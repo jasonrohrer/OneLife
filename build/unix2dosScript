@@ -1,0 +1,7 @@
+
+
+cat "$1" | ./unix2dos > tempUNIX2DOS.txt
+
+cp -f tempUNIX2DOS.txt "$1"
+
+rm -f tempUNIX2DOS.txt
