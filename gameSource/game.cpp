@@ -78,7 +78,6 @@ float mouseSpeed;
 
 int musicOff;
 float musicLoudness;
-int diffHighlightsOff;
 
 int webRetrySeconds;
 
@@ -87,6 +86,7 @@ double frameRateFactor = 1;
 
 
 char firstDrawFrameCalled = false;
+char firstServerMessageReceived = false;
 
 
 char upKey = 'w';
@@ -94,6 +94,13 @@ char leftKey = 'a';
 char downKey = 's';
 char rightKey = 'd';
 
+
+
+
+char *serverAddress = NULL;
+int serverPort;
+
+int serverSocket = -1;
 
 
 
@@ -157,52 +164,6 @@ Font *numbersFontFixed;
 char *shutdownMessage = NULL;
 
 
-// start at reflector URL
-// first step is replacing it with server URL after reflection
-char *serverURL = NULL;
-
-
-char *userEmail = NULL;
-int userID = -1;
-char *accountKey = NULL;
-// each new request to server must use next sequence number
-int serverSequenceNumber = 0;
-
-double depositFlatFee = 0;
-double depositPercentage = 0;
-double minDeposit = 2.00;
-double maxDeposit = 999999.99;
-
-double minGameStakes = 0.01;
-double maxGameStakes = 999999999.99;
-
-
-
-double userBalance = 0;
-double checkCostUS = 0;
-double checkCostGlobal = 0;
-double transferCost = 0;
-
-// gets set permanently to true for session if withdraw method list
-// ever contains in_person
-char inPersonMode = false;
-
-
-int playerIsAdmin = 0;
-
-
-// this is non-zero only if amuletID below is one we just picked up
-int justAcquiredAmuletID = 0;
-char *justAcquiredAmuletTGAURL = NULL;
-
-int amuletID = 0;
-int amuletPointCount;
-int amuletBaseTime;
-int amuletHoldPenaltyPerMinute;
-
-double amuletStake = 3.00;
-
-char waitingAmuletGame = false;
 
 
 
@@ -229,11 +190,11 @@ static int stepsBetweenDeleteRepeat;
 
 static const char *customDataFormatWriteString = 
     "version%d_mouseSpeed%f_musicOff%d_musicLoudness%f"
-    "_webRetrySeconds%d_accountKey%s_email%s";
+    "_webRetrySeconds%d";
 
 static const char *customDataFormatReadString = 
     "version%d_mouseSpeed%f_musicOff%d_musicLoudness%f"
-    "_webRetrySeconds%d_accountKey%10s_email%99s";
+    "_webRetrySeconds%d";
 
 
 char *getCustomRecordedGameData() {    
@@ -247,51 +208,12 @@ char *getCustomRecordedGameData() {
     int webRetrySecondsSetting = 
         SettingsManager::getIntSetting( "webRetrySeconds", 10 );
     
-    char *email =
-        SettingsManager::getStringSetting( "email" );
-    if( email == NULL ) {
-        email = stringDuplicate( "*" );
-        }
-    else {
-        // put bogus email in recording files, since we don't
-        // need a email during playback anyway (not communicating with 
-        // server during playback)
-        
-        // want people to be able to share playback files freely without
-        // divulging their emails
-        delete [] email;
-
-        email = stringDuplicate( "redacted@redacted.com" );
-        }
-    
-    
-    char *code = SettingsManager::getStringSetting( "accountKey" );
-    
-    if( code == NULL ) {
-        code = stringDuplicate( "**********" );
-        }
-    else {
-        // put bogus code in recording files, since we don't
-        // need a valid code during playback anyway (not communicating with 
-        // server during playback)
-        
-        // want people to be able to share playback files freely without
-        // divulging their download codes
-        delete [] code;
-
-        code = stringDuplicate( "EMPTYDEEPS" );
-        }
-    
-
 
     char * result = autoSprintf(
         customDataFormatWriteString,
         versionNumber, mouseSpeedSetting, musicOffSetting, 
         musicLoudnessSetting,
-        webRetrySecondsSetting, code, email );
-
-    delete [] email;
-    delete [] code;
+        webRetrySecondsSetting );
     
 
     return result;
@@ -392,8 +314,6 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     float musicLoudnessSetting = 1.0f;
     int webRetrySecondsSetting = 10;
 
-    userEmail = new char[100];
-    accountKey = new char[11];
     
     int readVersionNumber;
     
@@ -403,10 +323,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                           &mouseSpeedSetting, 
                           &musicOffSetting,
                           &musicLoudnessSetting,
-                          &webRetrySecondsSetting,
-                          accountKey,
-                          userEmail );
-    if( numRead != 7 ) {
+                          &webRetrySecondsSetting );
+    if( numRead != 5 ) {
         // no recorded game?
         }
     else {
@@ -418,29 +336,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                 "but game version is %d...",
                 readVersionNumber, versionNumber );
             }
-
-        if( strcmp( accountKey, "**********" ) == 0 ) {
-            delete [] accountKey;
-            accountKey = NULL;
-            }
-        if( strcmp( userEmail, "*" ) == 0 ) {
-            delete [] userEmail;
-            userEmail = NULL;
-            }
         }
     
-    if( !inPlayingBack ) {
-        // read REAL email and download code from settings file
-
-        delete [] userEmail;
-        
-        userEmail = SettingsManager::getStringSetting( "email" );    
-
-        
-        delete [] accountKey;
-        
-        accountKey = SettingsManager::getStringSetting( "accountKey" );    
-        }
     
 
     
@@ -454,13 +351,14 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     musicLoudness = musicLoudnessSetting;
     webRetrySeconds = webRetrySecondsSetting;
 
-    serverURL = SettingsManager::getStringSetting( "reflectorURL" );
+    
+    serverAddress = SettingsManager::getStringSetting( "serverAddress" );
 
-    if( serverURL == NULL ) {
-        serverURL = 
-            stringDuplicate( 
-                "http://localhost/jcr13/castleReflector/server.php" );
+    if( serverAddress == NULL ) {
+        serverAddress = stringDuplicate( "127.0.0.1" );
         }
+
+    serverPort = SettingsManager::getIntSetting( "serverPort", 5077 );
 
 
 
@@ -488,21 +386,15 @@ void freeFrameDrawer() {
         shutdownMessage = NULL;
         }
 
-    if( serverURL != NULL ) {
-        delete [] serverURL;
-        serverURL = NULL;
-        }
 
-    if( accountKey != NULL ) {
-        delete [] accountKey;
-        accountKey = NULL;
+    if( serverAddress != NULL ) {    
+        delete [] serverAddress;
+        serverAddress = NULL;
         }
     
-    if( userEmail != NULL ) {
-        delete [] userEmail;
-        userEmail = NULL;
+    if( serverSocket != -1 ) {
+        closeSocket( serverSocket );
         }
-
     }
 
 
@@ -791,8 +683,71 @@ void deleteCharFromUserTypedMessage() {
 
 
 
+SimpleVector<char> serverSocketBuffer;
 
 
+// reads all waiting data from socket and stores it in buffer
+void readServerSocketFull() {
+
+    char buffer[512];
+    
+    int numRead = readFromSocket( serverSocket, (unsigned char*)buffer, 512 );
+    
+    
+    while( numRead > 0 ) {
+        serverSocketBuffer.appendArray( buffer, numRead );
+
+        numRead = readFromSocket( serverSocket, (unsigned char*)buffer, 512 );
+        }    
+    }
+
+
+
+// NULL if there's no full message available
+char *getNextServerMessage() {
+    // find first terminal character #
+
+    int index = serverSocketBuffer.getElementIndex( '#' );
+        
+    if( index == -1 ) {
+        return NULL;
+        }
+    
+    char *message = new char[ index + 1 ];
+    
+    for( int i=0; i<index; i++ ) {
+        message[i] = serverSocketBuffer.getElementDirect( 0 );
+        serverSocketBuffer.deleteElement( 0 );
+        }
+    // delete message terminal character
+    serverSocketBuffer.deleteElement( 0 );
+    
+    message[ index ] = '\0';
+    
+    return message;
+    }
+
+
+
+
+typedef struct LiveObject {
+        int id;
+        int x;
+        int y;
+
+        int xTemp;
+        int yTemp;
+        
+        
+        char displayChar;
+    } LiveObject;
+
+
+SimpleVector<LiveObject> gameObjects;
+
+int ourID;
+
+char lastCharUsed = 'A';
 
 
 void drawFrame( char inUpdate ) {    
@@ -926,6 +881,9 @@ void drawFrame( char inUpdate ) {
             }
 
 
+        serverSocket = openSocketConnection( serverAddress, serverPort );
+
+
         firstDrawFrameCalled = true;
         }
 
@@ -945,7 +903,163 @@ void drawFrame( char inUpdate ) {
 
     // updates here
     
+    
+    // first, read all available data from server
+    readServerSocketFull();
+    
 
+    char *message = getNextServerMessage();
+
+
+    if( message != NULL ) {
+        
+        if( !firstServerMessageReceived ) {
+        
+            printf( "Got first message from server: %s\n", message );
+
+
+            SimpleVector<char *> *tokens = 
+                tokenizeString( message );
+            
+            int numTokens = tokens->size();
+            
+            // triplets
+            for( int i=0; i<numTokens; i+=3 ) {
+                
+                LiveObject o;
+                
+                sscanf( tokens->getElementDirect( i ), "%d", &( o.id ) );
+                sscanf( tokens->getElementDirect( i+1 ), "%d", &( o.x ) );
+                sscanf( tokens->getElementDirect( i+2 ), "%d", &( o.y ) );
+                
+                o.displayChar = lastCharUsed + 1;
+                
+                lastCharUsed = o.displayChar;
+                
+                o.xTemp = o.x;
+                o.yTemp = o.y;
+
+                gameObjects.push_back( o );
+                }
+
+            LiveObject *ourObject = 
+                gameObjects.getElement( gameObjects.size() - 1 );
+            ourID = ourObject->id;
+            ourObject->displayChar = 'A';
+            
+            
+            tokens->deallocateStringElements();
+            
+            delete tokens;
+
+            firstServerMessageReceived = true;
+            }
+        else {
+            // update message
+            
+            printf( "Got update message from server: %s\n", message );
+
+            SimpleVector<char *> *tokens = 
+                tokenizeString( message );
+            
+            int numTokens = tokens->size();
+            
+            // triplets
+            for( int i=0; i<numTokens; i+=3 ) {
+                                
+                int id, x, y;
+                
+                int numRead = 0;
+                
+                numRead += 
+                    sscanf( tokens->getElementDirect( i ), "%d", &( id ) );
+                numRead += 
+                    sscanf( tokens->getElementDirect( i+1 ), "%d", &( x ) );
+                numRead += 
+                    sscanf( tokens->getElementDirect( i+2 ), "%d", &( y ) );
+                
+                char mustDelete = false;
+                if( numRead != 3 ) {
+                    if( strcmp( tokens->getElementDirect( i+1 ), "X" ) == 0 ) {
+                        mustDelete = true;
+                        }
+                    }
+                
+                
+                char found = false;
+                for( int i=0; i<gameObjects.size(); i++ ) {
+        
+                    LiveObject *o = gameObjects.getElement( i );
+
+                    if( o->id == id ) {
+
+                        if( mustDelete ) {
+                            gameObjects.deleteElement( i );
+                            }
+                        else {
+                            o->x = x;
+                            o->y = y;
+                            }
+                        found = true;
+                        break;
+                        }
+                    }
+                
+                if( !found ) {
+                    LiveObject o;
+                    
+                    o.id = id;
+                    o.displayChar = lastCharUsed + 1;
+                
+                    lastCharUsed = o.displayChar;
+                
+                    o.x = x;
+                    o.y = y;
+                    
+                    o.xTemp = o.x;
+                    o.yTemp = o.y;
+
+                    gameObjects.push_back( o );
+                    }
+                }
+            
+            
+            tokens->deallocateStringElements();
+            }
+        
+        
+
+
+        delete [] message;
+        }
+    
+
+
+    // move objects toward their x,y destinations
+
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        
+        LiveObject *o = gameObjects.getElement( i );
+
+        if( o->x != o->xTemp ) {
+            if( o->x > o->xTemp ) {
+                o->xTemp++;
+                }
+            else {
+                o->xTemp--;
+                }
+            }
+        if( o->y != o->yTemp ) {
+            if( o->y > o->yTemp ) {
+                o->yTemp++;
+                }
+            else {
+                o->yTemp--;
+                }
+            }
+        }
+    
+    
 
     // now draw stuff AFTER all updates
     drawFrameNoUpdate( true );
@@ -966,6 +1080,46 @@ void drawFrameNoUpdate( char inUpdate ) {
     //    currentGamePage->base_draw( lastScreenViewCenter, viewWidth );
     //    }
 
+    
+    
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        
+        LiveObject *o = gameObjects.getElement( i );
+
+
+        if( o->x != o->xTemp || o->y != o->yTemp ) {
+            // destination
+            
+            char *string = autoSprintf( "[%c]", o->displayChar );
+        
+            doublePair pos;
+            pos.x = o->x;
+            pos.y = o->y;
+        
+            setDrawColor( 1, 0, 0, 1 );
+            mainFont->drawString( string, 
+                                  pos, alignCenter );
+            delete [] string;
+            }
+
+
+
+        // current pos
+        char *string = autoSprintf( "%c", o->displayChar );
+        
+        doublePair pos;
+        pos.x = o->xTemp;
+        pos.y = o->yTemp;
+        
+        setDrawColor( 1, 1, 1, 1 );
+        mainFont->drawString( string, 
+                              pos, alignCenter );
+
+        delete [] string;
+        
+        
+        
+        }
     }
 
 
@@ -1012,6 +1166,33 @@ void pointerDown( float inX, float inY ) {
     if( isPaused() ) {
         return;
         }
+
+    if( !firstServerMessageReceived ) {
+        return;
+        }
+
+    LiveObject *ourLiveObject;
+
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        
+        LiveObject *o = gameObjects.getElement( i );
+        
+        if( o->id == ourID ) {
+            ourLiveObject = o;
+            break;
+            }
+        }
+    
+    if( ourLiveObject->x == ourLiveObject->xTemp && 
+        ourLiveObject->y == ourLiveObject->yTemp ) {
+        
+        char *message = autoSprintf( "%d %d#", (int)inX, (int)inY );
+        sendToSocket( serverSocket, (unsigned char*)message, 
+                      strlen( message ) );
+        
+        delete [] message;
+        }
+    
     }
 
 
