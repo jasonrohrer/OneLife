@@ -1,0 +1,50 @@
+#!/bin/sh
+
+#
+# Modification History
+#
+# 2007-November-12   Jason Rohrer
+# Copied from Cultivation build.
+#
+
+
+if [ $# -lt 3 ] ; then
+   echo "Usage: $0 release_name unix_platform_name path_to_SDL.framework"
+   exit 1
+fi
+
+
+rm -rf mac/OneLife_$1
+
+
+./makeBaseDistributionFolder $1
+
+
+mv base/* mac
+
+
+cp -r macOSX/OneLife.app mac/OneLife_$1/OneLife.app
+cp ../gameSource/OneLife mac/OneLife_$1/OneLife.app/Contents/MacOS
+
+rm -r mac/OneLife_$1/OneLife.app/Contents/MacOS/empty.txt
+rm -r mac/OneLife_$1/OneLife.app/Contents/Frameworks/empty.txt
+
+# install SDL framework
+cp -r $3 mac/OneLife_$1/OneLife.app/Contents/Frameworks/
+
+cd mac
+
+
+d=`date`
+
+echo "$1 built on $d" > OneLife_$1/binary.txt
+
+
+tar cf "OneLife_$1_$2.tar" OneLife_$1
+gzip "OneLife_$1_$2.tar"
+
+
+
+
+
+

@@ -1,0 +1,12 @@
+SOURCEDIR=`pwd`
+echo "running export from $SOURCEDIR"
+
+cd ../../../../minorGems
+hg archive $SOURCEDIR/minorGems
+
+cd $SOURCEDIR
+
+cd ../../../../OneLife
+hg archive $SOURCEDIR/OneLife
+
+cd $SOURCEDIR

@@ -1,0 +1,9 @@
+
+del OneLife_%version%_Windows.zip 
+del OneLife_%version%_Windows.exe
+
+7z a -tzip OneLife_%version%_Windows.zip OneLife_%version% -r
+
+makesfx.exe /zip="OneLife_%version%_Windows.zip" /sfx="OneLife_%version%_Windows.exe" /title="One Dollar One Hour One Life %version%" /website="http://1dollar1hour1life.com" /intro="This will extract the game." /defaultpath="$curdir$" /icon="..\win32\icon_installer.ico"
+
+pause

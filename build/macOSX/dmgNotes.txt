@@ -1,0 +1,23 @@
+To mount dmg:
+
+hdiutil mount Test.dmg
+
+
+To unmount:
+
+hdiutil unmount /Volumes/Test
+
+
+To convert DMG to compressed:
+
+hdiutil convert Test.dmg -format UDZO -o Test_compressed.dmg
+
+
+To convert compressed DMG to R/W:
+
+hdiutil convert Test_compressed.dmg -format UDRW -o Test.dmg
+
+
+To rename a volume:
+
+diskutil rename /Volumes/NameA NameB

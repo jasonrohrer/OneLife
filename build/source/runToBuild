@@ -1,0 +1,55 @@
+#!/bin/bash
+
+#
+# Modification History
+#
+# 2010-April-2        Andy Sommerville
+# - Added a few "|| exit 1" to terminate as soon as error occurs.
+# - Read menu choice from argv[1].
+# - Added "-p" to mkdir to suppress "already exists" message.
+# - Added automatic backup of "resourceCache". (wish I'd thought of that a few minutes ago....)
+#
+# 2007-November-12    Jason Rohrer
+# Copied from Cultivation.
+#
+
+
+cd OneLife
+chmod u+x ./configure
+./configure $@ || exit 1
+
+
+
+
+cd gameSource
+
+
+echo "Building OneLife..."
+
+make || exit 1
+
+
+
+cd ../..
+
+mkdir -p graphics
+mkdir -p settings
+mkdir -p languages
+
+
+
+
+cp OneLife/gameSource/OneLife ./OneLifeApp
+cp OneLife/documentation/Readme.txt .
+cp OneLife/no_copyright.txt .
+cp OneLife/gameSource/graphics/* ./graphics
+ccp OneLife/gameSource/settings/* ./settings
+cp OneLife/gameSource/languages/* ./languages
+cp OneLife/gameSource/language.txt ./
+
+
+echo "Run CORDIAL_MINUET to play."
+
+
+
+

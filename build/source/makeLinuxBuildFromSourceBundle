@@ -1,0 +1,43 @@
+#!/bin/sh
+
+if [ $# -lt 1 ] ; then
+   echo "Usage: $0 release_name"
+   exit 1
+fi
+
+
+
+sourceBundleDir="OneLife_$1_UnixSource"
+
+sourceWorkingDir="OneLife_$1_UnixSource_build"
+
+rm -rf $sourceWorkingDir
+
+cp -r $sourceBundleDir $sourceWorkingDir
+
+cd $sourceWorkingDir
+./runToBuild 1
+
+cd ..
+
+buildDir="OneLife_$1"
+finalTarball="OneLife_$1_Linux.tar.gz"
+
+rm -rf $buildDir $buildDir_Linux.tar.gz
+
+mkdir $buildDir
+
+cd $sourceWorkingDir
+cp -r OneLifeApp graphics sounds languages language.txt no_copyright.txt Readme.txt settings ../$buildDir
+
+cd ..
+
+
+d=`date`
+
+echo "$1 built on $d" > $buildDir/binary.txt
+
+
+tar czf $finalTarball $buildDir
+
+rm -rf $sourceWorkingDir

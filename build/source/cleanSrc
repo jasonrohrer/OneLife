@@ -1,0 +1,7 @@
+rm -r minorGems/ai
+rm -r minorGems/bench
+rm -r minorGems/doc
+rm -r minorGems/examples
+rm -r minorGems/sound/portaudio
+
+

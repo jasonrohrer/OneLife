@@ -1,0 +1,30 @@
+#!/bin/sh
+
+if [ $# -lt 1 ] ; then
+   echo "Usage: $0 release_name"
+   exit 1
+fi
+
+
+bundleDir="OneLife_$1_UnixSource"
+
+rm -rf $bundleDir $bundleDir.tar.gz
+
+mkdir $bundleDir
+
+cd $bundleDir
+
+../exportSrc
+
+../cleanSrc
+
+cp ../runToBuild .
+
+# fix date stamping so that tga files aren't rebuilt by accident
+cd OneLife/gameSource/graphics
+touch *.tga
+
+cd ../../../..
+
+
+tar czf $bundleDir.tar.gz $bundleDir

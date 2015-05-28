@@ -1,0 +1,42 @@
+#!/bin/sh
+
+if [ $# -lt 1 ] ; then
+   echo "Usage: $0 release_name"
+   exit 1
+fi
+
+
+rm -rf base
+
+mkdir base
+
+
+baseFolder=base/OneLife_$1
+
+mkdir $baseFolder
+mkdir $baseFolder/graphics
+mkdir $baseFolder/settings
+mkdir $baseFolder/languages
+
+
+
+cp ../gameSource/graphics/*.tga $baseFolder/graphics
+cp ../gameSource/settings/*.ini $baseFolder/settings
+cp ../gameSource/languages/*.txt $baseFolder/languages
+cp ../gameSource/language.txt $baseFolder
+cp ../documentation/Readme.txt $baseFolder
+cp ../no_copyright.txt $baseFolder
+
+
+
+rm -f $baseFolder/settings/email.ini
+rm -f $baseFolder/settings/accountKey.ini
+
+
+# remove all editor backup files
+find $baseFolder -name "*~" -exec rm -f {} \;
+
+
+
+
+

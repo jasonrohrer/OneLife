@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist SYSTEM "file://localhost/System/Library/DTDs/PropertyList.dtd">
+<plist version="0.9">
+<dict>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.cordialminuet</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>OneLife</string>
+	<key>CFBundleIconFile</key>
+	<string>OneLife.icns</string>
+	<key>CFBundleName</key>
+	<string>OneLife</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>0</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0</string>
+	<key>CFBundleGetInfoString</key>
+	<string>OneLife</string>
+	<key>CFBundleLongVersionString</key>
+	<string>0</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Public Domain, 2014</string>
+	<key>LSRequiresCarbon</key>
+        <true/>
+	<key>CSResourcesFileMapped</key>
+	<true/>
+</dict>
+</plist>
