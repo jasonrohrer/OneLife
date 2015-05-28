@@ -14,6 +14,8 @@ if [ $# -lt 1 ] ; then
 fi
 
 
+mkdir windows
+
 rm -rf windows/OneLife_$1
 
 
