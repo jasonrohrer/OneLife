@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <signal.h>
 
 
 #include "minorGems/util/stringUtils.h"
@@ -31,11 +32,21 @@ SimpleVector<LiveObject> players;
 int nextID = 0;
 
 
+volatile char quit = false;
+
+void intHandler( int inUnused ) {
+    quit = true;
+    }
+
+
+int numConnections = 0;
 
 
 int main() {
 
     printf( "Test server\n" );
+
+    signal( SIGINT, intHandler );
     
     int port = 
         SettingsManager::getIntSetting( "port", 5077 );
@@ -46,13 +57,13 @@ int main() {
 
     printf( "Listening for connection on port %d\n", port );
 
-    while( true ) {
+    while( !quit ) {
         
-
         Socket *sock = server.acceptConnection( 0 );
         
         if( sock != NULL ) {
             printf( "Got connection\n" );
+            numConnections ++;
             
             LiveObject newObject;
             newObject.id = nextID;
@@ -237,6 +248,10 @@ int main() {
                     }
                 }
             }
+
+        if( moveMessage != NULL ) {
+            delete [] moveMessage;
+            }
         
         
         // handle closing any that have an error
@@ -255,6 +270,16 @@ int main() {
 
         }
     
+
+    printf( "Quitting...\n" );
+    
+
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *nextPlayer = players.getElement(i);
+        delete nextPlayer->sock;
+        }
+    
+    printf( "Done.\n" );
 
 
     return 0;
