@@ -1025,6 +1025,7 @@ void drawFrame( char inUpdate ) {
             
             
             tokens->deallocateStringElements();
+            delete tokens;
             }
         
         
