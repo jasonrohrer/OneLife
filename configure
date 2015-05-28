@@ -1,0 +1,7 @@
+#!/bin/sh
+
+export MG_PATH="../minorGems"
+export TARGET_MAKEFILE_PATH="gameSource"
+
+# pass all arguments into main configure
+../minorGems/game/platforms/SDL/configure $@

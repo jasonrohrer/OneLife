@@ -1,0 +1,1215 @@
+int versionNumber = 26;
+
+// retain an older version number here if server is compatible
+// with older client versions.
+// Change this number (and number on server) if server has changed
+// in a way that breaks old clients.
+int accountHmacVersionNumber = 25;
+
+
+
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+
+//#define USE_MALLINFO
+
+#ifdef USE_MALLINFO
+#include <malloc.h>
+#endif
+
+
+#include "minorGems/graphics/Color.h"
+
+
+
+
+
+#include "minorGems/util/SimpleVector.h"
+#include "minorGems/util/stringUtils.h"
+#include "minorGems/util/SettingsManager.h"
+#include "minorGems/util/random/CustomRandomSource.h"
+
+
+// static seed
+CustomRandomSource randSource( 34957197 );
+
+
+
+#include "minorGems/util/log/AppLog.h"
+
+
+
+#include "minorGems/game/game.h"
+#include "minorGems/game/gameGraphics.h"
+#include "minorGems/game/Font.h"
+#include "minorGems/game/drawUtils.h"
+#include "minorGems/game/diffBundle/client/diffBundleClient.h"
+
+
+
+
+
+
+
+
+
+
+
+
+// position of view in world
+doublePair lastScreenViewCenter = {0, 0 };
+
+
+
+// world with of one view
+double viewWidth = 666;
+
+// fraction of viewWidth visible vertically (aspect ratio)
+double viewHeightFraction;
+
+int screenW, screenH;
+
+char initDone = false;
+
+float mouseSpeed;
+
+int musicOff;
+float musicLoudness;
+int diffHighlightsOff;
+
+int webRetrySeconds;
+
+
+double frameRateFactor = 1;
+
+
+char firstDrawFrameCalled = false;
+
+
+char upKey = 'w';
+char leftKey = 'a';
+char downKey = 's';
+char rightKey = 'd';
+
+
+
+
+char doesOverrideGameImageSize() {
+    return true;
+    }
+
+
+
+void getGameImageSize( int *outWidth, int *outHeight ) {
+    *outWidth = 666;
+    *outHeight = 666;
+    }
+
+
+
+const char *getWindowTitle() {
+    return "One Dollar One Hour One Life";
+    }
+
+
+const char *getAppName() {
+    return "OneLife";
+    }
+
+const char *getLinuxAppName() {
+    // no dir-name conflict here because we're using all caps for app name
+    return "OneLifeApp";
+    }
+
+
+
+const char *getFontTGAFileName() {
+    return "font_32_64.tga";
+    }
+
+
+char isDemoMode() {
+    return false;
+    }
+
+
+const char *getDemoCodeSharedSecret() {
+    return "fundamental_right";
+    }
+
+
+const char *getDemoCodeServerURL() {
+    return "http://FIXME/demoServer/server.php";
+    }
+
+
+
+char gamePlayingBack = false;
+
+
+Font *mainFont;
+Font *mainFontFixed;
+Font *numbersFontFixed;
+
+char *shutdownMessage = NULL;
+
+
+// start at reflector URL
+// first step is replacing it with server URL after reflection
+char *serverURL = NULL;
+
+
+char *userEmail = NULL;
+int userID = -1;
+char *accountKey = NULL;
+// each new request to server must use next sequence number
+int serverSequenceNumber = 0;
+
+double depositFlatFee = 0;
+double depositPercentage = 0;
+double minDeposit = 2.00;
+double maxDeposit = 999999.99;
+
+double minGameStakes = 0.01;
+double maxGameStakes = 999999999.99;
+
+
+
+double userBalance = 0;
+double checkCostUS = 0;
+double checkCostGlobal = 0;
+double transferCost = 0;
+
+// gets set permanently to true for session if withdraw method list
+// ever contains in_person
+char inPersonMode = false;
+
+
+int playerIsAdmin = 0;
+
+
+// this is non-zero only if amuletID below is one we just picked up
+int justAcquiredAmuletID = 0;
+char *justAcquiredAmuletTGAURL = NULL;
+
+int amuletID = 0;
+int amuletPointCount;
+int amuletBaseTime;
+int amuletHoldPenaltyPerMinute;
+
+double amuletStake = 3.00;
+
+char waitingAmuletGame = false;
+
+
+
+
+
+
+static char wasPaused = false;
+static float pauseScreenFade = 0;
+
+static char *currentUserTypedMessage = NULL;
+
+
+
+// for delete key repeat during message typing
+static int holdDeleteKeySteps = -1;
+static int stepsBetweenDeleteRepeat;
+
+
+
+
+
+#define SETTINGS_HASH_SALT "another_loss"
+
+
+static const char *customDataFormatWriteString = 
+    "version%d_mouseSpeed%f_musicOff%d_musicLoudness%f"
+    "_webRetrySeconds%d_accountKey%s_email%s";
+
+static const char *customDataFormatReadString = 
+    "version%d_mouseSpeed%f_musicOff%d_musicLoudness%f"
+    "_webRetrySeconds%d_accountKey%10s_email%99s";
+
+
+char *getCustomRecordedGameData() {    
+    
+    float mouseSpeedSetting = 
+        SettingsManager::getFloatSetting( "mouseSpeed", 1.0f );
+    int musicOffSetting = 
+        SettingsManager::getIntSetting( "musicOff", 0 );
+    float musicLoudnessSetting = 
+        SettingsManager::getFloatSetting( "musicLoudness", 1.0f );
+    int webRetrySecondsSetting = 
+        SettingsManager::getIntSetting( "webRetrySeconds", 10 );
+    
+    char *email =
+        SettingsManager::getStringSetting( "email" );
+    if( email == NULL ) {
+        email = stringDuplicate( "*" );
+        }
+    else {
+        // put bogus email in recording files, since we don't
+        // need a email during playback anyway (not communicating with 
+        // server during playback)
+        
+        // want people to be able to share playback files freely without
+        // divulging their emails
+        delete [] email;
+
+        email = stringDuplicate( "redacted@redacted.com" );
+        }
+    
+    
+    char *code = SettingsManager::getStringSetting( "accountKey" );
+    
+    if( code == NULL ) {
+        code = stringDuplicate( "**********" );
+        }
+    else {
+        // put bogus code in recording files, since we don't
+        // need a valid code during playback anyway (not communicating with 
+        // server during playback)
+        
+        // want people to be able to share playback files freely without
+        // divulging their download codes
+        delete [] code;
+
+        code = stringDuplicate( "EMPTYDEEPS" );
+        }
+    
+
+
+    char * result = autoSprintf(
+        customDataFormatWriteString,
+        versionNumber, mouseSpeedSetting, musicOffSetting, 
+        musicLoudnessSetting,
+        webRetrySecondsSetting, code, email );
+
+    delete [] email;
+    delete [] code;
+    
+
+    return result;
+    }
+
+
+
+char showMouseDuringPlayback() {
+    // since we rely on the system mouse pointer during the game (and don't
+    // draw our own pointer), we need to see the recorded pointer position
+    // to make sense of game playback
+    return true;
+    }
+
+
+
+char *getHashSalt() {
+    return stringDuplicate( SETTINGS_HASH_SALT );
+    }
+
+
+
+
+void initDrawString( int inWidth, int inHeight ) {
+    mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16 );
+    mainFont->setMinimumPositionPrecision( 1 );
+
+    setViewCenterPosition( lastScreenViewCenter.x, lastScreenViewCenter.y );
+
+    viewHeightFraction = inHeight / (double)inWidth;
+
+    // square window for this game
+    viewWidth = 666 * 1.0 / viewHeightFraction;
+    
+    
+    setViewSize( viewWidth );
+    }
+
+
+void freeDrawString() {
+    delete mainFont;
+    }
+
+
+
+void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
+                      const char *inCustomRecordedGameData,
+                      char inPlayingBack ) {
+    
+    gamePlayingBack = inPlayingBack;
+    
+    screenW = inWidth;
+    screenH = inHeight;
+    
+    if( inTargetFrameRate != 60 ) {
+        frameRateFactor = (double)60 / (double)inTargetFrameRate;
+        }
+    
+    
+
+
+    setViewCenterPosition( lastScreenViewCenter.x, lastScreenViewCenter.y );
+
+    viewHeightFraction = inHeight / (double)inWidth;
+
+    
+    // square window for this game
+    viewWidth = 666 * 1.0 / viewHeightFraction;
+    
+    
+    setViewSize( viewWidth );
+
+
+    
+    
+
+    
+
+    setCursorVisible( true );
+    grabInput( false );
+    
+    // world coordinates
+    setMouseReportingMode( true );
+    
+    
+    
+    
+    mainFontFixed = new Font( getFontTGAFileName(), 6, 16, true, 16 );
+    numbersFontFixed = new Font( getFontTGAFileName(), 6, 16, true, 16, 16 );
+    
+    mainFontFixed->setMinimumPositionPrecision( 1 );
+    numbersFontFixed->setMinimumPositionPrecision( 1 );
+    
+
+    float mouseSpeedSetting = 1.0f;
+    
+    int musicOffSetting = 0;
+    float musicLoudnessSetting = 1.0f;
+    int webRetrySecondsSetting = 10;
+
+    userEmail = new char[100];
+    accountKey = new char[11];
+    
+    int readVersionNumber;
+    
+    int numRead = sscanf( inCustomRecordedGameData, 
+                          customDataFormatReadString, 
+                          &readVersionNumber,
+                          &mouseSpeedSetting, 
+                          &musicOffSetting,
+                          &musicLoudnessSetting,
+                          &webRetrySecondsSetting,
+                          accountKey,
+                          userEmail );
+    if( numRead != 7 ) {
+        // no recorded game?
+        }
+    else {
+
+        if( readVersionNumber != versionNumber ) {
+            AppLog::printOutNextMessage();
+            AppLog::warningF( 
+                "WARNING:  version number in playback file is %d "
+                "but game version is %d...",
+                readVersionNumber, versionNumber );
+            }
+
+        if( strcmp( accountKey, "**********" ) == 0 ) {
+            delete [] accountKey;
+            accountKey = NULL;
+            }
+        if( strcmp( userEmail, "*" ) == 0 ) {
+            delete [] userEmail;
+            userEmail = NULL;
+            }
+        }
+    
+    if( !inPlayingBack ) {
+        // read REAL email and download code from settings file
+
+        delete [] userEmail;
+        
+        userEmail = SettingsManager::getStringSetting( "email" );    
+
+        
+        delete [] accountKey;
+        
+        accountKey = SettingsManager::getStringSetting( "accountKey" );    
+        }
+    
+
+    
+    double mouseParam = 0.000976562;
+
+    mouseParam *= mouseSpeedSetting;
+
+    mouseSpeed = mouseParam * inWidth / viewWidth;
+
+    musicOff = musicOffSetting;
+    musicLoudness = musicLoudnessSetting;
+    webRetrySeconds = webRetrySecondsSetting;
+
+    serverURL = SettingsManager::getStringSetting( "reflectorURL" );
+
+    if( serverURL == NULL ) {
+        serverURL = 
+            stringDuplicate( 
+                "http://localhost/jcr13/castleReflector/server.php" );
+        }
+
+
+
+    setSoundLoudness( musicLoudness );
+    setSoundPlaying( false );
+
+    initDone = true;
+    }
+
+
+
+void freeFrameDrawer() {
+    delete mainFontFixed;
+    delete numbersFontFixed;
+    
+    if( currentUserTypedMessage != NULL ) {
+        delete [] currentUserTypedMessage;
+        currentUserTypedMessage = NULL;
+        }
+
+    
+
+    if( shutdownMessage != NULL ) {
+        delete [] shutdownMessage;
+        shutdownMessage = NULL;
+        }
+
+    if( serverURL != NULL ) {
+        delete [] serverURL;
+        serverURL = NULL;
+        }
+
+    if( accountKey != NULL ) {
+        delete [] accountKey;
+        accountKey = NULL;
+        }
+    
+    if( userEmail != NULL ) {
+        delete [] userEmail;
+        userEmail = NULL;
+        }
+
+    }
+
+
+
+
+
+    
+
+
+// draw code separated from updates
+// some updates are still embedded in draw code, so pass a switch to 
+// turn them off
+static void drawFrameNoUpdate( char inUpdate );
+
+
+
+
+static void drawPauseScreen() {
+
+    double viewHeight = viewHeightFraction * viewWidth;
+
+    setDrawColor( 1, 1, 1, 0.5 * pauseScreenFade );
+        
+    drawSquare( lastScreenViewCenter, 1.05 * ( viewHeight / 3 ) );
+        
+
+    setDrawColor( 0.2, 0.2, 0.2, 0.85 * pauseScreenFade  );
+        
+    drawSquare( lastScreenViewCenter, viewHeight / 3 );
+        
+
+    setDrawColor( 1, 1, 1, pauseScreenFade );
+
+    doublePair messagePos = lastScreenViewCenter;
+
+    messagePos.y += 4.5  * (viewHeight / 15);
+
+    mainFont->drawString( translate( "pauseMessage1" ), 
+                           messagePos, alignCenter );
+        
+    messagePos.y -= 1.25 * (viewHeight / 15);
+    mainFont->drawString( translate( "pauseMessage2" ), 
+                           messagePos, alignCenter );
+
+    if( currentUserTypedMessage != NULL ) {
+            
+        messagePos.y -= 1.25 * (viewHeight / 15);
+            
+        double maxWidth = 0.95 * ( viewHeight / 1.5 );
+            
+        int maxLines = 9;
+
+        SimpleVector<char *> *tokens = 
+            tokenizeString( currentUserTypedMessage );
+
+
+        // collect all lines before drawing them
+        SimpleVector<char *> lines;
+        
+            
+        while( tokens->size() > 0 ) {
+
+            // build up a a line
+
+            // always take at least first token, even if it is too long
+            char *currentLineString = 
+                stringDuplicate( *( tokens->getElement( 0 ) ) );
+                
+            delete [] *( tokens->getElement( 0 ) );
+            tokens->deleteElement( 0 );
+            
+            
+
+            
+
+            
+            char nextTokenIsFileSeparator = false;
+                
+            char *nextLongerString = NULL;
+                
+            if( tokens->size() > 0 ) {
+
+                char *nextToken = *( tokens->getElement( 0 ) );
+                
+                if( nextToken[0] == 28 ) {
+                    nextTokenIsFileSeparator = true;
+                    }
+                else {
+                    nextLongerString =
+                        autoSprintf( "%s %s ",
+                                     currentLineString,
+                                     *( tokens->getElement( 0 ) ) );
+                    }
+                
+                }
+                
+            while( !nextTokenIsFileSeparator 
+                   &&
+                   nextLongerString != NULL 
+                   && 
+                   mainFont->measureString( nextLongerString ) 
+                   < maxWidth 
+                   &&
+                   tokens->size() > 0 ) {
+                    
+                delete [] currentLineString;
+                    
+                currentLineString = nextLongerString;
+                    
+                nextLongerString = NULL;
+                    
+                // token consumed
+                delete [] *( tokens->getElement( 0 ) );
+                tokens->deleteElement( 0 );
+                    
+                if( tokens->size() > 0 ) {
+                    
+                    char *nextToken = *( tokens->getElement( 0 ) );
+                
+                    if( nextToken[0] == 28 ) {
+                        nextTokenIsFileSeparator = true;
+                        }
+                    else {
+                        nextLongerString =
+                            autoSprintf( "%s%s ",
+                                         currentLineString,
+                                         *( tokens->getElement( 0 ) ) );
+                        }
+                    }
+                }
+                
+            if( nextLongerString != NULL ) {    
+                delete [] nextLongerString;
+                }
+                
+            while( mainFont->measureString( currentLineString ) > 
+                   maxWidth ) {
+                    
+                // single token that is too long by itself
+                // simply trim it and discard part of it 
+                // (user typing nonsense anyway)
+                    
+                currentLineString[ strlen( currentLineString ) - 1 ] =
+                    '\0';
+                }
+                
+            if( currentLineString[ strlen( currentLineString ) - 1 ] 
+                == ' ' ) {
+                // trim last bit of whitespace
+                currentLineString[ strlen( currentLineString ) - 1 ] = 
+                    '\0';
+                }
+
+                
+            lines.push_back( currentLineString );
+
+            
+            if( nextTokenIsFileSeparator ) {
+                // file separator
+
+                // put a paragraph separator in
+                lines.push_back( stringDuplicate( "---" ) );
+
+                // token consumed
+                delete [] *( tokens->getElement( 0 ) );
+                tokens->deleteElement( 0 );
+                }
+            }   
+
+
+        // all tokens deleted above
+        delete tokens;
+
+
+        double messageLineSpacing = 0.625 * (viewHeight / 15);
+        
+        int numLinesToSkip = lines.size() - maxLines;
+
+        if( numLinesToSkip < 0 ) {
+            numLinesToSkip = 0;
+            }
+        
+        
+        for( int i=0; i<numLinesToSkip-1; i++ ) {
+            char *currentLineString = *( lines.getElement( i ) );
+            delete [] currentLineString;
+            }
+        
+        int lastSkipLine = numLinesToSkip - 1;
+
+        if( lastSkipLine >= 0 ) {
+            
+            char *currentLineString = *( lines.getElement( lastSkipLine ) );
+
+            // draw above and faded out somewhat
+
+            doublePair lastSkipLinePos = messagePos;
+            
+            lastSkipLinePos.y += messageLineSpacing;
+
+            setDrawColor( 1, 1, 0.5, 0.125 * pauseScreenFade );
+
+            mainFont->drawString( currentLineString, 
+                                   lastSkipLinePos, alignCenter );
+
+            
+            delete [] currentLineString;
+            }
+        
+
+        setDrawColor( 1, 1, 0.5, pauseScreenFade );
+
+        for( int i=numLinesToSkip; i<lines.size(); i++ ) {
+            char *currentLineString = *( lines.getElement( i ) );
+            
+            if( false && lastSkipLine >= 0 ) {
+            
+                if( i == numLinesToSkip ) {
+                    // next to last
+                    setDrawColor( 1, 1, 0.5, 0.25 * pauseScreenFade );
+                    }
+                else if( i == numLinesToSkip + 1 ) {
+                    // next after that
+                    setDrawColor( 1, 1, 0.5, 0.5 * pauseScreenFade );
+                    }
+                else if( i == numLinesToSkip + 2 ) {
+                    // rest are full fade
+                    setDrawColor( 1, 1, 0.5, pauseScreenFade );
+                    }
+                }
+            
+            mainFont->drawString( currentLineString, 
+                                   messagePos, alignCenter );
+
+            delete [] currentLineString;
+                
+            messagePos.y -= messageLineSpacing;
+            }
+        }
+        
+        
+
+    setDrawColor( 1, 1, 1, pauseScreenFade );
+
+    messagePos = lastScreenViewCenter;
+
+    messagePos.y -= 3.75 * ( viewHeight / 15 );
+    //mainFont->drawString( translate( "pauseMessage3" ), 
+    //                      messagePos, alignCenter );
+
+    messagePos.y -= 0.625 * (viewHeight / 15);
+
+    const char* quitMessageKey = "pauseMessage3";
+    
+    if( isQuittingBlocked() ) {
+        quitMessageKey = "pauseMessage3b";
+        }
+
+    mainFont->drawString( translate( quitMessageKey ), 
+                          messagePos, alignCenter );
+
+    }
+
+
+
+void deleteCharFromUserTypedMessage() {
+    if( currentUserTypedMessage != NULL ) {
+                    
+        int length = strlen( currentUserTypedMessage );
+        
+        char fileSeparatorDeleted = false;
+        if( length > 2 ) {
+            if( currentUserTypedMessage[ length - 2 ] == 28 ) {
+                // file separator with spaces around it
+                // delete whole thing with one keypress
+                currentUserTypedMessage[ length - 3 ] = '\0';
+                fileSeparatorDeleted = true;
+                }
+            }
+        if( !fileSeparatorDeleted && length > 0 ) {
+            currentUserTypedMessage[ length - 1 ] = '\0';
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+void drawFrame( char inUpdate ) {    
+
+
+    if( !inUpdate ) {
+
+        if( isQuittingBlocked() ) {
+            // unsafe NOT to keep updating here, because pending network
+            // requests can stall
+
+            // keep stepping current page, but don't do any other processing
+            // (and still block user events from reaching current page)
+            //if( currentGamePage != NULL ) {
+            //    currentGamePage->base_step();
+            //    }
+            }
+
+        drawFrameNoUpdate( false );
+            
+        drawPauseScreen();
+        
+        if( !wasPaused ) {
+            //if( currentGamePage != NULL ) {
+            //    currentGamePage->base_makeNotActive();
+            //    }
+
+            // fade out music during pause
+            //setMusicLoudness( 0 );
+            }
+        wasPaused = true;
+
+        // handle delete key repeat
+        if( holdDeleteKeySteps > -1 ) {
+            holdDeleteKeySteps ++;
+            
+            if( holdDeleteKeySteps > stepsBetweenDeleteRepeat ) {        
+                // delete repeat
+
+                // platform layer doesn't receive event for key held down
+                // tell it we are still active so that it doesn't
+                // reduce the framerate during long, held deletes
+                wakeUpPauseFrameRate();
+                
+
+
+                // subtract from messsage
+                deleteCharFromUserTypedMessage();
+                
+                            
+
+                // shorter delay for subsequent repeats
+                stepsBetweenDeleteRepeat = (int)( 2/ frameRateFactor );
+                holdDeleteKeySteps = 0;
+                }
+            }
+
+        // fade in pause screen
+        if( pauseScreenFade < 1 ) {
+            pauseScreenFade += ( 1.0 / 30 ) * frameRateFactor;
+        
+            if( pauseScreenFade > 1 ) {
+                pauseScreenFade = 1;
+                }
+            }
+        
+
+        return;
+        }
+
+
+    // not paused
+
+
+    // fade pause screen out
+    if( pauseScreenFade > 0 ) {
+        pauseScreenFade -= ( 1.0 / 30 ) * frameRateFactor;
+        
+        if( pauseScreenFade < 0 ) {
+            pauseScreenFade = 0;
+
+            if( currentUserTypedMessage != NULL ) {
+
+                // make sure it doesn't already end with a file separator
+                // (never insert two in a row, even when player closes
+                //  pause screen without typing anything)
+                int lengthCurrent = strlen( currentUserTypedMessage );
+
+                if( lengthCurrent < 2 ||
+                    currentUserTypedMessage[ lengthCurrent - 2 ] != 28 ) {
+                         
+                        
+                    // insert at file separator (ascii 28)
+                    
+                    char *oldMessage = currentUserTypedMessage;
+                    
+                    currentUserTypedMessage = autoSprintf( "%s %c ", 
+                                                           oldMessage,
+                                                           28 );
+                    delete [] oldMessage;
+                    }
+                }
+            }
+        }    
+    
+    
+
+    if( !firstDrawFrameCalled ) {
+        
+        // do final init step... stuff that shouldn't be done until
+        // we have control of screen
+        
+        char *moveKeyMapping = 
+            SettingsManager::getStringSetting( "upLeftDownRightKeys" );
+    
+        if( moveKeyMapping != NULL ) {
+            char *temp = stringToLowerCase( moveKeyMapping );
+            delete [] moveKeyMapping;
+            moveKeyMapping = temp;
+        
+            if( strlen( moveKeyMapping ) == 4 &&
+                strcmp( moveKeyMapping, "wasd" ) != 0 ) {
+                // different assignment
+
+                upKey = moveKeyMapping[0];
+                leftKey = moveKeyMapping[1];
+                downKey = moveKeyMapping[2];
+                rightKey = moveKeyMapping[3];
+                }
+            delete [] moveKeyMapping;
+            }
+
+
+        firstDrawFrameCalled = true;
+        }
+
+    if( wasPaused ) {
+        //if( currentGamePage != NULL ) {
+        //    currentGamePage->base_makeActive( false );
+        //    }
+
+        // fade music in
+        //if( ! musicOff ) {
+        //    setMusicLoudness( 1.0 );
+        //    }
+        wasPaused = false;
+        }
+
+
+
+    // updates here
+    
+
+
+    // now draw stuff AFTER all updates
+    drawFrameNoUpdate( true );
+
+
+
+    // draw tail end of pause screen, if it is still visible
+    if( pauseScreenFade > 0 ) {
+        drawPauseScreen();
+        }
+    }
+
+
+
+void drawFrameNoUpdate( char inUpdate ) {
+
+    //if( currentGamePage != NULL ) {
+    //    currentGamePage->base_draw( lastScreenViewCenter, viewWidth );
+    //    }
+
+    }
+
+
+
+// store mouse data for use as unguessable randomizing data
+// for key generation, etc.
+#define MOUSE_DATA_BUFFER_SIZE 20
+int mouseDataBufferSize = MOUSE_DATA_BUFFER_SIZE;
+int nextMouseDataIndex = 0;
+// ensure that stationary mouse data (same value over and over)
+// doesn't overwrite data from actual motion
+float lastBufferedMouseValue = 0;
+float mouseDataBuffer[ MOUSE_DATA_BUFFER_SIZE ];
+
+
+
+void pointerMove( float inX, float inY ) {
+
+    // save all mouse movement data for key generation
+    float bufferValue = inX + inY;
+    // ignore mouse positions that are the same as the last one
+    // only save data when mouse actually moving
+    if( bufferValue != lastBufferedMouseValue ) {
+        
+        mouseDataBuffer[ nextMouseDataIndex ] = bufferValue;
+        lastBufferedMouseValue = bufferValue;
+        
+        nextMouseDataIndex ++;
+        if( nextMouseDataIndex >= mouseDataBufferSize ) {
+            nextMouseDataIndex = 0;
+            }
+        }
+    
+
+    if( isPaused() ) {
+        return;
+        }
+    
+    }
+
+
+
+void pointerDown( float inX, float inY ) {
+    if( isPaused() ) {
+        return;
+        }
+    }
+
+
+
+void pointerDrag( float inX, float inY ) {
+    if( isPaused() ) {
+        return;
+        }
+    }
+
+
+
+void pointerUp( float inX, float inY ) {
+    if( isPaused() ) {
+        return;
+        }
+    }
+
+
+
+
+
+
+
+void keyDown( unsigned char inASCII ) {
+
+    // taking screen shot is ALWAYS possible
+    if( inASCII == '=' ) {    
+        saveScreenShot( "screen" );
+        }
+    
+
+    
+    if( isPaused() ) {
+        // block general keyboard control during pause
+
+
+        switch( inASCII ) {
+            case 13:  // enter
+                // unpause
+                pauseGame();
+                break;
+            }
+        
+        
+        if( inASCII == 127 || inASCII == 8 ) {
+            // subtract from it
+
+            deleteCharFromUserTypedMessage();
+
+            holdDeleteKeySteps = 0;
+            // start with long delay until first repeat
+            stepsBetweenDeleteRepeat = (int)( 30 / frameRateFactor );
+            }
+        else if( inASCII >= 32 ) {
+            // add to it
+            if( currentUserTypedMessage != NULL ) {
+                
+                char *oldMessage = currentUserTypedMessage;
+
+                currentUserTypedMessage = autoSprintf( "%s%c", 
+                                                       oldMessage, inASCII );
+                delete [] oldMessage;
+                }
+            else {
+                currentUserTypedMessage = autoSprintf( "%c", inASCII );
+                }
+            }
+        
+        return;
+        }
+    
+
+    
+    switch( inASCII ) {
+        case 'm':
+        case 'M': {
+#ifdef USE_MALLINFO
+            struct mallinfo meminfo = mallinfo();
+            printf( "Mem alloc: %d\n",
+                    meminfo.uordblks / 1024 );
+#endif
+            }
+            break;
+        }
+    }
+
+
+
+void keyUp( unsigned char inASCII ) {
+    if( inASCII == 127 || inASCII == 8 ) {
+        // delete no longer held
+        // even if pause screen no longer up, pay attention to this
+        holdDeleteKeySteps = -1;
+        }
+
+    if( ! isPaused() ) {
+
+        
+        }
+
+    }
+
+
+
+
+
+
+
+void specialKeyDown( int inKey ) {
+    if( isPaused() ) {
+        return;
+        }
+    
+	}
+
+
+
+void specialKeyUp( int inKey ) {
+    if( isPaused() ) {
+        return;
+        }
+    
+	} 
+
+
+
+
+char getUsesSound() {
+    
+    return ! musicOff;
+    }
+
+
+
+
+
+
+
+
+
+void drawString( const char *inString, char inForceCenter ) {
+    
+    setDrawColor( 1, 1, 1, 0.75 );
+
+    doublePair messagePos = lastScreenViewCenter;
+
+    TextAlignment align = alignCenter;
+    
+    if( initDone && !inForceCenter ) {
+        // transparent message
+        setDrawColor( 1, 1, 1, 0.75 );
+
+        // stick messages in corner
+        messagePos.x -= viewWidth / 2;
+        
+        messagePos.x +=  20;
+    
+
+    
+        messagePos.y += (viewWidth * viewHeightFraction) /  2;
+    
+        messagePos.y -= 32;
+
+        align = alignLeft;
+        }
+    else {
+        // fully opaque message
+        setDrawColor( 1, 1, 1, 1 );
+
+        // leave centered
+        }
+    
+
+    int numLines;
+    
+    char **lines = split( inString, "\n", &numLines );
+    
+    for( int i=0; i<numLines; i++ ) {
+        
+
+        mainFont->drawString( lines[i], messagePos, align );
+        messagePos.y -= 32;
+        
+        delete [] lines[i];
+        }
+    delete [] lines;
+    }
+
+
+
+
+
+// called by platform to get more samples
+void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
+    // for now, do nothing (no sound)
+    }
+
+
+
+
