@@ -1,0 +1,68 @@
+
+# Can change flags here
+# See minorGems/game/platforms/SDL/Makefile.common for flags
+DEBUG_FLAG = ${DEBUG_ON_FLAG}
+
+PROFILE_FLAG = ${PROFILE_OFF_FLAG}
+
+LINK_AGAINST_LIBJPEG = no
+LINK_AGAINST_LIBPNG = yes
+
+APP_NAME = EditOneLife
+ROOT_PATH = ../..
+
+
+
+LAYER_SOURCE = \
+editor.cpp
+
+
+
+
+GAME_GRAPHICS = \
+graphics/font_32_64.tga
+
+
+NEEDED_MINOR_GEMS_OBJECTS = \
+ ${SCREEN_GL_SDL_O} \
+ ${SINGLE_TEXTURE_GL_O} \
+ ${TYPE_IO_O} \
+ ${STRING_UTILS_O} \
+ ${STRING_BUFFER_OUTPUT_STREAM_O} \
+ ${PATH_O} \
+ ${TIME_O} \
+ ${THREAD_O} \
+ ${MUTEX_LOCK_O} \
+ ${TRANSLATION_MANAGER_O} \
+ ${SOCKET_O} \
+ ${HOST_ADDRESS_O} \
+ ${SOCKET_CLIENT_O} \
+ ${SOCKET_SERVER_O} \
+ ${NETWORK_FUNCTION_LOCKS_O} \
+ ${LOOKUP_THREAD_O} \
+ ${WEB_REQUEST_O} \
+ ${URL_UTILS_O} \
+ ${SETTINGS_MANAGER_O} \
+ ${FINISHED_SIGNAL_THREAD_O} \
+ ${SHA1_O} \
+ ${ENCODING_UTILS_O} \
+ ${DIRECTORY_O} \
+ ${LOG_O} \
+ ${APP_LOG_O} \
+ ${FILE_LOG_O} \
+ ${PRINT_LOG_O} \
+ ${PRINT_UTILS_O} \
+ ${GAME_SDL_O} \
+ ${GAME_GRAPHICS_GL_O} \
+ ${SPRITE_GL_O} \
+ ${DOUBLE_PAIR_O} \
+ ${FONT_O} \
+ ${DRAW_UTILS_O} \
+ ${DEMO_CODE_CHECKER_O} \
+ ${AIFF_O} \
+ ${SOUND_SAMPLES_O} \
+ ${REVERB_SOUND_FILTER_O} \
+ ${COEFFICIENT_FILTERS_O} \
+ ${CURVE_25519_O} \
+ ${CRYPTO_RANDOM_O} \
+ ${DIFF_BUNDLE_CLIENT_O} \
