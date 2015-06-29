@@ -51,6 +51,14 @@ CustomRandomSource randSource( 34957197 );
 
 
 
+#include "EditorImportPage.h"
+
+
+
+
+EditorImportPage *importPage;
+
+GamePage *currentGamePage = NULL;
 
 
 
@@ -65,7 +73,7 @@ doublePair lastScreenViewCenter = {0, 0 };
 
 
 // world with of one view
-double viewWidth = 666;
+double viewWidth = 800;
 
 // fraction of viewWidth visible vertically (aspect ratio)
 double viewHeightFraction;
@@ -111,8 +119,8 @@ char doesOverrideGameImageSize() {
 
 
 void getGameImageSize( int *outWidth, int *outHeight ) {
-    *outWidth = 666;
-    *outHeight = 666;
+    *outWidth = 800;
+    *outHeight = 600;
     }
 
 
@@ -245,8 +253,8 @@ void initDrawString( int inWidth, int inHeight ) {
 
     viewHeightFraction = inHeight / (double)inWidth;
 
-    // square window for this game
-    viewWidth = 666 * 1.0 / viewHeightFraction;
+    // rect window
+    viewWidth = inWidth;
     
     
     setViewSize( viewWidth );
@@ -365,6 +373,15 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     setSoundLoudness( musicLoudness );
     setSoundPlaying( false );
 
+
+
+
+    importPage = new EditorImportPage;
+    
+    currentGamePage = importPage;
+    currentGamePage->base_makeActive( true );
+
+
     initDone = true;
     }
 
@@ -395,6 +412,9 @@ void freeFrameDrawer() {
     if( serverSocket != -1 ) {
         closeSocket( serverSocket );
         }
+
+
+    delete importPage;
     }
 
 
@@ -696,9 +716,9 @@ void drawFrame( char inUpdate ) {
 
             // keep stepping current page, but don't do any other processing
             // (and still block user events from reaching current page)
-            //if( currentGamePage != NULL ) {
-            //    currentGamePage->base_step();
-            //    }
+            if( currentGamePage != NULL ) {
+                currentGamePage->base_step();
+                }
             }
 
         drawFrameNoUpdate( false );
@@ -706,9 +726,9 @@ void drawFrame( char inUpdate ) {
         drawPauseScreen();
         
         if( !wasPaused ) {
-            //if( currentGamePage != NULL ) {
-            //    currentGamePage->base_makeNotActive();
-            //    }
+            if( currentGamePage != NULL ) {
+                currentGamePage->base_makeNotActive();
+                }
 
             // fade out music during pause
             //setMusicLoudness( 0 );
@@ -819,9 +839,9 @@ void drawFrame( char inUpdate ) {
         }
 
     if( wasPaused ) {
-        //if( currentGamePage != NULL ) {
-        //    currentGamePage->base_makeActive( false );
-        //    }
+        if( currentGamePage != NULL ) {
+            currentGamePage->base_makeActive( false );
+            }
 
         // fade music in
         //if( ! musicOff ) {
@@ -833,6 +853,10 @@ void drawFrame( char inUpdate ) {
 
 
     // updates here
+    
+    if( currentGamePage != NULL ) {
+        currentGamePage->base_step();    
+        }
     
     
 
@@ -850,6 +874,9 @@ void drawFrame( char inUpdate ) {
 
 
 void drawFrameNoUpdate( char inUpdate ) {
+    if( currentGamePage != NULL ) {
+        currentGamePage->base_draw( lastScreenViewCenter, viewWidth );
+        }
     }
 
 
@@ -888,6 +915,9 @@ void pointerMove( float inX, float inY ) {
         return;
         }
     
+    if( currentGamePage != NULL ) {
+        currentGamePage->base_pointerMove( inX, inY );
+        }
     }
 
 
@@ -897,7 +927,9 @@ void pointerDown( float inX, float inY ) {
         return;
         }
 
-    
+    if( currentGamePage != NULL ) {
+        currentGamePage->base_pointerDown( inX, inY );
+        }
     }
 
 
@@ -906,6 +938,10 @@ void pointerDrag( float inX, float inY ) {
     if( isPaused() ) {
         return;
         }
+
+    if( currentGamePage != NULL ) {
+        currentGamePage->base_pointerDrag( inX, inY );
+        }
     }
 
 
@@ -913,6 +949,10 @@ void pointerDrag( float inX, float inY ) {
 void pointerUp( float inX, float inY ) {
     if( isPaused() ) {
         return;
+        }
+
+    if( currentGamePage != NULL ) {
+        currentGamePage->base_pointerUp( inX, inY );
         }
     }
 
@@ -970,7 +1010,10 @@ void keyDown( unsigned char inASCII ) {
         return;
         }
     
-
+    
+    if( currentGamePage != NULL ) {
+        currentGamePage->base_keyDown( inASCII );
+        }
     
     switch( inASCII ) {
         case 'm':
@@ -996,7 +1039,9 @@ void keyUp( unsigned char inASCII ) {
 
     if( ! isPaused() ) {
 
-        
+        if( currentGamePage != NULL ) {
+            currentGamePage->base_keyUp( inASCII );
+            }
         }
 
     }
@@ -1011,7 +1056,10 @@ void specialKeyDown( int inKey ) {
     if( isPaused() ) {
         return;
         }
-    
+
+    if( currentGamePage != NULL ) {
+        currentGamePage->base_specialKeyDown( inKey );
+        }
 	}
 
 
@@ -1021,6 +1069,9 @@ void specialKeyUp( int inKey ) {
         return;
         }
     
+    if( currentGamePage != NULL ) {
+        currentGamePage->base_specialKeyUp( inKey );
+        }
 	} 
 
 

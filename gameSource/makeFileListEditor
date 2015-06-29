@@ -14,13 +14,28 @@ ROOT_PATH = ../..
 
 
 LAYER_SOURCE = \
-editor.cpp
+editor.cpp \
+PageComponent.cpp \
+GamePage.cpp \
+TextField.cpp \
+Button.cpp \
+TextButton.cpp \
+whiteSprites.cpp \
+serialWebRequests.cpp \
+message.cpp \
+accountHmac.cpp \
+EditorImportPage.cpp \
 
 
 
 
 GAME_GRAPHICS = \
-graphics/font_32_64.tga
+graphics/font_32_64.tga \
+graphics/loading.tga \
+graphics/loading2.tga \
+graphics/loading3.tga \
+graphics/responseWarning.tga \
+
 
 
 NEEDED_MINOR_GEMS_OBJECTS = \
