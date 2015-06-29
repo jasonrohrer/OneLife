@@ -289,7 +289,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
     
     // square window for this game
-    viewWidth = 666 * 1.0 / viewHeightFraction;
+    viewWidth = inWidth;
     
     
     setViewSize( viewWidth );
