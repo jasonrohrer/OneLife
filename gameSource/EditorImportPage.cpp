@@ -241,6 +241,71 @@ void EditorImportPage::pointerUp( float inX, float inY ) {
 
 
 
+#include "minorGems/graphics/filters/FastBlurFilter.h"
+
+
+
+static void addShadow( Image *inImage ) {
+    
+    int w = inImage->getWidth();
+    int h = inImage->getHeight();
+    
+    int numPixels = w * h;
+
+    Image shadowImage( w, h, 1, true );
+    
+    shadowImage.pasteChannel( inImage->getChannel( 3 ), 0 );
+    
+    // now we have black, clear shadow
+    FastBlurFilter filter;
+    
+    for( int i=0; i<20; i++ ) {
+        shadowImage.filter( &filter, 0 );
+        }
+    
+    double *shadowAlpha = shadowImage.getChannel( 0 );
+    double *imageAlpha = inImage->getChannel( 3 );
+
+    // fade shadow out near bottom visible edge of sprite
+
+    char visibleRowSeen = false;
+    int numVisibleRows = 0;
+    for( int y = h-1; y>=0; y-- ) {
+        
+        if( !visibleRowSeen ) {
+            // check for visible pixels in this row
+            for( int x=0; x<w; x++ ) {
+                if( imageAlpha[y*w+x] > 0 ) {
+                    visibleRowSeen = true;
+                    }
+                // clear shadow below visible pixels
+                shadowAlpha[y*w+x] = 0;
+                }
+            }
+        else {
+            double scaleFactor = numVisibleRows / 15.0;
+            if( scaleFactor < 1 ) {
+                
+                for( int x=0; x<w; x++ ) {
+                    shadowAlpha[y*w+x] *= scaleFactor;
+                    }
+                }
+            numVisibleRows++;
+            }
+        
+        }
+    
+    
+    for( int i=0; i<numPixels; i++ ) {
+        imageAlpha[i] += shadowAlpha[i];
+        if( imageAlpha[i] > 1.0 ) {
+            imageAlpha[i] = 1.0;
+            }
+        }
+    
+    }
+
+
 
 
 void EditorImportPage::processSelection() {
@@ -366,7 +431,7 @@ void EditorImportPage::processSelection() {
             
             // however, make sure paper areas that aren't black at all
             // are totally transparent
-            if( r[i] > 0.92 ) {
+            if( r[i] > 0.88 ) {
                 a[i] = 0;
                 }
             
@@ -386,6 +451,8 @@ void EditorImportPage::processSelection() {
     
 
     mProcessedSelection = expandToPowersOfTwo( cutImage );
+    
+    addShadow( mProcessedSelection );
     
     delete cutImage;
 
