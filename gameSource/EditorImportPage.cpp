@@ -513,7 +513,61 @@ void EditorImportPage::processSelection() {
         
 
         }
+
+
+    double paperThreshold = 0.88;
     
+    // first, clean up isolated noise points in paper
+    
+    for( int i=0; i<numPixels; i++ ) {
+        if( whiteMap[i] == 1 ) {
+            
+            if( r[i] <= paperThreshold ) {
+                // a point in white areas that we can't count as paper 
+                
+                int x = i % w;
+                int y = i / w;
+
+                // check if all neighbors over threshold
+                // if so, this is an isolated noise pixel
+                int nDX[4] = { 0, 1, 0, -1 };
+                int nDY[4] = { 1, 0, -1, 0 };
+            
+
+                char foundNonPaperNeighbor = false;
+                
+                for( int n=0; n<4; n++ ) {
+                    
+                    int nX = x + nDX[n];
+                    int nY = y + nDY[n];
+                
+                
+                    if( nX >= 0 && nX < w
+                        &&
+                        nY >= 0 && nY < h ) {
+                        
+                        int nI = nY * w + nX;
+                        
+                        if( whiteMap[nI] != 1 ||
+                            r[nI] <= paperThreshold ) {
+                            
+                            foundNonPaperNeighbor = true;
+                            break;
+                            }
+                        }
+                    }
+
+                if( ! foundNonPaperNeighbor ) {
+                    // isolated non-paper point in middle of paper
+                    // noise
+                    
+                    // turn it full white so we make it transparent below
+                    r[i] = 1;
+                    printf( "Found noise point at %d, %d\n", x, y );
+                    }
+                }
+            }
+        }
     
     for( int i=0; i<numPixels; i++ ) {
         if( whiteMap[i] == 1 ) {
@@ -526,9 +580,9 @@ void EditorImportPage::processSelection() {
             
             // however, make sure paper areas that aren't black at all
             // are totally transparent
-            if( r[i] > 0.88 ) {
+            if( r[i] > paperThreshold ) {
                 a[i] = 0;
-                }
+                }            
             
 
             // and make it all black out beyond outer line
@@ -538,18 +592,93 @@ void EditorImportPage::processSelection() {
             g[i] = 0;
             b[i] = 0;
             }
-        
         }
    
     delete [] doneMap;
     delete [] whiteMap;
-    
 
-    mProcessedSelection = expandToPowersOfTwo( cutImage );
+
+    // now trim down image just around non-transparent part so
+    // it is properly centered
+
+    int firstX = w;
+    int lastX = -1;
     
-    addShadow( mProcessedSelection );
+    int firstY = h;
+    int lastY = -1;
+    
+    for( int y=0; y<h; y++ ) {
+        for( int x=0; x<w; x++ ) {
+            int i = y * w + x;
+            
+            if( a[i] > 0.0 ) {
+                //printf( "a at (%d,%d) = %f\n", x, y, a[i] );
+                
+                if( x < firstX ) {
+                    firstX = x;
+                    }
+                if( x > lastX ) {
+                    lastX = x;
+                    }
+                if( y < firstY ) {
+                    firstY = y;
+                    }
+                if( y > lastY ) {
+                    lastY = y;
+                    }
+
+                // for testing, highlight main area of image
+                //a[i] = 1;
+                //r[i] = 1;
+                }
+            }
+        }
+    
+    Image *trimmedImage = 
+        cutImage->getSubImage( firstX, firstY, 
+                               1 + lastX - firstX, 1 + lastY - firstY );
     
     delete cutImage;
+    
+    
+    // expand to make it big enough for shadow
+    w = trimmedImage->getWidth();
+    h = trimmedImage->getHeight();
+    
+    Image *shadowImage = trimmedImage->expandImage( w + 20 + 20, h + 20 + 20 );
+    
+    delete trimmedImage;
+
+
+
+    addShadow( shadowImage );    
+    
+    
+    /*
+      // for testing to check for non-transparent areas
+
+    w = shadowImage->getWidth();
+    h = shadowImage->getHeight();
+    
+    numPixels = w * h;
+    r = shadowImage->getChannel( 0 );
+    a = shadowImage->getChannel( 3 );
+    for( int i=0; i<numPixels; i++ ) {
+        if( a[i] > 0.002 ) {
+            r[i] = 1;
+            a[i] = 1;
+            }
+        }
+    */
+
+
+    mProcessedSelection = expandToPowersOfTwo( shadowImage );
+    delete shadowImage;
+
+    
+
+
+
 
     if( mProcessedSelectionSprite != NULL ) {
         freeSprite( mProcessedSelectionSprite );
