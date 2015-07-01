@@ -54,6 +54,8 @@ CustomRandomSource randSource( 34957197 );
 #include "EditorImportPage.h"
 
 
+#include "spriteBank.h"
+
 
 
 EditorImportPage *importPage;
@@ -374,7 +376,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     setSoundPlaying( false );
 
 
-
+    initSpriteBank();
+    
 
     importPage = new EditorImportPage;
     
@@ -415,6 +418,8 @@ void freeFrameDrawer() {
 
 
     delete importPage;
+
+    freeSpriteBank();
     }
 
 

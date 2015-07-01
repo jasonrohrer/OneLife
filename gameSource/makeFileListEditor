@@ -25,7 +25,7 @@ serialWebRequests.cpp \
 message.cpp \
 accountHmac.cpp \
 EditorImportPage.cpp \
-
+spriteBank.cpp \
 
 
 
@@ -81,3 +81,4 @@ NEEDED_MINOR_GEMS_OBJECTS = \
  ${CURVE_25519_O} \
  ${CRYPTO_RANDOM_O} \
  ${DIFF_BUNDLE_CLIENT_O} \
+ ${STRING_TREE_O} \
