@@ -9,6 +9,7 @@
 
 
 // fires action performed when ENTER hit inside field
+// (can be toggled to fire on every text change)
 class TextField : public PageComponent, public ActionListenerList {
         
     public:
@@ -49,6 +50,10 @@ class TextField : public PageComponent, public ActionListenerList {
         double getRightEdgeX();
         
 
+        // defaults to false
+        void setFireOnAnyTextChange( char inFireOnAny );
+
+        
         virtual void setActive( char inActive );
         virtual char isActive();
         
@@ -92,7 +97,7 @@ class TextField : public PageComponent, public ActionListenerList {
         
         int mMaxLength;
         
-
+        char mFireOnAnyChange;
         char mForceCaps;
 
         char *mLabelText;

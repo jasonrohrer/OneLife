@@ -1,3 +1,5 @@
+#ifndef SPRITE_BANK_INCLUDED
+#define SPRITE_BANK_INCLUDED
 
 
 #include "minorGems/game/gameGraphics.h"
@@ -32,3 +34,6 @@ SpriteRecord **searchSprites( const char *inSearch,
 
 
 void addSprite( int inID, const char *inTag, SpriteHandle inSprite );
+
+
+#endif

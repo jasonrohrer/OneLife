@@ -30,6 +30,7 @@ TextField::TextField( Font *inDisplayFont,
           mActive( true ), mFont( inDisplayFont ), 
           mCharsWide( inCharsWide ),
           mMaxLength( -1 ),
+          mFireOnAnyChange( false ),
           mForceCaps( inForceCaps ),
           mLabelText( NULL ),
           mAllowedChars( NULL ), mForbiddenChars( NULL ),
@@ -610,6 +611,13 @@ double TextField::getRightEdgeX() {
 
 
 
+void TextField::setFireOnAnyTextChange( char inFireOnAny ) {
+    mFireOnAnyChange = inFireOnAny;
+    }
+
+
+
+
 void TextField::keyDown( unsigned char inASCII ) {
     if( !mFocused ) {
         return;
@@ -657,6 +665,10 @@ void TextField::keyDown( unsigned char inASCII ) {
         mFirstDeleteRepeatDone = false;
 
         clearArrowRepeat();
+
+        if( mFireOnAnyChange ) {
+            fireActionPerformed( this );
+            }
         }    
     }
 
@@ -688,6 +700,10 @@ void TextField::deleteHit() {
         delete [] oldText;
 
         mCursorPosition--;
+
+        if( mFireOnAnyChange ) {
+            fireActionPerformed( this );
+            }
         }
     }
 

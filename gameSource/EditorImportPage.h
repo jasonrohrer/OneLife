@@ -14,6 +14,7 @@
 #include "TextButton.h"
 #include "TextField.h"
 
+#include "SpritePicker.h"
 
 
 
@@ -62,6 +63,9 @@ class EditorImportPage : public GamePage, public ActionListener {
         TextField mSpriteTagField;
         
         TextButton mSaveSpriteButton;
+
+        SpritePicker mSpritePicker;
+        
     };
 
 

@@ -29,14 +29,18 @@ EditorImportPage::EditorImportPage()
                            0,  -260, 6,
                            false,
                            "Sprite Tag", NULL, " " ),
-          mSaveSpriteButton( mainFont, 210, -260, "Save" ) {
+          mSaveSpriteButton( mainFont, 210, -260, "Save" ),
+          mSpritePicker( -310, 100 ) {
 
     addComponent( &mImportButton );
     addComponent( &mSpriteTagField );
     addComponent( &mSaveSpriteButton );
+    addComponent( &mSpritePicker );
 
     mImportButton.addActionListener( this );
     mSaveSpriteButton.addActionListener( this );
+
+    mSaveSpriteButton.setVisible( false );
     }
 
 
@@ -197,6 +201,15 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
                     delete [] fileName;
                     delete spriteFile;
                     
+                    addSprite( nextSpriteNumber, tag, 
+                               mProcessedSelectionSprite );
+                    
+                    mSpritePicker.redoSearch();
+                    
+                    // don't let it get freed now
+                    mProcessedSelectionSprite = NULL;
+                    mSaveSpriteButton.setVisible( false );
+
                     nextSpriteNumber++;
                     }
 
@@ -543,4 +556,5 @@ void EditorImportPage::processSelection() {
         mProcessedSelectionSprite = NULL;
         }
     mProcessedSelectionSprite = fillSprite( mProcessedSelection, false );
+    mSaveSpriteButton.setVisible( true );
     }

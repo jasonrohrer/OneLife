@@ -211,6 +211,9 @@ void addSprite( int inID, const char *inTag, SpriteHandle inSprite ) {
         
         SpriteRecord **newMap = new SpriteRecord*[newMapSize];
         
+        for( int i=0; i<newMapSize; i++ ) {
+            newMap[i] = NULL;
+            }
 
         memcpy( newMap, idMap, sizeof(SpriteRecord*) * mapSize );
 
