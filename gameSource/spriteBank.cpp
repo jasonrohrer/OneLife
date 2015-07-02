@@ -203,8 +203,8 @@ SpriteRecord **searchSprites( const char *inSearch,
 
 
 
-void addSprite( const char *inTag, SpriteHandle inSprite,
-                Image *inSourceImage ) {
+int addSprite( const char *inTag, SpriteHandle inSprite,
+               Image *inSourceImage ) {
 
     
     int newID = -1;
@@ -279,7 +279,7 @@ void addSprite( const char *inTag, SpriteHandle inSprite,
     
     if( newID == -1 ) {
         // failed to save it to disk
-        return;
+        return -1;
         }
 
     
@@ -318,6 +318,7 @@ void addSprite( const char *inTag, SpriteHandle inSprite,
     
     tree.insert( inTag, idMap[newID] );
 
+    return newID;
     }
 
 

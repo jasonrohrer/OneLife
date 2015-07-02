@@ -33,8 +33,9 @@ SpriteRecord **searchSprites( const char *inSearch,
                               int *outNumResults, int *outNumRemaining );
 
 
-void addSprite( const char *inTag, SpriteHandle inSprite, 
-                Image *inSourceImage );
+// returns new ID, or -1 if adding failed
+int addSprite( const char *inTag, SpriteHandle inSprite, 
+               Image *inSourceImage );
 
 
 #endif
