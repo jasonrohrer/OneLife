@@ -21,8 +21,8 @@ class SpritePicker : public PageComponent, ActionListener {
         ~SpritePicker();
 
 
-        // null if none picked
-        SpriteRecord *getSelectedSprite();
+        // -1 if none picked
+        int getSelectedSprite();
         
         
         void redoSearch();
@@ -47,6 +47,7 @@ class SpritePicker : public PageComponent, ActionListener {
         
         TextField mSearchField;
         
+        int mSelectionIndex;
 
     };
 

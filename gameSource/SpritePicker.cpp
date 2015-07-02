@@ -31,7 +31,8 @@ SpritePicker::SpritePicker( double inX, double inY )
           mSearchField( mainFont, 
                         0,  100, 4,
                         false,
-                        "", NULL, " " ) {
+                        "", NULL, " " ),
+          mSelectionIndex( -1 ) {
 
     addComponent( &mNextButton );
     addComponent( &mPrevButton );
@@ -76,6 +77,7 @@ void SpritePicker::redoSearch() {
     mNextButton.setVisible( numRemain > 0 );
     
     delete [] search;
+    mSelectionIndex = -1;
     }
 
 
@@ -105,9 +107,9 @@ void SpritePicker::actionPerformed( GUIComponent *inTarget ) {
 void SpritePicker::draw() {
     setDrawColor( 0.75, 0.75, 0.75, 1 );
     
-    doublePair bgPos = { 0, -80 };
+    doublePair bgPos = { 0, -85 };
     
-    drawRect( bgPos, 80, 155 );
+    drawRect( bgPos, 80, 160 );
     
 
 
@@ -116,6 +118,13 @@ void SpritePicker::draw() {
         
         
         for( int i=0; i<mNumResults; i++ ) {
+            if( i == mSelectionIndex ) {
+                setDrawColor( 1, 1, 1, 1 );
+                doublePair selPos = pos;
+                selPos.x = 0;
+                drawRect( selPos, 80, 32 );
+                }
+
             setDrawColor( 1, 1, 1, 1 );
             drawSprite( mResults[i]->sprite, pos );
             
@@ -135,6 +144,35 @@ void SpritePicker::draw() {
         
 
 void SpritePicker::pointerUp( float inX, float inY ) {
-    
+    if( inX > -80 && inX < 80 ) {
+        
+        inY -= 40;
+        
+        inY *= -1;
+        
+        inY += 32;
+        
+        mSelectionIndex = (int)( inY / 64 );
+        
+        if( mSelectionIndex >= PER_PAGE ) {
+            mSelectionIndex = -1;
+            }
+        if( mSelectionIndex < 0 ) {
+            mSelectionIndex = -1;
+            }
+        }
     }
 
+
+
+int SpritePicker::getSelectedSprite() {
+    if( mSelectionIndex == -1 ) {
+        return -1;
+        }
+    
+    if( mSelectionIndex >= mNumResults ) {
+        return -1;
+        }
+    
+    return mResults[mSelectionIndex]->id;
+    }
