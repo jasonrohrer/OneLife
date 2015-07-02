@@ -48,4 +48,9 @@ int addObject( const char *inDescription,
 
 
 
+void drawObject( ObjectRecord *inObject, doublePair inPos );
+
+
+
+
 #endif

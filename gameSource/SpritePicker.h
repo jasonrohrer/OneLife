@@ -1,3 +1,5 @@
+#ifndef SPRITE_PICKER_INCLUDED
+#define SPRITE_PICKER_INCLUDED
 
 
 #include "PageComponent.h"
@@ -9,10 +11,13 @@
 
 #include "minorGems/game/Font.h"
 #include "minorGems/ui/event/ActionListener.h"
+#include "minorGems/ui/event/ActionListenerList.h"
 
 
 
-class SpritePicker : public PageComponent, ActionListener {
+// fires action performed when selected object changes
+class SpritePicker : public PageComponent, ActionListener, 
+                     public ActionListenerList  {
     public:
         
         // centered on inX, inY
@@ -23,6 +28,8 @@ class SpritePicker : public PageComponent, ActionListener {
 
         // -1 if none picked
         int getSelectedSprite();
+
+        void unselectSprite();
         
         
         void redoSearch();
@@ -51,3 +58,6 @@ class SpritePicker : public PageComponent, ActionListener {
 
     };
 
+
+
+#endif

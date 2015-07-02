@@ -77,7 +77,13 @@ void SpritePicker::redoSearch() {
     mNextButton.setVisible( numRemain > 0 );
     
     delete [] search;
+
+    int oldSelection = mSelectionIndex;
     mSelectionIndex = -1;
+
+    if( oldSelection != mSelectionIndex ) {
+        fireActionPerformed( this );
+        }
     }
 
 
@@ -152,13 +158,21 @@ void SpritePicker::pointerUp( float inX, float inY ) {
         
         inY += 32;
         
+        int oldSelection = mSelectionIndex;
+        
+
         mSelectionIndex = (int)( inY / 64 );
         
-        if( mSelectionIndex >= PER_PAGE ) {
+        if( mSelectionIndex >= mNumResults ) {
             mSelectionIndex = -1;
             }
         if( mSelectionIndex < 0 ) {
             mSelectionIndex = -1;
+            }
+
+        
+        if( oldSelection != mSelectionIndex ) {
+            fireActionPerformed( this );
             }
         }
     }
@@ -170,9 +184,11 @@ int SpritePicker::getSelectedSprite() {
         return -1;
         }
     
-    if( mSelectionIndex >= mNumResults ) {
-        return -1;
-        }
-    
     return mResults[mSelectionIndex]->id;
+    }
+
+
+
+void SpritePicker::unselectSprite() {
+    mSelectionIndex = -1;
     }

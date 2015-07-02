@@ -11,6 +11,9 @@
 #include "minorGems/graphics/converters/TGAImageConverter.h"
 
 
+#include "spriteBank.h"
+
+
 
 static int mapSize;
 // maps IDs to records
@@ -350,4 +353,14 @@ int addObject( const char *inDescription,
     return newID;
     }
 
+
+
+
+void drawObject( ObjectRecord *inObject, doublePair inPos ) {
+    for( int i=0; i<inObject->numSprites; i++ ) {
+        doublePair pos = add( inObject->spritePos[i], inPos );
+        
+        drawSprite( getSprite( inObject->sprites[i] ), pos );
+        }    
+    }
 
