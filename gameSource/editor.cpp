@@ -52,6 +52,7 @@ CustomRandomSource randSource( 34957197 );
 
 
 #include "EditorImportPage.h"
+#include "EditorObjectPage.h"
 
 
 #include "spriteBank.h"
@@ -59,6 +60,7 @@ CustomRandomSource randSource( 34957197 );
 
 
 EditorImportPage *importPage;
+EditorObjectPage *objectPage;
 
 GamePage *currentGamePage = NULL;
 
@@ -382,6 +384,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
 
     importPage = new EditorImportPage;
+    objectPage = new EditorObjectPage;
     
     currentGamePage = importPage;
     currentGamePage->base_makeActive( true );
@@ -421,6 +424,7 @@ void freeFrameDrawer() {
 
 
     delete importPage;
+    delete objectPage;
 
     freeSpriteBank();
     }
@@ -863,7 +867,21 @@ void drawFrame( char inUpdate ) {
     // updates here
     
     if( currentGamePage != NULL ) {
-        currentGamePage->base_step();    
+        currentGamePage->base_step();
+
+
+        if( currentGamePage == importPage ) {
+            if( importPage->checkSignal( "objectEditor" ) ) {
+                currentGamePage = objectPage;
+                currentGamePage->base_makeActive( true );
+                }
+            }
+        else if( currentGamePage == objectPage ) {
+            if( objectPage->checkSignal( "importEditor" ) ) {
+                currentGamePage = importPage;
+                currentGamePage->base_makeActive( true );
+                }
+            }
         }
     
     

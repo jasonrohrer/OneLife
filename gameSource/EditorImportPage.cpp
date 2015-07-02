@@ -29,15 +29,18 @@ EditorImportPage::EditorImportPage()
                            false,
                            "Sprite Tag", NULL, " " ),
           mSaveSpriteButton( mainFont, 210, -260, "Save" ),
-          mSpritePicker( -310, 100 ) {
+          mSpritePicker( -310, 100 ),
+          mObjectEditorButton( mainFont, 0, 260, "Objects" ) {
 
     addComponent( &mImportButton );
     addComponent( &mSpriteTagField );
     addComponent( &mSaveSpriteButton );
     addComponent( &mSpritePicker );
+    addComponent( &mObjectEditorButton );
 
     mImportButton.addActionListener( this );
     mSaveSpriteButton.addActionListener( this );
+    mObjectEditorButton.addActionListener( this );
 
     mSaveSpriteButton.setVisible( false );
     }
@@ -163,7 +166,11 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
 
         delete [] tag;
         }
+    else if( inTarget == &mObjectEditorButton ) {
+        setSignal( "objectEditor" );
+        }
     
+
     }
 
 

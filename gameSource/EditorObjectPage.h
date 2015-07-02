@@ -1,5 +1,5 @@
-#ifndef EDITOR_IMPORT_PAGE_INCLUDED
-#define EDITOR_IMPORT_PAGE_INCLUDED
+#ifndef EDITOR_OBJECT_PAGE_INCLUDED
+#define EDITOR_OBJECT_PAGE_INCLUDED
 
 
 
@@ -14,15 +14,15 @@
 #include "TextButton.h"
 #include "TextField.h"
 
-#include "SpritePicker.h"
+//#include "SpritePicker.h"
 
 
 
-class EditorImportPage : public GamePage, public ActionListener {
+class EditorObjectPage : public GamePage, public ActionListener {
         
     public:
-        EditorImportPage();
-        ~EditorImportPage();
+        EditorObjectPage();
+        ~EditorObjectPage();
         
         virtual void actionPerformed( GUIComponent *inTarget );
         
@@ -40,35 +40,14 @@ class EditorImportPage : public GamePage, public ActionListener {
         virtual void pointerUp( float inX, float inY );
 
     protected:
+
+        TextField mDescriptionField;
         
+        TextButton mSaveObjectButton;
 
-        void processSelection();
+        //SpritePicker mSpritePicker;
         
-
-        TextButton mImportButton;
-
-        int mSheetW, mSheetH;
-
-        char mSelect;
-        doublePair mSelectStart;
-        doublePair mSelectEnd;
-        
-        Image *mImportedSheet;
-        SpriteHandle mImportedSheetSprite;
-        
-
-        Image *mProcessedSelection;
-        SpriteHandle mProcessedSelectionSprite;
-
-        TextField mSpriteTagField;
-        
-        TextButton mSaveSpriteButton;
-
-        SpritePicker mSpritePicker;
-        
-
-        TextButton mObjectEditorButton;
-        
+        TextButton mImportEditorButton;
     };
 
 

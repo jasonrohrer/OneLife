@@ -28,6 +28,7 @@ EditorImportPage.cpp \
 spriteBank.cpp \
 SpritePicker.cpp \
 objectBank.cpp \
+EditorObjectPage.cpp \
 
 
 
