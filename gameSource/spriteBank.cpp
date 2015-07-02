@@ -8,6 +8,8 @@
 
 #include "minorGems/io/file/File.h"
 
+#include "minorGems/graphics/converters/TGAImageConverter.h"
+
 
 
 static int mapSize;
@@ -201,11 +203,91 @@ SpriteRecord **searchSprites( const char *inSearch,
 
 
 
-void addSprite( int inID, const char *inTag, SpriteHandle inSprite ) {
-    if( inID >= mapSize ) {
+void addSprite( const char *inTag, SpriteHandle inSprite,
+                Image *inSourceImage ) {
+
+    
+    int newID = -1;
+
+
+    // add it to file structure
+    File spritesDir( NULL, "sprites" );
+            
+    if( !spritesDir.exists() ) {
+        spritesDir.makeDirectory();
+        }
+    
+    if( spritesDir.exists() && spritesDir.isDirectory() ) {
+                
+                
+        int nextSpriteNumber = 1;
+                
+        File *nextNumberFile = 
+            spritesDir.getChildFile( "nextSpriteNumber.txt" );
+                
+        if( nextNumberFile->exists() ) {
+                    
+            char *nextNumberString = 
+                nextNumberFile->readFileContents();
+
+            if( nextNumberString != NULL ) {
+                sscanf( nextNumberString, "%d", &nextSpriteNumber );
+                
+                delete [] nextNumberString;
+                }
+            }
+                
+                    
+        File *tagDir = spritesDir.getChildFile( inTag );
+        
+        if( !tagDir->exists() ) {
+            tagDir->makeDirectory();
+            }
+                
+        
+        if( tagDir->exists() && tagDir->isDirectory() ) {
+            
+            char *fileName = autoSprintf( "%d.tga", nextSpriteNumber );
+            
+            newID = nextSpriteNumber;
+
+            File *spriteFile = tagDir->getChildFile( fileName );
+            
+            TGAImageConverter tga;
+            
+            FileOutputStream stream( spriteFile );
+            
+            tga.formatImage( inSourceImage, &stream );
+                    
+            delete [] fileName;
+            delete spriteFile;
+
+            nextSpriteNumber++;
+            }
+
+                
+        char *nextNumberString = autoSprintf( "%d", nextSpriteNumber );
+        
+        nextNumberFile->writeToFile( nextNumberString );
+        
+        delete [] nextNumberString;
+                
+        
+        delete nextNumberFile;
+        delete tagDir;
+        }
+    
+    if( newID == -1 ) {
+        // failed to save it to disk
+        return;
+        }
+
+    
+    // now add it to live, in memory database
+    if( newID >= mapSize ) {
         // expand map
 
-        int newMapSize = inID + 1;
+        int newMapSize = newID + 1;
         
 
         
@@ -224,17 +306,18 @@ void addSprite( int inID, const char *inTag, SpriteHandle inSprite ) {
 
     SpriteRecord *r = new SpriteRecord;
     
-    r->id = inID;
+    r->id = newID;
     r->sprite = inSprite;
     r->tag = stringDuplicate( inTag );
     
 
     // delete old
-    freeSpriteRecord( inID );
+    freeSpriteRecord( newID );
     
-    idMap[inID] = r;
+    idMap[newID] = r;
     
-    tree.insert( inTag, idMap[inID] );
+    tree.insert( inTag, idMap[newID] );
+
     }
 
 

@@ -8,7 +8,6 @@
 #include "minorGems/util/SettingsManager.h"
 
 #include "minorGems/graphics/converters/PNGImageConverter.h"
-#include "minorGems/graphics/converters/TGAImageConverter.h"
 
 #include "minorGems/io/file/FileInputStream.h"
 
@@ -149,82 +148,19 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         char *tag = mSpriteTagField.getText();
         
         if( strcmp( tag, "" ) != 0 ) {
+                                
+            addSprite( tag, 
+                       mProcessedSelectionSprite,
+                       mProcessedSelection );
+
+            mSpritePicker.redoSearch();
             
-            
-            File spritesDir( NULL, "sprites" );
-            
-            if( !spritesDir.exists() ) {
-                spritesDir.makeDirectory();
-                }
-            
-            if( spritesDir.exists() && spritesDir.isDirectory() ) {
-                
-                
-                int nextSpriteNumber = 1;
-                
-                File *nextNumberFile = 
-                    spritesDir.getChildFile( "nextSpriteNumber.txt" );
-                
-                if( nextNumberFile->exists() ) {
-                    
-                    char *nextNumberString = 
-                        nextNumberFile->readFileContents();
-
-                    if( nextNumberString != NULL ) {
-                        sscanf( nextNumberString, "%d", &nextSpriteNumber );
-                    
-                        delete [] nextNumberString;
-                        }
-                    }
-                
-                    
-
-                File *tagDir = spritesDir.getChildFile( tag );
-
-                if( !tagDir->exists() ) {
-                    tagDir->makeDirectory();
-                    }
-                
-                
-                if( tagDir->exists() && tagDir->isDirectory() ) {
-                    
-                    char *fileName = autoSprintf( "%d.tga", nextSpriteNumber );
-
-                    File *spriteFile = tagDir->getChildFile( fileName );
-                    
-                    TGAImageConverter tga;
-                    
-                    FileOutputStream stream( spriteFile );
-                    
-                    tga.formatImage( mProcessedSelection, &stream );
-                    
-                    delete [] fileName;
-                    delete spriteFile;
-                    
-                    addSprite( nextSpriteNumber, tag, 
-                               mProcessedSelectionSprite );
-                    
-                    mSpritePicker.redoSearch();
-                    
-                    // don't let it get freed now
-                    mProcessedSelectionSprite = NULL;
-                    mSaveSpriteButton.setVisible( false );
-
-                    nextSpriteNumber++;
-                    }
-
-                
-                char *nextNumberString = autoSprintf( "%d", nextSpriteNumber );
-                
-                nextNumberFile->writeToFile( nextNumberString );
-
-                delete [] nextNumberString;
-                
-                
-                delete nextNumberFile;
-                delete tagDir;
-                }
+            // don't let it get freed now
+            mProcessedSelectionSprite = NULL;
+            mSaveSpriteButton.setVisible( false );
             }
+        
+
         delete [] tag;
         }
     
