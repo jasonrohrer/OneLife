@@ -426,21 +426,28 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
 
 
 void EditorObjectPage::specialKeyDown( int inKeyCode ) {
+    int offset = 1;
+    
+    if( isCommandKeyDown() ) {
+        offset = 5;
+        }
+    
+
     if( mPickedObjectLayer == -1 ) {
 
         for( int i=0; i<mCurrentObject.numSprites; i++ ) {
             switch( inKeyCode ) {
                 case MG_KEY_LEFT:
-                    mCurrentObject.spritePos[i].x -= 1;
+                    mCurrentObject.spritePos[i].x -= offset;
                     break;
                 case MG_KEY_RIGHT:
-                    mCurrentObject.spritePos[i].x += 1;
+                    mCurrentObject.spritePos[i].x += offset;
                     break;
                 case MG_KEY_DOWN:
-                    mCurrentObject.spritePos[i].y -= 1;
+                    mCurrentObject.spritePos[i].y -= offset;
                     break;
                 case MG_KEY_UP:
-                    mCurrentObject.spritePos[i].y += 1;
+                    mCurrentObject.spritePos[i].y += offset;
                     break;
                 }
             }
@@ -449,49 +456,64 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
     
     switch( inKeyCode ) {
         case MG_KEY_LEFT:
-            mCurrentObject.spritePos[mPickedObjectLayer].x -= 1;
+            mCurrentObject.spritePos[mPickedObjectLayer].x -= offset;
             break;
         case MG_KEY_RIGHT:
-            mCurrentObject.spritePos[mPickedObjectLayer].x += 1;
+            mCurrentObject.spritePos[mPickedObjectLayer].x += offset;
             break;
         case MG_KEY_DOWN:
-            mCurrentObject.spritePos[mPickedObjectLayer].y -= 1;
+            mCurrentObject.spritePos[mPickedObjectLayer].y -= offset;
             break;
         case MG_KEY_UP:
-            mCurrentObject.spritePos[mPickedObjectLayer].y += 1;
+            mCurrentObject.spritePos[mPickedObjectLayer].y += offset;
             break;
-        case MG_KEY_PAGE_UP:
-            if( mPickedObjectLayer < mCurrentObject.numSprites - 1 ) {
-                int tempSprite = mCurrentObject.sprites[mPickedObjectLayer+1];
-                doublePair tempPos = 
-                    mCurrentObject.spritePos[mPickedObjectLayer+1];
+        case MG_KEY_PAGE_UP:  {
+            int layerOffset = offset;
+            if( mPickedObjectLayer + offset >= mCurrentObject.numSprites ) {
+                layerOffset = 
+                    mCurrentObject.numSprites - 1 - mPickedObjectLayer;
+                }
+            if( mPickedObjectLayer < 
+                mCurrentObject.numSprites - layerOffset ) {
                 
-                mCurrentObject.sprites[mPickedObjectLayer+1]
+                int tempSprite = 
+                    mCurrentObject.sprites[mPickedObjectLayer + layerOffset];
+                doublePair tempPos = 
+                    mCurrentObject.spritePos[mPickedObjectLayer + layerOffset];
+                
+                mCurrentObject.sprites[mPickedObjectLayer + layerOffset]
                     = mCurrentObject.sprites[mPickedObjectLayer];
                 mCurrentObject.sprites[mPickedObjectLayer] = tempSprite;
                 
-                mCurrentObject.spritePos[mPickedObjectLayer+1]
+                mCurrentObject.spritePos[mPickedObjectLayer + layerOffset]
                     = mCurrentObject.spritePos[mPickedObjectLayer];
                 mCurrentObject.spritePos[mPickedObjectLayer] = tempPos;
                 
-                mPickedObjectLayer++;
+                mPickedObjectLayer += layerOffset;
                 }
+            }
             break;
         case MG_KEY_PAGE_DOWN:
-            if( mPickedObjectLayer > 0 ) {
-                int tempSprite = mCurrentObject.sprites[mPickedObjectLayer-1];
+            int layerOffset = offset;
+            if( mPickedObjectLayer - offset < 0 ) {
+                layerOffset = mPickedObjectLayer;
+                }
+
+            if( mPickedObjectLayer >= layerOffset ) {
+                int tempSprite = 
+                    mCurrentObject.sprites[mPickedObjectLayer - layerOffset];
                 doublePair tempPos = 
-                    mCurrentObject.spritePos[mPickedObjectLayer-1];
+                    mCurrentObject.spritePos[mPickedObjectLayer - layerOffset];
                 
-                mCurrentObject.sprites[mPickedObjectLayer-1]
+                mCurrentObject.sprites[mPickedObjectLayer - layerOffset]
                     = mCurrentObject.sprites[mPickedObjectLayer];
                 mCurrentObject.sprites[mPickedObjectLayer] = tempSprite;
                 
-                mCurrentObject.spritePos[mPickedObjectLayer-1]
+                mCurrentObject.spritePos[mPickedObjectLayer - layerOffset]
                     = mCurrentObject.spritePos[mPickedObjectLayer];
                 mCurrentObject.spritePos[mPickedObjectLayer] = tempPos;
                 
-                mPickedObjectLayer--;
+                mPickedObjectLayer -= layerOffset;
                 }
             break;
             
