@@ -21,7 +21,7 @@ EditorObjectPage::EditorObjectPage()
         : mDescriptionField( mainFont, 
                              0,  -260, 6,
                              false,
-                             "Description", NULL, " " ),
+                             "Description", NULL, NULL ),
           mSaveObjectButton( mainFont, 210, -260, "Save" ),
           mImportEditorButton( mainFont, 210, 260, "Sprites" ),
           mSpritePicker( -310, 100 ) {
@@ -30,6 +30,10 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mSaveObjectButton );
     addComponent( &mImportEditorButton );
     addComponent( &mSpritePicker );
+
+    mDescriptionField.setFireOnAnyTextChange( true );
+    mDescriptionField.addActionListener( this );
+    
 
     mSaveObjectButton.addActionListener( this );
     mImportEditorButton.addActionListener( this );
@@ -66,7 +70,25 @@ EditorObjectPage::~EditorObjectPage() {
 
 void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
     
-    if( inTarget == &mSaveObjectButton ) {
+    if( inTarget == &mDescriptionField ) {
+        char *text = mDescriptionField.getText();
+        
+
+        mSaveObjectButton.setVisible(
+            ( mCurrentObject.numSprites > 0 )
+            &&
+            ( strcmp( text, "" ) != 0 ) );
+        
+        delete [] text;
+        }
+    else if( inTarget == &mSaveObjectButton ) {
+        char *text = mDescriptionField.getText();
+
+        addObject( text,
+                   mCurrentObject.numSprites, mCurrentObject.sprites, 
+                   mCurrentObject.spritePos );
+        
+        delete [] text;
         }
     else if( inTarget == &mImportEditorButton ) {
         setSignal( "importEditor" );
@@ -192,6 +214,7 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
     
     
     if( mPickedObjectLayer != -1 ) {
+        mDescriptionField.unfocus();
         
         mPickedMouseOffset = 
             sub( pos, mCurrentObject.spritePos[mPickedObjectLayer] );
@@ -255,6 +278,11 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         mCurrentObject.numSprites = newNumSprites;
         
         mPickedObjectLayer = -1;
+        
+
+        if( newNumSprites == 0 ) {
+            mSaveObjectButton.setVisible( false );
+            }
         }
     
         

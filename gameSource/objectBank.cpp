@@ -42,9 +42,10 @@ void initObjectBank() {
                                         
                 char *txtFileName = childFiles[i]->getFileName();
                         
-                if( strstr( txtFileName, ".txt" ) != NULL ) {
+                if( strstr( txtFileName, ".txt" ) != NULL &&
+                    strcmp( txtFileName, "nextObjectNumber.txt" ) != 0 ) {
                             
-                    // a txt file!
+                    // an object txt file!
 
                     char *fullName = childFiles[i]->getFullFileName();
                             
@@ -250,7 +251,7 @@ int addObject( const char *inDescription,
             }
                 
             
-        char *fileName = autoSprintf( "%d.ttxt", nextObjectNumber );
+        char *fileName = autoSprintf( "%d.txt", nextObjectNumber );
             
         newID = nextObjectNumber;
 
