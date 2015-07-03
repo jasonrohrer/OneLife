@@ -115,6 +115,29 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 void EditorObjectPage::draw( doublePair inViewCenter, 
                      double inViewSize ) {
     
+
+
+    
+    int i = 0;
+    for( int y=0; y<5; y++ ) {
+        for( int x=0; x<5; x++ ) {
+            
+            doublePair pos = { y * 32 - 2.5 * 32, 
+                               x * 32 - 2.5 * 32};
+            
+            if( i%2 == 0 ) {
+                setDrawColor( 1, 1, 1, 1 );
+                }
+            else {
+                setDrawColor( 0.75, 0.75, 0.75, 1 );
+                }
+            
+            drawSquare( pos, 16 );
+            i++;
+            }
+        }
+
+
     setDrawColor( 1, 1, 1, 1 );
 
     doublePair pos = { 0, 0 };
