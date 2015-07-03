@@ -214,6 +214,41 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
         case MG_KEY_UP:
             mCurrentObject.spritePos[mPickedObjectLayer].y += 1;
             break;
+        case MG_KEY_PAGE_UP:
+            if( mPickedObjectLayer < mCurrentObject.numSprites - 1 ) {
+                int tempSprite = mCurrentObject.sprites[mPickedObjectLayer+1];
+                doublePair tempPos = 
+                    mCurrentObject.spritePos[mPickedObjectLayer+1];
+                
+                mCurrentObject.sprites[mPickedObjectLayer+1]
+                    = mCurrentObject.sprites[mPickedObjectLayer];
+                mCurrentObject.sprites[mPickedObjectLayer] = tempSprite;
+                
+                mCurrentObject.spritePos[mPickedObjectLayer+1]
+                    = mCurrentObject.spritePos[mPickedObjectLayer];
+                mCurrentObject.spritePos[mPickedObjectLayer] = tempPos;
+                
+                mPickedObjectLayer++;
+                }
+            break;
+        case MG_KEY_PAGE_DOWN:
+            if( mPickedObjectLayer > 0 ) {
+                int tempSprite = mCurrentObject.sprites[mPickedObjectLayer-1];
+                doublePair tempPos = 
+                    mCurrentObject.spritePos[mPickedObjectLayer-1];
+                
+                mCurrentObject.sprites[mPickedObjectLayer-1]
+                    = mCurrentObject.sprites[mPickedObjectLayer];
+                mCurrentObject.sprites[mPickedObjectLayer] = tempSprite;
+                
+                mCurrentObject.spritePos[mPickedObjectLayer-1]
+                    = mCurrentObject.spritePos[mPickedObjectLayer];
+                mCurrentObject.spritePos[mPickedObjectLayer] = tempPos;
+                
+                mPickedObjectLayer--;
+                }
+            break;
+            
         }
     
             
