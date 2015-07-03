@@ -195,3 +195,26 @@ void EditorObjectPage::pointerUp( float inX, float inY ) {
     }
 
 
+
+void EditorObjectPage::specialKeyDown( int inKeyCode ) {
+    if( mPickedObjectLayer == -1 ) {
+        return;
+        }
+    
+    switch( inKeyCode ) {
+        case MG_KEY_LEFT:
+            mCurrentObject.spritePos[mPickedObjectLayer].x -= 1;
+            break;
+        case MG_KEY_RIGHT:
+            mCurrentObject.spritePos[mPickedObjectLayer].x += 1;
+            break;
+        case MG_KEY_DOWN:
+            mCurrentObject.spritePos[mPickedObjectLayer].y -= 1;
+            break;
+        case MG_KEY_UP:
+            mCurrentObject.spritePos[mPickedObjectLayer].y += 1;
+            break;
+        }
+    
+            
+    }
