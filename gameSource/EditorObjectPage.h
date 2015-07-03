@@ -41,6 +41,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
         virtual void pointerDrag( float inX, float inY );
         virtual void pointerUp( float inX, float inY );
         
+        virtual void keyDown( unsigned char inASCII );
         virtual void specialKeyDown( int inKeyCode );
         
     protected:

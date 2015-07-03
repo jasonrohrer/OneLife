@@ -219,6 +219,49 @@ void EditorObjectPage::pointerUp( float inX, float inY ) {
 
 
 
+void EditorObjectPage::keyDown( unsigned char inASCII ) {
+    if( mPickedObjectLayer == -1 ) {
+        return;
+        }
+    
+    if( inASCII == 8 ) {
+        // backspace
+        
+        int newNumSprites = mCurrentObject.numSprites - 1;
+            
+        int *newSprites = new int[ newNumSprites ];
+        
+        memcpy( newSprites, mCurrentObject.sprites, 
+                mPickedObjectLayer * sizeof( int ) );
+        
+        memcpy( &( newSprites[mPickedObjectLayer] ), 
+                &( mCurrentObject.sprites[mPickedObjectLayer+1] ), 
+                (newNumSprites - mPickedObjectLayer ) * sizeof( int ) );
+
+        doublePair *newSpritePos = new doublePair[ newNumSprites ];
+        
+        memcpy( newSpritePos, mCurrentObject.spritePos, 
+                mPickedObjectLayer * sizeof( doublePair ) );
+        
+        memcpy( &( newSpritePos[mPickedObjectLayer] ), 
+                &( mCurrentObject.spritePos[mPickedObjectLayer+1] ), 
+                (newNumSprites - mPickedObjectLayer ) * sizeof( doublePair ) );
+
+        delete [] mCurrentObject.sprites;
+        delete [] mCurrentObject.spritePos;
+            
+        mCurrentObject.sprites = newSprites;
+        mCurrentObject.spritePos = newSpritePos;
+        mCurrentObject.numSprites = newNumSprites;
+        
+        mPickedObjectLayer = -1;
+        }
+    
+        
+    }
+
+
+
 void EditorObjectPage::specialKeyDown( int inKeyCode ) {
     if( mPickedObjectLayer == -1 ) {
         return;
