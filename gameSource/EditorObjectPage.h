@@ -49,6 +49,10 @@ class EditorObjectPage : public GamePage, public ActionListener {
         TextField mDescriptionField;
         
         TextButton mSaveObjectButton;
+        TextButton mReplaceObjectButton;
+
+        TextButton mClearObjectButton;
+
         
         TextButton mImportEditorButton;
 

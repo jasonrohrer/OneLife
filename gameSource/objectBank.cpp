@@ -230,11 +230,12 @@ ObjectRecord **searchObjects( const char *inSearch,
 
 int addObject( const char *inDescription,
                int inNumSprites, int *inSprites, 
-               doublePair *inSpritePos ) {
+               doublePair *inSpritePos,
+               int inReplaceID ) {
     
 
     
-    int newID = -1;
+    int newID = inReplaceID;
 
 
     // add it to file structure
@@ -263,11 +264,13 @@ int addObject( const char *inDescription,
                 delete [] nextNumberString;
                 }
             }
-                
-            
-        char *fileName = autoSprintf( "%d.txt", nextObjectNumber );
-            
-        newID = nextObjectNumber;
+        
+        if( newID == -1 ) {
+            newID = nextObjectNumber;
+            }
+        
+        char *fileName = autoSprintf( "%d.txt", newID );
+
 
         File *objectFile = objectsDir.getChildFile( fileName );
         
@@ -303,8 +306,9 @@ int addObject( const char *inDescription,
         delete [] fileName;
         delete objectFile;
         
-        nextObjectNumber++;
-        
+        if( inReplaceID == -1 ) {
+            nextObjectNumber++;
+            }
 
         
         char *nextNumberString = autoSprintf( "%d", nextObjectNumber );

@@ -172,7 +172,11 @@ void Picker::pointerUp( float inX, float inY ) {
             }
 
         
-        if( oldSelection != mSelectionIndex ) {
+        // change or re-click on already-selected one
+        if( oldSelection != mSelectionIndex 
+            || 
+            mSelectionIndex != -1 ) {
+            
             fireActionPerformed( this );
             }
         }

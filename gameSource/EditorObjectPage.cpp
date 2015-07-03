@@ -14,6 +14,7 @@
 
 
 extern Font *mainFont;
+extern Font *smallFont;
 
 
 #include "SpritePickable.h"
@@ -32,14 +33,20 @@ EditorObjectPage::EditorObjectPage()
                              0,  -260, 6,
                              false,
                              "Description", NULL, NULL ),
-          mSaveObjectButton( mainFont, 210, -260, "Save" ),
+          mSaveObjectButton( smallFont, 210, -260, "Save New" ),
+          mReplaceObjectButton( smallFont, 310, -260, "Replace" ),
+          mClearObjectButton( mainFont, 0, 160, "Blank" ),
           mImportEditorButton( mainFont, 210, 260, "Sprites" ),
           mSpritePicker( &spritePickable, -310, 100 ),
           mObjectPicker( &objectPickable, +310, 100 ) {
 
     addComponent( &mDescriptionField );
     addComponent( &mSaveObjectButton );
+    addComponent( &mReplaceObjectButton );
     addComponent( &mImportEditorButton );
+    
+    addComponent( &mClearObjectButton );
+
     addComponent( &mSpritePicker );
     addComponent( &mObjectPicker );
 
@@ -48,13 +55,17 @@ EditorObjectPage::EditorObjectPage()
     
 
     mSaveObjectButton.addActionListener( this );
+    mReplaceObjectButton.addActionListener( this );
     mImportEditorButton.addActionListener( this );
+
+    mClearObjectButton.addActionListener( this );
 
     mSpritePicker.addActionListener( this );
     mObjectPicker.addActionListener( this );
 
     mSaveObjectButton.setVisible( false );
-
+    mReplaceObjectButton.setVisible( false );
+    mClearObjectButton.setVisible( false );
 
     mCurrentObject.id = -1;
     mCurrentObject.description = mDescriptionField.getText();
@@ -92,9 +103,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             &&
             ( strcmp( text, "" ) != 0 ) );
         
-        delete [] text;
+        mReplaceObjectButton.setVisible(
+            mSaveObjectButton.isVisible() 
+            &&
+            mCurrentObject.id != -1 );
 
-        mObjectPicker.redoSearch();
+        delete [] text;
         }
     else if( inTarget == &mSaveObjectButton ) {
         char *text = mDescriptionField.getText();
@@ -106,6 +120,43 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         delete [] text;
         
         mObjectPicker.redoSearch();
+        actionPerformed( &mClearObjectButton );
+        }
+    else if( inTarget == &mReplaceObjectButton ) {
+        char *text = mDescriptionField.getText();
+
+        addObject( text,
+                   mCurrentObject.numSprites, mCurrentObject.sprites, 
+                   mCurrentObject.spritePos,
+                   mCurrentObject.id );
+        
+        delete [] text;
+        
+        mObjectPicker.redoSearch();
+        actionPerformed( &mClearObjectButton );
+        }
+    else if( inTarget == &mClearObjectButton ) {
+        mCurrentObject.id = -1;
+        
+        mDescriptionField.setText( "" );
+
+        delete [] mCurrentObject.description;
+        mCurrentObject.description = mDescriptionField.getText();
+        
+        mCurrentObject.numSprites = 0;
+        
+        delete [] mCurrentObject.sprites;
+        mCurrentObject.sprites = new int[ 0 ];
+
+        delete [] mCurrentObject.spritePos;
+        mCurrentObject.spritePos = new doublePair[ 0 ];
+        
+        mSaveObjectButton.setVisible( false );
+        mReplaceObjectButton.setVisible( false );
+        mClearObjectButton.setVisible( false );
+        
+        
+        mPickedObjectLayer = -1;
         }
     else if( inTarget == &mImportEditorButton ) {
         setSignal( "importEditor" );
@@ -114,8 +165,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         int spriteID = mSpritePicker.getSelectedObject();
         
-        if( spriteID != -1 ) {
-            
+        if( spriteID != -1 ) {            
 
             int newNumSprites = mCurrentObject.numSprites + 1;
             
@@ -131,7 +181,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             doublePair pos = {0,0};
             
-            newSpritePos[ mCurrentObject.numSprites] = pos;
+            newSpritePos[ mCurrentObject.numSprites ] = pos;
 
             delete [] mCurrentObject.sprites;
             delete [] mCurrentObject.spritePos;
@@ -139,10 +189,53 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.sprites = newSprites;
             mCurrentObject.spritePos = newSpritePos;
             mCurrentObject.numSprites = newNumSprites;
+
+            mClearObjectButton.setVisible( true );
             
-            mSpritePicker.unselectObject();            
+            char *text = mDescriptionField.getText();
+            
+            if( strlen( text ) > 0 ) {
+                mSaveObjectButton.setVisible( true );
+                }
+            delete [] text;
+
+            mPickedObjectLayer = mCurrentObject.numSprites - 1;
             }
-        
+        }
+    
+    else if( inTarget == &mObjectPicker ) {
+        int objectID = mObjectPicker.getSelectedObject();
+
+        if( objectID != -1 ) {
+            ObjectRecord *pickedRecord = getObject( objectID );
+
+                
+            delete [] mCurrentObject.sprites;
+            delete [] mCurrentObject.spritePos;
+
+            mCurrentObject.id = objectID;
+                
+            mDescriptionField.setText( pickedRecord->description );
+                
+            mCurrentObject.numSprites = pickedRecord->numSprites;
+                
+            mCurrentObject.sprites = new int[ pickedRecord->numSprites ];
+            mCurrentObject.spritePos = 
+                new doublePair[ pickedRecord->numSprites ];
+                
+            memcpy( mCurrentObject.sprites, pickedRecord->sprites,
+                    sizeof( int ) * pickedRecord->numSprites );
+                
+            memcpy( mCurrentObject.spritePos, pickedRecord->spritePos,
+                    sizeof( doublePair ) * pickedRecord->numSprites );
+                
+
+            mSaveObjectButton.setVisible( true );
+            mReplaceObjectButton.setVisible( true );
+            mClearObjectButton.setVisible( true );
+
+            mPickedObjectLayer = -1;
+            }
         }
     
     
@@ -302,6 +395,7 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
 
         if( newNumSprites == 0 ) {
             mSaveObjectButton.setVisible( false );
+            mReplaceObjectButton.setVisible( false );
             }
         }
     

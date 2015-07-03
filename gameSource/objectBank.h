@@ -43,7 +43,8 @@ ObjectRecord **searchObjects( const char *inSearch,
 
 int addObject( const char *inDescription,
                int inNumSprites, int *inSprites, 
-               doublePair *inSpritePos );
+               doublePair *inSpritePos,
+               int inReplaceID = -1 );
 
 
 
