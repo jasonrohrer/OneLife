@@ -21,6 +21,11 @@ extern Font *mainFont;
 static SpritePickable spritePickable;
 
 
+#include "ObjectPickable.h"
+
+static ObjectPickable objectPickable;
+
+
 
 EditorObjectPage::EditorObjectPage()
         : mDescriptionField( mainFont, 
@@ -29,12 +34,14 @@ EditorObjectPage::EditorObjectPage()
                              "Description", NULL, NULL ),
           mSaveObjectButton( mainFont, 210, -260, "Save" ),
           mImportEditorButton( mainFont, 210, 260, "Sprites" ),
-          mSpritePicker( &spritePickable, -310, 100 ) {
+          mSpritePicker( &spritePickable, -310, 100 ),
+          mObjectPicker( &spritePickable, +310, 100 ) {
 
     addComponent( &mDescriptionField );
     addComponent( &mSaveObjectButton );
     addComponent( &mImportEditorButton );
     addComponent( &mSpritePicker );
+    addComponent( &mObjectPicker );
 
     mDescriptionField.setFireOnAnyTextChange( true );
     mDescriptionField.addActionListener( this );
@@ -44,6 +51,7 @@ EditorObjectPage::EditorObjectPage()
     mImportEditorButton.addActionListener( this );
 
     mSpritePicker.addActionListener( this );
+    mObjectPicker.addActionListener( this );
 
     mSaveObjectButton.setVisible( false );
 
@@ -85,6 +93,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             ( strcmp( text, "" ) != 0 ) );
         
         delete [] text;
+
+        mObjectPicker.redoSearch();
         }
     else if( inTarget == &mSaveObjectButton ) {
         char *text = mDescriptionField.getText();

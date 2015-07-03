@@ -53,6 +53,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
         TextButton mImportEditorButton;
 
         Picker mSpritePicker;
+        Picker mObjectPicker;
 
 
         ObjectRecord mCurrentObject;
