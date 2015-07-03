@@ -114,7 +114,11 @@ void initSpriteBank() {
         
         idMap[ r->id ] = r;
         
-        tree.insert( r->tag, r );
+        char *lower = stringToLowerCase( r->tag );
+        
+        tree.insert( lower, r );
+        
+        delete [] lower;
         }
 
     printf( "Loaded %d tagged sprites from sprites folder\n", numRecords );
@@ -129,7 +133,12 @@ static void freeSpriteRecord( int inID ) {
          
             freeSprite( idMap[inID]->sprite );
             
-            tree.remove( idMap[inID]->tag, idMap[inID] );
+            char *lower = stringToLowerCase( idMap[inID]->tag );
+            
+            tree.remove( lower, idMap[inID] );
+
+            delete [] lower;
+
             delete [] idMap[inID]->tag;
             
             delete idMap[inID];
@@ -179,7 +188,9 @@ SpriteRecord **searchSprites( const char *inSearch,
                               int inNumToGet, 
                               int *outNumResults, int *outNumRemaining ) {
     
-    int numTotalMatches = tree.countMatches( inSearch );
+    char *lower = stringToLowerCase( inSearch );
+    
+    int numTotalMatches = tree.countMatches( lower );
         
     int numAfterSkip = numTotalMatches - inNumToSkip;
     
@@ -193,11 +204,11 @@ SpriteRecord **searchSprites( const char *inSearch,
     SpriteRecord **results = new SpriteRecord*[ numToGet ];
     
     
-        // outValues must have space allocated by caller for inNumToGet 
-        // pointers
     *outNumResults = 
-        tree.getMatches( inSearch, inNumToSkip, numToGet, (void**)results );
+        tree.getMatches( lower, inNumToSkip, numToGet, (void**)results );
     
+    delete [] lower;
+
     return results;
     }
 
@@ -316,7 +327,11 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     
     idMap[newID] = r;
     
-    tree.insert( inTag, idMap[newID] );
+    char *lower = stringToLowerCase( inTag );
+    
+    tree.insert( lower, idMap[newID] );
+
+    delete [] lower;
 
     return newID;
     }

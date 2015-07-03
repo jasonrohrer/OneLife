@@ -125,7 +125,11 @@ void initObjectBank() {
         
         idMap[ r->id ] = r;
         
-        tree.insert( r->description, r );
+        char *lowercase = stringToLowerCase( r->description );
+        
+        tree.insert( lowercase, r );
+
+        delete [] lowercase;
         }
 
     printf( "Loaded %d objects from objects folder\n", numRecords );
@@ -138,8 +142,13 @@ static void freeObjectRecord( int inID ) {
     if( inID < mapSize ) {
         if( idMap[inID] != NULL ) {
             
-            tree.remove( idMap[inID]->description, idMap[inID] );
+            char *lower = stringToLowerCase( idMap[inID]->description );
             
+            tree.remove( lower, idMap[inID] );
+            
+            delete [] lower;
+            
+
             delete [] idMap[inID]->description;
             delete [] idMap[inID]->sprites;
             delete [] idMap[inID]->spritePos;
@@ -192,8 +201,11 @@ ObjectRecord **searchObjects( const char *inSearch,
                               int inNumToGet, 
                               int *outNumResults, int *outNumRemaining ) {
     
-    int numTotalMatches = tree.countMatches( inSearch );
+    char *lowerSearch = stringToLowerCase( inSearch );
+
+    int numTotalMatches = tree.countMatches( lowerSearch );
         
+    
     int numAfterSkip = numTotalMatches - inNumToSkip;
     
     int numToGet = inNumToGet;
@@ -206,11 +218,11 @@ ObjectRecord **searchObjects( const char *inSearch,
     ObjectRecord **results = new ObjectRecord*[ numToGet ];
     
     
-        // outValues must have space allocated by caller for inNumToGet 
-        // pointers
     *outNumResults = 
-        tree.getMatches( inSearch, inNumToSkip, numToGet, (void**)results );
+        tree.getMatches( lowerSearch, inNumToSkip, numToGet, (void**)results );
     
+    delete [] lowerSearch;
+
     return results;
     }
 
@@ -351,8 +363,12 @@ int addObject( const char *inDescription,
     
     idMap[newID] = r;
     
-    tree.insert( inDescription, idMap[newID] );
+    char *lower = stringToLowerCase( inDescription );
+    
+    tree.insert( lower, idMap[newID] );
 
+    delete [] lower;
+    
     return newID;
     }
 
