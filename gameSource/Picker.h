@@ -1,5 +1,5 @@
-#ifndef SPRITE_PICKER_INCLUDED
-#define SPRITE_PICKER_INCLUDED
+#ifndef PICKER_INCLUDED
+#define PICKER_INCLUDED
 
 
 #include "PageComponent.h"
@@ -7,7 +7,7 @@
 #include "TextField.h"
 
 
-#include "spriteBank.h"
+#include "Pickable.h"
 
 #include "minorGems/game/Font.h"
 #include "minorGems/ui/event/ActionListener.h"
@@ -16,20 +16,20 @@
 
 
 // fires action performed when selected object changes
-class SpritePicker : public PageComponent, ActionListener, 
+class Picker : public PageComponent, ActionListener, 
                      public ActionListenerList  {
     public:
         
         // centered on inX, inY
-        SpritePicker( double inX, double inY );
+        Picker( Pickable *inPickable, double inX, double inY );
         
-        ~SpritePicker();
+        ~Picker();
 
 
         // -1 if none picked
-        int getSelectedSprite();
+        int getSelectedObject();
 
-        void unselectSprite();
+        void unselectObject();
         
         
         void redoSearch();
@@ -43,10 +43,12 @@ class SpritePicker : public PageComponent, ActionListener,
 
         virtual void pointerUp( float inX, float inY );
 
-
+        
+        Pickable *mPickable;
+        
         int mSkip;
         
-        SpriteRecord **mResults;
+        void **mResults;
         int mNumResults;
 
         TextButton mNextButton;

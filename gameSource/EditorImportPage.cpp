@@ -16,6 +16,11 @@
 extern Font *mainFont;
 
 
+#include "SpritePickable.h"
+
+static SpritePickable spritePickable;
+
+
 
 EditorImportPage::EditorImportPage()
         : mImportButton( mainFont, -210, 260, "Import" ),
@@ -29,7 +34,7 @@ EditorImportPage::EditorImportPage()
                            false,
                            "Sprite Tag", NULL, " " ),
           mSaveSpriteButton( mainFont, 210, -260, "Save" ),
-          mSpritePicker( -310, 100 ),
+          mSpritePicker( &spritePickable, -310, 100 ),
           mObjectEditorButton( mainFont, 0, 260, "Objects" ) {
 
     addComponent( &mImportButton );

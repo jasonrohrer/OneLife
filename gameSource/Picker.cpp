@@ -1,6 +1,4 @@
-#include "SpritePicker.h"
-
-#include "spriteBank.h"
+#include "Picker.h"
 
 #include "minorGems/game/Font.h"
 #include "minorGems/game/drawUtils.h"
@@ -21,8 +19,9 @@ extern Font *mainFont;
 extern Font *smallFont;
 
 
-SpritePicker::SpritePicker( double inX, double inY )
-        : PageComponent( inX, inY ), 
+Picker::Picker( Pickable *inPickable, double inX, double inY )
+        : PageComponent( inX, inY ),
+          mPickable( inPickable ),
           mSkip( 0 ),
           mResults( NULL ),
           mNumResults( 0 ),
@@ -49,7 +48,7 @@ SpritePicker::SpritePicker( double inX, double inY )
 
 
 
-SpritePicker::~SpritePicker() {
+Picker::~Picker() {
     if( mResults != NULL ) {
         delete [] mResults;
         }
@@ -57,7 +56,7 @@ SpritePicker::~SpritePicker() {
 
 
 
-void SpritePicker::redoSearch() {
+void Picker::redoSearch() {
     char *search = mSearchField.getText();
     
     if( mResults != NULL ) {
@@ -67,10 +66,10 @@ void SpritePicker::redoSearch() {
 
     int numRemain;
     
-    mResults = searchSprites( search, 
-                              mSkip, 
-                              PER_PAGE, 
-                              &mNumResults, &numRemain );
+    mResults = mPickable->search( search, 
+                                  mSkip, 
+                                  PER_PAGE, 
+                                  &mNumResults, &numRemain );
 
     
     mPrevButton.setVisible( mSkip > 0 );
@@ -89,7 +88,7 @@ void SpritePicker::redoSearch() {
 
 
         
-void SpritePicker::actionPerformed( GUIComponent *inTarget ) {
+void Picker::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mNextButton ) {
         mSkip += PER_PAGE;
         redoSearch();
@@ -110,7 +109,7 @@ void SpritePicker::actionPerformed( GUIComponent *inTarget ) {
 
 
 
-void SpritePicker::draw() {
+void Picker::draw() {
     setDrawColor( 0.75, 0.75, 0.75, 1 );
     
     doublePair bgPos = { 0, -85 };
@@ -132,13 +131,14 @@ void SpritePicker::draw() {
                 }
 
             setDrawColor( 1, 1, 1, 1 );
-            drawSprite( mResults[i]->sprite, pos );
+            mPickable->draw( mResults[i], pos );
             
             doublePair textPos = pos;
             textPos.x += 52;
             
             setDrawColor( 0, 0, 0, 1 );
-            smallFont->drawString( mResults[i]->tag, textPos, alignLeft );
+            smallFont->drawString( mPickable->getText( mResults[i] ), 
+                                   textPos, alignLeft );
             
 
             pos.y -= 64;
@@ -149,7 +149,7 @@ void SpritePicker::draw() {
 
         
 
-void SpritePicker::pointerUp( float inX, float inY ) {
+void Picker::pointerUp( float inX, float inY ) {
     if( inX > -80 && inX < 80 ) {
         
         inY -= 40;
@@ -179,16 +179,16 @@ void SpritePicker::pointerUp( float inX, float inY ) {
 
 
 
-int SpritePicker::getSelectedSprite() {
+int Picker::getSelectedObject() {
     if( mSelectionIndex == -1 ) {
         return -1;
         }
     
-    return mResults[mSelectionIndex]->id;
+    return mPickable->getID( mResults[mSelectionIndex] );
     }
 
 
 
-void SpritePicker::unselectSprite() {
+void Picker::unselectObject() {
     mSelectionIndex = -1;
     }

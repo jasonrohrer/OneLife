@@ -14,7 +14,7 @@
 #include "TextButton.h"
 #include "TextField.h"
 
-#include "SpritePicker.h"
+#include "Picker.h"
 
 #include "objectBank.h"
 
@@ -52,7 +52,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
         TextButton mImportEditorButton;
 
-        SpritePicker mSpritePicker;
+        Picker mSpritePicker;
 
 
         ObjectRecord mCurrentObject;

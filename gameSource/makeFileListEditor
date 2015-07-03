@@ -26,7 +26,7 @@ message.cpp \
 accountHmac.cpp \
 EditorImportPage.cpp \
 spriteBank.cpp \
-SpritePicker.cpp \
+Picker.cpp \
 objectBank.cpp \
 EditorObjectPage.cpp \
 
