@@ -157,6 +157,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         
         mPickedObjectLayer = -1;
+        
+        mObjectPicker.unselectObject();
         }
     else if( inTarget == &mImportEditorButton ) {
         setSignal( "importEditor" );
@@ -332,19 +334,38 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
         mPickedMouseOffset = 
             sub( pos, mCurrentObject.spritePos[mPickedObjectLayer] );
         }
-    
+    else {
+        // dragging whole object?
+        doublePair center = {0,0};
+        
+        mPickedMouseOffset = sub( pos, center );
+        }
     }
 
 
 
+
 void EditorObjectPage::pointerDrag( float inX, float inY ) {
-    
+    doublePair pos = {inX, inY};
+
     if( mPickedObjectLayer != -1 ) {
-        doublePair pos = {inX, inY};
-        
 
         mCurrentObject.spritePos[mPickedObjectLayer]
             = sub( pos, mPickedMouseOffset );
+        }
+    else {
+        doublePair center = {0,0};
+        
+        double centerDist = distance( center, pos );
+        
+        if( centerDist < 200 ) {
+            for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+                mCurrentObject.spritePos[i] =
+                    add( mCurrentObject.spritePos[i],
+                         sub( pos, mPickedMouseOffset ) );
+                }
+            mPickedMouseOffset = pos;
+            }
         }
     }
 
@@ -406,6 +427,23 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
 
 void EditorObjectPage::specialKeyDown( int inKeyCode ) {
     if( mPickedObjectLayer == -1 ) {
+
+        for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+            switch( inKeyCode ) {
+                case MG_KEY_LEFT:
+                    mCurrentObject.spritePos[i].x -= 1;
+                    break;
+                case MG_KEY_RIGHT:
+                    mCurrentObject.spritePos[i].x += 1;
+                    break;
+                case MG_KEY_DOWN:
+                    mCurrentObject.spritePos[i].y -= 1;
+                    break;
+                case MG_KEY_UP:
+                    mCurrentObject.spritePos[i].y += 1;
+                    break;
+                }
+            }
         return;
         }
     
