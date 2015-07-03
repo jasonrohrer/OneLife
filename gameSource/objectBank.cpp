@@ -101,6 +101,8 @@ void initObjectBank() {
                         delete [] lines;
                         }
                     }
+                
+                delete [] txtFileName;
                 }
             delete childFiles[i];
             }
