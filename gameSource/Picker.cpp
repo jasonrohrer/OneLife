@@ -150,7 +150,8 @@ void Picker::draw() {
         
 
 void Picker::pointerUp( float inX, float inY ) {
-    if( inX > -80 && inX < 80 ) {
+    if( inX > -80 && inX < 80 &&
+        inY < 75 && inY > -245 ) {
         
         inY -= 40;
         
@@ -160,7 +161,7 @@ void Picker::pointerUp( float inX, float inY ) {
         
         int oldSelection = mSelectionIndex;
         
-
+ 
         mSelectionIndex = (int)( inY / 64 );
         
         if( mSelectionIndex >= mNumResults ) {
