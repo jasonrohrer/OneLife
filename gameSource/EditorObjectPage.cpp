@@ -35,7 +35,7 @@ EditorObjectPage::EditorObjectPage()
           mSaveObjectButton( mainFont, 210, -260, "Save" ),
           mImportEditorButton( mainFont, 210, 260, "Sprites" ),
           mSpritePicker( &spritePickable, -310, 100 ),
-          mObjectPicker( &spritePickable, +310, 100 ) {
+          mObjectPicker( &objectPickable, +310, 100 ) {
 
     addComponent( &mDescriptionField );
     addComponent( &mSaveObjectButton );
@@ -104,6 +104,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spritePos );
         
         delete [] text;
+        
+        mObjectPicker.redoSearch();
         }
     else if( inTarget == &mImportEditorButton ) {
         setSignal( "importEditor" );
@@ -159,8 +161,8 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     for( int y=0; y<5; y++ ) {
         for( int x=0; x<5; x++ ) {
             
-            doublePair pos = { y * 32 - 2.5 * 32, 
-                               x * 32 - 2.5 * 32};
+            doublePair pos = { y * 32 - 2 * 32, 
+                               x * 32 - 2 * 32};
             
             if( i%2 == 0 ) {
                 setDrawColor( 1, 1, 1, 1 );
@@ -194,9 +196,12 @@ void EditorObjectPage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
-
+    
+    mSpritePicker.redoSearch();
+    mObjectPicker.redoSearch();
 
     }
+
 
 
 void EditorObjectPage::pointerMove( float inX, float inY ) {
