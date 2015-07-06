@@ -29,6 +29,7 @@ spriteBank.cpp \
 Picker.cpp \
 objectBank.cpp \
 EditorObjectPage.cpp \
+transitionBank.cpp \
 
 
 
