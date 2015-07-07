@@ -59,14 +59,16 @@ class EditorTransitionPage : public GamePage, public ActionListener {
 
         int mCurrentlyReplacing;
 
-        TextButton *mReplaceButtons[4];
+        Button *mPickButtons[4];
         
         TextButton *mClearButtons[2];
         
+        
+        int mLastSearchID;
 
         int mProducedBySkip;
         TransRecord mProducedBy[NUM_TREE_TRANS_TO_SHOW];
-        TextButton *mProducedByButtons[NUM_TREE_TRANS_TO_SHOW];
+        Button *mProducedByButtons[NUM_TREE_TRANS_TO_SHOW];
         
         TextButton mProducedByNext;
         TextButton mProducedByPrev;
@@ -74,7 +76,7 @@ class EditorTransitionPage : public GamePage, public ActionListener {
 
         int mProducesSkip;
         TransRecord mProduces[NUM_TREE_TRANS_TO_SHOW];
-        TextButton *mProducesButtons[NUM_TREE_TRANS_TO_SHOW];
+        Button *mProducesButtons[NUM_TREE_TRANS_TO_SHOW];
         
         TextButton mProducesNext;
         TextButton mProducesPrev;

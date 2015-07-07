@@ -64,7 +64,7 @@ static ObjectPickable objectPickable;
 
 
 EditorTransitionPage::EditorTransitionPage()
-        : mSaveTransitionButton( mainFont, -210, 0, "Save" ),
+        : mSaveTransitionButton( mainFont, -310, 0, "Save" ),
           mObjectPicker( &objectPickable, +310, 100 ),
           mObjectEditorButton( mainFont, 310, 260, "Objects" ),
           mProducedByNext( smallFont, 200, 260, "Next" ),
@@ -115,18 +115,24 @@ EditorTransitionPage::EditorTransitionPage()
     
     int i = 0;
     for( int y = 0; y<2; y++ ) {
-        int xP = - 250;
+        int xP = - 200;
         for( int x = 0; x<2; x++ ) {
         
-            mReplaceButtons[i] = new TextButton( mainFont, xP, yP, "R" );
+            // buttons hiding under displays to register clicks
+            mPickButtons[i] = new Button( xP, yP, 100, 100, 1 );
             
-            addComponent( mReplaceButtons[i] );
+            addComponent( mPickButtons[i] );
             
-            mReplaceButtons[i]->addActionListener( this );
+            mPickButtons[i]->addActionListener( this );
             
             if( i>= 2 ) {
+                int offset = -90;
+                if( i == 3 ) {
+                    offset = 90;
+                    }
+                
                 mClearButtons[i-2] = 
-                    new TextButton( smallFont, xP, yP - 52, "X" );
+                    new TextButton( smallFont, xP + offset, yP, "X" );
                 
                 addComponent( mClearButtons[i-2] );
                 mClearButtons[i-2]->addActionListener( this );
@@ -135,16 +141,16 @@ EditorTransitionPage::EditorTransitionPage()
             
             i++;
             
-            xP += 400;
+            xP += 200;
             }
         yP -= 150;
         }
 
 
-    int xP = -200;
+    int xP = 0;
     for( int i=0; i<NUM_TREE_TRANS_TO_SHOW; i++ ) {
-        mProducedByButtons[i] = new TextButton( smallFont, xP, 260, "L" );
-        mProducesButtons[i] = new TextButton( smallFont, xP, -260, "L" );
+        mProducedByButtons[i] = new Button( xP, 260, 250, 100, 1 );
+        mProducesButtons[i] = new Button( xP, -260, 250, 100, 1 );
         
         addComponent( mProducedByButtons[i] );
         addComponent( mProducesButtons[i] );
@@ -166,13 +172,15 @@ EditorTransitionPage::EditorTransitionPage()
     mProducedBySkip = 0;
     mProducesSkip = 0;
     
+
+    mLastSearchID = -1;
     }
 
 
 
 EditorTransitionPage::~EditorTransitionPage() {
     for( int i=0; i<4; i++ ) {
-        delete mReplaceButtons[i];
+        delete mPickButtons[i];
         }
     for( int i=0; i<2; i++ ) {
         delete mClearButtons[i];
@@ -209,13 +217,17 @@ void EditorTransitionPage::checkIfSaveVisible() {
 
 void EditorTransitionPage::redoTransSearches( int inObjectID,
                                               char inClearSkip ) {
-
-    printf( "Searching for %d\n", inObjectID );
+    
+    mLastSearchID = inObjectID;
     
     if( inClearSkip ) {
         mProducedBySkip = 0;
         mProducesSkip = 0;
         }
+
+    printf( "Searching for %d, skips = %d,%d\n", 
+            inObjectID,
+            mProducedBySkip, mProducesSkip );
 
 
     int numResults, numLeft;
@@ -242,14 +254,14 @@ void EditorTransitionPage::redoTransSearches( int inObjectID,
     
         mProducedByPrev.setVisible( mProducedBySkip > 0 );
     
-        mProducedByPrev.setVisible( numLeft > 0 );
+        mProducedByNext.setVisible( numLeft > 0 );
 
         delete [] resultsA;
         }
     else {
         mProducedByPrev.setVisible( false );
     
-        mProducedByPrev.setVisible( false );
+        mProducedByNext.setVisible( false );
         }
     
 
@@ -276,14 +288,14 @@ void EditorTransitionPage::redoTransSearches( int inObjectID,
         
         mProducesPrev.setVisible( mProducesSkip > 0 );
         
-        mProducesPrev.setVisible( numLeft > 0 );
+        mProducesNext.setVisible( numLeft > 0 );
         
         delete [] resultsA;
                 }
     else {
         mProducesPrev.setVisible( false );
     
-        mProducesPrev.setVisible( false );
+        mProducesNext.setVisible( false );
         }
 
     
@@ -302,6 +314,8 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                   mCurrentTransition.target,
                   mCurrentTransition.newActor,
                   mCurrentTransition.newTarget );
+            
+        redoTransSearches( mLastSearchID, true );
         }
     else if( inTarget == &mObjectPicker ) {
         if( mCurrentlyReplacing != -1 ) {
@@ -322,10 +336,27 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mObjectEditorButton ) {
         setSignal( "objectEditor" );
         }
+    else if( inTarget == &mProducedByNext ) {
+        mProducedBySkip += NUM_TREE_TRANS_TO_SHOW;
+        
+        redoTransSearches( mLastSearchID, false );
+        }
+    else if( inTarget == &mProducedByPrev ) {
+        mProducedBySkip -= NUM_TREE_TRANS_TO_SHOW;
+        redoTransSearches( mLastSearchID, false );
+        }
+    else if( inTarget == &mProducesNext ) {
+        mProducesSkip += NUM_TREE_TRANS_TO_SHOW;
+        redoTransSearches( mLastSearchID, false );
+        }
+    else if( inTarget == &mProducesPrev ) {
+        mProducesSkip -= NUM_TREE_TRANS_TO_SHOW;
+        redoTransSearches( mLastSearchID, false );
+        }    
     else {
 
         for( int i=0; i<4; i++ ) {
-            if( inTarget == mReplaceButtons[i] ) {
+            if( inTarget == mPickButtons[i] ) {
                 
                 mCurrentlyReplacing = i;
                 
@@ -351,7 +382,43 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                 return;
                 }
             }
-        
+
+        for( int i=0; i< NUM_TREE_TRANS_TO_SHOW; i++ ) {
+            if( inTarget == mProducedByButtons[i] ) {
+                
+                mCurrentTransition = mProducedBy[i];
+                
+                // select the obj we were searching for when
+                // we jump too this transition... thus, we don't redo search
+                for( int j=0; j<4; j++ ) {
+                    if( getObjectByIndex( &mCurrentTransition, j ) == 
+                        mLastSearchID ) {
+                        
+                        mCurrentlyReplacing = j;
+                        break;
+                        }
+                    }
+                
+                return;
+                }
+            if( inTarget == mProducesButtons[i] ) {
+            
+                mCurrentTransition = mProduces[i];
+                
+                // select the obj we were searching for when
+                // we jump too this transition... thus, we don't redo search
+                for( int j=0; j<4; j++ ) {
+                    if( getObjectByIndex( &mCurrentTransition, j ) == 
+                        mLastSearchID ) {
+                        
+                        mCurrentlyReplacing = j;
+                        break;
+                        }
+                    }
+
+                return;
+                }
+            }
         }
     
     }
@@ -365,15 +432,8 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
                      double inViewSize ) {
     
     for( int i=0; i<4; i++ ) {
-        doublePair pos = mReplaceButtons[i]->getCenter();        
-        
-        if( i % 2 == 0 ) {    
-            pos.x += 100;
-            }
-        else {
-            pos.x -= 100;
-            }
-        
+        doublePair pos = mPickButtons[i]->getCenter();        
+
         if( i == mCurrentlyReplacing ) {
             setDrawColor( 1, 1, 0, 1 );
             drawSquare( pos, 60 );
@@ -390,16 +450,16 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             }
         }
 
-    doublePair centerA = mult( add( mReplaceButtons[0]->getCenter(),
-                                    mReplaceButtons[1]->getCenter() ),
+    doublePair centerA = mult( add( mPickButtons[0]->getCenter(),
+                                    mPickButtons[1]->getCenter() ),
                                0.5 );
     
     setDrawColor( 1, 1, 1, 1 );
     mainFont->drawString( "+", centerA, alignCenter );
 
 
-    doublePair centerB = mult( add( mReplaceButtons[2]->getCenter(),
-                                    mReplaceButtons[3]->getCenter() ),
+    doublePair centerB = mult( add( mPickButtons[2]->getCenter(),
+                                    mPickButtons[3]->getCenter() ),
                                0.5 );
     
     mainFont->drawString( "+", centerB, alignCenter );
@@ -413,38 +473,43 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
     setDrawColor( 1, 1, 1, 1 );
     
     for( int i=0; i<NUM_TREE_TRANS_TO_SHOW; i++ ) {
-        int actor = getObjectByIndex( &mProducedBy[i], 0 );
-        int target = getObjectByIndex( &mProducedBy[i], 1 );
+
+        if( mProducedByButtons[i]->isVisible() ) {
         
-        if( actor != 1 && target != -1 ) {
+            int actor = getObjectByIndex( &mProducedBy[i], 0 );
+            int target = getObjectByIndex( &mProducedBy[i], 1 );
             
             doublePair pos = mProducedByButtons[i]->getCenter();
             
-            pos.x += 100;
+            pos.x -= 75;
             
             drawSquare( pos, 50 );
 
-            drawObject( getObject( actor ), pos );
+            
+            if( actor != 1 ) {
+                drawObject( getObject( actor ), pos );
+                }
             
             pos.x += 150;
             
             drawSquare( pos, 50 );
 
+            // target always non-blank
             drawObject( getObject( target ), pos );
             }
 
-
-        int newActor = getObjectByIndex( &mProduces[i], 2 );
-        int newTarget = getObjectByIndex( &mProduces[i], 3 );
         
-        if( newActor != -1 || newTarget != -1 ) {
+        if( mProducesButtons[i]->isVisible() ) {
             
+            int newActor = getObjectByIndex( &mProduces[i], 2 );
+            int newTarget = getObjectByIndex( &mProduces[i], 3 );
+        
             doublePair pos = mProducesButtons[i]->getCenter();
-            
-            pos.x += 100;
+        
+            pos.x -= 75;
             
             drawSquare( pos, 50 );
-
+            
             if( newActor != -1 ) {
                 drawObject( getObject( newActor ), pos );
                 }
@@ -452,11 +517,10 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             pos.x += 150;
             
             drawSquare( pos, 50 );
-
+            
             if( newTarget != -1 ) {
                 drawObject( getObject( newTarget ), pos );
                 }
-            
             }
         }
     
