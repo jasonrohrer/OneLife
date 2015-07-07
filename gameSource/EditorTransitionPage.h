@@ -52,6 +52,11 @@ class EditorTransitionPage : public GamePage, public ActionListener {
         TextButton mObjectEditorButton;
 
         TransRecord mCurrentTransition;
+
+        int mCurrentlyReplacing;
+
+        TextButton *mReplaceButtons[4];
+        
     };
 
 
