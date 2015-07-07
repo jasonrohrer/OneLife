@@ -114,6 +114,8 @@ EditorTransitionPage::EditorTransitionPage()
     int yP = 75;
     
     int i = 0;
+    int clearI = 0;
+    
     for( int y = 0; y<2; y++ ) {
         int xP = - 200;
         for( int x = 0; x<2; x++ ) {
@@ -125,17 +127,19 @@ EditorTransitionPage::EditorTransitionPage()
             
             mPickButtons[i]->addActionListener( this );
             
-            if( i>= 2 ) {
+            if( i == 0 || i>= 2 ) {
                 int offset = -90;
                 if( i == 3 ) {
                     offset = 90;
                     }
                 
-                mClearButtons[i-2] = 
+                mClearButtons[clearI] = 
                     new TextButton( smallFont, xP + offset, yP, "X" );
                 
-                addComponent( mClearButtons[i-2] );
-                mClearButtons[i-2]->addActionListener( this );
+                addComponent( mClearButtons[clearI] );
+                mClearButtons[clearI]->addActionListener( this );
+
+                clearI++;
                 }
             
             
@@ -182,7 +186,7 @@ EditorTransitionPage::~EditorTransitionPage() {
     for( int i=0; i<4; i++ ) {
         delete mPickButtons[i];
         }
-    for( int i=0; i<2; i++ ) {
+    for( int i=0; i<3; i++ ) {
         delete mClearButtons[i];
         }
     
@@ -201,16 +205,8 @@ EditorTransitionPage::~EditorTransitionPage() {
 
 
 void EditorTransitionPage::checkIfSaveVisible() {
-    
-    if( getObjectByIndex( &mCurrentTransition, 0 ) != -1
-        &&
-        getObjectByIndex( &mCurrentTransition, 1 ) != -1 ) {
-        
-        mSaveTransitionButton.setVisible( true );
-        }
-    else {
-        mSaveTransitionButton.setVisible( false );
-        }
+    mSaveTransitionButton.setVisible( 
+        getObjectByIndex( &mCurrentTransition, 1 ) != -1 );
     }
 
 
@@ -374,10 +370,18 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             }
         
-        for( int i=0; i<2; i++ ) {
+        for( int i=0; i<3; i++ ) {
             if( inTarget == mClearButtons[i] ) {
                 
-                setObjectByIndex( &mCurrentTransition, i+2, -1 );
+                int index = i;
+                
+                if( i !=  0 ) {
+                    // skip target, can't be cleared
+                    index = i+1;
+                    }
+                
+                setObjectByIndex( &mCurrentTransition, index, -1 );
+            
                 checkIfSaveVisible();
                 return;
                 }
@@ -486,7 +490,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             drawSquare( pos, 50 );
 
             
-            if( actor != 1 ) {
+            if( actor != -1 ) {
                 drawObject( getObject( actor ), pos );
                 }
             

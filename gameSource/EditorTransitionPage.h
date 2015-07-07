@@ -61,7 +61,7 @@ class EditorTransitionPage : public GamePage, public ActionListener {
 
         Button *mPickButtons[4];
         
-        TextButton *mClearButtons[2];
+        TextButton *mClearButtons[3];
         
         
         int mLastSearchID;

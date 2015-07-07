@@ -49,7 +49,7 @@ void initTransBank() {
                     
                     sscanf( txtFileName, "%d_%d.txt", &actor, &target );
                     
-                    if( actor != -1 && target != -1 ) {
+                    if(  target != -1 ) {
                         char *contents = childFiles[i]->readFileContents();
                         
                         if( contents != NULL ) {
@@ -106,9 +106,11 @@ void initTransBank() {
     for( int i=0; i<numRecords; i++ ) {
         TransRecord *t = records.getElementDirect( i );
         
-
-        usesMap[t->actor].push_back( t );
-
+        
+        if( t->actor != -1 ) {
+            usesMap[t->actor].push_back( t );
+            }
+        
         // no duplicate records
         if( t->target != t->actor ) {    
             usesMap[t->target].push_back( t );
@@ -294,8 +296,10 @@ void addTrans( int inActor, int inTarget,
 
         records.push_back( t );
 
-        usesMap[inActor].push_back( t );
-
+        if( inActor != -1 ) {
+            usesMap[inActor].push_back( t );
+            }
+        
         // no duplicate records when actor and target are the same
         if( inTarget != inActor ) {    
             usesMap[inTarget].push_back( t );
