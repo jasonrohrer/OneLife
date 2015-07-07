@@ -25,7 +25,7 @@ static ObjectPickable objectPickable;
 
 
 EditorTransitionPage::EditorTransitionPage()
-        : mSaveTransitionButton( smallFont, 210, -260, "Save New" ),
+        : mSaveTransitionButton( mainFont, 210, -260, "Save" ),
           mObjectPicker( &objectPickable, +310, 100 ),
           mObjectEditorButton( mainFont, 0, 260, "Objects" ) {
 
@@ -132,12 +132,32 @@ static void setObjectByIndex( TransRecord *inRecord, int inIndex, int inID ) {
 
 
 
+void EditorTransitionPage::checkIfSaveVisible() {
+    
+    if( getObjectByIndex( &mCurrentTransition, 0 ) != -1
+        &&
+        getObjectByIndex( &mCurrentTransition, 1 ) != -1 ) {
+        
+        mSaveTransitionButton.setVisible( true );
+        }
+    else {
+        mSaveTransitionButton.setVisible( false );
+        }
+    }
+
+
+
 
 
 void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
     
     if( inTarget == &mSaveTransitionButton ) {
         
+
+        addTrans( mCurrentTransition.actor,
+                  mCurrentTransition.target,
+                  mCurrentTransition.newActor,
+                  mCurrentTransition.newTarget );
         }
     else if( inTarget == &mObjectPicker ) {
         if( mCurrentlyReplacing != -1 ) {
@@ -147,6 +167,8 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             if( objectID != -1 ) {
                 setObjectByIndex( &mCurrentTransition, mCurrentlyReplacing,
                                   objectID );
+                
+                checkIfSaveVisible();
                 }
             }
         
@@ -169,6 +191,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             if( inTarget == mClearButtons[i] ) {
                 
                 setObjectByIndex( &mCurrentTransition, i+2, -1 );
+                checkIfSaveVisible();
                 return;
                 }
             }

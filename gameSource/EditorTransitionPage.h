@@ -59,6 +59,8 @@ class EditorTransitionPage : public GamePage, public ActionListener {
         
         TextButton *mClearButtons[2];
         
+
+        void checkIfSaveVisible();
     };
 
 

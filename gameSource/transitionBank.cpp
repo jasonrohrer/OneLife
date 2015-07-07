@@ -353,7 +353,7 @@ void addTrans( int inActor, int inTarget,
             File *transFile = transDir.getChildFile( fileName );
             
             char *fileContents = autoSprintf( "%d %d", 
-                                              inNewTarget, inNewActor );
+                                              inNewActor, inNewTarget );
             
             
             transFile->writeToFile( fileContents );
