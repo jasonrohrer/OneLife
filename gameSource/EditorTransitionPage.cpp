@@ -13,6 +13,45 @@
 
 
 
+
+
+static int getObjectByIndex( TransRecord *inRecord, int inIndex ) {
+    
+    switch( inIndex ) {
+        case 0:
+            return inRecord->actor;
+        case 1:
+            return inRecord->target;
+        case 2:
+            return inRecord->newActor;
+        case 3:
+            return inRecord->newTarget;
+        default:
+            return -1;
+        }
+    }
+
+
+static void setObjectByIndex( TransRecord *inRecord, int inIndex, int inID ) {
+    
+    switch( inIndex ) {
+        case 0:
+            inRecord->actor = inID;
+            break;
+        case 1:
+            inRecord->target = inID;
+            break;
+        case 2:
+            inRecord->newActor = inID;
+            break;
+        case 3:
+            inRecord->newTarget = inID;
+            break;
+        }
+    }
+
+
+
 extern Font *mainFont;
 extern Font *smallFont;
 
@@ -25,13 +64,23 @@ static ObjectPickable objectPickable;
 
 
 EditorTransitionPage::EditorTransitionPage()
-        : mSaveTransitionButton( mainFont, 210, -260, "Save" ),
+        : mSaveTransitionButton( mainFont, -210, 0, "Save" ),
           mObjectPicker( &objectPickable, +310, 100 ),
-          mObjectEditorButton( mainFont, 0, 260, "Objects" ) {
+          mObjectEditorButton( mainFont, 310, 260, "Objects" ),
+          mProducedByNext( smallFont, 200, 260, "Next" ),
+          mProducedByPrev( smallFont, -350, 260, "Prev" ),
+          mProducesNext( smallFont, 200, -260, "Next" ),
+          mProducesPrev( smallFont, -350, -260, "Prev" ) {
 
     addComponent( &mSaveTransitionButton );
     addComponent( &mObjectPicker );
     addComponent( &mObjectEditorButton );
+
+
+    addComponent( &mProducedByNext );
+    addComponent( &mProducedByPrev );
+    addComponent( &mProducesNext );
+    addComponent( &mProducesPrev );
     
 
     mSaveTransitionButton.addActionListener( this );
@@ -41,6 +90,17 @@ EditorTransitionPage::EditorTransitionPage()
 
     mSaveTransitionButton.setVisible( false );
 
+
+    mProducedByNext.addActionListener( this );
+    mProducedByPrev.addActionListener( this );
+    mProducesNext.addActionListener( this );
+    mProducesPrev.addActionListener( this );
+    
+    mProducedByNext.setVisible( false );
+    mProducedByPrev.setVisible( false );
+    mProducesNext.setVisible( false );
+    mProducesPrev.setVisible( false );
+    
 
     mCurrentTransition.actor = -1;
     mCurrentTransition.target = -1;
@@ -79,6 +139,33 @@ EditorTransitionPage::EditorTransitionPage()
             }
         yP -= 150;
         }
+
+
+    int xP = -200;
+    for( int i=0; i<NUM_TREE_TRANS_TO_SHOW; i++ ) {
+        mProducedByButtons[i] = new TextButton( smallFont, xP, 260, "L" );
+        mProducesButtons[i] = new TextButton( smallFont, xP, -260, "L" );
+        
+        addComponent( mProducedByButtons[i] );
+        addComponent( mProducesButtons[i] );
+        
+        mProducedByButtons[i]->addActionListener( this );
+        mProducesButtons[i]->addActionListener( this );
+
+        mProducedByButtons[i]->setVisible( false );
+        mProducesButtons[i]->setVisible( false );
+        
+        xP += 150;
+
+        for( int j=0; j<4; j++ ) {
+            setObjectByIndex( &( mProducedBy[i] ), j, -1 );
+            setObjectByIndex( &( mProduces[i] ), j, -1 );
+            }
+        }
+
+    mProducedBySkip = 0;
+    mProducesSkip = 0;
+    
     }
 
 
@@ -90,45 +177,18 @@ EditorTransitionPage::~EditorTransitionPage() {
     for( int i=0; i<2; i++ ) {
         delete mClearButtons[i];
         }
-    }
-
-
-
-
-
-
-static int getObjectByIndex( TransRecord *inRecord, int inIndex ) {
     
-    switch( inIndex ) {
-        case 0:
-            return inRecord->actor;
-        case 1:
-            return inRecord->target;
-        case 2:
-            return inRecord->newActor;
-        case 3:
-            return inRecord->newTarget;
+    for( int i=0; i<NUM_TREE_TRANS_TO_SHOW; i++ ) {
+        delete mProducedByButtons[i];
+        delete mProducesButtons[i];
         }
     }
 
 
-static void setObjectByIndex( TransRecord *inRecord, int inIndex, int inID ) {
-    
-    switch( inIndex ) {
-        case 0:
-            inRecord->actor = inID;
-            break;
-        case 1:
-            inRecord->target = inID;
-            break;
-        case 2:
-            inRecord->newActor = inID;
-            break;
-        case 3:
-            inRecord->newTarget = inID;
-            break;
-        }
-    }
+
+
+
+
 
 
 
@@ -143,6 +203,90 @@ void EditorTransitionPage::checkIfSaveVisible() {
     else {
         mSaveTransitionButton.setVisible( false );
         }
+    }
+
+
+
+void EditorTransitionPage::redoTransSearches( int inObjectID,
+                                              char inClearSkip ) {
+
+    printf( "Searching for %d\n", inObjectID );
+    
+    if( inClearSkip ) {
+        mProducedBySkip = 0;
+        mProducesSkip = 0;
+        }
+
+
+    int numResults, numLeft;
+    TransRecord **resultsA = searchProduces( inObjectID, 
+                                             mProducedBySkip, 
+                                             NUM_TREE_TRANS_TO_SHOW, 
+                                             &numResults, &numLeft );
+
+    for( int i=0; i< NUM_TREE_TRANS_TO_SHOW; i++ ) {
+        mProducedByButtons[i]->setVisible( false );
+        for( int j=0; j<4; j++ ) {
+            setObjectByIndex( &( mProducedBy[i] ), j, -1 );
+            }
+        }
+    
+    if( resultsA != NULL ) {
+        
+
+        for( int i=0; i<numResults; i++ ) {
+            mProducedBy[i] = *( resultsA[i] );
+            mProducedByButtons[i]->setVisible( true );
+            }
+    
+    
+        mProducedByPrev.setVisible( mProducedBySkip > 0 );
+    
+        mProducedByPrev.setVisible( numLeft > 0 );
+
+        delete [] resultsA;
+        }
+    else {
+        mProducedByPrev.setVisible( false );
+    
+        mProducedByPrev.setVisible( false );
+        }
+    
+
+
+    TransRecord **resultsB = searchUses( inObjectID, 
+                                         mProducesSkip, 
+                                         NUM_TREE_TRANS_TO_SHOW, 
+                                         &numResults, &numLeft );
+
+    for( int i=0; i< NUM_TREE_TRANS_TO_SHOW; i++ ) {
+        mProducesButtons[i]->setVisible( false );
+        for( int j=0; j<4; j++ ) {
+            setObjectByIndex( &( mProduces[i] ), j, -1 );
+            }
+        }
+
+
+    if( resultsB != NULL ) {
+        
+        for( int i=0; i<numResults; i++ ) {
+            mProduces[i] = *( resultsB[i] );
+            mProducesButtons[i]->setVisible( true );
+            }
+        
+        mProducesPrev.setVisible( mProducesSkip > 0 );
+        
+        mProducesPrev.setVisible( numLeft > 0 );
+        
+        delete [] resultsA;
+                }
+    else {
+        mProducesPrev.setVisible( false );
+    
+        mProducesPrev.setVisible( false );
+        }
+
+    
     }
 
 
@@ -169,6 +313,8 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                                   objectID );
                 
                 checkIfSaveVisible();
+
+                redoTransSearches( objectID, true );
                 }
             }
         
@@ -182,6 +328,16 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             if( inTarget == mReplaceButtons[i] ) {
                 
                 mCurrentlyReplacing = i;
+                
+                mObjectPicker.unselectObject();
+
+                
+                int replacingID = getObjectByIndex( &mCurrentTransition,
+                                                    mCurrentlyReplacing );
+                
+                if( replacingID != -1 ) {    
+                    redoTransSearches( replacingID, true );
+                    }
                 
                 return;
                 }
@@ -253,6 +409,57 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
     
     mainFont->drawString( "=", centerC, alignCenter );
 
+
+    setDrawColor( 1, 1, 1, 1 );
+    
+    for( int i=0; i<NUM_TREE_TRANS_TO_SHOW; i++ ) {
+        int actor = getObjectByIndex( &mProducedBy[i], 0 );
+        int target = getObjectByIndex( &mProducedBy[i], 1 );
+        
+        if( actor != 1 && target != -1 ) {
+            
+            doublePair pos = mProducedByButtons[i]->getCenter();
+            
+            pos.x += 100;
+            
+            drawSquare( pos, 50 );
+
+            drawObject( getObject( actor ), pos );
+            
+            pos.x += 150;
+            
+            drawSquare( pos, 50 );
+
+            drawObject( getObject( target ), pos );
+            }
+
+
+        int newActor = getObjectByIndex( &mProduces[i], 2 );
+        int newTarget = getObjectByIndex( &mProduces[i], 3 );
+        
+        if( newActor != -1 || newTarget != -1 ) {
+            
+            doublePair pos = mProducesButtons[i]->getCenter();
+            
+            pos.x += 100;
+            
+            drawSquare( pos, 50 );
+
+            if( newActor != -1 ) {
+                drawObject( getObject( newActor ), pos );
+                }
+            
+            pos.x += 150;
+            
+            drawSquare( pos, 50 );
+
+            if( newTarget != -1 ) {
+                drawObject( getObject( newTarget ), pos );
+                }
+            
+            }
+        }
+    
     }
 
 
@@ -286,7 +493,7 @@ void EditorTransitionPage::pointerDown( float inX, float inY ) {
 
 
 void EditorTransitionPage::pointerDrag( float inX, float inY ) {
-    doublePair pos = {inX, inY};
+    //doublePair pos = {inX, inY};
     }
 
 

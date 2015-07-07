@@ -160,6 +160,12 @@ static TransRecord **search( SimpleVector<TransRecord *> inMapToSearch[],
                              int inNumToGet, 
                              int *outNumResults, int *outNumRemaining ) {
     
+    if( inID >= mapSize ) {
+        // no transition for an object with this ID range
+        return NULL;
+        }
+
+
     int numRecords = inMapToSearch[inID].size();
     
     int numLeft = numRecords - inNumToSkip;

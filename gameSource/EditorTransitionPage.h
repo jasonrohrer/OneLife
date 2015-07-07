@@ -20,6 +20,10 @@
 
 
 
+#define NUM_TREE_TRANS_TO_SHOW 1
+
+
+
 class EditorTransitionPage : public GamePage, public ActionListener {
         
     public:
@@ -60,7 +64,28 @@ class EditorTransitionPage : public GamePage, public ActionListener {
         TextButton *mClearButtons[2];
         
 
+        int mProducedBySkip;
+        TransRecord mProducedBy[NUM_TREE_TRANS_TO_SHOW];
+        TextButton *mProducedByButtons[NUM_TREE_TRANS_TO_SHOW];
+        
+        TextButton mProducedByNext;
+        TextButton mProducedByPrev;
+        
+
+        int mProducesSkip;
+        TransRecord mProduces[NUM_TREE_TRANS_TO_SHOW];
+        TextButton *mProducesButtons[NUM_TREE_TRANS_TO_SHOW];
+        
+        TextButton mProducesNext;
+        TextButton mProducesPrev;
+        
+        
+        
+
         void checkIfSaveVisible();
+
+        void redoTransSearches( int inObjectID, char inClearSkip );
+        
     };
 
 

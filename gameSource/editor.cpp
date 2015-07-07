@@ -385,6 +385,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
     initSpriteBank();
     initObjectBank();
+    initTransBank();
     
 
     importPage = new EditorImportPage;
@@ -431,6 +432,9 @@ void freeFrameDrawer() {
     delete importPage;
     delete objectPage;
     delete transPage;
+
+
+    freeTransBank();
     
     freeObjectBank();
 
