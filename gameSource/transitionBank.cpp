@@ -108,13 +108,18 @@ void initTransBank() {
         
 
         usesMap[t->actor].push_back( t );
-        usesMap[t->target].push_back( t );
+
+        // no duplicate records
+        if( t->target != t->actor ) {    
+            usesMap[t->target].push_back( t );
+            }
         
         if( t->newActor != -1 ) {
             producesMap[t->newActor].push_back( t );
             }
         
-        if( t->newTarget != -1 ) {    
+        // no duplicate records
+        if( t->newTarget != -1 && t->newTarget != t->newActor ) {    
             producesMap[t->newTarget].push_back( t );
             }
         }
@@ -290,13 +295,18 @@ void addTrans( int inActor, int inTarget,
         records.push_back( t );
 
         usesMap[inActor].push_back( t );
-        usesMap[inTarget].push_back( t );
+
+        // no duplicate records when actor and target are the same
+        if( inTarget != inActor ) {    
+            usesMap[inTarget].push_back( t );
+            }
         
         if( inNewActor != -1 ) {
             producesMap[inNewActor].push_back( t );
             }
         
-        if( inNewTarget != -1 ) {    
+        // avoid duplicate records here too
+        if( inNewTarget != -1 && inNewTarget != inNewActor ) {    
             producesMap[inNewTarget].push_back( t );
             }
         
@@ -334,7 +344,8 @@ void addTrans( int inActor, int inTarget,
                 producesMap[inNewActor].push_back( t );
                 }
             
-            if( inNewTarget != -1 ) {    
+            // no duplicate records
+            if( inNewTarget != -1 && inNewTarget != inNewActor ) {    
                 producesMap[inNewTarget].push_back( t );
                 }
             
