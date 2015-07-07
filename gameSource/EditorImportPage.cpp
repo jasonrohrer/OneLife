@@ -23,7 +23,7 @@ static SpritePickable spritePickable;
 
 
 EditorImportPage::EditorImportPage()
-        : mImportButton( mainFont, -210, 260, "Import" ),
+        : mImportButton( mainFont, +210, 260, "Import" ),
           mSelect( false ),
           mImportedSheet( NULL ),
           mImportedSheetSprite( NULL ),

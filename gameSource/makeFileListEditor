@@ -30,6 +30,7 @@ Picker.cpp \
 objectBank.cpp \
 EditorObjectPage.cpp \
 transitionBank.cpp \
+EditorTransitionPage.cpp \
 
 
 

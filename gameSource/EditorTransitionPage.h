@@ -1,5 +1,5 @@
-#ifndef EDITOR_OBJECT_PAGE_INCLUDED
-#define EDITOR_OBJECT_PAGE_INCLUDED
+#ifndef EDITOR_TRANSITION_PAGE_INCLUDED
+#define EDITOR_TRANSITION_PAGE_INCLUDED
 
 
 
@@ -16,15 +16,15 @@
 
 #include "Picker.h"
 
-#include "objectBank.h"
+#include "transitionBank.h"
 
 
 
-class EditorObjectPage : public GamePage, public ActionListener {
+class EditorTransitionPage : public GamePage, public ActionListener {
         
     public:
-        EditorObjectPage();
-        ~EditorObjectPage();
+        EditorTransitionPage();
+        ~EditorTransitionPage();
         
         virtual void actionPerformed( GUIComponent *inTarget );
         
@@ -45,26 +45,13 @@ class EditorObjectPage : public GamePage, public ActionListener {
         virtual void specialKeyDown( int inKeyCode );
         
     protected:
-
-        TextField mDescriptionField;
         
-        TextButton mSaveObjectButton;
-        TextButton mReplaceObjectButton;
-
-        TextButton mClearObjectButton;
-
-        
-        TextButton mImportEditorButton;
-        TextButton mTransEditorButton;
-
-        Picker mSpritePicker;
+        TextButton mSaveTransitionButton;
         Picker mObjectPicker;
 
+        TextButton mObjectEditorButton;
 
-        ObjectRecord mCurrentObject;
-
-        int mPickedObjectLayer;
-        doublePair mPickedMouseOffset;
+        TransRecord mCurrentTransition;
     };
 
 

@@ -36,7 +36,8 @@ EditorObjectPage::EditorObjectPage()
           mSaveObjectButton( smallFont, 210, -260, "Save New" ),
           mReplaceObjectButton( smallFont, 310, -260, "Replace" ),
           mClearObjectButton( mainFont, 0, 160, "Blank" ),
-          mImportEditorButton( mainFont, 210, 260, "Sprites" ),
+          mImportEditorButton( mainFont, -210, 260, "Sprites" ),
+          mTransEditorButton( mainFont, 210, 260, "Trans" ),
           mSpritePicker( &spritePickable, -310, 100 ),
           mObjectPicker( &objectPickable, +310, 100 ) {
 
@@ -44,6 +45,7 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mSaveObjectButton );
     addComponent( &mReplaceObjectButton );
     addComponent( &mImportEditorButton );
+    addComponent( &mTransEditorButton );
     
     addComponent( &mClearObjectButton );
 
@@ -57,6 +59,7 @@ EditorObjectPage::EditorObjectPage()
     mSaveObjectButton.addActionListener( this );
     mReplaceObjectButton.addActionListener( this );
     mImportEditorButton.addActionListener( this );
+    mTransEditorButton.addActionListener( this );
 
     mClearObjectButton.addActionListener( this );
 
@@ -162,6 +165,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mImportEditorButton ) {
         setSignal( "importEditor" );
+        }
+    else if( inTarget == &mTransEditorButton ) {
+        setSignal( "transEditor" );
         }
     else if( inTarget == &mSpritePicker ) {
         
