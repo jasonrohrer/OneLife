@@ -57,6 +57,8 @@ class EditorTransitionPage : public GamePage, public ActionListener {
 
         TextButton *mReplaceButtons[4];
         
+        TextButton *mClearButtons[2];
+        
     };
 
 

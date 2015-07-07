@@ -51,11 +51,11 @@ EditorTransitionPage::EditorTransitionPage()
     
 
     
-    int yP = 100;
+    int yP = 75;
     
     int i = 0;
     for( int y = 0; y<2; y++ ) {
-        int xP = - 100;
+        int xP = - 250;
         for( int x = 0; x<2; x++ ) {
         
             mReplaceButtons[i] = new TextButton( mainFont, xP, yP, "R" );
@@ -64,12 +64,20 @@ EditorTransitionPage::EditorTransitionPage()
             
             mReplaceButtons[i]->addActionListener( this );
             
+            if( i>= 2 ) {
+                mClearButtons[i-2] = 
+                    new TextButton( smallFont, xP, yP - 52, "X" );
+                
+                addComponent( mClearButtons[i-2] );
+                mClearButtons[i-2]->addActionListener( this );
+                }
+            
             
             i++;
             
-            xP += 200;
+            xP += 400;
             }
-        yP -= 200;
+        yP -= 150;
         }
     }
 
@@ -78,6 +86,9 @@ EditorTransitionPage::EditorTransitionPage()
 EditorTransitionPage::~EditorTransitionPage() {
     for( int i=0; i<4; i++ ) {
         delete mReplaceButtons[i];
+        }
+    for( int i=0; i<2; i++ ) {
+        delete mClearButtons[i];
         }
     }
 
@@ -144,17 +155,24 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
         setSignal( "objectEditor" );
         }
     else {
-        char hit = false;
-        
+
         for( int i=0; i<4; i++ ) {
             if( inTarget == mReplaceButtons[i] ) {
                 
                 mCurrentlyReplacing = i;
                 
-                hit = true;
-                break;
+                return;
                 }
             }
+        
+        for( int i=0; i<2; i++ ) {
+            if( inTarget == mClearButtons[i] ) {
+                
+                setObjectByIndex( &mCurrentTransition, i+2, -1 );
+                return;
+                }
+            }
+        
         }
     
     }
@@ -169,8 +187,13 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
     
     for( int i=0; i<4; i++ ) {
         doublePair pos = mReplaceButtons[i]->getCenter();        
-
-        pos.x -= 100;
+        
+        if( i % 2 == 0 ) {    
+            pos.x += 100;
+            }
+        else {
+            pos.x -= 100;
+            }
         
         if( i == mCurrentlyReplacing ) {
             setDrawColor( 1, 1, 0, 1 );
@@ -187,7 +210,26 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             drawObject( getObject( id ), pos );
             }
         }
+
+    doublePair centerA = mult( add( mReplaceButtons[0]->getCenter(),
+                                    mReplaceButtons[1]->getCenter() ),
+                               0.5 );
     
+    setDrawColor( 1, 1, 1, 1 );
+    mainFont->drawString( "+", centerA, alignCenter );
+
+
+    doublePair centerB = mult( add( mReplaceButtons[2]->getCenter(),
+                                    mReplaceButtons[3]->getCenter() ),
+                               0.5 );
+    
+    mainFont->drawString( "+", centerB, alignCenter );
+    
+    
+    doublePair centerC = mult( add( centerA, centerB ), 0.5 );
+    
+    mainFont->drawString( "=", centerC, alignCenter );
+
     }
 
 
