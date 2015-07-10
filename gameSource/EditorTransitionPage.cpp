@@ -261,7 +261,7 @@ void EditorTransitionPage::redoTransSearches( int inObjectID,
         }
     
 
-
+    
     TransRecord **resultsB = searchUses( inObjectID, 
                                          mProducesSkip, 
                                          NUM_TREE_TRANS_TO_SHOW, 
@@ -286,8 +286,8 @@ void EditorTransitionPage::redoTransSearches( int inObjectID,
         
         mProducesNext.setVisible( numLeft > 0 );
         
-        delete [] resultsA;
-                }
+        delete [] resultsB;
+        }
     else {
         mProducesPrev.setVisible( false );
     
