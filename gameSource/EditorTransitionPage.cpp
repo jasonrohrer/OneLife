@@ -200,6 +200,15 @@ EditorTransitionPage::~EditorTransitionPage() {
 
 
 
+void EditorTransitionPage::clearUseOfObject( int inObjectID ) {
+    for( int i=0; i<4; i++ ) {    
+        if( getObjectByIndex( &mCurrentTransition, i ) == inObjectID ) {
+            
+            setObjectByIndex( &mCurrentTransition, i, -1 );
+            }
+        }
+    checkIfSaveVisible();
+    }
 
 
 

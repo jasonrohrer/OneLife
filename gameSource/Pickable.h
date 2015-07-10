@@ -25,6 +25,11 @@ class Pickable {
 
         virtual int getID( void *inObject ) = 0;
         
+
+        virtual char canDelete( int inID ) = 0;
+        
+        virtual void deleteID( int inID ) = 0;
+        
         
         // not destroyed by caller
         virtual const char *getText( void *inObject ) = 0;

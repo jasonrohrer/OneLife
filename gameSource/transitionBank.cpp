@@ -387,3 +387,33 @@ void addTrans( int inActor, int inTarget,
     
     }
 
+
+
+char isObjectUsed( int inObjectID ) {
+    
+    
+    int numResults, numRemaining;
+    
+    TransRecord **results = searchUses( inObjectID, 
+                                        0, 1,
+                                        &numResults, &numRemaining );
+    
+    if( results != NULL ) {
+        delete [] results;
+        
+        return true;
+        }
+    
+    
+    results = searchProduces( inObjectID, 
+                              0, 1,
+                              &numResults, &numRemaining );
+    
+    if( results != NULL ) {
+        delete [] results;
+        
+        return true;
+        }
+
+    return false;
+    }

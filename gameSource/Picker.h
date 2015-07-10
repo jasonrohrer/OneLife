@@ -53,6 +53,10 @@ class Picker : public PageComponent, ActionListener,
 
         TextButton mNextButton;
         TextButton mPrevButton;
+
+        TextButton mDelButton;
+        TextButton mDelConfirmButton;
+
         
         TextField mSearchField;
         

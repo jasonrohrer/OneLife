@@ -27,6 +27,8 @@ Picker::Picker( Pickable *inPickable, double inX, double inY )
           mNumResults( 0 ),
           mNextButton( smallFont, +60, -290, "Next" ), 
           mPrevButton( smallFont, -60, -290, "Prev" ), 
+          mDelButton( smallFont, 15, -290, "x" ), 
+          mDelConfirmButton( smallFont, -15, -290, "!" ), 
           mSearchField( mainFont, 
                         0,  100, 4,
                         false,
@@ -37,10 +39,20 @@ Picker::Picker( Pickable *inPickable, double inX, double inY )
     addComponent( &mPrevButton );
     addComponent( &mSearchField );
     
+    addComponent( &mDelButton );
+    addComponent( &mDelConfirmButton );
+    
+
     mNextButton.addActionListener( this );
     mPrevButton.addActionListener( this );
     mSearchField.addActionListener( this );
     
+    mDelButton.addActionListener( this );
+    mDelConfirmButton.addActionListener( this );
+    
+    mDelButton.setVisible( false );
+    mDelConfirmButton.setVisible( false );
+
     mSearchField.setFireOnAnyTextChange( true );
 
     redoSearch();
@@ -83,6 +95,9 @@ void Picker::redoSearch() {
     if( oldSelection != mSelectionIndex ) {
         fireActionPerformed( this );
         }
+
+    mDelButton.setVisible( false );
+    mDelConfirmButton.setVisible( false );
     }
 
 
@@ -104,6 +119,21 @@ void Picker::actionPerformed( GUIComponent *inTarget ) {
         mSkip = 0;
         redoSearch();
         }
+    else if( inTarget == &mDelButton ) {
+        mDelButton.setVisible( false );
+        mDelConfirmButton.setVisible( true );
+        }
+    else if( inTarget == &mDelConfirmButton ) {    
+        mPickable->deleteID( 
+            mPickable->getID( mResults[ mSelectionIndex ] ) );
+            
+        mDelButton.setVisible( false );
+        mDelConfirmButton.setVisible( false );
+
+        redoSearch();
+        }
+    
+        
     }
 
 
@@ -179,6 +209,17 @@ void Picker::pointerUp( float inX, float inY ) {
             
             fireActionPerformed( this );
             }
+
+        mDelButton.setVisible( false );
+        mDelConfirmButton.setVisible( false );
+
+        if( mSelectionIndex != -1 ) {
+            if( mPickable->canDelete( 
+                    mPickable->getID( mResults[ mSelectionIndex ] ) ) ) {
+                mDelButton.setVisible( true );
+                }
+            }
+        
         }
     }
 
@@ -196,4 +237,7 @@ int Picker::getSelectedObject() {
 
 void Picker::unselectObject() {
     mSelectionIndex = -1;
+    
+    mDelButton.setVisible( false );
+    mDelConfirmButton.setVisible( false );
     }

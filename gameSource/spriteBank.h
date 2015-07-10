@@ -38,4 +38,7 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
                Image *inSourceImage );
 
 
+void deleteSpriteFromBank( int inID );
+
+
 #endif

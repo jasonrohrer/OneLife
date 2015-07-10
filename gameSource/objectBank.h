@@ -53,5 +53,11 @@ void drawObject( ObjectRecord *inObject, doublePair inPos );
 
 
 
+void deleteObjectFromBank( int inID );
+
+
+char isSpriteUsed( int inSpriteID );
+
+
 
 #endif

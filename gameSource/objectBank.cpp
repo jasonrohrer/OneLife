@@ -387,3 +387,46 @@ void drawObject( ObjectRecord *inObject, doublePair inPos ) {
         }    
     }
 
+
+
+
+void deleteObjectFromBank( int inID ) {
+    
+    File objectsDir( NULL, "objects" );
+    
+    
+    if( objectsDir.exists() && objectsDir.isDirectory() ) {                
+                    
+        char *fileName = autoSprintf( "%d.txt", inID );
+        
+        File *objectFile = objectsDir.getChildFile( fileName );
+            
+        objectFile->remove();
+        
+        delete [] fileName;
+        delete objectFile;
+        }
+
+    freeObjectRecord( inID );
+    }
+
+
+
+char isSpriteUsed( int inSpriteID ) {
+
+
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            
+            for( int s=0; s<idMap[i]->numSprites; s++ ) {
+                if( idMap[i]->sprites[s] == inSpriteID ) {
+                    return true;
+                    }
+                }
+            }
+        }
+    return false;
+    }
+
+
+

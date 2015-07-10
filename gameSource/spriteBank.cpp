@@ -337,3 +337,35 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     }
 
 
+
+void deleteSpriteFromBank( int inID ) {
+    SpriteRecord *r = idMap[ inID ];
+
+    
+    File spritesDir( NULL, "sprites" );
+    
+    
+    if( spritesDir.exists() && spritesDir.isDirectory() ) {                
+                    
+        File *tagDir = spritesDir.getChildFile( r->tag );
+        
+        if( tagDir->exists() && tagDir->isDirectory() ) {
+            
+            char *fileName = autoSprintf( "%d.tga", inID );
+            
+            File *spriteFile = tagDir->getChildFile( fileName );
+            
+            spriteFile->remove();
+            
+            delete [] fileName;
+            delete spriteFile;
+            }
+        delete tagDir;
+        }
+    
+    
+    freeSpriteRecord( inID );
+    }
+
+
+

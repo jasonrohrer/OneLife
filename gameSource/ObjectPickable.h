@@ -6,6 +6,12 @@
 
 
 #include "objectBank.h"
+#include "transitionBank.h"
+
+
+#include "EditorTransitionPage.h"
+
+extern EditorTransitionPage *transPage;
 
 
 class ObjectPickable : public Pickable {
@@ -36,6 +42,18 @@ class ObjectPickable : public Pickable {
             return r->id;
             }
         
+
+
+        virtual char canDelete( int inID ) {
+            return ! isObjectUsed( inID );
+            }
+        
+
+        
+        virtual void deleteID( int inID ) {
+            transPage->clearUseOfObject( inID );
+            deleteObjectFromBank( inID );
+            }
 
 
 

@@ -122,6 +122,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         delete [] text;
         
+        mSpritePicker.unselectObject();
+
         mObjectPicker.redoSearch();
         actionPerformed( &mClearObjectButton );
         }
@@ -134,6 +136,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.id );
         
         delete [] text;
+        
+        mSpritePicker.unselectObject();
         
         mObjectPicker.redoSearch();
         actionPerformed( &mClearObjectButton );
@@ -302,6 +306,45 @@ void EditorObjectPage::makeActive( char inFresh ) {
     mObjectPicker.redoSearch();
 
     }
+
+
+
+
+void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
+    int numUses = 0;
+    
+    for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+        if( mCurrentObject.sprites[i] == inSpriteID ) {
+            numUses ++;
+            }
+        }
+
+    int newNumSprites = mCurrentObject.numSprites - numUses;
+    
+    int *newSprites = new int[ newNumSprites ];
+
+
+    doublePair *newSpritePos = new doublePair[ newNumSprites ];
+    
+    int j = 0;
+    for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+        
+        if( mCurrentObject.sprites[i] != inSpriteID ) {
+            // not one we're skipping
+            newSprites[j] = mCurrentObject.sprites[i];
+            newSpritePos[j] = mCurrentObject.spritePos[i];
+            j++;
+            }
+        }
+    
+    delete [] mCurrentObject.sprites;
+    delete [] mCurrentObject.spritePos;
+            
+    mCurrentObject.sprites = newSprites;
+    mCurrentObject.spritePos = newSpritePos;
+    mCurrentObject.numSprites = newNumSprites;
+    }
+
 
 
 

@@ -52,4 +52,8 @@ void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget );
 
 
+
+char isObjectUsed( int inObjectID );
+
+
 #endif

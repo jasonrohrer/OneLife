@@ -29,7 +29,10 @@ class EditorTransitionPage : public GamePage, public ActionListener {
     public:
         EditorTransitionPage();
         ~EditorTransitionPage();
+
+        void clearUseOfObject( int inObjectID );
         
+
         virtual void actionPerformed( GUIComponent *inTarget );
         
         virtual void draw( doublePair inViewCenter, 

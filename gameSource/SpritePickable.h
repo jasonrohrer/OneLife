@@ -6,6 +6,12 @@
 
 
 #include "spriteBank.h"
+#include "objectBank.h"
+
+
+#include "EditorObjectPage.h"
+
+extern EditorObjectPage *objectPage;
 
 
 class SpritePickable : public Pickable {
@@ -37,7 +43,17 @@ class SpritePickable : public Pickable {
             }
         
 
-
+        virtual char canDelete( int inID ) {
+            return ! isSpriteUsed( inID );
+            }
+        
+        
+        virtual void deleteID( int inID ) {
+            objectPage->clearUseOfSprite( inID );
+            deleteSpriteFromBank( inID );
+            }
+        
+        
 
         virtual const char *getText( void *inObject ) {
             SpriteRecord *r = (SpriteRecord*)inObject;

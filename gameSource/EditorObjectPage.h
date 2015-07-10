@@ -25,6 +25,10 @@ class EditorObjectPage : public GamePage, public ActionListener {
     public:
         EditorObjectPage();
         ~EditorObjectPage();
+
+
+        void clearUseOfSprite( int inSpriteID );
+        
         
         virtual void actionPerformed( GUIComponent *inTarget );
         
