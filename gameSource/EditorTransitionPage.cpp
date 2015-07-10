@@ -528,6 +528,25 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             }
         }
     
+    if( mCurrentlyReplacing != -1 ) {
+        int id = getObjectByIndex( &mCurrentTransition, mCurrentlyReplacing );
+        
+        if( id != -1 ) {
+            
+            ObjectRecord *r = getObject( id );
+            
+            setDrawColor( 1, 1, 1, 1 );
+            
+            doublePair desPos = centerB;
+            
+            desPos.y -= 100;
+
+            smallFont->drawString( r->description, desPos, alignCenter );
+
+            
+            }
+        }
+
     }
 
 
