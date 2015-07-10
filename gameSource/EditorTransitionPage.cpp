@@ -70,12 +70,15 @@ EditorTransitionPage::EditorTransitionPage()
           mProducedByNext( smallFont, 200, 260, "Next" ),
           mProducedByPrev( smallFont, -350, 260, "Prev" ),
           mProducesNext( smallFont, 200, -260, "Next" ),
-          mProducesPrev( smallFont, -350, -260, "Prev" ) {
+          mProducesPrev( smallFont, -350, -260, "Prev" ),
+          mDelButton( smallFont, +150, 0, "Delete" ),
+          mDelConfirmButton( smallFont, +150, 40, "Delete?" ) {
 
     addComponent( &mSaveTransitionButton );
     addComponent( &mObjectPicker );
     addComponent( &mObjectEditorButton );
-
+    addComponent( &mDelButton );
+    addComponent( &mDelConfirmButton );
 
     addComponent( &mProducedByNext );
     addComponent( &mProducedByPrev );
@@ -89,7 +92,13 @@ EditorTransitionPage::EditorTransitionPage()
     mObjectPicker.addActionListener( this );
 
     mSaveTransitionButton.setVisible( false );
+    
+    mDelButton.addActionListener( this );
+    mDelConfirmButton.addActionListener( this );
 
+    mDelButton.setVisible( false );
+    mDelConfirmButton.setVisible( false );
+    
 
     mProducedByNext.addActionListener( this );
     mProducedByPrev.addActionListener( this );
@@ -214,8 +223,12 @@ void EditorTransitionPage::clearUseOfObject( int inObjectID ) {
 
 
 void EditorTransitionPage::checkIfSaveVisible() {
-    mSaveTransitionButton.setVisible( 
-        getObjectByIndex( &mCurrentTransition, 1 ) != -1 );
+    char vis = ( getObjectByIndex( &mCurrentTransition, 1 ) != -1 );
+    
+    mSaveTransitionButton.setVisible( vis );
+    
+    mDelButton.setVisible( vis );
+    mDelConfirmButton.setVisible( false );
     }
 
 
@@ -322,6 +335,22 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             
         redoTransSearches( mLastSearchID, true );
         }
+    if( inTarget == &mDelButton ) {
+        mDelButton.setVisible( false );
+        mDelConfirmButton.setVisible( true );
+        }
+    else if( inTarget == &mDelConfirmButton ) {
+        
+        deleteTransFromBank( getObjectByIndex( &mCurrentTransition, 0 ),
+                             getObjectByIndex( &mCurrentTransition, 1 ) );
+                             
+        for( int i=0; i<4; i++ ) {
+            setObjectByIndex( &mCurrentTransition, i, -1 );
+            }
+        checkIfSaveVisible();
+
+        redoTransSearches( 0, true );
+        }
     else if( inTarget == &mObjectPicker ) {
         if( mCurrentlyReplacing != -1 ) {
             
@@ -375,6 +404,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                     redoTransSearches( replacingID, true );
                     }
                 
+                checkIfSaveVisible();
                 return;
                 }
             }
@@ -411,7 +441,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                         break;
                         }
                     }
-                
+                checkIfSaveVisible();
                 return;
                 }
             if( inTarget == mProducesButtons[i] ) {
@@ -428,7 +458,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                         break;
                         }
                     }
-
+                checkIfSaveVisible();
                 return;
                 }
             }

@@ -53,6 +53,10 @@ void addTrans( int inActor, int inTarget,
 
 
 
+void deleteTransFromBank( int inActor, int inTarget );
+
+
+
 char isObjectUsed( int inObjectID );
 
 

@@ -334,7 +334,7 @@ void addTrans( int inActor, int inTarget,
             // remove record from producesMaps
             
             if( t->newActor != -1 ) {
-                producesMap[t->newTarget].deleteElementEqualTo( t );
+                producesMap[t->newActor].deleteElementEqualTo( t );
                 }
             if( t->newTarget != -1 ) {                
                 producesMap[t->newTarget].deleteElementEqualTo( t );
@@ -386,6 +386,51 @@ void addTrans( int inActor, int inTarget,
         }
     
     }
+
+
+
+void deleteTransFromBank( int inActor, int inTarget ) {
+    
+    // one exists?
+    TransRecord *t = getTrans( inActor, inTarget );
+    
+    if( t != NULL ) {
+        
+        File transDir( NULL, "transitions" );
+                    
+        if( transDir.exists() && transDir.isDirectory() ) {
+        
+            char *fileName = autoSprintf( "%d_%d.txt", inActor, inTarget );
+            
+
+            File *transFile = transDir.getChildFile( fileName );
+            
+        
+            transFile->remove();
+            delete transFile;
+            delete [] fileName;
+            }
+        
+
+        if( t->newActor != -1 ) {
+            producesMap[t->newActor].deleteElementEqualTo( t );
+                }
+        if( t->newTarget != -1 ) {                
+            producesMap[t->newTarget].deleteElementEqualTo( t );
+            }
+        
+        if( inActor != -1 ) {
+            usesMap[inActor].deleteElementEqualTo( t );
+            }
+        usesMap[inTarget].deleteElementEqualTo( t );
+        
+
+        records.deleteElementEqualTo( t );
+
+        delete t;
+        }
+    }
+
 
 
 

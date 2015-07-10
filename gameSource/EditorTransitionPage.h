@@ -85,6 +85,8 @@ class EditorTransitionPage : public GamePage, public ActionListener {
         TextButton mProducesPrev;
         
         
+        TextButton mDelButton;
+        TextButton mDelConfirmButton;
         
 
         void checkIfSaveVisible();
