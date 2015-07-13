@@ -50,6 +50,8 @@ CustomRandomSource randSource( 34957197 );
 
 
 
+#include "spriteBank.h"
+#include "objectBank.h"
 
 
 
@@ -101,6 +103,13 @@ char *serverAddress = NULL;
 int serverPort;
 
 int serverSocket = -1;
+
+
+
+int mapD = 100;
+
+int *map;
+
 
 
 
@@ -365,6 +374,18 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     setSoundLoudness( musicLoudness );
     setSoundPlaying( false );
 
+
+    map = new int[ mapD * mapD ];
+
+    for( int i=0; i<mapD *mapD; i++ ) {
+        map[i] = 0;
+        }
+    
+    
+    initSpriteBank();
+    initObjectBank();
+    
+
     initDone = true;
     }
 
@@ -395,6 +416,12 @@ void freeFrameDrawer() {
     if( serverSocket != -1 ) {
         closeSocket( serverSocket );
         }
+
+
+    freeObjectBank();
+    freeSpriteBank();
+
+    delete [] map;
     }
 
 
@@ -729,6 +756,42 @@ char *getNextServerMessage() {
 
 
 
+typedef enum messageType {
+	MAP_CHUNK,
+    PLAYER_UPDATE,
+    UNKNOWN
+    } messageType;
+
+
+
+
+messageType getMessageType( char *inMessage ) {
+    char *copy = stringDuplicate( inMessage );
+    
+    char *firstBreak = strstr( copy, "\n" );
+    
+    if( firstBreak == NULL ) {
+        delete [] copy;
+        return UNKNOWN;
+        }
+    
+    firstBreak[0] = '\0';
+    
+    messageType returnValue = UNKNOWN;
+
+    if( strcmp( copy, "MAP_CHUNK" ) == 0 ) {
+        returnValue = MAP_CHUNK;
+        }
+    else if( strcmp( copy, "PLAYER_UPDATE" ) == 0 ) {
+        returnValue = PLAYER_UPDATE;
+        }
+    
+    delete [] copy;
+    return returnValue;
+    }
+
+
+
 
 typedef struct LiveObject {
         int id;
@@ -744,6 +807,9 @@ typedef struct LiveObject {
 
 
 SimpleVector<LiveObject> gameObjects;
+
+
+
 
 int ourID;
 
@@ -912,7 +978,58 @@ void drawFrame( char inUpdate ) {
 
 
     if( message != NULL ) {
+        printf( "Got message\n%s\n", message );
+
+        messageType type = getMessageType( message );
         
+
+        if( type == MAP_CHUNK ) {
+            
+            int size = 0;
+            int x = 0;
+            int y = 0;
+            
+            sscanf( message, "MAP_CHUNK\n%d %d %d\n", &size, &x, &y );
+            
+            printf( "Got map chunk\n%s\n", message );
+
+            SimpleVector<char *> *tokens = tokenizeString( message );
+            
+
+            // first four are header parts
+
+            int numCells = size * size;
+
+            if( tokens->size() == numCells + 4 ) {
+                
+                for( int i=4; i<tokens->size(); i++ ) {
+                    int cI = i-4;
+                    int cX = cI % size;
+                    int cY = cI / size;
+                    
+                    int mapX = cX + x + mapD / 2;
+                    int mapY = cY + y + mapD / 2;
+                    
+                    if( mapX >= 0 && mapX < mapD
+                        &&
+                        mapY >= 0 && mapY < mapD ) {
+                        
+                        
+                        int mapI = mapY * mapD + mapX;
+                        
+                        sscanf( tokens->getElementDirect(i),
+                                "%d", &( map[mapI] ) );
+                        }
+                    }
+                }   
+            
+            tokens->deallocateStringElements();
+            delete tokens;
+            }
+        
+        delete [] message;
+
+        /*
         if( !firstServerMessageReceived ) {
         
             printf( "Got first message from server: %s\n", message );
@@ -1032,6 +1149,7 @@ void drawFrame( char inUpdate ) {
 
 
         delete [] message;
+        */
         }
     
 
@@ -1076,11 +1194,39 @@ void drawFrame( char inUpdate ) {
 
 
 void drawFrameNoUpdate( char inUpdate ) {
-
+    
+    setDrawColor( 1, 1, 1, 1 );
+    doublePair center = {0,0};
+    drawSquare( center, 400 );
+    
     //if( currentGamePage != NULL ) {
     //    currentGamePage->base_draw( lastScreenViewCenter, viewWidth );
     //    }
+    
+    setDrawColor( 1, 1, 1, 1 );
+    for( int y=0; y<mapD; y++ ) {
+        
+        int screenY = - 32 * ( y - mapD / 2 );
+        
+        for( int x=0; x<mapD; x++ ) {
+            
+            int screenX = 32 * ( x - mapD / 2 );
 
+            int mapI = y * mapD + x;
+            
+            int oID = map[ mapI ];
+            
+            if( oID > 0 ) {
+                
+                doublePair pos = { screenX, screenY };
+
+                drawObject( getObject(oID), pos );
+                }
+            }
+        }
+        
+    
+    
     
     
     for( int i=0; i<gameObjects.size(); i++ ) {

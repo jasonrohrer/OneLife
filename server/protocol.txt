@@ -4,6 +4,84 @@ Terminated by # character
 
 
 
+Each message from server is prefaced by a type tag.
+
+Possible types include:
+
+MAP_CHUNK
+
+PLAYER_UPDATE
+
+PLAYER_MOVES_START
+
+MAP_CHANGE
+
+
+
+Client can expect to receive these at any time, and in any order.
+
+
+
+MAP_CHUNK
+size x y
+id id id id id id id id ... id#
+
+
+Where:
+Chunk includes a size X size number of ids (a square of the map).
+Square is positioned on map grid with upper left corner at x y
+
+
+
+
+PLAYER_UPDATE
+p_id o_id x y
+p_id o_id x y
+p_id o_id x y
+p_id o_id x y
+...
+p_id o_id x y
+#
+
+List of player ids with their held object ids and x,y grid positions.
+This means the player is stationary at this position.
+
+
+
+
+
+PLAYER_MOVES_START
+p_id x y fraction_done eta_sec
+p_id x y fraction_done eta_sec
+p_id x y fraction_done eta_sec
+...
+p_id x y fraction_done eta_sec
+#
+
+List of player ids that just started moving, their destination x y grid
+position, how far along their move they are (in case we come into the game in
+the middle of a move), and their time to arrival in floating point seconds
+
+
+A PLAYER_UPDATE will be sent when these players reach their destination.
+Until that has happened, client must assume player is still in transit.
+
+
+
+
+MAP_CHANGE
+x y new_id
+x y new_id
+x y new_id
+...
+x y new_id
+#
+
+Grid position of changes, and id that position must change to.
+
+
+
+
 First message sent upon client new connection to server:
 
 List of object IDs and x,y positions.  Client's object is listed last
@@ -31,6 +109,10 @@ In other words, no x,y coordiantes, but the character X twice instead
 
 
 
+
 Clients send moves in the following format:
 
-x y#
+MOVE x y#
+USE x y#
+GRAB x y#
+DROP x y#

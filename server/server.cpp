@@ -9,6 +9,9 @@
 #include "minorGems/network/SocketServer.h"
 
 
+#include "map.h"
+
+
 
 typedef struct LiveObject {
         int id;
@@ -47,6 +50,10 @@ int main() {
     printf( "Test server\n" );
 
     signal( SIGINT, intHandler );
+
+
+    initMap();
+    
     
     int port = 
         SettingsManager::getIntSetting( "port", 5077 );
@@ -184,8 +191,38 @@ int main() {
             
             if( ! nextPlayer->firstMessageSent ) {
                 
+
+                // first, send the map chunk around them
+
+                char *mapChunkMessage = getChunkMessage( nextPlayer->x,
+                                                         nextPlayer->y );
+                
+                
+                int messageLength = strlen( mapChunkMessage );
+
+                int numSent = 
+                    nextPlayer->sock->send( (unsigned char*)mapChunkMessage, 
+                                            messageLength, 
+                                            false, false );
+                
+                delete [] mapChunkMessage;
+                
+
+                if( numSent == -1 ) {
+                    nextPlayer->error = true;
+                    }
+                else if( numSent != messageLength ) {
+                    // still not sent, try again later
+                    continue;
+                    }
+
+
+
                 // now send starting message
                 SimpleVector<char> messageBuffer;
+
+                messageBuffer.appendElementString( "PLAYER_UPDATE\n" );
+
                 int numPlayers = players.size();
             
                 // must be last in message
@@ -195,8 +232,10 @@ int main() {
                 
                     LiveObject o = *( players.getElement( i ) );
                 
+
+                    // holding no object for now
                     char *messageLine = 
-                        autoSprintf( "%d %d %d\n", o.id, o.x, o.y );
+                        autoSprintf( "%d 0 %d %d\n", o.id, o.x, o.y );
                     
 
                     if( o.id != nextPlayer->id ) {
@@ -215,9 +254,9 @@ int main() {
                 messageBuffer.push_back( '#' );
             
                 char *message = messageBuffer.getElementString();
-                int messageLength = strlen( message );
+                messageLength = strlen( message );
 
-                int numSent = 
+                numSent = 
                     nextPlayer->sock->send( (unsigned char*)message, 
                                             messageLength, 
                                             false, false );
@@ -279,6 +318,8 @@ int main() {
         delete nextPlayer->sock;
         }
     
+    freeMap();
+
     printf( "Done.\n" );
 
 

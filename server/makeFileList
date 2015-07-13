@@ -17,7 +17,7 @@ ROOT_PATH = ../..
 
 LAYER_SOURCE = \
 server.cpp \
-
+map.cpp \
 
 
 GAME_GRAPHICS = \

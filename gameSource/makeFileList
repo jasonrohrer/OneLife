@@ -14,8 +14,9 @@ ROOT_PATH = ../..
 
 
 LAYER_SOURCE = \
-game.cpp
-
+game.cpp \
+spriteBank.cpp \
+objectBank.cpp \
 
 
 
@@ -66,3 +67,5 @@ NEEDED_MINOR_GEMS_OBJECTS = \
  ${CURVE_25519_O} \
  ${CRYPTO_RANDOM_O} \
  ${DIFF_BUNDLE_CLIENT_O} \
+ ${STRING_TREE_O} \
+
