@@ -214,6 +214,8 @@ void Picker::pointerUp( float inX, float inY ) {
         mDelConfirmButton.setVisible( false );
 
         if( mSelectionIndex != -1 ) {
+            mSearchField.unfocusAll();
+            
             if( mPickable->canDelete( 
                     mPickable->getID( mResults[ mSelectionIndex ] ) ) ) {
                 mDelButton.setVisible( true );

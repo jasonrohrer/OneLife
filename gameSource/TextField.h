@@ -82,6 +82,12 @@ class TextField : public PageComponent, public ActionListenerList {
         virtual void unfocus();
 
         virtual char isFocused();
+        
+        
+        static char isAnyFocused();
+        
+        static void unfocusAll();
+        
 
         // defaults to 30 and 2
         static void setDeleteRepeatDelays( int inFirstDelaySteps,

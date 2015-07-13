@@ -378,12 +378,13 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
     
     
     if( mPickedObjectLayer != -1 ) {
-        mDescriptionField.unfocus();
+        mDescriptionField.unfocusAll();
         
         mPickedMouseOffset = 
             sub( pos, mCurrentObject.spritePos[mPickedObjectLayer] );
         }
-    else {
+    else if( smallestDist < 200 ) {
+        mDescriptionField.unfocusAll();
         // dragging whole object?
         doublePair center = {0,0};
         
@@ -427,6 +428,10 @@ void EditorObjectPage::pointerUp( float inX, float inY ) {
 
 void EditorObjectPage::keyDown( unsigned char inASCII ) {
     if( mPickedObjectLayer == -1 ) {
+        return;
+        }
+
+    if( mDescriptionField.isAnyFocused() ) {
         return;
         }
     
@@ -475,6 +480,12 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
 
 
 void EditorObjectPage::specialKeyDown( int inKeyCode ) {
+    
+    if( mDescriptionField.isAnyFocused() ) {
+        return;
+        }
+
+
     int offset = 1;
     
     if( isCommandKeyDown() ) {

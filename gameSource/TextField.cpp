@@ -814,3 +814,26 @@ void TextField::setDeleteRepeatDelays( int inFirstDelaySteps,
     sDeleteFirstDelaySteps = inFirstDelaySteps;
     sDeleteNextDelaySteps = inNextDelaySteps;
     }
+
+
+
+char TextField::isAnyFocused() {
+    if( sFocusedTextField != NULL ) {
+        return true;
+        }
+    return false;
+    }
+
+
+        
+void TextField::unfocusAll() {
+    
+    if( sFocusedTextField != NULL ) {
+        // unfocus last focused
+        sFocusedTextField->unfocus();
+        }
+
+    sFocusedTextField = NULL;
+    }
+
+        

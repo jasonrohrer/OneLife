@@ -225,8 +225,8 @@ void EditorImportPage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
-
-
+    
+    mSpritePicker.redoSearch();
     }
 
 
