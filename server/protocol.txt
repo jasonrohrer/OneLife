@@ -46,21 +46,27 @@ p_id o_id x y
 List of player ids with their held object ids and x,y grid positions.
 This means the player is stationary at this position.
 
+Deleted players reported in update with
+X X 
+for x y.
+
+
 
 
 
 
 PLAYER_MOVES_START
-p_id x y fraction_done eta_sec
-p_id x y fraction_done eta_sec
-p_id x y fraction_done eta_sec
+p_id xs ys xd yd fraction_done eta_sec
+p_id xs ys xd yd fraction_done eta_sec
+p_id xs ys xd yd fraction_done eta_sec
 ...
-p_id x y fraction_done eta_sec
+p_id xs ys xd yd fraction_done eta_sec
 #
 
-List of player ids that just started moving, their destination x y grid
-position, how far along their move they are (in case we come into the game in
-the middle of a move), and their time to arrival in floating point seconds
+List of player ids that just started moving, their start and 
+destination x y grid position, how far along their move they are (in case we 
+come into the game in the middle of a move), and their time to arrival in 
+floating point seconds
 
 
 A PLAYER_UPDATE will be sent when these players reach their destination.

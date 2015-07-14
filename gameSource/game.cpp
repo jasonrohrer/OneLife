@@ -88,7 +88,7 @@ double frameRateFactor = 1;
 
 
 char firstDrawFrameCalled = false;
-char firstServerMessageReceived = false;
+int firstServerMessagesReceived = 0;
 
 
 char upKey = 'w';
@@ -759,6 +759,7 @@ char *getNextServerMessage() {
 typedef enum messageType {
 	MAP_CHUNK,
     PLAYER_UPDATE,
+    PLAYER_MOVES_START,
     UNKNOWN
     } messageType;
 
@@ -785,6 +786,9 @@ messageType getMessageType( char *inMessage ) {
     else if( strcmp( copy, "PLAYER_UPDATE" ) == 0 ) {
         returnValue = PLAYER_UPDATE;
         }
+    else if( strcmp( copy, "PLAYER_MOVES_START" ) == 0 ) {
+        returnValue = PLAYER_MOVES_START;
+        }
     
     delete [] copy;
     return returnValue;
@@ -800,8 +804,9 @@ typedef struct LiveObject {
 
         int holdingID;
 
-        int xTemp;
-        int yTemp;
+        
+        double xTemp;
+        double yTemp;
         
         
         char displayChar;
@@ -1027,6 +1032,8 @@ void drawFrame( char inUpdate ) {
             
             tokens->deallocateStringElements();
             delete tokens;
+
+            firstServerMessagesReceived |= 1;
             }
         else if( type == PLAYER_UPDATE ) {
             
@@ -1079,7 +1086,88 @@ void drawFrame( char inUpdate ) {
                         gameObjects.push_back( o );
                         }
                     }
+                else if( numRead == 2 ) {
+                    if( strstr( lines[i], "X X" ) != NULL  ) {
+                        // object deleted
+                        
+                        numRead = sscanf( lines[i], "%d %d",
+                                          &( o.id ),
+                                          &( o.holdingID ) );
+                        
+
+                        for( int i=0; i<gameObjects.size(); i++ ) {
+        
+                            if( gameObjects.getElement( i )->id == o.id ) {
+                                gameObjects.deleteElement( i );
+                                break;
+                                }
+                            }
+                        
+                        }
+                    }
                 
+                delete [] lines[i];
+                }
+            
+
+            delete [] lines;
+
+
+            if( ( firstServerMessagesReceived & 2 ) == 0 ) {
+            
+                LiveObject *ourObject = 
+                    gameObjects.getElement( gameObjects.size() - 1 );
+                
+                ourID = ourObject->id;
+                
+                ourObject->displayChar = 'A';
+                }
+            
+            firstServerMessagesReceived |= 2;
+            }
+        else if( type == PLAYER_MOVES_START ) {
+            
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip fist
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+
+                LiveObject o;
+
+                double fractDone, etaSec;
+                
+                int numRead = sscanf( lines[i], "%d %d %d %lf %lf %lf %lf",
+                                      &( o.id ),
+                                      &( o.x ),
+                                      &( o.y ),
+                                      &( o.xTemp ),
+                                      &( o.yTemp ),
+                                      &fractDone,
+                                      &etaSec );
+                
+                if( numRead == 7 ) {
+                    
+                    for( int j=0; j<gameObjects.size(); j++ ) {
+                        if( gameObjects.getElement(j)->id == o.id ) {
+                            
+                            LiveObject *existing = gameObjects.getElement(j);
+                            
+                            existing->xTemp = (double)( existing->x );
+                            existing->yTemp = (double)(  existing->y );
+                            
+                            existing->x = (int)( o.xTemp );
+                            existing->y = (int)( o.yTemp );
+
+                            break;
+                            }
+                        }
+                    }
                 delete [] lines[i];
                 }
             
@@ -1091,7 +1179,7 @@ void drawFrame( char inUpdate ) {
         delete [] message;
 
         /*
-        if( !firstServerMessageReceived ) {
+        if( !firstServerMessagesReceived ) {
         
             printf( "Got first message from server: %s\n", message );
 
@@ -1130,7 +1218,7 @@ void drawFrame( char inUpdate ) {
             
             delete tokens;
 
-            firstServerMessageReceived = true;
+            firstServerMessagesReceived = true;
             }
         else {
             // update message
@@ -1223,18 +1311,18 @@ void drawFrame( char inUpdate ) {
 
         if( o->x != o->xTemp ) {
             if( o->x > o->xTemp ) {
-                o->xTemp++;
+                o->xTemp += 1.0 / 32;
                 }
             else {
-                o->xTemp--;
+                o->xTemp -= 1.0 / 32;
                 }
             }
         if( o->y != o->yTemp ) {
             if( o->y > o->yTemp ) {
-                o->yTemp++;
+                o->yTemp += 1.0 / 32;
                 }
             else {
-                o->yTemp--;
+                o->yTemp -= 1.0 / 32;
                 }
             }
         }
@@ -1301,8 +1389,8 @@ void drawFrameNoUpdate( char inUpdate ) {
             char *string = autoSprintf( "[%c]", o->displayChar );
         
             doublePair pos;
-            pos.x = o->x;
-            pos.y = o->y;
+            pos.x = o->x * 32;
+            pos.y = o->y * 32;
         
             setDrawColor( 1, 0, 0, 1 );
             mainFont->drawString( string, 
@@ -1316,8 +1404,8 @@ void drawFrameNoUpdate( char inUpdate ) {
         char *string = autoSprintf( "%c", o->displayChar );
         
         doublePair pos;
-        pos.x = o->xTemp;
-        pos.y = o->yTemp;
+        pos.x = o->xTemp * 32;
+        pos.y = o->yTemp * 32;
         
         setDrawColor( 0, 0, 0, 1 );
         mainFont->drawString( string, 
@@ -1375,7 +1463,7 @@ void pointerDown( float inX, float inY ) {
         return;
         }
 
-    if( !firstServerMessageReceived ) {
+    if( firstServerMessagesReceived != 3 ) {
         return;
         }
 
@@ -1391,10 +1479,14 @@ void pointerDown( float inX, float inY ) {
             }
         }
     
+    int destX = (int)inX / 32;
+    
+    int dextY = (int)inY / 32;
+    
     if( ourLiveObject->x == ourLiveObject->xTemp && 
         ourLiveObject->y == ourLiveObject->yTemp ) {
         
-        char *message = autoSprintf( "%d %d#", (int)inX, (int)inY );
+        char *message = autoSprintf( "MOVE %d %d#", destX, dextY );
         sendToSocket( serverSocket, (unsigned char*)message, 
                       strlen( message ) );
         
