@@ -18,6 +18,8 @@ typedef struct LiveObject {
         int x;
         int y;
 
+        int holdingID;
+
         Socket *sock;
         
         char isNew;
@@ -77,6 +79,7 @@ int main() {
             nextID++;
             newObject.x = 0;
             newObject.y = 0;
+            newObject.holdingID = 0;
             newObject.sock = sock;
             newObject.isNew = true;
             newObject.firstMessageSent = false;
@@ -235,7 +238,8 @@ int main() {
 
                     // holding no object for now
                     char *messageLine = 
-                        autoSprintf( "%d 0 %d %d\n", o.id, o.x, o.y );
+                        autoSprintf( "%d %d %d %d\n", o.id, o.holdingID,
+                                     o.x, o.y );
                     
 
                     if( o.id != nextPlayer->id ) {

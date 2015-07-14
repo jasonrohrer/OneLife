@@ -798,6 +798,8 @@ typedef struct LiveObject {
         int x;
         int y;
 
+        int holdingID;
+
         int xTemp;
         int yTemp;
         
@@ -1026,7 +1028,66 @@ void drawFrame( char inUpdate ) {
             tokens->deallocateStringElements();
             delete tokens;
             }
+        else if( type == PLAYER_UPDATE ) {
+            
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip fist
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+
+                LiveObject o;
+
+                int numRead = sscanf( lines[i], "%d %d %d %d",
+                                      &( o.id ),
+                                      &( o.holdingID ),
+                                      &( o.x ),
+                                      &( o.y ) );
+                
+                if( numRead == 4 ) {
+                    
+                    LiveObject *existing = NULL;
+
+                    for( int j=0; j<gameObjects.size(); j++ ) {
+                        if( gameObjects.getElement(j)->id == o.id ) {
+                            existing = gameObjects.getElement(j);
+                            break;
+                            }
+                        }
+                    
+                    if( existing != NULL ) {
+                        existing->x = o.x;
+                        existing->y = o.y;
+                        existing->holdingID = o.holdingID;
+                        
+                        existing->xTemp = o.x;
+                        existing->yTemp = o.y;
+                        }
+                    else {    
+                        o.displayChar = lastCharUsed + 1;
+                    
+                        lastCharUsed = o.displayChar;
+                    
+                        o.xTemp = o.x;
+                        o.yTemp = o.y;
+                    
+                        gameObjects.push_back( o );
+                        }
+                    }
+                
+                delete [] lines[i];
+                }
+            
+
+            delete [] lines;
+            }
         
+
         delete [] message;
 
         /*
@@ -1258,7 +1319,7 @@ void drawFrameNoUpdate( char inUpdate ) {
         pos.x = o->xTemp;
         pos.y = o->yTemp;
         
-        setDrawColor( 1, 1, 1, 1 );
+        setDrawColor( 0, 0, 0, 1 );
         mainFont->drawString( string, 
                               pos, alignCenter );
 
