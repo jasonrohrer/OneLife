@@ -1456,6 +1456,21 @@ void drawFrameNoUpdate( char inUpdate ) {
         
         
         }
+
+
+    setDrawColor( 0, 0, 0, 0.125 );
+    
+    for( int y=-10; y<10; y++ ) {
+        for( int x=-10; x<10; x++ ) {
+            
+            doublePair pos;
+            pos.x = x * 32;
+            pos.y = y * 32;
+            
+            drawSquare( pos, 14 );
+            }
+        }
+    
     }
 
 
@@ -1519,14 +1534,15 @@ void pointerDown( float inX, float inY ) {
             }
         }
     
-    int destX = (int)inX / 32;
+    int destX = lrintf( ( inX ) / 32 );
     
-    int dextY = (int)inY / 32;
+    int destY = lrintf( ( inY ) / 32 );
+    
     
     if( ourLiveObject->xs == ourLiveObject->xd && 
         ourLiveObject->ys == ourLiveObject->yd ) {
         
-        char *message = autoSprintf( "MOVE %d %d#", destX, dextY );
+        char *message = autoSprintf( "MOVE %d %d#", destX, destY );
         sendToSocket( serverSocket, (unsigned char*)message, 
                       strlen( message ) );
         
