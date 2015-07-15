@@ -32,6 +32,8 @@ int accountHmacVersionNumber = 25;
 #include "minorGems/util/SettingsManager.h"
 #include "minorGems/util/random/CustomRandomSource.h"
 
+#include "minorGems/system/Time.h"
+
 
 // static seed
 CustomRandomSource randSource( 34957197 );
@@ -804,9 +806,17 @@ typedef struct LiveObject {
 
         int holdingID;
 
+        int xs;
+        int ys;
+        int xd;
+        int yd;
         
-        double xTemp;
-        double yTemp;
+        // how long whole move should take
+        double moveTotalTime;
+        
+        // wall clock time in seconds object should arrive
+        double moveEtaTime;
+
         
         
         char displayChar;
@@ -1072,17 +1082,28 @@ void drawFrame( char inUpdate ) {
                         existing->y = o.y;
                         existing->holdingID = o.holdingID;
                         
-                        existing->xTemp = o.x;
-                        existing->yTemp = o.y;
+                        existing->xs = o.x;
+                        existing->ys = o.y;
+                        
+                        existing->xd = o.x;
+                        existing->yd = o.y;
+                        
+                        existing->moveTotalTime = 0;
                         }
                     else {    
                         o.displayChar = lastCharUsed + 1;
                     
                         lastCharUsed = o.displayChar;
                     
-                        o.xTemp = o.x;
-                        o.yTemp = o.y;
-                    
+                        o.xs = o.x;
+                        o.ys = o.y;
+                        
+                        o.xd = o.x;
+                        o.yd = o.y;
+                        
+                        o.moveTotalTime = 0;
+                        
+                        
                         gameObjects.push_back( o );
                         }
                     }
@@ -1140,17 +1161,20 @@ void drawFrame( char inUpdate ) {
 
                 LiveObject o;
 
-                double fractDone, etaSec;
+                double etaSec;
                 
-                int numRead = sscanf( lines[i], "%d %d %d %lf %lf %lf %lf",
+                int numRead = sscanf( lines[i], "%d %d %d %d %d %lf %lf",
                                       &( o.id ),
-                                      &( o.x ),
-                                      &( o.y ),
-                                      &( o.xTemp ),
-                                      &( o.yTemp ),
-                                      &fractDone,
+                                      &( o.xs ),
+                                      &( o.ys ),
+                                      &( o.xd ),
+                                      &( o.yd ),
+                                      &( o.moveTotalTime ),
                                       &etaSec );
                 
+                o.moveEtaTime = etaSec + Time::getCurrentTime();
+                
+
                 if( numRead == 7 ) {
                     
                     for( int j=0; j<gameObjects.size(); j++ ) {
@@ -1158,11 +1182,14 @@ void drawFrame( char inUpdate ) {
                             
                             LiveObject *existing = gameObjects.getElement(j);
                             
-                            existing->xTemp = (double)( existing->x );
-                            existing->yTemp = (double)(  existing->y );
+                            existing->xs = o.xs;
+                            existing->ys = o.ys;
                             
-                            existing->x = (int)( o.xTemp );
-                            existing->y = (int)( o.yTemp );
+                            existing->xd = o.xd;
+                            existing->yd = o.yd;
+                            
+                            existing->moveTotalTime = o.moveTotalTime;
+                            existing->moveEtaTime = o.moveEtaTime;
 
                             break;
                             }
@@ -1302,7 +1329,7 @@ void drawFrame( char inUpdate ) {
         }
     
 
-
+    /*
     // move objects toward their x,y destinations
 
     for( int i=0; i<gameObjects.size(); i++ ) {
@@ -1326,7 +1353,7 @@ void drawFrame( char inUpdate ) {
                 }
             }
         }
-    
+    */
     
 
     // now draw stuff AFTER all updates
@@ -1383,14 +1410,14 @@ void drawFrameNoUpdate( char inUpdate ) {
         LiveObject *o = gameObjects.getElement( i );
 
 
-        if( o->x != o->xTemp || o->y != o->yTemp ) {
+        if( o->xs != o->xd || o->ys != o->yd ) {
             // destination
             
             char *string = autoSprintf( "[%c]", o->displayChar );
         
             doublePair pos;
-            pos.x = o->x * 32;
-            pos.y = o->y * 32;
+            pos.x = o->xd * 32;
+            pos.y = o->yd * 32;
         
             setDrawColor( 1, 0, 0, 1 );
             mainFont->drawString( string, 
@@ -1403,9 +1430,22 @@ void drawFrameNoUpdate( char inUpdate ) {
         // current pos
         char *string = autoSprintf( "%c", o->displayChar );
         
+        double fracDone = 1;
+
+        if( o->xs != o->xd || o->ys != o->yd ) {
+
+            double timeLeft = o->moveEtaTime - Time::getCurrentTime();
+            
+            if( timeLeft > 0 ) {
+                fracDone = 1 - ( timeLeft / o->moveTotalTime );
+                }
+            }
+        
+
+
         doublePair pos;
-        pos.x = o->xTemp * 32;
-        pos.y = o->yTemp * 32;
+        pos.x = ( fracDone * o->xd + (1-fracDone) * o->xs )* 32;
+        pos.y = ( fracDone * o->yd + (1-fracDone) * o->ys )* 32;
         
         setDrawColor( 0, 0, 0, 1 );
         mainFont->drawString( string, 
@@ -1483,8 +1523,8 @@ void pointerDown( float inX, float inY ) {
     
     int dextY = (int)inY / 32;
     
-    if( ourLiveObject->x == ourLiveObject->xTemp && 
-        ourLiveObject->y == ourLiveObject->yTemp ) {
+    if( ourLiveObject->xs == ourLiveObject->xd && 
+        ourLiveObject->ys == ourLiveObject->yd ) {
         
         char *message = autoSprintf( "MOVE %d %d#", destX, dextY );
         sendToSocket( serverSocket, (unsigned char*)message, 

@@ -193,8 +193,6 @@ char *getMovesMessage( char inNewMovesOnly ) {
             
             double deltaSec = Time::getCurrentTime() - o->moveStartTime;
             
-            double fractionDone = deltaSec / o->moveTotalSeconds;
-            
             double etaSec = o->moveTotalSeconds - deltaSec;
                 
             if( inNewMovesOnly ) {
@@ -205,7 +203,7 @@ char *getMovesMessage( char inNewMovesOnly ) {
             char *messageLine = 
                 autoSprintf( "%d %d %d %d %d %f %f\n", o->id, 
                              o->xs, o->ys, o->xd, o->yd, 
-                             fractionDone, etaSec );
+                             o->moveTotalSeconds, etaSec );
                                     
             messageBuffer.appendElementString( messageLine );
             delete [] messageLine;
