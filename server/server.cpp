@@ -403,7 +403,7 @@ int main() {
             LiveObject *nextPlayer = players.getElement( 
                 playerIndicesToSendUpdatesAbout.getElementDirect( i ) );
 
-            char *updateLine = autoSprintf( "%d %d  %d %d\n", 
+            char *updateLine = autoSprintf( "%d %d %d %d\n", 
                                             nextPlayer->id,
                                             nextPlayer->holdingID,
                                             nextPlayer->xs, 
