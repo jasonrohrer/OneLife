@@ -184,8 +184,8 @@ char *getMovesMessage( char inNewMovesOnly ) {
         LiveObject *o = players.getElement( i );
                 
 
-        if( o->xd != o->xs &&
-            o->yd != o->ys &&
+        if( ( o->xd != o->xs || o->yd != o->ys )
+            &&
             ( o->newMove || !inNewMovesOnly ) ) {
 
  
@@ -284,13 +284,20 @@ int main() {
 
             printf( "Listening for another connection on port %d\n", port );
             }
+        
 
         int numLive = players.size();
         
 
         // listen for any messages from clients 
-        char anyUpdates = false;
+
+        // track index of each player that needs an update sent about it
+        // we compose the full update message below
+        SimpleVector<int> playerIndicesToSendUpdatesAbout;
+        
+        // accumulated text of update lines
         SimpleVector<char> newUpdates;
+
         
         for( int i=0; i<numLive; i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
@@ -341,18 +348,10 @@ int main() {
             if( nextPlayer->isNew ) {
                 // their first position is an update
                 
-                char *updateLine = autoSprintf( "%d %d  %d %d\n", 
-                                                nextPlayer->id,
-                                                nextPlayer->holdingID,
-                                                nextPlayer->xs, 
-                                                nextPlayer->ys );
-                newUpdates.appendElementString( updateLine );
-                
-                delete [] updateLine;
+
+                playerIndicesToSendUpdatesAbout.push_back( i );
                 
                 nextPlayer->isNew = false;
-                
-                anyUpdates = true;
                 }
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
                 char *updateLine = autoSprintf( "%d %d X X\n", 
@@ -365,14 +364,57 @@ int main() {
                 
                 nextPlayer->isNew = false;
                 
-                anyUpdates = true;
-                
                 nextPlayer->deleteSent = true;
                 }
+            else {
+                // check if they are done moving
+                // if so, send an update
+                
+
+                if( nextPlayer->xd != nextPlayer->xs ||
+                    nextPlayer->yd != nextPlayer->ys ) {
+                
+                    
+                    if( Time::getCurrentTime() - nextPlayer->moveStartTime
+                        >
+                        nextPlayer->moveTotalSeconds ) {
+                        
+                        // done
+                        nextPlayer->xs = nextPlayer->xd;
+                        nextPlayer->ys = nextPlayer->yd;
+                        nextPlayer->newMove = false;
+                        
+
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        }
+                    }
+                
+                }
+            
             
             }
         
+
         
+        
+
+        
+        for( int i=0; i<playerIndicesToSendUpdatesAbout.size(); i++ ) {
+            LiveObject *nextPlayer = players.getElement( 
+                playerIndicesToSendUpdatesAbout.getElementDirect( i ) );
+
+            char *updateLine = autoSprintf( "%d %d  %d %d\n", 
+                                            nextPlayer->id,
+                                            nextPlayer->holdingID,
+                                            nextPlayer->xs, 
+                                            nextPlayer->ys );
+
+            newUpdates.appendElementString( updateLine );
+            
+            delete [] updateLine;
+            }
+        
+
         
         char *moveMessage = getMovesMessage( true );
         
@@ -389,7 +431,7 @@ int main() {
         char *updateMessage = NULL;
         int updateMessageLength = 0;
         
-        if( anyUpdates ) {
+        if( newUpdates.size() > 0 ) {
             newUpdates.push_back( '#' );
             char *temp = newUpdates.getElementString();
 
@@ -523,7 +565,7 @@ int main() {
             else {
                 // this player has first message, ready for updates/moves
 
-                if( anyUpdates ) {
+                if( updateMessage != NULL ) {
                     
 
                     int numSent = 
