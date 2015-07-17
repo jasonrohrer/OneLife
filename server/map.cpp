@@ -10,6 +10,8 @@
 
 
 static int fullMapDimension = 1000;
+static int halfD = fullMapDimension/2;
+
 
 static int chunkDimension = 32;
 
@@ -17,6 +19,17 @@ static int *map;
 
 
 static int startingObjectID = 26;
+
+
+
+
+static int *getMapSpot( int inX, int inY ) {
+    inX += halfD;
+    inY += halfD;
+
+    return &( map[ inY * fullMapDimension + inX ] );
+    }
+
 
 
 void initMap() {
@@ -64,8 +77,8 @@ char *getChunkMessage( int inCenterX, int inCenterY ) {
     int worldStartY = inCenterY - halfChunk;
     
 
-    int startY = inCenterY + fullMapDimension/2 - halfChunk;
-    int startX = inCenterX + fullMapDimension/2 - halfChunk;
+    int startY = inCenterY + halfD - halfChunk;
+    int startX = inCenterX + halfD - halfChunk;
     
     int endY = startY + chunkDimension;
     int endX = startX + chunkDimension;
@@ -127,4 +140,24 @@ char *getChunkMessage( int inCenterX, int inCenterY ) {
 
     return buffer.getElementString();
     }
+
+
+
+
+
+
+
+
+
+int getMapObject( int inX, int inY ) {
+    return *getMapSpot( inX, inY );
+    }
+
+
+
+
+void setMapObject( int inX, int inY, int inID ) {
+    *getMapSpot( inX, inY ) = inID;
+    }
+
 

@@ -18,6 +18,7 @@ ROOT_PATH = ../..
 LAYER_SOURCE = \
 server.cpp \
 map.cpp \
+../gameSource/transitionBank.cpp \
 
 
 GAME_GRAPHICS = \

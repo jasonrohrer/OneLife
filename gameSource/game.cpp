@@ -760,6 +760,7 @@ char *getNextServerMessage() {
 
 typedef enum messageType {
 	MAP_CHUNK,
+    MAP_CHANGE,
     PLAYER_UPDATE,
     PLAYER_MOVES_START,
     UNKNOWN
@@ -784,6 +785,9 @@ messageType getMessageType( char *inMessage ) {
 
     if( strcmp( copy, "MAP_CHUNK" ) == 0 ) {
         returnValue = MAP_CHUNK;
+        }
+    else if( strcmp( copy, "MAP_CHANGE" ) == 0 ) {
+        returnValue = MAP_CHANGE;
         }
     else if( strcmp( copy, "PLAYER_UPDATE" ) == 0 ) {
         returnValue = PLAYER_UPDATE;
@@ -1044,6 +1048,38 @@ void drawFrame( char inUpdate ) {
             delete tokens;
 
             firstServerMessagesReceived |= 1;
+            }
+        else if( type == MAP_CHANGE ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip fist
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+                
+                int x, y, id;
+                int numRead = sscanf( lines[i], "%d %d %d",
+                                      &x, &y, &id );
+                if( numRead == 3 ) {
+                    int mapX = x + mapD / 2;
+                    int mapY = y + mapD / 2;
+                    
+                    if( mapX >= 0 && mapX < mapD
+                        &&
+                        mapY >= 0 && mapY < mapD ) {
+                        
+                        map[mapY * mapD + mapX ] = id;
+                        }
+                    }
+                
+                delete [] lines[i];
+                }
+            
+            delete [] lines;
             }
         else if( type == PLAYER_UPDATE ) {
             
@@ -1380,9 +1416,9 @@ void drawFrameNoUpdate( char inUpdate ) {
     //    }
     
     setDrawColor( 1, 1, 1, 1 );
-    for( int y=0; y<mapD; y++ ) {
+    for( int y=mapD-1; y>=0; y-- ) {
         
-        int screenY = - 32 * ( y - mapD / 2 );
+        int screenY = 32 * ( y - mapD / 2 );
         
         for( int x=0; x<mapD; x++ ) {
             
@@ -1453,6 +1489,14 @@ void drawFrameNoUpdate( char inUpdate ) {
 
         delete [] string;
         
+        if( o->holdingID != 0 ) { 
+            doublePair holdPos = pos;
+            holdPos.x += 16;
+            holdPos.y -= 16;
+            
+            setDrawColor( 1, 1, 1, 1 );
+            drawObject( getObject( o->holdingID ), holdPos );
+            }
         
         
         }
@@ -1542,11 +1586,49 @@ void pointerDown( float inX, float inY ) {
     if( ourLiveObject->xs == ourLiveObject->xd && 
         ourLiveObject->ys == ourLiveObject->yd ) {
         
-        char *message = autoSprintf( "MOVE %d %d#", destX, destY );
-        sendToSocket( serverSocket, (unsigned char*)message, 
-                      strlen( message ) );
+        int destID = 0;
         
-        delete [] message;
+        int mapX = destX + mapD / 2;
+        int mapY = destY + mapD / 2;
+
+        printf( "destX,Y = %d, %d,  mapX,Y = %d, %d, curX,Y = %d, %d\n", 
+                destX, destY, 
+                mapX, mapY,
+                ourLiveObject->xd, ourLiveObject->yd );
+        if( mapY >= 0 && mapY < mapD &&
+            mapX >= 0 && mapX < mapD ) {
+            
+            destID = map[ mapY * mapD + mapX ];
+            }
+        
+        printf( "DestID = %d\n", destID );
+        
+
+        if( destID == 0 ) {
+            // a move to an empty spot
+        
+            char *message = autoSprintf( "MOVE %d %d#", destX, destY );
+            sendToSocket( serverSocket, (unsigned char*)message, 
+                          strlen( message ) );
+            
+            delete [] message;
+            }
+        else {
+            // use action?
+            // only if close enough
+            if( ( abs( destX - ourLiveObject->xd ) == 1 )
+                !=   // xor
+                ( abs( destY - ourLiveObject->yd ) == 1 ) ) {
+                
+                
+                char *message = autoSprintf( "USE %d %d#", destX, destY );
+                sendToSocket( serverSocket, (unsigned char*)message, 
+                              strlen( message ) );
+            
+                delete [] message;
+                }
+            }
+        
         }
     
     }

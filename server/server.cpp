@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 
 
@@ -12,6 +13,7 @@
 
 
 #include "map.h"
+#include "../gameSource/transitionBank.h"
 
 
 
@@ -241,6 +243,8 @@ int main() {
     signal( SIGINT, intHandler );
 
 
+    initTransBank();
+
     initMap();
     
     
@@ -297,7 +301,10 @@ int main() {
         
         // accumulated text of update lines
         SimpleVector<char> newUpdates;
+        
 
+        SimpleVector<char> mapChanges;
+        
         
         for( int i=0; i<numLive; i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
@@ -315,15 +322,13 @@ int main() {
                 delete [] message;
                 
                 
-                if( m.type == MOVE ) {
+                if( nextPlayer->xs == nextPlayer->xd &&
+                    nextPlayer->ys == nextPlayer->yd ) {
                     
-                    if( nextPlayer->xs == nextPlayer->xd &&
-                        nextPlayer->ys == nextPlayer->yd ) {
+                    // ignore new move if not stationary
+                
+                    if( m.type == MOVE ) {
                     
-                        // ignore new move if not stationary
-    
-                        
-
                         nextPlayer->xd = m.x;
                         nextPlayer->yd = m.y;
                         
@@ -334,14 +339,46 @@ int main() {
                         double dist = distance( start, dest );
                         
                         
-                        // for now, all move 1 square per sec
+                        // for now, all move 4 square per sec
                         
-                        nextPlayer->moveTotalSeconds = dist;
+                        nextPlayer->moveTotalSeconds = dist / 4;
                         nextPlayer->moveStartTime = Time::getCurrentTime();
                         
                         nextPlayer->newMove = true;
                         }
-                    }
+                    else if( m.type == USE ) {
+                        if( ( abs( m.x - nextPlayer->xd ) == 1 )
+                            !=   // xor
+                            ( abs( m.y - nextPlayer->yd ) == 1 ) ) {
+                            
+                            // can only use on targets next to us for now,
+                            // no diags
+                            
+                            int target = getMapObject( m.x, m.y );
+                            
+                            TransRecord *r = 
+                                getTrans( nextPlayer->holdingID, 
+                                          target );
+
+                            if( r != NULL ) {
+                                nextPlayer->holdingID = r->newActor;
+                                
+                                setMapObject( m.x, m.y, r->newTarget );
+                                
+                                // what they're holding may have changed
+                                playerIndicesToSendUpdatesAbout.push_back( i );
+
+                                char *changeLine =
+                                    autoSprintf( "%d %d %d\n",
+                                                 m.x, m.y, r->newTarget );
+                                
+                                mapChanges.appendElementString( changeLine );
+                                
+                                delete [] changeLine;
+                                }
+                            }
+                        }
+                    }                
                 }
             
                 
@@ -439,6 +476,20 @@ int main() {
             delete [] temp;
 
             updateMessageLength = strlen( updateMessage );
+            }
+        
+
+        char *mapChangeMessage = NULL;
+        int mapChangeMessageLength = 0;
+        
+        if( mapChanges.size() > 0 ) {
+            mapChanges.push_back( '#' );
+            char *temp = mapChanges.getElementString();
+
+            mapChangeMessage = concatonate( "MAP_CHANGE\n", temp );
+            delete [] temp;
+
+            mapChangeMessageLength = strlen( mapChangeMessage );
             }
         
 
@@ -588,6 +639,18 @@ int main() {
                         }
                     
                     }
+                if( mapChangeMessage != NULL ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            (unsigned char*)mapChangeMessage, 
+                            mapChangeMessageLength, 
+                            false, false );
+
+                    if( numSent == -1 ) {
+                        nextPlayer->error = true;
+                        }
+                    
+                    }
                 
                 }
             }
@@ -629,6 +692,8 @@ int main() {
         }
     
     freeMap();
+
+    freeTransBank();
 
     printf( "Done.\n" );
 
