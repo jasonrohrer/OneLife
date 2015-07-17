@@ -231,6 +231,19 @@ char *getMovesMessage( char inNewMovesOnly ) {
 
 
 
+static char isGridAdjacent( int inXA, int inYA, int inXB, int inYB ) {
+    if( ( abs( inXA - inXB ) == 1 && inYA == inYB ) 
+        ||
+        ( abs( inYA - inYB ) == 1 && inXA == inXB ) ) {
+        
+        return true;
+        }
+
+    return false;
+    }
+
+
+
 
 
 
@@ -347,9 +360,9 @@ int main() {
                         nextPlayer->newMove = true;
                         }
                     else if( m.type == USE ) {
-                        if( ( abs( m.x - nextPlayer->xd ) == 1 )
-                            !=   // xor
-                            ( abs( m.y - nextPlayer->yd ) == 1 ) ) {
+                        if( isGridAdjacent( m.x, m.y,
+                                            nextPlayer->xd, 
+                                            nextPlayer->yd ) ) {
                             
                             // can only use on targets next to us for now,
                             // no diags
@@ -373,6 +386,70 @@ int main() {
                                                  m.x, m.y, r->newTarget );
                                 
                                 mapChanges.appendElementString( changeLine );
+                                
+                                delete [] changeLine;
+                                }
+                            }
+                        }                    
+                    else if( m.type == DROP ) {
+                        if( isGridAdjacent( m.x, m.y,
+                                            nextPlayer->xd, 
+                                            nextPlayer->yd ) ) {
+                            
+                            int target = getMapObject( m.x, m.y );
+                            
+                            if( nextPlayer->holdingID != 0 && 
+                                target == 0 ) {
+                                
+                                // empty spot to drop into
+                                    
+                                setMapObject( m.x, m.y, 
+                                              nextPlayer->holdingID );
+                                
+                                // what they're holding may changed
+                                playerIndicesToSendUpdatesAbout.
+                                    push_back( i );
+                                
+                                char *changeLine =
+                                    autoSprintf( "%d %d %d\n",
+                                                 m.x, m.y,
+                                                 nextPlayer->holdingID );
+                                
+                                mapChanges.appendElementString( 
+                                    changeLine );
+                                
+                                delete [] changeLine;
+                                
+                                nextPlayer->holdingID = 0;
+                                }
+                            }
+                        }
+                    else if( m.type == GRAB ) {
+                        if( isGridAdjacent( m.x, m.y,
+                                            nextPlayer->xd, 
+                                            nextPlayer->yd ) ) {
+                            
+                            int target = getMapObject( m.x, m.y );
+                            
+                            if( nextPlayer->holdingID == 0 && 
+                                target != 0 ) {
+                                
+                                // something to grab
+
+                                setMapObject( m.x, m.y, 0 );
+                                
+                                nextPlayer->holdingID = target;
+                                
+                                // what they're holding has changed
+                                playerIndicesToSendUpdatesAbout.
+                                    push_back( i );
+                                
+                                char *changeLine =
+                                    autoSprintf( "%d %d %d\n",
+                                                 m.x, m.y, 0 );
+                                
+                                mapChanges.appendElementString( 
+                                    changeLine );
                                 
                                 delete [] changeLine;
                                 }

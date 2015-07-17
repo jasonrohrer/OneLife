@@ -113,6 +113,8 @@ int mapD = 100;
 int *map;
 
 
+char eKeyDown = false;
+
 
 
 char doesOverrideGameImageSize() {
@@ -864,6 +866,9 @@ void drawFrame( char inUpdate ) {
 
             // fade out music during pause
             //setMusicLoudness( 0 );
+
+            // unhold E key
+            eKeyDown = false;
             }
         wasPaused = true;
 
@@ -1557,6 +1562,18 @@ void pointerMove( float inX, float inY ) {
 
 
 
+static char isGridAdjacent( int inXA, int inYA, int inXB, int inYB ) {
+    if( ( abs( inXA - inXB ) == 1 && inYA == inYB ) 
+        ||
+        ( abs( inYA - inYB ) == 1 && inXA == inXB ) ) {
+        
+        return true;
+        }
+
+    return false;
+    }
+
+
 void pointerDown( float inX, float inY ) {
     if( isPaused() ) {
         return;
@@ -1604,9 +1621,39 @@ void pointerDown( float inX, float inY ) {
         printf( "DestID = %d\n", destID );
         
 
-        if( destID == 0 ) {
+        if( eKeyDown ) {
+            // use/drop modifier
+            
+            // only adjacent cells
+            if( isGridAdjacent( destX, destY,
+                                ourLiveObject->xd, ourLiveObject->yd ) ) {
+                
+                const char *action = "";
+                
+                char send = false;
+                
+                if( destID == 0 && ourLiveObject->holdingID != 0 ) {
+                    action = "DROP";
+                    send = true;
+                    }
+                else if( destID != 0 ) {
+                    action = "USE";
+                    send = true;
+                    }
+                
+                if( send ) {
+                    char *message = autoSprintf( "%s %d %d#", action,
+                                                 destX, destY );
+                    sendToSocket( serverSocket, (unsigned char*)message, 
+                                  strlen( message ) );
+                    
+                    delete [] message;
+                    }
+                }
+            }
+        else if( destID == 0 ) {
             // a move to an empty spot
-        
+                
             char *message = autoSprintf( "MOVE %d %d#", destX, destY );
             sendToSocket( serverSocket, (unsigned char*)message, 
                           strlen( message ) );
@@ -1614,14 +1661,12 @@ void pointerDown( float inX, float inY ) {
             delete [] message;
             }
         else {
-            // use action?
+            // pick up action?
             // only if close enough
-            if( ( abs( destX - ourLiveObject->xd ) == 1 )
-                !=   // xor
-                ( abs( destY - ourLiveObject->yd ) == 1 ) ) {
+            if( isGridAdjacent( destX, destY,
+                                ourLiveObject->xd, ourLiveObject->yd ) ) {
                 
-                
-                char *message = autoSprintf( "USE %d %d#", destX, destY );
+                char *message = autoSprintf( "GRAB %d %d#", destX, destY );
                 sendToSocket( serverSocket, (unsigned char*)message, 
                               strlen( message ) );
             
@@ -1706,6 +1751,10 @@ void keyDown( unsigned char inASCII ) {
 
     
     switch( inASCII ) {
+        case 'e':
+        case 'E':
+            eKeyDown = true;
+            break;
         case 'm':
         case 'M': {
 #ifdef USE_MALLINFO
@@ -1728,8 +1777,13 @@ void keyUp( unsigned char inASCII ) {
         }
 
     if( ! isPaused() ) {
-
         
+        switch( inASCII ) {
+            case 'e':
+            case 'E':
+                eKeyDown = false;
+                break;
+            }
         }
 
     }
