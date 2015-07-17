@@ -44,18 +44,18 @@ void initTransBank() {
                         
                 if( strstr( txtFileName, ".txt" ) != NULL ) {
                     
-                    int actor = -1;
-                    int target = -1;
+                    int actor = 0;
+                    int target = 0;
                     
                     sscanf( txtFileName, "%d_%d.txt", &actor, &target );
                     
-                    if(  target != -1 ) {
+                    if(  target != 0 ) {
                         char *contents = childFiles[i]->readFileContents();
                         
                         if( contents != NULL ) {
                             
-                            int newActor = -1;
-                            int newTarget = -1;
+                            int newActor = 0;
+                            int newTarget = 0;
 
                             sscanf( contents, "%d %d", &newActor, &newTarget );
                             
@@ -107,7 +107,7 @@ void initTransBank() {
         TransRecord *t = records.getElementDirect( i );
         
         
-        if( t->actor != -1 ) {
+        if( t->actor != 0 ) {
             usesMap[t->actor].push_back( t );
             }
         
@@ -116,12 +116,12 @@ void initTransBank() {
             usesMap[t->target].push_back( t );
             }
         
-        if( t->newActor != -1 ) {
+        if( t->newActor != 0 ) {
             producesMap[t->newActor].push_back( t );
             }
         
         // no duplicate records
-        if( t->newTarget != -1 && t->newTarget != t->newActor ) {    
+        if( t->newTarget != 0 && t->newTarget != t->newActor ) {    
             producesMap[t->newTarget].push_back( t );
             }
         }
@@ -296,7 +296,7 @@ void addTrans( int inActor, int inTarget,
 
         records.push_back( t );
 
-        if( inActor != -1 ) {
+        if( inActor != 0 ) {
             usesMap[inActor].push_back( t );
             }
         
@@ -305,12 +305,12 @@ void addTrans( int inActor, int inTarget,
             usesMap[inTarget].push_back( t );
             }
         
-        if( inNewActor != -1 ) {
+        if( inNewActor != 0 ) {
             producesMap[inNewActor].push_back( t );
             }
         
         // avoid duplicate records here too
-        if( inNewTarget != -1 && inNewTarget != inNewActor ) {    
+        if( inNewTarget != 0 && inNewTarget != inNewActor ) {    
             producesMap[inNewTarget].push_back( t );
             }
         
@@ -333,10 +333,10 @@ void addTrans( int inActor, int inTarget,
             
             // remove record from producesMaps
             
-            if( t->newActor != -1 ) {
+            if( t->newActor != 0 ) {
                 producesMap[t->newActor].deleteElementEqualTo( t );
                 }
-            if( t->newTarget != -1 ) {                
+            if( t->newTarget != 0 ) {                
                 producesMap[t->newTarget].deleteElementEqualTo( t );
                 }
             
@@ -344,12 +344,12 @@ void addTrans( int inActor, int inTarget,
             t->newActor = inNewActor;
             t->newTarget = inNewTarget;
             
-            if( inNewActor != -1 ) {
+            if( inNewActor != 0 ) {
                 producesMap[inNewActor].push_back( t );
                 }
             
             // no duplicate records
-            if( inNewTarget != -1 && inNewTarget != inNewActor ) {    
+            if( inNewTarget != 0 && inNewTarget != inNewActor ) {    
                 producesMap[inNewTarget].push_back( t );
                 }
             
@@ -412,14 +412,14 @@ void deleteTransFromBank( int inActor, int inTarget ) {
             }
         
 
-        if( t->newActor != -1 ) {
+        if( t->newActor != 0 ) {
             producesMap[t->newActor].deleteElementEqualTo( t );
                 }
-        if( t->newTarget != -1 ) {                
+        if( t->newTarget != 0 ) {                
             producesMap[t->newTarget].deleteElementEqualTo( t );
             }
         
-        if( inActor != -1 ) {
+        if( inActor != 0 ) {
             usesMap[inActor].deleteElementEqualTo( t );
             }
         usesMap[inTarget].deleteElementEqualTo( t );

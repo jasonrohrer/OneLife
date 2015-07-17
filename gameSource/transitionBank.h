@@ -42,12 +42,12 @@ TransRecord **searchProduces( int inProducesID,
 
 
 
-// inTarget can never be -1
+// inTarget can never be 0
 
-// inActor can be -1 (this is the bare-hands action on the target)
+// inActor can be 0 (this is the bare-hands action on the target)
 
 // only one trans allowed per actor/target pair, so replacement is automatic
-// -1 for inNewActor or inNewTarget means actor or target consumed
+// 0 for inNewActor or inNewTarget means actor or target consumed
 void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget );
 

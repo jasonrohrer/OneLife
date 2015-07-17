@@ -111,10 +111,10 @@ EditorTransitionPage::EditorTransitionPage()
     mProducesPrev.setVisible( false );
     
 
-    mCurrentTransition.actor = -1;
-    mCurrentTransition.target = -1;
-    mCurrentTransition.newActor = -1;
-    mCurrentTransition.newTarget = -1;
+    mCurrentTransition.actor = 0;
+    mCurrentTransition.target = 0;
+    mCurrentTransition.newActor = 0;
+    mCurrentTransition.newTarget = 0;
     
     mCurrentlyReplacing = 0;
     
@@ -177,8 +177,8 @@ EditorTransitionPage::EditorTransitionPage()
         xP += 150;
 
         for( int j=0; j<4; j++ ) {
-            setObjectByIndex( &( mProducedBy[i] ), j, -1 );
-            setObjectByIndex( &( mProduces[i] ), j, -1 );
+            setObjectByIndex( &( mProducedBy[i] ), j, 0 );
+            setObjectByIndex( &( mProduces[i] ), j, 0 );
             }
         }
 
@@ -213,7 +213,7 @@ void EditorTransitionPage::clearUseOfObject( int inObjectID ) {
     for( int i=0; i<4; i++ ) {    
         if( getObjectByIndex( &mCurrentTransition, i ) == inObjectID ) {
             
-            setObjectByIndex( &mCurrentTransition, i, -1 );
+            setObjectByIndex( &mCurrentTransition, i, 0 );
             }
         }
     checkIfSaveVisible();
@@ -223,7 +223,7 @@ void EditorTransitionPage::clearUseOfObject( int inObjectID ) {
 
 
 void EditorTransitionPage::checkIfSaveVisible() {
-    char vis = ( getObjectByIndex( &mCurrentTransition, 1 ) != -1 );
+    char vis = ( getObjectByIndex( &mCurrentTransition, 1 ) != 0 );
     
     mSaveTransitionButton.setVisible( vis );
     
@@ -257,7 +257,7 @@ void EditorTransitionPage::redoTransSearches( int inObjectID,
     for( int i=0; i< NUM_TREE_TRANS_TO_SHOW; i++ ) {
         mProducedByButtons[i]->setVisible( false );
         for( int j=0; j<4; j++ ) {
-            setObjectByIndex( &( mProducedBy[i] ), j, -1 );
+            setObjectByIndex( &( mProducedBy[i] ), j, 0 );
             }
         }
     
@@ -292,7 +292,7 @@ void EditorTransitionPage::redoTransSearches( int inObjectID,
     for( int i=0; i< NUM_TREE_TRANS_TO_SHOW; i++ ) {
         mProducesButtons[i]->setVisible( false );
         for( int j=0; j<4; j++ ) {
-            setObjectByIndex( &( mProduces[i] ), j, -1 );
+            setObjectByIndex( &( mProduces[i] ), j, 0 );
             }
         }
 
@@ -345,7 +345,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                              getObjectByIndex( &mCurrentTransition, 1 ) );
                              
         for( int i=0; i<4; i++ ) {
-            setObjectByIndex( &mCurrentTransition, i, -1 );
+            setObjectByIndex( &mCurrentTransition, i, 0 );
             }
         checkIfSaveVisible();
 
@@ -400,7 +400,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                 int replacingID = getObjectByIndex( &mCurrentTransition,
                                                     mCurrentlyReplacing );
                 
-                if( replacingID != -1 ) {    
+                if( replacingID != 0 ) {    
                     redoTransSearches( replacingID, true );
                     }
                 
@@ -419,7 +419,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                     index = i+1;
                     }
                 
-                setObjectByIndex( &mCurrentTransition, index, -1 );
+                setObjectByIndex( &mCurrentTransition, index, 0 );
             
                 checkIfSaveVisible();
                 return;
@@ -488,7 +488,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         
         int id = getObjectByIndex( &mCurrentTransition, i );
         
-        if( id != -1 ) {
+        if( id != 0 ) {
             drawObject( getObject( id ), pos );
             }
         }
@@ -529,7 +529,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             drawSquare( pos, 50 );
 
             
-            if( actor != -1 ) {
+            if( actor != 0 ) {
                 drawObject( getObject( actor ), pos );
                 }
             
@@ -553,7 +553,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             
             drawSquare( pos, 50 );
             
-            if( newActor != -1 ) {
+            if( newActor != 0 ) {
                 drawObject( getObject( newActor ), pos );
                 }
             
@@ -561,7 +561,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             
             drawSquare( pos, 50 );
             
-            if( newTarget != -1 ) {
+            if( newTarget != 0 ) {
                 drawObject( getObject( newTarget ), pos );
                 }
             }
@@ -570,7 +570,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
     if( mCurrentlyReplacing != -1 ) {
         int id = getObjectByIndex( &mCurrentTransition, mCurrentlyReplacing );
         
-        if( id != -1 ) {
+        if( id != 0 ) {
             
             ObjectRecord *r = getObject( id );
             
