@@ -8,6 +8,7 @@
 #include "minorGems/util/SettingsManager.h"
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/network/SocketServer.h"
+#include "minorGems/network/SocketPoll.h"
 
 #include "minorGems/game/doublePair.h"
 
@@ -70,18 +71,24 @@ int numConnections = 0;
 
 
 // reads all waiting data from socket and stores it in buffer
-void readSocketFull( Socket *inSock, SimpleVector<char> *inBuffer ) {
+// returns true if socket still good, false on error
+char readSocketFull( Socket *inSock, SimpleVector<char> *inBuffer ) {
 
     char buffer[512];
     
     int numRead = inSock->receive( (unsigned char*)buffer, 512, 0 );
     
+    if( numRead == -1 ) {
+        return false;
+        }
     
     while( numRead > 0 ) {
         inBuffer->appendArray( buffer, numRead );
 
         numRead = inSock->receive( (unsigned char*)buffer, 512, 0 );
-        }    
+        }
+
+    return true;
     }
 
 
@@ -264,46 +271,110 @@ int main() {
     int port = 
         SettingsManager::getIntSetting( "port", 5077 );
     
-
+    
+    SocketPoll sockPoll;
+    
+    
     
     SocketServer server( port, 256 );
-
+    
+    sockPoll.addSocketServer( &server );
+    
     printf( "Listening for connection on port %d\n", port );
 
     while( !quit ) {
+    
+        int numLive = players.size();
         
-        Socket *sock = server.acceptConnection( 0 );
+
+        // check if any are still moving
+        // if so, we must busy-loop over them until moves are
+        // complete
+        char anyMoving = false;
+        double minMoveTime = 999999;
         
-        if( sock != NULL ) {
-            printf( "Got connection\n" );
-            numConnections ++;
+        for( int i=0; i<numLive; i++ ) {
+            LiveObject *nextPlayer = players.getElement( i );
             
-            LiveObject newObject;
-            newObject.id = nextID;
-            nextID++;
-            newObject.xs = 0;
-            newObject.ys = 0;
-            newObject.xd = 0;
-            newObject.yd = 0;
-            newObject.moveTotalSeconds = 0;
-            newObject.holdingID = 0;
-            newObject.sock = sock;
-            newObject.sockBuffer = new SimpleVector<char>();
-            newObject.isNew = true;
-            newObject.firstMessageSent = false;
-            newObject.error = false;
-            newObject.deleteSent = false;
-            newObject.newMove = false;
-
-            players.push_back( newObject );            
-            
-            printf( "New player connected as player %d\n", newObject.id );
-
-            printf( "Listening for another connection on port %d\n", port );
+            if( nextPlayer->xd != nextPlayer->xs ||
+                nextPlayer->yd != nextPlayer->ys ) {
+                
+                double moveTimeLeft =
+                    nextPlayer->moveTotalSeconds -
+                    ( Time::getCurrentTime() - nextPlayer->moveStartTime );
+                
+                if( moveTimeLeft < 0 ) {
+                    moveTimeLeft = 0;
+                    }
+                
+                if( moveTimeLeft < minMoveTime ) {
+                    minMoveTime = moveTimeLeft;
+                    }
+                anyMoving = true;
+                }
             }
         
+        SocketOrServer *readySock =  NULL;
 
-        int numLive = players.size();
+        if( !anyMoving ) {
+            // use 0 cpu when total idle
+            readySock = sockPoll.wait();
+            }
+        else {
+            // players are connected and moving, must do move updates anyway
+            
+            if( minMoveTime > 0 ) {
+                
+                // use a timeout based on shortest time to complete move
+                // so we'll wake up and catch it
+                readySock = sockPoll.wait( (int)( minMoveTime * 1000 ) );
+                }
+            }    
+        
+        
+        
+        
+        if( readySock != NULL && !readySock->isSocket ) {
+            // server ready
+            Socket *sock = server.acceptConnection( 0 );
+
+            if( sock != NULL ) {
+                
+                
+                printf( "Got connection\n" );
+                numConnections ++;
+                
+                LiveObject newObject;
+                newObject.id = nextID;
+                nextID++;
+                newObject.xs = 0;
+                newObject.ys = 0;
+                newObject.xd = 0;
+                newObject.yd = 0;
+                newObject.moveTotalSeconds = 0;
+                newObject.holdingID = 0;
+                newObject.sock = sock;
+                newObject.sockBuffer = new SimpleVector<char>();
+                newObject.isNew = true;
+                newObject.firstMessageSent = false;
+                newObject.error = false;
+                newObject.deleteSent = false;
+                newObject.newMove = false;
+
+                sockPoll.addSocket( sock );
+                
+                players.push_back( newObject );            
+            
+                printf( "New player connected as player %d\n", newObject.id );
+
+                printf( "Listening for another connection on port %d\n", 
+                        port );
+                }
+            }
+        
+        
+
+        numLive = players.size();
         
 
         // listen for any messages from clients 
@@ -323,8 +394,13 @@ int main() {
             LiveObject *nextPlayer = players.getElement( i );
             
 
-            readSocketFull( nextPlayer->sock, nextPlayer->sockBuffer );
+            char result = 
+                readSocketFull( nextPlayer->sock, nextPlayer->sockBuffer );
             
+            if( ! result ) {
+                nextPlayer->error = true;
+                }
+
             char *message = getNextClientMessage( nextPlayer->sockBuffer );
             
             if( message != NULL ) {
