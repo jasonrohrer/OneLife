@@ -108,7 +108,7 @@ int serverSocket = -1;
 
 
 
-int mapD = 100;
+int mapD = 2000;
 
 int *map;
 
@@ -1344,11 +1344,36 @@ void drawFrameNoUpdate( char inUpdate ) {
     //    }
     
     setDrawColor( 1, 1, 1, 1 );
-    for( int y=mapD-1; y>=0; y-- ) {
+
+    int gridCenterX = lrintf( lastScreenViewCenter.x / 32 ) + mapD/2;
+    int gridCenterY = lrintf( lastScreenViewCenter.y / 32 ) + mapD/2;
+    
+    int xStart = gridCenterX - 12;
+    int xEnd = gridCenterX + 12;
+
+    int yStart = gridCenterY - 12;
+    int yEnd = gridCenterY + 12;
+
+    if( xStart < 0 ) {
+        xStart = 0;
+        }
+    if( xStart >= mapD ) {
+        xStart = mapD - 1;
+        }
+    
+    if( yStart < 0 ) {
+        yStart = 0;
+        }
+    if( yStart >= mapD ) {
+        yStart = mapD - 1;
+        }
+    
+
+    for( int y=yEnd; y>=yStart; y-- ) {
         
         int screenY = 32 * ( y - mapD / 2 );
         
-        for( int x=0; x<mapD; x++ ) {
+        for( int x=xStart; x<=xEnd; x++ ) {
             
             int screenX = 32 * ( x - mapD / 2 );
 
