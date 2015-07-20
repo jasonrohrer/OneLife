@@ -29,6 +29,9 @@ typedef struct LiveObject {
         int xd;
         int yd;
         
+        int lastSentMapX;
+        int lastSentMapY;
+
         double moveTotalSeconds;
         double moveStartTime;
         
@@ -252,6 +255,37 @@ static char isGridAdjacent( int inXA, int inYA, int inXB, int inYB ) {
 
 
 
+// sets lastSentMap in inO if chunk goes through
+// returns result of send, auto-marks error in inO
+int sendMapChunkMessage( LiveObject *inO ) {
+    char *mapChunkMessage = getChunkMessage( inO->xs,
+                                             inO->ys );
+                
+                
+
+                
+    int messageLength = strlen( mapChunkMessage );
+
+    int numSent = 
+        inO->sock->send( (unsigned char*)mapChunkMessage, 
+                         messageLength, 
+                         false, false );
+                
+    delete [] mapChunkMessage;
+                
+
+    if( numSent == messageLength ) {
+        // sent correctly
+        inO->lastSentMapX = inO->xs;
+        inO->lastSentMapY = inO->ys;
+        }
+    else if( numSent == -1 ) {
+        inO->error = true;
+        }
+    return numSent;
+    }
+
+
 
 
 
@@ -351,6 +385,8 @@ int main() {
                 newObject.ys = 0;
                 newObject.xd = 0;
                 newObject.yd = 0;
+                newObject.lastSentMapX = 0;
+                newObject.lastSentMapY = 0;
                 newObject.moveTotalSeconds = 0;
                 newObject.holdingID = 0;
                 newObject.sock = sock;
@@ -684,25 +720,10 @@ int main() {
                 
 
                 // first, send the map chunk around them
-
-                char *mapChunkMessage = getChunkMessage( nextPlayer->xs,
-                                                         nextPlayer->ys );
                 
+                int numSent = sendMapChunkMessage( nextPlayer );
                 
-                int messageLength = strlen( mapChunkMessage );
-
-                int numSent = 
-                    nextPlayer->sock->send( (unsigned char*)mapChunkMessage, 
-                                            messageLength, 
-                                            false, false );
-                
-                delete [] mapChunkMessage;
-                
-
-                if( numSent == -1 ) {
-                    nextPlayer->error = true;
-                    }
-                else if( numSent != messageLength ) {
+                if( numSent == -2 ) {
                     // still not sent, try again later
                     continue;
                     }
@@ -746,7 +767,7 @@ int main() {
                 messageBuffer.push_back( '#' );
             
                 char *message = messageBuffer.getElementString();
-                messageLength = strlen( message );
+                int messageLength = strlen( message );
 
                 numSent = 
                     nextPlayer->sock->send( (unsigned char*)message, 
@@ -794,6 +815,17 @@ int main() {
                 }
             else {
                 // this player has first message, ready for updates/moves
+                
+                if( abs( nextPlayer->xd - nextPlayer->lastSentMapX ) > 8
+                    ||
+                    abs( nextPlayer->yd - nextPlayer->lastSentMapY ) > 8 ) {
+                
+                    // moving out of bounds of chunk, send update
+                    
+                    
+                    sendMapChunkMessage( nextPlayer );
+                    }
+                
 
                 if( updateMessage != NULL ) {
                     

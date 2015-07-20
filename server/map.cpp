@@ -83,26 +83,28 @@ char *getChunkMessage( int inCenterX, int inCenterY ) {
     int endY = startY + chunkDimension;
     int endX = startX + chunkDimension;
 
-    char forceZero = false;
+    
     
     for( int y=startY; y<endY; y++ ) {
         int chunkY = y - startY;
         
+        char forceZeroY = false;
         if( y < 0 || y >= fullMapDimension ) {
-            forceZero = true;
+            forceZeroY = true;
             }
 
         for( int x=startX; x<endX; x++ ) {
             int chunkX = x - startX;
             
+            char forceZeroX = false;
             if( x < 0 || x >= fullMapDimension ) {
-                forceZero = true;
+                forceZeroX = true;
                 }
 
             int i = y * fullMapDimension + x;
             int cI = chunkY * chunkDimension + chunkX;
             
-            if( forceZero ) {
+            if( forceZeroY || forceZeroX ) {
                 chunk[cI] = 0;
                 }
             else {

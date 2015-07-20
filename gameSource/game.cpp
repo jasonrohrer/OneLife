@@ -108,7 +108,7 @@ int serverSocket = -1;
 
 
 
-int mapD = 2000;
+int mapD = 1000;
 
 int *map;
 
