@@ -369,25 +369,51 @@ int main() {
                             
                             int target = getMapObject( m.x, m.y );
                             
-                            TransRecord *r = 
-                                getTrans( nextPlayer->holdingID, 
-                                          target );
+                            if( target != 0 ) {
+                                
+                                TransRecord *r = 
+                                    getTrans( nextPlayer->holdingID, 
+                                              target );
 
-                            if( r != NULL ) {
-                                nextPlayer->holdingID = r->newActor;
-                                
-                                setMapObject( m.x, m.y, r->newTarget );
-                                
-                                // what they're holding may have changed
-                                playerIndicesToSendUpdatesAbout.push_back( i );
+                                if( r != NULL ) {
+                                    nextPlayer->holdingID = r->newActor;
+                                    
+                                    setMapObject( m.x, m.y, r->newTarget );
+                                    
+                                    // what they're holding may have changed
+                                    playerIndicesToSendUpdatesAbout.
+                                        push_back( i );
 
-                                char *changeLine =
-                                    autoSprintf( "%d %d %d\n",
-                                                 m.x, m.y, r->newTarget );
+                                    char *changeLine =
+                                        autoSprintf( "%d %d %d\n",
+                                                     m.x, m.y, r->newTarget );
                                 
-                                mapChanges.appendElementString( changeLine );
+                                    mapChanges.
+                                        appendElementString( changeLine );
+                                    
+                                    delete [] changeLine;
+                                    }
+                                else if( nextPlayer->holdingID == 0 ) {
+                                    // no bare-hand transition applies to
+                                    // this target object
+                                    // treat it like GRAB
+                                    setMapObject( m.x, m.y, 0 );
+                                    
+                                    nextPlayer->holdingID = target;
                                 
-                                delete [] changeLine;
+                                    // what they're holding has changed
+                                    playerIndicesToSendUpdatesAbout.
+                                        push_back( i );
+                                
+                                    char *changeLine =
+                                        autoSprintf( "%d %d %d\n",
+                                                     m.x, m.y, 0 );
+                                
+                                    mapChanges.appendElementString( 
+                                        changeLine );
+                                    
+                                    delete [] changeLine;
+                                    }    
                                 }
                             }
                         }                    
