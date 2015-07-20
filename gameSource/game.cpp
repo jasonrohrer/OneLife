@@ -1245,157 +1245,81 @@ void drawFrame( char inUpdate ) {
         
 
         delete [] message;
-
-        /*
-        if( !firstServerMessagesReceived ) {
-        
-            printf( "Got first message from server: %s\n", message );
-
-
-            SimpleVector<char *> *tokens = 
-                tokenizeString( message );
-            
-            int numTokens = tokens->size();
-            
-            // triplets
-            for( int i=0; i<numTokens; i+=3 ) {
-                
-                LiveObject o;
-                
-                sscanf( tokens->getElementDirect( i ), "%d", &( o.id ) );
-                sscanf( tokens->getElementDirect( i+1 ), "%d", &( o.x ) );
-                sscanf( tokens->getElementDirect( i+2 ), "%d", &( o.y ) );
-                
-                o.displayChar = lastCharUsed + 1;
-                
-                lastCharUsed = o.displayChar;
-                
-                o.xTemp = o.x;
-                o.yTemp = o.y;
-
-                gameObjects.push_back( o );
-                }
-
-            LiveObject *ourObject = 
-                gameObjects.getElement( gameObjects.size() - 1 );
-            ourID = ourObject->id;
-            ourObject->displayChar = 'A';
-            
-            
-            tokens->deallocateStringElements();
-            
-            delete tokens;
-
-            firstServerMessagesReceived = true;
-            }
-        else {
-            // update message
-            
-            printf( "Got update message from server: %s\n", message );
-
-            SimpleVector<char *> *tokens = 
-                tokenizeString( message );
-            
-            int numTokens = tokens->size();
-            
-            // triplets
-            for( int i=0; i<numTokens; i+=3 ) {
-                                
-                int id, x, y;
-                
-                int numRead = 0;
-                
-                numRead += 
-                    sscanf( tokens->getElementDirect( i ), "%d", &( id ) );
-                numRead += 
-                    sscanf( tokens->getElementDirect( i+1 ), "%d", &( x ) );
-                numRead += 
-                    sscanf( tokens->getElementDirect( i+2 ), "%d", &( y ) );
-                
-                char mustDelete = false;
-                if( numRead != 3 ) {
-                    if( strcmp( tokens->getElementDirect( i+1 ), "X" ) == 0 ) {
-                        mustDelete = true;
-                        }
-                    }
-                
-                
-                char found = false;
-                for( int i=0; i<gameObjects.size(); i++ ) {
-        
-                    LiveObject *o = gameObjects.getElement( i );
-
-                    if( o->id == id ) {
-
-                        if( mustDelete ) {
-                            gameObjects.deleteElement( i );
-                            }
-                        else {
-                            o->x = x;
-                            o->y = y;
-                            }
-                        found = true;
-                        break;
-                        }
-                    }
-                
-                if( !found ) {
-                    LiveObject o;
-                    
-                    o.id = id;
-                    o.displayChar = lastCharUsed + 1;
-                
-                    lastCharUsed = o.displayChar;
-                
-                    o.x = x;
-                    o.y = y;
-                    
-                    o.xTemp = o.x;
-                    o.yTemp = o.y;
-
-                    gameObjects.push_back( o );
-                    }
-                }
-            
-            
-            tokens->deallocateStringElements();
-            delete tokens;
-            }
-        
-        
-
-
-        delete [] message;
-        */
         }
     
-
-    /*
-    // move objects toward their x,y destinations
+        
+    // check if we're about to move off the screen
+    LiveObject *ourLiveObject = NULL;
 
     for( int i=0; i<gameObjects.size(); i++ ) {
         
         LiveObject *o = gameObjects.getElement( i );
-
-        if( o->x != o->xTemp ) {
-            if( o->x > o->xTemp ) {
-                o->xTemp += 1.0 / 32;
-                }
-            else {
-                o->xTemp -= 1.0 / 32;
-                }
-            }
-        if( o->y != o->yTemp ) {
-            if( o->y > o->yTemp ) {
-                o->yTemp += 1.0 / 32;
-                }
-            else {
-                o->yTemp -= 1.0 / 32;
-                }
+        
+        if( o->id == ourID ) {
+            ourLiveObject = o;
+            break;
             }
         }
-    */
+
     
+    if( ourLiveObject != NULL ) {
+        
+        doublePair screenDest = { ourLiveObject->xd * 32, 
+                                  ourLiveObject->yd * 32 };
+        
+        doublePair dir = sub( screenDest, lastScreenViewCenter );
+        
+        char viewChange = false;
+        
+        int maxR = 150;
+        double moveSpeedFactor = 0.02;
+
+        if( fabs( dir.x ) > maxR ) {
+            viewChange = true;
+        
+            double moveMagnitudeX = fabs( dir.x ) - maxR;
+            
+            moveMagnitudeX *= moveSpeedFactor / frameRateFactor;
+
+            // bin it to whole numbered bins
+            moveMagnitudeX = ceil( moveMagnitudeX );
+                            
+            if( dir.x < 0 ) {
+                moveMagnitudeX *= -1;
+                }
+            
+
+            lastScreenViewCenter.x += moveMagnitudeX;
+            }
+        if( fabs( dir.y ) > maxR ) {
+            viewChange = true;
+        
+            double moveMagnitudeY = fabs( dir.y ) - maxR;
+            
+            moveMagnitudeY *= moveSpeedFactor / frameRateFactor;
+
+            // bin it to whole numbered bins
+            moveMagnitudeY = ceil( moveMagnitudeY );
+                            
+            if( dir.y < 0 ) {
+                moveMagnitudeY *= -1;
+                }
+            
+
+            lastScreenViewCenter.y += moveMagnitudeY;
+            }
+        
+
+        if( viewChange ) {
+            
+            setViewCenterPosition( lastScreenViewCenter.x, 
+                                   lastScreenViewCenter.y );
+            
+            }
+        }
+    
+        
+
 
     // now draw stuff AFTER all updates
     drawFrameNoUpdate( true );
@@ -1413,8 +1337,7 @@ void drawFrame( char inUpdate ) {
 void drawFrameNoUpdate( char inUpdate ) {
     
     setDrawColor( 1, 1, 1, 1 );
-    doublePair center = {0,0};
-    drawSquare( center, 400 );
+    drawSquare( lastScreenViewCenter, 400 );
     
     //if( currentGamePage != NULL ) {
     //    currentGamePage->base_draw( lastScreenViewCenter, viewWidth );
@@ -1509,12 +1432,15 @@ void drawFrameNoUpdate( char inUpdate ) {
 
     setDrawColor( 0, 0, 0, 0.125 );
     
-    for( int y=-10; y<10; y++ ) {
-        for( int x=-10; x<10; x++ ) {
+    int screenGridOffsetX = lrint( lastScreenViewCenter.x / 32 );
+    int screenGridOffsetY = lrint( lastScreenViewCenter.y / 32 );
+    
+    for( int y=-11; y<12; y++ ) {
+        for( int x=-11; x<12; x++ ) {
             
             doublePair pos;
-            pos.x = x * 32;
-            pos.y = y * 32;
+            pos.x = ( x + screenGridOffsetX ) * 32;
+            pos.y = ( y + screenGridOffsetY ) * 32;
             
             drawSquare( pos, 14 );
             }
