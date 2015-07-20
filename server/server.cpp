@@ -840,6 +840,9 @@ int main() {
         if( updateMessage != NULL ) {
             delete [] updateMessage;
             }
+        if( mapChangeMessage != NULL ) {
+            delete [] mapChangeMessage;
+            }
         
 
         
