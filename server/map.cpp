@@ -14,13 +14,9 @@
 
 
 
-static int fullMapDimension = 1000;
-static int halfD = fullMapDimension/2;
 
 
 static int chunkDimension = 32;
-
-static int *map;
 
 
 static int startingObjectID = 26;
@@ -34,6 +30,20 @@ static char *dbMapTableName = NULL;
 
 static MYSQL *dbCon = NULL;
 
+
+static int randSeed = 10;
+static JenkinsRandomSource randSource;
+
+
+
+static float getXYRandom( int inX, int inY ) {
+    
+    unsigned int fullSeed = inX ^ (inY * 57) ^ ( randSeed * 131 );
+    
+    randSource.reseed( fullSeed );
+    
+    return randSource.getRandomFloat();
+    }
 
 
 
@@ -80,18 +90,22 @@ int queryDatabase( const char *inQueryFormatString, ... ) {
 
 
 
-static int *getMapSpot( int inX, int inY ) {
-    inX += halfD;
-    inY += halfD;
-
-    return &( map[ inY * fullMapDimension + inX ] );
+// gets procedurally-generated base map at a given spot
+// player modifications are overlayed on top of this
+static int getBaseMap( int inX, int inY ) {
+    
+    float randValue = getXYRandom( inX, inY );
+    
+    if( randValue < 0.1 ) {
+        return startingObjectID;
+        }
+    return 0;
     }
 
 
 
+
 void initMap() {
-    
-    JenkinsRandomSource randSource( 10 );
     
     char *dbConnection = SettingsManager::getStringSetting( "dbConnection" );
 
@@ -164,20 +178,6 @@ void initMap() {
             }
         }
     
-
-
-    int cells = fullMapDimension*fullMapDimension;
-    
-    map = new int[cells];
-
-    for( int i=0; i<cells; i++ ) {
-        if( randSource.getRandomBoundedInt( 0, 100 ) < 10 ) {
-            map[i] = startingObjectID;
-            }
-        else {
-            map[i] = 0;
-            }
-        }
     }
 
 
@@ -192,7 +192,6 @@ void freeAndNullString( char **inStringPointer ) {
 
 
 void freeMap() {
-    delete [] map;
     
     freeAndNullString( &dbUser );
     freeAndNullString( &dbPassword );
@@ -221,13 +220,10 @@ char *getChunkMessage( int inCenterX, int inCenterY ) {
     // 0,0 is center of map
     
     int halfChunk = chunkDimension /2;
-
-    int worldStartX = inCenterX - halfChunk;
-    int worldStartY = inCenterY - halfChunk;
     
 
-    int startY = inCenterY + halfD - halfChunk;
-    int startX = inCenterX + halfD - halfChunk;
+    int startY = inCenterY - halfChunk;
+    int startX = inCenterX - halfChunk;
     
     int endY = startY + chunkDimension;
     int endX = startX + chunkDimension;
@@ -237,28 +233,13 @@ char *getChunkMessage( int inCenterX, int inCenterY ) {
     for( int y=startY; y<endY; y++ ) {
         int chunkY = y - startY;
         
-        char forceZeroY = false;
-        if( y < 0 || y >= fullMapDimension ) {
-            forceZeroY = true;
-            }
 
         for( int x=startX; x<endX; x++ ) {
             int chunkX = x - startX;
             
-            char forceZeroX = false;
-            if( x < 0 || x >= fullMapDimension ) {
-                forceZeroX = true;
-                }
-
-            int i = y * fullMapDimension + x;
             int cI = chunkY * chunkDimension + chunkX;
             
-            if( forceZeroY || forceZeroX ) {
-                chunk[cI] = 0;
-                }
-            else {
-                chunk[cI] = map[i];
-                }
+            chunk[cI] = getBaseMap( x, y );
             }
         
         }
@@ -271,8 +252,8 @@ char *getChunkMessage( int inCenterX, int inCenterY ) {
         "WHERE x >= %d AND x < %d  "
         "AND y >= %d AND y < %d",
         dbMapTableName, 
-        worldStartX, worldStartX + chunkDimension, 
-        worldStartY, worldStartY + chunkDimension );
+        startX, endX, 
+        startY, endY );
     
     if( !dbResult ) {
         MYSQL_RES *result = mysql_store_result( dbCon );
@@ -290,8 +271,8 @@ char *getChunkMessage( int inCenterX, int inCenterY ) {
             sscanf( row[1], "%d", &y );
             sscanf( row[2], "%d", &id );
             
-            int chunkY = (y + halfD) - startY;
-            int chunkX = (x + halfD) - startX;
+            int chunkY = y - startY;
+            int chunkX = x - startX;
             
             int cI = chunkY * chunkDimension + chunkX;
             chunk[cI] = id;
@@ -303,7 +284,7 @@ char *getChunkMessage( int inCenterX, int inCenterY ) {
 
 
     char *header = autoSprintf( "MAP_CHUNK\n%d %d %d\n", chunkDimension,
-                                worldStartX, worldStartY );
+                                startX, startY );
     
     SimpleVector<char> buffer;
     buffer.appendElementString( header );
@@ -362,7 +343,7 @@ int getMapObject( int inX, int inY ) {
         return id;
         }
     else {
-        return *getMapSpot( inX, inY );
+        return getBaseMap( inX, inY );
         }
     }
 
@@ -370,8 +351,6 @@ int getMapObject( int inX, int inY ) {
 
 
 void setMapObject( int inX, int inY, int inID ) {
-    *getMapSpot( inX, inY ) = inID;
-
     
     queryDatabase( "INSERT INTO %s "
                    "  SET x=%d, y=%d, value='%d' "
