@@ -108,9 +108,12 @@ int serverSocket = -1;
 
 
 
-int mapD = 1000;
+int mapD = 32;
 
 int *map;
+
+int mapOffsetX = 0;
+int mapOffsetY = 0;
 
 
 char eKeyDown = false;
@@ -1018,7 +1021,11 @@ void drawFrame( char inUpdate ) {
             sscanf( message, "MAP_CHUNK\n%d %d %d\n", &size, &x, &y );
             
             printf( "Got map chunk\n%s\n", message );
-
+            
+            // recenter our in-ram sub-map around this new chunk
+            mapOffsetX = x + size/2;
+            mapOffsetY = y + size/2;
+            
             SimpleVector<char *> *tokens = tokenizeString( message );
             
 
@@ -1033,8 +1040,8 @@ void drawFrame( char inUpdate ) {
                     int cX = cI % size;
                     int cY = cI / size;
                     
-                    int mapX = cX + x + mapD / 2;
-                    int mapY = cY + y + mapD / 2;
+                    int mapX = cX + x - mapOffsetX + mapD / 2;
+                    int mapY = cY + y - mapOffsetY + mapD / 2;
                     
                     if( mapX >= 0 && mapX < mapD
                         &&
@@ -1345,8 +1352,10 @@ void drawFrameNoUpdate( char inUpdate ) {
     
     setDrawColor( 1, 1, 1, 1 );
 
-    int gridCenterX = lrintf( lastScreenViewCenter.x / 32 ) + mapD/2;
-    int gridCenterY = lrintf( lastScreenViewCenter.y / 32 ) + mapD/2;
+    int gridCenterX = 
+        lrintf( lastScreenViewCenter.x / 32 ) - mapOffsetX + mapD/2;
+    int gridCenterY = 
+        lrintf( lastScreenViewCenter.y / 32 ) - mapOffsetY + mapD/2;
     
     int xStart = gridCenterX - 12;
     int xEnd = gridCenterX + 12;
@@ -1367,15 +1376,29 @@ void drawFrameNoUpdate( char inUpdate ) {
     if( yStart >= mapD ) {
         yStart = mapD - 1;
         }
+
+    if( xEnd < 0 ) {
+        xEnd = 0;
+        }
+    if( xEnd >= mapD ) {
+        xEnd = mapD - 1;
+        }
+    
+    if( yStart < 0 ) {
+        yStart = 0;
+        }
+    if( yEnd >= mapD ) {
+        yEnd = mapD - 1;
+        }
     
 
     for( int y=yEnd; y>=yStart; y-- ) {
         
-        int screenY = 32 * ( y - mapD / 2 );
+        int screenY = 32 * ( y + mapOffsetY - mapD / 2 );
         
         for( int x=xStart; x<=xEnd; x++ ) {
             
-            int screenX = 32 * ( x - mapD / 2 );
+            int screenX = 32 * ( x + mapOffsetX - mapD / 2 );
 
             int mapI = y * mapD + x;
             
