@@ -1077,8 +1077,8 @@ void drawFrame( char inUpdate ) {
                 int numRead = sscanf( lines[i], "%d %d %d",
                                       &x, &y, &id );
                 if( numRead == 3 ) {
-                    int mapX = x + mapD / 2;
-                    int mapY = y + mapD / 2;
+                    int mapX = x - mapOffsetX + mapD / 2;
+                    int mapY = y - mapOffsetY + mapD / 2;
                     
                     if( mapX >= 0 && mapX < mapD
                         &&
@@ -1579,8 +1579,8 @@ void pointerDown( float inX, float inY ) {
         
         int destID = 0;
         
-        int mapX = destX + mapD / 2;
-        int mapY = destY + mapD / 2;
+        int mapX = destX - mapOffsetX + mapD / 2;
+        int mapY = destY - mapOffsetY + mapD / 2;
 
         printf( "destX,Y = %d, %d,  mapX,Y = %d, %d, curX,Y = %d, %d\n", 
                 destX, destY, 
