@@ -1271,8 +1271,8 @@ void drawFrame( char inUpdate ) {
     
     if( ourLiveObject != NULL ) {
         
-        doublePair screenDest = { ourLiveObject->xd * 32, 
-                                  ourLiveObject->yd * 32 };
+        doublePair screenDest = { (double)( ourLiveObject->xd * 32 ), 
+                                  (double)( ourLiveObject->yd * 32 ) };
         
         doublePair dir = sub( screenDest, lastScreenViewCenter );
         
@@ -1406,7 +1406,7 @@ void drawFrameNoUpdate( char inUpdate ) {
             
             if( oID > 0 ) {
                 
-                doublePair pos = { screenX, screenY };
+                doublePair pos = { (double)screenX, (double)screenY };
 
                 drawObject( getObject(oID), pos );
                 }
