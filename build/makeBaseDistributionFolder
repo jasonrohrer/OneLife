@@ -18,6 +18,10 @@ mkdir $baseFolder/graphics
 mkdir $baseFolder/settings
 mkdir $baseFolder/languages
 
+mkdir $baseFolder/sprites
+mkdir $baseFolder/objects
+mkdir $baseFolder/transitions
+
 
 
 cp ../gameSource/graphics/*.tga $baseFolder/graphics
@@ -26,6 +30,11 @@ cp ../gameSource/languages/*.txt $baseFolder/languages
 cp ../gameSource/language.txt $baseFolder
 cp ../documentation/Readme.txt $baseFolder
 cp ../no_copyright.txt $baseFolder
+
+
+cp -r ../gameSource/sprites/* $baseFolder/sprites
+cp ../gameSource/objects/* $baseFolder/objects
+cp ../gameSource/transitions/* $baseFolder/transitions
 
 
 
