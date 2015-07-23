@@ -87,7 +87,7 @@ int webRetrySeconds;
 
 
 double frameRateFactor = 1;
-
+int baseFramesPerSecond = 60;
 
 char firstDrawFrameCalled = false;
 int firstServerMessagesReceived = 0;
@@ -284,8 +284,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     screenW = inWidth;
     screenH = inHeight;
     
-    if( inTargetFrameRate != 60 ) {
-        frameRateFactor = (double)60 / (double)inTargetFrameRate;
+    if( inTargetFrameRate != baseFramesPerSecond ) {
+        frameRateFactor = 
+            (double)baseFramesPerSecond / (double)inTargetFrameRate;
         }
     
     
@@ -810,13 +811,19 @@ messageType getMessageType( char *inMessage ) {
 
 typedef struct LiveObject {
         int id;
-        int x;
-        int y;
 
         int holdingID;
 
-        int xs;
-        int ys;
+        // current fractional grid position and speed
+        doublePair currentPos;
+        // current speed is move delta per frame
+        doublePair currentSpeed;
+
+        // recompute speed periodically during move so that we don't
+        // fall behind when frame rate fluctuates
+        double timeOfLastSpeedUpdate;
+        
+        // destination grid position
         int xd;
         int yd;
         
@@ -833,6 +840,28 @@ typedef struct LiveObject {
 
 
 SimpleVector<LiveObject> gameObjects;
+
+
+
+
+void updateMoveSpeed( LiveObject *inObject ) {
+    doublePair endPos = { (double)inObject->xd, (double)inObject->yd };
+    
+    double etaSec = inObject->moveEtaTime - game_getCurrentTime();
+    
+    doublePair moveLeft = sub( endPos, 
+                               inObject->currentPos );
+
+    doublePair speedPerSec =
+        mult( moveLeft, 1.0 / etaSec );
+                            
+    inObject->currentSpeed =
+        mult( speedPerSec, 
+              1.0 / getRecentFrameRate() );
+    
+    inObject->timeOfLastSpeedUpdate = game_getCurrentTime();
+    }
+
 
 
 
@@ -1111,8 +1140,8 @@ void drawFrame( char inUpdate ) {
                 int numRead = sscanf( lines[i], "%d %d %d %d",
                                       &( o.id ),
                                       &( o.holdingID ),
-                                      &( o.x ),
-                                      &( o.y ) );
+                                      &( o.xd ),
+                                      &( o.yd ) );
                 
                 if( numRead == 4 ) {
                     
@@ -1126,15 +1155,16 @@ void drawFrame( char inUpdate ) {
                         }
                     
                     if( existing != NULL ) {
-                        existing->x = o.x;
-                        existing->y = o.y;
                         existing->holdingID = o.holdingID;
                         
-                        existing->xs = o.x;
-                        existing->ys = o.y;
+                        existing->currentPos.x = o.xd;
+                        existing->currentPos.y = o.yd;
                         
-                        existing->xd = o.x;
-                        existing->yd = o.y;
+                        existing->currentSpeed.x = 0;
+                        existing->currentSpeed.y = 0;
+
+                        existing->xd = o.xd;
+                        existing->yd = o.yd;
                         
                         existing->moveTotalTime = 0;
                         }
@@ -1143,11 +1173,12 @@ void drawFrame( char inUpdate ) {
                     
                         lastCharUsed = o.displayChar;
                     
-                        o.xs = o.x;
-                        o.ys = o.y;
+                        o.currentPos.x = o.xd;
+                        o.currentPos.y = o.yd;
                         
-                        o.xd = o.x;
-                        o.yd = o.y;
+                        o.currentSpeed.x = 0;
+                        o.currentSpeed.y = 0;
+
                         
                         o.moveTotalTime = 0;
                         
@@ -1211,16 +1242,18 @@ void drawFrame( char inUpdate ) {
 
                 double etaSec;
                 
+                int startX, startY;
+                
                 int numRead = sscanf( lines[i], "%d %d %d %d %d %lf %lf",
                                       &( o.id ),
-                                      &( o.xs ),
-                                      &( o.ys ),
+                                      &( startX ),
+                                      &( startY ),
                                       &( o.xd ),
                                       &( o.yd ),
                                       &( o.moveTotalTime ),
                                       &etaSec );
                 
-                o.moveEtaTime = etaSec + Time::getCurrentTime();
+                o.moveEtaTime = etaSec + game_getCurrentTime();
                 
 
                 if( numRead == 7 ) {
@@ -1230,14 +1263,30 @@ void drawFrame( char inUpdate ) {
                             
                             LiveObject *existing = gameObjects.getElement(j);
                             
-                            existing->xs = o.xs;
-                            existing->ys = o.ys;
+                            double timePassed = 
+                                o.moveTotalTime - etaSec;
                             
+                            double fractionPassed = 
+                                timePassed / o.moveTotalTime;
+                            
+                            doublePair startPos = { (double)startX,
+                                                    (double)startY };
+                            doublePair endPos = { (double)o.xd,
+                                                  (double)o.yd };
+                            
+
+                            existing->currentPos = 
+                                add( mult( endPos, fractionPassed ), 
+                                     mult( startPos, 1 - fractionPassed ) );
+                            
+
                             existing->xd = o.xd;
                             existing->yd = o.yd;
                             
                             existing->moveTotalTime = o.moveTotalTime;
                             existing->moveEtaTime = o.moveEtaTime;
+
+                            updateMoveSpeed( existing );
 
                             break;
                             }
@@ -1321,6 +1370,24 @@ void drawFrame( char inUpdate ) {
             
             setViewCenterPosition( lastScreenViewCenter.x, 
                                    lastScreenViewCenter.y );
+            
+            }
+
+        // apply move step
+        if( length( ourLiveObject->currentSpeed ) != 0 ) {
+            ourLiveObject->currentPos =
+                add( ourLiveObject->currentPos,
+                     ourLiveObject->currentSpeed );
+
+            // correct move speed based on how far we have left to go
+            // and eta wall-clock time
+            
+            // make this correction once per second
+            if( game_getCurrentTime() - ourLiveObject->timeOfLastSpeedUpdate
+                > .25 ) {
+    
+                updateMoveSpeed( ourLiveObject );
+                }
             
             }
         }
@@ -1422,7 +1489,7 @@ void drawFrameNoUpdate( char inUpdate ) {
         LiveObject *o = gameObjects.getElement( i );
 
 
-        if( o->xs != o->xd || o->ys != o->yd ) {
+        if( o->currentPos.x != o->xd || o->currentPos.y != o->yd ) {
             // destination
             
             char *string = autoSprintf( "[%c]", o->displayChar );
@@ -1441,23 +1508,8 @@ void drawFrameNoUpdate( char inUpdate ) {
 
         // current pos
         char *string = autoSprintf( "%c", o->displayChar );
-        
-        double fracDone = 1;
 
-        if( o->xs != o->xd || o->ys != o->yd ) {
-
-            double timeLeft = o->moveEtaTime - Time::getCurrentTime();
-            
-            if( timeLeft > 0 ) {
-                fracDone = 1 - ( timeLeft / o->moveTotalTime );
-                }
-            }
-        
-
-
-        doublePair pos;
-        pos.x = ( fracDone * o->xd + (1-fracDone) * o->xs )* 32;
-        pos.y = ( fracDone * o->yd + (1-fracDone) * o->ys )* 32;
+        doublePair pos = mult( o->currentPos, 32 );
         
         setDrawColor( 0, 0, 0, 1 );
         mainFont->drawString( string, 
@@ -1574,8 +1626,8 @@ void pointerDown( float inX, float inY ) {
     int destY = lrintf( ( inY ) / 32 );
     
     
-    if( ourLiveObject->xs == ourLiveObject->xd && 
-        ourLiveObject->ys == ourLiveObject->yd ) {
+    if( ourLiveObject->currentPos.x == ourLiveObject->xd && 
+        ourLiveObject->currentPos.y == ourLiveObject->yd ) {
         
         int destID = 0;
         
