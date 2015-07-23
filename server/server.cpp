@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <math.h>
 
 
 #include "minorGems/util/stringUtils.h"
@@ -9,6 +10,8 @@
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/network/SocketServer.h"
 #include "minorGems/network/SocketPoll.h"
+
+#include "minorGems/system/Thread.h"
 
 #include "minorGems/game/doublePair.h"
 
@@ -447,13 +450,41 @@ int main() {
                 delete [] message;
                 
                 
-                if( nextPlayer->xs == nextPlayer->xd &&
-                    nextPlayer->ys == nextPlayer->yd ) {
-                    
-                    // ignore new move if not stationary
                 
-                    if( m.type == MOVE ) {
+                // if player is still moving, ignore all actions
+                // except for move interrupts
+                if( ( nextPlayer->xs == nextPlayer->xd &&
+                      nextPlayer->ys == nextPlayer->yd ) 
+                    ||
+                    m.type == MOVE ) {
                     
+                    if( m.type == MOVE ) {
+                        if( nextPlayer->xs != nextPlayer->xd ||
+                            nextPlayer->ys != nextPlayer->yd ) {
+                    
+                            // a new move interrupting a non-stationary object
+                            
+                            // compute closest starting position part way along
+                            // path
+                            double fractionDone = 
+                                ( Time::getCurrentTime() - 
+                                  nextPlayer->moveStartTime )
+                                / nextPlayer->moveTotalSeconds;
+                    
+                            doublePair start = { nextPlayer->xs, 
+                                                 nextPlayer->ys };
+                            doublePair dest = { nextPlayer->xd, 
+                                                nextPlayer->yd };
+                            
+                            doublePair cur =
+                                add( mult( dest, fractionDone ),
+                                     mult( start, 1 - fractionDone ) );
+                            
+                            nextPlayer->xs = lrintf( cur.x );
+                            nextPlayer->ys = lrintf( cur.y );
+                            }
+
+
                         nextPlayer->xd = m.x;
                         nextPlayer->yd = m.y;
                         

@@ -1681,98 +1681,103 @@ void pointerDown( float inX, float inY ) {
     int destY = lrintf( ( inY ) / 32 );
     
     
+    char currentlyMoving = true;
+    
     if( ourLiveObject->currentPos.x == ourLiveObject->xd && 
         ourLiveObject->currentPos.y == ourLiveObject->yd ) {
         
-        int destID = 0;
-        
-        int mapX = destX - mapOffsetX + mapD / 2;
-        int mapY = destY - mapOffsetY + mapD / 2;
+        currentlyMoving = false;
+        }
+    
 
-        printf( "destX,Y = %d, %d,  mapX,Y = %d, %d, curX,Y = %d, %d\n", 
-                destX, destY, 
-                mapX, mapY,
-                ourLiveObject->xd, ourLiveObject->yd );
-        if( mapY >= 0 && mapY < mapD &&
-            mapX >= 0 && mapX < mapD ) {
-            
-            destID = map[ mapY * mapD + mapX ];
-            }
+    int destID = 0;
         
-        printf( "DestID = %d\n", destID );
+    int mapX = destX - mapOffsetX + mapD / 2;
+    int mapY = destY - mapOffsetY + mapD / 2;
+    
+    printf( "destX,Y = %d, %d,  mapX,Y = %d, %d, curX,Y = %d, %d\n", 
+            destX, destY, 
+            mapX, mapY,
+            ourLiveObject->xd, ourLiveObject->yd );
+    if( mapY >= 0 && mapY < mapD &&
+        mapX >= 0 && mapX < mapD ) {
+        
+        destID = map[ mapY * mapD + mapX ];
+        }
+    
+    printf( "DestID = %d\n", destID );
         
 
-        if( eKeyDown ) {
-            // use/drop modifier
+    if( ! currentlyMoving && eKeyDown ) {
+        // use/drop modifier
             
-            // only adjacent cells
-            if( isGridAdjacent( destX, destY,
-                                ourLiveObject->xd, ourLiveObject->yd ) ) {
+        // only adjacent cells
+        if( isGridAdjacent( destX, destY,
+                            ourLiveObject->xd, ourLiveObject->yd ) ) {
+            
+            const char *action = "";
+            
+            char send = false;
+            
+            if( destID == 0 && ourLiveObject->holdingID != 0 ) {
+                action = "DROP";
+                send = true;
+                }
+            else if( destID != 0 ) {
+                action = "USE";
+                send = true;
+                }
+            
+            if( send ) {
+                char *message = autoSprintf( "%s %d %d#", action,
+                                             destX, destY );
+                sendToSocket( serverSocket, (unsigned char*)message, 
+                              strlen( message ) );
                 
-                const char *action = "";
-                
-                char send = false;
-                
-                if( destID == 0 && ourLiveObject->holdingID != 0 ) {
-                    action = "DROP";
-                    send = true;
-                    }
-                else if( destID != 0 ) {
-                    action = "USE";
-                    send = true;
-                    }
-                
-                if( send ) {
-                    char *message = autoSprintf( "%s %d %d#", action,
-                                                 destX, destY );
-                    sendToSocket( serverSocket, (unsigned char*)message, 
-                                  strlen( message ) );
-                    
-                    delete [] message;
-                    }
+                delete [] message;
                 }
             }
-        else if( destID == 0 ) {
-            // a move to an empty spot
+        }
+    else if( destID == 0 ) {
+        // a move to an empty spot
+        // can interrupt current move
                 
-            char *message = autoSprintf( "MOVE %d %d#", destX, destY );
+        char *message = autoSprintf( "MOVE %d %d#", destX, destY );
+        sendToSocket( serverSocket, (unsigned char*)message, 
+                      strlen( message ) );
+            
+        delete [] message;
+
+        // start moving before we hear back from server
+
+        ourLiveObject->xd = destX;
+        ourLiveObject->yd = destY;
+            
+        doublePair endPos = { (double)destX, (double)destY };
+            
+        ourLiveObject->moveTotalTime = 
+            distance( endPos, 
+                      ourLiveObject->currentPos ) / 
+            ourLiveObject->lastSpeed;
+
+        ourLiveObject->moveEtaTime = game_getCurrentTime() +
+            ourLiveObject->moveTotalTime;
+
+            
+        updateMoveSpeed( ourLiveObject );
+        }
+    else if( !currentlyMoving ) {
+        // pick up action?
+        // only if close enough
+        if( isGridAdjacent( destX, destY,
+                            ourLiveObject->xd, ourLiveObject->yd ) ) {
+                
+            char *message = autoSprintf( "GRAB %d %d#", destX, destY );
             sendToSocket( serverSocket, (unsigned char*)message, 
                           strlen( message ) );
             
             delete [] message;
-
-            // start moving before we hear back from server
-
-            ourLiveObject->xd = destX;
-            ourLiveObject->yd = destY;
-            
-            doublePair endPos = { (double)destX, (double)destY };
-            
-            ourLiveObject->moveTotalTime = 
-                distance( endPos, 
-                          ourLiveObject->currentPos ) / 
-                ourLiveObject->lastSpeed;
-
-            ourLiveObject->moveEtaTime = game_getCurrentTime() +
-                ourLiveObject->moveTotalTime;
-
-            
-            updateMoveSpeed( ourLiveObject );
             }
-        else {
-            // pick up action?
-            // only if close enough
-            if( isGridAdjacent( destX, destY,
-                                ourLiveObject->xd, ourLiveObject->yd ) ) {
-                
-                char *message = autoSprintf( "GRAB %d %d#", destX, destY );
-                sendToSocket( serverSocket, (unsigned char*)message, 
-                              strlen( message ) );
-            
-                delete [] message;
-                }
-            }
-        
         }
     
     }
