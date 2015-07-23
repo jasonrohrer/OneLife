@@ -819,6 +819,11 @@ typedef struct LiveObject {
         // current speed is move delta per frame
         doublePair currentSpeed;
 
+        // for instant reaction to move command when server hasn't
+        // responded yet
+        // in grid spaces per sec
+        double lastSpeed;
+
         // recompute speed periodically during move so that we don't
         // fall behind when frame rate fluctuates
         double timeOfLastSpeedUpdate;
@@ -858,7 +863,7 @@ void updateMoveSpeed( LiveObject *inObject ) {
     inObject->currentSpeed =
         mult( speedPerSec, 
               1.0 / getRecentFrameRate() );
-    
+
     inObject->timeOfLastSpeedUpdate = game_getCurrentTime();
     }
 
@@ -1157,14 +1162,20 @@ void drawFrame( char inUpdate ) {
                     if( existing != NULL ) {
                         existing->holdingID = o.holdingID;
                         
-                        existing->currentPos.x = o.xd;
-                        existing->currentPos.y = o.yd;
+                        if( existing->id != ourID ) {
+                            // don't ever force-update these for
+                            // our locally-controlled object
+                            // give illusion of it being totally responsive
+                            // to move commands
+                            existing->currentPos.x = o.xd;
+                            existing->currentPos.y = o.yd;
                         
-                        existing->currentSpeed.x = 0;
-                        existing->currentSpeed.y = 0;
-
-                        existing->xd = o.xd;
-                        existing->yd = o.yd;
+                            existing->currentSpeed.x = 0;
+                            existing->currentSpeed.y = 0;
+                        
+                            existing->xd = o.xd;
+                            existing->yd = o.yd;
+                            }
                         
                         existing->moveTotalTime = 0;
                         }
@@ -1179,6 +1190,9 @@ void drawFrame( char inUpdate ) {
                         o.currentSpeed.x = 0;
                         o.currentSpeed.y = 0;
 
+                        // default to 4 grid spaces per second
+                        // if we haven't heard it from server yet
+                        o.lastSpeed = 4;
                         
                         o.moveTotalTime = 0;
                         
@@ -1274,20 +1288,39 @@ void drawFrame( char inUpdate ) {
                             doublePair endPos = { (double)o.xd,
                                                   (double)o.yd };
                             
-
-                            existing->currentPos = 
-                                add( mult( endPos, fractionPassed ), 
-                                     mult( startPos, 1 - fractionPassed ) );
                             
-
-                            existing->xd = o.xd;
-                            existing->yd = o.yd;
+                            existing->lastSpeed = 
+                                distance( endPos, startPos ) / o.moveTotalTime;
                             
-                            existing->moveTotalTime = o.moveTotalTime;
-                            existing->moveEtaTime = o.moveEtaTime;
+                            if( existing->id != ourID ) {
+                                // don't force-update these
+                                // for our object
+                                // we control it locally, to keep
+                                // illusion of full move interactivity
+                            
+                                if( equal( existing->currentPos, startPos ) ) {
+                                
+                                    existing->currentPos = 
+                                        add( mult( endPos, 
+                                                   fractionPassed ), 
+                                             mult( startPos, 
+                                                   1 - fractionPassed ) );
+                                    }
+                                
+                                
+                                existing->xd = o.xd;
+                                existing->yd = o.yd;
+                                
+                                existing->moveTotalTime = o.moveTotalTime;
+                                existing->moveEtaTime = o.moveEtaTime;
 
-                            updateMoveSpeed( existing );
-
+                                if( existing->id != ourID ) {
+                                    // move speed already updated when
+                                    // we started moving
+                                    updateMoveSpeed( existing );
+                                    }
+                                }
+                            
                             break;
                             }
                         }
@@ -1373,26 +1406,48 @@ void drawFrame( char inUpdate ) {
             
             }
 
-        // apply move step
-        if( length( ourLiveObject->currentSpeed ) != 0 ) {
-            ourLiveObject->currentPos =
-                add( ourLiveObject->currentPos,
-                     ourLiveObject->currentSpeed );
+        }
+    
+    
+    // update all positions for moving objects
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        
+        LiveObject *o = gameObjects.getElement( i );
+        
+        if( o->currentSpeed.x != 0 ||
+            o->currentSpeed.y != 0 ) {
 
+            doublePair endPos = { (double)o->xd, (double)o->yd };
+            
+            if( distance( endPos, o->currentPos )
+                < length( o->currentSpeed ) ) {
+                
+                // reached destination
+                o->currentPos = endPos;
+                o->currentSpeed.x = 0;
+                o->currentSpeed.y = 0;
+                }
+            else {
+                // still stepping toward it
+                o->currentPos =
+                    add( o->currentPos,
+                         o->currentSpeed );
+                }
+            
             // correct move speed based on how far we have left to go
             // and eta wall-clock time
             
             // make this correction once per second
-            if( game_getCurrentTime() - ourLiveObject->timeOfLastSpeedUpdate
+            if( game_getCurrentTime() - o->timeOfLastSpeedUpdate
                 > .25 ) {
     
-                updateMoveSpeed( ourLiveObject );
+                //updateMoveSpeed( o );
                 }
             
             }
+
         }
     
-        
 
 
     // now draw stuff AFTER all updates
@@ -1685,6 +1740,24 @@ void pointerDown( float inX, float inY ) {
                           strlen( message ) );
             
             delete [] message;
+
+            // start moving before we hear back from server
+
+            ourLiveObject->xd = destX;
+            ourLiveObject->yd = destY;
+            
+            doublePair endPos = { (double)destX, (double)destY };
+            
+            ourLiveObject->moveTotalTime = 
+                distance( endPos, 
+                          ourLiveObject->currentPos ) / 
+                ourLiveObject->lastSpeed;
+
+            ourLiveObject->moveEtaTime = game_getCurrentTime() +
+                ourLiveObject->moveTotalTime;
+
+            
+            updateMoveSpeed( ourLiveObject );
             }
         else {
             // pick up action?
