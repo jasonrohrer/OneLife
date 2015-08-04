@@ -35,6 +35,9 @@ typedef struct LiveObject {
         int lastSentMapX;
         int lastSentMapY;
 
+        // in grid square widths per second
+        double moveSpeed;
+        
         double moveTotalSeconds;
         double moveStartTime;
         
@@ -390,6 +393,7 @@ int main() {
                 newObject.yd = 0;
                 newObject.lastSentMapX = 0;
                 newObject.lastSentMapY = 0;
+                newObject.moveSpeed = 4;
                 newObject.moveTotalSeconds = 0;
                 newObject.holdingID = 0;
                 newObject.sock = sock;
@@ -495,9 +499,9 @@ int main() {
                         double dist = distance( start, dest );
                         
                         
-                        // for now, all move 4 square per sec
-                        
-                        nextPlayer->moveTotalSeconds = dist / 4;
+                        nextPlayer->moveTotalSeconds = dist / 
+                            nextPlayer->moveSpeed;
+
                         nextPlayer->moveStartTime = Time::getCurrentTime();
                         
                         nextPlayer->newMove = true;
@@ -637,9 +641,10 @@ int main() {
                 nextPlayer->isNew = false;
                 }
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
-                char *updateLine = autoSprintf( "%d %d X X\n", 
+                char *updateLine = autoSprintf( "%d %d X X %f\n", 
                                                 nextPlayer->id,
-                                                nextPlayer->holdingID );
+                                                nextPlayer->holdingID,
+                                                nextPlayer->moveSpeed );
                 
                 newUpdates.appendElementString( updateLine );
                 
@@ -686,12 +691,13 @@ int main() {
             LiveObject *nextPlayer = players.getElement( 
                 playerIndicesToSendUpdatesAbout.getElementDirect( i ) );
 
-            char *updateLine = autoSprintf( "%d %d %d %d\n", 
+            char *updateLine = autoSprintf( "%d %d %d %d %f\n", 
                                             nextPlayer->id,
                                             nextPlayer->holdingID,
                                             nextPlayer->xs, 
-                                            nextPlayer->ys );
-
+                                            nextPlayer->ys,
+                                            nextPlayer->moveSpeed );
+            
             newUpdates.appendElementString( updateLine );
             
             delete [] updateLine;
@@ -778,8 +784,8 @@ int main() {
 
                     // holding no object for now
                     char *messageLine = 
-                        autoSprintf( "%d %d %d %d\n", o.id, o.holdingID,
-                                     o.xs, o.ys );
+                        autoSprintf( "%d %d %d %d %f\n", o.id, o.holdingID,
+                                     o.xs, o.ys, o.moveSpeed );
                     
 
                     if( o.id != nextPlayer->id ) {

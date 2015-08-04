@@ -1149,13 +1149,14 @@ void drawFrame( char inUpdate ) {
 
                 LiveObject o;
 
-                int numRead = sscanf( lines[i], "%d %d %d %d",
+                int numRead = sscanf( lines[i], "%d %d %d %d %lf",
                                       &( o.id ),
                                       &( o.holdingID ),
                                       &( o.xd ),
-                                      &( o.yd ) );
+                                      &( o.yd ),
+                                      &( o.lastSpeed ) );
                 
-                if( numRead == 4 ) {
+                if( numRead == 5 ) {
                     
                     LiveObject *existing = NULL;
 
@@ -1171,7 +1172,9 @@ void drawFrame( char inUpdate ) {
                         
                         // in motion until update received
                         existing->inMotion = false;
-
+                        
+                        existing->lastSpeed = o.lastSpeed;
+                        
                         if( existing->id != ourID ) {
                             // don't ever force-update these for
                             // our locally-controlled object
@@ -1199,10 +1202,6 @@ void drawFrame( char inUpdate ) {
                         
                         o.currentSpeed.x = 0;
                         o.currentSpeed.y = 0;
-
-                        // default to 4 grid spaces per second
-                        // if we haven't heard it from server yet
-                        o.lastSpeed = 4;
                         
                         o.moveTotalTime = 0;
                         
@@ -1299,8 +1298,6 @@ void drawFrame( char inUpdate ) {
                                                   (double)o.yd };
                             
                             
-                            existing->lastSpeed = 
-                                distance( endPos, startPos ) / o.moveTotalTime;
                             
                             
                             // stays in motion until we receive final
@@ -1330,11 +1327,7 @@ void drawFrame( char inUpdate ) {
                                 existing->moveTotalTime = o.moveTotalTime;
                                 existing->moveEtaTime = o.moveEtaTime;
 
-                                if( existing->id != ourID ) {
-                                    // move speed already updated when
-                                    // we started moving
-                                    updateMoveSpeed( existing );
-                                    }
+                                updateMoveSpeed( existing );
                                 }
                             
                             break;

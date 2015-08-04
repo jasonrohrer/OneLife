@@ -35,15 +35,17 @@ Square is positioned on map grid with upper left corner at x y
 
 
 PLAYER_UPDATE
-p_id o_id x y
-p_id o_id x y
-p_id o_id x y
-p_id o_id x y
+p_id o_id x y s
+p_id o_id x y s
+p_id o_id x y s
+p_id o_id x y s
 ...
-p_id o_id x y
+p_id o_id x y s
 #
 
-List of player ids with their held object ids and x,y grid positions.
+List of player ids with their held object ids and x,y grid positions
+and floating point s move speeds (in grid square widths per second)
+
 This means the player is stationary at this position.
 
 Deleted players reported in update with
