@@ -198,6 +198,10 @@ static int holdDeleteKeySteps = -1;
 static int stepsBetweenDeleteRepeat;
 
 
+// if user clicks to initiate an action while still moving, we
+// queue it here
+static char *nextActionMessageToSend = NULL;
+
 
 
 
@@ -430,6 +434,8 @@ void freeFrameDrawer() {
     freeSpriteBank();
 
     delete [] map;
+
+    delete [] nextActionMessageToSend;
     }
 
 
@@ -839,6 +845,7 @@ typedef struct LiveObject {
         double moveEtaTime;
 
         
+        char inMotion;
         
         char displayChar;
     } LiveObject;
@@ -1162,6 +1169,9 @@ void drawFrame( char inUpdate ) {
                     if( existing != NULL ) {
                         existing->holdingID = o.holdingID;
                         
+                        // in motion until update received
+                        existing->inMotion = false;
+
                         if( existing->id != ourID ) {
                             // don't ever force-update these for
                             // our locally-controlled object
@@ -1291,6 +1301,12 @@ void drawFrame( char inUpdate ) {
                             
                             existing->lastSpeed = 
                                 distance( endPos, startPos ) / o.moveTotalTime;
+                            
+                            
+                            // stays in motion until we receive final
+                            // PLAYER_UPDATE from server telling us
+                            // that move is over
+                            existing->inMotion = true;
                             
                             if( existing->id != ourID ) {
                                 // don't force-update these
@@ -1446,6 +1462,18 @@ void drawFrame( char inUpdate ) {
             
             }
 
+        }
+    
+
+    if( nextActionMessageToSend != NULL &&
+        ! ourLiveObject->inMotion ) {
+        
+        // queued action waiting for our move to end
+        sendToSocket( serverSocket, (unsigned char*)nextActionMessageToSend, 
+                      strlen( nextActionMessageToSend) );
+        
+        delete [] nextActionMessageToSend;
+        nextActionMessageToSend = NULL;
         }
     
 
@@ -1681,13 +1709,6 @@ void pointerDown( float inX, float inY ) {
     int destY = lrintf( ( inY ) / 32 );
     
     
-    char currentlyMoving = true;
-    
-    if( ourLiveObject->currentPos.x == ourLiveObject->xd && 
-        ourLiveObject->currentPos.y == ourLiveObject->yd ) {
-        
-        currentlyMoving = false;
-        }
     
 
     int destID = 0;
@@ -1708,7 +1729,13 @@ void pointerDown( float inX, float inY ) {
     printf( "DestID = %d\n", destID );
         
 
-    if( ! currentlyMoving && eKeyDown ) {
+    if( nextActionMessageToSend != NULL ) {
+        delete [] nextActionMessageToSend;
+        nextActionMessageToSend = NULL;
+        }
+    
+
+    if( eKeyDown ) {
         // use/drop modifier
             
         // only adjacent cells
@@ -1729,12 +1756,9 @@ void pointerDown( float inX, float inY ) {
                 }
             
             if( send ) {
-                char *message = autoSprintf( "%s %d %d#", action,
-                                             destX, destY );
-                sendToSocket( serverSocket, (unsigned char*)message, 
-                              strlen( message ) );
-                
-                delete [] message;
+                // queue this until after we are done moving, if we are
+                nextActionMessageToSend = autoSprintf( "%s %d %d#", action,
+                                                       destX, destY );
                 }
             }
         }
@@ -1742,6 +1766,7 @@ void pointerDown( float inX, float inY ) {
         // a move to an empty spot
         // can interrupt current move
                 
+        // send move right away
         char *message = autoSprintf( "MOVE %d %d#", destX, destY );
         sendToSocket( serverSocket, (unsigned char*)message, 
                       strlen( message ) );
@@ -1766,19 +1791,30 @@ void pointerDown( float inX, float inY ) {
             
         updateMoveSpeed( ourLiveObject );
         }
-    else if( !currentlyMoving ) {
+    else {
         // pick up action?
         // only if close enough
         if( isGridAdjacent( destX, destY,
                             ourLiveObject->xd, ourLiveObject->yd ) ) {
                 
-            char *message = autoSprintf( "GRAB %d %d#", destX, destY );
-            sendToSocket( serverSocket, (unsigned char*)message, 
-                          strlen( message ) );
-            
-            delete [] message;
+            // queue this until after we are done moving, if we are
+            nextActionMessageToSend
+                = autoSprintf( "GRAB %d %d#", destX, destY );
             }
         }
+
+
+    if( ! ourLiveObject->inMotion && nextActionMessageToSend ) {
+        // can send action right now and unqueue it
+        // else, wait until after next player update to send it
+        sendToSocket( serverSocket, (unsigned char*)nextActionMessageToSend, 
+                      strlen( nextActionMessageToSend) );
+        
+        delete [] nextActionMessageToSend;
+        nextActionMessageToSend = NULL;
+        }
+    
+                
     
     }
 
