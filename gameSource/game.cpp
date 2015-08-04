@@ -1740,7 +1740,14 @@ void pointerDown( float inX, float inY ) {
         }
     
 
-    if( eKeyDown || destID != 0 ) {
+    char modClick = false;
+    
+    if( eKeyDown || isLastMouseButtonRight() ) {
+        modClick = true;
+        }
+
+
+    if( modClick || destID != 0 ) {
         // use/drop modifier
         // OR pick up action
             
@@ -1810,15 +1817,15 @@ void pointerDown( float inX, float inY ) {
             char send = false;
             
                 
-            if( eKeyDown && destID == 0 && ourLiveObject->holdingID != 0 ) {
+            if( modClick && destID == 0 && ourLiveObject->holdingID != 0 ) {
                 action = "DROP";
                 send = true;
                 }
-            else if( eKeyDown && destID != 0 ) {
+            else if( modClick && destID != 0 ) {
                 action = "USE";
                 send = true;
                 }
-            else if( ! eKeyDown && destID != 0 ) {
+            else if( ! modClick && destID != 0 ) {
                 action = "GRAB";
                 send = true;
                 }
