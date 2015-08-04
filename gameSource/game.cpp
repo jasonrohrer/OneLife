@@ -1778,7 +1778,8 @@ void pointerDown( float inX, float inY ) {
                         int emptyX = clickDestX + nDX[n];
                         int emptyY = clickDestY + nDY[n];
 
-                        doublePair emptyDest = { emptyX, emptyY };
+                        doublePair emptyDest = { (double)emptyX, 
+                                                 (double)emptyY };
                         
                         double emptyDist = 
                             distance( emptyDest, ourLiveObject->currentPos );
