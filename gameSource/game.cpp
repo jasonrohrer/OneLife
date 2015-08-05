@@ -1739,8 +1739,13 @@ void pointerDown( float inX, float inY ) {
         modClick = true;
         }
 
-
-    if( modClick || destID != 0 ) {
+    if( destID == 0 && ( !modClick || ourLiveObject->holdingID == 0 ) ) {
+        // a move to an empty spot
+        // can interrupt current move
+        
+        mustMove = true;
+        }
+    else if( modClick || destID != 0 ) {
         // use/drop modifier
         // OR pick up action
             
@@ -1833,12 +1838,7 @@ void pointerDown( float inX, float inY ) {
                 }
             }
         }
-    else if( destID == 0 ) {
-        // a move to an empty spot
-        // can interrupt current move
-        
-        mustMove = true;
-        }
+    
 
 
     
