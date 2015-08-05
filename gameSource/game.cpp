@@ -1177,8 +1177,7 @@ void drawFrame( char inUpdate ) {
                     if( existing != NULL ) {
                         existing->holdingID = o.holdingID;
                         
-                        // in motion until update received
-                        existing->inMotion = false;
+                        
                         
                         existing->lastSpeed = o.lastSpeed;
                         
@@ -1199,12 +1198,18 @@ void drawFrame( char inUpdate ) {
                         else {
                             // update for us
                             
-                            // ready to execute next action
-                            playerActionPending = false;
-                            
-                            existing->pendingAction = false;
+                            if( !existing->inMotion ) {
+                                // this is an update post-action, not post-move
+                                
+                                // ready to execute next action
+                                playerActionPending = false;
+                                
+                                existing->pendingAction = false;
+                                }
                             }
                         
+                        // in motion until update received, now done
+                        existing->inMotion = false;
                         
                         existing->moveTotalTime = 0;
                         }
@@ -1217,7 +1222,8 @@ void drawFrame( char inUpdate ) {
                         o.inMotion = false;
 
                         o.pendingAction = false;
-
+                        o.pendingActionAnimationProgress = 0;
+                        
                         o.currentPos.x = o.xd;
                         o.currentPos.y = o.yd;
                         
@@ -1475,30 +1481,59 @@ void drawFrame( char inUpdate ) {
                 }
             
             }
-        if( o->id == ourID && o->pendingAction ) {
+
+        if( o->id == ourID &&
+            ( o->pendingAction || o->pendingActionAnimationProgress != 0 ) ) {
             
             o->pendingActionAnimationProgress += 0.05 * frameRateFactor;
             
             if( o->pendingActionAnimationProgress > 1 ) {
-                o->pendingActionAnimationProgress -= 1;
+                if( o->pendingAction ) {
+                    // still pending, wrap around smoothly
+                    o->pendingActionAnimationProgress -= 1;
+                    }
+                else {
+                    // no longer pending, finish last cycle by snapping
+                    // back to 0
+                    o->pendingActionAnimationProgress = 0;
+                    }
                 }
             }
         }
     
 
-    if( nextActionMessageToSend != NULL &&
-        ! ourLiveObject->inMotion ) {
+    if( nextActionMessageToSend != NULL 
+        && ourLiveObject->currentSpeed.x == 0
+        && ourLiveObject->currentSpeed.y == 0 ) {
         
-        // queued action waiting for our move to end
-        sendToSocket( serverSocket, (unsigned char*)nextActionMessageToSend, 
-                      strlen( nextActionMessageToSend) );
+        // done moving on client end
+        // can start showing pending action animation, even if 
+        // end of motion not received from server yet
+
+        if( !playerActionPending ) {
+            playerActionPending = true;
+            ourLiveObject->pendingAction = true;
+            
+            // start on first frame to force at least one cycle no
+            // matter how fast the server responds
+            ourLiveObject->pendingActionAnimationProgress = 
+                0.05 * frameRateFactor;
+            }
         
-        delete [] nextActionMessageToSend;
-        nextActionMessageToSend = NULL;
         
-        playerActionPending = true;
-        ourLiveObject->pendingAction = true;
-        ourLiveObject->pendingActionAnimationProgress = 0;
+        if( ! ourLiveObject->inMotion && 
+            ourLiveObject->pendingActionAnimationProgress > 0.25 ) {
+            
+            // move end acked by server AND action animation in progress
+
+            // queued action waiting for our move to end
+            sendToSocket( serverSocket, 
+                          (unsigned char*)nextActionMessageToSend, 
+                          strlen( nextActionMessageToSend) );
+        
+            delete [] nextActionMessageToSend;
+            nextActionMessageToSend = NULL;
+            }
         }
     
 
@@ -1622,8 +1657,7 @@ void drawFrameNoUpdate( char inUpdate ) {
         doublePair actionOffset = { 0, 0 };
         
         
-        if( o->id == ourID && o->pendingAction ) {
-            // bare hands action
+        if( o->id == ourID && o->pendingActionAnimationProgress != 0 ) {
             // wiggle toward target
 
             float xDir = 0;
@@ -1643,8 +1677,8 @@ void drawFrameNoUpdate( char inUpdate ) {
                 }
             
             double offset =
-                8 + 
-                8 * sin( 2 * M_PI * o->pendingActionAnimationProgress );
+                8 - 
+                8 * cos( 2 * M_PI * o->pendingActionAnimationProgress );
             
 
             actionOffset.x += xDir * offset;
@@ -1652,7 +1686,10 @@ void drawFrameNoUpdate( char inUpdate ) {
             }
         
 
-        if(  o->id == ourID && o->pendingAction && o->holdingID == 0 ) {
+        // bare hands action OR holding something
+        // character wiggle
+        if(  o->id == ourID && o->pendingActionAnimationProgress != 0 ) {
+            
             pos = add( pos, actionOffset );
             }
         
@@ -1667,10 +1704,6 @@ void drawFrameNoUpdate( char inUpdate ) {
             doublePair holdPos = pos;
             holdPos.x += 16;
             holdPos.y -= 16;
-
-            if(  o->id == ourID && o->pendingAction ) {
-                holdPos = add( holdPos, actionOffset );
-                }
             
             setDrawColor( 1, 1, 1, 1 );
             drawObject( getObject( o->holdingID ), holdPos );
@@ -1959,25 +1992,7 @@ void pointerDown( float inX, float inY ) {
 
             
         updateMoveSpeed( ourLiveObject );
-        }
-    
-
-
-
-    if( ! ourLiveObject->inMotion && nextActionMessageToSend ) {
-        // can send action right now and unqueue it
-        // else, wait until after next player update to send it
-        sendToSocket( serverSocket, (unsigned char*)nextActionMessageToSend, 
-                      strlen( nextActionMessageToSend) );
-        
-        delete [] nextActionMessageToSend;
-        nextActionMessageToSend = NULL;
-        
-        playerActionPending = true;
-        ourLiveObject->pendingAction = true;
-        ourLiveObject->pendingActionAnimationProgress = 0;
-        }
-    
+        }    
                 
     
     }
