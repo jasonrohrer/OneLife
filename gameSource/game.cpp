@@ -202,6 +202,9 @@ static int stepsBetweenDeleteRepeat;
 // queue it here
 static char *nextActionMessageToSend = NULL;
 
+// block move until next PLAYER_UPDATE received after action sent
+static char playerActionPending = false;
+static int playerActionTargetX, playerActionTargetY;
 
 
 
@@ -848,6 +851,10 @@ typedef struct LiveObject {
         char inMotion;
         
         char displayChar;
+
+        char pendingAction;
+        float pendingActionAnimationProgress;
+        
     } LiveObject;
 
 
@@ -1189,6 +1196,15 @@ void drawFrame( char inUpdate ) {
                             existing->xd = o.xd;
                             existing->yd = o.yd;
                             }
+                        else {
+                            // update for us
+                            
+                            // ready to execute next action
+                            playerActionPending = false;
+                            
+                            existing->pendingAction = false;
+                            }
+                        
                         
                         existing->moveTotalTime = 0;
                         }
@@ -1197,6 +1213,11 @@ void drawFrame( char inUpdate ) {
                     
                         lastCharUsed = o.displayChar;
                     
+
+                        o.inMotion = false;
+
+                        o.pendingAction = false;
+
                         o.currentPos.x = o.xd;
                         o.currentPos.y = o.yd;
                         
@@ -1454,7 +1475,14 @@ void drawFrame( char inUpdate ) {
                 }
             
             }
-
+        if( o->id == ourID && o->pendingAction ) {
+            
+            o->pendingActionAnimationProgress += 0.05 * frameRateFactor;
+            
+            if( o->pendingActionAnimationProgress > 1 ) {
+                o->pendingActionAnimationProgress -= 1;
+                }
+            }
         }
     
 
@@ -1467,6 +1495,10 @@ void drawFrame( char inUpdate ) {
         
         delete [] nextActionMessageToSend;
         nextActionMessageToSend = NULL;
+        
+        playerActionPending = true;
+        ourLiveObject->pendingAction = true;
+        ourLiveObject->pendingActionAnimationProgress = 0;
         }
     
 
@@ -1586,7 +1618,45 @@ void drawFrameNoUpdate( char inUpdate ) {
         char *string = autoSprintf( "%c", o->displayChar );
 
         doublePair pos = mult( o->currentPos, 32 );
+
+        doublePair actionOffset = { 0, 0 };
         
+        
+        if( o->id == ourID && o->pendingAction ) {
+            // bare hands action
+            // wiggle toward target
+
+            float xDir = 0;
+            float yDir = 0;
+            
+            if( o->xd < playerActionTargetX ) {
+                xDir = 1;
+                }
+            if( o->xd > playerActionTargetX ) {
+                xDir = -1;
+                }
+            if( o->yd < playerActionTargetY ) {
+                yDir = 1;
+                }
+            if( o->yd > playerActionTargetY ) {
+                yDir = -1;
+                }
+            
+            double offset =
+                8 + 
+                8 * sin( 2 * M_PI * o->pendingActionAnimationProgress );
+            
+
+            actionOffset.x += xDir * offset;
+            actionOffset.y += yDir * offset;
+            }
+        
+
+        if(  o->id == ourID && o->pendingAction && o->holdingID == 0 ) {
+            pos = add( pos, actionOffset );
+            }
+        
+
         setDrawColor( 0, 0, 0, 1 );
         mainFont->drawString( string, 
                               pos, alignCenter );
@@ -1597,6 +1667,10 @@ void drawFrameNoUpdate( char inUpdate ) {
             doublePair holdPos = pos;
             holdPos.x += 16;
             holdPos.y -= 16;
+
+            if(  o->id == ourID && o->pendingAction ) {
+                holdPos = add( holdPos, actionOffset );
+                }
             
             setDrawColor( 1, 1, 1, 1 );
             drawObject( getObject( o->holdingID ), holdPos );
@@ -1685,6 +1759,13 @@ void pointerDown( float inX, float inY ) {
         return;
         }
 
+    if( playerActionPending ) {
+        // block further actions until update received to confirm last
+        // action
+        return;
+        }
+    
+
     LiveObject *ourLiveObject;
 
     for( int i=0; i<gameObjects.size(); i++ ) {
@@ -1700,6 +1781,12 @@ void pointerDown( float inX, float inY ) {
     int clickDestX = lrintf( ( inX ) / 32 );
     
     int clickDestY = lrintf( ( inY ) / 32 );
+    
+
+    if( clickDestX == ourLiveObject->xd && clickDestY == ourLiveObject->yd ) {
+        // ignore clicks where we're already standing
+        return;
+        }
     
     
     // may change to empty adjacent spot to click
@@ -1835,6 +1922,8 @@ void pointerDown( float inX, float inY ) {
                 nextActionMessageToSend = 
                     autoSprintf( "%s %d %d#", action,
                                  clickDestX, clickDestY );
+                playerActionTargetX = clickDestX;
+                playerActionTargetY = clickDestY;
                 }
             }
         }
@@ -1883,6 +1972,10 @@ void pointerDown( float inX, float inY ) {
         
         delete [] nextActionMessageToSend;
         nextActionMessageToSend = NULL;
+        
+        playerActionPending = true;
+        ourLiveObject->pendingAction = true;
+        ourLiveObject->pendingActionAnimationProgress = 0;
         }
     
                 

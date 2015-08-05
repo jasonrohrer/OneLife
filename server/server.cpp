@@ -507,6 +507,10 @@ int main() {
                         nextPlayer->newMove = true;
                         }
                     else if( m.type == USE ) {
+                        // send update even if action fails (to let them
+                        // know that action is over)
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+
                         if( isGridAdjacent( m.x, m.y,
                                             nextPlayer->xd, 
                                             nextPlayer->yd ) ) {
@@ -527,10 +531,6 @@ int main() {
                                     
                                     setMapObject( m.x, m.y, r->newTarget );
                                     
-                                    // what they're holding may have changed
-                                    playerIndicesToSendUpdatesAbout.
-                                        push_back( i );
-
                                     char *changeLine =
                                         autoSprintf( "%d %d %d\n",
                                                      m.x, m.y, r->newTarget );
@@ -548,9 +548,6 @@ int main() {
                                     
                                     nextPlayer->holdingID = target;
                                 
-                                    // what they're holding has changed
-                                    playerIndicesToSendUpdatesAbout.
-                                        push_back( i );
                                 
                                     char *changeLine =
                                         autoSprintf( "%d %d %d\n",
@@ -565,6 +562,10 @@ int main() {
                             }
                         }                    
                     else if( m.type == DROP ) {
+                        // send update even if action fails (to let them
+                        // know that action is over)
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+
                         if( isGridAdjacent( m.x, m.y,
                                             nextPlayer->xd, 
                                             nextPlayer->yd ) ) {
@@ -578,10 +579,6 @@ int main() {
                                     
                                 setMapObject( m.x, m.y, 
                                               nextPlayer->holdingID );
-                                
-                                // what they're holding may changed
-                                playerIndicesToSendUpdatesAbout.
-                                    push_back( i );
                                 
                                 char *changeLine =
                                     autoSprintf( "%d %d %d\n",
@@ -598,6 +595,10 @@ int main() {
                             }
                         }
                     else if( m.type == GRAB ) {
+                        // send update even if action fails (to let them
+                        // know that action is over)
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+
                         if( isGridAdjacent( m.x, m.y,
                                             nextPlayer->xd, 
                                             nextPlayer->yd ) ) {
@@ -612,10 +613,6 @@ int main() {
                                 setMapObject( m.x, m.y, 0 );
                                 
                                 nextPlayer->holdingID = target;
-                                
-                                // what they're holding has changed
-                                playerIndicesToSendUpdatesAbout.
-                                    push_back( i );
                                 
                                 char *changeLine =
                                     autoSprintf( "%d %d %d\n",
