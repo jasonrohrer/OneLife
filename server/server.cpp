@@ -19,6 +19,11 @@
 #include "map.h"
 #include "../gameSource/transitionBank.h"
 
+#include "minorGems/util/random/JenkinsRandomSource.h"
+
+
+static JenkinsRandomSource testRandSource;
+
 
 
 typedef struct LiveObject {
@@ -453,7 +458,8 @@ int main() {
                 
                 delete [] message;
                 
-                
+                //Thread::staticSleep( 
+                //    testRandSource.getRandomBoundedInt( 0, 450 ) );
                 
                 // if player is still moving, ignore all actions
                 // except for move interrupts
