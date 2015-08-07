@@ -106,6 +106,11 @@ int serverPort;
 
 int serverSocket = -1;
 
+int numServerBytesRead = 0;
+int numServerBytesSent = 0;
+
+int overheadServerBytesSent = 0;
+int overheadServerBytesRead = 0;
 
 
 int mapD = 32;
@@ -407,6 +412,12 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
 
 void freeFrameDrawer() {
+
+    printf( "Total received = %d bytes (+%d in headers), "
+            "total sent = %d bytes (+%d in headers)\n",
+            numServerBytesRead, overheadServerBytesRead,
+            numServerBytesSent, overheadServerBytesSent );
+    
     delete mainFontFixed;
     delete numbersFontFixed;
     
@@ -740,6 +751,7 @@ void readServerSocketFull() {
     
     while( numRead > 0 ) {
         serverSocketBuffer.appendArray( buffer, numRead );
+        numServerBytesRead += numRead;
 
         numRead = readFromSocket( serverSocket, (unsigned char*)buffer, 512 );
         }    
@@ -767,6 +779,8 @@ char *getNextServerMessage() {
     serverSocketBuffer.deleteElement( 0 );
     
     message[ index ] = '\0';
+    
+    overheadServerBytesRead += 52;
     
     return message;
     }
@@ -1055,7 +1069,7 @@ void drawFrame( char inUpdate ) {
 
 
     if( message != NULL ) {
-        printf( "Got message\n%s\n", message );
+        printf( "Got length %d message\n%s\n", strlen( message ), message );
 
         messageType type = getMessageType( message );
         
@@ -1068,7 +1082,7 @@ void drawFrame( char inUpdate ) {
             
             sscanf( message, "MAP_CHUNK\n%d %d %d\n", &size, &x, &y );
             
-            printf( "Got map chunk\n%s\n", message );
+            // printf( "Got map chunk\n%s\n", message );
             
             // recenter our in-ram sub-map around this new chunk
             mapOffsetX = x + size/2;
@@ -1271,6 +1285,13 @@ void drawFrame( char inUpdate ) {
                 ourID = ourObject->id;
                 
                 ourObject->displayChar = 'A';
+
+                // center view on player's starting position
+                lastScreenViewCenter.x = 32 * ourObject->xd;
+                lastScreenViewCenter.y = 32 * ourObject->yd;
+
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
                 }
             
             firstServerMessagesReceived |= 2;
@@ -1530,7 +1551,10 @@ void drawFrame( char inUpdate ) {
             sendToSocket( serverSocket, 
                           (unsigned char*)nextActionMessageToSend, 
                           strlen( nextActionMessageToSend) );
-        
+            
+            numServerBytesSent += strlen( nextActionMessageToSend );
+            overheadServerBytesSent += 52;
+
             delete [] nextActionMessageToSend;
             nextActionMessageToSend = NULL;
             }
@@ -1972,6 +1996,9 @@ void pointerDown( float inX, float inY ) {
         sendToSocket( serverSocket, (unsigned char*)message, 
                       strlen( message ) );
             
+        numServerBytesSent += strlen( message );
+        overheadServerBytesSent += 52;
+
         delete [] message;
 
         // start moving before we hear back from server
