@@ -270,16 +270,17 @@ static char isGridAdjacent( int inXA, int inYA, int inXB, int inYB ) {
 // sets lastSentMap in inO if chunk goes through
 // returns result of send, auto-marks error in inO
 int sendMapChunkMessage( LiveObject *inO ) {
-    char *mapChunkMessage = getChunkMessage( inO->xs,
-                                             inO->ys );
+    int messageLength;
+    
+    unsigned char *mapChunkMessage = getChunkMessage( inO->xs,
+                                                      inO->ys, 
+                                                      &messageLength );
                 
                 
 
                 
-    int messageLength = strlen( mapChunkMessage );
-
     int numSent = 
-        inO->sock->send( (unsigned char*)mapChunkMessage, 
+        inO->sock->send( mapChunkMessage, 
                          messageLength, 
                          false, false );
                 

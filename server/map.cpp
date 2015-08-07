@@ -210,7 +210,8 @@ void freeMap() {
 
 // returns properly formatted chunk message for chunk centered
 // around x,y
-char *getChunkMessage( int inCenterX, int inCenterY ) {
+unsigned char *getChunkMessage( int inCenterX, int inCenterY,
+                                int *outMessageLength ) {
     
     int chunkCells = chunkDimension * chunkDimension;
     
@@ -283,32 +284,40 @@ char *getChunkMessage( int inCenterX, int inCenterY ) {
     
 
 
-    char *header = autoSprintf( "MC\n%d %d %d\n", chunkDimension,
-                                startX, startY );
-    
-    SimpleVector<char> buffer;
-    buffer.appendElementString( header );
-    delete [] header;
-    
-    
+
+    SimpleVector<unsigned char> chunkDataBuffer;
+
     for( int i=0; i<chunkCells; i++ ) {
         
         if( i > 0 ) {
-            buffer.appendElementString( " " );
+            chunkDataBuffer.appendArray( (unsigned char*)" ", 1 );
             }
         
 
         char *cell = autoSprintf( "%d", chunk[i] );
         
-        buffer.appendElementString( cell );
+        chunkDataBuffer.appendArray( (unsigned char*)cell, strlen(cell) );
         delete [] cell;
         }
-    buffer.appendElementString( "#" );
-    
-    
     delete [] chunk;
 
-    return buffer.getElementString();
+    
+    char *header = autoSprintf( "MC\n%d %d %d\n%d\n#", chunkDimension,
+                                startX, startY, chunkDataBuffer.size() );
+    
+    SimpleVector<unsigned char> buffer;
+    buffer.appendArray( (unsigned char*)header, strlen( header ) );
+    delete [] header;
+
+    unsigned char *chunkData = chunkDataBuffer.getElementArray();
+    
+    buffer.appendArray( chunkData, chunkDataBuffer.size() );
+    
+    delete [] chunkData;
+    
+    
+    *outMessageLength = buffer.size();
+    return buffer.getElementArray();
     }
 
 

@@ -738,22 +738,22 @@ void deleteCharFromUserTypedMessage() {
 
 
 
-SimpleVector<char> serverSocketBuffer;
+SimpleVector<unsigned char> serverSocketBuffer;
 
 
 // reads all waiting data from socket and stores it in buffer
 void readServerSocketFull() {
 
-    char buffer[512];
+    unsigned char buffer[512];
     
-    int numRead = readFromSocket( serverSocket, (unsigned char*)buffer, 512 );
+    int numRead = readFromSocket( serverSocket, buffer, 512 );
     
     
     while( numRead > 0 ) {
         serverSocketBuffer.appendArray( buffer, numRead );
         numServerBytesRead += numRead;
 
-        numRead = readFromSocket( serverSocket, (unsigned char*)buffer, 512 );
+        numRead = readFromSocket( serverSocket, buffer, 512 );
         }    
     }
 
@@ -772,7 +772,7 @@ char *getNextServerMessage() {
     char *message = new char[ index + 1 ];
     
     for( int i=0; i<index; i++ ) {
-        message[i] = serverSocketBuffer.getElementDirect( 0 );
+        message[i] = (char)( serverSocketBuffer.getElementDirect( 0 ) );
         serverSocketBuffer.deleteElement( 0 );
         }
     // delete message terminal character
@@ -1080,22 +1080,41 @@ void drawFrame( char inUpdate ) {
             int x = 0;
             int y = 0;
             
-            sscanf( message, "MC\n%d %d %d\n", &size, &x, &y );
+            int binarySize = 0;
             
-            // printf( "Got map chunk\n%s\n", message );
+            sscanf( message, "MC\n%d %d %d\n%d\n", 
+                    &size, &x, &y, &binarySize );
+            
+            printf( "Got map chunk with bin size %d\n", binarySize );
             
             // recenter our in-ram sub-map around this new chunk
             mapOffsetX = x + size/2;
             mapOffsetY = y + size/2;
             
-            SimpleVector<char *> *tokens = tokenizeString( message );
             
+            
+            unsigned char *binaryChunk = new unsigned char[ binarySize + 1 ];
+    
+            for( int i=0; i<binarySize; i++ ) {
+                binaryChunk[i] = serverSocketBuffer.getElementDirect( 0 );
+                
+                serverSocketBuffer.deleteElement( 0 );
+                }
+
+            // for now, binary chunk is actually just ASCII
+            binaryChunk[ binarySize ] = '\0';
+            
+
+            SimpleVector<char *> *tokens = 
+                tokenizeString( (char*)binaryChunk );
+            
+            delete [] binaryChunk;
 
             // first four are header parts
 
             int numCells = size * size;
 
-            if( tokens->size() == numCells + 4 ) {
+            if( tokens->size() == numCells ) {
                 
                 for( int i=4; i<tokens->size(); i++ ) {
                     int cI = i-4;

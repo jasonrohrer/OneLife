@@ -24,12 +24,18 @@ Client can expect to receive these at any time, and in any order.
 
 MC
 size x y
-id id id id id id id id ... id#
+binary_size
+#
+BINARY_DATA
 
 
 Where:
 Chunk includes a size X size number of ids (a square of the map).
 Square is positioned on map grid with upper left corner at x y
+binary_size is the number of binary bytes of map data that will follow the #
+
+BINARY_DATA is the raw binary data.  This involves run-length encoding and 
+a few other tricks to reduce it's size.  Check the code for details.
 
 
 
