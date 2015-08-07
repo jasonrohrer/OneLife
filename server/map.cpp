@@ -283,7 +283,7 @@ char *getChunkMessage( int inCenterX, int inCenterY ) {
     
 
 
-    char *header = autoSprintf( "MAP_CHUNK\n%d %d %d\n", chunkDimension,
+    char *header = autoSprintf( "MC\n%d %d %d\n", chunkDimension,
                                 startX, startY );
     
     SimpleVector<char> buffer;

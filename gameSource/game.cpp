@@ -812,16 +812,16 @@ messageType getMessageType( char *inMessage ) {
     
     messageType returnValue = UNKNOWN;
 
-    if( strcmp( copy, "MAP_CHUNK" ) == 0 ) {
+    if( strcmp( copy, "MC" ) == 0 ) {
         returnValue = MAP_CHUNK;
         }
-    else if( strcmp( copy, "MAP_CHANGE" ) == 0 ) {
+    else if( strcmp( copy, "MX" ) == 0 ) {
         returnValue = MAP_CHANGE;
         }
-    else if( strcmp( copy, "PLAYER_UPDATE" ) == 0 ) {
+    else if( strcmp( copy, "PU" ) == 0 ) {
         returnValue = PLAYER_UPDATE;
         }
-    else if( strcmp( copy, "PLAYER_MOVES_START" ) == 0 ) {
+    else if( strcmp( copy, "PM" ) == 0 ) {
         returnValue = PLAYER_MOVES_START;
         }
     
@@ -1080,7 +1080,7 @@ void drawFrame( char inUpdate ) {
             int x = 0;
             int y = 0;
             
-            sscanf( message, "MAP_CHUNK\n%d %d %d\n", &size, &x, &y );
+            sscanf( message, "MC\n%d %d %d\n", &size, &x, &y );
             
             // printf( "Got map chunk\n%s\n", message );
             
@@ -1314,15 +1314,19 @@ void drawFrame( char inUpdate ) {
                 double etaSec;
                 
                 int startX, startY;
+                int deltaX, deltaY;
                 
                 int numRead = sscanf( lines[i], "%d %d %d %d %d %lf %lf",
                                       &( o.id ),
                                       &( startX ),
                                       &( startY ),
-                                      &( o.xd ),
-                                      &( o.yd ),
+                                      &( deltaX ),
+                                      &( deltaY ),
                                       &( o.moveTotalTime ),
                                       &etaSec );
+                
+                o.xd = startX + deltaX;
+                o.yd = startY + deltaY;
                 
                 o.moveEtaTime = etaSec + game_getCurrentTime();
                 

@@ -195,7 +195,7 @@ char *getMovesMessage( char inNewMovesOnly ) {
     
     SimpleVector<char> messageBuffer;
 
-    messageBuffer.appendElementString( "PLAYER_MOVES_START\n" );
+    messageBuffer.appendElementString( "PM\n" );
 
     int numPlayers = players.size();
                 
@@ -224,8 +224,9 @@ char *getMovesMessage( char inNewMovesOnly ) {
             
             // holding no object for now
             char *messageLine = 
-                autoSprintf( "%d %d %d %d %d %f %f\n", o->id, 
-                             o->xs, o->ys, o->xd, o->yd, 
+                autoSprintf( "%d %d %d %d %d %.3f %.3f\n", o->id, 
+                             o->xs, o->ys, 
+                             o->xd - o->xs, o->yd - o->ys, 
                              o->moveTotalSeconds, etaSec );
                                     
             messageBuffer.appendElementString( messageLine );
@@ -644,7 +645,7 @@ int main() {
                 nextPlayer->isNew = false;
                 }
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
-                char *updateLine = autoSprintf( "%d %d X X %f\n", 
+                char *updateLine = autoSprintf( "%d %d X X %.2f\n", 
                                                 nextPlayer->id,
                                                 nextPlayer->holdingID,
                                                 nextPlayer->moveSpeed );
@@ -694,7 +695,7 @@ int main() {
             LiveObject *nextPlayer = players.getElement( 
                 playerIndicesToSendUpdatesAbout.getElementDirect( i ) );
 
-            char *updateLine = autoSprintf( "%d %d %d %d %f\n", 
+            char *updateLine = autoSprintf( "%d %d %d %d %.2f\n", 
                                             nextPlayer->id,
                                             nextPlayer->holdingID,
                                             nextPlayer->xs, 
@@ -727,7 +728,7 @@ int main() {
             newUpdates.push_back( '#' );
             char *temp = newUpdates.getElementString();
 
-            updateMessage = concatonate( "PLAYER_UPDATE\n", temp );
+            updateMessage = concatonate( "PU\n", temp );
             delete [] temp;
 
             updateMessageLength = strlen( updateMessage );
@@ -741,7 +742,7 @@ int main() {
             mapChanges.push_back( '#' );
             char *temp = mapChanges.getElementString();
 
-            mapChangeMessage = concatonate( "MAP_CHANGE\n", temp );
+            mapChangeMessage = concatonate( "MX\n", temp );
             delete [] temp;
 
             mapChangeMessageLength = strlen( mapChangeMessage );
@@ -773,7 +774,7 @@ int main() {
                 // now send starting message
                 SimpleVector<char> messageBuffer;
 
-                messageBuffer.appendElementString( "PLAYER_UPDATE\n" );
+                messageBuffer.appendElementString( "PU\n" );
 
                 int numPlayers = players.size();
             
@@ -787,7 +788,7 @@ int main() {
 
                     // holding no object for now
                     char *messageLine = 
-                        autoSprintf( "%d %d %d %d %f\n", o.id, o.holdingID,
+                        autoSprintf( "%d %d %d %d %.2f\n", o.id, o.holdingID,
                                      o.xs, o.ys, o.moveSpeed );
                     
 

@@ -8,13 +8,13 @@ Each message from server is prefaced by a type tag.
 
 Possible types include:
 
-MAP_CHUNK
+MAP_CHUNK  (MC)
 
-PLAYER_UPDATE
+PLAYER_UPDATE  (PU)
 
-PLAYER_MOVES_START
+PLAYER_MOVES_START (PM)
 
-MAP_CHANGE
+MAP_CHANGE (MX)
 
 
 
@@ -22,7 +22,7 @@ Client can expect to receive these at any time, and in any order.
 
 
 
-MAP_CHUNK
+MC
 size x y
 id id id id id id id id ... id#
 
@@ -34,7 +34,7 @@ Square is positioned on map grid with upper left corner at x y
 
 
 
-PLAYER_UPDATE
+PU
 p_id o_id x y s
 p_id o_id x y s
 p_id o_id x y s
@@ -57,16 +57,17 @@ for x y.
 
 
 
-PLAYER_MOVES_START
-p_id xs ys xd yd total_sec eta_sec
-p_id xs ys xd yd total_sec eta_sec
-p_id xs ys xd yd total_sec eta_sec
+PM
+p_id xs ys xdelt ydelt total_sec eta_sec
+p_id xs ys xdelt ydelt total_sec eta_sec
+p_id xs ys xdelt ydelt total_sec eta_sec
 ...
-p_id xs ys xd yd total_sec eta_sec
+p_id xs ys xdelt ydelt total_sec eta_sec
 #
 
-List of player ids that just started moving, their start and 
-destination x y grid position, how long the total move should take (in case we 
+List of player ids that just started moving, their start x y grid position,
+their delta grid offset (xs + xdelt = destination x), 
+how long the total move should take (in case we 
 come into the game in the middle of a move), and their time to arrival in 
 floating point seconds
 
@@ -77,7 +78,7 @@ Until that has happened, client must assume player is still in transit.
 
 
 
-MAP_CHANGE
+MX
 x y new_id
 x y new_id
 x y new_id
