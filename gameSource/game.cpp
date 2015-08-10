@@ -1107,42 +1107,39 @@ void drawFrame( char inUpdate ) {
                 serverSocketBuffer.deleteElement( 0 );
                 }
 
-            /*
+            
             unsigned char *decompressedChunk =
                 zipDecompress( compressedChunk, 
                                compressedSize,
                                binarySize );
             
             delete [] compressedChunk;
-            */
+            
             
             unsigned char *binaryChunk = new unsigned char[ binarySize + 1 ];
             
-            //memcpy( binaryChunk, decompressedChunk, binarySize );
-            memcpy( binaryChunk, compressedChunk, binarySize );
-            //delete [] decompressedChunk;
-            delete [] compressedChunk;
-
+            memcpy( binaryChunk, decompressedChunk, binarySize );
+            
+            delete [] decompressedChunk;
+ 
+            
             // for now, binary chunk is actually just ASCII
             binaryChunk[ binarySize ] = '\0';
             
-            printf( "Chunk = \n%s\n", binaryChunk );
 
             SimpleVector<char *> *tokens = 
                 tokenizeString( (char*)binaryChunk );
             
             delete [] binaryChunk;
 
-            // first four are header parts
 
             int numCells = size * size;
 
             if( tokens->size() == numCells ) {
                 
-                for( int i=4; i<tokens->size(); i++ ) {
-                    int cI = i-4;
-                    int cX = cI % size;
-                    int cY = cI / size;
+                for( int i=0; i<tokens->size(); i++ ) {
+                    int cX = i % size;
+                    int cY = i / size;
                     
                     int mapX = cX + x - mapOffsetX + mapD / 2;
                     int mapY = cY + y - mapOffsetY + mapD / 2;

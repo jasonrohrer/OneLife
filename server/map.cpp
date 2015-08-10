@@ -315,15 +315,14 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
 
     char *header = autoSprintf( "MC\n%d %d %d\n%d %d\n#", chunkDimension,
                                 startX, startY, chunkDataBuffer.size(),
-                                chunkDataBuffer.size() );//compressedSize );
+                                compressedSize );
     
     SimpleVector<unsigned char> buffer;
     buffer.appendArray( (unsigned char*)header, strlen( header ) );
     delete [] header;
 
     
-    //buffer.appendArray( compressedChunkData, compressedSize );
-    buffer.appendArray( chunkData, chunkDataBuffer.size() );
+    buffer.appendArray( compressedChunkData, compressedSize );
     
     delete [] chunkData;
     delete [] compressedChunkData;
