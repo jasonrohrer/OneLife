@@ -7,6 +7,8 @@
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/SettingsManager.h"
 
+#include "minorGems/formats/encodingUtils.h"
+
 #include <mysql/mysql.h>
 
 #include <stdarg.h>
@@ -302,19 +304,31 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
     delete [] chunk;
 
     
-    char *header = autoSprintf( "MC\n%d %d %d\n%d\n#", chunkDimension,
-                                startX, startY, chunkDataBuffer.size() );
+    unsigned char *chunkData = chunkDataBuffer.getElementArray();
+    
+    int compressedSize;
+    unsigned char *compressedChunkData =
+        zipCompress( chunkData, chunkDataBuffer.size(),
+                     &compressedSize );
+
+
+
+    char *header = autoSprintf( "MC\n%d %d %d\n%d %d\n#", chunkDimension,
+                                startX, startY, chunkDataBuffer.size(),
+                                chunkDataBuffer.size() );//compressedSize );
     
     SimpleVector<unsigned char> buffer;
     buffer.appendArray( (unsigned char*)header, strlen( header ) );
     delete [] header;
 
-    unsigned char *chunkData = chunkDataBuffer.getElementArray();
     
+    //buffer.appendArray( compressedChunkData, compressedSize );
     buffer.appendArray( chunkData, chunkDataBuffer.size() );
     
     delete [] chunkData;
+    delete [] compressedChunkData;
     
+
     
     *outMessageLength = buffer.size();
     return buffer.getElementArray();

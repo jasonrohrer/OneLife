@@ -51,6 +51,9 @@ CustomRandomSource randSource( 34957197 );
 #include "minorGems/game/diffBundle/client/diffBundleClient.h"
 
 
+#include "minorGems/formats/encodingUtils.h"
+
+
 
 #include "spriteBank.h"
 #include "objectBank.h"
@@ -1081,29 +1084,49 @@ void drawFrame( char inUpdate ) {
             int y = 0;
             
             int binarySize = 0;
+            int compressedSize = 0;
             
-            sscanf( message, "MC\n%d %d %d\n%d\n", 
-                    &size, &x, &y, &binarySize );
+            sscanf( message, "MC\n%d %d %d\n%d %d\n", 
+                    &size, &x, &y, &binarySize, &compressedSize );
             
-            printf( "Got map chunk with bin size %d\n", binarySize );
+            printf( "Got map chunk with bin size %d, compressed size %d\n", 
+                    binarySize, compressedSize );
             
             // recenter our in-ram sub-map around this new chunk
             mapOffsetX = x + size/2;
             mapOffsetY = y + size/2;
+                        
             
-            
-            
-            unsigned char *binaryChunk = new unsigned char[ binarySize + 1 ];
+            unsigned char *compressedChunk = 
+                new unsigned char[ compressedSize ];
     
-            for( int i=0; i<binarySize; i++ ) {
-                binaryChunk[i] = serverSocketBuffer.getElementDirect( 0 );
+            
+            for( int i=0; i<compressedSize; i++ ) {
+                compressedChunk[i] = serverSocketBuffer.getElementDirect( 0 );
                 
                 serverSocketBuffer.deleteElement( 0 );
                 }
 
+            /*
+            unsigned char *decompressedChunk =
+                zipDecompress( compressedChunk, 
+                               compressedSize,
+                               binarySize );
+            
+            delete [] compressedChunk;
+            */
+            
+            unsigned char *binaryChunk = new unsigned char[ binarySize + 1 ];
+            
+            //memcpy( binaryChunk, decompressedChunk, binarySize );
+            memcpy( binaryChunk, compressedChunk, binarySize );
+            //delete [] decompressedChunk;
+            delete [] compressedChunk;
+
             // for now, binary chunk is actually just ASCII
             binaryChunk[ binarySize ] = '\0';
             
+            printf( "Chunk = \n%s\n", binaryChunk );
 
             SimpleVector<char *> *tokens = 
                 tokenizeString( (char*)binaryChunk );

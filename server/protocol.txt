@@ -24,9 +24,9 @@ Client can expect to receive these at any time, and in any order.
 
 MC
 size x y
-binary_size
+binary_raw_size binary_compressed_size 
 #
-BINARY_DATA
+COMPRESSED_BINARY_DATA
 
 
 Where:
