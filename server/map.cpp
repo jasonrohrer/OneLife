@@ -9,7 +9,7 @@
 
 #include "minorGems/formats/encodingUtils.h"
 
-#include <mysql/mysql.h>
+#include "kissdb.h"
 
 #include <stdarg.h>
 
@@ -23,14 +23,10 @@ static int chunkDimension = 32;
 
 static int startingObjectID = 26;
 
-static char *dbUser = NULL;
-static char *dbPassword = NULL;
-static char *dbServerAddress = NULL;
-static char *dbDatabaseName = NULL;
-static char *dbMapTableName = NULL;
 
 
-static MYSQL *dbCon = NULL;
+static KISSDB db;
+static char dbOpen = false;
 
 
 static int randSeed = 10;
@@ -49,45 +45,9 @@ static float getXYRandom( int inX, int inY ) {
 
 
 
-char doesTableExist( const char *inTableName ) {
-    mysql_query( dbCon, "SHOW TABLES" );
-    
-    MYSQL_RES *result = mysql_store_result( dbCon );
-            
-    MYSQL_ROW row;
-    while( ( row = mysql_fetch_row( result ) ) ) {
-        if( strcmp( row[0], inTableName ) == 0 ) {
-            return true;
-            }
-        }
-    return false;
-    }
 
 
-int queryDatabase( const char *inQueryFormatString, ... ) {
-    
-    va_list argList;
-    va_start( argList, inQueryFormatString );
-    
-    char *query = vautoSprintf( inQueryFormatString, argList );
-    
-    va_end( argList );
 
-    
-    printf( "Query =\n%s\n", query );
-    
-    int result = mysql_query( dbCon, query );
-    
-    if( result ) {
-        printf( "MySQL query failed, query = %s;  error = %s\n", 
-                query, mysql_error( dbCon ) );
-        }
-    
-
-    delete [] query;
-    
-    return result;
-    }
 
 
 
@@ -107,79 +67,50 @@ static int getBaseMap( int inX, int inY ) {
 
 
 
+
+// two ints to an 8-byte key
+void intPairToKey( int inX, int inY, unsigned char *outKey ) {
+    for( int i=0; i<4; i++ ) {
+        outKey[i] = ( inX >> i ) & 0xFF;
+        outKey[i+4] = ( inY >> i ) & 0xFF;
+        }    
+    }
+
+// one int to an 4-byte value
+void intToValue( int inV, unsigned char *outValue ) {
+    for( int i=0; i<4; i++ ) {
+        outValue[i] = ( inV >> i ) & 0xFF;
+        }    
+    }
+
+
+int valueToInt( unsigned char *inValue ) {
+    return 
+        inValue[3] << 3 | inValue[2] << 2 | 
+        inValue[1] << 1 | inValue[0];
+    }
+
+
+
+
+
 void initMap() {
+
+
+    int error = KISSDB_open( &db, 
+                             "map.db", 
+                             KISSDB_OPEN_MODE_RWCREAT,
+                             80000,
+                             8, // two 32-bit ints, xy
+                             4 // one int
+                             );
     
-    char *dbConnection = SettingsManager::getStringSetting( "dbConnection" );
-
-    
-    if( dbConnection != NULL ) {
-        dbUser = new char[100];
-        dbPassword = new char[100];
-        dbServerAddress = new char[100];
-        
-        int numRead = sscanf( dbConnection, 
-                              "%99[^:]:%99[^@]@%99s", 
-                              dbUser, dbPassword, dbServerAddress );
-        
-        dbDatabaseName = SettingsManager::getStringSetting( "dbDatabaseName" );
-
-        if( numRead != 3 || dbDatabaseName == NULL ) {
-            printf( "Failed to read mysql connection "
-                    "settings:  %s\n", dbConnection );
-
-            delete [] dbConnection;
-            }
-        else {
-            delete [] dbConnection;
-
-
-            dbCon = mysql_init( NULL );
-        
-            
-
-            if( dbCon == NULL ) {
-                printf( "MySQL Init Error: %s\n", mysql_error( dbCon ) );
-                return;
-                }
-            
-            if( mysql_real_connect( dbCon, 
-                                    dbServerAddress, dbUser, dbPassword,
-                                    dbDatabaseName, 0, NULL, 0 ) == NULL ) {
-                
-                printf( "MySQL Connect Error: %s\n", mysql_error( dbCon ) );
-                mysql_close( dbCon );
-                return;
-                }
-            
-            printf( "Connected to MySQL database %s\n", dbDatabaseName );
-            
-            // stay connected forever, until we close the connection
-            mysql_query( dbCon, "SET wait_timeout = 2000000" );
-
-
-            dbMapTableName = 
-                SettingsManager::getStringSetting( "dbMapTableName" );
-
-            if( dbMapTableName == NULL ) {
-                dbMapTableName = stringDuplicate( "mapTriplets" );
-                }
-
-            if( !doesTableExist( dbMapTableName ) ) {
-                printf( "Table %s does not exist, creating it\n",
-                        dbMapTableName );
-                
-                queryDatabase( 
-                    "CREATE TABLE %s( "
-                    " x INT NOT NULL, "
-                    " y INT NOT NULL, "
-                    " PRIMARY KEY(x,y), "
-                    " value TEXT NOT NULL ) ENGINE = MYISAM",
-                    dbMapTableName );
-                }
-                
-            }
+    if( error ) {
+        printf( "Error %d opening KissDB\n", error );
+        return;
         }
     
+    dbOpen = true;
     }
 
 
@@ -194,19 +125,31 @@ void freeAndNullString( char **inStringPointer ) {
 
 
 void freeMap() {
-    
-    freeAndNullString( &dbUser );
-    freeAndNullString( &dbPassword );
-    freeAndNullString( &dbServerAddress );
-    freeAndNullString( &dbDatabaseName );
-    freeAndNullString( &dbMapTableName );    
-
-    if( dbCon != NULL ) {
-        mysql_close( dbCon );
-        printf( "Closed MySQL database connection\n" );
+    if( dbOpen ) {
+        KISSDB_close( &db );
         }
     }
 
+
+
+int getMapObject( int inX, int inY ) {    
+
+    unsigned char key[8];
+    unsigned char value[4];
+
+    // look for changes to default in database
+    intPairToKey( inX, inY, key );
+    
+    int result = KISSDB_get( &db, key, value );
+    
+    if( result == 0 ) {
+        // found
+        return valueToInt( value );
+        }
+    else {
+        return getBaseMap( inX, inY );
+        }
+    }
 
 
 
@@ -242,48 +185,10 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
             
             int cI = chunkY * chunkDimension + chunkX;
             
-            chunk[cI] = getBaseMap( x, y );
+            chunk[cI] = getMapObject( x, y );
             }
         
         }
-    
-
-    // now apply updates to default from db
-
-    int dbResult = queryDatabase( 
-        "SELECT x, y, value FROM %s "
-        "WHERE x >= %d AND x < %d  "
-        "AND y >= %d AND y < %d",
-        dbMapTableName, 
-        startX, endX, 
-        startY, endY );
-    
-    if( !dbResult ) {
-        MYSQL_RES *result = mysql_store_result( dbCon );
-        
-        MYSQL_ROW row;
-        
-        int numRows = mysql_num_rows( result );
-        printf( "Chunk contains %d db updates\n", numRows );
-        
-        while( ( row = mysql_fetch_row( result ) ) ) {
-            
-            int x, y, id;
-            
-            sscanf( row[0], "%d", &x );
-            sscanf( row[1], "%d", &y );
-            sscanf( row[2], "%d", &id );
-            
-            int chunkY = y - startY;
-            int chunkX = x - startX;
-            
-            int cI = chunkY * chunkDimension + chunkX;
-            chunk[cI] = id;
-            }
-        
-        mysql_free_result( result );
-        }
-    
 
 
 
@@ -341,44 +246,20 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
 
 
 
-int getMapObject( int inX, int inY ) {
-    
-    int dbResult = queryDatabase( "SELECT value FROM %s WHERE x=%d AND y=%d",
-                                  dbMapTableName, inX, inY );
-    
-    int id = -1;
-
-    if( !dbResult ) {
-        MYSQL_RES *result = mysql_store_result( dbCon );
-        
-        
-        if( mysql_num_rows( result ) == 1 ) {
-            MYSQL_ROW row = mysql_fetch_row( result );
-            
-            sscanf( row[0], "%d", &id );
-            }
-        
-        mysql_free_result( result );
-        }
-    
-    if( id != -1 ) {
-        return id;
-        }
-    else {
-        return getBaseMap( inX, inY );
-        }
-    }
 
 
 
 
 void setMapObject( int inX, int inY, int inID ) {
+    unsigned char key[8];
+    unsigned char value[4];
     
-    queryDatabase( "INSERT INTO %s "
-                   "  SET x=%d, y=%d, value='%d' "
-                   "ON DUPLICATE KEY UPDATE "
-                   "  value='%d' ",
-                   dbMapTableName, inX, inY, inID, inID );
+
+    intPairToKey( inX, inY, key );
+    intToValue( inID, value );
+            
+    
+    KISSDB_put( &db, key, value );
     }
 
 

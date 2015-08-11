@@ -14,13 +14,15 @@ APP_NAME = OneLifeServer
 ROOT_PATH = ../..
 
 
-CUSTOM_LINUX_LINK_FLAGS = -lmysqlclient
+CUSTOM_LINUX_LINK_FLAGS =
 
 
 LAYER_SOURCE = \
 server.cpp \
 map.cpp \
 ../gameSource/transitionBank.cpp \
+kissdb.cpp \
+
 
 
 GAME_GRAPHICS = \
