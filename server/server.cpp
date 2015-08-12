@@ -483,10 +483,10 @@ int main() {
                                   nextPlayer->moveStartTime )
                                 / nextPlayer->moveTotalSeconds;
                     
-                            doublePair start = { nextPlayer->xs, 
-                                                 nextPlayer->ys };
-                            doublePair dest = { nextPlayer->xd, 
-                                                nextPlayer->yd };
+                            doublePair start = { (double)nextPlayer->xs, 
+                                                 (double)nextPlayer->ys };
+                            doublePair dest = { (double)nextPlayer->xd, 
+                                                (double)nextPlayer->yd };
                             
                             doublePair cur =
                                 add( mult( dest, fractionDone ),
@@ -500,9 +500,9 @@ int main() {
                         nextPlayer->xd = m.x;
                         nextPlayer->yd = m.y;
                         
-                        doublePair start = { nextPlayer->xs, 
-                                             nextPlayer->ys };
-                        doublePair dest = { m.x, m.y };
+                        doublePair start = { (double)nextPlayer->xs, 
+                                             (double)nextPlayer->ys };
+                        doublePair dest = { (double)m.x, (double)m.y };
                         
                         double dist = distance( start, dest );
                         
