@@ -69,11 +69,52 @@ SimpleVector<LiveObject> players;
 int nextID = 0;
 
 
+
+void quitCleanup() {
+    printf( "Quitting...\n" );
+    
+
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *nextPlayer = players.getElement(i);
+        delete nextPlayer->sock;
+        delete nextPlayer->sockBuffer;
+        }
+    
+    freeMap();
+
+    freeTransBank();
+
+    printf( "Done.\n" );
+    }
+
+
+
+
+
+
 volatile char quit = false;
 
 void intHandler( int inUnused ) {
+    printf( "Quit received for unix\n" );
+    
+    // since we handled this singal, we will return to normal execution
     quit = true;
     }
+
+
+#ifdef WIN_32
+#include <windows.h>
+BOOL WINAPI ctrlHandler( DWORD dwCtrlType ) {
+    if( CTRL_C_EVENT == dwCtrlType ) {
+        printf( "Quit received for windows \n" );
+        
+        // will auto-quit as soon as we return from this handler
+        // so cleanup now
+        quitCleanup();
+        }
+    return true;
+    }
+#endif
 
 
 int numConnections = 0;
@@ -309,6 +350,9 @@ int main() {
 
     signal( SIGINT, intHandler );
 
+#ifdef WIN_32
+    SetConsoleCtrlHandler( ctrlHandler, TRUE );
+#endif
 
     initTransBank();
 
@@ -928,6 +972,8 @@ int main() {
                 printf( "Closing connection to player %d on error\n",
                         nextPlayer->id );
                 
+                sockPoll.removeSocket( nextPlayer->sock );
+                
                 delete nextPlayer->sock;
                 delete nextPlayer->sockBuffer;
                 players.deleteElement( i );
@@ -938,21 +984,7 @@ int main() {
         }
     
 
-    printf( "Quitting...\n" );
-    
-
-    for( int i=0; i<players.size(); i++ ) {
-        LiveObject *nextPlayer = players.getElement(i);
-        delete nextPlayer->sock;
-        delete nextPlayer->sockBuffer;
-        }
-    
-    freeMap();
-
-    freeTransBank();
-
-    printf( "Done.\n" );
-
+    quitCleanup();
 
     return 0;
     }
