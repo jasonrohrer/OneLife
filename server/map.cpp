@@ -71,23 +71,24 @@ static int getBaseMap( int inX, int inY ) {
 // two ints to an 8-byte key
 void intPairToKey( int inX, int inY, unsigned char *outKey ) {
     for( int i=0; i<4; i++ ) {
-        outKey[i] = ( inX >> i ) & 0xFF;
-        outKey[i+4] = ( inY >> i ) & 0xFF;
+        int offset = i * 8;
+        outKey[i] = ( inX >> offset ) & 0xFF;
+        outKey[i+4] = ( inY >> offset ) & 0xFF;
         }    
     }
 
 // one int to an 4-byte value
 void intToValue( int inV, unsigned char *outValue ) {
     for( int i=0; i<4; i++ ) {
-        outValue[i] = ( inV >> i ) & 0xFF;
+        outValue[i] = ( inV >> (i * 8) ) & 0xFF;
         }    
     }
 
 
 int valueToInt( unsigned char *inValue ) {
     return 
-        inValue[3] << 3 | inValue[2] << 2 | 
-        inValue[1] << 1 | inValue[0];
+        inValue[3] << 24 | inValue[2] << 16 | 
+        inValue[1] << 8 | inValue[0];
     }
 
 
