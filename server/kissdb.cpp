@@ -234,7 +234,12 @@ int KISSDB_put(KISSDB *db,const void *key,const void *value)
 					klen -= (unsigned long)n;
 				}
 			}
- 
+            
+            /* key matches
+               need to seek at least once after fread before doing fwrite
+               at this pos  (C99 spec)*/
+            fseeko( db->f, 0, SEEK_CUR );
+
 			if (fwrite(value,db->value_size,1,db->f) == 1) {
 				fflush(db->f);
 				return 0; /* success */
