@@ -71,7 +71,7 @@ int nextID = 0;
 
 
 void quitCleanup() {
-    printf( "Quitting...\n" );
+    printf( "Cleaning up on quit...\n" );
     
 
     for( int i=0; i<players.size(); i++ ) {
@@ -83,8 +83,6 @@ void quitCleanup() {
     freeMap();
 
     freeTransBank();
-
-    printf( "Done.\n" );
     }
 
 
@@ -106,11 +104,16 @@ void intHandler( int inUnused ) {
 #include <windows.h>
 BOOL WINAPI ctrlHandler( DWORD dwCtrlType ) {
     if( CTRL_C_EVENT == dwCtrlType ) {
-        printf( "Quit received for windows \n" );
+        printf( "Quit received for windows\n" );
         
         // will auto-quit as soon as we return from this handler
         // so cleanup now
-        quitCleanup();
+        //quitCleanup();
+        
+        // seems to handle CTRL-C properly if launched by double-click
+        // or batch file
+        // (just not if launched directly from command line)
+        quit = true;
         }
     return true;
     }
@@ -346,7 +349,9 @@ int sendMapChunkMessage( LiveObject *inO ) {
 
 int main() {
 
-    printf( "Test server\n" );
+    printf( "\nServer starting up\n\n" );
+
+    printf( "Press CTRL-C to shut down server gracefully\n\n" );
 
     signal( SIGINT, intHandler );
 
@@ -409,7 +414,8 @@ int main() {
 
         if( !anyMoving ) {
             // use 0 cpu when total idle
-            readySock = sockPoll.wait();
+            // but wake up periodically to catch quit signals, etc
+            readySock = sockPoll.wait( 2000 );
             }
         else {
             // players are connected and moving, must do move updates anyway
@@ -985,6 +991,9 @@ int main() {
     
 
     quitCleanup();
+    
+    
+    printf( "Done.\n" );
 
     return 0;
     }
