@@ -17,6 +17,13 @@ LAYER_SOURCE = \
 game.cpp \
 spriteBank.cpp \
 objectBank.cpp \
+whiteSprites.cpp \
+message.cpp \
+serialWebRequests.cpp \
+accountHmac.cpp \
+PageComponent.cpp \
+GamePage.cpp \
+LivingLifePage.cpp \
 
 
 
