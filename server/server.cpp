@@ -66,6 +66,17 @@ typedef struct LiveObject {
 SimpleVector<LiveObject> players;
 
 
+typedef struct ChangePosition {
+        int x, y;
+        
+        // true if update should be sent to everyone regardless
+        // of distance (like position of a new player in the world,
+        // or the removal of a player).
+        char global;
+    };
+
+
+
 int nextID = 0;
 
 
@@ -235,7 +246,8 @@ ClientMessage parseMessage( char *inMessage ) {
 
 
 // returns NULL if there are no matching moves
-char *getMovesMessage( char inNewMovesOnly ) {
+char *getMovesMessage( char inNewMovesOnly, 
+                       SimpleVector<ChangePosition> *inChangeVector = NULL ) {
     
     SimpleVector<char> messageBuffer;
 
@@ -275,6 +287,11 @@ char *getMovesMessage( char inNewMovesOnly ) {
                                     
             messageBuffer.appendElementString( messageLine );
             delete [] messageLine;
+            
+            if( inChangeVector != NULL ) {
+                ChangePosition p = { o->xd, o->yd, false };
+                inChangeVector->push_back( p );
+                }
 
             numLines ++;
             
@@ -340,6 +357,15 @@ int sendMapChunkMessage( LiveObject *inO ) {
         inO->error = true;
         }
     return numSent;
+    }
+
+
+
+double intDist( int inXA, int inYA, int inXB, int inYB ) {
+    int dx = inXA - inXB;
+    int dy = inYA - inYB;
+
+    return sqrt(  dx * dx + dy * dy );
     }
 
 
@@ -485,10 +511,10 @@ int main() {
         
         // accumulated text of update lines
         SimpleVector<char> newUpdates;
-        
+        SimpleVector<ChangePosition> newUpdatesPos;
 
         SimpleVector<char> mapChanges;
-        
+        SimpleVector<ChangePosition> mapChangesPos;
         
         for( int i=0; i<numLive; i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
@@ -596,6 +622,10 @@ int main() {
                                     mapChanges.
                                         appendElementString( changeLine );
                                     
+                                    ChangePosition p = { m.x, m.y, false };
+                                    mapChangesPos.push_back( p );
+                
+
                                     delete [] changeLine;
                                     }
                                 else if( nextPlayer->holdingID == 0 ) {
@@ -614,6 +644,9 @@ int main() {
                                     mapChanges.appendElementString( 
                                         changeLine );
                                     
+                                    ChangePosition p = { m.x, m.y, false };
+                                    mapChangesPos.push_back( p );
+
                                     delete [] changeLine;
                                     }    
                                 }
@@ -646,6 +679,9 @@ int main() {
                                 mapChanges.appendElementString( 
                                     changeLine );
                                 
+                                ChangePosition p = { m.x, m.y, false };
+                                mapChangesPos.push_back( p );
+                
                                 delete [] changeLine;
                                 
                                 nextPlayer->holdingID = 0;
@@ -679,6 +715,9 @@ int main() {
                                 mapChanges.appendElementString( 
                                     changeLine );
                                 
+                                ChangePosition p = { m.x, m.y, false };
+                                mapChangesPos.push_back( p );    
+
                                 delete [] changeLine;
                                 }
                             }
@@ -694,6 +733,10 @@ int main() {
                 playerIndicesToSendUpdatesAbout.push_back( i );
                 
                 nextPlayer->isNew = false;
+                
+                // force this PU to be sent to everyone
+                ChangePosition p = { 0, 0, true };
+                newUpdatesPos.push_back( p );
                 }
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
                 char *updateLine = autoSprintf( "%d %d X X %.2f\n", 
@@ -702,7 +745,9 @@ int main() {
                                                 nextPlayer->moveSpeed );
                 
                 newUpdates.appendElementString( updateLine );
-                
+                ChangePosition p = { 0, 0, true };
+                newUpdatesPos.push_back( p );
+
                 delete [] updateLine;
                 
                 nextPlayer->isNew = false;
@@ -754,13 +799,17 @@ int main() {
                                             nextPlayer->moveSpeed );
             
             newUpdates.appendElementString( updateLine );
-            
+            ChangePosition p = { nextPlayer->xs, nextPlayer->ys, false };
+            newUpdatesPos.push_back( p );
+
             delete [] updateLine;
             }
         
 
         
-        char *moveMessage = getMovesMessage( true );
+        SimpleVector<ChangePosition> movesPos;        
+
+        char *moveMessage = getMovesMessage( true, &movesPos );
         
         int moveMessageLength = 0;
         
@@ -918,41 +967,102 @@ int main() {
                     sendMapChunkMessage( nextPlayer );
                     }
                 
+                double maxDist = 32;
+
 
                 if( updateMessage != NULL ) {
+
+                    double minUpdateDist = 64;
                     
-
-                    int numSent = 
-                        nextPlayer->sock->send( (unsigned char*)updateMessage, 
-                                                updateMessageLength, 
-                                                false, false );
-
-                    if( numSent == -1 ) {
-                        nextPlayer->error = true;
+                    for( int u=0; u<newUpdatesPos.size(); u++ ) {
+                        ChangePosition *p = newUpdatesPos.getElement( u );
+                        
+                        // update messages can be global when a new
+                        // player joins or an old player is deleted
+                        if( p->global ) {
+                            minUpdateDist = 0;
+                            }
+                        else {
+                            double d = intDist( p->x, p->y, 
+                                                nextPlayer->xd, 
+                                                nextPlayer->yd );
+                    
+                            if( d < minUpdateDist ) {
+                                minUpdateDist = d;
+                                }
+                            }
                         }
+
+                    if( minUpdateDist <= maxDist ) {
+                        int numSent = 
+                            nextPlayer->sock->send( 
+                                (unsigned char*)updateMessage, 
+                                updateMessageLength, 
+                                false, false );
+
+                        if( numSent == -1 ) {
+                            nextPlayer->error = true;
+                            }
+                        }
+                    
                     }
                 if( moveMessage != NULL ) {
-                    int numSent = 
-                        nextPlayer->sock->send( (unsigned char*)moveMessage, 
-                                                moveMessageLength, 
-                                                false, false );
-
-                    if( numSent == -1 ) {
-                        nextPlayer->error = true;
-                        }
                     
+                    double minUpdateDist = 64;
+                    
+                    for( int u=0; u<movesPos.size(); u++ ) {
+                        ChangePosition *p = movesPos.getElement( u );
+                        
+                        // move messages are never global
+
+                        double d = intDist( p->x, p->y, 
+                                            nextPlayer->xd, nextPlayer->yd );
+                    
+                        if( d < minUpdateDist ) {
+                            minUpdateDist = d;
+                            }
+                        }
+
+                    if( minUpdateDist <= maxDist ) {
+                        
+                        int numSent = 
+                            nextPlayer->sock->send( 
+                                (unsigned char*)moveMessage, 
+                                moveMessageLength, 
+                                false, false );
+
+                        if( numSent == -1 ) {
+                            nextPlayer->error = true;
+                            }
+                        }
                     }
                 if( mapChangeMessage != NULL ) {
-                    int numSent = 
-                        nextPlayer->sock->send( 
-                            (unsigned char*)mapChangeMessage, 
-                            mapChangeMessageLength, 
-                            false, false );
-
-                    if( numSent == -1 ) {
-                        nextPlayer->error = true;
-                        }
+                    double minUpdateDist = 64;
                     
+                    for( int u=0; u<mapChangesPos.size(); u++ ) {
+                        ChangePosition *p = mapChangesPos.getElement( u );
+                        
+                        // map changes are never global
+
+                        double d = intDist( p->x, p->y, 
+                                            nextPlayer->xd, nextPlayer->yd );
+                        
+                        if( d < minUpdateDist ) {
+                            minUpdateDist = d;
+                            }
+                        }
+
+                    if( minUpdateDist <= maxDist ) {
+                        int numSent = 
+                            nextPlayer->sock->send( 
+                                (unsigned char*)mapChangeMessage, 
+                                mapChangeMessageLength, 
+                                false, false );
+                        
+                        if( numSent == -1 ) {
+                            nextPlayer->error = true;
+                            }
+                        }
                     }
                 
                 }
