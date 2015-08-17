@@ -6,6 +6,8 @@ void initMap();
 void freeMap();
 
 
+int getChunkDimension();
+
 
 // returns properly formatted chunk message for chunk centered
 // around x,y

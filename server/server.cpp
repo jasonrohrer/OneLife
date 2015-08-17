@@ -247,7 +247,8 @@ ClientMessage parseMessage( char *inMessage ) {
 
 // returns NULL if there are no matching moves
 char *getMovesMessage( char inNewMovesOnly, 
-                       SimpleVector<ChangePosition> *inChangeVector = NULL ) {
+                       SimpleVector<ChangePosition> *inChangeVector = NULL,
+                       int inOneIDOnly = -1 ) {
     
     SimpleVector<char> messageBuffer;
 
@@ -265,7 +266,8 @@ char *getMovesMessage( char inNewMovesOnly,
 
         if( ( o->xd != o->xs || o->yd != o->ys )
             &&
-            ( o->newMove || !inNewMovesOnly ) ) {
+            ( o->newMove || !inNewMovesOnly ) 
+            && ( inOneIDOnly == -1 || inOneIDOnly == o->id ) ) {
 
  
             // p_id xs ys xd yd fraction_done eta_sec
@@ -965,8 +967,113 @@ int main() {
                     
                     
                     sendMapChunkMessage( nextPlayer );
+
+
+                    // send updates about any non-moving players
+                    // that are in this chunk
+                    SimpleVector<char> chunkPlayerUpdates;
+
+                    SimpleVector<char> chunkPlayerMoves;
+                    
+                    for( int j=0; j<numLive; j++ ) {
+                        LiveObject *otherPlayer = 
+                            players.getElement( j );
+                        
+                        if( otherPlayer->id != nextPlayer->id ) {
+                            // not us
+
+                            double d = intDist( nextPlayer->xd,
+                                                nextPlayer->yd,
+                                                otherPlayer->xd,
+                                                otherPlayer->yd );
+                            
+                            
+                            if( d <= getChunkDimension() / 2 ) {
+                                
+                                // send next player a player update
+                                // about this player, telling nextPlayer
+                                // where this player was last stationary
+                                // and what they're holding
+                        
+                                char *updateLine = autoSprintf( 
+                                    "%d %d %d %d %.2f\n", 
+                                    otherPlayer->id,
+                                    otherPlayer->holdingID,
+                                    otherPlayer->xs, 
+                                    otherPlayer->ys,
+                                    otherPlayer->moveSpeed ); 
+
+                                chunkPlayerUpdates.appendElementString( 
+                                    updateLine );
+                                delete [] updateLine;
+
+                                if( otherPlayer->xs != otherPlayer->xd
+                                    ||
+                                    otherPlayer->ys != otherPlayer->yd ) {
+                            
+                                    // moving too
+                                    // send message telling nextPlayer
+                                    // about this move in progress
+
+                                    char *message =
+                                        getMovesMessage( false, NULL, 
+                                                         otherPlayer->id );
+                            
+                            
+                                    chunkPlayerMoves.appendElementString( 
+                                        message );
+                                    
+                                    delete [] message;
+                                    }
+                                }
+                            }
+                        }
+
+
+                    if( chunkPlayerUpdates.size() > 0 ) {
+                        chunkPlayerUpdates.push_back( '#' );
+                        char *temp = chunkPlayerUpdates.getElementString();
+
+                        char *message = concatonate( "PU\n", temp );
+                        delete [] temp;
+
+
+                        int numSent = 
+                            nextPlayer->sock->send( 
+                                (unsigned char*)message, 
+                                strlen( message ), 
+                                false, false );
+
+                        if( numSent == -1 ) {
+                            nextPlayer->error = true;
+                            }
+                        
+                        delete [] message;
+                        }
+
+                    
+                    if( chunkPlayerMoves.size() > 0 ) {
+                        char *temp = chunkPlayerMoves.getElementString();
+
+                        int numSent = 
+                            nextPlayer->sock->send( 
+                                (unsigned char*)temp, 
+                                strlen( temp ), 
+                                false, false );
+                        
+                        if( numSent == -1 ) {
+                            nextPlayer->error = true;
+                            }
+
+                        delete [] temp;
+                        }
                     }
+                // done handling sending new map chunk and player updates
+                // for players in the new chunk
                 
+                
+                
+
                 double maxDist = 32;
 
 

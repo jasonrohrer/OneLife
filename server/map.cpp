@@ -44,7 +44,9 @@ static float getXYRandom( int inX, int inY ) {
     }
 
 
-
+int getChunkDimension() {
+    return chunkDimension;
+    }
 
 
 
