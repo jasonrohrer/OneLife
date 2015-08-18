@@ -335,8 +335,8 @@ static char isGridAdjacent( int inXA, int inYA, int inXB, int inYB ) {
 int sendMapChunkMessage( LiveObject *inO ) {
     int messageLength;
     
-    unsigned char *mapChunkMessage = getChunkMessage( inO->xs,
-                                                      inO->ys, 
+    unsigned char *mapChunkMessage = getChunkMessage( inO->xd,
+                                                      inO->yd, 
                                                       &messageLength );
                 
                 
@@ -352,8 +352,8 @@ int sendMapChunkMessage( LiveObject *inO ) {
 
     if( numSent == messageLength ) {
         // sent correctly
-        inO->lastSentMapX = inO->xs;
-        inO->lastSentMapY = inO->ys;
+        inO->lastSentMapX = inO->xd;
+        inO->lastSentMapY = inO->yd;
         }
     else if( numSent == -1 ) {
         inO->error = true;
@@ -959,9 +959,9 @@ int main() {
             else {
                 // this player has first message, ready for updates/moves
                 
-                if( abs( nextPlayer->xd - nextPlayer->lastSentMapX ) > 10
+                if( abs( nextPlayer->xd - nextPlayer->lastSentMapX ) > 7
                     ||
-                    abs( nextPlayer->yd - nextPlayer->lastSentMapY ) > 10 ) {
+                    abs( nextPlayer->yd - nextPlayer->lastSentMapY ) > 7 ) {
                 
                     // moving out of bounds of chunk, send update
                     

@@ -337,8 +337,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
         
+    doublePair lastChunkCenter = { 32 * mMapOffsetX, 32 * mMapOffsetY };
     
+    setDrawColor( 0, 1, 0, 1 );
     
+    mainFont->drawString( "X", 
+                          lastChunkCenter, alignCenter );
     
     
     for( int i=0; i<gameObjects.size(); i++ ) {
@@ -849,14 +853,13 @@ void LivingLifePage::step() {
     
     if( ourLiveObject != NULL ) {
         
-        doublePair screenDest = { (double)( ourLiveObject->xd * 32 ), 
-                                  (double)( ourLiveObject->yd * 32 ) };
+        doublePair screenPos = mult( ourLiveObject->currentPos, 32 );
         
-        doublePair dir = sub( screenDest, lastScreenViewCenter );
+        doublePair dir = sub( screenPos, lastScreenViewCenter );
         
         char viewChange = false;
         
-        int maxR = 150;
+        int maxR = 50;
         double moveSpeedFactor = 0.02;
 
         if( fabs( dir.x ) > maxR ) {
