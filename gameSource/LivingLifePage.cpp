@@ -213,7 +213,7 @@ LivingLifePage::LivingLifePage()
         : mServerAddress( NULL ),
           mServerSocket( -1 ), 
           mFirstServerMessagesReceived( 0 ),
-          mMapD( 32 ),
+          mMapD( 64 ),
           mMapOffsetX( 0 ),
           mMapOffsetY( 0 ),
           mEKeyDown( false ) {
@@ -493,9 +493,40 @@ void LivingLifePage::step() {
                     binarySize, compressedSize );
             
             // recenter our in-ram sub-map around this new chunk
-            mMapOffsetX = x + size/2;
-            mMapOffsetY = y + size/2;
-                        
+            int newMapOffsetX = x + size/2;
+            int newMapOffsetY = y + size/2;
+            
+            // move old cached map cells over to line up with new center
+
+            int xMove = mMapOffsetX - newMapOffsetX;
+            int yMove = mMapOffsetY - newMapOffsetY;
+            
+            int *newMap = new int[ mMapD * mMapD ];
+            
+            for( int i=0; i<mMapD *mMapD; i++ ) {
+                newMap[i] = 0;
+
+                int newX = i % mMapD;
+                int newY = i / mMapD;
+                
+                int oldX = newX - xMove;
+                int oldY = newY - yMove;
+                
+                if( oldX >= 0 && oldX < mMapD
+                    &&
+                    oldY >= 0 && oldY < mMapD ) {
+                    
+                    newMap[i] = mMap[ oldY * mMapD + oldX ];
+                    }
+                }
+            
+            memcpy( mMap, newMap, mMapD * mMapD * sizeof( int ) );
+            
+            delete [] newMap;
+
+            mMapOffsetX = newMapOffsetX;
+            mMapOffsetY = newMapOffsetY;
+            
             
             unsigned char *compressedChunk = 
                 new unsigned char[ compressedSize ];
