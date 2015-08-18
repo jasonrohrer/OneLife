@@ -73,7 +73,7 @@ typedef struct ChangePosition {
         // of distance (like position of a new player in the world,
         // or the removal of a player).
         char global;
-    };
+    } ChangePosition;
 
 
 
