@@ -24,6 +24,7 @@ accountHmac.cpp \
 PageComponent.cpp \
 GamePage.cpp \
 LivingLifePage.cpp \
+pathFind.cpp \
 
 
 

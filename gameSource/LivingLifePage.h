@@ -13,6 +13,60 @@
 #include "GamePage.h"
 
 
+#include "pathFind.h"
+
+
+
+
+typedef struct LiveObject {
+        int id;
+
+        int holdingID;
+
+        // current fractional grid position and speed
+        doublePair currentPos;
+        // current speed is move delta per frame
+        doublePair currentSpeed;
+
+        // for instant reaction to move command when server hasn't
+        // responded yet
+        // in grid spaces per sec
+        double lastSpeed;
+
+        // recompute speed periodically during move so that we don't
+        // fall behind when frame rate fluctuates
+        double timeOfLastSpeedUpdate;
+        
+        // destination grid position
+        int xd;
+        int yd;
+        
+        int pathLength;
+        GridPos *pathToDest;
+
+        int pathOffsetX;
+        int pathOffsetY;
+        
+
+        // how long whole move should take
+        double moveTotalTime;
+        
+        // wall clock time in seconds object should arrive
+        double moveEtaTime;
+
+        
+        char inMotion;
+        
+        char displayChar;
+
+        char pendingAction;
+        float pendingActionAnimationProgress;
+        
+    } LiveObject;
+
+
+
+
 
 class LivingLifePage : public GamePage {
         
@@ -61,8 +115,9 @@ class LivingLifePage : public GamePage {
 
 
         char mEKeyDown;
-
         
+        
+        void computePathToDest( LiveObject *inObject );
     };
 
 

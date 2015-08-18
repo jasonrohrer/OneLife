@@ -124,44 +124,6 @@ messageType getMessageType( char *inMessage ) {
 
 
 
-typedef struct LiveObject {
-        int id;
-
-        int holdingID;
-
-        // current fractional grid position and speed
-        doublePair currentPos;
-        // current speed is move delta per frame
-        doublePair currentSpeed;
-
-        // for instant reaction to move command when server hasn't
-        // responded yet
-        // in grid spaces per sec
-        double lastSpeed;
-
-        // recompute speed periodically during move so that we don't
-        // fall behind when frame rate fluctuates
-        double timeOfLastSpeedUpdate;
-        
-        // destination grid position
-        int xd;
-        int yd;
-        
-        // how long whole move should take
-        double moveTotalTime;
-        
-        // wall clock time in seconds object should arrive
-        double moveEtaTime;
-
-        
-        char inMotion;
-        
-        char displayChar;
-
-        char pendingAction;
-        float pendingActionAnimationProgress;
-        
-    } LiveObject;
 
 
 SimpleVector<LiveObject> gameObjects;
@@ -185,6 +147,47 @@ void updateMoveSpeed( LiveObject *inObject ) {
               1.0 / getRecentFrameRate() );
 
     inObject->timeOfLastSpeedUpdate = game_getCurrentTime();
+    }
+
+
+
+void LivingLifePage::computePathToDest( LiveObject *inObject ) {
+    
+    GridPos start;
+    start.x = (int)( inObject->currentPos.x );
+    start.y = (int)( inObject->currentPos.y );
+
+    GridPos end = { inObject->xd, inObject->yd };
+        
+    char *blockedMap = new char[ mMapD * mMapD ];
+    for( int i=0; i<mMapD*mMapD; i++ ) {
+        blockedMap[i] = ( mMap[ i ] != 0 );
+        }
+    
+    inObject->pathOffsetX = mMapD/2 - mMapOffsetX;
+    inObject->pathOffsetY = mMapD/2 - mMapOffsetY;
+    
+    start.x += inObject->pathOffsetX;
+    start.y += inObject->pathOffsetY;
+    
+    end.x += inObject->pathOffsetX;
+    end.y += inObject->pathOffsetY;
+    
+    char pathFound = 
+        pathFind( mMapD, mMapD,
+                  blockedMap, 
+                  start, end, 
+                  &( inObject->pathLength ),
+                  &( inObject->pathToDest ) );
+    
+    if( pathFound ) {
+        printf( "Path found\n" );
+        }
+    else {
+        printf( "Path not found\n" );
+        }
+    
+    delete [] blockedMap;
     }
 
 
@@ -363,6 +366,27 @@ void LivingLifePage::draw( doublePair inViewCenter,
             mainFont->drawString( string, 
                                   pos, alignCenter );
             delete [] string;
+
+
+            if( o->pathToDest != NULL ) {
+                // highlight path
+                
+                for( int p=0; p< o->pathLength; p++ ) {
+                    GridPos pathSpot = o->pathToDest[ p ];
+                    
+                    int worldX = pathSpot.x - o->pathOffsetX;
+                    int worldY = pathSpot.y - o->pathOffsetY;
+                    
+                    pos.x = worldX * 32;
+                    pos.y = worldY * 32;
+
+                    setDrawColor( 1, 1, 0, 1 );
+                    mainFont->drawString( "P", 
+                                          pos, alignCenter );
+                    }
+                
+                }
+            
             }
 
 
@@ -639,7 +663,9 @@ void LivingLifePage::step() {
             for( int i=1; i<numLines; i++ ) {
 
                 LiveObject o;
-
+                
+                o.pathToDest = NULL;
+                
                 int numRead = sscanf( lines[i], "%d %d %d %d %lf",
                                       &( o.id ),
                                       &( o.holdingID ),
@@ -845,6 +871,14 @@ void LivingLifePage::step() {
                                 
                                 existing->xd = o.xd;
                                 existing->yd = o.yd;
+                                
+
+                                if( existing->pathToDest != NULL ) {
+                                    delete [] existing->pathToDest;
+                                    existing->pathToDest = NULL;
+                                    }
+                                computePathToDest( existing );
+                                
                                 
                                 existing->moveTotalTime = o.moveTotalTime;
                                 existing->moveEtaTime = o.moveEtaTime;
@@ -1274,6 +1308,15 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         ourLiveObject->xd = moveDestX;
         ourLiveObject->yd = moveDestY;
         ourLiveObject->inMotion = true;
+
+        if( ourLiveObject->pathToDest != NULL ) {
+            delete [] ourLiveObject->pathToDest;
+            ourLiveObject->pathToDest = NULL;
+            }
+
+
+        computePathToDest( ourLiveObject );
+        
 
         doublePair endPos = { (double)moveDestX, (double)moveDestY };
             
