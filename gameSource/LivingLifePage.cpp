@@ -340,7 +340,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
         
-    doublePair lastChunkCenter = { 32 * mMapOffsetX, 32 * mMapOffsetY };
+    doublePair lastChunkCenter = { 32.0 * mMapOffsetX, 32.0 * mMapOffsetY };
     
     setDrawColor( 0, 1, 0, 1 );
     
