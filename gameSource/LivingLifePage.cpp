@@ -153,6 +153,11 @@ void updateMoveSpeed( LiveObject *inObject ) {
 
 void LivingLifePage::computePathToDest( LiveObject *inObject ) {
     
+    if( inObject->pathToDest != NULL ) {
+        delete [] inObject->pathToDest;
+        inObject->pathToDest = NULL;
+        }
+
     GridPos start;
     start.x = (int)( inObject->currentPos.x );
     start.y = (int)( inObject->currentPos.y );
@@ -916,10 +921,6 @@ void LivingLifePage::step() {
                                 existing->yd = o.yd;
                                 
 
-                                if( existing->pathToDest != NULL ) {
-                                    delete [] existing->pathToDest;
-                                    existing->pathToDest = NULL;
-                                    }
                                 computePathToDest( existing );
                                 
                                 
@@ -1280,12 +1281,28 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         
                         if( emptyDist < closestDist ) {
                             
-                            moveDestX = emptyX;
-                            moveDestY = emptyY;
+                            // check if there's a path there
+                            int oldXD = ourLiveObject->xd;
+                            int oldYD = ourLiveObject->yd;
                             
-                            closestDist = emptyDist;
-                        
-                            foundEmpty = true;
+                            ourLiveObject->xd = emptyX;
+                            ourLiveObject->yd = emptyY;
+        
+                            computePathToDest( ourLiveObject );
+                            
+                            if( ourLiveObject->pathToDest != NULL ) {
+                                // can get there
+
+                                moveDestX = emptyX;
+                                moveDestY = emptyY;
+                            
+                                closestDist = emptyDist;
+                                
+                                foundEmpty = true;
+                                }
+
+                            ourLiveObject->xd = oldXD;
+                            ourLiveObject->yd = oldYD;
                             }
                         }
                     
@@ -1338,11 +1355,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         ourLiveObject->yd = moveDestY;
         
         ourLiveObject->inMotion = true;
-
-        if( ourLiveObject->pathToDest != NULL ) {
-            delete [] ourLiveObject->pathToDest;
-            ourLiveObject->pathToDest = NULL;
-            }
 
         computePathToDest( ourLiveObject );
 
