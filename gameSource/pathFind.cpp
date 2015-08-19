@@ -170,7 +170,7 @@ static pathSearchRecord *pullSearchRecord( pathSearchQueue *inQueue,
 
 
 
-char  pathFind( int inMapH, int inMapW,
+char pathFind( int inMapH, int inMapW,
                 char *inBlockedMap, 
                 GridPos inStart, GridPos inGoal,
                 int *outFullPathLength,
@@ -293,8 +293,17 @@ char  pathFind( int inMapH, int inMapW,
             int cost = bestRecord.cost + 1;
 
             for( int n=0; n<4; n++ ) {
-                int neighborSquareIndex = 
-                    neighbors[n].y * inMapW + neighbors[n].x;
+                int y = neighbors[n].y;
+                int x = neighbors[n].x;
+                
+                // skip neighbors that are off the edge of the map
+                if( x < 0 || x >= inMapW ||
+                    y < 0 || y >= inMapH ) {
+                
+                    continue;
+                    }
+                
+                int neighborSquareIndex = y * inMapW + x;
                 
                 if( ! inBlockedMap[ neighborSquareIndex ] ) {
                     // floor

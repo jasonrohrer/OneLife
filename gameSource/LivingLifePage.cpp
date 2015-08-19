@@ -173,6 +173,7 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
     end.x += inObject->pathOffsetX;
     end.y += inObject->pathOffsetY;
     
+    double startTime = game_getCurrentTime();
     char pathFound = 
         pathFind( mMapD, mMapD,
                   blockedMap, 
@@ -181,10 +182,12 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
                   &( inObject->pathToDest ) );
     
     if( pathFound ) {
-        printf( "Path found\n" );
+        printf( "Path found in %f ms\n", 
+                1000 * ( game_getCurrentTime() - startTime ) );
         }
     else {
-        printf( "Path not found\n" );
+        printf( "Path not found in %f ms\n", 
+                1000 * ( game_getCurrentTime() - startTime ) );
         }
     
     delete [] blockedMap;
