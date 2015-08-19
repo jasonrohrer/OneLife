@@ -262,6 +262,19 @@ LivingLifePage::~LivingLifePage() {
             numServerBytesSent, overheadServerBytesSent );
 
 
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        
+        LiveObject *nextObject =
+            gameObjects.getElement( i );
+        
+        if( nextObject->pathToDest != NULL ) {
+            delete [] nextObject->pathToDest;
+            }
+        }
+    
+    gameObjects.deleteAll();
+    
+
 
     if( mServerAddress != NULL ) {    
         delete [] mServerAddress;
@@ -779,7 +792,15 @@ void LivingLifePage::step() {
 
                         for( int i=0; i<gameObjects.size(); i++ ) {
         
-                            if( gameObjects.getElement( i )->id == o.id ) {
+                            LiveObject *nextObject =
+                                gameObjects.getElement( i );
+                            
+                            if( nextObject->id == o.id ) {
+
+                                if( nextObject->pathToDest != NULL ) {
+                                    delete [] nextObject->pathToDest;
+                                    }
+                                
                                 gameObjects.deleteElement( i );
                                 break;
                                 }
@@ -1335,6 +1356,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             moveDestX = ourLiveObject->xd;
             moveDestY = ourLiveObject->yd;
+            
+            if( nextActionMessageToSend != NULL ) {
+                // abort the action, because we can't reach the spot we
+                // want to reach
+                delete [] nextActionMessageToSend;
+                nextActionMessageToSend = NULL;
+                }
             
             }
         
