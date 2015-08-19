@@ -47,6 +47,9 @@ typedef struct LiveObject {
         int pathOffsetX;
         int pathOffsetY;
         
+        int closestDestIfPathFailedX;
+        int closestDestIfPathFailedY;
+        
 
         // how long whole move should take
         double moveTotalTime;

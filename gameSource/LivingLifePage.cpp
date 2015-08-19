@@ -174,12 +174,16 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
     end.y += inObject->pathOffsetY;
     
     double startTime = game_getCurrentTime();
+
+    GridPos closestFound;
+    
     char pathFound = 
         pathFind( mMapD, mMapD,
                   blockedMap, 
                   start, end, 
                   &( inObject->pathLength ),
-                  &( inObject->pathToDest ) );
+                  &( inObject->pathToDest ),
+                  &closestFound );
     
     if( pathFound ) {
         printf( "Path found in %f ms\n", 
@@ -188,6 +192,13 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
     else {
         printf( "Path not found in %f ms\n", 
                 1000 * ( game_getCurrentTime() - startTime ) );
+        
+        inObject->closestDestIfPathFailedX = 
+            closestFound.x - inObject->pathOffsetX;
+
+        inObject->closestDestIfPathFailedY = 
+            closestFound.y - inObject->pathOffsetY;
+        
         }
     
     delete [] blockedMap;
@@ -387,8 +398,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     mainFont->drawString( "P", 
                                           pos, alignCenter );
                     }
-                
                 }
+            else {
+                pos.x = o->closestDestIfPathFailedX * 32;
+                pos.y = o->closestDestIfPathFailedY * 32;
+                
+                setDrawColor( 1, 0, 1, 1 );
+                mainFont->drawString( "P", 
+                                      pos, alignCenter );
+                }
+            
             
             }
 
@@ -1294,6 +1313,30 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     
     if( mustMove ) {
+        ourLiveObject->xd = moveDestX;
+        ourLiveObject->yd = moveDestY;
+        
+        ourLiveObject->inMotion = true;
+
+        if( ourLiveObject->pathToDest != NULL ) {
+            delete [] ourLiveObject->pathToDest;
+            ourLiveObject->pathToDest = NULL;
+            }
+
+        computePathToDest( ourLiveObject );
+
+        
+        if( ourLiveObject->pathToDest == NULL ) {
+            // adjust move to closest possible
+            ourLiveObject->xd = ourLiveObject->closestDestIfPathFailedX;
+            ourLiveObject->yd = ourLiveObject->closestDestIfPathFailedY;
+            
+            computePathToDest( ourLiveObject );
+            
+            moveDestX = ourLiveObject->xd;
+            moveDestY = ourLiveObject->yd;
+            
+            }
         
 
         // send move right away
@@ -1308,17 +1351,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
         // start moving before we hear back from server
 
-        ourLiveObject->xd = moveDestX;
-        ourLiveObject->yd = moveDestY;
-        ourLiveObject->inMotion = true;
-
-        if( ourLiveObject->pathToDest != NULL ) {
-            delete [] ourLiveObject->pathToDest;
-            ourLiveObject->pathToDest = NULL;
-            }
 
 
-        computePathToDest( ourLiveObject );
+        
         
 
         doublePair endPos = { (double)moveDestX, (double)moveDestY };

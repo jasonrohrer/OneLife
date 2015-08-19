@@ -171,10 +171,11 @@ static pathSearchRecord *pullSearchRecord( pathSearchQueue *inQueue,
 
 
 char pathFind( int inMapH, int inMapW,
-                char *inBlockedMap, 
-                GridPos inStart, GridPos inGoal,
-                int *outFullPathLength,
-                GridPos **outFullPath ) {
+               char *inBlockedMap, 
+               GridPos inStart, GridPos inGoal,
+               int *outFullPathLength,
+               GridPos **outFullPath,
+               GridPos *outClosest ) {
 
     // watch for degen case where start and goal are equal
     if( equal( inStart, inGoal ) ) {
@@ -376,6 +377,25 @@ char pathFind( int inMapH, int inMapW,
     delete [] openMap;
     delete [] doneMap;
     
+
+    if( failed && outClosest != NULL ) {
+        // find visited spot with closest
+        
+        double minEst = inMapW + inMapH;
+        GridPos minPos = inStart;
+        
+        for( int i=0; i<searchQueueRecords.size(); i++ ) {
+            pathSearchRecord *r = searchQueueRecords.getElementDirect( i );
+            if( r->estimate < minEst ) {
+                minEst = r->estimate;
+                minPos = r->pos;
+                }
+            }        
+        *outClosest = minPos;
+        }
+    
+
+
     for( int i=0; i<searchQueueRecords.size(); i++ ) {
         delete *( searchQueueRecords.getElement( i ) );
         }
@@ -386,6 +406,12 @@ char pathFind( int inMapH, int inMapW,
         }
     
 
+    if( outClosest != NULL ) {
+        // reached goal
+        *outClosest = inGoal;
+        }
+    
+    
             
     // follow index to reconstruct path
     // last in done queue is best-reached goal node

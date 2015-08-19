@@ -1,3 +1,4 @@
+#include <stdlib.h>
 
 
 typedef struct GridPos {
@@ -16,5 +17,9 @@ char pathFind( int inMapH, int inMapW,
                char *inBlockedMap, 
                GridPos inStart, GridPos inGoal, 
                int *outFullPathLength,
-               GridPos **outFullPath );
+               GridPos **outFullPath,
+               // if not-NULL, set to closest reachable cooridinates to inGoal
+               // this will be inGoal if path find is successful, or closest
+               // possible if path finding fails
+               GridPos *outClosest = NULL );
 
