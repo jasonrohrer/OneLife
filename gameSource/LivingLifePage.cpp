@@ -962,48 +962,63 @@ void LivingLifePage::step() {
     
     if( ourLiveObject != NULL ) {
         
-        doublePair screenPos = mult( ourLiveObject->currentPos, 32 );
+        doublePair screenTargetPos = mult( ourLiveObject->currentPos, 32 );
         
-        doublePair dir = sub( screenPos, lastScreenViewCenter );
+
+        if( ourLiveObject->currentPos.x != ourLiveObject->xd
+            ||
+            ourLiveObject->currentPos.y != ourLiveObject->yd ) {
+            
+            // moving
+
+            // push camera out in front
+            
+            doublePair moveDir = { ourLiveObject->xd -
+                                   ourLiveObject->currentPos.x,
+                                   ourLiveObject->yd -
+                                   ourLiveObject->currentPos.y };
+            
+            
+            if( length( moveDir ) > 10 ) {
+                moveDir = mult( normalize( moveDir ), 10 );
+                }
+                
+            moveDir = mult( moveDir, 32 );
+            
+            
+            screenTargetPos = add( screenTargetPos, moveDir );
+            }
+        
+        // whole pixels
+        screenTargetPos.x = round( screenTargetPos.x );
+        screenTargetPos.y = round( screenTargetPos.y );
+        
+
+        doublePair dir = sub( screenTargetPos, lastScreenViewCenter );
         
         char viewChange = false;
         
         int maxR = 50;
-        double moveSpeedFactor = 0.02;
-
-        if( fabs( dir.x ) > maxR ) {
-            viewChange = true;
+        double moveSpeedFactor = .5;
         
-            double moveMagnitudeX = fabs( dir.x ) - maxR;
-            
-            moveMagnitudeX *= moveSpeedFactor / frameRateFactor;
 
-            // bin it to whole numbered bins
-            moveMagnitudeX = ceil( moveMagnitudeX );
-                            
-            if( dir.x < 0 ) {
-                moveMagnitudeX *= -1;
+        if( length( dir ) > maxR ) {
+            
+            double moveScale = moveSpeedFactor * sqrt( length( dir ) - maxR ) 
+                * frameRateFactor;
+
+            doublePair moveStep = mult( normalize( dir ), moveScale );
+            
+            // whole pixels
+
+            moveStep.x = lrint( moveStep.x );
+            moveStep.y = lrint( moveStep.y );
+                        
+            if( length( moveStep ) > 0 ) {
+                lastScreenViewCenter = add( lastScreenViewCenter, 
+                                            moveStep );
+                viewChange = true;
                 }
-            
-
-            lastScreenViewCenter.x += moveMagnitudeX;
-            }
-        if( fabs( dir.y ) > maxR ) {
-            viewChange = true;
-        
-            double moveMagnitudeY = fabs( dir.y ) - maxR;
-            
-            moveMagnitudeY *= moveSpeedFactor / frameRateFactor;
-
-            // bin it to whole numbered bins
-            moveMagnitudeY = ceil( moveMagnitudeY );
-                            
-            if( dir.y < 0 ) {
-                moveMagnitudeY *= -1;
-                }
-            
-
-            lastScreenViewCenter.y += moveMagnitudeY;
             }
         
 
