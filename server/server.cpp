@@ -572,25 +572,44 @@ int main() {
                             
                             nextPlayer->xs = lrintf( cur.x );
                             nextPlayer->ys = lrintf( cur.y );
+
+                            if( nextPlayer->xs == m.x &&
+                                nextPlayer->ys == m.y ) {
+                                
+                                // move interrupt that redirects player
+                                // to where we think player actually is
+                                
+                                // send update about them to end the move
+                                // right now
+                                playerIndicesToSendUpdatesAbout.push_back( i );
+                                }
                             }
 
 
                         nextPlayer->xd = m.x;
                         nextPlayer->yd = m.y;
                         
-                        doublePair start = { (double)nextPlayer->xs, 
-                                             (double)nextPlayer->ys };
-                        doublePair dest = { (double)m.x, (double)m.y };
-                        
-                        double dist = distance( start, dest );
-                        
-                        
-                        nextPlayer->moveTotalSeconds = dist / 
-                            nextPlayer->moveSpeed;
 
-                        nextPlayer->moveStartTime = Time::getCurrentTime();
-                        
-                        nextPlayer->newMove = true;
+                        if( nextPlayer->xd != nextPlayer->xs
+                            || 
+                            nextPlayer->yd != nextPlayer->ys ) {
+                            
+                            // an actual move away from current xs,ys
+                            
+                            doublePair start = { (double)nextPlayer->xs, 
+                                                 (double)nextPlayer->ys };
+                            doublePair dest = { (double)m.x, (double)m.y };
+                            
+                            double dist = distance( start, dest );
+                            
+                            
+                            nextPlayer->moveTotalSeconds = dist / 
+                                nextPlayer->moveSpeed;
+                            
+                            nextPlayer->moveStartTime = Time::getCurrentTime();
+                            
+                            nextPlayer->newMove = true;
+                            }
                         }
                     else if( m.type == USE ) {
                         // send update even if action fails (to let them
