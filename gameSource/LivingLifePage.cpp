@@ -1045,21 +1045,101 @@ void LivingLifePage::step() {
         if( o->currentSpeed.x != 0 ||
             o->currentSpeed.y != 0 ) {
 
-            doublePair endPos = { (double)o->xd, (double)o->yd };
+            GridPos nextStepDest = o->pathToDest[ o->currentPathStep + 1 ];
             
+            char roundingCorner = false;
+
+            doublePair endPos = { (double)nextStepDest.x, 
+                                  (double)nextStepDest.y };
+
+            if( o->currentPathStep < o->pathLength - 2 ) {
+                // at least two more steps ahead
+                
+                // check if we should smooth a curve
+                
+                GridPos curStepDest = o->pathToDest[ o->currentPathStep ];
+
+                GridPos nextNextStepDest = 
+                    o->pathToDest[ o->currentPathStep + 2 ];
+                
+                int firstDX = nextStepDest.x - curStepDest.x;
+                int firstDY = nextStepDest.y - curStepDest.y;
+                
+                int secondDX = nextNextStepDest.x - nextStepDest.x;
+                int secondDY = nextNextStepDest.y - nextStepDest.y;
+                
+                if( firstDX != secondDX || firstDY != secondDY ) {
+                    
+                    // turns a corner
+
+                    // smooth between next pos and next-next pos
+                    
+                    doublePair nextNextEndPos = { (double)nextNextStepDest.x, 
+                                                  (double)nextNextStepDest.y };
+                    
+                    doublePair startPos = { (double)curStepDest.x, 
+                                          (double)curStepDest.y };
+
+                    double curDistFromStart =
+                        distance( o->currentPos, startPos );
+                    
+                    double maxDist = distance( startPos, nextNextEndPos );
+                    
+                    double weight = 1.0 - curDistFromStart / maxDist;
+                    
+                    endPos = add( mult( endPos, weight ),
+                                  mult( nextNextEndPos, 1 - weight ) );
+                    roundingCorner = true;
+                    }
+                }
+            
+
             if( distance( endPos, o->currentPos )
                 < length( o->currentSpeed ) ) {
                 
                 // reached destination
                 o->currentPos = endPos;
-                o->currentSpeed.x = 0;
-                o->currentSpeed.y = 0;
+
+                if( o->currentPathStep == o->pathLength - 2 
+                    || 
+                    ( o->currentPathStep == o->pathLength - 3 
+                      && roundingCorner ) ) {
+                    
+                    // completed final step
+                    o->currentSpeed.x = 0;
+                    o->currentSpeed.y = 0;
+                    }
+                else {
+                    double extraDist = 
+                        length( o->currentSpeed ) -
+                        distance( endPos, o->currentPos );
+                    
+                    o->currentPathStep ++;
+                    
+                    if( roundingCorner ) {
+                        o->currentPathStep ++;
+                        }
+                    
+                        
+                    
+                    nextStepDest = o->pathToDest[ o->currentPathStep + 1 ];
+                    endPos.x = nextStepDest.x;
+                    endPos.y = nextStepDest.y;
+                    
+                    doublePair newDir = 
+                        normalize( sub( endPos, o->currentPos ) );
+                    
+                    o->currentPos = add( o->currentPos,
+                                         mult( newDir, extraDist ) );
+                    }                        
                 }
             else {
                 // still stepping toward it
+                doublePair dir = normalize( sub( endPos, o->currentPos ) );
+
                 o->currentPos =
                     add( o->currentPos,
-                         o->currentSpeed );
+                         mult( dir, length( o->currentSpeed ) ) );
                 }
             
             // correct move speed based on how far we have left to go
