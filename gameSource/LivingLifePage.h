@@ -44,11 +44,12 @@ typedef struct LiveObject {
         int pathLength;
         GridPos *pathToDest;
 
-        int pathOffsetX;
-        int pathOffsetY;
-        
+                
         int closestDestIfPathFailedX;
         int closestDestIfPathFailedY;
+        
+
+        int currentPathStep;
         
 
         // how long whole move should take

@@ -169,14 +169,14 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
         blockedMap[i] = ( mMap[ i ] != 0 );
         }
     
-    inObject->pathOffsetX = mMapD/2 - mMapOffsetX;
-    inObject->pathOffsetY = mMapD/2 - mMapOffsetY;
+    int pathOffsetX = mMapD/2 - mMapOffsetX;
+    int pathOffsetY = mMapD/2 - mMapOffsetY;
     
-    start.x += inObject->pathOffsetX;
-    start.y += inObject->pathOffsetY;
+    start.x += pathOffsetX;
+    start.y += pathOffsetY;
     
-    end.x += inObject->pathOffsetX;
-    end.y += inObject->pathOffsetY;
+    end.x += pathOffsetX;
+    end.y += pathOffsetY;
     
     double startTime = game_getCurrentTime();
 
@@ -193,18 +193,26 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
     if( pathFound ) {
         printf( "Path found in %f ms\n", 
                 1000 * ( game_getCurrentTime() - startTime ) );
+
+        // move into world coordinates
+        for( int i=0; i<inObject->pathLength; i++ ) {
+            inObject->pathToDest[i].x -= pathOffsetX;
+            inObject->pathToDest[i].y -= pathOffsetY;
+            }
         }
     else {
         printf( "Path not found in %f ms\n", 
                 1000 * ( game_getCurrentTime() - startTime ) );
         
         inObject->closestDestIfPathFailedX = 
-            closestFound.x - inObject->pathOffsetX;
+            closestFound.x - pathOffsetX;
 
         inObject->closestDestIfPathFailedY = 
-            closestFound.y - inObject->pathOffsetY;
+            closestFound.y - pathOffsetY;
         
         }
+    
+    inObject->currentPathStep = 0;
     
     delete [] blockedMap;
     }
@@ -406,11 +414,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 for( int p=0; p< o->pathLength; p++ ) {
                     GridPos pathSpot = o->pathToDest[ p ];
                     
-                    int worldX = pathSpot.x - o->pathOffsetX;
-                    int worldY = pathSpot.y - o->pathOffsetY;
-                    
-                    pos.x = worldX * 32;
-                    pos.y = worldY * 32;
+                    pos.x = pathSpot.x * 32;
+                    pos.y = pathSpot.y * 32;
 
                     setDrawColor( 1, 1, 0, 1 );
                     mainFont->drawString( "P", 
@@ -1366,6 +1371,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     
     if( mustMove ) {
+        
+        int oldXD = ourLiveObject->xd;
+        int oldYD = ourLiveObject->yd;
+        
         ourLiveObject->xd = moveDestX;
         ourLiveObject->yd = moveDestY;
         
@@ -1379,6 +1388,16 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             ourLiveObject->xd = ourLiveObject->closestDestIfPathFailedX;
             ourLiveObject->yd = ourLiveObject->closestDestIfPathFailedY;
             
+
+            if( ourLiveObject->xd == oldXD 
+                &&
+                ourLiveObject->yd == oldYD ) {
+                
+                // truncated path is where we're already standing
+                return;
+                }
+            
+
             computePathToDest( ourLiveObject );
             
             moveDestX = ourLiveObject->xd;
