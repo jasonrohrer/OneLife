@@ -305,6 +305,7 @@ LivingLifePage::~LivingLifePage() {
     }
 
 
+SimpleVector<doublePair> trail;
 
 
 
@@ -443,7 +444,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         doublePair actionOffset = { 0, 0 };
         
-        
+        trail.push_back( pos );
+
         if( o->id == ourID && o->pendingActionAnimationProgress != 0 ) {
             // wiggle toward target
 
@@ -499,6 +501,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         }
 
+    setDrawColor( 0, 0.5, 0, 0.25 );
+    for( int i=0; i<trail.size(); i++ ) {
+        doublePair *p = trail.getElement( i );
+        
+        mainFont->drawString( ".", 
+                              *p, alignCenter );
+        }
+    
 
     setDrawColor( 0, 0, 0, 0.125 );
     
@@ -1049,6 +1059,8 @@ void LivingLifePage::step() {
             
             char roundingCorner = false;
 
+            char roundingDoubleCorner = false;
+            
             doublePair endPos = { (double)nextStepDest.x, 
                                   (double)nextStepDest.y };
 
@@ -1087,9 +1099,45 @@ void LivingLifePage::step() {
                     
                     double weight = 1.0 - curDistFromStart / maxDist;
                     
-                    endPos = add( mult( endPos, weight ),
-                                  mult( nextNextEndPos, 1 - weight ) );
-                    roundingCorner = true;
+                    if( weight > 0.25 && 
+                        o->currentPathStep < o->pathLength - 3 ) {
+                        
+                        GridPos nextNextNextStepDest = 
+                            o->pathToDest[ o->currentPathStep + 3 ];
+                        
+                        int thirdDX = 
+                            nextNextNextStepDest.x - nextNextStepDest.x;
+                        int thirdDY = 
+                            nextNextNextStepDest.y - nextNextStepDest.y;
+
+                        if( thirdDX != secondDX || thirdDY != secondDY ) {
+                            
+
+                            // start moving toward third next waypoint
+
+                             doublePair nextNextNextEndPos = 
+                                 { (double)nextNextNextStepDest.x, 
+                                   (double)nextNextNextStepDest.y };
+                            
+                            maxDist = distance( startPos, nextNextNextEndPos );
+                    
+                            double weight = 1.0 - curDistFromStart / maxDist;
+                    
+                            
+                            endPos = 
+                                add( mult( nextNextEndPos, weight ),
+                                     mult( nextNextNextEndPos, 1 - weight ) );
+                            roundingDoubleCorner = true;
+                            }
+                        }
+                    
+                    if( ! roundingDoubleCorner ) {    
+
+                        endPos = add( mult( endPos, weight ),
+                                      mult( nextNextEndPos, 1 - weight ) );
+                        roundingCorner = true;
+                        }
+                    
                     }
                 }
             
@@ -1103,7 +1151,10 @@ void LivingLifePage::step() {
                 if( o->currentPathStep == o->pathLength - 2 
                     || 
                     ( o->currentPathStep == o->pathLength - 3 
-                      && roundingCorner ) ) {
+                      && roundingCorner ) 
+                    ||
+                    ( o->currentPathStep == o->pathLength - 4 
+                      && roundingDoubleCorner ) ) {
                     
                     // completed final step
                     o->currentSpeed.x = 0;
@@ -1118,6 +1169,9 @@ void LivingLifePage::step() {
                     
                     if( roundingCorner ) {
                         o->currentPathStep ++;
+                        }
+                    else if( roundingDoubleCorner ) {
+                        o->currentPathStep += 2;
                         }
                     
                         
