@@ -1099,8 +1099,7 @@ void LivingLifePage::step() {
                     
                     double weight = 1.0 - curDistFromStart / maxDist;
                     
-                    if( weight > 0.25 && 
-                        o->currentPathStep < o->pathLength - 3 ) {
+                    if( o->currentPathStep < o->pathLength - 3 ) {
                         
                         GridPos nextNextNextStepDest = 
                             o->pathToDest[ o->currentPathStep + 3 ];
@@ -1120,12 +1119,14 @@ void LivingLifePage::step() {
                                    (double)nextNextNextStepDest.y };
                             
                             maxDist = distance( startPos, nextNextNextEndPos );
-                    
+                            
                             double weight = 1.0 - curDistFromStart / maxDist;
                     
                             
+                            endPos = add( mult( endPos, weight ),
+                                          mult( nextNextEndPos, 1 - weight ) );
                             endPos = 
-                                add( mult( nextNextEndPos, weight ),
+                                add( mult( endPos, weight ),
                                      mult( nextNextNextEndPos, 1 - weight ) );
                             roundingDoubleCorner = true;
                             }
