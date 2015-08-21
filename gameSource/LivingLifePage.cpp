@@ -160,6 +160,9 @@ void updateMoveSpeed( LiveObject *inObject ) {
     }
 
 
+// should match limit on server
+static int pathFindingD = 20;
+
 
 void LivingLifePage::computePathToDest( LiveObject *inObject ) {
     
@@ -174,13 +177,34 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
 
     GridPos end = { inObject->xd, inObject->yd };
         
-    char *blockedMap = new char[ mMapD * mMapD ];
-    for( int i=0; i<mMapD*mMapD; i++ ) {
-        blockedMap[i] = ( mMap[ i ] != 0 );
+    // window around player's start position
+    char *blockedMap = new char[ pathFindingD * pathFindingD ];
+
+    int pathOffsetX = pathFindingD/2 - start.x;
+    int pathOffsetY = pathFindingD/2 - start.y;
+
+
+    for( int y=0; y<pathFindingD; y++ ) {
+        int mapY = ( y - pathOffsetY ) + mMapD / 2 - mMapOffsetY;
+        
+        for( int x=0; x<pathFindingD; x++ ) {
+            int mapX = ( x - pathOffsetX ) + mMapD / 2 - mMapOffsetX;
+            
+            blockedMap[ y * pathFindingD + x ]
+                =
+                ( mMap[ mapY * mMapD + mapX ] != 0 );
+            
+            if( blockedMap[ y * pathFindingD + x ] ) {
+                printf( "X" );
+                }
+            else {
+                printf( "-" );
+                }
+            }
+        printf( "\n" );
         }
     
-    int pathOffsetX = mMapD/2 - mMapOffsetX;
-    int pathOffsetY = mMapD/2 - mMapOffsetY;
+    
     
     start.x += pathOffsetX;
     start.y += pathOffsetY;
@@ -193,7 +217,7 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
     GridPos closestFound;
     
     char pathFound = 
-        pathFind( mMapD, mMapD,
+        pathFind( pathFindingD, pathFindingD,
                   blockedMap, 
                   start, end, 
                   &( inObject->pathLength ),
