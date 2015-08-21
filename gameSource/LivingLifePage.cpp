@@ -79,6 +79,16 @@ char *getNextServerMessage() {
 
 
 
+
+doublePair gridToDouble( GridPos inGridPos ) {
+    doublePair d = { (double) inGridPos.x, (double) inGridPos.y };
+    
+    return d;
+    }
+
+
+
+
 typedef enum messageType {
 	MAP_CHUNK,
     MAP_CHANGE,
@@ -997,14 +1007,35 @@ void LivingLifePage::step() {
 
             // push camera out in front
             
-            doublePair moveDir = { ourLiveObject->xd -
-                                   ourLiveObject->currentPos.x,
-                                   ourLiveObject->yd -
-                                   ourLiveObject->currentPos.y };
+            doublePair farthestPathPos;
+            double farthestDist = 0;
             
+            for( int i=ourLiveObject->currentPathStep+1; 
+                 i<ourLiveObject->pathLength; i++ ) {
             
-            if( length( moveDir ) > 10 ) {
-                moveDir = mult( normalize( moveDir ), 10 );
+                GridPos pathStep = ourLiveObject->pathToDest[i];
+                
+                doublePair pathPos = gridToDouble( pathStep );
+                
+                double dist = distance( ourLiveObject->currentPos,
+                                        pathPos );
+                
+                if( dist > farthestDist ) {
+                    farthestDist = dist;
+                    farthestPathPos = pathPos;
+                    }
+                }
+            
+            if( false )printf( "Our pos = %f,%f, farthest path pos = %f,%f\n",
+                    ourLiveObject->currentPos.x, ourLiveObject->currentPos.y,
+                    farthestPathPos.x, farthestPathPos.y );
+            
+            doublePair moveDir = sub( farthestPathPos, 
+                                      ourLiveObject->currentPos );
+                        
+            
+            if( length( moveDir ) > 7 ) {
+                moveDir = mult( normalize( moveDir ), 7 );
                 }
                 
             moveDir = mult( moveDir, 32 );
