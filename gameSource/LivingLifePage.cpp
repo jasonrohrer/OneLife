@@ -500,7 +500,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         doublePair actionOffset = { 0, 0 };
         
-        trail.push_back( pos );
+        //trail.push_back( pos );
 
         if( o->id == ourID && o->pendingActionAnimationProgress != 0 ) {
             // wiggle toward target
