@@ -161,7 +161,7 @@ void updateMoveSpeed( LiveObject *inObject ) {
 
 
 // should match limit on server
-static int pathFindingD = 20;
+static int pathFindingD = 32;
 
 
 void LivingLifePage::computePathToDest( LiveObject *inObject ) {
@@ -190,18 +190,11 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
         for( int x=0; x<pathFindingD; x++ ) {
             int mapX = ( x - pathOffsetX ) + mMapD / 2 - mMapOffsetX;
             
+            // note that unknowns (-1) count as blocked too
             blockedMap[ y * pathFindingD + x ]
                 =
                 ( mMap[ mapY * mMapD + mapX ] != 0 );
-            
-            if( blockedMap[ y * pathFindingD + x ] ) {
-                printf( "X" );
-                }
-            else {
-                printf( "-" );
-                }
             }
-        printf( "\n" );
         }
     
     
@@ -314,7 +307,9 @@ LivingLifePage::LivingLifePage()
     mMap = new int[ mMapD * mMapD ];
     
     for( int i=0; i<mMapD *mMapD; i++ ) {
-        mMap[i] = 0;
+        // -1 represents unknown
+        // 0 represents known empty
+        mMap[i] = -1;
         }
 
     }
@@ -428,7 +423,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 doublePair pos = { (double)screenX, (double)screenY };
 
+                setDrawColor( 1, 1, 1, 1 );
+                
                 drawObject( getObject(oID), pos );
+                }
+            else if( oID == -1 ) {
+                // unknown
+                doublePair pos = { (double)screenX, (double)screenY };
+                
+                setDrawColor( 0, 0, 0, 0.5 );
+                drawSquare( pos, 14 );
                 }
             }
         }
@@ -635,7 +639,8 @@ void LivingLifePage::step() {
             int *newMap = new int[ mMapD * mMapD ];
             
             for( int i=0; i<mMapD *mMapD; i++ ) {
-                newMap[i] = 0;
+                // starts uknown, not empty
+                newMap[i] = -1;
 
                 int newX = i % mMapD;
                 int newY = i / mMapD;
