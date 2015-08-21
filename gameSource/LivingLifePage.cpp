@@ -224,7 +224,7 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
                   &( inObject->pathToDest ),
                   &closestFound );
     
-    if( pathFound ) {
+    if( pathFound && inObject->pathToDest != NULL ) {
         printf( "Path found in %f ms\n", 
                 1000 * ( game_getCurrentTime() - startTime ) );
 
@@ -247,11 +247,20 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
         printf( "Path not found in %f ms\n", 
                 1000 * ( game_getCurrentTime() - startTime ) );
         
-        inObject->closestDestIfPathFailedX = 
-            closestFound.x - pathOffsetX;
-
-        inObject->closestDestIfPathFailedY = 
-            closestFound.y - pathOffsetY;
+        if( !pathFound ) {
+            
+            inObject->closestDestIfPathFailedX = 
+                closestFound.x - pathOffsetX;
+            
+            inObject->closestDestIfPathFailedY = 
+                closestFound.y - pathOffsetY;
+            }
+        else {
+            // degen case where start == end?
+            inObject->closestDestIfPathFailedX = inObject->xd;
+            inObject->closestDestIfPathFailedY = inObject->yd;
+            }
+        
         
         }
     
@@ -1493,7 +1502,54 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             computePathToDest( ourLiveObject );
             
             if( ourLiveObject->pathToDest == NULL ) {
-                printf( "WHOA:  truncated path still null\n" );
+                // this happens when our curPos is slightly off of xd,yd
+                // but not a full cell away
+
+                // make a fake path
+                doublePair dest = { (double) ourLiveObject->xd,
+                                    (double) ourLiveObject->yd };
+                
+                doublePair dir = normalize( sub( dest, 
+                                                 ourLiveObject->currentPos ) );
+
+                // fake start, one grid step away
+                doublePair fakeStart = dest;
+
+                if( fabs( dir.x ) > fabs( dir.y ) ) {
+                    
+                    if( dir.x < 0 ) {
+                        fakeStart.x += 1;
+                        }
+                    else {
+                        fakeStart.x -= 1;
+                        }
+                    }
+                else {
+                    if( dir.y < 0 ) {
+                        fakeStart.y += 1;
+                        }
+                    else {
+                        fakeStart.y -= 1;
+                        }
+                    
+                    }
+                
+                
+                ourLiveObject->pathToDest = new GridPos[2];
+                
+                ourLiveObject->pathToDest[0].x = (int)fakeStart.x;
+                ourLiveObject->pathToDest[0].y = (int)fakeStart.y;
+                
+                ourLiveObject->pathToDest[1].x = ourLiveObject->xd;
+                ourLiveObject->pathToDest[1].y = ourLiveObject->yd;
+                
+                ourLiveObject->pathLength = 2;
+                ourLiveObject->currentPathStep = 0;
+                
+                ourLiveObject->currentMoveDirection =
+                    normalize( 
+                        sub( gridToDouble( ourLiveObject->pathToDest[1] ), 
+                             gridToDouble( ourLiveObject->pathToDest[0] ) ) );
                 }
 
             if( ourLiveObject->xd == oldXD 
