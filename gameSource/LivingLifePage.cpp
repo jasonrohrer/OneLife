@@ -1032,27 +1032,9 @@ void LivingLifePage::step() {
             // push camera out in front
             
             doublePair farthestPathPos;
-            double farthestDist = 0;
             
-            for( int i=ourLiveObject->currentPathStep+1; 
-                 i<ourLiveObject->pathLength; i++ ) {
-            
-                GridPos pathStep = ourLiveObject->pathToDest[i];
-                
-                doublePair pathPos = gridToDouble( pathStep );
-                
-                double dist = distance( ourLiveObject->currentPos,
-                                        pathPos );
-                
-                if( dist > farthestDist ) {
-                    farthestDist = dist;
-                    farthestPathPos = pathPos;
-                    }
-                }
-            
-            if( false )printf( "Our pos = %f,%f, farthest path pos = %f,%f\n",
-                    ourLiveObject->currentPos.x, ourLiveObject->currentPos.y,
-                    farthestPathPos.x, farthestPathPos.y );
+            farthestPathPos.x = (double)ourLiveObject->xd;
+            farthestPathPos.y = (double)ourLiveObject->yd;
             
             doublePair moveDir = sub( farthestPathPos, 
                                       ourLiveObject->currentPos );
@@ -1392,7 +1374,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             char foundEmpty = false;
             
             double closestDist = 9999999;
-            
+
+            char oldPathExists = ( ourLiveObject->pathToDest != NULL );
 
             for( int n=0; n<4; n++ ) {
                 int x = mapX + nDX[n];
@@ -1443,6 +1426,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     }
                 }
             
+            if( oldPathExists ) {
+                // restore it
+                computePathToDest( ourLiveObject );
+                }
+
             if( foundEmpty ) {
                 canExecute = true;
                 mustMove = true;
@@ -1501,19 +1489,23 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             // adjust move to closest possible
             ourLiveObject->xd = ourLiveObject->closestDestIfPathFailedX;
             ourLiveObject->yd = ourLiveObject->closestDestIfPathFailedY;
+
+            computePathToDest( ourLiveObject );
             
+            if( ourLiveObject->pathToDest == NULL ) {
+                printf( "WHOA:  truncated path still null\n" );
+                }
 
             if( ourLiveObject->xd == oldXD 
                 &&
                 ourLiveObject->yd == oldYD ) {
                 
-                // truncated path is where we're already standing
+                // truncated path is where we're already going
+                // don't send new move message
                 return;
                 }
-            
 
-            computePathToDest( ourLiveObject );
-            
+
             moveDestX = ourLiveObject->xd;
             moveDestY = ourLiveObject->yd;
             
