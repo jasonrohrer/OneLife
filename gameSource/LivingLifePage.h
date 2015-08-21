@@ -50,6 +50,7 @@ typedef struct LiveObject {
         
 
         int currentPathStep;
+        doublePair currentMoveDirection;
         
 
         // how long whole move should take

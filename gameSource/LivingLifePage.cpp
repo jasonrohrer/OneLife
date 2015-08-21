@@ -199,6 +199,15 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
             inObject->pathToDest[i].x -= pathOffsetX;
             inObject->pathToDest[i].y -= pathOffsetY;
             }
+
+        GridPos aGridPos = inObject->pathToDest[0];
+        GridPos bGridPos = inObject->pathToDest[1];
+        
+        doublePair aPos = { (double)aGridPos.x, (double)aGridPos.y };
+        doublePair bPos = { (double)bGridPos.x, (double)bGridPos.y };
+        
+        inObject->currentMoveDirection =
+            normalize( sub( bPos, aPos ) );
         }
     else {
         printf( "Path not found in %f ms\n", 
@@ -502,7 +511,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
 
     setDrawColor( 0, 0.5, 0, 0.25 );
-    for( int i=0; i<trail.size(); i++ ) {
+    if( false )for( int i=0; i<trail.size(); i++ ) {
         doublePair *p = trail.getElement( i );
         
         mainFont->drawString( ".", 
@@ -1055,146 +1064,61 @@ void LivingLifePage::step() {
         if( o->currentSpeed.x != 0 ||
             o->currentSpeed.y != 0 ) {
 
+            GridPos curStepDest = o->pathToDest[ o->currentPathStep ];
             GridPos nextStepDest = o->pathToDest[ o->currentPathStep + 1 ];
             
-            char roundingCorner = false;
+            doublePair startPos = { (double)curStepDest.x, 
+                                    (double)curStepDest.y };
 
-            char roundingDoubleCorner = false;
-            
             doublePair endPos = { (double)nextStepDest.x, 
                                   (double)nextStepDest.y };
-
-            if( o->currentPathStep < o->pathLength - 2 ) {
-                // at least two more steps ahead
-                
-                // check if we should smooth a curve
-                
-                GridPos curStepDest = o->pathToDest[ o->currentPathStep ];
-
-                GridPos nextNextStepDest = 
-                    o->pathToDest[ o->currentPathStep + 2 ];
-                
-                int firstDX = nextStepDest.x - curStepDest.x;
-                int firstDY = nextStepDest.y - curStepDest.y;
-                
-                int secondDX = nextNextStepDest.x - nextStepDest.x;
-                int secondDY = nextNextStepDest.y - nextStepDest.y;
-                
-                if( firstDX != secondDX || firstDY != secondDY ) {
-                    
-                    // turns a corner
-
-                    // smooth between next pos and next-next pos
-                    
-                    doublePair nextNextEndPos = { (double)nextNextStepDest.x, 
-                                                  (double)nextNextStepDest.y };
-                    
-                    doublePair startPos = { (double)curStepDest.x, 
-                                          (double)curStepDest.y };
-
-                    double curDistFromStart =
-                        distance( o->currentPos, startPos );
-                    
-                    double maxDist = distance( startPos, nextNextEndPos );
-                    
-                    double weight = 1.0 - curDistFromStart / maxDist;
-                    
-                    if( o->currentPathStep < o->pathLength - 3 ) {
-                        
-                        GridPos nextNextNextStepDest = 
-                            o->pathToDest[ o->currentPathStep + 3 ];
-                        
-                        int thirdDX = 
-                            nextNextNextStepDest.x - nextNextStepDest.x;
-                        int thirdDY = 
-                            nextNextNextStepDest.y - nextNextStepDest.y;
-
-                        if( thirdDX != secondDX || thirdDY != secondDY ) {
-                            
-
-                            // start moving toward third next waypoint
-
-                             doublePair nextNextNextEndPos = 
-                                 { (double)nextNextNextStepDest.x, 
-                                   (double)nextNextNextStepDest.y };
-                            
-                            maxDist = distance( startPos, nextNextNextEndPos );
-                            
-                            double weight = 1.0 - curDistFromStart / maxDist;
-                    
-                            
-                            endPos = add( mult( endPos, weight ),
-                                          mult( nextNextEndPos, 1 - weight ) );
-                            endPos = 
-                                add( mult( endPos, weight ),
-                                     mult( nextNextNextEndPos, 1 - weight ) );
-                            roundingDoubleCorner = true;
-                            }
-                        }
-                    
-                    if( ! roundingDoubleCorner ) {    
-
-                        endPos = add( mult( endPos, weight ),
-                                      mult( nextNextEndPos, 1 - weight ) );
-                        roundingCorner = true;
-                        }
-                    
-                    }
-                }
+            
+            doublePair dir = normalize( sub( endPos, o->currentPos ) );
             
 
-            if( distance( endPos, o->currentPos )
-                < length( o->currentSpeed ) ) {
-                
-                // reached destination
-                o->currentPos = endPos;
+            double turnFactor = 0.35;
+            
+            if( o->currentPathStep == o->pathLength - 2 ) {
+                // last segment
+                // speed up turn toward final spot so that we
+                // don't miss it and circle around it forever
+                turnFactor = 0.5;
+                }
+            
+            
+            o->currentMoveDirection = 
+                normalize( add( o->currentMoveDirection, 
+                                mult( dir, turnFactor * frameRateFactor ) ) );
 
-                if( o->currentPathStep == o->pathLength - 2 
-                    || 
-                    ( o->currentPathStep == o->pathLength - 3 
-                      && roundingCorner ) 
-                    ||
-                    ( o->currentPathStep == o->pathLength - 4 
-                      && roundingDoubleCorner ) ) {
+            if( o->currentPathStep < o->pathLength - 2 ) {
+
+                o->currentPos = add( o->currentPos,
+                                     mult( o->currentMoveDirection,
+                                           length( o->currentSpeed ) ) );
+                
+                if( 1.5 * distance( o->currentPos,
+                                    startPos )
+                    >
+                    distance( o->currentPos,
+                              endPos ) ) {
                     
-                    // completed final step
+                    o->currentPathStep ++; 
+                    }
+                }
+            else {
+                if( distance( endPos, o->currentPos )
+                    < length( o->currentSpeed ) ) {
+
+                    // reached destination
+                    o->currentPos = endPos;
                     o->currentSpeed.x = 0;
                     o->currentSpeed.y = 0;
                     }
                 else {
-                    double extraDist = 
-                        length( o->currentSpeed ) -
-                        distance( endPos, o->currentPos );
-                    
-                    o->currentPathStep ++;
-                    
-                    if( roundingCorner ) {
-                        o->currentPathStep ++;
-                        }
-                    else if( roundingDoubleCorner ) {
-                        o->currentPathStep += 2;
-                        }
-                    
-                        
-                    
-                    nextStepDest = o->pathToDest[ o->currentPathStep + 1 ];
-                    endPos.x = nextStepDest.x;
-                    endPos.y = nextStepDest.y;
-                    
-                    doublePair newDir = 
-                        normalize( sub( endPos, o->currentPos ) );
-                    
                     o->currentPos = add( o->currentPos,
-                                         mult( newDir, extraDist ) );
-                    }                        
-                }
-            else {
-                // still stepping toward it
-                doublePair dir = normalize( sub( endPos, o->currentPos ) );
-
-                o->currentPos =
-                    add( o->currentPos,
-                         mult( dir, length( o->currentSpeed ) ) );
+                                         mult( o->currentMoveDirection,
+                                               length( o->currentSpeed ) ) );
+                    }
                 }
             
             // correct move speed based on how far we have left to go
