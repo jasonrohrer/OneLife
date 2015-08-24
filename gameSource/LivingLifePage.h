@@ -26,7 +26,7 @@ typedef struct LiveObject {
         // current fractional grid position and speed
         doublePair currentPos;
         // current speed is move delta per frame
-        doublePair currentSpeed;
+        double currentSpeed;
 
         // for instant reaction to move command when server hasn't
         // responded yet

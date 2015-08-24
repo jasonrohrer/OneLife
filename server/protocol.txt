@@ -64,15 +64,14 @@ for x y.
 
 
 PM
-p_id xs ys xdelt ydelt total_sec eta_sec
-p_id xs ys xdelt ydelt total_sec eta_sec
-p_id xs ys xdelt ydelt total_sec eta_sec
+p_id xs ys total_sec eta_sec xdelt0 ydelt0 xdelt1 ydelt1 ... xdeltN ydeltN
+p_id xs ys total_sec eta_sec xdelt0 ydelt0 xdelt1 ydelt1 ... xdeltN ydeltN
 ...
-p_id xs ys xdelt ydelt total_sec eta_sec
+p_id xs ys total_sec eta_sec xdelt0 ydelt0 xdelt1 ydelt1 ... xdeltN ydeltN
 #
 
 List of player ids that just started moving, their start x y grid position,
-their delta grid offset (xs + xdelt = destination x), 
+their delta grid offsets along their path (xs + xdelt0 = first destination x), 
 how long the total move should take (in case we 
 come into the game in the middle of a move), and their time to arrival in 
 floating point seconds
@@ -127,7 +126,18 @@ In other words, no x,y coordiantes, but the character X twice instead
 
 Clients send moves in the following format:
 
-MOVE x y#
 USE x y#
 GRAB x y#
 DROP x y#
+
+
+This one is more complicated:
+MOVE xs ys xdelt0 ydelt0 xdelt1 ydelt1 ... xdeltN ydeltN#
+
+xs,ys is the absolute world position the player thinks they're currently at
+
+the pairs of deltas represent steps along an obstacle-free path that the player
+wants to take to their destination xdeltN,ydeltN
+
+These deltas are relative to xs,ys and will be rejected if they are larger
+than +/- 16 (the maximum allowed path search radius.

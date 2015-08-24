@@ -142,20 +142,16 @@ SimpleVector<LiveObject> gameObjects;
 
 
 void updateMoveSpeed( LiveObject *inObject ) {
-    doublePair endPos = { (double)inObject->xd, (double)inObject->yd };
-    
     double etaSec = inObject->moveEtaTime - game_getCurrentTime();
     
-    doublePair moveLeft = sub( endPos, 
-                               inObject->currentPos );
 
-    doublePair speedPerSec =
-        mult( moveLeft, 1.0 / etaSec );
-                            
-    inObject->currentSpeed =
-        mult( speedPerSec, 
-              1.0 / getRecentFrameRate() );
-
+    int moveLeft = inObject->pathLength - inObject->currentPathStep;
+    
+    
+    double speedPerSec = moveLeft / etaSec;
+                     
+    inObject->currentSpeed = speedPerSec / getRecentFrameRate();
+    
     inObject->timeOfLastSpeedUpdate = game_getCurrentTime();
     }
 
@@ -172,8 +168,8 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
         }
 
     GridPos start;
-    start.x = (int)( inObject->currentPos.x );
-    start.y = (int)( inObject->currentPos.y );
+    start.x = lrint( inObject->currentPos.x );
+    start.y = lrint( inObject->currentPos.y );
 
     GridPos end = { inObject->xd, inObject->yd };
         
@@ -811,9 +807,8 @@ void LivingLifePage::step() {
                             existing->currentPos.x = o.xd;
                             existing->currentPos.y = o.yd;
                         
-                            existing->currentSpeed.x = 0;
-                            existing->currentSpeed.y = 0;
-                        
+                            existing->currentSpeed = 0;
+                            
                             existing->xd = o.xd;
                             existing->yd = o.yd;
                             }
@@ -849,9 +844,8 @@ void LivingLifePage::step() {
                         o.currentPos.x = o.xd;
                         o.currentPos.y = o.yd;
                         
-                        o.currentSpeed.x = 0;
-                        o.currentSpeed.y = 0;
-                        
+                        o.currentSpeed = 0;
+                                                
                         o.moveTotalTime = 0;
                         
                         
@@ -930,25 +924,67 @@ void LivingLifePage::step() {
                 double etaSec;
                 
                 int startX, startY;
-                int deltaX, deltaY;
                 
-                int numRead = sscanf( lines[i], "%d %d %d %d %d %lf %lf",
+                int numRead = sscanf( lines[i], "%d %d %d %lf %lf",
                                       &( o.id ),
                                       &( startX ),
                                       &( startY ),
-                                      &( deltaX ),
-                                      &( deltaY ),
                                       &( o.moveTotalTime ),
                                       &etaSec );
+
+                SimpleVector<char *> *tokens =
+                    tokenizeString( lines[i] );
+        
+
+                o.pathLength = 0;
+                o.pathToDest = NULL;
                 
-                o.xd = startX + deltaX;
-                o.yd = startY + deltaY;
+                // require an odd number greater than 7
+                if( tokens->size() < 7 || tokens->size() % 2 != 1 ) {
+                    }
+                else {                    
+                    int numTokens = tokens->size();
+        
+                    o.pathLength = (numTokens - 5) / 2 + 1;
+        
+                    o.pathToDest = new GridPos[ o.pathLength ];
+
+                    o.pathToDest[0].x = startX;
+                    o.pathToDest[0].y = startY;
+
+                    for( int e=1; e<o.pathLength; e++ ) {
+            
+                        char *xToken = 
+                            tokens->getElementDirect( 5 + (e-1) * 2 );
+                        char *yToken = 
+                            tokens->getElementDirect( 5 + (e-1) * 2 + 1 );
+                        
+        
+                        sscanf( xToken, "%d", &( o.pathToDest[e].x ) );
+                        sscanf( yToken, "%d", &( o.pathToDest[e].y ) );
+                        
+                        // make them absolute
+                        o.pathToDest[e].x += startX;
+                        o.pathToDest[e].y += startY;
+                        }
+        
+                    }
+
+                tokens->deallocateStringElements();
+                delete tokens;
+                    
+                
+                
                 
                 o.moveEtaTime = etaSec + game_getCurrentTime();
                 
 
-                if( numRead == 7 ) {
-                    
+                if( numRead == 5 && o.pathLength > 0 ) {
+                
+                    o.xd = o.pathToDest[ o.pathLength -1 ].x;
+                    o.yd = o.pathToDest[ o.pathLength -1 ].y;
+                
+    
                     for( int j=0; j<gameObjects.size(); j++ ) {
                         if( gameObjects.getElement(j)->id == o.id ) {
                             
@@ -962,8 +998,6 @@ void LivingLifePage::step() {
                             
                             doublePair startPos = { (double)startX,
                                                     (double)startY };
-                            doublePair endPos = { (double)o.xd,
-                                                  (double)o.yd };
                             
                             
                             
@@ -973,6 +1007,17 @@ void LivingLifePage::step() {
                             // that move is over
                             existing->inMotion = true;
                             
+
+                            existing->pathLength = o.pathLength;
+
+                            if( existing->pathToDest != NULL ) {
+                                delete [] existing->pathToDest;
+                                }
+                            existing->pathToDest = new GridPos[ o.pathLength ];
+                            memcpy( existing->pathToDest,
+                                    o.pathToDest,
+                                    sizeof( GridPos ) * o.pathLength );
+
                             if( existing->id != ourID ) {
                                 // don't force-update these
                                 // for our object
@@ -981,19 +1026,51 @@ void LivingLifePage::step() {
                             
                                 if( equal( existing->currentPos, startPos ) ) {
                                 
-                                    existing->currentPos = 
-                                        add( mult( endPos, 
-                                                   fractionPassed ), 
-                                             mult( startPos, 
-                                                   1 - fractionPassed ) );
+                                    // current step
+                                    int b = 
+                                        (int)floor( fractionPassed * 
+                                                    existing->pathLength );
+                                    // next step
+                                    int n =
+                                        (int)ceil( fractionPassed * 
+                                                   existing->pathLength );
+                                    
+                                    if( n == b ) {
+                                        if( n < existing->pathLength - 1 ) {
+                                            n ++ ;
+                                            }
+                                        else {
+                                            b--;
+                                            }
+                                        }
+                                        
+                                    existing->currentPathStep = b;
+                                    
+                                    double nWeight =
+                                        fractionPassed * existing->pathLength 
+                                        - b;
+                                    
+                                    doublePair bWorld =
+                                        gridToDouble(
+                                            existing->pathToDest[ b ] );
+                                    
+                                    doublePair nWorld =
+                                        gridToDouble(
+                                            existing->pathToDest[ n ] );
+                                    
+
+                                    existing->currentPos =
+                                        add( 
+                                            mult( bWorld, 1 - nWeight ), 
+                                            mult( nWorld, nWeight ) );
+
+                                    existing->currentMoveDirection =
+                                        normalize( sub( nWorld, bWorld ) );
                                     }
                                 
                                 
                                 existing->xd = o.xd;
                                 existing->yd = o.yd;
-                                
-
-                                computePathToDest( existing );
                                 
                                 
                                 existing->moveTotalTime = o.moveTotalTime;
@@ -1112,8 +1189,7 @@ void LivingLifePage::step() {
         
         LiveObject *o = gameObjects.getElement( i );
         
-        if( o->currentSpeed.x != 0 ||
-            o->currentSpeed.y != 0 ) {
+        if( o->currentSpeed != 0 ) {
 
             GridPos curStepDest = o->pathToDest[ o->currentPathStep ];
             GridPos nextStepDest = o->pathToDest[ o->currentPathStep + 1 ];
@@ -1145,7 +1221,7 @@ void LivingLifePage::step() {
 
                 o->currentPos = add( o->currentPos,
                                      mult( o->currentMoveDirection,
-                                           length( o->currentSpeed ) ) );
+                                           o->currentSpeed ) );
                 
                 if( 1.5 * distance( o->currentPos,
                                     startPos )
@@ -1158,17 +1234,16 @@ void LivingLifePage::step() {
                 }
             else {
                 if( distance( endPos, o->currentPos )
-                    < length( o->currentSpeed ) ) {
+                    < o->currentSpeed ) {
 
                     // reached destination
                     o->currentPos = endPos;
-                    o->currentSpeed.x = 0;
-                    o->currentSpeed.y = 0;
+                    o->currentSpeed = 0;
                     }
                 else {
                     o->currentPos = add( o->currentPos,
                                          mult( o->currentMoveDirection,
-                                               length( o->currentSpeed ) ) );
+                                               o->currentSpeed ) );
                     }
                 }
             
@@ -1205,8 +1280,7 @@ void LivingLifePage::step() {
     
 
     if( nextActionMessageToSend != NULL 
-        && ourLiveObject->currentSpeed.x == 0
-        && ourLiveObject->currentSpeed.y == 0 ) {
+        && ourLiveObject->currentSpeed == 0 ) {
         
         // done moving on client end
         // can start showing pending action animation, even if 
@@ -1581,7 +1655,32 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
 
         // send move right away
-        char *message = autoSprintf( "MOVE %d %d#", moveDestX, moveDestY );
+
+        SimpleVector<char> moveMessageBuffer;
+        
+        moveMessageBuffer.appendElementString( "MOVE" );
+        // start is absolute
+        char *startString = autoSprintf( " %d %d", 
+                                         ourLiveObject->pathToDest[0].x,
+                                         ourLiveObject->pathToDest[0].y );
+        moveMessageBuffer.appendElementString( startString );
+        delete [] startString;
+        
+        for( int i=1; i<ourLiveObject->pathLength; i++ ) {
+            // rest are relative to start
+            char *stepString = autoSprintf( " %d %d", 
+                                         ourLiveObject->pathToDest[i].x
+                                            - ourLiveObject->pathToDest[0].x,
+                                         ourLiveObject->pathToDest[i].y
+                                            - ourLiveObject->pathToDest[0].y );
+            
+            moveMessageBuffer.appendElementString( stepString );
+            delete [] stepString;
+            }
+        moveMessageBuffer.appendElementString( "#" );
+        
+
+        char *message = moveMessageBuffer.getElementString();
         sendToSocket( mServerSocket, (unsigned char*)message, 
                       strlen( message ) );
             
@@ -1597,11 +1696,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         
 
-        doublePair endPos = { (double)moveDestX, (double)moveDestY };
-            
         ourLiveObject->moveTotalTime = 
-            distance( endPos, 
-                      ourLiveObject->currentPos ) / 
+            ourLiveObject->pathLength / 
             ourLiveObject->lastSpeed;
 
         ourLiveObject->moveEtaTime = game_getCurrentTime() +

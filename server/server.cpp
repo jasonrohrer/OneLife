@@ -25,6 +25,12 @@
 static JenkinsRandomSource testRandSource;
 
 
+typedef struct GridPos {
+        int x;
+        int y;
+    } GridPos;
+
+
 
 typedef struct LiveObject {
         int id;
@@ -37,6 +43,10 @@ typedef struct LiveObject {
         int xd;
         int yd;
         
+        int pathLength;
+        GridPos *pathToDest;
+        
+
         int lastSentMapX;
         int lastSentMapY;
 
@@ -89,6 +99,10 @@ void quitCleanup() {
         LiveObject *nextPlayer = players.getElement(i);
         delete nextPlayer->sock;
         delete nextPlayer->sockBuffer;
+
+        if( nextPlayer->pathToDest != NULL ) {
+            delete [] nextPlayer->pathToDest;
+            }
         }
     
     freeMap();
@@ -199,22 +213,37 @@ typedef enum messageType {
     } messageType;
 
 
+
+
 typedef struct ClientMessage {
         messageType type;
         int x, y;
+
+        // some messages have extra positions attached
+        int numExtraPos;
+
+        // NULL if there are no extra
+        GridPos *extraPos;
     } ClientMessage;
 
 
+static int pathDeltaMax = 16;
 
 
+// if extraPos present in result, destroyed by caller
 ClientMessage parseMessage( char *inMessage ) {
     
     char nameBuffer[100];
     
     ClientMessage m;
     
+    m.numExtraPos = 0;
+    m.extraPos = NULL;
+    
+    // don't require # terminator here
+
     int numRead = sscanf( inMessage, 
-                          "%99s %d %d#", nameBuffer, &( m.x ), &( m.y ) );
+                          "%99s %d %d", nameBuffer, &( m.x ), &( m.y ) );
 
 
     if( numRead != 3 ) {
@@ -225,6 +254,56 @@ ClientMessage parseMessage( char *inMessage ) {
 
     if( strcmp( nameBuffer, "MOVE" ) == 0) {
         m.type = MOVE;
+
+        SimpleVector<char *> *tokens =
+            tokenizeString( inMessage );
+        
+        // require an odd number greater than 5
+        if( tokens->size() < 5 || tokens->size() % 2 != 1 ) {
+            tokens->deallocateStringElements();
+            delete tokens;
+            
+            m.type = UNKNOWN;
+            return m;
+            }
+        
+        int numTokens = tokens->size();
+        
+        m.numExtraPos = (numTokens - 3) / 2;
+        
+        m.extraPos = new GridPos[ m.numExtraPos ];
+
+        for( int e=0; e<m.numExtraPos; e++ ) {
+            
+            char *xToken = tokens->getElementDirect( 3 + e * 2 );
+            char *yToken = tokens->getElementDirect( 3 + e * 2 + 1 );
+            
+            
+            sscanf( xToken, "%d", &( m.extraPos[e].x ) );
+            sscanf( yToken, "%d", &( m.extraPos[e].y ) );
+            
+            if( abs( m.extraPos[e].x ) > pathDeltaMax ||
+                abs( m.extraPos[e].y ) > pathDeltaMax ) {
+                // path goes too far afield
+                
+                // terminate it here
+                m.numExtraPos = e;
+                
+                if( e == 0 ) {
+                    delete [] m.extraPos;
+                    m.extraPos = NULL;
+                    }
+                break;
+                }
+                
+
+            // make them absolute
+            m.extraPos[e].x += m.x;
+            m.extraPos[e].y += m.y;
+            }
+        
+        tokens->deallocateStringElements();
+        delete tokens;
         }
     else if( strcmp( nameBuffer, "USE" ) == 0 ) {
         m.type = USE;
@@ -280,12 +359,33 @@ char *getMovesMessage( char inNewMovesOnly,
                 o->newMove = false;
                 }
             
-            // holding no object for now
-            char *messageLine = 
-                autoSprintf( "%d %d %d %d %d %.3f %.3f\n", o->id, 
-                             o->xs, o->ys, 
-                             o->xd - o->xs, o->yd - o->ys, 
-                             o->moveTotalSeconds, etaSec );
+            
+            
+            SimpleVector<char> messageLineBuffer;
+        
+            // start is absolute
+            char *startString = autoSprintf( "%d %d %d %.3f %.3f", 
+                                             o->id, 
+                                             o->xs, o->ys, 
+                                             o->moveTotalSeconds, etaSec);
+            messageLineBuffer.appendElementString( startString );
+            delete [] startString;
+            
+            for( int p=0; p<o->pathLength; p++ ) {
+                // rest are relative to start
+                char *stepString = autoSprintf( " %d %d", 
+                                                o->pathToDest[p].x
+                                                - o->xs,
+                                                o->pathToDest[p].y
+                                                - o->ys );
+                
+                messageLineBuffer.appendElementString( stepString );
+                delete [] stepString;
+                }
+        
+        
+
+            char *messageLine = messageLineBuffer.getElementString();
                                     
             messageBuffer.appendElementString( messageLine );
             delete [] messageLine;
@@ -325,6 +425,11 @@ static char isGridAdjacent( int inXA, int inYA, int inXB, int inYB ) {
         }
 
     return false;
+    }
+
+
+static char isGridAdjacent( GridPos inA, GridPos inB ) {
+    return isGridAdjacent( inA.x, inA.y, inB.x, inB.y );
     }
 
 
@@ -476,6 +581,8 @@ int main() {
                 newObject.ys = 0;
                 newObject.xd = 0;
                 newObject.yd = 0;
+                newObject.pathLength = 0;
+                newObject.pathToDest = NULL;
                 newObject.lastSentMapX = 0;
                 newObject.lastSentMapY = 0;
                 newObject.moveSpeed = 4;
@@ -585,30 +692,115 @@ int main() {
                                 }
                             }
 
-
-                        nextPlayer->xd = m.x;
-                        nextPlayer->yd = m.y;
                         
-
+                        nextPlayer->xd = m.extraPos[ m.numExtraPos - 1].x;
+                        nextPlayer->yd = m.extraPos[ m.numExtraPos - 1].y;
+                        
+                        
                         if( nextPlayer->xd != nextPlayer->xs
                             || 
                             nextPlayer->yd != nextPlayer->ys ) {
                             
                             // an actual move away from current xs,ys
+
+                            // check path for obstacles
+                            // and make sure it contains their current
+                            // location
+
+                            SimpleVector<GridPos> validPath;
+
+                            char startFound = false;
+                            GridPos lastValidPathStep =
+                                { m.x, m.y };
                             
-                            doublePair start = { (double)nextPlayer->xs, 
-                                                 (double)nextPlayer->ys };
-                            doublePair dest = { (double)m.x, (double)m.y };
+                            int startIndex = 0;
+                            for( int p=0; p<m.numExtraPos; p++ ) {
+                                
+                                if( m.extraPos[p].x == nextPlayer->xs
+                                    &&
+                                    m.extraPos[p].y == nextPlayer->ys ) {
+                                    
+                                    startFound = true;
+                                    startIndex = p + 1;
+                                    break;
+                                    }
+                                }
                             
-                            double dist = distance( start, dest );
+                            if( ! startFound &&
+                                ! isGridAdjacent( m.extraPos[startIndex].x,
+                                                  m.extraPos[startIndex].y,
+                                                  nextPlayer->xs,
+                                                  nextPlayer->ys ) ) {
+                                }
+                            else {
+                                
+                                
+                                // skip past start
+                                for( int p=startIndex; p<m.numExtraPos; p++ ) {
+                                
+                                    if( getMapObject( m.extraPos[p].x, 
+                                                      m.extraPos[p].y )
+                                        != 0 ) {
+                                        // blockage in middle of path
+                                        // terminate path here
+                                        break;
+                                        }
+
+                                    // make sure it's not more
+                                    // than one step beyond
+                                    // last step
+
+                                    if( ! isGridAdjacent( 
+                                            m.extraPos[p],
+                                            lastValidPathStep ) ) {
+                                        // a path with a break in it
+                                        // terminate it here
+                                        break;
+                                        }
+                                    
+                                    // no blockage, no gaps, add this step
+                                    validPath.push_back( m.extraPos[p] );
+                                    lastValidPathStep = m.extraPos[p];
+                                    }
+                                }
+                            
+                            if( validPath.size() == 0 ) {
+                                // path not permitted
+                                
+                                nextPlayer->xd = nextPlayer->xs;
+                                nextPlayer->yd = nextPlayer->ys;
+                                
+                                // send update about them to end the move
+                                // right now
+                                playerIndicesToSendUpdatesAbout.push_back( i );
+                                }
+                            else {
+                                // a good path
+                                
+                                if( nextPlayer->pathToDest != NULL ) {
+                                    delete [] nextPlayer->pathToDest;
+                                    nextPlayer->pathToDest = NULL;
+                                    }
+
+                                nextPlayer->pathLength = validPath.size();
+                                
+                                nextPlayer->pathToDest = 
+                                    validPath.getElementArray();
+                                    
+                                                        
+                                // distance is number of orthogonal steps
+                            
+                                double dist = m.numExtraPos;
                             
                             
-                            nextPlayer->moveTotalSeconds = dist / 
-                                nextPlayer->moveSpeed;
+                                nextPlayer->moveTotalSeconds = dist / 
+                                    nextPlayer->moveSpeed;
                             
-                            nextPlayer->moveStartTime = Time::getCurrentTime();
+                                nextPlayer->moveStartTime = 
+                                    Time::getCurrentTime();
                             
-                            nextPlayer->newMove = true;
+                                nextPlayer->newMove = true;
+                                }
                             }
                         }
                     else if( m.type == USE ) {
@@ -742,6 +934,10 @@ int main() {
                                 delete [] changeLine;
                                 }
                             }
+                        }
+                    
+                    if( m.numExtraPos > 0 ) {
+                        delete [] m.extraPos;
                         }
                     }                
                 }
