@@ -1047,11 +1047,6 @@ void LivingLifePage::step() {
                             double fractionPassed = 
                                 timePassed / o.moveTotalTime;
                             
-                            doublePair startPos = { (double)startX,
-                                                    (double)startY };
-                            
-                            
-                            
                             
                             // stays in motion until we receive final
                             // PLAYER_UPDATE from server telling us
@@ -1068,6 +1063,66 @@ void LivingLifePage::step() {
                                 oldCurrentPathPos = 
                                     existing->pathToDest[
                                         existing->currentPathStep ];
+                                }
+                            
+
+                            if( existing->id != ourID ) {
+                                // remove any double-backs from path
+                                // because they confuse smooth path following
+                                
+                                SimpleVector<GridPos> filteredPath;
+                                
+                                int dbA = -1;
+                                int dbB = -1;
+                                
+                                int longestDB = 0;
+                                
+                                
+                                for( int e=0; e<o.pathLength; e++ ) {
+                                    
+                                    for( int f=e; f<o.pathLength; f++ ) {
+                                        
+                                        if( equal( o.pathToDest[e],
+                                                   o.pathToDest[f] ) ) {
+                                            
+                                            int dist = f - e;
+                                            
+                                            if( dist > longestDB ) {
+                                                
+                                                dbA = e;
+                                                dbB = f;
+                                                longestDB = dist;
+                                                }
+                                            }
+                                        }
+                                    }
+                                
+                                if( longestDB > 0 ) {
+                                    
+                                    printf( "Removing loop with %d elements\n",
+                                            longestDB );
+
+                                    for( int e=0; e<=dbA; e++ ) {
+                                        filteredPath.push_back( 
+                                            o.pathToDest[e] );
+                                        }
+                                    
+                                    // skip loop between
+
+                                    for( int e=dbB + 1; e<o.pathLength; e++ ) {
+                                        filteredPath.push_back( 
+                                            o.pathToDest[e] );
+                                        }
+                                    
+                                    o.pathLength = filteredPath.size();
+                                    
+                                    delete [] o.pathToDest;
+                                    
+                                    o.pathToDest = 
+                                        filteredPath.getElementArray();
+                                    }
+                                
+                                    
                                 }
                             
 
@@ -1108,55 +1163,47 @@ void LivingLifePage::step() {
                                 // illusion of full move interactivity
                             
                                 
+                                // current step
+                                int b = 
+                                    (int)floor( fractionPassed * 
+                                                existing->pathLength );
+                                // next step
+                                int n =
+                                    (int)ceil( fractionPassed *
+                                               existing->pathLength );
                                 
-
-
-                                if( equal( existing->currentPos, startPos ) ) {
-                                
-                                    // current step
-                                    int b = 
-                                        (int)floor( fractionPassed * 
-                                                    existing->pathLength );
-                                    // next step
-                                    int n =
-                                        (int)ceil( fractionPassed * 
-                                                   existing->pathLength );
-                                    
-                                    if( n == b ) {
-                                        if( n < existing->pathLength - 1 ) {
-                                            n ++ ;
-                                            }
-                                        else {
-                                            b--;
-                                            }
+                                if( n == b ) {
+                                    if( n < existing->pathLength - 1 ) {
+                                        n ++ ;
                                         }
-                                        
-                                    existing->currentPathStep = b;
-                                    
-                                    double nWeight =
-                                        fractionPassed * existing->pathLength 
-                                        - b;
-                                    
-                                    doublePair bWorld =
-                                        gridToDouble(
-                                            existing->pathToDest[ b ] );
-                                    
-                                    doublePair nWorld =
-                                        gridToDouble(
-                                            existing->pathToDest[ n ] );
-                                    
-
-                                    existing->currentPos =
-                                        add( 
-                                            mult( bWorld, 1 - nWeight ), 
-                                            mult( nWorld, nWeight ) );
-
-                                    existing->currentMoveDirection =
-                                        normalize( sub( nWorld, bWorld ) );
+                                    else {
+                                        b--;
+                                        }
                                     }
                                 
+                                existing->currentPathStep = b;
+                                
+                                double nWeight =
+                                    fractionPassed * existing->pathLength 
+                                    - b;
+                                
+                                doublePair bWorld =
+                                    gridToDouble(
+                                        existing->pathToDest[ b ] );
+                                
+                                doublePair nWorld =
+                                    gridToDouble(
+                                        existing->pathToDest[ n ] );
                                 
                                 
+                                existing->currentPos =
+                                    add( 
+                                        mult( bWorld, 1 - nWeight ), 
+                                        mult( nWorld, nWeight ) );
+                                
+                                existing->currentMoveDirection =
+                                    normalize( sub( nWorld, bWorld ) );
+                                                                
                                 
                                 existing->moveTotalTime = o.moveTotalTime;
                                 existing->moveEtaTime = o.moveEtaTime;
@@ -1241,6 +1288,11 @@ void LivingLifePage::step() {
                             }
                         }
                     }
+                
+                if( o.pathToDest != NULL ) {
+                    delete [] o.pathToDest;
+                    }
+
                 delete [] lines[i];
                 }
             
