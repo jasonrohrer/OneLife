@@ -98,6 +98,18 @@ char equal( GridPos inA, GridPos inB ) {
     }
 
 
+static char isGridAdjacent( int inXA, int inYA, int inXB, int inYB ) {
+    if( ( abs( inXA - inXB ) == 1 && inYA == inYB ) 
+        ||
+        ( abs( inYA - inYB ) == 1 && inXA == inXB ) ) {
+        
+        return true;
+        }
+
+    return false;
+    }
+
+
 
 
 typedef enum messageType {
@@ -794,6 +806,9 @@ void LivingLifePage::step() {
                 
                 if( numRead == 5 ) {
                     
+                    o.xServer = o.xd;
+                    o.yServer = o.yd;
+
                     LiveObject *existing = NULL;
 
                     for( int j=0; j<gameObjects.size(); j++ ) {
@@ -807,6 +822,8 @@ void LivingLifePage::step() {
                         existing->holdingID = o.holdingID;
                         
                         
+                        existing->xServer = o.xServer;
+                        existing->yServer = o.yServer;
                         
                         existing->lastSpeed = o.lastSpeed;
                         
@@ -1034,20 +1051,34 @@ void LivingLifePage::step() {
                                 }
                             
 
-                            existing->pathLength = o.pathLength;
 
-                            if( existing->pathToDest != NULL ) {
-                                delete [] existing->pathToDest;
+
+                            if( existing->id != ourID ||
+                                truncated ) {
+                                // always replace path for other players
+                                // with latest from server
+
+                                // only replace OUR path if we
+                                // learn that a path we submitted
+                                // was truncated
+
+                                existing->pathLength = o.pathLength;
+
+                                if( existing->pathToDest != NULL ) {
+                                    delete [] existing->pathToDest;
+                                    }
+                                existing->pathToDest = 
+                                    new GridPos[ o.pathLength ];
+                                
+                                memcpy( existing->pathToDest,
+                                        o.pathToDest,
+                                        sizeof( GridPos ) * o.pathLength );
+
+                                existing->xd = o.xd;
+                                existing->yd = o.yd;
                                 }
-                            existing->pathToDest = new GridPos[ o.pathLength ];
-                            memcpy( existing->pathToDest,
-                                    o.pathToDest,
-                                    sizeof( GridPos ) * o.pathLength );
+                            
 
-                            // update d for all, even our player object,
-                            // to handle path truncation
-                            existing->xd = o.xd;
-                            existing->yd = o.yd;
 
 
                             if( existing->id != ourID ) {
@@ -1056,6 +1087,10 @@ void LivingLifePage::step() {
                                 // we control it locally, to keep
                                 // illusion of full move interactivity
                             
+                                
+                                
+
+
                                 if( equal( existing->currentPos, startPos ) ) {
                                 
                                     // current step
@@ -1108,15 +1143,23 @@ void LivingLifePage::step() {
 
                                 updateMoveSpeed( existing );
                                 }
-                            else {
+                            else if( truncated ) {
                                 // adjustment to our own movement
                                 
+                                // cancel pending action upon arrival
+                                // (no longer possible, since truncated)
+
+                                existing->pendingActionAnimationProgress = 0;
+                                existing->pendingAction = false;
+                                
+                                if( nextActionMessageToSend != NULL ) {
+                                    delete [] nextActionMessageToSend;
+                                    nextActionMessageToSend = NULL;
+                                    }
+
                                 // this path may be different
                                 // from what we actually requested
-                                // from sever (on an interrupt, 
-                                // the path we requested may extend 
-                                // our old path, for example)
-
+                                // from sever
 
                                 char stillOnPath = false;
                                     
@@ -1153,7 +1196,7 @@ void LivingLifePage::step() {
 
                                 // only jump around if we must
 
-                                if( truncated && ! stillOnPath ) {
+                                if( ! stillOnPath ) {
                                     // path truncation from what we last knew
                                     // for ourselves, and we're off the end
                                     // of the new path
@@ -1376,7 +1419,9 @@ void LivingLifePage::step() {
     
 
     if( nextActionMessageToSend != NULL 
-        && ourLiveObject->currentSpeed == 0 ) {
+        && ourLiveObject->currentSpeed == 0 
+        && isGridAdjacent( ourLiveObject->xd, ourLiveObject->yd,
+                           playerActionTargetX, playerActionTargetY ) ) {
         
         // done moving on client end
         // can start showing pending action animation, even if 
@@ -1393,8 +1438,17 @@ void LivingLifePage::step() {
             }
         
         
+        // wait until 
+        // we've stopped moving locally
+        // AND animation has played for a bit
+        // AND server agrees with our position
         if( ! ourLiveObject->inMotion && 
-            ourLiveObject->pendingActionAnimationProgress > 0.25 ) {
+            ourLiveObject->pendingActionAnimationProgress > 0.25 &&
+            ourLiveObject->xd == ourLiveObject->xServer &&
+            ourLiveObject->yd == ourLiveObject->yServer ) {
+            
+            printf( "Sending pending action message to server: %s\n",
+                    nextActionMessageToSend );
             
             // move end acked by server AND action animation in progress
 
@@ -1432,16 +1486,6 @@ void LivingLifePage::makeActive( char inFresh ) {
 
 
 
-static char isGridAdjacent( int inXA, int inYA, int inXB, int inYB ) {
-    if( ( abs( inXA - inXB ) == 1 && inYA == inYB ) 
-        ||
-        ( abs( inYA - inYB ) == 1 && inXA == inXB ) ) {
-        
-        return true;
-        }
-
-    return false;
-    }
         
 
 

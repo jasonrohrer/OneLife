@@ -41,6 +41,12 @@ typedef struct LiveObject {
         int xd;
         int yd;
         
+        // last confirmed stationary position of this
+        // object on the server (from the last player_update)
+        int xServer;
+        int yServer;
+        
+
         int pathLength;
         GridPos *pathToDest;
 
