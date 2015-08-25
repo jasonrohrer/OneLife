@@ -611,7 +611,7 @@ void LivingLifePage::step() {
     char *message = getNextServerMessage();
 
 
-    if( message != NULL ) {
+    while( message != NULL ) {
         overheadServerBytesRead += 52;
         
         printf( "Got length %d message\n%s\n", strlen( message ), message );
@@ -1179,6 +1179,9 @@ void LivingLifePage::step() {
         
 
         delete [] message;
+
+        // process next message if there is one
+        message = getNextServerMessage();
         }
     
         
