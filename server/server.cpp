@@ -787,7 +787,15 @@ int main() {
                                 nextPlayer->pathToDest = 
                                     validPath.getElementArray();
                                     
-                                                        
+                                // path may be truncated from what was 
+                                // requested, so set new d
+                                nextPlayer->xd = 
+                                    nextPlayer->pathToDest[ 
+                                        nextPlayer->pathLength - 1 ].x;
+                                nextPlayer->yd = 
+                                    nextPlayer->pathToDest[ 
+                                        nextPlayer->pathLength - 1 ].y;
+
                                 // distance is number of orthogonal steps
                             
                                 double dist = m.numExtraPos;

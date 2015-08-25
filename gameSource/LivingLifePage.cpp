@@ -12,6 +12,8 @@
 
 #include "minorGems/formats/encodingUtils.h"
 
+#include "minorGems/system/Thread.h"
+
 
 #include <stdlib.h>//#include <math.h>
 
@@ -1069,8 +1071,6 @@ void LivingLifePage::step() {
                                     }
                                 
                                 
-                                existing->xd = o.xd;
-                                existing->yd = o.yd;
                                 
                                 
                                 existing->moveTotalTime = o.moveTotalTime;
@@ -1078,6 +1078,12 @@ void LivingLifePage::step() {
 
                                 updateMoveSpeed( existing );
                                 }
+                            
+                            // update d for all, even our player object
+                            // to handle path truncation
+                            existing->xd = o.xd;
+                            existing->yd = o.yd;
+
                             
                             break;
                             }
@@ -1650,7 +1656,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
 
         // send move right away
-
+        Thread::staticSleep( 5000 );
         SimpleVector<char> moveMessageBuffer;
         
         moveMessageBuffer.appendElementString( "MOVE" );
