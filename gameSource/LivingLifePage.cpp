@@ -1111,34 +1111,35 @@ void LivingLifePage::step() {
                             else {
                                 // adjustment to our own movement
                                 
-                                // only jump around if we must
+                                // this path may be different
+                                // from what we actually requested
+                                // from sever (on an interrupt, 
+                                // the path we requested may extend 
+                                // our old path, for example)
 
-                                if( truncated ) {
-                                    // path truncation from what we last knew
-                                    // for ourselves
+
+                                char stillOnPath = false;
                                     
-                                    char stillOnPath = false;
+                                if( oldPathLength > 0 ) {
+                                    // on a path, perhaps some other one
                                     
-                                    if( oldPathLength > 0 ) {
-                                        // on a path, perhaps some other one
-
-                                        // check if our current pos
-                                        // is on this new, truncated path
-
-                                        char found = false;
-                                        int foundStep = -1;
-                                        for( int p=0; 
-                                             p<existing->pathLength - 1;
-                                             p++ ) {
+                                    // check if our current pos
+                                    // is on this new, truncated path
+                                    
+                                    char found = false;
+                                    int foundStep = -1;
+                                    for( int p=0; 
+                                         p<existing->pathLength - 1;
+                                         p++ ) {
+                                        
+                                        if( equal( existing->pathToDest[p],
+                                                   oldCurrentPathPos ) ) {
                                             
-                                            if( equal( existing->pathToDest[p],
-                                                       oldCurrentPathPos ) ) {
-                                                
-                                                found = true;
-                                                foundStep = p;
-                                                }
+                                            found = true;
+                                            foundStep = p;
                                             }
-
+                                        }
+                                    
                                         if( found ) {
                                             stillOnPath = true;
                                             
@@ -1146,19 +1147,24 @@ void LivingLifePage::step() {
                                                 foundStep;
                                             }
                                         
-                                        }
-                                        
-                                    if( ! stillOnPath ) {
-                                        // not on a path at all, hard 
-                                        // jump back
-                                        existing->currentSpeed = 0;
-                                        
-                                        existing->currentPos.x =
-                                            existing->xd;
-                                        existing->currentPos.y =
-                                            existing->yd;
-                                        }
+                                    }
                                     
+
+
+                                // only jump around if we must
+
+                                if( truncated && ! stillOnPath ) {
+                                    // path truncation from what we last knew
+                                    // for ourselves, and we're off the end
+                                    // of the new path
+                                    
+                                    // hard jump back
+                                    existing->currentSpeed = 0;
+                                    
+                                    existing->currentPos.x =
+                                        existing->xd;
+                                    existing->currentPos.y =
+                                        existing->yd;
                                     }
                                 }
                             
@@ -1740,7 +1746,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
 
         // send move right away
-        Thread::staticSleep( 2000 );
+        //Thread::staticSleep( 2000 );
         SimpleVector<char> moveMessageBuffer;
         
         moveMessageBuffer.appendElementString( "MOVE" );
