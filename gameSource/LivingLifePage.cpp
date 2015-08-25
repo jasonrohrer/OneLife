@@ -1461,7 +1461,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             char foundEmpty = false;
             
-            double closestDist = 9999999;
+            int closestDist = 9999999;
 
             char oldPathExists = ( ourLiveObject->pathToDest != NULL );
 
@@ -1478,37 +1478,32 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         int emptyX = clickDestX + nDX[n];
                         int emptyY = clickDestY + nDY[n];
 
-                        doublePair emptyDest = { (double)emptyX, 
-                                                 (double)emptyY };
+                        // check if there's a path there
+                        int oldXD = ourLiveObject->xd;
+                        int oldYD = ourLiveObject->yd;
                         
-                        double emptyDist = 
-                            distance( emptyDest, ourLiveObject->currentPos );
+                        // set this temporarily for pathfinding
+                        ourLiveObject->xd = emptyX;
+                        ourLiveObject->yd = emptyY;
                         
-                        if( emptyDist < closestDist ) {
+                        computePathToDest( ourLiveObject );
+                        
+                        if( ourLiveObject->pathToDest != NULL &&
+                            ourLiveObject->pathLength < closestDist ) {
                             
-                            // check if there's a path there
-                            int oldXD = ourLiveObject->xd;
-                            int oldYD = ourLiveObject->yd;
+                            // can get there
                             
-                            ourLiveObject->xd = emptyX;
-                            ourLiveObject->yd = emptyY;
-        
-                            computePathToDest( ourLiveObject );
+                            moveDestX = emptyX;
+                            moveDestY = emptyY;
                             
-                            if( ourLiveObject->pathToDest != NULL ) {
-                                // can get there
-
-                                moveDestX = emptyX;
-                                moveDestY = emptyY;
+                            closestDist = ourLiveObject->pathLength;
                             
-                                closestDist = emptyDist;
-                                
-                                foundEmpty = true;
-                                }
-
-                            ourLiveObject->xd = oldXD;
-                            ourLiveObject->yd = oldYD;
+                            foundEmpty = true;
                             }
+                        
+                        // restore our old dest
+                        ourLiveObject->xd = oldXD;
+                        ourLiveObject->yd = oldYD;    
                         }
                     
                     }
