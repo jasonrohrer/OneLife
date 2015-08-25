@@ -90,6 +90,15 @@ doublePair gridToDouble( GridPos inGridPos ) {
 
 
 
+char equal( GridPos inA, GridPos inB ) {
+    if( inA.x == inB.x && inA.y == inB.y ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
 
 typedef enum messageType {
 	MAP_CHUNK,
@@ -927,12 +936,15 @@ void LivingLifePage::step() {
                 
                 int startX, startY;
                 
-                int numRead = sscanf( lines[i], "%d %d %d %lf %lf",
+                int truncated;
+                
+                int numRead = sscanf( lines[i], "%d %d %d %lf %lf %d",
                                       &( o.id ),
                                       &( startX ),
                                       &( startY ),
                                       &( o.moveTotalTime ),
-                                      &etaSec );
+                                      &etaSec,
+                                      &truncated );
 
                 SimpleVector<char *> *tokens =
                     tokenizeString( lines[i] );
@@ -941,13 +953,13 @@ void LivingLifePage::step() {
                 o.pathLength = 0;
                 o.pathToDest = NULL;
                 
-                // require an odd number greater than 7
-                if( tokens->size() < 7 || tokens->size() % 2 != 1 ) {
+                // require an even number at least 8
+                if( tokens->size() < 8 || tokens->size() % 2 != 0 ) {
                     }
                 else {                    
                     int numTokens = tokens->size();
         
-                    o.pathLength = (numTokens - 5) / 2 + 1;
+                    o.pathLength = (numTokens - 6) / 2 + 1;
         
                     o.pathToDest = new GridPos[ o.pathLength ];
 
@@ -957,9 +969,9 @@ void LivingLifePage::step() {
                     for( int e=1; e<o.pathLength; e++ ) {
             
                         char *xToken = 
-                            tokens->getElementDirect( 5 + (e-1) * 2 );
+                            tokens->getElementDirect( 6 + (e-1) * 2 );
                         char *yToken = 
-                            tokens->getElementDirect( 5 + (e-1) * 2 + 1 );
+                            tokens->getElementDirect( 6 + (e-1) * 2 + 1 );
                         
         
                         sscanf( xToken, "%d", &( o.pathToDest[e].x ) );
@@ -981,7 +993,7 @@ void LivingLifePage::step() {
                 o.moveEtaTime = etaSec + game_getCurrentTime();
                 
 
-                if( numRead == 5 && o.pathLength > 0 ) {
+                if( numRead == 6 && o.pathLength > 0 ) {
                 
                     o.xd = o.pathToDest[ o.pathLength -1 ].x;
                     o.yd = o.pathToDest[ o.pathLength -1 ].y;
@@ -1009,6 +1021,18 @@ void LivingLifePage::step() {
                             // that move is over
                             existing->inMotion = true;
                             
+                            int oldPathLength = 0;
+                            int oldCurrentPathStep = 0;
+                            GridPos oldCurrentPathPos;
+                            
+                            if( existing->pathToDest != NULL ) {
+                                oldPathLength = existing->pathLength;
+                                oldCurrentPathStep = existing->currentPathStep;
+                                oldCurrentPathPos = 
+                                    existing->pathToDest[
+                                        existing->currentPathStep ];
+                                }
+                            
 
                             existing->pathLength = o.pathLength;
 
@@ -1019,6 +1043,12 @@ void LivingLifePage::step() {
                             memcpy( existing->pathToDest,
                                     o.pathToDest,
                                     sizeof( GridPos ) * o.pathLength );
+
+                            // update d for all, even our player object,
+                            // to handle path truncation
+                            existing->xd = o.xd;
+                            existing->yd = o.yd;
+
 
                             if( existing->id != ourID ) {
                                 // don't force-update these
@@ -1078,13 +1108,64 @@ void LivingLifePage::step() {
 
                                 updateMoveSpeed( existing );
                                 }
+                            else {
+                                // adjustment to our own movement
+                                
+                                // only jump around if we must
+
+                                if( truncated ) {
+                                    // path truncation from what we last knew
+                                    // for ourselves
+                                    
+                                    char stillOnPath = false;
+                                    
+                                    if( oldPathLength > 0 ) {
+                                        // on a path, perhaps some other one
+
+                                        // check if our current pos
+                                        // is on this new, truncated path
+
+                                        char found = false;
+                                        int foundStep = -1;
+                                        for( int p=0; 
+                                             p<existing->pathLength - 1;
+                                             p++ ) {
+                                            
+                                            if( equal( existing->pathToDest[p],
+                                                       oldCurrentPathPos ) ) {
+                                                
+                                                found = true;
+                                                foundStep = p;
+                                                }
+                                            }
+
+                                        if( found ) {
+                                            stillOnPath = true;
+                                            
+                                            existing->currentPathStep =
+                                                foundStep;
+                                            }
+                                        
+                                        }
+                                        
+                                    if( ! stillOnPath ) {
+                                        // not on a path at all, hard 
+                                        // jump back
+                                        existing->currentSpeed = 0;
+                                        
+                                        existing->currentPos.x =
+                                            existing->xd;
+                                        existing->currentPos.y =
+                                            existing->yd;
+                                        }
+                                    
+                                    }
+                                }
                             
-                            // update d for all, even our player object
-                            // to handle path truncation
-                            existing->xd = o.xd;
-                            existing->yd = o.yd;
+                            
 
                             
+
                             break;
                             }
                         }
@@ -1656,7 +1737,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
 
         // send move right away
-        Thread::staticSleep( 5000 );
+        Thread::staticSleep( 2000 );
         SimpleVector<char> moveMessageBuffer;
         
         moveMessageBuffer.appendElementString( "MOVE" );

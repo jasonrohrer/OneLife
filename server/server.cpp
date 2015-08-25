@@ -46,6 +46,7 @@ typedef struct LiveObject {
         int pathLength;
         GridPos *pathToDest;
         
+        char pathTruncated;
 
         int lastSentMapX;
         int lastSentMapY;
@@ -364,10 +365,11 @@ char *getMovesMessage( char inNewMovesOnly,
             SimpleVector<char> messageLineBuffer;
         
             // start is absolute
-            char *startString = autoSprintf( "%d %d %d %.3f %.3f", 
+            char *startString = autoSprintf( "%d %d %d %.3f %.3f %d", 
                                              o->id, 
                                              o->xs, o->ys, 
-                                             o->moveTotalSeconds, etaSec);
+                                             o->moveTotalSeconds, etaSec,
+                                             o->pathTruncated );
             messageLineBuffer.appendElementString( startString );
             delete [] startString;
             
@@ -583,6 +585,7 @@ int main() {
                 newObject.yd = 0;
                 newObject.pathLength = 0;
                 newObject.pathToDest = NULL;
+                newObject.pathTruncated = 0;
                 newObject.lastSentMapX = 0;
                 newObject.lastSentMapY = 0;
                 newObject.moveSpeed = 4;
@@ -656,6 +659,7 @@ int main() {
                     m.type == MOVE ) {
                     
                     if( m.type == MOVE ) {
+                        Thread::staticSleep( 1000 );
                         if( nextPlayer->xs != nextPlayer->xd ||
                             nextPlayer->ys != nextPlayer->yd ) {
                     
@@ -706,7 +710,9 @@ int main() {
                             // check path for obstacles
                             // and make sure it contains their current
                             // location
-
+                            
+                            char truncated = 0;
+                            
                             SimpleVector<GridPos> validPath;
 
                             char startFound = false;
@@ -731,6 +737,9 @@ int main() {
                                                   m.extraPos[startIndex].y,
                                                   nextPlayer->xs,
                                                   nextPlayer->ys ) ) {
+                                // path start jumps away from current player 
+                                // start
+                                // ignore it
                                 }
                             else {
                                 
@@ -743,6 +752,7 @@ int main() {
                                         != 0 ) {
                                         // blockage in middle of path
                                         // terminate path here
+                                        truncated = 1;
                                         break;
                                         }
 
@@ -755,6 +765,7 @@ int main() {
                                             lastValidPathStep ) ) {
                                         // a path with a break in it
                                         // terminate it here
+                                        truncated = 1;
                                         break;
                                         }
                                     
@@ -782,6 +793,8 @@ int main() {
                                     nextPlayer->pathToDest = NULL;
                                     }
 
+                                nextPlayer->pathTruncated = truncated;
+                                
                                 nextPlayer->pathLength = validPath.size();
                                 
                                 nextPlayer->pathToDest = 
