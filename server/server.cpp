@@ -441,6 +441,15 @@ static char isGridAdjacent( GridPos inA, GridPos inB ) {
 
 
 
+static char equal( GridPos inA, GridPos inB ) {
+    if( inA.x == inB.x && inA.y == inB.y ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
 
 // sets lastSentMap in inO if chunk goes through
 // returns result of send, auto-marks error in inO
@@ -668,6 +677,7 @@ int main() {
                         printf( "  Processing move\n" );
 
                         char interrupt = false;
+                        char pathPrefixAdded = false;
                         
                         // first, construct a path from any existing
                         // path PLUS path that player is suggesting
@@ -693,63 +703,104 @@ int main() {
                             int c = 
                                 lrint( ( nextPlayer->pathLength  - 1 ) *
                                        fractionDone );
+                            GridPos cPos = nextPlayer->pathToDest[c];
                                                         
-                            nextPlayer->xs = nextPlayer->pathToDest[c].x;
-                            nextPlayer->ys = nextPlayer->pathToDest[c].y;
+                            nextPlayer->xs = cPos.x;
+                            nextPlayer->ys = cPos.y;
+                            
+
+                            printf( "Interrupt at step %d in a %d step path "
+                                    " at %d,%d\n",
+                                    c + 1, nextPlayer->pathLength,
+                                    nextPlayer->xs, nextPlayer->ys );
                             
                             
-                            // index where they think they are
-
-                            // could be ahead or behind where we think
-                            // they are
-
-                            int theirPathIndex = -1;
+                            char cOnTheirNewPath = false;
                             
-                            for( int p=0; p<nextPlayer->pathLength; p++ ) {
-                                GridPos pos = nextPlayer->pathToDest[p];
 
-                                if( m.x == pos.x && m.y == pos.y ) {
-                                    // reached point along old path
-                                    // where player thinks they actually are
-                                    theirPathIndex = p;
+                            for( int p=0; p<m.numExtraPos; p++ ) {
+                                if( equal( cPos, m.extraPos[p] ) ) {
+                                    cOnTheirNewPath = true;
                                     break;
                                     }
                                 }
                             
-                            if( theirPathIndex != -1 ) {
-                                // okay, they think they are on last path
-                                // that we had for them
+                            if( cPos.x == m.x && cPos.y == m.y ) {
+                                // also if equal to their start pos
+                                cOnTheirNewPath = true;
+                                }
+                            
 
-                                // step through path from where WE
-                                // think they should be to where they
-                                // think they are and add this as a prefix
-                                // to the path they submitted
-                                // (we may walk backward along the old
-                                //  path to do this)
+
+                            if( !cOnTheirNewPath ) {
+                                // add prefix to their path from
+                                // c to the start of their path
                                 
-                                int pathStep = 0;
+                                // index where they think they are
+
+                                // could be ahead or behind where we think
+                                // they are
                                 
-                                if( theirPathIndex < c ) {
-                                    pathStep = -1;
-                                    }
-                                else if( theirPathIndex > c ) {
-                                    pathStep = 1;
-                                    }
-                                
-                                if( pathStep != 0 ) {
-                                    for( int p = c + pathStep; 
-                                         p != theirPathIndex + pathStep; 
-                                         p += pathStep ) {
-                                        GridPos pos = 
-                                            nextPlayer->pathToDest[p];
-                                
-                                        unfilteredPath.push_back( pos );
+                                int theirPathIndex = -1;
+                            
+                                for( int p=0; p<nextPlayer->pathLength; p++ ) {
+                                    GridPos pos = nextPlayer->pathToDest[p];
+                                    
+                                    if( m.x == pos.x && m.y == pos.y ) {
+                                        // reached point along old path
+                                        // where player thinks they 
+                                        // actually are
+                                        theirPathIndex = p;
+                                        break;
                                         }
                                     }
-                                // otherwise, they are where we think
-                                // they are, and we don't need to prefix
-                                // their path
+                            
+                                printf( "They are on our path at index %d\n",
+                                        theirPathIndex );
+                            
+                                if( theirPathIndex != -1 ) {
+                                    // okay, they think they are on last path
+                                    // that we had for them
+
+                                    // step through path from where WE
+                                    // think they should be to where they
+                                    // think they are and add this as a prefix
+                                    // to the path they submitted
+                                    // (we may walk backward along the old
+                                    //  path to do this)
+                                
+                                    int pathStep = 0;
+                                    
+                                    if( theirPathIndex < c ) {
+                                        pathStep = -1;
+                                        }
+                                    else if( theirPathIndex > c ) {
+                                        pathStep = 1;
+                                        }
+                                    
+                                    if( pathStep != 0 ) {
+                                        for( int p = c + pathStep; 
+                                             p != theirPathIndex + pathStep; 
+                                             p += pathStep ) {
+                                            GridPos pos = 
+                                                nextPlayer->pathToDest[p];
+                                            
+                                            unfilteredPath.push_back( pos );
+                                            }
+                                        }
+                                    // otherwise, they are where we think
+                                    // they are, and we don't need to prefix
+                                    // their path
+
+                                    printf( "Prefixing their path "
+                                            "with %d steps\n",
+                                            unfilteredPath.size() );
+                                    }
                                 }
+                            }
+                        
+                        if( unfilteredPath.size() > 0 ) {
+                            pathPrefixAdded = true;
                             }
 
                         // now add path player says they want to go down
@@ -759,6 +810,28 @@ int main() {
                             }
                         
 
+                        printf( "Unfiltered path = " );
+                        for( int p=0; p<unfilteredPath.size(); p++ ) {
+                            printf( "(%d, %d) ",
+                                    unfilteredPath.getElementDirect(p).x, 
+                                    unfilteredPath.getElementDirect(p).y );
+                            }
+                        printf( "\n" );
+
+                        // remove any duplicate spots due to doubling back
+
+                        for( int p=1; p<unfilteredPath.size(); p++ ) {
+                            
+                            if( equal( unfilteredPath.getElementDirect(p-1),
+                                       unfilteredPath.getElementDirect(p) ) ) {
+                                unfilteredPath.deleteElement( p );
+                                p--;
+                                printf( "FOUND duplicate path element\n" );
+                                }
+                            }
+                            
+                                
+                                       
                         
                         nextPlayer->xd = m.extraPos[ m.numExtraPos - 1].x;
                         nextPlayer->yd = m.extraPos[ m.numExtraPos - 1].y;
@@ -795,7 +868,9 @@ int main() {
                             
                             
                             int startIndex = 0;
-                            for( int p=0; p<unfilteredPath.size(); p++ ) {
+                            // search from end first to find last occurrence
+                            // of start pos
+                            for( int p=unfilteredPath.size() - 1; p>=0; p-- ) {
                                 
                                 if( unfilteredPath.getElementDirect(p).x 
                                       == nextPlayer->xs
@@ -804,10 +879,12 @@ int main() {
                                       == nextPlayer->ys ) {
                                     
                                     startFound = true;
-                                    startIndex = p + 1;
+                                    startIndex = p;
                                     break;
                                     }
                                 }
+                            
+                            printf( "Start index = %d\n", startIndex );
                             
                             if( ! startFound &&
                                 ! isGridAdjacent( 
@@ -823,20 +900,25 @@ int main() {
                                 }
                             else {
                                 
-                                GridPos lastValidPathStep;
+                                GridPos lastValidPathStep =
+                                    { m.x, m.y };
                                 
-                                if( startIndex == 0 ) {
+                                if( pathPrefixAdded ) {
                                     lastValidPathStep.x = nextPlayer->xs;
                                     lastValidPathStep.y = nextPlayer->ys;
                                     }
-                                else {
-                                    unfilteredPath.getElementDirect( 
-                                        startIndex - 1 );
-                                    }
                                 
+                                // we know where we think start
+                                // of this path should be,
+                                // but player may be behind this point
+                                // on path (if we get their message late)
+                                // So, it's not safe to pre-truncate
+                                // the path
 
-                                // skip past start
-                                for( int p=startIndex; 
+                                // However, we will adjust timing, below,
+                                // to match where we think they should be
+
+                                for( int p=0; 
                                      p<unfilteredPath.size(); p++ ) {
                                 
                                     GridPos pos = 
@@ -908,14 +990,25 @@ int main() {
 
                                 // distance is number of orthogonal steps
                             
-                                double dist = m.numExtraPos;
+                                double dist = validPath.size();
                             
+
+                                double distAlreadyDone = startIndex;
                             
                                 nextPlayer->moveTotalSeconds = dist / 
                                     nextPlayer->moveSpeed;
                             
+                                double secondsAlreadyDone = distAlreadyDone / 
+                                    nextPlayer->moveSpeed;
+                                
+                                printf( "Skipping %f seconds along new %f-"
+                                        "second path\n",
+                                        secondsAlreadyDone, 
+                                        nextPlayer->moveTotalSeconds );
+                                
                                 nextPlayer->moveStartTime = 
-                                    Time::getCurrentTime();
+                                    Time::getCurrentTime() - 
+                                    secondsAlreadyDone;
                             
                                 nextPlayer->newMove = true;
                                 }
