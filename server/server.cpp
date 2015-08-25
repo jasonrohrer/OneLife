@@ -43,6 +43,11 @@ typedef struct LiveObject {
         int xd;
         int yd;
         
+        // next player update should be flagged
+        // as a forced position change
+        char posForced;
+        
+
         int pathLength;
         GridPos *pathToDest;
         
@@ -871,6 +876,8 @@ int main() {
                                 nextPlayer->xd = nextPlayer->xs;
                                 nextPlayer->yd = nextPlayer->ys;
                                 
+                                nextPlayer->posForced = true;
+
                                 // send update about them to end the move
                                 // right now
                                 playerIndicesToSendUpdatesAbout.push_back( i );
@@ -977,6 +984,7 @@ int main() {
                             }
                         }                    
                     else if( m.type == DROP ) {
+                        Thread::staticSleep( 2000 );
                         // send update even if action fails (to let them
                         // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
@@ -1067,7 +1075,7 @@ int main() {
                 newUpdatesPos.push_back( p );
                 }
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
-                char *updateLine = autoSprintf( "%d %d X X %.2f\n", 
+                char *updateLine = autoSprintf( "%d %d 0 X X %.2f\n", 
                                                 nextPlayer->id,
                                                 nextPlayer->holdingID,
                                                 nextPlayer->moveSpeed );
@@ -1120,13 +1128,16 @@ int main() {
             LiveObject *nextPlayer = players.getElement( 
                 playerIndicesToSendUpdatesAbout.getElementDirect( i ) );
 
-            char *updateLine = autoSprintf( "%d %d %d %d %.2f\n", 
+            char *updateLine = autoSprintf( "%d %d %d %d %d %.2f\n", 
                                             nextPlayer->id,
                                             nextPlayer->holdingID,
+                                            nextPlayer->posForced,
                                             nextPlayer->xs, 
                                             nextPlayer->ys,
                                             nextPlayer->moveSpeed );
             
+            nextPlayer->posForced = false;
+
             newUpdates.appendElementString( updateLine );
             ChangePosition p = { nextPlayer->xs, nextPlayer->ys, false };
             newUpdatesPos.push_back( p );
@@ -1217,7 +1228,7 @@ int main() {
 
                     // holding no object for now
                     char *messageLine = 
-                        autoSprintf( "%d %d %d %d %.2f\n", o.id, o.holdingID,
+                        autoSprintf( "%d %d 0 %d %d %.2f\n", o.id, o.holdingID,
                                      o.xs, o.ys, o.moveSpeed );
                     
 

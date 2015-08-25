@@ -797,14 +797,17 @@ void LivingLifePage::step() {
                 
                 o.pathToDest = NULL;
                 
-                int numRead = sscanf( lines[i], "%d %d %d %d %lf",
+                int forced = 0;
+                
+                int numRead = sscanf( lines[i], "%d %d %d %d %d %lf",
                                       &( o.id ),
                                       &( o.holdingID ),
+                                      &forced,
                                       &( o.xd ),
                                       &( o.yd ),
                                       &( o.lastSpeed ) );
                 
-                if( numRead == 5 ) {
+                if( numRead == 6 ) {
                     
                     o.xServer = o.xd;
                     o.yServer = o.yd;
@@ -827,11 +830,15 @@ void LivingLifePage::step() {
                         
                         existing->lastSpeed = o.lastSpeed;
                         
-                        if( existing->id != ourID ) {
+                        if( existing->id != ourID || 
+                            forced ) {
+                            
                             // don't ever force-update these for
                             // our locally-controlled object
                             // give illusion of it being totally responsive
                             // to move commands
+
+                            // UNLESS server tells us to force update
                             existing->currentPos.x = o.xd;
                             existing->currentPos.y = o.yd;
                         
@@ -840,7 +847,8 @@ void LivingLifePage::step() {
                             existing->xd = o.xd;
                             existing->yd = o.yd;
                             }
-                        else {
+                        
+                        if( existing->id == ourID ) {
                             // update for us
                             
                             if( !existing->inMotion ) {
@@ -850,6 +858,18 @@ void LivingLifePage::step() {
                                 playerActionPending = false;
                                 
                                 existing->pendingAction = false;
+                                }
+
+                            if( forced ) {
+                                existing->pendingActionAnimationProgress = 0;
+                                existing->pendingAction = false;
+                                
+                                playerActionPending = false;
+
+                                if( nextActionMessageToSend != NULL ) {
+                                    delete [] nextActionMessageToSend;
+                                    nextActionMessageToSend = NULL;
+                                    }
                                 }
                             }
                         
@@ -880,7 +900,7 @@ void LivingLifePage::step() {
                         gameObjects.push_back( o );
                         }
                     }
-                else if( numRead == 2 ) {
+                else if( numRead == 3 ) {
                     if( strstr( lines[i], "X X" ) != NULL  ) {
                         // object deleted
                         
@@ -1152,6 +1172,8 @@ void LivingLifePage::step() {
                                 existing->pendingActionAnimationProgress = 0;
                                 existing->pendingAction = false;
                                 
+                                playerActionPending = false;
+
                                 if( nextActionMessageToSend != NULL ) {
                                     delete [] nextActionMessageToSend;
                                     nextActionMessageToSend = NULL;
