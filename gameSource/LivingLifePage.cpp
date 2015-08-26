@@ -1057,7 +1057,11 @@ void LivingLifePage::step() {
                             int oldCurrentPathStep = 0;
                             GridPos oldCurrentPathPos;
                             
-                            if( existing->pathToDest != NULL ) {
+                            if( existing->currentSpeed != 0
+                                &&
+                                existing->pathToDest != NULL ) {
+                                
+                                // an interrupted move
                                 oldPathLength = existing->pathLength;
                                 oldCurrentPathStep = existing->currentPathStep;
                                 oldCurrentPathPos = 
@@ -1162,51 +1166,146 @@ void LivingLifePage::step() {
                                 // we control it locally, to keep
                                 // illusion of full move interactivity
                             
-                                
-                                // current step
-                                int b = 
-                                    (int)floor( fractionPassed * 
-                                                existing->pathLength );
-                                // next step
-                                int n =
-                                    (int)ceil( fractionPassed *
-                                               existing->pathLength );
-                                
-                                if( n == b ) {
-                                    if( n < existing->pathLength - 1 ) {
-                                        n ++ ;
+                                char usingOldPathStep = false;
+
+                                if( oldPathLength != 0 ) {
+                                    // this move interrupts or truncates
+                                    // the move we were already on
+
+                                    // look to see if the old path step
+                                    // is on our new path
+                                    char found = false;
+                                    int foundStep = -1;
+
+                                    for( int p=0; 
+                                         p<existing->pathLength - 1;
+                                         p++ ) {
+                                        
+                                        if( equal( existing->pathToDest[p],
+                                                   oldCurrentPathPos ) ) {
+                                            
+                                            found = true;
+                                            foundStep = p;
+                                            }
                                         }
-                                    else {
-                                        b--;
+                                    
+                                    if( found ) {
+                                        usingOldPathStep = true;
+                                        
+                                        existing->currentPathStep =
+                                            foundStep;
+                                        
+                                        doublePair foundWorld = 
+                                            gridToDouble(
+                                                existing->
+                                                pathToDest[ foundStep ] );
+
+                                        // where we should move toward
+                                        doublePair nextWorld;
+                                        
+                                        if( foundStep < 
+                                            existing->pathLength - 1 ) {
+                                            
+                                            // point from here to our
+                                            // next step
+                                            nextWorld = 
+                                                gridToDouble(
+                                                    existing->
+                                                    pathToDest[ 
+                                                        foundStep + 1 ] );    
+                                            }
+                                        else {
+                                            // at end of path, point right
+                                            // to it
+                                            nextWorld = foundWorld;
+                                            }
+
+                                        existing->currentMoveDirection =
+                                            normalize( 
+                                                sub( nextWorld, 
+                                                     existing->currentPos ) );
                                         }
                                     }
                                 
-                                existing->currentPathStep = b;
                                 
-                                double nWeight =
-                                    fractionPassed * existing->pathLength 
-                                    - b;
+                                if( ! usingOldPathStep ) {
+                                    // forced to jump to exactly where
+                                    // server says we are
+                                    
+                                    // current step
+                                    int b = 
+                                        (int)floor( fractionPassed * 
+                                                    existing->pathLength );
+                                    // next step
+                                    int n =
+                                        (int)ceil( fractionPassed *
+                                                   existing->pathLength );
+                                    
+                                    if( n == b ) {
+                                        if( n < existing->pathLength - 1 ) {
+                                            n ++ ;
+                                            }
+                                        else {
+                                            b--;
+                                            }
+                                        }
+                                    
+                                    existing->currentPathStep = b;
                                 
-                                doublePair bWorld =
-                                    gridToDouble(
-                                        existing->pathToDest[ b ] );
+                                    double nWeight =
+                                        fractionPassed * existing->pathLength 
+                                        - b;
                                 
-                                doublePair nWorld =
-                                    gridToDouble(
-                                        existing->pathToDest[ n ] );
+                                    doublePair bWorld =
+                                        gridToDouble(
+                                            existing->pathToDest[ b ] );
+                                    
+                                    doublePair nWorld =
+                                        gridToDouble(
+                                            existing->pathToDest[ n ] );
+                                    
                                 
+                                    existing->currentPos =
+                                        add( mult( bWorld, 1 - nWeight ), 
+                                             mult( nWorld, nWeight ) );
+                                    
+                                    existing->currentMoveDirection =
+                                        normalize( sub( nWorld, bWorld ) );
+                                    }
                                 
-                                existing->currentPos =
-                                    add( 
-                                        mult( bWorld, 1 - nWeight ), 
-                                        mult( nWorld, nWeight ) );
-                                
-                                existing->currentMoveDirection =
-                                    normalize( sub( nWorld, bWorld ) );
-                                                                
                                 
                                 existing->moveTotalTime = o.moveTotalTime;
                                 existing->moveEtaTime = o.moveEtaTime;
+
+                                if( usingOldPathStep ) {
+                                    // we're ignoring where server
+                                    // says we should be
+
+                                    // BUT, we should change speed to
+                                    // compensate for the difference
+
+                                    double oldFractionPassed =
+                                        (double)existing->currentPathStep
+                                        / (double)existing->pathLength;
+                                    
+                                    
+                                    // if this is positive, we are
+                                    // farther along than we should be
+                                    // we need to slow down (moveEtaTime
+                                    // should get bigger)
+
+                                    // if negative, we are behind
+                                    // we should speed up (moveEtaTime
+                                    // should get smaller)
+                                    double fractionDiff =
+                                        oldFractionPassed - fractionPassed;
+                                    
+                                    double timeAdjust =
+                                        existing->moveTotalTime * fractionDiff;
+                                    
+                                    existing->moveEtaTime += timeAdjust;
+                                    }
+                                
 
                                 updateMoveSpeed( existing );
                                 }
