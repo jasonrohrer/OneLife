@@ -512,7 +512,7 @@ int main() {
 
     printf( "Press CTRL-C to shut down server gracefully\n\n" );
 
-    signal( SIGINT, intHandler );
+    signal( SIGTSTP, intHandler );
 
 #ifdef WIN_32
     SetConsoleCtrlHandler( ctrlHandler, TRUE );
@@ -1778,6 +1778,10 @@ int main() {
                 
                 delete nextPlayer->sock;
                 delete nextPlayer->sockBuffer;
+                
+                if( nextPlayer->pathToDest != NULL ) {
+                    delete [] nextPlayer->pathToDest;
+                    }
                 players.deleteElement( i );
                 i--;
                 }
