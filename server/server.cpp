@@ -375,6 +375,9 @@ char *getMovesMessage( char inNewMovesOnly,
                                              o->xs, o->ys, 
                                              o->moveTotalSeconds, etaSec,
                                              o->pathTruncated );
+            // mark that this has been sent
+            o->pathTruncated = false;
+            
             messageLineBuffer.appendElementString( startString );
             delete [] startString;
             
@@ -446,6 +449,13 @@ static char equal( GridPos inA, GridPos inB ) {
         return true;
         }
     return false;
+    }
+
+
+static double distance( GridPos inA, GridPos inB ) {
+    return sqrt( ( inA.x - inB.x ) * ( inA.x - inB.x )
+                 +
+                 ( inA.y - inB.y ) * ( inA.y - inB.y ) );
     }
 
 
@@ -673,8 +683,11 @@ int main() {
                     m.type == MOVE ) {
                     
                     if( m.type == MOVE ) {
-                        Thread::staticSleep( 1000 );
-                        printf( "  Processing move\n" );
+                        //Thread::staticSleep( 1000 );
+                        printf( "  Processing move, "
+                                "we think player at %d,%d\n",
+                                nextPlayer->xs,
+                                nextPlayer->ys );
 
                         char interrupt = false;
                         char pathPrefixAdded = false;
@@ -1077,7 +1090,8 @@ int main() {
                             }
                         }                    
                     else if( m.type == DROP ) {
-                        Thread::staticSleep( 2000 );
+                        //Thread::staticSleep( 2000 );
+                        
                         // send update even if action fails (to let them
                         // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
@@ -1110,6 +1124,132 @@ int main() {
                                 delete [] changeLine;
                                 
                                 nextPlayer->holdingID = 0;
+
+                                
+                                // watch out for truncations of in-progress
+                                // moves of other players
+                                
+                                GridPos dropSpot = { m.x, m.y };
+                                
+                                for( int j=0; j<numLive; j++ ) {
+                                    LiveObject *otherPlayer = 
+                                        players.getElement( j );
+                                    
+                                    if( otherPlayer->xd != otherPlayer->xs ||
+                                        otherPlayer->yd != otherPlayer->ys ) {
+                
+                                        double fractionDone = 
+                                            ( Time::getCurrentTime() - 
+                                              otherPlayer->moveStartTime )
+                                            / otherPlayer->moveTotalSeconds;
+                                        
+                                        if( fractionDone > 1 ) {
+                                            fractionDone = 1;
+                                            }
+                                        
+                                        int c = lrint( 
+                                            ( otherPlayer->pathLength  - 1 ) *
+                                            fractionDone );
+                                        GridPos cPos = 
+                                            otherPlayer->pathToDest[c];
+                                        
+                                        printf( 
+                                            "Checking how drop at %d,%d "
+                                            "affects player at step %d "
+                                            "along len %d path\n",
+                                            m.x, m.y,
+                                            c + 1, otherPlayer->pathLength );
+                                        
+                                        if( distance( cPos, dropSpot ) 
+                                            <= 2 * pathDeltaMax ) {
+                                            
+                                            // this is close enough
+                                            // to this path that it might
+                                            // block it
+
+                                            char blocked = false;
+                                            int blockedStep = -1;
+                                            
+                                            for( int p=c; 
+                                                 p<otherPlayer->pathLength;
+                                                 p++ ) {
+                                                
+                                                if( equal( 
+                                                        otherPlayer->
+                                                        pathToDest[p],
+                                                        dropSpot ) ) {
+                                                    
+                                                    blocked = true;
+                                                    blockedStep = p;
+                                                    break;
+                                                    }
+                                                }
+                                            
+                                            if( blocked ) {
+                                                printf( 
+                                                    "  Blocked by drop\n" );
+                                                }
+                                            
+
+                                            if( blocked &&
+                                                blockedStep > 1 ) {
+                                                
+                                                otherPlayer->pathLength
+                                                    = blockedStep;
+                                                otherPlayer->pathTruncated
+                                                    = true;
+
+                                                // update timing
+                                                double dist = 
+                                                    otherPlayer->pathLength;
+                            
+                                                
+                                                double distAlreadyDone = c;
+                            
+                                                otherPlayer->moveTotalSeconds 
+                                                    = 
+                                                    dist / 
+                                                    otherPlayer->moveSpeed;
+                            
+                                                double secondsAlreadyDone = 
+                                                    distAlreadyDone / 
+                                                    otherPlayer->moveSpeed;
+                                
+                                                otherPlayer->moveStartTime = 
+                                                    Time::getCurrentTime() - 
+                                                    secondsAlreadyDone;
+                            
+                                                otherPlayer->newMove = true;
+                                                
+                                                otherPlayer->xd 
+                                                    = otherPlayer->pathToDest[
+                                                        blockedStep - 1].x;
+                                                otherPlayer->yd 
+                                                    = otherPlayer->pathToDest[
+                                                        blockedStep - 1].y;
+                                                
+                                                }
+                                            else if( blocked ) {
+                                                // cutting off path
+                                                // right at the beginning
+                                                // nothing left
+
+                                                // end move now
+                                                otherPlayer->xd = 
+                                                    otherPlayer->xs;
+                                                
+                                                otherPlayer->yd = 
+                                                    otherPlayer->ys;
+                                                
+                                                playerIndicesToSendUpdatesAbout
+                                                    .push_back( i );
+                                                }
+                                            } 
+                                        
+                                        }
+                                    
+                                    }
+                                
                                 }
                             }
                         }
@@ -1202,7 +1342,15 @@ int main() {
                         nextPlayer->newMove = false;
                         
 
-                        printf( "Player %d's move is done\n", i );
+                        printf( "Player %d's move is done at %d,%d\n", i,
+                                nextPlayer->xs,
+                                nextPlayer->ys );
+
+                        if( nextPlayer->pathTruncated ) {
+                            // truncated, but never told them about it
+                            // force update now
+                            nextPlayer->posForced = true;
+                            }
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         }
                     }
@@ -1427,7 +1575,7 @@ int main() {
                                 // and what they're holding
                         
                                 char *updateLine = autoSprintf( 
-                                    "%d %d %d %d %.2f\n", 
+                                    "%d %d 0 %d %d %.2f\n", 
                                     otherPlayer->id,
                                     otherPlayer->holdingID,
                                     otherPlayer->xs, 
