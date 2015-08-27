@@ -190,6 +190,10 @@ char pathFind( int inMapH, int inMapW,
         }
         
 
+    
+    int xTotalDelta = abs( inGoal.x - inStart.x );
+    int yTotalDelta = abs( inGoal.y - inStart.y );
+
 
     // insertion-sorted queue of records waiting to be searched
     pathSearchQueue recordsToSearch;
@@ -277,19 +281,38 @@ char pathFind( int inMapH, int inMapW,
             GridPos neighbors[4];
                     
             GridPos bestPos = bestRecord.pos;
-                    
-            neighbors[0].x = bestPos.x;
-            neighbors[0].y = bestPos.y - 1;
 
-            neighbors[1].x = bestPos.x;
-            neighbors[1].y = bestPos.y + 1;
+            
+            // pick which neighbors to explore first
+            // we want our path to walk in the long direction first
+            if( yTotalDelta > xTotalDelta ) {    
+                neighbors[0].x = bestPos.x;
+                neighbors[0].y = bestPos.y - 1;
 
-            neighbors[2].x = bestPos.x - 1;
-            neighbors[2].y = bestPos.y;
+                neighbors[1].x = bestPos.x;
+                neighbors[1].y = bestPos.y + 1;
+                
+                neighbors[2].x = bestPos.x - 1;
+                neighbors[2].y = bestPos.y;
+                
+                neighbors[3].x = bestPos.x + 1;
+                neighbors[3].y = bestPos.y;
+                }
+            else {
+                neighbors[2].x = bestPos.x;
+                neighbors[2].y = bestPos.y - 1;
 
-            neighbors[3].x = bestPos.x + 1;
-            neighbors[3].y = bestPos.y;
-                    
+                neighbors[3].x = bestPos.x;
+                neighbors[3].y = bestPos.y + 1;
+                
+                neighbors[0].x = bestPos.x - 1;
+                neighbors[0].y = bestPos.y;
+                
+                neighbors[1].x = bestPos.x + 1;
+                neighbors[1].y = bestPos.y;
+                }
+            
+            
             // one step to neighbors from best record
             int cost = bestRecord.cost + 1;
 
