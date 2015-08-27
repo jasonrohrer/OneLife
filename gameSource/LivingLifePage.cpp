@@ -463,44 +463,20 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
 
-    for( int y=yEnd; y>=yStart; y-- ) {
-        
-        int screenY = 32 * ( y + mMapOffsetY - mMapD / 2 );
-        
-        for( int x=xStart; x<=xEnd; x++ ) {
-            
-            int screenX = 32 * ( x + mMapOffsetX - mMapD / 2 );
+    
+    int worldXStart = xStart + mMapOffsetX - mMapD / 2;
+    int worldXEnd = xEnd + mMapOffsetX - mMapD / 2;
 
-            int mapI = y * mMapD + x;
-            
-            int oID = mMap[ mapI ];
-            
-            if( oID > 0 ) {
-                
-                doublePair pos = { (double)screenX, (double)screenY };
+    //int worldYStart = xStart + mMapOffsetY - mMapD / 2;
+    //int worldYEnd = xEnd + mMapOffsetY - mMapD / 2;
 
-                setDrawColor( 1, 1, 1, 1 );
-                
-                drawObject( getObject(oID), pos );
-                }
-            else if( oID == -1 ) {
-                // unknown
-                doublePair pos = { (double)screenX, (double)screenY };
-                
-                setDrawColor( 0, 0, 0, 0.5 );
-                drawSquare( pos, 14 );
-                }
-            }
-        }
-        
-    doublePair lastChunkCenter = { 32.0 * mMapOffsetX, 32.0 * mMapOffsetY };
-    
-    setDrawColor( 0, 1, 0, 1 );
-    
-    mainFont->drawString( "X", 
-                          lastChunkCenter, alignCenter );
-    
-    
+
+
+    // FIXME:  skip these that are off screen
+    // of course, we may not end up drawing paths on screen anyway
+    // (probably only our own destination), so don't fix this for now
+
+    // draw paths and destinations under everything
     for( int i=0; i<gameObjects.size(); i++ ) {
         
         LiveObject *o = gameObjects.getElement( i );
@@ -546,73 +522,146 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             
             }
-
-
-
-        // current pos
-        char *string = autoSprintf( "%c", o->displayChar );
-
-        doublePair pos = mult( o->currentPos, 32 );
-
-        doublePair actionOffset = { 0, 0 };
-        
-        //trail.push_back( pos );
-
-        if( o->id == ourID && o->pendingActionAnimationProgress != 0 ) {
-            // wiggle toward target
-
-            float xDir = 0;
-            float yDir = 0;
-            
-            if( o->xd < playerActionTargetX ) {
-                xDir = 1;
-                }
-            if( o->xd > playerActionTargetX ) {
-                xDir = -1;
-                }
-            if( o->yd < playerActionTargetY ) {
-                yDir = 1;
-                }
-            if( o->yd > playerActionTargetY ) {
-                yDir = -1;
-                }
-            
-            double offset =
-                8 - 
-                8 * cos( 2 * M_PI * o->pendingActionAnimationProgress );
-            
-
-            actionOffset.x += xDir * offset;
-            actionOffset.y += yDir * offset;
-            }
-        
-
-        // bare hands action OR holding something
-        // character wiggle
-        if(  o->id == ourID && o->pendingActionAnimationProgress != 0 ) {
-            
-            pos = add( pos, actionOffset );
-            }
-        
-
-        setDrawColor( 0, 0, 0, 1 );
-        mainFont->drawString( string, 
-                              pos, alignCenter );
-
-        delete [] string;
-        
-        if( o->holdingID != 0 ) { 
-            doublePair holdPos = pos;
-            holdPos.x += 16;
-            holdPos.y -= 16;
-            
-            setDrawColor( 1, 1, 1, 1 );
-            drawObject( getObject( o->holdingID ), holdPos );
-            }
-        
-        
         }
+    
 
+
+    for( int y=yEnd; y>=yStart; y-- ) {
+        
+        int screenY = 32 * ( y + mMapOffsetY - mMapD / 2 );
+        
+        for( int x=xStart; x<=xEnd; x++ ) {
+            
+            int screenX = 32 * ( x + mMapOffsetX - mMapD / 2 );
+
+            int mapI = y * mMapD + x;
+            
+            int oID = mMap[ mapI ];
+            
+            if( oID > 0 ) {
+                
+                doublePair pos = { (double)screenX, (double)screenY };
+
+                setDrawColor( 1, 1, 1, 1 );
+                
+                drawObject( getObject(oID), pos );
+                }
+            else if( oID == -1 ) {
+                // unknown
+                doublePair pos = { (double)screenX, (double)screenY };
+                
+                setDrawColor( 0, 0, 0, 0.5 );
+                drawSquare( pos, 14 );
+                }
+            }
+        
+
+        // draw any player objects that are in this row
+
+        int worldY = y + mMapOffsetY - mMapD / 2;
+        
+
+        for( int i=0; i<gameObjects.size(); i++ ) {
+        
+            LiveObject *o = gameObjects.getElement( i );
+            
+            // first, check if it's on the screen
+            int oX = o->xd;
+            int oY = o->yd;
+            
+            if( o->currentSpeed != 0 ) {
+                oX = o->pathToDest[ o->currentPathStep ].x;
+                oY = o->pathToDest[ o->currentPathStep ].y;
+                }
+            
+            if( oY == worldY && oX >= worldXStart && oX <= worldXEnd ) {
+                // in this row
+                
+
+
+                // current pos
+                char *string = autoSprintf( "%c", o->displayChar );
+                
+                doublePair pos = mult( o->currentPos, 32 );
+                
+                doublePair actionOffset = { 0, 0 };
+                
+                //trail.push_back( pos );
+                
+                if( o->id == ourID && 
+                    o->pendingActionAnimationProgress != 0 ) {
+                    
+                    // wiggle toward target
+                    
+                    float xDir = 0;
+                    float yDir = 0;
+                    
+                    if( o->xd < playerActionTargetX ) {
+                        xDir = 1;
+                        }
+                    if( o->xd > playerActionTargetX ) {
+                        xDir = -1;
+                        }
+                    if( o->yd < playerActionTargetY ) {
+                        yDir = 1;
+                        }
+                    if( o->yd > playerActionTargetY ) {
+                        yDir = -1;
+                        }
+                    
+                    double offset =
+                        8 - 
+                        8 * 
+                        cos( 2 * M_PI * o->pendingActionAnimationProgress );
+                    
+                    
+                    actionOffset.x += xDir * offset;
+                    actionOffset.y += yDir * offset;
+                    }
+                
+                
+                // bare hands action OR holding something
+                // character wiggle
+                if(  o->id == ourID && 
+                     o->pendingActionAnimationProgress != 0 ) {
+                    
+                    pos = add( pos, actionOffset );
+                    }
+                
+                
+                setDrawColor( 0, 0, 0, 1 );
+                mainFont->drawString( string, 
+                                      pos, alignCenter );
+                
+                delete [] string;
+                
+                if( o->holdingID != 0 ) { 
+                    doublePair holdPos = pos;
+                    holdPos.x += 16;
+                    holdPos.y -= 16;
+                    
+                    setDrawColor( 1, 1, 1, 1 );
+                    drawObject( getObject( o->holdingID ), holdPos );
+                    }
+                }
+            }
+        } // end loop over rows on screen
+
+
+        
+    doublePair lastChunkCenter = { 32.0 * mMapOffsetX, 32.0 * mMapOffsetY };
+    
+    setDrawColor( 0, 1, 0, 1 );
+    
+    mainFont->drawString( "X", 
+                          lastChunkCenter, alignCenter );
+    
+    
+
+
+
+
+    
     setDrawColor( 0, 0.5, 0, 0.25 );
     if( false )for( int i=0; i<trail.size(); i++ ) {
         doublePair *p = trail.getElement( i );
