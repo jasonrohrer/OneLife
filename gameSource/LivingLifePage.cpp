@@ -111,6 +111,14 @@ static char isGridAdjacent( int inXA, int inYA, int inXB, int inYB ) {
 
 
 
+static GridPos sub( GridPos inA, GridPos inB ) {
+    GridPos result = { inA.x - inB.x, inA.y - inB.y };
+    
+    return result;
+    }
+
+
+
 
 typedef enum messageType {
 	MAP_CHUNK,
@@ -168,8 +176,37 @@ void updateMoveSpeed( LiveObject *inObject ) {
     double etaSec = inObject->moveEtaTime - game_getCurrentTime();
     
 
-    int moveLeft = inObject->pathLength - inObject->currentPathStep;
+    int moveLeft = inObject->pathLength - inObject->currentPathStep - 1;
     
+
+    // count number of turns, which we execute faster than we should
+    // because of path smoothing,
+    // and use them to reduce overall speed to compensate
+    int numTurns = 0;
+
+    if( inObject->currentPathStep < inObject->pathLength - 1 ) {
+        GridPos lastDir = sub( 
+            inObject->pathToDest[inObject->currentPathStep + 1],
+            inObject->pathToDest[inObject->currentPathStep] );
+        
+        for( int p=inObject->currentPathStep+1; 
+             p<inObject->pathLength -1; p++ ) {
+            
+            GridPos dir = sub( 
+                inObject->pathToDest[p+1],
+                inObject->pathToDest[p] );
+
+            if( !equal( dir, lastDir ) ) {
+                numTurns++;
+                lastDir = dir;
+                }
+            }
+
+        }
+    
+    double turnTimeBoost = 0.08 * numTurns;
+
+    etaSec += turnTimeBoost;
     
     double speedPerSec = moveLeft / etaSec;
                      
@@ -1551,6 +1588,9 @@ void LivingLifePage::step() {
                     // reached destination
                     o->currentPos = endPos;
                     o->currentSpeed = 0;
+
+                    printf( "Reached dest %f seconds early\n",
+                            o->moveEtaTime - game_getCurrentTime() );
                     }
                 else {
                     o->currentPos = add( o->currentPos,
