@@ -322,6 +322,26 @@ char pathFind( int inMapH, int inMapW,
                             getGridDistance( neighbors[n], 
                                              inGoal );
                             
+                        // add cross-product to heuristic
+                        // to make paths prettier
+                        
+                        // idea from:
+                        // theory.stanford.edu/~amitp/GameProgramming/
+
+                        // problem:  diagonal paths are hard to watch
+                        // because they are so bumpy
+                        /*
+                        int dx1 = neighbors[n].x - inGoal.x;
+                        int dy1 = neighbors[n].y - inGoal.y;
+                        
+                        int dx2 = inStart.x - inGoal.x;
+                        int dy2 = inStart.y - inGoal.y;
+                        
+                        int cross = abs( dx1 * dy2 - dx2*dy1 );
+                        
+                        dist += cross * 0.001;
+                        */
+                        
                         // track how we got here (pred)
                         pathSearchRecord nRecord = { neighbors[n],
                                                      neighborSquareIndex,
