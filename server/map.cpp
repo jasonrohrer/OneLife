@@ -236,6 +236,7 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
                 containedStacks[cI] = contained;
                 }
             else {
+                containedStackSizes[cI] = 0;
                 containedStacks[cI] = NULL;
                 }
             }
@@ -271,6 +272,8 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
             }
         }
     delete [] chunk;
+    
+    delete [] containedStackSizes;
     delete [] containedStacks;
     
 
