@@ -18,6 +18,7 @@
 
 #include "map.h"
 #include "../gameSource/transitionBank.h"
+#include "../gameSource/objectBank.h"
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
 
@@ -65,6 +66,9 @@ typedef struct LiveObject {
 
         int holdingID;
 
+        int numContained;
+        int *containedIDs;
+
         Socket *sock;
         SimpleVector<char> *sockBuffer;
 
@@ -106,6 +110,11 @@ void quitCleanup() {
         delete nextPlayer->sock;
         delete nextPlayer->sockBuffer;
 
+        
+        if( nextPlayer->containedIDs != NULL ) {
+            delete [] nextPlayer->containedIDs;
+            }
+        
         if( nextPlayer->pathToDest != NULL ) {
             delete [] nextPlayer->pathToDest;
             }
@@ -114,6 +123,7 @@ void quitCleanup() {
     freeMap();
 
     freeTransBank();
+    freeObjectBank();
     }
 
 
@@ -504,6 +514,36 @@ double intDist( int inXA, int inYA, int inXB, int inYB ) {
 
 
 
+char *getHoldingString( LiveObject *inObject ) {
+    if( inObject->numContained == 0 ) {
+        return autoSprintf( "%d", inObject->holdingID );
+        }
+
+    
+    SimpleVector<char> buffer;
+    
+
+    char *idString = autoSprintf( "%d", inObject->holdingID );
+    
+    buffer.appendElementString( idString );
+    
+    delete [] idString;
+    
+    
+    if( inObject->numContained > 0 ) {
+        for( int i=0; i<inObject->numContained; i++ ) {
+            
+            char *idString = autoSprintf( ",%d", inObject->containedIDs[i] );
+    
+            buffer.appendElementString( idString );
+    
+            delete [] idString;
+            }
+        }
+    
+    return buffer.getElementString();
+    }
+
 
 
 int main() {
@@ -518,6 +558,7 @@ int main() {
     SetConsoleCtrlHandler( ctrlHandler, TRUE );
 #endif
 
+    initObjectBank();
     initTransBank();
 
     initMap();
@@ -615,6 +656,8 @@ int main() {
                 newObject.moveSpeed = 4;
                 newObject.moveTotalSeconds = 0;
                 newObject.holdingID = 0;
+                newObject.numContained = 0;
+                newObject.containedIDs = NULL;
                 newObject.sock = sock;
                 newObject.sockBuffer = new SimpleVector<char>();
                 newObject.isNew = true;
@@ -1042,50 +1085,120 @@ int main() {
                             int target = getMapObject( m.x, m.y );
                             
                             if( target != 0 ) {
+                            
+                                char containerOp = false;
                                 
-                                TransRecord *r = 
-                                    getTrans( nextPlayer->holdingID, 
-                                              target );
-
-                                if( r != NULL ) {
-                                    nextPlayer->holdingID = r->newActor;
-                                    
-                                    setMapObject( m.x, m.y, r->newTarget );
-                                    
-                                    char *changeLine =
-                                        autoSprintf( "%d %d %d\n",
-                                                     m.x, m.y, r->newTarget );
+                                int targetSlots = 
+                                    getNumContainerSlots( target );
                                 
-                                    mapChanges.
-                                        appendElementString( changeLine );
+                                if( targetSlots != 0 ) {
+                                    int numIn = 
+                                        getNumContained( m.x, m.y );
                                     
-                                    ChangePosition p = { m.x, m.y, false };
-                                    mapChangesPos.push_back( p );
-                
+                                    if( nextPlayer->holdingID == 0 && 
+                                        numIn > 0 ) {
+                                        // get from container
+    
+                                        nextPlayer->holdingID =
+                                            removeContained( m.x, m.y );
+                                        
+                                        char *changeLine =
+                                            getMapChangeLineString(
+                                                m.x, m.y );
+                                
+                                        mapChanges.
+                                            appendElementString( 
+                                                changeLine );
+                                        
+                                        delete [] changeLine;
 
-                                    delete [] changeLine;
+                                        ChangePosition p = { m.x, m.y, 
+                                                             false };
+                                        mapChangesPos.push_back( p );
+                                        containerOp = true;
+                                        }
+                                    else if( nextPlayer->holdingID != 0 &&
+                                             numIn < targetSlots &&
+                                             isContainable( 
+                                                 nextPlayer->holdingID ) ) {
+                                        // add to container
+                                        
+                                        addContained( m.x, m.y,
+                                                      nextPlayer->holdingID );
+                                        
+                                        nextPlayer->holdingID = 0;
+                                        
+                                        char *changeLine =
+                                            getMapChangeLineString(
+                                                m.x, m.y );
+                                
+                                        mapChanges.
+                                            appendElementString( 
+                                                changeLine );
+                                        
+                                        delete [] changeLine;
+                                        
+                                        ChangePosition p = { m.x, m.y, 
+                                                             false };
+                                        mapChangesPos.push_back( p );
+                                        containerOp = true;
+                                        }
                                     }
-                                else if( nextPlayer->holdingID == 0 ) {
-                                    // no bare-hand transition applies to
-                                    // this target object
-                                    // treat it like GRAB
-                                    setMapObject( m.x, m.y, 0 );
-                                    
-                                    nextPlayer->holdingID = target;
                                 
-                                
-                                    char *changeLine =
-                                        autoSprintf( "%d %d %d\n",
-                                                     m.x, m.y, 0 );
-                                
-                                    mapChanges.appendElementString( 
-                                        changeLine );
-                                    
-                                    ChangePosition p = { m.x, m.y, false };
-                                    mapChangesPos.push_back( p );
 
-                                    delete [] changeLine;
-                                    }    
+                                if( !containerOp ) {
+                                    // try using object on this target 
+                                    
+                                    TransRecord *r = 
+                                        getTrans( nextPlayer->holdingID, 
+                                                  target );
+
+                                    if( r != NULL ) {
+                                        nextPlayer->holdingID = r->newActor;
+                                    
+                                        setMapObject( m.x, m.y, r->newTarget );
+                                        
+                                        char *changeLine =
+                                            getMapChangeLineString(
+                                                m.x, m.y );
+                                        
+                                        mapChanges.
+                                            appendElementString( changeLine );
+                                        
+                                        ChangePosition p = { m.x, m.y, false };
+                                        mapChangesPos.push_back( p );
+                                        
+
+                                        delete [] changeLine;
+                                        }
+                                    else if( nextPlayer->holdingID == 0 ) {
+                                        // no bare-hand transition applies to
+                                        // this target object
+                                        // treat it like GRAB
+
+                                        nextPlayer->containedIDs =
+                                            getContained( 
+                                              m.x, m.y,
+                                              &( nextPlayer->numContained ) );
+                                        
+                                        clearAllContained( m.x, m.y );
+                                        setMapObject( m.x, m.y, 0 );
+                                        
+                                        nextPlayer->holdingID = target;
+                                        
+                                        char *changeLine =
+                                            getMapChangeLineString(
+                                                m.x, m.y );
+                                        
+                                        mapChanges.appendElementString( 
+                                            changeLine );
+                                        
+                                        ChangePosition p = { m.x, m.y, false };
+                                        mapChangesPos.push_back( p );
+                                        
+                                        delete [] changeLine;
+                                        }    
+                                    }
                                 }
                             }
                         }                    
@@ -1110,10 +1223,23 @@ int main() {
                                 setMapObject( m.x, m.y, 
                                               nextPlayer->holdingID );
                                 
+                                if( nextPlayer->numContained != 0 ) {
+                                    for( int c=0;
+                                         c < nextPlayer->numContained;
+                                         c++ ) {
+                                        addContained( 
+                                            m.x, m.y,
+                                            nextPlayer->containedIDs[c] );
+                                        }
+                                    delete [] nextPlayer->containedIDs;
+                                    nextPlayer->containedIDs = NULL;
+                                    nextPlayer->numContained = 0;
+                                    }
+                                
+                                
                                 char *changeLine =
-                                    autoSprintf( "%d %d %d\n",
-                                                 m.x, m.y,
-                                                 nextPlayer->holdingID );
+                                    getMapChangeLineString(
+                                        m.x, m.y );
                                 
                                 mapChanges.appendElementString( 
                                     changeLine );
@@ -1268,14 +1394,21 @@ int main() {
                                 target != 0 ) {
                                 
                                 // something to grab
+                                
+                                nextPlayer->containedIDs =
+                                    getContained( 
+                                        m.x, m.y,
+                                        &( nextPlayer->numContained ) );
+                                        
+                                clearAllContained( m.x, m.y );
 
                                 setMapObject( m.x, m.y, 0 );
                                 
                                 nextPlayer->holdingID = target;
                                 
                                 char *changeLine =
-                                    autoSprintf( "%d %d %d\n",
-                                                 m.x, m.y, 0 );
+                                    getMapChangeLineString(
+                                        m.x, m.y );
                                 
                                 mapChanges.appendElementString( 
                                     changeLine );
@@ -1308,11 +1441,15 @@ int main() {
                 newUpdatesPos.push_back( p );
                 }
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
-                char *updateLine = autoSprintf( "%d %d 0 X X %.2f\n", 
+                char *holdingString = getHoldingString( nextPlayer );
+                
+                char *updateLine = autoSprintf( "%d %s 0 X X %.2f\n", 
                                                 nextPlayer->id,
-                                                nextPlayer->holdingID,
+                                                holdingString,
                                                 nextPlayer->moveSpeed );
                 
+                delete [] holdingString;
+
                 newUpdates.appendElementString( updateLine );
                 ChangePosition p = { 0, 0, true };
                 newUpdatesPos.push_back( p );
@@ -1369,13 +1506,17 @@ int main() {
             LiveObject *nextPlayer = players.getElement( 
                 playerIndicesToSendUpdatesAbout.getElementDirect( i ) );
 
-            char *updateLine = autoSprintf( "%d %d %d %d %d %.2f\n", 
+            char *holdingString = getHoldingString( nextPlayer );
+            
+            char *updateLine = autoSprintf( "%d %s %d %d %d %.2f\n", 
                                             nextPlayer->id,
-                                            nextPlayer->holdingID,
+                                            holdingString,
                                             nextPlayer->posForced,
                                             nextPlayer->xs, 
                                             nextPlayer->ys,
                                             nextPlayer->moveSpeed );
+            
+            delete [] holdingString;
             
             nextPlayer->posForced = false;
 
@@ -1574,14 +1715,19 @@ int main() {
                                 // where this player was last stationary
                                 // and what they're holding
                         
+                                char *holdingString = 
+                                    getHoldingString( otherPlayer );
+                                
                                 char *updateLine = autoSprintf( 
-                                    "%d %d 0 %d %d %.2f\n", 
+                                    "%d %s 0 %d %d %.2f\n", 
                                     otherPlayer->id,
-                                    otherPlayer->holdingID,
+                                    holdingString,
                                     otherPlayer->xs, 
                                     otherPlayer->ys,
                                     otherPlayer->moveSpeed ); 
 
+                                delete [] holdingString;
+                                
                                 chunkPlayerUpdates.appendElementString( 
                                     updateLine );
                                 delete [] updateLine;
@@ -1779,6 +1925,10 @@ int main() {
                 delete nextPlayer->sock;
                 delete nextPlayer->sockBuffer;
                 
+                if( nextPlayer->containedIDs != NULL ) {
+                    delete [] nextPlayer->containedIDs;
+                    }
+                
                 if( nextPlayer->pathToDest != NULL ) {
                     delete [] nextPlayer->pathToDest;
                     }
@@ -1797,3 +1947,18 @@ int main() {
 
     return 0;
     }
+
+
+
+// implement null versions of these to allow a headless build
+// we never call drawObject, but we need to use other objectBank functions
+
+
+void *getSprite( int ) {
+    return NULL;
+    }
+
+void drawSprite( void*, doublePair, double ) {
+    }
+
+

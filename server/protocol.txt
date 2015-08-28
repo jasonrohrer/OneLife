@@ -3,6 +3,16 @@ Messages in ascii.
 Terminated by # character
 
 
+NOTE:
+
+Wherever an object_id is menioned (o_id, new_id, etc), it can be either
+a single ASCII-base-10 integer, OR a comma-delimited list of integers.
+
+The first one is the base object ID (can be 0 if no object there),
+and subsequent IDs are the objects contained in that object
+
+
+
 
 Each message from server is prefaced by a type tag.
 
@@ -35,7 +45,7 @@ Square is positioned on map grid with upper left corner at x y
 binary_size is the number of binary bytes of map data that will follow the #
 
 BINARY_DATA is the raw binary data.  This involves run-length encoding and 
-a few other tricks to reduce it's size.  Check the code for details.
+a few other tricks to reduce it's size.  Check the code in map.cpp for details.
 
 
 

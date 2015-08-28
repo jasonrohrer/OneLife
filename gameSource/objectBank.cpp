@@ -203,6 +203,7 @@ void freeObjectBank() {
     for( int i=0; i<mapSize; i++ ) {
         if( idMap[i] != NULL ) {
             
+            delete [] idMap[i]->slotPos;
             delete [] idMap[i]->description;
             delete [] idMap[i]->sprites;
             delete [] idMap[i]->spritePos;
@@ -225,6 +226,32 @@ ObjectRecord *getObject( int inID ) {
             }
         }
     return NULL;
+    }
+
+
+
+int getNumContainerSlots( int inID ) {
+    ObjectRecord *r = getObject( inID );
+    
+    if( r == NULL ) {
+        return 0;
+        }
+    else {
+        return r->numSlots;
+        }
+    }
+
+
+
+char isContainable( int inID ) {
+    ObjectRecord *r = getObject( inID );
+    
+    if( r == NULL ) {
+        return false;
+        }
+    else {
+        return r->containable;
+        }
     }
 
     

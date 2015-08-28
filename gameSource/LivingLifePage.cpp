@@ -362,6 +362,8 @@ LivingLifePage::LivingLifePage()
 
     mMap = new int[ mMapD * mMapD ];
     
+    mMapContainedStacks = new SimpleVector<int>[ mMapD * mMapD ];
+
     for( int i=0; i<mMapD *mMapD; i++ ) {
         // -1 represents unknown
         // 0 represents known empty
@@ -383,6 +385,10 @@ LivingLifePage::~LivingLifePage() {
         LiveObject *nextObject =
             gameObjects.getElement( i );
         
+        if( nextObject->containedIDs != NULL ) {
+            delete [] nextObject->containedIDs;
+            }
+        
         if( nextObject->pathToDest != NULL ) {
             delete [] nextObject->pathToDest;
             }
@@ -402,6 +408,8 @@ LivingLifePage::~LivingLifePage() {
         }
 
 
+    delete [] mMapContainedStacks;
+    
     delete [] mMap;
 
     delete [] nextActionMessageToSend;
@@ -825,6 +833,30 @@ void LivingLifePage::step() {
                         
                         sscanf( tokens->getElementDirect(i),
                                 "%d", &( mMap[mapI] ) );
+
+                        mMapContainedStacks[mapI].deleteAll();
+                        
+
+                        if( strstr( tokens->getElementDirect(i), "," ) 
+                            != NULL ) {
+                            
+                            int numInts;
+                            char **ints = split( tokens->getElementDirect(i), 
+                                                 ",", &numInts );
+                            
+                            delete [] ints[0];
+
+                            int numContained = numInts - 1;
+
+                            for( int c=0; c<numContained; c++ ) {
+                                int contained = atoi( ints[ c + 1 ] );
+                                mMapContainedStacks[mapI].push_back( 
+                                    contained );
+                                
+                                delete [] ints[ c + 1 ];
+                                }
+                            delete [] ints;
+                            }
                         }
                     }
                 }   
@@ -882,18 +914,47 @@ void LivingLifePage::step() {
                 LiveObject o;
                 
                 o.pathToDest = NULL;
-                
+                o.containedIDs = NULL;
+
                 int forced = 0;
                 
-                int numRead = sscanf( lines[i], "%d %d %d %d %d %lf",
+                
+                char *holdingIDBuffer = new char[500];
+
+                int numRead = sscanf( lines[i], "%d %499s %d %d %d %lf",
                                       &( o.id ),
-                                      &( o.holdingID ),
+                                      holdingIDBuffer,
                                       &forced,
                                       &( o.xd ),
                                       &( o.yd ),
                                       &( o.lastSpeed ) );
                 
                 if( numRead == 6 ) {
+                    
+
+                    if( strstr( holdingIDBuffer, "," ) != NULL ) {
+                        int numInts;
+                        char **ints = split( holdingIDBuffer, ",", &numInts );
+                        
+                        o.holdingID = atoi( ints[0] );
+                        
+                        delete ints[0];
+
+                        o.numContained = numInts - 1;
+                        o.containedIDs = new int[ o.numContained ];
+                        
+                        for( int c=0; c<o.numContained; c++ ) {
+                            o.containedIDs[c] = atoi( ints[ c + 1 ] );
+                            delete [] ints[ c + 1 ];
+                            }
+                        delete [] ints;
+                        }
+                    else {
+                        // a single int
+                        o.holdingID = atoi( holdingIDBuffer );
+                        o.numContained = 0;
+                        }
+                    
                     
                     o.xServer = o.xd;
                     o.yServer = o.yd;

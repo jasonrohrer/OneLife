@@ -379,3 +379,49 @@ void clearAllContained( int inX, int inY ) {
     dbPut( inX, inY, 1, 0 );
     }
 
+
+
+
+
+char *getMapChangeLineString( int inX, int inY  ) {
+    
+
+    SimpleVector<char> buffer;
+    
+
+    char *header = autoSprintf( "%d %d ", inX, inY );
+    
+    buffer.appendElementString( header );
+    
+    delete [] header;
+    
+
+    char *idString = autoSprintf( "%d", getMapObject( inX, inY ) );
+    
+    buffer.appendElementString( idString );
+    
+    delete [] idString;
+    
+    
+    int numContained;
+    int *contained = getContained(  inX, inY, &numContained );
+
+    if( numContained > 0 ) {
+        for( int i=0; i<numContained; i++ ) {
+            
+            char *idString = autoSprintf( ",%d", contained[i] );
+    
+            buffer.appendElementString( idString );
+    
+            delete [] idString;
+            }
+        
+        delete [] contained;
+        }
+    
+    
+    buffer.appendElementString( "\n" );
+
+    return buffer.getElementString();
+    }
+

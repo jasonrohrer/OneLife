@@ -34,3 +34,7 @@ int *getContained( int inX, int inY, int *outNumContained );
 int removeContained( int inX, int inY );
 
 void clearAllContained( int inX, int inY );
+
+
+// line for a map change message
+char *getMapChangeLineString( int inX, int inY  );

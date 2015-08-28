@@ -22,6 +22,10 @@ typedef struct LiveObject {
         int id;
 
         int holdingID;
+        
+        int numContained;
+        int *containedIDs;
+        
 
         // current fractional grid position and speed
         doublePair currentPos;
@@ -120,6 +124,8 @@ class LivingLifePage : public GamePage {
         int mMapD;
 
         int *mMap;
+
+        SimpleVector<int> *mMapContainedStacks;
 
         int mMapOffsetX;
         int mMapOffsetY;

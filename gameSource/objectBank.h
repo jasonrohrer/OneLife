@@ -74,4 +74,10 @@ char isSpriteUsed( int inSpriteID );
 
 
 
+int getNumContainerSlots( int inID );
+
+char isContainable( int inID );
+
+
+
 #endif
