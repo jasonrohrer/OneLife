@@ -375,3 +375,7 @@ int removeContained( int inX, int inY ) {
 
 
 
+void clearAllContained( int inX, int inY ) {
+    dbPut( inX, inY, 1, 0 );
+    }
+

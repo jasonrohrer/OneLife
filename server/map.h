@@ -32,3 +32,5 @@ int *getContained( int inX, int inY, int *outNumContained );
 
 // removes from top of stack
 int removeContained( int inX, int inY );
+
+void clearAllContained( int inX, int inY );
