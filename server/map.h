@@ -20,3 +20,15 @@ int getMapObject( int inX, int inY );
 
 
 void setMapObject( int inX, int inY, int inID );
+
+
+// adds to top of stack
+void addContained( int inX, int inY, int inContainedID );
+
+int getNumContained( int inX, int inY );
+
+// destroyed by caller, returns NULL if empty
+int *getContained( int inX, int inY, int *outNumContained );
+
+// removes from top of stack
+int removeContained( int inX, int inY );

@@ -71,11 +71,12 @@ static int getBaseMap( int inX, int inY ) {
 
 
 // two ints to an 8-byte key
-void intPairToKey( int inX, int inY, unsigned char *outKey ) {
+void intTripleToKey( int inX, int inY, int inSlot, unsigned char *outKey ) {
     for( int i=0; i<4; i++ ) {
         int offset = i * 8;
         outKey[i] = ( inX >> offset ) & 0xFF;
         outKey[i+4] = ( inY >> offset ) & 0xFF;
+        outKey[i+8] = ( inSlot >> offset ) & 0xFF;
         }    
     }
 
@@ -104,8 +105,15 @@ void initMap() {
                              "map.db", 
                              KISSDB_OPEN_MODE_RWCREAT,
                              80000,
-                             8, // two 32-bit ints, xy
-                             4 // one int
+                             12, // three 32-bit ints, xys
+                                 // s is the slot number 
+                                 // s=0 for base object
+                                 // s=1 for count of contained objects
+                                 // s=2 first contained object
+                                 // s=3 second contained object
+                                 // s=... remaining contained objects
+                             4 // one int, object ID at x,y in slot s
+                               // OR contained count if s=1
                              );
     
     if( error ) {
@@ -135,19 +143,47 @@ void freeMap() {
 
 
 
-int getMapObject( int inX, int inY ) {    
-
-    unsigned char key[8];
+// returns -1 if not found
+static int dbGet( int inX, int inY, int inSlot ) {
+    unsigned char key[12];
     unsigned char value[4];
 
     // look for changes to default in database
-    intPairToKey( inX, inY, key );
+    intTripleToKey( inX, inY, inSlot, key );
     
     int result = KISSDB_get( &db, key, value );
     
     if( result == 0 ) {
         // found
         return valueToInt( value );
+        }
+    else {
+        return -1;
+        }
+    }
+
+
+static void dbPut( int inX, int inY, int inSlot, int inValue ) {
+    unsigned char key[12];
+    unsigned char value[4];
+    
+
+    intTripleToKey( inX, inY, inSlot, key );
+    intToValue( inValue, value );
+            
+    
+    KISSDB_put( &db, key, value );
+    }
+
+
+
+int getMapObject( int inX, int inY ) {    
+
+    int result = dbGet( inX, inY, 0 );
+    
+    if( result != -1 ) {
+        // found
+        return result;
         }
     else {
         return getBaseMap( inX, inY );
@@ -254,15 +290,88 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
 
 
 void setMapObject( int inX, int inY, int inID ) {
-    unsigned char key[8];
-    unsigned char value[4];
+    dbPut( inX, inY, 0, inID );
+    }
+
+
+
+
+
+void addContained( int inX, int inY, int inContainedID ) {
+    int oldNum = getNumContained( inX, inY );
+    
+    int newNum = oldNum + 1;
     
 
-    intPairToKey( inX, inY, key );
-    intToValue( inID, value );
-            
+    dbPut( inX, inY, 1 + newNum, inContainedID );
     
-    KISSDB_put( &db, key, value );
+    dbPut( inX, inY, 1, newNum );
     }
+
+
+int getNumContained( int inX, int inY ) {
+    int result = dbGet( inX, inY, 1 );
+    
+    if( result != -1 ) {
+        // found
+        return result;
+        }
+    else {
+        // default, empty container
+        return 0;
+        }
+    }
+
+
+
+int *getContained( int inX, int inY, int *outNumContained ) {
+    int num = getNumContained( inX, inY );
+
+    *outNumContained = num;
+    
+    if( num == 0 ) {
+        return NULL;
+        }
+   
+    int *contained = new int[ num ];
+
+    for( int i=0; i<num; i++ ) {
+        int result = dbGet( inX, inY, 2 + i );
+        if( result != -1 ) {
+            contained[i] = result;
+            }
+        else {
+            contained[i] = 0;
+            }
+        }
+    return contained;
+    }
+
+    
+
+// removes from top of stack
+int removeContained( int inX, int inY ) {
+    int num = getNumContained( inX, inY );
+    
+    if( num == 0 ) {
+        return 0;
+        }
+    
+    int result = dbGet( inX, inY, 1 + num );
+    
+    // shrink number of slots
+    num -= 1;
+    dbPut( inX, inY, 1, num );
+        
+
+    if( result != -1 ) {    
+        return result;
+        }
+    else {
+        // nothing in that slot
+        return 0;
+        }
+    }
+
 
 
