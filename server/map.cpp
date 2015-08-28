@@ -201,6 +201,8 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
     
     int *chunk = new int[chunkCells];
     
+    int *containedStackSizes = new int[ chunkCells ];
+    int **containedStacks = new int*[ chunkCells ];
 
     // 0,0 is center of map
     
@@ -225,6 +227,17 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
             int cI = chunkY * chunkDimension + chunkX;
             
             chunk[cI] = getMapObject( x, y );
+
+            int numContained;
+            int *contained = getContained( x, y, &numContained );
+
+            if( contained != NULL ) {
+                containedStackSizes[cI] = numContained;
+                containedStacks[cI] = contained;
+                }
+            else {
+                containedStacks[cI] = NULL;
+                }
             }
         
         }
@@ -244,10 +257,23 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
         
         chunkDataBuffer.appendArray( (unsigned char*)cell, strlen(cell) );
         delete [] cell;
+
+        if( containedStacks[i] != NULL ) {
+            for( int c=0; c<containedStackSizes[i]; c++ ) {
+                char *containedString = autoSprintf( ",%d", 
+                                                     containedStacks[i][c] );
+        
+                chunkDataBuffer.appendArray( (unsigned char*)containedString, 
+                                             strlen( containedString ) );
+                delete [] containedString;
+                }
+            delete [] containedStacks[i];
+            }
         }
     delete [] chunk;
-
+    delete [] containedStacks;
     
+
     unsigned char *chunkData = chunkDataBuffer.getElementArray();
     
     int compressedSize;

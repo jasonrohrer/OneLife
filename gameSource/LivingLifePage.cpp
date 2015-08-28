@@ -552,7 +552,18 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                 setDrawColor( 1, 1, 1, 1 );
                 
-                drawObject( getObject(oID), pos );
+                if( mMapContainedStacks[ mapI ].size() > 0 ) {
+                    int *stackArray = 
+                        mMapContainedStacks[ mapI ].getElementArray();
+                    
+                    drawObject( getObject(oID), pos,
+                                mMapContainedStacks[ mapI ].size(),
+                                stackArray );
+                    delete [] stackArray;
+                    }
+                else {
+                    drawObject( getObject(oID), pos );
+                    }
                 }
             else if( oID == -1 ) {
                 // unknown
@@ -649,7 +660,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     holdPos.y -= 16;
                     
                     setDrawColor( 1, 1, 1, 1 );
-                    drawObject( getObject( o->holdingID ), holdPos );
+                    
+                    if( o->numContained == 0 ) {
+                        
+                        drawObject( getObject( o->holdingID ), holdPos );
+                        }
+                    else {
+                        drawObject( getObject(o->holdingID), pos,
+                                    o->numContained,
+                                    o->containedIDs );
+                        }
                     }
                 }
             }
@@ -878,9 +898,13 @@ void LivingLifePage::step() {
             
             for( int i=1; i<numLines; i++ ) {
                 
-                int x, y, id;
-                int numRead = sscanf( lines[i], "%d %d %d",
-                                      &x, &y, &id );
+                int x, y;
+                
+                                
+                char *idBuffer = new char[500];
+
+                int numRead = sscanf( lines[i], "%d %d %499s",
+                                      &x, &y, idBuffer );
                 if( numRead == 3 ) {
                     int mapX = x - mMapOffsetX + mMapD / 2;
                     int mapY = y - mMapOffsetY + mMapD / 2;
@@ -889,9 +913,38 @@ void LivingLifePage::step() {
                         &&
                         mapY >= 0 && mapY < mMapD ) {
                         
-                        mMap[mapY * mMapD + mapX ] = id;
+                        int mapI = mapY * mMapD + mapX;
+
+                        if( strstr( idBuffer, "," ) != NULL ) {
+                            int numInts;
+                            char **ints = 
+                                split( idBuffer, ",", &numInts );
+                        
+
+                            mMap[mapI] = atoi( ints[0] );
+                        
+                            delete [] ints[0];
+                            
+                            mMapContainedStacks[mapI].deleteAll();
+                            
+                            int numContained = numInts - 1;
+                            
+                            for( int c=0; c<numContained; c++ ) {
+                                mMapContainedStacks[mapI].push_back(
+                                    atoi( ints[ c + 1 ] ) );
+                                delete [] ints[ c + 1 ];
+                                }
+                            delete [] ints;
+                            }
+                        else {
+                            // a single int
+                            mMap[mapI] = atoi( idBuffer );
+                            mMapContainedStacks[mapI].deleteAll();
+                            }
                         }
                     }
+                
+                delete [] idBuffer;
                 
                 delete [] lines[i];
                 }
@@ -938,7 +991,7 @@ void LivingLifePage::step() {
                         
                         o.holdingID = atoi( ints[0] );
                         
-                        delete ints[0];
+                        delete [] ints[0];
 
                         o.numContained = numInts - 1;
                         o.containedIDs = new int[ o.numContained ];
@@ -971,6 +1024,11 @@ void LivingLifePage::step() {
                     if( existing != NULL ) {
                         existing->holdingID = o.holdingID;
                         
+                        if( existing->containedIDs != NULL ) {
+                            delete [] existing->containedIDs;
+                            }
+                        existing->containedIDs = o.containedIDs;
+                        existing->numContained = o.numContained;
                         
                         existing->xServer = o.xServer;
                         existing->yServer = o.yServer;
@@ -1074,6 +1132,8 @@ void LivingLifePage::step() {
                         
                         }
                     }
+                
+                delete [] holdingIDBuffer;
                 
                 delete [] lines[i];
                 }

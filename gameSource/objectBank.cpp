@@ -474,6 +474,26 @@ void drawObject( ObjectRecord *inObject, doublePair inPos ) {
 
 
 
+void drawObject( ObjectRecord *inObject, doublePair inPos,
+                 int inNumContained, int *inContainedIDs ) {
+
+    int numSlots = getNumContainerSlots( inObject->id );
+    
+    if( inNumContained > numSlots ) {
+        inNumContained = numSlots;
+        }
+    
+    for( int i=0; i<inNumContained; i++ ) {
+        doublePair pos = add( inObject->slotPos[i], inPos );
+        drawObject( getObject( inContainedIDs[i] ), pos );
+        }
+    
+    drawObject( inObject, inPos );
+    }
+
+
+
+
 
 void deleteObjectFromBank( int inID ) {
     

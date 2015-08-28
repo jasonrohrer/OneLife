@@ -66,6 +66,10 @@ int addObject( const char *inDescription,
 void drawObject( ObjectRecord *inObject, doublePair inPos );
 
 
+void drawObject( ObjectRecord *inObject, doublePair inPos,
+                 int inNumContained, int *inContainedIDs );
+
+
 
 void deleteObjectFromBank( int inID );
 
