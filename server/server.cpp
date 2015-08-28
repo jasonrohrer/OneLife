@@ -1102,7 +1102,15 @@ int main() {
                                 if( r != NULL ) {
                                     nextPlayer->holdingID = r->newActor;
                                     
+                                    // has target shrunken as a container?
+                                    int newSlots = 
+                                        getNumContainerSlots( r->newTarget );
+ 
+                                    shrinkContainer( m.x, m.y, newSlots );
+                                                                        
+
                                     setMapObject( m.x, m.y, r->newTarget );
+                                    
                                     
                                     char *changeLine =
                                         getMapChangeLineString(

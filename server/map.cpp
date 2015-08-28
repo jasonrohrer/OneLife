@@ -410,6 +410,15 @@ void clearAllContained( int inX, int inY ) {
 
 
 
+void shrinkContainer( int inX, int inY, int inNumNewSlots ) {
+    int oldNum = getNumContained( inX, inY );
+    
+    if( oldNum > inNumNewSlots ) {
+        dbPut( inX, inY, 1, inNumNewSlots );
+        }
+    }
+
+
 
 
 char *getMapChangeLineString( int inX, int inY  ) {

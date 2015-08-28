@@ -35,6 +35,9 @@ int removeContained( int inX, int inY );
 
 void clearAllContained( int inX, int inY );
 
+// if inNumNewSlots less than number contained, the excess are discarded
+void shrinkContainer( int inX, int inY, int inNumNewSlots );
+
 
 // line for a map change message
 char *getMapChangeLineString( int inX, int inY  );
