@@ -66,12 +66,18 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         TextButton mToggleContainableButton;
 
+        TextButton mDemoSlotsButton;
+        TextButton mClearSlotsDemoButton;
+        
 
         Picker mSpritePicker;
         Picker mObjectPicker;
 
 
         ObjectRecord mCurrentObject;
+        
+        char mDemoSlots;
+        int mSlotsDemoObject;
 
         SpriteHandle mSlotPlaceholderSprite;
 

@@ -41,9 +41,14 @@ EditorObjectPage::EditorObjectPage()
           mMoreSlotsButton( smallFont, -120, -110, "More" ),
           mLessSlotsButton( smallFont, -120, -190, "Less" ),
           mToggleContainableButton( smallFont, 150, -190, "Toggle" ),
+          mDemoSlotsButton( smallFont, 150, 32, "Demo Slots" ),
+          mClearSlotsDemoButton( smallFont, 150, -32, "End Demo" ),
           mSpritePicker( &spritePickable, -310, 100 ),
           mObjectPicker( &objectPickable, +310, 100 ),
           mSlotPlaceholderSprite( loadSprite( "slotPlaceholder.tga" ) ) {
+
+    mDemoSlots = false;
+    mSlotsDemoObject = -1;
 
     addComponent( &mDescriptionField );
     addComponent( &mSaveObjectButton );
@@ -54,8 +59,14 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mMoreSlotsButton );
     addComponent( &mLessSlotsButton );
     addComponent( &mToggleContainableButton );
+
+    addComponent( &mDemoSlotsButton );
+    addComponent( &mClearSlotsDemoButton );
     
+    mDemoSlotsButton.setVisible( false );
+    mClearSlotsDemoButton.setVisible( false );
     
+
     addComponent( &mClearObjectButton );
 
     addComponent( &mSpritePicker );
@@ -75,6 +86,9 @@ EditorObjectPage::EditorObjectPage()
     mMoreSlotsButton.addActionListener( this );
     mLessSlotsButton.addActionListener( this );
     mToggleContainableButton.addActionListener( this );
+
+    mDemoSlotsButton.addActionListener( this );
+    mClearSlotsDemoButton.addActionListener( this );
     
 
     mSpritePicker.addActionListener( this );
@@ -220,6 +234,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             slots[numSlots].x = 0;
             slots[numSlots].y = 0;
+            
+            mDemoSlotsButton.setVisible( true );
+            mClearSlotsDemoButton.setVisible( false );
             }
         else {
             slots[numSlots].x = 
@@ -237,16 +254,50 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         if( mCurrentObject.numSlots > 0 ) {
             
             mCurrentObject.numSlots --;
+            
+            if( mCurrentObject.numSlots == 0 ) {
+                mDemoSlots = false;
+                mSlotsDemoObject = -1;
+                mDemoSlotsButton.setVisible( false );
+                mClearSlotsDemoButton.setVisible( false );
+                }
             }
         }
     else if( inTarget == &mToggleContainableButton ) {
         mCurrentObject.containable = ! mCurrentObject.containable;
-        if( mCurrentObject.numSlots >= 0 && mCurrentObject.containable ) {
+        if( mCurrentObject.containable ) {
             mCurrentObject.numSlots = 0;
+            
+            mDemoSlots = false;
+            mSlotsDemoObject = -1;
+            mDemoSlotsButton.setVisible( false );
+            mClearSlotsDemoButton.setVisible( false );
             }
+        else {
+            mDemoSlotsButton.setVisible( true );
+            mClearSlotsDemoButton.setVisible( false );
+            }
+        }
+    else if( inTarget == &mDemoSlotsButton ) {
+        mDemoSlots = true;
+        mDemoSlotsButton.setVisible( false );
+        mClearSlotsDemoButton.setVisible( true );
+        }
+    else if( inTarget == &mClearSlotsDemoButton ) {
+        mDemoSlots = false;
+        mSlotsDemoObject = -1;
+        mDemoSlotsButton.setVisible( true );
+        mClearSlotsDemoButton.setVisible( false );
         }
     else if( inTarget == &mSpritePicker ) {
         
+        if( mDemoSlots ) {
+            mDemoSlots = false;
+            mSlotsDemoObject = -1;
+            mDemoSlotsButton.setVisible( true );
+            mClearSlotsDemoButton.setVisible( false );
+            }
+
         int spriteID = mSpritePicker.getSelectedObject();
         
         if( spriteID != -1 ) {            
@@ -291,7 +342,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mObjectPicker ) {
         int objectID = mObjectPicker.getSelectedObject();
 
-        if( objectID != -1 ) {
+        if( objectID != -1 && mDemoSlots ) {
+            mSlotsDemoObject = objectID;
+            }
+        else if( objectID != -1 ) {
             ObjectRecord *pickedRecord = getObject( objectID );
 
                 
@@ -332,6 +386,19 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mPickedObjectLayer = -1;
             mPickedSlot = -1;
+
+            if( !mCurrentObject.containable && mCurrentObject.numSlots > 0 ) {
+                mDemoSlots = false;
+                mSlotsDemoObject = -1;
+                mDemoSlotsButton.setVisible( true );
+                mClearSlotsDemoButton.setVisible( false );
+                }
+            else {
+                mDemoSlots = false;
+                mSlotsDemoObject = -1;
+                mDemoSlotsButton.setVisible( false );
+                mClearSlotsDemoButton.setVisible( false );
+                }
             }
         }
     
@@ -370,22 +437,35 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     
     if( mCurrentObject.numSlots > 0 ) {
 
-        for( int i=0; i<mCurrentObject.numSlots; i++ ) {
+        if( mSlotsDemoObject == -1 ) {
             
-            setDrawColor( 1, 1, 1, 0.5 );
-            drawSprite( mSlotPlaceholderSprite, mCurrentObject.slotPos[i] );
-
+            for( int i=0; i<mCurrentObject.numSlots; i++ ) {
             
-            setDrawColor( 0, 1, 1, 0.5 );
-            
-            char *numberString = autoSprintf( "%d", i + 1 );
-
-            mainFont->drawString( numberString, mCurrentObject.slotPos[i],
-                                  alignCenter );
-            
-            delete [] numberString;
-
+                setDrawColor( 1, 1, 1, 0.5 );
+                drawSprite( mSlotPlaceholderSprite, 
+                            mCurrentObject.slotPos[i] );
+                
+                
+                setDrawColor( 0, 1, 1, 0.5 );
+                
+                char *numberString = autoSprintf( "%d", i + 1 );
+                
+                mainFont->drawString( numberString, mCurrentObject.slotPos[i],
+                                      alignCenter );
+                
+                delete [] numberString;
+                }
             }
+        else {
+            ObjectRecord *demoObject = getObject( mSlotsDemoObject );
+            
+            setDrawColor( 1, 1, 1, 1 );
+            
+            for( int i=0; i<mCurrentObject.numSlots; i++ ) {
+                drawObject( demoObject, mCurrentObject.slotPos[i] );
+                }
+            }
+        
         }
     
 
