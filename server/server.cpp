@@ -1086,118 +1086,112 @@ int main() {
                             
                             if( target != 0 ) {
                             
-                                char containerOp = false;
-                                
                                 int targetSlots = 
                                     getNumContainerSlots( target );
                                 
-                                if( targetSlots != 0 ) {
-                                    int numIn = 
-                                        getNumContained( m.x, m.y );
-                                    
-                                    if( nextPlayer->holdingID == 0 && 
-                                        numIn > 0 ) {
-                                        // get from container
-    
-                                        nextPlayer->holdingID =
-                                            removeContained( m.x, m.y );
-                                        
-                                        char *changeLine =
-                                            getMapChangeLineString(
-                                                m.x, m.y );
+                                int numIn = 
+                                    getNumContained( m.x, m.y );
                                 
-                                        mapChanges.
-                                            appendElementString( 
-                                                changeLine );
-                                        
-                                        delete [] changeLine;
 
-                                        ChangePosition p = { m.x, m.y, 
-                                                             false };
-                                        mapChangesPos.push_back( p );
-                                        containerOp = true;
-                                        }
-                                    else if( nextPlayer->holdingID != 0 &&
-                                             numIn < targetSlots &&
-                                             isContainable( 
-                                                 nextPlayer->holdingID ) ) {
-                                        // add to container
-                                        
-                                        addContained( m.x, m.y,
-                                                      nextPlayer->holdingID );
-                                        
-                                        nextPlayer->holdingID = 0;
-                                        
-                                        char *changeLine =
-                                            getMapChangeLineString(
-                                                m.x, m.y );
+                                // try using object on this target 
                                 
-                                        mapChanges.
-                                            appendElementString( 
-                                                changeLine );
-                                        
-                                        delete [] changeLine;
-                                        
-                                        ChangePosition p = { m.x, m.y, 
-                                                             false };
-                                        mapChangesPos.push_back( p );
-                                        containerOp = true;
-                                        }
+                                TransRecord *r = 
+                                    getTrans( nextPlayer->holdingID, 
+                                              target );
+
+                                if( r != NULL ) {
+                                    nextPlayer->holdingID = r->newActor;
+                                    
+                                    setMapObject( m.x, m.y, r->newTarget );
+                                    
+                                    char *changeLine =
+                                        getMapChangeLineString(
+                                            m.x, m.y );
+                                    
+                                    mapChanges.
+                                        appendElementString( changeLine );
+                                    
+                                    ChangePosition p = { m.x, m.y, false };
+                                    mapChangesPos.push_back( p );
+                                    
+                                    
+                                    delete [] changeLine;
                                     }
-                                
-
-                                if( !containerOp ) {
-                                    // try using object on this target 
+                                else if( nextPlayer->holdingID != 0  &&
+                                         numIn < targetSlots &&
+                                         isContainable( 
+                                             nextPlayer->holdingID ) ) {
+                                    // add to container
+                                        
+                                    addContained( m.x, m.y,
+                                                  nextPlayer->holdingID );
+                                        
+                                    nextPlayer->holdingID = 0;
                                     
-                                    TransRecord *r = 
-                                        getTrans( nextPlayer->holdingID, 
-                                                  target );
-
-                                    if( r != NULL ) {
-                                        nextPlayer->holdingID = r->newActor;
+                                    char *changeLine =
+                                        getMapChangeLineString(
+                                            m.x, m.y );
                                     
-                                        setMapObject( m.x, m.y, r->newTarget );
-                                        
-                                        char *changeLine =
-                                            getMapChangeLineString(
-                                                m.x, m.y );
-                                        
-                                        mapChanges.
-                                            appendElementString( changeLine );
-                                        
-                                        ChangePosition p = { m.x, m.y, false };
-                                        mapChangesPos.push_back( p );
-                                        
-
-                                        delete [] changeLine;
-                                        }
-                                    else if( nextPlayer->holdingID == 0 ) {
-                                        // no bare-hand transition applies to
-                                        // this target object
-                                        // treat it like GRAB
-
-                                        nextPlayer->containedIDs =
-                                            getContained( 
-                                              m.x, m.y,
-                                              &( nextPlayer->numContained ) );
-                                        
-                                        clearAllContained( m.x, m.y );
-                                        setMapObject( m.x, m.y, 0 );
-                                        
-                                        nextPlayer->holdingID = target;
-                                        
-                                        char *changeLine =
-                                            getMapChangeLineString(
-                                                m.x, m.y );
-                                        
-                                        mapChanges.appendElementString( 
+                                    mapChanges.
+                                        appendElementString( 
                                             changeLine );
+                                    
+                                    delete [] changeLine;
+                                    
+                                    ChangePosition p = { m.x, m.y, 
+                                                         false };
+                                    mapChangesPos.push_back( p );
+                                    }
+                                else if( nextPlayer->holdingID == 0 && 
+                                         numIn > 0 ) {
+                                    // get from container
+    
+                                    nextPlayer->holdingID =
+                                        removeContained( m.x, m.y );
                                         
-                                        ChangePosition p = { m.x, m.y, false };
-                                        mapChangesPos.push_back( p );
-                                        
-                                        delete [] changeLine;
-                                        }    
+                                    char *changeLine =
+                                        getMapChangeLineString(
+                                            m.x, m.y );
+                                    
+                                    mapChanges.
+                                        appendElementString( 
+                                            changeLine );
+                                    
+                                    delete [] changeLine;
+                                    
+                                    ChangePosition p = { m.x, m.y, 
+                                                         false };
+                                    mapChangesPos.push_back( p );
+                                    }
+                                else if( nextPlayer->holdingID == 0 ) {
+                                    // no bare-hand transition applies to
+                                    // this target object
+                                    
+                                    // and nothing in it to take out
+                                    
+                                    // treat it like GRAB
+                                    
+                                    nextPlayer->containedIDs =
+                                        getContained( 
+                                            m.x, m.y,
+                                            &( nextPlayer->numContained ) );
+                                    
+                                    clearAllContained( m.x, m.y );
+                                    setMapObject( m.x, m.y, 0 );
+                                    
+                                    nextPlayer->holdingID = target;
+                                    
+                                    char *changeLine =
+                                        getMapChangeLineString(
+                                            m.x, m.y );
+                                    
+                                    mapChanges.appendElementString( 
+                                        changeLine );
+                                    
+                                    ChangePosition p = { m.x, m.y, false };
+                                    mapChangesPos.push_back( p );
+                                    
+                                    delete [] changeLine;
                                     }
                                 }
                             }
