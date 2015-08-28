@@ -1100,8 +1100,24 @@ int main() {
                                               target );
 
                                 if( r != NULL ) {
+                                    int oldContained = 
+                                        nextPlayer->numContained;
+
                                     nextPlayer->holdingID = r->newActor;
                                     
+                                    // can newly changed container hold
+                                    // less than what it could contain
+                                    // before?
+
+                                    int newHeldSlots = getNumContainerSlots( 
+                                        nextPlayer->holdingID );
+
+                                    if( newHeldSlots < oldContained ) {
+                                        // truncate
+                                        nextPlayer->numContained
+                                            = newHeldSlots;
+                                        }
+
                                     // has target shrunken as a container?
                                     int newSlots = 
                                         getNumContainerSlots( r->newTarget );
