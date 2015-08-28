@@ -63,33 +63,67 @@ void initObjectBank() {
                         
                         delete [] objectText;
 
-                        if( numLines >= 3 ) {
+                        if( numLines >= 5 ) {
                             ObjectRecord *r = new ObjectRecord;
                             
+                            int next = 0;
+                            
                             r->id = 0;
-                            sscanf( lines[0], "id=%d", 
+                            sscanf( lines[next], "id=%d", 
                                     &( r->id ) );
                             
                             if( r->id > maxID ) {
                                 maxID = r->id;
                                 }
                             
-                            r->description = stringDuplicate( lines[1] );
+                            next++;
                             
+                            r->description = stringDuplicate( lines[next] );
+                            
+                            next++;
+
+                            r->containable = 0;
+                            sscanf( lines[next], "containable=%d", 
+                                    &( r->containable ) );
+                            
+                            next++;
+
+                            r->numSlots = 0;
+                            sscanf( lines[next], "numSlots=%d", 
+                                    &( r->numSlots ) );
+                            
+                            next++;
+
+                            r->slotPos = new doublePair[ r->numSlots ];
+                            
+                            for( int i=0; i< r->numSlots; i++ ) {
+                                sscanf( lines[ next ], "slotPos=%lf,%lf", 
+                                        &( r->slotPos[i].x ),
+                                        &( r->slotPos[i].y ) );
+                                next++;
+                                }
+                            
+
                             r->numSprites = 0;
-                            sscanf( lines[2], "numSprites=%d", 
+                            sscanf( lines[next], "numSprites=%d", 
                                     &( r->numSprites ) );
                             
+                            next++;
+
                             r->sprites = new int[r->numSprites];
                             r->spritePos = new doublePair[ r->numSprites ];
                             
                             for( int i=0; i< r->numSprites; i++ ) {
-                                sscanf( lines[3 + i * 2], "spriteID=%d", 
+                                sscanf( lines[next], "spriteID=%d", 
                                         &( r->sprites[i] ) );
                                 
-                                sscanf( lines[4 + i * 2], "pos=%lf,%lf", 
+                                next++;
+                                
+                                sscanf( lines[next], "pos=%lf,%lf", 
                                         &( r->spritePos[i].x ),
                                         &( r->spritePos[i].y ) );
+                                
+                                next++;
                                 }
                             
                             records.push_back( r );
@@ -150,6 +184,7 @@ static void freeObjectRecord( int inID ) {
             
 
             delete [] idMap[inID]->description;
+            delete [] idMap[inID]->slotPos;
             delete [] idMap[inID]->sprites;
             delete [] idMap[inID]->spritePos;
             
@@ -229,6 +264,8 @@ ObjectRecord **searchObjects( const char *inSearch,
 
 
 int addObject( const char *inDescription,
+               int inContainable,
+               int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
                int inReplaceID ) {
@@ -279,6 +316,17 @@ int addObject( const char *inDescription,
         
         lines.push_back( autoSprintf( "id=%d", newID ) );
         lines.push_back( stringDuplicate( inDescription ) );
+
+        lines.push_back( autoSprintf( "containable=%d", inContainable ) );
+        
+        lines.push_back( autoSprintf( "numSlots=%d", inNumSlots ) );
+
+        for( int i=0; i<inNumSlots; i++ ) {
+            lines.push_back( autoSprintf( "slotPos=%f,%f", 
+                                          inSlotPos[i].x,
+                                          inSlotPos[i].y ) );
+            }
+
         
         lines.push_back( autoSprintf( "numSprites=%d", inNumSprites ) );
 
@@ -352,6 +400,16 @@ int addObject( const char *inDescription,
     
     r->id = newID;
     r->description = stringDuplicate( inDescription );
+
+    r->containable = inContainable;
+    
+    r->numSlots = inNumSlots;
+    
+    r->slotPos = new doublePair[ inNumSlots ];
+    
+    memcpy( r->slotPos, inSlotPos, inNumSlots * sizeof( doublePair ) );
+    
+
     r->numSprites = inNumSprites;
     
     r->sprites = new int[ inNumSprites ];

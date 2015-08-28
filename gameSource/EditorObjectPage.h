@@ -60,6 +60,12 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
         TextButton mImportEditorButton;
         TextButton mTransEditorButton;
+        
+        TextButton mMoreSlotsButton;
+        TextButton mLessSlotsButton;
+
+        TextButton mToggleContainableButton;
+
 
         Picker mSpritePicker;
         Picker mObjectPicker;
@@ -67,7 +73,10 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         ObjectRecord mCurrentObject;
 
+        SpriteHandle mSlotPlaceholderSprite;
+
         int mPickedObjectLayer;
+        int mPickedSlot;
         doublePair mPickedMouseOffset;
     };
 

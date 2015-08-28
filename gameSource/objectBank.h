@@ -9,6 +9,15 @@ typedef struct ObjectRecord {
         int id;
         
         char *description;
+
+        // can it go into a container
+        int containable;
+
+        // if it is a container, how many slots?
+        // 0 if not a container
+        int numSlots;
+
+        doublePair *slotPos;
         
 
         int numSprites;
@@ -16,6 +25,9 @@ typedef struct ObjectRecord {
         int *sprites;
         
         doublePair *spritePos;
+
+                
+
         
     } ObjectRecord;
 
@@ -42,6 +54,8 @@ ObjectRecord **searchObjects( const char *inSearch,
 
 
 int addObject( const char *inDescription,
+               int inContainable,
+               int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
                int inReplaceID = -1 );
