@@ -190,6 +190,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         delete [] mCurrentObject.description;
         mCurrentObject.description = mDescriptionField.getText();
         
+        mCurrentObject.containable = 0;
+        
         mCurrentObject.numSlots = 0;
         
         delete [] mCurrentObject.slotPos;
@@ -245,6 +247,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 slots[numSlots - 1].y;
             }
         
+        mPickedSlot = numSlots;
+        mPickedObjectLayer = -1;
+        
         delete [] mCurrentObject.slotPos;
         mCurrentObject.slotPos = slots;
 
@@ -271,10 +276,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mDemoSlots = false;
             mSlotsDemoObject = -1;
             mDemoSlotsButton.setVisible( false );
-            mClearSlotsDemoButton.setVisible( false );
-            }
-        else {
-            mDemoSlotsButton.setVisible( true );
             mClearSlotsDemoButton.setVisible( false );
             }
         }
@@ -565,6 +566,10 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
 
     doublePair pos = { inX, inY };
     
+    int oldLayerPick = mPickedObjectLayer;
+    int oldSlotPick = mPickedSlot;
+    
+
     mPickedObjectLayer = -1;
     double smallestDist = 9999999;
     
@@ -592,10 +597,21 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
         }
 
 
-    if( smallestDist > 100 ) {
-        // too far to count as a pick
-        mPickedObjectLayer = -1;
-        mPickedSlot = -1;
+    if( smallestDist > 32 ) {
+        // too far to count as a new pick
+
+        if( smallestDist < 100 ) {
+            // drag old pick around
+            mPickedObjectLayer = oldLayerPick;
+            mPickedSlot = oldSlotPick;
+            }
+        else if( smallestDist < 200 ) {
+            // far enough away to clear the pick completely
+            // and allow whole-object dragging
+            mPickedObjectLayer = -1;
+            mPickedSlot = -1;
+            }
+        
         }
     
     
