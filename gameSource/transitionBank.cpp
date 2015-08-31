@@ -56,8 +56,10 @@ void initTransBank() {
                             
                             int newActor = 0;
                             int newTarget = 0;
-
-                            sscanf( contents, "%d %d", &newActor, &newTarget );
+                            int autoDecaySeconds = 0;
+                            
+                            sscanf( contents, "%d %d %d", 
+                                    &newActor, &newTarget, &autoDecaySeconds );
                             
                             TransRecord *r = new TransRecord;
                             
@@ -65,7 +67,8 @@ void initTransBank() {
                             r->target = target;
                             r->newActor = newActor;
                             r->newTarget = newTarget;
-
+                            r->autoDecaySeconds = autoDecaySeconds;
+                            
                             records.push_back( r );
                             
                             if( actor > maxID ) {
@@ -107,7 +110,7 @@ void initTransBank() {
         TransRecord *t = records.getElementDirect( i );
         
         
-        if( t->actor != 0 ) {
+        if( t->actor > 0 ) {
             usesMap[t->actor].push_back( t );
             }
         
@@ -236,7 +239,8 @@ TransRecord **searchProduces( int inProducesID,
 
 
 void addTrans( int inActor, int inTarget,
-               int inNewActor, int inNewTarget ) {
+               int inNewActor, int inNewTarget,
+               int inAutoDecaySeconds ) {
 
     // exapand id-indexed maps if a bigger ID is being added    
     if( inActor >= mapSize || inTarget >= mapSize 
@@ -293,10 +297,11 @@ void addTrans( int inActor, int inTarget,
         t->target = inTarget;
         t->newActor = inNewActor;
         t->newTarget = inNewTarget;
-
+        t->autoDecaySeconds = inAutoDecaySeconds;
+        
         records.push_back( t );
 
-        if( inActor != 0 ) {
+        if( inActor > 0 ) {
             usesMap[inActor].push_back( t );
             }
         
@@ -323,7 +328,8 @@ void addTrans( int inActor, int inTarget,
         // usesMap already contains it, no change
 
         if( t->newTarget == inNewTarget &&
-            t->newActor == inNewActor ) {
+            t->newActor == inNewActor &&
+            t->autoDecaySeconds == inAutoDecaySeconds ) {
             
             // no change to produces map either... 
 
@@ -343,7 +349,8 @@ void addTrans( int inActor, int inTarget,
 
             t->newActor = inNewActor;
             t->newTarget = inNewTarget;
-            
+            t->autoDecaySeconds = inAutoDecaySeconds;
+
             if( inNewActor != 0 ) {
                 producesMap[inNewActor].push_back( t );
                 }
@@ -373,8 +380,9 @@ void addTrans( int inActor, int inTarget,
 
             File *transFile = transDir.getChildFile( fileName );
             
-            char *fileContents = autoSprintf( "%d %d", 
-                                              inNewActor, inNewTarget );
+            char *fileContents = autoSprintf( "%d %d %d", 
+                                              inNewActor, inNewTarget,
+                                              inAutoDecaySeconds );
             
             
             transFile->writeToFile( fileContents );
@@ -419,7 +427,7 @@ void deleteTransFromBank( int inActor, int inTarget ) {
             producesMap[t->newTarget].deleteElementEqualTo( t );
             }
         
-        if( inActor != 0 ) {
+        if( inActor > 0 ) {
             usesMap[inActor].deleteElementEqualTo( t );
             }
         usesMap[inTarget].deleteElementEqualTo( t );

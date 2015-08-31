@@ -64,7 +64,11 @@ static ObjectPickable objectPickable;
 
 
 EditorTransitionPage::EditorTransitionPage()
-        : mSaveTransitionButton( mainFont, -310, 0, "Save" ),
+        : mAutoDecayTimeField( smallFont, 
+                               0,  -160, 6,
+                               false,
+                               "AutoDecay Seconds", "0123456789", NULL ),
+          mSaveTransitionButton( mainFont, -310, 0, "Save" ),
           mObjectPicker( &objectPickable, +310, 100 ),
           mObjectEditorButton( mainFont, 310, 260, "Objects" ),
           mProducedByNext( smallFont, 200, 260, "Next" ),
@@ -74,6 +78,10 @@ EditorTransitionPage::EditorTransitionPage()
           mDelButton( smallFont, +150, 0, "Delete" ),
           mDelConfirmButton( smallFont, +150, 40, "Delete?" ) {
 
+
+    addComponent( &mAutoDecayTimeField );
+    mAutoDecayTimeField.setVisible( false );
+    
     addComponent( &mSaveTransitionButton );
     addComponent( &mObjectPicker );
     addComponent( &mObjectEditorButton );
@@ -115,7 +123,8 @@ EditorTransitionPage::EditorTransitionPage()
     mCurrentTransition.target = 0;
     mCurrentTransition.newActor = 0;
     mCurrentTransition.newTarget = 0;
-    
+    mCurrentTransition.autoDecaySeconds = 0;
+
     mCurrentlyReplacing = 0;
     
 
@@ -229,6 +238,32 @@ void EditorTransitionPage::checkIfSaveVisible() {
     
     mDelButton.setVisible( vis );
     mDelConfirmButton.setVisible( false );
+
+    if( vis && 
+        getObjectByIndex( &mCurrentTransition, 0 ) <= 0 &&
+        getObjectByIndex( &mCurrentTransition, 2 ) == 0 ) {
+        // no actor, no new actor, but there's a target
+
+        // can be auto-decay
+        mAutoDecayTimeField.setVisible( true );
+
+        if( mCurrentTransition.autoDecaySeconds > 0 ) {
+            char *decayString =
+                autoSprintf( "%d", mCurrentTransition.autoDecaySeconds );
+            
+            mAutoDecayTimeField.setText( decayString );
+            
+            delete [] decayString;
+            }
+        else {
+            mAutoDecayTimeField.setText( "" );
+            }
+        }
+    else {
+        mAutoDecayTimeField.setVisible( false );
+        mAutoDecayTimeField.setText( "" );
+        }
+        
     }
 
 
@@ -327,11 +362,30 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
     
     if( inTarget == &mSaveTransitionButton ) {
         
+        int decayTime = 0;
+        char *decayText = mAutoDecayTimeField.getText();
+        
+        if( strcmp( decayText, "" ) != 0 ) {    
+            sscanf( decayText, "%d", &decayTime );
+            }            
+        delete [] decayText;
 
-        addTrans( mCurrentTransition.actor,
+        int actor = mCurrentTransition.actor;
+        
+        if( decayTime > 0 ) {
+            // signal auto-delay
+            actor = -1;
+            }
+        else if( actor == -1 ) {
+            // correct it back to 0 for non-autoDecay transitions
+            actor = 0;
+            }
+        
+        addTrans( actor,
                   mCurrentTransition.target,
                   mCurrentTransition.newActor,
-                  mCurrentTransition.newTarget );
+                  mCurrentTransition.newTarget,
+                  decayTime );
             
         redoTransSearches( mLastSearchID, true );
         }
@@ -340,13 +394,34 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
         mDelConfirmButton.setVisible( true );
         }
     else if( inTarget == &mDelConfirmButton ) {
+
+        int decayTime = 0;
+        char *decayText = mAutoDecayTimeField.getText();
         
-        deleteTransFromBank( getObjectByIndex( &mCurrentTransition, 0 ),
+        if( strcmp( decayText, "" ) != 0 ) {    
+            sscanf( decayText, "%d", &decayTime );
+            }            
+        delete [] decayText;
+
+        int actor = mCurrentTransition.actor;
+        
+        if( decayTime > 0 ) {
+            // signal auto-delay
+            actor = -1;
+            }
+        else if( actor == -1 ) {
+            // correct it back to 0 for non-autoDecay transitions
+            actor = 0;
+            }
+
+        deleteTransFromBank( actor,
                              getObjectByIndex( &mCurrentTransition, 1 ) );
                              
         for( int i=0; i<4; i++ ) {
             setObjectByIndex( &mCurrentTransition, i, 0 );
             }
+        mCurrentTransition.autoDecaySeconds = 0;
+        
         checkIfSaveVisible();
 
         redoTransSearches( 0, true );
@@ -488,7 +563,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         
         int id = getObjectByIndex( &mCurrentTransition, i );
         
-        if( id != 0 ) {
+        if( id > 0 ) {
             drawObject( getObject( id ), pos );
             }
         }
@@ -529,7 +604,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             drawSquare( pos, 50 );
 
             
-            if( actor != 0 ) {
+            if( actor > 0 ) {
                 drawObject( getObject( actor ), pos );
                 }
             
@@ -576,9 +651,9 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             
             setDrawColor( 1, 1, 1, 1 );
             
-            doublePair desPos = centerB;
+            doublePair desPos = centerA;
             
-            desPos.y -= 100;
+            desPos.y += 100;
 
             smallFont->drawString( r->description, desPos, alignCenter );
 

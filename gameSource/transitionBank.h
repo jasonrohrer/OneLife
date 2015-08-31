@@ -11,7 +11,11 @@ typedef struct TransRecord {
         // if either are blank, they are consumed by transition
         int newActor;
         int newTarget;
-        
+    
+
+        // if actor is -1 and autoDecaySeconds is non-zero
+        // then target decays to newTarget automatically in autoDecaySeconds
+        int autoDecaySeconds;
     } TransRecord;
 
 
@@ -46,10 +50,15 @@ TransRecord **searchProduces( int inProducesID,
 
 // inActor can be 0 (this is the bare-hands action on the target)
 
+// inActor can be -1 if inAutoDecaySeconds > 0 and inNewActor is 0
+// (this signals an auto-decay from inTarget to inNewTarget after X seconds)
+
 // only one trans allowed per actor/target pair, so replacement is automatic
+
 // 0 for inNewActor or inNewTarget means actor or target consumed
 void addTrans( int inActor, int inTarget,
-               int inNewActor, int inNewTarget );
+               int inNewActor, int inNewTarget,
+               int inAutoDecaySeconds = 0 );
 
 
 

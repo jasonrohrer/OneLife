@@ -53,6 +53,9 @@ class EditorTransitionPage : public GamePage, public ActionListener {
         
     protected:
         
+        TextField mAutoDecayTimeField;
+
+        
         TextButton mSaveTransitionButton;
         Picker mObjectPicker;
 
