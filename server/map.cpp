@@ -11,9 +11,14 @@
 
 #include "kissdb.h"
 
+
+#include "kissdb.h"
+
 #include <stdarg.h>
 
 
+#include "../gameSource/transitionBank.h"
+#include "../gameSource/objectBank.h"
 
 
 
@@ -31,6 +36,29 @@ static char dbOpen = false;
 
 static int randSeed = 10;
 static JenkinsRandomSource randSource;
+
+
+
+#define DECAY_SLOT 1
+#define NUM_CONT_SLOT 2
+#define FIRST_CONT_SLOT 3
+
+
+// 15 minutes
+static int maxSecondsForActiveDecayTracking = 900;
+
+
+typedef struct LiveDecayRecord {
+        int x, y;
+        unsigned int etaTimeSeconds;
+    } LiveDecayRecord;
+
+
+
+#include "minorGems/util/MinPriorityQueue.h"
+
+static MinPriorityQueue<LiveDecayRecord> liveDecayQueue;
+
 
 
 
@@ -163,6 +191,7 @@ static int dbGet( int inX, int inY, int inSlot ) {
     }
 
 
+
 static void dbPut( int inX, int inY, int inSlot, int inValue ) {
     unsigned char key[12];
     unsigned char value[4];
@@ -177,17 +206,98 @@ static void dbPut( int inX, int inY, int inSlot, int inValue ) {
 
 
 
-int getMapObject( int inX, int inY ) {    
+int checkDecayObject( int inX, int inY, int inID ) {
+    TransRecord *t = getTrans( -1, inID );
 
-    int result = dbGet( inX, inY, 0 );
+    if( t == NULL ) {
+        // no auto-decay for this object
+        return inID;
+        }
     
-    if( result != -1 ) {
-        // found
-        return result;
+    
+    // else decay exists for this object
+    
+    int newID = inID;
+
+    // is eta stored in map?
+    unsigned int mapETA = getEtaDecay( inX, inY );
+    
+    if( mapETA != 0 ) {
+        
+        if( (int)mapETA < time( NULL ) ) {
+            
+            // object in map has decayed (eta expired)
+
+            // apply the transition
+            newID = t->newTarget;
+            
+
+            int oldSlots = getNumContainerSlots( inID );
+
+            int newSlots = getNumContainerSlots( newID );
+            
+            if( newSlots < oldSlots ) {
+                shrinkContainer( inX, inY, newSlots );
+                }
+            
+            setMapObject( inX, inY, newID );
+            
+            TransRecord *newDecayT = getTrans( -1, newID );
+
+            if( newDecayT != NULL ) {
+                mapETA = time(NULL) + newDecayT->autoDecaySeconds;
+                }
+            else {
+                // no further decay
+                mapETA = 0;
+                }
+
+            setEtaDecay( inX, inY, mapETA );
+            }
+
         }
     else {
-        return getBaseMap( inX, inY );
+        // update map with decay for the applicable transition
+        mapETA = time( NULL ) + t->autoDecaySeconds;
+        
+        setEtaDecay( inX, inY, mapETA );
         }
+    
+
+    if( mapETA != 0 ) {
+        int timeLeft = mapETA - time( NULL );
+        
+        if( timeLeft < maxSecondsForActiveDecayTracking ) {
+            // track it live
+            
+            // duplicates okay
+            // we'll deal with them when they ripen
+            // (we check the true ETA stored in map before acting
+            //   on one stored in this queue)
+            LiveDecayRecord r = { inX, inY, mapETA };
+            
+            liveDecayQueue.insert( r, mapETA );
+            }
+        }
+    
+    
+    return inID;
+    }
+
+
+
+int getMapObject( int inX, int inY ) {    
+    
+    
+    int result = dbGet( inX, inY, 0 );
+    
+    if( result == -1 ) {
+        // nothing in map
+        result = getBaseMap( inX, inY );
+        }
+
+    // apply any decay that should have happened by now
+    return checkDecayObject( inX, inY, result );
     }
 
 
@@ -325,6 +435,28 @@ void setMapObject( int inX, int inY, int inID ) {
 
 
 
+void setEtaDecay( int inX, int inY, unsigned int inAbsoluteTimeInSeconds ) {
+    dbPut( inX, inY, DECAY_SLOT, (int)inAbsoluteTimeInSeconds );
+    }
+
+
+
+
+unsigned int getEtaDecay( int inX, int inY ) {
+    int value = dbGet( inX, inY, DECAY_SLOT );
+    
+    if( value != -1 ) {
+        return (unsigned int)value;
+        }
+    else {
+        return 0;
+        }
+    
+    }
+
+
+
+
 
 void addContained( int inX, int inY, int inContainedID ) {
     int oldNum = getNumContained( inX, inY );
@@ -332,14 +464,14 @@ void addContained( int inX, int inY, int inContainedID ) {
     int newNum = oldNum + 1;
     
 
-    dbPut( inX, inY, 1 + newNum, inContainedID );
+    dbPut( inX, inY, FIRST_CONT_SLOT + newNum - 1, inContainedID );
     
-    dbPut( inX, inY, 1, newNum );
+    dbPut( inX, inY, NUM_CONT_SLOT, newNum );
     }
 
 
 int getNumContained( int inX, int inY ) {
-    int result = dbGet( inX, inY, 1 );
+    int result = dbGet( inX, inY, NUM_CONT_SLOT );
     
     if( result != -1 ) {
         // found
@@ -365,7 +497,7 @@ int *getContained( int inX, int inY, int *outNumContained ) {
     int *contained = new int[ num ];
 
     for( int i=0; i<num; i++ ) {
-        int result = dbGet( inX, inY, 2 + i );
+        int result = dbGet( inX, inY, FIRST_CONT_SLOT + i );
         if( result != -1 ) {
             contained[i] = result;
             }
@@ -386,11 +518,11 @@ int removeContained( int inX, int inY ) {
         return 0;
         }
     
-    int result = dbGet( inX, inY, 1 + num );
+    int result = dbGet( inX, inY, FIRST_CONT_SLOT + num - 1 );
     
     // shrink number of slots
     num -= 1;
-    dbPut( inX, inY, 1, num );
+    dbPut( inX, inY, NUM_CONT_SLOT, num );
         
 
     if( result != -1 ) {    
@@ -405,7 +537,7 @@ int removeContained( int inX, int inY ) {
 
 
 void clearAllContained( int inX, int inY ) {
-    dbPut( inX, inY, 1, 0 );
+    dbPut( inX, inY, NUM_CONT_SLOT, 0 );
     }
 
 
@@ -414,7 +546,7 @@ void shrinkContainer( int inX, int inY, int inNumNewSlots ) {
     int oldNum = getNumContained( inX, inY );
     
     if( oldNum > inNumNewSlots ) {
-        dbPut( inX, inY, 1, inNumNewSlots );
+        dbPut( inX, inY, NUM_CONT_SLOT, inNumNewSlots );
         }
     }
 
@@ -462,4 +594,26 @@ char *getMapChangeLineString( int inX, int inY  ) {
 
     return buffer.getElementString();
     }
+
+
+
+
+void stepMap( SimpleVector<char> *inMapChanges, 
+              SimpleVector<ChangePosition> *inChangePosList ) {
+    // FIXME:
+
+    // check live decay queue for any that are expired
+
+    // for each, remove expired ETA record from queue,
+    //
+    // THEN check map for true ETA (there can be stale duplicates
+    // in the queue), and act only if true ETA expired
+
+    // calling checkDecayObject will handle this
+
+    // for any calls to checkDecayObject that change the ID there,
+    // getMapChangeLineString and append it to inMapChanges
+    // append position to inChangePosList
+    }
+
 

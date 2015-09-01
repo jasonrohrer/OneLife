@@ -86,14 +86,6 @@ typedef struct LiveObject {
 SimpleVector<LiveObject> players;
 
 
-typedef struct ChangePosition {
-        int x, y;
-        
-        // true if update should be sent to everyone regardless
-        // of distance (like position of a new player in the world,
-        // or the removal of a player).
-        char global;
-    } ChangePosition;
 
 
 
