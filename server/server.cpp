@@ -1567,6 +1567,11 @@ int main() {
             }
         
 
+
+        // add changes from auto-decays on map
+        stepMap( &mapChanges, &mapChangesPos );
+        
+        
         char *mapChangeMessage = NULL;
         int mapChangeMessageLength = 0;
         

@@ -26,7 +26,7 @@
 static int chunkDimension = 32;
 
 
-static int startingObjectID = 1;
+static int startingObjectID = 7;
 
 
 
@@ -240,7 +240,8 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 shrinkContainer( inX, inY, newSlots );
                 }
             
-            setMapObject( inX, inY, newID );
+            // set it in DB
+            dbPut( inX, inY, 0, newID );
             
             TransRecord *newDecayT = getTrans( -1, newID );
 
@@ -277,27 +278,35 @@ int checkDecayObject( int inX, int inY, int inID ) {
             LiveDecayRecord r = { inX, inY, mapETA };
             
             liveDecayQueue.insert( r, mapETA );
+            printf( "inserting eta of %d into live decay queue, current %d\n",
+                    mapETA, time(NULL ) );
             }
         }
     
     
-    return inID;
+    return newID;
     }
 
 
 
-int getMapObject( int inX, int inY ) {    
-    
-    
+int getMapObjectRaw( int inX, int inY ) {
     int result = dbGet( inX, inY, 0 );
     
     if( result == -1 ) {
         // nothing in map
         result = getBaseMap( inX, inY );
         }
+    
+    return result;
+    }
+
+
+
+
+int getMapObject( int inX, int inY ) {
 
     // apply any decay that should have happened by now
-    return checkDecayObject( inX, inY, result );
+    return checkDecayObject( inX, inY, getMapObjectRaw( inX, inY ) );
     }
 
 
@@ -430,6 +439,12 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
 
 void setMapObject( int inX, int inY, int inID ) {
     dbPut( inX, inY, 0, inID );
+
+    // disable any old decay
+    setEtaDecay( inX, inY, 0 );
+    
+    // set up any new decay and start tracking it
+    checkDecayObject( inX, inY, inID );    
     }
 
 
@@ -601,19 +616,43 @@ char *getMapChangeLineString( int inX, int inY  ) {
 void stepMap( SimpleVector<char> *inMapChanges, 
               SimpleVector<ChangePosition> *inChangePosList ) {
     // FIXME:
+    
+    printf( "Stepping map\n" );
+    
+    unsigned int curTime = time( NULL );
 
-    // check live decay queue for any that are expired
+    while( liveDecayQueue.size() > 0 && 
+           liveDecayQueue.checkMinPriority() < curTime ) {
+        
+        // another expired
 
-    // for each, remove expired ETA record from queue,
-    //
-    // THEN check map for true ETA (there can be stale duplicates
-    // in the queue), and act only if true ETA expired
+        LiveDecayRecord r = liveDecayQueue.removeMin();
+        
+        printf( "Pulled record with ETA %d (cur = %d) from queue\n",
+                r.etaTimeSeconds, time( NULL ) );
 
-    // calling checkDecayObject will handle this
+        int oldID = getMapObjectRaw( r.x, r.y );
 
-    // for any calls to checkDecayObject that change the ID there,
-    // getMapChangeLineString and append it to inMapChanges
-    // append position to inChangePosList
+        // apply real eta from map (to ignore stale duplicates in live list)
+        // and update live list if new object is decaying too
+        int newID = checkDecayObject( r.x, r.y, oldID );
+        
+        printf( "Old id %d, new %d\n", oldID, newID );
+        
+        if( newID != oldID ) {
+            
+            char *changeString = getMapChangeLineString( r.x, r.y );
+            
+            inMapChanges->appendElementString( changeString );
+
+            delete [] changeString;
+
+            ChangePosition p = { r.x, r.y, false };
+            
+            inChangePosList->push_back( p );
+            }
+        }
+    
     }
 
 
