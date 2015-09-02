@@ -419,8 +419,8 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     for( int y=0; y<5; y++ ) {
         for( int x=0; x<5; x++ ) {
             
-            doublePair pos = { y * 32 - 2 * 32, 
-                               x * 32 - 2 * 32};
+	  doublePair pos = { (double)( y * 32 - 2 * 32 ), 
+			     (double)( x * 32 - 2 * 32 ) };
             
             if( i%2 == 0 ) {
                 setDrawColor( 1, 1, 1, 1 );
