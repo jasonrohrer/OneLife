@@ -278,8 +278,6 @@ int checkDecayObject( int inX, int inY, int inID ) {
             LiveDecayRecord r = { inX, inY, mapETA };
             
             liveDecayQueue.insert( r, mapETA );
-            printf( "inserting eta of %d into live decay queue, current %d\n",
-                    mapETA, time(NULL ) );
             }
         }
     
@@ -443,8 +441,17 @@ void setMapObject( int inX, int inY, int inID ) {
     // disable any old decay
     setEtaDecay( inX, inY, 0 );
     
-    // set up any new decay and start tracking it
-    checkDecayObject( inX, inY, inID );    
+    // don't set up new decay here
+    // only set it up on the next get
+    // (if no one is looking at the object currently, it doesn't decay)
+    // decay is only set up when someone looks at it
+    //
+    // NOTE that after setting a new map object, a get almost always follows
+    // so we have "decay setup on get only" to avoid duplicate decay setups
+
+    // also, when chosing between setting up decay on a set and setting
+    // it up on a get, we have to chose get, because there are loads
+    // of gets that have no set (for example, getting a map chunk)
     }
 
 
@@ -615,9 +622,6 @@ char *getMapChangeLineString( int inX, int inY  ) {
 
 void stepMap( SimpleVector<char> *inMapChanges, 
               SimpleVector<ChangePosition> *inChangePosList ) {
-    // FIXME:
-    
-    printf( "Stepping map\n" );
     
     unsigned int curTime = time( NULL );
 
@@ -626,18 +630,13 @@ void stepMap( SimpleVector<char> *inMapChanges,
         
         // another expired
 
-        LiveDecayRecord r = liveDecayQueue.removeMin();
-        
-        printf( "Pulled record with ETA %d (cur = %d) from queue\n",
-                r.etaTimeSeconds, time( NULL ) );
+        LiveDecayRecord r = liveDecayQueue.removeMin();        
 
         int oldID = getMapObjectRaw( r.x, r.y );
 
         // apply real eta from map (to ignore stale duplicates in live list)
         // and update live list if new object is decaying too
         int newID = checkDecayObject( r.x, r.y, oldID );
-        
-        printf( "Old id %d, new %d\n", oldID, newID );
         
         if( newID != oldID ) {
             
