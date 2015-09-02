@@ -706,6 +706,35 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
 
 
 
+// checks both grid of objects and live, non-moving player positions
+char isMapSpotEmpty( int inX, int inY ) {
+    int target = getMapObject( inX, inY );
+    
+    if( target != 0 ) {
+        return false;
+        }
+    
+    int numLive = players.size();
+    
+    for( int i=0; i<numLive; i++ ) {
+        LiveObject *nextPlayer = players.getElement( i );
+        
+        if( // stationary
+            nextPlayer->xs == nextPlayer->xd &&
+            nextPlayer->ys == nextPlayer->yd &&
+            // in this spot
+            inX == nextPlayer->xd &&
+            inY == nextPlayer->yd ) {
+            return false;            
+            } 
+        }
+    
+    return true;
+    }
+
+    
+
+
 
 
 
@@ -1394,10 +1423,8 @@ int main() {
                                             nextPlayer->xd, 
                                             nextPlayer->yd ) ) {
                             
-                            int target = getMapObject( m.x, m.y );
-                            
                             if( nextPlayer->holdingID != 0 && 
-                                target == 0 ) {
+                                isMapSpotEmpty( m.x, m.y ) ) {
                                 
                                 // empty spot to drop into
                                 
@@ -1498,8 +1525,7 @@ int main() {
                                                 
 
 
-                                                if( getMapObject( x, y ) 
-                                                    == 0 ) {
+                                                if( isMapSpotEmpty( x, y ) ) {
                                                     
                                                     found = true;
                                                     foundX = x;
