@@ -538,6 +538,177 @@ char *getHoldingString( LiveObject *inObject ) {
 
 
 
+
+// drops an object held by a player at target x,y location
+// doesn't check for adjacency (so works for thrown drops too)
+void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
+                 SimpleVector<char> *inMapChanges, 
+                 SimpleVector<ChangePosition> *inChangePosList,
+                 SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
+    
+    setMapObject( inX, inY, inDroppingPlayer->holdingID );
+                                
+    if( inDroppingPlayer->numContained != 0 ) {
+        for( int c=0;
+             c < inDroppingPlayer->numContained;
+             c++ ) {
+            addContained( 
+                inX, inY,
+                inDroppingPlayer->containedIDs[c] );
+            }
+        delete [] inDroppingPlayer->containedIDs;
+        inDroppingPlayer->containedIDs = NULL;
+        inDroppingPlayer->numContained = 0;
+        }
+                                
+                                
+    char *changeLine =
+        getMapChangeLineString(
+            inX, inY );
+                                
+    inMapChanges->appendElementString( 
+        changeLine );
+                                
+    ChangePosition p = { inX, inY, false };
+    inChangePosList->push_back( p );
+                
+    delete [] changeLine;
+                                
+    inDroppingPlayer->holdingID = 0;
+
+                                
+    // watch out for truncations of in-progress
+    // moves of other players
+                                
+    GridPos dropSpot = { inX, inY };
+          
+    int numLive = players.size();
+                      
+    for( int j=0; j<numLive; j++ ) {
+        LiveObject *otherPlayer = 
+            players.getElement( j );
+                                    
+        if( otherPlayer->xd != otherPlayer->xs ||
+            otherPlayer->yd != otherPlayer->ys ) {
+                
+            double fractionDone = 
+                ( Time::getCurrentTime() - 
+                  otherPlayer->moveStartTime )
+                / otherPlayer->moveTotalSeconds;
+                                        
+            if( fractionDone > 1 ) {
+                fractionDone = 1;
+                }
+                                        
+            int c = lrint( 
+                ( otherPlayer->pathLength  - 1 ) *
+                fractionDone );
+            GridPos cPos = 
+                otherPlayer->pathToDest[c];
+                                        
+            printf( 
+                "Checking how drop at %d,%d "
+                "affects player at step %d "
+                "along len %d path\n",
+                inX, inY,
+                c + 1, otherPlayer->pathLength );
+                                        
+            if( distance( cPos, dropSpot ) 
+                <= 2 * pathDeltaMax ) {
+                                            
+                // this is close enough
+                // to this path that it might
+                // block it
+
+                char blocked = false;
+                int blockedStep = -1;
+                                            
+                for( int p=c; 
+                     p<otherPlayer->pathLength;
+                     p++ ) {
+                                                
+                    if( equal( 
+                            otherPlayer->
+                            pathToDest[p],
+                            dropSpot ) ) {
+                                                    
+                        blocked = true;
+                        blockedStep = p;
+                        break;
+                        }
+                    }
+                                            
+                if( blocked ) {
+                    printf( 
+                        "  Blocked by drop\n" );
+                    }
+                                            
+
+                if( blocked &&
+                    blockedStep > 1 ) {
+                                                
+                    otherPlayer->pathLength
+                        = blockedStep;
+                    otherPlayer->pathTruncated
+                        = true;
+
+                    // update timing
+                    double dist = 
+                        otherPlayer->pathLength;
+                            
+                                                
+                    double distAlreadyDone = c;
+                            
+                    otherPlayer->moveTotalSeconds 
+                        = 
+                        dist / 
+                        otherPlayer->moveSpeed;
+                            
+                    double secondsAlreadyDone = 
+                        distAlreadyDone / 
+                        otherPlayer->moveSpeed;
+                                
+                    otherPlayer->moveStartTime = 
+                        Time::getCurrentTime() - 
+                        secondsAlreadyDone;
+                            
+                    otherPlayer->newMove = true;
+                                                
+                    otherPlayer->xd 
+                        = otherPlayer->pathToDest[
+                            blockedStep - 1].x;
+                    otherPlayer->yd 
+                        = otherPlayer->pathToDest[
+                            blockedStep - 1].y;
+                                                
+                    }
+                else if( blocked ) {
+                    // cutting off path
+                    // right at the beginning
+                    // nothing left
+
+                    // end move now
+                    otherPlayer->xd = 
+                        otherPlayer->xs;
+                                                
+                    otherPlayer->yd = 
+                        otherPlayer->ys;
+                                                
+                    inPlayerIndicesToSendUpdatesAbout->push_back( j );
+                    }
+                } 
+                                        
+            }
+                                    
+        }
+                                
+    }
+
+
+
+
+
+
 int main() {
 
     printf( "\nServer starting up\n\n" );
@@ -1229,163 +1400,10 @@ int main() {
                                 target == 0 ) {
                                 
                                 // empty spot to drop into
-                                    
-                                setMapObject( m.x, m.y, 
-                                              nextPlayer->holdingID );
                                 
-                                if( nextPlayer->numContained != 0 ) {
-                                    for( int c=0;
-                                         c < nextPlayer->numContained;
-                                         c++ ) {
-                                        addContained( 
-                                            m.x, m.y,
-                                            nextPlayer->containedIDs[c] );
-                                        }
-                                    delete [] nextPlayer->containedIDs;
-                                    nextPlayer->containedIDs = NULL;
-                                    nextPlayer->numContained = 0;
-                                    }
-                                
-                                
-                                char *changeLine =
-                                    getMapChangeLineString(
-                                        m.x, m.y );
-                                
-                                mapChanges.appendElementString( 
-                                    changeLine );
-                                
-                                ChangePosition p = { m.x, m.y, false };
-                                mapChangesPos.push_back( p );
-                
-                                delete [] changeLine;
-                                
-                                nextPlayer->holdingID = 0;
-
-                                
-                                // watch out for truncations of in-progress
-                                // moves of other players
-                                
-                                GridPos dropSpot = { m.x, m.y };
-                                
-                                for( int j=0; j<numLive; j++ ) {
-                                    LiveObject *otherPlayer = 
-                                        players.getElement( j );
-                                    
-                                    if( otherPlayer->xd != otherPlayer->xs ||
-                                        otherPlayer->yd != otherPlayer->ys ) {
-                
-                                        double fractionDone = 
-                                            ( Time::getCurrentTime() - 
-                                              otherPlayer->moveStartTime )
-                                            / otherPlayer->moveTotalSeconds;
-                                        
-                                        if( fractionDone > 1 ) {
-                                            fractionDone = 1;
-                                            }
-                                        
-                                        int c = lrint( 
-                                            ( otherPlayer->pathLength  - 1 ) *
-                                            fractionDone );
-                                        GridPos cPos = 
-                                            otherPlayer->pathToDest[c];
-                                        
-                                        printf( 
-                                            "Checking how drop at %d,%d "
-                                            "affects player at step %d "
-                                            "along len %d path\n",
-                                            m.x, m.y,
-                                            c + 1, otherPlayer->pathLength );
-                                        
-                                        if( distance( cPos, dropSpot ) 
-                                            <= 2 * pathDeltaMax ) {
-                                            
-                                            // this is close enough
-                                            // to this path that it might
-                                            // block it
-
-                                            char blocked = false;
-                                            int blockedStep = -1;
-                                            
-                                            for( int p=c; 
-                                                 p<otherPlayer->pathLength;
-                                                 p++ ) {
-                                                
-                                                if( equal( 
-                                                        otherPlayer->
-                                                        pathToDest[p],
-                                                        dropSpot ) ) {
-                                                    
-                                                    blocked = true;
-                                                    blockedStep = p;
-                                                    break;
-                                                    }
-                                                }
-                                            
-                                            if( blocked ) {
-                                                printf( 
-                                                    "  Blocked by drop\n" );
-                                                }
-                                            
-
-                                            if( blocked &&
-                                                blockedStep > 1 ) {
-                                                
-                                                otherPlayer->pathLength
-                                                    = blockedStep;
-                                                otherPlayer->pathTruncated
-                                                    = true;
-
-                                                // update timing
-                                                double dist = 
-                                                    otherPlayer->pathLength;
-                            
-                                                
-                                                double distAlreadyDone = c;
-                            
-                                                otherPlayer->moveTotalSeconds 
-                                                    = 
-                                                    dist / 
-                                                    otherPlayer->moveSpeed;
-                            
-                                                double secondsAlreadyDone = 
-                                                    distAlreadyDone / 
-                                                    otherPlayer->moveSpeed;
-                                
-                                                otherPlayer->moveStartTime = 
-                                                    Time::getCurrentTime() - 
-                                                    secondsAlreadyDone;
-                            
-                                                otherPlayer->newMove = true;
-                                                
-                                                otherPlayer->xd 
-                                                    = otherPlayer->pathToDest[
-                                                        blockedStep - 1].x;
-                                                otherPlayer->yd 
-                                                    = otherPlayer->pathToDest[
-                                                        blockedStep - 1].y;
-                                                
-                                                }
-                                            else if( blocked ) {
-                                                // cutting off path
-                                                // right at the beginning
-                                                // nothing left
-
-                                                // end move now
-                                                otherPlayer->xd = 
-                                                    otherPlayer->xs;
-                                                
-                                                otherPlayer->yd = 
-                                                    otherPlayer->ys;
-                                                
-                                                playerIndicesToSendUpdatesAbout
-                                                    .push_back( i );
-                                                }
-                                            } 
-                                        
-                                        }
-                                    
-                                    }
-                                
+                                handleDrop( m.x, m.y, nextPlayer,
+                                            &mapChanges, &mapChangesPos,
+                                            &playerIndicesToSendUpdatesAbout );
                                 }
                             }
                         }
@@ -1400,10 +1418,137 @@ int main() {
                             
                             int target = getMapObject( m.x, m.y );
                             
-                            if( nextPlayer->holdingID == 0 && 
-                                target != 0 ) {
+                            if( target != 0 ) {
                                 
                                 // something to grab
+
+
+                                if( nextPlayer->holdingID != 0 ) {
+
+                                    // grab while holding something else
+                                    
+                                    // throw it into nearest empty spot
+                                    
+                                    char found = false;
+                                    int foundX, foundY;
+                                    
+                                    // change direction of throw
+                                    // to match opposite direction of pickup
+                                    int xDir = m.x - nextPlayer->xd;
+                                    int yDir = m.y - nextPlayer->yd;
+                                    
+
+                                    // check in y dir first at each
+                                    // expanded radius?
+                                    char yFirst = false;
+                                    
+                                    if( yDir != 0 ) {
+                                        yFirst = true;
+                                        }
+                                    
+                                    for( int d=1; d<10 && !found; d++ ) {
+                                        
+                                        char doneY0 = false;
+                                        
+                                        for( int yD = -d; yD<=d && !found; 
+                                             yD++ ) {
+                                         
+                                            if( ! doneY0 ) {
+                                                yD = 0;
+                                                }
+
+                                            if( yDir != 0 ) {
+                                                yD *= yDir;
+                                                }
+                                            
+                                            char doneX0 = false;
+                                            
+                                            for( int xD = -d; xD<=d && !found; 
+                                                 xD++ ) {
+                                                
+                                                if( ! doneX0 ) {
+                                                    xD = 0;
+                                                    }
+
+                                                if( xDir != 0 ) {
+                                                    xD *= xDir;
+                                                    }
+   
+
+                                                if( yD == 0 && xD == 0 ) {
+                                                    if( ! doneX0 ) {
+                                                        doneX0 = true;
+                                                        
+                                                        // back up in loop
+                                                        xD = -d - 1;
+                                                        }
+                                                    continue;
+                                                    }
+                                                
+                                                int x = nextPlayer->xd + xD;
+                                                int y = nextPlayer->yd + yD;
+                                                
+                                                if( yFirst ) {
+                                                    // swap them
+                                                    // to reverse order
+                                                    // of expansion
+                                                    x = nextPlayer->xd + yD;
+                                                    y = nextPlayer->yd + xD;
+                                                    }
+                                                
+
+
+                                                if( getMapObject( x, y ) 
+                                                    == 0 ) {
+                                                    
+                                                    found = true;
+                                                    foundX = x;
+                                                    foundY = y;
+                                                    }
+
+                                                if( ! doneX0 ) {
+                                                    doneX0 = true;
+                                                    
+                                                    // back up in loop
+                                                    xD = -d - 1;
+                                                    }
+                                                }
+                                            
+                                            if( ! doneY0 ) {
+                                                doneY0 = true;
+                                                
+                                                // back up in loop
+                                                yD = -d - 1;
+                                                }
+                                            }
+                                        }
+
+                                    if( found ) {
+                                        // drop what they're holding
+                                        
+                                        handleDrop( 
+                                            foundX, foundY, 
+                                            nextPlayer,
+                                            &mapChanges, 
+                                            &mapChangesPos,
+                                            &playerIndicesToSendUpdatesAbout );
+                                        }
+                                    else {
+                                        // no drop spot found
+                                        // what they're holding must evaporate
+                                        
+                                        if( nextPlayer->containedIDs != 
+                                            NULL ) {
+                                            
+                                            delete [] nextPlayer->containedIDs;
+                                            nextPlayer->containedIDs = NULL;
+                                            nextPlayer->numContained = 0;
+                                            }
+                                        nextPlayer->holdingID = 0;
+                                        }
+                                    }
+                                
+                                
                                 
                                 nextPlayer->containedIDs =
                                     getContained( 
