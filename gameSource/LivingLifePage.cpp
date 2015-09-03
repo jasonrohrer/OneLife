@@ -666,7 +666,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         drawObject( getObject( o->holdingID ), holdPos );
                         }
                     else {
-                        drawObject( getObject(o->holdingID), pos,
+                        drawObject( getObject(o->holdingID), holdPos,
                                     o->numContained,
                                     o->containedIDs );
                         }
