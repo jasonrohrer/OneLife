@@ -40,7 +40,6 @@ EditorObjectPage::EditorObjectPage()
           mTransEditorButton( mainFont, 210, 260, "Trans" ),
           mMoreSlotsButton( smallFont, -120, -110, "More" ),
           mLessSlotsButton( smallFont, -120, -190, "Less" ),
-          mToggleContainableButton( smallFont, 150, -190, "Toggle" ),
           mDemoSlotsButton( smallFont, 150, 32, "Demo Slots" ),
           mClearSlotsDemoButton( smallFont, 150, -32, "End Demo" ),
           mSpritePicker( &spritePickable, -310, 100 ),
@@ -58,8 +57,7 @@ EditorObjectPage::EditorObjectPage()
 
     addComponent( &mMoreSlotsButton );
     addComponent( &mLessSlotsButton );
-    addComponent( &mToggleContainableButton );
-
+    
     addComponent( &mDemoSlotsButton );
     addComponent( &mClearSlotsDemoButton );
     
@@ -85,8 +83,7 @@ EditorObjectPage::EditorObjectPage()
 
     mMoreSlotsButton.addActionListener( this );
     mLessSlotsButton.addActionListener( this );
-    mToggleContainableButton.addActionListener( this );
-
+    
     mDemoSlotsButton.addActionListener( this );
     mClearSlotsDemoButton.addActionListener( this );
     
@@ -110,6 +107,20 @@ EditorObjectPage::EditorObjectPage()
 
     mPickedObjectLayer = -1;
     mPickedSlot = -1;
+
+
+
+    double boxY = -150;
+    
+    for( int i=0; i<NUM_OBJECT_CHECKBOXES; i++ ) {
+        mCheckboxes[i] = new CheckboxButton( 150, boxY, 2 );
+        addComponent( mCheckboxes[i] );
+
+        boxY -= 20;
+        }
+    mCheckboxNames[0] = "Containable";
+    mCheckboxNames[1] = "Permanent";
+    
     }
 
 
@@ -122,6 +133,10 @@ EditorObjectPage::~EditorObjectPage() {
     delete [] mCurrentObject.spritePos;
 
     freeSprite( mSlotPlaceholderSprite );
+    
+    for( int i=0; i<NUM_OBJECT_CHECKBOXES; i++ ) {
+        delete mCheckboxes[i];
+        }
     }
 
 
@@ -153,7 +168,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         char *text = mDescriptionField.getText();
 
         addObject( text,
-                   mCurrentObject.containable,
+                   mCheckboxes[0]->getToggled(),
+                   mCheckboxes[1]->getToggled(),
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos );
@@ -169,7 +185,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         char *text = mDescriptionField.getText();
 
         addObject( text,
-                   mCurrentObject.containable,
+                   mCheckboxes[0]->getToggled(),
+                   mCheckboxes[1]->getToggled(),
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
@@ -190,8 +207,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         delete [] mCurrentObject.description;
         mCurrentObject.description = mDescriptionField.getText();
         
-        mCurrentObject.containable = 0;
         
+        for( int i=0; i<NUM_OBJECT_CHECKBOXES; i++ ) {
+            mCheckboxes[i]->setToggled( false );
+            }
+
         mCurrentObject.numSlots = 0;
         
         delete [] mCurrentObject.slotPos;
@@ -266,17 +286,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 mDemoSlotsButton.setVisible( false );
                 mClearSlotsDemoButton.setVisible( false );
                 }
-            }
-        }
-    else if( inTarget == &mToggleContainableButton ) {
-        mCurrentObject.containable = ! mCurrentObject.containable;
-        if( mCurrentObject.containable ) {
-            mCurrentObject.numSlots = 0;
-            
-            mDemoSlots = false;
-            mSlotsDemoObject = -1;
-            mDemoSlotsButton.setVisible( false );
-            mClearSlotsDemoButton.setVisible( false );
             }
         }
     else if( inTarget == &mDemoSlotsButton ) {
@@ -400,6 +409,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 mDemoSlotsButton.setVisible( false );
                 mClearSlotsDemoButton.setVisible( false );
                 }
+
+            mCheckboxes[0]->setToggled( pickedRecord->containable );
+            mCheckboxes[1]->setToggled( pickedRecord->permanent );
+            
             }
         }
     
@@ -489,13 +502,13 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     delete [] numSlotString;
     
 
-    pos.x += 250;
+    for( int i=0; i<NUM_OBJECT_CHECKBOXES; i++ ) {
+        pos = mCheckboxes[i]->getPosition();
     
-    char *containableString = autoSprintf( "Cntabl: %d",
-                                           mCurrentObject.containable );
-    mainFont->drawString( containableString, pos, alignLeft );
-
-    delete [] containableString;
+        pos.x -= 20;
+        
+        smallFont->drawString( mCheckboxNames[i], pos, alignRight );
+        }
     
     }
 

@@ -31,6 +31,9 @@ objectBank.cpp \
 EditorObjectPage.cpp \
 transitionBank.cpp \
 EditorTransitionPage.cpp \
+SpriteButton.cpp \
+SpriteToggleButton.cpp \
+CheckboxButton.cpp \
 
 
 
@@ -41,6 +44,8 @@ graphics/loading2.tga \
 graphics/loading3.tga \
 graphics/responseWarning.tga \
 graphics/slotPlaceholder.tga \
+graphics/checkMark.tga \
+graphics/checkMarkOff.tga \
 
 
 

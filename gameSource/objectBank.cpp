@@ -63,7 +63,7 @@ void initObjectBank() {
                         
                         delete [] objectText;
 
-                        if( numLines >= 5 ) {
+                        if( numLines >= 6 ) {
                             ObjectRecord *r = new ObjectRecord;
                             
                             int next = 0;
@@ -81,11 +81,23 @@ void initObjectBank() {
                             r->description = stringDuplicate( lines[next] );
                             
                             next++;
-
-                            r->containable = 0;
-                            sscanf( lines[next], "containable=%d", 
-                                    &( r->containable ) );
                             
+                            int contRead = 0;                            
+                            sscanf( lines[next], "containable=%d", 
+                                    &( contRead ) );
+                            
+                            r->containable = contRead;
+                            
+                            next++;
+                            
+
+                            int permRead = 0;                            
+                            sscanf( lines[next], "permanent=%d", 
+                                    &( permRead ) );
+                            
+                            r->permanent = permRead;
+
+
                             next++;
 
                             r->numSlots = 0;
@@ -291,7 +303,8 @@ ObjectRecord **searchObjects( const char *inSearch,
 
 
 int addObject( const char *inDescription,
-               int inContainable,
+               char inContainable,
+               char inPermanent,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
@@ -344,7 +357,8 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "id=%d", newID ) );
         lines.push_back( stringDuplicate( inDescription ) );
 
-        lines.push_back( autoSprintf( "containable=%d", inContainable ) );
+        lines.push_back( autoSprintf( "containable=%d", (int)inContainable ) );
+        lines.push_back( autoSprintf( "permanent=%d", (int)inPermanent ) );
         
         lines.push_back( autoSprintf( "numSlots=%d", inNumSlots ) );
 
@@ -429,6 +443,7 @@ int addObject( const char *inDescription,
     r->description = stringDuplicate( inDescription );
 
     r->containable = inContainable;
+    r->permanent = inPermanent;
     
     r->numSlots = inNumSlots;
     

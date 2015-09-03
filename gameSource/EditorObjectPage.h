@@ -14,9 +14,14 @@
 #include "TextButton.h"
 #include "TextField.h"
 
+#include "CheckboxButton.h"
+
 #include "Picker.h"
 
 #include "objectBank.h"
+
+
+#define NUM_OBJECT_CHECKBOXES 2
 
 
 
@@ -63,8 +68,9 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
         TextButton mMoreSlotsButton;
         TextButton mLessSlotsButton;
-
-        TextButton mToggleContainableButton;
+        
+        CheckboxButton *mCheckboxes[NUM_OBJECT_CHECKBOXES];
+        const char *mCheckboxNames[NUM_OBJECT_CHECKBOXES];
 
         TextButton mDemoSlotsButton;
         TextButton mClearSlotsDemoButton;

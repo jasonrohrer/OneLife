@@ -1444,10 +1444,12 @@ int main() {
                                             nextPlayer->yd ) ) {
                             
                             int target = getMapObject( m.x, m.y );
-                            
-                            if( target != 0 ) {
+
+                            if( target != 0 &&
+                                ! getObject( target )->permanent ) {
                                 
                                 // something to grab
+                                // (can't grab permanents)
 
 
                                 if( nextPlayer->holdingID != 0 ) {

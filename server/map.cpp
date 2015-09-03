@@ -26,7 +26,7 @@
 static int chunkDimension = 32;
 
 
-static int startingObjectID = 7;
+static int startingObjectID = 1;
 
 
 

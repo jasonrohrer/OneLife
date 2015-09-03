@@ -11,7 +11,11 @@ typedef struct ObjectRecord {
         char *description;
 
         // can it go into a container
-        int containable;
+        char containable;
+        
+        // can it not be picked up
+        char permanent;
+        
 
         // if it is a container, how many slots?
         // 0 if not a container
@@ -54,7 +58,8 @@ ObjectRecord **searchObjects( const char *inSearch,
 
 
 int addObject( const char *inDescription,
-               int inContainable,
+               char inContainable,
+               char inPermanent,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
