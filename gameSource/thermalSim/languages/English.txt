@@ -1,0 +1,43 @@
+writeFailed "ERROR:##GAME FOLDER IS##READ-ONLY"
+
+
+loading "LOADING"
+
+
+
+
+
+
+pauseMessage1 "[ENTER] TO RESUME"
+
+pauseMessage2 "OR TYPE SOMETHING:"
+
+pauseMessage3 "PRESS [%] TO QUIT"
+pauseMessage3b "YOU CAN'T QUIT NOW"
+
+pauseMessage4 "-"
+
+
+
+quitMessage "[ESC] TO QUIT"
+
+
+
+playbackTag           "PLAYBACK %:"
+playbackToggleMessage "(PRESS [%] TO HIDE)"
+playbackEndMessage    "(PRESS [ESC] TO END)"
+
+
+enterDemoCode  "Enter a demo code:"
+checkingCode  "Checking demo permissions with server..."
+
+
+
+responseWarning "CANNOT REACH SERVER.##ATTEMPTING RETRY %d"
+
+
+err_webRequest   "ERROR:  WEB REQUEST FAILED."
+err_codeFailed  "This demo code was denied by the server."
+err_serverVerifyFailed  "Response from the server##could not be authenticated."
+
+err_badServerResponse  "ERROR:  UNEXPECTED##RESPONSE FROM SERVER"
