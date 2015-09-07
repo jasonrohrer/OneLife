@@ -648,7 +648,19 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 
                 
-                setDrawColor( 0, 0, 0, 1 );
+                float red, blue;
+                
+                red = 0;
+                blue = 0;
+                
+                if( o->heat > 0.75 ) {
+                    red = 1;
+                    }
+                else if( o->heat < 0.25 ) {
+                    blue = 1;
+                    }
+                
+                setDrawColor( red, 0, blue, 1 );
                 mainFont->drawString( string, 
                                       pos, alignCenter );
                 
@@ -974,15 +986,16 @@ void LivingLifePage::step() {
                 
                 char *holdingIDBuffer = new char[500];
 
-                int numRead = sscanf( lines[i], "%d %499s %d %d %d %lf",
+                int numRead = sscanf( lines[i], "%d %499s %f %d %d %d %lf",
                                       &( o.id ),
                                       holdingIDBuffer,
+                                      &( o.heat ),
                                       &forced,
                                       &( o.xd ),
                                       &( o.yd ),
                                       &( o.lastSpeed ) );
                 
-                if( numRead == 6 ) {
+                if( numRead == 7 ) {
                     
 
                     if( strstr( holdingIDBuffer, "," ) != NULL ) {
@@ -1024,6 +1037,8 @@ void LivingLifePage::step() {
                     if( existing != NULL ) {
                         existing->holdingID = o.holdingID;
                         
+                        existing->heat = o.heat;
+
                         if( existing->containedIDs != NULL ) {
                             delete [] existing->containedIDs;
                             }
@@ -1105,7 +1120,7 @@ void LivingLifePage::step() {
                         gameObjects.push_back( o );
                         }
                     }
-                else if( numRead == 3 ) {
+                else if( numRead == 4 ) {
                     if( strstr( lines[i], "X X" ) != NULL  ) {
                         // object deleted
                         

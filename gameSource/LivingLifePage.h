@@ -23,6 +23,9 @@ typedef struct LiveObject {
 
         int holdingID;
         
+        float heat;
+        
+
         int numContained;
         int *containedIDs;
         

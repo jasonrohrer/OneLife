@@ -32,6 +32,10 @@ typedef struct GridPos {
     } GridPos;
 
 
+#define HEAT_MAP_D 16
+
+float targetHeat = 10;
+
 
 typedef struct LiveObject {
         int id;
@@ -79,6 +83,18 @@ typedef struct LiveObject {
 
         char newMove;
         
+        // heat map that player carries around with them
+        // every time they stop moving, it is updated to compute
+        // their local temp
+        float heatMap[ HEAT_MAP_D * HEAT_MAP_D ];
+
+        // heat of local object
+        // map is tracked in heat units (each object produces an 
+        // integer amount of heat)
+        // it is mapped into 0..1 based on targetHeat to set this value here
+        float heat;
+        
+
     } LiveObject;
 
 
@@ -857,6 +873,12 @@ int main() {
                 newObject.error = false;
                 newObject.deleteSent = false;
                 newObject.newMove = false;
+                newObject.heat = 0.5;
+
+                
+                for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
+                    newObject.heatMap[i] = 0;
+                    }
 
                 sockPoll.addSocket( sock );
                 
@@ -1626,9 +1648,10 @@ int main() {
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
                 char *holdingString = getHoldingString( nextPlayer );
                 
-                char *updateLine = autoSprintf( "%d %s 0 X X %.2f\n", 
+                char *updateLine = autoSprintf( "%d %s %.2f 0 X X %.2f\n", 
                                                 nextPlayer->id,
                                                 holdingString,
+                                                nextPlayer->heat,
                                                 nextPlayer->moveSpeed );
                 
                 delete [] holdingString;
@@ -1691,9 +1714,136 @@ int main() {
 
             char *holdingString = getHoldingString( nextPlayer );
             
-            char *updateLine = autoSprintf( "%d %s %d %d %d %.2f\n", 
+
+            // recompute heat map
+            
+            // assume instant decay of heat off edge (infinite heat sink
+            // outside of our window).  Otherwise, we achieve stasis
+            // if entire map filled with same value
+            
+            for( int y=0; y<HEAT_MAP_D; y++ ) {
+                nextPlayer->heatMap[ y * HEAT_MAP_D ] = 0;
+                nextPlayer->heatMap[ y * HEAT_MAP_D + HEAT_MAP_D - 1 ] = 0;
+                }
+            for( int x=0; x<HEAT_MAP_D; x++ ) {
+                nextPlayer->heatMap[ x ] = 0;
+                nextPlayer->heatMap[ (HEAT_MAP_D - 1) * HEAT_MAP_D + x ] = 0;
+                }
+            
+            int heatOutputGrid[ HEAT_MAP_D * HEAT_MAP_D ];
+            float rGrid[ HEAT_MAP_D * HEAT_MAP_D ];
+
+            for( int y=0; y<HEAT_MAP_D; y++ ) {
+                int mapY = nextPlayer->ys + y - HEAT_MAP_D / 2;
+                
+                for( int x=0; x<HEAT_MAP_D; x++ ) {
+                    
+                    int mapX = nextPlayer->xs + x - HEAT_MAP_D / 2;
+                    
+
+                    ObjectRecord *o = getObject( getMapObject( mapX, mapY ) );
+                    
+                    int j = y * HEAT_MAP_D + x;
+
+                    if( o != NULL ) {
+                        heatOutputGrid[j] = o->heatValue;
+                        rGrid[j] = o->rValue;
+                        }
+                    else {
+                        heatOutputGrid[j] = 0;
+                        rGrid[j] = 0;
+                        }
+                    }
+                }
+
+            
+            //double startTime = Time::getCurrentTime();
+            
+            int numCycles = 20;
+            
+            int numNeighbors = 4;
+            int ndx[4] = { 0, 1,  0, -1 };
+            int ndy[4] = { 1, 0, -1,  0 };
+
+            for( int c=0; c<numCycles; c++ ) {
+                
+                float tempHeatGrid[ HEAT_MAP_D * HEAT_MAP_D ];
+                memcpy( tempHeatGrid, nextPlayer->heatMap, 
+                        HEAT_MAP_D * HEAT_MAP_D * sizeof( float ) );
+                
+                for( int y=1; y<HEAT_MAP_D-1; y++ ) {
+                    for( int x=1; x<HEAT_MAP_D-1; x++ ) {
+                        int j = y * HEAT_MAP_D + x;
+            
+                        float heatDelta = 0;
+                
+                        float centerWeight = 1 - rGrid[j];
+
+                        float centerOldHeat = tempHeatGrid[j];
+
+                        for( int n=0; n<numNeighbors; n++ ) {
+                
+                            int nx = x + ndx[n];
+                            int ny = y + ndy[n];
+                        
+                            int nj = ny * HEAT_MAP_D + nx;
+                        
+                            float nWeight = 1 - rGrid[ nj ];
+                    
+                            heatDelta += centerWeight * nWeight *
+                                ( tempHeatGrid[ nj ] - centerOldHeat );
+                            }
+                
+                        nextPlayer->heatMap[j] = 
+                            tempHeatGrid[j] + heatDelta / numNeighbors;
+                
+                        nextPlayer->heatMap[j] += heatOutputGrid[j];
+                        }
+                    }
+                }
+            
+            //printf( "Computing %d cycles took %f ms\n",
+            //        numCycles, 
+            //        ( Time::getCurrentTime() - startTime ) * 1000 );
+            /*
+            printf( "Player heat map:\n" );
+            
+            for( int y=0; y<HEAT_MAP_D; y++ ) {
+                
+                for( int x=0; x<HEAT_MAP_D; x++ ) {
+                    
+                    if( y == HEAT_MAP_D / 2 &&
+                        x == HEAT_MAP_D / 2 ) {
+                        printf( "p" );
+                        }
+                    if( heatOutputGrid[ y * HEAT_MAP_D + x ] > 0 ) {
+                        printf( "H" );
+                        }
+
+                    printf( "%.1f ", 
+                            nextPlayer->heatMap[ y * HEAT_MAP_D + x ] );
+                            //tempHeatGrid[ y * HEAT_MAP_D + x ] );
+                    }
+                printf( "\n" );
+                }
+            */
+
+            float playerHeat = 
+                nextPlayer->heatMap[ ( HEAT_MAP_D / 2 ) * HEAT_MAP_D +
+                                     ( HEAT_MAP_D / 2 ) ];
+            
+            // convert into 0..1 range, where 0.5 represents targetHeat
+            nextPlayer->heat = ( playerHeat / targetHeat ) / 2;
+            if( nextPlayer->heat > 1 ) {
+                nextPlayer->heat = 1;
+                }
+            
+
+            
+            char *updateLine = autoSprintf( "%d %s %.2f %d %d %d %.2f\n", 
                                             nextPlayer->id,
                                             holdingString,
+                                            nextPlayer->heat,
                                             nextPlayer->posForced,
                                             nextPlayer->xs, 
                                             nextPlayer->ys,
@@ -1798,7 +1948,8 @@ int main() {
 
                     // holding no object for now
                     char *messageLine = 
-                        autoSprintf( "%d %d 0 %d %d %.2f\n", o.id, o.holdingID,
+                        autoSprintf( "%d %d %.2f 0 %d %d %.2f\n", 
+                                     o.id, o.holdingID, o.heat,
                                      o.xs, o.ys, o.moveSpeed );
                     
 
@@ -1907,9 +2058,10 @@ int main() {
                                     getHoldingString( otherPlayer );
                                 
                                 char *updateLine = autoSprintf( 
-                                    "%d %s 0 %d %d %.2f\n", 
+                                    "%d %s %.2f 0 %d %d %.2f\n", 
                                     otherPlayer->id,
                                     holdingString,
+                                    otherPlayer->heat,
                                     otherPlayer->xs, 
                                     otherPlayer->ys,
                                     otherPlayer->moveSpeed ); 
