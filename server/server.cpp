@@ -1401,9 +1401,10 @@ int main() {
                                                          false };
                                     mapChangesPos.push_back( p );
                                     }
-                                else if( nextPlayer->holdingID == 0 ) {
+                                else if( nextPlayer->holdingID == 0 &&
+                                         ! getObject( target )->permanent ) {
                                     // no bare-hand transition applies to
-                                    // this target object
+                                    // this non-permanent target object
                                     
                                     // and nothing in it to take out
                                     
