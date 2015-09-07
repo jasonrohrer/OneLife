@@ -104,7 +104,7 @@ double tempHeatGrid[ GRID_D * GRID_D ];
 
 double rGrid[ GRID_D * GRID_D ];
 
-double heatOutpuGrid[ GRID_D * GRID_D ];
+double heatOutputGrid[ GRID_D * GRID_D ];
 
 
 
@@ -369,7 +369,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     for( int i=0; i<gridD*gridD; i++ ) {
         heatGrid[i] = 0;
         rGrid[i] = 0;
-        heatOutpuGrid[i] = 0;
+        heatOutputGrid[i] = 0;
         }
     
     }
@@ -878,7 +878,7 @@ void drawFrame( char inUpdate ) {
                 
                 heatGrid[i] = tempHeatGrid[i] + heatDelta / numNeighbors;
                 
-                heatGrid[i] += heatOutpuGrid[ i ];
+                heatGrid[i] += heatOutputGrid[ i ];
                 }
             }
         }
@@ -943,10 +943,10 @@ void drawFrameNoUpdate( char inUpdate ) {
             setDrawColor( red, green, blue, 1 );
             drawSquare( pos, 15 );
 
-            if( heatOutpuGrid[i] > 0 ) {
+            if( heatOutputGrid[i] > 0 ) {
                 setDrawColor( 0.5, 0.5, 0.5, 1 );
                 
-                char *string = autoSprintf( "%.1f", heatOutpuGrid[i] );
+                char *string = autoSprintf( "%.1f", heatOutputGrid[i] );
                 
                 mainFont->drawString( string, pos, alignCenter );
                 
@@ -1053,13 +1053,13 @@ void pointerDown( float inX, float inY ) {
             // heat sources
             
             if( isLastMouseButtonRight() ) {
-                heatOutpuGrid[i] -= 1;
-                if( heatOutpuGrid[i] < 0 ) {
-                    heatOutpuGrid[i] = 0;
+                heatOutputGrid[i] -= 1;
+                if( heatOutputGrid[i] < 0 ) {
+                    heatOutputGrid[i] = 0;
                     }
                 }
             else {
-                heatOutpuGrid[i] += 1;
+                heatOutputGrid[i] += 1;
                 }
             }
         else {
