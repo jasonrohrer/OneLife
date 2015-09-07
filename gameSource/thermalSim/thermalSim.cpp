@@ -913,8 +913,34 @@ void drawFrameNoUpdate( char inUpdate ) {
             
             setDrawColor( 1, 1, 1, .5 );
             drawSquare( pos, 16 );
+            
+            float red = ( heatGrid[i] - 60 ) / (60);
+            if( red < 0 ) {
+                red = 0;
+                }
 
-            setDrawColor( heatGrid[i], 0, 0, 1 );
+            float green = ( heatGrid[i] - 120 ) / (255 - 120);
+            
+            if( green < 0 ) {
+                green = 0;
+                }
+
+            float blue = 0;
+
+            if( heatGrid[i] < 60 ) {
+                blue = heatGrid[i] / 60;
+                }
+            else if( heatGrid[i] < 90 ) {
+                blue = 1;
+                }
+            else if( heatGrid[i] < 120 ) {
+                blue = (120 - heatGrid[i] ) / 30;
+                }
+            
+            
+            
+
+            setDrawColor( red, green, blue, 1 );
             drawSquare( pos, 15 );
 
             if( heatOutpuGrid[i] > 0 ) {
@@ -1027,13 +1053,13 @@ void pointerDown( float inX, float inY ) {
             // heat sources
             
             if( isLastMouseButtonRight() ) {
-                heatOutpuGrid[i] -= 0.1;
+                heatOutpuGrid[i] -= 1;
                 if( heatOutpuGrid[i] < 0 ) {
                     heatOutpuGrid[i] = 0;
                     }
                 }
             else {
-                heatOutpuGrid[i] += 0.1;
+                heatOutpuGrid[i] += 1;
                 }
             }
         else {
