@@ -16,6 +16,11 @@ typedef struct ObjectRecord {
         // can it not be picked up
         char permanent;
         
+        int heatValue;
+        
+        // between 0 and 1, how much heat is transmitted
+        float rValue;
+        
 
         // if it is a container, how many slots?
         // 0 if not a container
@@ -60,6 +65,8 @@ ObjectRecord **searchObjects( const char *inSearch,
 int addObject( const char *inDescription,
                char inContainable,
                char inPermanent,
+               int inHeatValue,
+               float inRValue,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,

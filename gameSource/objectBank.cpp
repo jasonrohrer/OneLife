@@ -90,15 +90,29 @@ void initObjectBank() {
                             
                             next++;
                             
-
+                            
                             int permRead = 0;                            
                             sscanf( lines[next], "permanent=%d", 
                                     &( permRead ) );
                             
                             r->permanent = permRead;
 
-
                             next++;
+
+
+                            r->heatValue = 0;                            
+                            sscanf( lines[next], "heatValue=%d", 
+                                    &( r->heatValue ) );
+                            
+                            next++;
+
+
+                            r->rValue = 0;                            
+                            sscanf( lines[next], "rValue=%f", 
+                                    &( r->rValue ) );
+                            
+                            next++;
+
 
                             r->numSlots = 0;
                             sscanf( lines[next], "numSlots=%d", 
@@ -305,6 +319,8 @@ ObjectRecord **searchObjects( const char *inSearch,
 int addObject( const char *inDescription,
                char inContainable,
                char inPermanent,
+               int inHeatValue,
+               float inRValue,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
@@ -359,6 +375,9 @@ int addObject( const char *inDescription,
 
         lines.push_back( autoSprintf( "containable=%d", (int)inContainable ) );
         lines.push_back( autoSprintf( "permanent=%d", (int)inPermanent ) );
+        
+        lines.push_back( autoSprintf( "heatValue=%d", inHeatValue ) );
+        lines.push_back( autoSprintf( "rValue=%f", inRValue ) );
         
         lines.push_back( autoSprintf( "numSlots=%d", inNumSlots ) );
 
@@ -445,6 +464,9 @@ int addObject( const char *inDescription,
     r->containable = inContainable;
     r->permanent = inPermanent;
     
+    r->heatValue = inHeatValue;
+    r->rValue = inRValue;
+
     r->numSlots = inNumSlots;
     
     r->slotPos = new doublePair[ inNumSlots ];

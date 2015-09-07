@@ -57,6 +57,10 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         TextField mDescriptionField;
         
+        TextField mHeatValueField;
+        TextField mRValueField;
+        
+
         TextButton mSaveObjectButton;
         TextButton mReplaceObjectButton;
 
@@ -90,6 +94,18 @@ class EditorObjectPage : public GamePage, public ActionListener {
         int mPickedObjectLayer;
         int mPickedSlot;
         doublePair mPickedMouseOffset;
+
+        
+        double getClosestSpriteOrSlot( float inX, float inY,
+                                       int *outSprite,
+                                       int *outSlot );
+
+        int mHoverObjectLayer;
+        int mHoverSlot;
+        
+        // fades when mouse stops moving
+        float mHoverStrength;
+        
     };
 
 

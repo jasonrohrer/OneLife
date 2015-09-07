@@ -836,4 +836,64 @@ void TextField::unfocusAll() {
     sFocusedTextField = NULL;
     }
 
+
+
+
+int TextField::getInt() {
+    char *text = getText();
+    
+    int i = 0;
+    
+    sscanf( text, "%d", &i );
+    
+    delete [] text;
+            
+    return i;
+    }
+
+        
+        
+float TextField::getFloat() {
+    char *text = getText();
+            
+    float f = 0;
+    
+    sscanf( text, "%f", &f );
+    
+    delete [] text;
+    
+    return f;
+    }
+
+
+
+void TextField::setInt( int inI ) {
+    char *text = autoSprintf( "%d", inI );
+    
+    setText( text );
+    delete [] text;
+    }
+
+        
+
+void TextField::setFloat( float inF, int inDigitsAfterDecimal ) {
+
+    char *formatString;
+    
+    if( inDigitsAfterDecimal == -1 ) {
+        formatString = stringDuplicate( "%f" );
+        }
+    else {
+        formatString = autoSprintf( "%%.%df\n", inDigitsAfterDecimal );
+        }
+
+    char *text = autoSprintf( formatString, inF );
+    
+    delete [] formatString;
+
+    setText( text );
+    delete [] text;
+    }
+
+
         

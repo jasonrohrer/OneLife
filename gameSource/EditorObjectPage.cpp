@@ -16,6 +16,8 @@
 extern Font *mainFont;
 extern Font *smallFont;
 
+extern double frameRateFactor;
+
 
 #include "SpritePickable.h"
 
@@ -33,6 +35,14 @@ EditorObjectPage::EditorObjectPage()
                              0,  -260, 6,
                              false,
                              "Description", NULL, NULL ),
+          mHeatValueField( smallFont, 
+                           -150,  32, 4,
+                           false,
+                           "Heat", "0123456789", NULL ),
+          mRValueField( smallFont, 
+                        -150,  0, 4,
+                        false,
+                        "R", "0123456789.", NULL ),
           mSaveObjectButton( smallFont, 210, -260, "Save New" ),
           mReplaceObjectButton( smallFont, 310, -260, "Replace" ),
           mClearObjectButton( mainFont, 0, 160, "Blank" ),
@@ -50,6 +60,9 @@ EditorObjectPage::EditorObjectPage()
     mSlotsDemoObject = -1;
 
     addComponent( &mDescriptionField );
+    addComponent( &mHeatValueField );
+    addComponent( &mRValueField );
+
     addComponent( &mSaveObjectButton );
     addComponent( &mReplaceObjectButton );
     addComponent( &mImportEditorButton );
@@ -107,7 +120,14 @@ EditorObjectPage::EditorObjectPage()
 
     mPickedObjectLayer = -1;
     mPickedSlot = -1;
+    
+    mHoverObjectLayer = -1;
+    mHoverSlot = -1;
+    mHoverStrength = 0;
 
+
+    mHeatValueField.setText( "0" );
+    mRValueField.setText( "0.0" );
 
 
     double boxY = -150;
@@ -142,6 +162,20 @@ EditorObjectPage::~EditorObjectPage() {
 
 
 
+float getFloat( TextField *inField ) {
+    char *text = inField->getText();
+    
+    float f = 0;
+    
+    sscanf( text, "%f", &f );
+
+    delete [] text;
+    
+    return f;
+    }
+
+
+
 
 
 
@@ -170,6 +204,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         addObject( text,
                    mCheckboxes[0]->getToggled(),
                    mCheckboxes[1]->getToggled(),
+                   mHeatValueField.getInt(),
+                   mRValueField.getFloat(),
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos );
@@ -187,6 +223,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         addObject( text,
                    mCheckboxes[0]->getToggled(),
                    mCheckboxes[1]->getToggled(),
+                   mHeatValueField.getInt(),
+                   mRValueField.getFloat(),
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
@@ -211,6 +249,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         for( int i=0; i<NUM_OBJECT_CHECKBOXES; i++ ) {
             mCheckboxes[i]->setToggled( false );
             }
+
+        mHeatValueField.setText( "0" );
+        mRValueField.setText( "0.0" );
 
         mCurrentObject.numSlots = 0;
         
@@ -366,7 +407,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.id = objectID;
                 
             mDescriptionField.setText( pickedRecord->description );
-                
+
+            mHeatValueField.setInt( pickedRecord->heatValue );
+            mRValueField.setFloat( pickedRecord->rValue, 2 );
+            
+
             mCurrentObject.containable = pickedRecord->containable;
             
             mCurrentObject.numSlots = pickedRecord->numSlots;
@@ -454,8 +499,16 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         if( mSlotsDemoObject == -1 ) {
             
             for( int i=0; i<mCurrentObject.numSlots; i++ ) {
-            
-                setDrawColor( 1, 1, 1, 0.5 );
+                
+                float blue = 1;
+                float red = 1;
+                
+                if( mHoverSlot == i && mHoverStrength > 0 ) {
+                    blue = 1 - mHoverStrength;
+                    red = 1 - mHoverStrength;
+                    }
+                
+                setDrawColor( red, 1, blue, 0.5 );
                 drawSprite( mSlotPlaceholderSprite, 
                             mCurrentObject.slotPos[i] );
                 
@@ -484,13 +537,28 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     
 
 
-    setDrawColor( 1, 1, 1, 1 );
+    
 
     doublePair pos = { 0, 0 };
     
-    drawObject( &mCurrentObject, pos );
+
+    for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+        doublePair spritePos = add( mCurrentObject.spritePos[i], pos );
+        
+        float blue = 1;
+        float red = 1;
+                
+        if( mHoverObjectLayer == i && mHoverStrength > 0 ) {
+            blue = 1 - mHoverStrength;
+            red = 1 - mHoverStrength;
+            }
+                
+        setDrawColor( red, 1, blue, 1 );
+        drawSprite( getSprite( mCurrentObject.sprites[i] ), spritePos );
+        }
 
 
+    setDrawColor( 1, 1, 1, 1 );
     pos.y -= 150;
     
     pos.x -= 200;
@@ -515,6 +583,13 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
 
 void EditorObjectPage::step() {
+    
+    mHoverStrength -= 0.01 * frameRateFactor;
+    
+    if( mHoverStrength < 0 ) {
+        mHoverStrength = 0;
+        }
+    
     }
 
 
@@ -571,11 +646,9 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
 
 
 
-void EditorObjectPage::pointerMove( float inX, float inY ) {
-    }
-
-
-void EditorObjectPage::pointerDown( float inX, float inY ) {
+double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
+                                               int *outSprite,
+                                               int *outSlot ) {
 
     doublePair pos = { inX, inY };
     
@@ -583,7 +656,7 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
     int oldSlotPick = mPickedSlot;
     
 
-    mPickedObjectLayer = -1;
+    *outSprite = -1;
     double smallestDist = 9999999;
     
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
@@ -591,19 +664,20 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
         double dist = distance( pos, mCurrentObject.spritePos[i] );
         
         if( dist < smallestDist ) {
-            mPickedObjectLayer = i;
+            *outSprite = i;
             
             smallestDist = dist;
             }
         }
     
+    *outSlot = -1;
     for( int i=0; i<mCurrentObject.numSlots; i++ ) {
         
         double dist = distance( pos, mCurrentObject.slotPos[i] );
         
         if( dist < smallestDist ) {
-            mPickedObjectLayer = -1;
-            mPickedSlot = i;
+            *outSprite = -1;
+            *outSlot = i;
             
             smallestDist = dist;
             }
@@ -613,19 +687,45 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
     if( smallestDist > 32 ) {
         // too far to count as a new pick
 
-        if( smallestDist < 100 ) {
+        if( smallestDist < 52 ) {
             // drag old pick around
-            mPickedObjectLayer = oldLayerPick;
-            mPickedSlot = oldSlotPick;
+            *outSprite = oldLayerPick;
+            *outSlot = oldSlotPick;
             }
-        else if( smallestDist < 200 ) {
+        else {
             // far enough away to clear the pick completely
             // and allow whole-object dragging
-            mPickedObjectLayer = -1;
-            mPickedSlot = -1;
+            *outSprite = -1;
+            *outSlot = -1;
             }
-        
         }
+    return smallestDist;
+    }
+
+
+
+
+
+void EditorObjectPage::pointerMove( float inX, float inY ) {
+    getClosestSpriteOrSlot( inX, inY, &mHoverObjectLayer, &mHoverSlot );
+    mHoverStrength = 1;
+    }
+
+
+
+
+void EditorObjectPage::pointerDown( float inX, float inY ) {
+    mHoverStrength = 0;
+    
+    if( inX < -80 || inX > 80 || 
+        inY < -80 || inY > 80 ) {
+        return;
+        }
+    
+    doublePair pos = { inX, inY };
+    
+    double smallestDist = 
+        getClosestSpriteOrSlot( inX, inY, &mPickedObjectLayer, &mPickedSlot );
     
     
     if( mPickedObjectLayer != -1 || mPickedSlot != -1 ) {
@@ -653,6 +753,13 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
 
 
 void EditorObjectPage::pointerDrag( float inX, float inY ) {
+    mHoverStrength = 0;
+    if( inX < -80 || inX > 80 || 
+        inY < -80 || inY > 80 ) {
+        return;
+        }
+    
+    
     doublePair pos = {inX, inY};
 
     if( mPickedObjectLayer != -1 ) {

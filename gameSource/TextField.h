@@ -53,6 +53,18 @@ class TextField : public PageComponent, public ActionListenerList {
         // defaults to false
         void setFireOnAnyTextChange( char inFireOnAny );
 
+
+        int getInt();
+        
+        float getFloat();
+        
+
+        void setInt( int inI );
+        
+        // if inDigitsAfterDecimal = -1 (default), no limit
+        void setFloat( float inF, int inDigitsAfterDecimal=-1 );
+        
+
         
         virtual void setActive( char inActive );
         virtual char isActive();
