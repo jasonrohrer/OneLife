@@ -34,7 +34,8 @@ EditorTransitionPage.cpp \
 SpriteButton.cpp \
 SpriteToggleButton.cpp \
 CheckboxButton.cpp \
-
+animationBank.cpp \
+EditorAnimationPage.cpp \
 
 
 GAME_GRAPHICS = \

@@ -54,6 +54,7 @@ CustomRandomSource randSource( 34957197 );
 #include "EditorImportPage.h"
 #include "EditorObjectPage.h"
 #include "EditorTransitionPage.h"
+#include "EditorAnimationPage.h"
 
 
 #include "spriteBank.h"
@@ -64,6 +65,7 @@ CustomRandomSource randSource( 34957197 );
 EditorImportPage *importPage;
 EditorObjectPage *objectPage;
 EditorTransitionPage *transPage;
+EditorAnimationPage *animPage;
 
 GamePage *currentGamePage = NULL;
 
@@ -386,11 +388,13 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     initSpriteBank();
     initObjectBank();
     initTransBank();
+    initAnimationBank();
     
 
     importPage = new EditorImportPage;
     objectPage = new EditorObjectPage;
     transPage = new EditorTransitionPage;
+    animPage = new EditorAnimationPage;
 
     currentGamePage = importPage;
     currentGamePage->base_makeActive( true );
@@ -432,13 +436,15 @@ void freeFrameDrawer() {
     delete importPage;
     delete objectPage;
     delete transPage;
-
+    delete animPage;
 
     freeTransBank();
     
     freeObjectBank();
 
     freeSpriteBank();
+    
+    freeAnimationBank();
     }
 
 
@@ -897,9 +903,19 @@ void drawFrame( char inUpdate ) {
                 currentGamePage = transPage;
                 currentGamePage->base_makeActive( true );
                 }
+            else if( objectPage->checkSignal( "animEditor" ) ) {
+                currentGamePage = animPage;
+                currentGamePage->base_makeActive( true );
+                }
             }
         else if( currentGamePage == transPage ) {
             if( transPage->checkSignal( "objectEditor" ) ) {
+                currentGamePage = objectPage;
+                currentGamePage->base_makeActive( true );
+                }
+            }
+        else if( currentGamePage == animPage ) {
+            if( animPage->checkSignal( "objectEditor" ) ) {
                 currentGamePage = objectPage;
                 currentGamePage->base_makeActive( true );
                 }

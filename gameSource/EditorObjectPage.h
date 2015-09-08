@@ -69,6 +69,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
         TextButton mImportEditorButton;
         TextButton mTransEditorButton;
+        TextButton mAnimEditorButton;
         
         TextButton mMoreSlotsButton;
         TextButton mLessSlotsButton;

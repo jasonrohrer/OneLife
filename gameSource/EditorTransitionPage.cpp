@@ -70,7 +70,7 @@ EditorTransitionPage::EditorTransitionPage()
                                "AutoDecay Seconds", "0123456789", NULL ),
           mSaveTransitionButton( mainFont, -310, 0, "Save" ),
           mObjectPicker( &objectPickable, +310, 100 ),
-          mObjectEditorButton( mainFont, 310, 260, "Objects" ),
+          mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mProducedByNext( smallFont, 200, 260, "Next" ),
           mProducedByPrev( smallFont, -350, 260, "Prev" ),
           mProducesNext( smallFont, 200, -260, "Next" ),

@@ -48,6 +48,7 @@ EditorObjectPage::EditorObjectPage()
           mClearObjectButton( mainFont, 0, 160, "Blank" ),
           mImportEditorButton( mainFont, -210, 260, "Sprites" ),
           mTransEditorButton( mainFont, 210, 260, "Trans" ),
+          mAnimEditorButton( mainFont, 330, 260, "Anim" ),
           mMoreSlotsButton( smallFont, -120, -110, "More" ),
           mLessSlotsButton( smallFont, -120, -190, "Less" ),
           mDemoSlotsButton( smallFont, 150, 32, "Demo Slots" ),
@@ -67,6 +68,7 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mReplaceObjectButton );
     addComponent( &mImportEditorButton );
     addComponent( &mTransEditorButton );
+    addComponent( &mAnimEditorButton );
 
     addComponent( &mMoreSlotsButton );
     addComponent( &mLessSlotsButton );
@@ -91,6 +93,7 @@ EditorObjectPage::EditorObjectPage()
     mReplaceObjectButton.addActionListener( this );
     mImportEditorButton.addActionListener( this );
     mTransEditorButton.addActionListener( this );
+    mAnimEditorButton.addActionListener( this );
 
     mClearObjectButton.addActionListener( this );
 
@@ -282,6 +285,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mTransEditorButton ) {
         setSignal( "transEditor" );
+        }
+    else if( inTarget == &mAnimEditorButton ) {
+        setSignal( "animEditor" );
         }
     else if( inTarget == &mMoreSlotsButton ) {
         mCurrentObject.containable = 0;
