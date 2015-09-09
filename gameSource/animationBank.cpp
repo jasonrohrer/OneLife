@@ -249,24 +249,9 @@ void addAnimation( AnimationRecord *inRecord ) {
     
     // copy to add it to memory bank
     
-    AnimationRecord *newRecord = new AnimationRecord;
     
-    newRecord->objectID = inRecord->objectID;
-    newRecord->type = inRecord->type;
-    
-    newRecord->numSprites = inRecord->numSprites;
-    newRecord->numSlots = inRecord->numSlots;
-    
-    newRecord->spriteAnim = new SpriteAnimationRecord[ newRecord->numSprites ];
-    newRecord->slotAnim = new SpriteAnimationRecord[ newRecord->numSlots ];
-    
-    memcpy( newRecord->spriteAnim, inRecord->spriteAnim,
-            sizeof( SpriteAnimationRecord ) * newRecord->numSprites );
-    
-    memcpy( newRecord->slotAnim, inRecord->slotAnim,
-            sizeof( SpriteAnimationRecord ) * newRecord->numSlots );
 
-    idMap[newID][inRecord->type] = newRecord;
+    idMap[newID][inRecord->type] = copyRecord( inRecord );
     
     
 
@@ -377,6 +362,16 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
         drawObject( getObject( inObjectID ), inPos );
         return;
         }
+    else {
+        drawObjectAnim( inObjectID, r, inFrameTime, inPos );
+        }
+    }
+
+
+
+void drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
+                     double inFrameTime, 
+                     doublePair inPos ) {
 
     ObjectRecord *obj = getObject( inObjectID );
 
@@ -385,22 +380,22 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
         
         double rot = 0;
         
-        if( i < r->numSprites ) {
+        if( i < inAnim->numSprites ) {
             
             pos.x += getOscOffset( 
                 inFrameTime,
-                r->spriteAnim[i].xOscPerSec,
-                r->spriteAnim[i].xAmp,
-                r->spriteAnim[i].xPhase );
+                inAnim->spriteAnim[i].xOscPerSec,
+                inAnim->spriteAnim[i].xAmp,
+                inAnim->spriteAnim[i].xPhase );
             
             pos.y += getOscOffset( 
                 inFrameTime,
-                r->spriteAnim[i].yOscPerSec,
-                r->spriteAnim[i].yAmp,
-                r->spriteAnim[i].yPhase );
+                inAnim->spriteAnim[i].yOscPerSec,
+                inAnim->spriteAnim[i].yAmp,
+                inAnim->spriteAnim[i].yPhase );
             
-            rot = r->spriteAnim[i].rotPerSec * inFrameTime + 
-                r->spriteAnim[i].rotPhase;
+            rot = inAnim->spriteAnim[i].rotPerSec * inFrameTime + 
+                inAnim->spriteAnim[i].rotPhase;
             }
         
         drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot );
@@ -414,11 +409,95 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      int inNumContained, int *inContainedIDs ) {
     
     AnimationRecord *r = getAnimation( inObjectID, inType );
-    
-
+ 
     if( r == NULL ) {
         drawObject( getObject( inObjectID ), inPos,
                     inNumContained, inContainedIDs );
         }
-    
+    else {
+        drawObjectAnim( inObjectID, r, inFrameTime, inPos,
+                        inNumContained, inContainedIDs );
+        }
     }
+
+
+
+void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
+    double inFrameTime, 
+    doublePair inPos,
+    int inNumContained, int *inContainedIDs ) {
+    
+    // first, draw jiggling (never rotating) objects in slots
+    // can't safely rotate them, because they may be compound objects
+    
+    ObjectRecord *obj = getObject( inObjectID );
+
+    for( int i=0; i<obj->numSlots; i++ ) {
+        if( i < inNumContained ) {
+
+            doublePair pos = add( obj->slotPos[i], inPos );
+        
+            if( i < inAnim->numSlots ) {
+                
+                pos.x += getOscOffset( 
+                    inFrameTime,
+                    inAnim->slotAnim[i].xOscPerSec,
+                    inAnim->slotAnim[i].xAmp,
+                    inAnim->slotAnim[i].xPhase );
+                
+                pos.y += getOscOffset( 
+                    inFrameTime,
+                    inAnim->slotAnim[i].yOscPerSec,
+                    inAnim->slotAnim[i].yAmp,
+                    inAnim->slotAnim[i].yPhase );
+                }
+                    
+            drawObject( getObject( inContainedIDs[i] ), pos );
+            }
+        
+        } 
+
+    // draw animating object on top of contained slots
+    drawObjectAnim( inObjectID, inAnim, inFrameTime, inPos );
+    }
+
+
+
+AnimationRecord *copyRecord( AnimationRecord *inRecord ) {
+    AnimationRecord *newRecord = new AnimationRecord;
+    
+    newRecord->objectID = inRecord->objectID;
+    newRecord->type = inRecord->type;
+    
+    newRecord->numSprites = inRecord->numSprites;
+    newRecord->numSlots = inRecord->numSlots;
+    
+    newRecord->spriteAnim = new SpriteAnimationRecord[ newRecord->numSprites ];
+    newRecord->slotAnim = new SpriteAnimationRecord[ newRecord->numSlots ];
+    
+    memcpy( newRecord->spriteAnim, inRecord->spriteAnim,
+            sizeof( SpriteAnimationRecord ) * newRecord->numSprites );
+    
+    memcpy( newRecord->slotAnim, inRecord->slotAnim,
+            sizeof( SpriteAnimationRecord ) * newRecord->numSlots );
+    
+    return newRecord;
+    }
+
+
+
+void zeroRecord( SpriteAnimationRecord *inRecord ) {
+    inRecord->xOscPerSec = 0;
+    inRecord->xAmp = 0;
+    inRecord->xPhase = 0;
+    
+    inRecord->yOscPerSec = 0;
+    inRecord->yAmp = 0;
+    inRecord->yPhase = 0;
+    
+    inRecord->rotPerSec = 0;
+    inRecord->rotPhase = 0;
+    }
+
+        
+

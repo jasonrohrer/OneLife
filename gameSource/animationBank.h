@@ -28,6 +28,9 @@ typedef struct SpriteAnimationRecord {
     } SpriteAnimationRecord;
 
 
+void zeroRecord( SpriteAnimationRecord *inRecord );
+
+
 
 typedef struct AnimationRecord {
         int objectID;
@@ -42,6 +45,9 @@ typedef struct AnimationRecord {
         
     } AnimationRecord;
 
+
+
+AnimationRecord *copyRecord( AnimationRecord *inRecord );
 
 
 void initAnimationBank();
@@ -64,11 +70,23 @@ void addAnimation( AnimationRecord *inRecord );
 void clearAnimation( int inObjectID, AnimType inType );
 
 
+
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 
                      doublePair inPos );
 
 
+void drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
+                     double inFrameTime, 
+                     doublePair inPos );
+
+
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 
+                     doublePair inPos,
+                     int inNumContained, int *inContainedIDs );
+
+
+void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
+                     double inFrameTime, 
                      doublePair inPos,
                      int inNumContained, int *inContainedIDs );
 

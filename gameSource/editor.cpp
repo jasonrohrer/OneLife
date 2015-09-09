@@ -281,6 +281,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                       const char *inCustomRecordedGameData,
                       char inPlayingBack ) {
     
+    toggleLinearMagFilter( true );
+    
     gamePlayingBack = inPlayingBack;
     
     screenW = inWidth;

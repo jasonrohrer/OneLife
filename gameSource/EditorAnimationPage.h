@@ -22,7 +22,7 @@
 #include "objectBank.h"
 
 
-#define NUM_OBJECT_CHECKBOXES 2
+#define NUM_ANIM_CHECKBOXES 3
 
 
 
@@ -56,9 +56,21 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         
         Picker mObjectPicker;
 
+        CheckboxButton *mCheckboxes[NUM_ANIM_CHECKBOXES];
+        const char *mCheckboxNames[NUM_ANIM_CHECKBOXES];
+        AnimType mCheckboxAnimTypes[NUM_ANIM_CHECKBOXES];
 
-        ObjectRecord mCurrentObject;
         
+        int mCurrentObjectID;
+
+        AnimationRecord *mCurrentAnim;
+        
+        AnimType mCurrentType;
+
+        int mFrameCount;
+
+        void freeCurrentAnim();
+        void populateCurrentAnim();
         
     };
 
