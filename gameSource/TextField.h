@@ -9,7 +9,7 @@
 
 
 // fires action performed when ENTER hit inside field
-// (can be toggled to fire on every text change)
+// (can be toggled to fire on every text change or every focus loss)
 class TextField : public PageComponent, public ActionListenerList {
         
     public:
@@ -52,6 +52,9 @@ class TextField : public PageComponent, public ActionListenerList {
 
         // defaults to false
         void setFireOnAnyTextChange( char inFireOnAny );
+
+        // defaults to false
+        void setFireOnLoseFocus( char inFireOnLeave );
 
 
         int getInt();
@@ -116,6 +119,7 @@ class TextField : public PageComponent, public ActionListenerList {
         int mMaxLength;
         
         char mFireOnAnyChange;
+        char mFireOnLeave;
         char mForceCaps;
 
         char *mLabelText;

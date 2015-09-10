@@ -31,6 +31,7 @@ TextField::TextField( Font *inDisplayFont,
           mCharsWide( inCharsWide ),
           mMaxLength( -1 ),
           mFireOnAnyChange( false ),
+          mFireOnLeave( false ),
           mForceCaps( inForceCaps ),
           mLabelText( NULL ),
           mAllowedChars( NULL ), mForbiddenChars( NULL ),
@@ -616,6 +617,11 @@ void TextField::setFireOnAnyTextChange( char inFireOnAny ) {
     }
 
 
+void TextField::setFireOnLoseFocus( char inFireOnLeave ) {
+    mFireOnLeave = inFireOnLeave;
+    }
+
+
 
 
 void TextField::keyDown( unsigned char inASCII ) {
@@ -798,6 +804,9 @@ void TextField::unfocus() {
 
     if( sFocusedTextField == this ) {
         sFocusedTextField = NULL;
+        if( mFireOnLeave ) {
+            fireActionPerformed( this );
+            }
         }    
     }
 

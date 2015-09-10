@@ -33,15 +33,27 @@ EditorAnimationPage::EditorAnimationPage()
           mCurrentObjectID( -1 ),
           mCurrentAnim( NULL ),
           mCurrentType( ground ),
+          mCurrentSpriteOrSlot( 0 ),
+          mNextSpriteOrSlotButton( smallFont, -180, -210, "Next Layer" ),
+          mPrevSpriteOrSlotButton( smallFont, -180, -270, "Prev Layer" ),
           mFrameCount( 0 ) {
+    
     
     addComponent( &mObjectEditorButton );
     addComponent( &mObjectPicker );
 
+    addComponent( &mNextSpriteOrSlotButton );
+    addComponent( &mPrevSpriteOrSlotButton );
+
     mObjectEditorButton.addActionListener( this );
     mObjectPicker.addActionListener( this );
 
+    mNextSpriteOrSlotButton.addActionListener( this );
+    mPrevSpriteOrSlotButton.addActionListener( this );
 
+    checkNextPrevVisible();
+    
+    
     double boxY = -150;
     
     for( int i=0; i<NUM_ANIM_CHECKBOXES; i++ ) {
@@ -60,6 +72,48 @@ EditorAnimationPage::EditorAnimationPage()
     mCheckboxAnimTypes[2] = moving;
 
     mCheckboxes[0]->setToggled( true );
+
+
+
+    boxY = 100;
+    
+    double space = 20;
+    double x = -140;
+    
+    mSliders[0] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 3, "X Osc" );
+    mSliders[1] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 64, "X Amp" );
+    mSliders[2] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 1, "X Phase" );
+
+    mSliders[3] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 3, "Y Osc" );
+    mSliders[4] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 64, "Y Amp" );
+    mSliders[5] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 1, "Y Phase" );
+    
+    mSliders[6] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 3, "Rot" );
+    mSliders[7] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 1, "Rot Phase" );
+        
+
+    for( int i=0; i<NUM_ANIM_SLIDERS; i++ ) {
+        addComponent( mSliders[i] );
+
+        mSliders[i]->addActionListener( this );
+        mSliders[i]->setVisible( false );
+        }
     }
 
 
@@ -70,7 +124,12 @@ EditorAnimationPage::~EditorAnimationPage() {
     for( int i=0; i<NUM_ANIM_CHECKBOXES; i++ ) {
         delete mCheckboxes[i];
         }
+    for( int i=0; i<NUM_ANIM_SLIDERS; i++ ) {
+        delete mSliders[i];
+        }
     }
+
+
 
 void EditorAnimationPage::freeCurrentAnim() {
     if( mCurrentAnim != NULL ) {
@@ -166,8 +225,79 @@ void EditorAnimationPage::populateCurrentAnim() {
         mCurrentAnim->numSlots = slots;
         }        
     
+    updateSlidersFromAnim();
     }
 
+
+
+void EditorAnimationPage::checkNextPrevVisible() {
+    if( mCurrentObjectID == -1 ) {
+        mNextSpriteOrSlotButton.setVisible( false );
+        mPrevSpriteOrSlotButton.setVisible( false );
+        return;
+        }
+    
+    ObjectRecord *r = getObject( mCurrentObjectID );
+
+    int num = r->numSprites + r->numSlots;
+    
+    mNextSpriteOrSlotButton.setVisible( mCurrentSpriteOrSlot < num - 1 );
+    mPrevSpriteOrSlotButton.setVisible( mCurrentSpriteOrSlot > 0 );
+    }
+
+
+
+void EditorAnimationPage::updateAnimFromSliders() {
+    SpriteAnimationRecord *r;
+    
+    if( mCurrentSpriteOrSlot > mCurrentAnim->numSprites - 1 ) {
+        r = &( mCurrentAnim->slotAnim[ mCurrentSpriteOrSlot -
+                                       mCurrentAnim->numSprites ] );
+        }
+    else {
+        r = &( mCurrentAnim->spriteAnim[ mCurrentSpriteOrSlot ] );
+        }
+    
+    
+    r->xOscPerSec = mSliders[0]->getValue();
+    r->xAmp = mSliders[1]->getValue();
+    r->xPhase = mSliders[2]->getValue();
+    r->yOscPerSec = mSliders[3]->getValue();
+    r->yAmp = mSliders[4]->getValue();
+    r->yPhase = mSliders[5]->getValue();
+    r->rotPerSec = mSliders[6]->getValue();
+    r->rotPhase = mSliders[7]->getValue();
+    }
+
+
+
+void EditorAnimationPage::updateSlidersFromAnim() {
+    SpriteAnimationRecord *r;
+    
+    if( mCurrentSpriteOrSlot > mCurrentAnim->numSprites - 1 ) {
+        r = &( mCurrentAnim->slotAnim[ mCurrentSpriteOrSlot -
+                                       mCurrentAnim->numSprites ] );
+        }
+    else {
+        r = &( mCurrentAnim->spriteAnim[ mCurrentSpriteOrSlot ] );
+        }
+    
+    
+    mSliders[0]->setValue( r->xOscPerSec );
+    mSliders[1]->setValue( r->xAmp );
+    mSliders[2]->setValue( r->xPhase );
+    mSliders[3]->setValue( r->yOscPerSec );
+    mSliders[4]->setValue( r->yAmp );
+    mSliders[5]->setValue( r->yPhase );
+    mSliders[6]->setValue( r->rotPerSec );
+    mSliders[7]->setValue( r->rotPhase );
+
+    for( int i=0; i<NUM_ANIM_SLIDERS; i++ ) {
+        mSliders[i]->setVisible( true );
+        }
+    }
+
+    
     
 
 
@@ -183,8 +313,22 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         if( newPickID != -1 ) {
             mCurrentObjectID = newPickID;
             
+            mCurrentSpriteOrSlot = 0;
+            
+            checkNextPrevVisible();
+            
             populateCurrentAnim();
             }
+        }
+    else if( inTarget == &mNextSpriteOrSlotButton ) {
+        mCurrentSpriteOrSlot ++;
+        checkNextPrevVisible();
+        updateSlidersFromAnim();
+        }
+    else if( inTarget == &mPrevSpriteOrSlotButton ) {
+        mCurrentSpriteOrSlot --;
+        checkNextPrevVisible();
+        updateSlidersFromAnim();
         }
     else {
         
@@ -212,7 +356,23 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         if( mCurrentObjectID != -1 &&
             oldType != mCurrentType ) {
             
+            mCurrentSpriteOrSlot = 0;
+            
+            checkNextPrevVisible();
             populateCurrentAnim();
+            }
+        
+
+        if( boxHit != -1 ) {
+            return;
+            }
+        
+        // check sliders
+        for( int i=0; i<NUM_ANIM_SLIDERS; i++ ) {
+            if( inTarget == mSliders[i] ) {
+                updateAnimFromSliders();
+                break;
+                }
             }
         
         }
@@ -252,6 +412,34 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
         
         smallFont->drawString( mCheckboxNames[i], pos, alignRight );
         }
+
+    if( mCurrentObjectID != -1 ) {
+        
+        setDrawColor( 1, 1, 1, 1 );
+        
+        pos = mNextSpriteOrSlotButton.getPosition();
+        
+        pos.y -= 30;
+        
+        const char *tag;
+        int num;
+        
+        
+        if( mCurrentSpriteOrSlot > mCurrentAnim->numSprites - 1 ) {
+            tag = "Slot";
+            num = mCurrentSpriteOrSlot - mCurrentAnim->numSprites;
+            }
+        else {
+            tag = "Sprite";
+            num = mCurrentSpriteOrSlot;
+            }
+
+        char *string = autoSprintf( "%s %d", tag, num );
+        smallFont->drawString( string, pos, alignLeft );
+        delete [] string;
+        }
+    
+    
     }
 
 

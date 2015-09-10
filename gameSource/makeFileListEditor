@@ -36,6 +36,8 @@ SpriteToggleButton.cpp \
 CheckboxButton.cpp \
 animationBank.cpp \
 EditorAnimationPage.cpp \
+ValueSlider.cpp \
+
 
 
 GAME_GRAPHICS = \

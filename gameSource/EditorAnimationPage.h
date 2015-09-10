@@ -16,6 +16,9 @@
 
 #include "CheckboxButton.h"
 
+#include "ValueSlider.h"
+
+
 #include "Picker.h"
 
 #include "animationBank.h"
@@ -23,7 +26,7 @@
 
 
 #define NUM_ANIM_CHECKBOXES 3
-
+#define NUM_ANIM_SLIDERS 8
 
 
 class EditorAnimationPage : public GamePage, public ActionListener {
@@ -59,13 +62,27 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         CheckboxButton *mCheckboxes[NUM_ANIM_CHECKBOXES];
         const char *mCheckboxNames[NUM_ANIM_CHECKBOXES];
         AnimType mCheckboxAnimTypes[NUM_ANIM_CHECKBOXES];
-
+        
+        ValueSlider *mSliders[ NUM_ANIM_SLIDERS ];
         
         int mCurrentObjectID;
 
         AnimationRecord *mCurrentAnim;
         
         AnimType mCurrentType;
+
+        int mCurrentSpriteOrSlot;
+        
+
+        TextButton mNextSpriteOrSlotButton;
+        TextButton mPrevSpriteOrSlotButton;
+        
+        void checkNextPrevVisible();
+        
+
+        void updateAnimFromSliders();
+        void updateSlidersFromAnim();
+
 
         int mFrameCount;
 
