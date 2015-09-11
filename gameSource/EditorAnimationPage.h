@@ -68,7 +68,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         int mCurrentObjectID;
         int mCurrentSlotDemoID;
 
-        AnimationRecord *mCurrentAnim;
+        AnimationRecord *mCurrentAnim[ endAnimType ];
         
         AnimationRecord *mWiggleAnim;
         

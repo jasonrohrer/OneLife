@@ -32,7 +32,6 @@ EditorAnimationPage::EditorAnimationPage()
           mObjectPicker( &objectPickable, +310, 100 ),
           mCurrentObjectID( -1 ),
           mCurrentSlotDemoID( -1 ),
-          mCurrentAnim( NULL ),
           mWiggleAnim( NULL ),
           mWiggleFade( 0.0 ),
           mWiggleSpriteOrSlot( 0 ),
@@ -46,6 +45,10 @@ EditorAnimationPage::EditorAnimationPage()
           mFrameCount( 0 ) {
     
     
+    for( int i=0; i<endAnimType; i++ ) {
+        mCurrentAnim[i] = NULL;
+        }
+
     addComponent( &mObjectEditorButton );
     addComponent( &mObjectPicker );
 
@@ -148,11 +151,14 @@ EditorAnimationPage::~EditorAnimationPage() {
 
 
 void EditorAnimationPage::freeCurrentAnim() {
-    if( mCurrentAnim != NULL ) {
-        delete [] mCurrentAnim->spriteAnim;
-        delete [] mCurrentAnim->slotAnim;
-        delete mCurrentAnim;
-        mCurrentAnim = NULL;        
+    
+    for( int i=0; i<endAnimType; i++ ) {
+        if( mCurrentAnim[i] != NULL ) {
+            delete [] mCurrentAnim[i]->spriteAnim;
+            delete [] mCurrentAnim[i]->slotAnim;
+            delete mCurrentAnim[i];
+            mCurrentAnim[i] = NULL;    
+            }
         }
     if( mWiggleAnim != NULL ) {
         delete [] mWiggleAnim->spriteAnim;
@@ -197,60 +203,62 @@ static void adjustRecordList( SpriteAnimationRecord **inOldList,
 
 void EditorAnimationPage::populateCurrentAnim() {
     freeCurrentAnim();
-    
-    AnimationRecord *oldRecord =
-        getAnimation( mCurrentObjectID, mCurrentType );
-    
-    
+
     ObjectRecord *obj = getObject( mCurrentObjectID );
- 
-    int sprites = obj->numSprites;
-    int slots = obj->numSlots;
-        
-    if( oldRecord == NULL ) {
-        // no anim exists
-        mCurrentAnim = new AnimationRecord;
-        
-        mCurrentAnim->objectID = mCurrentObjectID;
-        mCurrentAnim->type = mCurrentType;
-        
-        
-        mCurrentAnim->numSprites = sprites;
-        mCurrentAnim->numSlots = slots;
-        
-        mCurrentAnim->spriteAnim = 
-            new SpriteAnimationRecord[ sprites ];
-        
-        mCurrentAnim->slotAnim = 
-            new SpriteAnimationRecord[ slots ];
-        
-        for( int i=0; i<sprites; i++ ) {
-            zeroRecord( &( mCurrentAnim->spriteAnim[i] ) );
-            }
-        for( int i=0; i<slots; i++ ) {
-            zeroRecord( &( mCurrentAnim->slotAnim[i] ) );
-            }
-        }
-    else {
-        mCurrentAnim = copyRecord( oldRecord );
-        
-        adjustRecordList( &( mCurrentAnim->spriteAnim ),
-                          mCurrentAnim->numSprites,
-                          sprites );
-        
-        mCurrentAnim->numSprites = sprites;
-        
-        adjustRecordList( &( mCurrentAnim->slotAnim ),
-                          mCurrentAnim->numSlots,
-                          slots );
-        
-        mCurrentAnim->numSlots = slots;
-        }        
     
-    mWiggleAnim = copyRecord( mCurrentAnim );
+    for( int i=0; i<endAnimType; i++ ) {
 
+        AnimationRecord *oldRecord =
+            getAnimation( mCurrentObjectID, (AnimType)i );
+            
+        int sprites = obj->numSprites;
+        int slots = obj->numSlots;
+        
+        if( oldRecord == NULL ) {
+            // no anim exists
+            mCurrentAnim[i] = new AnimationRecord;
+        
+            mCurrentAnim[i]->objectID = mCurrentObjectID;
+            mCurrentAnim[i]->type = (AnimType)i;
+        
+        
+            mCurrentAnim[i]->numSprites = sprites;
+            mCurrentAnim[i]->numSlots = slots;
+            
+            mCurrentAnim[i]->spriteAnim = 
+                new SpriteAnimationRecord[ sprites ];
+            
+            mCurrentAnim[i]->slotAnim = 
+                new SpriteAnimationRecord[ slots ];
+            
+            for( int j=0; j<sprites; j++ ) {
+                zeroRecord( &( mCurrentAnim[i]->spriteAnim[j] ) );
+                }
+            for( int j=0; j<slots; j++ ) {
+                zeroRecord( &( mCurrentAnim[i]->slotAnim[j] ) );
+                }
+            }
+        else {
+            mCurrentAnim[i] = copyRecord( oldRecord );
+        
+            adjustRecordList( &( mCurrentAnim[i]->spriteAnim ),
+                              mCurrentAnim[i]->numSprites,
+                              sprites );
+            
+            mCurrentAnim[i]->numSprites = sprites;
+            
+            adjustRecordList( &( mCurrentAnim[i]->slotAnim ),
+                              mCurrentAnim[i]->numSlots,
+                              slots );
+            
+            mCurrentAnim[i]->numSlots = slots;
+            }        
+    
+        mWiggleAnim = copyRecord( mCurrentAnim[i] );
+        }
+    
     updateSlidersFromAnim();
-
+        
     mFrameCount = 0;
     }
 
@@ -310,12 +318,14 @@ void EditorAnimationPage::checkNextPrevVisible() {
 void EditorAnimationPage::updateAnimFromSliders() {
     SpriteAnimationRecord *r;
     
-    if( mCurrentSpriteOrSlot > mCurrentAnim->numSprites - 1 ) {
-        r = &( mCurrentAnim->slotAnim[ mCurrentSpriteOrSlot -
-                                       mCurrentAnim->numSprites ] );
+    AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
+    
+    if( mCurrentSpriteOrSlot > anim->numSprites - 1 ) {
+        r = &( anim->slotAnim[ mCurrentSpriteOrSlot -
+                               anim->numSprites ] );
         }
     else {
-        r = &( mCurrentAnim->spriteAnim[ mCurrentSpriteOrSlot ] );
+        r = &( anim->spriteAnim[ mCurrentSpriteOrSlot ] );
         }
     
     
@@ -337,17 +347,19 @@ void EditorAnimationPage::updateSlidersFromAnim() {
     for( int i=0; i<NUM_ANIM_SLIDERS; i++ ) {
         mSliders[i]->setVisible( true );
         }
-    
-    if( mCurrentSpriteOrSlot > mCurrentAnim->numSprites - 1 ) {
-        r = &( mCurrentAnim->slotAnim[ mCurrentSpriteOrSlot -
-                                       mCurrentAnim->numSprites ] );
 
+    AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
+
+    if( mCurrentSpriteOrSlot > anim->numSprites - 1 ) {
+        r = &( anim->slotAnim[ mCurrentSpriteOrSlot -
+                               anim->numSprites ] );
+        
         // last two sliders (rotation) not available for slots
         mSliders[6]->setVisible( false );
         mSliders[7]->setVisible( false );
         }
     else {
-        r = &( mCurrentAnim->spriteAnim[ mCurrentSpriteOrSlot ] );
+        r = &( anim->spriteAnim[ mCurrentSpriteOrSlot ] );
         
         // last two sliders (rotation) are available for sprites
         mSliders[6]->setVisible( true );
@@ -460,8 +472,10 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             
             mCurrentSpriteOrSlot = 0;
             
+            mFrameCount = 0;
+            
             checkNextPrevVisible();
-            populateCurrentAnim();
+            updateSlidersFromAnim();
             }
         
 
@@ -506,7 +520,7 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
             }
         
 
-        AnimationRecord *anim = mCurrentAnim;
+        AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
         
         if( mWiggleFade > 0 ) {
             anim = mWiggleAnim;
@@ -551,6 +565,7 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
         smallFont->drawString( mCheckboxNames[i], pos, alignRight );
         }
 
+    
     if( mCurrentObjectID != -1 ) {
         
         setDrawColor( 1, 1, 1, 1 );
@@ -562,10 +577,11 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
         const char *tag;
         int num;
         
+        AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
         
-        if( mCurrentSpriteOrSlot > mCurrentAnim->numSprites - 1 ) {
+        if( mCurrentSpriteOrSlot > anim->numSprites - 1 ) {
             tag = "Slot";
-            num = mCurrentSpriteOrSlot - mCurrentAnim->numSprites;
+            num = mCurrentSpriteOrSlot - anim->numSprites;
             }
         else {
             tag = "Sprite";
@@ -716,22 +732,6 @@ void EditorAnimationPage::pointerUp( float inX, float inY ) {
 
 
 void EditorAnimationPage::keyDown( unsigned char inASCII ) {
-    /*
-    if( inASCII == 'o' ) {
-        if( mCurrentObjectID != -1 && mCurrentAnim != NULL ) {
-            mCurrentAnim->spriteAnim[0].yOscPerSec = 1;
-            mCurrentAnim->spriteAnim[0].yAmp += 2;
-            
-            mCurrentAnim->spriteAnim[1].rotPerSec += 0.25;
-            }
-        }
-    else if( inASCII == 'm' ) {
-        toggleLinearMagFilter( false );
-        }
-    else if( inASCII == 'M' ) {
-        toggleLinearMagFilter( true );
-        }
-    */
     }
 
 
