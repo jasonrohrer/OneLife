@@ -31,9 +31,13 @@ EditorAnimationPage::EditorAnimationPage()
         : mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mObjectPicker( &objectPickable, +310, 100 ),
           mCurrentObjectID( -1 ),
+          mCurrentSlotDemoID( -1 ),
           mCurrentAnim( NULL ),
           mCurrentType( ground ),
           mCurrentSpriteOrSlot( 0 ),
+          mPickSlotDemoButton( smallFont, 180, 0, "Fill Slots" ),
+          mPickingSlotDemo( false ),
+          mClearSlotDemoButton( smallFont, 180, -60, "Clear Slots" ),
           mNextSpriteOrSlotButton( smallFont, -180, -210, "Next Layer" ),
           mPrevSpriteOrSlotButton( smallFont, -180, -270, "Prev Layer" ),
           mFrameCount( 0 ) {
@@ -42,14 +46,23 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mObjectEditorButton );
     addComponent( &mObjectPicker );
 
+    addComponent( &mPickSlotDemoButton );
+    addComponent( &mClearSlotDemoButton );
+
     addComponent( &mNextSpriteOrSlotButton );
     addComponent( &mPrevSpriteOrSlotButton );
+    
 
     mObjectEditorButton.addActionListener( this );
     mObjectPicker.addActionListener( this );
 
+    mPickSlotDemoButton.addActionListener( this );
+    mClearSlotDemoButton.addActionListener( this );
+
     mNextSpriteOrSlotButton.addActionListener( this );
     mPrevSpriteOrSlotButton.addActionListener( this );
+
+    mClearSlotDemoButton.setVisible( false );
 
     checkNextPrevVisible();
     
@@ -311,14 +324,35 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         int newPickID = mObjectPicker.getSelectedObject();
 
         if( newPickID != -1 ) {
-            mCurrentObjectID = newPickID;
+            if( mPickingSlotDemo ) {
+                mPickingSlotDemo = false;
+                
+                mCurrentSlotDemoID = newPickID;
+                mPickSlotDemoButton.setVisible( true );
+                mClearSlotDemoButton.setVisible( true );
+                }
+            else {
+                mCurrentObjectID = newPickID;
             
-            mCurrentSpriteOrSlot = 0;
-            
-            checkNextPrevVisible();
-            
-            populateCurrentAnim();
+                mCurrentSpriteOrSlot = 0;
+                
+                checkNextPrevVisible();
+                
+                populateCurrentAnim();
+                }
             }
+        }
+    else if( inTarget == &mPickSlotDemoButton ) {
+        mPickingSlotDemo = true;
+        mCurrentSlotDemoID = -1;
+        mPickSlotDemoButton.setVisible( false );
+        mClearSlotDemoButton.setVisible( true );
+        }
+    else if( inTarget == &mClearSlotDemoButton ) {
+        mPickingSlotDemo = false;
+        mCurrentSlotDemoID = -1;
+        mPickSlotDemoButton.setVisible( true );
+        mClearSlotDemoButton.setVisible( false );
         }
     else if( inTarget == &mNextSpriteOrSlotButton ) {
         mCurrentSpriteOrSlot ++;
@@ -393,15 +427,44 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
 
     if( mCurrentObjectID != -1 ) {
         
+        ObjectRecord *obj = getObject( mCurrentObjectID );
+
+        int *demoSlots = NULL;
+        if( mCurrentSlotDemoID != -1 && obj->numSlots > 0 ) {
+            demoSlots = new int[ obj->numSlots ];
+            for( int i=0; i<obj->numSlots; i++ ) {
+                demoSlots[i] = mCurrentSlotDemoID;
+                }
+            }
+        
+
         if( mCurrentAnim != NULL ) {
 
             double frameTime = ( mFrameCount / 60.0 ) * frameRateFactor;
             
-            drawObjectAnim( mCurrentObjectID, 
-                            mCurrentAnim, frameTime, pos );
+            
+            if( demoSlots != NULL ) {
+                drawObjectAnim( mCurrentObjectID, 
+                                mCurrentAnim, frameTime, pos,
+                                obj->numSlots, demoSlots );
+                }
+            else {
+                drawObjectAnim( mCurrentObjectID, 
+                                mCurrentAnim, frameTime, pos );
+                }
             }
         else {
-            drawObject( getObject( mCurrentObjectID ), pos );
+            if( mCurrentSlotDemoID != -1 && obj->numSlots > 0 ) {
+                drawObject( obj, pos,
+                            obj->numSlots, demoSlots );
+                }
+            else {
+                drawObject( obj, pos );
+                }
+            }
+        
+        if( demoSlots != NULL ) {
+            delete [] demoSlots;
             }
         }
     

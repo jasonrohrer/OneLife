@@ -66,12 +66,19 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         ValueSlider *mSliders[ NUM_ANIM_SLIDERS ];
         
         int mCurrentObjectID;
+        int mCurrentSlotDemoID;
 
         AnimationRecord *mCurrentAnim;
         
         AnimType mCurrentType;
 
         int mCurrentSpriteOrSlot;
+        
+        TextButton mPickSlotDemoButton;
+        
+        char mPickingSlotDemo;
+
+        TextButton mClearSlotDemoButton;
         
 
         TextButton mNextSpriteOrSlotButton;
