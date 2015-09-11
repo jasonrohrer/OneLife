@@ -70,6 +70,12 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
         AnimationRecord *mCurrentAnim;
         
+        AnimationRecord *mWiggleAnim;
+        
+        double mWiggleFade;
+        int mWiggleSpriteOrSlot;
+
+
         AnimType mCurrentType;
 
         int mCurrentSpriteOrSlot;
@@ -95,6 +101,11 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
         void freeCurrentAnim();
         void populateCurrentAnim();
+        
+
+        void setWiggle();
+        
+        int getClosestSpriteOrSlot( float inX, float inY );
         
     };
 

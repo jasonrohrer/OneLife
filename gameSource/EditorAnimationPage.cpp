@@ -33,6 +33,9 @@ EditorAnimationPage::EditorAnimationPage()
           mCurrentObjectID( -1 ),
           mCurrentSlotDemoID( -1 ),
           mCurrentAnim( NULL ),
+          mWiggleAnim( NULL ),
+          mWiggleFade( 0.0 ),
+          mWiggleSpriteOrSlot( 0 ),
           mCurrentType( ground ),
           mCurrentSpriteOrSlot( 0 ),
           mPickSlotDemoButton( smallFont, 180, 0, "Fill Slots" ),
@@ -151,6 +154,12 @@ void EditorAnimationPage::freeCurrentAnim() {
         delete mCurrentAnim;
         mCurrentAnim = NULL;        
         }
+    if( mWiggleAnim != NULL ) {
+        delete [] mWiggleAnim->spriteAnim;
+        delete [] mWiggleAnim->slotAnim;
+        delete mWiggleAnim;
+        mWiggleAnim = NULL;        
+        }
     }
 
 
@@ -238,7 +247,45 @@ void EditorAnimationPage::populateCurrentAnim() {
         mCurrentAnim->numSlots = slots;
         }        
     
+    mWiggleAnim = copyRecord( mCurrentAnim );
+
     updateSlidersFromAnim();
+
+    mFrameCount = 0;
+    }
+
+
+
+void EditorAnimationPage::setWiggle() {
+    int sprites = mWiggleAnim->numSprites;
+    int slots = mWiggleAnim->numSlots;
+
+    SpriteAnimationRecord *r = NULL;
+    
+    int totalCount = 0;
+    
+    for( int i=0; i<sprites; i++ ) {
+        zeroRecord( &( mWiggleAnim->spriteAnim[i] ) );
+        
+        if( totalCount == mWiggleSpriteOrSlot ) {
+            r = &( mWiggleAnim->spriteAnim[i] );
+            }
+        totalCount++;
+        }
+
+    for( int i=0; i<slots; i++ ) {
+        zeroRecord( &( mWiggleAnim->slotAnim[i] ) );
+        
+        if( totalCount == mWiggleSpriteOrSlot ) {
+            r = &( mWiggleAnim->slotAnim[i] );
+            }
+        totalCount++;
+        }
+
+    if( r != NULL ) {
+        r->yOscPerSec = 2;
+        r->yAmp = 16 * mWiggleFade;
+        }
     }
 
 
@@ -286,13 +333,25 @@ void EditorAnimationPage::updateAnimFromSliders() {
 
 void EditorAnimationPage::updateSlidersFromAnim() {
     SpriteAnimationRecord *r;
+
+    for( int i=0; i<NUM_ANIM_SLIDERS; i++ ) {
+        mSliders[i]->setVisible( true );
+        }
     
     if( mCurrentSpriteOrSlot > mCurrentAnim->numSprites - 1 ) {
         r = &( mCurrentAnim->slotAnim[ mCurrentSpriteOrSlot -
                                        mCurrentAnim->numSprites ] );
+
+        // last two sliders (rotation) not available for slots
+        mSliders[6]->setVisible( false );
+        mSliders[7]->setVisible( false );
         }
     else {
         r = &( mCurrentAnim->spriteAnim[ mCurrentSpriteOrSlot ] );
+        
+        // last two sliders (rotation) are available for sprites
+        mSliders[6]->setVisible( true );
+        mSliders[7]->setVisible( true );
         }
     
     
@@ -305,9 +364,6 @@ void EditorAnimationPage::updateSlidersFromAnim() {
     mSliders[6]->setValue( r->rotPerSec );
     mSliders[7]->setValue( r->rotPhase );
 
-    for( int i=0; i<NUM_ANIM_SLIDERS; i++ ) {
-        mSliders[i]->setVisible( true );
-        }
     }
 
     
@@ -356,11 +412,23 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mNextSpriteOrSlotButton ) {
         mCurrentSpriteOrSlot ++;
+        
+        mWiggleFade = 1.0;
+        mWiggleSpriteOrSlot = mCurrentSpriteOrSlot;
+        setWiggle();
+        mFrameCount = 0;
+
         checkNextPrevVisible();
         updateSlidersFromAnim();
         }
     else if( inTarget == &mPrevSpriteOrSlotButton ) {
         mCurrentSpriteOrSlot --;
+        
+        mWiggleFade = 1.0;
+        mWiggleSpriteOrSlot = mCurrentSpriteOrSlot;
+        setWiggle();
+        mFrameCount = 0;
+        
         checkNextPrevVisible();
         updateSlidersFromAnim();
         }
@@ -438,19 +506,26 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
             }
         
 
-        if( mCurrentAnim != NULL ) {
+        AnimationRecord *anim = mCurrentAnim;
+        
+        if( mWiggleFade > 0 ) {
+            anim = mWiggleAnim;
+            }
+        
+
+        if( anim != NULL ) {
 
             double frameTime = ( mFrameCount / 60.0 ) * frameRateFactor;
             
             
             if( demoSlots != NULL ) {
                 drawObjectAnim( mCurrentObjectID, 
-                                mCurrentAnim, frameTime, pos,
+                                anim, frameTime, pos,
                                 obj->numSlots, demoSlots );
                 }
             else {
                 drawObjectAnim( mCurrentObjectID, 
-                                mCurrentAnim, frameTime, pos );
+                                anim, frameTime, pos );
                 }
             }
         else {
@@ -510,6 +585,17 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
 
 void EditorAnimationPage::step() {
     mFrameCount++;
+
+    if( mWiggleFade > 0 ) {
+        
+        mWiggleFade -= 0.05 * frameRateFactor;
+        
+        if( mWiggleFade < 0 ) {
+            mWiggleFade = 0;
+            mFrameCount = 0;
+            }
+        setWiggle();
+        }
     }
 
 
@@ -520,14 +606,100 @@ void EditorAnimationPage::makeActive( char inFresh ) {
 
 
 
+int EditorAnimationPage::getClosestSpriteOrSlot( float inX, float inY ) {
+    if( mCurrentObjectID == -1 ) {
+        return -1;
+        }
+    
+    int closestSpriteOrSlot = -1;
+    
+    
+    if( inX > -128 && inX < 128
+        &&
+        inY > -128 && inY < 128 ) {
+        
+        
+        double closestDist = 99999;
 
 
-void EditorAnimationPage::pointerMove( float inX, float inY ) {
+        doublePair mousePos = { inX, inY };
+        
+        
+        ObjectRecord *obj = getObject( mCurrentObjectID );
+        
+        int sprites = obj->numSprites;
+        int slots = obj->numSlots;
+
+        int totalCount = 0;
+        
+        for( int i=0; i<sprites; i++ ) {
+            double dist = distance( obj->spritePos[i], mousePos );
+            
+            if( dist < closestDist ) {
+                closestDist = dist;
+                closestSpriteOrSlot = totalCount;
+                }
+            
+            totalCount++;
+            }
+
+        for( int i=0; i<slots; i++ ) {
+            double dist = distance( obj->slotPos[i], mousePos );
+            
+            if( dist < closestDist ) {
+                closestDist = dist;
+                closestSpriteOrSlot = totalCount;
+                }
+            
+            totalCount++;
+            }
+        }
+    
+    return closestSpriteOrSlot;
+    }
+
+
+
+
+void EditorAnimationPage::pointerMove( float inX, float inY ) {    
+        
+    int closestSpriteOrSlot = getClosestSpriteOrSlot( inX, inY );
+    
+    if( closestSpriteOrSlot != -1 ) {
+        if( closestSpriteOrSlot != mWiggleSpriteOrSlot ) {
+                
+            // switch
+            mWiggleFade = 1.0;
+            mWiggleSpriteOrSlot = closestSpriteOrSlot;
+            setWiggle();
+            mFrameCount = 0;
+            }
+        else {
+            // increase amplitude again
+            mWiggleFade += 0.1;
+            if( mWiggleFade > 1 ) {
+                mWiggleFade = 1;
+                }
+            }
+        }
     }
 
 
 
 void EditorAnimationPage::pointerDown( float inX, float inY ) {
+    int closestSpriteOrSlot = getClosestSpriteOrSlot( inX, inY );
+    
+    if( closestSpriteOrSlot != -1 ) {
+        mCurrentSpriteOrSlot = closestSpriteOrSlot;
+        
+        mWiggleFade = 1.0;
+        mWiggleSpriteOrSlot = mCurrentSpriteOrSlot;
+        setWiggle();
+        mFrameCount = 0;
+
+        checkNextPrevVisible();
+        updateSlidersFromAnim();
+        }
     }
 
 
