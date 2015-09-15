@@ -353,7 +353,8 @@ static double getOscOffset( double inFrameTime,
 
 
 
-void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 
+void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
+                     double inAnimFade,
                      doublePair inPos ) {
     AnimationRecord *r = getAnimation( inObjectID, inType );
     
@@ -363,14 +364,15 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
         return;
         }
     else {
-        drawObjectAnim( inObjectID, r, inFrameTime, inPos );
+        drawObjectAnim( inObjectID, r, inFrameTime, inAnimFade, inPos );
         }
     }
 
 
 
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
-                     double inFrameTime, 
+                     double inFrameTime,
+                     double inAnimFade, 
                      doublePair inPos ) {
 
     ObjectRecord *obj = getObject( inObjectID );
@@ -382,20 +384,31 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         
         if( i < inAnim->numSprites ) {
             
-            pos.x += getOscOffset( 
-                inFrameTime,
-                inAnim->spriteAnim[i].xOscPerSec,
-                inAnim->spriteAnim[i].xAmp,
-                inAnim->spriteAnim[i].xPhase );
+            pos.x += 
+                inAnimFade * 
+                getOscOffset( 
+                    inFrameTime,
+                    inAnim->spriteAnim[i].xOscPerSec,
+                    inAnim->spriteAnim[i].xAmp,
+                    inAnim->spriteAnim[i].xPhase );
             
-            pos.y += getOscOffset( 
-                inFrameTime,
-                inAnim->spriteAnim[i].yOscPerSec,
-                inAnim->spriteAnim[i].yAmp,
-                inAnim->spriteAnim[i].yPhase );
+            pos.y += 
+                inAnimFade *
+                getOscOffset( 
+                    inFrameTime,
+                    inAnim->spriteAnim[i].yOscPerSec,
+                    inAnim->spriteAnim[i].yAmp,
+                    inAnim->spriteAnim[i].yPhase );
             
             rot = inAnim->spriteAnim[i].rotPerSec * inFrameTime + 
                 inAnim->spriteAnim[i].rotPhase;
+
+            if( inAnimFade < 1 ) {
+                double targetRot = ceil( rot );
+                if( rot != targetRot ) {
+                    rot = inAnimFade * rot + (1 - inAnimFade) * targetRot;
+                    }
+                }
             }
         
         drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot );
@@ -405,7 +418,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 
-                     doublePair inPos,
+                     double inAnimFade, doublePair inPos,
                      int inNumContained, int *inContainedIDs ) {
     
     AnimationRecord *r = getAnimation( inObjectID, inType );
@@ -415,7 +428,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                     inNumContained, inContainedIDs );
         }
     else {
-        drawObjectAnim( inObjectID, r, inFrameTime, inPos,
+        drawObjectAnim( inObjectID, r, inFrameTime, inAnimFade, inPos,
                         inNumContained, inContainedIDs );
         }
     }
@@ -423,9 +436,9 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
 
 
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
-    double inFrameTime, 
-    doublePair inPos,
-    int inNumContained, int *inContainedIDs ) {
+                     double inFrameTime, double inAnimFade,
+                     doublePair inPos,
+                     int inNumContained, int *inContainedIDs ) {
     
     // first, draw jiggling (never rotating) objects in slots
     // can't safely rotate them, because they may be compound objects
@@ -439,17 +452,21 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         
             if( i < inAnim->numSlots ) {
                 
-                pos.x += getOscOffset( 
-                    inFrameTime,
-                    inAnim->slotAnim[i].xOscPerSec,
-                    inAnim->slotAnim[i].xAmp,
-                    inAnim->slotAnim[i].xPhase );
+                pos.x += 
+                    inAnimFade *
+                    getOscOffset( 
+                        inFrameTime,
+                        inAnim->slotAnim[i].xOscPerSec,
+                        inAnim->slotAnim[i].xAmp,
+                        inAnim->slotAnim[i].xPhase );
                 
-                pos.y += getOscOffset( 
-                    inFrameTime,
-                    inAnim->slotAnim[i].yOscPerSec,
-                    inAnim->slotAnim[i].yAmp,
-                    inAnim->slotAnim[i].yPhase );
+                pos.y += 
+                    inAnimFade * 
+                    getOscOffset( 
+                        inFrameTime,
+                        inAnim->slotAnim[i].yOscPerSec,
+                        inAnim->slotAnim[i].yAmp,
+                        inAnim->slotAnim[i].yPhase );
                 }
                     
             drawObject( getObject( inContainedIDs[i] ), pos );
@@ -458,7 +475,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         } 
 
     // draw animating object on top of contained slots
-    drawObjectAnim( inObjectID, inAnim, inFrameTime, inPos );
+    drawObjectAnim( inObjectID, inAnim, inFrameTime, inAnimFade, inPos );
     }
 
 

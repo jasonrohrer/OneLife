@@ -36,6 +36,8 @@ EditorAnimationPage::EditorAnimationPage()
           mWiggleFade( 0.0 ),
           mWiggleSpriteOrSlot( 0 ),
           mCurrentType( ground ),
+          mLastType( ground ),
+          mLastTypeFade( 0 ),
           mCurrentSpriteOrSlot( 0 ),
           mPickSlotDemoButton( smallFont, 180, 0, "Fill Slots" ),
           mPickingSlotDemo( false ),
@@ -469,10 +471,13 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         
         if( mCurrentObjectID != -1 &&
             oldType != mCurrentType ) {
+
+            mLastType = oldType;
+            mLastTypeFade = 1.0;
             
+
             mCurrentSpriteOrSlot = 0;
             
-            mFrameCount = 0;
             
             checkNextPrevVisible();
             updateSlidersFromAnim();
@@ -519,11 +524,19 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
                 }
             }
         
+        AnimType t = mCurrentType;
+        double animFade = 1.0;
+        
+        if( mLastTypeFade != 0 ) {
+            t = mLastType;
+            animFade = mLastTypeFade;
+            }
 
-        AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
+        AnimationRecord *anim = mCurrentAnim[ t ];
         
         if( mWiggleFade > 0 ) {
             anim = mWiggleAnim;
+            animFade = 1.0;
             }
         
 
@@ -534,12 +547,12 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
             
             if( demoSlots != NULL ) {
                 drawObjectAnim( mCurrentObjectID, 
-                                anim, frameTime, pos,
+                                anim, frameTime, animFade, pos,
                                 obj->numSlots, demoSlots );
                 }
             else {
                 drawObjectAnim( mCurrentObjectID, 
-                                anim, frameTime, pos );
+                                anim, frameTime, animFade, pos );
                 }
             }
         else {
@@ -612,6 +625,17 @@ void EditorAnimationPage::step() {
             }
         setWiggle();
         }
+
+    if( mLastTypeFade > 0 ) {
+        mLastTypeFade -= 0.05 * frameRateFactor;
+        printf( "mLastTypeFade = %lf (old=%d, new=%d)\n", mLastTypeFade,
+                mLastType, mCurrentType );
+        if( mLastTypeFade < 0 ) {
+            mLastTypeFade = 0;
+            mFrameCount = 0;
+            }
+        }
+    
     }
 
 

@@ -77,6 +77,10 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
 
         AnimType mCurrentType;
+        AnimType mLastType;
+
+        double mLastTypeFade;
+        
 
         int mCurrentSpriteOrSlot;
         
