@@ -82,6 +82,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         AnimType mLastType;
 
         double mLastTypeFade;
+        int mLastTypeFrozenRotFrameCount;
         
 
         int mCurrentSpriteOrSlot;

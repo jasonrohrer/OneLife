@@ -353,6 +353,7 @@ static double getOscOffset( double inFrameTime,
 
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
+                     double inRotFrameTime,
                      double inAnimFade,
                      doublePair inPos ) {
     AnimationRecord *r = getAnimation( inObjectID, inType );
@@ -363,7 +364,8 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
         return;
         }
     else {
-        drawObjectAnim( inObjectID, r, inFrameTime, inAnimFade, inPos );
+        drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
+                        inAnimFade, inPos );
         }
     }
 
@@ -371,6 +373,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
 
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
                      double inFrameTime,
+                     double inRotFrameTime,
                      double inAnimFade, 
                      doublePair inPos ) {
 
@@ -399,13 +402,28 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     inAnim->spriteAnim[i].yAmp,
                     inAnim->spriteAnim[i].yPhase );
             
-            rot = inAnim->spriteAnim[i].rotPerSec * inFrameTime + 
+            rot = inAnim->spriteAnim[i].rotPerSec * inRotFrameTime + 
                 inAnim->spriteAnim[i].rotPhase;
 
+            if( rot != 0 ) {
+                printf( "Rot = %f\n", rot );
+                }
             if( inAnimFade < 1 ) {
                 double targetRot = ceil( rot );
+                /*
+                  double altTargetRot = floor( rot );
+                
+                if( rot - altTargetRot < .1 ) {
+                    // close enough to just over 0 to push back
+                    // without doing a full additional rotation
+                    targetRot = altTargetRot;
+                    }
+                */
                 if( rot != targetRot ) {
+                    printf( "  Rot = %f, target = %f, ",
+                            rot, targetRot );
                     rot = inAnimFade * rot + (1 - inAnimFade) * targetRot;
+                    printf( "blended = %f\n", rot );
                     }
                 }
             }
@@ -416,7 +434,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
 
 
-void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 
+void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
+                     double inRotFrameTime,
                      double inAnimFade, doublePair inPos,
                      int inNumContained, int *inContainedIDs ) {
     
@@ -427,7 +446,8 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                     inNumContained, inContainedIDs );
         }
     else {
-        drawObjectAnim( inObjectID, r, inFrameTime, inAnimFade, inPos,
+        drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
+                        inAnimFade, inPos,
                         inNumContained, inContainedIDs );
         }
     }
@@ -435,7 +455,8 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
 
 
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
-                     double inFrameTime, double inAnimFade,
+                     double inFrameTime, double inRotFrameTime, 
+                     double inAnimFade,
                      doublePair inPos,
                      int inNumContained, int *inContainedIDs ) {
     
@@ -474,7 +495,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         } 
 
     // draw animating object on top of contained slots
-    drawObjectAnim( inObjectID, inAnim, inFrameTime, inAnimFade, inPos );
+    drawObjectAnim( inObjectID, inAnim, inFrameTime, inRotFrameTime,
+                    inAnimFade, inPos );
     }
 
 

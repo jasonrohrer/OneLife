@@ -71,25 +71,29 @@ void clearAnimation( int inObjectID, AnimType inType );
 
 
 
-void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 
+void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
+                     double inRotFrameTime,
                      double inAnimFade,
                      doublePair inPos );
 
 
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
-                     double inFrameTime, 
+                     double inFrameTime,
+                     double inRotFrameTime,
                      double inAnimFade,
                      doublePair inPos );
 
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 
+                     double inRotFrameTime,
                      double inAnimFade,
                      doublePair inPos,
                      int inNumContained, int *inContainedIDs );
 
 
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
-                     double inFrameTime, 
+                     double inFrameTime,
+                     double inRotFrameTime,
                      double inAnimFade,
                      doublePair inPos,
                      int inNumContained, int *inContainedIDs );

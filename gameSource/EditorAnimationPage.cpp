@@ -537,7 +537,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
 
             mLastType = oldType;
             mLastTypeFade = 1.0;
-            
+            mLastTypeFrozenRotFrameCount = mFrameCount;
 
             mCurrentSpriteOrSlot = 0;
             
@@ -607,15 +607,22 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
 
             double frameTime = ( mFrameCount / 60.0 ) * frameRateFactor;
             
+            double rotFrameTime = frameTime;
+            
+            if( mWiggleFade == 0 && mLastTypeFade != 0 ) {
+                // freeze rotation frame time for smooth return to 0;
+                rotFrameTime = 
+                    ( mLastTypeFrozenRotFrameCount / 60.0 ) * frameRateFactor;
+                }
             
             if( demoSlots != NULL ) {
                 drawObjectAnim( mCurrentObjectID, 
-                                anim, frameTime, animFade, pos,
+                                anim, frameTime, rotFrameTime, animFade, pos,
                                 obj->numSlots, demoSlots );
                 }
             else {
                 drawObjectAnim( mCurrentObjectID, 
-                                anim, frameTime, animFade, pos );
+                                anim, frameTime, rotFrameTime, animFade, pos );
                 }
             }
         else {
