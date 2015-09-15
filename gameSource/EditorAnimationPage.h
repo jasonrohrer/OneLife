@@ -93,6 +93,12 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextButton mClearSlotDemoButton;
         
 
+        SpriteAnimationRecord mCopyBuffer;
+        TextButton mCopyButton;
+        TextButton mPasteButton;
+        TextButton mClearButton;
+        
+
         TextButton mNextSpriteOrSlotButton;
         TextButton mPrevSpriteOrSlotButton;
         
@@ -112,6 +118,11 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         void setWiggle();
         
         int getClosestSpriteOrSlot( float inX, float inY );
+        
+
+        
+        SpriteAnimationRecord *getRecordForCurrentSlot(
+            char *outIsSprite = NULL );
         
     };
 

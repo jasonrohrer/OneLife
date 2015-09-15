@@ -43,6 +43,9 @@ EditorAnimationPage::EditorAnimationPage()
           mPickSlotDemoButton( smallFont, 180, 0, "Fill Slots" ),
           mPickingSlotDemo( false ),
           mClearSlotDemoButton( smallFont, 180, -60, "Clear Slots" ),
+          mCopyButton( smallFont, -290, 210, "Copy" ),
+          mPasteButton( smallFont, -230, 210, "Paste" ),
+          mClearButton( smallFont, -170, 210, "Clear" ),
           mNextSpriteOrSlotButton( smallFont, -180, -210, "Next Layer" ),
           mPrevSpriteOrSlotButton( smallFont, -180, -270, "Prev Layer" ),
           mFrameCount( 0 ) {
@@ -51,6 +54,8 @@ EditorAnimationPage::EditorAnimationPage()
     for( int i=0; i<endAnimType; i++ ) {
         mCurrentAnim[i] = NULL;
         }
+    
+    zeroRecord( &mCopyBuffer );
 
     addComponent( &mObjectEditorButton );
     addComponent( &mSaveButton );
@@ -58,6 +63,12 @@ EditorAnimationPage::EditorAnimationPage()
 
     addComponent( &mPickSlotDemoButton );
     addComponent( &mClearSlotDemoButton );
+
+
+    addComponent( &mCopyButton );
+    addComponent( &mPasteButton );
+    addComponent( &mClearButton );
+    
 
     addComponent( &mNextSpriteOrSlotButton );
     addComponent( &mPrevSpriteOrSlotButton );
@@ -69,6 +80,11 @@ EditorAnimationPage::EditorAnimationPage()
 
     mPickSlotDemoButton.addActionListener( this );
     mClearSlotDemoButton.addActionListener( this );
+
+    mCopyButton.addActionListener( this );
+    mPasteButton.addActionListener( this );
+    mClearButton.addActionListener( this );
+    
 
     mNextSpriteOrSlotButton.addActionListener( this );
     mPrevSpriteOrSlotButton.addActionListener( this );
@@ -346,26 +362,48 @@ void EditorAnimationPage::updateAnimFromSliders() {
 
 
 
-void EditorAnimationPage::updateSlidersFromAnim() {
-    SpriteAnimationRecord *r;
-
-    for( int i=0; i<NUM_ANIM_SLIDERS; i++ ) {
-        mSliders[i]->setVisible( true );
-        }
+SpriteAnimationRecord *EditorAnimationPage::getRecordForCurrentSlot(
+    char *outIsSprite ) {
+    
+    SpriteAnimationRecord *r = NULL;
 
     AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
 
     if( mCurrentSpriteOrSlot > anim->numSprites - 1 ) {
         r = &( anim->slotAnim[ mCurrentSpriteOrSlot -
                                anim->numSprites ] );
+        if( outIsSprite != NULL ) {
+            *outIsSprite = false;
+            }
+        }
+    else {
+        r = &( anim->spriteAnim[ mCurrentSpriteOrSlot ] );
         
+        if( outIsSprite != NULL ) {
+            *outIsSprite = true;
+            }
+        }
+    return r;
+    }
+
+
+
+void EditorAnimationPage::updateSlidersFromAnim() {
+    char isSprite;
+
+    SpriteAnimationRecord *r = getRecordForCurrentSlot( &isSprite );
+
+    
+    for( int i=0; i<NUM_ANIM_SLIDERS; i++ ) {
+        mSliders[i]->setVisible( true );
+        }
+
+    if( ! isSprite ) {
         // last two sliders (rotation) not available for slots
         mSliders[6]->setVisible( false );
         mSliders[7]->setVisible( false );
         }
     else {
-        r = &( anim->spriteAnim[ mCurrentSpriteOrSlot ] );
-        
         // last two sliders (rotation) are available for sprites
         mSliders[6]->setVisible( true );
         mSliders[7]->setVisible( true );
@@ -397,6 +435,23 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         for( int i=0; i<endAnimType; i++ ) {
             addAnimation( mCurrentAnim[i] );
             }
+        }
+    else if( inTarget == &mClearButton ) {
+        zeroRecord( getRecordForCurrentSlot() );
+        updateSlidersFromAnim();
+        }
+    else if( inTarget == &mCopyButton ) {
+        mCopyBuffer = *( getRecordForCurrentSlot() );
+        }
+    else if( inTarget == &mPasteButton ) {
+        char isSprite;
+        SpriteAnimationRecord *r = getRecordForCurrentSlot( &isSprite );
+        *r = mCopyBuffer;
+        if( !isSprite ) {
+            r->rotPerSec = 0;
+            r->rotPhase = 0;
+            }
+        updateSlidersFromAnim();
         }
     else if( inTarget == &mObjectPicker ) {
         int newPickID = mObjectPicker.getSelectedObject();
@@ -636,8 +691,6 @@ void EditorAnimationPage::step() {
 
     if( mLastTypeFade > 0 ) {
         mLastTypeFade -= 0.05 * frameRateFactor;
-        printf( "mLastTypeFade = %lf (old=%d, new=%d)\n", mLastTypeFade,
-                mLastType, mCurrentType );
         if( mLastTypeFade < 0 ) {
             mLastTypeFade = 0;
             mFrameCount = 0;
