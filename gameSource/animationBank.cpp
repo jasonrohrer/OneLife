@@ -126,11 +126,10 @@ void initAnimationBank() {
                             records.push_back( r );
                             }
                         }
-                    delete [] animText;
                     }
                 delete [] txtFileName;
                 }
-            delete [] childFiles[i];
+            delete childFiles[i];
             }
         delete [] childFiles;
         }

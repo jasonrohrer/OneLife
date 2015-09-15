@@ -56,6 +56,8 @@ class EditorAnimationPage : public GamePage, public ActionListener {
     protected:
         
         TextButton mObjectEditorButton;
+
+        TextButton mSaveButton;
         
         Picker mObjectPicker;
 

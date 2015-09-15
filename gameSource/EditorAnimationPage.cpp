@@ -29,6 +29,7 @@ static ObjectPickable objectPickable;
 
 EditorAnimationPage::EditorAnimationPage()
         : mObjectEditorButton( mainFont, 0, 260, "Objects" ),
+          mSaveButton( mainFont, 0, 180, "Save" ),
           mObjectPicker( &objectPickable, +310, 100 ),
           mCurrentObjectID( -1 ),
           mCurrentSlotDemoID( -1 ),
@@ -52,6 +53,7 @@ EditorAnimationPage::EditorAnimationPage()
         }
 
     addComponent( &mObjectEditorButton );
+    addComponent( &mSaveButton );
     addComponent( &mObjectPicker );
 
     addComponent( &mPickSlotDemoButton );
@@ -62,6 +64,7 @@ EditorAnimationPage::EditorAnimationPage()
     
 
     mObjectEditorButton.addActionListener( this );
+    mSaveButton.addActionListener( this );
     mObjectPicker.addActionListener( this );
 
     mPickSlotDemoButton.addActionListener( this );
@@ -389,6 +392,11 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     
     if( inTarget == &mObjectEditorButton ) {
         setSignal( "objectEditor" );
+        }
+    else if( inTarget == &mSaveButton ) {
+        for( int i=0; i<endAnimType; i++ ) {
+            addAnimation( mCurrentAnim[i] );
+            }
         }
     else if( inTarget == &mObjectPicker ) {
         int newPickID = mObjectPicker.getSelectedObject();
