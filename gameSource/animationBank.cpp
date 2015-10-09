@@ -431,30 +431,38 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             rot = inAnim->spriteAnim[i].rotPerSec * inRotFrameTime + 
                 inAnim->spriteAnim[i].rotPhase;
 
-            if( rot != 0 ) {
-                printf( "Rot = %f\n", rot );
-                }
             if( inAnimFade < 1 ) {
-                double targetRot = ceil( rot );
+                double targetRot;
 
                 // rotate toward starting pos of fade target
-                targetRot += inFadeTargetAnim->spriteAnim[i].rotPhase;
-                
-                
-                /*
-                  double altTargetRot = floor( rot );
-                
-                if( rot - altTargetRot < .1 ) {
-                    // close enough to just over 0 to push back
-                    // without doing a full additional rotation
-                    targetRot = altTargetRot;
+                if( inAnim->spriteAnim[i].rotPerSec > 0 
+                    ||
+                    ( inAnim->spriteAnim[i].rotPerSec == 0 &&
+                      inFadeTargetAnim->spriteAnim[i].rotPerSec > 0 ) 
+                    ||
+                    ( inAnim->spriteAnim[i].rotPerSec == 0 &&
+                      inFadeTargetAnim->spriteAnim[i].rotPerSec == 0 ) ) {
+                    
+                    targetRot = floor( rot ) + 
+                        inFadeTargetAnim->spriteAnim[i].rotPhase;
+                    
+                    while( targetRot < rot ) {
+                        // behind us, push ahead one more rotation CW
+                        targetRot += 1;
+                        }
                     }
-                */
+                else {
+                    targetRot = ceil( rot ) + 
+                        inFadeTargetAnim->spriteAnim[i].rotPhase;
+                    
+                    while( targetRot > rot ) {
+                        // behind us, push ahead one more rotation CCW
+                        targetRot -= 1;
+                        }
+                    }
+                
                 if( rot != targetRot ) {
-                    printf( "  Rot = %f, target = %f, ",
-                            rot, targetRot );
                     rot = inAnimFade * rot + (1 - inAnimFade) * targetRot;
-                    printf( "blended = %f\n", rot );
                     }
                 }
             }

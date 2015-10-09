@@ -31,6 +31,7 @@ EditorAnimationPage::EditorAnimationPage()
         : mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mSaveButton( mainFont, 0, 180, "Save" ),
           mObjectPicker( &objectPickable, +310, 100 ),
+          mReverseRotationCheckbox( 0, 0, 2 ),
           mCurrentObjectID( -1 ),
           mCurrentSlotDemoID( -1 ),
           mWiggleAnim( NULL ),
@@ -115,10 +116,10 @@ EditorAnimationPage::EditorAnimationPage()
 
 
 
-    boxY = 100;
+    boxY = 190;
     
-    double space = 20;
-    double x = -140;
+    double space = 40;
+    double x = -290;
     
     mSliders[0] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
@@ -143,6 +144,12 @@ EditorAnimationPage::EditorAnimationPage()
     mSliders[6] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 3, "Rot" );
+    
+    mReverseRotationCheckbox.setPosition( x - 65, boxY );
+
+    addComponent( &mReverseRotationCheckbox );
+    mReverseRotationCheckbox.addActionListener( this );
+
     mSliders[7] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "Rot Phase" );
@@ -154,6 +161,7 @@ EditorAnimationPage::EditorAnimationPage()
         mSliders[i]->addActionListener( this );
         mSliders[i]->setVisible( false );
         }
+    mReverseRotationCheckbox.setVisible( false );
     }
 
 
@@ -356,7 +364,13 @@ void EditorAnimationPage::updateAnimFromSliders() {
     r->yOscPerSec = mSliders[3]->getValue();
     r->yAmp = mSliders[4]->getValue();
     r->yPhase = mSliders[5]->getValue();
+    
     r->rotPerSec = mSliders[6]->getValue();
+    
+    if( mReverseRotationCheckbox.getToggled() ) {
+        r->rotPerSec *= -1;
+        }
+    
     r->rotPhase = mSliders[7]->getValue();
     }
 
@@ -402,11 +416,13 @@ void EditorAnimationPage::updateSlidersFromAnim() {
         // last two sliders (rotation) not available for slots
         mSliders[6]->setVisible( false );
         mSliders[7]->setVisible( false );
+        mReverseRotationCheckbox.setVisible( false );
         }
     else {
         // last two sliders (rotation) are available for sprites
         mSliders[6]->setVisible( true );
         mSliders[7]->setVisible( true );
+        mReverseRotationCheckbox.setVisible( true );
         }
     
     
@@ -416,7 +432,10 @@ void EditorAnimationPage::updateSlidersFromAnim() {
     mSliders[3]->setValue( r->yOscPerSec );
     mSliders[4]->setValue( r->yAmp );
     mSliders[5]->setValue( r->yPhase );
-    mSliders[6]->setValue( r->rotPerSec );
+    
+    mSliders[6]->setValue( fabs( r->rotPerSec ) );
+    mReverseRotationCheckbox.setToggled( r->rotPerSec < 0 );
+
     mSliders[7]->setValue( r->rotPhase );
 
     }
@@ -508,6 +527,9 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         
         checkNextPrevVisible();
         updateSlidersFromAnim();
+        }
+    else if( inTarget == &mReverseRotationCheckbox ) {
+        updateAnimFromSliders();
         }
     else {
         
@@ -651,6 +673,10 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
         
         smallFont->drawString( mCheckboxNames[i], pos, alignRight );
         }
+
+    pos = mReverseRotationCheckbox.getPosition();
+    pos.x -= 10;
+    smallFont->drawString( "CCW", pos, alignRight );
 
     
     if( mCurrentObjectID != -1 ) {
