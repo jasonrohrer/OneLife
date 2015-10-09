@@ -355,6 +355,7 @@ static double getOscOffset( double inFrameTime,
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      double inRotFrameTime,
                      double inAnimFade,
+                     AnimType inFadeTargetType,
                      doublePair inPos ) {
     AnimationRecord *r = getAnimation( inObjectID, inType );
     
@@ -364,8 +365,10 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
         return;
         }
     else {
+        AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
+        
         drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
-                        inAnimFade, inPos );
+                        inAnimFade, rB, inPos );
         }
     }
 
@@ -374,7 +377,8 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
                      double inFrameTime,
                      double inRotFrameTime,
-                     double inAnimFade, 
+                     double inAnimFade,
+                     AnimationRecord *inFadeTargetAnim,
                      doublePair inPos ) {
 
     ObjectRecord *obj = getObject( inObjectID );
@@ -386,6 +390,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         
         if( i < inAnim->numSprites ) {
             
+
             pos.x += 
                 inAnimFade * 
                 getOscOffset( 
@@ -402,6 +407,27 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     inAnim->spriteAnim[i].yAmp,
                     inAnim->spriteAnim[i].yPhase );
             
+            if( inAnimFade < 1 ) {
+                double targetWeight = 1 - inAnimFade;
+                
+                pos.x += 
+                    targetWeight *
+                    getOscOffset( 
+                        0,
+                        inFadeTargetAnim->spriteAnim[i].xOscPerSec,
+                        inFadeTargetAnim->spriteAnim[i].xAmp,
+                        inFadeTargetAnim->spriteAnim[i].xPhase );
+                
+                pos.y += 
+                    targetWeight *
+                    getOscOffset( 
+                        0,
+                        inFadeTargetAnim->spriteAnim[i].yOscPerSec,
+                        inFadeTargetAnim->spriteAnim[i].yAmp,
+                        inFadeTargetAnim->spriteAnim[i].yPhase );
+                }
+            
+
             rot = inAnim->spriteAnim[i].rotPerSec * inRotFrameTime + 
                 inAnim->spriteAnim[i].rotPhase;
 
@@ -410,6 +436,11 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 }
             if( inAnimFade < 1 ) {
                 double targetRot = ceil( rot );
+
+                // rotate toward starting pos of fade target
+                targetRot += inFadeTargetAnim->spriteAnim[i].rotPhase;
+                
+                
                 /*
                   double altTargetRot = floor( rot );
                 
@@ -436,7 +467,9 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      double inRotFrameTime,
-                     double inAnimFade, doublePair inPos,
+                     double inAnimFade, 
+                     AnimType inFadeTargetType,
+                     doublePair inPos,
                      int inNumContained, int *inContainedIDs ) {
     
     AnimationRecord *r = getAnimation( inObjectID, inType );
@@ -446,8 +479,10 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                     inNumContained, inContainedIDs );
         }
     else {
+        AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
+        
         drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
-                        inAnimFade, inPos,
+                        inAnimFade, rB, inPos,
                         inNumContained, inContainedIDs );
         }
     }
@@ -457,6 +492,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      double inFrameTime, double inRotFrameTime, 
                      double inAnimFade,
+                     AnimationRecord *inFadeTargetAnim,
                      doublePair inPos,
                      int inNumContained, int *inContainedIDs ) {
     
@@ -487,6 +523,26 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                         inAnim->slotAnim[i].yOscPerSec,
                         inAnim->slotAnim[i].yAmp,
                         inAnim->slotAnim[i].yPhase );
+
+                if( inAnimFade < 1 ) {
+                    double targetWeight = 1 - inAnimFade;
+                
+                    pos.x += 
+                        targetWeight *
+                        getOscOffset( 
+                            0,
+                            inFadeTargetAnim->slotAnim[i].xOscPerSec,
+                            inFadeTargetAnim->slotAnim[i].xAmp,
+                            inFadeTargetAnim->slotAnim[i].xPhase );
+                    
+                    pos.y += 
+                        targetWeight *
+                        getOscOffset( 
+                            0,
+                            inFadeTargetAnim->slotAnim[i].yOscPerSec,
+                            inFadeTargetAnim->slotAnim[i].yAmp,
+                            inFadeTargetAnim->slotAnim[i].yPhase );
+                    }
                 }
                     
             drawObject( getObject( inContainedIDs[i] ), pos );
@@ -496,7 +552,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
     // draw animating object on top of contained slots
     drawObjectAnim( inObjectID, inAnim, inFrameTime, inRotFrameTime,
-                    inAnimFade, inPos );
+                    inAnimFade, inFadeTargetAnim, inPos );
     }
 
 

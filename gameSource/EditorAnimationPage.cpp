@@ -596,9 +596,11 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
             }
 
         AnimationRecord *anim = mCurrentAnim[ t ];
+        AnimationRecord *fadeTargetAnim = mCurrentAnim[ mCurrentType ];
         
         if( mWiggleFade > 0 ) {
             anim = mWiggleAnim;
+            fadeTargetAnim = mWiggleAnim;
             animFade = 1.0;
             }
         
@@ -617,12 +619,14 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
             
             if( demoSlots != NULL ) {
                 drawObjectAnim( mCurrentObjectID, 
-                                anim, frameTime, rotFrameTime, animFade, pos,
+                                anim, frameTime, rotFrameTime, animFade, 
+                                fadeTargetAnim, pos,
                                 obj->numSlots, demoSlots );
                 }
             else {
                 drawObjectAnim( mCurrentObjectID, 
-                                anim, frameTime, rotFrameTime, animFade, pos );
+                                anim, frameTime, rotFrameTime, animFade, 
+                                fadeTargetAnim, pos );
                 }
             }
         else {

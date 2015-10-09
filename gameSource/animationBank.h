@@ -74,6 +74,10 @@ void clearAnimation( int inObjectID, AnimType inType );
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      double inRotFrameTime,
                      double inAnimFade,
+                     // if inAnimFade < 0, this is the animation
+                     // that we are fading to (fading to the time-0 config
+                     // for this animation)
+                     AnimType inFadeTargetType,
                      doublePair inPos );
 
 
@@ -81,12 +85,14 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      double inFrameTime,
                      double inRotFrameTime,
                      double inAnimFade,
+                     AnimationRecord *inFadeTargetAnim,
                      doublePair inPos );
 
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 
                      double inRotFrameTime,
                      double inAnimFade,
+                     AnimType inFadeTargetType,
                      doublePair inPos,
                      int inNumContained, int *inContainedIDs );
 
@@ -95,6 +101,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      double inFrameTime,
                      double inRotFrameTime,
                      double inAnimFade,
+                     AnimationRecord *inFadeTargetAnim,
                      doublePair inPos,
                      int inNumContained, int *inContainedIDs );
 
