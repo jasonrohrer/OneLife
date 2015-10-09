@@ -15,7 +15,7 @@ ValueSlider::ValueSlider( Font *inDisplayFont,
                           const char *inLabelText )
         : PageComponent( inX, inY ),
           mFont( inDisplayFont ),
-          mValueField( inDisplayFont, inX, inY, 5,
+          mValueField( inDisplayFont, 0, 0, 5,
                        false,
                        inLabelText,
                        ".0123456789-" ),
@@ -33,7 +33,7 @@ ValueSlider::ValueSlider( Font *inDisplayFont,
     
     mBarEndX = mBarStartX + inWidth;
 
-    mBarStartY = inY - inHeight/2;
+    mBarStartY = - inHeight/2;
     mBarEndY = mBarStartY + inHeight;
     }
 
