@@ -89,7 +89,8 @@ void initAnimationBank() {
                                 
                                 sscanf( lines[next], 
                                         "animParam="
-                                        "%lf %lf %lf %lf %lf %lf %lf %lf",
+                                        "%lf %lf %lf %lf %lf %lf %lf %lf "
+                                        "%lf %lf %lf",
                                         &( r->spriteAnim[j].xOscPerSec ),
                                         &( r->spriteAnim[j].xAmp ),
                                         &( r->spriteAnim[j].xPhase ),
@@ -99,7 +100,11 @@ void initAnimationBank() {
                                         &( r->spriteAnim[j].yPhase ),
                                         
                                         &( r->spriteAnim[j].rotPerSec ),
-                                        &( r->spriteAnim[j].rotPhase ) );
+                                        &( r->spriteAnim[j].rotPhase ),
+                                        
+                                        &( r->spriteAnim[j].rockOscPerSec ),
+                                        &( r->spriteAnim[j].rockAmp ),
+                                        &( r->spriteAnim[j].rockPhase ) );
                                 next++;
                                 }
 
@@ -108,17 +113,14 @@ void initAnimationBank() {
                                 
                                 sscanf( lines[next], 
                                         "animParam="
-                                        "%lf %lf %lf %lf %lf %lf %lf %lf",
+                                        "%lf %lf %lf %lf %lf %lf",
                                         &( r->slotAnim[j].xOscPerSec ),
                                         &( r->slotAnim[j].xAmp ),
                                         &( r->slotAnim[j].xPhase ),
                                         
                                         &( r->slotAnim[j].yOscPerSec ),
                                         &( r->slotAnim[j].yAmp ),
-                                        &( r->slotAnim[j].yPhase ),
-                                        
-                                        &( r->slotAnim[j].rotPerSec ),
-                                        &( r->slotAnim[j].rotPhase ) );
+                                        &( r->slotAnim[j].yPhase ) );
                                 next++;
                                 }
                             
@@ -273,7 +275,8 @@ void addAnimation( AnimationRecord *inRecord ) {
             lines.push_back( 
                 autoSprintf( 
                     "animParam="
-                    "%lf %lf %lf %lf %lf %lf %lf %lf",
+                    "%lf %lf %lf %lf %lf %lf %lf %lf "
+                    "%lf %lf %lf",
                     inRecord->spriteAnim[j].xOscPerSec,
                     inRecord->spriteAnim[j].xAmp,
                     inRecord->spriteAnim[j].xPhase,
@@ -283,23 +286,24 @@ void addAnimation( AnimationRecord *inRecord ) {
                     inRecord->spriteAnim[j].yPhase,
                     
                     inRecord->spriteAnim[j].rotPerSec,
-                    inRecord->spriteAnim[j].rotPhase ) );
+                    inRecord->spriteAnim[j].rotPhase,
+                    
+                    inRecord->spriteAnim[j].rockOscPerSec,
+                    inRecord->spriteAnim[j].rockAmp,
+                    inRecord->spriteAnim[j].rockPhase ) );
             }
         for( int j=0; j<inRecord->numSlots; j++ ) {
             lines.push_back( 
                 autoSprintf( 
                     "animParam="
-                    "%lf %lf %lf %lf %lf %lf %lf %lf",
+                    "%lf %lf %lf %lf %lf %lf",
                     inRecord->slotAnim[j].xOscPerSec,
                     inRecord->slotAnim[j].xAmp,
                     inRecord->slotAnim[j].xPhase,
                     
                     inRecord->slotAnim[j].yOscPerSec,
                     inRecord->slotAnim[j].yAmp,
-                    inRecord->slotAnim[j].yPhase,
-                    
-                    inRecord->slotAnim[j].rotPerSec,
-                    inRecord->slotAnim[j].rotPhase ) );
+                    inRecord->slotAnim[j].yPhase ) );
             }
 
 
@@ -407,6 +411,12 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     inAnim->spriteAnim[i].yAmp,
                     inAnim->spriteAnim[i].yPhase );
             
+            double rock = inAnimFade * 
+                getOscOffset( inFrameTime,
+                              inAnim->spriteAnim[i].rockOscPerSec,
+                              inAnim->spriteAnim[i].rockAmp,
+                              inAnim->spriteAnim[i].rockPhase );
+
             if( inAnimFade < 1 ) {
                 double targetWeight = 1 - inAnimFade;
                 
@@ -425,6 +435,14 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                         inFadeTargetAnim->spriteAnim[i].yOscPerSec,
                         inFadeTargetAnim->spriteAnim[i].yAmp,
                         inFadeTargetAnim->spriteAnim[i].yPhase );
+
+                 rock += 
+                     targetWeight *
+                     getOscOffset( 
+                         0,
+                         inFadeTargetAnim->spriteAnim[i].rockOscPerSec,
+                         inFadeTargetAnim->spriteAnim[i].rockAmp,
+                         inFadeTargetAnim->spriteAnim[i].rockPhase );
                 }
             
 
@@ -465,6 +483,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     rot = inAnimFade * rot + (1 - inAnimFade) * targetRot;
                     }
                 }
+
+            rot += rock;
             }
         
         drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot );
@@ -599,6 +619,10 @@ void zeroRecord( SpriteAnimationRecord *inRecord ) {
     
     inRecord->rotPerSec = 0;
     inRecord->rotPhase = 0;
+
+    inRecord->rockOscPerSec = 0;
+    inRecord->rockAmp = 0;
+    inRecord->rockPhase = 0;
     }
 
         

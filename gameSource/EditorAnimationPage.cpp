@@ -118,7 +118,7 @@ EditorAnimationPage::EditorAnimationPage()
 
     boxY = 190;
     
-    double space = 40;
+    double space = 32;
     double x = -290;
     
     mSliders[0] = new ValueSlider( smallFont, x, boxY -= space, 2,
@@ -153,7 +153,17 @@ EditorAnimationPage::EditorAnimationPage()
     mSliders[7] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "Rot Phase" );
-        
+
+    mSliders[8] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 3, "Rock Osc" );
+    mSliders[9] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 1, "Rock Amp" );
+    mSliders[10] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                    100, 20,
+                                    0, 1, "Rock Phase" );
+    
 
     for( int i=0; i<NUM_ANIM_SLIDERS; i++ ) {
         addComponent( mSliders[i] );
@@ -372,6 +382,10 @@ void EditorAnimationPage::updateAnimFromSliders() {
         }
     
     r->rotPhase = mSliders[7]->getValue();
+    
+    r->rockOscPerSec = mSliders[8]->getValue();
+    r->rockAmp = mSliders[9]->getValue();
+    r->rockPhase = mSliders[10]->getValue();
     }
 
 
@@ -413,16 +427,24 @@ void EditorAnimationPage::updateSlidersFromAnim() {
         }
 
     if( ! isSprite ) {
-        // last two sliders (rotation) not available for slots
+        // last five sliders (rotation, rock) not available for slots
         mSliders[6]->setVisible( false );
         mSliders[7]->setVisible( false );
         mReverseRotationCheckbox.setVisible( false );
+        
+        mSliders[8]->setVisible( false );
+        mSliders[9]->setVisible( false );
+        mSliders[10]->setVisible( false );
         }
     else {
         // last two sliders (rotation) are available for sprites
         mSliders[6]->setVisible( true );
         mSliders[7]->setVisible( true );
         mReverseRotationCheckbox.setVisible( true );
+        
+        mSliders[8]->setVisible( true );
+        mSliders[9]->setVisible( true );
+        mSliders[10]->setVisible( true );
         }
     
     
@@ -438,6 +460,9 @@ void EditorAnimationPage::updateSlidersFromAnim() {
 
     mSliders[7]->setValue( r->rotPhase );
 
+    mSliders[8]->setValue( r->rockOscPerSec );
+    mSliders[9]->setValue( r->rockAmp );
+    mSliders[10]->setValue( r->rockPhase );
     }
 
     

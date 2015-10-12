@@ -15,16 +15,24 @@ typedef enum AnimType {
 
 typedef struct SpriteAnimationRecord {
         double xOscPerSec;
+        // in pixels
         double xAmp;
+        // between 0 and 1
         double xPhase;
 
         double yOscPerSec;
         double yAmp;
         double yPhase;
 
+        // can be positive (CW) or negative (CCW)
         double rotPerSec;
         double rotPhase;
-        
+
+        double rockOscPerSec;
+        // between 0 and 1, where 1 is full rotation before coming back
+        double rockAmp;
+        double rockPhase;
+
     } SpriteAnimationRecord;
 
 
