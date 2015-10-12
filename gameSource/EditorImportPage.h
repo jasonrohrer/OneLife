@@ -68,6 +68,11 @@ class EditorImportPage : public GamePage, public ActionListener {
         
 
         TextButton mObjectEditorButton;
+
+        SpriteHandle mCenterMarkSprite;
+        
+        char mCenterSet;
+        doublePair mCenterPoint;
         
     };
 

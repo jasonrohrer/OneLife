@@ -35,7 +35,9 @@ EditorImportPage::EditorImportPage()
                            "Sprite Tag", NULL, " " ),
           mSaveSpriteButton( mainFont, 210, -260, "Save" ),
           mSpritePicker( &spritePickable, -310, 100 ),
-          mObjectEditorButton( mainFont, 0, 260, "Objects" ) {
+          mObjectEditorButton( mainFont, 0, 260, "Objects" ),
+          mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
+          mCenterSet( false ) {
 
     addComponent( &mImportButton );
     addComponent( &mSpriteTagField );
@@ -68,6 +70,8 @@ EditorImportPage::~EditorImportPage() {
     if( mProcessedSelectionSprite != NULL ) {
         freeSprite( mProcessedSelectionSprite );
         }
+
+    freeSprite( mCenterMarkSprite );
     }
 
 
@@ -198,6 +202,12 @@ void EditorImportPage::draw( doublePair inViewCenter,
             drawRect( mSelectStart.x, mSelectStart.y,
                       mSelectEnd.x, mSelectEnd.y );
             }
+
+            
+        if( mCenterSet ) {
+            setDrawColor( 1, 1, 1, 0.75 );
+            drawSprite( mCenterMarkSprite, mCenterPoint );
+            }
         }
 
     if( mProcessedSelectionSprite != NULL ) {
@@ -241,6 +251,22 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
         return;
         }
 
+
+    if( isLastMouseButtonRight() ) {
+    
+        if( !mCenterSet ) {
+            mCenterPoint.x = inX;
+            mCenterPoint.y = inY;
+            
+            mCenterSet = true;
+            }
+        else {
+            mCenterSet = false;
+            }
+        return;
+        }
+    
+
     if( inX > - mSheetW / 2
         &&
         inX < mSheetW / 2 
@@ -260,6 +286,15 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
 
 
 void EditorImportPage::pointerDrag( float inX, float inY ) {
+    if( isLastMouseButtonRight() ) {
+        if( mCenterSet ) {
+            mCenterPoint.x = inX;
+            mCenterPoint.y = inY;
+            }
+        return;
+        }
+
+
     if( mSelect ) {
         if( inX > mSelectStart.x ) {
             mSelectEnd.x = inX;
@@ -357,6 +392,26 @@ void EditorImportPage::processSelection() {
         delete mProcessedSelection;
         mProcessedSelection = NULL;
         }
+    
+    
+    char usingCenter = mCenterSet;
+
+    // relative to cut selection
+    int centerX = (int)( mCenterPoint.x - mSelectStart.x );
+    int centerY = (int)( mSelectStart.y - mCenterPoint.y );
+
+    if( mCenterPoint.x >= mSelectStart.x &&
+        mCenterPoint.x < mSelectEnd.x &&
+        mCenterPoint.y <= mSelectStart.y &&
+        mCenterPoint.y > mSelectEnd.y ) {
+        
+        usingCenter = mCenterSet;
+        }
+    else {
+        usingCenter = false;
+        }
+    
+
     
 
     Image *cutImage = 
@@ -588,6 +643,10 @@ void EditorImportPage::processSelection() {
     
     delete cutImage;
     
+    // make relative to new trim
+    centerX -= firstX;
+    centerY -= firstY;
+
     
     // expand to make it big enough for shadow
     w = trimmedImage->getWidth();
@@ -597,10 +656,65 @@ void EditorImportPage::processSelection() {
     
     delete trimmedImage;
 
+    centerX += 20;
+    centerY += 20;
 
 
     addShadow( shadowImage );    
     
+
+    if( usingCenter ) {
+        w = shadowImage->getWidth();
+        h = shadowImage->getHeight();
+
+        if( centerX != w / 2 ||
+            centerY != h / 2 ) {
+            
+            // not currently centered
+
+            // make room to center.
+            Image *bigImage = 
+                shadowImage->expandImage( 3 * w, 
+                                          3 * h );
+
+            int xRadA = centerX;
+            int xRadB = w - centerX;
+
+            int xRad = xRadA;
+            
+            if( xRadB > xRad ) {
+                xRad = xRadB;
+                }
+
+            
+            int yRadA = centerY;
+            int yRadB = h - centerY;
+
+            int yRad = yRadA;
+            
+            if( yRadB > yRad ) {
+                yRad = yRadB;
+                }
+            
+
+
+            delete shadowImage;
+            
+            centerX += w;
+            centerY += h;
+
+            
+
+            shadowImage = 
+                bigImage->getSubImage( centerX - xRad, centerY - yRad, 
+                                       2 * xRad, 2 * yRad );
+
+            delete bigImage;
+            }
+            
+        }
+    
+
     
     /*
       // for testing to check for non-transparent areas
