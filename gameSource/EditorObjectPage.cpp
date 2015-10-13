@@ -127,7 +127,8 @@ EditorObjectPage::EditorObjectPage()
     mHoverObjectLayer = -1;
     mHoverSlot = -1;
     mHoverStrength = 0;
-
+    mHoverFrameCount = 0;
+    
 
     mHeatValueField.setText( "0" );
     mRValueField.setText( "0.0" );
@@ -509,12 +510,17 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 float blue = 1;
                 float red = 1;
                 
+                float alpha = 0.5;
+
                 if( mHoverSlot == i && mHoverStrength > 0 ) {
                     blue = 1 - mHoverStrength;
                     red = 1 - mHoverStrength;
+                    
+                    // use changing hover strength to guide timing
+                    alpha *= mHoverFlash;
                     }
                 
-                setDrawColor( red, 1, blue, 0.5 );
+                setDrawColor( red, 1, blue, alpha );
                 drawSprite( mSlotPlaceholderSprite, 
                             mCurrentObject.slotPos[i] );
                 
@@ -553,13 +559,15 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         float blue = 1;
         float red = 1;
-                
+        float alpha = 1;
+        
         if( mHoverObjectLayer == i && mHoverStrength > 0 ) {
             blue = 1 - mHoverStrength;
             red = 1 - mHoverStrength;
+            alpha *= mHoverFlash;
             }
                 
-        setDrawColor( red, 1, blue, 1 );
+        setDrawColor( red, 1, blue, alpha );
         drawSprite( getSprite( mCurrentObject.sprites[i] ), spritePos );
         }
 
@@ -594,7 +602,19 @@ void EditorObjectPage::step() {
     
     if( mHoverStrength < 0 ) {
         mHoverStrength = 0;
+        mHoverFlash = 1;
         }
+    else {
+        mHoverFlash = 
+            0.375 * sin( 0.2 * frameRateFactor * mHoverFrameCount ) + 
+            0.625;
+
+        // flash gets less strong as hover fades
+        mHoverFlash = mHoverFlash * mHoverStrength + 1 - mHoverStrength;
+        
+        mHoverFrameCount++;
+        }
+    
     
     }
 
@@ -805,15 +825,12 @@ void EditorObjectPage::pointerUp( float inX, float inY ) {
 
 
 void EditorObjectPage::keyDown( unsigned char inASCII ) {
-    if( mPickedObjectLayer == -1 ) {
-        return;
-        }
-
+    
     if( mDescriptionField.isAnyFocused() ) {
         return;
         }
     
-    if( inASCII == 8 ) {
+    if( mPickedObjectLayer == -1 && inASCII == 8 ) {
         // backspace
         
         int newNumSprites = mCurrentObject.numSprites - 1;
@@ -851,6 +868,63 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
             mReplaceObjectButton.setVisible( false );
             }
         }
+    else if( inASCII == 'm' ) {
+        if( mPickedObjectLayer == -1 && mPickedSlot == -1 ) {
+            mPickedObjectLayer = 0;            
+            }
+        else if( mPickedObjectLayer != -1 ) {
+            mPickedObjectLayer ++;
+            if( mPickedObjectLayer >= mCurrentObject.numSprites ) {
+                mPickedObjectLayer = -1;
+                
+                if( mCurrentObject.numSlots > 0 ) {
+                    
+                    mPickedSlot = 0;
+                    }
+                }
+            }
+        else if( mPickedSlot != -1 ) {
+            mPickedSlot++;
+            
+            if( mPickedSlot >= mCurrentObject.numSlots ) {
+                mPickedSlot = -1;
+                }
+            }        
+        
+        mHoverObjectLayer = mPickedObjectLayer;
+        mHoverSlot = mPickedSlot;
+        mHoverStrength = 1;
+        }
+    else if( inASCII == 'n' ) {
+        if( mPickedObjectLayer == -1 && mPickedSlot == -1 ) {
+            if( mCurrentObject.numSlots > 0 ) {
+                mPickedSlot = mCurrentObject.numSlots - 1;
+                }
+            else if( mCurrentObject.numSprites > 0 ) {
+                mPickedObjectLayer = mCurrentObject.numSprites - 1;
+                }
+            }
+        else if( mPickedObjectLayer != -1 ) {
+            mPickedObjectLayer --;
+            if( mPickedObjectLayer < 0 ) {
+                mPickedObjectLayer = -1;
+                }
+            }
+        else if( mPickedSlot != -1 ) {
+            mPickedSlot--;
+            
+            if( mPickedSlot < 0 ) {
+                mPickedSlot = -1;
+                if( mCurrentObject.numSprites > 0 ) {
+                    mPickedObjectLayer = mCurrentObject.numSprites - 1;
+                    }
+                }
+            }        
+        
+        mHoverObjectLayer = mPickedObjectLayer;
+        mHoverSlot = mPickedSlot;
+        mHoverStrength = 1;
+        }
     
         
     }
@@ -886,6 +960,22 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                     break;
                 case MG_KEY_UP:
                     mCurrentObject.spritePos[i].y += offset;
+                    break;
+                }
+            }
+        for( int i=0; i<mCurrentObject.numSlots; i++ ) {
+            switch( inKeyCode ) {
+                case MG_KEY_LEFT:
+                    mCurrentObject.slotPos[i].x -= offset;
+                    break;
+                case MG_KEY_RIGHT:
+                    mCurrentObject.slotPos[i].x += offset;
+                    break;
+                case MG_KEY_DOWN:
+                    mCurrentObject.slotPos[i].y -= offset;
+                    break;
+                case MG_KEY_UP:
+                    mCurrentObject.slotPos[i].y += offset;
                     break;
                 }
             }

@@ -107,6 +107,11 @@ class EditorObjectPage : public GamePage, public ActionListener {
         // fades when mouse stops moving
         float mHoverStrength;
         
+        // alpha for blinking on hover
+        float mHoverFlash;
+
+        int mHoverFrameCount;
+        
     };
 
 
