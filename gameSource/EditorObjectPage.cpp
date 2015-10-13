@@ -538,9 +538,21 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         else {
             ObjectRecord *demoObject = getObject( mSlotsDemoObject );
             
-            setDrawColor( 1, 1, 1, 1 );
-            
             for( int i=0; i<mCurrentObject.numSlots; i++ ) {
+                float blue = 1;
+                float red = 1;
+                
+                float alpha = 1;
+
+                if( mHoverSlot == i && mHoverStrength > 0 ) {
+                    blue = 1 - mHoverStrength;
+                    red = 1 - mHoverStrength;
+                    
+                    // use changing hover strength to guide timing
+                    alpha *= mHoverFlash;
+                    }
+
+                setDrawColor( red, 1, blue, alpha );
                 drawObject( demoObject, mCurrentObject.slotPos[i], false );
                 }
             }

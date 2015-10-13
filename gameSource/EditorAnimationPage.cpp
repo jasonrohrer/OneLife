@@ -766,6 +766,11 @@ void EditorAnimationPage::step() {
 
 
 void EditorAnimationPage::makeActive( char inFresh ) {
+    if( !inFresh ) {
+        return;
+        }
+    
+    mObjectPicker.redoSearch();
     }
 
 
