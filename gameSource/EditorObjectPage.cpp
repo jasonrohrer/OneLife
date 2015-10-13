@@ -541,7 +541,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             setDrawColor( 1, 1, 1, 1 );
             
             for( int i=0; i<mCurrentObject.numSlots; i++ ) {
-                drawObject( demoObject, mCurrentObject.slotPos[i] );
+                drawObject( demoObject, mCurrentObject.slotPos[i], false );
                 }
             }
         

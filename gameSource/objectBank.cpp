@@ -501,17 +501,25 @@ int addObject( const char *inDescription,
 
 
 
-void drawObject( ObjectRecord *inObject, doublePair inPos ) {
+void drawObject( ObjectRecord *inObject, doublePair inPos,
+                 char inFlipH ) {
     for( int i=0; i<inObject->numSprites; i++ ) {
-        doublePair pos = add( inObject->spritePos[i], inPos );
+        doublePair spritePos = inObject->spritePos[i];
+
+        if( inFlipH ) {
+            spritePos.x *= -1;
+            }
+
+        doublePair pos = add( spritePos, inPos );
         
-        drawSprite( getSprite( inObject->sprites[i] ), pos );
+        drawSprite( getSprite( inObject->sprites[i] ), pos, 1.0, 0, inFlipH );
         }    
     }
 
 
 
 void drawObject( ObjectRecord *inObject, doublePair inPos,
+                 char inFlipH,
                  int inNumContained, int *inContainedIDs ) {
 
     int numSlots = getNumContainerSlots( inObject->id );
@@ -521,11 +529,17 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
         }
     
     for( int i=0; i<inNumContained; i++ ) {
-        doublePair pos = add( inObject->slotPos[i], inPos );
-        drawObject( getObject( inContainedIDs[i] ), pos );
+        doublePair slotPos = inObject->slotPos[i];
+
+        if( inFlipH ) {
+            slotPos.x *= -1;
+            }
+
+        doublePair pos = add( slotPos, inPos );
+        drawObject( getObject( inContainedIDs[i] ), pos, inFlipH );
         }
     
-    drawObject( inObject, inPos );
+    drawObject( inObject, inPos, inFlipH );
     }
 
 

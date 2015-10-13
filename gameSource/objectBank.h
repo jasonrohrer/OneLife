@@ -75,10 +75,12 @@ int addObject( const char *inDescription,
 
 
 
-void drawObject( ObjectRecord *inObject, doublePair inPos );
+void drawObject( ObjectRecord *inObject, doublePair inPos, 
+                 char inFlipH );
 
 
 void drawObject( ObjectRecord *inObject, doublePair inPos,
+                 char inFlipH,
                  int inNumContained, int *inContainedIDs );
 
 

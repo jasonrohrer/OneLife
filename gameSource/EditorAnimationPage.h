@@ -72,6 +72,9 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         int mCurrentObjectID;
         int mCurrentSlotDemoID;
 
+        char mFlipDraw;
+        
+
         AnimationRecord *mCurrentAnim[ endAnimType ];
         
         AnimationRecord *mWiggleAnim;

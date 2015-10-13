@@ -34,6 +34,7 @@ EditorAnimationPage::EditorAnimationPage()
           mReverseRotationCheckbox( 0, 0, 2 ),
           mCurrentObjectID( -1 ),
           mCurrentSlotDemoID( -1 ),
+          mFlipDraw( false ),
           mWiggleAnim( NULL ),
           mWiggleFade( 0.0 ),
           mWiggleSpriteOrSlot( 0 ),
@@ -667,22 +668,22 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
             if( demoSlots != NULL ) {
                 drawObjectAnim( mCurrentObjectID, 
                                 anim, frameTime, rotFrameTime, animFade, 
-                                fadeTargetAnim, pos,
+                                fadeTargetAnim, pos, mFlipDraw,
                                 obj->numSlots, demoSlots );
                 }
             else {
                 drawObjectAnim( mCurrentObjectID, 
                                 anim, frameTime, rotFrameTime, animFade, 
-                                fadeTargetAnim, pos );
+                                fadeTargetAnim, pos, mFlipDraw );
                 }
             }
         else {
             if( mCurrentSlotDemoID != -1 && obj->numSlots > 0 ) {
-                drawObject( obj, pos,
+                drawObject( obj, pos, mFlipDraw,
                             obj->numSlots, demoSlots );
                 }
             else {
-                drawObject( obj, pos );
+                drawObject( obj, pos, mFlipDraw );
                 }
             }
         
@@ -879,6 +880,9 @@ void EditorAnimationPage::pointerUp( float inX, float inY ) {
 
 
 void EditorAnimationPage::keyDown( unsigned char inASCII ) {
+    if( inASCII == 'f' ) {
+        mFlipDraw = ! mFlipDraw;
+        }
     }
 
 

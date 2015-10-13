@@ -360,19 +360,20 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      double inRotFrameTime,
                      double inAnimFade,
                      AnimType inFadeTargetType,
-                     doublePair inPos ) {
+                     doublePair inPos,
+                     char inFlipH ) {
     AnimationRecord *r = getAnimation( inObjectID, inType );
     
 
     if( r == NULL ) {
-        drawObject( getObject( inObjectID ), inPos );
+        drawObject( getObject( inObjectID ), inPos, inFlipH );
         return;
         }
     else {
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
         drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
-                        inAnimFade, rB, inPos );
+                        inAnimFade, rB, inPos, inFlipH );
         }
     }
 
@@ -383,7 +384,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      double inRotFrameTime,
                      double inAnimFade,
                      AnimationRecord *inFadeTargetAnim,
-                     doublePair inPos ) {
+                     doublePair inPos,
+                     char inFlipH ) {
 
     ObjectRecord *obj = getObject( inObjectID );
 
@@ -487,7 +489,12 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             rot += rock;
             }
         
-        drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot );
+        if( inFlipH ) {
+            pos.x *= -1;
+            rot *= -1;
+            }
+
+        drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, inFlipH );
         } 
     }
 
@@ -498,19 +505,20 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      double inAnimFade, 
                      AnimType inFadeTargetType,
                      doublePair inPos,
+                     char inFlipH,
                      int inNumContained, int *inContainedIDs ) {
     
     AnimationRecord *r = getAnimation( inObjectID, inType );
  
     if( r == NULL ) {
-        drawObject( getObject( inObjectID ), inPos,
+        drawObject( getObject( inObjectID ), inPos, inFlipH,
                     inNumContained, inContainedIDs );
         }
     else {
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
         drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
-                        inAnimFade, rB, inPos,
+                        inAnimFade, rB, inPos, inFlipH,
                         inNumContained, inContainedIDs );
         }
     }
@@ -522,6 +530,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      double inAnimFade,
                      AnimationRecord *inFadeTargetAnim,
                      doublePair inPos,
+                     char inFlipH,
                      int inNumContained, int *inContainedIDs ) {
     
     // first, draw jiggling (never rotating) objects in slots
@@ -572,15 +581,19 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                             inFadeTargetAnim->slotAnim[i].yPhase );
                     }
                 }
-                    
-            drawObject( getObject( inContainedIDs[i] ), pos );
+                  
+            if( inFlipH ) {
+                pos.x *= -1;
+                }
+  
+            drawObject( getObject( inContainedIDs[i] ), pos, inFlipH );
             }
         
         } 
 
     // draw animating object on top of contained slots
     drawObjectAnim( inObjectID, inAnim, inFrameTime, inRotFrameTime,
-                    inAnimFade, inFadeTargetAnim, inPos );
+                    inAnimFade, inFadeTargetAnim, inPos, inFlipH );
     }
 
 
