@@ -23,6 +23,8 @@ typedef struct LiveObject {
 
         int holdingID;
         
+        char holdingFlip;
+        
         float heat;
         
 

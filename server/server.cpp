@@ -2299,7 +2299,7 @@ void *getSprite( int ) {
     return NULL;
     }
 
-void drawSprite( void*, doublePair, double, double ) {
+void drawSprite( void*, doublePair, double, double, char ) {
     }
 
 

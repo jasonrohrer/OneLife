@@ -556,13 +556,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     int *stackArray = 
                         mMapContainedStacks[ mapI ].getElementArray();
                     
-                    drawObject( getObject(oID), pos,
+                    drawObject( getObject(oID), pos, false,
                                 mMapContainedStacks[ mapI ].size(),
                                 stackArray );
                     delete [] stackArray;
                     }
                 else {
-                    drawObject( getObject(oID), pos );
+                    drawObject( getObject(oID), pos, false );
                     }
                 }
             else if( oID == -1 ) {
@@ -675,10 +675,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     if( o->numContained == 0 ) {
                         
-                        drawObject( getObject( o->holdingID ), holdPos );
+                        drawObject( getObject( o->holdingID ), holdPos, 
+                                    o->holdingFlip );
                         }
                     else {
                         drawObject( getObject(o->holdingID), holdPos,
+                                    o->holdingFlip,
                                     o->numContained,
                                     o->containedIDs );
                         }
@@ -1037,6 +1039,10 @@ void LivingLifePage::step() {
                     if( existing != NULL ) {
                         existing->holdingID = o.holdingID;
                         
+                        if( existing->holdingID == 0 ) {
+                            existing->holdingFlip = false;
+                            }
+                        
                         existing->heat = o.heat;
 
                         if( existing->containedIDs != NULL ) {
@@ -1105,6 +1111,8 @@ void LivingLifePage::step() {
                     
 
                         o.inMotion = false;
+                        
+                        o.holdingFlip = false;
 
                         o.pendingAction = false;
                         o.pendingActionAnimationProgress = 0;
@@ -1756,6 +1764,13 @@ void LivingLifePage::step() {
                 o->currentPos = add( o->currentPos,
                                      mult( o->currentMoveDirection,
                                            o->currentSpeed ) );
+                
+                if( o->currentMoveDirection.x > 0 ) {
+                    o->holdingFlip = true;
+                    }
+                else {
+                    o->holdingFlip = false;
+                    }
                 
                 if( 1.5 * distance( o->currentPos,
                                     startPos )
