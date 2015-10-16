@@ -363,11 +363,18 @@ LivingLifePage::LivingLifePage()
     mMap = new int[ mMapD * mMapD ];
     
     mMapContainedStacks = new SimpleVector<int>[ mMapD * mMapD ];
-
+    
+    mMapAnimationFrameCount =  new int[ mMapD * mMapD ];
+    mMapLastAnimType =  new AnimType[ mMapD * mMapD ];
+    mMapLastAnimFade =  new double[ mMapD * mMapD ];
+    
     for( int i=0; i<mMapD *mMapD; i++ ) {
         // -1 represents unknown
         // 0 represents known empty
         mMap[i] = -1;
+        mMapAnimationFrameCount[i] = 0;
+        mMapLastAnimType[i] = ground;
+        mMapLastAnimFade[i] = 0;
         }
 
     }
@@ -407,7 +414,11 @@ LivingLifePage::~LivingLifePage() {
         closeSocket( mServerSocket );
         }
 
-
+    
+    delete [] mMapAnimationFrameCount;
+    delete [] mMapLastAnimType;
+    delete [] mMapLastAnimFade;
+    
     delete [] mMapContainedStacks;
     
     delete [] mMap;
@@ -548,21 +559,54 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             if( oID > 0 ) {
                 
+                mMapAnimationFrameCount[ mapI ] ++;
+                
+                if( mMapLastAnimFade[ mapI ] > 0 ) {
+                    mMapLastAnimFade[ mapI ] -= 0.05 * frameRateFactor;
+                    if( mMapLastAnimFade[ mapI ] < 0 ) {
+                        mMapLastAnimFade[ mapI ] = 0;
+                        // start current animation fresh after fade
+                        mMapAnimationFrameCount[ mapI ] = 0;
+                        }
+                    }
+                
+
                 doublePair pos = { (double)screenX, (double)screenY };
 
                 setDrawColor( 1, 1, 1, 1 );
                 
+                AnimType curType = ground;
+                AnimType fadeTargetType = ground;
+                double animFade = 1;
+                
+                if( mMapLastAnimFade[ mapI ] != 0 ) {
+                    animFade = mMapLastAnimFade[ mapI ];
+                    curType = mMapLastAnimType[ mapI ];
+                    fadeTargetType = ground;
+                    }
+                
+                double timeVal = frameRateFactor * 
+                    mMapAnimationFrameCount[ mapI ] / 60.0;
+                
+
                 if( mMapContainedStacks[ mapI ].size() > 0 ) {
                     int *stackArray = 
                         mMapContainedStacks[ mapI ].getElementArray();
                     
-                    drawObject( getObject(oID), pos, false,
-                                mMapContainedStacks[ mapI ].size(),
-                                stackArray );
+                    drawObjectAnim( oID, 
+                                    curType, timeVal, timeVal,
+                                    animFade,
+                                    fadeTargetType,
+                                    pos, false,
+                                    mMapContainedStacks[ mapI ].size(),
+                                    stackArray );
                     delete [] stackArray;
                     }
                 else {
-                    drawObject( getObject(oID), pos, false );
+                    drawObjectAnim( oID, 
+                                    curType, timeVal, timeVal,
+                                    animFade,
+                                    fadeTargetType, pos, false );
                     }
                 }
             else if( oID == -1 ) {
@@ -673,16 +717,39 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     setDrawColor( 1, 1, 1, 1 );
                     
+                    double timeVal = frameRateFactor * 
+                        o->animationFrameCount / 60.0;
+                        
+                    
+                    AnimType curType = o->curHeldAnim;
+                    AnimType fadeTargetType = o->curHeldAnim;
+                    
+                    double animFade = 1.0;
+                    
+                    if( o->lastHeldAnimFade > 0 ) {
+                        curType = o->lastHeldAnim;
+                        fadeTargetType = o->curHeldAnim;
+                        animFade = o->lastHeldAnimFade;
+                        }
+
                     if( o->numContained == 0 ) {
                         
-                        drawObject( getObject( o->holdingID ), holdPos, 
-                                    o->holdingFlip );
+                        drawObjectAnim( o->holdingID, curType, 
+                                        timeVal, timeVal,
+                                        animFade,
+                                        fadeTargetType,
+                                        holdPos,
+                                        o->holdingFlip );
                         }
                     else {
-                        drawObject( getObject(o->holdingID), holdPos,
-                                    o->holdingFlip,
-                                    o->numContained,
-                                    o->containedIDs );
+                        drawObjectAnim( o->holdingID, curType, 
+                                        timeVal, timeVal,
+                                        animFade,
+                                        fadeTargetType,
+                                        holdPos,
+                                        o->holdingFlip,
+                                        o->numContained,
+                                        o->containedIDs );
                         }
                     }
                 }
@@ -934,9 +1001,22 @@ void LivingLifePage::step() {
                             char **ints = 
                                 split( idBuffer, ",", &numInts );
                         
-
+                            int old = mMap[mapI];
+                            
                             mMap[mapI] = atoi( ints[0] );
                         
+                            if( old == 0 && mMap[mapI] != 0 ) {
+                                // new placement
+                                
+                                // FIXME:
+                                // need to copy frame count from last holder
+                                // of this object (server needs to track
+                                // who was holding it and tell us about it)
+                                mMapAnimationFrameCount[mapI] = 0;
+                                mMapLastAnimType[mapI] = held;
+                                mMapLastAnimFade[mapI] = 1;
+                                }
+                            
                             delete [] ints[0];
                             
                             mMapContainedStacks[mapI].deleteAll();
@@ -1041,7 +1121,22 @@ void LivingLifePage::step() {
                         
                         if( existing->holdingID == 0 ) {
                             existing->holdingFlip = false;
+                            existing->animationFrameCount = 0;
+                            existing->curHeldAnim = ground;
+                            existing->lastHeldAnim = ground;
+                            existing->lastHeldAnimFade = 0;
                             }
+                        else {
+                            // holding something
+                            if( existing->curHeldAnim != held ) {
+                                // start new anim
+                                existing->lastHeldAnim = existing->curHeldAnim;
+                                existing->lastHeldAnimFade = 1;
+                                existing->curHeldAnim = held;
+                                // keep old frame count going
+                                }
+                            }
+                        
                         
                         existing->heat = o.heat;
 
@@ -1731,6 +1826,21 @@ void LivingLifePage::step() {
         
         LiveObject *o = gameObjects.getElement( i );
         
+
+        if( o->holdingID != 0 ) {
+            o->animationFrameCount++;
+            
+            if( o->lastHeldAnimFade > 0 ) {
+                o->lastHeldAnimFade -= 0.05 * frameRateFactor;
+                if( o->lastHeldAnimFade < 0 ) {
+                    o->lastHeldAnimFade = 0;
+                    // start current animation fresh after fade
+                    o->animationFrameCount = 0;
+                    }
+                }
+            }
+
+
         if( o->currentSpeed != 0 ) {
 
             GridPos curStepDest = o->pathToDest[ o->currentPathStep ];
@@ -1770,6 +1880,14 @@ void LivingLifePage::step() {
                     }
                 else {
                     o->holdingFlip = false;
+                    }                
+
+                if( o->holdingID != 0 ) {
+                    if( o->curHeldAnim != moving ) {
+                        o->lastHeldAnim = o->curHeldAnim;
+                        o->curHeldAnim = moving;
+                        o->lastHeldAnimFade = 1;
+                        }
                     }
                 
                 if( 1.5 * distance( o->currentPos,
@@ -1788,6 +1906,15 @@ void LivingLifePage::step() {
                     // reached destination
                     o->currentPos = endPos;
                     o->currentSpeed = 0;
+
+                    if( o->holdingID != 0 ) {
+                        if( o->curHeldAnim != held ) {
+                            o->lastHeldAnim = o->curHeldAnim;
+                            o->curHeldAnim = held;
+                            o->lastHeldAnimFade = 1;
+                            }
+                        }
+                    
 
                     printf( "Reached dest %f seconds early\n",
                             o->moveEtaTime - game_getCurrentTime() );

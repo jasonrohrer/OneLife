@@ -390,7 +390,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     ObjectRecord *obj = getObject( inObjectID );
 
     for( int i=0; i<obj->numSprites; i++ ) {
-        doublePair pos = add( obj->spritePos[i], inPos );
+        doublePair pos = obj->spritePos[i];
         
         double rot = 0;
         
@@ -493,7 +493,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             pos.x *= -1;
             rot *= -1;
             }
-
+        pos = add( pos, inPos );
+        
         drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, inFlipH );
         } 
     }
@@ -541,7 +542,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     for( int i=0; i<obj->numSlots; i++ ) {
         if( i < inNumContained ) {
 
-            doublePair pos = add( obj->slotPos[i], inPos );
+            doublePair pos = obj->slotPos[i];
         
             if( i < inAnim->numSlots ) {
                 
@@ -586,6 +587,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 pos.x *= -1;
                 }
   
+            pos = add( pos, inPos );
             drawObject( getObject( inContainedIDs[i] ), pos, inFlipH );
             }
         

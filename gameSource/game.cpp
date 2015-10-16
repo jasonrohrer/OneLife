@@ -269,7 +269,9 @@ void freeDrawString() {
 void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                       const char *inCustomRecordedGameData,
                       char inPlayingBack ) {
-    
+
+    toggleLinearMagFilter( true );
+
     gamePlayingBack = inPlayingBack;
     
     screenW = inWidth;
@@ -371,6 +373,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
     initSpriteBank();
     initObjectBank();
+    initAnimationBank();
     
 
     livingLifePage = new LivingLifePage;
@@ -404,6 +407,7 @@ void freeFrameDrawer() {
 
     delete livingLifePage;
 
+    freeAnimationBank();
     freeObjectBank();
     freeSpriteBank();
     }

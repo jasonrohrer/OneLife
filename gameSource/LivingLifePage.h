@@ -15,6 +15,8 @@
 
 #include "pathFind.h"
 
+#include "animationBank.h"
+
 
 
 
@@ -24,7 +26,13 @@ typedef struct LiveObject {
         int holdingID;
         
         char holdingFlip;
+
+        AnimType curHeldAnim;
+        AnimType lastHeldAnim;
+        double lastHeldAnimFade;
         
+        int animationFrameCount;
+
         float heat;
         
 
@@ -129,6 +137,14 @@ class LivingLifePage : public GamePage {
         int mMapD;
 
         int *mMap;
+        
+        int *mMapAnimationFrameCount;
+        
+        // all tiles on ground have current animation type of
+        // "ground" but may have a lingering last type after being dropped
+        AnimType *mMapLastAnimType;
+        double *mMapLastAnimFade;
+        
 
         SimpleVector<int> *mMapContainedStacks;
 

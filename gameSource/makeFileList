@@ -17,6 +17,7 @@ LAYER_SOURCE = \
 game.cpp \
 spriteBank.cpp \
 objectBank.cpp \
+animationBank.cpp \
 whiteSprites.cpp \
 message.cpp \
 serialWebRequests.cpp \
