@@ -60,7 +60,8 @@ void shrinkContainer( int inX, int inY, int inNumNewSlots );
 
 
 // line for a map change message
-char *getMapChangeLineString( int inX, int inY  );
+char *getMapChangeLineString( int inX, int inY, 
+                              int inResponsiblePlayerID = -1  );
 
 
 

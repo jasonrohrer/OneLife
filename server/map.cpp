@@ -575,7 +575,8 @@ void shrinkContainer( int inX, int inY, int inNumNewSlots ) {
 
 
 
-char *getMapChangeLineString( int inX, int inY  ) {
+char *getMapChangeLineString( int inX, int inY,
+                              int inResponsiblePlayerID ) {
     
 
     SimpleVector<char> buffer;
@@ -611,6 +612,13 @@ char *getMapChangeLineString( int inX, int inY  ) {
         delete [] contained;
         }
     
+
+    char *player = autoSprintf( " %d", inResponsiblePlayerID );
+    
+    buffer.appendElementString( player );
+    
+    delete [] player;
+
     
     buffer.appendElementString( "\n" );
 

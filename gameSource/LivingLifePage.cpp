@@ -979,14 +979,14 @@ void LivingLifePage::step() {
             
             for( int i=1; i<numLines; i++ ) {
                 
-                int x, y;
+                int x, y, responsiblePlayerID;
                 
                                 
                 char *idBuffer = new char[500];
 
-                int numRead = sscanf( lines[i], "%d %d %499s",
-                                      &x, &y, idBuffer );
-                if( numRead == 3 ) {
+                int numRead = sscanf( lines[i], "%d %d %499s %d",
+                                      &x, &y, idBuffer, &responsiblePlayerID );
+                if( numRead == 4 ) {
                     int mapX = x - mMapOffsetX + mMapD / 2;
                     int mapY = y - mMapOffsetY + mMapD / 2;
                     
@@ -1029,13 +1029,36 @@ void LivingLifePage::step() {
                         if( old == 0 && mMap[mapI] != 0 ) {
                             // new placement
                             
-                            // FIXME:
-                            // need to copy frame count from last holder
-                            // of this object (server needs to track
-                            // who was holding it and tell us about it)
+                            printf( "New placement, responsible=%d\n",
+                                    responsiblePlayerID );
+
                             mMapAnimationFrameCount[mapI] = 0;
                             mMapLastAnimType[mapI] = held;
                             mMapLastAnimFade[mapI] = 1;
+                            
+                            
+                            // copy frame count from last holder
+                            // of this object (server tracks
+                            // who was holding it and tell us about it)
+                            if( responsiblePlayerID != -1 ) {
+                                for( int i=0; i<gameObjects.size(); i++ ) {
+        
+                                    LiveObject *nextObject =
+                                        gameObjects.getElement( i );
+                                    
+                                    if( nextObject->id ==
+                                        responsiblePlayerID ) {
+
+                                        mMapAnimationFrameCount[mapI] =
+                                            nextObject->animationFrameCount;
+                                        
+                                        mMapLastAnimType[mapI] = 
+                                            nextObject->curHeldAnim;
+                                        
+                                        break;
+                                        }           
+                                    }
+                                }
                             }
                         }
                     }
@@ -1070,16 +1093,22 @@ void LivingLifePage::step() {
                 
                 char *holdingIDBuffer = new char[500];
 
-                int numRead = sscanf( lines[i], "%d %499s %f %d %d %d %lf",
+                int heldOriginValid, heldOriginX, heldOriginY;
+
+                int numRead = sscanf( lines[i], 
+                                      "%d %499s %d %d %d %f %d %d %d %lf",
                                       &( o.id ),
                                       holdingIDBuffer,
+                                      &heldOriginValid,
+                                      &heldOriginX,
+                                      &heldOriginY,
                                       &( o.heat ),
                                       &forced,
                                       &( o.xd ),
                                       &( o.yd ),
                                       &( o.lastSpeed ) );
                 
-                if( numRead == 7 ) {
+                if( numRead == 10 ) {
                     
 
                     if( strstr( holdingIDBuffer, "," ) != NULL ) {
@@ -1119,24 +1148,52 @@ void LivingLifePage::step() {
                         }
                     
                     if( existing != NULL ) {
+                        int oldHeld = existing->holdingID;
+                        
                         existing->holdingID = o.holdingID;
                         
                         if( existing->holdingID == 0 ) {
                             existing->holdingFlip = false;
-                            existing->animationFrameCount = 0;
-                            existing->curHeldAnim = ground;
+                            
+                            // don't reset these when dropping something
+                            // leave them in place so that dropped object
+                            // can use them for smooth fade
+                            // existing->animationFrameCount = 0;
+                            // existing->curHeldAnim = ground;
+                            
                             existing->lastHeldAnim = ground;
                             existing->lastHeldAnimFade = 0;
                             }
-                        else {
-                            // holding something
-                            if( existing->curHeldAnim != held ) {
-                                // start new anim
-                                existing->lastHeldAnim = existing->curHeldAnim;
-                                existing->lastHeldAnimFade = 1;
-                                existing->curHeldAnim = held;
-                                // keep old frame count going
+                        else if( oldHeld == 0 ) {
+                            // holding something new
+
+                            // start new anim
+                            existing->lastHeldAnim = ground;
+                            existing->lastHeldAnimFade = 1;
+                            existing->curHeldAnim = held;
+
+                            if( heldOriginValid ) {
+                                // transition from last ground animation
+                                // of object, keeping that frame count
+                                // for smooth transition
+                                
+                                int mapX = 
+                                    heldOriginX - mMapOffsetX + mMapD / 2;
+                                int mapY = 
+                                    heldOriginY - mMapOffsetY + mMapD / 2;
+                    
+                                if( mapX >= 0 && mapX < mMapD
+                                    &&
+                                    mapY >= 0 && mapY < mMapD ) {
+                        
+                                    int mapI = mapY * mMapD + mapX;
+                                
+                                    existing->animationFrameCount =
+                                        mMapAnimationFrameCount[ mapI ];
+                                    
+                                    }
                                 }
+                            // otherwise, don't touch frame count
                             }
                         
                         
@@ -1225,31 +1282,28 @@ void LivingLifePage::step() {
                         gameObjects.push_back( o );
                         }
                     }
-                else if( numRead == 4 ) {
-                    if( strstr( lines[i], "X X" ) != NULL  ) {
-                        // object deleted
+                else if( strstr( lines[i], "X X" ) != NULL  ) {
+                    // object deleted
                         
-                        numRead = sscanf( lines[i], "%d %d",
-                                          &( o.id ),
-                                          &( o.holdingID ) );
+                    numRead = sscanf( lines[i], "%d %d",
+                                      &( o.id ),
+                                      &( o.holdingID ) );
+                    
+                    
+                    for( int i=0; i<gameObjects.size(); i++ ) {
                         
-
-                        for( int i=0; i<gameObjects.size(); i++ ) {
-        
-                            LiveObject *nextObject =
-                                gameObjects.getElement( i );
+                        LiveObject *nextObject =
+                            gameObjects.getElement( i );
+                        
+                        if( nextObject->id == o.id ) {
                             
-                            if( nextObject->id == o.id ) {
-
-                                if( nextObject->pathToDest != NULL ) {
-                                    delete [] nextObject->pathToDest;
-                                    }
-                                
-                                gameObjects.deleteElement( i );
-                                break;
+                            if( nextObject->pathToDest != NULL ) {
+                                delete [] nextObject->pathToDest;
                                 }
+                            
+                            gameObjects.deleteElement( i );
+                            break;
                             }
-                        
                         }
                     }
                 

@@ -458,10 +458,10 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 if( inAnim->spriteAnim[i].rotPerSec > 0 
                     ||
                     ( inAnim->spriteAnim[i].rotPerSec == 0 &&
-                      inFadeTargetAnim->spriteAnim[i].rotPerSec > 0 ) 
-                    ||
-                    ( inAnim->spriteAnim[i].rotPerSec == 0 &&
-                      inFadeTargetAnim->spriteAnim[i].rotPerSec == 0 ) ) {
+                      inFadeTargetAnim->spriteAnim[i].rotPerSec > 0 ) ) {
+                    
+                    // one or other has positive rotation, keep going
+                    // in that direction to come back to 0 point of target
                     
                     targetRot = floor( rot ) + 
                         inFadeTargetAnim->spriteAnim[i].rotPhase;
@@ -471,7 +471,17 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                         targetRot += 1;
                         }
                     }
+                else if( inAnim->spriteAnim[i].rotPerSec == 0 &&
+                         inFadeTargetAnim->spriteAnim[i].rotPerSec == 0 ) {
+                    // both are not rotating
+
+                    // blend between phases
+                    targetRot = inFadeTargetAnim->spriteAnim[i].rotPhase;
+                    }
                 else {
+                    // one has negative rotation, continue around
+                    // to zero point of target
+
                     targetRot = ceil( rot ) + 
                         inFadeTargetAnim->spriteAnim[i].rotPhase;
                     

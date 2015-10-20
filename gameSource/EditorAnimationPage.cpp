@@ -382,12 +382,12 @@ void EditorAnimationPage::updateAnimFromSliders() {
     r->yPhase = mSliders[5]->getValue();
     
     r->rotPerSec = mSliders[6]->getValue();
-    
+    r->rotPhase = mSliders[7]->getValue();
+
     if( mReverseRotationCheckbox.getToggled() ) {
         r->rotPerSec *= -1;
+        r->rotPhase *= -1;
         }
-    
-    r->rotPhase = mSliders[7]->getValue();
     
     r->rockOscPerSec = mSliders[8]->getValue();
     r->rockAmp = mSliders[9]->getValue();
@@ -462,9 +462,10 @@ void EditorAnimationPage::updateSlidersFromAnim() {
     mSliders[5]->setValue( r->yPhase );
     
     mSliders[6]->setValue( fabs( r->rotPerSec ) );
-    mReverseRotationCheckbox.setToggled( r->rotPerSec < 0 );
+    mSliders[7]->setValue( fabs( r->rotPhase ) );
 
-    mSliders[7]->setValue( r->rotPhase );
+    mReverseRotationCheckbox.setToggled( r->rotPerSec < 0 ||
+                                         r->rotPhase < 0 );
 
     mSliders[8]->setValue( r->rockOscPerSec );
     mSliders[9]->setValue( r->rockAmp );

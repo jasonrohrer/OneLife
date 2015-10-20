@@ -70,6 +70,11 @@ typedef struct LiveObject {
 
         int holdingID;
 
+        // where on map held object was picked up from
+        char heldOriginValid;
+        int heldOriginX;
+        int heldOriginY;
+
         int numContained;
         int *containedIDs;
 
@@ -580,7 +585,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                                 
     char *changeLine =
         getMapChangeLineString(
-            inX, inY );
+            inX, inY, inDroppingPlayer->id );
                                 
     inMapChanges->appendElementString( 
         changeLine );
@@ -591,7 +596,10 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     delete [] changeLine;
                                 
     inDroppingPlayer->holdingID = 0;
-
+    inDroppingPlayer->heldOriginValid = 0;
+    inDroppingPlayer->heldOriginX = 0;
+    inDroppingPlayer->heldOriginY = 0;
+    
                                 
     // watch out for truncations of in-progress
     // moves of other players
@@ -864,6 +872,9 @@ int main() {
                 newObject.moveSpeed = 4;
                 newObject.moveTotalSeconds = 0;
                 newObject.holdingID = 0;
+                newObject.heldOriginValid = 0;
+                newObject.heldOriginX = 0;
+                newObject.heldOriginY = 0;
                 newObject.numContained = 0;
                 newObject.containedIDs = NULL;
                 newObject.sock = sock;
@@ -1365,6 +1376,9 @@ int main() {
                                                   nextPlayer->holdingID );
                                         
                                     nextPlayer->holdingID = 0;
+                                    nextPlayer->heldOriginValid = 0;
+                                    nextPlayer->heldOriginX = 0;
+                                    nextPlayer->heldOriginY = 0;
                                     
                                     char *changeLine =
                                         getMapChangeLineString(
@@ -1386,6 +1400,13 @@ int main() {
     
                                     nextPlayer->holdingID =
                                         removeContained( m.x, m.y );
+                                    
+                                    // contained objects aren't animating
+                                    // in a way that needs to be smooth
+                                    // transitioned on client
+                                    nextPlayer->heldOriginValid = 0;
+                                    nextPlayer->heldOriginX = 0;
+                                    nextPlayer->heldOriginY = 0;
                                         
                                     char *changeLine =
                                         getMapChangeLineString(
@@ -1420,6 +1441,10 @@ int main() {
                                     
                                     nextPlayer->holdingID = target;
                                     
+                                    nextPlayer->heldOriginValid = 1;
+                                    nextPlayer->heldOriginX = m.x;
+                                    nextPlayer->heldOriginY = m.y;
+
                                     char *changeLine =
                                         getMapChangeLineString(
                                             m.x, m.y );
@@ -1461,6 +1486,11 @@ int main() {
                         // send update even if action fails (to let them
                         // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
+                        
+                        nextPlayer->heldOriginValid = 0;
+                        nextPlayer->heldOriginX = 0;
+                        nextPlayer->heldOriginY = 0;
+                        
 
                         if( isGridAdjacent( m.x, m.y,
                                             nextPlayer->xd, 
@@ -1596,6 +1626,9 @@ int main() {
                                             nextPlayer->numContained = 0;
                                             }
                                         nextPlayer->holdingID = 0;
+                                        nextPlayer->heldOriginValid = 0;
+                                        nextPlayer->heldOriginX = 0;
+                                        nextPlayer->heldOriginY = 0;
                                         }
                                     }
                                 
@@ -1612,6 +1645,10 @@ int main() {
                                 
                                 nextPlayer->holdingID = target;
                                 
+                                nextPlayer->heldOriginValid = 1;
+                                nextPlayer->heldOriginX = m.x;
+                                nextPlayer->heldOriginY = m.y;
+
                                 char *changeLine =
                                     getMapChangeLineString(
                                         m.x, m.y );
@@ -1649,11 +1686,15 @@ int main() {
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
                 char *holdingString = getHoldingString( nextPlayer );
                 
-                char *updateLine = autoSprintf( "%d %s %.2f 0 X X %.2f\n", 
-                                                nextPlayer->id,
-                                                holdingString,
-                                                nextPlayer->heat,
-                                                nextPlayer->moveSpeed );
+                char *updateLine = autoSprintf( 
+                    "%d %s %d %d %d %.2f 0 X X %.2f\n", 
+                    nextPlayer->id,
+                    holdingString,
+                    nextPlayer->heldOriginValid,
+                    nextPlayer->heldOriginX,
+                    nextPlayer->heldOriginY,
+                    nextPlayer->heat,
+                    nextPlayer->moveSpeed );
                 
                 delete [] holdingString;
 
@@ -1841,14 +1882,18 @@ int main() {
             
 
             
-            char *updateLine = autoSprintf( "%d %s %.2f %d %d %d %.2f\n", 
-                                            nextPlayer->id,
-                                            holdingString,
-                                            nextPlayer->heat,
-                                            nextPlayer->posForced,
-                                            nextPlayer->xs, 
-                                            nextPlayer->ys,
-                                            nextPlayer->moveSpeed );
+            char *updateLine = autoSprintf( 
+                "%d %s %d %d %d %.2f %d %d %d %.2f\n", 
+                nextPlayer->id,
+                holdingString,
+                nextPlayer->heldOriginValid,
+                nextPlayer->heldOriginX,
+                nextPlayer->heldOriginY,
+                nextPlayer->heat,
+                nextPlayer->posForced,
+                nextPlayer->xs, 
+                nextPlayer->ys,
+                nextPlayer->moveSpeed );
             
             delete [] holdingString;
             
@@ -1949,8 +1994,11 @@ int main() {
 
                     // holding no object for now
                     char *messageLine = 
-                        autoSprintf( "%d %d %.2f 0 %d %d %.2f\n", 
-                                     o.id, o.holdingID, o.heat,
+                        autoSprintf( "%d %d %d %d %d %.2f 0 %d %d %.2f\n", 
+                                     o.id, o.holdingID, 
+                                     o.heldOriginValid, o.heldOriginX,
+                                     o.heldOriginY,
+                                     o.heat,
                                      o.xs, o.ys, o.moveSpeed );
                     
 
@@ -2059,9 +2107,12 @@ int main() {
                                     getHoldingString( otherPlayer );
                                 
                                 char *updateLine = autoSprintf( 
-                                    "%d %s %.2f 0 %d %d %.2f\n", 
+                                    "%d %s %d %d %d %.2f 0 %d %d %.2f\n", 
                                     otherPlayer->id,
                                     holdingString,
+                                    otherPlayer->heldOriginValid,
+                                    otherPlayer->heldOriginX,
+                                    otherPlayer->heldOriginY,
                                     otherPlayer->heat,
                                     otherPlayer->xs, 
                                     otherPlayer->ys,

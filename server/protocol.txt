@@ -51,16 +51,18 @@ a few other tricks to reduce it's size.  Check the code in map.cpp for details.
 
 
 PU
-p_id o_id heat force x y s
-p_id o_id heat force x y s
-p_id o_id heat force x y s
-p_id o_id heat force x y s
+p_id o_id o_origin_valid o_origin_x o_origin_y heat force x y s
+p_id o_id o_origin_valid o_origin_x o_origin_y heat force x y s
+p_id o_id o_origin_valid o_origin_x o_origin_y heat force x y s
+p_id o_id o_origin_valid o_origin_x o_origin_y heat force x y s
 ...
-p_id o_id heat force x y s
+p_id o_id o_origin_valid o_origin_x o_origin_y heat force x y s
 #
 
-List of player ids with their held object ids and x,y grid positions
-and floating point s move speeds (in grid square widths per second)
+List of player ids with their held object ids, whether held origin is valid
+(1 or 0), origin position on map of that held object (where it was picked up 
+from), and x,y grid positions of player and floating point s move speeds (in 
+grid square widths per second)
 
 Heat is the player's warmth between 0 and 1, where 0 is coldest, 1 is hottest,
 and 0.5 is ideal.
@@ -106,14 +108,16 @@ Until that has happened, client must assume player is still in transit.
 
 
 MX
-x y new_id
-x y new_id
-x y new_id
+x y new_id p_id
+x y new_id p_id
+x y new_id p_id
 ...
-x y new_id
+x y new_id p_id
 #
 
-Grid position of changes, and id that position must change to.
+Grid position of changes, and new object id that position must change to.
+p_id is the player that was responsible for the change (in the case of an 
+object drop only), or -1 if none.
 
 
 
