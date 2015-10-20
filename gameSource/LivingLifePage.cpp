@@ -1869,19 +1869,19 @@ void LivingLifePage::step() {
                 normalize( add( o->currentMoveDirection, 
                                 mult( dir, turnFactor * frameRateFactor ) ) );
 
+            if( o->currentMoveDirection.x > 0 ) {
+                o->holdingFlip = true;
+                }
+            else {
+                o->holdingFlip = false;
+                }           
+
             if( o->currentPathStep < o->pathLength - 2 ) {
 
                 o->currentPos = add( o->currentPos,
                                      mult( o->currentMoveDirection,
                                            o->currentSpeed ) );
                 
-                if( o->currentMoveDirection.x > 0 ) {
-                    o->holdingFlip = true;
-                    }
-                else {
-                    o->holdingFlip = false;
-                    }                
-
                 if( o->holdingID != 0 ) {
                     if( o->curHeldAnim != moving ) {
                         o->lastHeldAnim = o->curHeldAnim;
