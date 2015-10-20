@@ -996,26 +996,16 @@ void LivingLifePage::step() {
                         
                         int mapI = mapY * mMapD + mapX;
 
+                        int old = mMap[mapI];
+
                         if( strstr( idBuffer, "," ) != NULL ) {
                             int numInts;
                             char **ints = 
                                 split( idBuffer, ",", &numInts );
                         
-                            int old = mMap[mapI];
+                            
                             
                             mMap[mapI] = atoi( ints[0] );
-                        
-                            if( old == 0 && mMap[mapI] != 0 ) {
-                                // new placement
-                                
-                                // FIXME:
-                                // need to copy frame count from last holder
-                                // of this object (server needs to track
-                                // who was holding it and tell us about it)
-                                mMapAnimationFrameCount[mapI] = 0;
-                                mMapLastAnimType[mapI] = held;
-                                mMapLastAnimFade[mapI] = 1;
-                                }
                             
                             delete [] ints[0];
                             
@@ -1034,6 +1024,18 @@ void LivingLifePage::step() {
                             // a single int
                             mMap[mapI] = atoi( idBuffer );
                             mMapContainedStacks[mapI].deleteAll();
+                            }
+
+                        if( old == 0 && mMap[mapI] != 0 ) {
+                            // new placement
+                            
+                            // FIXME:
+                            // need to copy frame count from last holder
+                            // of this object (server needs to track
+                            // who was holding it and tell us about it)
+                            mMapAnimationFrameCount[mapI] = 0;
+                            mMapLastAnimType[mapI] = held;
+                            mMapLastAnimFade[mapI] = 1;
                             }
                         }
                     }

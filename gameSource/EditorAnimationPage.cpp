@@ -693,7 +693,7 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
                 }
             }
         else {
-            if( mCurrentSlotDemoID != -1 && obj->numSlots > 0 ) {
+            if( demoSlots != NULL ) {
                 drawObject( obj, pos, mFlipDraw,
                             obj->numSlots, demoSlots );
                 }
