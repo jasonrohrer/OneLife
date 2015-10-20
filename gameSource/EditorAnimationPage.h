@@ -58,7 +58,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextButton mObjectEditorButton;
 
         TextButton mSaveButton;
-        
+        TextButton mDeleteButton;
         Picker mObjectPicker;
 
         CheckboxButton *mCheckboxes[NUM_ANIM_CHECKBOXES];

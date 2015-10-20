@@ -30,6 +30,7 @@ static ObjectPickable objectPickable;
 EditorAnimationPage::EditorAnimationPage()
         : mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mSaveButton( mainFont, 0, 180, "Save" ),
+          mDeleteButton( mainFont, 140, 180, "Delete" ),
           mObjectPicker( &objectPickable, +310, 100 ),
           mReverseRotationCheckbox( 0, 0, 2 ),
           mCurrentObjectID( -1 ),
@@ -61,6 +62,8 @@ EditorAnimationPage::EditorAnimationPage()
 
     addComponent( &mObjectEditorButton );
     addComponent( &mSaveButton );
+    addComponent( &mDeleteButton );
+    
     addComponent( &mObjectPicker );
 
     addComponent( &mPickSlotDemoButton );
@@ -78,6 +81,8 @@ EditorAnimationPage::EditorAnimationPage()
 
     mObjectEditorButton.addActionListener( this );
     mSaveButton.addActionListener( this );
+    mDeleteButton.addActionListener( this );
+    
     mObjectPicker.addActionListener( this );
 
     mPickSlotDemoButton.addActionListener( this );
@@ -481,6 +486,16 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             addAnimation( mCurrentAnim[i] );
             }
         }
+    else if( inTarget == &mDeleteButton ) {
+        for( int i=0; i<endAnimType; i++ ) {
+            clearAnimation( mCurrentAnim[i]->objectID, 
+                            mCurrentAnim[i]->type );
+            }
+        mCurrentSpriteOrSlot = 0;
+                
+        checkNextPrevVisible();
+        populateCurrentAnim();
+        }    
     else if( inTarget == &mClearButton ) {
         zeroRecord( getRecordForCurrentSlot() );
         updateSlidersFromAnim();
