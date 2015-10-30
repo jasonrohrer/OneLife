@@ -127,6 +127,10 @@ void initAnimationBank() {
 
                             records.push_back( r );
                             }
+                        for( int j=0; j<numLines; j++ ) {
+                            delete [] lines[j];
+                            }
+                        delete [] lines;
                         }
                     }
                 delete [] txtFileName;
