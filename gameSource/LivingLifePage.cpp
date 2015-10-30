@@ -715,6 +715,28 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     holdPos.x += 16;
                     holdPos.y -= 16;
                     
+                    holdPos = mult( holdPos, 1.0/32.0 );
+
+                    if( ! equal( holdPos, o->heldObjectPos ) ) {
+                        
+                        doublePair delta = sub( holdPos, o->heldObjectPos );
+                        
+                        double step = frameRateFactor * 0.0625;
+                        
+                        if( length( delta ) < step ) {
+                            o->heldObjectPos = holdPos;
+                            }
+                        else {
+                            o->heldObjectPos =
+                                add( o->heldObjectPos,
+                                     mult( normalize( delta ),
+                                           step ) );
+                            
+                            holdPos = o->heldObjectPos;
+                            }
+                        }
+                    holdPos = mult( holdPos, 32.0 );
+
                     setDrawColor( 1, 1, 1, 1 );
                     
                     double timeVal = frameRateFactor * 
@@ -1177,6 +1199,9 @@ void LivingLifePage::step() {
                                 // of object, keeping that frame count
                                 // for smooth transition
                                 
+                                existing->heldObjectPos.x = heldOriginX;
+                                existing->heldObjectPos.y = heldOriginY;
+                                
                                 int mapX = 
                                     heldOriginX - mMapOffsetX + mMapD / 2;
                                 int mapY = 
@@ -1193,6 +1218,10 @@ void LivingLifePage::step() {
                                     
                                     }
                                 }
+                            else {
+                                existing->heldObjectPos = existing->currentPos;
+                                }
+                            
                             // otherwise, don't touch frame count
                             }
                         

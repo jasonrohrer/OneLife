@@ -27,6 +27,8 @@ typedef struct LiveObject {
         
         char holdingFlip;
 
+        doublePair heldObjectPos;
+
         AnimType curHeldAnim;
         AnimType lastHeldAnim;
         double lastHeldAnimFade;
