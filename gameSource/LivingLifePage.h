@@ -33,6 +33,9 @@ typedef struct LiveObject {
         AnimType curHeldAnim;
         AnimType lastHeldAnim;
         double lastHeldAnimFade;
+
+        // furture states that curHeldAnim should fade to, one at a time
+        SimpleVector<AnimType> futureAnimStack;
         
         int animationFrameCount;
 
@@ -143,8 +146,9 @@ class LivingLifePage : public GamePage {
         
         int *mMapAnimationFrameCount;
         
-        // all tiles on ground have current animation type of
-        // "ground" but may have a lingering last type after being dropped
+        // all tiles on ground work their way toward animation type of
+        // "ground" but may have a lingering types after being dropped
+        AnimType *mMapCurAnimType;
         AnimType *mMapLastAnimType;
         double *mMapLastAnimFade;
         
