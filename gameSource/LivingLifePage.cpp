@@ -368,6 +368,8 @@ LivingLifePage::LivingLifePage()
     mMapLastAnimType =  new AnimType[ mMapD * mMapD ];
     mMapLastAnimFade =  new double[ mMapD * mMapD ];
     
+    mMapDropOffsets = new doublePair[ mMapD * mMapD ];
+
     for( int i=0; i<mMapD *mMapD; i++ ) {
         // -1 represents unknown
         // 0 represents known empty
@@ -375,6 +377,9 @@ LivingLifePage::LivingLifePage()
         mMapAnimationFrameCount[i] = 0;
         mMapLastAnimType[i] = ground;
         mMapLastAnimFade[i] = 0;
+
+        mMapDropOffsets[i].x = 0;
+        mMapDropOffsets[i].y = 0;
         }
 
     }
@@ -573,6 +578,32 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                 doublePair pos = { (double)screenX, (double)screenY };
 
+                if( mMapDropOffsets[ mapI ].x != 0 ||
+                    mMapDropOffsets[ mapI ].y != 0 ) {
+                    
+                    pos = add( pos, mult( mMapDropOffsets[ mapI ], 32 ) );
+                    
+                    doublePair nullOffset = { 0, 0 };
+                    
+
+                    doublePair delta = sub( nullOffset, 
+                                            mMapDropOffsets[ mapI ] );
+                    
+                    double step = frameRateFactor * 0.0625;
+                    
+                    if( length( delta ) < step ) {
+                        
+                        mMapDropOffsets[ mapI ].x = 0;
+                        mMapDropOffsets[ mapI ].y = 0;
+                        }
+                    else {
+                        mMapDropOffsets[ mapI ] =
+                            add( mMapDropOffsets[ mapI ],
+                                 mult( normalize( delta ), step ) );
+                        }
+                    }
+                
+
                 setDrawColor( 1, 1, 1, 1 );
                 
                 AnimType curType = ground;
@@ -717,7 +748,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     holdPos = mult( holdPos, 1.0/32.0 );
 
-                    if( ! equal( holdPos, o->heldObjectPos ) ) {
+                    if( o->heldPosOverride && 
+                        ! equal( holdPos, o->heldObjectPos ) ) {
                         
                         doublePair delta = sub( holdPos, o->heldObjectPos );
                         
@@ -735,6 +767,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             holdPos = o->heldObjectPos;
                             }
                         }
+                    else {
+                        o->heldPosOverride = false;
+                        // track it every frame so we have a good
+                        // base point for smooth move when the object
+                        // is dropped
+                        o->heldObjectPos = holdPos;
+                        }
+                    
                     holdPos = mult( holdPos, 32.0 );
 
                     setDrawColor( 1, 1, 1, 1 );
@@ -1077,6 +1117,12 @@ void LivingLifePage::step() {
                                         mMapLastAnimType[mapI] = 
                                             nextObject->curHeldAnim;
                                         
+                                        mMapDropOffsets[mapI].x = 
+                                            nextObject->heldObjectPos.x - x;
+                                        
+                                        mMapDropOffsets[mapI].y = 
+                                            nextObject->heldObjectPos.y - y;
+
                                         break;
                                         }           
                                     }
@@ -1199,6 +1245,7 @@ void LivingLifePage::step() {
                                 // of object, keeping that frame count
                                 // for smooth transition
                                 
+                                existing->heldPosOverride = true;
                                 existing->heldObjectPos.x = heldOriginX;
                                 existing->heldObjectPos.y = heldOriginY;
                                 

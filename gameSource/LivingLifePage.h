@@ -27,6 +27,7 @@ typedef struct LiveObject {
         
         char holdingFlip;
 
+        char heldPosOverride;
         doublePair heldObjectPos;
 
         AnimType curHeldAnim;
@@ -146,6 +147,10 @@ class LivingLifePage : public GamePage {
         // "ground" but may have a lingering last type after being dropped
         AnimType *mMapLastAnimType;
         double *mMapLastAnimFade;
+        
+        // 0,0 for most, except for a newly-dropped object
+        // as it slides back into grid position
+        doublePair *mMapDropOffsets;
         
 
         SimpleVector<int> *mMapContainedStacks;
