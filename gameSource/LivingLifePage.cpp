@@ -926,9 +926,27 @@ void LivingLifePage::step() {
             
             int *newMap = new int[ mMapD * mMapD ];
             
+
+            int *newMapAnimationFrameCount = new int[ mMapD * mMapD ];
+        
+            AnimType *newMapCurAnimType = new AnimType[ mMapD * mMapD ];
+            AnimType *newMapLastAnimType = new AnimType[ mMapD * mMapD ];
+            double *newMapLastAnimFade = new double[ mMapD * mMapD ];
+            
+            doublePair *newMapDropOffsets = new doublePair[ mMapD * mMapD ];
+
+            
             for( int i=0; i<mMapD *mMapD; i++ ) {
                 // starts uknown, not empty
                 newMap[i] = -1;
+                
+                newMapAnimationFrameCount[i] = 0;
+                newMapCurAnimType[i] = ground;
+                newMapLastAnimFade[i] = ground;
+                newMapLastAnimFade[i] = 0;
+                newMapDropOffsets[i].x = 0;
+                newMapDropOffsets[i].y = 0;
+                
 
                 int newX = i % mMapD;
                 int newY = i / mMapD;
@@ -940,13 +958,38 @@ void LivingLifePage::step() {
                     &&
                     oldY >= 0 && oldY < mMapD ) {
                     
-                    newMap[i] = mMap[ oldY * mMapD + oldX ];
+                    int oI = oldY * mMapD + oldX;
+
+                    newMap[i] = mMap[oI];
+
+                    newMapAnimationFrameCount[i] = mMapAnimationFrameCount[oI];
+                    newMapCurAnimType[i] = mMapCurAnimType[oI];
+                    newMapLastAnimFade[i] = mMapLastAnimFade[oI];
+                    newMapLastAnimFade[i] = mMapLastAnimFade[oI];
+                    newMapDropOffsets[i] = mMapDropOffsets[oI];
                     }
                 }
             
             memcpy( mMap, newMap, mMapD * mMapD * sizeof( int ) );
+
+            memcpy( mMapAnimationFrameCount, newMapAnimationFrameCount, 
+                    mMapD * mMapD * sizeof( int ) );
+            memcpy( mMapCurAnimType, newMapCurAnimType, 
+                    mMapD * mMapD * sizeof( AnimType ) );
+            memcpy( mMapLastAnimFade, newMapLastAnimFade,
+                    mMapD * mMapD * sizeof( AnimType ) );
+            memcpy( mMapLastAnimFade, newMapLastAnimFade,
+                    mMapD * mMapD * sizeof( double ) );
+            memcpy( mMapDropOffsets, newMapDropOffsets,
+                    mMapD * mMapD * sizeof( doublePair ) );
             
             delete [] newMap;
+            delete [] newMapAnimationFrameCount;
+            delete [] newMapCurAnimType;
+            delete [] newMapLastAnimType;
+            delete [] newMapLastAnimFade;
+            delete [] newMapDropOffsets;
+            
 
             mMapOffsetX = newMapOffsetX;
             mMapOffsetY = newMapOffsetY;
