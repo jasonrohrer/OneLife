@@ -8,6 +8,7 @@
 #include "minorGems/game/Font.h"
 #include "minorGems/util/stringUtils.h"
 #include "minorGems/util/SettingsManager.h"
+#include "minorGems/util/random/JenkinsRandomSource.h"
 #include "minorGems/game/drawUtils.h"
 
 #include "minorGems/formats/encodingUtils.h"
@@ -24,6 +25,8 @@ extern Font *mainFont;
 
 extern doublePair lastScreenViewCenter;
 
+
+static JenkinsRandomSource randSource;
 
 
 int numServerBytesRead = 0;
@@ -375,7 +378,7 @@ LivingLifePage::LivingLifePage()
         // -1 represents unknown
         // 0 represents known empty
         mMap[i] = -1;
-        mMapAnimationFrameCount[i] = 0;
+        mMapAnimationFrameCount[i] = randSource.getRandomBoundedInt( 0, 500 );
         mMapCurAnimType[i] = ground;
         mMapLastAnimType[i] = ground;
         mMapLastAnimFade[i] = 0;
@@ -940,7 +943,8 @@ void LivingLifePage::step() {
                 // starts uknown, not empty
                 newMap[i] = -1;
                 
-                newMapAnimationFrameCount[i] = 0;
+                newMapAnimationFrameCount[i] = 
+                    randSource.getRandomBoundedInt( 0, 500 );;
                 newMapCurAnimType[i] = ground;
                 newMapLastAnimFade[i] = ground;
                 newMapLastAnimFade[i] = 0;
