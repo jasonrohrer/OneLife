@@ -481,11 +481,11 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
     
     int i = 0;
-    for( int y=0; y<5; y++ ) {
-        for( int x=0; x<5; x++ ) {
+    for( int y=0; y<3; y++ ) {
+        for( int x=0; x<3; x++ ) {
             
-	  doublePair pos = { (double)( y * 32 - 2 * 32 ), 
-			     (double)( x * 32 - 2 * 32 ) };
+            doublePair pos = { (double)( y * 64 - 64 ), 
+                               (double)( x * 64 - 64 ) };
             
             if( i%2 == 0 ) {
                 setDrawColor( 1, 1, 1, 1 );
@@ -494,7 +494,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 setDrawColor( 0.75, 0.75, 0.75, 1 );
                 }
             
-            drawSquare( pos, 16 );
+            drawSquare( pos, 32 );
             i++;
             }
         }
