@@ -28,6 +28,8 @@ extern doublePair lastScreenViewCenter;
 
 static JenkinsRandomSource randSource;
 
+#define CELL_D 64
+
 
 int numServerBytesRead = 0;
 int numServerBytesSent = 0;
@@ -456,15 +458,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
     setDrawColor( 1, 1, 1, 1 );
 
     int gridCenterX = 
-        lrintf( lastScreenViewCenter.x / 32 ) - mMapOffsetX + mMapD/2;
+        lrintf( lastScreenViewCenter.x / CELL_D ) - mMapOffsetX + mMapD/2;
     int gridCenterY = 
-        lrintf( lastScreenViewCenter.y / 32 ) - mMapOffsetY + mMapD/2;
+        lrintf( lastScreenViewCenter.y / CELL_D ) - mMapOffsetY + mMapD/2;
     
-    int xStart = gridCenterX - 12;
-    int xEnd = gridCenterX + 12;
+    int xStart = gridCenterX - 6;
+    int xEnd = gridCenterX + 6;
 
-    int yStart = gridCenterY - 12;
-    int yEnd = gridCenterY + 12;
+    int yStart = gridCenterY - 6;
+    int yEnd = gridCenterY + 6;
 
     if( xStart < 0 ) {
         xStart = 0;
@@ -520,8 +522,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             char *string = autoSprintf( "[%c]", o->displayChar );
         
             doublePair pos;
-            pos.x = o->xd * 32;
-            pos.y = o->yd * 32;
+            pos.x = o->xd * CELL_D;
+            pos.y = o->yd * CELL_D;
         
             setDrawColor( 1, 0, 0, 1 );
             mainFont->drawString( string, 
@@ -535,8 +537,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 for( int p=0; p< o->pathLength; p++ ) {
                     GridPos pathSpot = o->pathToDest[ p ];
                     
-                    pos.x = pathSpot.x * 32;
-                    pos.y = pathSpot.y * 32;
+                    pos.x = pathSpot.x * CELL_D;
+                    pos.y = pathSpot.y * CELL_D;
 
                     setDrawColor( 1, 1, 0, 1 );
                     mainFont->drawString( "P", 
@@ -544,8 +546,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 }
             else {
-                pos.x = o->closestDestIfPathFailedX * 32;
-                pos.y = o->closestDestIfPathFailedY * 32;
+                pos.x = o->closestDestIfPathFailedX * CELL_D;
+                pos.y = o->closestDestIfPathFailedY * CELL_D;
                 
                 setDrawColor( 1, 0, 1, 1 );
                 mainFont->drawString( "P", 
@@ -560,11 +562,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     for( int y=yEnd; y>=yStart; y-- ) {
         
-        int screenY = 32 * ( y + mMapOffsetY - mMapD / 2 );
+        int screenY = CELL_D * ( y + mMapOffsetY - mMapD / 2 );
         
         for( int x=xStart; x<=xEnd; x++ ) {
             
-            int screenX = 32 * ( x + mMapOffsetX - mMapD / 2 );
+            int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
 
             int mapI = y * mMapD + x;
             
@@ -596,7 +598,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 if( mMapDropOffsets[ mapI ].x != 0 ||
                     mMapDropOffsets[ mapI ].y != 0 ) {
                     
-                    pos = add( pos, mult( mMapDropOffsets[ mapI ], 32 ) );
+                    pos = add( pos, mult( mMapDropOffsets[ mapI ], CELL_D ) );
                     
                     doublePair nullOffset = { 0, 0 };
                     
@@ -691,7 +693,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 // current pos
                 char *string = autoSprintf( "%c", o->displayChar );
                 
-                doublePair pos = mult( o->currentPos, 32 );
+                doublePair pos = mult( o->currentPos, CELL_D );
                 
                 doublePair actionOffset = { 0, 0 };
                 
@@ -761,7 +763,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     holdPos.x += 16;
                     holdPos.y -= 16;
                     
-                    holdPos = mult( holdPos, 1.0/32.0 );
+                    holdPos = mult( holdPos, 1.0 / CELL_D );
 
                     if( o->heldPosOverride && 
                         ! equal( holdPos, o->heldObjectPos ) ) {
@@ -790,7 +792,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         o->heldObjectPos = holdPos;
                         }
                     
-                    holdPos = mult( holdPos, 32.0 );
+                    holdPos = mult( holdPos, CELL_D );
 
                     setDrawColor( 1, 1, 1, 1 );
                     
@@ -835,7 +837,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
         
-    doublePair lastChunkCenter = { 32.0 * mMapOffsetX, 32.0 * mMapOffsetY };
+    doublePair lastChunkCenter = { CELL_D * mMapOffsetX, 
+                                   CELL_D * mMapOffsetY };
     
     setDrawColor( 0, 1, 0, 1 );
     
@@ -859,17 +862,17 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     setDrawColor( 0, 0, 0, 0.125 );
     
-    int screenGridOffsetX = lrint( lastScreenViewCenter.x / 32 );
-    int screenGridOffsetY = lrint( lastScreenViewCenter.y / 32 );
+    int screenGridOffsetX = lrint( lastScreenViewCenter.x / CELL_D );
+    int screenGridOffsetY = lrint( lastScreenViewCenter.y / CELL_D );
     
     for( int y=-11; y<12; y++ ) {
         for( int x=-11; x<12; x++ ) {
             
             doublePair pos;
-            pos.x = ( x + screenGridOffsetX ) * 32;
-            pos.y = ( y + screenGridOffsetY ) * 32;
+            pos.x = ( x + screenGridOffsetX ) * CELL_D;
+            pos.y = ( y + screenGridOffsetY ) * CELL_D;
             
-            drawSquare( pos, 14 );
+            drawSquare( pos, 30 );
             }
         }    
 
@@ -1503,8 +1506,8 @@ void LivingLifePage::step() {
                 ourObject->displayChar = 'A';
 
                 // center view on player's starting position
-                lastScreenViewCenter.x = 32 * ourObject->xd;
-                lastScreenViewCenter.y = 32 * ourObject->yd;
+                lastScreenViewCenter.x = CELL_D * ourObject->xd;
+                lastScreenViewCenter.y = CELL_D * ourObject->yd;
 
                 setViewCenterPosition( lastScreenViewCenter.x, 
                                        lastScreenViewCenter.y );
@@ -1981,7 +1984,7 @@ void LivingLifePage::step() {
     
     if( ourLiveObject != NULL ) {
         
-        doublePair screenTargetPos = mult( ourLiveObject->currentPos, 32 );
+        doublePair screenTargetPos = mult( ourLiveObject->currentPos, CELL_D );
         
 
         if( ourLiveObject->currentPos.x != ourLiveObject->xd
@@ -2005,7 +2008,7 @@ void LivingLifePage::step() {
                 moveDir = mult( normalize( moveDir ), 7 );
                 }
                 
-            moveDir = mult( moveDir, 32 );
+            moveDir = mult( moveDir, CELL_D );
             
             
             screenTargetPos = add( screenTargetPos, moveDir );
@@ -2338,9 +2341,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             }
         }
     
-    int clickDestX = lrintf( ( inX ) / 32 );
+    int clickDestX = lrintf( ( inX ) / CELL_D );
     
-    int clickDestY = lrintf( ( inY ) / 32 );
+    int clickDestY = lrintf( ( inY ) / CELL_D );
     
 
     if( clickDestX == ourLiveObject->xd && clickDestY == ourLiveObject->yd ) {

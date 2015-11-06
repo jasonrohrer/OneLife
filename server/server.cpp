@@ -2067,9 +2067,9 @@ int main() {
             else {
                 // this player has first message, ready for updates/moves
                 
-                if( abs( nextPlayer->xd - nextPlayer->lastSentMapX ) > 7
+                if( abs( nextPlayer->xd - nextPlayer->lastSentMapX ) > 3
                     ||
-                    abs( nextPlayer->yd - nextPlayer->lastSentMapY ) > 7 ) {
+                    abs( nextPlayer->yd - nextPlayer->lastSentMapY ) > 3 ) {
                 
                     // moving out of bounds of chunk, send update
                     

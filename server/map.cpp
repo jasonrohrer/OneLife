@@ -23,7 +23,7 @@
 
 
 
-static int chunkDimension = 32;
+static int chunkDimension = 16;
 
 
 static int startingObjectID = 1;
