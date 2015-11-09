@@ -31,6 +31,9 @@ static JenkinsRandomSource randSource;
 #define CELL_D 64
 
 
+#define PERSON_OBJ_ID 12
+
+
 int numServerBytesRead = 0;
 int numServerBytesSent = 0;
 
@@ -752,10 +755,31 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     blue = 1;
                     }
                 
-                setDrawColor( red, 0, blue, 1 );
-                mainFont->drawString( string, 
-                                      pos, alignCenter );
+
+                double timeVal = frameRateFactor * 
+                    o->animationFrameCount / 60.0;
+
+                setDrawColor( 1, 1, 1, 1 );
+                //setDrawColor( red, 0, blue, 1 );
+                //mainFont->drawString( string, 
+                //                      pos, alignCenter );
                 
+                // fixme:  track animation transitions
+                AnimType anim = ground;
+                
+                if( o->inMotion ) {
+                    anim = moving;
+                    }
+                
+                drawObjectAnim( PERSON_OBJ_ID, anim, 
+                                timeVal, timeVal,
+                                1,
+                                anim,
+                                pos,
+                                // fixme:  reverse flip of drawing,
+                                // because it is backwards
+                                ! o->holdingFlip );
+
                 delete [] string;
                 
                 if( o->holdingID != 0 ) { 
@@ -796,8 +820,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                     setDrawColor( 1, 1, 1, 1 );
                     
-                    double timeVal = frameRateFactor * 
-                        o->animationFrameCount / 60.0;
+                    
                         
                     
                     AnimType curType = o->curHeldAnim;
@@ -2063,8 +2086,9 @@ void LivingLifePage::step() {
         LiveObject *o = gameObjects.getElement( i );
         
 
+        o->animationFrameCount++;
+
         if( o->holdingID != 0 ) {
-            o->animationFrameCount++;
             
             if( o->lastHeldAnimFade > 0 ) {
                 
