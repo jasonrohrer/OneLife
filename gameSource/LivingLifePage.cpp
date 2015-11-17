@@ -712,9 +712,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     if( o->xd < playerActionTargetX ) {
                         xDir = 1;
+                        o->holdingFlip = true;
                         }
                     if( o->xd > playerActionTargetX ) {
                         xDir = -1;
+                        o->holdingFlip = false;
                         }
                     if( o->yd < playerActionTargetY ) {
                         yDir = 1;
@@ -1325,8 +1327,7 @@ void LivingLifePage::step() {
                         existing->holdingID = o.holdingID;
                         
                         if( existing->holdingID == 0 ) {
-                            existing->holdingFlip = false;
-                            
+                                                        
                             // don't reset these when dropping something
                             // leave them in place so that dropped object
                             // can use them for smooth fade
@@ -2143,12 +2144,17 @@ void LivingLifePage::step() {
                 normalize( add( o->currentMoveDirection, 
                                 mult( dir, turnFactor * frameRateFactor ) ) );
 
-            if( o->currentMoveDirection.x > 0 ) {
-                o->holdingFlip = true;
+            // don't change flip unless moving in x
+            if( o->currentMoveDirection.x != 0 ) {
+                
+                if( o->currentMoveDirection.x > 0 ) {
+                    o->holdingFlip = true;
+                    }
+                else {
+                    o->holdingFlip = false;
+                    }         
                 }
-            else {
-                o->holdingFlip = false;
-                }           
+            
 
             if( o->currentPathStep < o->pathLength - 2 ) {
 
