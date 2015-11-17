@@ -30,11 +30,11 @@ typedef struct LiveObject {
         char heldPosOverride;
         doublePair heldObjectPos;
 
-        AnimType curHeldAnim;
-        AnimType lastHeldAnim;
-        double lastHeldAnimFade;
+        AnimType curAnim;
+        AnimType lastAnim;
+        double lastAnimFade;
 
-        // furture states that curHeldAnim should fade to, one at a time
+        // furture states that curAnim should fade to, one at a time
         SimpleVector<AnimType> futureAnimStack;
         
         int animationFrameCount;
