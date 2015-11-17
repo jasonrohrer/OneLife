@@ -78,6 +78,12 @@ void addAnimation( AnimationRecord *inRecord );
 void clearAnimation( int inObjectID, AnimType inType );
 
 
+// do we need a smooth fade when transitionion from current animation
+// to a given target animation?
+char isAnimFadeNeeded( int inObjectID, AnimType inCurType, 
+                       AnimType inTargetType );
+
+
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      double inRotFrameTime,

@@ -2115,6 +2115,26 @@ void LivingLifePage::step() {
             
         if( o->lastAnimFade > 0 ) {
             
+            if( o->lastAnimFade == 1 ) {
+                // fade just started
+                // check if it's necessary
+                
+                if( isAnimFadeNeeded( PERSON_OBJ_ID, 
+                                      o->lastAnim, o->curAnim )
+                    ||
+                    ( o->holdingID != 0 &&
+                      isAnimFadeNeeded( o->holdingID, 
+                                        o->lastAnim, o->curAnim ) ) ) {
+                    // fade needed, do nothing
+                    }
+                else {
+                    // fade not needed
+                    // jump to end of it
+                    o->lastAnimFade = 0;
+                    }
+                }
+            
+
             o->lastAnimFade -= 0.05 * frameRateFactor;
             if( o->lastAnimFade < 0 ) {
                 o->lastAnimFade = 0;

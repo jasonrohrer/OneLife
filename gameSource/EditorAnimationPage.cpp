@@ -605,6 +605,14 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
 
             mCurrentSpriteOrSlot = 0;
             
+            if( ! isAnimFadeNeeded( mCurrentObjectID,
+                                    mLastType, mCurrentType ) ) {
+                
+                // jump right to start of new animation with no fade
+                mLastTypeFade = 0;
+                mFrameCount = 0;
+                }
+
             
             checkNextPrevVisible();
             updateSlidersFromAnim();

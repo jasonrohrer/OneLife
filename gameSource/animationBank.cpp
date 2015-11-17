@@ -360,6 +360,101 @@ static double getOscOffset( double inFrameTime,
 
 
 
+
+char isAnimFadeNeeded( int inObjectID, AnimType inCurType, 
+                       AnimType inTargetType ) {
+    AnimationRecord *curR = getAnimation( inObjectID, inCurType );
+    AnimationRecord *targetR = getAnimation( inObjectID, inTargetType );
+    
+    if( curR == NULL || targetR == NULL ) {
+        return false;
+        }
+
+    ObjectRecord *obj = getObject( inObjectID );
+    
+    
+    for( int i=0; i<obj->numSprites; i++ ) {
+        
+        // if current is moving at all, must fade
+
+        if( curR->spriteAnim[i].xOscPerSec > 0 ) return true;
+        
+        if( curR->spriteAnim[i].xAmp != 0 &&
+            curR->spriteAnim[i].xPhase != 0 &&
+            curR->spriteAnim[i].xPhase != 0.5 ) return true;
+        
+        if( curR->spriteAnim[i].yOscPerSec > 0 ) return true;
+        
+        if( curR->spriteAnim[i].yAmp != 0 &&
+            curR->spriteAnim[i].yPhase != 0 &&
+            curR->spriteAnim[i].yPhase != 0.5 ) return true;
+        
+        
+        if( curR->spriteAnim[i].rockOscPerSec > 0 ) return true;
+        
+        if( curR->spriteAnim[i].rockAmp != 0 &&
+            curR->spriteAnim[i].rockPhase != 0 &&
+            curR->spriteAnim[i].rockPhase != 0.5 ) return true;
+        
+        
+        if( curR->spriteAnim[i].rotPerSec > 0 ) return true;
+        
+        
+
+        // if target starts out of phase, must fade
+        
+        if( targetR->spriteAnim[i].xAmp != 0 &&
+            targetR->spriteAnim[i].xPhase != 0 &&
+            targetR->spriteAnim[i].xPhase != 0.5 ) return true;
+        
+        if( targetR->spriteAnim[i].yAmp != 0 &&
+            targetR->spriteAnim[i].yPhase != 0 &&
+            targetR->spriteAnim[i].yPhase != 0.5 ) return true;
+        
+        if( targetR->spriteAnim[i].rockAmp != 0 &&
+            targetR->spriteAnim[i].rockPhase != 0 &&
+            targetR->spriteAnim[i].rockPhase != 0.5 ) return true;
+        
+        if( targetR->spriteAnim[i].rotPerSec != 0 && 
+            targetR->spriteAnim[i].rotPhase != 0 ) return true;
+        }
+    
+    
+    for( int i=0; i<obj->numSlots; i++ ) {
+        // if current is moving at all, must fade
+
+        if( curR->slotAnim[i].xOscPerSec > 0 ) return true;
+        
+        if( curR->slotAnim[i].xAmp != 0 &&
+            ( curR->slotAnim[i].xPhase != 0 ||
+              curR->slotAnim[i].xPhase != 0.5  ) ) return true;
+        
+        if( curR->slotAnim[i].yOscPerSec > 0 ) return true;
+        
+        if( curR->slotAnim[i].yAmp != 0 &&
+            ( curR->slotAnim[i].yPhase != 0 ||
+              curR->slotAnim[i].yPhase != 0.5  ) ) return true;        
+        
+
+        // if target starts out of phase, must fade
+        
+        if( targetR->slotAnim[i].xAmp != 0 &&
+            ( targetR->slotAnim[i].xPhase != 0 ||
+              targetR->slotAnim[i].xPhase != 0.5  ) ) return true;
+        
+        if( targetR->slotAnim[i].yAmp != 0 &&
+            ( targetR->slotAnim[i].yPhase != 0 ||
+              targetR->slotAnim[i].yPhase != 0.5  ) ) return true;
+        }
+    
+    // current animation lines up with start of target
+    // no fade
+    return false;
+    }
+
+
+
+
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      double inRotFrameTime,
                      double inAnimFade,
