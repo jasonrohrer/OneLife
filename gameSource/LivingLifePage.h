@@ -157,6 +157,11 @@ class LivingLifePage : public GamePage {
         doublePair *mMapDropOffsets;
         
 
+        // true if left-right flipped (to match last drop)
+        // not tracked on server, so resets when object goes off of screen
+        char *mMapTileFlips;
+        
+
         SimpleVector<int> *mMapContainedStacks;
 
         int mMapOffsetX;

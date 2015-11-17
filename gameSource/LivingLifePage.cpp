@@ -378,6 +378,7 @@ LivingLifePage::LivingLifePage()
     mMapLastAnimFade =  new double[ mMapD * mMapD ];
     
     mMapDropOffsets = new doublePair[ mMapD * mMapD ];
+    mMapTileFlips = new char[ mMapD * mMapD ];
 
     for( int i=0; i<mMapD *mMapD; i++ ) {
         // -1 represents unknown
@@ -390,6 +391,8 @@ LivingLifePage::LivingLifePage()
 
         mMapDropOffsets[i].x = 0;
         mMapDropOffsets[i].y = 0;
+        
+        mMapTileFlips[i] = false;
         }
 
     }
@@ -437,6 +440,8 @@ LivingLifePage::~LivingLifePage() {
     
     delete [] mMapDropOffsets;
 
+    delete [] mMapTileFlips;
+    
     delete [] mMapContainedStacks;
     
     delete [] mMap;
@@ -845,7 +850,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                     curType, timeVal, timeVal,
                                     animFade,
                                     fadeTargetType,
-                                    pos, false,
+                                    pos, mMapTileFlips[ mapI ],
                                     mMapContainedStacks[ mapI ].size(),
                                     stackArray );
                     delete [] stackArray;
@@ -854,7 +859,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     drawObjectAnim( oID, 
                                     curType, timeVal, timeVal,
                                     animFade,
-                                    fadeTargetType, pos, false );
+                                    fadeTargetType, pos, 
+                                    mMapTileFlips[ mapI ] );
                     }
                 }
             else if( oID == -1 ) {
@@ -973,6 +979,7 @@ void LivingLifePage::step() {
             double *newMapLastAnimFade = new double[ mMapD * mMapD ];
             
             doublePair *newMapDropOffsets = new doublePair[ mMapD * mMapD ];
+            char *newMapTileFlips= new char[ mMapD * mMapD ];
 
             
             for( int i=0; i<mMapD *mMapD; i++ ) {
@@ -986,6 +993,8 @@ void LivingLifePage::step() {
                 newMapLastAnimFade[i] = 0;
                 newMapDropOffsets[i].x = 0;
                 newMapDropOffsets[i].y = 0;
+
+                newMapTileFlips[i] = false;
                 
 
                 int newX = i % mMapD;
@@ -1007,6 +1016,8 @@ void LivingLifePage::step() {
                     newMapLastAnimFade[i] = mMapLastAnimFade[oI];
                     newMapLastAnimFade[i] = mMapLastAnimFade[oI];
                     newMapDropOffsets[i] = mMapDropOffsets[oI];
+
+                    newMapTileFlips[i] = mMapTileFlips[oI];
                     }
                 }
             
@@ -1023,12 +1034,17 @@ void LivingLifePage::step() {
             memcpy( mMapDropOffsets, newMapDropOffsets,
                     mMapD * mMapD * sizeof( doublePair ) );
             
+            memcpy( mMapTileFlips, newMapTileFlips,
+                    mMapD * mMapD * sizeof( char ) );
+            
             delete [] newMap;
             delete [] newMapAnimationFrameCount;
             delete [] newMapCurAnimType;
             delete [] newMapLastAnimType;
             delete [] newMapLastAnimFade;
             delete [] newMapDropOffsets;
+            delete [] newMapTileFlips;
+            
             
 
             mMapOffsetX = newMapOffsetX;
@@ -1236,7 +1252,9 @@ void LivingLifePage::step() {
                                         
                                         mMapDropOffsets[mapI].y = 
                                             nextObject->heldObjectPos.y - y;
-
+                                        
+                                        mMapTileFlips[mapI] =
+                                            nextObject->holdingFlip;
                                         break;
                                         }           
                                     }
