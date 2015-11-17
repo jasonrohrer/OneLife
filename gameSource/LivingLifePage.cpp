@@ -566,111 +566,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
     for( int y=yEnd; y>=yStart; y-- ) {
         
         int screenY = CELL_D * ( y + mMapOffsetY - mMapD / 2 );
-        
-        for( int x=xStart; x<=xEnd; x++ ) {
-            
-            int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
 
-            int mapI = y * mMapD + x;
-            
-            int oID = mMap[ mapI ];
-            
-            if( oID > 0 ) {
-                
-                mMapAnimationFrameCount[ mapI ] ++;
-                
-                if( mMapLastAnimFade[ mapI ] > 0 ) {
-                    mMapLastAnimFade[ mapI ] -= 0.05 * frameRateFactor;
-                    if( mMapLastAnimFade[ mapI ] < 0 ) {
-                        mMapLastAnimFade[ mapI ] = 0;
-                        // start current animation fresh after fade
-                        mMapAnimationFrameCount[ mapI ] = 0;
 
-                        if( mMapCurAnimType[ mapI ] != ground ) {
-                            // transition to ground now
-                            mMapLastAnimType[ mapI ] = mMapCurAnimType[ mapI ];
-                            mMapCurAnimType[ mapI ] = ground;
-                            mMapLastAnimFade[ mapI ] = 1;
-                            }
-                        }
-                    }
-                
 
-                doublePair pos = { (double)screenX, (double)screenY };
-
-                if( mMapDropOffsets[ mapI ].x != 0 ||
-                    mMapDropOffsets[ mapI ].y != 0 ) {
-                    
-                    pos = add( pos, mult( mMapDropOffsets[ mapI ], CELL_D ) );
-                    
-                    doublePair nullOffset = { 0, 0 };
-                    
-
-                    doublePair delta = sub( nullOffset, 
-                                            mMapDropOffsets[ mapI ] );
-                    
-                    double step = frameRateFactor * 0.0625;
-                    
-                    if( length( delta ) < step ) {
-                        
-                        mMapDropOffsets[ mapI ].x = 0;
-                        mMapDropOffsets[ mapI ].y = 0;
-                        }
-                    else {
-                        mMapDropOffsets[ mapI ] =
-                            add( mMapDropOffsets[ mapI ],
-                                 mult( normalize( delta ), step ) );
-                        }
-                    }
-                
-
-                setDrawColor( 1, 1, 1, 1 );
-                
-                AnimType curType = ground;
-                AnimType fadeTargetType = ground;
-                double animFade = 1;
-                
-                if( mMapLastAnimFade[ mapI ] != 0 ) {
-                    animFade = mMapLastAnimFade[ mapI ];
-                    curType = mMapLastAnimType[ mapI ];
-                    fadeTargetType = mMapCurAnimType[ mapI ];
-                    }
-                
-                double timeVal = frameRateFactor * 
-                    mMapAnimationFrameCount[ mapI ] / 60.0;
-                
-
-                if( mMapContainedStacks[ mapI ].size() > 0 ) {
-                    int *stackArray = 
-                        mMapContainedStacks[ mapI ].getElementArray();
-                    
-                    drawObjectAnim( oID, 
-                                    curType, timeVal, timeVal,
-                                    animFade,
-                                    fadeTargetType,
-                                    pos, false,
-                                    mMapContainedStacks[ mapI ].size(),
-                                    stackArray );
-                    delete [] stackArray;
-                    }
-                else {
-                    drawObjectAnim( oID, 
-                                    curType, timeVal, timeVal,
-                                    animFade,
-                                    fadeTargetType, pos, false );
-                    }
-                }
-            else if( oID == -1 ) {
-                // unknown
-                doublePair pos = { (double)screenX, (double)screenY };
-                
-                setDrawColor( 0, 0, 0, 0.5 );
-                drawSquare( pos, 14 );
-                }
-            }
-        
 
         // draw any player objects that are in this row
+        // UNDER the objects in this row (so that pick up and set down
+        // looks correct
 
         int worldY = y + mMapOffsetY - mMapD / 2;
         
@@ -858,6 +760,112 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 }
             }
+
+
+
+        // now draw tiles in this row
+        for( int x=xStart; x<=xEnd; x++ ) {
+            
+            int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
+
+            int mapI = y * mMapD + x;
+            
+            int oID = mMap[ mapI ];
+            
+            if( oID > 0 ) {
+                
+                mMapAnimationFrameCount[ mapI ] ++;
+                
+                if( mMapLastAnimFade[ mapI ] > 0 ) {
+                    mMapLastAnimFade[ mapI ] -= 0.05 * frameRateFactor;
+                    if( mMapLastAnimFade[ mapI ] < 0 ) {
+                        mMapLastAnimFade[ mapI ] = 0;
+                        // start current animation fresh after fade
+                        mMapAnimationFrameCount[ mapI ] = 0;
+
+                        if( mMapCurAnimType[ mapI ] != ground ) {
+                            // transition to ground now
+                            mMapLastAnimType[ mapI ] = mMapCurAnimType[ mapI ];
+                            mMapCurAnimType[ mapI ] = ground;
+                            mMapLastAnimFade[ mapI ] = 1;
+                            }
+                        }
+                    }
+                
+
+                doublePair pos = { (double)screenX, (double)screenY };
+
+                if( mMapDropOffsets[ mapI ].x != 0 ||
+                    mMapDropOffsets[ mapI ].y != 0 ) {
+                    
+                    pos = add( pos, mult( mMapDropOffsets[ mapI ], CELL_D ) );
+                    
+                    doublePair nullOffset = { 0, 0 };
+                    
+
+                    doublePair delta = sub( nullOffset, 
+                                            mMapDropOffsets[ mapI ] );
+                    
+                    double step = frameRateFactor * 0.0625;
+                    
+                    if( length( delta ) < step ) {
+                        
+                        mMapDropOffsets[ mapI ].x = 0;
+                        mMapDropOffsets[ mapI ].y = 0;
+                        }
+                    else {
+                        mMapDropOffsets[ mapI ] =
+                            add( mMapDropOffsets[ mapI ],
+                                 mult( normalize( delta ), step ) );
+                        }
+                    }
+                
+
+                setDrawColor( 1, 1, 1, 1 );
+                
+                AnimType curType = ground;
+                AnimType fadeTargetType = ground;
+                double animFade = 1;
+                
+                if( mMapLastAnimFade[ mapI ] != 0 ) {
+                    animFade = mMapLastAnimFade[ mapI ];
+                    curType = mMapLastAnimType[ mapI ];
+                    fadeTargetType = mMapCurAnimType[ mapI ];
+                    }
+                
+                double timeVal = frameRateFactor * 
+                    mMapAnimationFrameCount[ mapI ] / 60.0;
+                
+
+                if( mMapContainedStacks[ mapI ].size() > 0 ) {
+                    int *stackArray = 
+                        mMapContainedStacks[ mapI ].getElementArray();
+                    
+                    drawObjectAnim( oID, 
+                                    curType, timeVal, timeVal,
+                                    animFade,
+                                    fadeTargetType,
+                                    pos, false,
+                                    mMapContainedStacks[ mapI ].size(),
+                                    stackArray );
+                    delete [] stackArray;
+                    }
+                else {
+                    drawObjectAnim( oID, 
+                                    curType, timeVal, timeVal,
+                                    animFade,
+                                    fadeTargetType, pos, false );
+                    }
+                }
+            else if( oID == -1 ) {
+                // unknown
+                doublePair pos = { (double)screenX, (double)screenY };
+                
+                setDrawColor( 0, 0, 0, 0.5 );
+                drawSquare( pos, 14 );
+                }
+            }
+
         } // end loop over rows on screen
 
 
