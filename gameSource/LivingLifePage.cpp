@@ -2273,6 +2273,25 @@ void LivingLifePage::step() {
                             o->moveEtaTime - game_getCurrentTime() );
                     }
                 else {
+                    if( o->curAnim != moving ) {
+                        if( o->lastAnimFade != 0 ) {
+                        
+                            // don't double stack
+                            if( o->futureAnimStack.size() == 0 ||
+                                o->futureAnimStack.getElementDirect(
+                                    o->futureAnimStack.size() - 1 ) 
+                                != moving ) {
+                            
+                                o->futureAnimStack.push_back( moving );
+                                }
+                            }
+                        else {
+                            o->lastAnim = o->curAnim;
+                            o->curAnim = moving;
+                            o->lastAnimFade = 1;
+                            }
+                        }
+
                     o->currentPos = add( o->currentPos,
                                          mult( o->currentMoveDirection,
                                                o->currentSpeed ) );
