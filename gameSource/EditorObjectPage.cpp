@@ -144,6 +144,7 @@ EditorObjectPage::EditorObjectPage()
         }
     mCheckboxNames[0] = "Containable";
     mCheckboxNames[1] = "Permanent";
+    mCheckboxNames[2] = "Person";
     
     }
 
@@ -210,6 +211,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCheckboxes[1]->getToggled(),
                    mHeatValueField.getInt(),
                    mRValueField.getFloat(),
+                   mCheckboxes[2]->getToggled(),
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos );
@@ -229,6 +231,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCheckboxes[1]->getToggled(),
                    mHeatValueField.getInt(),
                    mRValueField.getFloat(),
+                   mCheckboxes[2]->getToggled(),
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
@@ -464,6 +467,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mCheckboxes[0]->setToggled( pickedRecord->containable );
             mCheckboxes[1]->setToggled( pickedRecord->permanent );
+            mCheckboxes[2]->setToggled( pickedRecord->person );
             
             }
         }
@@ -842,7 +846,7 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         return;
         }
     
-    if( mPickedObjectLayer == -1 && inASCII == 8 ) {
+    if( mPickedObjectLayer != -1 && inASCII == 8 ) {
         // backspace
         
         int newNumSprites = mCurrentObject.numSprites - 1;

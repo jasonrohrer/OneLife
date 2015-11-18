@@ -21,7 +21,7 @@
 #include "objectBank.h"
 
 
-#define NUM_OBJECT_CHECKBOXES 2
+#define NUM_OBJECT_CHECKBOXES 3
 
 
 

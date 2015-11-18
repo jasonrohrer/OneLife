@@ -63,7 +63,7 @@ void initObjectBank() {
                         
                         delete [] objectText;
 
-                        if( numLines >= 6 ) {
+                        if( numLines >= 7 ) {
                             ObjectRecord *r = new ObjectRecord;
                             
                             int next = 0;
@@ -112,6 +112,17 @@ void initObjectBank() {
                                     &( r->rValue ) );
                             
                             next++;
+
+
+
+                            int personRead = 0;                            
+                            sscanf( lines[next], "person=%d", 
+                                    &( personRead ) );
+                            
+                            r->person = personRead;
+                            
+                            next++;
+
 
 
                             r->numSlots = 0;
@@ -321,6 +332,7 @@ int addObject( const char *inDescription,
                char inPermanent,
                int inHeatValue,
                float inRValue,
+               char inPerson,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
@@ -378,6 +390,8 @@ int addObject( const char *inDescription,
         
         lines.push_back( autoSprintf( "heatValue=%d", inHeatValue ) );
         lines.push_back( autoSprintf( "rValue=%f", inRValue ) );
+
+        lines.push_back( autoSprintf( "person=%d", (int)inPerson ) );
         
         lines.push_back( autoSprintf( "numSlots=%d", inNumSlots ) );
 
@@ -466,6 +480,8 @@ int addObject( const char *inDescription,
     
     r->heatValue = inHeatValue;
     r->rValue = inRValue;
+
+    r->person = inPerson;
 
     r->numSlots = inNumSlots;
     
