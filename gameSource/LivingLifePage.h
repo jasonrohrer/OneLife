@@ -23,6 +23,14 @@
 typedef struct LiveObject {
         int id;
 
+        int displayID;
+        
+        double age;
+        double ageRate;
+        
+        double lastAgeSetTime;
+        
+
         int holdingID;
         
         char holdingFlip;

@@ -23,7 +23,7 @@
 #include "minorGems/util/random/JenkinsRandomSource.h"
 
 
-static JenkinsRandomSource testRandSource;
+static JenkinsRandomSource randSource;
 
 
 typedef struct GridPos {
@@ -37,9 +37,19 @@ typedef struct GridPos {
 float targetHeat = 10;
 
 
+#define PERSON_OBJ_ID 12
+
+
 typedef struct LiveObject {
         int id;
         
+        // object ID used to visually represent this player
+        int displayID;
+        
+        // time that this life started (for computing age)
+        double lifeStartTimeSeconds;
+        
+
         // start and dest for a move
         // same if reached destination
         int xs;
@@ -352,7 +362,55 @@ ClientMessage parseMessage( char *inMessage ) {
 
 
 
+// compute closest starting position part way along
+// path
+int computePartialMovePathStep( LiveObject *inPlayer ) {
+    
+    double fractionDone = 
+        ( Time::getCurrentTime() - 
+          inPlayer->moveStartTime )
+        / inPlayer->moveTotalSeconds;
+    
+    if( fractionDone > 1 ) {
+        fractionDone = 1;
+        }
+    
+    int c = 
+        lrint( ( inPlayer->pathLength  - 1 ) *
+               fractionDone );
+    return c;
+    }
 
+
+
+GridPos computePartialMoveSpot( LiveObject *inPlayer ) {
+
+    int c = computePartialMovePathStep( inPlayer );
+    
+    GridPos cPos = inPlayer->pathToDest[c];
+    
+    return cPos;
+    }
+
+
+
+double getAgeRate() {
+    return 1.0 / 60.0;
+    }
+
+
+
+double computeAge( LiveObject *inPlayer ) {
+    double deltaSeconds = 
+        Time::getCurrentTime() - inPlayer->lifeStartTimeSeconds;
+    
+    return deltaSeconds * getAgeRate();
+    }
+
+
+
+    
+    
 // returns NULL if there are no matching moves
 char *getMovesMessage( char inNewMovesOnly, 
                        SimpleVector<ChangePosition> *inChangeVector = NULL,
@@ -615,27 +673,8 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
         if( otherPlayer->xd != otherPlayer->xs ||
             otherPlayer->yd != otherPlayer->ys ) {
                 
-            double fractionDone = 
-                ( Time::getCurrentTime() - 
-                  otherPlayer->moveStartTime )
-                / otherPlayer->moveTotalSeconds;
-                                        
-            if( fractionDone > 1 ) {
-                fractionDone = 1;
-                }
-                                        
-            int c = lrint( 
-                ( otherPlayer->pathLength  - 1 ) *
-                fractionDone );
             GridPos cPos = 
-                otherPlayer->pathToDest[c];
-                                        
-            printf( 
-                "Checking how drop at %d,%d "
-                "affects player at step %d "
-                "along len %d path\n",
-                inX, inY,
-                c + 1, otherPlayer->pathLength );
+                computePartialMoveSpot( otherPlayer );
                                         
             if( distance( cPos, dropSpot ) 
                 <= 2 * pathDeltaMax ) {
@@ -643,6 +682,8 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                 // this is close enough
                 // to this path that it might
                 // block it
+                
+                int c = computePartialMovePathStep( otherPlayer );
 
                 char blocked = false;
                 int blockedStep = -1;
@@ -860,10 +901,56 @@ int main() {
                 LiveObject newObject;
                 newObject.id = nextID;
                 nextID++;
+                
+                newObject.displayID = getRandomPersonObject();
+
+                newObject.lifeStartTimeSeconds = Time::getCurrentTime();
+
+                if( players.size() == 0 ) {
+                    // new Eve
+                    // she starts almost full grown
+                    newObject.lifeStartTimeSeconds -= 14 * 60;
+                    }
+                // else player starts as newborn
+                
+                    
+
                 newObject.xs = 0;
                 newObject.ys = 0;
                 newObject.xd = 0;
                 newObject.yd = 0;
+                
+                if( players.size() > 0 ) {
+                    // born to an existing player
+                    int parentIndex = 
+                        randSource.getRandomBoundedInt( 0,
+                                                        players.size() - 1 );
+                    
+                    LiveObject *parent = players.getElement( parentIndex );
+                    
+                    if( parent->xs == parent->xd && 
+                        parent->ys == parent->yd ) {
+                        
+                        // stationary parent
+                        newObject.xs = parent->xs;
+                        newObject.ys = parent->ys;
+                        
+                        newObject.xd = parent->xs;
+                        newObject.yd = parent->ys;
+                        }
+                    else {
+                        // find where parent is along path
+                        GridPos cPos = computePartialMoveSpot( parent );
+                        
+                        newObject.xs = cPos.x;
+                        newObject.ys = cPos.y;
+                        
+                        newObject.xd = cPos.x;
+                        newObject.yd = cPos.y;
+                        }
+                    }
+                
+
                 newObject.pathLength = 0;
                 newObject.pathToDest = NULL;
                 newObject.pathTruncated = 0;
@@ -970,30 +1057,11 @@ int main() {
                             // a new move interrupting a non-stationary object
                             interrupt = true;
 
-                            // compute closest starting position part way along
-                            // path
-                            double fractionDone = 
-                                ( Time::getCurrentTime() - 
-                                  nextPlayer->moveStartTime )
-                                / nextPlayer->moveTotalSeconds;
-                            
-                            if( fractionDone > 1 ) {
-                                fractionDone = 1;
-                                }
-                            
-                            int c = 
-                                lrint( ( nextPlayer->pathLength  - 1 ) *
-                                       fractionDone );
-                            GridPos cPos = nextPlayer->pathToDest[c];
+                            GridPos cPos = 
+                                computePartialMoveSpot( nextPlayer );
                                                         
                             nextPlayer->xs = cPos.x;
                             nextPlayer->ys = cPos.y;
-                            
-
-                            printf( "Interrupt at step %d in a %d step path "
-                                    " at %d,%d\n",
-                                    c + 1, nextPlayer->pathLength,
-                                    nextPlayer->xs, nextPlayer->ys );
                             
                             
                             char cOnTheirNewPath = false;
@@ -1050,6 +1118,9 @@ int main() {
                                     // (we may walk backward along the old
                                     //  path to do this)
                                 
+                                    int c = computePartialMovePathStep( 
+                                        nextPlayer );
+                                    
                                     int pathStep = 0;
                                     
                                     if( theirPathIndex < c ) {
@@ -1687,13 +1758,16 @@ int main() {
                 char *holdingString = getHoldingString( nextPlayer );
                 
                 char *updateLine = autoSprintf( 
-                    "%d %s %d %d %d %.2f 0 X X %.2f\n", 
+                    "%d %d %s %d %d %d %.2f 0 X X %.2f %.2f %.2\n", 
                     nextPlayer->id,
+                    nextPlayer->displayID,
                     holdingString,
                     nextPlayer->heldOriginValid,
                     nextPlayer->heldOriginX,
                     nextPlayer->heldOriginY,
                     nextPlayer->heat,
+                    computeAge( nextPlayer ),
+                    getAgeRate(),
                     nextPlayer->moveSpeed );
                 
                 delete [] holdingString;
@@ -1883,8 +1957,9 @@ int main() {
 
             
             char *updateLine = autoSprintf( 
-                "%d %s %d %d %d %.2f %d %d %d %.2f\n", 
+                "%d %d %s %d %d %d %.2f %d %d %d %.2f %.2f %.2f\n", 
                 nextPlayer->id,
+                nextPlayer->displayID,
                 holdingString,
                 nextPlayer->heldOriginValid,
                 nextPlayer->heldOriginX,
@@ -1893,6 +1968,8 @@ int main() {
                 nextPlayer->posForced,
                 nextPlayer->xs, 
                 nextPlayer->ys,
+                computeAge( nextPlayer ),
+                getAgeRate(),
                 nextPlayer->moveSpeed );
             
             delete [] holdingString;
@@ -1994,12 +2071,18 @@ int main() {
 
                     // holding no object for now
                     char *messageLine = 
-                        autoSprintf( "%d %d %d %d %d %.2f 0 %d %d %.2f\n", 
-                                     o.id, o.holdingID, 
+                        autoSprintf( "%d %d "
+                                     "%d %d %d %d %.2f 0 %d %d "
+                                     "%.2f %.2f %.2f\n", 
+                                     o.id, o.displayID, 
+                                     o.holdingID, 
                                      o.heldOriginValid, o.heldOriginX,
                                      o.heldOriginY,
                                      o.heat,
-                                     o.xs, o.ys, o.moveSpeed );
+                                     o.xs, o.ys, 
+                                     computeAge( &o ),
+                                     getAgeRate(),
+                                     o.moveSpeed );
                     
 
                     if( o.id != nextPlayer->id ) {
@@ -2107,8 +2190,11 @@ int main() {
                                     getHoldingString( otherPlayer );
                                 
                                 char *updateLine = autoSprintf( 
-                                    "%d %s %d %d %d %.2f 0 %d %d %.2f\n", 
+                                    "%d %d "
+                                    "%s %d %d %d %.2f 0 %d %d "
+                                    "%.2f %.2f %.2f\n", 
                                     otherPlayer->id,
+                                    otherPlayer->displayID,
                                     holdingString,
                                     otherPlayer->heldOriginValid,
                                     otherPlayer->heldOriginX,
@@ -2116,6 +2202,8 @@ int main() {
                                     otherPlayer->heat,
                                     otherPlayer->xs, 
                                     otherPlayer->ys,
+                                    computeAge( otherPlayer ),
+                                    getAgeRate(),
                                     otherPlayer->moveSpeed ); 
 
                                 delete [] holdingString;

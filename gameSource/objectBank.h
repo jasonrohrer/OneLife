@@ -102,4 +102,9 @@ char isContainable( int inID );
 
 
 
+// -1 if no person object exists
+int getRandomPersonObject();
+
+
+
 #endif

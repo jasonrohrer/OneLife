@@ -6,6 +6,8 @@
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/stringUtils.h"
 
+#include "minorGems/util/random/JenkinsRandomSource.h"
+
 #include "minorGems/io/file/File.h"
 
 #include "minorGems/graphics/converters/TGAImageConverter.h"
@@ -23,6 +25,13 @@ static ObjectRecord **idMap;
 
 
 static StringTree tree;
+
+
+// track objects that are marked with the person flag
+static SimpleVector<int> personObjectIDs;
+
+
+static JenkinsRandomSource randSource;
 
 
 
@@ -165,6 +174,11 @@ void initObjectBank() {
                                 }
                             
                             records.push_back( r );
+
+                            
+                            if( r->person ) {
+                                personObjectIDs.push_back( r->id );
+                                }
                             }
                             
                         for( int i=0; i<numLines; i++ ) {
@@ -231,6 +245,8 @@ static void freeObjectRecord( int inID ) {
             return ;
             }
         }
+    
+    personObjectIDs.deleteElementEqualTo( inID );
     }
 
 
@@ -512,6 +528,8 @@ int addObject( const char *inDescription,
 
     delete [] lower;
     
+    personObjectIDs.push_back( newID );
+
     return newID;
     }
 
@@ -604,6 +622,17 @@ char isSpriteUsed( int inSpriteID ) {
         }
     return false;
     }
+
+
+
+
+int getRandomPersonObject() {
+    
+    return personObjectIDs.getElementDirect( 
+        randSource.getRandomBoundedInt( 0, 
+                                        personObjectIDs.size() - 1  ) );
+    }
+
 
 
 

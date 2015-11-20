@@ -31,8 +31,6 @@ static JenkinsRandomSource randSource;
 #define CELL_D 64
 
 
-#define PERSON_OBJ_ID 12
-
 
 int numServerBytesRead = 0;
 int numServerBytesSent = 0;
@@ -685,14 +683,18 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 //mainFont->drawString( string, 
                 //                      pos, alignCenter );
                 
-                drawObjectAnim( PERSON_OBJ_ID, curType, 
+                double age = o->age + 
+                    o->ageRate * ( game_getCurrentTime() - o->lastAgeSetTime );
+
+                drawObjectAnim( o->displayID, curType, 
                                 timeVal, timeVal,
                                 animFade,
                                 fadeTargetType,
                                 pos,
                                 // fixme:  reverse flip of drawing,
                                 // because it is backwards
-                                ! o->holdingFlip );
+                                ! o->holdingFlip,
+                                age );
 
                 delete [] string;
                 
@@ -745,7 +747,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                         animFade,
                                         fadeTargetType,
                                         holdPos,
-                                        o->holdingFlip );
+                                        o->holdingFlip, -1 );
                         }
                     else {
                         drawObjectAnim( o->holdingID, curType, 
@@ -754,6 +756,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                         fadeTargetType,
                                         holdPos,
                                         o->holdingFlip,
+                                        -1,
                                         o->numContained,
                                         o->containedIDs );
                         }
@@ -846,6 +849,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                     animFade,
                                     fadeTargetType,
                                     pos, mMapTileFlips[ mapI ],
+                                    -1,
                                     mMapContainedStacks[ mapI ].size(),
                                     stackArray );
                     delete [] stackArray;
@@ -855,7 +859,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                     curType, timeVal, timeVal,
                                     animFade,
                                     fadeTargetType, pos, 
-                                    mMapTileFlips[ mapI ] );
+                                    mMapTileFlips[ mapI ], -1 );
                     }
                 }
             else if( oID == -1 ) {
@@ -1301,8 +1305,11 @@ void LivingLifePage::step() {
                 int heldOriginValid, heldOriginX, heldOriginY;
 
                 int numRead = sscanf( lines[i], 
-                                      "%d %499s %d %d %d %f %d %d %d %lf",
+                                      "%d %d "
+                                      "%499s %d %d %d %f %d %d %d "
+                                      "%lf %lf %lf",
                                       &( o.id ),
+                                      &( o.displayID ),
                                       holdingIDBuffer,
                                       &heldOriginValid,
                                       &heldOriginX,
@@ -1311,10 +1318,12 @@ void LivingLifePage::step() {
                                       &forced,
                                       &( o.xd ),
                                       &( o.yd ),
+                                      &( o.age ),
+                                      &( o.ageRate ),
                                       &( o.lastSpeed ) );
                 
-                if( numRead == 10 ) {
-                    
+                if( numRead == 13 ) {
+                    o.lastAgeSetTime = game_getCurrentTime();
 
                     if( strstr( holdingIDBuffer, "," ) != NULL ) {
                         int numInts;
@@ -1431,6 +1440,9 @@ void LivingLifePage::step() {
                             // otherwise, don't touch frame count
                             }
                         
+                        existing->displayID = o.displayID;
+                        existing->age = o.age;
+                        existing->lastAgeSetTime = o.lastAgeSetTime;
                         
                         existing->heat = o.heat;
 
@@ -2129,7 +2141,7 @@ void LivingLifePage::step() {
                 // fade just started
                 // check if it's necessary
                 
-                if( isAnimFadeNeeded( PERSON_OBJ_ID, 
+                if( isAnimFadeNeeded( o->displayID, 
                                       o->lastAnim, o->curAnim )
                     ||
                     ( o->holdingID != 0 &&

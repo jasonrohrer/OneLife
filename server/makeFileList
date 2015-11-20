@@ -22,6 +22,7 @@ server.cpp \
 map.cpp \
 ../gameSource/transitionBank.cpp \
 ../gameSource/objectBank.cpp \
+../gameSource/ageControl.cpp \
 kissdb.cpp \
 
 
