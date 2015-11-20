@@ -1,5 +1,8 @@
 #include "EditorObjectPage.h"
 
+#include "ageControl.h"
+
+
 #include "minorGems/game/game.h"
 #include "minorGems/game/Font.h"
 #include "minorGems/game/drawUtils.h"
@@ -55,6 +58,9 @@ EditorObjectPage::EditorObjectPage()
           mClearSlotsDemoButton( smallFont, 150, -32, "End Demo" ),
           mSpritePicker( &spritePickable, -310, 100 ),
           mObjectPicker( &objectPickable, +310, 100 ),
+          mPersonAgeSlider( smallFont, 0, -110, 2,
+                            100, 20,
+                            0, 100, "Age" ),
           mSlotPlaceholderSprite( loadSprite( "slotPlaceholder.tga" ) ) {
 
     mDemoSlots = false;
@@ -84,6 +90,11 @@ EditorObjectPage::EditorObjectPage()
 
     addComponent( &mSpritePicker );
     addComponent( &mObjectPicker );
+
+    addComponent( &mPersonAgeSlider );
+    
+    mPersonAgeSlider.setVisible( false );
+    
 
     mDescriptionField.setFireOnAnyTextChange( true );
     mDescriptionField.addActionListener( this );
@@ -146,6 +157,7 @@ EditorObjectPage::EditorObjectPage()
     mCheckboxNames[1] = "Permanent";
     mCheckboxNames[2] = "Person";
     
+    mCheckboxes[2]->addActionListener( this );
     }
 
 
@@ -469,6 +481,22 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCheckboxes[1]->setToggled( pickedRecord->permanent );
             mCheckboxes[2]->setToggled( pickedRecord->person );
             
+            if( mCheckboxes[2]->getToggled() ) {
+                mPersonAgeSlider.setValue( 20 );
+                mPersonAgeSlider.setVisible( true );
+                }
+            else {
+                mPersonAgeSlider.setVisible( false );
+                }
+            }
+        }
+    else if( inTarget == mCheckboxes[2] ) {
+        if( mCheckboxes[2]->getToggled() ) {
+            mPersonAgeSlider.setValue( 20 );
+            mPersonAgeSlider.setVisible( true );
+            }
+        else {
+            mPersonAgeSlider.setVisible( false );
             }
         }
     
@@ -557,7 +585,8 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                     }
 
                 setDrawColor( red, 1, blue, alpha );
-                drawObject( demoObject, mCurrentObject.slotPos[i], false );
+                
+                drawObject( demoObject, mCurrentObject.slotPos[i], false, -1 );
                 }
             }
         
@@ -584,6 +613,18 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             }
                 
         setDrawColor( red, 1, blue, alpha );
+
+        
+                        
+        if( mPersonAgeSlider.isVisible() &&
+            i == mCurrentObject.numSprites - 1 ) {
+            
+            double age = mPersonAgeSlider.getValue();
+            
+            spritePos = add( spritePos, getAgeHeadOffset( age, spritePos ) );
+            }
+                
+
         drawSprite( getSprite( mCurrentObject.sprites[i] ), spritePos );
         }
 

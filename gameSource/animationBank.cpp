@@ -12,6 +12,9 @@
 #include "minorGems/game/gameGraphics.h"
 
 
+#include "ageControl.h"
+
+
 
 static int mapSize;
 // maps IDs to records
@@ -460,19 +463,21 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      double inAnimFade,
                      AnimType inFadeTargetType,
                      doublePair inPos,
-                     char inFlipH ) {
+                     char inFlipH,
+                     double inAge ) {
+    
     AnimationRecord *r = getAnimation( inObjectID, inType );
     
 
     if( r == NULL ) {
-        drawObject( getObject( inObjectID ), inPos, inFlipH );
+        drawObject( getObject( inObjectID ), inPos, inFlipH, inAge );
         return;
         }
     else {
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
         drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
-                        inAnimFade, rB, inPos, inFlipH );
+                        inAnimFade, rB, inPos, inFlipH, inAge );
         }
     }
 
@@ -484,13 +489,18 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      double inAnimFade,
                      AnimationRecord *inFadeTargetAnim,
                      doublePair inPos,
-                     char inFlipH ) {
+                     char inFlipH,
+                     double inAge ) {
 
     ObjectRecord *obj = getObject( inObjectID );
 
     for( int i=0; i<obj->numSprites; i++ ) {
         doublePair pos = obj->spritePos[i];
         
+        if( obj->person && i == obj->numSprites - 1 ) {
+            pos = add( pos, getAgeHeadOffset( inAge, pos ) );
+            }
+
         double rot = 0;
         
         if( i < inAnim->numSprites ) {
@@ -616,19 +626,20 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      AnimType inFadeTargetType,
                      doublePair inPos,
                      char inFlipH,
+                     double inAge,
                      int inNumContained, int *inContainedIDs ) {
     
     AnimationRecord *r = getAnimation( inObjectID, inType );
  
     if( r == NULL ) {
-        drawObject( getObject( inObjectID ), inPos, inFlipH,
+        drawObject( getObject( inObjectID ), inPos, inFlipH, inAge,
                     inNumContained, inContainedIDs );
         }
     else {
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
         drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
-                        inAnimFade, rB, inPos, inFlipH,
+                        inAnimFade, rB, inPos, inFlipH, inAge,
                         inNumContained, inContainedIDs );
         }
     }
@@ -641,6 +652,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      AnimationRecord *inFadeTargetAnim,
                      doublePair inPos,
                      char inFlipH,
+                     double inAge,
                      int inNumContained, int *inContainedIDs ) {
     
     // first, draw jiggling (never rotating) objects in slots
@@ -697,14 +709,16 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 }
   
             pos = add( pos, inPos );
-            drawObject( getObject( inContainedIDs[i] ), pos, inFlipH );
+            drawObject( getObject( inContainedIDs[i] ), pos, inFlipH,
+                        inAge );
             }
         
         } 
 
     // draw animating object on top of contained slots
     drawObjectAnim( inObjectID, inAnim, inFrameTime, inRotFrameTime,
-                    inAnimFade, inFadeTargetAnim, inPos, inFlipH );
+                    inAnimFade, inFadeTargetAnim, inPos, inFlipH,
+                    inAge );
     }
 
 

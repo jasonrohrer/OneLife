@@ -13,6 +13,7 @@
 
 #include "spriteBank.h"
 
+#include "ageControl.h"
 
 
 static int mapSize;
@@ -518,7 +519,7 @@ int addObject( const char *inDescription,
 
 
 void drawObject( ObjectRecord *inObject, doublePair inPos,
-                 char inFlipH ) {
+                 char inFlipH, double inAge ) {
     for( int i=0; i<inObject->numSprites; i++ ) {
         doublePair spritePos = inObject->spritePos[i];
 
@@ -528,6 +529,10 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
 
         doublePair pos = add( spritePos, inPos );
         
+        if( inObject->person && i == inObject->numSprites - 1 ) {
+            pos = add( pos, getAgeHeadOffset( inAge, spritePos ) );
+            }
+        
         drawSprite( getSprite( inObject->sprites[i] ), pos, 1.0, 0, inFlipH );
         }    
     }
@@ -535,7 +540,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
 
 
 void drawObject( ObjectRecord *inObject, doublePair inPos,
-                 char inFlipH,
+                 char inFlipH, double inAge,
                  int inNumContained, int *inContainedIDs ) {
 
     int numSlots = getNumContainerSlots( inObject->id );
@@ -552,10 +557,10 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             }
 
         doublePair pos = add( slotPos, inPos );
-        drawObject( getObject( inContainedIDs[i] ), pos, inFlipH );
+        drawObject( getObject( inContainedIDs[i] ), pos, inFlipH, inAge );
         }
     
-    drawObject( inObject, inPos, inFlipH );
+    drawObject( inObject, inPos, inFlipH, inAge );
     }
 
 

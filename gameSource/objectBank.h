@@ -77,12 +77,14 @@ int addObject( const char *inDescription,
 
 
 
+// inAge -1 for no age modifier
 void drawObject( ObjectRecord *inObject, doublePair inPos, 
-                 char inFlipH );
+                 char inFlipH, double inAge );
 
 
 void drawObject( ObjectRecord *inObject, doublePair inPos,
                  char inFlipH,
+                 double inAge,
                  int inNumContained, int *inContainedIDs );
 
 

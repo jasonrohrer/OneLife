@@ -93,7 +93,8 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      // for this animation)
                      AnimType inFadeTargetType,
                      doublePair inPos,
-                     char inFlipH );
+                     char inFlipH,
+                     double inAge );
 
 
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
@@ -102,7 +103,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      double inAnimFade,
                      AnimationRecord *inFadeTargetAnim,
                      doublePair inPos,
-                     char inFlipH );
+                     char inFlipH,
+                     double inAge );
 
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 
@@ -111,6 +113,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      AnimType inFadeTargetType,
                      doublePair inPos,
                      char inFlipH,
+                     double inAge,
                      int inNumContained, int *inContainedIDs );
 
 
@@ -121,6 +124,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      AnimationRecord *inFadeTargetAnim,
                      doublePair inPos,
                      char inFlipH,
+                     double inAge,
                      int inNumContained, int *inContainedIDs );
 
 

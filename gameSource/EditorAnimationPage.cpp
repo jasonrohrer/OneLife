@@ -692,22 +692,22 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
             if( demoSlots != NULL ) {
                 drawObjectAnim( mCurrentObjectID, 
                                 anim, frameTime, rotFrameTime, animFade, 
-                                fadeTargetAnim, pos, mFlipDraw,
+                                fadeTargetAnim, pos, mFlipDraw, -1,
                                 obj->numSlots, demoSlots );
                 }
             else {
                 drawObjectAnim( mCurrentObjectID, 
                                 anim, frameTime, rotFrameTime, animFade, 
-                                fadeTargetAnim, pos, mFlipDraw );
+                                fadeTargetAnim, pos, mFlipDraw, -1 );
                 }
             }
         else {
             if( demoSlots != NULL ) {
-                drawObject( obj, pos, mFlipDraw,
+                drawObject( obj, pos, mFlipDraw, -1,
                             obj->numSlots, demoSlots );
                 }
             else {
-                drawObject( obj, pos, mFlipDraw );
+                drawObject( obj, pos, mFlipDraw, -1 );
                 }
             }
         

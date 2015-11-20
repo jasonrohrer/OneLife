@@ -18,6 +18,9 @@
 
 #include "Picker.h"
 
+#include "ValueSlider.h"
+
+
 #include "objectBank.h"
 
 
@@ -83,6 +86,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         Picker mSpritePicker;
         Picker mObjectPicker;
+
+        ValueSlider mPersonAgeSlider;
 
 
         ObjectRecord mCurrentObject;

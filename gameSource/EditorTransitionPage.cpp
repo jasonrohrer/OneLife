@@ -564,7 +564,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         int id = getObjectByIndex( &mCurrentTransition, i );
         
         if( id > 0 ) {
-            drawObject( getObject( id ), pos, false );
+            drawObject( getObject( id ), pos, false, -1 );
             }
         }
 
@@ -605,7 +605,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
 
             
             if( actor > 0 ) {
-                drawObject( getObject( actor ), pos, false );
+                drawObject( getObject( actor ), pos, false, -1 );
                 }
             
             pos.x += 150;
@@ -613,7 +613,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             drawSquare( pos, 50 );
 
             // target always non-blank
-            drawObject( getObject( target ), pos, false );
+            drawObject( getObject( target ), pos, false, -1 );
             }
 
         
@@ -629,7 +629,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             drawSquare( pos, 50 );
             
             if( newActor != 0 ) {
-                drawObject( getObject( newActor ), pos, false );
+                drawObject( getObject( newActor ), pos, false, -1 );
                 }
             
             pos.x += 150;
@@ -637,7 +637,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             drawSquare( pos, 50 );
             
             if( newTarget != 0 ) {
-                drawObject( getObject( newTarget ), pos, false );
+                drawObject( getObject( newTarget ), pos, false, -1 );
                 }
             }
         }

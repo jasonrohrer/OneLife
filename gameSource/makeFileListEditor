@@ -37,6 +37,7 @@ CheckboxButton.cpp \
 animationBank.cpp \
 EditorAnimationPage.cpp \
 ValueSlider.cpp \
+ageControl.cpp \
 
 
 

@@ -26,6 +26,7 @@ PageComponent.cpp \
 GamePage.cpp \
 LivingLifePage.cpp \
 pathFind.cpp \
+ageControl.cpp \
 
 
 
