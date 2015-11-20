@@ -61,6 +61,8 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextButton mDeleteButton;
         Picker mObjectPicker;
 
+        ValueSlider mPersonAgeSlider;
+
         CheckboxButton *mCheckboxes[NUM_ANIM_CHECKBOXES];
         const char *mCheckboxNames[NUM_ANIM_CHECKBOXES];
         AnimType mCheckboxAnimTypes[NUM_ANIM_CHECKBOXES];

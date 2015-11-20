@@ -32,6 +32,9 @@ EditorAnimationPage::EditorAnimationPage()
           mSaveButton( mainFont, 0, 180, "Save" ),
           mDeleteButton( mainFont, 140, 180, "Delete" ),
           mObjectPicker( &objectPickable, +310, 100 ),
+          mPersonAgeSlider( smallFont, 0, -220, 2,
+                            100, 20,
+                            0, 100, "Age" ),
           mReverseRotationCheckbox( 0, 0, 2 ),
           mCurrentObjectID( -1 ),
           mCurrentSlotDemoID( -1 ),
@@ -65,6 +68,10 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mDeleteButton );
     
     addComponent( &mObjectPicker );
+
+    addComponent( &mPersonAgeSlider );
+    
+    mPersonAgeSlider.setVisible( false );
 
     addComponent( &mPickSlotDemoButton );
     addComponent( &mClearSlotDemoButton );
@@ -533,6 +540,14 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 checkNextPrevVisible();
                 
                 populateCurrentAnim();
+
+                if( getObject( mCurrentObjectID )->person ) {
+                    mPersonAgeSlider.setValue( 20 );
+                    mPersonAgeSlider.setVisible( true );
+                    }
+                else {
+                    mPersonAgeSlider.setVisible( false );
+                    }
                 }
             }
         }
@@ -614,6 +629,15 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 }
 
             
+            // reset age slider when animation type changes
+            if( getObject( mCurrentObjectID )->person ) {
+                mPersonAgeSlider.setValue( 20 );
+                mPersonAgeSlider.setVisible( true );
+                }
+            else {
+                mPersonAgeSlider.setVisible( false );
+                }
+            
             checkNextPrevVisible();
             updateSlidersFromAnim();
             }
@@ -676,6 +700,11 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
             animFade = 1.0;
             }
         
+        double age = -1;
+
+        if( mPersonAgeSlider.isVisible() ) {
+            age = mPersonAgeSlider.getValue();
+            }
 
         if( anim != NULL ) {
 
@@ -692,22 +721,22 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
             if( demoSlots != NULL ) {
                 drawObjectAnim( mCurrentObjectID, 
                                 anim, frameTime, rotFrameTime, animFade, 
-                                fadeTargetAnim, pos, mFlipDraw, -1,
+                                fadeTargetAnim, pos, mFlipDraw, age,
                                 obj->numSlots, demoSlots );
                 }
             else {
                 drawObjectAnim( mCurrentObjectID, 
                                 anim, frameTime, rotFrameTime, animFade, 
-                                fadeTargetAnim, pos, mFlipDraw, -1 );
+                                fadeTargetAnim, pos, mFlipDraw, age );
                 }
             }
         else {
             if( demoSlots != NULL ) {
-                drawObject( obj, pos, mFlipDraw, -1,
+                drawObject( obj, pos, mFlipDraw, age,
                             obj->numSlots, demoSlots );
                 }
             else {
-                drawObject( obj, pos, mFlipDraw, -1 );
+                drawObject( obj, pos, mFlipDraw, age );
                 }
             }
         
