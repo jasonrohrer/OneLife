@@ -63,6 +63,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         TextField mHeatValueField;
         TextField mRValueField;
         
+        TextField mFoodValueField;
+        
 
         TextButton mSaveObjectButton;
         TextButton mReplaceObjectButton;

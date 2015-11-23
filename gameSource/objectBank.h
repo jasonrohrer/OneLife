@@ -22,6 +22,9 @@ typedef struct ObjectRecord {
         float rValue;
 
         char person;
+        
+        int foodValue;
+        
 
         // if it is a container, how many slots?
         // 0 if not a container
@@ -69,6 +72,7 @@ int addObject( const char *inDescription,
                int inHeatValue,
                float inRValue,
                char inPerson,
+               int inFoodValue,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
