@@ -357,7 +357,9 @@ LivingLifePage::LivingLifePage()
           mMapD( 64 ),
           mMapOffsetX( 0 ),
           mMapOffsetY( 0 ),
-          mEKeyDown( false ) {
+          mEKeyDown( false ),
+          mFoodEmptySprite( loadSprite( "hungerEmpty.tga", false ) ),
+          mFoodFullSprite( loadSprite( "hungerFull.tga", false ) ) {
 
     
     mServerAddress = SettingsManager::getStringSetting( "serverAddress" );
@@ -449,7 +451,30 @@ LivingLifePage::~LivingLifePage() {
     delete [] mMap;
 
     delete [] nextActionMessageToSend;
+
+
+    freeSprite( mFoodEmptySprite );
+    freeSprite( mFoodFullSprite );
     }
+
+
+
+LiveObject *LivingLifePage::getOurLiveObject() {
+    
+    LiveObject *ourLiveObject = NULL;
+
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        
+        LiveObject *o = gameObjects.getElement( i );
+        
+        if( o->id == ourID ) {
+            ourLiveObject = o;
+            break;
+            }
+        }
+    return ourLiveObject;
+    }
+
 
 
 SimpleVector<doublePair> trail;
@@ -917,6 +942,40 @@ void LivingLifePage::draw( doublePair inViewCenter,
             drawSquare( pos, 30 );
             }
         }    
+
+
+    // info panel at bottom
+    setDrawColor( 0.5, 0.5, 0.5, .75 );
+    drawRect( lastScreenViewCenter.x - 333, lastScreenViewCenter.y - 300, 
+              lastScreenViewCenter.x + 333, lastScreenViewCenter.y - 333 );
+    
+    LiveObject *ourLiveObject = getOurLiveObject();
+
+    if( ourLiveObject != NULL ) {
+        
+        if( ourLiveObject->foodStore <= ourLiveObject->foodCapacity / 2 ) {
+            setDrawColor( 1, .5, .5, 1 );
+            }
+        else {
+            setDrawColor( 1, 1, 1, 1 );
+            }
+    
+
+        for( int i=0; i<ourLiveObject->foodCapacity; i++ ) {
+            doublePair pos = { lastScreenViewCenter.x - 300, 
+                               lastScreenViewCenter.y - 317 };
+        
+            pos.x += i * 32;
+            
+            if( i < ourLiveObject->foodStore ) {                
+                drawSprite( mFoodFullSprite, pos );
+                }
+            else {
+                drawSprite( mFoodEmptySprite, pos );
+                }
+            }
+        }
+
 
     }
 
@@ -2041,17 +2100,7 @@ void LivingLifePage::step() {
             }
         else if( type == FOOD_CHANGE ) {
             
-            LiveObject *ourLiveObject = NULL;
-
-            for( int i=0; i<gameObjects.size(); i++ ) {
-                
-                LiveObject *o = gameObjects.getElement( i );
-                
-                if( o->id == ourID ) {
-                    ourLiveObject = o;
-                    break;
-                    }
-                }
+            LiveObject *ourLiveObject = getOurLiveObject();
             
             if( ourLiveObject != NULL ) {
                 

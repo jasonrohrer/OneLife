@@ -31,7 +31,9 @@ ageControl.cpp \
 
 
 GAME_GRAPHICS = \
-graphics/font_32_64.tga
+graphics/font_32_64.tga \
+graphics/hungerFull.tga \
+graphics/hungerEmpty.tga \
 
 
 NEEDED_MINOR_GEMS_OBJECTS = \

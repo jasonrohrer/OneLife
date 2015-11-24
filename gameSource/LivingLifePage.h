@@ -181,8 +181,16 @@ class LivingLifePage : public GamePage {
 
         char mEKeyDown;
         
+
+        SpriteHandle mFoodEmptySprite;
+        SpriteHandle mFoodFullSprite;
+        
         
         void computePathToDest( LiveObject *inObject );
+
+
+        LiveObject *getOurLiveObject();
+        
     };
 
 
