@@ -30,6 +30,9 @@ typedef struct LiveObject {
         
         double lastAgeSetTime;
         
+        int foodStore;
+        int foodCapacity;
+
 
         int holdingID;
         

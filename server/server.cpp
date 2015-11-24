@@ -70,9 +70,6 @@ typedef struct LiveObject {
 
         int lastSentMapX;
         int lastSentMapY;
-
-        // in grid square widths per second
-        double moveSpeed;
         
         double moveTotalSeconds;
         double moveStartTime;
@@ -109,6 +106,13 @@ typedef struct LiveObject {
         // it is mapped into 0..1 based on targetHeat to set this value here
         float heat;
         
+        int foodStore;
+        
+        // wall clock time when we should decrement the food store
+        double foodDecrementETASeconds;
+        
+        // should we send player a food status message
+        char foodUpdate;
 
     } LiveObject;
 
@@ -394,6 +398,9 @@ GridPos computePartialMoveSpot( LiveObject *inPlayer ) {
 
 
 
+int foodDecrementTimeSeconds = 10;
+
+
 double getAgeRate() {
     return 1.0 / 60.0;
     }
@@ -405,6 +412,50 @@ double computeAge( LiveObject *inPlayer ) {
         Time::getCurrentTime() - inPlayer->lifeStartTimeSeconds;
     
     return deltaSeconds * getAgeRate();
+    }
+
+
+int computeFoodCapacity( LiveObject *inPlayer ) {
+    int ageInYears = lrint( computeAge( inPlayer ) );
+    
+    if( ageInYears > 20 ) {
+        ageInYears = 20;
+        }
+
+    return ageInYears + 2;
+    }
+
+
+double computeMoveSpeed( LiveObject *inPlayer ) {
+    double age = computeAge( inPlayer );
+    
+
+    double speed = 4;
+    
+
+    if( age < 20 ) {
+        speed *= age / 20;
+        }
+    if( age > 40 ) {
+        // half speed by 60, then keep slowing down after that
+        speed -= (age - 40 ) * 2.0 / 20.0;
+        
+        }
+    
+    int foodCap = computeFoodCapacity( inPlayer );
+    
+    
+    if( inPlayer->foodStore <= foodCap / 2 ) {
+        // jumps instantly to 1/2 speed at half food, then decays after that
+        speed *= inPlayer->foodStore / (double) foodCap;
+        }
+    
+    // never move at 0 speed, divide by 0 errors for eta times
+    if( speed < 0.1 ) {
+        speed = 0.1;
+        }
+
+    return speed;
     }
 
 
@@ -724,14 +775,16 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                                                 
                     double distAlreadyDone = c;
                             
+                    double moveSpeed = computeMoveSpeed( otherPlayer );
+
                     otherPlayer->moveTotalSeconds 
                         = 
                         dist / 
-                        otherPlayer->moveSpeed;
+                        moveSpeed;
                             
                     double secondsAlreadyDone = 
                         distAlreadyDone / 
-                        otherPlayer->moveSpeed;
+                        moveSpeed;
                                 
                     otherPlayer->moveStartTime = 
                         Time::getCurrentTime() - 
@@ -913,7 +966,15 @@ int main() {
                     }
                 // else player starts as newborn
                 
-                    
+
+                // start full up to capacity with food
+                newObject.foodStore = computeFoodCapacity( &newObject );
+
+                newObject.foodDecrementETASeconds =
+                    Time::getCurrentTime() + foodDecrementTimeSeconds;
+                
+                newObject.foodUpdate = true;
+
 
                 newObject.xs = 0;
                 newObject.ys = 0;
@@ -956,7 +1017,6 @@ int main() {
                 newObject.pathTruncated = 0;
                 newObject.lastSentMapX = 0;
                 newObject.lastSentMapY = 0;
-                newObject.moveSpeed = 4;
                 newObject.moveTotalSeconds = 0;
                 newObject.holdingID = 0;
                 newObject.heldOriginValid = 0;
@@ -972,7 +1032,10 @@ int main() {
                 newObject.deleteSent = false;
                 newObject.newMove = false;
                 newObject.heat = 0.5;
-
+                
+                
+                
+                
                 
                 for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
                     newObject.heatMap[i] = 0;
@@ -1347,11 +1410,14 @@ int main() {
 
                                 double distAlreadyDone = startIndex;
                             
+                                double moveSpeed = computeMoveSpeed( 
+                                    nextPlayer );
+                                
                                 nextPlayer->moveTotalSeconds = dist / 
-                                    nextPlayer->moveSpeed;
+                                    moveSpeed;
                             
                                 double secondsAlreadyDone = distAlreadyDone / 
-                                    nextPlayer->moveSpeed;
+                                    moveSpeed;
                                 
                                 printf( "Skipping %f seconds along new %f-"
                                         "second path\n",
@@ -1768,7 +1834,7 @@ int main() {
                     nextPlayer->heat,
                     computeAge( nextPlayer ),
                     getAgeRate(),
-                    nextPlayer->moveSpeed );
+                    computeMoveSpeed( nextPlayer ) );
                 
                 delete [] holdingString;
 
@@ -1812,6 +1878,22 @@ int main() {
                             }
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         }
+                    }
+                
+                // check if we need to decrement their food
+                if( Time::getCurrentTime() > 
+                    nextPlayer->foodDecrementETASeconds ) {
+                    
+                    nextPlayer->foodStore --;
+                    
+                    nextPlayer->foodDecrementETASeconds +=
+                        foodDecrementTimeSeconds;
+                    
+                    if( nextPlayer->foodStore == 0 ) {
+                        // player has died
+                        // fixme
+                        }
+                    nextPlayer->foodUpdate = true;
                     }
                 
                 }
@@ -1970,7 +2052,7 @@ int main() {
                 nextPlayer->ys,
                 computeAge( nextPlayer ),
                 getAgeRate(),
-                nextPlayer->moveSpeed );
+                computeMoveSpeed( nextPlayer ) );
             
             delete [] holdingString;
             
@@ -2069,7 +2151,6 @@ int main() {
                     LiveObject o = *( players.getElement( i ) );
                 
 
-                    // holding no object for now
                     char *messageLine = 
                         autoSprintf( "%d %d "
                                      "%d %d %d %d %.2f 0 %d %d "
@@ -2082,7 +2163,7 @@ int main() {
                                      o.xs, o.ys, 
                                      computeAge( &o ),
                                      getAgeRate(),
-                                     o.moveSpeed );
+                                     computeMoveSpeed( &o ) );
                     
 
                     if( o.id != nextPlayer->id ) {
@@ -2204,7 +2285,7 @@ int main() {
                                     otherPlayer->ys,
                                     computeAge( otherPlayer ),
                                     getAgeRate(),
-                                    otherPlayer->moveSpeed ); 
+                                    computeMoveSpeed( otherPlayer ) ); 
 
                                 delete [] holdingString;
                                 
@@ -2377,6 +2458,32 @@ int main() {
                         }
                     }
                 
+
+                if( nextPlayer->foodUpdate ) {
+                    // send this player a food status change
+
+                     char *foodMessage = autoSprintf( 
+                         "FX\n"
+                         "%d %d %.2f\n"
+                         "#", 
+                         nextPlayer->foodStore,
+                         computeFoodCapacity( nextPlayer ),
+                         computeMoveSpeed( nextPlayer ) );
+                     
+                     int numSent = 
+                         nextPlayer->sock->send( 
+                             (unsigned char*)foodMessage, 
+                             strlen( foodMessage ), 
+                             false, false );
+
+                     if( numSent == -1 ) {
+                         nextPlayer->error = true;
+                         }
+                     
+                     delete [] foodMessage;
+                     
+                     nextPlayer->foodUpdate = false;
+                    }
                 }
             }
 

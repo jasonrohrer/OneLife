@@ -131,6 +131,7 @@ typedef enum messageType {
     MAP_CHANGE,
     PLAYER_UPDATE,
     PLAYER_MOVES_START,
+    FOOD_CHANGE,
     UNKNOWN
     } messageType;
 
@@ -162,6 +163,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "PM" ) == 0 ) {
         returnValue = PLAYER_MOVES_START;
+        }
+    else if( strcmp( copy, "FX" ) == 0 ) {
+        returnValue = FOOD_CHANGE;
         }
     
     delete [] copy;
@@ -1297,6 +1301,12 @@ void LivingLifePage::step() {
                 o.pathToDest = NULL;
                 o.containedIDs = NULL;
 
+
+                // don't track these for other players
+                o.foodStore = 0;
+                o.foodCapacity = 0;
+                
+                
                 int forced = 0;
                 
                 
@@ -2029,6 +2039,33 @@ void LivingLifePage::step() {
 
             delete [] lines;
             }
+        else if( type == FOOD_CHANGE ) {
+            
+            LiveObject *ourLiveObject = NULL;
+
+            for( int i=0; i<gameObjects.size(); i++ ) {
+                
+                LiveObject *o = gameObjects.getElement( i );
+                
+                if( o->id == ourID ) {
+                    ourLiveObject = o;
+                    break;
+                    }
+                }
+            
+            if( ourLiveObject != NULL ) {
+                
+                sscanf( message, "FX\n%d %d %lf", 
+                        &( ourLiveObject->foodStore ),
+                        &( ourLiveObject->foodCapacity ),
+                        &( ourLiveObject->lastSpeed ) );
+
+                printf( "Our food = %d/%d\n", 
+                        ourLiveObject->foodStore,
+                        ourLiveObject->foodCapacity );
+                }
+            }
+        
         
 
         delete [] message;

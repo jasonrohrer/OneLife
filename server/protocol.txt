@@ -26,6 +26,8 @@ PLAYER_MOVES_START (PM)
 
 MAP_CHANGE (MX)
 
+FOOD_CHANGE (FX)
+
 
 
 Client can expect to receive these at any time, and in any order.
@@ -123,30 +125,25 @@ object drop only), or -1 if none.
 
 
 
+
+FX
+food_store food_capacity move_speed
+#
+
+store is integer amount of food left in body, capacity is the integer 
+maximum amount of food.
+
+move_speed is floating point speed in grid square widths per second.
+
+
+
+
+
+
 First message sent upon client new connection to server:
 
-List of object IDs and x,y positions.  Client's object is listed last
-
-
-id x y
-id x y
-id x y
-id x y
-#
-
-
-Example:
-
-0 250 120
-1 200 45
-4 302 78
-#
-
-
-Deleted objects listed in the format:
-id X X
-
-In other words, no x,y coordiantes, but the character X twice instead
+A map chunk message for where the player is standing, followed by 
+a full player update message for ALL players on entire server.
 
 
 
