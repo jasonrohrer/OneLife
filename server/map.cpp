@@ -27,6 +27,7 @@ static int chunkDimension = 16;
 
 
 static int startingObjectID = 1;
+static int startingObjectID2 = 17;
 
 
 
@@ -89,7 +90,13 @@ static int getBaseMap( int inX, int inY ) {
     float randValue = getXYRandom( inX, inY );
     
     if( randValue < 0.1 ) {
-        return startingObjectID;
+
+        if( randValue < 0.05 ) {
+            return startingObjectID2;
+            }
+        else {
+            return startingObjectID;
+            }
         }
     return 0;
     }
