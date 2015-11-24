@@ -2430,8 +2430,12 @@ void LivingLifePage::step() {
 
     if( nextActionMessageToSend != NULL 
         && ourLiveObject->currentSpeed == 0 
-        && isGridAdjacent( ourLiveObject->xd, ourLiveObject->yd,
-                           playerActionTargetX, playerActionTargetY ) ) {
+        && (
+            isGridAdjacent( ourLiveObject->xd, ourLiveObject->yd,
+                            playerActionTargetX, playerActionTargetY )
+            ||
+            ( ourLiveObject->xd == playerActionTargetX &&
+              ourLiveObject->yd == playerActionTargetY ) ) ){
         
         // done moving on client end
         // can start showing pending action animation, even if 
@@ -2540,8 +2544,36 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     int clickDestY = lrintf( ( inY ) / CELL_D );
     
 
+    char modClick = false;
+    
+    if( mEKeyDown || isLastMouseButtonRight() ) {
+        modClick = true;
+        }
+
     if( clickDestX == ourLiveObject->xd && clickDestY == ourLiveObject->yd ) {
         // ignore clicks where we're already standing
+
+        // unless it's a use-on-self action and standing still
+
+        if( ! ourLiveObject->inMotion ) {
+            
+            if( modClick ) {
+
+                if( nextActionMessageToSend != NULL ) {
+                    delete [] nextActionMessageToSend;
+                    nextActionMessageToSend = NULL;
+                    }
+
+                nextActionMessageToSend = 
+                    autoSprintf( "USE %d %d#",
+                                 clickDestX, clickDestY );
+                playerActionTargetX = clickDestX;
+                playerActionTargetY = clickDestY;
+                printf( "Use on self\n" );
+                }
+            }
+        
+
         return;
         }
     
@@ -2577,11 +2609,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
     
 
-    char modClick = false;
     
-    if( mEKeyDown || isLastMouseButtonRight() ) {
-        modClick = true;
-        }
 
     if( destID == 0 && ( !modClick || ourLiveObject->holdingID == 0 ) ) {
         // a move to an empty spot

@@ -1596,6 +1596,43 @@ int main() {
                                     }
                                 }
                             }
+                        else if( m.x == nextPlayer->xd &&
+                                 m.y == nextPlayer->yd ) {
+                            
+                            // use on self
+                            if( nextPlayer->holdingID != 0 ) {
+                                ObjectRecord *obj = 
+                                    getObject( nextPlayer->holdingID );
+                                
+                                if( obj->foodValue > 0 ) {
+                                    nextPlayer->foodStore += obj->foodValue;
+                                    
+                                    int cap =
+                                        computeFoodCapacity( nextPlayer );
+                                    
+                                    if( nextPlayer->foodStore > cap ) {
+                                        nextPlayer->foodStore = cap;
+                                        }
+                                    
+
+                                    // does eating it leave something
+                                    // behind (like seeds from apple)?
+                                    
+                                    // leave it as NO for now
+                                    // could be bare-handed trans, but
+                                    // would want it to be distinct from
+                                    // non-eating bare-handed action
+
+                                    // could extract seeds from an apple
+                                    // with a knife to make it explicit.
+
+
+                                    nextPlayer->holdingID = 0;
+                                    
+                                    nextPlayer->foodUpdate = true;
+                                    }
+                                }
+                            }
                         }                    
                     else if( m.type == DROP ) {
                         //Thread::staticSleep( 2000 );
