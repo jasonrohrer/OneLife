@@ -151,8 +151,19 @@ a full player update message for ALL players on entire server.
 Clients send moves in the following format:
 
 USE x y#
-GRAB x y#
+REMV x y#
 DROP x y#
+
+
+DROP is for setting held object down on empty grid square OR
+	 for adding something to a container
+
+USE  is for bare-hand or held-object action on target object in non-empty 
+     grid square, including picking something up (if there's no bare-handed 
+     action), and picking up a container.
+
+REMV is special case of removing an object from a container.
+ 
 
 
 This one is more complicated:

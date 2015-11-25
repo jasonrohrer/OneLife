@@ -250,7 +250,7 @@ char *getNextClientMessage( SimpleVector<char> *inBuffer ) {
 typedef enum messageType {
 	MOVE,
     USE,
-    GRAB,
+    REMV,
     DROP,
     UNKNOWN
     } messageType;
@@ -351,8 +351,8 @@ ClientMessage parseMessage( char *inMessage ) {
     else if( strcmp( nameBuffer, "USE" ) == 0 ) {
         m.type = USE;
         }
-    else if( strcmp( nameBuffer, "GRAB" ) == 0 ) {
-        m.type = GRAB;
+    else if( strcmp( nameBuffer, "REMV" ) == 0 ) {
+        m.type = REMV;
         }
     else if( strcmp( nameBuffer, "DROP" ) == 0 ) {
         m.type = DROP;
@@ -1475,14 +1475,7 @@ int main() {
                             
                             int target = getMapObject( m.x, m.y );
                             
-                            if( target != 0 ) {
-                            
-                                int targetSlots = 
-                                    getNumContainerSlots( target );
-                                
-                                int numIn = 
-                                    getNumContained( m.x, m.y );
-                                
+                            if( target != 0 ) {                                
 
                                 // try using object on this target 
                                 
@@ -1532,70 +1525,12 @@ int main() {
                                     
                                     delete [] changeLine;
                                     }
-                                else if( nextPlayer->holdingID != 0  &&
-                                         numIn < targetSlots &&
-                                         isContainable( 
-                                             nextPlayer->holdingID ) ) {
-                                    // add to container
-                                        
-                                    addContained( m.x, m.y,
-                                                  nextPlayer->holdingID );
-                                        
-                                    nextPlayer->holdingID = 0;
-                                    nextPlayer->heldOriginValid = 0;
-                                    nextPlayer->heldOriginX = 0;
-                                    nextPlayer->heldOriginY = 0;
-                                    
-                                    char *changeLine =
-                                        getMapChangeLineString(
-                                            m.x, m.y );
-                                    
-                                    mapChanges.
-                                        appendElementString( 
-                                            changeLine );
-                                    
-                                    delete [] changeLine;
-                                    
-                                    ChangePosition p = { m.x, m.y, 
-                                                         false };
-                                    mapChangesPos.push_back( p );
-                                    }
-                                else if( nextPlayer->holdingID == 0 && 
-                                         numIn > 0 ) {
-                                    // get from container
-    
-                                    nextPlayer->holdingID =
-                                        removeContained( m.x, m.y );
-                                    
-                                    // contained objects aren't animating
-                                    // in a way that needs to be smooth
-                                    // transitioned on client
-                                    nextPlayer->heldOriginValid = 0;
-                                    nextPlayer->heldOriginX = 0;
-                                    nextPlayer->heldOriginY = 0;
-                                        
-                                    char *changeLine =
-                                        getMapChangeLineString(
-                                            m.x, m.y );
-                                    
-                                    mapChanges.
-                                        appendElementString( 
-                                            changeLine );
-                                    
-                                    delete [] changeLine;
-                                    
-                                    ChangePosition p = { m.x, m.y, 
-                                                         false };
-                                    mapChangesPos.push_back( p );
-                                    }
                                 else if( nextPlayer->holdingID == 0 &&
                                          ! getObject( target )->permanent ) {
                                     // no bare-hand transition applies to
                                     // this non-permanent target object
                                     
-                                    // and nothing in it to take out
-                                    
-                                    // treat it like GRAB
+                                    // treat it like pick up
                                     
                                     nextPlayer->containedIDs =
                                         getContained( 
@@ -1623,6 +1558,52 @@ int main() {
                                     
                                     delete [] changeLine;
                                     }
+                                /*
+                                  // FIXME:
+                                  // need special case here when surrounded
+                                  // and holding something
+                                  // (otherwise, trapped).
+                                  // easy to check for this and allow
+                                  // pick-up of something around us,
+                                  // with held object vanishing
+                                  // (can only be surrounded by 
+                                  // placements of another player)
+                                else if( nextPlayer->holdingID != 0 &&
+                                         ! getObject( target )->permanent ) {
+                                    // no held-object transition applies to
+                                    // this non-permanent target object
+                                    
+                                    // and can't add it to container
+                                    
+                                    // treat it like pick up
+                                    
+                                    nextPlayer->containedIDs =
+                                        getContained( 
+                                            m.x, m.y,
+                                            &( nextPlayer->numContained ) );
+                                    
+                                    clearAllContained( m.x, m.y );
+                                    setMapObject( m.x, m.y, 0 );
+                                    
+                                    nextPlayer->holdingID = target;
+                                    
+                                    nextPlayer->heldOriginValid = 1;
+                                    nextPlayer->heldOriginX = m.x;
+                                    nextPlayer->heldOriginY = m.y;
+
+                                    char *changeLine =
+                                        getMapChangeLineString(
+                                            m.x, m.y );
+                                    
+                                    mapChanges.appendElementString( 
+                                        changeLine );
+                                    
+                                    ChangePosition p = { m.x, m.y, false };
+                                    mapChangesPos.push_back( p );
+                                    
+                                    delete [] changeLine;
+                                    }
+                                */
                                 }
                             }
                         else if( m.x == nextPlayer->xd &&
@@ -1677,18 +1658,63 @@ int main() {
                                             nextPlayer->xd, 
                                             nextPlayer->yd ) ) {
                             
-                            if( nextPlayer->holdingID != 0 && 
-                                isMapSpotEmpty( m.x, m.y ) ) {
+                            if( nextPlayer->holdingID != 0 ) {
                                 
-                                // empty spot to drop into
                                 
-                                handleDrop( m.x, m.y, nextPlayer,
-                                            &mapChanges, &mapChangesPos,
-                                            &playerIndicesToSendUpdatesAbout );
+                                
+                                if( isMapSpotEmpty( m.x, m.y ) ) {
+                                
+                                    // empty spot to drop into
+                                    
+                                    handleDrop( 
+                                        m.x, m.y, nextPlayer,
+                                        &mapChanges, &mapChangesPos,
+                                        &playerIndicesToSendUpdatesAbout );
+                                    }
+                                else {
+                                    int target = getMapObject( m.x, m.y );
+                            
+                                    if( target != 0 ) {
+                                        int targetSlots = 
+                                            getNumContainerSlots( target );
+                                        
+                                        int numIn = 
+                                            getNumContained( m.x, m.y );
+                                        
+                                        if( numIn < targetSlots &&
+                                            isContainable( 
+                                                nextPlayer->holdingID ) ) {
+                                            // add to container
+                                        
+                                            addContained( 
+                                                m.x, m.y,
+                                                nextPlayer->holdingID );
+                                        
+                                            nextPlayer->holdingID = 0;
+                                            nextPlayer->heldOriginValid = 0;
+                                            nextPlayer->heldOriginX = 0;
+                                            nextPlayer->heldOriginY = 0;
+                                            
+                                            char *changeLine =
+                                                getMapChangeLineString(
+                                                    m.x, m.y );
+                                            
+                                            mapChanges.
+                                                appendElementString( 
+                                                    changeLine );
+                                            
+                                            delete [] changeLine;
+                                            
+                                            ChangePosition p = { m.x, m.y, 
+                                                         false };
+                                            mapChangesPos.push_back( p );
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
-                    else if( m.type == GRAB ) {
+                    else if( m.type == REMV ) {
                         // send update even if action fails (to let them
                         // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
@@ -1698,177 +1724,55 @@ int main() {
                         nextPlayer->heldOriginY = 0;
                         
 
+
                         if( isGridAdjacent( m.x, m.y,
                                             nextPlayer->xd, 
                                             nextPlayer->yd ) ) {
                             
+                            // can only use on targets next to us for now,
+                            // no diags
+                            
                             int target = getMapObject( m.x, m.y );
-
-                            if( target != 0 &&
-                                ! getObject( target )->permanent ) {
+                            
+                            if( target != 0 ) {
+                            
+                                int numIn = 
+                                    getNumContained( m.x, m.y );
                                 
-                                // something to grab
-                                // (can't grab permanents)
 
-
-                                if( nextPlayer->holdingID != 0 ) {
-
-                                    // grab while holding something else
+                                if( nextPlayer->holdingID == 0 && 
+                                    numIn > 0 ) {
+                                    // get from container
                                     
-                                    // throw it into nearest empty spot
+                                    nextPlayer->holdingID =
+                                        removeContained( m.x, m.y );
                                     
-                                    char found = false;
-                                    int foundX, foundY;
-                                    
-                                    // change direction of throw
-                                    // to match opposite direction of pickup
-                                    int xDir = m.x - nextPlayer->xd;
-                                    int yDir = m.y - nextPlayer->yd;
-                                    
-
-                                    // check in y dir first at each
-                                    // expanded radius?
-                                    char yFirst = false;
-                                    
-                                    if( yDir != 0 ) {
-                                        yFirst = true;
-                                        }
-                                    
-                                    for( int d=1; d<10 && !found; d++ ) {
+                                    // contained objects aren't animating
+                                    // in a way that needs to be smooth
+                                    // transitioned on client
+                                    nextPlayer->heldOriginValid = 0;
+                                    nextPlayer->heldOriginX = 0;
+                                    nextPlayer->heldOriginY = 0;
                                         
-                                        char doneY0 = false;
-                                        
-                                        for( int yD = -d; yD<=d && !found; 
-                                             yD++ ) {
-                                         
-                                            if( ! doneY0 ) {
-                                                yD = 0;
-                                                }
-
-                                            if( yDir != 0 ) {
-                                                yD *= yDir;
-                                                }
-                                            
-                                            char doneX0 = false;
-                                            
-                                            for( int xD = -d; xD<=d && !found; 
-                                                 xD++ ) {
-                                                
-                                                if( ! doneX0 ) {
-                                                    xD = 0;
-                                                    }
-
-                                                if( xDir != 0 ) {
-                                                    xD *= xDir;
-                                                    }
-   
-
-                                                if( yD == 0 && xD == 0 ) {
-                                                    if( ! doneX0 ) {
-                                                        doneX0 = true;
-                                                        
-                                                        // back up in loop
-                                                        xD = -d - 1;
-                                                        }
-                                                    continue;
-                                                    }
-                                                
-                                                int x = nextPlayer->xd + xD;
-                                                int y = nextPlayer->yd + yD;
-                                                
-                                                if( yFirst ) {
-                                                    // swap them
-                                                    // to reverse order
-                                                    // of expansion
-                                                    x = nextPlayer->xd + yD;
-                                                    y = nextPlayer->yd + xD;
-                                                    }
-                                                
-
-
-                                                if( isMapSpotEmpty( x, y ) ) {
-                                                    
-                                                    found = true;
-                                                    foundX = x;
-                                                    foundY = y;
-                                                    }
-
-                                                if( ! doneX0 ) {
-                                                    doneX0 = true;
-                                                    
-                                                    // back up in loop
-                                                    xD = -d - 1;
-                                                    }
-                                                }
-                                            
-                                            if( ! doneY0 ) {
-                                                doneY0 = true;
-                                                
-                                                // back up in loop
-                                                yD = -d - 1;
-                                                }
-                                            }
-                                        }
-
-                                    if( found ) {
-                                        // drop what they're holding
-                                        
-                                        handleDrop( 
-                                            foundX, foundY, 
-                                            nextPlayer,
-                                            &mapChanges, 
-                                            &mapChangesPos,
-                                            &playerIndicesToSendUpdatesAbout );
-                                        }
-                                    else {
-                                        // no drop spot found
-                                        // what they're holding must evaporate
-                                        
-                                        if( nextPlayer->containedIDs != 
-                                            NULL ) {
-                                            
-                                            delete [] nextPlayer->containedIDs;
-                                            nextPlayer->containedIDs = NULL;
-                                            nextPlayer->numContained = 0;
-                                            }
-                                        nextPlayer->holdingID = 0;
-                                        nextPlayer->heldOriginValid = 0;
-                                        nextPlayer->heldOriginX = 0;
-                                        nextPlayer->heldOriginY = 0;
-                                        }
+                                    char *changeLine =
+                                        getMapChangeLineString(
+                                            m.x, m.y );
+                                    
+                                    mapChanges.
+                                        appendElementString( 
+                                            changeLine );
+                                    
+                                    delete [] changeLine;
+                                    
+                                    ChangePosition p = { m.x, m.y, 
+                                                         false };
+                                    mapChangesPos.push_back( p );
                                     }
-                                
-                                
-                                
-                                nextPlayer->containedIDs =
-                                    getContained( 
-                                        m.x, m.y,
-                                        &( nextPlayer->numContained ) );
-                                        
-                                clearAllContained( m.x, m.y );
-
-                                setMapObject( m.x, m.y, 0 );
-                                
-                                nextPlayer->holdingID = target;
-                                
-                                nextPlayer->heldOriginValid = 1;
-                                nextPlayer->heldOriginX = m.x;
-                                nextPlayer->heldOriginY = m.y;
-
-                                char *changeLine =
-                                    getMapChangeLineString(
-                                        m.x, m.y );
-                                
-                                mapChanges.appendElementString( 
-                                    changeLine );
-                                
-                                ChangePosition p = { m.x, m.y, false };
-                                mapChangesPos.push_back( p );    
-
-                                delete [] changeLine;
                                 }
                             }
+                        
                         }
+                    
                     
                     if( m.numExtraPos > 0 ) {
                         delete [] m.extraPos;

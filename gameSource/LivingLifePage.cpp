@@ -2531,22 +2531,19 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
         // unless it's a use-on-self action and standing still
 
-        if( ! ourLiveObject->inMotion ) {
+        if( ! ourLiveObject->inMotion && ! modClick ) {
             
-            if( modClick ) {
-
-                if( nextActionMessageToSend != NULL ) {
-                    delete [] nextActionMessageToSend;
-                    nextActionMessageToSend = NULL;
-                    }
-
-                nextActionMessageToSend = 
-                    autoSprintf( "USE %d %d#",
-                                 clickDestX, clickDestY );
-                playerActionTargetX = clickDestX;
-                playerActionTargetY = clickDestY;
-                printf( "Use on self\n" );
+            if( nextActionMessageToSend != NULL ) {
+                delete [] nextActionMessageToSend;
+                nextActionMessageToSend = NULL;
                 }
+            
+            nextActionMessageToSend = 
+                autoSprintf( "USE %d %d#",
+                             clickDestX, clickDestY );
+            playerActionTargetX = clickDestX;
+            playerActionTargetY = clickDestY;
+            printf( "Use on self\n" );
             }
         
 
@@ -2563,6 +2560,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     int destID = 0;
         
+    int destNumContained = 0;
+    
     int mapX = clickDestX - mMapOffsetX + mMapD / 2;
     int mapY = clickDestY - mMapOffsetY + mMapD / 2;
     
@@ -2574,6 +2573,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         mapX >= 0 && mapX < mMapD ) {
         
         destID = mMap[ mapY * mMapD + mapX ];
+    
+        destNumContained = mMapContainedStacks[ mapY * mMapD + mapX ].size();
         }
     
     printf( "DestID = %d\n", destID );
@@ -2685,12 +2686,21 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 action = "DROP";
                 send = true;
                 }
-            else if( modClick && destID != 0 ) {
-                action = "USE";
+            else if( modClick && ourLiveObject->holdingID == 0 &&
+                     destID != 0 &&
+                     getNumContainerSlots( destID ) > 0 ) {
+                action = "REMV";
+                send = true;
+                }
+            else if( modClick && ourLiveObject->holdingID != 0 &&
+                     destID != 0 &&
+                     getNumContainerSlots( destID ) > 0 &&
+                     destNumContained < getNumContainerSlots( destID ) ) {
+                action = "DROP";
                 send = true;
                 }
             else if( ! modClick && destID != 0 ) {
-                action = "GRAB";
+                action = "USE";
                 send = true;
                 }
             
