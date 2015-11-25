@@ -368,6 +368,7 @@ ClientMessage parseMessage( char *inMessage ) {
 
 // compute closest starting position part way along
 // path
+// (-1 if closest spot is starting spot not included in path steps)
 int computePartialMovePathStep( LiveObject *inPlayer ) {
     
     double fractionDone = 
@@ -380,9 +381,9 @@ int computePartialMovePathStep( LiveObject *inPlayer ) {
         }
     
     int c = 
-        lrint( ( inPlayer->pathLength  - 1 ) *
+        lrint( ( inPlayer->pathLength ) *
                fractionDone );
-    return c;
+    return c - 1;
     }
 
 
@@ -390,10 +391,18 @@ int computePartialMovePathStep( LiveObject *inPlayer ) {
 GridPos computePartialMoveSpot( LiveObject *inPlayer ) {
 
     int c = computePartialMovePathStep( inPlayer );
-    
-    GridPos cPos = inPlayer->pathToDest[c];
-    
-    return cPos;
+
+    if( c >= 0 ) {
+        
+        GridPos cPos = inPlayer->pathToDest[c];
+        
+        return cPos;
+        }
+    else {
+        GridPos cPos = { inPlayer->xs, inPlayer->ys };
+        
+        return cPos;
+        }
     }
 
 
@@ -736,6 +745,12 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                 
                 int c = computePartialMovePathStep( otherPlayer );
 
+                // -1 means starting, pre-path pos is closest
+                // push it up to first path step
+                if( c < 0 ) {
+                    c = 0;
+                    }
+
                 char blocked = false;
                 int blockedStep = -1;
                                             
@@ -761,7 +776,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                                             
 
                 if( blocked &&
-                    blockedStep > 1 ) {
+                    blockedStep > 0 ) {
                                                 
                     otherPlayer->pathLength
                         = blockedStep;
@@ -811,7 +826,9 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                                                 
                     otherPlayer->yd = 
                         otherPlayer->ys;
-                                                
+                             
+                    otherPlayer->posForced = true;
+                    
                     inPlayerIndicesToSendUpdatesAbout->push_back( j );
                     }
                 } 
@@ -1103,7 +1120,7 @@ int main() {
                     if( m.type == MOVE ) {
                         //Thread::staticSleep( 1000 );
                         printf( "  Processing move, "
-                                "we think player at %d,%d\n",
+                                "we think player at old start pos %d,%d\n",
                                 nextPlayer->xs,
                                 nextPlayer->ys );
 
@@ -1122,7 +1139,11 @@ int main() {
 
                             GridPos cPos = 
                                 computePartialMoveSpot( nextPlayer );
-                                                        
+                                                 
+                            printf( "   we think player in motion at %d,%d\n",
+                                    cPos.x,
+                                    cPos.y );
+       
                             nextPlayer->xs = cPos.x;
                             nextPlayer->ys = cPos.y;
                             
@@ -1184,6 +1205,14 @@ int main() {
                                     int c = computePartialMovePathStep( 
                                         nextPlayer );
                                     
+                                    // -1 means starting, pre-path 
+                                    // pos is closest
+                                    // push it up to first path step
+                                    if( c < 0 ) {
+                                        c = 0;
+                                        }
+
+
                                     int pathStep = 0;
                                     
                                     if( theirPathIndex < c ) {
