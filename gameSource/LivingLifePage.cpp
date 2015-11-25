@@ -331,6 +331,30 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
 
 
 
+static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
+    if( inObject->curAnim != inNewAnim ) {
+        if( inObject->lastAnimFade != 0 ) {
+                        
+            // don't double stack
+            if( inObject->futureAnimStack.size() == 0 ||
+                inObject->futureAnimStack.getElementDirect(
+                    inObject->futureAnimStack.size() - 1 ) 
+                != inNewAnim ) {
+                
+                inObject->futureAnimStack.push_back( inNewAnim );
+                }
+            }
+        else {
+            inObject->lastAnim = inObject->curAnim;
+            inObject->curAnim = inNewAnim;
+            inObject->lastAnimFade = 1;
+            }
+        }
+    }
+
+
+
+
 
 
 // if user clicks to initiate an action while still moving, we
@@ -1542,6 +1566,8 @@ void LivingLifePage::step() {
                             
                             existing->xd = o.xd;
                             existing->yd = o.yd;
+
+                            addNewAnim( existing, held );
                             }
                         
                         if( existing->id == ourID ) {
@@ -2311,24 +2337,8 @@ void LivingLifePage::step() {
                                      mult( o->currentMoveDirection,
                                            o->currentSpeed ) );
                 
-                if( o->curAnim != moving ) {
-                    if( o->lastAnimFade != 0 ) {
-                        
-                        // don't double stack
-                        if( o->futureAnimStack.size() == 0 ||
-                            o->futureAnimStack.getElementDirect(
-                                o->futureAnimStack.size() - 1 ) 
-                            != moving ) {
-                            
-                            o->futureAnimStack.push_back( moving );
-                            }
-                        }
-                    else {
-                        o->lastAnim = o->curAnim;
-                        o->curAnim = moving;
-                        o->lastAnimFade = 1;
-                        }
-                    }
+                addNewAnim( o, moving );
+                
                 
                 if( 1.5 * distance( o->currentPos,
                                     startPos )
@@ -2347,49 +2357,17 @@ void LivingLifePage::step() {
                     o->currentPos = endPos;
                     o->currentSpeed = 0;
 
-                    if( o->curAnim != held ) {
-                        if( o->lastAnimFade != 0 ) {
-                                
-                            // don't double stack
-                            if( o->futureAnimStack.size() == 0 ||
-                                o->futureAnimStack.getElementDirect(
-                                    o->futureAnimStack.size() - 1 ) 
-                                != held ) {
-                                
-                                o->futureAnimStack.push_back( held );
-                                }
-                            }
-                        else {
-                            o->lastAnim = o->curAnim;
-                            o->curAnim = held;
-                            o->lastAnimFade = 1;
-                            }
-                        }
-                    
+
+                    addNewAnim( o, held );
+                                        
 
                     printf( "Reached dest %f seconds early\n",
                             o->moveEtaTime - game_getCurrentTime() );
                     }
                 else {
-                    if( o->curAnim != moving ) {
-                        if( o->lastAnimFade != 0 ) {
-                        
-                            // don't double stack
-                            if( o->futureAnimStack.size() == 0 ||
-                                o->futureAnimStack.getElementDirect(
-                                    o->futureAnimStack.size() - 1 ) 
-                                != moving ) {
-                            
-                                o->futureAnimStack.push_back( moving );
-                                }
-                            }
-                        else {
-                            o->lastAnim = o->curAnim;
-                            o->curAnim = moving;
-                            o->lastAnimFade = 1;
-                            }
-                        }
 
+                    addNewAnim( o, moving );
+                    
                     o->currentPos = add( o->currentPos,
                                          mult( o->currentMoveDirection,
                                                o->currentSpeed ) );
