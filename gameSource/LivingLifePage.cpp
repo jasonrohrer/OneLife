@@ -928,8 +928,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
         
-    doublePair lastChunkCenter = { CELL_D * mMapOffsetX, 
-                                   CELL_D * mMapOffsetY };
+    doublePair lastChunkCenter = { (double)( CELL_D * mMapOffsetX ), 
+                                   (double)( CELL_D * mMapOffsetY ) };
     
     setDrawColor( 0, 1, 0, 1 );
     
@@ -1780,8 +1780,7 @@ void LivingLifePage::step() {
                             existing->inMotion = true;
                             
                             int oldPathLength = 0;
-                            int oldCurrentPathStep = 0;
-                            GridPos oldCurrentPathPos;
+			    GridPos oldCurrentPathPos;
                             
                             if( existing->currentSpeed != 0
                                 &&
@@ -1789,8 +1788,7 @@ void LivingLifePage::step() {
                                 
                                 // an interrupted move
                                 oldPathLength = existing->pathLength;
-                                oldCurrentPathStep = existing->currentPathStep;
-                                oldCurrentPathPos = 
+				oldCurrentPathPos = 
                                     existing->pathToDest[
                                         existing->currentPathStep ];
                                 }
