@@ -1628,6 +1628,9 @@ int main() {
 
 
                                     nextPlayer->holdingID = 0;
+                                    nextPlayer->heldOriginValid = 0;
+                                    nextPlayer->heldOriginX = 0;
+                                    nextPlayer->heldOriginY = 0;
                                     
                                     nextPlayer->foodUpdate = true;
                                     }
@@ -1926,9 +1929,12 @@ int main() {
                     nextPlayer->foodDecrementETASeconds +=
                         foodDecrementTimeSeconds;
                     
-                    if( nextPlayer->foodStore == 0 ) {
+                    if( nextPlayer->foodStore <= 0 ) {
                         // player has died
                         // fixme
+
+                        // no negative
+                        nextPlayer->foodStore = 0;
                         }
                     nextPlayer->foodUpdate = true;
                     }
