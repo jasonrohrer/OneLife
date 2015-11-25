@@ -2588,13 +2588,16 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     
 
-    if( destID == 0 && ( !modClick || ourLiveObject->holdingID == 0 ) ) {
+    if( destID == 0 && !modClick ) {
         // a move to an empty spot
         // can interrupt current move
         
         mustMove = true;
         }
-    else if( modClick || destID != 0 ) {
+    else if( ( modClick && ourLiveObject->holdingID != 0 )
+             || ( ! modClick && destID != 0 )
+             || ( modClick && ourLiveObject->holdingID == 0 &&
+                  destNumContained > 0 ) ) {
         // use/drop modifier
         // OR pick up action
             
