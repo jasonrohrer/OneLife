@@ -1489,6 +1489,10 @@ int main() {
 
                                     nextPlayer->holdingID = r->newActor;
                                     
+                                    nextPlayer->heldOriginValid = 0;
+                                    nextPlayer->heldOriginX = 0;
+                                    nextPlayer->heldOriginY = 0;
+
                                     // can newly changed container hold
                                     // less than what it could contain
                                     // before?
