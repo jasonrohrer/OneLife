@@ -463,6 +463,13 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
     if( speed < 0.1 ) {
         speed = 0.1;
         }
+    
+    if( inPlayer->holdingID != 0 ) {
+        ObjectRecord *r = getObject( inPlayer->holdingID );
+
+        speed *= r->speedMult;
+        }
+    
 
     return speed;
     }

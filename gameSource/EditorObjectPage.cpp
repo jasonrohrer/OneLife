@@ -50,6 +50,10 @@ EditorObjectPage::EditorObjectPage()
                            -150,  -32, 4,
                            false,
                            "Food", "0123456789", NULL ),
+          mSpeedMultField( smallFont, 
+                           -150,  -64, 4,
+                           false,
+                           "Speed", "0123456789.", NULL ),
           mSaveObjectButton( smallFont, 210, -260, "Save New" ),
           mReplaceObjectButton( smallFont, 310, -260, "Replace" ),
           mClearObjectButton( mainFont, 0, 160, "Blank" ),
@@ -74,6 +78,7 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mHeatValueField );
     addComponent( &mRValueField );
     addComponent( &mFoodValueField );
+    addComponent( &mSpeedMultField );
 
     addComponent( &mSaveObjectButton );
     addComponent( &mReplaceObjectButton );
@@ -150,6 +155,7 @@ EditorObjectPage::EditorObjectPage()
     mRValueField.setText( "0.0" );
     
     mFoodValueField.setText( "0" );
+    mSpeedMultField.setText( "1.0" );
 
 
     double boxY = -150;
@@ -232,6 +238,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mRValueField.getFloat(),
                    mCheckboxes[2]->getToggled(),
                    mFoodValueField.getInt(),
+                   mSpeedMultField.getFloat(),
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos );
@@ -253,6 +260,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mRValueField.getFloat(),
                    mCheckboxes[2]->getToggled(),
                    mFoodValueField.getInt(),
+                   mSpeedMultField.getFloat(),
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
@@ -282,6 +290,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mRValueField.setText( "0.0" );
 
         mFoodValueField.setText( "0" );
+        mSpeedMultField.setText( "1.0" );
 
         mCurrentObject.numSlots = 0;
         
@@ -445,6 +454,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mRValueField.setFloat( pickedRecord->rValue, 2 );
             
             mFoodValueField.setInt( pickedRecord->foodValue );
+
+            mSpeedMultField.setFloat( pickedRecord->speedMult, 2 );
 
 
             mCurrentObject.containable = pickedRecord->containable;

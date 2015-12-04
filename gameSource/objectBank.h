@@ -25,6 +25,9 @@ typedef struct ObjectRecord {
         
         int foodValue;
         
+        // multiplier on walking speed when holding
+        float speedMult;
+        
 
         // if it is a container, how many slots?
         // 0 if not a container
@@ -73,6 +76,7 @@ int addObject( const char *inDescription,
                float inRValue,
                char inPerson,
                int inFoodValue,
+               float inSpeedMult,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
