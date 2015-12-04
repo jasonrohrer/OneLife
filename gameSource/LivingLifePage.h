@@ -191,6 +191,10 @@ class LivingLifePage : public GamePage {
 
         LiveObject *getOurLiveObject();
         
+
+        void clearLiveObjects();
+        
+
     };
 
 

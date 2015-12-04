@@ -917,10 +917,8 @@ int main() {
         int numLive = players.size();
         
 
-        // check if any are still moving
-        // if so, we must busy-loop over them until moves are
-        // complete
-        char anyMoving = false;
+        // check for timeout for shortest player move or food decrement
+        // so that we wake up from listening to socket to handle it
         double minMoveTime = 999999;
         
         for( int i=0; i<numLive; i++ ) {
@@ -940,27 +938,39 @@ int main() {
                 if( moveTimeLeft < minMoveTime ) {
                     minMoveTime = moveTimeLeft;
                     }
-                anyMoving = true;
                 }
+            
+            // look at food decrement time too
+                
+            double timeLeft =
+                nextPlayer->foodDecrementETASeconds - Time::getCurrentTime();
+                        
+            if( timeLeft < 0 ) {
+                timeLeft = 0;
+                }
+            if( timeLeft < minMoveTime ) {
+                minMoveTime = timeLeft;
+                }                
             }
         
         SocketOrServer *readySock =  NULL;
 
-        if( !anyMoving ) {
-            // use 0 cpu when total idle
-            // but wake up periodically to catch quit signals, etc
-            readySock = sockPoll.wait( 2000 );
-            }
-        else {
-            // players are connected and moving, must do move updates anyway
+        double pollTimeout = 2;
+        
+        if( minMoveTime < pollTimeout ) {
+            // shorter timeout if we have to wake up for a move
             
-            if( minMoveTime > 0 ) {
-                
-                // use a timeout based on shortest time to complete move
-                // so we'll wake up and catch it
-                readySock = sockPoll.wait( (int)( minMoveTime * 1000 ) );
-                }
-            }    
+            // HOWEVER, always keep max timout at 2 sec
+            // so we always wake up periodically to catch quit signals, etc
+
+            pollTimeout = minMoveTime;
+            }
+
+        // we thus use zero CPU as long as no messages or new connections
+        // come in, and only wake up when some timed action needs to be
+        // handled
+        
+        readySock = sockPoll.wait( (int)( pollTimeout * 1000 ) );
         
         
         
@@ -2036,7 +2046,9 @@ int main() {
                     
                     if( nextPlayer->foodStore <= 0 ) {
                         // player has died
-                        // fixme
+                        
+                        // break the connection with them
+                        nextPlayer->error = true;
 
                         // no negative
                         nextPlayer->foodStore = 0;

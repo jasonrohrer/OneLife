@@ -60,8 +60,12 @@ CustomRandomSource randSource( 34957197 );
 
 
 #include "LivingLifePage.h"
+#include "ExtendedMessagePage.h"
+#include "RebirthChoicePage.h"
 
 LivingLifePage *livingLifePage;
+ExtendedMessagePage *extendedMessagePage;
+RebirthChoicePage *rebirthChoicePage;
 
 GamePage *currentGamePage = NULL;
 
@@ -377,6 +381,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
 
     livingLifePage = new LivingLifePage;
+    extendedMessagePage = new ExtendedMessagePage;
+    rebirthChoicePage = new RebirthChoicePage;
     
     currentGamePage = livingLifePage;
     currentGamePage->base_makeActive( true );
@@ -406,7 +412,9 @@ void freeFrameDrawer() {
     
 
     delete livingLifePage;
-
+    delete extendedMessagePage;
+    delete rebirthChoicePage;
+    
     freeAnimationBank();
     freeObjectBank();
     freeSpriteBank();
@@ -858,8 +866,40 @@ void drawFrame( char inUpdate ) {
 
 
         if( currentGamePage == livingLifePage ) {
+            if( livingLifePage->checkSignal( "died" ) ) {
+                
+                lastScreenViewCenter.x = 0;
+                lastScreenViewCenter.y = 0;
+
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
+                
+                currentGamePage = extendedMessagePage;
+                        
+                extendedMessagePage->setMessageKey( "youDied" );
+                
+                currentGamePage->base_makeActive( true );
+                }
             
             }
+        else if( currentGamePage == extendedMessagePage ) {
+            if( extendedMessagePage->checkSignal( "done" ) ) {
+                currentGamePage = rebirthChoicePage;
+                
+                currentGamePage->base_makeActive( true );
+                }
+            }
+        else if( currentGamePage == rebirthChoicePage ) {
+            if( rebirthChoicePage->checkSignal( "reborn" ) ) {
+                currentGamePage = livingLifePage;
+                
+                currentGamePage->base_makeActive( true );
+                }
+            else if( rebirthChoicePage->checkSignal( "quit" ) ) {
+                quitGame();
+                }
+            }
+            
         }
     
 

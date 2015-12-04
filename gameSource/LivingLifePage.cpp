@@ -44,7 +44,8 @@ SimpleVector<unsigned char> serverSocketBuffer;
 
 
 // reads all waiting data from socket and stores it in buffer
-void readServerSocketFull( int inServerSocket ) {
+// returns false on socket error
+static char readServerSocketFull( int inServerSocket ) {
 
     unsigned char buffer[512];
     
@@ -57,6 +58,12 @@ void readServerSocketFull( int inServerSocket ) {
 
         numRead = readFromSocket( inServerSocket, buffer, 512 );
         }    
+
+    if( numRead == -1 ) {
+        return false;
+        }
+    
+    return true;
     }
 
 
@@ -426,13 +433,9 @@ LivingLifePage::LivingLifePage()
     }
 
 
-LivingLifePage::~LivingLifePage() {
-    printf( "Total received = %d bytes (+%d in headers), "
-            "total sent = %d bytes (+%d in headers)\n",
-            numServerBytesRead, overheadServerBytesRead,
-            numServerBytesSent, overheadServerBytesSent );
 
 
+void LivingLifePage::clearLiveObjects() {
     for( int i=0; i<gameObjects.size(); i++ ) {
         
         LiveObject *nextObject =
@@ -448,7 +451,19 @@ LivingLifePage::~LivingLifePage() {
         }
     
     gameObjects.deleteAll();
+    }
+
+
+
+
+LivingLifePage::~LivingLifePage() {
+    printf( "Total received = %d bytes (+%d in headers), "
+            "total sent = %d bytes (+%d in headers)\n",
+            numServerBytesRead, overheadServerBytesRead,
+            numServerBytesSent, overheadServerBytesSent );
+
     
+    clearLiveObjects();
 
 
     if( mServerAddress != NULL ) {    
@@ -1015,9 +1030,16 @@ void LivingLifePage::step() {
         }
     
 
-
     // first, read all available data from server
-    readServerSocketFull( mServerSocket );
+    char readSuccess = readServerSocketFull( mServerSocket );
+    
+
+    if( ! readSuccess ) {
+        closeSocket( mServerSocket );
+        mServerSocket = -1;
+        setSignal( "died" );
+        return;
+        }
     
 
     char *message = getNextServerMessage();
@@ -2470,8 +2492,10 @@ void LivingLifePage::makeActive( char inFresh ) {
         return;
         }
     
+    clearLiveObjects();
+    mFirstServerMessagesReceived = 0;
     
-    
+    serverSocketBuffer.deleteAll();
     }
 
 

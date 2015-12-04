@@ -4,6 +4,12 @@ writeFailed "ERROR:##GAME FOLDER IS##READ-ONLY"
 loading "LOADING"
 
 
+youDied "YOU DIED"
+
+okay "OK"
+quit "QUIT"
+
+reborn "GET REBORN"
 
 
 

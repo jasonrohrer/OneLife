@@ -27,6 +27,12 @@ GamePage.cpp \
 LivingLifePage.cpp \
 pathFind.cpp \
 ageControl.cpp \
+ExtendedMessagePage.cpp \
+buttonStyle.cpp \
+Button.cpp \
+TextButton.cpp \
+RebirthChoicePage.cpp \
+
 
 
 
