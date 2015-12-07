@@ -22,6 +22,7 @@
 extern double frameRateFactor;
 
 extern Font *mainFont;
+extern Font *handwritingFont;
 
 extern doublePair lastScreenViewCenter;
 
@@ -390,7 +391,10 @@ LivingLifePage::LivingLifePage()
           mMapOffsetY( 0 ),
           mEKeyDown( false ),
           mFoodEmptySprite( loadSprite( "hungerEmpty.tga", false ) ),
-          mFoodFullSprite( loadSprite( "hungerFull.tga", false ) ) {
+          mFoodFullSprite( loadSprite( "hungerFull.tga", false ) ),
+          mLastMouseOverID( 0 ),
+          mCurMouseOverID( 0 ),
+          mLastMouseOverFade( 0.0 ) {
 
     
     mServerAddress = SettingsManager::getStringSetting( "serverAddress" );
@@ -1013,9 +1017,32 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 drawSprite( mFoodEmptySprite, pos );
                 }
             }
+
+        if( mCurMouseOverID != 0 || mLastMouseOverID != 0 ) {
+            int idToDescribe = mCurMouseOverID;
+            
+            double fade = 1.0;
+            
+            if( mCurMouseOverID == 0 ) {
+                idToDescribe = mLastMouseOverID;
+                fade = mLastMouseOverFade;
+                }
+
+            
+            setDrawColor( 0, 0, 0, fade );
+
+            doublePair pos = { lastScreenViewCenter.x - 300, 
+                               lastScreenViewCenter.y - 317 };
+            
+            char *des = getObject( idToDescribe )->description;
+            
+            char *desUpper = stringToUpperCase( des );
+
+            handwritingFont->drawString( desUpper, pos, alignLeft );
+            }
+        
         }
-
-
+    
     }
 
 
@@ -2479,7 +2506,14 @@ void LivingLifePage::step() {
 
 
 
-
+    if( mLastMouseOverFade != 0 ) {
+        mLastMouseOverFade -= 0.05 * frameRateFactor;
+        if( mLastMouseOverFade < 0 ) {
+            mLastMouseOverFade = 0;
+            mLastMouseOverID = 0;
+            }
+        }
+    
     }
 
 
@@ -2507,7 +2541,32 @@ void LivingLifePage::makeActive( char inFresh ) {
 
 
 void LivingLifePage::pointerMove( float inX, float inY ) {
+    int clickDestX = lrintf( ( inX ) / CELL_D );
+    
+    int clickDestY = lrintf( ( inY ) / CELL_D );
+    
+    int destID = 0;
+        
+    int mapX = clickDestX - mMapOffsetX + mMapD / 2;
+    int mapY = clickDestY - mMapOffsetY + mMapD / 2;
+    if( mapY >= 0 && mapY < mMapD &&
+        mapX >= 0 && mapX < mMapD ) {
+        
+        destID = mMap[ mapY * mMapD + mapX ];
+        }
+
+    if( destID != 0 ) {
+        mCurMouseOverID = destID;
+        
+        }
+    else if( mCurMouseOverID != 0 ) {
+        mLastMouseOverID = mCurMouseOverID;
+        mLastMouseOverFade = 1.0;
+        mCurMouseOverID = 0;
+        }
+    
     }
+
 
 
 

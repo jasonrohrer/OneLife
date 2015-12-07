@@ -171,6 +171,8 @@ char gamePlayingBack = false;
 Font *mainFont;
 Font *mainFontFixed;
 Font *numbersFontFixed;
+Font *handwritingFont;
+
 
 char *shutdownMessage = NULL;
 
@@ -321,7 +323,12 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     mainFontFixed->setMinimumPositionPrecision( 1 );
     numbersFontFixed->setMinimumPositionPrecision( 1 );
     
+    handwritingFont = 
+        new Font( "font_handwriting_16_16.tga", 1, 6, false, 16 );
 
+    handwritingFont->setMinimumPositionPrecision( 1 );
+
+    
     float mouseSpeedSetting = 1.0f;
     
     int musicOffSetting = 0;
@@ -398,6 +405,8 @@ void freeFrameDrawer() {
     delete mainFontFixed;
     delete numbersFontFixed;
     
+    delete handwritingFont;
+
     if( currentUserTypedMessage != NULL ) {
         delete [] currentUserTypedMessage;
         currentUserTypedMessage = NULL;

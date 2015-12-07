@@ -185,6 +185,12 @@ class LivingLifePage : public GamePage {
         SpriteHandle mFoodEmptySprite;
         SpriteHandle mFoodFullSprite;
         
+
+        int mLastMouseOverID;
+        int mCurMouseOverID;
+        
+        double mLastMouseOverFade;
+
         
         void computePathToDest( LiveObject *inObject );
 
