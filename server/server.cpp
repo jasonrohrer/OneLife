@@ -252,6 +252,7 @@ typedef enum messageType {
     USE,
     REMV,
     DROP,
+    SAY,
     UNKNOWN
     } messageType;
 
@@ -267,6 +268,10 @@ typedef struct ClientMessage {
 
         // NULL if there are no extra
         GridPos *extraPos;
+
+        // null if type not SAY
+        char *saidText;
+        
     } ClientMessage;
 
 
@@ -282,7 +287,7 @@ ClientMessage parseMessage( char *inMessage ) {
     
     m.numExtraPos = 0;
     m.extraPos = NULL;
-    
+    m.saidText = NULL;
     // don't require # terminator here
 
     int numRead = sscanf( inMessage, 
@@ -356,6 +361,21 @@ ClientMessage parseMessage( char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "DROP" ) == 0 ) {
         m.type = DROP;
+        }
+    else if( strcmp( nameBuffer, "SAY" ) == 0 ) {
+        m.type = SAY;
+
+        // look after second space
+        char *firstSpace = strstr( inMessage, " " );
+        
+        if( firstSpace != NULL ) {
+            
+            char *secondSpace = strstr( firstSpace, " " );
+            
+            if( secondSpace != NULL ) {
+                m.saidText = stringDuplicate( &( secondSpace[1] ) );
+                }
+            }
         }
     else {
         m.type = UNKNOWN;
@@ -1104,6 +1124,10 @@ int main() {
         SimpleVector<char> mapChanges;
         SimpleVector<ChangePosition> mapChangesPos;
         
+        SimpleVector<char> newSpeech;
+        SimpleVector<ChangePosition> newSpeechPos;
+
+        
         for( int i=0; i<numLive; i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
             
@@ -1477,6 +1501,31 @@ int main() {
                                 nextPlayer->newMove = true;
                                 }
                             }
+                        }
+                    else if( m.type == SAY && m.saidText != NULL ) {
+                        unsigned int sayLimit = 
+                            (unsigned int)( 
+                                floor( computeAge( nextPlayer ) ) + 1 );
+                        
+                        if( strlen( m.saidText ) > sayLimit ) {
+                            // truncate
+                            m.saidText[ sayLimit ] = '\0';
+                            }
+                        
+                        
+                        char *line = autoSprintf( "%d %s\n", nextPlayer->id,
+                                                  m.saidText );
+                        
+                        newSpeech.appendElementString( line );
+                        
+                        delete [] line;
+                        
+                        delete [] m.saidText;
+
+
+                        ChangePosition p = { nextPlayer->xd, nextPlayer->yd, 
+                                             false };
+                        newSpeechPos.push_back( p );
                         }
                     else if( m.type == USE ) {
                         // send update even if action fails (to let them
@@ -2274,6 +2323,20 @@ int main() {
             }
         
 
+
+        char *speechMessage = NULL;
+        int speechMessageLength = 0;
+        
+        if( newSpeech.size() > 0 ) {
+            newSpeech.push_back( '#' );
+            char *temp = newSpeech.getElementString();
+
+            speechMessage = concatonate( "PS\n", temp );
+            delete [] temp;
+
+            speechMessageLength = strlen( speechMessage );
+            }
+
         
         // send moves and updates to clients
         
@@ -2617,6 +2680,34 @@ int main() {
                             }
                         }
                     }
+                if( speechMessage != NULL ) {
+                    double minUpdateDist = 64;
+                    
+                    for( int u=0; u<newSpeechPos.size(); u++ ) {
+                        ChangePosition *p = newSpeechPos.getElement( u );
+                        
+                        // map changes are never global
+
+                        double d = intDist( p->x, p->y, 
+                                            nextPlayer->xd, nextPlayer->yd );
+                        
+                        if( d < minUpdateDist ) {
+                            minUpdateDist = d;
+                            }
+                        }
+
+                    if( minUpdateDist <= maxDist ) {
+                        int numSent = 
+                            nextPlayer->sock->send( 
+                                (unsigned char*)speechMessage, 
+                                speechMessageLength, 
+                                false, false );
+                        
+                        if( numSent == -1 ) {
+                            nextPlayer->error = true;
+                            }
+                        }
+                    }
                 
 
                 if( nextPlayer->foodUpdate ) {
@@ -2655,6 +2746,9 @@ int main() {
             }
         if( mapChangeMessage != NULL ) {
             delete [] mapChangeMessage;
+            }
+        if( speechMessage != NULL ) {
+            delete [] speechMessage;
             }
         
 

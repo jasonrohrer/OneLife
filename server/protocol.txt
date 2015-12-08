@@ -24,6 +24,8 @@ PLAYER_UPDATE  (PU)
 
 PLAYER_MOVES_START (PM)
 
+PLAYER_SAYS (PS)
+
 MAP_CHANGE (MX)
 
 FOOD_CHANGE (FX)
@@ -110,6 +112,20 @@ Until that has happened, client must assume player is still in transit.
 
 
 
+PS
+p_id text
+p_id text
+p_id text
+...
+p_id text
+#
+
+Text that each player says must not contain # or newline.
+
+
+
+
+
 MX
 x y new_id p_id
 x y new_id p_id
@@ -167,6 +183,7 @@ REMV is special case of removing an object from a container.
 
 
 This one is more complicated:
+
 MOVE xs ys xdelt0 ydelt0 xdelt1 ydelt1 ... xdeltN ydeltN#
 
 xs,ys is the absolute world position the player thinks they're currently at
@@ -176,3 +193,16 @@ wants to take to their destination xdeltN,ydeltN
 
 These deltas are relative to xs,ys and will be rejected if they are larger
 than +/- 16 (the maximum allowed path search radius.
+
+
+
+
+
+SAY 0 0 text#
+
+
+SAY text cannot contain the # character and will be truncated at the
+    player's age-speech limit (age in years + 1 character).
+
+    The x y parameters to SAY are currently ignored and can be 0, but must
+    be present.
