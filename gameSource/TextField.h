@@ -38,6 +38,10 @@ class TextField : public PageComponent, public ActionListenerList {
         // defaults to -1 (no limit)
         void setMaxLength( int inLimit );
         
+        // returns -1 if no limit
+        int getMaxLength();
+        
+        
 
         // at current cursor position
         void insertCharacter( unsigned char inASCII );

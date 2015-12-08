@@ -537,7 +537,8 @@ LiveObject *LivingLifePage::getOurLiveObject() {
 void LivingLifePage::drawChalkBackgroundString( doublePair inPos, 
                                                 const char *inString,
                                                 double inFade,
-                                                double inMaxWidth ) {
+                                                double inMaxWidth,
+                                                int inForceMinChalkBlots ) {
     
     char *stringUpper = stringToUpperCase( inString );
 
@@ -610,7 +611,10 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         double length = handwritingFont->measureString( line );
             
         int numBlots = lrint( 0.25 + length / 20 ) + 1;
-            
+        
+        if( inForceMinChalkBlots != -1 && numBlots < inForceMinChalkBlots ) {
+            numBlots = inForceMinChalkBlots;
+            }
     
         doublePair blotSpacing = { 20, 0 };
     
@@ -1164,7 +1168,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
         if( mSayField.isFocused() ) {
             char *partialSay = mSayField.getText();
             
-            char *drawString = autoSprintf( "SAY:  %s\n", partialSay );
+            int charsLeft = mSayField.getMaxLength() - strlen( partialSay );
+
+            char *drawString = autoSprintf( "SAY:  %s\n", 
+                                            partialSay, charsLeft );
             delete [] partialSay;
 
             doublePair pos = { lastScreenViewCenter.x, 
@@ -1172,6 +1179,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             drawChalkBackgroundString( pos, drawString, 1.0, 250 );
             
+            delete [] drawString;
+
+            drawString = autoSprintf( "%d\n", charsLeft );
+            
+            pos.x -= 64;
+            
+            drawChalkBackgroundString( pos, drawString, 1.0, 250, 2 );
+
             delete [] drawString;
             }
         
@@ -2347,6 +2362,17 @@ void LivingLifePage::step() {
     
     if( ourLiveObject != NULL ) {
         
+
+        // current age
+        double age = 
+            ourLiveObject->age + 
+            ourLiveObject->ageRate * 
+            ( game_getCurrentTime() - ourLiveObject->lastAgeSetTime );
+
+        int sayCap = (int)( floor( age ) + 1 );
+        
+        mSayField.setMaxLength( sayCap );
+
         doublePair screenTargetPos = mult( ourLiveObject->currentPos, CELL_D );
         
 

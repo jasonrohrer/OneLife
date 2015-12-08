@@ -171,6 +171,12 @@ void TextField::setMaxLength( int inLimit ) {
 
 
 
+int TextField::getMaxLength() {
+    return mMaxLength;
+    }
+
+
+
 void TextField::setActive( char inActive ) {
     mActive = inActive;
     }

@@ -213,7 +213,8 @@ class LivingLifePage : public GamePage {
         void drawChalkBackgroundString( doublePair inPos, 
                                         const char *inString,
                                         double inFade,
-                                        double inMaxWidth );
+                                        double inMaxWidth,
+                                        int inForceMinChalkBlots = -1 );
 
     };
 
