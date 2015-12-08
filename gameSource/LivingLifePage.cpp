@@ -1,6 +1,7 @@
 #include "LivingLifePage.h"
 
 #include "objectBank.h"
+#include "whiteSprites.h"
 
 #include "minorGems/util/SimpleVector.h"
 
@@ -394,7 +395,17 @@ LivingLifePage::LivingLifePage()
           mFoodFullSprite( loadSprite( "hungerFull.tga", false ) ),
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
-          mLastMouseOverFade( 0.0 ) {
+          mLastMouseOverFade( 0.0 ),
+          mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
+          mSayField( handwritingFont, 0, 0, 10, true, NULL,
+                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,'?! " ) {
+    
+    // not visible, drawn under world at 0, 0, and doesn't move with camera
+    // still, we can use it to receive/process/filter typing events
+    addComponent( &mSayField );
+    
+    mSayField.unfocus();
+    
 
     
     mServerAddress = SettingsManager::getStringSetting( "serverAddress" );
@@ -498,6 +509,7 @@ LivingLifePage::~LivingLifePage() {
 
     freeSprite( mFoodEmptySprite );
     freeSprite( mFoodFullSprite );
+    freeSprite( mChalkBlotSprite );
     }
 
 
@@ -518,6 +530,117 @@ LiveObject *LivingLifePage::getOurLiveObject() {
     return ourLiveObject;
     }
 
+
+
+
+// forces uppercase
+void LivingLifePage::drawChalkBackgroundString( doublePair inPos, 
+                                                const char *inString,
+                                                double inFade,
+                                                double inMaxWidth ) {
+    
+    char *stringUpper = stringToUpperCase( inString );
+
+    // break into lines
+    SimpleVector<char *> *tokens = 
+        tokenizeString( stringUpper );
+    
+    
+    // collect all lines before drawing them
+    SimpleVector<char *> lines;
+    
+    
+    if( tokens->size() > 0 ) {
+        // start with firt token
+        char *firstToken = tokens->getElementDirect( 0 );
+        
+        lines.push_back( firstToken );
+        
+        tokens->deleteElement( 0 );
+        }
+    
+    
+    while( tokens->size() > 0 ) {
+        char *nextToken = tokens->getElementDirect( 0 );
+        
+        char *currentLine = lines.getElementDirect( lines.size() - 1 );
+         
+        char *expandedLine = autoSprintf( "%s %s", currentLine, nextToken );
+         
+        if( handwritingFont->measureString( expandedLine ) <= inMaxWidth ) {
+            // replace current line
+            delete [] currentLine;
+            lines.deleteElement(  lines.size() - 1 );
+             
+            lines.push_back( expandedLine );
+            }
+        else {
+            // expanded is too long
+            // put token at start of next line
+            delete [] expandedLine;
+             
+            lines.push_back( stringDuplicate( nextToken ) );
+            }
+         
+
+        delete [] nextToken;
+        tokens->deleteElement( 0 );
+        }
+    
+    delete tokens;
+    
+    if( lines.size() == 0 ) {
+        return;
+        }
+
+    double lineSpacing = handwritingFont->getFontHeight() + 5;
+    
+    double firstLineY =  inPos.y + ( lines.size() - 1 ) * lineSpacing;
+    
+
+    setDrawColor( 1, 1, 1, inFade );
+
+    // with a fixed seed
+    JenkinsRandomSource blotRandSource( 0 );
+        
+    for( int i=0; i<lines.size(); i++ ) {
+        char *line = lines.getElementDirect( i );
+        
+
+        double length = handwritingFont->measureString( line );
+            
+        int numBlots = lrint( 0.25 + length / 20 ) + 1;
+            
+    
+        doublePair blotSpacing = { 20, 0 };
+    
+        doublePair firstBlot = 
+            { inPos.x, firstLineY - i * lineSpacing};
+
+        
+        for( int b=0; b<numBlots; b++ ) {
+            doublePair blotPos = add( firstBlot, mult( blotSpacing, b ) );
+        
+            double rot = blotRandSource.getRandomDouble();
+            drawSprite( mChalkBlotSprite, blotPos, 1.0, rot );
+            drawSprite( mChalkBlotSprite, blotPos, 1.0, rot );
+            }
+        }
+    
+    
+    setDrawColor( 0, 0, 0, inFade );
+
+    for( int i=0; i<lines.size(); i++ ) {
+        char *line = lines.getElementDirect( i );
+        
+        doublePair lineStart = 
+            { inPos.x, firstLineY - i * lineSpacing};
+        
+        handwritingFont->drawString( line, lineStart, alignLeft );
+        delete [] line;
+        }
+    
+    }
 
 
 SimpleVector<doublePair> trail;
@@ -1029,16 +1152,27 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 }
 
             
-            setDrawColor( 0, 0, 0, fade );
-
+            
             doublePair pos = { lastScreenViewCenter.x - 300, 
                                lastScreenViewCenter.y - 317 };
-            
             char *des = getObject( idToDescribe )->description;
-            
-            char *desUpper = stringToUpperCase( des );
 
-            handwritingFont->drawString( desUpper, pos, alignLeft );
+            drawChalkBackgroundString( pos, des, fade, 10 );
+            }
+        
+
+        if( mSayField.isFocused() ) {
+            char *partialSay = mSayField.getText();
+            
+            char *drawString = autoSprintf( "SAY:  %s\n", partialSay );
+            delete [] partialSay;
+
+            doublePair pos = { lastScreenViewCenter.x, 
+                               lastScreenViewCenter.y - 317 };
+            
+            drawChalkBackgroundString( pos, drawString, 1.0, 250 );
+            
+            delete [] drawString;
             }
         
         }
@@ -2555,7 +2689,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         destID = mMap[ mapY * mMapD + mapX ];
         }
 
-    if( destID != 0 ) {
+    if( destID > 0 ) {
         mCurMouseOverID = destID;
         
         }
@@ -2968,6 +3102,17 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         case 'e':
         case 'E':
             mEKeyDown = true;
+            break;
+        case 13:  // enter
+            // speak
+            if( ! mSayField.isFocused() ) {
+                
+                mSayField.setText( "" );
+                mSayField.focus();
+                }
+            else {
+                // fixme:  send text to server
+                }
             break;
         }
     }

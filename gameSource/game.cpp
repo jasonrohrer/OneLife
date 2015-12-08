@@ -1115,6 +1115,9 @@ void specialKeyDown( int inKey ) {
         return;
         }
     
+    if( currentGamePage != NULL ) {
+        currentGamePage->base_specialKeyDown( inKey );
+        }
 	}
 
 
@@ -1123,7 +1126,10 @@ void specialKeyUp( int inKey ) {
     if( isPaused() ) {
         return;
         }
-    
+
+    if( currentGamePage != NULL ) {
+        currentGamePage->base_specialKeyUp( inKey );
+        }
 	} 
 
 

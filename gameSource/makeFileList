@@ -32,6 +32,7 @@ buttonStyle.cpp \
 Button.cpp \
 TextButton.cpp \
 RebirthChoicePage.cpp \
+TextField.cpp \
 
 
 
@@ -40,6 +41,7 @@ GAME_GRAPHICS = \
 graphics/font_32_64.tga \
 graphics/hungerFull.tga \
 graphics/hungerEmpty.tga \
+graphics/chalkBlot.tga \
 
 
 NEEDED_MINOR_GEMS_OBJECTS = \

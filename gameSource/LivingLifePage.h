@@ -17,6 +17,8 @@
 
 #include "animationBank.h"
 
+#include "TextField.h"
+
 
 
 
@@ -191,7 +193,15 @@ class LivingLifePage : public GamePage {
         
         double mLastMouseOverFade;
 
+
+        SpriteHandle mChalkBlotSprite;
         
+        
+        // not visible, but used for its text filtering
+        // capabilities
+        TextField mSayField;
+        
+
         void computePathToDest( LiveObject *inObject );
 
 
@@ -200,6 +210,10 @@ class LivingLifePage : public GamePage {
 
         void clearLiveObjects();
         
+        void drawChalkBackgroundString( doublePair inPos, 
+                                        const char *inString,
+                                        double inFade,
+                                        double inMaxWidth );
 
     };
 
