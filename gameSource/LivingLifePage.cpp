@@ -554,6 +554,7 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     SimpleVector<char *> *tokens = 
         tokenizeString( stringUpper );
     
+    delete [] stringUpper;
     
     // collect all lines before drawing them
     SimpleVector<char *> lines;
