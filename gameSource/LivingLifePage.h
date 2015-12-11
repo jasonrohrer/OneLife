@@ -108,6 +108,13 @@ typedef struct LiveObject {
 
         char pendingAction;
         float pendingActionAnimationProgress;
+
+        
+        // NULL if no active speech
+        char *currentSpeech;
+        double speechFade;
+        // wall clock time when speech should start fading
+        double speechFadeETATime;
         
     } LiveObject;
 

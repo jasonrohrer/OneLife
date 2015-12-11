@@ -370,10 +370,15 @@ ClientMessage parseMessage( char *inMessage ) {
         
         if( firstSpace != NULL ) {
             
-            char *secondSpace = strstr( firstSpace, " " );
+            char *secondSpace = strstr( &( firstSpace[1] ), " " );
             
             if( secondSpace != NULL ) {
-                m.saidText = stringDuplicate( &( secondSpace[1] ) );
+
+                char *thirdSpace = strstr( &( secondSpace[1] ), " " );
+                
+                if( thirdSpace != NULL ) {
+                    m.saidText = stringDuplicate( &( thirdSpace[1] ) );
+                    }
                 }
             }
         }
@@ -1156,7 +1161,8 @@ int main() {
                 if( ( nextPlayer->xs == nextPlayer->xd &&
                       nextPlayer->ys == nextPlayer->yd ) 
                     ||
-                    m.type == MOVE ) {
+                    m.type == MOVE ||
+                    m.type == SAY ) {
                     
                     if( m.type == MOVE ) {
                         //Thread::staticSleep( 1000 );

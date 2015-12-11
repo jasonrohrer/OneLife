@@ -179,7 +179,7 @@ USE  is for bare-hand or held-object action on target object in non-empty
      action), and picking up a container.
 
 REMV is special case of removing an object from a container.
- 
+
 
 
 This one is more complicated:
@@ -194,6 +194,10 @@ wants to take to their destination xdeltN,ydeltN
 These deltas are relative to xs,ys and will be rejected if they are larger
 than +/- 16 (the maximum allowed path search radius.
 
+
+Note that USE, DROP, and REMV actions are ignored while a MOVE is in progress 
+(until the server sends a PU to indicate that the move is finished and the
+ destination has been reached).  SAY can happen during a move, however.
 
 
 

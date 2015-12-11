@@ -140,6 +140,7 @@ typedef enum messageType {
     MAP_CHANGE,
     PLAYER_UPDATE,
     PLAYER_MOVES_START,
+    PLAYER_SAYS,
     FOOD_CHANGE,
     UNKNOWN
     } messageType;
@@ -172,6 +173,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "PM" ) == 0 ) {
         returnValue = PLAYER_MOVES_START;
+        }
+    else if( strcmp( copy, "PS" ) == 0 ) {
+        returnValue = PLAYER_SAYS;
         }
     else if( strcmp( copy, "FX" ) == 0 ) {
         returnValue = FOOD_CHANGE;
@@ -463,6 +467,10 @@ void LivingLifePage::clearLiveObjects() {
         if( nextObject->pathToDest != NULL ) {
             delete [] nextObject->pathToDest;
             }
+
+        if( nextObject->currentSpeech != NULL ) {
+            delete [] nextObject->currentSpeech;
+            }
         }
     
     gameObjects.deleteAll();
@@ -709,6 +717,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
     //int worldYStart = xStart + mMapOffsetY - mMapD / 2;
     //int worldYEnd = xEnd + mMapOffsetY - mMapD / 2;
 
+
+    // capture pointers to objects that are speaking and visible on 
+    // screen
+
+    // draw speech on top of everything at end
+
+    SimpleVector<LiveObject *> speakers;
+    SimpleVector<doublePair> speakersPos;
 
 
     // FIXME:  skip these that are off screen
@@ -960,6 +976,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                         o->containedIDs );
                         }
                     }
+                
+                if( o->currentSpeech != NULL ) {
+                    
+                    speakers.push_back( o );
+                    speakersPos.push_back( pos );
+                    }
                 }
             }
 
@@ -1072,6 +1094,33 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         } // end loop over rows on screen
 
+    
+    for( int i=0; i<speakers.size(); i++ ) {
+        LiveObject *o = speakers.getElementDirect( i );
+        
+        doublePair pos = speakersPos.getElementDirect( i );
+        
+
+        doublePair speechPos = pos;
+                    
+        int width = 250;
+        int widthLimit = 250;
+        
+        double fullWidth = 
+            handwritingFont->measureString( o->currentSpeech );
+        
+        if( fullWidth < width ) {
+            width = (int)fullWidth;
+            }
+        
+        
+        speechPos.x -= width / 2;
+        speechPos.y += 54;
+        
+        drawChalkBackgroundString( speechPos, o->currentSpeech, 
+                                   o->speechFade, widthLimit );
+        }
+    
 
         
     doublePair lastChunkCenter = { (double)( CELL_D * mMapOffsetX ), 
@@ -1587,6 +1636,9 @@ void LivingLifePage::step() {
                 o.foodStore = 0;
                 o.foodCapacity = 0;
                 
+                o.currentSpeech = NULL;
+                o.speechFade = 1.0;
+                
                 
                 int forced = 0;
                 
@@ -1978,7 +2030,7 @@ void LivingLifePage::step() {
                             existing->inMotion = true;
                             
                             int oldPathLength = 0;
-			    GridPos oldCurrentPathPos;
+                            GridPos oldCurrentPathPos;
                             
                             if( existing->currentSpeed != 0
                                 &&
@@ -1986,7 +2038,7 @@ void LivingLifePage::step() {
                                 
                                 // an interrupted move
                                 oldPathLength = existing->pathLength;
-				oldCurrentPathPos = 
+                                oldCurrentPathPos = 
                                     existing->pathToDest[
                                         existing->currentPathStep ];
                                 }
@@ -2320,6 +2372,57 @@ void LivingLifePage::step() {
 
             delete [] lines;
             }
+        else if( type == PLAYER_SAYS ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+
+                int id;
+                int numRead = sscanf( lines[i], "%d ",
+                                      &( id ) );
+
+                if( numRead == 1 ) {
+                    for( int j=0; j<gameObjects.size(); j++ ) {
+                        if( gameObjects.getElement(j)->id == id ) {
+                            
+                            LiveObject *existing = gameObjects.getElement(j);
+                            
+                            if( existing->currentSpeech != NULL ) {
+                                delete [] existing->currentSpeech;
+                                existing->currentSpeech = NULL;
+                                }
+                            
+                            char *firstSpace = strstr( lines[i], " " );
+        
+                            if( firstSpace != NULL ) {
+                                existing->currentSpeech = 
+                                    stringDuplicate( &( firstSpace[1] ) );
+                                
+                                existing->speechFade = 1.0;
+                                
+                                // longer time for longer speech
+                                existing->speechFadeETATime = 
+                                    game_getCurrentTime() + 3 +
+                                    strlen( existing->currentSpeech ) / 5;
+                                }
+                            
+                            break;
+                            }
+                        }
+                    
+                    }
+                
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
         else if( type == FOOD_CHANGE ) {
             
             LiveObject *ourLiveObject = getOurLiveObject();
@@ -2451,6 +2554,21 @@ void LivingLifePage::step() {
         
         LiveObject *o = gameObjects.getElement( i );
         
+
+        if( o->currentSpeech != NULL ) {
+            if( game_getCurrentTime() > o->speechFadeETATime ) {
+                
+                o->speechFade -= 0.05 * frameRateFactor;
+
+                if( o->speechFade <= 0 ) {
+                    delete [] o->currentSpeech;
+                    o->currentSpeech = NULL;
+                    o->speechFade = 1.0;
+                    }
+                }
+            }
+        
+
 
         o->animationFrameCount++;
             
@@ -3137,7 +3255,30 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 mSayField.focus();
                 }
             else {
-                // fixme:  send text to server
+                char *typedText = mSayField.getText();
+                
+                if( strcmp( typedText, "" ) == 0 ) {
+                    mSayField.unfocus();
+                    }
+                else {
+                    // send text to server
+                    char *message = 
+                        autoSprintf( "SAY 0 0 %s\n#",
+                                     typedText );
+                    sendToSocket( mServerSocket, (unsigned char*)message, 
+                                  strlen( message ) );
+            
+                    numServerBytesSent += strlen( message );
+                    overheadServerBytesSent += 52;
+
+                    
+                    mSayField.setText( "" );
+                    mSayField.unfocus();
+
+                    delete [] message;
+                    }
+                
+                delete [] typedText;
                 }
             break;
         }
