@@ -62,6 +62,14 @@ static MinPriorityQueue<LiveDecayRecord> liveDecayQueue;
 
 
 
+// track decay-caused map transitions that happened since the last
+// call to stepMap
+static SimpleVector<char> mapChangesSinceLastStep;
+
+static SimpleVector<ChangePosition> mapChangePosSinceLastStep;
+
+
+
 
 static float getXYRandom( int inX, int inY ) {
     
@@ -143,9 +151,10 @@ void initMap() {
                              12, // three 32-bit ints, xys
                                  // s is the slot number 
                                  // s=0 for base object
-                                 // s=1 for count of contained objects
-                                 // s=2 first contained object
-                                 // s=3 second contained object
+                                 // s=1 decay ETA seconds (wall clock time)
+                                 // s=2 for count of contained objects
+                                 // s=3 first contained object
+                                 // s=4 second contained object
                                  // s=... remaining contained objects
                              4 // one int, object ID at x,y in slot s
                                // OR contained count if s=1
@@ -250,6 +259,20 @@ int checkDecayObject( int inX, int inY, int inID ) {
             // set it in DB
             dbPut( inX, inY, 0, newID );
             
+
+            char *changeString = getMapChangeLineString( inX, inY );
+            
+            mapChangesSinceLastStep.appendElementString( changeString );
+
+            delete [] changeString;
+            
+
+            ChangePosition p = { inX, inY, false };
+            
+            mapChangePosSinceLastStep.push_back( p );
+
+
+
             TransRecord *newDecayT = getTrans( -1, newID );
 
             if( newDecayT != NULL ) {
@@ -285,6 +308,8 @@ int checkDecayObject( int inX, int inY, int inID ) {
             LiveDecayRecord r = { inX, inY, mapETA };
             
             liveDecayQueue.insert( r, mapETA );
+            printf( "Adding live decay record at %d,%d (etaT=%d, curT=%d\n",
+                    inX, inY, mapETA, (int)time( NULL ) );
             }
         }
     
@@ -651,22 +676,33 @@ void stepMap( SimpleVector<char> *inMapChanges,
 
         // apply real eta from map (to ignore stale duplicates in live list)
         // and update live list if new object is decaying too
-        int newID = checkDecayObject( r.x, r.y, oldID );
         
-        if( newID != oldID ) {
-            
-            char *changeString = getMapChangeLineString( r.x, r.y );
-            
-            inMapChanges->appendElementString( changeString );
 
-            delete [] changeString;
-
-            ChangePosition p = { r.x, r.y, false };
-            
-            inChangePosList->push_back( p );
-            }
+        // this call will append changes to our global lists, which
+        // we process below
+        checkDecayObject( r.x, r.y, oldID );
         }
     
+
+    // all of them, including these new ones and others acculuated since
+    // last step are accumulated in these global vectors
+    
+    int numChars = mapChangesSinceLastStep.size();
+    
+    for( int i=0; i<numChars; i++ ) {
+        inMapChanges->push_back( mapChangesSinceLastStep.getElementDirect(i) );
+        }
+    
+    int numPos = mapChangePosSinceLastStep.size();
+
+    for( int i=0; i<numPos; i++ ) {
+        inChangePosList->push_back( 
+            mapChangePosSinceLastStep.getElementDirect(i) );
+        }
+
+    
+    mapChangesSinceLastStep.deleteAll();
+    mapChangePosSinceLastStep.deleteAll();
     }
 
 
