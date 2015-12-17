@@ -1,4 +1,5 @@
 #include "map.h"
+#include "HashTable.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -59,6 +60,13 @@ typedef struct LiveDecayRecord {
 #include "minorGems/util/MinPriorityQueue.h"
 
 static MinPriorityQueue<LiveDecayRecord> liveDecayQueue;
+
+
+// for quick lookup of existing records in liveDecayQueue
+// store the eta time here
+// before storing a new record in the queue, we can check this hash
+// table to see whether it already exists
+static HashTable<unsigned int> liveDecayRecordPresentHashTable( 1024 );
 
 
 
@@ -307,10 +315,19 @@ int checkDecayObject( int inX, int inY, int inID ) {
             //   on one stored in this queue)
             LiveDecayRecord r = { inX, inY, mapETA };
             
-            liveDecayQueue.insert( r, mapETA );
-            printf( "Adding live decay record at %d,%d (etaT=%d, curT=%d\n",
-                    inX, inY, mapETA, (int)time( NULL ) );
+            char exists;
+            unsigned int existingETA =
+                liveDecayRecordPresentHashTable.lookup( inX, inY,
+                                                        &exists );
+
+            if( !exists || existingETA != mapETA ) {
+                
+                liveDecayQueue.insert( r, mapETA );
+                
+                liveDecayRecordPresentHashTable.insert( inX, inY, mapETA );
+                }
             }
+        
         }
     
     
@@ -671,6 +688,16 @@ void stepMap( SimpleVector<char> *inMapChanges,
         // another expired
 
         LiveDecayRecord r = liveDecayQueue.removeMin();        
+
+        char storedFound;
+        unsigned int storedETA =
+            liveDecayRecordPresentHashTable.lookup( r.x, r.y, &storedFound );
+        
+        if( storedFound && storedETA == r.etaTimeSeconds ) {
+            
+            liveDecayRecordPresentHashTable.remove( r.x, r.y );
+            }
+        
 
         int oldID = getMapObjectRaw( r.x, r.y );
 
