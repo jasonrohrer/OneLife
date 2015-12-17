@@ -172,6 +172,7 @@ void initObjectBank() {
 
                             r->sprites = new int[r->numSprites];
                             r->spritePos = new doublePair[ r->numSprites ];
+                            r->spriteRot = new double[ r->numSprites ];
                             
                             for( int i=0; i< r->numSprites; i++ ) {
                                 sscanf( lines[next], "spriteID=%d", 
@@ -182,6 +183,12 @@ void initObjectBank() {
                                 sscanf( lines[next], "pos=%lf,%lf", 
                                         &( r->spritePos[i].x ),
                                         &( r->spritePos[i].y ) );
+                                
+                                next++;
+                                
+                                // fixme
+                                sscanf( lines[next], "rot=%lf", 
+                                        &( r->spriteRot[i] ) );
                                 
                                 next++;
                                 }
@@ -252,6 +259,7 @@ static void freeObjectRecord( int inID ) {
             delete [] idMap[inID]->slotPos;
             delete [] idMap[inID]->sprites;
             delete [] idMap[inID]->spritePos;
+            delete [] idMap[inID]->spriteRot;
             
             delete idMap[inID];
             idMap[inID] = NULL;
@@ -274,6 +282,7 @@ void freeObjectBank() {
             delete [] idMap[i]->description;
             delete [] idMap[i]->sprites;
             delete [] idMap[i]->spritePos;
+            delete [] idMap[i]->spriteRot;
 
             delete idMap[i];
             }
@@ -368,6 +377,7 @@ int addObject( const char *inDescription,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
+               double *inSpriteRot,
                int inReplaceID ) {
     
 
@@ -445,6 +455,8 @@ int addObject( const char *inDescription,
             lines.push_back( autoSprintf( "pos=%f,%f", 
                                           inSpritePos[i].x,
                                           inSpritePos[i].y ) );
+            lines.push_back( autoSprintf( "rot=%f", 
+                                          inSpriteRot[i] ) );
             }
         
         char **linesArray = lines.getElementArray();
@@ -532,9 +544,11 @@ int addObject( const char *inDescription,
     
     r->sprites = new int[ inNumSprites ];
     r->spritePos = new doublePair[ inNumSprites ];
+    r->spriteRot = new double[ inNumSprites ];
     
     memcpy( r->sprites, inSprites, inNumSprites * sizeof( int ) );
     memcpy( r->spritePos, inSpritePos, inNumSprites * sizeof( doublePair ) );
+    memcpy( r->spriteRot, inSpriteRot, inNumSprites * sizeof( double ) );
     
 
 
@@ -572,7 +586,8 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             pos = add( pos, getAgeHeadOffset( inAge, spritePos ) );
             }
         
-        drawSprite( getSprite( inObject->sprites[i] ), pos, 1.0, 0, inFlipH );
+        drawSprite( getSprite( inObject->sprites[i] ), pos, 1.0,
+                    inObject->spriteRot[i], inFlipH );
         }    
     }
 

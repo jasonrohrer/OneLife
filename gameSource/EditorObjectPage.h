@@ -54,6 +54,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
         virtual void pointerUp( float inX, float inY );
         
         virtual void keyDown( unsigned char inASCII );
+        virtual void keyUp( unsigned char inASCII );
         virtual void specialKeyDown( int inKeyCode );
         
     protected:
@@ -119,6 +120,9 @@ class EditorObjectPage : public GamePage, public ActionListener {
         float mHoverFlash;
 
         int mHoverFrameCount;
+
+        char mRotAdjustMode;
+        float mRotStartMouseX;
         
     };
 

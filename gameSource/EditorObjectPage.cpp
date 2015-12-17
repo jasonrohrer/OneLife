@@ -141,6 +141,7 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.numSprites = 0;
     mCurrentObject.sprites = new int[ 0 ];
     mCurrentObject.spritePos = new doublePair[ 0 ];
+    mCurrentObject.spriteRot = new double[ 0 ];
 
     mPickedObjectLayer = -1;
     mPickedSlot = -1;
@@ -149,6 +150,10 @@ EditorObjectPage::EditorObjectPage()
     mHoverSlot = -1;
     mHoverStrength = 0;
     mHoverFrameCount = 0;
+    
+
+    mRotAdjustMode = false;
+    mRotStartMouseX = 0;
     
 
     mHeatValueField.setText( "0" );
@@ -181,6 +186,7 @@ EditorObjectPage::~EditorObjectPage() {
     delete [] mCurrentObject.slotPos;
     delete [] mCurrentObject.sprites;
     delete [] mCurrentObject.spritePos;
+    delete [] mCurrentObject.spriteRot;
 
     freeSprite( mSlotPlaceholderSprite );
     
@@ -241,7 +247,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mSpeedMultField.getFloat(),
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
-                   mCurrentObject.spritePos );
+                   mCurrentObject.spritePos,
+                   mCurrentObject.spriteRot );
         
         delete [] text;
         
@@ -264,6 +271,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
+                   mCurrentObject.spriteRot,
                    mCurrentObject.id );
         
         delete [] text;
@@ -305,6 +313,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         delete [] mCurrentObject.spritePos;
         mCurrentObject.spritePos = new doublePair[ 0 ];
+        
+        delete [] mCurrentObject.spriteRot;
+        mCurrentObject.spriteRot = new double[ 0 ];
         
         mSaveObjectButton.setVisible( false );
         mReplaceObjectButton.setVisible( false );
@@ -404,6 +415,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             doublePair *newSpritePos = new doublePair[ newNumSprites ];
             memcpy( newSpritePos, mCurrentObject.spritePos, 
                     mCurrentObject.numSprites * sizeof( doublePair ) );
+
+            double *newSpriteRot = new double[ newNumSprites ];
+            memcpy( newSpriteRot, mCurrentObject.spriteRot, 
+                    mCurrentObject.numSprites * sizeof( double ) );
         
             newSprites[ mCurrentObject.numSprites ] = spriteID;
             
@@ -411,11 +426,15 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             newSpritePos[ mCurrentObject.numSprites ] = pos;
 
+            newSpriteRot[ mCurrentObject.numSprites ] = 0;
+
             delete [] mCurrentObject.sprites;
             delete [] mCurrentObject.spritePos;
+            delete [] mCurrentObject.spriteRot;
             
             mCurrentObject.sprites = newSprites;
             mCurrentObject.spritePos = newSpritePos;
+            mCurrentObject.spriteRot = newSpriteRot;
             mCurrentObject.numSprites = newNumSprites;
 
             mClearObjectButton.setVisible( true );
@@ -445,6 +464,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] mCurrentObject.slotPos;
             delete [] mCurrentObject.sprites;
             delete [] mCurrentObject.spritePos;
+            delete [] mCurrentObject.spriteRot;
 
             mCurrentObject.id = objectID;
                 
@@ -473,12 +493,17 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.sprites = new int[ pickedRecord->numSprites ];
             mCurrentObject.spritePos = 
                 new doublePair[ pickedRecord->numSprites ];
+            mCurrentObject.spriteRot = 
+                new double[ pickedRecord->numSprites ];
                 
             memcpy( mCurrentObject.sprites, pickedRecord->sprites,
                     sizeof( int ) * pickedRecord->numSprites );
                 
             memcpy( mCurrentObject.spritePos, pickedRecord->spritePos,
                     sizeof( doublePair ) * pickedRecord->numSprites );
+
+            memcpy( mCurrentObject.spriteRot, pickedRecord->spriteRot,
+                    sizeof( double ) * pickedRecord->numSprites );
                 
 
             mSaveObjectButton.setVisible( true );
@@ -649,7 +674,8 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             }
                 
 
-        drawSprite( getSprite( mCurrentObject.sprites[i] ), spritePos );
+        drawSprite( getSprite( mCurrentObject.sprites[i] ), spritePos,
+                    1.0, mCurrentObject.spriteRot[i] );
         }
 
 
@@ -663,7 +689,23 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     mainFont->drawString( numSlotString, pos, alignLeft );
 
     delete [] numSlotString;
+
+
     
+    if( mPickedObjectLayer != -1 ) {
+        pos.x += 150;
+        pos.y -= 50;
+
+        char *rotString = 
+            autoSprintf( "Rot: %f", 
+                         mCurrentObject.spriteRot[mPickedObjectLayer] );
+    
+        smallFont->drawString( rotString, pos, alignLeft );
+        
+        delete [] rotString;
+        }
+    
+
 
     for( int i=0; i<NUM_OBJECT_CHECKBOXES; i++ ) {
         pos = mCheckboxes[i]->getPosition();
@@ -710,6 +752,7 @@ void EditorObjectPage::makeActive( char inFresh ) {
     mSpritePicker.redoSearch();
     mObjectPicker.redoSearch();
 
+    mRotAdjustMode = false;
     }
 
 
@@ -730,6 +773,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
 
 
     doublePair *newSpritePos = new doublePair[ newNumSprites ];
+    double *newSpriteRot = new double[ newNumSprites ];
     
     int j = 0;
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
@@ -738,15 +782,18 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
             // not one we're skipping
             newSprites[j] = mCurrentObject.sprites[i];
             newSpritePos[j] = mCurrentObject.spritePos[i];
+            newSpriteRot[j] = mCurrentObject.spriteRot[i];
             j++;
             }
         }
     
     delete [] mCurrentObject.sprites;
     delete [] mCurrentObject.spritePos;
+    delete [] mCurrentObject.spriteRot;
             
     mCurrentObject.sprites = newSprites;
     mCurrentObject.spritePos = newSpritePos;
+    mCurrentObject.spriteRot = newSpriteRot;
     mCurrentObject.numSprites = newNumSprites;
     }
 
@@ -814,8 +861,16 @@ double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
 
 
 void EditorObjectPage::pointerMove( float inX, float inY ) {
-    getClosestSpriteOrSlot( inX, inY, &mHoverObjectLayer, &mHoverSlot );
-    mHoverStrength = 1;
+    if( mRotAdjustMode && mPickedObjectLayer != -1 ) {
+        // mouse move adjusts rotation
+        mCurrentObject.spriteRot[ mPickedObjectLayer ] =
+            ( inX - mRotStartMouseX ) / 200;
+        }
+    else {    
+        mRotStartMouseX = inX;
+        getClosestSpriteOrSlot( inX, inY, &mHoverObjectLayer, &mHoverSlot );
+        mHoverStrength = 1;
+        }
     }
 
 
@@ -911,6 +966,9 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         return;
         }
     
+    if( mPickedObjectLayer != -1 && inASCII == 'r' ) {
+        mRotAdjustMode = true;
+        }
     if( mPickedObjectLayer != -1 && inASCII == 8 ) {
         // backspace
         
@@ -934,11 +992,23 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
                 &( mCurrentObject.spritePos[mPickedObjectLayer+1] ), 
                 (newNumSprites - mPickedObjectLayer ) * sizeof( doublePair ) );
 
+
+        double *newSpriteRot = new double[ newNumSprites ];
+        
+        memcpy( newSpriteRot, mCurrentObject.spriteRot, 
+                mPickedObjectLayer * sizeof( double ) );
+        
+        memcpy( &( newSpriteRot[mPickedObjectLayer] ), 
+                &( mCurrentObject.spriteRot[mPickedObjectLayer+1] ), 
+                (newNumSprites - mPickedObjectLayer ) * sizeof( double ) );
+
         delete [] mCurrentObject.sprites;
         delete [] mCurrentObject.spritePos;
+        delete [] mCurrentObject.spriteRot;
             
         mCurrentObject.sprites = newSprites;
         mCurrentObject.spritePos = newSpritePos;
+        mCurrentObject.spriteRot = newSpriteRot;
         mCurrentObject.numSprites = newNumSprites;
         
         mPickedObjectLayer = -1;
@@ -1008,6 +1078,15 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         }
     
         
+    }
+
+
+void EditorObjectPage::keyUp( unsigned char inASCII ) {
+    
+    if( mPickedObjectLayer != -1 && inASCII == 'r' ) {
+        mRotAdjustMode = false;
+        }
+    
     }
 
 
@@ -1096,6 +1175,9 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                     doublePair tempPos = 
                         mCurrentObject.spritePos[mPickedObjectLayer + 
                                                  layerOffset];
+                    double tempRot = 
+                        mCurrentObject.spriteRot[mPickedObjectLayer + 
+                                                 layerOffset];
                 
                     mCurrentObject.sprites[mPickedObjectLayer + layerOffset]
                         = mCurrentObject.sprites[mPickedObjectLayer];
@@ -1104,7 +1186,12 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                     mCurrentObject.spritePos[mPickedObjectLayer + layerOffset]
                         = mCurrentObject.spritePos[mPickedObjectLayer];
                     mCurrentObject.spritePos[mPickedObjectLayer] = tempPos;
+
+                    mCurrentObject.spriteRot[mPickedObjectLayer + layerOffset]
+                        = mCurrentObject.spriteRot[mPickedObjectLayer];
+                    mCurrentObject.spriteRot[mPickedObjectLayer] = tempRot;
                 
+                    
                     mPickedObjectLayer += layerOffset;
                     }
                 }
@@ -1122,6 +1209,10 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                     doublePair tempPos = 
                         mCurrentObject.spritePos[mPickedObjectLayer - 
                                                  layerOffset];
+
+                    double tempRot = 
+                        mCurrentObject.spriteRot[mPickedObjectLayer - 
+                                                 layerOffset];
                 
                     mCurrentObject.sprites[mPickedObjectLayer - layerOffset]
                         = mCurrentObject.sprites[mPickedObjectLayer];
@@ -1130,6 +1221,11 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                     mCurrentObject.spritePos[mPickedObjectLayer - layerOffset]
                         = mCurrentObject.spritePos[mPickedObjectLayer];
                     mCurrentObject.spritePos[mPickedObjectLayer] = tempPos;
+
+                    mCurrentObject.spriteRot[mPickedObjectLayer - layerOffset]
+                        = mCurrentObject.spriteRot[mPickedObjectLayer];
+                    mCurrentObject.spriteRot[mPickedObjectLayer] = tempRot;
+
                 
                     mPickedObjectLayer -= layerOffset;
                     }

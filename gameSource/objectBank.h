@@ -42,7 +42,7 @@ typedef struct ObjectRecord {
         
         doublePair *spritePos;
 
-                
+        double *spriteRot;
 
         
     } ObjectRecord;
@@ -80,6 +80,7 @@ int addObject( const char *inDescription,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
+               double *inSpriteRot,
                int inReplaceID = -1 );
 
 
