@@ -83,6 +83,9 @@ void clearAnimation( int inObjectID, AnimType inType );
 char isAnimFadeNeeded( int inObjectID, AnimType inCurType, 
                        AnimType inTargetType );
 
+char isAnimFadeNeeded( int inObjectID,
+                       AnimationRecord *inCurR, AnimationRecord *inTargetR );
+
 
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,

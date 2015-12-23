@@ -621,7 +621,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentSpriteOrSlot = 0;
             
             if( ! isAnimFadeNeeded( mCurrentObjectID,
-                                    mLastType, mCurrentType ) ) {
+                                    mCurrentAnim[ mLastType ],
+                                    mCurrentAnim[ mCurrentType ] ) ) {
                 
                 // jump right to start of new animation with no fade
                 mLastTypeFade = 0;
