@@ -57,6 +57,7 @@ EditorObjectPage::EditorObjectPage()
           mSaveObjectButton( smallFont, 210, -260, "Save New" ),
           mReplaceObjectButton( smallFont, 310, -260, "Replace" ),
           mClearObjectButton( mainFont, 0, 160, "Blank" ),
+          mClearRotButton( smallFont, 0, -160, "0 Rot" ),
           mImportEditorButton( mainFont, -210, 260, "Sprites" ),
           mTransEditorButton( mainFont, 210, 260, "Trans" ),
           mAnimEditorButton( mainFont, 330, 260, "Anim" ),
@@ -97,6 +98,7 @@ EditorObjectPage::EditorObjectPage()
     
 
     addComponent( &mClearObjectButton );
+    addComponent( &mClearRotButton );
 
     addComponent( &mSpritePicker );
     addComponent( &mObjectPicker );
@@ -117,6 +119,9 @@ EditorObjectPage::EditorObjectPage()
     mAnimEditorButton.addActionListener( this );
 
     mClearObjectButton.addActionListener( this );
+
+    mClearRotButton.addActionListener( this );
+    mClearRotButton.setVisible( false );
 
     mMoreSlotsButton.addActionListener( this );
     mLessSlotsButton.addActionListener( this );
@@ -326,6 +331,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mPickedSlot = -1;
         
         mObjectPicker.unselectObject();
+        }
+    else if( inTarget == &mClearRotButton ) {
+        if( mPickedObjectLayer != -1 ) {
+            mCurrentObject.spriteRot[mPickedObjectLayer] = 0;
+            }
+        mClearRotButton.setVisible( false );
         }
     else if( inTarget == &mImportEditorButton ) {
         setSignal( "importEditor" );
@@ -738,7 +749,18 @@ void EditorObjectPage::step() {
         mHoverFrameCount++;
         }
     
-    
+    if( mPickedObjectLayer != -1 ) {
+        
+        if( mCurrentObject.spriteRot[mPickedObjectLayer] != 0 ) {
+            mClearRotButton.setVisible( true );
+            }
+        else {
+            mClearRotButton.setVisible( false );
+            }
+        }
+    else {
+        mClearRotButton.setVisible( false );
+        }
     }
 
 

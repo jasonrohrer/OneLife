@@ -73,6 +73,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         TextButton mClearObjectButton;
 
+        TextButton mClearRotButton;
         
         TextButton mImportEditorButton;
         TextButton mTransEditorButton;
