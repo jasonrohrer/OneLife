@@ -15,6 +15,16 @@ typedef struct ObjectRecord {
         
         // can it not be picked up
         char permanent;
+
+
+        // chance of occurrence naturally on map
+        // value between 0 and 1 inclusive
+        // Note that there's an overall chance-of-anything that is applied
+        // first (controls density of map), so even if an object's value is
+        // 1, it will not appear everywhere.
+        // Furthermore, this value is a weight that is a fraction of the
+        // total sum weight of all objects.
+        float mapChance;
         
         int heatValue;
         
@@ -58,6 +68,10 @@ void initObjectBank();
 void freeObjectBank();
 
 
+// useful during development when new object property added
+void resaveAll();
+
+
 
 ObjectRecord *getObject( int inID );
 
@@ -72,6 +86,7 @@ ObjectRecord **searchObjects( const char *inSearch,
 int addObject( const char *inDescription,
                char inContainable,
                char inPermanent,
+               float inMapChance,
                int inHeatValue,
                float inRValue,
                char inPerson,

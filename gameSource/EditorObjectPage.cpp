@@ -38,6 +38,10 @@ EditorObjectPage::EditorObjectPage()
                              0,  -260, 6,
                              false,
                              "Description", NULL, NULL ),
+          mMapChanceField( smallFont, 
+                           -150,  64, 4,
+                           false,
+                           "MapP", "0123456789.", NULL ),
           mHeatValueField( smallFont, 
                            -150,  32, 4,
                            false,
@@ -76,6 +80,7 @@ EditorObjectPage::EditorObjectPage()
     mSlotsDemoObject = -1;
 
     addComponent( &mDescriptionField );
+    addComponent( &mMapChanceField );
     addComponent( &mHeatValueField );
     addComponent( &mRValueField );
     addComponent( &mFoodValueField );
@@ -160,12 +165,13 @@ EditorObjectPage::EditorObjectPage()
     mRotAdjustMode = false;
     mRotStartMouseX = 0;
     
-
+    mMapChanceField.setText( "0.00" );
+    
     mHeatValueField.setText( "0" );
-    mRValueField.setText( "0.0" );
+    mRValueField.setText( "0.00" );
     
     mFoodValueField.setText( "0" );
-    mSpeedMultField.setText( "1.0" );
+    mSpeedMultField.setText( "1.00" );
 
 
     double boxY = -150;
@@ -245,6 +251,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         addObject( text,
                    mCheckboxes[0]->getToggled(),
                    mCheckboxes[1]->getToggled(),
+                   mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
                    mRValueField.getFloat(),
                    mCheckboxes[2]->getToggled(),
@@ -268,6 +275,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         addObject( text,
                    mCheckboxes[0]->getToggled(),
                    mCheckboxes[1]->getToggled(),
+                   mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
                    mRValueField.getFloat(),
                    mCheckboxes[2]->getToggled(),
@@ -295,15 +303,19 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mCurrentObject.description = mDescriptionField.getText();
         
         
+        mPersonAgeSlider.setVisible( false );
+
         for( int i=0; i<NUM_OBJECT_CHECKBOXES; i++ ) {
             mCheckboxes[i]->setToggled( false );
             }
 
+        mMapChanceField.setText( "0.00" );
+
         mHeatValueField.setText( "0" );
-        mRValueField.setText( "0.0" );
+        mRValueField.setText( "0.00" );
 
         mFoodValueField.setText( "0" );
-        mSpeedMultField.setText( "1.0" );
+        mSpeedMultField.setText( "1.00" );
 
         mCurrentObject.numSlots = 0;
         
@@ -481,6 +493,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 
             mDescriptionField.setText( pickedRecord->description );
 
+            mMapChanceField.setFloat( pickedRecord->mapChance, 2 );
+            
             mHeatValueField.setInt( pickedRecord->heatValue );
             mRValueField.setFloat( pickedRecord->rValue, 2 );
             

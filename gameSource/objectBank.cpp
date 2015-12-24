@@ -73,7 +73,7 @@ void initObjectBank() {
                         
                         delete [] objectText;
 
-                        if( numLines >= 9 ) {
+                        if( numLines >= 10 ) {
                             ObjectRecord *r = new ObjectRecord;
                             
                             int next = 0;
@@ -110,12 +110,20 @@ void initObjectBank() {
                             next++;
 
 
+                            r->mapChance = 0;      
+                            sscanf( lines[next], "mapChance=%f", 
+                            &( r->mapChance ) );
+                            
+                            next++;
+
+
                             r->heatValue = 0;                            
                             sscanf( lines[next], "heatValue=%d", 
                                     &( r->heatValue ) );
                             
                             next++;
 
+                            
 
                             r->rValue = 0;                            
                             sscanf( lines[next], "rValue=%f", 
@@ -239,6 +247,8 @@ void initObjectBank() {
         }
 
     printf( "Loaded %d objects from objects folder\n", numRecords );
+
+    // resaveAll();
     }
 
 
@@ -289,6 +299,32 @@ void freeObjectBank() {
         }
 
     delete [] idMap;
+    }
+
+
+
+void resaveAll() {
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+
+            addObject( idMap[i]->description,
+                       idMap[i]->containable,
+                       idMap[i]->permanent,
+                       idMap[i]->mapChance,
+                       idMap[i]->heatValue,
+                       idMap[i]->rValue,
+                       idMap[i]->person,
+                       idMap[i]->foodValue,
+                       idMap[i]->speedMult,
+                       idMap[i]->numSlots, 
+                       idMap[i]->slotPos,
+                       idMap[i]->numSprites, 
+                       idMap[i]->sprites, 
+                       idMap[i]->spritePos,
+                       idMap[i]->spriteRot,
+                       idMap[i]->id );
+            }
+        }
     }
 
 
@@ -369,6 +405,7 @@ ObjectRecord **searchObjects( const char *inSearch,
 int addObject( const char *inDescription,
                char inContainable,
                char inPermanent,
+               float inMapChance,
                int inHeatValue,
                float inRValue,
                char inPerson,
@@ -430,6 +467,7 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "containable=%d", (int)inContainable ) );
         lines.push_back( autoSprintf( "permanent=%d", (int)inPermanent ) );
         
+        lines.push_back( autoSprintf( "mapChance=%f", inMapChance ) );
         lines.push_back( autoSprintf( "heatValue=%d", inHeatValue ) );
         lines.push_back( autoSprintf( "rValue=%f", inRValue ) );
 
@@ -526,6 +564,8 @@ int addObject( const char *inDescription,
     r->containable = inContainable;
     r->permanent = inPermanent;
     
+    r->mapChance = inMapChance;
+    
     r->heatValue = inHeatValue;
     r->rValue = inRValue;
 
@@ -553,11 +593,17 @@ int addObject( const char *inDescription,
 
 
     // delete old
+    if( newID == 1 ) {
+        printf( "Hey\n" );
+        }
+
+    // grab this before freeing, in case inDescription is the same as
+    // idMap[newID].description
+    char *lower = stringToLowerCase( inDescription );
+    
     freeObjectRecord( newID );
     
     idMap[newID] = r;
-    
-    char *lower = stringToLowerCase( inDescription );
     
     tree.insert( lower, idMap[newID] );
 

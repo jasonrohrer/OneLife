@@ -61,6 +61,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         TextField mDescriptionField;
         
+        TextField mMapChanceField;
         TextField mHeatValueField;
         TextField mRValueField;
         
