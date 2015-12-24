@@ -130,5 +130,8 @@ char isContainable( int inID );
 int getRandomPersonObject();
 
 
+// return array destroyed by caller
+ObjectRecord **getAllObjects( int *outNumResults );
+
 
 #endif

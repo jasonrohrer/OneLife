@@ -718,3 +718,21 @@ int getRandomPersonObject() {
 
 
 
+ObjectRecord **getAllObjects( int *outNumResults ) {
+    SimpleVector<ObjectRecord *> records;
+    
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            
+            records.push_back( idMap[i] );
+            }
+        }
+    
+    *outNumResults = records.size();
+    
+    return records.getElementArray();
+    }
+
+
+
+
