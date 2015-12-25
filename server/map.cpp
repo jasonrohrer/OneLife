@@ -16,6 +16,7 @@
 #include "kissdb.h"
 
 #include <stdarg.h>
+#include <math.h>
 
 
 #include "../gameSource/transitionBank.h"
@@ -27,8 +28,14 @@
 static int chunkDimension = 16;
 
 
-static int startingObjectID = 1;
-static int startingObjectID2 = 17;
+
+
+// object ids that occur naturally on map at random
+static SimpleVector<int> naturalMapIDs;
+static SimpleVector<float> naturalMapChances;
+
+static float totalChanceWeight;
+
 
 
 
@@ -102,19 +109,73 @@ int getChunkDimension() {
 // gets procedurally-generated base map at a given spot
 // player modifications are overlayed on top of this
 static int getBaseMap( int inX, int inY ) {
-    
-    float randValue = getXYRandom( inX, inY );
-    
-    if( randValue < 0.1 ) {
 
-        if( randValue < 0.05 ) {
-            return startingObjectID2;
+    float density = .5 * getXYRandom( inX / 10, inY / 10 );
+
+
+    int numObjects = naturalMapIDs.size();
+
+    if( numObjects > 0 && 
+        getXYRandom( 287 + inX, 383 + inY ) < density ) {
+        
+        // something present here
+
+        
+        // special object in this region is 10x more common than it 
+        // would be otherwise
+        int specialObjectIndex =
+            lrint( ( numObjects - 1 ) *
+                   getXYRandom(  123 + inX / 10, 753 + inY / 10 ) );
+        
+        float oldSpecialChance = 
+            naturalMapChances.getElementDirect( specialObjectIndex );
+        
+        float newSpecialChance = oldSpecialChance * 10;
+        
+        *( naturalMapChances.getElement( specialObjectIndex ) )
+            = newSpecialChance;
+        
+        float oldTotalChanceWeight = totalChanceWeight;
+        
+        totalChanceWeight -= oldSpecialChance;
+        totalChanceWeight += newSpecialChance;
+        
+
+        // pick one of our natural objects at random
+
+        // pick value between 0 and total weight
+
+        float randValue = totalChanceWeight * getXYRandom( inX, inY );
+
+        // walk through objects, summing weights, until one crosses threshold
+        int i = 0;
+        float weightSum = 0;        
+        
+        while( weightSum < randValue && i < numObjects ) {
+            weightSum += naturalMapChances.getElementDirect( i );
+            i++;
+            }
+        
+        i--;
+        
+
+        // restore chance of special object
+        *( naturalMapChances.getElement( specialObjectIndex ) )
+            = oldSpecialChance;
+
+        totalChanceWeight = oldTotalChanceWeight;
+
+        if( i >= 0 ) {
+            return naturalMapIDs.getElementDirect( i );
             }
         else {
-            return startingObjectID;
+            return 0;
             }
         }
-    return 0;
+    else {
+        return 0;
+        }
+    
     }
 
 
@@ -174,6 +235,30 @@ void initMap() {
         }
     
     dbOpen = true;
+
+    
+
+    int numObjects;
+    ObjectRecord **allObjects = getAllObjects( &numObjects );
+    
+    totalChanceWeight = 0;
+    
+    for( int i=0; i<numObjects; i++ ) {
+        ObjectRecord *o = allObjects[i];
+        
+        float p = o->mapChance;
+        if( p > 0 ) {
+            
+            naturalMapIDs.push_back( o->id );
+            naturalMapChances.push_back( p );
+            
+            totalChanceWeight += p;
+            }
+        }
+    printf( "Found %d natural objects with total weight %f\n",
+            naturalMapIDs.size(), totalChanceWeight );
+
+    delete [] allObjects;
     }
 
 
