@@ -3,6 +3,7 @@
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
+#include "minorGems/util/random/CustomRandomSource.h"
 
 #include "minorGems/util/stringUtils.h"
 #include "minorGems/util/SimpleVector.h"
@@ -43,8 +44,9 @@ static KISSDB db;
 static char dbOpen = false;
 
 
-static int randSeed = 10;
-static JenkinsRandomSource randSource;
+static int randSeed = 11;
+//static JenkinsRandomSource randSource( randSeed );
+static CustomRandomSource randSource( randSeed );
 
 
 
@@ -86,6 +88,7 @@ static SimpleVector<ChangePosition> mapChangePosSinceLastStep;
 
 
 
+// in 0..1
 static float getXYRandom( int inX, int inY ) {
     
     unsigned int fullSeed = inX ^ (inY * 57) ^ ( randSeed * 131 );
@@ -96,13 +99,87 @@ static float getXYRandom( int inX, int inY ) {
     }
 
 
+// in -1..1
+static float getXYRandomN( int inX, int inY ) {
+    
+    unsigned int fullSeed = inX ^ (inY * 57) ^ ( randSeed * 131 );
+    
+    randSource.reseed( fullSeed );
+    
+    return 2 * randSource.getRandomFloat() - 1;
+    }
+
+
+
+
 int getChunkDimension() {
     return chunkDimension;
     }
 
 
 
+float getXYFractal( int inX, int inY, float inRoughness, int inScale ) {
 
+    float b = inRoughness;
+    float a = 1 - b;
+
+    float sum =
+        a * getXYRandomN( inX / (32 * inScale), inY / (32 * inScale) )
+        +
+        b * (
+            a * getXYRandomN( inX / (16 * inScale), inY / (16 * inScale) )
+            +
+            b * (
+                a * getXYRandomN( inX / (8 * inScale), inY / (8 * inScale) )
+                +
+                b * (
+                    a * getXYRandomN( inX / (4 * inScale), 
+                                      inY / (4 * inScale) )
+                    +
+                    b * (
+                        a * getXYRandomN( inX / (2 * inScale), 
+                                         inY / (2 * inScale) )
+                        +
+                        b * (
+                            getXYRandomN( inX / inScale, inY / inScale )
+                            ) ) ) ) );
+    
+    return ( sum + 1 ) * 0.5;
+    }
+
+    
+
+
+
+
+// inKnee in 0..inf, smaller values make harder knees
+// intput in 0..1
+// output in 0..1
+
+// from Simplest AI trick in the book:
+// Normalized Tunable SIgmoid Function 
+// Dino Dini, GDC 2013
+float sigmoid( float inInput, float inKnee ) {
+    
+    // in -1,-1
+    float shiftedInput = inInput * 2 - 1;
+    
+
+    float sign = 1;
+    if( shiftedInput < 0 ) {
+        sign = -1;
+        }
+    
+    
+    float k = -1 - inKnee;
+    
+    float absInput = fabs( shiftedInput );
+
+    // out in -1..1
+    float out = sign * absInput * k / ( 1 + k - absInput );
+    
+    return ( out + 1 ) * 0.5;
+    }
 
 
 
@@ -110,14 +187,29 @@ int getChunkDimension() {
 // player modifications are overlayed on top of this
 static int getBaseMap( int inX, int inY ) {
 
-    float density = .5 * getXYRandom( inX / 10, inY / 10 );
+    float density = getXYFractal( inX, inY, 0.5, 2 );
+
+    // correction
+    //density = sigmoid( density, 0.0005 );
+    
+    // scale
+    density *= .25;
+    
+
+    //getXYRandom( inX / 10, inY / 10 );
+    //printf( "Density = %f\n", density );
 
 
     int numObjects = naturalMapIDs.size();
 
     if( numObjects > 0 && 
         getXYRandom( 287 + inX, 383 + inY ) < density ) {
+      
+        // fixme
+        //return( naturalMapIDs.getElementDirect( 0 ) );
         
+    
+  
         // something present here
 
         
@@ -125,8 +217,18 @@ static int getBaseMap( int inX, int inY ) {
         // would be otherwise
         int specialObjectIndex =
             lrint( ( numObjects - 1 ) *
-                   getXYRandom(  123 + inX / 10, 753 + inY / 10 ) );
+                   //getXYRandom(  123 + inX / 13, 753 + inY / 13 ) );
+                   getXYFractal(  123 + inX, 753 + inY, 0.6, 2 ) );
         
+        // fixme
+        if( specialObjectIndex == 0 ) {
+            return( naturalMapIDs.getElementDirect( 0 ) );
+            }
+        else {
+            return 0;
+            }
+        
+
         float oldSpecialChance = 
             naturalMapChances.getElementDirect( specialObjectIndex );
         
@@ -210,6 +312,72 @@ int valueToInt( unsigned char *inValue ) {
 
 
 
+
+#include "minorGems/graphics/Image.h"
+#include "minorGems/graphics/converters/TGAImageConverter.h"
+#include "minorGems/io/file/File.h"
+#include "minorGems/system/Time.h"
+
+void outputMapImage() {
+    
+    // output a chunk of the map as an image
+
+    int w =  1000;
+    int h = 500;
+    
+    Image im( w, h, 3, true );
+    
+    SimpleVector<Color> objColors;
+    for( int i=0; i<naturalMapIDs.size(); i++ ) {
+        Color *c = Color::makeColorFromHSV( randSource.getRandomFloat(),
+                                            1, 1 );
+        objColors.push_back( *c );
+        delete c;
+        }
+
+    double startTime = Time::getCurrentTime();
+    for( int y = 0; y<h; y++ ) {
+        
+        for( int x = 0; x<w; x++ ) {
+            int id = getBaseMap( x, y );
+            }
+        }
+    
+    printf( "Generating %d map spots took %f sec\n",
+            w * h, Time::getCurrentTime() - startTime );
+    //exit(0);
+
+    for( int y = 0; y<h; y++ ) {
+        
+        for( int x = 0; x<w; x++ ) {
+            int id = getBaseMap( x, y );
+    
+            if( id > 0 ) {
+                for( int i=0; i<naturalMapIDs.size(); i++ ) {
+                    if( naturalMapIDs.getElementDirect(i) == id ) {
+                        im.setColor( y * w + x,
+                                     objColors.getElementDirect( i ) );
+                        break;
+                        }
+                    }
+                
+                }
+            }
+        }
+    
+    File tgaFile( NULL, "mapOut.tga" );
+    FileOutputStream tgaStream( &tgaFile );
+    
+    TGAImageConverter converter;
+    
+    converter.formatImage( &im, &tgaStream );
+    }
+
+
+
+
+
+
 void initMap() {
 
 
@@ -259,7 +427,12 @@ void initMap() {
             naturalMapIDs.size(), totalChanceWeight );
 
     delete [] allObjects;
+
+
+
+    outputMapImage();
     }
+
 
 
 
