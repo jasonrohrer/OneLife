@@ -149,6 +149,10 @@ void freeTransBank() {
 
 TransRecord *getTrans( int inActor, int inTarget ) {
 
+    if( inTarget >= mapSize ) {
+        return NULL;
+        }
+    
     int numRecords = usesMap[inTarget].size();
     
     for( int i=0; i<numRecords; i++ ) {
