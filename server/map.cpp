@@ -44,7 +44,7 @@ static KISSDB db;
 static char dbOpen = false;
 
 
-static int randSeed = 11;
+static int randSeed = 124567;
 //static JenkinsRandomSource randSource( randSeed );
 static CustomRandomSource randSource( randSeed );
 
@@ -89,25 +89,58 @@ static SimpleVector<ChangePosition> mapChangePosSinceLastStep;
 
 
 // in 0..1
-static float getXYRandom( int inX, int inY ) {
+static double getXYRandom( int inX, int inY ) {
     
     unsigned int fullSeed = inX ^ (inY * 57) ^ ( randSeed * 131 );
     
     randSource.reseed( fullSeed );
     
-    return randSource.getRandomFloat();
+    return randSource.getRandomDouble();
     }
 
 
 // in -1..1
-static float getXYRandomN( int inX, int inY ) {
+static double getXYRandomN( int inX, int inY ) {
     
     unsigned int fullSeed = inX ^ (inY * 57) ^ ( randSeed * 131 );
     
     randSource.reseed( fullSeed );
     
-    return 2 * randSource.getRandomFloat() - 1;
+    return 2 * randSource.getRandomDouble() - 1;
     }
+
+
+
+// in -1..1
+// interpolated for inX,inY that aren't integers
+static double getXYRandomBN( double inX, double inY ) {
+    
+    int floorX = (int)floor(inX);
+    int ceilX = (int)ceil(inX);
+    int floorY = (int)floor(inY);
+    int ceilY = (int)ceil(inY);
+    
+
+    double cornerA1 = getXYRandomN( floorX, floorY );
+    double cornerA2 = getXYRandomN( ceilX, floorY );
+
+    double cornerB1 = getXYRandomN( floorX, ceilY );
+    double cornerB2 = getXYRandomN( ceilX, ceilY );
+    
+
+    double xOffset = inX - floorX;
+    double yOffset = inY - floorY;
+    
+    
+    double topBlend = cornerA2 * xOffset + (1-xOffset) * cornerA1;
+    
+    double bottomBlend = cornerB2 * xOffset + (1-xOffset) * cornerB1;
+    
+
+    return bottomBlend * yOffset + (1-yOffset) * topBlend;
+    }
+
+
 
 
 
@@ -118,31 +151,65 @@ int getChunkDimension() {
 
 
 
-float getXYFractal( int inX, int inY, float inRoughness, int inScale ) {
+double getXYFractal( int inX, int inY, double inRoughness, int inScale ) {
 
-    float b = inRoughness;
-    float a = 1 - b;
+    double b = inRoughness;
+    double a = 1 - b;
 
-    float sum =
+    double sum =
         a * getXYRandomN( inX / (32 * inScale), inY / (32 * inScale) )
         +
         b * (
             a * getXYRandomN( inX / (16 * inScale), inY / (16 * inScale) )
             +
             b * (
-                a * getXYRandomN( inX / (8 * inScale), inY / (8 * inScale) )
+                a * getXYRandomN( inX / (8 * inScale), 
+                                   inY / (8 * inScale) )
                 +
                 b * (
                     a * getXYRandomN( inX / (4 * inScale), 
-                                      inY / (4 * inScale) )
+                                       inY / (4 * inScale) )
                     +
                     b * (
                         a * getXYRandomN( inX / (2 * inScale), 
-                                         inY / (2 * inScale) )
+                                           inY / (2 * inScale) )
                         +
                         b * (
                             getXYRandomN( inX / inScale, inY / inScale )
                             ) ) ) ) );
+    
+    return ( sum + 1 ) * 0.5;
+    }
+
+
+
+
+double getXYFractalB( int inX, int inY, double inRoughness, double inScale ) {
+
+    double b = inRoughness;
+    double a = 1 - b;
+
+    double sum =
+        //        a * getXYRandomBN( inX / (32 * inScale), inY / (32 * inScale) )
+        //+
+        //b * (
+            a * getXYRandomBN( inX / (16 * inScale), inY / (16 * inScale) )
+            +
+            b * (
+                a * getXYRandomBN( inX / (8 * inScale), 
+                                   inY / (8 * inScale) )
+                +
+                b * (
+                    a * getXYRandomBN( inX / (4 * inScale), 
+                                       inY / (4 * inScale) )
+                    +
+                    b * (
+                        a * getXYRandomBN( inX / (2 * inScale), 
+                                           inY / (2 * inScale) )
+                        +
+                        b * (
+                            getXYRandomBN( inX / inScale, inY / inScale )
+                            ) ) ) ) ;//);
     
     return ( sum + 1 ) * 0.5;
     }
@@ -159,24 +226,24 @@ float getXYFractal( int inX, int inY, float inRoughness, int inScale ) {
 // from Simplest AI trick in the book:
 // Normalized Tunable SIgmoid Function 
 // Dino Dini, GDC 2013
-float sigmoid( float inInput, float inKnee ) {
+double sigmoid( double inInput, double inKnee ) {
     
     // in -1,-1
-    float shiftedInput = inInput * 2 - 1;
+    double shiftedInput = inInput * 2 - 1;
     
 
-    float sign = 1;
+    double sign = 1;
     if( shiftedInput < 0 ) {
         sign = -1;
         }
     
     
-    float k = -1 - inKnee;
+    double k = -1 - inKnee;
     
-    float absInput = fabs( shiftedInput );
+    double absInput = fabs( shiftedInput );
 
     // out in -1..1
-    float out = sign * absInput * k / ( 1 + k - absInput );
+    double out = sign * absInput * k / ( 1 + k - absInput );
     
     return ( out + 1 ) * 0.5;
     }
@@ -187,15 +254,17 @@ float sigmoid( float inInput, float inKnee ) {
 // player modifications are overlayed on top of this
 static int getBaseMap( int inX, int inY ) {
 
-    float density = getXYFractal( inX, inY, 0.5, 2 );
+    double density = getXYFractalB( inX, inY, 0.1, 2 );
 
+    //    printf( "Base density = %f\n", density );
+    
     // correction
-    //density = sigmoid( density, 0.0005 );
+    density = sigmoid( density, 0.1 );
     
     // scale
     density *= .25;
+    //density = 1;
     
-
     //getXYRandom( inX / 10, inY / 10 );
     //printf( "Density = %f\n", density );
 
@@ -218,16 +287,18 @@ static int getBaseMap( int inX, int inY ) {
         int specialObjectIndex =
             lrint( ( numObjects - 1 ) *
                    //getXYRandom(  123 + inX / 13, 753 + inY / 13 ) );
-                   getXYFractal(  123 + inX, 753 + inY, 0.6, 2 ) );
+                   getXYFractalB(  123 + inX, 753 + inY, 0.4, 2 ) );
         
         // fixme
+        //return( naturalMapIDs.getElementDirect( specialObjectIndex ) );
+        /*
         if( specialObjectIndex == 0 ) {
             return( naturalMapIDs.getElementDirect( 0 ) );
             }
         else {
             return 0;
             }
-        
+        */
 
         float oldSpecialChance = 
             naturalMapChances.getElementDirect( specialObjectIndex );
@@ -247,7 +318,7 @@ static int getBaseMap( int inX, int inY ) {
 
         // pick value between 0 and total weight
 
-        float randValue = totalChanceWeight * getXYRandom( inX, inY );
+        double randValue = totalChanceWeight * getXYRandom( inX, inY );
 
         // walk through objects, summing weights, until one crosses threshold
         int i = 0;
@@ -322,14 +393,15 @@ void outputMapImage() {
     
     // output a chunk of the map as an image
 
-    int w =  1000;
+    int w =  500;
     int h = 500;
     
     Image im( w, h, 3, true );
     
     SimpleVector<Color> objColors;
     for( int i=0; i<naturalMapIDs.size(); i++ ) {
-        Color *c = Color::makeColorFromHSV( randSource.getRandomFloat(),
+        randSource.getRandomFloat();
+        Color *c = Color::makeColorFromHSV( (float)i / naturalMapIDs.size(),
                                             1, 1 );
         objColors.push_back( *c );
         delete c;
