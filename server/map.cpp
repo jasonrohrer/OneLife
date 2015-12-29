@@ -190,9 +190,9 @@ double getXYFractalB( int inX, int inY, double inRoughness, double inScale ) {
     double a = 1 - b;
 
     double sum =
-        //        a * getXYRandomBN( inX / (32 * inScale), inY / (32 * inScale) )
-        //+
-        //b * (
+        a * getXYRandomBN( inX / (32 * inScale), inY / (32 * inScale) )
+        +
+        b * (
             a * getXYRandomBN( inX / (16 * inScale), inY / (16 * inScale) )
             +
             b * (
@@ -209,7 +209,7 @@ double getXYFractalB( int inX, int inY, double inRoughness, double inScale ) {
                         +
                         b * (
                             getXYRandomBN( inX / inScale, inY / inScale )
-                            ) ) ) ) ;//);
+                            ) ) ) ) );
     
     return ( sum + 1 ) * 0.5;
     }
@@ -250,33 +250,25 @@ double sigmoid( double inInput, double inKnee ) {
 
 
 
+
 // gets procedurally-generated base map at a given spot
 // player modifications are overlayed on top of this
 static int getBaseMap( int inX, int inY ) {
 
-    double density = getXYFractalB( inX, inY, 0.1, 2 );
-
-    //    printf( "Base density = %f\n", density );
+    double density = getXYFractalB( inX, inY, 0.1, 1 );
     
     // correction
     density = sigmoid( density, 0.1 );
     
     // scale
-    density *= .25;
+    density *= .4;
     //density = 1;
-    
-    //getXYRandom( inX / 10, inY / 10 );
-    //printf( "Density = %f\n", density );
 
 
     int numObjects = naturalMapIDs.size();
 
     if( numObjects > 0 && 
         getXYRandom( 287 + inX, 383 + inY ) < density ) {
-      
-        // fixme
-        //return( naturalMapIDs.getElementDirect( 0 ) );
-        
     
   
         // something present here
@@ -284,21 +276,54 @@ static int getBaseMap( int inX, int inY ) {
         
         // special object in this region is 10x more common than it 
         // would be otherwise
-        int specialObjectIndex =
-            lrint( ( numObjects - 1 ) *
-                   //getXYRandom(  123 + inX / 13, 753 + inY / 13 ) );
-                   getXYFractalB(  123 + inX, 753 + inY, 0.4, 2 ) );
+
+        double randVal = getXYFractalB(  123 + inX, 753 + inY, 0.3, 1 );
         
-        // fixme
-        //return( naturalMapIDs.getElementDirect( specialObjectIndex ) );
-        /*
-        if( specialObjectIndex == 0 ) {
-            return( naturalMapIDs.getElementDirect( 0 ) );
+
+        
+        
+        
+
+        // expand range around 0.5
+        double expandFactor = 4;
+        
+        randVal = ( randVal - 0.5 ) * expandFactor + 0.5;
+        
+        if( randVal < 0 ) {
+            randVal = 0;
             }
-        else {
-            return 0;
+        else if( randVal > 1 ) {
+            randVal = 1;
             }
-        */
+        
+
+        int specialObjectIndex =
+            lrint( ( numObjects - 1 ) * randVal );
+        
+
+
+        // jump randomly amoung objects to avoid consistent banding
+        
+        // if we pick our seed for jumping using a fractal that is low
+        // frequency across the map, we'll get a jump that changes 
+        // infrequently,
+        // but with discontinuities
+        int randJumpSeed = (int)( 5 * 
+                                  getXYFractalB(  3123 + inX, 
+                                                  9753 + inY, 0.3, 6 ) );
+
+        randSource.reseed( 1457 + 327 * randJumpSeed + 
+                           293 * specialObjectIndex );
+    
+        // pick a large value and wrap around
+        int jump = randSource.getRandomBoundedInt( 0, numObjects * 10 );
+
+        specialObjectIndex += jump;
+        
+        specialObjectIndex = specialObjectIndex % numObjects;
+
+
+
 
         float oldSpecialChance = 
             naturalMapChances.getElementDirect( specialObjectIndex );
@@ -502,8 +527,10 @@ void initMap() {
 
 
 
-    outputMapImage();
+    // for debugging the map
+    //outputMapImage();
     }
+
 
 
 
