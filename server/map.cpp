@@ -436,7 +436,9 @@ void outputMapImage() {
     for( int y = 0; y<h; y++ ) {
         
         for( int x = 0; x<w; x++ ) {
-            int id = getBaseMap( x, y );
+            // discard id output
+            // just invoking this to time it
+            getBaseMap( x, y );
             }
         }
     
