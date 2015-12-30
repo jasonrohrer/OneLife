@@ -467,6 +467,12 @@ char isAnimFadeNeeded( int inObjectID,
 
 
 
+static char logicalXOR( char inA, char inB ) {
+    return !inA != !inB;
+    }
+
+
+
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      double inRotFrameTime,
@@ -628,7 +634,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             }
         pos = add( pos, inPos );
         
-        drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, inFlipH );
+        drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, 
+                    logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
         } 
     }
 

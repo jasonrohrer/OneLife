@@ -193,7 +193,8 @@ void initObjectBank() {
                             r->sprites = new int[r->numSprites];
                             r->spritePos = new doublePair[ r->numSprites ];
                             r->spriteRot = new double[ r->numSprites ];
-                            
+                            r->spriteHFlip = new char[ r->numSprites ];
+
                             for( int i=0; i< r->numSprites; i++ ) {
                                 sscanf( lines[next], "spriteID=%d", 
                                         &( r->sprites[i] ) );
@@ -208,6 +209,15 @@ void initObjectBank() {
                                 
                                 sscanf( lines[next], "rot=%lf", 
                                         &( r->spriteRot[i] ) );
+                                
+                                next++;
+                                
+                                
+                                int flipRead = 0;
+                                
+                                sscanf( lines[next], "hFlip=%d", &flipRead );
+                                
+                                r->spriteHFlip[i] = flipRead;
                                 
                                 next++;
                                 }
@@ -334,6 +344,7 @@ void resaveAll() {
                        idMap[i]->sprites, 
                        idMap[i]->spritePos,
                        idMap[i]->spriteRot,
+                       idMap[i]->spriteHFlip,
                        idMap[i]->id );
             }
         }
@@ -428,6 +439,7 @@ int addObject( const char *inDescription,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
                double *inSpriteRot,
+               char *inSpriteHFlip,
                int inReplaceID ) {
     
 
@@ -511,6 +523,8 @@ int addObject( const char *inDescription,
                                           inSpritePos[i].y ) );
             lines.push_back( autoSprintf( "rot=%f", 
                                           inSpriteRot[i] ) );
+            lines.push_back( autoSprintf( "hFlip=%d", 
+                                          inSpriteHFlip[i] ) );
             }
         
         char **linesArray = lines.getElementArray();
@@ -602,10 +616,12 @@ int addObject( const char *inDescription,
     r->sprites = new int[ inNumSprites ];
     r->spritePos = new doublePair[ inNumSprites ];
     r->spriteRot = new double[ inNumSprites ];
-    
+    r->spriteHFlip = new char[ inNumSprites ];
+
     memcpy( r->sprites, inSprites, inNumSprites * sizeof( int ) );
     memcpy( r->spritePos, inSpritePos, inNumSprites * sizeof( doublePair ) );
     memcpy( r->spriteRot, inSpriteRot, inNumSprites * sizeof( double ) );
+    memcpy( r->spriteHFlip, inSpriteHFlip, inNumSprites * sizeof( char ) );
     
 
 
@@ -631,6 +647,10 @@ int addObject( const char *inDescription,
     }
 
 
+static char logicalXOR( char inA, char inB ) {
+    return !inA != !inB;
+    }
+
 
 
 void drawObject( ObjectRecord *inObject, doublePair inPos,
@@ -649,7 +669,8 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             }
         
         drawSprite( getSprite( inObject->sprites[i] ), pos, 1.0,
-                    inObject->spriteRot[i], inFlipH );
+                    inObject->spriteRot[i], 
+                    logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
         }    
     }
 
