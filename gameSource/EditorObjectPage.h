@@ -88,6 +88,9 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         TextButton mDemoSlotsButton;
         TextButton mClearSlotsDemoButton;
+
+        TextButton mSetHeldPosButton;
+        TextButton mEndSetHeldPosButton;
         
 
         Picker mSpritePicker;
@@ -100,6 +103,13 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
         char mDemoSlots;
         int mSlotsDemoObject;
+
+        char mSetHeldPos;
+        int mHeldPosPersonObject;
+        
+        doublePair mSetHeldMouseStart;
+        doublePair mSetHeldOffsetStart;
+
 
         SpriteHandle mSlotPlaceholderSprite;
 

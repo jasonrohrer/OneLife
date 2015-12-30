@@ -69,6 +69,8 @@ EditorObjectPage::EditorObjectPage()
           mLessSlotsButton( smallFont, -120, -190, "Less" ),
           mDemoSlotsButton( smallFont, 150, 32, "Demo Slots" ),
           mClearSlotsDemoButton( smallFont, 150, -32, "End Demo" ),
+          mSetHeldPosButton( smallFont, 150, 76, "Held Pos" ),
+          mEndSetHeldPosButton( smallFont, 150, -76, "End Held" ),
           mSpritePicker( &spritePickable, -310, 100 ),
           mObjectPicker( &objectPickable, +310, 100 ),
           mPersonAgeSlider( smallFont, 0, -110, 2,
@@ -78,6 +80,9 @@ EditorObjectPage::EditorObjectPage()
 
     mDemoSlots = false;
     mSlotsDemoObject = -1;
+
+    mSetHeldPos = false;
+    mHeldPosPersonObject = -1;
 
     addComponent( &mDescriptionField );
     addComponent( &mMapChanceField );
@@ -97,9 +102,15 @@ EditorObjectPage::EditorObjectPage()
     
     addComponent( &mDemoSlotsButton );
     addComponent( &mClearSlotsDemoButton );
-    
+
     mDemoSlotsButton.setVisible( false );
-    mClearSlotsDemoButton.setVisible( false );
+    mClearSlotsDemoButton.setVisible( false );    
+
+    addComponent( &mSetHeldPosButton );
+    addComponent( &mEndSetHeldPosButton );
+
+    mSetHeldPosButton.setVisible( false );
+    mEndSetHeldPosButton.setVisible( false );    
     
 
     addComponent( &mClearObjectButton );
@@ -133,6 +144,9 @@ EditorObjectPage::EditorObjectPage()
     
     mDemoSlotsButton.addActionListener( this );
     mClearSlotsDemoButton.addActionListener( this );
+
+    mSetHeldPosButton.addActionListener( this );
+    mEndSetHeldPosButton.addActionListener( this );
     
 
     mSpritePicker.addActionListener( this );
@@ -145,6 +159,10 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.id = -1;
     mCurrentObject.description = mDescriptionField.getText();
     mCurrentObject.containable = 0;
+
+    mCurrentObject.heldOffset.x = 0;
+    mCurrentObject.heldOffset.y = 0;
+    
     mCurrentObject.numSlots = 0;
     mCurrentObject.slotPos = new doublePair[ 0 ];
     
@@ -257,6 +275,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCheckboxes[2]->getToggled(),
                    mFoodValueField.getInt(),
                    mSpeedMultField.getFloat(),
+                   mCurrentObject.heldOffset,
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
@@ -281,6 +300,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCheckboxes[2]->getToggled(),
                    mFoodValueField.getInt(),
                    mSpeedMultField.getFloat(),
+                   mCurrentObject.heldOffset,
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
@@ -319,6 +339,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         mCurrentObject.numSlots = 0;
         
+        mCurrentObject.heldOffset.x = 0;
+        mCurrentObject.heldOffset.y = 0;
+
         delete [] mCurrentObject.slotPos;
         mCurrentObject.slotPos = new doublePair[ 0 ];
 
@@ -338,6 +361,18 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mReplaceObjectButton.setVisible( false );
         mClearObjectButton.setVisible( false );
         
+
+        mDemoSlotsButton.setVisible( false );
+        mClearSlotsDemoButton.setVisible( false );
+        mSetHeldPosButton.setVisible( false );
+        mEndSetHeldPosButton.setVisible( false );
+        
+        mDemoSlots = false;
+        mSlotsDemoObject = -1;
+        
+        mSetHeldPos = false;
+        mHeldPosPersonObject = -1;
+
         
         mPickedObjectLayer = -1;
         mPickedSlot = -1;
@@ -416,6 +451,23 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mDemoSlotsButton.setVisible( true );
         mClearSlotsDemoButton.setVisible( false );
         }
+    else if( inTarget == &mSetHeldPosButton ) {
+        mHeldPosPersonObject = getRandomPersonObject();
+        
+        if( mHeldPosPersonObject != -1 ) {
+            
+            mSetHeldPos = true;
+            mSetHeldPosButton.setVisible( false );
+            mEndSetHeldPosButton.setVisible( true );
+            }
+        }
+    else if( inTarget == &mEndSetHeldPosButton ) {
+        mSetHeldPos = false;
+        mHeldPosPersonObject = -1;
+
+        mSetHeldPosButton.setVisible( true );
+        mEndSetHeldPosButton.setVisible( false );
+        }
     else if( inTarget == &mSpritePicker ) {
         
         if( mDemoSlots ) {
@@ -424,6 +476,13 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mDemoSlotsButton.setVisible( true );
             mClearSlotsDemoButton.setVisible( false );
             }
+        else {
+            mSetHeldPos = false;
+            mHeldPosPersonObject = -1;
+            mSetHeldPosButton.setVisible( true );
+            mEndSetHeldPosButton.setVisible( false );
+            }
+        
 
         int spriteID = mSpritePicker.getSelectedObject();
         
@@ -477,6 +536,17 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mObjectPicker ) {
         int objectID = mObjectPicker.getSelectedObject();
 
+        
+        // auto-end the held-pos setting if a new object is picked
+        // (also, potentially enable the setting button for the first time) 
+        if( objectID != -1 && ! mDemoSlots ) {
+            mSetHeldPos = false;
+            mHeldPosPersonObject = -1;
+            mSetHeldPosButton.setVisible( true );
+            mEndSetHeldPosButton.setVisible( false );
+            }
+        
+
         if( objectID != -1 && mDemoSlots ) {
             mSlotsDemoObject = objectID;
             }
@@ -505,6 +575,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mCurrentObject.containable = pickedRecord->containable;
             
+            mCurrentObject.heldOffset = pickedRecord->heldOffset;
+
+
             mCurrentObject.numSlots = pickedRecord->numSlots;
 
             mCurrentObject.slotPos = 
@@ -604,6 +677,21 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             i++;
             }
         }
+    
+
+    doublePair drawOffset = { 0, 0 };
+    
+
+    if( mSetHeldPos ) {
+        
+        // draw sample person behind
+        setDrawColor( 1, 1, 1, 1 );
+        
+        drawObject( getObject( mHeldPosPersonObject ), drawOffset, false, -1 );
+
+        drawOffset = mCurrentObject.heldOffset;
+        }
+    
 
 
     
@@ -628,14 +716,17 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 
                 setDrawColor( red, 1, blue, alpha );
                 drawSprite( mSlotPlaceholderSprite, 
-                            mCurrentObject.slotPos[i] );
+                            add( mCurrentObject.slotPos[i],
+                                 drawOffset ) );
                 
                 
                 setDrawColor( 0, 1, 1, 0.5 );
                 
                 char *numberString = autoSprintf( "%d", i + 1 );
                 
-                mainFont->drawString( numberString, mCurrentObject.slotPos[i],
+                mainFont->drawString( numberString, 
+                                      add( mCurrentObject.slotPos[i], 
+                                           drawOffset ),
                                       alignCenter );
                 
                 delete [] numberString;
@@ -660,7 +751,9 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
                 setDrawColor( red, 1, blue, alpha );
                 
-                drawObject( demoObject, mCurrentObject.slotPos[i], false, -1 );
+                drawObject( demoObject, 
+                            add( mCurrentObject.slotPos[i], drawOffset ),
+                            false, -1 );
                 }
             }
         
@@ -674,7 +767,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     
 
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
-        doublePair spritePos = add( mCurrentObject.spritePos[i], pos );
+        doublePair spritePos = add( mCurrentObject.spritePos[i], drawOffset );
         
         float blue = 1;
         float red = 1;
@@ -921,6 +1014,14 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
         }
     
     doublePair pos = { inX, inY };
+
+
+    if( mSetHeldPos ) {    
+        mSetHeldMouseStart = pos;
+        mSetHeldOffsetStart = mCurrentObject.heldOffset;
+        return;
+        }
+    
     
     double smallestDist = 
         getClosestSpriteOrSlot( inX, inY, &mPickedObjectLayer, &mPickedSlot );
@@ -957,6 +1058,16 @@ void EditorObjectPage::pointerDrag( float inX, float inY ) {
         return;
         }
     
+    if( mSetHeldPos ) {    
+        doublePair cur = { inX, inY };
+        
+        doublePair diff = sub( cur, mSetHeldMouseStart );
+        
+        mCurrentObject.heldOffset = add( mSetHeldOffsetStart, diff );
+        return;
+        }
+
+
     
     doublePair pos = {inX, inY};
 

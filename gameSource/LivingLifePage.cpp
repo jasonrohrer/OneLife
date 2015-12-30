@@ -833,11 +833,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     if( o->xd < playerActionTargetX ) {
                         xDir = 1;
-                        o->holdingFlip = true;
+                        o->holdingFlip = false;
                         }
                     if( o->xd > playerActionTargetX ) {
                         xDir = -1;
-                        o->holdingFlip = false;
+                        o->holdingFlip = true;
                         }
                     if( o->yd < playerActionTargetY ) {
                         yDir = 1;
@@ -907,17 +907,24 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 animFade,
                                 fadeTargetType,
                                 pos,
-                                // fixme:  reverse flip of drawing,
-                                // because it is backwards
-                                ! o->holdingFlip,
+                                o->holdingFlip,
                                 age );
 
                 delete [] string;
                 
                 if( o->holdingID != 0 ) { 
                     doublePair holdPos = pos;
-                    holdPos.x += 16;
-                    holdPos.y -= 16;
+
+                    ObjectRecord *heldObject = getObject( o->holdingID );
+                    
+                    if( o->holdingFlip ) {
+                        holdPos.x -= heldObject->heldOffset.x;
+                        }
+                    else {
+                        holdPos.x += heldObject->heldOffset.x;
+                        }
+                    
+                    holdPos.y += heldObject->heldOffset.y;
                     
                     holdPos = mult( holdPos, 1.0 / CELL_D );
 
@@ -2649,10 +2656,10 @@ void LivingLifePage::step() {
             if( o->currentMoveDirection.x != 0 ) {
                 
                 if( o->currentMoveDirection.x > 0 ) {
-                    o->holdingFlip = true;
+                    o->holdingFlip = false;
                     }
                 else {
-                    o->holdingFlip = false;
+                    o->holdingFlip = true;
                     }         
                 }
             

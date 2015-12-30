@@ -37,6 +37,11 @@ typedef struct ObjectRecord {
         
         // multiplier on walking speed when holding
         float speedMult;
+
+        // how far to move object off center when held
+        // (for right-facing hold)
+        // if 0, held dead center on person center
+        doublePair heldOffset;
         
 
         // if it is a container, how many slots?
@@ -54,6 +59,7 @@ typedef struct ObjectRecord {
 
         double *spriteRot;
 
+        
         
     } ObjectRecord;
 
@@ -92,6 +98,7 @@ int addObject( const char *inDescription,
                char inPerson,
                int inFoodValue,
                float inSpeedMult,
+               doublePair inHeldOffset,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,

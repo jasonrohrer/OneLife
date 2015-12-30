@@ -73,7 +73,7 @@ void initObjectBank() {
                         
                         delete [] objectText;
 
-                        if( numLines >= 10 ) {
+                        if( numLines >= 11 ) {
                             ObjectRecord *r = new ObjectRecord;
                             
                             int next = 0;
@@ -154,7 +154,19 @@ void initObjectBank() {
                                     &( r->speedMult ) );
                             
                             next++;
+
+
+
+                            r->heldOffset.x = 0;
+                            r->heldOffset.y = 0;
                             
+                            sscanf( lines[next], "heldOffset=%lf,%lf", 
+                                    &( r->heldOffset.x ),
+                                    &( r->heldOffset.y ) );
+                            
+                            next++;
+
+
 
                             r->numSlots = 0;
                             sscanf( lines[next], "numSlots=%d", 
@@ -194,7 +206,6 @@ void initObjectBank() {
                                 
                                 next++;
                                 
-                                // fixme
                                 sscanf( lines[next], "rot=%lf", 
                                         &( r->spriteRot[i] ) );
                                 
@@ -316,6 +327,7 @@ void resaveAll() {
                        idMap[i]->person,
                        idMap[i]->foodValue,
                        idMap[i]->speedMult,
+                       idMap[i]->heldOffset,
                        idMap[i]->numSlots, 
                        idMap[i]->slotPos,
                        idMap[i]->numSprites, 
@@ -411,6 +423,7 @@ int addObject( const char *inDescription,
                char inPerson,
                int inFoodValue,
                float inSpeedMult,
+               doublePair inHeldOffset,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
@@ -476,6 +489,9 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "foodValue=%d", inFoodValue ) );
         
         lines.push_back( autoSprintf( "speedMult=%f", inSpeedMult ) );
+
+        lines.push_back( autoSprintf( "heldOffset=%f,%f",
+                                      inHeldOffset.x, inHeldOffset.y ) );
         
         lines.push_back( autoSprintf( "numSlots=%d", inNumSlots ) );
 
@@ -572,6 +588,7 @@ int addObject( const char *inDescription,
     r->person = inPerson;
     r->foodValue = inFoodValue;
     r->speedMult = inSpeedMult;
+    r->heldOffset = inHeldOffset;
     
     r->numSlots = inNumSlots;
     
@@ -593,9 +610,6 @@ int addObject( const char *inDescription,
 
 
     // delete old
-    if( newID == 1 ) {
-        printf( "Hey\n" );
-        }
 
     // grab this before freeing, in case inDescription is the same as
     // idMap[newID].description
@@ -609,8 +623,10 @@ int addObject( const char *inDescription,
 
     delete [] lower;
     
-    personObjectIDs.push_back( newID );
-
+    if( r->person ) {    
+        personObjectIDs.push_back( newID );
+        }
+    
     return newID;
     }
 
@@ -710,6 +726,11 @@ char isSpriteUsed( int inSpriteID ) {
 
 int getRandomPersonObject() {
     
+    if( personObjectIDs.size() == 0 ) {
+        return -1;
+        }
+    
+        
     return personObjectIDs.getElementDirect( 
         randSource.getRandomBoundedInt( 0, 
                                         personObjectIDs.size() - 1  ) );
