@@ -61,6 +61,9 @@ typedef struct LiveObject {
         int animationFrameCount;
         int heldAnimationFrameCount;
 
+        int animationFrozenRotFrameCount;
+        int heldAnimationFrozenRotFrameCount;
+
         float heat;
         
 

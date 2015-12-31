@@ -361,6 +361,8 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
             inObject->lastAnim = inObject->curAnim;
             inObject->curAnim = inNewAnim;
             inObject->lastAnimFade = 1;
+            inObject->animationFrozenRotFrameCount = 
+                inObject->animationFrameCount;
             }
         }
 
@@ -380,6 +382,8 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
             inObject->lastHeldAnim = inObject->curHeldAnim;
             inObject->curHeldAnim = inNewAnim;
             inObject->lastHeldAnimFade = 1;
+            inObject->heldAnimationFrozenRotFrameCount = 
+                inObject->heldAnimationFrameCount;
             }
         }
     }
@@ -904,14 +908,20 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 double animFade = 1.0;
                 
+                double timeVal = frameRateFactor * 
+                    o->animationFrameCount / 60.0;
+                
+                double rotTimeVal = timeVal;
+
                 if( o->lastAnimFade > 0 ) {
                     curType = o->lastAnim;
                     fadeTargetType = o->curAnim;
                     animFade = o->lastAnimFade;
+                    
+                    rotTimeVal = frameRateFactor * 
+                        o->animationFrozenRotFrameCount / 60.0;
                     }
-
-                double timeVal = frameRateFactor * 
-                    o->animationFrameCount / 60.0;
+                
 
                 setDrawColor( 1, 1, 1, 1 );
                 //setDrawColor( red, 0, blue, 1 );
@@ -922,7 +932,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     o->ageRate * ( game_getCurrentTime() - o->lastAgeSetTime );
 
                 drawObjectAnim( o->displayID, curType, 
-                                timeVal, timeVal,
+                                timeVal, rotTimeVal,
                                 animFade,
                                 fadeTargetType,
                                 pos,
@@ -983,22 +993,28 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     AnimType fadeTargetHeldType = o->curHeldAnim;
                 
                     double heldAnimFade = 1.0;
-                
+                    
+                    double heldTimeVal = frameRateFactor * 
+                        o->heldAnimationFrameCount / 60.0;
+
+                    double heldRotTimeVal = heldTimeVal;
+
                     if( o->lastHeldAnimFade > 0 ) {
                         curHeldType = o->lastHeldAnim;
                         fadeTargetHeldType = o->curHeldAnim;
                         heldAnimFade = o->lastHeldAnimFade;
+
+                        heldRotTimeVal = frameRateFactor * 
+                            o->heldAnimationFrozenRotFrameCount / 60.0;
                         }
 
-                    double heldTimeVal = frameRateFactor * 
-                        o->heldAnimationFrameCount / 60.0;
                         
                     
 
                     if( o->numContained == 0 ) {
                         
                         drawObjectAnim( o->holdingID, curHeldType, 
-                                        heldTimeVal, heldTimeVal,
+                                        heldTimeVal, heldRotTimeVal,
                                         heldAnimFade,
                                         fadeTargetHeldType,
                                         holdPos,
@@ -2639,6 +2655,7 @@ void LivingLifePage::step() {
                 o->lastAnimFade = 0;
                 // start current animation fresh after fade
                 o->animationFrameCount = 0;
+                o->animationFrozenRotFrameCount = 0;
                 
                 if( o->futureAnimStack.size() > 0 ) {
                     // move on to next in stack
@@ -2682,7 +2699,8 @@ void LivingLifePage::step() {
                 o->lastHeldAnimFade = 0;
                 // start current animation fresh after fade
                 o->heldAnimationFrameCount = 0;
-                
+                o->heldAnimationFrozenRotFrameCount = 0;
+
                 if( o->futureHeldAnimStack.size() > 0 ) {
                     // move on to next in stack
                     o->lastHeldAnim = o->curHeldAnim;
