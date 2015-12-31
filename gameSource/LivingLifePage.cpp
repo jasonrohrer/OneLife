@@ -33,6 +33,10 @@ static JenkinsRandomSource randSource;
 #define CELL_D 64
 
 
+// base speed for animations that aren't speeded up or slowed down
+// when player moving at a different speed, anim speed is modified
+#define BASE_SPEED 4.0
+
 
 int numServerBytesRead = 0;
 int numServerBytesSent = 0;
@@ -1641,7 +1645,8 @@ void LivingLifePage::step() {
                                         responsiblePlayerID ) {
 
                                         mMapAnimationFrameCount[mapI] =
-                                            nextObject->animationFrameCount;
+                                            lrint( nextObject->
+                                                   heldAnimationFrameCount );
                                         
                                         if( nextObject->lastAnimFade == 
                                             0 ) {
@@ -1834,7 +1839,7 @@ void LivingLifePage::step() {
                         
                                     int mapI = mapY * mMapD + mapX;
                                 
-                                    existing->animationFrameCount =
+                                    existing->heldAnimationFrameCount =
                                         mMapAnimationFrameCount[ mapI ];
                                     
                                     if( mMapLastAnimFade[ mapI ] == 0 ) {
@@ -2661,7 +2666,13 @@ void LivingLifePage::step() {
         
 
 
-        o->animationFrameCount++;
+        if( o->lastAnimFade > 0 ) {
+            // constant anim speed during anim fades
+            o->animationFrameCount++;
+            }
+        else {
+            o->animationFrameCount += o->lastSpeed / BASE_SPEED;
+            }
             
         if( o->lastAnimFade > 0 ) {
             
@@ -2704,8 +2715,15 @@ void LivingLifePage::step() {
             }
 
 
-        if( ! o->heldAnimationFrameFrozen ) {    
-            o->heldAnimationFrameCount++;
+        if( ! o->heldAnimationFrameFrozen ) {
+
+            if( o->lastHeldAnimFade > 0 ) {
+                // constant anim speed during anim fades
+                o->heldAnimationFrameCount++;
+                }
+            else {
+                o->heldAnimationFrameCount += o->lastSpeed / BASE_SPEED;
+                }
             }
         
         if( o->lastHeldAnimFade > 0 ) {

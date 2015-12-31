@@ -58,11 +58,16 @@ typedef struct LiveObject {
         SimpleVector<AnimType> futureAnimStack;
         SimpleVector<AnimType> futureHeldAnimStack;
         
-        int animationFrameCount;
-        int heldAnimationFrameCount;
+        // store frame counts in fractional form
+        // this allows animations that can vary in speed without
+        // ever experiencing discontinuities 
+        // (an integer frame count, with a speed modifier applied later
+        // could jump backwards in time when the modifier changes)
+        double animationFrameCount;
+        double heldAnimationFrameCount;
 
-        int animationFrozenRotFrameCount;
-        int heldAnimationFrozenRotFrameCount;
+        double animationFrozenRotFrameCount;
+        double heldAnimationFrozenRotFrameCount;
 
         // for special case where held animation is all-zero
         // we can freeze moving animation when player stops moving and
