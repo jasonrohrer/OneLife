@@ -87,6 +87,11 @@ char isAnimFadeNeeded( int inObjectID,
                        AnimationRecord *inCurR, AnimationRecord *inTargetR );
 
 
+// returns true if animation is all-0 for both motion and phase
+char isAnimEmpty( int inObjectID, AnimType inType );
+
+
+
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      double inRotFrameTime,

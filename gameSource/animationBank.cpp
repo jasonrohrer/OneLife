@@ -439,31 +439,95 @@ char isAnimFadeNeeded( int inObjectID,
         if( inCurR->slotAnim[i].xOscPerSec > 0 ) return true;
         
         if( inCurR->slotAnim[i].xAmp != 0 &&
-            ( inCurR->slotAnim[i].xPhase != 0 ||
-              inCurR->slotAnim[i].xPhase != 0.5  ) ) return true;
+            inCurR->slotAnim[i].xPhase != 0 &&
+            inCurR->slotAnim[i].xPhase != 0.5 ) return true;
         
         if( inCurR->slotAnim[i].yOscPerSec > 0 ) return true;
         
         if( inCurR->slotAnim[i].yAmp != 0 &&
-            ( inCurR->slotAnim[i].yPhase != 0 ||
-              inCurR->slotAnim[i].yPhase != 0.5  ) ) return true;        
+            inCurR->slotAnim[i].yPhase != 0 &&
+            inCurR->slotAnim[i].yPhase != 0.5 ) return true;        
         
 
         // if target starts out of phase, must fade
         
         if( inTargetR->slotAnim[i].xAmp != 0 &&
-            ( inTargetR->slotAnim[i].xPhase != 0 ||
-              inTargetR->slotAnim[i].xPhase != 0.5  ) ) return true;
+            inTargetR->slotAnim[i].xPhase != 0 &&
+            inTargetR->slotAnim[i].xPhase != 0.5 ) return true;
         
         if( inTargetR->slotAnim[i].yAmp != 0 &&
-            ( inTargetR->slotAnim[i].yPhase != 0 ||
-              inTargetR->slotAnim[i].yPhase != 0.5  ) ) return true;
+            inTargetR->slotAnim[i].yPhase != 0 &&
+            inTargetR->slotAnim[i].yPhase != 0.5 ) return true;
         }
     
     // current animation lines up with start of target
     // no fade
     return false;
     }
+
+
+
+
+char isAnimEmpty( int inObjectID, AnimType inType ) {
+    AnimationRecord *r = getAnimation( inObjectID, inType );
+    
+    if( r == NULL ) {
+        return true;
+        }
+    
+
+    ObjectRecord *obj = getObject( inObjectID );
+    
+    
+    for( int i=0; i<obj->numSprites; i++ ) {
+        
+        if( r->spriteAnim[i].xOscPerSec > 0 ) return false;
+        
+        if( r->spriteAnim[i].xAmp != 0 &&
+            r->spriteAnim[i].xPhase != 0 &&
+            r->spriteAnim[i].xPhase != 0.5 ) return false;
+        
+        if( r->spriteAnim[i].yOscPerSec > 0 ) return false;
+        
+        if( r->spriteAnim[i].yAmp != 0 &&
+            r->spriteAnim[i].yPhase != 0 &&
+            r->spriteAnim[i].yPhase != 0.5 ) return false;
+        
+        
+        if( r->spriteAnim[i].rockOscPerSec > 0 ) return false;
+        
+        if( r->spriteAnim[i].rockAmp != 0 &&
+            r->spriteAnim[i].rockPhase != 0 &&
+            r->spriteAnim[i].rockPhase != 0.5 ) return false;
+        
+        
+        if( r->spriteAnim[i].rotPerSec != 0 ) return false;
+        
+        if( r->spriteAnim[i].rotPhase != 0 ) return false;
+
+        }
+    
+    
+    for( int i=0; i<obj->numSlots; i++ ) {
+        // if current is moving at all, must fade
+
+        if( r->slotAnim[i].xOscPerSec > 0 ) return false;
+        
+        if( r->slotAnim[i].xAmp != 0 &&
+            r->slotAnim[i].xPhase != 0 &&
+            r->slotAnim[i].xPhase != 0.5 ) return false;
+        
+        if( r->slotAnim[i].yOscPerSec > 0 ) return false;
+        
+        if( r->slotAnim[i].yAmp != 0 &&
+            r->slotAnim[i].yPhase != 0 &&
+            r->slotAnim[i].yPhase != 0.5 ) return false;        
+
+        }
+    
+    return true;
+    }
+
 
 
 
