@@ -47,10 +47,19 @@ typedef struct LiveObject {
         AnimType lastAnim;
         double lastAnimFade;
 
+        // anim tracking for held object
+        AnimType curHeldAnim;
+        AnimType lastHeldAnim;
+        double lastHeldAnimFade;
+
+
+
         // furture states that curAnim should fade to, one at a time
         SimpleVector<AnimType> futureAnimStack;
+        SimpleVector<AnimType> futureHeldAnimStack;
         
         int animationFrameCount;
+        int heldAnimationFrameCount;
 
         float heat;
         
