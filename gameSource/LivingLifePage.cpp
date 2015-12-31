@@ -366,26 +366,54 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
             }
         }
 
+
     if( inObject->curHeldAnim != inNewAnim ) {
-        if( inObject->lastHeldAnimFade != 0 ) {
-                        
-            // don't double stack
-            if( inObject->futureHeldAnimStack.size() == 0 ||
-                inObject->futureHeldAnimStack.getElementDirect(
-                    inObject->futureHeldAnimStack.size() - 1 ) 
-                != inNewAnim ) {
-                
-                inObject->futureHeldAnimStack.push_back( inNewAnim );
-                }
+
+        // special case:
+        // looks better if we just freeze moving anim when we stop, if we can
+        
+        if( inObject->holdingID != 0 &&
+            inObject->curHeldAnim == moving &&
+            inNewAnim == held &&
+            isAnimEmpty( inObject->holdingID, held ) ) {
+            
+            inObject->heldAnimationFrameFrozen = true;
+        
+            // just keep moving animation in place
             }
         else {
-            inObject->lastHeldAnim = inObject->curHeldAnim;
-            inObject->curHeldAnim = inNewAnim;
-            inObject->lastHeldAnimFade = 1;
-            inObject->heldAnimationFrozenRotFrameCount = 
+            inObject->heldAnimationFrameFrozen = false;
+        
+
+            if( inObject->lastHeldAnimFade != 0 ) {
+                        
+                // don't double stack
+                if( inObject->futureHeldAnimStack.size() == 0 ||
+                    inObject->futureHeldAnimStack.getElementDirect(
+                        inObject->futureHeldAnimStack.size() - 1 ) 
+                    != inNewAnim ) {
+                    
+                    inObject->futureHeldAnimStack.push_back( inNewAnim );
+                    }
+                }
+            else {
+                inObject->lastHeldAnim = inObject->curHeldAnim;
+                inObject->curHeldAnim = inNewAnim;
+                inObject->lastHeldAnimFade = 1;
+                inObject->heldAnimationFrozenRotFrameCount = 
                 inObject->heldAnimationFrameCount;
+                }
             }
         }
+    else if( inNewAnim == moving ) {
+        // moving never frozen
+        // we may need to unfreeze if we kept our moving frozen last
+        // time we transitioned to held
+        
+        inObject->heldAnimationFrameFrozen = false;
+        }
+    
+        
     }
 
 
@@ -1919,6 +1947,9 @@ void LivingLifePage::step() {
                         o.lastHeldAnim = held;
                         o.lastHeldAnimFade = 0;
                         
+                        o.heldAnimationFrameFrozen = false;
+                        
+
                         o.inMotion = false;
                         
                         o.holdingFlip = false;
@@ -2673,8 +2704,10 @@ void LivingLifePage::step() {
             }
 
 
-        o->heldAnimationFrameCount++;
-
+        if( ! o->heldAnimationFrameFrozen ) {    
+            o->heldAnimationFrameCount++;
+            }
+        
         if( o->lastHeldAnimFade > 0 ) {
             
             if( o->lastHeldAnimFade == 1 ) {

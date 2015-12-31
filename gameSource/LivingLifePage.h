@@ -64,6 +64,12 @@ typedef struct LiveObject {
         int animationFrozenRotFrameCount;
         int heldAnimationFrozenRotFrameCount;
 
+        // for special case where held animation is all-zero
+        // we can freeze moving animation when player stops moving and
+        // then simply resume when they start moving again
+        char heldAnimationFrameFrozen;
+        
+
         float heat;
         
 
