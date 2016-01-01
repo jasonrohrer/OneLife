@@ -34,6 +34,9 @@ static SimpleVector<int> personObjectIDs;
 static JenkinsRandomSource randSource;
 
 
+static ClothingSet emptyClothing = getEmptyClothingSet();
+
+
 
 
 void initObjectBank() {
@@ -174,8 +177,19 @@ void initObjectBank() {
                                     &( r->clothing ));
                             
                             next++;
-
                             
+                            
+                            
+                            r->clothingOffset.x = 0;
+                            r->clothingOffset.y = 0;
+                            
+                            sscanf( lines[next], "clothingOffset=%lf,%lf", 
+                                    &( r->clothingOffset.x ),
+                                    &( r->clothingOffset.y ) );
+                            
+                            next++;
+                            
+
 
                             r->numSlots = 0;
                             sscanf( lines[next], "numSlots=%d", 
@@ -348,6 +362,7 @@ void resaveAll() {
                        idMap[i]->speedMult,
                        idMap[i]->heldOffset,
                        idMap[i]->clothing,
+                       idMap[i]->clothingOffset,
                        idMap[i]->numSlots, 
                        idMap[i]->slotPos,
                        idMap[i]->numSprites, 
@@ -446,6 +461,7 @@ int addObject( const char *inDescription,
                float inSpeedMult,
                doublePair inHeldOffset,
                char inClothing,
+               doublePair inClothingOffset,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
@@ -517,6 +533,10 @@ int addObject( const char *inDescription,
                                       inHeldOffset.x, inHeldOffset.y ) );
 
         lines.push_back( autoSprintf( "clothing=%c", inClothing ) );
+
+        lines.push_back( autoSprintf( "clothingOffset=%f,%f",
+                                      inClothingOffset.x, 
+                                      inClothingOffset.y ) );
         
         lines.push_back( autoSprintf( "numSlots=%d", inNumSlots ) );
 
@@ -617,7 +637,8 @@ int addObject( const char *inDescription,
     r->speedMult = inSpeedMult;
     r->heldOffset = inHeldOffset;
     r->clothing = inClothing;
-    
+    r->clothingOffset = inClothingOffset;
+
     r->numSlots = inNumSlots;
     
     r->slotPos = new doublePair[ inNumSlots ];
@@ -668,7 +689,7 @@ static char logicalXOR( char inA, char inB ) {
 
 
 void drawObject( ObjectRecord *inObject, doublePair inPos,
-                 char inFlipH, double inAge ) {
+                 char inFlipH, double inAge, ClothingSet inClothing ) {
     for( int i=0; i<inObject->numSprites; i++ ) {
         doublePair spritePos = inObject->spritePos[i];
 
@@ -676,15 +697,80 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             spritePos.x *= -1;
             }
 
-        doublePair pos = add( spritePos, inPos );
-        
         if( inObject->person && i == inObject->numSprites - 1 ) {
-            pos = add( pos, getAgeHeadOffset( inAge, spritePos ) );
+            spritePos = add( spritePos, getAgeHeadOffset( inAge, spritePos ) );
             }
         
-        drawSprite( getSprite( inObject->sprites[i] ), pos, 1.0,
-                    inObject->spriteRot[i], 
-                    logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
+        doublePair pos = add( spritePos, inPos );
+
+        char skipSprite = false;
+        
+        // draw head behind hat
+        if( i == inObject->numSprites - 1 && inClothing.hat != NULL ) {
+            drawSprite( getSprite( inObject->sprites[i] ), pos, 1.0,
+                        inObject->spriteRot[i], 
+                        logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
+            }
+        
+        
+        if( i == 0 && inClothing.backShoe != NULL ) {
+            skipSprite = true;
+            doublePair cPos = add( spritePos, 
+                                   inClothing.backShoe->clothingOffset );
+            if( inFlipH ) {
+                cPos.x *= -1;
+                }
+            cPos = add( cPos, inPos );
+            
+            drawObject( inClothing.backShoe, cPos,
+                        inFlipH, -1, emptyClothing );
+            }
+        else if( i == 1 && inClothing.tunic != NULL ) {
+            skipSprite = true;
+            doublePair cPos = add( spritePos, 
+                                   inClothing.tunic->clothingOffset );
+            if( inFlipH ) {
+                cPos.x *= -1;
+                }
+            cPos = add( cPos, inPos );
+            
+            drawObject( inClothing.tunic, cPos,
+                        inFlipH, -1, emptyClothing );
+            }
+        else if( i == 2 && inClothing.frontShoe != NULL ) {
+            skipSprite = true;
+            doublePair cPos = add( spritePos, 
+                                   inClothing.frontShoe->clothingOffset );
+            if( inFlipH ) {
+                cPos.x *= -1;
+                }
+            cPos = add( cPos, inPos );
+            
+            drawObject( inClothing.frontShoe, cPos,
+                        inFlipH, -1, emptyClothing );
+            }
+        else if( i == inObject->numSprites - 1 && inClothing.hat != NULL ) {
+            skipSprite = true;
+            doublePair cPos = add( spritePos, 
+                                   inClothing.hat->clothingOffset );
+            if( inFlipH ) {
+                cPos.x *= -1;
+                }
+            cPos = add( cPos, inPos );
+            
+            drawObject( inClothing.hat, cPos,
+                        inFlipH, -1, emptyClothing );
+            }
+        
+        
+        if( ! skipSprite ) {
+            
+            drawSprite( getSprite( inObject->sprites[i] ), pos, 1.0,
+                        inObject->spriteRot[i], 
+                        logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
+
+            
+            }
         }    
     }
 
@@ -692,6 +778,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
 
 void drawObject( ObjectRecord *inObject, doublePair inPos,
                  char inFlipH, double inAge,
+                 ClothingSet inClothing,
                  int inNumContained, int *inContainedIDs ) {
 
     int numSlots = getNumContainerSlots( inObject->id );
@@ -708,10 +795,11 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             }
 
         doublePair pos = add( slotPos, inPos );
-        drawObject( getObject( inContainedIDs[i] ), pos, inFlipH, inAge );
+        drawObject( getObject( inContainedIDs[i] ), pos, inFlipH, inAge,
+                    emptyClothing );
         }
     
-    drawObject( inObject, inPos, inFlipH, inAge );
+    drawObject( inObject, inPos, inFlipH, inAge, inClothing );
     }
 
 
@@ -788,6 +876,14 @@ ObjectRecord **getAllObjects( int *outNumResults ) {
     
     return records.getElementArray();
     }
+
+
+
+
+ClothingSet getEmptyClothingSet() {
+    return emptyClothing;
+    }
+
 
 
 

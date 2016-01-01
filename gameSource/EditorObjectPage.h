@@ -94,6 +94,10 @@ class EditorObjectPage : public GamePage, public ActionListener {
         CheckboxButton *mClothingCheckboxes[NUM_CLOTHING_CHECKBOXES];
         const char *mClothingCheckboxNames[NUM_CLOTHING_CHECKBOXES];
 
+        TextButton mDemoClothesButton;
+        TextButton mEndClothesDemoButton;
+        
+
         TextButton mDemoSlotsButton;
         TextButton mClearSlotsDemoButton;
 
@@ -113,10 +117,17 @@ class EditorObjectPage : public GamePage, public ActionListener {
         int mSlotsDemoObject;
 
         char mSetHeldPos;
-        int mHeldPosPersonObject;
+        int mDemoPersonObject;
         
+        // use same person object
+        char mSetClothesPos;
+        
+
         doublePair mSetHeldMouseStart;
         doublePair mSetHeldOffsetStart;
+
+        doublePair mSetClothingMouseStart;
+        doublePair mSetClothingOffsetStart;
 
 
         SpriteHandle mSlotPlaceholderSprite;

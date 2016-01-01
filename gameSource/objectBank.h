@@ -49,6 +49,11 @@ typedef struct ObjectRecord {
         // h = hat
         char clothing;
         
+        // offset of clothing from it's default location
+        // (hats is slightly above head, shoes is centered on feet,
+        //  tunics is centered on body)
+        doublePair clothingOffset;
+
 
 
         // if it is a container, how many slots?
@@ -71,6 +76,29 @@ typedef struct ObjectRecord {
         
     } ObjectRecord;
 
+
+
+
+// can be applied to a person object when drawing it 
+// note that these should be pointers to records managed elsewhere
+// null pointers mean no clothing of that type
+typedef struct ClothingSet {
+        // drawn above top layer
+        ObjectRecord *hat;
+
+        // drawn to replace second layer
+        ObjectRecord *tunic;
+
+
+        // drawn to replace third layer
+        ObjectRecord *frontShoe;
+
+        // drawn to replace bottom layer
+        ObjectRecord *backShoe;
+    } ClothingSet;
+
+
+ClothingSet getEmptyClothingSet();
 
 
 
@@ -108,6 +136,7 @@ int addObject( const char *inDescription,
                float inSpeedMult,
                doublePair inHeldOffset,
                char inClothing,
+               doublePair inClothingOffset,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
@@ -120,12 +149,13 @@ int addObject( const char *inDescription,
 
 // inAge -1 for no age modifier
 void drawObject( ObjectRecord *inObject, doublePair inPos, 
-                 char inFlipH, double inAge );
+                 char inFlipH, double inAge, ClothingSet inClothing );
 
 
 void drawObject( ObjectRecord *inObject, doublePair inPos,
                  char inFlipH,
                  double inAge,
+                 ClothingSet inClothing,
                  int inNumContained, int *inContainedIDs );
 
 

@@ -4,6 +4,8 @@
 
 #include "minorGems/game/doublePair.h"
 
+#include "objectBank.h"
+
 
 typedef enum AnimType {
     ground = 0,
@@ -102,7 +104,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      AnimType inFadeTargetType,
                      doublePair inPos,
                      char inFlipH,
-                     double inAge );
+                     double inAge, ClothingSet inClothing );
 
 
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
@@ -112,7 +114,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      AnimationRecord *inFadeTargetAnim,
                      doublePair inPos,
                      char inFlipH,
-                     double inAge );
+                     double inAge, ClothingSet inClothing );
 
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 
@@ -122,6 +124,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
+                     ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs );
 
 
@@ -133,6 +136,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
+                     ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs );
 
 

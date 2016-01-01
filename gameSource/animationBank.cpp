@@ -544,20 +544,22 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      AnimType inFadeTargetType,
                      doublePair inPos,
                      char inFlipH,
-                     double inAge ) {
+                     double inAge, 
+                     ClothingSet inClothing ) {
     
     AnimationRecord *r = getAnimation( inObjectID, inType );
     
 
     if( r == NULL ) {
-        drawObject( getObject( inObjectID ), inPos, inFlipH, inAge );
+        drawObject( getObject( inObjectID ), inPos, inFlipH, inAge, 
+                    inClothing );
         return;
         }
     else {
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
         drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
-                        inAnimFade, rB, inPos, inFlipH, inAge );
+                        inAnimFade, rB, inPos, inFlipH, inAge, inClothing );
         }
     }
 
@@ -570,7 +572,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      AnimationRecord *inFadeTargetAnim,
                      doublePair inPos,
                      char inFlipH,
-                     double inAge ) {
+                     double inAge, 
+                     ClothingSet inClothing ) {
 
     ObjectRecord *obj = getObject( inObjectID );
 
@@ -712,19 +715,20 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
+                     ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs ) {
     
     AnimationRecord *r = getAnimation( inObjectID, inType );
  
     if( r == NULL ) {
-        drawObject( getObject( inObjectID ), inPos, inFlipH, inAge,
+        drawObject( getObject( inObjectID ), inPos, inFlipH, inAge, inClothing,
                     inNumContained, inContainedIDs );
         }
     else {
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
         drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
-                        inAnimFade, rB, inPos, inFlipH, inAge,
+                        inAnimFade, rB, inPos, inFlipH, inAge, inClothing,
                         inNumContained, inContainedIDs );
         }
     }
@@ -738,7 +742,10 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
+                     ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs ) {
+    
+    ClothingSet emptyClothing = getEmptyClothingSet();
     
     // first, draw jiggling (never rotating) objects in slots
     // can't safely rotate them, because they may be compound objects
@@ -795,7 +802,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
   
             pos = add( pos, inPos );
             drawObject( getObject( inContainedIDs[i] ), pos, inFlipH,
-                        inAge );
+                        inAge, emptyClothing );
             }
         
         } 
@@ -803,7 +810,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     // draw animating object on top of contained slots
     drawObjectAnim( inObjectID, inAnim, inFrameTime, inRotFrameTime,
                     inAnimFade, inFadeTargetAnim, inPos, inFlipH,
-                    inAge );
+                    inAge, inClothing );
     }
 
 

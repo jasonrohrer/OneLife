@@ -723,21 +723,23 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
                 drawObjectAnim( mCurrentObjectID, 
                                 anim, frameTime, rotFrameTime, animFade, 
                                 fadeTargetAnim, pos, mFlipDraw, age,
+                                getEmptyClothingSet(),
                                 obj->numSlots, demoSlots );
                 }
             else {
                 drawObjectAnim( mCurrentObjectID, 
                                 anim, frameTime, rotFrameTime, animFade, 
-                                fadeTargetAnim, pos, mFlipDraw, age );
+                                fadeTargetAnim, pos, mFlipDraw, age,
+                                getEmptyClothingSet() );
                 }
             }
         else {
             if( demoSlots != NULL ) {
-                drawObject( obj, pos, mFlipDraw, age,
+                drawObject( obj, pos, mFlipDraw, age, getEmptyClothingSet(),
                             obj->numSlots, demoSlots );
                 }
             else {
-                drawObject( obj, pos, mFlipDraw, age );
+                drawObject( obj, pos, mFlipDraw, age, getEmptyClothingSet() );
                 }
             }
         

@@ -68,6 +68,8 @@ EditorObjectPage::EditorObjectPage()
           mAnimEditorButton( mainFont, 330, 260, "Anim" ),
           mMoreSlotsButton( smallFont, -120, -110, "More" ),
           mLessSlotsButton( smallFont, -120, -190, "Less" ),
+          mDemoClothesButton( smallFont, 200, 200, "Pos" ),
+          mEndClothesDemoButton( smallFont, 200, 160, "XPos" ),
           mDemoSlotsButton( smallFont, 150, 32, "Demo Slots" ),
           mClearSlotsDemoButton( smallFont, 150, -32, "End Demo" ),
           mSetHeldPosButton( smallFont, 150, 76, "Held Pos" ),
@@ -83,7 +85,10 @@ EditorObjectPage::EditorObjectPage()
     mSlotsDemoObject = -1;
 
     mSetHeldPos = false;
-    mHeldPosPersonObject = -1;
+    mDemoPersonObject = -1;
+
+    mSetClothesPos = false;
+    
 
     addComponent( &mDescriptionField );
     addComponent( &mMapChanceField );
@@ -98,11 +103,18 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mTransEditorButton );
     addComponent( &mAnimEditorButton );
 
+
     addComponent( &mMoreSlotsButton );
     addComponent( &mLessSlotsButton );
     
     addComponent( &mDemoSlotsButton );
     addComponent( &mClearSlotsDemoButton );
+
+    addComponent( &mDemoClothesButton );
+    addComponent( &mEndClothesDemoButton );
+
+    mDemoClothesButton.setVisible( false );
+    mEndClothesDemoButton.setVisible( false );
 
     mDemoSlotsButton.setVisible( false );
     mClearSlotsDemoButton.setVisible( false );    
@@ -153,6 +165,9 @@ EditorObjectPage::EditorObjectPage()
 
     mSetHeldPosButton.addActionListener( this );
     mEndSetHeldPosButton.addActionListener( this );
+
+    mDemoClothesButton.addActionListener( this );
+    mEndClothesDemoButton.addActionListener( this );
     
 
     mSpritePicker.addActionListener( this );
@@ -168,7 +183,10 @@ EditorObjectPage::EditorObjectPage()
 
     mCurrentObject.heldOffset.x = 0;
     mCurrentObject.heldOffset.y = 0;
+
     mCurrentObject.clothing = 'n';
+    mCurrentObject.clothingOffset.x = 0;
+    mCurrentObject.clothingOffset.y = 0;
     
     mCurrentObject.numSlots = 0;
     mCurrentObject.slotPos = new doublePair[ 0 ];
@@ -307,6 +325,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mSpeedMultField.getFloat(),
                    mCurrentObject.heldOffset,
                    mCurrentObject.clothing,
+                   mCurrentObject.clothingOffset,
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
@@ -334,6 +353,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mSpeedMultField.getFloat(),
                    mCurrentObject.heldOffset,
                    mCurrentObject.clothing,
+                   mCurrentObject.clothingOffset,
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
@@ -411,8 +431,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mSlotsDemoObject = -1;
         
         mSetHeldPos = false;
-        mHeldPosPersonObject = -1;
+        mDemoPersonObject = -1;
 
+        mSetClothesPos = false;
+        
         
         mPickedObjectLayer = -1;
         mPickedSlot = -1;
@@ -501,9 +523,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mClearSlotsDemoButton.setVisible( false );
         }
     else if( inTarget == &mSetHeldPosButton ) {
-        mHeldPosPersonObject = getRandomPersonObject();
+        mDemoPersonObject = getRandomPersonObject();
         
-        if( mHeldPosPersonObject != -1 ) {
+        if( mDemoPersonObject != -1 ) {
             
             mSetHeldPos = true;
             mSetHeldPosButton.setVisible( false );
@@ -515,7 +537,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mEndSetHeldPosButton ) {
         mSetHeldPos = false;
-        mHeldPosPersonObject = -1;
+        mDemoPersonObject = -1;
 
         mSetHeldPosButton.setVisible( true );
         mEndSetHeldPosButton.setVisible( false );
@@ -527,6 +549,46 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         else {
             mPersonAgeSlider.setVisible( false );
             }
+        
+        if( ! mClothingCheckboxes[0]->getToggled() ) {
+            mDemoClothesButton.setVisible( true );
+            mEndClothesDemoButton.setVisible( false );
+            }
+        }
+    else if( inTarget == &mDemoClothesButton ) {
+        mDemoPersonObject = getRandomPersonObject();
+        
+        if( mDemoPersonObject != -1 ) {
+            
+            mSetClothesPos = true;
+            mDemoClothesButton.setVisible( false );
+            mEndClothesDemoButton.setVisible( true );
+            
+            mSetHeldPos = false;
+            mSetHeldPosButton.setVisible( false );
+            mEndSetHeldPosButton.setVisible( false );
+
+            mPersonAgeSlider.setValue( 20 );
+            mPersonAgeSlider.setVisible( true );
+            }
+        }
+    else if( inTarget == &mEndClothesDemoButton ) {
+        mSetClothesPos = false;
+        mDemoPersonObject = -1;
+
+        mDemoClothesButton.setVisible( true );
+        mEndClothesDemoButton.setVisible( false );
+
+        if( mCheckboxes[2]->getToggled() ) {
+            mPersonAgeSlider.setValue( 20 );
+            mPersonAgeSlider.setVisible( true );
+            }
+        else {
+            mPersonAgeSlider.setVisible( false );
+            }
+
+        mSetHeldPosButton.setVisible( true );
+        mEndSetHeldPosButton.setVisible( false );
         }
     else if( inTarget == &mSpritePicker ) {
         
@@ -538,9 +600,14 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }
         else {
             mSetHeldPos = false;
-            mHeldPosPersonObject = -1;
+            mDemoPersonObject = -1;
             mSetHeldPosButton.setVisible( true );
             mEndSetHeldPosButton.setVisible( false );
+
+            mSetClothesPos = false;
+            mDemoPersonObject = -1;
+            mDemoClothesButton.setVisible( true );
+            mEndClothesDemoButton.setVisible( false );
             }
         
 
@@ -609,7 +676,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         // (also, potentially enable the setting button for the first time) 
         if( objectID != -1 && ! mDemoSlots ) {
             mSetHeldPos = false;
-            mHeldPosPersonObject = -1;
+            mDemoPersonObject = -1;
             mSetHeldPosButton.setVisible( true );
             mEndSetHeldPosButton.setVisible( false );
             }
@@ -647,6 +714,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.heldOffset = pickedRecord->heldOffset;
 
             mCurrentObject.clothing = pickedRecord->clothing;
+            mCurrentObject.clothingOffset = pickedRecord->clothingOffset;
 
 
             switch( mCurrentObject.clothing ) {
@@ -768,6 +836,17 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                         break;   
                     }
                 mCurrentObject.clothing = c;
+
+                mEndClothesDemoButton.setVisible( false );
+                mSetClothesPos = false;
+
+                if( i != 0 ) {
+                    mDemoClothesButton.setVisible( true );
+                    }
+                else {
+                    mDemoClothesButton.setVisible( false );
+                    }
+                
                 break;
                 }
             }
@@ -815,16 +894,54 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
         double age = mPersonAgeSlider.getValue();
             
-        drawObject( getObject( mHeldPosPersonObject ), drawOffset, false, 
-                    age );
+        drawObject( getObject( mDemoPersonObject ), drawOffset, false, 
+                    age, getEmptyClothingSet() );
 
         drawOffset = mCurrentObject.heldOffset;
+        }
+
+    char skipDrawing = false;
+    
+    if( mSetClothesPos ) {
+        
+        // draw sample person behind
+        setDrawColor( 1, 1, 1, 1 );
+
+
+        double age = mPersonAgeSlider.getValue();
+          
+
+        ClothingSet s = getEmptyClothingSet();
+        
+        switch( mCurrentObject.clothing ) {
+            case 's':
+                s.backShoe = &mCurrentObject;
+                s.frontShoe = &mCurrentObject;
+                break;
+            case 't':
+                s.tunic = &mCurrentObject;
+                break;
+            case 'h':
+                s.hat = &mCurrentObject;
+                break;
+            }
+        
+                
+  
+        drawObject( getObject( mDemoPersonObject ), drawOffset, false, 
+                    age, s );
+
+        // offset from body part
+        //switch( mCurrentObject.clothing ) {
+        //    case 's':
+        
+        skipDrawing = true;
         }
     
 
 
     
-    if( mCurrentObject.numSlots > 0 ) {
+    if( ! skipDrawing && mCurrentObject.numSlots > 0 ) {
 
         if( mSlotsDemoObject == -1 ) {
             
@@ -882,7 +999,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 
                 drawObject( demoObject, 
                             add( mCurrentObject.slotPos[i], drawOffset ),
-                            false, -1 );
+                            false, -1, getEmptyClothingSet() );
                 }
             }
         
@@ -895,6 +1012,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     doublePair pos = { 0, 0 };
     
 
+    if( !skipDrawing )
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
         doublePair spritePos = add( mCurrentObject.spritePos[i], drawOffset );
         
@@ -1167,6 +1285,11 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
         mSetHeldOffsetStart = mCurrentObject.heldOffset;
         return;
         }
+    else if( mSetClothesPos ) {    
+        mSetClothingMouseStart = pos;
+        mSetClothingOffsetStart = mCurrentObject.clothingOffset;
+        return;
+        }
     
     
     double smallestDist = 
@@ -1210,6 +1333,14 @@ void EditorObjectPage::pointerDrag( float inX, float inY ) {
         doublePair diff = sub( cur, mSetHeldMouseStart );
         
         mCurrentObject.heldOffset = add( mSetHeldOffsetStart, diff );
+        return;
+        }
+    else if( mSetClothesPos ) {    
+        doublePair cur = { inX, inY };
+        
+        doublePair diff = sub( cur, mSetClothingMouseStart );
+        
+        mCurrentObject.clothingOffset = add( mSetClothingOffsetStart, diff );
         return;
         }
 

@@ -31,7 +31,7 @@ class ObjectPickable : public Pickable {
         virtual void draw( void *inObject, doublePair inPos ) {
             ObjectRecord *r = (ObjectRecord*)inObject;
             
-            drawObject( r, inPos, false, -1 );
+            drawObject( r, inPos, false, -1, getEmptyClothingSet() );
             }
 
 
