@@ -314,6 +314,7 @@ static void freeObjectRecord( int inID ) {
             delete [] idMap[inID]->sprites;
             delete [] idMap[inID]->spritePos;
             delete [] idMap[inID]->spriteRot;
+            delete [] idMap[inID]->spriteHFlip;
             
             delete idMap[inID];
             idMap[inID] = NULL;
@@ -337,6 +338,7 @@ void freeObjectBank() {
             delete [] idMap[i]->sprites;
             delete [] idMap[i]->spritePos;
             delete [] idMap[i]->spriteRot;
+            delete [] idMap[i]->spriteHFlip;
 
             delete idMap[i];
             }
