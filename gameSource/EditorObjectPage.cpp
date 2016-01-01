@@ -481,6 +481,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mSetHeldPos = true;
             mSetHeldPosButton.setVisible( false );
             mEndSetHeldPosButton.setVisible( true );
+            
+            mPersonAgeSlider.setValue( 20 );
+            mPersonAgeSlider.setVisible( true );
             }
         }
     else if( inTarget == &mEndSetHeldPosButton ) {
@@ -489,6 +492,14 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         mSetHeldPosButton.setVisible( true );
         mEndSetHeldPosButton.setVisible( false );
+
+        if( mCheckboxes[2]->getToggled() ) {
+            mPersonAgeSlider.setValue( 20 );
+            mPersonAgeSlider.setVisible( true );
+            }
+        else {
+            mPersonAgeSlider.setVisible( false );
+            }
         }
     else if( inTarget == &mSpritePicker ) {
         
@@ -722,8 +733,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         // draw sample person behind
         setDrawColor( 1, 1, 1, 1 );
-        
-        drawObject( getObject( mHeldPosPersonObject ), drawOffset, false, -1 );
+
+
+        double age = mPersonAgeSlider.getValue();
+            
+        drawObject( getObject( mHeldPosPersonObject ), drawOffset, false, 
+                    age );
 
         drawOffset = mCurrentObject.heldOffset;
         }
@@ -820,6 +835,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
                         
         if( mPersonAgeSlider.isVisible() &&
+            mCheckboxes[2]->getToggled() &&
             i == mCurrentObject.numSprites - 1 ) {
             
             double age = mPersonAgeSlider.getValue();
