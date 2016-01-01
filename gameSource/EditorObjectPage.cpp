@@ -168,6 +168,7 @@ EditorObjectPage::EditorObjectPage()
 
     mCurrentObject.heldOffset.x = 0;
     mCurrentObject.heldOffset.y = 0;
+    mCurrentObject.clothing = 'n';
     
     mCurrentObject.numSlots = 0;
     mCurrentObject.slotPos = new doublePair[ 0 ];
@@ -212,6 +213,23 @@ EditorObjectPage::EditorObjectPage()
     mCheckboxNames[2] = "Person";
     
     mCheckboxes[2]->addActionListener( this );
+
+
+    boxY = 200;
+
+    for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
+        mClothingCheckboxes[i] = new CheckboxButton( 150, boxY, 2 );
+        addComponent( mClothingCheckboxes[i] );
+        
+        mClothingCheckboxes[i]->addActionListener( this );
+    
+        boxY -= 20;
+        }
+    mClothingCheckboxNames[0] = "No wear";
+    mClothingCheckboxNames[1] = "Shoe";
+    mClothingCheckboxNames[2] = "Tunic";
+    mClothingCheckboxNames[3] = "Hat";
+    mClothingCheckboxes[0]->setToggled( true );
     }
 
 
@@ -230,6 +248,10 @@ EditorObjectPage::~EditorObjectPage() {
     for( int i=0; i<NUM_OBJECT_CHECKBOXES; i++ ) {
         delete mCheckboxes[i];
         }
+
+     for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
+         delete mClothingCheckboxes[i];
+         }
     }
 
 
@@ -284,6 +306,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mFoodValueField.getInt(),
                    mSpeedMultField.getFloat(),
                    mCurrentObject.heldOffset,
+                   mCurrentObject.clothing,
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
@@ -310,6 +333,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mFoodValueField.getInt(),
                    mSpeedMultField.getFloat(),
                    mCurrentObject.heldOffset,
+                   mCurrentObject.clothing,
                    mCurrentObject.numSlots, mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
@@ -351,6 +375,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         mCurrentObject.heldOffset.x = 0;
         mCurrentObject.heldOffset.y = 0;
+
+        actionPerformed( mClothingCheckboxes[0] );
+        
 
         delete [] mCurrentObject.slotPos;
         mCurrentObject.slotPos = new doublePair[ 0 ];
@@ -619,6 +646,24 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             mCurrentObject.heldOffset = pickedRecord->heldOffset;
 
+            mCurrentObject.clothing = pickedRecord->clothing;
+
+
+            switch( mCurrentObject.clothing ) {
+                case 'n':
+                    actionPerformed( mClothingCheckboxes[0] );
+                    break;
+                case 's':
+                    actionPerformed( mClothingCheckboxes[1] );
+                    break;
+                case 't':
+                    actionPerformed( mClothingCheckboxes[2] );
+                    break;
+                case 'h':
+                    actionPerformed( mClothingCheckboxes[3] );
+                    break;
+                }   
+
 
             mCurrentObject.numSlots = pickedRecord->numSlots;
 
@@ -693,8 +738,41 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mPersonAgeSlider.setVisible( false );
             }
         }
-    
-    
+    else {
+        // check clothing checkboxes
+        int indexFound = -1;
+        
+        for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
+            if( inTarget == mClothingCheckboxes[i] ) {
+                indexFound = i;
+                
+                mClothingCheckboxes[i]->setToggled( true );
+                
+                for( int j=0; j<NUM_CLOTHING_CHECKBOXES; j++ ) {
+                    if( i != j ) {
+                        mClothingCheckboxes[j]->setToggled( false );
+                        }
+                    }
+                
+                char c = 'n';
+                
+                switch( i ) {
+                    case 1:
+                        c = 's';
+                        break;
+                    case 2:
+                        c = 't';
+                        break;
+                    case 3:
+                        c = 'h';
+                        break;   
+                    }
+                mCurrentObject.clothing = c;
+                break;
+                }
+            }
+        }
+
     }
 
    
@@ -884,6 +962,14 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         pos.x -= 20;
         
         smallFont->drawString( mCheckboxNames[i], pos, alignRight );
+        }
+
+    for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
+        pos = mClothingCheckboxes[i]->getPosition();
+    
+        pos.x -= 20;
+        
+        smallFont->drawString( mClothingCheckboxNames[i], pos, alignRight );
         }
     
     }

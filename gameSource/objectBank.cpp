@@ -168,6 +168,15 @@ void initObjectBank() {
 
 
 
+                            r->clothing = 'n';
+                            
+                            sscanf( lines[next], "clothing=%c", 
+                                    &( r->clothing ));
+                            
+                            next++;
+
+                            
+
                             r->numSlots = 0;
                             sscanf( lines[next], "numSlots=%d", 
                                     &( r->numSlots ) );
@@ -338,6 +347,7 @@ void resaveAll() {
                        idMap[i]->foodValue,
                        idMap[i]->speedMult,
                        idMap[i]->heldOffset,
+                       idMap[i]->clothing,
                        idMap[i]->numSlots, 
                        idMap[i]->slotPos,
                        idMap[i]->numSprites, 
@@ -435,6 +445,7 @@ int addObject( const char *inDescription,
                int inFoodValue,
                float inSpeedMult,
                doublePair inHeldOffset,
+               char inClothing,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
@@ -504,6 +515,8 @@ int addObject( const char *inDescription,
 
         lines.push_back( autoSprintf( "heldOffset=%f,%f",
                                       inHeldOffset.x, inHeldOffset.y ) );
+
+        lines.push_back( autoSprintf( "clothing=%c", inClothing ) );
         
         lines.push_back( autoSprintf( "numSlots=%d", inNumSlots ) );
 
@@ -603,6 +616,7 @@ int addObject( const char *inDescription,
     r->foodValue = inFoodValue;
     r->speedMult = inSpeedMult;
     r->heldOffset = inHeldOffset;
+    r->clothing = inClothing;
     
     r->numSlots = inNumSlots;
     

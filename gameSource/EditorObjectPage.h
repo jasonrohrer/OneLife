@@ -26,6 +26,8 @@
 
 #define NUM_OBJECT_CHECKBOXES 3
 
+#define NUM_CLOTHING_CHECKBOXES 4
+
 
 
 class EditorObjectPage : public GamePage, public ActionListener {
@@ -88,6 +90,9 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
         CheckboxButton *mCheckboxes[NUM_OBJECT_CHECKBOXES];
         const char *mCheckboxNames[NUM_OBJECT_CHECKBOXES];
+
+        CheckboxButton *mClothingCheckboxes[NUM_CLOTHING_CHECKBOXES];
+        const char *mClothingCheckboxNames[NUM_CLOTHING_CHECKBOXES];
 
         TextButton mDemoSlotsButton;
         TextButton mClearSlotsDemoButton;

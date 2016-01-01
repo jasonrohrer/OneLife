@@ -43,6 +43,13 @@ typedef struct ObjectRecord {
         // if 0, held dead center on person center
         doublePair heldOffset;
         
+        // n = not wearable
+        // s = shoe
+        // t = tunic
+        // h = hat
+        char clothing;
+        
+
 
         // if it is a container, how many slots?
         // 0 if not a container
@@ -100,6 +107,7 @@ int addObject( const char *inDescription,
                int inFoodValue,
                float inSpeedMult,
                doublePair inHeldOffset,
+               char inClothing,
                int inNumSlots, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
