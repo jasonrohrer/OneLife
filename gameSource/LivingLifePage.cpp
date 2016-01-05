@@ -969,7 +969,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 fadeTargetType,
                                 pos,
                                 o->holdingFlip,
-                                age );
+                                age,
+                                getEmptyClothingSet() );
 
                 delete [] string;
                 
@@ -1050,7 +1051,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                         heldAnimFade,
                                         fadeTargetHeldType,
                                         holdPos,
-                                        o->holdingFlip, -1 );
+                                        o->holdingFlip, -1,
+                                        getEmptyClothingSet() );
                         }
                     else {
                         drawObjectAnim( o->holdingID, curHeldType, 
@@ -1060,6 +1062,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                         holdPos,
                                         o->holdingFlip,
                                         -1,
+                                        getEmptyClothingSet(),
                                         o->numContained,
                                         o->containedIDs );
                         }
@@ -1159,6 +1162,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                     fadeTargetType,
                                     pos, mMapTileFlips[ mapI ],
                                     -1,
+                                    getEmptyClothingSet(),
                                     mMapContainedStacks[ mapI ].size(),
                                     stackArray );
                     delete [] stackArray;
@@ -1168,7 +1172,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                     curType, timeVal, timeVal,
                                     animFade,
                                     fadeTargetType, pos, 
-                                    mMapTileFlips[ mapI ], -1 );
+                                    mMapTileFlips[ mapI ], -1,
+                                    getEmptyClothingSet() );
                     }
                 }
             else if( oID == -1 ) {
