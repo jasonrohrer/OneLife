@@ -101,6 +101,22 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextButton mClearSlotDemoButton;
         
 
+        TextButton mPickClothingButton;
+        
+        char mPickingClothing;
+        
+        ClothingSet mClothingSet;
+        
+        ObjectRecord **mNextShoeToFill;
+        ObjectRecord **mOtherShoe;
+        
+
+
+        TextButton mClearClothingButton;
+
+        
+
+
         SpriteAnimationRecord mCopyBuffer;
         TextButton mCopyButton;
         TextButton mPasteButton;

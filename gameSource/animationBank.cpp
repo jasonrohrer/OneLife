@@ -22,6 +22,11 @@ static int mapSize;
 static AnimationRecord * **idMap;
 
 
+
+static ClothingSet emptyClothing = getEmptyClothingSet();
+
+
+
 void initAnimationBank() {
     SimpleVector<AnimationRecord*> records;
     
@@ -578,10 +583,10 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     ObjectRecord *obj = getObject( inObjectID );
 
     for( int i=0; i<obj->numSprites; i++ ) {
-        doublePair pos = obj->spritePos[i];
+        doublePair spritePos = obj->spritePos[i];
         
         if( obj->person && i == obj->numSprites - 1 ) {
-            pos = add( pos, getAgeHeadOffset( inAge, pos ) );
+            spritePos = add( spritePos, getAgeHeadOffset( inAge, spritePos ) );
             }
 
         double rot = obj->spriteRot[i];
@@ -589,7 +594,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         if( i < inAnim->numSprites ) {
             
 
-            pos.x += 
+            spritePos.x += 
                 inAnimFade * 
                 getOscOffset( 
                     inFrameTime,
@@ -597,7 +602,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     inAnim->spriteAnim[i].xAmp,
                     inAnim->spriteAnim[i].xPhase );
             
-            pos.y += 
+            spritePos.y += 
                 inAnimFade *
                 getOscOffset( 
                     inFrameTime,
@@ -614,7 +619,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             if( inAnimFade < 1 ) {
                 double targetWeight = 1 - inAnimFade;
                 
-                pos.x += 
+                spritePos.x += 
                     targetWeight *
                     getOscOffset( 
                         0,
@@ -622,7 +627,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                         inFadeTargetAnim->spriteAnim[i].xAmp,
                         inFadeTargetAnim->spriteAnim[i].xPhase );
                 
-                pos.y += 
+                spritePos.y += 
                     targetWeight *
                     getOscOffset( 
                         0,
@@ -696,13 +701,77 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             }
         
         if( inFlipH ) {
-            pos.x *= -1;
+            spritePos.x *= -1;
             rot *= -1;
             }
-        pos = add( pos, inPos );
         
-        drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, 
-                    logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
+        doublePair pos = add( spritePos, inPos );
+
+
+        char skipSprite = false;
+        
+        // draw head behind hat
+        if( i == obj->numSprites - 1 && inClothing.hat != NULL ) {
+            drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, 
+                        logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
+            }
+        
+        
+        if( i == 0 && inClothing.backShoe != NULL ) {
+            skipSprite = true;
+            doublePair cPos = add( spritePos, 
+                                   inClothing.backShoe->clothingOffset );
+            if( inFlipH ) {
+                cPos.x *= -1;
+                }
+            cPos = add( cPos, inPos );
+            
+            drawObject( inClothing.backShoe, cPos,
+                        inFlipH, -1, emptyClothing );
+            }
+        else if( i == 1 && inClothing.tunic != NULL ) {
+            skipSprite = true;
+            doublePair cPos = add( spritePos, 
+                                   inClothing.tunic->clothingOffset );
+            if( inFlipH ) {
+                cPos.x *= -1;
+                }
+            cPos = add( cPos, inPos );
+            
+            drawObject( inClothing.tunic, cPos,
+                        inFlipH, -1, emptyClothing );
+            }
+        else if( i == 2 && inClothing.frontShoe != NULL ) {
+            skipSprite = true;
+            doublePair cPos = add( spritePos, 
+                                   inClothing.frontShoe->clothingOffset );
+            if( inFlipH ) {
+                cPos.x *= -1;
+                }
+            cPos = add( cPos, inPos );
+            
+            drawObject( inClothing.frontShoe, cPos,
+                        inFlipH, -1, emptyClothing );
+            }
+        else if( i == obj->numSprites - 1 && inClothing.hat != NULL ) {
+            skipSprite = true;
+            doublePair cPos = add( spritePos, 
+                                   inClothing.hat->clothingOffset );
+            if( inFlipH ) {
+                cPos.x *= -1;
+                }
+            cPos = add( cPos, inPos );
+            
+            drawObject( inClothing.hat, cPos,
+                        inFlipH, -1, emptyClothing );
+            }
+
+
+        if( !skipSprite ) {    
+            drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, 
+                        logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
+            }
+        
         } 
     }
 

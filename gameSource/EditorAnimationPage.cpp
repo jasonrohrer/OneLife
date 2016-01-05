@@ -49,6 +49,9 @@ EditorAnimationPage::EditorAnimationPage()
           mPickSlotDemoButton( smallFont, 180, 0, "Fill Slots" ),
           mPickingSlotDemo( false ),
           mClearSlotDemoButton( smallFont, 180, -60, "Clear Slots" ),
+          mPickClothingButton( smallFont, 180, 60, "+ Clothes" ),
+          mPickingClothing( false ),
+          mClearClothingButton( smallFont, 180, 120, "X Clothes" ),
           mCopyButton( smallFont, -290, 210, "Copy" ),
           mPasteButton( smallFont, -230, 210, "Paste" ),
           mClearButton( smallFont, -170, 210, "Clear" ),
@@ -76,6 +79,9 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mPickSlotDemoButton );
     addComponent( &mClearSlotDemoButton );
 
+    addComponent( &mPickClothingButton );
+    addComponent( &mClearClothingButton );
+    
 
     addComponent( &mCopyButton );
     addComponent( &mPasteButton );
@@ -95,6 +101,9 @@ EditorAnimationPage::EditorAnimationPage()
     mPickSlotDemoButton.addActionListener( this );
     mClearSlotDemoButton.addActionListener( this );
 
+    mPickClothingButton.addActionListener( this );
+    mClearClothingButton.addActionListener( this );
+
     mCopyButton.addActionListener( this );
     mPasteButton.addActionListener( this );
     mClearButton.addActionListener( this );
@@ -104,6 +113,10 @@ EditorAnimationPage::EditorAnimationPage()
     mPrevSpriteOrSlotButton.addActionListener( this );
 
     mClearSlotDemoButton.setVisible( false );
+
+    mPickClothingButton.setVisible( false );
+    mClearClothingButton.setVisible( false );
+    
 
     checkNextPrevVisible();
     
@@ -185,6 +198,11 @@ EditorAnimationPage::EditorAnimationPage()
         mSliders[i]->setVisible( false );
         }
     mReverseRotationCheckbox.setVisible( false );
+
+
+    mClothingSet = getEmptyClothingSet();
+    mNextShoeToFill = &( mClothingSet.backShoe );
+    mOtherShoe = &( mClothingSet.frontShoe );
     }
 
 
@@ -306,8 +324,10 @@ void EditorAnimationPage::populateCurrentAnim() {
             mCurrentAnim[i]->numSlots = slots;
             }        
     
-        mWiggleAnim = copyRecord( mCurrentAnim[i] );
         }
+
+    mWiggleAnim = copyRecord( mCurrentAnim[0] );
+
     
     updateSlidersFromAnim();
         
@@ -354,6 +374,9 @@ void EditorAnimationPage::checkNextPrevVisible() {
     if( mCurrentObjectID == -1 ) {
         mNextSpriteOrSlotButton.setVisible( false );
         mPrevSpriteOrSlotButton.setVisible( false );
+    
+        mPickSlotDemoButton.setVisible( false );
+        mPickClothingButton.setVisible( false );
         return;
         }
     
@@ -363,6 +386,23 @@ void EditorAnimationPage::checkNextPrevVisible() {
     
     mNextSpriteOrSlotButton.setVisible( mCurrentSpriteOrSlot < num - 1 );
     mPrevSpriteOrSlotButton.setVisible( mCurrentSpriteOrSlot > 0 );
+    
+    
+    if( r->person ) {
+        mPickClothingButton.setVisible( true );
+        }
+    else {
+        mPickClothingButton.setVisible( false );
+        mClearClothingButton.setVisible( false );
+        }
+    
+    if( r->numSlots > 0 ) {
+        mPickSlotDemoButton.setVisible( true );
+        }
+    else {
+        mPickSlotDemoButton.setVisible( false );
+        mClearSlotDemoButton.setVisible( false );
+        }
     }
 
 
@@ -532,11 +572,37 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 mPickSlotDemoButton.setVisible( true );
                 mClearSlotDemoButton.setVisible( true );
                 }
+            else if( mPickingClothing ) {
+                mPickingClothing = false;
+                ObjectRecord *r = getObject( newPickID );
+                switch( r->clothing ) {
+                    case 's': {
+                        *mNextShoeToFill = r;
+                        ObjectRecord **temp = mNextShoeToFill;
+                        mNextShoeToFill = mOtherShoe;
+                        mOtherShoe = temp;
+                        break;
+                        }
+                    case 'h':
+                        mClothingSet.hat = r;
+                        break;
+                    case 't':
+                        mClothingSet.tunic = r;
+                        break;
+                    }   
+                        
+                mPickClothingButton.setVisible( true );
+                }
             else {
                 mCurrentObjectID = newPickID;
             
                 mCurrentSpriteOrSlot = 0;
                 
+                mClothingSet.hat = NULL;
+                mClothingSet.frontShoe = NULL;
+                mClothingSet.backShoe = NULL;
+                mClothingSet.tunic = NULL;
+
                 checkNextPrevVisible();
                 
                 populateCurrentAnim();
@@ -553,6 +619,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mPickSlotDemoButton ) {
         mPickingSlotDemo = true;
+        mPickingClothing = false;
         mCurrentSlotDemoID = -1;
         mPickSlotDemoButton.setVisible( false );
         mClearSlotDemoButton.setVisible( true );
@@ -562,6 +629,22 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mCurrentSlotDemoID = -1;
         mPickSlotDemoButton.setVisible( true );
         mClearSlotDemoButton.setVisible( false );
+        }
+    else if( inTarget == &mPickClothingButton ) {
+        mPickingSlotDemo = false;
+        mPickingClothing = true;
+        mPickClothingButton.setVisible( false );
+        mClearClothingButton.setVisible( true );
+        }
+    else if( inTarget == &mClearClothingButton ) {
+        mPickingClothing = false;
+        mPickClothingButton.setVisible( true );
+        mClearClothingButton.setVisible( false );
+        
+        mClothingSet.hat = NULL;
+        mClothingSet.frontShoe = NULL;
+        mClothingSet.backShoe = NULL;
+        mClothingSet.tunic = NULL;
         }
     else if( inTarget == &mNextSpriteOrSlotButton ) {
         mCurrentSpriteOrSlot ++;
@@ -723,23 +806,23 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
                 drawObjectAnim( mCurrentObjectID, 
                                 anim, frameTime, rotFrameTime, animFade, 
                                 fadeTargetAnim, pos, mFlipDraw, age,
-                                getEmptyClothingSet(),
+                                mClothingSet,
                                 obj->numSlots, demoSlots );
                 }
             else {
                 drawObjectAnim( mCurrentObjectID, 
                                 anim, frameTime, rotFrameTime, animFade, 
                                 fadeTargetAnim, pos, mFlipDraw, age,
-                                getEmptyClothingSet() );
+                                mClothingSet );
                 }
             }
         else {
             if( demoSlots != NULL ) {
-                drawObject( obj, pos, mFlipDraw, age, getEmptyClothingSet(),
+                drawObject( obj, pos, mFlipDraw, age, mClothingSet,
                             obj->numSlots, demoSlots );
                 }
             else {
-                drawObject( obj, pos, mFlipDraw, age, getEmptyClothingSet() );
+                drawObject( obj, pos, mFlipDraw, age, mClothingSet );
                 }
             }
         
