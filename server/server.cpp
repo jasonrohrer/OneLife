@@ -114,6 +114,9 @@ typedef struct LiveObject {
         // should we send player a food status message
         char foodUpdate;
 
+
+        ClothingSet clothing;
+        
     } LiveObject;
 
 
@@ -897,6 +900,59 @@ char isMapSpotEmpty( int inX, int inY ) {
         }
     
     return true;
+    }
+
+
+
+// returns 0 for NULL
+static int objectRecordToID( ObjectRecord *inRecord ) {
+    if( inRecord == NULL ) {
+        return 0;
+        }
+    else {
+        return inRecord->id;
+        }
+    }
+
+
+// inDelete true to send X X for position
+static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
+
+    char *holdingString = getHoldingString( inPlayer );
+    
+    char *posString;
+    if( inDelete ) {
+        posString = stringDuplicate( "0 X X" );
+        }
+    else {
+        posString = autoSprintf( "%d %d %d",          
+                                 inPlayer->posForced,
+                                 inPlayer->xs, 
+                                 inPlayer->ys );
+        }
+    
+
+    char *updateLine = autoSprintf( 
+        "%d %d %s %d %d %d %.2f %s %.2f %.2f %.2f %d,%d,%d,%d\n",
+        inPlayer->id,
+        inPlayer->displayID,
+        holdingString,
+        inPlayer->heldOriginValid,
+        inPlayer->heldOriginX,
+        inPlayer->heldOriginY,
+        inPlayer->heat,
+        posString,
+        computeAge( inPlayer ),
+        getAgeRate(),
+        computeMoveSpeed( inPlayer ),
+        objectRecordToID( inPlayer->clothing.hat ),
+        objectRecordToID( inPlayer->clothing.tunic ),
+        objectRecordToID( inPlayer->clothing.frontShoe ),
+        objectRecordToID( inPlayer->clothing.backShoe ) );
+    
+    delete [] holdingString;
+    
+    return updateLine;
     }
 
     
@@ -2031,22 +2087,7 @@ int main() {
                 newUpdatesPos.push_back( p );
                 }
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
-                char *holdingString = getHoldingString( nextPlayer );
-                
-                char *updateLine = autoSprintf( 
-                    "%d %d %s %d %d %d %.2f 0 X X %.2f %.2f %.2\n", 
-                    nextPlayer->id,
-                    nextPlayer->displayID,
-                    holdingString,
-                    nextPlayer->heldOriginValid,
-                    nextPlayer->heldOriginX,
-                    nextPlayer->heldOriginY,
-                    nextPlayer->heat,
-                    computeAge( nextPlayer ),
-                    getAgeRate(),
-                    computeMoveSpeed( nextPlayer ) );
-                
-                delete [] holdingString;
+                char *updateLine = getUpdateLine( nextPlayer, true );
 
                 newUpdates.appendElementString( updateLine );
                 ChangePosition p = { 0, 0, true };
@@ -2125,8 +2166,6 @@ int main() {
             LiveObject *nextPlayer = players.getElement( 
                 playerIndicesToSendUpdatesAbout.getElementDirect( i ) );
 
-            char *holdingString = getHoldingString( nextPlayer );
-            
 
             // recompute heat map
             
@@ -2253,23 +2292,8 @@ int main() {
             
 
             
-            char *updateLine = autoSprintf( 
-                "%d %d %s %d %d %d %.2f %d %d %d %.2f %.2f %.2f\n", 
-                nextPlayer->id,
-                nextPlayer->displayID,
-                holdingString,
-                nextPlayer->heldOriginValid,
-                nextPlayer->heldOriginX,
-                nextPlayer->heldOriginY,
-                nextPlayer->heat,
-                nextPlayer->posForced,
-                nextPlayer->xs, 
-                nextPlayer->ys,
-                computeAge( nextPlayer ),
-                getAgeRate(),
-                computeMoveSpeed( nextPlayer ) );
-            
-            delete [] holdingString;
+            char *updateLine = getUpdateLine( nextPlayer, false );
+
             
             nextPlayer->posForced = false;
 
@@ -2377,25 +2401,12 @@ int main() {
                 
                 for( int i=0; i<numPlayers; i++ ) {
                 
-                    LiveObject o = *( players.getElement( i ) );
+                    LiveObject *o = players.getElement( i );
                 
 
-                    char *messageLine = 
-                        autoSprintf( "%d %d "
-                                     "%d %d %d %d %.2f 0 %d %d "
-                                     "%.2f %.2f %.2f\n", 
-                                     o.id, o.displayID, 
-                                     o.holdingID, 
-                                     o.heldOriginValid, o.heldOriginX,
-                                     o.heldOriginY,
-                                     o.heat,
-                                     o.xs, o.ys, 
-                                     computeAge( &o ),
-                                     getAgeRate(),
-                                     computeMoveSpeed( &o ) );
+                    char *messageLine = getUpdateLine( o, false );
                     
-
-                    if( o.id != nextPlayer->id ) {
+                    if( o->id != nextPlayer->id ) {
                         messageBuffer.appendElementString( messageLine );
                         delete [] messageLine;
                         }
@@ -2495,29 +2506,10 @@ int main() {
                                 // about this player, telling nextPlayer
                                 // where this player was last stationary
                                 // and what they're holding
-                        
-                                char *holdingString = 
-                                    getHoldingString( otherPlayer );
-                                
-                                char *updateLine = autoSprintf( 
-                                    "%d %d "
-                                    "%s %d %d %d %.2f 0 %d %d "
-                                    "%.2f %.2f %.2f\n", 
-                                    otherPlayer->id,
-                                    otherPlayer->displayID,
-                                    holdingString,
-                                    otherPlayer->heldOriginValid,
-                                    otherPlayer->heldOriginX,
-                                    otherPlayer->heldOriginY,
-                                    otherPlayer->heat,
-                                    otherPlayer->xs, 
-                                    otherPlayer->ys,
-                                    computeAge( otherPlayer ),
-                                    getAgeRate(),
-                                    computeMoveSpeed( otherPlayer ) ); 
 
-                                delete [] holdingString;
-                                
+                                char *updateLine = 
+                                    getUpdateLine( otherPlayer, false ); 
+                                    
                                 chunkPlayerUpdates.appendElementString( 
                                     updateLine );
                                 delete [] updateLine;

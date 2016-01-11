@@ -81,6 +81,8 @@ typedef struct LiveObject {
         int numContained;
         int *containedIDs;
         
+        ClothingSet clothing;
+        
 
         // current fractional grid position and speed
         doublePair currentPos;

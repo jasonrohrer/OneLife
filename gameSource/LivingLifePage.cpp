@@ -970,7 +970,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 pos,
                                 o->holdingFlip,
                                 age,
-                                getEmptyClothingSet() );
+                                o->clothing );
 
                 delete [] string;
                 
@@ -1741,10 +1741,12 @@ void LivingLifePage::step() {
 
                 int heldOriginValid, heldOriginX, heldOriginY;
 
+                int hat, tunic, frontShoe, backShoe;
+                
                 int numRead = sscanf( lines[i], 
                                       "%d %d "
                                       "%499s %d %d %d %f %d %d %d "
-                                      "%lf %lf %lf",
+                                      "%lf %lf %lf %d,%d,%d,%d",
                                       &( o.id ),
                                       &( o.displayID ),
                                       holdingIDBuffer,
@@ -1757,10 +1759,20 @@ void LivingLifePage::step() {
                                       &( o.yd ),
                                       &( o.age ),
                                       &( o.ageRate ),
-                                      &( o.lastSpeed ) );
+                                      &( o.lastSpeed ),
+                                      &( hat ),
+                                      &( tunic ),
+                                      &( frontShoe ),
+                                      &( backShoe ) );
                 
-                if( numRead == 13 ) {
+                if( numRead == 17 ) {
                     o.lastAgeSetTime = game_getCurrentTime();
+
+                    o.clothing.hat = getObject( hat );
+                    o.clothing.tunic = getObject( tunic );
+                    o.clothing.frontShoe = getObject( frontShoe );
+                    o.clothing.backShoe = getObject( backShoe );
+                    
 
                     if( strstr( holdingIDBuffer, "," ) != NULL ) {
                         int numInts;
@@ -1894,6 +1906,9 @@ void LivingLifePage::step() {
                         
                         existing->lastSpeed = o.lastSpeed;
                         
+                        existing->clothing = o.clothing;
+                        
+
                         if( existing->id != ourID || 
                             forced ) {
                             

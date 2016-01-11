@@ -55,19 +55,20 @@ a few other tricks to reduce it's size.  Check the code in map.cpp for details.
 
 
 PU
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s
+p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s c
+p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s c
+p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s c
+p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s c
 ...
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s
+p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s c
 #
 
 List of player ids with their display object ids, held object ids, 
 whether held origin is valid (1 or 0), origin position on map of that held 
 object (where it was picked up from), and x,y grid positions of player,
 floating point age in "years", floating point aging rate in years/sec, and
-floating point s move speeds (in grid square widths per second)
+floating point s move speeds (in grid square widths per second) and clothing
+set.
 
 Heat is the player's warmth between 0 and 1, where 0 is coldest, 1 is hottest,
 and 0.5 is ideal.
@@ -82,6 +83,8 @@ Deleted players reported in update with
 X X 
 for x y.
 
+Clothing sets are in the format of hat_id,tunic_id,front_shoe_id,back_shoe_id
+If an ID is 0, player is not wearing anything in that spot.
 
 
 
