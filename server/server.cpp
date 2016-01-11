@@ -1937,6 +1937,85 @@ int main() {
                                     
                                     nextPlayer->foodUpdate = true;
                                     }
+                                else if( obj->clothing != 'n' ) {
+                                    // wearable
+                                    
+                                    nextPlayer->holdingID = 0;
+                                    nextPlayer->heldOriginValid = 0;
+                                    nextPlayer->heldOriginX = 0;
+                                    nextPlayer->heldOriginY = 0;
+
+                                    ObjectRecord *oldC = NULL;
+                                    
+                                    switch( obj->clothing ) {
+                                        case 'h':
+                                            oldC = nextPlayer->clothing.hat;
+                                            nextPlayer->clothing.hat = obj;
+                                            if( oldC != NULL ) {
+                                                nextPlayer->holdingID =
+                                                    oldC->id;
+                                                }
+                                            break;
+                                        case 't':
+                                            oldC = nextPlayer->clothing.tunic;
+                                            nextPlayer->clothing.tunic = obj;
+                                            if( oldC != NULL ) {
+                                                nextPlayer->holdingID =
+                                                    oldC->id;
+                                                }
+                                            break;
+                                        case 's':
+                                            if( nextPlayer->clothing.backShoe
+                                                == NULL ) {
+                                                nextPlayer->clothing.backShoe 
+                                                    = obj;
+                                                }
+                                            else if( 
+                                                nextPlayer->clothing.frontShoe
+                                                == NULL ) {
+                                                nextPlayer->clothing.frontShoe 
+                                                    = obj;
+                                                }
+                                            else {
+                                                // replace a shoe
+                                                
+                                                oldC = 
+                                                    nextPlayer->
+                                                    clothing.frontShoe;
+                                                nextPlayer->clothing.frontShoe 
+                                                    = obj;
+                                                if( oldC != NULL ) {
+                                                    nextPlayer->holdingID =
+                                                        oldC->id;
+                                                    }
+                                                }
+                                            break;
+                                        }
+                                    }
+                                }
+                            else {
+                                // empty hand on self, remove clothing
+                                if( nextPlayer->clothing.frontShoe != NULL ) {
+                                    nextPlayer->holdingID =
+                                        nextPlayer->clothing.frontShoe->id;
+                                    nextPlayer->clothing.frontShoe = NULL;
+                                    }
+                                else if( nextPlayer->clothing.backShoe 
+                                         != NULL ) {
+                                    nextPlayer->holdingID =
+                                        nextPlayer->clothing.backShoe->id;
+                                    nextPlayer->clothing.backShoe = NULL;
+                                    }
+                                else if( nextPlayer->clothing.hat != NULL ) {
+                                    nextPlayer->holdingID =
+                                        nextPlayer->clothing.hat->id;
+                                    nextPlayer->clothing.hat = NULL;
+                                    }
+                                else if( nextPlayer->clothing.tunic != NULL ) {
+                                    nextPlayer->holdingID =
+                                        nextPlayer->clothing.tunic->id;
+                                    nextPlayer->clothing.tunic = NULL;
+                                    }
                                 }
                             }
                         }                    
