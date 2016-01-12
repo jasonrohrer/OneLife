@@ -715,7 +715,10 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             }
         
         
-        if( i == 0 && inClothing.backShoe != NULL ) {
+        if( ( i == 0 && !inFlipH ||
+              i == 2 && inFlipH ) 
+            && inClothing.backShoe != NULL ) {
+            
             skipSprite = true;
             doublePair cPos = add( spritePos, 
                                    inClothing.backShoe->clothingOffset );
@@ -739,7 +742,10 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             drawObject( inClothing.tunic, cPos,
                         inFlipH, -1, emptyClothing );
             }
-        else if( i == 2 && inClothing.frontShoe != NULL ) {
+        else if( ( i == 2 && !inFlipH ||
+                   i == 0 && inFlipH ) 
+                 && inClothing.frontShoe != NULL ) {
+            
             skipSprite = true;
             doublePair cPos = add( spritePos, 
                                    inClothing.frontShoe->clothingOffset );
