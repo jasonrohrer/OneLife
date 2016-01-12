@@ -23,6 +23,9 @@ class EditorImportPage : public GamePage, public ActionListener {
     public:
         EditorImportPage();
         ~EditorImportPage();
+
+        void clearUseOfOverlay( int inOverlayID );
+
         
         virtual void actionPerformed( GUIComponent *inTarget );
         
@@ -46,6 +49,7 @@ class EditorImportPage : public GamePage, public ActionListener {
         
 
         TextButton mImportButton;
+        TextButton mImportOverlayButton;
 
         int mSheetW, mSheetH;
 
@@ -63,8 +67,10 @@ class EditorImportPage : public GamePage, public ActionListener {
         TextField mSpriteTagField;
         
         TextButton mSaveSpriteButton;
+        TextButton mSaveOverlayButton;
 
         Picker mSpritePicker;
+        Picker mOverlayPicker;
         
 
         TextButton mObjectEditorButton;

@@ -38,6 +38,7 @@ animationBank.cpp \
 EditorAnimationPage.cpp \
 ValueSlider.cpp \
 ageControl.cpp \
+overlayBank.cpp \
 
 
 

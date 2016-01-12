@@ -14,16 +14,21 @@
 
 
 extern Font *mainFont;
+extern Font *smallFont;
 
 
 #include "SpritePickable.h"
+#include "OverlayPickable.h"
 
 static SpritePickable spritePickable;
+
+static OverlayPickable overlayPickable;
 
 
 
 EditorImportPage::EditorImportPage()
-        : mImportButton( mainFont, +210, 260, "Import" ),
+        : mImportButton( smallFont, +180, 260, "Sprite Import" ),
+          mImportOverlayButton( smallFont, +310, 260, "Overlay Import" ),
           mSelect( false ),
           mImportedSheet( NULL ),
           mImportedSheetSprite( NULL ),
@@ -32,24 +37,33 @@ EditorImportPage::EditorImportPage()
           mSpriteTagField( mainFont, 
                            0,  -260, 6,
                            false,
-                           "Sprite Tag", NULL, " " ),
+                           "Tag", NULL, " " ),
           mSaveSpriteButton( mainFont, 210, -260, "Save" ),
+          mSaveOverlayButton( smallFont, 310, -260, "Save Overlay" ),
           mSpritePicker( &spritePickable, -310, 100 ),
+          mOverlayPicker( &overlayPickable, 310, 100 ),
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
           mCenterSet( false ) {
 
     addComponent( &mImportButton );
+    addComponent( &mImportOverlayButton );
     addComponent( &mSpriteTagField );
     addComponent( &mSaveSpriteButton );
+    addComponent( &mSaveOverlayButton );
     addComponent( &mSpritePicker );
+    addComponent( &mOverlayPicker );
     addComponent( &mObjectEditorButton );
 
     mImportButton.addActionListener( this );
+    mImportOverlayButton.addActionListener( this );
+    
     mSaveSpriteButton.addActionListener( this );
+    mSaveOverlayButton.addActionListener( this );
     mObjectEditorButton.addActionListener( this );
 
     mSaveSpriteButton.setVisible( false );
+    mSaveOverlayButton.setVisible( false );
     }
 
 
@@ -94,23 +108,84 @@ static Image *expandToPowersOfTwo( Image *inImage ) {
 
 
 
+void EditorImportPage::clearUseOfOverlay( int inOverlayID ) {
+    
+    // FIXME
+
+    }
+
+
+
+
 
 void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
-    if( inTarget == &mImportButton ) {
+    if( inTarget == &mImportButton ||
+        inTarget == &mImportOverlayButton ) {
         
-        char *importPath = 
-            SettingsManager::getStringSetting( "editorImportPath" );
+        if( mProcessedSelectionSprite != NULL ) {
+            freeSprite( mProcessedSelectionSprite );
+            mProcessedSelectionSprite = NULL;
+            }
+        mSaveSpriteButton.setVisible( false );
+        mSaveOverlayButton.setVisible( false );
+
+        File *importFile = NULL;
         
-        if( importPath != NULL ) {
-            PNGImageConverter converter;
+        if( inTarget == &mImportButton ) {
             
-            File importFile( NULL, importPath );
+            char *importPath = 
+                SettingsManager::getStringSetting( "editorImportPath" );
             
+            if( importPath != NULL ) {
+                
+                importFile = new File( NULL, importPath );
+                
+                delete [] importPath;
+                }
+            }
+        else if( inTarget == &mImportOverlayButton ) {
+            // used first PNG file in overlayImport dir
+            
+            File importDir( NULL, "overlayImport" );
+            if( importDir.exists() && importDir.isDirectory() ) {
+                int numPNGFiles;
+                File **pngFiles = importDir.getChildFiles( &numPNGFiles );
+
+                char found = false;
+                for( int t=0; t<numPNGFiles; t++ ) {
+                    if( !found ) {
+                        
+                        if( !pngFiles[t]->isDirectory() ) {
+                            char *pngFileName = pngFiles[t]->getFileName();
+                        
+                            if( strstr( pngFileName, ".png" ) != NULL ) {
+                        
+                                importFile = pngFiles[t];
+                                found = true;
+                                }
+                            }
+                        if( !found ) {
+                            // this file was not a match
+                            delete pngFiles[t];
+                            }
+                        }
+                    else {
+                        delete pngFiles[t];
+                        }
+                    }
+                delete [] pngFiles;
+                }
+            }
+        
+
+        if( importFile != NULL ) {
+    
             char imported = false;
             
-            if( importFile.exists() ) {
+            if( importFile->exists() ) {
+                PNGImageConverter converter;
                 
-                FileInputStream stream( &importFile );
+                FileInputStream stream( importFile );
                 
                 Image *image = converter.deformatImage( &stream );
                 
@@ -141,17 +216,30 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             
             if( !imported ) {
+                char *fullFileName = importFile->getFullFileName();
+                
                 char *message = autoSprintf( "Failed to import PNG from:##"
-                                             "%s", importPath );
+                                             "%s", fullFileName );
+                
+                delete [] fullFileName;
                 
                 setStatusDirect( message, true );
                 delete message;
                 }
+            else if( inTarget == &mImportOverlayButton ) {
+                // can save right away without making a selection
+                mSaveOverlayButton.setVisible( true );
+                }
             
-            delete [] importPath;
+            delete importFile;
             }
         else {
-            setStatus( "Import path not set in settings folder", true );
+            if( inTarget == &mImportButton ) {
+                setStatus( "Import path not set in settings folder", true );
+                }
+            else {
+                setStatus( "No PNG file found in overlayImport folder", true );
+                }
             }
         
         
@@ -412,7 +500,31 @@ void EditorImportPage::processSelection() {
         }
     
 
+    int startImX = (int)( mSelectStart.x + mSheetW/2 );
+    int startImY = (int)( mSheetH/2 - mSelectStart.y );
     
+    int imW = (int)( mSelectEnd.x - mSelectStart.x );
+    int imH = (int)( mSelectStart.y - mSelectEnd.y );
+    
+    if( startImX >= mImportedSheet->getWidth() ) {
+        imW -= startImX - ( mImportedSheet->getWidth() - 1 );
+        startImX = mImportedSheet->getWidth() - 1;
+        }
+    if( startImY >= mImportedSheet->getHeight() ) {
+        imH -= startImY - ( mImportedSheet->getHeight() - 1 );
+        startImY = mImportedSheet->getHeight() - 1;
+        }
+    
+    if( startImX < 0 ) {
+        imW -= 0 - startImX;
+        startImX = 0;
+        }
+    if( startImY < 0 ) {
+        imH -= 0 - startImY;
+        startImY = 0;
+        }
+    
+
 
     Image *cutImage = 
         mImportedSheet->getSubImage( (int)( mSelectStart.x + mSheetW/2 ), 
@@ -748,4 +860,5 @@ void EditorImportPage::processSelection() {
         }
     mProcessedSelectionSprite = fillSprite( mProcessedSelection, false );
     mSaveSpriteButton.setVisible( true );
+    mSaveOverlayButton.setVisible( false );
     }
