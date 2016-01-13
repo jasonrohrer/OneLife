@@ -1089,7 +1089,8 @@ int main() {
                     Time::getCurrentTime() + foodDecrementTimeSeconds;
                 
                 newObject.foodUpdate = true;
-
+		
+		newObject.clothing = getEmptyClothingSet();
 
                 newObject.xs = 0;
                 newObject.ys = 0;
