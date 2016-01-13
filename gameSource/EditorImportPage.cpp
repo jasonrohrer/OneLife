@@ -293,6 +293,7 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             mOverlayOffset.x = 0;
             mOverlayOffset.y = 0;
             mMovingOverlay = false;
+            mOverlayScale = 1.0;
             }
         }
     else if( inTarget == &mObjectEditorButton ) {
@@ -332,7 +333,8 @@ void EditorImportPage::drawUnderComponents( doublePair inViewCenter,
     if( mCurrentOverlay != NULL ) {
         setDrawColor( 1, 1, 1, 1 );
         toggleMultiplicativeBlend( true );
-        drawSprite( mCurrentOverlay->thumbnailSprite, mOverlayOffset );
+        drawSprite( mCurrentOverlay->thumbnailSprite, mOverlayOffset,
+                    mOverlayScale );
         toggleMultiplicativeBlend( false );
         }
     }
@@ -367,6 +369,7 @@ void EditorImportPage::step() {
 
 void EditorImportPage::makeActive( char inFresh ) {
     mMovingOverlay = false;
+    mScalingOverlay = false;
     
     if( !inFresh ) {
         return;
@@ -383,6 +386,10 @@ void EditorImportPage::pointerMove( float inX, float inY ) {
     if( mMovingOverlay ) {
         doublePair pos = { inX, inY };
         mOverlayOffset = sub( pos, mMovingOverlayPointerStart );
+        }
+    if( mScalingOverlay ) {
+        doublePair pos = { inX, inY };
+        mOverlayScale = 1 + ( pos.y - mMovingOverlayPointerStart.y ) / 100;
         }
     }
 
@@ -532,6 +539,12 @@ void EditorImportPage::keyDown( unsigned char inASCII ) {
         mMovingOverlayPointerStart.x = lastMouseX - mOverlayOffset.x;
         mMovingOverlayPointerStart.y = lastMouseY - mOverlayOffset.y;
         }
+    else if( inASCII == 's' ) {
+        mScalingOverlay = true;
+        mMovingOverlayPointerStart.x = lastMouseX;
+        mMovingOverlayPointerStart.y = lastMouseY;
+        
+        }
     }
 
 
@@ -539,6 +552,9 @@ void EditorImportPage::keyDown( unsigned char inASCII ) {
 void EditorImportPage::keyUp( unsigned char inASCII ) {
     if( inASCII == 'o' ) {
         mMovingOverlay = false;
+        }
+    else if( inASCII == 's' ) {
+        mScalingOverlay = false;
         }
     }
 
@@ -810,20 +826,72 @@ void EditorImportPage::processSelection() {
             for( int y=0; y<cutH; y++ ) {
                 int overY = y + offsetH;
 
-                if( overY >= 0 && overY < overH ) {
+                double overScaledY = (overY - overH/2) / mOverlayScale
+                    + overH/2;
+
+                if( overScaledY >= 0 && overScaledY < overH - 1 ) {
                     
                     for( int x=0; x<cutW; x++ ) {
                         
                         int overX = x + offsetW;
+                        
+                        double overScaledX = 
+                            (overX - overW/2) / mOverlayScale
+                            + overW/2;
 
-                        if( overX >= 0 && overX < overW ) {
+                        if( overScaledX >= 0 && overScaledX < overW - 1 ) {
                             // this cut pixel is hit by overlay
                             
                             int cutI = y * cutW + x;
                             
-                            int overI = overY * overW + overX;
+                            // interpolation
                             
-                            cutC[ cutI ] *= overC[ overI ];
+                            if( mOverlayScale == 1 ) {
+                                // no interp needed
+                                
+                                int overI = overY * overW + overX;
+                            
+                                cutC[ cutI ] *= overC[ overI ];
+                                }
+                            else {
+                                // bilinear interp
+                                
+                                int floorX = (int)floor(overScaledX);
+                                int ceilX = (int)ceil(overScaledX);
+                                int floorY = (int)floor(overScaledY);
+                                int ceilY = (int)ceil(overScaledY);
+    
+
+                                double cornerA1 = 
+                                    overC[ floorX + floorY * overW ];
+                                double cornerA2 = 
+                                    overC[ ceilX + floorY * overW ];
+                                
+                                double cornerB1 = 
+                                    overC[ floorX + ceilY * overW ];
+
+                                double cornerB2 = 
+                                    overC[ ceilX + ceilY * overW ];
+                                
+
+                                double xOffset = overScaledX - floorX;
+                                double yOffset = overScaledY - floorY;
+    
+    
+                                double topBlend = 
+                                    cornerA2 * xOffset + 
+                                    (1-xOffset) * cornerA1;
+    
+                                double bottomBlend = cornerB2 * xOffset + 
+                                    (1-xOffset) * cornerB1;
+    
+
+                                double blend = 
+                                    bottomBlend * yOffset + 
+                                    (1-yOffset) * topBlend;
+                                
+                                cutC[ cutI ] *= blend;
+                                }
                             }
                         }
                     }
