@@ -715,8 +715,8 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             }
         
         
-        if( ( i == 0 && !inFlipH ||
-              i == 2 && inFlipH ) 
+        if( ( ( i == 0 && !inFlipH ) ||
+              ( i == 2 && inFlipH ) ) 
             && inClothing.backShoe != NULL ) {
             
             skipSprite = true;
@@ -742,8 +742,8 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             drawObject( inClothing.tunic, cPos,
                         inFlipH, -1, emptyClothing );
             }
-        else if( ( i == 2 && !inFlipH ||
-                   i == 0 && inFlipH ) 
+        else if( ( ( i == 2 && !inFlipH ) ||
+                   ( i == 0 && inFlipH ) ) 
                  && inClothing.frontShoe != NULL ) {
             
             skipSprite = true;
