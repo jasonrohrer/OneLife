@@ -56,7 +56,9 @@ void initOverlayBank() {
                             
                             printf( "Loading overlay from path %s, tag %s\n", 
                                     fullName, tag );
-                            
+                            if( strcmp( tag, "test3" ) == 0 ) {
+                                printf( "HEY\n" );
+                                }
                             SpriteHandle thumbnailSprite =
                                 loadSpriteBase( fullName, false );
                             
@@ -225,6 +227,24 @@ OverlayRecord **searchOverlays( const char *inSearch,
 int addOverlay( const char *inTag,
                Image *inSourceImage ) {
 
+    // first, make transparent areas white
+    // the Import page expands image to a power of two, filling in the 
+    // extra space with transparent black
+    
+    // but since overlays are used multiplicatively, ignoring alpha values,
+    // we need to make this extra area white so that it's invisible
+
+    Color transWhite( 1, 1, 1, 0 );
+    
+    int numP = inSourceImage->getHeight() * inSourceImage->getWidth();
+    
+    double *alpha = inSourceImage->getChannel( 3 );
+    for( int i=0; i<numP; i++ ) {
+        if( alpha[i] == 0 ) {
+            inSourceImage->setColor( i, transWhite );
+            }    
+        }
+    
     
     int newID = -1;
 
@@ -368,6 +388,8 @@ void deleteOverlayFromBank( int inID ) {
             
             delete [] fileName;
             delete overlayFile;
+            
+            tagDir->remove();
             }
         delete tagDir;
         }

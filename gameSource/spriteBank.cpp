@@ -359,6 +359,8 @@ void deleteSpriteFromBank( int inID ) {
             
             delete [] fileName;
             delete spriteFile;
+            
+            tagDir->remove();
             }
         delete tagDir;
         }

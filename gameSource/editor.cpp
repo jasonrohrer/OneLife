@@ -59,6 +59,7 @@ CustomRandomSource randSource( 34957197 );
 
 #include "spriteBank.h"
 #include "objectBank.h"
+#include "overlayBank.h"
 
 
 
@@ -387,6 +388,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     setSoundPlaying( false );
 
 
+    initOverlayBank();
     initSpriteBank();
     initObjectBank();
     initTransBank();
@@ -446,6 +448,8 @@ void freeFrameDrawer() {
 
     freeSpriteBank();
     
+    freeOverlayBank();
+
     freeAnimationBank();
     }
 

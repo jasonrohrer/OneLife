@@ -17,6 +17,9 @@
 #include "Picker.h"
 
 
+#include "overlayBank.h"
+
+
 
 class EditorImportPage : public GamePage, public ActionListener {
         
@@ -29,6 +32,8 @@ class EditorImportPage : public GamePage, public ActionListener {
         
         virtual void actionPerformed( GUIComponent *inTarget );
         
+        virtual void drawUnderComponents( doublePair inViewCenter, 
+                                          double inViewSize );
         virtual void draw( doublePair inViewCenter, 
                            double inViewSize );
         
@@ -41,6 +46,10 @@ class EditorImportPage : public GamePage, public ActionListener {
         virtual void pointerDown( float inX, float inY );
         virtual void pointerDrag( float inX, float inY );
         virtual void pointerUp( float inX, float inY );
+
+        virtual void keyDown( unsigned char inASCII );
+        virtual void keyUp( unsigned char inASCII );
+
 
     protected:
         
@@ -80,6 +89,14 @@ class EditorImportPage : public GamePage, public ActionListener {
         char mCenterSet;
         doublePair mCenterPoint;
         
+
+        doublePair mOverlayOffset;
+        OverlayRecord *mCurrentOverlay;
+        
+
+        char mMovingOverlay;
+        
+        doublePair mMovingOverlayPointerStart;
     };
 
 

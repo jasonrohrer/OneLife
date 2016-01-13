@@ -44,7 +44,8 @@ EditorImportPage::EditorImportPage()
           mOverlayPicker( &overlayPickable, 310, 100 ),
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
-          mCenterSet( false ) {
+          mCenterSet( false ),
+          mCurrentOverlay( NULL ) {
 
     addComponent( &mImportButton );
     addComponent( &mImportOverlayButton );
@@ -61,6 +62,8 @@ EditorImportPage::EditorImportPage()
     mSaveSpriteButton.addActionListener( this );
     mSaveOverlayButton.addActionListener( this );
     mObjectEditorButton.addActionListener( this );
+    
+    mOverlayPicker.addActionListener( this );
 
     mSaveSpriteButton.setVisible( false );
     mSaveOverlayButton.setVisible( false );
@@ -110,8 +113,9 @@ static Image *expandToPowersOfTwo( Image *inImage ) {
 
 void EditorImportPage::clearUseOfOverlay( int inOverlayID ) {
     
-    // FIXME
-
+    if( mCurrentOverlay->id == inOverlayID ) {
+        mCurrentOverlay = NULL;
+        }
     }
 
 
@@ -263,6 +267,34 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
 
         delete [] tag;
         }
+    else if( inTarget == &mSaveOverlayButton ) {
+        char *tag = mSpriteTagField.getText();
+        
+        if( strcmp( tag, "" ) != 0 ) {
+                                
+            addOverlay( tag, mImportedSheet );
+
+            // don't let it get freed now
+            mImportedSheet = NULL;
+            
+            mOverlayPicker.redoSearch();
+            
+            mSaveOverlayButton.setVisible( false );
+            }
+        
+
+        delete [] tag;
+        }
+    else if( inTarget == &mOverlayPicker ) {
+        int overlayID = mOverlayPicker.getSelectedObject();
+    
+        if( overlayID != -1 ) {
+            mCurrentOverlay = getOverlay( overlayID );
+            mOverlayOffset.x = 0;
+            mOverlayOffset.y = 0;
+            mMovingOverlay = false;
+            }
+        }
     else if( inTarget == &mObjectEditorButton ) {
         setSignal( "objectEditor" );
         }
@@ -274,8 +306,8 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
 float lastMouseX, lastMouseY;
 
         
-void EditorImportPage::draw( doublePair inViewCenter, 
-                     double inViewSize ) {
+void EditorImportPage::drawUnderComponents( doublePair inViewCenter, 
+                                            double inViewSize ) {
     
     doublePair pos = { 0, 0 };
     
@@ -297,8 +329,22 @@ void EditorImportPage::draw( doublePair inViewCenter,
             drawSprite( mCenterMarkSprite, mCenterPoint );
             }
         }
+    if( mCurrentOverlay != NULL ) {
+        setDrawColor( 1, 1, 1, 1 );
+        toggleMultiplicativeBlend( true );
+        drawSprite( mCurrentOverlay->thumbnailSprite, mOverlayOffset );
+        toggleMultiplicativeBlend( false );
+        }
+    }
 
+
+
+void EditorImportPage::draw( doublePair inViewCenter, 
+                             double inViewSize ) {
+    
     if( mProcessedSelectionSprite != NULL ) {
+        doublePair pos;
+        
         pos.x = lastMouseX;
         pos.y = lastMouseY;
         
@@ -320,10 +366,12 @@ void EditorImportPage::step() {
 
 
 void EditorImportPage::makeActive( char inFresh ) {
+    mMovingOverlay = false;
+    
     if( !inFresh ) {
         return;
         }
-    
+
     mSpritePicker.redoSearch();
     }
 
@@ -331,6 +379,11 @@ void EditorImportPage::makeActive( char inFresh ) {
 void EditorImportPage::pointerMove( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
+
+    if( mMovingOverlay ) {
+        doublePair pos = { inX, inY };
+        mOverlayOffset = sub( pos, mMovingOverlayPointerStart );
+        }
     }
 
 
@@ -473,6 +526,24 @@ static void addShadow( Image *inImage ) {
 
 
 
+void EditorImportPage::keyDown( unsigned char inASCII ) {
+    if( inASCII == 'o' ) {
+        mMovingOverlay = true;
+        mMovingOverlayPointerStart.x = lastMouseX - mOverlayOffset.x;
+        mMovingOverlayPointerStart.y = lastMouseY - mOverlayOffset.y;
+        }
+    }
+
+
+
+void EditorImportPage::keyUp( unsigned char inASCII ) {
+    if( inASCII == 'o' ) {
+        mMovingOverlay = false;
+        }
+    }
+
+
+
 
 void EditorImportPage::processSelection() {
     
@@ -523,15 +594,11 @@ void EditorImportPage::processSelection() {
         imH -= 0 - startImY;
         startImY = 0;
         }
-    
-
 
     Image *cutImage = 
-        mImportedSheet->getSubImage( (int)( mSelectStart.x + mSheetW/2 ), 
-                                     (int)( mSheetH/2 - mSelectStart.y ), 
-                                     (int)( mSelectEnd.x - mSelectStart.x ), 
-                                     (int)( mSelectStart.y - mSelectEnd.y ) );
-
+        mImportedSheet->getSubImage( startImX, startImY, imW, imH );
+        
+    
     int w = cutImage->getWidth();
     int h = cutImage->getHeight();
     
@@ -713,6 +780,59 @@ void EditorImportPage::processSelection() {
     delete [] whiteMap;
 
 
+
+
+    if( mCurrentOverlay != NULL ) {
+        // apply overlay as multiply to cut image
+        
+        int cutW = cutImage->getWidth();
+        int cutH = cutImage->getHeight();
+        
+        int sheetW = mImportedSheet->getWidth();
+        int sheetH = mImportedSheet->getHeight();
+        
+        int overW = mCurrentOverlay->image->getWidth();
+        int overH = mCurrentOverlay->image->getHeight();
+
+        // this is relative to our whole sheet
+        int offsetW = (overW - sheetW)/2 - (int)mOverlayOffset.x;
+        int offsetH = (overH - sheetH)/2 + (int)mOverlayOffset.y;
+        
+        // this is relative to what we cut out
+        offsetW = startImX + offsetW;
+        offsetH = startImY + offsetH;
+        
+
+        for( int c=0; c<3; c++ ) {
+            double *overC = mCurrentOverlay->image->getChannel( c );
+            double *cutC = cutImage->getChannel( c );
+            
+            for( int y=0; y<cutH; y++ ) {
+                int overY = y + offsetH;
+
+                if( overY >= 0 && overY < overH ) {
+                    
+                    for( int x=0; x<cutW; x++ ) {
+                        
+                        int overX = x + offsetW;
+
+                        if( overX >= 0 && overX < overW ) {
+                            // this cut pixel is hit by overlay
+                            
+                            int cutI = y * cutW + x;
+                            
+                            int overI = overY * overW + overX;
+                            
+                            cutC[ cutI ] *= overC[ overI ];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+
     // now trim down image just around non-transparent part so
     // it is properly centered
 
@@ -749,9 +869,18 @@ void EditorImportPage::processSelection() {
             }
         }
     
-    Image *trimmedImage = 
-        cutImage->getSubImage( firstX, firstY, 
-                               1 + lastX - firstX, 1 + lastY - firstY );
+    Image *trimmedImage = NULL;
+    
+    if( lastX > firstX && lastY > firstY ) {
+        
+        trimmedImage = 
+            cutImage->getSubImage( firstX, firstY, 
+                                   1 + lastX - firstX, 1 + lastY - firstY );
+        }
+    else {
+        // no non-trans areas, don't trim it
+        trimmedImage = cutImage->copy();
+        }
     
     delete cutImage;
     

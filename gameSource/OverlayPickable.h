@@ -37,7 +37,7 @@ class OverlayPickable : public Pickable {
                 maxD = w;
                 }
 
-            double scale = 32.0 / maxD;
+            double scale = 64.0 / maxD;
             
             drawSprite( r->thumbnailSprite, inPos, scale );
             }

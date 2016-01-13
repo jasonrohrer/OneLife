@@ -34,6 +34,8 @@ OverlayRecord **searchOverlays( const char *inSearch,
                                 int *outNumResults, int *outNumRemaining );
 
 
+// added image is stored internally
+// should not be destroyed by caller unless adding failed
 // returns new ID, or -1 if adding failed
 int addOverlay( const char *inTag, Image *inSourceImage );
 
