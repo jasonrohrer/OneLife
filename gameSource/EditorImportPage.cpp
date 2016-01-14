@@ -389,7 +389,13 @@ void EditorImportPage::pointerMove( float inX, float inY ) {
         }
     if( mScalingOverlay ) {
         doublePair pos = { inX, inY };
-        mOverlayScale = 1 + ( pos.y - mMovingOverlayPointerStart.y ) / 100;
+        mOverlayScale = mMovingOverlayScaleStart + 
+            0.75 * mMovingOverlayScaleStart * 
+            ( pos.y - mMovingOverlayPointerStart.y ) / 100;
+        
+        if( mOverlayScale < 0 ) {
+            mOverlayScale = 0;
+            }
         }
     }
 
@@ -543,7 +549,7 @@ void EditorImportPage::keyDown( unsigned char inASCII ) {
         mScalingOverlay = true;
         mMovingOverlayPointerStart.x = lastMouseX;
         mMovingOverlayPointerStart.y = lastMouseY;
-        
+        mMovingOverlayScaleStart = mOverlayScale;
         }
     }
 

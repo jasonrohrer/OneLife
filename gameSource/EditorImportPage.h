@@ -99,6 +99,8 @@ class EditorImportPage : public GamePage, public ActionListener {
         double mOverlayScale;
         
         doublePair mMovingOverlayPointerStart;
+
+        double mMovingOverlayScaleStart;
     };
 
 
