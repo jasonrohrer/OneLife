@@ -833,7 +833,7 @@ void EditorImportPage::processSelection() {
                 int overY = y + offsetH;
 
                 double overScaledY = (overY - overH/2) / mOverlayScale
-                    + overH/2;
+                    + overH/2 - 0.5;
 
                 if( overScaledY >= 0 && overScaledY < overH - 1 ) {
                     
@@ -843,7 +843,7 @@ void EditorImportPage::processSelection() {
                         
                         double overScaledX = 
                             (overX - overW/2) / mOverlayScale
-                            + overW/2;
+                            + overW/2 - 0.5;
 
                         if( overScaledX >= 0 && overScaledX < overW - 1 ) {
                             // this cut pixel is hit by overlay
