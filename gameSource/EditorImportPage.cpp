@@ -45,7 +45,9 @@ EditorImportPage::EditorImportPage()
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
           mCenterSet( false ),
-          mCurrentOverlay( NULL ) {
+          mCurrentOverlay( NULL ),
+          mClearRotButton( smallFont, -300, -280, "0 Rot" ),
+          mClearScaleButton( smallFont, -300, -240, "1 Scale" ) {
 
     addComponent( &mImportButton );
     addComponent( &mImportOverlayButton );
@@ -56,6 +58,10 @@ EditorImportPage::EditorImportPage()
     addComponent( &mOverlayPicker );
     addComponent( &mObjectEditorButton );
 
+    addComponent( &mClearRotButton );
+    addComponent( &mClearScaleButton );
+    
+
     mImportButton.addActionListener( this );
     mImportOverlayButton.addActionListener( this );
     
@@ -65,8 +71,19 @@ EditorImportPage::EditorImportPage()
     
     mOverlayPicker.addActionListener( this );
 
+
+    mClearRotButton.addActionListener( this );
+    mClearScaleButton.addActionListener( this );
+    
+
     mSaveSpriteButton.setVisible( false );
     mSaveOverlayButton.setVisible( false );
+
+    mClearRotButton.setVisible( false );
+    mClearScaleButton.setVisible( false );
+
+    mOverlayScale = 1;
+    mOverlayRotation = 0;
     }
 
 
@@ -285,6 +302,14 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
 
         delete [] tag;
         }
+    else if( inTarget == &mClearRotButton ) {
+        mClearRotButton.setVisible( false );
+        mOverlayRotation = 0;
+        }
+    else if( inTarget == &mClearScaleButton ) {
+        mClearScaleButton.setVisible( false );
+        mOverlayScale = 1;
+        }    
     else if( inTarget == &mOverlayPicker ) {
         int overlayID = mOverlayPicker.getSelectedObject();
     
@@ -363,10 +388,34 @@ void EditorImportPage::draw( doublePair inViewCenter,
         drawSprite( mProcessedSelectionSprite, pos );
         }
     
+    setDrawColor( 1, 1, 1, 1 );
+
+    if( mOverlayScale != 1.0 ) {
+        doublePair pos = { 300, -240 };
+        char *string = 
+            autoSprintf( "Scale: %.3f", 
+                         mOverlayScale );
+    
+        smallFont->drawString( string, pos, alignLeft );
+        
+        delete [] string;
+        }
+    if( mOverlayRotation != 0 ) {
+        doublePair pos = { 300, -260 };
+        char *string = 
+            autoSprintf( "Rot: %.3f", 
+                         mOverlayRotation );
+    
+        smallFont->drawString( string, pos, alignLeft );
+        
+        delete [] string;
+        }
     }
 
 
 void EditorImportPage::step() {
+    mClearRotButton.setVisible( mOverlayRotation != 0 );
+    mClearScaleButton.setVisible( mOverlayScale != 1 );
     }
 
 
@@ -389,25 +438,29 @@ void EditorImportPage::pointerMove( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
 
-    if( mMovingOverlay ) {
-        doublePair pos = { inX, inY };
-        mOverlayOffset = sub( pos, mMovingOverlayPointerStart );
-        }
-    if( mScalingOverlay ) {
-        doublePair pos = { inX, inY };
-        mOverlayScale = mMovingOverlayScaleStart + 
-            0.75 * mMovingOverlayScaleStart * 
-            ( pos.y - mMovingOverlayPointerStart.y ) / 100;
+    if( mCurrentOverlay != NULL  ) {
         
-        if( mOverlayScale < 0 ) {
-            mOverlayScale = 0;
+        if( mMovingOverlay ) {
+            doublePair pos = { inX, inY };
+            mOverlayOffset = sub( pos, mMovingOverlayPointerStart );
+            }
+        if( mScalingOverlay ) {
+            doublePair pos = { inX, inY };
+            mOverlayScale = mMovingOverlayScaleStart + 
+                0.75 * mMovingOverlayScaleStart * 
+                ( pos.y - mMovingOverlayPointerStart.y ) / 100;
+        
+            if( mOverlayScale < 0 ) {
+                mOverlayScale = 0;
+                }
+            }
+        if( mRotatingOverlay ) {
+            doublePair pos = { inX, inY };
+            mOverlayRotation = mMovingOverlayRotationStart + 
+                ( pos.x - mMovingOverlayPointerStart.x ) / 400;
             }
         }
-    if( mRotatingOverlay ) {
-        doublePair pos = { inX, inY };
-        mOverlayRotation = mMovingOverlayRotationStart + 
-            ( pos.x - mMovingOverlayPointerStart.x ) / 400;
-        }
+
     }
 
 
