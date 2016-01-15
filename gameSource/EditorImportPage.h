@@ -94,6 +94,13 @@ class EditorImportPage : public GamePage, public ActionListener {
         OverlayRecord *mCurrentOverlay;
         
 
+        char mMovingSheet;
+        doublePair mSheetOffset;
+        doublePair mMovingSheetPointerStart;
+        
+
+        char mSettingSpriteCenter;
+        
         char mMovingOverlay;
         char mScalingOverlay;
         char mRotatingOverlay;

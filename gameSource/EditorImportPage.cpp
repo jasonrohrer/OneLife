@@ -84,7 +84,14 @@ EditorImportPage::EditorImportPage()
 
     mOverlayScale = 1;
     mOverlayRotation = 0;
+
+
+    mMovingSheet = false;
+    doublePair offset = { 0, 0 };
+    mSheetOffset = offset;
+    mMovingSheetPointerStart = offset;
     }
+
 
 
 
@@ -147,6 +154,9 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             freeSprite( mProcessedSelectionSprite );
             mProcessedSelectionSprite = NULL;
             }
+        
+        mSettingSpriteCenter = false;
+
         mSaveSpriteButton.setVisible( false );
         mSaveOverlayButton.setVisible( false );
 
@@ -163,6 +173,9 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
                 
                 delete [] importPath;
                 }
+            mSheetOffset.x = 0;
+            mSheetOffset.y = 0;
+            mMovingSheet = false;
             }
         else if( inTarget == &mImportOverlayButton ) {
             // used first PNG file in overlayImport dir
@@ -340,11 +353,9 @@ float lastMouseX, lastMouseY;
 void EditorImportPage::drawUnderComponents( doublePair inViewCenter, 
                                             double inViewSize ) {
     
-    doublePair pos = { 0, 0 };
-    
     if( mImportedSheetSprite != NULL ) {
         setDrawColor( 1, 1, 1, 1 );
-        drawSprite( mImportedSheetSprite, pos );
+        drawSprite( mImportedSheetSprite, mSheetOffset );
 
 
         if( mSelect ) {
@@ -471,6 +482,13 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
 
 
     if( isLastMouseButtonRight() ) {
+        mMovingSheet = true;
+        mMovingSheetPointerStart.x = inX - mSheetOffset.x;
+        mMovingSheetPointerStart.y = inY - mSheetOffset.y;
+        return;
+        }
+    
+    if( mSettingSpriteCenter ) {
     
         if( !mCenterSet ) {
             mCenterPoint.x = inX;
@@ -485,13 +503,13 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
         }
     
 
-    if( inX > - mSheetW / 2
+    if( inX - mSheetOffset.x > - mSheetW / 2
         &&
-        inX < mSheetW / 2 
+        inX - mSheetOffset.x < mSheetW / 2 
         &&
-        inY > - mSheetH / 2
+        inY - mSheetOffset.y > - mSheetH / 2
         &&
-        inY < mSheetH / 2 ) {
+        inY - mSheetOffset.y < mSheetH / 2 ) {
         
         mSelectStart.x = inX;
         mSelectStart.y = inY;
@@ -504,7 +522,16 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
 
 
 void EditorImportPage::pointerDrag( float inX, float inY ) {
-    if( isLastMouseButtonRight() ) {
+    lastMouseX = inX;
+    lastMouseY = inY;
+    
+    if( mMovingSheet ) {
+        doublePair pos = { inX, inY };
+        mSheetOffset = sub( pos, mMovingSheetPointerStart );
+        }
+    
+
+    if( mSettingSpriteCenter ) {
         if( mCenterSet ) {
             mCenterPoint.x = inX;
             mCenterPoint.y = inY;
@@ -533,6 +560,8 @@ void EditorImportPage::pointerUp( float inX, float inY ) {
         processSelection();
         mSelect = false;
         }
+    
+    mMovingSheet = false;
     }
 
 
@@ -621,6 +650,9 @@ void EditorImportPage::keyDown( unsigned char inASCII ) {
         mMovingOverlayPointerStart.y = lastMouseY;
         mMovingOverlayRotationStart = mOverlayRotation;
         }
+    else if( inASCII == 'c' ) {
+        mSettingSpriteCenter = true;
+        }
     }
 
 
@@ -634,6 +666,9 @@ void EditorImportPage::keyUp( unsigned char inASCII ) {
         }
     else if( inASCII == 'r' ) {
         mRotatingOverlay = false;
+        }
+    else if( inASCII == 'c' ) {
+        mSettingSpriteCenter = false;
         }
     }
 
@@ -666,8 +701,8 @@ void EditorImportPage::processSelection() {
         }
     
 
-    int startImX = (int)( mSelectStart.x + mSheetW/2 );
-    int startImY = (int)( mSheetH/2 - mSelectStart.y );
+    int startImX = (int)( mSelectStart.x + mSheetW/2 - mSheetOffset.x );
+    int startImY = (int)( mSheetH/2 - mSelectStart.y + mSheetOffset.y );
     
     int imW = (int)( mSelectEnd.x - mSelectStart.x );
     int imH = (int)( mSelectStart.y - mSelectEnd.y );
@@ -893,8 +928,10 @@ void EditorImportPage::processSelection() {
         int overH = mCurrentOverlay->image->getHeight();
 
         // this is relative to our whole sheet
-        int offsetW = (overW - sheetW)/2 - (int)mOverlayOffset.x;
-        int offsetH = (overH - sheetH)/2 + (int)mOverlayOffset.y;
+        int offsetW = (overW - sheetW)/2 - (int)mOverlayOffset.x 
+            + (int)mSheetOffset.x;
+        int offsetH = (overH - sheetH)/2 + (int)mOverlayOffset.y
+            - (int)mSheetOffset.y;
         
         // this is relative to what we cut out
         offsetW = startImX + offsetW;
