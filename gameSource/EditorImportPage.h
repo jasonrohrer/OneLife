@@ -119,6 +119,9 @@ class EditorImportPage : public GamePage, public ActionListener {
         TextButton mClearScaleButton;
 
         TextButton mFlipOverlayButton;
+
+        TextButton mClearOverlayButton;
+        
         
     };
 

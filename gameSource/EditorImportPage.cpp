@@ -48,7 +48,8 @@ EditorImportPage::EditorImportPage()
           mCurrentOverlay( NULL ),
           mClearRotButton( smallFont, -300, -280, "0 Rot" ),
           mClearScaleButton( smallFont, -300, -240, "1 Scale" ),
-          mFlipOverlayButton( smallFont, -230, -280, "Flip H" ){
+          mFlipOverlayButton( smallFont, -230, -280, "Flip H" ),
+          mClearOverlayButton( smallFont, -230, -240, "X Ovly" ) {
 
     addComponent( &mImportButton );
     addComponent( &mImportOverlayButton );
@@ -62,6 +63,7 @@ EditorImportPage::EditorImportPage()
     addComponent( &mClearRotButton );
     addComponent( &mClearScaleButton );
     addComponent( &mFlipOverlayButton );
+    addComponent( &mClearOverlayButton );
     
 
     mImportButton.addActionListener( this );
@@ -77,6 +79,8 @@ EditorImportPage::EditorImportPage()
     mClearRotButton.addActionListener( this );
     mClearScaleButton.addActionListener( this );
     mFlipOverlayButton.addActionListener( this );
+    mClearOverlayButton.addActionListener( this );
+
 
     mSaveSpriteButton.setVisible( false );
     mSaveOverlayButton.setVisible( false );
@@ -84,6 +88,7 @@ EditorImportPage::EditorImportPage()
     mClearRotButton.setVisible( false );
     mClearScaleButton.setVisible( false );
     mFlipOverlayButton.setVisible( false );
+    mClearOverlayButton.setVisible( false );
 
     mOverlayScale = 1;
     mOverlayRotation = 0;
@@ -331,6 +336,13 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mFlipOverlayButton ) {
         mOverlayFlip = !mOverlayFlip;
         }    
+    else if( inTarget == &mClearOverlayButton ) {
+        mCurrentOverlay = NULL;
+        mClearScaleButton.setVisible( false );
+        mClearRotButton.setVisible( false );
+        mFlipOverlayButton.setVisible( false );
+        mClearOverlayButton.setVisible( false );
+        }    
     else if( inTarget == &mOverlayPicker ) {
         int overlayID = mOverlayPicker.getSelectedObject();
     
@@ -346,6 +358,7 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             mOverlayFlip = 0;
             
             mFlipOverlayButton.setVisible( true );
+            mClearOverlayButton.setVisible( true );
 
             mOverlayScale = 1.0;
             mOverlayRotation = 0;
