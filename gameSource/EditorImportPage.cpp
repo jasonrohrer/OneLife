@@ -292,8 +292,13 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentOverlay = getOverlay( overlayID );
             mOverlayOffset.x = 0;
             mOverlayOffset.y = 0;
+            
             mMovingOverlay = false;
+            mScalingOverlay = false;
+            mRotatingOverlay = false;
+            
             mOverlayScale = 1.0;
+            mOverlayRotation = 0;
             }
         }
     else if( inTarget == &mObjectEditorButton ) {
@@ -334,7 +339,7 @@ void EditorImportPage::drawUnderComponents( doublePair inViewCenter,
         setDrawColor( 1, 1, 1, 1 );
         toggleMultiplicativeBlend( true );
         drawSprite( mCurrentOverlay->thumbnailSprite, mOverlayOffset,
-                    mOverlayScale );
+                    mOverlayScale, mOverlayRotation );
         toggleMultiplicativeBlend( false );
         }
     }
@@ -370,6 +375,7 @@ void EditorImportPage::step() {
 void EditorImportPage::makeActive( char inFresh ) {
     mMovingOverlay = false;
     mScalingOverlay = false;
+    mRotatingOverlay = false;
     
     if( !inFresh ) {
         return;
@@ -396,6 +402,11 @@ void EditorImportPage::pointerMove( float inX, float inY ) {
         if( mOverlayScale < 0 ) {
             mOverlayScale = 0;
             }
+        }
+    if( mRotatingOverlay ) {
+        doublePair pos = { inX, inY };
+        mOverlayRotation = mMovingOverlayRotationStart + 
+            ( pos.x - mMovingOverlayPointerStart.x ) / 400;
         }
     }
 
@@ -540,7 +551,7 @@ static void addShadow( Image *inImage ) {
 
 
 void EditorImportPage::keyDown( unsigned char inASCII ) {
-    if( inASCII == 'o' ) {
+    if( inASCII == 't' ) {
         mMovingOverlay = true;
         mMovingOverlayPointerStart.x = lastMouseX - mOverlayOffset.x;
         mMovingOverlayPointerStart.y = lastMouseY - mOverlayOffset.y;
@@ -551,16 +562,25 @@ void EditorImportPage::keyDown( unsigned char inASCII ) {
         mMovingOverlayPointerStart.y = lastMouseY;
         mMovingOverlayScaleStart = mOverlayScale;
         }
+    else if( inASCII == 'r' ) {
+        mRotatingOverlay = true;
+        mMovingOverlayPointerStart.x = lastMouseX;
+        mMovingOverlayPointerStart.y = lastMouseY;
+        mMovingOverlayRotationStart = mOverlayRotation;
+        }
     }
 
 
 
 void EditorImportPage::keyUp( unsigned char inASCII ) {
-    if( inASCII == 'o' ) {
+    if( inASCII == 't' ) {
         mMovingOverlay = false;
         }
     else if( inASCII == 's' ) {
         mScalingOverlay = false;
+        }
+    else if( inASCII == 'r' ) {
+        mRotatingOverlay = false;
         }
     }
 
@@ -807,6 +827,9 @@ void EditorImportPage::processSelection() {
     if( mCurrentOverlay != NULL ) {
         // apply overlay as multiply to cut image
         
+        double cosAngle = cos( - 2 * M_PI * mOverlayRotation );
+        double sinAngle = sin( - 2 * M_PI * mOverlayRotation );
+
         int cutW = cutImage->getWidth();
         int cutH = cutImage->getHeight();
         
@@ -832,27 +855,52 @@ void EditorImportPage::processSelection() {
             for( int y=0; y<cutH; y++ ) {
                 int overY = y + offsetH;
 
-                double overScaledY = (overY - overH/2) / mOverlayScale
-                    + overH/2 - 0.5;
+                // scale and rotate relative to center
+                double overScaledY = (overY - overH/2) / mOverlayScale;
 
-                if( overScaledY >= 0 && overScaledY < overH - 1 ) {
                     
-                    for( int x=0; x<cutW; x++ ) {
-                        
-                        int overX = x + offsetW;
-                        
-                        double overScaledX = 
-                            (overX - overW/2) / mOverlayScale
-                            + overW/2 - 0.5;
+                for( int x=0; x<cutW; x++ ) {
+                    
+                    int overX = x + offsetW;
+                    
+                    // scale and rotate relative to center
+                    double overScaledX = 
+                        (overX - overW/2) / mOverlayScale;
 
-                        if( overScaledX >= 0 && overScaledX < overW - 1 ) {
+                    double overScaledFinalX = overScaledX;
+                    double overScaledFinalY = overScaledY;
+                    
+
+                    if( mOverlayRotation != 0 ) {
+                        
+                        double rotX = 
+                            overScaledX * cosAngle - overScaledY * sinAngle;
+                        double rotY = 
+                            overScaledX * sinAngle + overScaledY * cosAngle;
+
+                        overScaledFinalX = rotX;
+                        overScaledFinalY = rotY;
+                        }
+                    
+                    // relative to corner again
+                    overScaledFinalX += overW/2 - 0.5;
+                    overScaledFinalY += overH/2 - 0.5;
+                        
+
+
+                    if( overScaledFinalY >= 0 && 
+                        overScaledFinalY < overH - 1 ) {
+
+                        if( overScaledFinalX >= 0 && 
+                            overScaledFinalX < overW - 1 ) {
                             // this cut pixel is hit by overlay
                             
                             int cutI = y * cutW + x;
                             
-                            // interpolation
+                            // interpolation?
                             
-                            if( mOverlayScale == 1 ) {
+                            if( mOverlayScale == 1 &&
+                                mOverlayRotation == 0 ) {
                                 // no interp needed
                                 
                                 int overI = overY * overW + overX;
@@ -862,10 +910,10 @@ void EditorImportPage::processSelection() {
                             else {
                                 // bilinear interp
                                 
-                                int floorX = (int)floor(overScaledX);
-                                int ceilX = (int)ceil(overScaledX);
-                                int floorY = (int)floor(overScaledY);
-                                int ceilY = (int)ceil(overScaledY);
+                                int floorX = (int)floor(overScaledFinalX);
+                                int ceilX = (int)ceil(overScaledFinalX);
+                                int floorY = (int)floor(overScaledFinalY);
+                                int ceilY = (int)ceil(overScaledFinalY);
     
 
                                 double cornerA1 = 
@@ -880,8 +928,8 @@ void EditorImportPage::processSelection() {
                                     overC[ ceilX + ceilY * overW ];
                                 
 
-                                double xOffset = overScaledX - floorX;
-                                double yOffset = overScaledY - floorY;
+                                double xOffset = overScaledFinalX - floorX;
+                                double yOffset = overScaledFinalY - floorY;
     
     
                                 double topBlend = 

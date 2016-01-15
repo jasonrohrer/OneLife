@@ -96,11 +96,14 @@ class EditorImportPage : public GamePage, public ActionListener {
 
         char mMovingOverlay;
         char mScalingOverlay;
+        char mRotatingOverlay;
         double mOverlayScale;
+        double mOverlayRotation;
         
         doublePair mMovingOverlayPointerStart;
 
         double mMovingOverlayScaleStart;
+        double mMovingOverlayRotationStart;
     };
 
 
