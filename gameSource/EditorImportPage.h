@@ -107,6 +107,9 @@ class EditorImportPage : public GamePage, public ActionListener {
         double mOverlayScale;
         double mOverlayRotation;
         
+        char mOverlayFlip;
+        
+
         doublePair mMovingOverlayPointerStart;
 
         double mMovingOverlayScaleStart;
@@ -114,6 +117,8 @@ class EditorImportPage : public GamePage, public ActionListener {
 
         TextButton mClearRotButton;
         TextButton mClearScaleButton;
+
+        TextButton mFlipOverlayButton;
         
     };
 

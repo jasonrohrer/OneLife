@@ -47,7 +47,8 @@ EditorImportPage::EditorImportPage()
           mCenterSet( false ),
           mCurrentOverlay( NULL ),
           mClearRotButton( smallFont, -300, -280, "0 Rot" ),
-          mClearScaleButton( smallFont, -300, -240, "1 Scale" ) {
+          mClearScaleButton( smallFont, -300, -240, "1 Scale" ),
+          mFlipOverlayButton( smallFont, -230, -280, "Flip H" ){
 
     addComponent( &mImportButton );
     addComponent( &mImportOverlayButton );
@@ -60,6 +61,7 @@ EditorImportPage::EditorImportPage()
 
     addComponent( &mClearRotButton );
     addComponent( &mClearScaleButton );
+    addComponent( &mFlipOverlayButton );
     
 
     mImportButton.addActionListener( this );
@@ -74,13 +76,14 @@ EditorImportPage::EditorImportPage()
 
     mClearRotButton.addActionListener( this );
     mClearScaleButton.addActionListener( this );
-    
+    mFlipOverlayButton.addActionListener( this );
 
     mSaveSpriteButton.setVisible( false );
     mSaveOverlayButton.setVisible( false );
 
     mClearRotButton.setVisible( false );
     mClearScaleButton.setVisible( false );
+    mFlipOverlayButton.setVisible( false );
 
     mOverlayScale = 1;
     mOverlayRotation = 0;
@@ -90,6 +93,8 @@ EditorImportPage::EditorImportPage()
     doublePair offset = { 0, 0 };
     mSheetOffset = offset;
     mMovingSheetPointerStart = offset;
+
+    mOverlayFlip = 0;
     }
 
 
@@ -323,6 +328,9 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         mClearScaleButton.setVisible( false );
         mOverlayScale = 1;
         }    
+    else if( inTarget == &mFlipOverlayButton ) {
+        mOverlayFlip = !mOverlayFlip;
+        }    
     else if( inTarget == &mOverlayPicker ) {
         int overlayID = mOverlayPicker.getSelectedObject();
     
@@ -335,6 +343,10 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             mScalingOverlay = false;
             mRotatingOverlay = false;
             
+            mOverlayFlip = 0;
+            
+            mFlipOverlayButton.setVisible( true );
+
             mOverlayScale = 1.0;
             mOverlayRotation = 0;
             }
@@ -375,7 +387,7 @@ void EditorImportPage::drawUnderComponents( doublePair inViewCenter,
         setDrawColor( 1, 1, 1, 1 );
         toggleMultiplicativeBlend( true );
         drawSprite( mCurrentOverlay->thumbnailSprite, mOverlayOffset,
-                    mOverlayScale, mOverlayRotation );
+                    mOverlayScale, mOverlayRotation, mOverlayFlip );
         toggleMultiplicativeBlend( false );
         }
     }
@@ -975,8 +987,11 @@ void EditorImportPage::processSelection() {
                     // relative to corner again
                     overScaledFinalX += overW/2 - 0.5;
                     overScaledFinalY += overH/2 - 0.5;
-                        
-
+                    
+                    if( mOverlayFlip ) {
+                        overScaledFinalX = ( overW - 1 ) - overScaledFinalX;
+                        overX = ( overW - 1 ) - overX;
+                        }
 
                     if( overScaledFinalY >= 0 && 
                         overScaledFinalY < overH - 1 ) {
