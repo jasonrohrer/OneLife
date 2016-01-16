@@ -19,6 +19,8 @@
 
 #include "overlayBank.h"
 
+#include "keyLegend.h"
+
 
 
 class EditorImportPage : public GamePage, public ActionListener {
@@ -121,6 +123,9 @@ class EditorImportPage : public GamePage, public ActionListener {
         TextButton mFlipOverlayButton;
 
         TextButton mClearOverlayButton;
+        
+        KeyLegend mSheetKeyLegend;
+        KeyLegend mOverlayKeyLegend;
         
         
     };

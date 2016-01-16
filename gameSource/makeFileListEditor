@@ -39,6 +39,7 @@ EditorAnimationPage.cpp \
 ValueSlider.cpp \
 ageControl.cpp \
 overlayBank.cpp \
+keyLegend.cpp \
 
 
 

@@ -100,6 +100,14 @@ EditorImportPage::EditorImportPage()
     mMovingSheetPointerStart = offset;
 
     mOverlayFlip = 0;
+
+
+    addKeyClassDescription( &mSheetKeyLegend, "r-mouse", "Mv sheet" );
+    addKeyDescription( &mSheetKeyLegend, 'c', "Mv sprite center" );
+    addKeyDescription( &mOverlayKeyLegend, 't', "Mv overlay" );
+    addKeyDescription( &mOverlayKeyLegend, 's', "Scale overlay" );
+    addKeyDescription( &mOverlayKeyLegend, 'r', "Rot overlay" );
+    
     }
 
 
@@ -446,7 +454,25 @@ void EditorImportPage::draw( doublePair inViewCenter,
         
         delete [] string;
         }
+
+    if( mCurrentOverlay != NULL ) {
+        doublePair pos = mObjectEditorButton.getPosition();
+
+        pos.y += 20;
+        pos.x -= 380;
+        
+        drawKeyLegend( &mOverlayKeyLegend, pos );
+        }
+    if( mImportedSheetSprite != NULL ) {
+        doublePair pos = mObjectEditorButton.getPosition();
+        
+        pos.y += 20;
+        pos.x -= 240;
+        
+        drawKeyLegend( &mSheetKeyLegend, pos );
+        }
     }
+
 
 
 void EditorImportPage::step() {
