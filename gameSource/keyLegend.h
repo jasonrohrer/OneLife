@@ -1,3 +1,6 @@
+#ifndef KEY_LEGNED_INCLUDED
+#define KEY_LEGNED_INCLUDED
+
 
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/game/doublePair.h"
@@ -29,3 +32,5 @@ void addKeyClassDescription( KeyLegend *inLegend,
 
 void drawKeyLegend( KeyLegend *inLegend, doublePair inPos );
 
+
+#endif

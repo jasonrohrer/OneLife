@@ -248,6 +248,14 @@ EditorObjectPage::EditorObjectPage()
     mClothingCheckboxNames[2] = "Tunic";
     mClothingCheckboxNames[3] = "Hat";
     mClothingCheckboxes[0]->setToggled( true );
+
+
+
+    addKeyClassDescription( &mKeyLegend, "n/m", "Switch layers" );
+    addKeyClassDescription( &mKeyLegend, "arrows", "Move layer" );
+    addKeyClassDescription( &mKeyLegend, "Pg Up/Down", "Layer order" );
+    addKeyClassDescription( &mKeyLegend, "Ctrl", "Bigger jumps" );
+    addKeyDescription( &mKeyLegend, 'r', "Rotate layer" );
     }
 
 
@@ -1090,6 +1098,14 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         smallFont->drawString( mClothingCheckboxNames[i], pos, alignRight );
         }
     
+
+
+    doublePair legendPos = mImportEditorButton.getPosition();
+    
+    legendPos.x = -100;
+    legendPos.y += 20;
+    
+    drawKeyLegend( &mKeyLegend, legendPos );
     }
 
 

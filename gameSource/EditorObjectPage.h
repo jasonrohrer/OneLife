@@ -23,6 +23,9 @@
 
 #include "objectBank.h"
 
+#include "keyLegend.h"
+
+
 
 #define NUM_OBJECT_CHECKBOXES 3
 
@@ -155,6 +158,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         char mRotAdjustMode;
         float mRotStartMouseX;
         
+
+        KeyLegend mKeyLegend;
     };
 
 
