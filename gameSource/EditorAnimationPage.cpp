@@ -839,10 +839,12 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
         smallFont->drawString( mCheckboxNames[i], pos, alignRight );
         }
 
-    pos = mReverseRotationCheckbox.getPosition();
-    pos.x -= 10;
-    smallFont->drawString( "CCW", pos, alignRight );
-
+    if( mReverseRotationCheckbox.isVisible() ) {
+        pos = mReverseRotationCheckbox.getPosition();
+        pos.x -= 10;
+        smallFont->drawString( "CCW", pos, alignRight );
+        }
+        
     
     if( mCurrentObjectID != -1 ) {
         
