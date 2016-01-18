@@ -104,7 +104,10 @@ ClothingSet getEmptyClothingSet();
 
 
 // loads from objects folder
-void initObjectBank();
+void initObjectBankStart();
+// returns progress... ready for Finish when progress == 1.0
+float initObjectBankStep();
+void initObjectBankFinish();
 
 
 void freeObjectBank();

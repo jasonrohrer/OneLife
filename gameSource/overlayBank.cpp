@@ -35,7 +35,6 @@ static int maxID;
 
 
 void initOverlayBankStart() {
-    SimpleVector<OverlayRecord*> records;
     maxID = 0;
 
     numFiles = 0;

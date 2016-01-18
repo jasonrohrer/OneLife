@@ -924,9 +924,21 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initSpriteBankFinish();
+                        loadingPage->setCurrentPhase( "OBJECTS" );
+                        initObjectBankStart();
+
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 2: {
+                    float progress = initObjectBankStep();
+                    loadingPage->setCurrentProgress( progress );
+                    
+                    if( progress == 1.0 ) {
+                        initObjectBankFinish();
                         loadingPhase ++;
                         
-                        initObjectBank();
                         initTransBank();
                         initAnimationBank();
                         }
