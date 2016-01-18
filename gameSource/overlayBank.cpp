@@ -23,88 +23,116 @@ static StringTree tree;
 
 
 
-void initOverlayBank() {
+static int numFiles;
+static File **childFiles;
+
+static int currentFile;
+
+
+static SimpleVector<OverlayRecord*> records;
+static int maxID;
+
+
+
+void initOverlayBankStart() {
     SimpleVector<OverlayRecord*> records;
-    int maxID = 0;
+    maxID = 0;
+
+    numFiles = 0;
+    currentFile = 0;
     
     File overlaysDir( NULL, "overlays" );
     if( overlaysDir.exists() && overlaysDir.isDirectory() ) {
 
-        int numFiles;
-        File **childFiles = overlaysDir.getChildFiles( &numFiles );
-
-        for( int i=0; i<numFiles; i++ ) {
-            
-            if( childFiles[i]->isDirectory() ) {
-                
-                char *tag = childFiles[i]->getFileName();
-                
-                int numTGAFiles;
-                File **tgaFiles = childFiles[i]->getChildFiles( &numTGAFiles );
-                
-                for( int t=0; t<numTGAFiles; t++ ) {
-                    
-                    if( ! tgaFiles[t]->isDirectory() ) {
-                        
-                        char *tgaFileName = tgaFiles[t]->getFileName();
-                        
-                        if( strstr( tgaFileName, ".tga" ) != NULL ) {
-                            
-                            // a tga file!
-
-                            char *fullName = tgaFiles[t]->getFullFileName();
-                            
-                            printf( "Loading overlay from path %s, tag %s\n", 
-                                    fullName, tag );
-                            if( strcmp( tag, "test3" ) == 0 ) {
-                                printf( "HEY\n" );
-                                }
-                            SpriteHandle thumbnailSprite =
-                                loadSpriteBase( fullName, false );
-                            
-                            
-                            if( thumbnailSprite != NULL ) {
-                                OverlayRecord *r = new OverlayRecord;
-
-                                r->id = 0;
-                                
-                                sscanf( tgaFileName, "%d.tga", &( r->id ) );
-                                
-                                printf( "Scanned id = %d\n", r->id );
-                                
-                                r->thumbnailSprite = thumbnailSprite;
-                                r->tag = stringDuplicate( tag );
-                                
-
-                                r->image = 
-                                    readTGAFileBase( fullName );
-
-                                records.push_back( r );
-
-                                if( maxID < r->id ) {
-                                    maxID = r->id;
-                                    }
-                                }
-                            
-                            delete [] fullName;
-                            }
-                        delete [] tgaFileName;
-                        }
-                    
-                    delete tgaFiles[t];
-                    }
-                
-                delete [] tag;
-                
-                delete [] tgaFiles;
-                }
-            
-            delete childFiles[i];
-            }
-        
-
-        delete [] childFiles;
+        childFiles = overlaysDir.getChildFiles( &numFiles );
         }
+    }
+
+
+
+float initOverlayBankStep() {
+
+    if( currentFile == numFiles ) {
+        return 1.0;
+        }
+    
+    int i = currentFile;
+    
+    if( childFiles[i]->isDirectory() ) {
+                
+        char *tag = childFiles[i]->getFileName();
+                
+        int numTGAFiles;
+        File **tgaFiles = childFiles[i]->getChildFiles( &numTGAFiles );
+                
+        for( int t=0; t<numTGAFiles; t++ ) {
+                    
+            if( ! tgaFiles[t]->isDirectory() ) {
+                        
+                char *tgaFileName = tgaFiles[t]->getFileName();
+                        
+                if( strstr( tgaFileName, ".tga" ) != NULL ) {
+                            
+                    // a tga file!
+
+                    char *fullName = tgaFiles[t]->getFullFileName();
+                            
+                    printf( "Loading overlay from path %s, tag %s\n", 
+                            fullName, tag );
+                    if( strcmp( tag, "test3" ) == 0 ) {
+                        printf( "HEY\n" );
+                        }
+                    SpriteHandle thumbnailSprite =
+                        loadSpriteBase( fullName, false );
+                            
+                            
+                    if( thumbnailSprite != NULL ) {
+                        OverlayRecord *r = new OverlayRecord;
+
+                        r->id = 0;
+                                
+                        sscanf( tgaFileName, "%d.tga", &( r->id ) );
+                                
+                        printf( "Scanned id = %d\n", r->id );
+                                
+                        r->thumbnailSprite = thumbnailSprite;
+                        r->tag = stringDuplicate( tag );
+                                
+
+                        r->image = 
+                            readTGAFileBase( fullName );
+
+                        records.push_back( r );
+
+                        if( maxID < r->id ) {
+                            maxID = r->id;
+                            }
+                        }
+                            
+                    delete [] fullName;
+                    }
+                delete [] tgaFileName;
+                }
+                    
+            delete tgaFiles[t];
+            }
+                
+        delete [] tag;
+                
+        delete [] tgaFiles;
+        }
+            
+    delete childFiles[i];
+    
+    currentFile ++;
+    return (float)( currentFile ) / (float)( numFiles );
+    }
+        
+ 
+
+void initOverlayBankFinish() {
+     
+    delete [] childFiles;
     
     mapSize = maxID + 1;
     

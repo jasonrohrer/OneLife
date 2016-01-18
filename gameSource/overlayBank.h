@@ -17,7 +17,10 @@ typedef struct OverlayRecord {
     } OverlayRecord;
 
 
-void initOverlayBank();
+void initOverlayBankStart();
+// returns progress... ready for Finish when progress == 1.0
+float initOverlayBankStep();
+void initOverlayBankFinish();
 
 
 void freeOverlayBank();

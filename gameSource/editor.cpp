@@ -395,15 +395,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     setSoundPlaying( false );
 
 
-    initOverlayBank();
-
-
-    initSpriteBankStart();
-    
-
-    initObjectBank();
-    initTransBank();
-    initAnimationBank();
+    initOverlayBankStart();
     
 
     importPage = new EditorImportPage;
@@ -412,6 +404,10 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     animPage = new EditorAnimationPage;
     loadingPage = new LoadingPage;
     
+    loadingPage->setCurrentPhase( "OVERLAYS" );
+    loadingPage->setCurrentProgress( 0 );
+    
+
     currentGamePage = loadingPage;
     currentGamePage->base_makeActive( true );
 
@@ -910,13 +906,29 @@ void drawFrame( char inUpdate ) {
             
             switch( loadingPhase ) {
                 case 0: {
-                    loadingPage->setCurrentPhase( "SPRITES" );
+                    float progress = initOverlayBankStep();
+                    loadingPage->setCurrentProgress( progress );
+                    
+                    if( progress == 1.0 ) {
+                        initOverlayBankFinish();
+                        initSpriteBankStart();
+                        loadingPage->setCurrentPhase( "SPRITES" );
+                    
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 1: {
                     float progress = initSpriteBankStep();
                     loadingPage->setCurrentProgress( progress );
                     
                     if( progress == 1.0 ) {
                         initSpriteBankFinish();
                         loadingPhase ++;
+                        
+                        initObjectBank();
+                        initTransBank();
+                        initAnimationBank();
                         }
                     break;
                     }

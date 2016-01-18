@@ -50,7 +50,7 @@ void initSpriteBankStart() {
 
 float initSpriteBankStep() {
     
-    if( numFiles == 0 ) {
+    if( currentFile == numFiles ) {
         return 1.0;
         }
     
