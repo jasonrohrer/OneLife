@@ -56,6 +56,7 @@ CustomRandomSource randSource( 34957197 );
 #include "EditorTransitionPage.h"
 #include "EditorAnimationPage.h"
 
+#include "LoadingPage.h"
 
 #include "spriteBank.h"
 #include "objectBank.h"
@@ -67,6 +68,12 @@ EditorImportPage *importPage;
 EditorObjectPage *objectPage;
 EditorTransitionPage *transPage;
 EditorAnimationPage *animPage;
+
+LoadingPage *loadingPage;
+
+int loadingPhase = 0;
+
+
 
 GamePage *currentGamePage = NULL;
 
@@ -389,7 +396,11 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
 
     initOverlayBank();
-    initSpriteBank();
+
+
+    initSpriteBankStart();
+    
+
     initObjectBank();
     initTransBank();
     initAnimationBank();
@@ -399,8 +410,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     objectPage = new EditorObjectPage;
     transPage = new EditorTransitionPage;
     animPage = new EditorAnimationPage;
-
-    currentGamePage = importPage;
+    loadingPage = new LoadingPage;
+    
+    currentGamePage = loadingPage;
     currentGamePage->base_makeActive( true );
 
 
@@ -441,6 +453,7 @@ void freeFrameDrawer() {
     delete objectPage;
     delete transPage;
     delete animPage;
+    delete loadingPage;
 
     freeTransBank();
     
@@ -893,7 +906,25 @@ void drawFrame( char inUpdate ) {
     if( currentGamePage != NULL ) {
         currentGamePage->base_step();
 
-
+        if( currentGamePage == loadingPage ) {
+            
+            switch( loadingPhase ) {
+                case 0: {
+                    loadingPage->setCurrentPhase( "SPRITES" );
+                    float progress = initSpriteBankStep();
+                    loadingPage->setCurrentProgress( progress );
+                    
+                    if( progress == 1.0 ) {
+                        initSpriteBankFinish();
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                default:
+                    currentGamePage = importPage;
+                    currentGamePage->base_makeActive( true );
+                }
+            }
         if( currentGamePage == importPage ) {
             if( importPage->checkSignal( "objectEditor" ) ) {
                 currentGamePage = objectPage;

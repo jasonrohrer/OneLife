@@ -16,7 +16,10 @@ typedef struct SpriteRecord {
 
 
 // loads from sprites folder
-void initSpriteBank();
+void initSpriteBankStart();
+// returns progress... ready for Finish when progress == 1.0
+float initSpriteBankStep();
+void initSpriteBankFinish();
 
 
 void freeSpriteBank();

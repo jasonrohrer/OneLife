@@ -40,7 +40,7 @@ ValueSlider.cpp \
 ageControl.cpp \
 overlayBank.cpp \
 keyLegend.cpp \
-
+LoadingPage.cpp \
 
 
 GAME_GRAPHICS = \

@@ -22,83 +22,109 @@ static StringTree tree;
 
 
 
+static int numFiles;
+static File **childFiles;
 
-void initSpriteBank() {
-    SimpleVector<SpriteRecord*> records;
-    int maxID = 0;
-    
+static int currentFile;
+
+
+static SimpleVector<SpriteRecord*> records;
+static int maxID;
+
+
+void initSpriteBankStart() {
+    maxID = 0;
+
+
     File spritesDir( NULL, "sprites" );
+    
+    numFiles = 0;
+    currentFile = 0;
+
     if( spritesDir.exists() && spritesDir.isDirectory() ) {
 
-        int numFiles;
-        File **childFiles = spritesDir.getChildFiles( &numFiles );
-
-        for( int i=0; i<numFiles; i++ ) {
-            
-            if( childFiles[i]->isDirectory() ) {
-                
-                char *tag = childFiles[i]->getFileName();
-                
-                int numTGAFiles;
-                File **tgaFiles = childFiles[i]->getChildFiles( &numTGAFiles );
-                
-                for( int t=0; t<numTGAFiles; t++ ) {
-                    
-                    if( ! tgaFiles[t]->isDirectory() ) {
-                        
-                        char *tgaFileName = tgaFiles[t]->getFileName();
-                        
-                        if( strstr( tgaFileName, ".tga" ) != NULL ) {
-                            
-                            // a tga file!
-
-                            char *fullName = tgaFiles[t]->getFullFileName();
-                            
-                            printf( "Loading sprite from path %s, tag %s\n", 
-                                    fullName, tag );
-                            
-                            SpriteHandle sprite =
-                                loadSpriteBase( fullName, false );
-                            
-                            delete [] fullName;
-                            
-                            
-                            if( sprite != NULL ) {
-                                SpriteRecord *r = new SpriteRecord;
-
-                                r->id = 0;
-                                
-                                sscanf( tgaFileName, "%d.tga", &( r->id ) );
-                                
-                                printf( "Scanned id = %d\n", r->id );
-                                
-                                r->sprite = sprite;
-                                r->tag = stringDuplicate( tag );
-                                
-                                records.push_back( r );
-
-                                if( maxID < r->id ) {
-                                    maxID = r->id;
-                                    }
-                                }
-                            }
-                        delete [] tgaFileName;
-                        }
-                    
-                    delete tgaFiles[t];
-                    }
-                
-                delete [] tag;
-                
-                delete [] tgaFiles;
-                }
-            
-            delete childFiles[i];
-            }
-        
-
-        delete [] childFiles;
+        childFiles = spritesDir.getChildFiles( &numFiles );
         }
+    }
+
+
+float initSpriteBankStep() {
+    
+    if( numFiles == 0 ) {
+        return 1.0;
+        }
+    
+    int i = currentFile;
+            
+    if( childFiles[i]->isDirectory() ) {
+                
+        char *tag = childFiles[i]->getFileName();
+                
+        int numTGAFiles;
+        File **tgaFiles = childFiles[i]->getChildFiles( &numTGAFiles );
+                
+        for( int t=0; t<numTGAFiles; t++ ) {
+                    
+            if( ! tgaFiles[t]->isDirectory() ) {
+                        
+                char *tgaFileName = tgaFiles[t]->getFileName();
+                        
+                if( strstr( tgaFileName, ".tga" ) != NULL ) {
+                            
+                    // a tga file!
+
+                    char *fullName = tgaFiles[t]->getFullFileName();
+                            
+                    printf( "Loading sprite from path %s, tag %s\n", 
+                            fullName, tag );
+                            
+                    SpriteHandle sprite =
+                        loadSpriteBase( fullName, false );
+                            
+                    delete [] fullName;
+                            
+                            
+                    if( sprite != NULL ) {
+                        SpriteRecord *r = new SpriteRecord;
+
+                        r->id = 0;
+                                
+                        sscanf( tgaFileName, "%d.tga", &( r->id ) );
+                                
+                        printf( "Scanned id = %d\n", r->id );
+                                
+                        r->sprite = sprite;
+                        r->tag = stringDuplicate( tag );
+                                
+                        records.push_back( r );
+
+                        if( maxID < r->id ) {
+                            maxID = r->id;
+                            }
+                        }
+                    }
+                delete [] tgaFileName;
+                }
+                    
+            delete tgaFiles[t];
+            }
+                
+        delete [] tag;
+                
+        delete [] tgaFiles;
+        }
+            
+    delete childFiles[i];
+
+
+    currentFile ++;
+    return (float)( currentFile ) / (float)( numFiles );
+    }
+ 
+
+void initSpriteBankFinish() {    
+
+    delete [] childFiles;
     
     mapSize = maxID + 1;
     
