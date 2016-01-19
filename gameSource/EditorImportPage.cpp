@@ -493,6 +493,7 @@ void EditorImportPage::makeActive( char inFresh ) {
         }
 
     mSpritePicker.redoSearch();
+    mOverlayPicker.redoSearch();
     }
 
 
