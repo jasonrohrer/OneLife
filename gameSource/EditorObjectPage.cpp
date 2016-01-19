@@ -816,12 +816,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else {
         // check clothing checkboxes
-        int indexFound = -1;
-        
+                
         for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
             if( inTarget == mClothingCheckboxes[i] ) {
-                indexFound = i;
-                
+                        
                 mClothingCheckboxes[i]->setToggled( true );
                 
                 for( int j=0; j<NUM_CLOTHING_CHECKBOXES; j++ ) {
