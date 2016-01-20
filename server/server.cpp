@@ -1080,11 +1080,35 @@ int main() {
 
                 newObject.lifeStartTimeSeconds = Time::getCurrentTime();
 
-                if( players.size() == 0 ) {
+                int numOfAge = 0;
+                
+                int numPlayers = players.size();
+
+                SimpleVector<LiveObject*> parentChoices;
+                
+                for( int i=0; i<numPlayers; i++ ) {
+                    
+                    double age = computeAge( players.getElement( i ) );
+                    
+                    if( age >= 14 ) {
+                        numOfAge ++;
+                        parentChoices.push_back( players.getElement( i ) );
+                        }
+                    }
+                
+
+                if( numOfAge == 0 ) {
+                    // all existing children are good spawn spot for Eve
+                    
+                    for( int i=0; i<numPlayers; i++ ) {
+                        parentChoices.push_back( players.getElement( i ) );
+                        }
+
                     // new Eve
                     // she starts almost full grown
                     newObject.lifeStartTimeSeconds -= 14 * 60;
                     }
+                
                 // else player starts as newborn
                 
 
@@ -1096,14 +1120,16 @@ int main() {
                 
                 newObject.foodUpdate = true;
 		
-		newObject.clothing = getEmptyClothingSet();
+                newObject.clothing = getEmptyClothingSet();
 
                 newObject.xs = 0;
                 newObject.ys = 0;
                 newObject.xd = 0;
                 newObject.yd = 0;
                 
-                if( players.size() > 0 ) {
+
+                
+                if( parentChoices.size() > 0 ) {
                     // born to an existing player
                     int parentIndex = 
                         randSource.getRandomBoundedInt( 0,
@@ -1132,7 +1158,9 @@ int main() {
                         newObject.yd = cPos.y;
                         }
                     }
-                
+                // else starts at 0,0 by default (lone Eve)
+
+
 
                 newObject.pathLength = 0;
                 newObject.pathToDest = NULL;
