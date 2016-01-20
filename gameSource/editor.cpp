@@ -937,10 +937,21 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initObjectBankFinish();
+                        loadingPage->setCurrentPhase( "TRANSITIONS" );
+                        initTransBankStart();
                         loadingPhase ++;
-                        
-                        initTransBank();
+                        }
+                    break;
+                    }
+                case 3: {
+                    float progress = initTransBankStep();
+                    loadingPage->setCurrentProgress( progress );
+                    
+                    if( progress == 1.0 ) {
+                        initTransBankFinish();
+                        loadingPage->setCurrentPhase( "ANIMATIONS" );
                         initAnimationBank();
+                        loadingPhase ++;
                         }
                     break;
                     }

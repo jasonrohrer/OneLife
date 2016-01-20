@@ -22,7 +22,9 @@ typedef struct TransRecord {
 
 
 
-void initTransBank();
+void initTransBankStart();
+float initTransBankStep();
+void initTransBankFinish();
 
 
 void freeTransBank();
