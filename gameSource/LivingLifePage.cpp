@@ -719,9 +719,7 @@ SimpleVector<doublePair> trail;
 void LivingLifePage::draw( doublePair inViewCenter, 
                            double inViewSize ) {
     
-    double pageLifeTime = game_getCurrentTime() - mPageStartTime;
-    
-    if( gameObjects.size() == 0 || pageLifeTime < 1 ) {
+    if( gameObjects.size() == 0 ) {
         // haven't gotten first message from server yet
         
         // draw this to cover up utility text field, but not
@@ -733,9 +731,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
         doublePair pos = { 0, 0 };
         drawMessage( "waitingBirth", pos );
         return;
-        }
-    else {
-        setWaiting( false );
         }
     
 
@@ -1369,6 +1364,16 @@ void LivingLifePage::step() {
         return;
         }
     
+
+    double pageLifeTime = game_getCurrentTime() - mPageStartTime;
+    
+    if( pageLifeTime < 1 ) {
+        return;
+        }
+    else {
+        setWaiting( false );
+        }
+
 
     // first, read all available data from server
     char readSuccess = readServerSocketFull( mServerSocket );
@@ -2997,6 +3002,11 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+    
+    lastScreenViewCenter.x = 0;
+    lastScreenViewCenter.y = 0;
+    
+    setViewCenterPosition( lastScreenViewCenter.x, lastScreenViewCenter.y );
     
     mPageStartTime = game_getCurrentTime();
     
