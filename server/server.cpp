@@ -2085,12 +2085,22 @@ int main() {
                                         int targetSlots = 
                                             getNumContainerSlots( target );
                                         
+                                        int slotSize =
+                                            getObject( target )->slotSize;
+                                        
+                                        int containSize =
+                                            getObject( 
+                                                nextPlayer->holdingID )->
+                                            containSize;
+
                                         int numIn = 
                                             getNumContained( m.x, m.y );
                                         
                                         if( numIn < targetSlots &&
                                             isContainable( 
-                                                nextPlayer->holdingID ) ) {
+                                                nextPlayer->holdingID ) &&
+                                            containSize <= slotSize ) {
+                                            
                                             // add to container
                                         
                                             addContained( 
