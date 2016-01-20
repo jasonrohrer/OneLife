@@ -543,6 +543,13 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         mPersonAgeSlider.setVisible( false );
         mCheckboxes[2]->setToggled( false );
+
+        mDemoClothesButton.setVisible( false );
+        mCurrentObject.clothing = 'n';
+        for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
+            mClothingCheckboxes[i]->setToggled( false );
+            }
+        mClothingCheckboxes[0]->setToggled( true );
         }
     else if( inTarget == &mLessSlotsButton ) {
         if( mCurrentObject.numSlots > 0 ) {
@@ -872,6 +879,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             mSlotSizeField.setInt( 1 );
             mSlotSizeField.setVisible( false );
+            mDemoSlotsButton.setVisible( false );
             mCurrentObject.numSlots = 0;
 
             mPersonAgeSlider.setVisible( false );
@@ -894,7 +902,15 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mSlotSizeField.setInt( 1 );
             mSlotSizeField.setVisible( false );
+            mDemoSlotsButton.setVisible( false );
             mCurrentObject.numSlots = 0;
+
+            mDemoClothesButton.setVisible( false );
+            mCurrentObject.clothing = 'n';
+            for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
+                mClothingCheckboxes[i]->setToggled( false );
+                }
+            mClothingCheckboxes[0]->setToggled( true );
             }
         else {
             mPersonAgeSlider.setVisible( false );
@@ -934,6 +950,14 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
                 if( i != 0 ) {
                     mDemoClothesButton.setVisible( true );
+                    
+                    mSlotSizeField.setInt( 1 );
+                    mSlotSizeField.setVisible( false );
+                    mCurrentObject.numSlots = 0;
+                    mDemoSlotsButton.setVisible( false );
+
+                    mPersonAgeSlider.setVisible( false );
+                    mCheckboxes[2]->setToggled( false );
                     }
                 else {
                     mDemoClothesButton.setVisible( false );
