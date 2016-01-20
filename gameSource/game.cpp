@@ -59,16 +59,19 @@ CustomRandomSource randSource( 34957197 );
 
 
 
+#include "LoadingPage.h"
 #include "LivingLifePage.h"
 #include "ExtendedMessagePage.h"
 #include "RebirthChoicePage.h"
 
+LoadingPage *loadingPage;
 LivingLifePage *livingLifePage;
 ExtendedMessagePage *extendedMessagePage;
 RebirthChoicePage *rebirthChoicePage;
 
 GamePage *currentGamePage = NULL;
 
+int loadingPhase = 0;
 
 
 
@@ -382,16 +385,19 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
     
     
-    initSpriteBank();
-    initObjectBank();
-    initAnimationBank();
+    initSpriteBankStart();
     
 
+    loadingPage = new LoadingPage;
     livingLifePage = new LivingLifePage;
     extendedMessagePage = new ExtendedMessagePage;
     rebirthChoicePage = new RebirthChoicePage;
     
-    currentGamePage = livingLifePage;
+    loadingPage->setCurrentPhase( "SPRITES" );
+    loadingPage->setCurrentProgress( 0 );
+
+
+    currentGamePage = loadingPage;
     currentGamePage->base_makeActive( true );
 
     initDone = true;
@@ -419,7 +425,8 @@ void freeFrameDrawer() {
         shutdownMessage = NULL;
         }
     
-
+    
+    delete loadingPage;
     delete livingLifePage;
     delete extendedMessagePage;
     delete rebirthChoicePage;
@@ -874,7 +881,50 @@ void drawFrame( char inUpdate ) {
         currentGamePage->base_step();
 
 
-        if( currentGamePage == livingLifePage ) {
+        if( currentGamePage == loadingPage ) {
+            
+            switch( loadingPhase ) {
+                case 0: {
+                    float progress = initSpriteBankStep();
+                    loadingPage->setCurrentProgress( progress );
+                    
+                    if( progress == 1.0 ) {
+                        initSpriteBankFinish();
+                        loadingPage->setCurrentPhase( "OBJECTS" );
+                        initObjectBankStart();
+
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 1: {
+                    float progress = initObjectBankStep();
+                    loadingPage->setCurrentProgress( progress );
+                    
+                    if( progress == 1.0 ) {
+                        initObjectBankFinish();
+                        loadingPage->setCurrentPhase( "ANIMATIONS" );
+                        initAnimationBankStart();
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 2: {
+                    float progress = initAnimationBankStep();
+                    loadingPage->setCurrentProgress( progress );
+                    
+                    if( progress == 1.0 ) {
+                        initAnimationBankFinish();
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                default:
+                    currentGamePage = livingLifePage;
+                    currentGamePage->base_makeActive( true );
+                }
+            }
+        else if( currentGamePage == livingLifePage ) {
             if( livingLifePage->checkSignal( "died" ) ) {
                 
                 lastScreenViewCenter.x = 0;

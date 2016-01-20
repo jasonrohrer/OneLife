@@ -33,6 +33,7 @@ Button.cpp \
 TextButton.cpp \
 RebirthChoicePage.cpp \
 TextField.cpp \
+LoadingPage.cpp \
 
 
 
