@@ -60,7 +60,10 @@ typedef struct AnimationRecord {
 AnimationRecord *copyRecord( AnimationRecord *inRecord );
 
 
-void initAnimationBank();
+void initAnimationBankStart();
+float initAnimationBankStep();
+void initAnimationBankFinish();
+
 
 
 void freeAnimationBank();

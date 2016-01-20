@@ -950,7 +950,17 @@ void drawFrame( char inUpdate ) {
                     if( progress == 1.0 ) {
                         initTransBankFinish();
                         loadingPage->setCurrentPhase( "ANIMATIONS" );
-                        initAnimationBank();
+                        initAnimationBankStart();
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 4: {
+                    float progress = initAnimationBankStep();
+                    loadingPage->setCurrentProgress( progress );
+                    
+                    if( progress == 1.0 ) {
+                        initAnimationBankFinish();
                         loadingPhase ++;
                         }
                     break;
