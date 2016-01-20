@@ -3,6 +3,13 @@ writeFailed "ERROR:##GAME FOLDER IS##READ-ONLY"
 
 loading "LOADING"
 
+sprites "SPRITES"
+objects "OBJECTS"
+animations "ANIMATIONS"
+
+waitingBirth "WAITING TO BE BORN"
+
+
 
 youDied "YOU DIED"
 

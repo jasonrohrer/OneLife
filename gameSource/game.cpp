@@ -393,7 +393,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     extendedMessagePage = new ExtendedMessagePage;
     rebirthChoicePage = new RebirthChoicePage;
     
-    loadingPage->setCurrentPhase( "SPRITES" );
+    loadingPage->setCurrentPhase( translate( "sprites" ) );
     loadingPage->setCurrentProgress( 0 );
 
 
@@ -890,7 +890,7 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initSpriteBankFinish();
-                        loadingPage->setCurrentPhase( "OBJECTS" );
+                        loadingPage->setCurrentPhase( translate( "objects" ) );
                         initObjectBankStart();
 
                         loadingPhase ++;
@@ -903,7 +903,9 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initObjectBankFinish();
-                        loadingPage->setCurrentPhase( "ANIMATIONS" );
+                        loadingPage->setCurrentPhase( 
+                            translate( "animations" ) );
+                        
                         initAnimationBankStart();
                         loadingPhase ++;
                         }

@@ -2,6 +2,7 @@
 
 #include "objectBank.h"
 #include "whiteSprites.h"
+#include "message.h"
 
 #include "minorGems/util/SimpleVector.h"
 
@@ -717,6 +718,27 @@ SimpleVector<doublePair> trail;
 
 void LivingLifePage::draw( doublePair inViewCenter, 
                            double inViewSize ) {
+    
+    double pageLifeTime = game_getCurrentTime() - mPageStartTime;
+    
+    if( gameObjects.size() == 0 || pageLifeTime < 1 ) {
+        // haven't gotten first message from server yet
+        
+        // draw this to cover up utility text field, but not
+        // waiting icon at top
+        setDrawColor( 0, 0, 0, 1 );
+        drawSquare( lastScreenViewCenter, 100 );
+        
+        setDrawColor( 1, 1, 1, 1 );
+        doublePair pos = { 0, 0 };
+        drawMessage( "waitingBirth", pos );
+        return;
+        }
+    else {
+        setWaiting( false );
+        }
+    
+
     setDrawColor( 1, 1, 1, 1 );
     drawSquare( lastScreenViewCenter, 400 );
     
@@ -2976,6 +2998,10 @@ void LivingLifePage::makeActive( char inFresh ) {
         return;
         }
     
+    mPageStartTime = game_getCurrentTime();
+    
+    setWaiting( true, false );
+
     clearLiveObjects();
     mFirstServerMessagesReceived = 0;
     

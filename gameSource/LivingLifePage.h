@@ -233,6 +233,7 @@ class LivingLifePage : public GamePage {
         // capabilities
         TextField mSayField;
         
+        double mPageStartTime;
 
         void computePathToDest( LiveObject *inObject );
 
