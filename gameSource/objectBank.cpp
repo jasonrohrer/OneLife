@@ -97,7 +97,7 @@ float initObjectBankStep() {
                         
                 delete [] objectText;
 
-                if( numLines >= 11 ) {
+                if( numLines >= 13 ) {
                     ObjectRecord *r = new ObjectRecord;
                             
                     int next = 0;
@@ -123,7 +123,12 @@ float initObjectBankStep() {
                     r->containable = contRead;
                             
                     next++;
+                    
+                    r->containSize = 1;
+                    sscanf( lines[next], "containSize=%d", 
+                            &( r->containSize ) );
                             
+                    next++;
                             
                     int permRead = 0;                            
                     sscanf( lines[next], "permanent=%d", 
@@ -215,6 +220,12 @@ float initObjectBankStep() {
                     r->numSlots = 0;
                     sscanf( lines[next], "numSlots=%d", 
                             &( r->numSlots ) );
+                            
+                    next++;
+
+                    r->slotSize = 1;
+                    sscanf( lines[next], "slotSize=%d", 
+                            &( r->slotSize ) );
                             
                     next++;
 
@@ -318,8 +329,6 @@ void initObjectBankFinish() {
         }
 
     printf( "Loaded %d objects from objects folder\n", numRecords );
-
-    // resaveAll();
     }
 
 
@@ -382,6 +391,7 @@ void resaveAll() {
 
             addObject( idMap[i]->description,
                        idMap[i]->containable,
+                       idMap[i]->containSize,
                        idMap[i]->permanent,
                        idMap[i]->mapChance,
                        idMap[i]->heatValue,
@@ -393,6 +403,7 @@ void resaveAll() {
                        idMap[i]->clothing,
                        idMap[i]->clothingOffset,
                        idMap[i]->numSlots, 
+                       idMap[i]->slotSize, 
                        idMap[i]->slotPos,
                        idMap[i]->numSprites, 
                        idMap[i]->sprites, 
@@ -481,6 +492,7 @@ ObjectRecord **searchObjects( const char *inSearch,
 
 int addObject( const char *inDescription,
                char inContainable,
+               int inContainSize,
                char inPermanent,
                float inMapChance,
                int inHeatValue,
@@ -491,7 +503,7 @@ int addObject( const char *inDescription,
                doublePair inHeldOffset,
                char inClothing,
                doublePair inClothingOffset,
-               int inNumSlots, doublePair *inSlotPos,
+               int inNumSlots, int inSlotSize, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
                double *inSpriteRot,
@@ -546,6 +558,7 @@ int addObject( const char *inDescription,
         lines.push_back( stringDuplicate( inDescription ) );
 
         lines.push_back( autoSprintf( "containable=%d", (int)inContainable ) );
+        lines.push_back( autoSprintf( "containSize=%d", (int)inContainSize ) );
         lines.push_back( autoSprintf( "permanent=%d", (int)inPermanent ) );
         
         lines.push_back( autoSprintf( "mapChance=%f", inMapChance ) );
@@ -568,6 +581,7 @@ int addObject( const char *inDescription,
                                       inClothingOffset.y ) );
         
         lines.push_back( autoSprintf( "numSlots=%d", inNumSlots ) );
+        lines.push_back( autoSprintf( "slotSize=%d", inSlotSize ) );
 
         for( int i=0; i<inNumSlots; i++ ) {
             lines.push_back( autoSprintf( "slotPos=%f,%f", 
@@ -654,6 +668,7 @@ int addObject( const char *inDescription,
     r->description = stringDuplicate( inDescription );
 
     r->containable = inContainable;
+    r->containSize = inContainSize;
     r->permanent = inPermanent;
     
     r->mapChance = inMapChance;
@@ -669,6 +684,7 @@ int addObject( const char *inDescription,
     r->clothingOffset = inClothingOffset;
 
     r->numSlots = inNumSlots;
+    r->slotSize = inSlotSize;
     
     r->slotPos = new doublePair[ inNumSlots ];
     

@@ -58,6 +58,14 @@ EditorObjectPage::EditorObjectPage()
                            -150,  -64, 4,
                            false,
                            "Speed", "0123456789.", NULL ),
+          mContainSizeField( smallFont, 
+                             150,  -120, 4,
+                             false,
+                             "Contain Size", "0123456789.", NULL ),
+          mSlotSizeField( smallFont, 
+                          -0,  -190, 4,
+                          false,
+                          "Slot Size", "0123456789.", NULL ),
           mSaveObjectButton( smallFont, 210, -260, "Save New" ),
           mReplaceObjectButton( smallFont, 310, -260, "Replace" ),
           mClearObjectButton( mainFont, 0, 160, "Blank" ),
@@ -96,6 +104,11 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mRValueField );
     addComponent( &mFoodValueField );
     addComponent( &mSpeedMultField );
+
+    addComponent( &mContainSizeField );
+    addComponent( &mSlotSizeField );
+    mContainSizeField.setVisible( false );
+    mSlotSizeField.setVisible( false );
 
     addComponent( &mSaveObjectButton );
     addComponent( &mReplaceObjectButton );
@@ -217,6 +230,10 @@ EditorObjectPage::EditorObjectPage()
     mFoodValueField.setText( "0" );
     mSpeedMultField.setText( "1.00" );
 
+    mContainSizeField.setInt( 1 );
+    mSlotSizeField.setInt( 1 );
+    
+
 
     double boxY = -150;
     
@@ -230,6 +247,7 @@ EditorObjectPage::EditorObjectPage()
     mCheckboxNames[1] = "Permanent";
     mCheckboxNames[2] = "Person";
     
+    mCheckboxes[0]->addActionListener( this );
     mCheckboxes[2]->addActionListener( this );
 
 
@@ -324,6 +342,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         addObject( text,
                    mCheckboxes[0]->getToggled(),
+                   mContainSizeField.getInt(),
                    mCheckboxes[1]->getToggled(),
                    mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
@@ -334,7 +353,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.heldOffset,
                    mCurrentObject.clothing,
                    mCurrentObject.clothingOffset,
-                   mCurrentObject.numSlots, mCurrentObject.slotPos,
+                   mCurrentObject.numSlots,
+                   mSlotSizeField.getInt(),
+                   mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
                    mCurrentObject.spriteRot,
@@ -352,6 +373,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         addObject( text,
                    mCheckboxes[0]->getToggled(),
+                   mContainSizeField.getInt(),
                    mCheckboxes[1]->getToggled(),
                    mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
@@ -362,7 +384,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.heldOffset,
                    mCurrentObject.clothing,
                    mCurrentObject.clothingOffset,
-                   mCurrentObject.numSlots, mCurrentObject.slotPos,
+                   mCurrentObject.numSlots,
+                   mSlotSizeField.getInt(), 
+                   mCurrentObject.slotPos,
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
                    mCurrentObject.spriteRot,
@@ -398,6 +422,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         mFoodValueField.setText( "0" );
         mSpeedMultField.setText( "1.00" );
+
+        mContainSizeField.setInt( 1 );
+        mSlotSizeField.setInt( 1 );
+        mContainSizeField.setVisible( false );
+        mSlotSizeField.setVisible( false );
 
         mCurrentObject.numSlots = 0;
         
@@ -505,6 +534,15 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mCurrentObject.slotPos = slots;
 
         mCurrentObject.numSlots = numSlots + 1;
+        
+        mSlotSizeField.setVisible( true );
+        
+        mContainSizeField.setInt( 1 );
+        mContainSizeField.setVisible( false );
+        mCheckboxes[0]->setToggled( false );
+
+        mPersonAgeSlider.setVisible( false );
+        mCheckboxes[2]->setToggled( false );
         }
     else if( inTarget == &mLessSlotsButton ) {
         if( mCurrentObject.numSlots > 0 ) {
@@ -516,6 +554,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 mSlotsDemoObject = -1;
                 mDemoSlotsButton.setVisible( false );
                 mClearSlotsDemoButton.setVisible( false );
+                
+                mSlotSizeField.setInt( 1 );
+                mSlotSizeField.setVisible( false );
                 }
             }
         }
@@ -716,6 +757,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mSpeedMultField.setFloat( pickedRecord->speedMult, 2 );
 
+            mContainSizeField.setInt( pickedRecord->containSize );
+            mSlotSizeField.setInt( pickedRecord->slotSize );
+
 
             mCurrentObject.containable = pickedRecord->containable;
             
@@ -803,12 +847,54 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             else {
                 mPersonAgeSlider.setVisible( false );
                 }
+
+            if( ! pickedRecord->containable ) {
+                mContainSizeField.setInt( 1 );
+                mContainSizeField.setVisible( false );
+                }
+            else {
+                mContainSizeField.setVisible( true );
+                }
+            
+            if( pickedRecord->numSlots == 0 ) {
+                mSlotSizeField.setInt( 1 );
+                mSlotSizeField.setVisible( false );
+                }
+            else {
+                mSlotSizeField.setVisible( true );
+                }
+            }
+        }
+    else if( inTarget == mCheckboxes[0] ) {
+        printf( "Toggle\n" );
+        if( mCheckboxes[0]->getToggled() ) {
+            mContainSizeField.setVisible( true );
+            
+            mSlotSizeField.setInt( 1 );
+            mSlotSizeField.setVisible( false );
+            mCurrentObject.numSlots = 0;
+
+            mPersonAgeSlider.setVisible( false );
+            mCheckboxes[2]->setToggled( false );
+            }
+        else {
+            mContainSizeField.setInt( 1 );
+            mContainSizeField.setVisible( false );
             }
         }
     else if( inTarget == mCheckboxes[2] ) {
         if( mCheckboxes[2]->getToggled() ) {
             mPersonAgeSlider.setValue( 20 );
             mPersonAgeSlider.setVisible( true );
+
+            
+            mContainSizeField.setInt( 1 );
+            mContainSizeField.setVisible( false );
+            mCheckboxes[0]->setToggled( false );
+
+            mSlotSizeField.setInt( 1 );
+            mSlotSizeField.setVisible( false );
+            mCurrentObject.numSlots = 0;
             }
         else {
             mPersonAgeSlider.setVisible( false );

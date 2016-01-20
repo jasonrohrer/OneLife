@@ -12,6 +12,8 @@ typedef struct ObjectRecord {
 
         // can it go into a container
         char containable;
+        // how big of a slot is needed to contain it
+        int containSize;
         
         // can it not be picked up
         char permanent;
@@ -59,7 +61,10 @@ typedef struct ObjectRecord {
         // if it is a container, how many slots?
         // 0 if not a container
         int numSlots;
-
+        
+        // how big of a containable can fit in each slot?
+        int slotSize;
+        
         doublePair *slotPos;
         
 
@@ -130,6 +135,7 @@ ObjectRecord **searchObjects( const char *inSearch,
 
 int addObject( const char *inDescription,
                char inContainable,
+               int inContainSize,
                char inPermanent,
                float inMapChance,
                int inHeatValue,
@@ -140,7 +146,7 @@ int addObject( const char *inDescription,
                doublePair inHeldOffset,
                char inClothing,
                doublePair inClothingOffset,
-               int inNumSlots, doublePair *inSlotPos,
+               int inNumSlots, int inSlotSize, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
                double *inSpriteRot,
