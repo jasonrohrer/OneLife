@@ -973,9 +973,15 @@ int main() {
     SetConsoleCtrlHandler( ctrlHandler, TRUE );
 #endif
 
-    initObjectBank();
-    initTransBank();
-
+    initObjectBankStart();
+    while( initObjectBankStep() < 1.0 );
+    initObjectBankFinish();
+        
+    initTransBankStart();
+    while( initTransBankStep() < 1.0 );
+    initTransBankFinish();
+    
+    
     initMap();
     
     
