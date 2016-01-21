@@ -55,7 +55,10 @@ typedef struct ObjectRecord {
         // (hats is slightly above head, shoes is centered on feet,
         //  tunics is centered on body)
         doublePair clothingOffset;
-
+        
+        // how many cells away this object can kill
+        // 0 for non-deadly objects
+        int deadlyDistance;
 
 
         // if it is a container, how many slots?
@@ -146,6 +149,7 @@ int addObject( const char *inDescription,
                doublePair inHeldOffset,
                char inClothing,
                doublePair inClothingOffset,
+               int inDeadlyDistance,
                int inNumSlots, int inSlotSize, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,

@@ -97,7 +97,7 @@ float initObjectBankStep() {
                         
                 delete [] objectText;
 
-                if( numLines >= 13 ) {
+                if( numLines >= 14 ) {
                     ObjectRecord *r = new ObjectRecord;
                             
                     int next = 0;
@@ -215,6 +215,12 @@ float initObjectBankStep() {
                             
                     next++;
                             
+                    
+                    r->deadlyDistance = 0;
+                    sscanf( lines[next], "deadlyDistance=%d", 
+                            &( r->deadlyDistance ) );
+                            
+                    next++;
 
 
                     r->numSlots = 0;
@@ -329,6 +335,8 @@ void initObjectBankFinish() {
         }
 
     printf( "Loaded %d objects from objects folder\n", numRecords );
+
+    // resaveAll();
     }
 
 
@@ -402,6 +410,7 @@ void resaveAll() {
                        idMap[i]->heldOffset,
                        idMap[i]->clothing,
                        idMap[i]->clothingOffset,
+                       idMap[i]->deadlyDistance,
                        idMap[i]->numSlots, 
                        idMap[i]->slotSize, 
                        idMap[i]->slotPos,
@@ -503,6 +512,7 @@ int addObject( const char *inDescription,
                doublePair inHeldOffset,
                char inClothing,
                doublePair inClothingOffset,
+               int inDeadlyDistance,
                int inNumSlots, int inSlotSize, doublePair *inSlotPos,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
@@ -579,6 +589,10 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "clothingOffset=%f,%f",
                                       inClothingOffset.x, 
                                       inClothingOffset.y ) );
+
+        lines.push_back( autoSprintf( "deadlyDistance=%d", 
+                                      inDeadlyDistance ) );
+        
         
         lines.push_back( autoSprintf( "numSlots=%d", inNumSlots ) );
         lines.push_back( autoSprintf( "slotSize=%d", inSlotSize ) );
@@ -682,6 +696,7 @@ int addObject( const char *inDescription,
     r->heldOffset = inHeldOffset;
     r->clothing = inClothing;
     r->clothingOffset = inClothingOffset;
+    r->deadlyDistance = inDeadlyDistance;
 
     r->numSlots = inNumSlots;
     r->slotSize = inSlotSize;

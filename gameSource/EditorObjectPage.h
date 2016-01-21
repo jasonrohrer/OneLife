@@ -76,6 +76,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         TextField mContainSizeField;
         TextField mSlotSizeField;
 
+        TextField mDeadlyDistanceField;
+
 
         TextButton mSaveObjectButton;
         TextButton mReplaceObjectButton;

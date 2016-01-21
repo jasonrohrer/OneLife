@@ -66,6 +66,10 @@ EditorObjectPage::EditorObjectPage()
                           -0,  -190, 4,
                           false,
                           "Slot Size", "0123456789.", NULL ),
+          mDeadlyDistanceField( smallFont, 
+                                150,  -220, 4,
+                                false,
+                                "Deadly Distance", "0123456789.", NULL ),
           mSaveObjectButton( smallFont, 210, -260, "Save New" ),
           mReplaceObjectButton( smallFont, 310, -260, "Replace" ),
           mClearObjectButton( mainFont, 0, 160, "Blank" ),
@@ -107,8 +111,11 @@ EditorObjectPage::EditorObjectPage()
 
     addComponent( &mContainSizeField );
     addComponent( &mSlotSizeField );
+
     mContainSizeField.setVisible( false );
     mSlotSizeField.setVisible( false );
+
+    addComponent( &mDeadlyDistanceField );
 
     addComponent( &mSaveObjectButton );
     addComponent( &mReplaceObjectButton );
@@ -233,7 +240,8 @@ EditorObjectPage::EditorObjectPage()
     mContainSizeField.setInt( 1 );
     mSlotSizeField.setInt( 1 );
     
-
+    mDeadlyDistanceField.setInt( 0 );
+    
 
     double boxY = -150;
     
@@ -353,6 +361,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.heldOffset,
                    mCurrentObject.clothing,
                    mCurrentObject.clothingOffset,
+                   mDeadlyDistanceField.getInt(),
                    mCurrentObject.numSlots,
                    mSlotSizeField.getInt(),
                    mCurrentObject.slotPos,
@@ -384,6 +393,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.heldOffset,
                    mCurrentObject.clothing,
                    mCurrentObject.clothingOffset,
+                   mDeadlyDistanceField.getInt(),
                    mCurrentObject.numSlots,
                    mSlotSizeField.getInt(), 
                    mCurrentObject.slotPos,
@@ -427,6 +437,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mSlotSizeField.setInt( 1 );
         mContainSizeField.setVisible( false );
         mSlotSizeField.setVisible( false );
+
+        mDeadlyDistanceField.setInt( 0 );
 
         mCurrentObject.numSlots = 0;
         
@@ -766,6 +778,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mContainSizeField.setInt( pickedRecord->containSize );
             mSlotSizeField.setInt( pickedRecord->slotSize );
+            
+            mDeadlyDistanceField.setInt( pickedRecord->deadlyDistance );
 
 
             mCurrentObject.containable = pickedRecord->containable;
