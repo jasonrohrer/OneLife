@@ -48,7 +48,8 @@ TransRecord **searchProduces( int inProducesID,
 
 
 
-// inTarget can never be 0
+// inTarget can never be 0, except in the case of generic on-person transitions
+// (to define what happens to an actor object when it is used on any person)
 
 // inActor can be 0 (this is the bare-hands action on the target)
 

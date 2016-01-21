@@ -13,6 +13,9 @@
 
 
 
+#include "message.h"
+
+
 
 
 static int getObjectByIndex( TransRecord *inRecord, int inIndex ) {
@@ -267,6 +270,18 @@ void EditorTransitionPage::checkIfSaveVisible() {
     }
 
 
+static void fillInGenericPersonTarget( TransRecord *inRecord ) {
+    if( inRecord->target == 0 ) {
+        inRecord->target = getRandomPersonObject();
+        
+        if( inRecord->target == -1 ) {
+            // no people in object bank?
+            inRecord->target = 0;
+            }
+        }
+    }
+
+
 
 void EditorTransitionPage::redoTransSearches( int inObjectID,
                                               char inClearSkip ) {
@@ -301,6 +316,9 @@ void EditorTransitionPage::redoTransSearches( int inObjectID,
 
         for( int i=0; i<numResults; i++ ) {
             mProducedBy[i] = *( resultsA[i] );
+            
+            fillInGenericPersonTarget( &( mProducedBy[i] ) );
+            
             mProducedByButtons[i]->setVisible( true );
             }
     
@@ -336,6 +354,9 @@ void EditorTransitionPage::redoTransSearches( int inObjectID,
         
         for( int i=0; i<numResults; i++ ) {
             mProduces[i] = *( resultsB[i] );
+            
+            fillInGenericPersonTarget( &( mProduces[i] ) );
+            
             mProducesButtons[i]->setVisible( true );
             }
         
@@ -381,8 +402,20 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             actor = 0;
             }
         
+        int target = mCurrentTransition.target;
+        
+        if( getObject( mCurrentTransition.target )->person ) {
+            // all transitions with person target define what happens
+            // when this actor is used on ANY person target
+            // (this specific person object is a placeholder)
+            
+            // use target 0 to inidicate this
+            target = 0;
+            }
+        
+
         addTrans( actor,
-                  mCurrentTransition.target,
+                  target,
                   mCurrentTransition.newActor,
                   mCurrentTransition.newTarget,
                   decayTime );
@@ -665,7 +698,21 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             
             }
         }
+    
 
+    if( mCurrentTransition.target != 0 &&
+        getObject( mCurrentTransition.target )->person ) {
+
+        doublePair pos = mPickButtons[1]->getCenter();
+
+        pos.y += 75;
+        
+        setDrawColor( 1, 1, 1, 1 );
+        
+        smallFont->drawString( "Generic on-person Transition", 
+                               pos, alignCenter );
+        }
+    
     }
 
 

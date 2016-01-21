@@ -65,11 +65,11 @@ float initTransBankStep() {
         if( strstr( txtFileName, ".txt" ) != NULL ) {
                     
             int actor = 0;
-            int target = 0;
+            int target = -1;
                     
             sscanf( txtFileName, "%d_%d.txt", &actor, &target );
                     
-            if(  target != 0 ) {
+            if(  target != -1 ) {
                 char *contents = childFiles[i]->readFileContents();
                         
                 if( contents != NULL ) {
