@@ -172,6 +172,7 @@ Clients send moves in the following format:
 USE x y#
 REMV x y#
 DROP x y#
+KILL x y#
 
 
 DROP is for setting held object down on empty grid square OR
@@ -182,6 +183,11 @@ USE  is for bare-hand or held-object action on target object in non-empty
      action), and picking up a container.
 
 REMV is special case of removing an object from a container.
+
+KILL is for using a deadly object on the target square.  Square can
+     be non-adjacent depending on deadly distance of held object.
+     If another player is located there (even if moving and crossing)
+	 they will be killed.
 
 
 

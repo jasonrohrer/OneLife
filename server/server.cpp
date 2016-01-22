@@ -255,6 +255,7 @@ typedef enum messageType {
     USE,
     REMV,
     DROP,
+    KILL,
     SAY,
     UNKNOWN
     } messageType;
@@ -364,6 +365,9 @@ ClientMessage parseMessage( char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "DROP" ) == 0 ) {
         m.type = DROP;
+        }
+    else if( strcmp( nameBuffer, "KILL" ) == 0 ) {
+        m.type = KILL;
         }
     else if( strcmp( nameBuffer, "SAY" ) == 0 ) {
         m.type = SAY;
@@ -1624,6 +1628,91 @@ int main() {
                                              false };
                         newSpeechPos.push_back( p );
                         }
+                    else if( m.type == KILL ) {
+                        // send update even if action fails (to let them
+                        // know that action is over)
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        
+                        if( nextPlayer->holdingID != 0 &&
+                            ! (m.x == nextPlayer->xd &&
+                               m.y == nextPlayer->yd ) ) {
+
+                            // holding something
+                            ObjectRecord *heldObj = 
+                                getObject( nextPlayer->holdingID );
+                            
+                            if( heldObj->deadlyDistance > 0 ) {
+                                // it's deadly
+
+                                GridPos targetPos = { m.x, m.y };
+                                GridPos playerPos = { nextPlayer->xd,
+                                                      nextPlayer->yd };
+                                
+                                double d = distance( targetPos,
+                                                     playerPos );
+                                
+                                if( heldObj->deadlyDistance >= d ) {
+                                    // target is close enough
+
+                                    // is anyone there?
+                                    int numLive = players.size();
+                                    
+                                    for( int j=0; j<numLive; j++ ) {
+                                        LiveObject *otherPlayer = 
+                                            players.getElement( j );
+                                    
+                                        
+
+                                        if( otherPlayer->xd == 
+                                            otherPlayer->xs &&
+                                            otherPlayer->yd ==
+                                            otherPlayer->ys ) {
+                                            // other player standing still
+                                            
+                                            if( otherPlayer->xd ==
+                                                m.x &&
+                                                otherPlayer->yd ==
+                                                m.y ) {
+                                                
+                                                // hit
+                                                // break the connection with 
+                                                // them
+                                                otherPlayer->error = true;
+                                                break;
+                                                }
+                                            }
+                                        else {
+                                            // other player moving
+                
+                                            GridPos cPos = 
+                                                computePartialMoveSpot( 
+                                                    otherPlayer );
+                                        
+                                            if( equal( cPos, targetPos ) ) {
+                                                // hit
+                                                otherPlayer->error = true;
+                                                break;
+                                                }
+                                            }
+                                        }
+                                    
+                                    // a player either hit or not
+                                    // in either case, weapon was used
+                                    
+                                    // check for a transition for weapon
+
+                                    // 0 is generic "on person" target
+                                    TransRecord *r = 
+                                        getTrans( nextPlayer->holdingID, 
+                                                  0 );
+
+                                    if( r != NULL ) {
+                                        nextPlayer->holdingID = r->newActor;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     else if( m.type == USE ) {
                         // send update even if action fails (to let them
                         // know that action is over)
@@ -2149,6 +2238,18 @@ int main() {
                         }
                     }                
                 }
+            }
+
+
+
+        // now that messages have been processed for all
+        // loop over and handle all post-message checks
+
+        // for example, if a player later in the list sends a message
+        // killing an earlier player, we need to check to see that
+        // player deleted afterward here
+        for( int i=0; i<numLive; i++ ) {
+            LiveObject *nextPlayer = players.getElement( i );
             
                 
             if( nextPlayer->isNew ) {

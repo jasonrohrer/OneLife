@@ -433,7 +433,7 @@ static char *nextActionMessageToSend = NULL;
 // block move until next PLAYER_UPDATE received after action sent
 static char playerActionPending = false;
 static int playerActionTargetX, playerActionTargetY;
-
+static char playerActionTargetNotAdjacent = false;
 
 
 int ourID;
@@ -457,7 +457,7 @@ LivingLifePage::LivingLifePage()
           mCurMouseOverID( 0 ),
           mLastMouseOverFade( 0.0 ),
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
-          mSayField( handwritingFont, 0, 0, 10, true, NULL,
+          mSayField( handwritingFont, 0, 1000, 10, true, NULL,
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,'?! " ) {
     
     // not visible, drawn under world at 0, 0, and doesn't move with camera
@@ -1964,7 +1964,8 @@ void LivingLifePage::step() {
                                 
                                 // ready to execute next action
                                 playerActionPending = false;
-                                
+                                playerActionTargetNotAdjacent = false;
+
                                 existing->pendingAction = false;
                                 }
 
@@ -1973,6 +1974,7 @@ void LivingLifePage::step() {
                                 existing->pendingAction = false;
                                 
                                 playerActionPending = false;
+                                playerActionTargetNotAdjacent = false;
 
                                 if( nextActionMessageToSend != NULL ) {
                                     delete [] nextActionMessageToSend;
@@ -2436,6 +2438,7 @@ void LivingLifePage::step() {
                                 existing->pendingAction = false;
                                 
                                 playerActionPending = false;
+                                playerActionTargetNotAdjacent = false;
 
                                 if( nextActionMessageToSend != NULL ) {
                                     delete [] nextActionMessageToSend;
@@ -2937,7 +2940,9 @@ void LivingLifePage::step() {
                             playerActionTargetX, playerActionTargetY )
             ||
             ( ourLiveObject->xd == playerActionTargetX &&
-              ourLiveObject->yd == playerActionTargetY ) ) ){
+              ourLiveObject->yd == playerActionTargetY ) 
+            ||
+            playerActionTargetNotAdjacent ) ) {
         
         // done moving on client end
         // can start showing pending action animation, even if 
@@ -3155,6 +3160,81 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
     
 
+    // true if we're too far away to kill BUT we should execute
+    // kill once we get to destination
+
+    // if we're close enough to kill, we'll kill from where we're standing
+    // and return
+    char killLater = false;
+    
+
+    if( destID == 0 &&
+        modClick && ourLiveObject->holdingID != 0 &&
+        getObject( ourLiveObject->holdingID )->deadlyDistance > 0 ) {
+        
+        // special case
+
+        // check for possible kill attempt at a distance
+
+        // if it fails (target too far away or no person near),
+        // then we resort to standard drop code below
+
+
+        double d = sqrt( ( clickDestX - ourLiveObject->xd ) * 
+                         ( clickDestX - ourLiveObject->xd )
+                         +
+                         ( clickDestY - ourLiveObject->yd ) * 
+                         ( clickDestY - ourLiveObject->yd ) );
+
+        doublePair targetPos = { clickDestX, clickDestY };
+        
+
+
+        for( int i=0; i<gameObjects.size(); i++ ) {
+        
+            LiveObject *o = gameObjects.getElement( i );
+            
+            if( o->id != ourID ) {
+                if( distance( targetPos, o->currentPos ) <= 1 ) {
+                    // clicked on someone
+                    
+                    if( getObject( ourLiveObject->holdingID )->deadlyDistance 
+                        >= d ) {
+                        // close enough to use deadly object right now
+
+                        
+                        if( nextActionMessageToSend != NULL ) {
+                            delete [] nextActionMessageToSend;
+                            nextActionMessageToSend = NULL;
+                            }
+            
+                        nextActionMessageToSend = 
+                            autoSprintf( "KILL %d %d#",
+                                         clickDestX, clickDestY );
+                        playerActionTargetX = clickDestX;
+                        playerActionTargetY = clickDestY;
+                        
+                        playerActionTargetNotAdjacent = true;
+                        
+                        printf( "KILL with target player %d\n", o->id );
+
+                        return;
+                        }
+                    else {
+                        // too far away, but try to kill later,
+                        // once we walk there, using standard path-to-adjacent
+                        // code below
+                        killLater = true;
+                        
+                        break;
+                        }
+                    }
+                }
+            }
+    
+        }
+    
+
     
 
     if( destID == 0 && !modClick ) {
@@ -3257,6 +3337,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( modClick && destID == 0 && ourLiveObject->holdingID != 0 ) {
                 action = "DROP";
                 send = true;
+
+                // special case:  we're too far away to kill someone
+                // but we've right clicked on them from a distance
+                // walk up and execute KILL once we get there.
+                
+                if( killLater ) {
+                    action = "KILL";
+                    }
                 }
             else if( modClick && ourLiveObject->holdingID == 0 &&
                      destID != 0 &&
