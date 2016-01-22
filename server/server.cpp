@@ -1885,53 +1885,6 @@ int main() {
                                     
                                     // action doesn't happen, just the drop
                                     }
-                                
-                                /*
-                                  // FIXME:
-                                  // need special case here when surrounded
-                                  // and holding something
-                                  // (otherwise, trapped).
-                                  // easy to check for this and allow
-                                  // pick-up of something around us,
-                                  // with held object vanishing
-                                  // (can only be surrounded by 
-                                  // placements of another player)
-                                else if( nextPlayer->holdingID != 0 &&
-                                         ! getObject( target )->permanent ) {
-                                    // no held-object transition applies to
-                                    // this non-permanent target object
-                                    
-                                    // and can't add it to container
-                                    
-                                    // treat it like pick up
-                                    
-                                    nextPlayer->containedIDs =
-                                        getContained( 
-                                            m.x, m.y,
-                                            &( nextPlayer->numContained ) );
-                                    
-                                    clearAllContained( m.x, m.y );
-                                    setMapObject( m.x, m.y, 0 );
-                                    
-                                    nextPlayer->holdingID = target;
-                                    
-                                    nextPlayer->heldOriginValid = 1;
-                                    nextPlayer->heldOriginX = m.x;
-                                    nextPlayer->heldOriginY = m.y;
-
-                                    char *changeLine =
-                                        getMapChangeLineString(
-                                            m.x, m.y );
-                                    
-                                    mapChanges.appendElementString( 
-                                        changeLine );
-                                    
-                                    ChangePosition p = { m.x, m.y, false };
-                                    mapChangesPos.push_back( p );
-                                    
-                                    delete [] changeLine;
-                                    }
-                                */
                                 }
                             }
                         else if( m.x == nextPlayer->xd &&
