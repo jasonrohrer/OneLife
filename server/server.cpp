@@ -1709,6 +1709,25 @@ int main() {
                                     if( r != NULL ) {
                                         nextPlayer->holdingID = r->newActor;
                                         }
+                                    int oldDestID = getMapObject( m.x, m.y );
+
+                                    if( oldDestID == 0 ) {    
+                                        setMapObject( m.x, m.y, 
+                                                      r->newTarget );
+
+                                        char *changeLine =
+                                            getMapChangeLineString(
+                                                m.x, m.y );
+                                    
+                                        mapChanges.
+                                            appendElementString( changeLine );
+                                    
+                                        ChangePosition p = { m.x, m.y, false };
+                                        mapChangesPos.push_back( p );
+                                    
+                                        delete [] changeLine;
+                                        }
+                                    
                                     }
                                 }
                             }
