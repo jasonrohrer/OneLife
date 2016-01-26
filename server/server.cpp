@@ -439,7 +439,25 @@ GridPos computePartialMoveSpot( LiveObject *inPlayer ) {
 
 
 
-int foodDecrementTimeSeconds = 10;
+int foodDecrementTimeSeconds = 20;
+
+
+double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
+    double value = foodDecrementTimeSeconds * 2 * inPlayer->heat;
+    
+    if( value > foodDecrementTimeSeconds ) {
+        // also reduce if too hot (above 0.5 heat)
+        
+        double extra = value - foodDecrementTimeSeconds;
+
+        value = foodDecrementTimeSeconds - extra;
+        }
+    
+    if( value < 5 ) {
+        value = 5;
+        }
+    return value;
+    }
 
 
 double getAgeRate() {
@@ -1121,8 +1139,11 @@ int main() {
                 // start full up to capacity with food
                 newObject.foodStore = computeFoodCapacity( &newObject );
 
+                newObject.heat = 0.5;
+
                 newObject.foodDecrementETASeconds =
-                    Time::getCurrentTime() + foodDecrementTimeSeconds;
+                    Time::getCurrentTime() + 
+                    computeFoodDecrementTimeSeconds( &newObject );
                 
                 newObject.foodUpdate = true;
 		
@@ -1187,7 +1208,6 @@ int main() {
                 newObject.error = false;
                 newObject.deleteSent = false;
                 newObject.newMove = false;
-                newObject.heat = 0.5;
                 
                 
                 
@@ -2407,7 +2427,7 @@ int main() {
                     nextPlayer->foodStore --;
                     
                     nextPlayer->foodDecrementETASeconds +=
-                        foodDecrementTimeSeconds;
+                        computeFoodDecrementTimeSeconds( nextPlayer );
                     
                     if( nextPlayer->foodStore <= 0 ) {
                         // player has died
@@ -2476,6 +2496,41 @@ int main() {
                         }
                     }
                 }
+
+            // clothing is additive to R value at center spot
+
+            float clothingR = 0;
+            
+            if( nextPlayer->clothing.hat != NULL ) {
+                clothingR += nextPlayer->clothing.hat->rValue;
+                }
+            if( nextPlayer->clothing.tunic != NULL ) {
+                clothingR += nextPlayer->clothing.tunic->rValue;
+                }
+            if( nextPlayer->clothing.frontShoe != NULL ) {
+                clothingR += nextPlayer->clothing.frontShoe->rValue;
+                }
+            if( nextPlayer->clothing.backShoe != NULL ) {
+                clothingR += nextPlayer->clothing.backShoe->rValue;
+                }
+            
+            int playerMapIndex = 
+                ( HEAT_MAP_D / 2 ) * HEAT_MAP_D +
+                ( HEAT_MAP_D / 2 );
+            
+
+            rGrid[ playerMapIndex ] += clothingR;
+            
+            
+            if( rGrid[ playerMapIndex ] > 1 ) {
+                
+                rGrid[ playerMapIndex ] = 1;
+                }
+            
+
+            // body itself produces 1 unit of heat
+            // (r value of clothing can hold this in
+            heatOutputGrid[ playerMapIndex ] += 1;
 
             
             //double startTime = Time::getCurrentTime();
@@ -2550,8 +2605,7 @@ int main() {
             */
 
             float playerHeat = 
-                nextPlayer->heatMap[ ( HEAT_MAP_D / 2 ) * HEAT_MAP_D +
-                                     ( HEAT_MAP_D / 2 ) ];
+                nextPlayer->heatMap[ playerMapIndex ];
             
             // convert into 0..1 range, where 0.5 represents targetHeat
             nextPlayer->heat = ( playerHeat / targetHeat ) / 2;

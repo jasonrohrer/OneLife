@@ -1303,6 +1303,17 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 drawSprite( mFoodEmptySprite, pos );
                 }
             }
+        
+        setDrawColor( 0, 0, 0, 1 );
+        
+        doublePair pos = { lastScreenViewCenter.x - 300, 
+                           lastScreenViewCenter.y - 317 };
+        pos.x += 128;
+        
+
+        char *heatString = autoSprintf( "%.2f", ourLiveObject->heat );
+        mainFont->drawString( heatString, pos, alignCenter );
+        delete [] heatString;
 
         if( mCurMouseOverID != 0 || mLastMouseOverID != 0 ) {
             int idToDescribe = mCurMouseOverID;
