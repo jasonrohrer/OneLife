@@ -2013,6 +2013,9 @@ void LivingLifePage::step() {
                         
                         o.currentPos.x = o.xd;
                         o.currentPos.y = o.yd;
+
+                        o.heldPosOverride = false;
+                        o.heldObjectPos = o.currentPos;
                         
                         o.currentSpeed = 0;
                                                 
