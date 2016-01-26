@@ -893,7 +893,9 @@ char isMapSpotEmpty( int inX, int inY ) {
     for( int i=0; i<numLive; i++ ) {
         LiveObject *nextPlayer = players.getElement( i );
         
-        if( // stationary
+        if( // not about to be deleted
+            ! nextPlayer->error &&
+            // stationary
             nextPlayer->xs == nextPlayer->xd &&
             nextPlayer->ys == nextPlayer->yd &&
             // in this spot
@@ -1220,6 +1222,13 @@ int main() {
         // accumulated text of update lines
         SimpleVector<char> newUpdates;
         SimpleVector<ChangePosition> newUpdatesPos;
+
+
+        // separate accumulated text of updates for player deletes
+        // these are global, so they're not tagged with positions for
+        // spatial filtering
+        SimpleVector<char> newDeleteUpdates;
+        
 
         SimpleVector<char> mapChanges;
         SimpleVector<ChangePosition> mapChangesPos;
@@ -1657,6 +1666,10 @@ int main() {
                                     // is anyone there?
                                     int numLive = players.size();
                                     
+                                    int hitPlayerIndex = 0;
+                                    
+                                    LiveObject *hitPlayer = NULL;
+                                    
                                     for( int j=0; j<numLive; j++ ) {
                                         LiveObject *otherPlayer = 
                                             players.getElement( j );
@@ -1675,9 +1688,8 @@ int main() {
                                                 m.y ) {
                                                 
                                                 // hit
-                                                // break the connection with 
-                                                // them
-                                                otherPlayer->error = true;
+                                                hitPlayerIndex = j;
+                                                hitPlayer = otherPlayer;
                                                 break;
                                                 }
                                             }
@@ -1690,11 +1702,31 @@ int main() {
                                         
                                             if( equal( cPos, targetPos ) ) {
                                                 // hit
-                                                otherPlayer->error = true;
+                                                hitPlayer = otherPlayer;
                                                 break;
                                                 }
                                             }
                                         }
+
+                                    
+                                    char hitWillDropSomething = false;
+                                    
+                                    if( hitPlayer != NULL ) {
+                                        
+                                        if( hitPlayer->holdingID != 0
+                                            && getMapObject( 
+                                                m.x, 
+                                                m.y ) == 0 ) {
+                                
+                                            hitWillDropSomething = true;
+                                            }
+
+
+                                        // break the connection with 
+                                        // them
+                                        hitPlayer->error = true;
+                                        }
+                                    
                                     
                                     // a player either hit or not
                                     // in either case, weapon was used
@@ -1709,9 +1741,10 @@ int main() {
                                     if( r != NULL ) {
                                         nextPlayer->holdingID = r->newActor;
                                         }
-                                    int oldDestID = getMapObject( m.x, m.y );
 
-                                    if( oldDestID == 0 ) {    
+                                    if( ! hitWillDropSomething &&
+                                        isMapSpotEmpty( m.x, m.y ) ) {    
+                                        
                                         setMapObject( m.x, m.y, 
                                                       r->newTarget );
 
@@ -1727,6 +1760,10 @@ int main() {
                                     
                                         delete [] changeLine;
                                         }
+                                    // else new target, post-kill-attempt
+                                    // is lost (maybe in case where
+                                    // target player dropped what they
+                                    // were holding when killed
                                     
                                     }
                                 }
@@ -2286,15 +2323,50 @@ int main() {
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
                 char *updateLine = getUpdateLine( nextPlayer, true );
 
-                newUpdates.appendElementString( updateLine );
-                ChangePosition p = { 0, 0, true };
-                newUpdatesPos.push_back( p );
-
+                newDeleteUpdates.appendElementString( updateLine );
+                
                 delete [] updateLine;
                 
                 nextPlayer->isNew = false;
                 
                 nextPlayer->deleteSent = true;
+
+
+                if( nextPlayer->holdingID != 0 ) {
+                    
+                    GridPos dropPos;
+                
+                    if( nextPlayer->xd == 
+                        nextPlayer->xs &&
+                        nextPlayer->yd ==
+                        nextPlayer->ys ) {
+                        // deleted player standing still
+                        
+                        dropPos.x = nextPlayer->xd;
+                        dropPos.y = nextPlayer->yd;
+                        }
+                    else {
+                        // player moving
+                        
+                        dropPos = 
+                            computePartialMoveSpot( nextPlayer );
+                        }
+                
+                    
+                    // empty spot to drop what 
+                    // they were holding
+                
+                    if( isMapSpotEmpty( dropPos.x, dropPos.y ) ) {
+                    
+                        handleDrop( 
+                            dropPos.x, dropPos.y, 
+                            nextPlayer,
+                            &mapChanges, 
+                            &mapChangesPos,
+                            &playerIndicesToSendUpdatesAbout );
+                        }
+                    }
+                
                 }
             else {
                 // check if they are done moving
@@ -2528,6 +2600,21 @@ int main() {
             delete [] temp;
 
             updateMessageLength = strlen( updateMessage );
+            }
+
+
+
+        char *deleteUpdateMessage = NULL;
+        int deleteUpdateMessageLength = 0;
+        
+        if( newDeleteUpdates.size() > 0 ) {
+            newDeleteUpdates.push_back( '#' );
+            char *temp = newDeleteUpdates.getElementString();
+
+            deleteUpdateMessage = concatonate( "PU\n", temp );
+            delete [] temp;
+
+            deleteUpdateMessageLength = strlen( deleteUpdateMessage );
             }
         
 
@@ -2904,6 +2991,21 @@ int main() {
                         }
                     }
                 
+
+                // EVERYONE gets updates about deleted players
+                if( deleteUpdateMessage != NULL ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            (unsigned char*)deleteUpdateMessage, 
+                            deleteUpdateMessageLength, 
+                            false, false );
+                    
+                    if( numSent == -1 ) {
+                        nextPlayer->error = true;
+                        }
+                    }
+                
+
 
                 if( nextPlayer->foodUpdate ) {
                     // send this player a food status change
