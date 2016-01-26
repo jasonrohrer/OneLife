@@ -3195,7 +3195,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             LiveObject *o = gameObjects.getElement( i );
             
             if( o->id != ourID ) {
-                if( distance( targetPos, o->currentPos ) <= 1 ) {
+                if( distance( targetPos, o->currentPos ) < 1 ) {
                     // clicked on someone
                     
                     if( getObject( ourLiveObject->holdingID )->deadlyDistance 
