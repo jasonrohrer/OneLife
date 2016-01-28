@@ -141,6 +141,12 @@ void getGameImageSize( int *outWidth, int *outHeight ) {
     }
 
 
+char shouldNativeScreenResolutionBeUsed() {
+    return true;
+    }
+
+
+
 
 const char *getWindowTitle() {
     return "EDITOR - One Dollar One Hour One Life";
