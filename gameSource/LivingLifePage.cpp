@@ -1268,7 +1268,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             pos.x = ( x + screenGridOffsetX ) * CELL_D;
             pos.y = ( y + screenGridOffsetY ) * CELL_D;
             
-            drawSquare( pos, 30 );
+            drawSquare( pos, CELL_D * .45 );
             }
         }    
 
