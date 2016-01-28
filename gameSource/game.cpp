@@ -82,8 +82,19 @@ doublePair lastScreenViewCenter = {0, 0 };
 
 
 
-// world with of one view
-double viewWidth = 666;
+// world width of one view
+double viewWidth = 1366;
+double viewHeight = 768;
+
+
+// this is the desired visible width
+// if our screen is wider than this (wider than 16:9 aspect ratio)
+// then we will put letterbox bars on the sides
+// Usually, if screen is not 16:9, it will be taller, not wider,
+// and we will put letterbox bars on the top and bottom 
+const double visibleViewWidth = viewWidth;
+
+
 
 // fraction of viewWidth visible vertically (aspect ratio)
 double viewHeightFraction;
@@ -119,14 +130,14 @@ char rightKey = 'd';
 
 
 char doesOverrideGameImageSize() {
-    return true;
+    return false;
     }
 
 
 
 void getGameImageSize( int *outWidth, int *outHeight ) {
-    *outWidth = 666;
-    *outHeight = 666;
+    *outWidth = (int)viewWidth;
+    *outHeight = (int)viewHeight;
     }
 
 
@@ -254,17 +265,23 @@ char *getHashSalt() {
 
 
 void initDrawString( int inWidth, int inHeight ) {
+
+    toggleLinearMagFilter( true );
+
     mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16 );
     mainFont->setMinimumPositionPrecision( 1 );
 
     setViewCenterPosition( lastScreenViewCenter.x, lastScreenViewCenter.y );
 
     viewHeightFraction = inHeight / (double)inWidth;
+    
+    if( viewHeightFraction < 9.0 / 16.0 ) {
+        // weird, wider than 16:9 aspect ratio
+        
+        viewWidth = viewHeight / viewHeightFraction;
+        }
+    
 
-    // square window for this game
-    viewWidth = 666 * 1.0 / viewHeightFraction;
-    
-    
     setViewSize( viewWidth );
     }
 
@@ -297,11 +314,13 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     setViewCenterPosition( lastScreenViewCenter.x, lastScreenViewCenter.y );
 
     viewHeightFraction = inHeight / (double)inWidth;
+    
 
-    
-    // square window for this game
-    viewWidth = 666 * 1.0 / viewHeightFraction;
-    
+    if( viewHeightFraction < 9.0 / 16.0 ) {
+        // weird, wider than 16:9 aspect ratio
+        
+        viewWidth = viewHeight / viewHeightFraction;
+        }
     
     setViewSize( viewWidth );
 
@@ -983,6 +1002,46 @@ void drawFrameNoUpdate( char inUpdate ) {
     if( currentGamePage != NULL ) {
         currentGamePage->base_draw( lastScreenViewCenter, viewWidth );
         }
+
+    // add letterboxes
+    if( viewHeight != viewHeightFraction * viewWidth ||
+        viewWidth != visibleViewWidth ) {
+
+        // screen is different aspect ratio than our game image
+        
+        // red for now, testing
+        setDrawColor( 1, 0, 0, 0.75 );
+            
+        if( viewWidth != visibleViewWidth ) {
+            // side bars
+            
+            drawRect( lastScreenViewCenter.x - viewWidth, 
+                      lastScreenViewCenter.y - viewHeight,
+                      lastScreenViewCenter.x - visibleViewWidth / 2, 
+                      lastScreenViewCenter.y + viewHeight );
+
+            drawRect( lastScreenViewCenter.x + viewWidth, 
+                      lastScreenViewCenter.y - viewHeight,
+                      lastScreenViewCenter.x + visibleViewWidth / 2, 
+                      lastScreenViewCenter.y + viewHeight );
+            }
+        else {
+            // top/bottom bars
+            
+            drawRect( lastScreenViewCenter.x - viewWidth, 
+                      lastScreenViewCenter.y - viewHeight,
+                      lastScreenViewCenter.x + viewWidth, 
+                      lastScreenViewCenter.y - viewHeight / 2 );
+
+            drawRect( lastScreenViewCenter.x - viewWidth, 
+                      lastScreenViewCenter.y + viewHeight,
+                      lastScreenViewCenter.x + viewWidth, 
+                      lastScreenViewCenter.y + viewHeight / 2 );
+            }
+        
+        
+        }
+    
     }
 
 
