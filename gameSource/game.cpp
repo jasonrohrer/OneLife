@@ -83,8 +83,8 @@ doublePair lastScreenViewCenter = {0, 0 };
 
 
 // world width of one view
-double viewWidth = 1366;
-double viewHeight = 768;
+double viewWidth = 1024;
+double viewHeight = 576;
 
 
 // this is the desired visible width
@@ -130,7 +130,7 @@ char rightKey = 'd';
 
 
 char doesOverrideGameImageSize() {
-    return false;
+    return true;
     }
 
 
