@@ -145,6 +145,9 @@ char shouldNativeScreenResolutionBeUsed() {
     return true;
     }
 
+char isNonIntegerScalingAllowed() {
+    return false;
+    }
 
 
 

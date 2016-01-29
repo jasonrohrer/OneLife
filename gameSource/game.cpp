@@ -146,6 +146,10 @@ char shouldNativeScreenResolutionBeUsed() {
     }
 
 
+char isNonIntegerScalingAllowed() {
+    return true;
+    }
+
 
 const char *getWindowTitle() {
     return "One Dollar One Hour One Life";
@@ -1009,44 +1013,30 @@ void drawFrameNoUpdate( char inUpdate ) {
         }
 
     // add letterboxes
-    if( viewHeight != viewHeightFraction * viewWidth ||
-        viewWidth != visibleViewWidth ) {
-
-        // screen is different aspect ratio than our game image
-        
-        // red for now, testing
-        setDrawColor( 1, 0, 0, 0.75 );
-            
-        if( viewWidth != visibleViewWidth ) {
-            // side bars
-            
-            drawRect( lastScreenViewCenter.x - viewWidth, 
-                      lastScreenViewCenter.y - viewHeight,
-                      lastScreenViewCenter.x - visibleViewWidth / 2, 
-                      lastScreenViewCenter.y + viewHeight );
-
-            drawRect( lastScreenViewCenter.x + viewWidth, 
-                      lastScreenViewCenter.y - viewHeight,
-                      lastScreenViewCenter.x + visibleViewWidth / 2, 
-                      lastScreenViewCenter.y + viewHeight );
-            }
-        else {
-            // top/bottom bars
-            
-            drawRect( lastScreenViewCenter.x - viewWidth, 
-                      lastScreenViewCenter.y - viewHeight,
-                      lastScreenViewCenter.x + viewWidth, 
-                      lastScreenViewCenter.y - viewHeight / 2 );
-
-            drawRect( lastScreenViewCenter.x - viewWidth, 
-                      lastScreenViewCenter.y + viewHeight,
-                      lastScreenViewCenter.x + viewWidth, 
-                      lastScreenViewCenter.y + viewHeight / 2 );
-            }
-        
-        
-        }
     
+    // red for now, testing
+    setDrawColor( 1, 0, 0, 0.75 );
+    drawRect( lastScreenViewCenter.x - viewWidth, 
+              lastScreenViewCenter.y - viewHeight,
+              lastScreenViewCenter.x - visibleViewWidth / 2, 
+              lastScreenViewCenter.y + viewHeight );
+    
+    drawRect( lastScreenViewCenter.x + viewWidth, 
+              lastScreenViewCenter.y - viewHeight,
+              lastScreenViewCenter.x + visibleViewWidth / 2, 
+              lastScreenViewCenter.y + viewHeight );
+    
+    // top/bottom bars
+            
+    drawRect( lastScreenViewCenter.x - viewWidth, 
+              lastScreenViewCenter.y - viewHeight,
+              lastScreenViewCenter.x + viewWidth, 
+              lastScreenViewCenter.y - viewHeight / 2 );
+    
+    drawRect( lastScreenViewCenter.x - viewWidth, 
+              lastScreenViewCenter.y + viewHeight,
+              lastScreenViewCenter.x + viewWidth, 
+              lastScreenViewCenter.y + viewHeight / 2 );
     }
 
 
