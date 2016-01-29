@@ -28,6 +28,8 @@ extern Font *handwritingFont;
 
 extern doublePair lastScreenViewCenter;
 
+extern double viewWidth;
+
 
 static JenkinsRandomSource randSource;
 
@@ -735,7 +737,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
     setDrawColor( 1, 1, 1, 1 );
-    drawSquare( lastScreenViewCenter, 400 );
+    drawSquare( lastScreenViewCenter, viewWidth );
     
     //if( currentGamePage != NULL ) {
     //    currentGamePage->base_draw( lastScreenViewCenter, viewWidth );
