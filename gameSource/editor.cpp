@@ -273,6 +273,11 @@ char *getHashSalt() {
 
 
 void initDrawString( int inWidth, int inHeight ) {
+    toggleLinearMagFilter( true );
+    toggleMipMapGeneration( true );
+    toggleMipMapMinFilter( true );
+
+
     mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16 );
     mainFont->setMinimumPositionPrecision( 1 );
 
@@ -299,6 +304,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                       char inPlayingBack ) {
     
     toggleLinearMagFilter( true );
+    toggleMipMapGeneration( true );
+    toggleMipMapMinFilter( true );
     
     gamePlayingBack = inPlayingBack;
     
@@ -1124,6 +1131,12 @@ void keyDown( unsigned char inASCII ) {
         saveScreenShot( "screen" );
         }
     
+    if( inASCII == 'N' ) {
+        toggleMipMapMinFilter( true );
+        }
+    if( inASCII == 'n' ) {
+        toggleMipMapMinFilter( false );
+        }
 
     
     if( isPaused() ) {
