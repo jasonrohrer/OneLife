@@ -83,8 +83,8 @@ doublePair lastScreenViewCenter = {0, 0 };
 
 
 // world width of one view
-double viewWidth = 1024;
-double viewHeight = 576;
+double viewWidth = 1920;
+double viewHeight = 1080;
 
 
 // this is the desired visible width
