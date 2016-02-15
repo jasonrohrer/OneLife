@@ -33,7 +33,7 @@ extern double viewWidth;
 
 static JenkinsRandomSource randSource;
 
-#define CELL_D 64
+#define CELL_D 128
 
 
 // base speed for animations that aren't speeded up or slowed down
@@ -750,11 +750,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int gridCenterY = 
         lrintf( lastScreenViewCenter.y / CELL_D ) - mMapOffsetY + mMapD/2;
     
-    int xStart = gridCenterX - 6;
-    int xEnd = gridCenterX + 6;
+    int xStart = gridCenterX - 8;
+    int xEnd = gridCenterX + 8;
 
-    int yStart = gridCenterY - 6;
-    int yEnd = gridCenterY + 6;
+    int yStart = gridCenterY - 5;
+    int yEnd = gridCenterY + 5;
 
     if( xStart < 0 ) {
         xStart = 0;
@@ -1263,8 +1263,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int screenGridOffsetX = lrint( lastScreenViewCenter.x / CELL_D );
     int screenGridOffsetY = lrint( lastScreenViewCenter.y / CELL_D );
     
-    for( int y=-11; y<12; y++ ) {
-        for( int x=-11; x<12; x++ ) {
+    for( int y=-5; y<=5; y++ ) {
+        for( int x=-8; x<=8; x++ ) {
             
             doublePair pos;
             pos.x = ( x + screenGridOffsetX ) * CELL_D;

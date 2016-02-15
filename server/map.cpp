@@ -26,7 +26,7 @@
 
 
 
-static int chunkDimension = 16;
+static int chunkDimension = 22;
 
 
 

@@ -2811,7 +2811,7 @@ int main() {
                 
                 if( abs( nextPlayer->xd - nextPlayer->lastSentMapX ) > 3
                     ||
-                    abs( nextPlayer->yd - nextPlayer->lastSentMapY ) > 3 ) {
+                    abs( nextPlayer->yd - nextPlayer->lastSentMapY ) > 5 ) {
                 
                     // moving out of bounds of chunk, send update
                     
