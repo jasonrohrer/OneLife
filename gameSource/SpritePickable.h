@@ -31,7 +31,9 @@ class SpritePickable : public Pickable {
         virtual void draw( void *inObject, doublePair inPos ) {
             SpriteRecord *r = (SpriteRecord*)inObject;
             
-            drawSprite( r->sprite, inPos );
+            double zoom = 64.0 / r->maxD;
+
+            drawSprite( r->sprite, inPos, zoom );
             }
 
 

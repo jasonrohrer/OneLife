@@ -95,7 +95,11 @@ float initSpriteBankStep() {
                                 
                         r->sprite = sprite;
                         r->tag = stringDuplicate( tag );
-                                
+                        
+                        r->maxD = getSpriteWidth( sprite );
+                        if( getSpriteHeight( sprite ) > r->maxD ) {
+                            r->maxD = getSpriteHeight( sprite );
+                            }
                         records.push_back( r );
 
                         if( maxID < r->id ) {
@@ -195,6 +199,16 @@ void freeSpriteBank() {
 
 
 
+SpriteRecord *getSpriteRecord( int inID ) {
+    if( inID < mapSize ) {
+        return idMap[inID];
+        }
+    else {
+        return NULL;
+        }
+    }
+
+
 
 SpriteHandle getSprite( int inID ) {
     if( inID < mapSize ) {
@@ -243,6 +257,11 @@ SpriteRecord **searchSprites( const char *inSearch,
 int addSprite( const char *inTag, SpriteHandle inSprite,
                Image *inSourceImage ) {
 
+    int maxD = inSourceImage->getWidth();
+    
+    if( maxD < inSourceImage->getHeight() ) {
+        maxD = inSourceImage->getHeight();
+        }
     
     int newID = -1;
 
@@ -346,7 +365,7 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     r->id = newID;
     r->sprite = inSprite;
     r->tag = stringDuplicate( inTag );
-    
+    r->maxD = maxD;
 
     // delete old
     freeSpriteRecord( newID );

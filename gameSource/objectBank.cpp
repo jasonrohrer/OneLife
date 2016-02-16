@@ -749,7 +749,8 @@ static char logicalXOR( char inA, char inB ) {
 
 
 void drawObject( ObjectRecord *inObject, doublePair inPos,
-                 char inFlipH, double inAge, ClothingSet inClothing ) {
+                 char inFlipH, double inAge, ClothingSet inClothing,
+                 double inScale ) {
     for( int i=0; i<inObject->numSprites; i++ ) {
         doublePair spritePos = inObject->spritePos[i];
 
@@ -761,13 +762,16 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             spritePos = add( spritePos, getAgeHeadOffset( inAge, spritePos ) );
             }
         
+
+        spritePos = mult( spritePos, inScale );
+
         doublePair pos = add( spritePos, inPos );
 
         char skipSprite = false;
         
         // draw head behind hat
         if( i == inObject->numSprites - 1 && inClothing.hat != NULL ) {
-            drawSprite( getSprite( inObject->sprites[i] ), pos, 1.0,
+            drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
                         inObject->spriteRot[i], 
                         logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
             }
@@ -831,7 +835,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
         
         if( ! skipSprite ) {
             
-            drawSprite( getSprite( inObject->sprites[i] ), pos, 1.0,
+            drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
                         inObject->spriteRot[i], 
                         logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
 

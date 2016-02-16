@@ -10,6 +10,10 @@ typedef struct SpriteRecord {
         SpriteHandle sprite;
         
         char *tag;
+
+        // maximum pixel dimension
+        // (used for sizing in pickers)
+        int maxD;
         
     } SpriteRecord;
 
@@ -25,6 +29,8 @@ void initSpriteBankFinish();
 void freeSpriteBank();
 
 
+
+SpriteRecord *getSpriteRecord( int inID );
 
 SpriteHandle getSprite( int inID );
 
