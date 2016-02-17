@@ -72,7 +72,7 @@ EditorObjectPage::EditorObjectPage()
                                 "Deadly Distance", "0123456789.", NULL ),
           mSaveObjectButton( smallFont, 210, -260, "Save New" ),
           mReplaceObjectButton( smallFont, 310, -260, "Replace" ),
-          mClearObjectButton( mainFont, 0, 160, "Blank" ),
+          mClearObjectButton( smallFont, 0, 160, "Blank" ),
           mClearRotButton( smallFont, 0, -160, "0 Rot" ),
           mFlipHButton( smallFont, -160, 160, "H Flip" ),
           mImportEditorButton( mainFont, -210, 260, "Sprites" ),
@@ -88,7 +88,7 @@ EditorObjectPage::EditorObjectPage()
           mEndSetHeldPosButton( smallFont, 150, -76, "End Held" ),
           mSpritePicker( &spritePickable, -310, 100 ),
           mObjectPicker( &objectPickable, +310, 100 ),
-          mPersonAgeSlider( smallFont, 0, -110, 2,
+          mPersonAgeSlider( smallFont, 0, 110, 2,
                             100, 20,
                             0, 100, "Age" ),
           mSlotPlaceholderSprite( loadSprite( "slotPlaceholder.tga" ) ) {
