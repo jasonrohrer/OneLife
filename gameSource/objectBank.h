@@ -5,6 +5,15 @@
 #include "minorGems/game/doublePair.h"
 
 
+typedef struct FloatRGB {
+        float r, g, b;
+    } FloatRGB;
+
+
+void setDrawColor( FloatRGB inColor );
+
+
+
 typedef struct ObjectRecord {
         int id;
         
@@ -80,6 +89,8 @@ typedef struct ObjectRecord {
         double *spriteRot;
         
         char *spriteHFlip;
+
+        FloatRGB *spriteColor;
         
         
     } ObjectRecord;
@@ -155,6 +166,7 @@ int addObject( const char *inDescription,
                doublePair *inSpritePos,
                double *inSpriteRot,
                char *inSpriteHFlip,
+               FloatRGB *inSpriteColor,
                int inReplaceID = -1 );
 
 

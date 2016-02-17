@@ -739,6 +739,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         
         // draw head behind hat
         if( i == obj->numSprites - 1 && inClothing.hat != NULL ) {
+            setDrawColor( obj->spriteColor[i] );
             drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, 
                         logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
             }
@@ -800,7 +801,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             }
 
 
-        if( !skipSprite ) {    
+        if( !skipSprite ) {
+            setDrawColor( obj->spriteColor[i] );
             drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, 
                         logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
             }

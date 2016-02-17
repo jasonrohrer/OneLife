@@ -48,6 +48,18 @@ static SimpleVector<ObjectRecord*> records;
 static int maxID;
 
 
+
+
+void setDrawColor( FloatRGB inColor ) {
+    setDrawColor( inColor.r, 
+                  inColor.g, 
+                  inColor.b,
+                  1 );
+    }
+
+
+
+
 void initObjectBankStart() {
     maxID = 0;
 
@@ -255,6 +267,7 @@ float initObjectBankStep() {
                     r->spritePos = new doublePair[ r->numSprites ];
                     r->spriteRot = new double[ r->numSprites ];
                     r->spriteHFlip = new char[ r->numSprites ];
+                    r->spriteColor = new FloatRGB[ r->numSprites ];
 
                     for( int i=0; i< r->numSprites; i++ ) {
                         sscanf( lines[next], "spriteID=%d", 
@@ -279,6 +292,14 @@ float initObjectBankStep() {
                         sscanf( lines[next], "hFlip=%d", &flipRead );
                                 
                         r->spriteHFlip[i] = flipRead;
+                                
+                        next++;
+
+
+                        sscanf( lines[next], "color=%f,%f,%f", 
+                                &( r->spriteColor[i].r ),
+                                &( r->spriteColor[i].g ),
+                                &( r->spriteColor[i].b ) );
                                 
                         next++;
                         }
@@ -359,6 +380,7 @@ static void freeObjectRecord( int inID ) {
             delete [] idMap[inID]->spritePos;
             delete [] idMap[inID]->spriteRot;
             delete [] idMap[inID]->spriteHFlip;
+            delete [] idMap[inID]->spriteColor;
             
             delete idMap[inID];
             idMap[inID] = NULL;
@@ -383,6 +405,7 @@ void freeObjectBank() {
             delete [] idMap[i]->spritePos;
             delete [] idMap[i]->spriteRot;
             delete [] idMap[i]->spriteHFlip;
+            delete [] idMap[i]->spriteColor;
 
             delete idMap[i];
             }
@@ -419,6 +442,7 @@ void resaveAll() {
                        idMap[i]->spritePos,
                        idMap[i]->spriteRot,
                        idMap[i]->spriteHFlip,
+                       idMap[i]->spriteColor,
                        idMap[i]->id );
             }
         }
@@ -518,6 +542,7 @@ int addObject( const char *inDescription,
                doublePair *inSpritePos,
                double *inSpriteRot,
                char *inSpriteHFlip,
+               FloatRGB *inSpriteColor,
                int inReplaceID ) {
     
 
@@ -615,6 +640,10 @@ int addObject( const char *inDescription,
                                           inSpriteRot[i] ) );
             lines.push_back( autoSprintf( "hFlip=%d", 
                                           inSpriteHFlip[i] ) );
+            lines.push_back( autoSprintf( "color=%f,%f,%f", 
+                                          inSpriteColor[i].r,
+                                          inSpriteColor[i].g,
+                                          inSpriteColor[i].b ) );
             }
         
         char **linesArray = lines.getElementArray();
@@ -712,11 +741,13 @@ int addObject( const char *inDescription,
     r->spritePos = new doublePair[ inNumSprites ];
     r->spriteRot = new double[ inNumSprites ];
     r->spriteHFlip = new char[ inNumSprites ];
+    r->spriteColor = new FloatRGB[ inNumSprites ];
 
     memcpy( r->sprites, inSprites, inNumSprites * sizeof( int ) );
     memcpy( r->spritePos, inSpritePos, inNumSprites * sizeof( doublePair ) );
     memcpy( r->spriteRot, inSpriteRot, inNumSprites * sizeof( double ) );
     memcpy( r->spriteHFlip, inSpriteHFlip, inNumSprites * sizeof( char ) );
+    memcpy( r->spriteColor, inSpriteColor, inNumSprites * sizeof( FloatRGB ) );
     
 
 
@@ -771,6 +802,8 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
         
         // draw head behind hat
         if( i == inObject->numSprites - 1 && inClothing.hat != NULL ) {
+            setDrawColor( inObject->spriteColor[i] );
+            
             drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
                         inObject->spriteRot[i], 
                         logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
@@ -834,7 +867,8 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
         
         
         if( ! skipSprite ) {
-            
+            setDrawColor( inObject->spriteColor[i] );
+
             drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
                         inObject->spriteRot[i], 
                         logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );

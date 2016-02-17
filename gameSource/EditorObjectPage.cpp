@@ -216,6 +216,7 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.spritePos = new doublePair[ 0 ];
     mCurrentObject.spriteRot = new double[ 0 ];
     mCurrentObject.spriteHFlip = new char[ 0 ];
+    mCurrentObject.spriteColor = new FloatRGB[ 0 ];
 
     mPickedObjectLayer = -1;
     mPickedSlot = -1;
@@ -294,6 +295,7 @@ EditorObjectPage::~EditorObjectPage() {
     delete [] mCurrentObject.spritePos;
     delete [] mCurrentObject.spriteRot;
     delete [] mCurrentObject.spriteHFlip;
+    delete [] mCurrentObject.spriteColor;
 
     freeSprite( mSlotPlaceholderSprite );
     
@@ -368,7 +370,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
                    mCurrentObject.spriteRot,
-                   mCurrentObject.spriteHFlip );
+                   mCurrentObject.spriteHFlip,
+                   mCurrentObject.spriteColor );
         
         delete [] text;
         
@@ -401,6 +404,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spritePos,
                    mCurrentObject.spriteRot,
                    mCurrentObject.spriteHFlip,
+                   mCurrentObject.spriteColor,
                    mCurrentObject.id );
         
         delete [] text;
@@ -465,6 +469,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         delete [] mCurrentObject.spriteHFlip;
         mCurrentObject.spriteHFlip = new char[ 0 ];
+
+        delete [] mCurrentObject.spriteColor;
+        mCurrentObject.spriteColor = new FloatRGB[ 0 ];
         
         mSaveObjectButton.setVisible( false );
         mReplaceObjectButton.setVisible( false );
@@ -700,6 +707,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             char *newSpriteHFlip = new char[ newNumSprites ];
             memcpy( newSpriteHFlip, mCurrentObject.spriteHFlip, 
                     mCurrentObject.numSprites * sizeof( char ) );
+
+            FloatRGB *newSpriteColor = new FloatRGB[ newNumSprites ];
+            memcpy( newSpriteColor, mCurrentObject.spriteColor, 
+                    mCurrentObject.numSprites * sizeof( FloatRGB ) );
         
             newSprites[ mCurrentObject.numSprites ] = spriteID;
             
@@ -715,11 +726,13 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] mCurrentObject.spritePos;
             delete [] mCurrentObject.spriteRot;
             delete [] mCurrentObject.spriteHFlip;
+            delete [] mCurrentObject.spriteColor;
             
             mCurrentObject.sprites = newSprites;
             mCurrentObject.spritePos = newSpritePos;
             mCurrentObject.spriteRot = newSpriteRot;
             mCurrentObject.spriteHFlip = newSpriteHFlip;
+            mCurrentObject.spriteColor = newSpriteColor;
             mCurrentObject.numSprites = newNumSprites;
 
             mClearObjectButton.setVisible( true );
@@ -762,6 +775,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] mCurrentObject.spritePos;
             delete [] mCurrentObject.spriteRot;
             delete [] mCurrentObject.spriteHFlip;
+            delete [] mCurrentObject.spriteColor;
 
             mCurrentObject.id = objectID;
                 
@@ -823,6 +837,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 new double[ pickedRecord->numSprites ];
             mCurrentObject.spriteHFlip = 
                 new char[ pickedRecord->numSprites ];
+            mCurrentObject.spriteColor = 
+                new FloatRGB[ pickedRecord->numSprites ];
                 
             memcpy( mCurrentObject.sprites, pickedRecord->sprites,
                     sizeof( int ) * pickedRecord->numSprites );
@@ -835,6 +851,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             memcpy( mCurrentObject.spriteHFlip, pickedRecord->spriteHFlip,
                     sizeof( char ) * pickedRecord->numSprites );
+                
+            memcpy( mCurrentObject.spriteColor, pickedRecord->spriteColor,
+                    sizeof( FloatRGB ) * pickedRecord->numSprites );
                 
 
             mSaveObjectButton.setVisible( true );
@@ -1148,6 +1167,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         float blue = 1;
         float red = 1;
+        float green = 1;
         float alpha = 1;
         
         if( mHoverObjectLayer == i && mHoverStrength > 0 ) {
@@ -1155,8 +1175,15 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             red = 1 - mHoverStrength;
             alpha *= mHoverFlash;
             }
-                
-        setDrawColor( red, 1, blue, alpha );
+        else {
+            FloatRGB color = mCurrentObject.spriteColor[i];
+            
+            red = color.r;
+            green = color.g;
+            blue = color.b;
+            }
+        
+        setDrawColor( red, green, blue, alpha );
 
         
                         
@@ -1170,6 +1197,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             }
                 
 
+        
         drawSprite( getSprite( mCurrentObject.sprites[i] ), spritePos,
                     1.0, mCurrentObject.spriteRot[i],
                     mCurrentObject.spriteHFlip[i] );
@@ -1302,6 +1330,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     doublePair *newSpritePos = new doublePair[ newNumSprites ];
     double *newSpriteRot = new double[ newNumSprites ];
     char *newSpriteHFlip = new char[ newNumSprites ];
+    FloatRGB *newSpriteColor = new FloatRGB[ newNumSprites ];
     
     int j = 0;
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
@@ -1312,6 +1341,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
             newSpritePos[j] = mCurrentObject.spritePos[i];
             newSpriteRot[j] = mCurrentObject.spriteRot[i];
             newSpriteHFlip[j] = mCurrentObject.spriteHFlip[i];
+            newSpriteColor[j] = mCurrentObject.spriteColor[i];
             j++;
             }
         }
@@ -1320,11 +1350,13 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     delete [] mCurrentObject.spritePos;
     delete [] mCurrentObject.spriteRot;
     delete [] mCurrentObject.spriteHFlip;
+    delete [] mCurrentObject.spriteColor;
             
     mCurrentObject.sprites = newSprites;
     mCurrentObject.spritePos = newSpritePos;
     mCurrentObject.spriteRot = newSpriteRot;
     mCurrentObject.spriteHFlip = newSpriteHFlip;
+    mCurrentObject.spriteColor = newSpriteColor;
     mCurrentObject.numSprites = newNumSprites;
     }
 
@@ -1575,15 +1607,27 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
                 (newNumSprites - mPickedObjectLayer ) * sizeof( char ) );
 
 
+        FloatRGB *newSpriteColor = new FloatRGB[ newNumSprites ];
+        
+        memcpy( newSpriteColor, mCurrentObject.spriteColor, 
+                mPickedObjectLayer * sizeof( FloatRGB ) );
+        
+        memcpy( &( newSpriteColor[mPickedObjectLayer] ), 
+                &( mCurrentObject.spriteColor[mPickedObjectLayer+1] ), 
+                (newNumSprites - mPickedObjectLayer ) * sizeof( FloatRGB ) );
+
+
         delete [] mCurrentObject.sprites;
         delete [] mCurrentObject.spritePos;
         delete [] mCurrentObject.spriteRot;
         delete [] mCurrentObject.spriteHFlip;
+        delete [] mCurrentObject.spriteColor;
             
         mCurrentObject.sprites = newSprites;
         mCurrentObject.spritePos = newSpritePos;
         mCurrentObject.spriteRot = newSpriteRot;
         mCurrentObject.spriteHFlip = newSpriteHFlip;
+        mCurrentObject.spriteColor = newSpriteColor;
         mCurrentObject.numSprites = newNumSprites;
         
         mPickedObjectLayer = -1;
@@ -1757,6 +1801,10 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                         mCurrentObject.spriteHFlip[mPickedObjectLayer + 
                                                    layerOffset];
                 
+                    FloatRGB tempColor = 
+                        mCurrentObject.spriteColor[mPickedObjectLayer + 
+                                                   layerOffset];
+                
                     mCurrentObject.sprites[mPickedObjectLayer + layerOffset]
                         = mCurrentObject.sprites[mPickedObjectLayer];
                     mCurrentObject.sprites[mPickedObjectLayer] = tempSprite;
@@ -1773,6 +1821,11 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                                + layerOffset]
                         = mCurrentObject.spriteHFlip[mPickedObjectLayer];
                     mCurrentObject.spriteHFlip[mPickedObjectLayer] = tempHFlip;
+
+                    mCurrentObject.spriteColor[mPickedObjectLayer 
+                                               + layerOffset]
+                        = mCurrentObject.spriteColor[mPickedObjectLayer];
+                    mCurrentObject.spriteColor[mPickedObjectLayer] = tempColor;
                 
                     
                     mPickedObjectLayer += layerOffset;
@@ -1800,6 +1853,10 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                     char tempHFlip = 
                         mCurrentObject.spriteHFlip[mPickedObjectLayer - 
                                                    layerOffset];
+
+                    FloatRGB tempColor = 
+                        mCurrentObject.spriteColor[mPickedObjectLayer - 
+                                                   layerOffset];
                 
                     mCurrentObject.sprites[mPickedObjectLayer - layerOffset]
                         = mCurrentObject.sprites[mPickedObjectLayer];
@@ -1817,6 +1874,12 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                                layerOffset]
                         = mCurrentObject.spriteHFlip[mPickedObjectLayer];
                     mCurrentObject.spriteHFlip[mPickedObjectLayer] = tempHFlip;
+
+
+                    mCurrentObject.spriteColor[mPickedObjectLayer - 
+                                               layerOffset]
+                        = mCurrentObject.spriteColor[mPickedObjectLayer];
+                    mCurrentObject.spriteColor[mPickedObjectLayer] = tempColor;
 
                 
                     mPickedObjectLayer -= layerOffset;
