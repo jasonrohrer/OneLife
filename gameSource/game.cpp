@@ -954,6 +954,7 @@ void drawFrame( char inUpdate ) {
                     break;
                     }
                 default:
+                    loadingComplete();
                     currentGamePage = livingLifePage;
                     currentGamePage->base_makeActive( true );
                 }
@@ -999,6 +1000,25 @@ void drawFrame( char inUpdate ) {
 
     // now draw stuff AFTER all updates
     drawFrameNoUpdate( true );
+
+
+
+    double recentFPS = getRecentFrameRate();
+
+    if( recentFPS < 0.90 * ( 60.0 / frameRateFactor ) 
+        ||
+        recentFPS > 1.10 * ( 60.0 / frameRateFactor ) ) {
+        
+        // slowdown or speedup of more than 10% off target
+
+        printf( "Seeing true framerate of %f\n", recentFPS );
+
+        // if we're seeing a speedup, this might be correcting
+        // for a previous slowdown that we already adjusted for
+        frameRateFactor = 60.0 / recentFPS;
+
+        printf( "Adjusting framerate factor to %f\n", frameRateFactor );
+        }
 
 
 

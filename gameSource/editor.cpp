@@ -983,6 +983,7 @@ void drawFrame( char inUpdate ) {
                     }
                 default:
                     currentGamePage = importPage;
+                    loadingComplete();
                     currentGamePage->base_makeActive( true );
                 }
             }
@@ -1026,6 +1027,23 @@ void drawFrame( char inUpdate ) {
     drawFrameNoUpdate( true );
 
 
+    double recentFPS = getRecentFrameRate();
+
+    if( recentFPS < 0.90 * ( 60.0 / frameRateFactor ) 
+        ||
+        recentFPS > 1.10 * ( 60.0 / frameRateFactor ) ) {
+        
+        // slowdown or speedup of more than 10% off target
+
+        printf( "Seeing true framerate of %f\n", recentFPS );
+
+        // if we're seeing a speedup, this might be correcting
+        // for a previous slowdown that we already adjusted for
+        frameRateFactor = 60.0 / recentFPS;
+
+        printf( "Adjusting framerate factor to %f\n", frameRateFactor );
+        }
+    
 
     // draw tail end of pause screen, if it is still visible
     if( pauseScreenFade > 0 ) {
