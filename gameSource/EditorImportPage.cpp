@@ -215,6 +215,7 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
                                 importFile = pngFiles[t];
                                 found = true;
                                 }
+                            delete [] pngFileName;
                             }
                         if( !found ) {
                             // this file was not a match

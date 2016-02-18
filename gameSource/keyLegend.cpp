@@ -57,6 +57,8 @@ void drawKeyLegend( KeyLegend *inLegend, doublePair inPos ) {
 
         smallFont->drawString( string, inPos, alignLeft );
 
+        delete [] string;
+
         inPos.y -= 16;
         }
     }
