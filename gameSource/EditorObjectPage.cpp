@@ -63,7 +63,7 @@ EditorObjectPage::EditorObjectPage()
                              false,
                              "Contain Size", "0123456789.", NULL ),
           mSlotSizeField( smallFont, 
-                          -0,  -190, 4,
+                          -160,  -230, 4,
                           false,
                           "Slot Size", "0123456789.", NULL ),
           mDeadlyDistanceField( smallFont, 
@@ -73,13 +73,13 @@ EditorObjectPage::EditorObjectPage()
           mSaveObjectButton( smallFont, 210, -260, "Save New" ),
           mReplaceObjectButton( smallFont, 310, -260, "Replace" ),
           mClearObjectButton( smallFont, 0, 160, "Blank" ),
-          mClearRotButton( smallFont, 0, -160, "0 Rot" ),
+          mClearRotButton( smallFont, -160, 120, "0 Rot" ),
           mFlipHButton( smallFont, -160, 160, "H Flip" ),
           mImportEditorButton( mainFont, -210, 260, "Sprites" ),
           mTransEditorButton( mainFont, 210, 260, "Trans" ),
           mAnimEditorButton( mainFont, 330, 260, "Anim" ),
-          mMoreSlotsButton( smallFont, -120, -110, "More" ),
-          mLessSlotsButton( smallFont, -120, -190, "Less" ),
+          mMoreSlotsButton( smallFont, -160, -110, "More" ),
+          mLessSlotsButton( smallFont, -160, -190, "Less" ),
           mDemoClothesButton( smallFont, 200, 200, "Pos" ),
           mEndClothesDemoButton( smallFont, 200, 160, "XPos" ),
           mDemoSlotsButton( smallFont, 150, 32, "Demo Slots" ),
@@ -91,6 +91,15 @@ EditorObjectPage::EditorObjectPage()
           mPersonAgeSlider( smallFont, 0, 110, 2,
                             100, 20,
                             0, 100, "Age" ),
+          mHueSlider( smallFont, -90, -130, 2,
+                      75, 20,
+                      0, 1, "H" ),
+          mSaturationSlider( smallFont, -90, -162, 2,
+                             75, 20,
+                             0, 1, "S" ),
+          mValueSlider( smallFont, -90, -194, 2,
+                        75, 20,
+                        0, 1, "V" ),
           mSlotPlaceholderSprite( loadSprite( "slotPlaceholder.tga" ) ) {
 
     mDemoSlots = false;
@@ -155,9 +164,24 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mObjectPicker );
 
     addComponent( &mPersonAgeSlider );
+
+    addComponent( &mHueSlider );
+    addComponent( &mSaturationSlider );
+    addComponent( &mValueSlider );
     
+
+
     mPersonAgeSlider.setVisible( false );
     
+    mHueSlider.setVisible( false );
+    mSaturationSlider.setVisible( false );
+    mValueSlider.setVisible( false );
+    
+    mHueSlider.addActionListener( this );
+    mSaturationSlider.addActionListener( this );
+    mValueSlider.addActionListener( this );
+    
+
 
     mDescriptionField.setFireOnAnyTextChange( true );
     mDescriptionField.addActionListener( this );
@@ -323,6 +347,32 @@ float getFloat( TextField *inField ) {
     return f;
     }
 
+
+
+
+void EditorObjectPage::updateSliderColors() {
+    Color *pureHue = Color::makeColorFromHSV(
+        mHueSlider.getValue(), 1, 1 );
+    
+    mHueSlider.setFillColor( *pureHue );
+    delete pureHue;
+    
+    Color *pureHueSat = Color::makeColorFromHSV(
+        mHueSlider.getValue(), mSaturationSlider.getValue(), 1 );
+    
+    mSaturationSlider.setFillColor( *pureHueSat );
+
+    mValueSlider.setFillColor( *pureHueSat );
+    delete pureHueSat;
+
+    
+    Color *totalColor = Color::makeColorFromHSV(
+        mHueSlider.getValue(), mSaturationSlider.getValue(),
+        mValueSlider.getValue() );
+
+    mValueSlider.setBackFillColor( *totalColor );
+    delete totalColor;
+    }
 
 
 
@@ -495,6 +545,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mPickedObjectLayer = -1;
         mPickedSlot = -1;
         
+        pickedLayerChanged();
+
+        
         mObjectPicker.unselectObject();
         }
     else if( inTarget == &mClearRotButton ) {
@@ -548,7 +601,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         mPickedSlot = numSlots;
         mPickedObjectLayer = -1;
-        
+        pickedLayerChanged();
+
         delete [] mCurrentObject.slotPos;
         mCurrentObject.slotPos = slots;
 
@@ -746,6 +800,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mPickedObjectLayer = mCurrentObject.numSprites - 1;
             mPickedSlot = -1;
+            
+            pickedLayerChanged();
             }
         }
     
@@ -862,6 +918,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mPickedObjectLayer = -1;
             mPickedSlot = -1;
+            pickedLayerChanged();
 
             if( !mCurrentObject.containable && mCurrentObject.numSlots > 0 ) {
                 mDemoSlots = false;
@@ -948,6 +1005,24 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         else {
             mPersonAgeSlider.setVisible( false );
             }
+        }
+    else if( inTarget == &mHueSlider ||
+             inTarget == &mSaturationSlider ||
+             inTarget == &mValueSlider ) {
+        
+        if( mPickedObjectLayer != -1 ) {
+            Color *c = Color::makeColorFromHSV(
+                mHueSlider.getValue(), mSaturationSlider.getValue(),
+                mValueSlider.getValue() );
+
+            mCurrentObject.spriteColor[mPickedObjectLayer].r = c->r;
+            mCurrentObject.spriteColor[mPickedObjectLayer].g = c->g;
+            mCurrentObject.spriteColor[mPickedObjectLayer].b = c->b;
+            delete c;
+            
+            updateSliderColors();
+            }
+        
         }
     else {
         // check clothing checkboxes
@@ -1211,15 +1286,15 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
     char *numSlotString = autoSprintf( "Slots: %d", mCurrentObject.numSlots );
     
-    mainFont->drawString( numSlotString, pos, alignLeft );
+    smallFont->drawString( numSlotString, pos, alignLeft );
 
     delete [] numSlotString;
 
 
     
     if( mPickedObjectLayer != -1 ) {
-        pos.x += 150;
-        pos.y -= 50;
+        pos.x = -210;
+        pos.y = 90;
 
         char *rotString = 
             autoSprintf( "Rot: %f", 
@@ -1421,6 +1496,35 @@ double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
 
 
 
+void EditorObjectPage::pickedLayerChanged() {
+    if( mPickedObjectLayer == -1 ) {
+        mHueSlider.setVisible( false );
+        mSaturationSlider.setVisible( false );
+        mValueSlider.setVisible( false );
+        }
+    else {
+        mHueSlider.setVisible( true );
+        mSaturationSlider.setVisible( true );
+        mValueSlider.setVisible( true );
+        
+
+        FloatRGB rgb = mCurrentObject.spriteColor[ mPickedObjectLayer ];
+        
+        Color c( rgb.r, rgb.g, rgb.b );
+        
+        float h, s, v;
+        c.makeHSV( &h, &s, &v );
+        
+        mHueSlider.setValue( h );
+        mSaturationSlider.setValue( s );
+        mValueSlider.setValue( v );
+
+        updateSliderColors();
+        }
+    }
+
+
+
 
 
 void EditorObjectPage::pointerMove( float inX, float inY ) {
@@ -1465,6 +1569,7 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
     double smallestDist = 
         getClosestSpriteOrSlot( inX, inY, &mPickedObjectLayer, &mPickedSlot );
     
+    pickedLayerChanged();
     
     if( mPickedObjectLayer != -1 || mPickedSlot != -1 ) {
         mDescriptionField.unfocusAll();
@@ -1631,7 +1736,7 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         mCurrentObject.numSprites = newNumSprites;
         
         mPickedObjectLayer = -1;
-        
+        pickedLayerChanged();
 
         if( newNumSprites == 0 ) {
             mSaveObjectButton.setVisible( false );
@@ -1640,13 +1745,18 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         }
     else if( inASCII == 'm' ) {
         if( mPickedObjectLayer == -1 && mPickedSlot == -1 ) {
-            mPickedObjectLayer = 0;            
+            mPickedObjectLayer = 0; 
+            pickedLayerChanged();
             }
         else if( mPickedObjectLayer != -1 ) {
             mPickedObjectLayer ++;
+            
+            pickedLayerChanged();
+                
             if( mPickedObjectLayer >= mCurrentObject.numSprites ) {
                 mPickedObjectLayer = -1;
-                
+                pickedLayerChanged();
+
                 if( mCurrentObject.numSlots > 0 ) {
                     
                     mPickedSlot = 0;
@@ -1672,12 +1782,15 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
                 }
             else if( mCurrentObject.numSprites > 0 ) {
                 mPickedObjectLayer = mCurrentObject.numSprites - 1;
+                pickedLayerChanged();
                 }
             }
         else if( mPickedObjectLayer != -1 ) {
             mPickedObjectLayer --;
+            pickedLayerChanged();
             if( mPickedObjectLayer < 0 ) {
                 mPickedObjectLayer = -1;
+                pickedLayerChanged();
                 }
             }
         else if( mPickedSlot != -1 ) {
@@ -1687,6 +1800,7 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
                 mPickedSlot = -1;
                 if( mCurrentObject.numSprites > 0 ) {
                     mPickedObjectLayer = mCurrentObject.numSprites - 1;
+                    pickedLayerChanged();
                     }
                 }
             }        

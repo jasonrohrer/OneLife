@@ -14,6 +14,8 @@ ValueSlider::ValueSlider( Font *inDisplayFont,
                           double inHighValue,
                           const char *inLabelText )
         : PageComponent( inX, inY ),
+          mFillColor( 0.8, 0.8, 0, 1 ),
+          mBackFillColor( 0, 0, 0, 1 ),
           mFont( inDisplayFont ),
           mValueField( inDisplayFont, 0, 0, 5,
                        false,
@@ -77,6 +79,19 @@ void ValueSlider::setFieldFromValue() {
 
 
 
+void ValueSlider::setFillColor( Color inColor ) {
+    mFillColor = inColor;
+    }
+
+
+
+void ValueSlider::setBackFillColor( Color inColor ) {
+    mBackFillColor = inColor;
+    }
+
+
+
+
 void ValueSlider::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mValueField ) {
         double value = (double)( mValueField.getFloat() );
@@ -110,7 +125,7 @@ void ValueSlider::draw() {
     drawRect( mBarStartX, mBarStartY, 
               mBarEndX, mBarEndY );
 
-    setDrawColor( 0, 0, 0, 1 );
+    setDrawColor( mBackFillColor.r, mBackFillColor.g, mBackFillColor.b, 1 );
     
     drawRect( mBarStartX + mBarBorder, mBarStartY + mBarBorder, 
               mBarEndX - mBarBorder, mBarEndY - mBarBorder );
@@ -119,7 +134,7 @@ void ValueSlider::draw() {
     double fillWidth = ( ( mValue - mLowValue ) / ( mHighValue - mLowValue ) )
         * ( mBarEndX - mBarStartX - 2 * mBarBorder );
     
-    setDrawColor( .8, .8, 0, 1 );
+    setDrawColor( mFillColor.r, mFillColor.g, mFillColor.b, mFillColor.a );
     
     drawRect( mBarStartX + mBarBorder, mBarStartY + mBarBorder, 
               mBarStartX + mBarBorder + fillWidth, mBarEndY - mBarBorder );

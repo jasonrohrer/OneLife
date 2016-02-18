@@ -118,6 +118,10 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         ValueSlider mPersonAgeSlider;
 
+        ValueSlider mHueSlider;
+        ValueSlider mSaturationSlider;
+        ValueSlider mValueSlider;
+
 
         ObjectRecord mCurrentObject;
         
@@ -148,6 +152,12 @@ class EditorObjectPage : public GamePage, public ActionListener {
         double getClosestSpriteOrSlot( float inX, float inY,
                                        int *outSprite,
                                        int *outSlot );
+        
+
+        void pickedLayerChanged();
+        
+        void updateSliderColors();
+        
 
         int mHoverObjectLayer;
         int mHoverSlot;

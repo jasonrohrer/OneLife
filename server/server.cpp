@@ -3153,4 +3153,8 @@ void *getSprite( int ) {
 void drawSprite( void*, doublePair, double, double, char ) {
     }
 
+void setDrawColor( float inR, float inG, float inB, float inA ) {
+    }
+
+
 

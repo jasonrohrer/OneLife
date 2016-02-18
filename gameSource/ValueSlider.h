@@ -30,7 +30,10 @@ class ValueSlider : public PageComponent, public ActionListenerList,
         double getValue();
         void setValue( double inValue );
         
-        
+        void setFillColor( Color inColor );
+        void setBackFillColor( Color inColor );
+
+
     protected:
         virtual void actionPerformed( GUIComponent *inTarget );
 
@@ -46,7 +49,10 @@ class ValueSlider : public PageComponent, public ActionListenerList,
 
         void setFieldFromValue();
         
-
+        
+        Color mFillColor;
+        Color mBackFillColor;
+        
         Font *mFont;
         TextField mValueField;
 

@@ -831,6 +831,8 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
             }
         }
     
+    setDrawColor( 1, 1, 1, 1 );
+
     for( int i=0; i<NUM_ANIM_CHECKBOXES; i++ ) {
         pos = mCheckboxes[i]->getPosition();
     
