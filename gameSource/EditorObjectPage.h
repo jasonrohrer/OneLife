@@ -157,6 +157,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         void pickedLayerChanged();
         
         void updateSliderColors();
+
+        FloatRGB mColorClipboard;
         
 
         int mHoverObjectLayer;

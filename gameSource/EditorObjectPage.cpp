@@ -287,7 +287,7 @@ EditorObjectPage::EditorObjectPage()
     boxY = 200;
 
     for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
-        mClothingCheckboxes[i] = new CheckboxButton( 150, boxY, 2 );
+        mClothingCheckboxes[i] = new CheckboxButton( 160, boxY, 2 );
         addComponent( mClothingCheckboxes[i] );
         
         mClothingCheckboxes[i]->addActionListener( this );
@@ -307,6 +307,12 @@ EditorObjectPage::EditorObjectPage()
     addKeyClassDescription( &mKeyLegend, "Pg Up/Down", "Layer order" );
     addKeyClassDescription( &mKeyLegend, "Ctrl", "Bigger jumps" );
     addKeyDescription( &mKeyLegend, 'r', "Rotate layer" );
+    addKeyClassDescription( &mKeyLegend, "c/v", "Copy/paste color" );
+
+
+    mColorClipboard.r = 1;
+    mColorClipboard.g = 1;
+    mColorClipboard.b = 1;
     }
 
 
@@ -1667,6 +1673,13 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
     
     if( mPickedObjectLayer != -1 && inASCII == 'r' ) {
         mRotAdjustMode = true;
+        }
+    if( mPickedObjectLayer != -1 && inASCII == 'c' ) {
+        mColorClipboard = mCurrentObject.spriteColor[ mPickedObjectLayer ];
+        }
+    if( mPickedObjectLayer != -1 && inASCII == 'v' ) {
+        mCurrentObject.spriteColor[ mPickedObjectLayer ] = mColorClipboard;
+        pickedLayerChanged();
         }
     if( mPickedObjectLayer != -1 && inASCII == 8 ) {
         // backspace
