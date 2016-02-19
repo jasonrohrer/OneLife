@@ -1588,7 +1588,7 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
     mHoverStrength = 0;
     
     if( inX < -96 || inX > 96 || 
-        inY < -96 || inY > 96 ) {
+        inY < -96 || inY > 192 ) {
         return;
         }
     
@@ -1638,8 +1638,9 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
 
 void EditorObjectPage::pointerDrag( float inX, float inY ) {
     mHoverStrength = 0;
-    if( inX < -80 || inX > 80 || 
-        inY < -80 || inY > 80 ) {
+    
+    if( inX < -96 || inX > 96 || 
+        inY < -96 || inY > 160 ) {
         return;
         }
     
