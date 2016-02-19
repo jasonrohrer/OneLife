@@ -127,7 +127,7 @@ class EditorImportPage : public GamePage, public ActionListener {
         KeyLegend mSheetKeyLegend;
         KeyLegend mOverlayKeyLegend;
         
-        
+        char mShowTagMessage;
     };
 
 

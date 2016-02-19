@@ -49,7 +49,8 @@ EditorImportPage::EditorImportPage()
           mClearRotButton( smallFont, -300, -280, "0 Rot" ),
           mClearScaleButton( smallFont, -300, -240, "1 Scale" ),
           mFlipOverlayButton( smallFont, -230, -280, "Flip H" ),
-          mClearOverlayButton( smallFont, -230, -240, "X Ovly" ) {
+          mClearOverlayButton( smallFont, -230, -240, "X Ovly" ),
+          mShowTagMessage( false ) {
 
     addComponent( &mImportButton );
     addComponent( &mImportOverlayButton );
@@ -156,7 +157,7 @@ static Image *expandToPowersOfTwo( Image *inImage ) {
 void EditorImportPage::clearUseOfOverlay( int inOverlayID ) {
     
     if( mCurrentOverlay->id == inOverlayID ) {
-        mCurrentOverlay = NULL;
+        actionPerformed( &mClearOverlayButton );
         }
     }
 
@@ -191,9 +192,6 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
                 
                 delete [] importPath;
                 }
-            mSheetOffset.x = 0;
-            mSheetOffset.y = 0;
-            mMovingSheet = false;
             }
         else if( inTarget == &mImportOverlayButton ) {
             // used first PNG file in overlayImport dir
@@ -233,6 +231,11 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
 
         if( importFile != NULL ) {
     
+            mSheetOffset.x = 0;
+            mSheetOffset.y = 0;
+            mMovingSheet = false;
+
+
             char imported = false;
             
             if( importFile->exists() ) {
@@ -311,6 +314,11 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             // don't let it get freed now
             mProcessedSelectionSprite = NULL;
             mSaveSpriteButton.setVisible( false );
+            
+            mShowTagMessage = false;
+            }
+        else {
+            mShowTagMessage = true;
             }
         
 
@@ -329,6 +337,11 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             mOverlayPicker.redoSearch();
             
             mSaveOverlayButton.setVisible( false );
+
+            mShowTagMessage = false;
+            }
+        else {
+            mShowTagMessage = true;
             }
         
 
@@ -347,6 +360,8 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         }    
     else if( inTarget == &mClearOverlayButton ) {
         mCurrentOverlay = NULL;
+        mOverlayRotation = 0;
+        mOverlayScale = 1 ;
         mClearScaleButton.setVisible( false );
         mClearRotButton.setVisible( false );
         mFlipOverlayButton.setVisible( false );
@@ -472,6 +487,16 @@ void EditorImportPage::draw( doublePair inViewCenter,
         
         drawKeyLegend( &mSheetKeyLegend, pos );
         }
+    
+    if( mShowTagMessage ) {
+        setDrawColor( 1, 0, 0, 1 );
+        
+        doublePair pos = mSpriteTagField.getPosition();
+        
+        pos.y += 40;
+        
+        smallFont->drawString( "Tag Required", pos, alignCenter );
+        }
     }
 
 
@@ -492,6 +517,8 @@ void EditorImportPage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    mShowTagMessage = false;
 
     mSpritePicker.redoSearch();
     mOverlayPicker.redoSearch();
@@ -536,6 +563,10 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
     if( inX > -210 && inX < 210 && 
         inY > -210 && inY < 210 ) {
         TextField::unfocusAll();
+        }
+    else {
+        // pointer down outside center area
+        return;
         }
 
 
@@ -691,6 +722,11 @@ static void addShadow( Image *inImage ) {
 
 
 void EditorImportPage::keyDown( unsigned char inASCII ) {
+
+    if( TextField::isAnyFocused() ) {
+        return;
+        }
+
     if( inASCII == 't' ) {
         mMovingOverlay = true;
         mMovingOverlayPointerStart.x = lastMouseX - mOverlayOffset.x;
