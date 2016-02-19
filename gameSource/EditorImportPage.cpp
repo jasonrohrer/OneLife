@@ -533,6 +533,11 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
         return;
         }
 
+    if( inX > -210 && inX < 210 && 
+        inY > -210 && inY < 210 ) {
+        TextField::unfocusAll();
+        }
+
 
     if( isLastMouseButtonRight() ) {
         mMovingSheet = true;

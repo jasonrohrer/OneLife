@@ -1552,8 +1552,8 @@ void EditorObjectPage::pointerMove( float inX, float inY ) {
 void EditorObjectPage::pointerDown( float inX, float inY ) {
     mHoverStrength = 0;
     
-    if( inX < -80 || inX > 80 || 
-        inY < -80 || inY > 80 ) {
+    if( inX < -96 || inX > 96 || 
+        inY < -96 || inY > 96 ) {
         return;
         }
     
@@ -1578,7 +1578,7 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
     pickedLayerChanged();
     
     if( mPickedObjectLayer != -1 || mPickedSlot != -1 ) {
-        mDescriptionField.unfocusAll();
+        TextField::unfocusAll();
         
         if( mPickedObjectLayer != -1 ) {
             mPickedMouseOffset = 
@@ -1590,7 +1590,7 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
             }
         }
     else if( smallestDist < 200 ) {
-        mDescriptionField.unfocusAll();
+        TextField::unfocusAll();
         // dragging whole object?
         doublePair center = {0,0};
         
@@ -1667,7 +1667,7 @@ void EditorObjectPage::pointerUp( float inX, float inY ) {
 
 void EditorObjectPage::keyDown( unsigned char inASCII ) {
     
-    if( mDescriptionField.isAnyFocused() ) {
+    if( TextField::isAnyFocused() ) {
         return;
         }
     

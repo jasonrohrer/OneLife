@@ -1143,18 +1143,22 @@ void pointerUp( float inX, float inY ) {
 
 
 void keyDown( unsigned char inASCII ) {
-
+    
     // taking screen shot is ALWAYS possible
     if( inASCII == '=' ) {    
         saveScreenShot( "screen" );
         }
     
-    if( inASCII == 'N' ) {
-        toggleMipMapMinFilter( true );
+    /*
+    if( ! TextField::isAnyFocused() ) {    
+        if( inASCII == 'N' ) {
+            toggleMipMapMinFilter( true );
+            }
+        if( inASCII == 'n' ) {
+            toggleMipMapMinFilter( false );
+            }
         }
-    if( inASCII == 'n' ) {
-        toggleMipMapMinFilter( false );
-        }
+    */
 
     
     if( isPaused() ) {
