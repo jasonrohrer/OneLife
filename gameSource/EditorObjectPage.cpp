@@ -627,6 +627,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mPersonAgeSlider.setVisible( false );
         mCheckboxes[2]->setToggled( false );
 
+        mSetHeldPosButton.setVisible( true );
+
         mDemoClothesButton.setVisible( false );
         mCurrentObject.clothing = 'n';
         for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
@@ -954,6 +956,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             if( mCheckboxes[2]->getToggled() ) {
                 mPersonAgeSlider.setValue( 20 );
                 mPersonAgeSlider.setVisible( true );
+                mSetHeldPosButton.setVisible( false );
                 }
             else {
                 mPersonAgeSlider.setVisible( false );
@@ -988,6 +991,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mPersonAgeSlider.setVisible( false );
             mCheckboxes[2]->setToggled( false );
+            mSetHeldPosButton.setVisible( true );
             }
         else {
             mContainSizeField.setInt( 1 );
@@ -998,6 +1002,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         if( mCheckboxes[2]->getToggled() ) {
             mPersonAgeSlider.setValue( 20 );
             mPersonAgeSlider.setVisible( true );
+            mSetHeldPosButton.setVisible( false );
 
             
             mContainSizeField.setInt( 1 );
@@ -1018,6 +1023,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }
         else {
             mPersonAgeSlider.setVisible( false );
+            mSetHeldPosButton.setVisible( true );
             }
         }
     else if( inTarget == &mHueSlider ||
@@ -1080,6 +1086,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
                     mPersonAgeSlider.setVisible( false );
                     mCheckboxes[2]->setToggled( false );
+                    mSetHeldPosButton.setVisible( true );
                     }
                 else {
                     mDemoClothesButton.setVisible( false );
