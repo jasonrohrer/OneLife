@@ -782,6 +782,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             newSpriteHFlip[ mCurrentObject.numSprites ] = 0;
 
+            FloatRGB white = { 1, 1, 1 };
+            
+            newSpriteColor[ mCurrentObject.numSprites ] = white;
+
             delete [] mCurrentObject.sprites;
             delete [] mCurrentObject.spritePos;
             delete [] mCurrentObject.spriteRot;
