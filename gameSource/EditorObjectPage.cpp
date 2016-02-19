@@ -72,7 +72,7 @@ EditorObjectPage::EditorObjectPage()
                                 "Deadly Distance", "0123456789.", NULL ),
           mSaveObjectButton( smallFont, 210, -260, "Save New" ),
           mReplaceObjectButton( smallFont, 310, -260, "Replace" ),
-          mClearObjectButton( smallFont, 0, 160, "Blank" ),
+          mClearObjectButton( smallFont, -160, 200, "Blank" ),
           mClearRotButton( smallFont, -160, 120, "0 Rot" ),
           mFlipHButton( smallFont, -160, 160, "H Flip" ),
           mImportEditorButton( mainFont, -210, 260, "Sprites" ),
@@ -88,7 +88,7 @@ EditorObjectPage::EditorObjectPage()
           mEndSetHeldPosButton( smallFont, 150, -76, "End Held" ),
           mSpritePicker( &spritePickable, -310, 100 ),
           mObjectPicker( &objectPickable, +310, 100 ),
-          mPersonAgeSlider( smallFont, 0, 110, 2,
+          mPersonAgeSlider( smallFont, -70, 175, 2,
                             100, 20,
                             0, 100, "Age" ),
           mHueSlider( smallFont, -90, -130, 2,
@@ -101,6 +101,10 @@ EditorObjectPage::EditorObjectPage()
                         75, 20,
                         0, 1, "V" ),
           mSlotPlaceholderSprite( loadSprite( "slotPlaceholder.tga" ) ) {
+    
+    mObjectCenterOnScreen.x = 0;
+    mObjectCenterOnScreen.y = -32;
+    
 
     mDemoSlots = false;
     mSlotsDemoObject = -1;
@@ -1097,15 +1101,26 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
 
     
-    int i = 0;
+    setDrawColor( 1, 1, 1, 1 );
     for( int y=0; y<3; y++ ) {
         for( int x=0; x<3; x++ ) {
             
-            doublePair pos = { (double)( y * 64 - 64 ), 
-                               (double)( x * 64 - 64 ) };
+            doublePair pos = { (double)( x * 64 - 64 ), 
+                               (double)( y * 64 - 64 ) };
+            
+            drawSquare( pos, 32 );
+            }
+        }
+
+    int i = 0;
+    for( int y=0; y<2; y++ ) {
+        for( int x=0; x<2; x++ ) {
+            
+            doublePair pos = { (double)( x * 64 - 32), 
+                               (double)( y * 64 - 64 ) };
             
             if( i%2 == 0 ) {
-                setDrawColor( 1, 1, 1, 1 );
+                setDrawColor( .85, .85, .85, 1 );
                 }
             else {
                 setDrawColor( 0.75, 0.75, 0.75, 1 );
@@ -1114,10 +1129,19 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             drawSquare( pos, 32 );
             i++;
             }
+        i++;
         }
+
+    
+    doublePair barPos = { 0, 128 };
+    
+    setDrawColor( .85, .85, .85, 1 );
+
+    drawRect( barPos, 96, 32 );
+
     
 
-    doublePair drawOffset = { 0, 0 };
+    doublePair drawOffset = mObjectCenterOnScreen;
     
 
     if( mSetHeldPos ) {
@@ -1131,7 +1155,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         drawObject( getObject( mDemoPersonObject ), drawOffset, false, 
                     age, getEmptyClothingSet() );
 
-        drawOffset = mCurrentObject.heldOffset;
+        drawOffset = add( mCurrentObject.heldOffset, drawOffset );
         }
 
     char skipDrawing = false;

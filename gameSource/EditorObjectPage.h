@@ -63,7 +63,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         virtual void specialKeyDown( int inKeyCode );
         
     protected:
-
+        doublePair mObjectCenterOnScreen;
+        
         TextField mDescriptionField;
         
         TextField mMapChanceField;
