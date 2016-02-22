@@ -92,6 +92,12 @@ typedef struct ObjectRecord {
 
         FloatRGB *spriteColor;
         
+        // -1,-1 if sprite present whole life
+        double *spriteAgeStart;
+        double *spriteAgeEnd;
+        
+        // 1 if sprite should move along with head as it ages
+        char *spriteAgesWithHead;
         
     } ObjectRecord;
 
@@ -167,6 +173,9 @@ int addObject( const char *inDescription,
                double *inSpriteRot,
                char *inSpriteHFlip,
                FloatRGB *inSpriteColor,
+               double *inSpriteAgeStart,
+               double *inSpriteAgeEnd,
+               char *inSpriteAgesWithHead,
                int inReplaceID = -1 );
 
 

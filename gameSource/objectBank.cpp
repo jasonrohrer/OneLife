@@ -268,6 +268,12 @@ float initObjectBankStep() {
                     r->spriteRot = new double[ r->numSprites ];
                     r->spriteHFlip = new char[ r->numSprites ];
                     r->spriteColor = new FloatRGB[ r->numSprites ];
+                    
+                    r->spriteAgeStart = new double[ r->numSprites ];
+                    r->spriteAgeEnd = new double[ r->numSprites ];
+
+                    r->spriteAgesWithHead = new char[ r->numSprites ];
+
 
                     for( int i=0; i< r->numSprites; i++ ) {
                         sscanf( lines[next], "spriteID=%d", 
@@ -300,6 +306,22 @@ float initObjectBankStep() {
                                 &( r->spriteColor[i].r ),
                                 &( r->spriteColor[i].g ),
                                 &( r->spriteColor[i].b ) );
+                                
+                        next++;
+
+
+                        sscanf( lines[next], "ageRange=%lf,%lf", 
+                                &( r->spriteAgeStart[i] ),
+                                &( r->spriteAgeEnd[i] ) );
+                                
+                        next++;
+
+                        int agesWithHeadRead = 0;
+                                
+                        sscanf( lines[next], "agesWithHead=%d", 
+                                &agesWithHeadRead );
+                                
+                        r->spriteAgesWithHead[i] = agesWithHeadRead;
                                 
                         next++;
                         }
@@ -381,6 +403,10 @@ static void freeObjectRecord( int inID ) {
             delete [] idMap[inID]->spriteRot;
             delete [] idMap[inID]->spriteHFlip;
             delete [] idMap[inID]->spriteColor;
+
+            delete [] idMap[inID]->spriteAgeStart;
+            delete [] idMap[inID]->spriteAgeEnd;
+            delete [] idMap[inID]->spriteAgesWithHead;
             
             delete idMap[inID];
             idMap[inID] = NULL;
@@ -406,6 +432,10 @@ void freeObjectBank() {
             delete [] idMap[i]->spriteRot;
             delete [] idMap[i]->spriteHFlip;
             delete [] idMap[i]->spriteColor;
+
+            delete [] idMap[i]->spriteAgeStart;
+            delete [] idMap[i]->spriteAgeEnd;
+            delete [] idMap[i]->spriteAgesWithHead;
 
             delete idMap[i];
             }
@@ -443,6 +473,9 @@ void resaveAll() {
                        idMap[i]->spriteRot,
                        idMap[i]->spriteHFlip,
                        idMap[i]->spriteColor,
+                       idMap[i]->spriteAgeStart,
+                       idMap[i]->spriteAgeEnd,
+                       idMap[i]->spriteAgesWithHead,
                        idMap[i]->id );
             }
         }
@@ -543,6 +576,9 @@ int addObject( const char *inDescription,
                double *inSpriteRot,
                char *inSpriteHFlip,
                FloatRGB *inSpriteColor,
+               double *inSpriteAgeStart,
+               double *inSpriteAgeEnd,
+               char *inSpriteAgesWithHead,
                int inReplaceID ) {
     
 
@@ -644,6 +680,13 @@ int addObject( const char *inDescription,
                                           inSpriteColor[i].r,
                                           inSpriteColor[i].g,
                                           inSpriteColor[i].b ) );
+
+            lines.push_back( autoSprintf( "ageRange=%f,%f", 
+                                          inSpriteAgeStart[i],
+                                          inSpriteAgeEnd[i] ) );
+
+            lines.push_back( autoSprintf( "agesWithHead=%d", 
+                                          inSpriteAgesWithHead[i] ) );
             }
         
         char **linesArray = lines.getElementArray();
@@ -743,11 +786,25 @@ int addObject( const char *inDescription,
     r->spriteHFlip = new char[ inNumSprites ];
     r->spriteColor = new FloatRGB[ inNumSprites ];
 
+    r->spriteAgeStart = new double[ inNumSprites ];
+    r->spriteAgeEnd = new double[ inNumSprites ];
+    r->spriteAgesWithHead = new char[ inNumSprites ];
+
+
     memcpy( r->sprites, inSprites, inNumSprites * sizeof( int ) );
     memcpy( r->spritePos, inSpritePos, inNumSprites * sizeof( doublePair ) );
     memcpy( r->spriteRot, inSpriteRot, inNumSprites * sizeof( double ) );
     memcpy( r->spriteHFlip, inSpriteHFlip, inNumSprites * sizeof( char ) );
     memcpy( r->spriteColor, inSpriteColor, inNumSprites * sizeof( FloatRGB ) );
+
+    memcpy( r->spriteAgeStart, inSpriteAgeStart, 
+            inNumSprites * sizeof( double ) );
+
+    memcpy( r->spriteAgeEnd, inSpriteAgeEnd, 
+            inNumSprites * sizeof( double ) );
+
+    memcpy( r->spriteAgesWithHead, inSpriteAgesWithHead, 
+            inNumSprites * sizeof( char ) );
     
 
 
