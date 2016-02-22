@@ -88,11 +88,11 @@ EditorObjectPage::EditorObjectPage()
                        false,
                        "In", "-0123456789.", NULL ),
           mAgeOutField( smallFont, 
-                        160,  -84, 6,
+                        160,  -90, 6,
                         false,
                         "Out", "-0123456789.", NULL ),
           mAgePunchInButton( smallFont, 210, -52, "S" ),
-          mAgePunchOutButton( smallFont, 210, -84, "S" ),
+          mAgePunchOutButton( smallFont, 210, -90, "S" ),
 
           mDemoClothesButton( smallFont, 200, 200, "Pos" ),
           mEndClothesDemoButton( smallFont, 200, 160, "XPos" ),
@@ -115,6 +115,9 @@ EditorObjectPage::EditorObjectPage()
                         75, 20,
                         0, 1, "V" ),
           mSlotPlaceholderSprite( loadSprite( "slotPlaceholder.tga" ) ) {
+
+
+    mDragging = false;
     
     mObjectCenterOnScreen.x = 0;
     mObjectCenterOnScreen.y = -32;
@@ -1895,6 +1898,8 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
         return;
         }
     
+    mDragging = true;
+    
     doublePair pos = { inX, inY };
 
 
@@ -1942,6 +1947,10 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
 void EditorObjectPage::pointerDrag( float inX, float inY ) {
     mHoverStrength = 0;
     
+    if( ! mDragging ) {
+        return;
+        }
+
     if( inX < -96 || inX > 96 || 
         inY < -96 || inY > 160 ) {
         return;
@@ -2000,6 +2009,7 @@ void EditorObjectPage::pointerDrag( float inX, float inY ) {
 
 
 void EditorObjectPage::pointerUp( float inX, float inY ) {
+    mDragging = false;
     }
 
 

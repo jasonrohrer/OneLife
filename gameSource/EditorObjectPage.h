@@ -161,6 +161,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         int mPickedSlot;
         doublePair mPickedMouseOffset;
 
+        char mDragging;
+        
         
         double getClosestSpriteOrSlot( float inX, float inY,
                                        int *outSprite,
