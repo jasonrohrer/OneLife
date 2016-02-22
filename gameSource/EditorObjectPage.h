@@ -159,6 +159,10 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
         void updateSliderColors();
 
+
+        void recomputeNumNonAgingSprites();
+        
+
         FloatRGB mColorClipboard;
         
 

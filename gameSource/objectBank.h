@@ -98,6 +98,9 @@ typedef struct ObjectRecord {
         
         // 1 if sprite should move along with head as it ages
         char *spriteAgesWithHead;
+
+        // count of sprites that span entire life
+        int numNonAgingSprites;
         
     } ObjectRecord;
 

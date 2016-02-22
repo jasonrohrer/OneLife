@@ -250,6 +250,9 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.spriteAgeEnd = new double[ 0 ];
     mCurrentObject.spriteAgesWithHead = new char[ 0 ];
 
+    mCurrentObject.numNonAgingSprites = 0;
+    
+
     mPickedObjectLayer = -1;
     mPickedSlot = -1;
     
@@ -394,6 +397,19 @@ void EditorObjectPage::updateSliderColors() {
     }
 
 
+
+void EditorObjectPage::recomputeNumNonAgingSprites() {
+    mCurrentObject.numNonAgingSprites = 0;
+    
+    for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+        
+        if( mCurrentObject.spriteAgeStart[i] == -1 &&
+            mCurrentObject.spriteAgeEnd[i] == -1 ) {
+            
+            mCurrentObject.numNonAgingSprites ++;
+            }
+        }
+    }
 
 
 
@@ -556,6 +572,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         delete [] mCurrentObject.spriteAgesWithHead;
         mCurrentObject.spriteAgesWithHead = new char[ 0 ];
+
+
+        recomputeNumNonAgingSprites();
         
 
         mSaveObjectButton.setVisible( false );
@@ -858,6 +877,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mCurrentObject.numSprites = newNumSprites;
 
+            recomputeNumNonAgingSprites();
+            
 
             mClearObjectButton.setVisible( true );
             
@@ -1003,8 +1024,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             memcpy( mCurrentObject.spriteAgesWithHead, 
                     pickedRecord->spriteAgesWithHead,
                     sizeof( char ) * pickedRecord->numSprites );
-                
-
+            
+            recomputeNumNonAgingSprites();
+            
             mSaveObjectButton.setVisible( true );
             mReplaceObjectButton.setVisible( true );
             mClearObjectButton.setVisible( true );
@@ -1354,6 +1376,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     doublePair pos = { 0, 0 };
     
 
+    int bodyIndex = 0;
+    
+    doublePair headPos = mCurrentObject.spritePos[ 
+        mCurrentObject.numNonAgingSprites - 1 ];
+    
+
     if( !skipDrawing )
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
         doublePair spritePos = mCurrentObject.spritePos[i];
@@ -1381,21 +1409,41 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
                         
         if( mPersonAgeSlider.isVisible() &&
-            mCheckboxes[2]->getToggled() &&
-            i == mCurrentObject.numSprites - 1 ) {
-            
-            double age = mPersonAgeSlider.getValue();
-
-            spritePos = add( spritePos, getAgeHeadOffset( age, spritePos ) );
-
-            }
+            mCheckboxes[2]->getToggled() ) {
         
+            double age = mPersonAgeSlider.getValue();
+            
+            if( mCurrentObject.spriteAgeStart[i] != -1 &&
+                mCurrentObject.spriteAgeEnd[i] != -1 ) {
+                
+                if( age < mCurrentObject.spriteAgeStart[i] || 
+                    age > mCurrentObject.spriteAgeEnd[i] ) {
+                    
+                    if( i != mPickedObjectLayer ) {
+                        // skip drawing
+                        continue;
+                        }
+                    }
+                }
+            if( ( bodyIndex == mCurrentObject.numNonAgingSprites - 1 ||
+                  mCurrentObject.spriteAgesWithHead[i] ) ) {
+            
+                spritePos = add( spritePos, getAgeHeadOffset( age, headPos ) );
+                }
+            }
+                
         spritePos = add( spritePos, drawOffset );
 
         
         drawSprite( getSprite( mCurrentObject.sprites[i] ), spritePos,
                     1.0, mCurrentObject.spriteRot[i],
                     mCurrentObject.spriteHFlip[i] );
+
+        if( mCurrentObject.spriteAgeStart[i] == -1 &&
+            mCurrentObject.spriteAgeEnd[i] == -1 ) {
+            
+            bodyIndex++;
+            }
         }
 
 
@@ -1568,6 +1616,8 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     mCurrentObject.spriteAgesWithHead = newSpriteAgesWithHead;
     
     mCurrentObject.numSprites = newNumSprites;
+
+    recomputeNumNonAgingSprites();
     }
 
 
@@ -1684,7 +1734,7 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
     mHoverStrength = 0;
     
     if( inX < -96 || inX > 96 || 
-        inY < -96 || inY > 192 ) {
+        inY < -96 || inY > 160 ) {
         return;
         }
     
@@ -1919,6 +1969,8 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         mCurrentObject.spriteAgesWithHead = newSpriteAgesWithHead;
         
         mCurrentObject.numSprites = newNumSprites;
+
+        recomputeNumNonAgingSprites();
         
         mPickedObjectLayer = -1;
         pickedLayerChanged();

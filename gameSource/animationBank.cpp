@@ -609,11 +609,37 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
     ObjectRecord *obj = getObject( inObjectID );
 
+
+    // don't count aging layers here
+    // thus we can determine body parts (feet, body, head) for clothing
+    // and aging without letting age-ranged add-on layers interfere
+    int bodyIndex = 0;
+
+    doublePair headPos = obj->spritePos[ 
+        obj->numNonAgingSprites - 1 ];
+
+
     for( int i=0; i<obj->numSprites; i++ ) {
+        
+        if( obj->person &&
+            ( obj->spriteAgeStart[i] != -1 ||
+              obj->spriteAgeEnd[i] != -1 ) ) {
+        
+            if( inAge < obj->spriteAgeStart[i] ||
+                inAge > obj->spriteAgeEnd[i] ) {
+                
+                // skip drawing this aging layer entirely
+                continue;
+                }
+            }
+
+
         doublePair spritePos = obj->spritePos[i];
         
-        if( obj->person && i == obj->numSprites - 1 ) {
-            spritePos = add( spritePos, getAgeHeadOffset( inAge, spritePos ) );
+        if( obj->person && 
+            ( bodyIndex == obj->numNonAgingSprites - 1 ||
+              obj->spriteAgesWithHead[i] ) ) {
+            spritePos = add( spritePos, getAgeHeadOffset( inAge, headPos ) );
             }
 
         double rot = obj->spriteRot[i];
@@ -738,15 +764,17 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         char skipSprite = false;
         
         // draw head behind hat
-        if( i == obj->numSprites - 1 && inClothing.hat != NULL ) {
+        if( bodyIndex == obj->numNonAgingSprites - 1 && 
+            inClothing.hat != NULL ) {
+            
             setDrawColor( obj->spriteColor[i] );
             drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, 
                         logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
             }
         
         
-        if( ( ( i == 0 && !inFlipH ) ||
-              ( i == 2 && inFlipH ) ) 
+        if( ( ( bodyIndex == 0 && !inFlipH ) ||
+              ( bodyIndex == 2 && inFlipH ) ) 
             && inClothing.backShoe != NULL ) {
             
             skipSprite = true;
@@ -760,7 +788,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             drawObject( inClothing.backShoe, cPos,
                         inFlipH, -1, emptyClothing );
             }
-        else if( i == 1 && inClothing.tunic != NULL ) {
+        else if( bodyIndex == 1 && inClothing.tunic != NULL ) {
             skipSprite = true;
             doublePair cPos = add( spritePos, 
                                    inClothing.tunic->clothingOffset );
@@ -772,8 +800,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             drawObject( inClothing.tunic, cPos,
                         inFlipH, -1, emptyClothing );
             }
-        else if( ( ( i == 2 && !inFlipH ) ||
-                   ( i == 0 && inFlipH ) ) 
+        else if( ( ( bodyIndex == 2 && !inFlipH ) ||
+                   ( bodyIndex == 0 && inFlipH ) ) 
                  && inClothing.frontShoe != NULL ) {
             
             skipSprite = true;
@@ -787,7 +815,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             drawObject( inClothing.frontShoe, cPos,
                         inFlipH, -1, emptyClothing );
             }
-        else if( i == obj->numSprites - 1 && inClothing.hat != NULL ) {
+        else if( bodyIndex == obj->numNonAgingSprites - 1 && 
+                 inClothing.hat != NULL ) {
             skipSprite = true;
             doublePair cPos = add( spritePos, 
                                    inClothing.hat->clothingOffset );
@@ -807,6 +836,12 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                         logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
             }
         
+
+        if( obj->spriteAgeStart[i] == -1 &&
+            obj->spriteAgeEnd[i] == -1 ) {
+        
+            bodyIndex++;
+            }
         } 
     }
 

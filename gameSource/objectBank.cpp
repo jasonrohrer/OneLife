@@ -274,6 +274,7 @@ float initObjectBankStep() {
 
                     r->spriteAgesWithHead = new char[ r->numSprites ];
 
+                    r->numNonAgingSprites = 0;
 
                     for( int i=0; i< r->numSprites; i++ ) {
                         sscanf( lines[next], "spriteID=%d", 
@@ -315,6 +316,13 @@ float initObjectBankStep() {
                                 &( r->spriteAgeEnd[i] ) );
                                 
                         next++;
+                        
+
+                        if( r->spriteAgeStart[i] == -1  &&
+                            r->spriteAgeEnd[i] == -1 ) {
+                            
+                            r->numNonAgingSprites ++;
+                            }
 
                         int agesWithHeadRead = 0;
                                 
@@ -325,7 +333,6 @@ float initObjectBankStep() {
                                 
                         next++;
                         }
-                            
                     records.push_back( r );
 
                             
@@ -806,6 +813,18 @@ int addObject( const char *inDescription,
     memcpy( r->spriteAgesWithHead, inSpriteAgesWithHead, 
             inNumSprites * sizeof( char ) );
     
+    r->numNonAgingSprites = 0;
+    
+    for( int i=0; i<inNumSprites; i++ ) {
+
+        if( r->spriteAgeStart[i] == -1  &&
+            r->spriteAgeEnd[i] == -1 ) {
+            
+            r->numNonAgingSprites ++;
+            }
+        }
+    
+
 
 
     // delete old
@@ -839,17 +858,48 @@ static char logicalXOR( char inA, char inB ) {
 void drawObject( ObjectRecord *inObject, doublePair inPos,
                  char inFlipH, double inAge, ClothingSet inClothing,
                  double inScale ) {
+    
+    // don't count aging layers here
+    // thus we can determine body parts (feet, body, head) for clothing
+    // and aging without letting age-ranged add-on layers interfere
+    int bodyIndex = 0;
+
+    
+    doublePair headPos = inObject->spritePos[ 
+        inObject->numNonAgingSprites - 1 ];
+    
+
+
     for( int i=0; i<inObject->numSprites; i++ ) {
+
+        if( inObject->person &&
+            ( inObject->spriteAgeStart[i] != -1 ||
+              inObject->spriteAgeEnd[i] != -1 ) ) {
+        
+            if( inAge < inObject->spriteAgeStart[i] ||
+                inAge > inObject->spriteAgeEnd[i] ) {
+                
+                // skip drawing this aging layer entirely
+                continue;
+                }
+            }
+
+
         doublePair spritePos = inObject->spritePos[i];
 
+
+        
+        if( inObject->person && 
+            ( bodyIndex == inObject->numNonAgingSprites - 1 ||
+              inObject->spriteAgesWithHead[i] ) ) {
+            
+            spritePos = add( spritePos, getAgeHeadOffset( inAge, spritePos ) );
+            }
+
+        
         if( inFlipH ) {
             spritePos.x *= -1;
             }
-
-        if( inObject->person && i == inObject->numSprites - 1 ) {
-            spritePos = add( spritePos, getAgeHeadOffset( inAge, spritePos ) );
-            }
-        
 
         spritePos = mult( spritePos, inScale );
 
@@ -867,8 +917,8 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             }
         
         
-        if( ( ( i == 0 && !inFlipH ) ||
-              ( i == 2 && inFlipH ) ) 
+        if( ( ( bodyIndex == 0 && !inFlipH ) ||
+              ( bodyIndex == 2 && inFlipH ) ) 
             && inClothing.backShoe != NULL ) {
             
             skipSprite = true;
@@ -882,7 +932,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             drawObject( inClothing.backShoe, cPos,
                         inFlipH, -1, emptyClothing );
             }
-        else if( i == 1 && inClothing.tunic != NULL ) {
+        else if( bodyIndex == 1 && inClothing.tunic != NULL ) {
             skipSprite = true;
             doublePair cPos = add( spritePos, 
                                    inClothing.tunic->clothingOffset );
@@ -894,8 +944,8 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             drawObject( inClothing.tunic, cPos,
                         inFlipH, -1, emptyClothing );
             }
-        else if( ( ( i == 2 && !inFlipH ) ||
-                   ( i == 0 && inFlipH ) ) 
+        else if( ( ( bodyIndex == 2 && !inFlipH ) ||
+                   ( bodyIndex == 0 && inFlipH ) ) 
                  && inClothing.frontShoe != NULL ) {
             
             skipSprite = true;
@@ -909,7 +959,8 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             drawObject( inClothing.frontShoe, cPos,
                         inFlipH, -1, emptyClothing );
             }
-        else if( i == inObject->numSprites - 1 && inClothing.hat != NULL ) {
+        else if( bodyIndex == inObject->numNonAgingSprites - 1 && 
+                 inClothing.hat != NULL ) {
             skipSprite = true;
             doublePair cPos = add( spritePos, 
                                    inClothing.hat->clothingOffset );
@@ -929,9 +980,17 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
                         inObject->spriteRot[i], 
                         logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
-
             
             }
+            
+        if( inObject->spriteAgeStart[i] == -1 &&
+            inObject->spriteAgeEnd[i] == -1 ) {
+        
+            bodyIndex++;
+            }
+        
+            
+            
         }    
     }
 
