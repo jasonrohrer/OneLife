@@ -1356,7 +1356,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
     if( !skipDrawing )
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
-        doublePair spritePos = add( mCurrentObject.spritePos[i], drawOffset );
+        doublePair spritePos = mCurrentObject.spritePos[i];
         
         float blue = 1;
         float red = 1;
@@ -1385,10 +1385,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             i == mCurrentObject.numSprites - 1 ) {
             
             double age = mPersonAgeSlider.getValue();
-            
+
             spritePos = add( spritePos, getAgeHeadOffset( age, spritePos ) );
+
             }
-                
+        
+        spritePos = add( spritePos, drawOffset );
 
         
         drawSprite( getSprite( mCurrentObject.sprites[i] ), spritePos,
@@ -1577,6 +1579,8 @@ double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
 
     doublePair pos = { inX, inY };
     
+    pos = sub( pos, mObjectCenterOnScreen );
+
     int oldLayerPick = mPickedObjectLayer;
     int oldSlotPick = mPickedSlot;
     
