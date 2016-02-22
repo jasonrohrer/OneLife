@@ -96,7 +96,19 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
         TextButton mMoreSlotsButton;
         TextButton mLessSlotsButton;
+
+
+        CheckboxButton mAgingLayerCheckbox;
+        CheckboxButton mAgesWithHeadCheckbox;
         
+        TextField mAgeInField;
+        TextField mAgeOutField;
+        
+        TextButton mAgePunchInButton;
+        TextButton mAgePunchOutButton;
+        
+        
+
         CheckboxButton *mCheckboxes[NUM_OBJECT_CHECKBOXES];
         const char *mCheckboxNames[NUM_OBJECT_CHECKBOXES];
 
@@ -161,6 +173,9 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
 
         void recomputeNumNonAgingSprites();
+        
+
+        void updateAgingPanel();
         
 
         FloatRGB mColorClipboard;

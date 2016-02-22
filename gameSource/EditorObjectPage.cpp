@@ -80,6 +80,20 @@ EditorObjectPage::EditorObjectPage()
           mAnimEditorButton( mainFont, 330, 260, "Anim" ),
           mMoreSlotsButton( smallFont, -160, -110, "More" ),
           mLessSlotsButton( smallFont, -160, -190, "Less" ),
+
+          mAgingLayerCheckbox( 190, 0, 2 ),
+          mAgesWithHeadCheckbox( 190, -20, 2 ),
+          mAgeInField( smallFont, 
+                       160,  -52, 6,
+                       false,
+                       "In", "-0123456789.", NULL ),
+          mAgeOutField( smallFont, 
+                        160,  -84, 6,
+                        false,
+                        "Out", "-0123456789.", NULL ),
+          mAgePunchInButton( smallFont, 210, -52, "S" ),
+          mAgePunchOutButton( smallFont, 210, -84, "S" ),
+
           mDemoClothesButton( smallFont, 200, 200, "Pos" ),
           mEndClothesDemoButton( smallFont, 200, 160, "XPos" ),
           mDemoSlotsButton( smallFont, 150, 32, "Demo Slots" ),
@@ -174,6 +188,27 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mValueSlider );
     
 
+    addComponent( &mAgingLayerCheckbox );
+    addComponent( &mAgesWithHeadCheckbox );
+    
+    addComponent( &mAgeInField );
+    addComponent( &mAgeOutField );
+    
+    addComponent( &mAgePunchInButton );
+    addComponent( &mAgePunchOutButton );
+    
+    mAgingLayerCheckbox.addActionListener( this );
+    mAgesWithHeadCheckbox.addActionListener( this );
+    mAgePunchInButton.addActionListener( this );
+    mAgePunchOutButton.addActionListener( this );
+    
+    mAgingLayerCheckbox.setVisible( false );
+    mAgesWithHeadCheckbox.setVisible( false );
+    mAgeInField.setVisible( false );
+    mAgeOutField.setVisible( false );
+    mAgePunchInButton.setVisible( false );
+    mAgePunchOutButton.setVisible( false );
+    
 
     mPersonAgeSlider.setVisible( false );
     
@@ -412,6 +447,63 @@ void EditorObjectPage::recomputeNumNonAgingSprites() {
     }
 
 
+
+void EditorObjectPage::updateAgingPanel() {
+    
+    char agingPanelVisible = true;
+    
+
+    if( ! mCheckboxes[2]->getToggled() ) {
+        agingPanelVisible = false;
+        mAgingLayerCheckbox.setVisible( false );
+        mAgesWithHeadCheckbox.setVisible( false );
+            
+        for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+            mCurrentObject.spriteAgeStart[i] = -1;
+            mCurrentObject.spriteAgeEnd[i] = -1;
+            mCurrentObject.spriteAgesWithHead[i] = 0;
+            }
+        }
+    else {
+        
+        if( mPickedObjectLayer != -1 ) {
+            mAgingLayerCheckbox.setVisible( true );
+        
+            if( mCurrentObject.spriteAgeStart[mPickedObjectLayer] != -1 &&
+                mCurrentObject.spriteAgeEnd[mPickedObjectLayer] != -1 ) {
+                
+                mAgingLayerCheckbox.setToggled( true );
+                mAgesWithHeadCheckbox.setVisible( true );
+                agingPanelVisible = true;
+            
+                mAgesWithHeadCheckbox.setToggled( 
+                    mCurrentObject.spriteAgesWithHead[mPickedObjectLayer] );
+
+                mAgeInField.setFloat(
+                    mCurrentObject.spriteAgeStart[mPickedObjectLayer], 2 );
+                mAgeOutField.setFloat(
+                    mCurrentObject.spriteAgeEnd[mPickedObjectLayer], 2 );
+                }
+            else {
+                mAgingLayerCheckbox.setToggled( false );
+                mAgesWithHeadCheckbox.setVisible( false );
+                agingPanelVisible = false;
+                }
+            }
+        else {
+            mAgingLayerCheckbox.setVisible( false );
+            mAgesWithHeadCheckbox.setVisible( false );
+                
+            agingPanelVisible = false;
+            }
+        
+        }
+
+    mAgeInField.setVisible( agingPanelVisible );
+    mAgeOutField.setVisible( agingPanelVisible );
+    mAgePunchInButton.setVisible( agingPanelVisible );
+    mAgePunchOutButton.setVisible( agingPanelVisible );
+    }
 
 
 void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
@@ -670,7 +762,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         mPersonAgeSlider.setVisible( false );
         mCheckboxes[2]->setToggled( false );
-
+        updateAgingPanel();
+        
         mSetHeldPosButton.setVisible( true );
 
         mDemoClothesButton.setVisible( false );
@@ -774,6 +867,53 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         mSetHeldPosButton.setVisible( true );
         mEndSetHeldPosButton.setVisible( false );
+        }
+    else if( inTarget == &mAgingLayerCheckbox ) {
+        if( mAgingLayerCheckbox.getToggled() ) {
+            mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] = 0;
+            mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] = 999;
+            mCurrentObject.spriteAgesWithHead[ mPickedObjectLayer ] = 0;
+            
+            mCurrentObject.numNonAgingSprites --;
+            }
+        else {
+            mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] = -1;
+            mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] = -1;
+            mCurrentObject.spriteAgesWithHead[ mPickedObjectLayer ] = 0;
+            
+            mCurrentObject.numNonAgingSprites++;
+            }
+        updateAgingPanel();
+        }
+    else if( inTarget == &mAgesWithHeadCheckbox ) {
+        mCurrentObject.spriteAgesWithHead[ mPickedObjectLayer ] =
+            mAgesWithHeadCheckbox.getToggled();
+        }
+    else if( inTarget == &mAgePunchInButton ) {
+        mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] =
+            mPersonAgeSlider.getValue();
+        
+        if( mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] >
+            mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] ) {
+            
+            mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] = 
+                mCurrentObject.spriteAgeStart[ mPickedObjectLayer ];
+            }
+        
+        updateAgingPanel();
+        }
+    else if( inTarget == &mAgePunchOutButton ) {
+        mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] =
+            mPersonAgeSlider.getValue();
+
+        if( mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] >
+            mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] ) {
+            
+            mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] =
+                mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ];
+            }
+
+        updateAgingPanel();
         }
     else if( inTarget == &mSpritePicker ) {
         
@@ -1033,7 +1173,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mPickedObjectLayer = -1;
             mPickedSlot = -1;
-            pickedLayerChanged();
 
             if( !mCurrentObject.containable && mCurrentObject.numSlots > 0 ) {
                 mDemoSlots = false;
@@ -1060,6 +1199,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             else {
                 mPersonAgeSlider.setVisible( false );
                 }
+            pickedLayerChanged();
 
             if( ! pickedRecord->containable ) {
                 mContainSizeField.setInt( 1 );
@@ -1096,6 +1236,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mContainSizeField.setInt( 1 );
             mContainSizeField.setVisible( false );
             }
+                    
+        updateAgingPanel();
         }
     else if( inTarget == mCheckboxes[2] ) {
         if( mCheckboxes[2]->getToggled() ) {
@@ -1124,6 +1266,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mPersonAgeSlider.setVisible( false );
             mSetHeldPosButton.setVisible( true );
             }
+                    
+        updateAgingPanel();    
         }
     else if( inTarget == &mHueSlider ||
              inTarget == &mSaturationSlider ||
@@ -1490,6 +1634,18 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         smallFont->drawString( mClothingCheckboxNames[i], pos, alignRight );
         }
+
+    if( mAgingLayerCheckbox.isVisible() ) {
+        pos = mAgingLayerCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Age Layer", pos, alignRight );
+        }
+    
+    if( mAgesWithHeadCheckbox.isVisible() ) {
+        pos = mAgesWithHeadCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "On Head", pos, alignRight );
+        }
     
 
 
@@ -1708,6 +1864,7 @@ void EditorObjectPage::pickedLayerChanged() {
 
         updateSliderColors();
         }
+    updateAgingPanel();
     }
 
 
