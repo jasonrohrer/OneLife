@@ -26,7 +26,7 @@
 
 
 #define NUM_ANIM_CHECKBOXES 3
-#define NUM_ANIM_SLIDERS 11
+#define NUM_ANIM_SLIDERS 13
 
 
 class EditorAnimationPage : public GamePage, public ActionListener {

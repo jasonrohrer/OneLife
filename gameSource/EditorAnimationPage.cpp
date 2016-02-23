@@ -55,8 +55,8 @@ EditorAnimationPage::EditorAnimationPage()
           mCopyButton( smallFont, -290, 210, "Copy" ),
           mPasteButton( smallFont, -230, 210, "Paste" ),
           mClearButton( smallFont, -170, 210, "Clear" ),
-          mNextSpriteOrSlotButton( smallFont, -180, -210, "Next Layer" ),
-          mPrevSpriteOrSlotButton( smallFont, -180, -270, "Prev Layer" ),
+          mNextSpriteOrSlotButton( smallFont, 120, -270, "Next Layer" ),
+          mPrevSpriteOrSlotButton( smallFont, -120, -270, "Prev Layer" ),
           mFrameCount( 0 ) {
     
     
@@ -149,27 +149,27 @@ EditorAnimationPage::EditorAnimationPage()
     
     mSliders[0] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 3, "X Osc" );
+                                   0, 6, "X Osc" );
     mSliders[1] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 64, "X Amp" );
+                                   0, 96, "X Amp" );
     mSliders[2] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "X Phase" );
 
     mSliders[3] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 3, "Y Osc" );
+                                   0, 6, "Y Osc" );
     mSliders[4] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 64, "Y Amp" );
+                                   0, 96, "Y Amp" );
     mSliders[5] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "Y Phase" );
     
     mSliders[6] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 3, "Rot" );
+                                   0, 12, "Rot" );
     
     mReverseRotationCheckbox.setPosition( x - 65, boxY );
 
@@ -182,13 +182,19 @@ EditorAnimationPage::EditorAnimationPage()
 
     mSliders[8] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 3, "Rock Osc" );
+                                   0, 6, "Rock Osc" );
     mSliders[9] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "Rock Amp" );
     mSliders[10] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                     100, 20,
                                     0, 1, "Rock Phase" );
+    mSliders[11] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                    100, 20,
+                                    0, 20, "Duration Sec" );
+    mSliders[12] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                    100, 20,
+                                    0, 20, "Pause Sec" );
     
 
     for( int i=0; i<NUM_ANIM_SLIDERS; i++ ) {
@@ -439,6 +445,10 @@ void EditorAnimationPage::updateAnimFromSliders() {
     r->rockOscPerSec = mSliders[8]->getValue();
     r->rockAmp = mSliders[9]->getValue();
     r->rockPhase = mSliders[10]->getValue();
+
+
+    r->durationSec = mSliders[11]->getValue();
+    r->pauseSec = mSliders[12]->getValue();
     }
 
 
@@ -517,6 +527,9 @@ void EditorAnimationPage::updateSlidersFromAnim() {
     mSliders[8]->setValue( r->rockOscPerSec );
     mSliders[9]->setValue( r->rockAmp );
     mSliders[10]->setValue( r->rockPhase );
+    
+    mSliders[11]->setValue( r->durationSec );
+    mSliders[12]->setValue( r->pauseSec );
     }
 
     
@@ -852,9 +865,9 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
         
         setDrawColor( 1, 1, 1, 1 );
         
-        pos = mNextSpriteOrSlotButton.getPosition();
+        pos = mPrevSpriteOrSlotButton.getPosition();
         
-        pos.y -= 30;
+        pos.x += 80;
         
         const char *tag;
         int num;

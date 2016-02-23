@@ -118,7 +118,7 @@ float initAnimationBankStep() {
                         sscanf( lines[next], 
                                 "animParam="
                                 "%lf %lf %lf %lf %lf %lf %lf %lf "
-                                "%lf %lf %lf",
+                                "%lf %lf %lf %lf %lf",
                                 &( r->spriteAnim[j].xOscPerSec ),
                                 &( r->spriteAnim[j].xAmp ),
                                 &( r->spriteAnim[j].xPhase ),
@@ -132,7 +132,10 @@ float initAnimationBankStep() {
                                         
                                 &( r->spriteAnim[j].rockOscPerSec ),
                                 &( r->spriteAnim[j].rockAmp ),
-                                &( r->spriteAnim[j].rockPhase ) );
+                                &( r->spriteAnim[j].rockPhase ),
+
+                                &( r->spriteAnim[j].durationSec ),
+                                &( r->spriteAnim[j].pauseSec ) );
                         next++;
                         }
 
@@ -141,14 +144,17 @@ float initAnimationBankStep() {
                                 
                         sscanf( lines[next], 
                                 "animParam="
-                                "%lf %lf %lf %lf %lf %lf",
+                                "%lf %lf %lf %lf %lf %lf %lf %lf",
                                 &( r->slotAnim[j].xOscPerSec ),
                                 &( r->slotAnim[j].xAmp ),
                                 &( r->slotAnim[j].xPhase ),
                                         
                                 &( r->slotAnim[j].yOscPerSec ),
                                 &( r->slotAnim[j].yAmp ),
-                                &( r->slotAnim[j].yPhase ) );
+                                &( r->slotAnim[j].yPhase ) ,
+
+                                &( r->slotAnim[j].durationSec ),
+                                &( r->slotAnim[j].pauseSec ) );
                         next++;
                         }
                             
@@ -315,7 +321,7 @@ void addAnimation( AnimationRecord *inRecord ) {
                 autoSprintf( 
                     "animParam="
                     "%lf %lf %lf %lf %lf %lf %lf %lf "
-                    "%lf %lf %lf",
+                    "%lf %lf %lf %lf %lf",
                     inRecord->spriteAnim[j].xOscPerSec,
                     inRecord->spriteAnim[j].xAmp,
                     inRecord->spriteAnim[j].xPhase,
@@ -329,20 +335,26 @@ void addAnimation( AnimationRecord *inRecord ) {
                     
                     inRecord->spriteAnim[j].rockOscPerSec,
                     inRecord->spriteAnim[j].rockAmp,
-                    inRecord->spriteAnim[j].rockPhase ) );
+                    inRecord->spriteAnim[j].rockPhase,
+                    
+                    inRecord->spriteAnim[j].durationSec,
+                    inRecord->spriteAnim[j].pauseSec ) );
             }
         for( int j=0; j<inRecord->numSlots; j++ ) {
             lines.push_back( 
                 autoSprintf( 
                     "animParam="
-                    "%lf %lf %lf %lf %lf %lf",
+                    "%lf %lf %lf %lf %lf %lf %lf %lf",
                     inRecord->slotAnim[j].xOscPerSec,
                     inRecord->slotAnim[j].xAmp,
                     inRecord->slotAnim[j].xPhase,
                     
                     inRecord->slotAnim[j].yOscPerSec,
                     inRecord->slotAnim[j].yAmp,
-                    inRecord->slotAnim[j].yPhase ) );
+                    inRecord->slotAnim[j].yPhase,
+                    
+                    inRecord->slotAnim[j].durationSec,
+                    inRecord->slotAnim[j].pauseSec ) );
             }
 
 
@@ -626,6 +638,52 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     
     for( int i=0; i<obj->numSprites; i++ ) {
         
+        double spriteFrameTime = inFrameTime;
+        double spriteRotFrameTime = inRotFrameTime;
+        
+        if( inAnim->spriteAnim[i].pauseSec != 0 ) {
+            double dur = inAnim->spriteAnim[i].durationSec;
+            double pause = inAnim->spriteAnim[i].pauseSec;
+            
+
+            double blockTime = dur + pause;
+            
+            double blockFraction = inFrameTime / blockTime;
+            double blockRotFraction = inRotFrameTime / blockTime;
+            
+            double numFullBlocksPassed = floor( blockFraction );
+            double numFullRotBlocksPassed = floor( blockRotFraction );
+
+            double thisBlockFraction = blockFraction - numFullBlocksPassed;
+            double thisRotBlockFraction = 
+                blockRotFraction - numFullRotBlocksPassed;
+
+            double thisBlockTime = thisBlockFraction * blockTime;
+            double thisRotBlockTime = thisRotBlockFraction * blockTime;
+            
+            if( thisBlockTime > dur ) {
+                // in pause, freeze time at end of last dur 
+                
+                spriteFrameTime = ( numFullBlocksPassed + 1 ) * dur;
+                }
+            else {
+                // in a dur block
+                spriteFrameTime = numFullBlocksPassed * dur + thisBlockTime;
+                }
+
+            if( thisRotBlockTime > dur ) {
+                // in pause, freeze time at end of last dur 
+                
+                spriteRotFrameTime = ( numFullRotBlocksPassed + 1 ) * dur;
+                }
+            else {
+                // in a dur block
+                spriteRotFrameTime = numFullRotBlocksPassed * dur + 
+                    thisRotBlockTime;
+                }
+            }
+        
+
         char agingLayer = false;
 
         if( obj->person &&
@@ -659,7 +717,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             spritePos.x += 
                 inAnimFade * 
                 getOscOffset( 
-                    inFrameTime,
+                    spriteFrameTime,
                     inAnim->spriteAnim[i].xOscPerSec,
                     inAnim->spriteAnim[i].xAmp,
                     inAnim->spriteAnim[i].xPhase );
@@ -667,13 +725,13 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             spritePos.y += 
                 inAnimFade *
                 getOscOffset( 
-                    inFrameTime,
+                    spriteFrameTime,
                     inAnim->spriteAnim[i].yOscPerSec,
                     inAnim->spriteAnim[i].yAmp,
                     inAnim->spriteAnim[i].yPhase );
             
             double rock = inAnimFade * 
-                getOscOffset( inFrameTime,
+                getOscOffset( spriteFrameTime,
                               inAnim->spriteAnim[i].rockOscPerSec,
                               inAnim->spriteAnim[i].rockAmp,
                               inAnim->spriteAnim[i].rockPhase );
@@ -707,7 +765,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 }
             
 
-            rot += inAnim->spriteAnim[i].rotPerSec * inRotFrameTime + 
+            rot += inAnim->spriteAnim[i].rotPerSec * spriteRotFrameTime + 
                 inAnim->spriteAnim[i].rotPhase;
 
             if( inAnimFade < 1 ) {
@@ -918,6 +976,36 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     for( int i=0; i<obj->numSlots; i++ ) {
         if( i < inNumContained ) {
 
+
+            double slotFrameTime = inFrameTime;
+            
+            if( inAnim->slotAnim[i].pauseSec != 0 ) {
+                double dur = inAnim->slotAnim[i].durationSec;
+                double pause = inAnim->slotAnim[i].pauseSec;
+                
+                
+                double blockTime = dur + pause;
+                
+                double blockFraction = inFrameTime / blockTime;
+                
+                double numFullBlocksPassed = floor( blockFraction );
+                
+                double thisBlockFraction = blockFraction - numFullBlocksPassed;
+                
+                double thisBlockTime = thisBlockFraction * blockTime;
+                
+                if( thisBlockTime > dur ) {
+                    // in pause, freeze time at end of last dur 
+                
+                    slotFrameTime = ( numFullBlocksPassed + 1 ) * dur;
+                    }
+                else {
+                    // in a dur block
+                    slotFrameTime = numFullBlocksPassed * dur + thisBlockTime;
+                    }
+                }
+            
+
             doublePair pos = obj->slotPos[i];
         
             if( i < inAnim->numSlots ) {
@@ -925,7 +1013,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 pos.x += 
                     inAnimFade *
                     getOscOffset( 
-                        inFrameTime,
+                        slotFrameTime,
                         inAnim->slotAnim[i].xOscPerSec,
                         inAnim->slotAnim[i].xAmp,
                         inAnim->slotAnim[i].xPhase );
@@ -933,7 +1021,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 pos.y += 
                     inAnimFade * 
                     getOscOffset( 
-                        inFrameTime,
+                        slotFrameTime,
                         inAnim->slotAnim[i].yOscPerSec,
                         inAnim->slotAnim[i].yAmp,
                         inAnim->slotAnim[i].yPhase );
@@ -1016,6 +1104,9 @@ void zeroRecord( SpriteAnimationRecord *inRecord ) {
     inRecord->rockOscPerSec = 0;
     inRecord->rockAmp = 0;
     inRecord->rockPhase = 0;
+
+    inRecord->durationSec = 1;
+    inRecord->pauseSec = 0;
     }
 
         

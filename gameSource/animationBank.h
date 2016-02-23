@@ -34,7 +34,12 @@ typedef struct SpriteAnimationRecord {
         // between 0 and 1, where 1 is full rotation before coming back
         double rockAmp;
         double rockPhase;
-
+        
+        // for animations that run for a while and pause between runs
+        // ticking cogs, twitching animal noses, etc.
+        double durationSec;
+        double pauseSec;
+        
     } SpriteAnimationRecord;
 
 
