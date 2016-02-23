@@ -16,6 +16,8 @@
 
 #include "Picker.h"
 
+#include "ValueSlider.h"
+
 
 #include "overlayBank.h"
 
@@ -74,6 +76,13 @@ class EditorImportPage : public GamePage, public ActionListener {
 
         Image *mProcessedSelection;
         SpriteHandle mProcessedSelectionSprite;
+
+        Image *mProcessedShadow;
+        SpriteHandle mProcessedShadowSprite;
+        
+
+        ValueSlider mShadowSlider;
+        
 
         TextField mSpriteTagField;
         

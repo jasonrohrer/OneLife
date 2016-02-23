@@ -34,6 +34,11 @@ EditorImportPage::EditorImportPage()
           mImportedSheetSprite( NULL ),
           mProcessedSelection( NULL ),
           mProcessedSelectionSprite( NULL ),
+          mProcessedShadow( NULL ),
+          mProcessedShadowSprite( NULL ),
+          mShadowSlider( smallFont, 0, 200, 2,
+                         100, 20,
+                         0, 1, "Shadow" ),
           mSpriteTagField( mainFont, 
                            0,  -260, 6,
                            false,
@@ -52,6 +57,10 @@ EditorImportPage::EditorImportPage()
           mClearOverlayButton( smallFont, -230, -240, "X Ovly" ),
           mShowTagMessage( false ) {
 
+
+    addComponent( &mShadowSlider );
+    mShadowSlider.setValue( 1.0 );
+    
     addComponent( &mImportButton );
     addComponent( &mImportOverlayButton );
     addComponent( &mSpriteTagField );
@@ -131,6 +140,13 @@ EditorImportPage::~EditorImportPage() {
         freeSprite( mProcessedSelectionSprite );
         }
 
+    if( mProcessedShadow != NULL ) {
+        delete mProcessedShadow;
+        }
+    if( mProcessedShadowSprite != NULL ) {
+        freeSprite( mProcessedShadowSprite );
+        }
+
     freeSprite( mCenterMarkSprite );
     }
 
@@ -163,6 +179,27 @@ void EditorImportPage::clearUseOfOverlay( int inOverlayID ) {
 
 
 
+static void addShadow( Image *inImage, Image *inShadow, double inWeight ) {
+    
+    int w = inImage->getWidth();
+    int h = inImage->getHeight();
+    
+    int numPixels = w * h;
+    
+    double *shadowAlpha = inShadow->getChannel( 3 );
+    double *imageAlpha = inImage->getChannel( 3 );
+    
+    for( int i=0; i<numPixels; i++ ) {
+        imageAlpha[i] += inWeight * shadowAlpha[i];
+        if( imageAlpha[i] > 1.0 ) {
+            imageAlpha[i] = 1.0;
+            }
+        }
+    
+    }
+
+
+
 
 
 void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
@@ -172,6 +209,11 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         if( mProcessedSelectionSprite != NULL ) {
             freeSprite( mProcessedSelectionSprite );
             mProcessedSelectionSprite = NULL;
+            }
+
+        if( mProcessedShadowSprite != NULL ) {
+            freeSprite( mProcessedShadowSprite );
+            mProcessedShadowSprite = NULL;
             }
         
         mSettingSpriteCenter = false;
@@ -304,7 +346,19 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         char *tag = mSpriteTagField.getText();
         
         if( strcmp( tag, "" ) != 0 ) {
-                                
+            
+            if( mShadowSlider.getValue() > 0 ) {
+                addShadow( mProcessedSelection, mProcessedShadow,
+                           mShadowSlider.getValue() );
+                
+                freeSprite( mProcessedSelectionSprite );
+                
+                mProcessedSelectionSprite = 
+                    fillSprite( mProcessedSelection, false );
+                }
+            
+
+
             addSprite( tag, 
                        mProcessedSelectionSprite,
                        mProcessedSelection );
@@ -313,6 +367,10 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             
             // don't let it get freed now
             mProcessedSelectionSprite = NULL;
+
+            freeSprite( mProcessedShadowSprite );
+            mProcessedShadowSprite = NULL;
+
             mSaveSpriteButton.setVisible( false );
             
             mShowTagMessage = false;
@@ -443,6 +501,9 @@ void EditorImportPage::draw( doublePair inViewCenter,
         setDrawColor( 1, 1, 1, 1 );
         
         //drawSquare( pos, 100 );
+
+        setDrawColor( 1, 1, 1, mShadowSlider.getValue() );
+        drawSprite( mProcessedShadowSprite, pos );
 
         setDrawColor( 1, 1, 1, 1 );
         drawSprite( mProcessedSelectionSprite, pos );
@@ -659,25 +720,23 @@ void EditorImportPage::pointerUp( float inX, float inY ) {
 
 
 
-static void addShadow( Image *inImage ) {
+static Image *getShadow( Image *inImage ) {
     
     int w = inImage->getWidth();
     int h = inImage->getHeight();
     
-    int numPixels = w * h;
-
-    Image shadowImage( w, h, 1, true );
+    Image *shadowImage = new Image( w, h, 4, true );
     
-    shadowImage.pasteChannel( inImage->getChannel( 3 ), 0 );
+    shadowImage->pasteChannel( inImage->getChannel( 3 ), 3 );
     
     // now we have black, clear shadow
     FastBlurFilter filter;
     
     for( int i=0; i<20; i++ ) {
-        shadowImage.filter( &filter, 0 );
+        shadowImage->filter( &filter, 3 );
         }
     
-    double *shadowAlpha = shadowImage.getChannel( 0 );
+    double *shadowAlpha = shadowImage->getChannel( 3 );
     double *imageAlpha = inImage->getChannel( 3 );
 
     // fade shadow out near bottom visible edge of sprite
@@ -709,15 +768,10 @@ static void addShadow( Image *inImage ) {
         
         }
     
-    
-    for( int i=0; i<numPixels; i++ ) {
-        imageAlpha[i] += shadowAlpha[i];
-        if( imageAlpha[i] > 1.0 ) {
-            imageAlpha[i] = 1.0;
-            }
-        }
-    
+    return shadowImage;
     }
+
+
 
 
 
@@ -774,6 +828,10 @@ void EditorImportPage::processSelection() {
     if( mProcessedSelection != NULL ) {
         delete mProcessedSelection;
         mProcessedSelection = NULL;
+        }
+    if( mProcessedShadow != NULL ) {
+        delete mProcessedShadow;
+        mProcessedShadow = NULL;
         }
     
     
@@ -1210,8 +1268,6 @@ void EditorImportPage::processSelection() {
     centerY += 20;
 
 
-    addShadow( shadowImage );    
-    
 
     if( usingCenter ) {
         w = shadowImage->getWidth();
@@ -1285,6 +1341,10 @@ void EditorImportPage::processSelection() {
 
 
     mProcessedSelection = expandToPowersOfTwo( shadowImage );
+
+    mProcessedShadow = getShadow( mProcessedSelection );    
+    
+
     delete shadowImage;
 
     
@@ -1297,6 +1357,14 @@ void EditorImportPage::processSelection() {
         mProcessedSelectionSprite = NULL;
         }
     mProcessedSelectionSprite = fillSprite( mProcessedSelection, false );
+    
+    if( mProcessedShadowSprite != NULL ) {
+        freeSprite( mProcessedShadowSprite );
+        mProcessedShadowSprite = NULL;
+        }
+    mProcessedShadowSprite = fillSprite( mProcessedShadow, false );
+    
+
     mSaveSpriteButton.setVisible( true );
     mSaveOverlayButton.setVisible( false );
     }
