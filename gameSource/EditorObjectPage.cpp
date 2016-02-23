@@ -94,7 +94,10 @@ EditorObjectPage::EditorObjectPage()
           mAgePunchInButton( smallFont, 210, -52, "S" ),
           mAgePunchOutButton( smallFont, 210, -90, "S" ),
 
+          // these are in same spot because they're never shown at same time
           mMaleCheckbox( 190, -190, 2 ),
+          mDeathMarkerCheckbox( 190, -190, 2 ),
+
           mDemoClothesButton( smallFont, 200, 200, "Pos" ),
           mEndClothesDemoButton( smallFont, 200, 160, "XPos" ),
           mDemoSlotsButton( smallFont, 150, 32, "Demo Slots" ),
@@ -337,6 +340,9 @@ EditorObjectPage::EditorObjectPage()
 
     addComponent( &mMaleCheckbox );
     mMaleCheckbox.setVisible( false );
+
+    addComponent( &mDeathMarkerCheckbox );
+    mDeathMarkerCheckbox.setVisible( true );
     
     boxY = 200;
 
@@ -474,9 +480,14 @@ void EditorObjectPage::updateAgingPanel() {
             }
         mMaleCheckbox.setToggled( false );
         mMaleCheckbox.setVisible( false );
+        
+        mDeathMarkerCheckbox.setVisible( true );
         }
     else {
         mMaleCheckbox.setVisible( true );
+
+        mDeathMarkerCheckbox.setToggled( false );
+        mDeathMarkerCheckbox.setVisible( false );
         
         if( mPickedObjectLayer != -1 ) {
             mAgingLayerCheckbox.setVisible( true );
@@ -548,6 +559,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mRValueField.getFloat(),
                    mCheckboxes[2]->getToggled(),
                    mMaleCheckbox.getToggled(),
+                   mDeathMarkerCheckbox.getToggled(),
                    mFoodValueField.getInt(),
                    mSpeedMultField.getFloat(),
                    mCurrentObject.heldOffset,
@@ -585,6 +597,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mRValueField.getFloat(),
                    mCheckboxes[2]->getToggled(),
                    mMaleCheckbox.getToggled(),
+                   mDeathMarkerCheckbox.getToggled(),
                    mFoodValueField.getInt(),
                    mSpeedMultField.getFloat(),
                    mCurrentObject.heldOffset,
@@ -1206,6 +1219,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCheckboxes[2]->setToggled( pickedRecord->person );
 
             mMaleCheckbox.setToggled( pickedRecord->male );
+            mDeathMarkerCheckbox.setToggled( pickedRecord->deathMarker );
             
             if( mCheckboxes[2]->getToggled() ) {
                 mPersonAgeSlider.setValue( 20 );
@@ -1670,6 +1684,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         pos = mMaleCheckbox.getPosition();
         pos.y += 20;
         smallFont->drawString( "Male", pos, alignCenter );
+        }
+
+    if( mDeathMarkerCheckbox.isVisible() ) {
+        pos = mDeathMarkerCheckbox.getPosition();
+        pos.y += 20;
+        smallFont->drawString( "Death", pos, alignCenter );
         }
     
 

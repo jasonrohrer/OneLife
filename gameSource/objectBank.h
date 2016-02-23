@@ -46,6 +46,9 @@ typedef struct ObjectRecord {
         
         char male;
         
+        // true if this object can be placed by server to mark a death
+        char deathMarker;
+        
 
         int foodValue;
         
@@ -170,6 +173,7 @@ int addObject( const char *inDescription,
                float inRValue,
                char inPerson,
                char inMale,
+               char inDeathMarker,
                int inFoodValue,
                float inSpeedMult,
                doublePair inHeldOffset,
@@ -222,6 +226,10 @@ char isContainable( int inID );
 
 // -1 if no person object exists
 int getRandomPersonObject();
+
+
+// -1 if no death marker object exists
+int getRandomDeathMarker();
 
 
 // return array destroyed by caller
