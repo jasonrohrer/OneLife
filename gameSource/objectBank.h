@@ -101,6 +101,8 @@ typedef struct ObjectRecord {
 
         // count of sprites that span entire life
         int numNonAgingSprites;
+        // index of top non aging sprite
+        int headIndex;
         
     } ObjectRecord;
 

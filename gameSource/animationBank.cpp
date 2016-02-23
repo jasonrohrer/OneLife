@@ -615,17 +615,25 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     // and aging without letting age-ranged add-on layers interfere
     int bodyIndex = 0;
 
-    doublePair headPos = obj->spritePos[ 
-        obj->numNonAgingSprites - 1 ];
-
+    doublePair headPos = obj->spritePos[ obj->headIndex ];
+    
     doublePair animHeadPos = headPos;
+
+
+    // when tunic should be drawn, behind shoe
+    doublePair animBodyPos = { 0, 0 };
+
     
     for( int i=0; i<obj->numSprites; i++ ) {
         
+        char agingLayer = false;
+
         if( obj->person &&
             ( obj->spriteAgeStart[i] != -1 ||
               obj->spriteAgeEnd[i] != -1 ) ) {
-        
+            
+            agingLayer = true;
+            
             if( inAge < obj->spriteAgeStart[i] ||
                 inAge > obj->spriteAgeEnd[i] ) {
                 
@@ -638,7 +646,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         doublePair spritePos = obj->spritePos[i];
         
         if( obj->person && 
-            ( bodyIndex == obj->numNonAgingSprites - 1 ||
+            ( i == obj->headIndex ||
               obj->spriteAgesWithHead[i] ) ) {
             spritePos = add( spritePos, getAgeHeadOffset( inAge, headPos ) );
             }
@@ -754,7 +762,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             rot += rock;
             }
         
-        if( bodyIndex == obj->numNonAgingSprites - 1 ) {
+        if( i == obj->headIndex ) {
             // this is the head
             animHeadPos = spritePos;
             }
@@ -770,7 +778,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         char skipSprite = false;
         
         
-        if( ( ( bodyIndex == 0 && !inFlipH ) ||
+        if( !agingLayer && ( ( bodyIndex == 0 && !inFlipH ) ||
               ( bodyIndex == 2 && inFlipH ) ) 
             && inClothing.backShoe != NULL ) {
             
@@ -785,32 +793,45 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             drawObject( inClothing.backShoe, cPos,
                         inFlipH, -1, emptyClothing );
             }
-        else if( bodyIndex == 1 && inClothing.tunic != NULL ) {
+        else if( !agingLayer && bodyIndex == 1 && inClothing.tunic != NULL ) {
             skipSprite = true;
-            doublePair cPos = add( spritePos, 
-                                   inClothing.tunic->clothingOffset );
-            if( inFlipH ) {
-                cPos.x *= -1;
-                }
-            cPos = add( cPos, inPos );
+
             
-            drawObject( inClothing.tunic, cPos,
-                        inFlipH, -1, emptyClothing );
+            animBodyPos = spritePos;
+            // wait to draw tunic until we're about to draw front shoe
+            // (so it's drawn behind all aging layers on body)
             }
-        else if( ( ( bodyIndex == 2 && !inFlipH ) ||
-                   ( bodyIndex == 0 && inFlipH ) ) 
-                 && inClothing.frontShoe != NULL ) {
-            
-            skipSprite = true;
-            doublePair cPos = add( spritePos, 
-                                   inClothing.frontShoe->clothingOffset );
-            if( inFlipH ) {
-                cPos.x *= -1;
+        else if( !agingLayer && ( ( bodyIndex == 2 && !inFlipH ) ||
+                                  ( bodyIndex == 0 && inFlipH ) ) ) {
+
+            if( inClothing.tunic != NULL ) {
+                
+                // first, draw tunic behind shoe
+
+                doublePair cPos = add( animBodyPos, 
+                                       inClothing.tunic->clothingOffset );
+                if( inFlipH ) {
+                    cPos.x *= -1;
+                    }
+                cPos = add( cPos, inPos );
+                
+                drawObject( inClothing.tunic, cPos,
+                            inFlipH, -1, emptyClothing );
                 }
-            cPos = add( cPos, inPos );
             
-            drawObject( inClothing.frontShoe, cPos,
-                        inFlipH, -1, emptyClothing );
+            if( inClothing.frontShoe != NULL ) {
+
+                skipSprite = true;
+                doublePair cPos = add( spritePos, 
+                                       inClothing.frontShoe->clothingOffset );
+                if( inFlipH ) {
+                    cPos.x *= -1;
+                    }
+                cPos = add( cPos, inPos );
+                
+                drawObject( inClothing.frontShoe, cPos,
+                            inFlipH, -1, emptyClothing );
+                }
             }
         
 

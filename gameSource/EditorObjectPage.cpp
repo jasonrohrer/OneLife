@@ -445,6 +445,7 @@ void EditorObjectPage::recomputeNumNonAgingSprites() {
             mCurrentObject.spriteAgeEnd[i] == -1 ) {
             
             mCurrentObject.numNonAgingSprites ++;
+            mCurrentObject.headIndex = i;
             }
         }
     }
@@ -877,14 +878,14 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] = 999;
             mCurrentObject.spriteAgesWithHead[ mPickedObjectLayer ] = 0;
             
-            mCurrentObject.numNonAgingSprites --;
+            recomputeNumNonAgingSprites();
             }
         else {
             mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] = -1;
             mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] = -1;
             mCurrentObject.spriteAgesWithHead[ mPickedObjectLayer ] = 0;
             
-            mCurrentObject.numNonAgingSprites++;
+            recomputeNumNonAgingSprites();
             }
         updateAgingPanel();
         }
@@ -1526,7 +1527,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     int bodyIndex = 0;
     
     doublePair headPos = mCurrentObject.spritePos[ 
-        mCurrentObject.numNonAgingSprites - 1 ];
+        mCurrentObject.headIndex ];
     
 
     if( !skipDrawing )
@@ -1572,7 +1573,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                         }
                     }
                 }
-            if( ( bodyIndex == mCurrentObject.numNonAgingSprites - 1 ||
+            if( ( i == mCurrentObject.headIndex ||
                   mCurrentObject.spriteAgesWithHead[i] ) ) {
             
                 spritePos = add( spritePos, getAgeHeadOffset( age, headPos ) );
@@ -2377,6 +2378,8 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                 
                     
                     mPickedObjectLayer += layerOffset;
+                    
+                    recomputeNumNonAgingSprites();
                     }
                 }
                 break;
@@ -2461,6 +2464,7 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                         tempAgesWithHead;
 
                     mPickedObjectLayer -= layerOffset;
+                    recomputeNumNonAgingSprites();
                     }
                 break;
             
