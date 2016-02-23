@@ -618,7 +618,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     doublePair headPos = obj->spritePos[ 
         obj->numNonAgingSprites - 1 ];
 
-
+    doublePair animHeadPos = headPos;
+    
     for( int i=0; i<obj->numSprites; i++ ) {
         
         if( obj->person &&
@@ -753,6 +754,11 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             rot += rock;
             }
         
+        if( bodyIndex == obj->numNonAgingSprites - 1 ) {
+            // this is the head
+            animHeadPos = spritePos;
+            }
+
         if( inFlipH ) {
             spritePos.x *= -1;
             rot *= -1;
@@ -762,15 +768,6 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
 
         char skipSprite = false;
-        
-        // draw head behind hat
-        if( bodyIndex == obj->numNonAgingSprites - 1 && 
-            inClothing.hat != NULL ) {
-            
-            setDrawColor( obj->spriteColor[i] );
-            drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, 
-                        logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
-            }
         
         
         if( ( ( bodyIndex == 0 && !inFlipH ) ||
@@ -815,19 +812,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             drawObject( inClothing.frontShoe, cPos,
                         inFlipH, -1, emptyClothing );
             }
-        else if( bodyIndex == obj->numNonAgingSprites - 1 && 
-                 inClothing.hat != NULL ) {
-            skipSprite = true;
-            doublePair cPos = add( spritePos, 
-                                   inClothing.hat->clothingOffset );
-            if( inFlipH ) {
-                cPos.x *= -1;
-                }
-            cPos = add( cPos, inPos );
-            
-            drawObject( inClothing.hat, cPos,
-                        inFlipH, -1, emptyClothing );
-            }
+        
 
 
         if( !skipSprite ) {
@@ -843,6 +828,24 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             bodyIndex++;
             }
         } 
+
+
+    if( inClothing.hat != NULL ) {
+
+        // hat on top of everything
+            
+        // relative to head
+
+        doublePair cPos = add( animHeadPos, 
+                               inClothing.hat->clothingOffset );
+        if( inFlipH ) {
+            cPos.x *= -1;
+            }
+        cPos = add( cPos, inPos );
+        
+        drawObject( inClothing.hat, cPos,
+                    inFlipH, -1, emptyClothing );
+        }
     }
 
 

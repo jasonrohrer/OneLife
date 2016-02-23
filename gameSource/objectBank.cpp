@@ -868,7 +868,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
     doublePair headPos = inObject->spritePos[ 
         inObject->numNonAgingSprites - 1 ];
     
-
+    doublePair animHeadPos = headPos;
 
     for( int i=0; i<inObject->numSprites; i++ ) {
 
@@ -893,9 +893,13 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             ( bodyIndex == inObject->numNonAgingSprites - 1 ||
               inObject->spriteAgesWithHead[i] ) ) {
             
-            spritePos = add( spritePos, getAgeHeadOffset( inAge, spritePos ) );
+            spritePos = add( spritePos, getAgeHeadOffset( inAge, headPos ) );
             }
 
+        if( bodyIndex == inObject->numNonAgingSprites - 1 ) {
+            // this is the head
+            animHeadPos = spritePos;
+            }
         
         if( inFlipH ) {
             spritePos.x *= -1;
@@ -907,14 +911,6 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
 
         char skipSprite = false;
         
-        // draw head behind hat
-        if( i == inObject->numSprites - 1 && inClothing.hat != NULL ) {
-            setDrawColor( inObject->spriteColor[i] );
-            
-            drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
-                        inObject->spriteRot[i], 
-                        logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
-            }
         
         
         if( ( ( bodyIndex == 0 && !inFlipH ) ||
@@ -959,19 +955,6 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             drawObject( inClothing.frontShoe, cPos,
                         inFlipH, -1, emptyClothing );
             }
-        else if( bodyIndex == inObject->numNonAgingSprites - 1 && 
-                 inClothing.hat != NULL ) {
-            skipSprite = true;
-            doublePair cPos = add( spritePos, 
-                                   inClothing.hat->clothingOffset );
-            if( inFlipH ) {
-                cPos.x *= -1;
-                }
-            cPos = add( cPos, inPos );
-            
-            drawObject( inClothing.hat, cPos,
-                        inFlipH, -1, emptyClothing );
-            }
         
         
         if( ! skipSprite ) {
@@ -988,10 +971,25 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
         
             bodyIndex++;
             }
-        
-            
-            
         }    
+
+    
+    if( inClothing.hat != NULL ) {
+        // hat on top of everything
+            
+        // relative to head
+        
+        doublePair cPos = add( animHeadPos, 
+                               inClothing.hat->clothingOffset );
+        if( inFlipH ) {
+            cPos.x *= -1;
+            }
+        cPos = add( cPos, inPos );
+        
+        drawObject( inClothing.hat, cPos,
+                    inFlipH, -1, emptyClothing );
+        }
+
     }
 
 
