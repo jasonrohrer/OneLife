@@ -622,7 +622,7 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
         }
 
     if( inX > -210 && inX < 210 && 
-        inY > -210 && inY < 210 ) {
+        inY > -210 && inY < 190 ) {
         TextField::unfocusAll();
         }
     else {
