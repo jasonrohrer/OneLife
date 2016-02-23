@@ -94,6 +94,7 @@ EditorObjectPage::EditorObjectPage()
           mAgePunchInButton( smallFont, 210, -52, "S" ),
           mAgePunchOutButton( smallFont, 210, -90, "S" ),
 
+          mMaleCheckbox( 190, -190, 2 ),
           mDemoClothesButton( smallFont, 200, 200, "Pos" ),
           mEndClothesDemoButton( smallFont, 200, 160, "XPos" ),
           mDemoSlotsButton( smallFont, 150, 32, "Demo Slots" ),
@@ -289,6 +290,7 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.spriteAgesWithHead = new char[ 0 ];
 
     mCurrentObject.numNonAgingSprites = 0;
+    mCurrentObject.headIndex = 0;
     
 
     mPickedObjectLayer = -1;
@@ -333,6 +335,9 @@ EditorObjectPage::EditorObjectPage()
     mCheckboxes[2]->addActionListener( this );
 
 
+    addComponent( &mMaleCheckbox );
+    mMaleCheckbox.setVisible( false );
+    
     boxY = 200;
 
     for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
@@ -467,8 +472,11 @@ void EditorObjectPage::updateAgingPanel() {
             mCurrentObject.spriteAgeEnd[i] = -1;
             mCurrentObject.spriteAgesWithHead[i] = 0;
             }
+        mMaleCheckbox.setToggled( false );
+        mMaleCheckbox.setVisible( false );
         }
     else {
+        mMaleCheckbox.setVisible( true );
         
         if( mPickedObjectLayer != -1 ) {
             mAgingLayerCheckbox.setVisible( true );
@@ -539,6 +547,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mHeatValueField.getInt(),
                    mRValueField.getFloat(),
                    mCheckboxes[2]->getToggled(),
+                   mMaleCheckbox.getToggled(),
                    mFoodValueField.getInt(),
                    mSpeedMultField.getFloat(),
                    mCurrentObject.heldOffset,
@@ -575,6 +584,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mHeatValueField.getInt(),
                    mRValueField.getFloat(),
                    mCheckboxes[2]->getToggled(),
+                   mMaleCheckbox.getToggled(),
                    mFoodValueField.getInt(),
                    mSpeedMultField.getFloat(),
                    mCurrentObject.heldOffset,
@@ -1194,6 +1204,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCheckboxes[0]->setToggled( pickedRecord->containable );
             mCheckboxes[1]->setToggled( pickedRecord->permanent );
             mCheckboxes[2]->setToggled( pickedRecord->person );
+
+            mMaleCheckbox.setToggled( pickedRecord->male );
             
             if( mCheckboxes[2]->getToggled() ) {
                 mPersonAgeSlider.setValue( 20 );
@@ -1334,6 +1346,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                     mPersonAgeSlider.setVisible( false );
                     mCheckboxes[2]->setToggled( false );
                     mSetHeldPosButton.setVisible( true );
+
+                    updateAgingPanel();
                     }
                 else {
                     mDemoClothesButton.setVisible( false );
@@ -1649,6 +1663,13 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         pos = mAgesWithHeadCheckbox.getPosition();
         pos.x -= 20;
         smallFont->drawString( "On Head", pos, alignRight );
+        }
+
+
+    if( mMaleCheckbox.isVisible() ) {
+        pos = mMaleCheckbox.getPosition();
+        pos.y += 20;
+        smallFont->drawString( "Male", pos, alignCenter );
         }
     
 

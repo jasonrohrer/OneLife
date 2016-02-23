@@ -44,6 +44,9 @@ typedef struct ObjectRecord {
 
         char person;
         
+        char male;
+        
+
         int foodValue;
         
         // multiplier on walking speed when holding
@@ -166,6 +169,7 @@ int addObject( const char *inDescription,
                int inHeatValue,
                float inRValue,
                char inPerson,
+               char inMale,
                int inFoodValue,
                float inSpeedMult,
                doublePair inHeldOffset,

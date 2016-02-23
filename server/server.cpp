@@ -474,6 +474,16 @@ double computeAge( LiveObject *inPlayer ) {
     }
 
 
+// false for male, true for female
+char getFemale( LiveObject *inPlayer ) {
+    ObjectRecord *r = getObject( inPlayer->displayID );
+    
+    return ! r->male;
+    }
+
+
+
+
 int computeFoodCapacity( LiveObject *inPlayer ) {
     int ageInYears = lrint( computeAge( inPlayer ) );
     
@@ -1114,7 +1124,9 @@ int main() {
                     
                     double age = computeAge( players.getElement( i ) );
                     
-                    if( age >= 14 ) {
+                    char f = getFemale( players.getElement( i ) );
+                    
+                    if( age >= 14 && f ) {
                         numOfAge ++;
                         parentChoices.push_back( players.getElement( i ) );
                         }
@@ -1131,7 +1143,16 @@ int main() {
                     // new Eve
                     // she starts almost full grown
                     newObject.lifeStartTimeSeconds -= 14 * 60;
+
+                    
+                    int tryCount = 0;
+                    
+                    while( ! getFemale( &newObject ) && tryCount < 100 ) {
+                        newObject.displayID = getRandomPersonObject();
+                        tryCount ++;
+                        }
                     }
+                
                 
                 // else player starts as newborn
                 

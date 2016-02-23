@@ -183,6 +183,15 @@ float initObjectBankStep() {
                     next++;
 
 
+                    int maleRead = 0;                            
+                    sscanf( lines[next], "male=%d", 
+                            &( maleRead ) );
+                    
+                    r->male = maleRead;
+                            
+                    next++;
+
+
                             
                     sscanf( lines[next], "foodValue=%d", 
                             &( r->foodValue ) );
@@ -467,6 +476,7 @@ void resaveAll() {
                        idMap[i]->heatValue,
                        idMap[i]->rValue,
                        idMap[i]->person,
+                       idMap[i]->male,
                        idMap[i]->foodValue,
                        idMap[i]->speedMult,
                        idMap[i]->heldOffset,
@@ -573,6 +583,7 @@ int addObject( const char *inDescription,
                int inHeatValue,
                float inRValue,
                char inPerson,
+               char inMale,
                int inFoodValue,
                float inSpeedMult,
                doublePair inHeldOffset,
@@ -646,6 +657,7 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "rValue=%f", inRValue ) );
 
         lines.push_back( autoSprintf( "person=%d", (int)inPerson ) );
+        lines.push_back( autoSprintf( "male=%d", (int)inMale ) );
 
         lines.push_back( autoSprintf( "foodValue=%d", inFoodValue ) );
         
@@ -772,6 +784,7 @@ int addObject( const char *inDescription,
     r->rValue = inRValue;
 
     r->person = inPerson;
+    r->male = inMale;
     r->foodValue = inFoodValue;
     r->speedMult = inSpeedMult;
     r->heldOffset = inHeldOffset;
