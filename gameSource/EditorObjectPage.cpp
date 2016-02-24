@@ -371,6 +371,10 @@ EditorObjectPage::EditorObjectPage()
     addKeyClassDescription( &mKeyLegend, "c/v", "Copy/paste color" );
 
 
+    addKeyClassDescription( &mKeyLegendB, "R-Click", "Layer parent" );
+    addKeyClassDescription( &mKeyLegendB, "Bkspce", "Remv layer" );
+
+
     mColorClipboard.r = 1;
     mColorClipboard.g = 1;
     mColorClipboard.b = 1;
@@ -1722,6 +1726,13 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     legendPos.y += 20;
     
     drawKeyLegend( &mKeyLegend, legendPos );
+
+
+    legendPos = mImportEditorButton.getPosition();
+    legendPos.x = -440;
+    legendPos.y += 20;
+    
+    drawKeyLegend( &mKeyLegendB, legendPos );
     }
 
 
@@ -1966,6 +1977,38 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
         return;
         }
     
+    if( isLastMouseButtonRight() && mPickedObjectLayer != -1 ) {
+        // pick new parent for this layer
+
+        int obj, slot;
+        
+        double smallestDist = 
+            getClosestSpriteOrSlot( inX, inY, &obj, &slot );
+
+        if( smallestDist < 200 && obj != -1 && obj != mPickedObjectLayer ) {
+            // parent picked
+            
+            // make sure this isn't one of our children
+            // walk up the chain, looking for us, or looking for the end
+            int nextParent = obj;
+            while( nextParent != -1 && nextParent != mPickedObjectLayer ) {
+                
+                nextParent = mCurrentObject.spriteParent[nextParent];
+                }
+            
+            if( nextParent != mPickedObjectLayer ) {
+                mCurrentObject.spriteParent[ mPickedObjectLayer ] = obj;
+                }
+            // else creating a loop, block it
+            }
+        else {
+            // parent cleared
+            mCurrentObject.spriteParent[ mPickedObjectLayer ] = -1;
+            }
+        }
+    
+    
+
     mDragging = true;
     
     doublePair pos = { inX, inY };
@@ -2011,6 +2054,25 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
 
 
 
+static void recursiveMove( ObjectRecord *inObject,
+                           int inMovingParentIndex,
+                           doublePair inMoveDelta ) {
+
+    // adjust children recursively
+    for( int i=0; i<inObject->numSprites; i++ ) {
+        if( inObject->spriteParent[i] == inMovingParentIndex ) {
+            
+            inObject->spritePos[i] =
+                add( inObject->spritePos[i], inMoveDelta );
+            
+            recursiveMove( inObject, i, inMoveDelta );
+            }
+        }
+    
+    }
+
+
+
 
 void EditorObjectPage::pointerDrag( float inX, float inY ) {
     mHoverStrength = 0;
@@ -2046,8 +2108,15 @@ void EditorObjectPage::pointerDrag( float inX, float inY ) {
     doublePair pos = {inX, inY};
 
     if( mPickedObjectLayer != -1 ) {
+        doublePair oldPos = mCurrentObject.spritePos[mPickedObjectLayer];
+        
         mCurrentObject.spritePos[mPickedObjectLayer]
             = sub( pos, mPickedMouseOffset );
+
+        doublePair delta = sub( mCurrentObject.spritePos[mPickedObjectLayer],
+                                oldPos );
+        
+        recursiveMove( &mCurrentObject, mPickedObjectLayer, delta );
         }
     else if( mPickedSlot != -1 ) {
         mCurrentObject.slotPos[mPickedSlot]

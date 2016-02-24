@@ -202,6 +202,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
 
         KeyLegend mKeyLegend;
+        KeyLegend mKeyLegendB;
     };
 
 
