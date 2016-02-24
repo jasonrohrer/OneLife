@@ -291,6 +291,7 @@ float initObjectBankStep() {
                     r->spriteAgeEnd = new double[ r->numSprites ];
 
                     r->spriteAgesWithHead = new char[ r->numSprites ];
+                    r->spriteParent = new int[ r->numSprites ];
 
                     r->numNonAgingSprites = 0;
                     r->headIndex = 0;
@@ -351,6 +352,12 @@ float initObjectBankStep() {
                                 
                         r->spriteAgesWithHead[i] = agesWithHeadRead;
                                 
+                        next++;
+                        
+
+                        sscanf( lines[next], "parent=%d", 
+                                &( r->spriteParent[i] ) );
+                        
                         next++;
                         }
                     records.push_back( r );
@@ -434,6 +441,7 @@ static void freeObjectRecord( int inID ) {
             delete [] idMap[inID]->spriteAgeStart;
             delete [] idMap[inID]->spriteAgeEnd;
             delete [] idMap[inID]->spriteAgesWithHead;
+            delete [] idMap[inID]->spriteParent;
             
             delete idMap[inID];
             idMap[inID] = NULL;
@@ -463,6 +471,7 @@ void freeObjectBank() {
             delete [] idMap[i]->spriteAgeStart;
             delete [] idMap[i]->spriteAgeEnd;
             delete [] idMap[i]->spriteAgesWithHead;
+            delete [] idMap[i]->spriteParent;
 
             delete idMap[i];
             }
@@ -505,6 +514,7 @@ void resaveAll() {
                        idMap[i]->spriteAgeStart,
                        idMap[i]->spriteAgeEnd,
                        idMap[i]->spriteAgesWithHead,
+                       idMap[i]->spriteParent,
                        idMap[i]->id );
             }
         }
@@ -610,6 +620,7 @@ int addObject( const char *inDescription,
                double *inSpriteAgeStart,
                double *inSpriteAgeEnd,
                char *inSpriteAgesWithHead,
+               int *inSpriteParent,
                int inReplaceID ) {
     
 
@@ -720,6 +731,9 @@ int addObject( const char *inDescription,
 
             lines.push_back( autoSprintf( "agesWithHead=%d", 
                                           inSpriteAgesWithHead[i] ) );
+
+            lines.push_back( autoSprintf( "parent=%d", 
+                                          inSpriteParent[i] ) );
             }
         
         char **linesArray = lines.getElementArray();
@@ -824,6 +838,8 @@ int addObject( const char *inDescription,
     r->spriteAgeStart = new double[ inNumSprites ];
     r->spriteAgeEnd = new double[ inNumSprites ];
     r->spriteAgesWithHead = new char[ inNumSprites ];
+    
+    r->spriteParent = new int[ inNumSprites ];
 
 
     memcpy( r->sprites, inSprites, inNumSprites * sizeof( int ) );
@@ -840,6 +856,9 @@ int addObject( const char *inDescription,
 
     memcpy( r->spriteAgesWithHead, inSpriteAgesWithHead, 
             inNumSprites * sizeof( char ) );
+
+    memcpy( r->spriteParent, inSpriteParent, 
+            inNumSprites * sizeof( int ) );
     
     r->numNonAgingSprites = 0;
     r->headIndex = 0;

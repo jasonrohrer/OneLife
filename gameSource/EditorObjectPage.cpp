@@ -291,6 +291,7 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.spriteAgeStart = new double[ 0 ];
     mCurrentObject.spriteAgeEnd = new double[ 0 ];
     mCurrentObject.spriteAgesWithHead = new char[ 0 ];
+    mCurrentObject.spriteParent = new int[ 0 ];
 
     mCurrentObject.numNonAgingSprites = 0;
     mCurrentObject.headIndex = 0;
@@ -390,6 +391,7 @@ EditorObjectPage::~EditorObjectPage() {
     delete [] mCurrentObject.spriteAgeStart;
     delete [] mCurrentObject.spriteAgeEnd;
     delete [] mCurrentObject.spriteAgesWithHead;
+    delete [] mCurrentObject.spriteParent;
 
 
     freeSprite( mSlotPlaceholderSprite );
@@ -576,7 +578,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteColor,
                    mCurrentObject.spriteAgeStart,
                    mCurrentObject.spriteAgeEnd,
-                   mCurrentObject.spriteAgesWithHead );
+                   mCurrentObject.spriteAgesWithHead,
+                   mCurrentObject.spriteParent );
         
         delete [] text;
         
@@ -615,6 +618,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteAgeStart,
                    mCurrentObject.spriteAgeEnd,
                    mCurrentObject.spriteAgesWithHead,
+                   mCurrentObject.spriteParent,
                    mCurrentObject.id );
         
         delete [] text;
@@ -691,6 +695,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         delete [] mCurrentObject.spriteAgesWithHead;
         mCurrentObject.spriteAgesWithHead = new char[ 0 ];
+
+
+        delete [] mCurrentObject.spriteParent;
+        mCurrentObject.spriteParent = new int[ 0 ];
 
 
         recomputeNumNonAgingSprites();
@@ -1001,6 +1009,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             char *newSpriteAgesWithHead = new char[ newNumSprites ];
             memcpy( newSpriteAgesWithHead, mCurrentObject.spriteAgesWithHead, 
                     mCurrentObject.numSprites * sizeof( char ) );
+
+            int *newSpriteParent = new int[ newNumSprites ];
+            memcpy( newSpriteParent, mCurrentObject.spriteParent, 
+                    mCurrentObject.numSprites * sizeof( int ) );
         
 
             newSprites[ mCurrentObject.numSprites ] = spriteID;
@@ -1020,6 +1032,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             newSpriteAgeStart[ mCurrentObject.numSprites ] = -1;
             newSpriteAgeEnd[ mCurrentObject.numSprites ] = -1;
             newSpriteAgesWithHead[ mCurrentObject.numSprites ] = 0;
+            
+            newSpriteParent[ mCurrentObject.numSprites ] = -1;
 
             delete [] mCurrentObject.sprites;
             delete [] mCurrentObject.spritePos;
@@ -1030,6 +1044,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] mCurrentObject.spriteAgeStart;
             delete [] mCurrentObject.spriteAgeEnd;
             delete [] mCurrentObject.spriteAgesWithHead;
+            delete [] mCurrentObject.spriteParent;
                         
 
             mCurrentObject.sprites = newSprites;
@@ -1041,6 +1056,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.spriteAgeStart = newSpriteAgeStart;
             mCurrentObject.spriteAgeEnd = newSpriteAgeEnd;
             mCurrentObject.spriteAgesWithHead = newSpriteAgesWithHead;
+            mCurrentObject.spriteParent = newSpriteParent;
 
             mCurrentObject.numSprites = newNumSprites;
 
@@ -1093,6 +1109,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] mCurrentObject.spriteAgeStart;
             delete [] mCurrentObject.spriteAgeEnd;
             delete [] mCurrentObject.spriteAgesWithHead;
+            delete [] mCurrentObject.spriteParent;
 
 
             mCurrentObject.id = objectID;
@@ -1164,7 +1181,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 new double[ pickedRecord->numSprites ];
             mCurrentObject.spriteAgesWithHead = 
                 new char[ pickedRecord->numSprites ];
-                
+            mCurrentObject.spriteParent = 
+                new int[ pickedRecord->numSprites ];
+
 
             memcpy( mCurrentObject.sprites, pickedRecord->sprites,
                     sizeof( int ) * pickedRecord->numSprites );
@@ -1191,6 +1210,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             memcpy( mCurrentObject.spriteAgesWithHead, 
                     pickedRecord->spriteAgesWithHead,
                     sizeof( char ) * pickedRecord->numSprites );
+            memcpy( mCurrentObject.spriteParent, 
+                    pickedRecord->spriteParent,
+                    sizeof( int ) * pickedRecord->numSprites );
             
             recomputeNumNonAgingSprites();
             
@@ -1779,6 +1801,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     double *newSpriteAgeStart = new double[ newNumSprites ];
     double *newSpriteAgeEnd = new double[ newNumSprites ];
     char *newSpriteAgesWithHead = new char[ newNumSprites ];
+    int *newSpriteParent = new int[ newNumSprites ];
 
     int j = 0;
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
@@ -1793,6 +1816,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
             newSpriteAgeStart[j] = mCurrentObject.spriteAgeStart[i];
             newSpriteAgeEnd[j] = mCurrentObject.spriteAgeEnd[i];
             newSpriteAgesWithHead[j] = mCurrentObject.spriteAgesWithHead[i];
+            newSpriteParent[j] = mCurrentObject.spriteParent[i];
             j++;
             }
         }
@@ -1806,6 +1830,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     delete [] mCurrentObject.spriteAgeStart;
     delete [] mCurrentObject.spriteAgeEnd;
     delete [] mCurrentObject.spriteAgesWithHead;
+    delete [] mCurrentObject.spriteParent;
             
     mCurrentObject.sprites = newSprites;
     mCurrentObject.spritePos = newSpritePos;
@@ -1815,6 +1840,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     mCurrentObject.spriteAgeStart = newSpriteAgeStart;
     mCurrentObject.spriteAgeEnd = newSpriteAgeEnd;
     mCurrentObject.spriteAgesWithHead = newSpriteAgesWithHead;
+    mCurrentObject.spriteParent = newSpriteParent;
     
     mCurrentObject.numSprites = newNumSprites;
 
@@ -2157,6 +2183,16 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
                 (newNumSprites - mPickedObjectLayer ) * sizeof( char ) );
 
 
+        int *newSpriteParent = new int[ newNumSprites ];
+        
+        memcpy( newSpriteParent, mCurrentObject.spriteParent, 
+                mPickedObjectLayer * sizeof( int ) );
+        
+        memcpy( &( newSpriteParent[mPickedObjectLayer] ), 
+                &( mCurrentObject.spriteParent[mPickedObjectLayer+1] ), 
+                (newNumSprites - mPickedObjectLayer ) * sizeof( int ) );
+
+
 
 
         delete [] mCurrentObject.sprites;
@@ -2167,6 +2203,7 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         delete [] mCurrentObject.spriteAgeStart;
         delete [] mCurrentObject.spriteAgeEnd;
         delete [] mCurrentObject.spriteAgesWithHead;
+        delete [] mCurrentObject.spriteParent;
             
         mCurrentObject.sprites = newSprites;
         mCurrentObject.spritePos = newSpritePos;
@@ -2176,6 +2213,7 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         mCurrentObject.spriteAgeStart = newSpriteAgeStart;
         mCurrentObject.spriteAgeEnd = newSpriteAgeEnd;
         mCurrentObject.spriteAgesWithHead = newSpriteAgesWithHead;
+        mCurrentObject.spriteParent = newSpriteParent;
         
         mCurrentObject.numSprites = newNumSprites;
 
@@ -2374,7 +2412,10 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                     char tempAgesWithHead = 
                         mCurrentObject.spriteAgesWithHead[mPickedObjectLayer + 
                                                           layerOffset];
-                
+                    int tempParent = 
+                        mCurrentObject.spriteParent[mPickedObjectLayer + 
+                                                    layerOffset];
+
                     mCurrentObject.sprites[mPickedObjectLayer + layerOffset]
                         = mCurrentObject.sprites[mPickedObjectLayer];
                     mCurrentObject.sprites[mPickedObjectLayer] = tempSprite;
@@ -2416,6 +2457,13 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                             mPickedObjectLayer];
                     mCurrentObject.spriteAgesWithHead[mPickedObjectLayer] = 
                         tempAgesWithHead;
+
+                    mCurrentObject.spriteParent[mPickedObjectLayer 
+                                                  + layerOffset]
+                        = mCurrentObject.spriteParent[
+                            mPickedObjectLayer];
+                    mCurrentObject.spriteParent[mPickedObjectLayer] = 
+                        tempParent;
                 
                     
                     mPickedObjectLayer += layerOffset;
@@ -2460,6 +2508,10 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                         mCurrentObject.spriteAgesWithHead[mPickedObjectLayer - 
                                                           layerOffset];
 
+                    int tempParent = 
+                        mCurrentObject.spriteParent[mPickedObjectLayer - 
+                                                    layerOffset];
+
 
                     mCurrentObject.sprites[mPickedObjectLayer - layerOffset]
                         = mCurrentObject.sprites[mPickedObjectLayer];
@@ -2503,6 +2555,15 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                             mPickedObjectLayer];
                     mCurrentObject.spriteAgesWithHead[mPickedObjectLayer] = 
                         tempAgesWithHead;
+
+                    mCurrentObject.spriteParent[mPickedObjectLayer 
+                                                - layerOffset]
+                        = mCurrentObject.spriteParent[
+                            mPickedObjectLayer];
+                    mCurrentObject.spriteParent[mPickedObjectLayer] = 
+                        tempParent;
+
+
 
                     mPickedObjectLayer -= layerOffset;
                     recomputeNumNonAgingSprites();

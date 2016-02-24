@@ -105,6 +105,10 @@ typedef struct ObjectRecord {
         // 1 if sprite should move along with head as it ages
         char *spriteAgesWithHead;
 
+        // index in this sprite list of sprite that is motion parent of this 
+        // sprite, or -1 if this sprite doesn't follow the motion of another
+        int *spriteParent;
+
         // count of sprites that span entire life
         int numNonAgingSprites;
         // index of top non aging sprite
@@ -189,6 +193,7 @@ int addObject( const char *inDescription,
                double *inSpriteAgeStart,
                double *inSpriteAgeEnd,
                char *inSpriteAgesWithHead,
+               int *inSpriteParent,
                int inReplaceID = -1 );
 
 
