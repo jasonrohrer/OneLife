@@ -2455,6 +2455,12 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                 if( mPickedObjectLayer < 
                     mCurrentObject.numSprites - layerOffset ) {
                 
+
+                    // two indices being swapped
+                    int indexA = mPickedObjectLayer;
+                    int indexB = mPickedObjectLayer + layerOffset;
+                    
+
                     int tempSprite = 
                         mCurrentObject.sprites[mPickedObjectLayer + 
                                                layerOffset];
@@ -2538,6 +2544,17 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                     mPickedObjectLayer += layerOffset;
                     
                     recomputeNumNonAgingSprites();
+                    
+                    // any children pointing to index A must now
+                    // point to B and vice-versa
+                    for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+                        if( mCurrentObject.spriteParent[i] == indexA ) {
+                            mCurrentObject.spriteParent[i] = indexB;
+                            }
+                        else if( mCurrentObject.spriteParent[i] == indexB ) {
+                            mCurrentObject.spriteParent[i] = indexA;
+                            }
+                        }
                     }
                 }
                 break;
@@ -2548,6 +2565,11 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                     }
 
                 if( mPickedObjectLayer >= layerOffset ) {
+
+                    // two indices being swapped
+                    int indexA = mPickedObjectLayer;
+                    int indexB = mPickedObjectLayer - layerOffset;
+
                     int tempSprite = 
                         mCurrentObject.sprites[mPickedObjectLayer - 
                                                layerOffset];
@@ -2636,6 +2658,18 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
 
                     mPickedObjectLayer -= layerOffset;
                     recomputeNumNonAgingSprites();
+
+
+                    // any children pointing to index A must now
+                    // point to B and vice-versa
+                    for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+                        if( mCurrentObject.spriteParent[i] == indexA ) {
+                            mCurrentObject.spriteParent[i] = indexB;
+                            }
+                        else if( mCurrentObject.spriteParent[i] == indexB ) {
+                            mCurrentObject.spriteParent[i] = indexA;
+                            }
+                        }
                     }
                 break;
             
