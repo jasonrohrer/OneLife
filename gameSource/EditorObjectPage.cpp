@@ -1542,9 +1542,11 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
     int bodyIndex = 0;
     
-    doublePair headPos = mCurrentObject.spritePos[ 
-        mCurrentObject.headIndex ];
-    
+    doublePair headPos = {0,0};
+
+    if( mCurrentObject.headIndex <= mCurrentObject.numSprites ) {
+        headPos = mCurrentObject.spritePos[ mCurrentObject.headIndex ];
+        }
 
     if( !skipDrawing )
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
@@ -1829,9 +1831,50 @@ double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
     *outSprite = -1;
     double smallestDist = 9999999;
     
+
+    doublePair headPos = {0,0};
+
+    if( mCurrentObject.headIndex <= mCurrentObject.numSprites ) {
+        headPos = mCurrentObject.spritePos[ mCurrentObject.headIndex ];
+        }
+
+    
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+
+        doublePair thisSpritePos = mCurrentObject.spritePos[i];
         
-        double dist = distance( pos, mCurrentObject.spritePos[i] );
+
+        if( mPersonAgeSlider.isVisible() && mCheckboxes[2]->getToggled() ) {
+            
+            double age = mPersonAgeSlider.getValue();
+
+            if( mCurrentObject.spriteAgeStart[i] != -1 &&
+                mCurrentObject.spriteAgeEnd[i] != -1 ) {
+                
+                if( age < mCurrentObject.spriteAgeStart[i] || 
+                    age > mCurrentObject.spriteAgeEnd[i] ) {
+                    
+                    if( i != mPickedObjectLayer ) {
+                        // invisible, don't let them pick it
+                        continue;
+                        }
+                    }
+                }
+
+            if( i == mCurrentObject.headIndex ||
+
+                checkSpriteAncestor( &mCurrentObject, i,
+                                     mCurrentObject.headIndex ) ) {
+            
+                thisSpritePos = add( thisSpritePos, 
+                                     getAgeHeadOffset( age, headPos ) );
+                }
+            
+            }
+        
+        
+        
+        double dist = distance( pos, thisSpritePos );
         
         if( dist < smallestDist ) {
             *outSprite = i;
