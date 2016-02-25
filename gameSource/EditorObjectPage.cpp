@@ -2288,6 +2288,19 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
 
         recomputeNumNonAgingSprites();
         
+
+        for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+            if( mCurrentObject.spriteParent[i] == mPickedObjectLayer ) {
+                // parent is gone
+                mCurrentObject.spriteParent[i] = -1;
+                }
+            else if( mCurrentObject.spriteParent[i] > mPickedObjectLayer ) {
+                // all parents above move down one index
+                mCurrentObject.spriteParent[i] --;
+                }
+            }
+
+
         mPickedObjectLayer = -1;
         pickedLayerChanged();
 
