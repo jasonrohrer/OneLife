@@ -609,6 +609,23 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
 
 
 
+
+// compute base pos and rot of each object
+// THEN go back through list and compute compound effects by walking
+// through tree of parent relationships.
+
+// we need a place to store all of these intermediary pos and rots
+
+// avoid mallocs every draw call by statically allocating this
+// here, we assume no object has more than 1000 sprites
+#define MAX_WORKING_SPRITES 1000
+static doublePair workingSpritePos[1000];
+static doublePair workingDeltaSpritePos[1000];
+static double workingRot[1000];
+static double workingDeltaRot[1000];
+
+
+
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
                      double inFrameTime,
                      double inRotFrameTime,
@@ -620,6 +637,12 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      ClothingSet inClothing ) {
 
     ObjectRecord *obj = getObject( inObjectID );
+    
+    if( obj->numSprites > MAX_WORKING_SPRITES ) {
+        // cannot animate objects with this many sprites
+        drawObject( obj, inPos, inFlipH, inAge, inClothing );
+        }
+    
 
 
     // don't count aging layers here
@@ -684,21 +707,6 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             }
         
 
-        char agingLayer = false;
-
-        if( obj->person &&
-            ( obj->spriteAgeStart[i] != -1 ||
-              obj->spriteAgeEnd[i] != -1 ) ) {
-            
-            agingLayer = true;
-            
-            if( inAge < obj->spriteAgeStart[i] ||
-                inAge > obj->spriteAgeEnd[i] ) {
-                
-                // skip drawing this aging layer entirely
-                continue;
-                }
-            }
 
 
         doublePair spritePos = obj->spritePos[i];
@@ -830,6 +838,80 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             spritePos.x *= -1;
             rot *= -1;
             }
+        
+        workingSpritePos[i] = spritePos;
+        workingRot[i] = rot;
+        
+        workingDeltaSpritePos[i] = sub( spritePos, obj->spritePos[i] );
+        workingDeltaRot[i] = rot - obj->spriteRot[i];
+        }
+
+
+    
+    // now that their individual animations have been computed
+    // walk through and follow parent chains to compute compound animations
+    // for each one before drawing
+    for( int i=0; i<obj->numSprites; i++ ) {
+
+
+        char agingLayer = false;
+        
+        if( obj->person &&
+            ( obj->spriteAgeStart[i] != -1 ||
+              obj->spriteAgeEnd[i] != -1 ) ) {
+            
+            agingLayer = true;
+            
+            if( inAge < obj->spriteAgeStart[i] ||
+                inAge > obj->spriteAgeEnd[i] ) {
+                
+                // skip drawing this aging layer entirely
+                continue;
+                }
+            }
+
+        
+        doublePair spritePos = workingSpritePos[i];
+        double rot = workingRot[i];
+        
+
+        int nextParent = obj->spriteParent[i];
+        int nextChild = i;
+        
+        while( nextParent != -1 ) {
+            
+            
+            
+            if( workingDeltaRot[nextParent] != 0 ) {
+                rot += workingDeltaRot[ nextParent ];
+            
+                double angle = - 2 * M_PI * workingDeltaRot[ nextParent ];
+
+                spritePos = add( spritePos, 
+                                 rotate( workingDeltaSpritePos[ nextParent ],
+                                         -angle ) );
+
+                // add in positional change based on arm's length rotation
+                // around parent
+            
+                doublePair childOffset = 
+                    sub( spritePos, 
+                         obj->spritePos[nextParent] );
+                
+                doublePair newChildOffset =  rotate( childOffset, angle );
+                
+                spritePos = 
+                    add( spritePos, sub( newChildOffset, childOffset ) );
+                }
+            else {
+                spritePos = add( spritePos, 
+                                 workingDeltaSpritePos[ nextParent ] );
+                }
+                    
+            nextChild = nextParent;
+            nextParent = obj->spriteParent[nextParent];
+            }
+        
         
         doublePair pos = add( spritePos, inPos );
 
