@@ -102,9 +102,6 @@ typedef struct ObjectRecord {
         double *spriteAgeStart;
         double *spriteAgeEnd;
         
-        // 1 if sprite should move along with head as it ages
-        char *spriteAgesWithHead;
-
         // index in this sprite list of sprite that is motion parent of this 
         // sprite, or -1 if this sprite doesn't follow the motion of another
         int *spriteParent;
@@ -192,7 +189,6 @@ int addObject( const char *inDescription,
                FloatRGB *inSpriteColor,
                double *inSpriteAgeStart,
                double *inSpriteAgeEnd,
-               char *inSpriteAgesWithHead,
                int *inSpriteParent,
                int inReplaceID = -1 );
 
@@ -239,6 +235,13 @@ int getRandomDeathMarker();
 
 // return array destroyed by caller
 ObjectRecord **getAllObjects( int *outNumResults );
+
+
+
+// returns true if sprite inPossibleAncestor is an ancestor of inChild
+char checkSpriteAncestor( ObjectRecord *inRecord, int inChildIndex,
+                          int inPossibleAncestorIndex );
+
 
 
 #endif

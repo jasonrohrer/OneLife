@@ -705,7 +705,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         
         if( obj->person && 
             ( i == obj->headIndex ||
-              obj->spriteAgesWithHead[i] ) ) {
+              checkSpriteAncestor( obj, i,
+                                   obj->headIndex ) ) ) {
             spritePos = add( spritePos, getAgeHeadOffset( inAge, headPos ) );
             }
 

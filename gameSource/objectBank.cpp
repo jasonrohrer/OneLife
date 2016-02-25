@@ -290,7 +290,6 @@ float initObjectBankStep() {
                     r->spriteAgeStart = new double[ r->numSprites ];
                     r->spriteAgeEnd = new double[ r->numSprites ];
 
-                    r->spriteAgesWithHead = new char[ r->numSprites ];
                     r->spriteParent = new int[ r->numSprites ];
 
                     r->numNonAgingSprites = 0;
@@ -344,15 +343,6 @@ float initObjectBankStep() {
                             r->numNonAgingSprites ++;
                             r->headIndex = i;
                             }
-
-                        int agesWithHeadRead = 0;
-                                
-                        sscanf( lines[next], "agesWithHead=%d", 
-                                &agesWithHeadRead );
-                                
-                        r->spriteAgesWithHead[i] = agesWithHeadRead;
-                                
-                        next++;
                         
 
                         sscanf( lines[next], "parent=%d", 
@@ -440,7 +430,6 @@ static void freeObjectRecord( int inID ) {
 
             delete [] idMap[inID]->spriteAgeStart;
             delete [] idMap[inID]->spriteAgeEnd;
-            delete [] idMap[inID]->spriteAgesWithHead;
             delete [] idMap[inID]->spriteParent;
             
             delete idMap[inID];
@@ -470,7 +459,6 @@ void freeObjectBank() {
 
             delete [] idMap[i]->spriteAgeStart;
             delete [] idMap[i]->spriteAgeEnd;
-            delete [] idMap[i]->spriteAgesWithHead;
             delete [] idMap[i]->spriteParent;
 
             delete idMap[i];
@@ -513,7 +501,6 @@ void resaveAll() {
                        idMap[i]->spriteColor,
                        idMap[i]->spriteAgeStart,
                        idMap[i]->spriteAgeEnd,
-                       idMap[i]->spriteAgesWithHead,
                        idMap[i]->spriteParent,
                        idMap[i]->id );
             }
@@ -619,7 +606,6 @@ int addObject( const char *inDescription,
                FloatRGB *inSpriteColor,
                double *inSpriteAgeStart,
                double *inSpriteAgeEnd,
-               char *inSpriteAgesWithHead,
                int *inSpriteParent,
                int inReplaceID ) {
     
@@ -729,9 +715,6 @@ int addObject( const char *inDescription,
                                           inSpriteAgeStart[i],
                                           inSpriteAgeEnd[i] ) );
 
-            lines.push_back( autoSprintf( "agesWithHead=%d", 
-                                          inSpriteAgesWithHead[i] ) );
-
             lines.push_back( autoSprintf( "parent=%d", 
                                           inSpriteParent[i] ) );
             }
@@ -837,7 +820,6 @@ int addObject( const char *inDescription,
 
     r->spriteAgeStart = new double[ inNumSprites ];
     r->spriteAgeEnd = new double[ inNumSprites ];
-    r->spriteAgesWithHead = new char[ inNumSprites ];
     
     r->spriteParent = new int[ inNumSprites ];
 
@@ -853,9 +835,6 @@ int addObject( const char *inDescription,
 
     memcpy( r->spriteAgeEnd, inSpriteAgeEnd, 
             inNumSprites * sizeof( double ) );
-
-    memcpy( r->spriteAgesWithHead, inSpriteAgesWithHead, 
-            inNumSprites * sizeof( char ) );
 
     memcpy( r->spriteParent, inSpriteParent, 
             inNumSprites * sizeof( int ) );
@@ -947,7 +926,8 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
         
         if( inObject->person && 
             ( i == inObject->headIndex ||
-              inObject->spriteAgesWithHead[i] ) ) {
+              checkSpriteAncestor( inObject, i,
+                                   inObject->headIndex ) ) ) {
             
             spritePos = add( spritePos, getAgeHeadOffset( inAge, headPos ) );
             }
@@ -1171,6 +1151,23 @@ ClothingSet getEmptyClothingSet() {
     return emptyClothing;
     }
 
+
+
+
+char checkSpriteAncestor( ObjectRecord *inObject, int inChildIndex,
+                          int inPossibleAncestorIndex ) {
+    
+    int nextParent = inChildIndex;
+    while( nextParent != -1 && nextParent != inPossibleAncestorIndex ) {
+                
+        nextParent = inObject->spriteParent[nextParent];
+        }
+
+    if( nextParent == inPossibleAncestorIndex ) {
+        return true;
+        }
+    return false;
+    }
 
 
 
