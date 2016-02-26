@@ -773,6 +773,8 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
     
     drawSquare( pos, 128 );
 
+    pos.y -= 64;
+
     if( mCurrentObjectID != -1 ) {
         
         ObjectRecord *obj = getObject( mCurrentObjectID );
