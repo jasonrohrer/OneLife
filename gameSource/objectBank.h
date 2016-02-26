@@ -255,4 +255,11 @@ char checkSpriteAncestor( ObjectRecord *inRecord, int inChildIndex,
 
 
 
+
+// get the maximum diameter of an object based on 
+// sprite position and dimensions
+int getMaxDiameter( ObjectRecord *inObject );
+
+
+
 #endif

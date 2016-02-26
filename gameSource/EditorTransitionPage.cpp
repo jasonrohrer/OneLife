@@ -576,6 +576,28 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
 
 
 
+static void drawTransObject( int inID, doublePair inPos ) {
+    if( inID > 0 ) {
+
+        inPos.y -= 40;
+
+        ObjectRecord *r = getObject( inID );
+        
+        int maxD = getMaxDiameter( r );
+        
+        double zoom = 1;
+        
+        if( maxD > 256 ) {
+            zoom = 256.0 / maxD;
+            }
+        
+        drawObject( getObject( inID ), inPos, 0, false, -1, 
+                    getEmptyClothingSet(), zoom );
+        }
+    }
+
+
+
    
 
      
@@ -596,10 +618,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         
         int id = getObjectByIndex( &mCurrentTransition, i );
         
-        if( id > 0 ) {
-            drawObject( getObject( id ), pos, 0, false, -1, 
-                        getEmptyClothingSet() );
-            }
+        drawTransObject( id, pos );
         }
 
     doublePair centerA = mult( add( mPickButtons[0]->getCenter(),
@@ -638,18 +657,14 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             drawSquare( pos, 50 );
 
             
-            if( actor > 0 ) {
-                drawObject( getObject( actor ), pos, 0, false, -1,
-                            getEmptyClothingSet() );
-                }
+            drawTransObject( actor, pos );
             
             pos.x += 150;
             
             drawSquare( pos, 50 );
 
             // target always non-blank
-            drawObject( getObject( target ), pos, 0, false, -1,
-                        getEmptyClothingSet() );
+            drawTransObject( target, pos );
             }
 
         
@@ -664,19 +679,13 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             
             drawSquare( pos, 50 );
             
-            if( newActor != 0 ) {
-                drawObject( getObject( newActor ), pos, 0, false, -1,
-                            getEmptyClothingSet() );
-                }
+            drawTransObject( newActor, pos );
             
             pos.x += 150;
             
             drawSquare( pos, 50 );
             
-            if( newTarget != 0 ) {
-                drawObject( getObject( newTarget ), pos, 0,false, -1,
-                            getEmptyClothingSet() );
-                }
+            drawTransObject( newTarget, pos );
             }
         }
     

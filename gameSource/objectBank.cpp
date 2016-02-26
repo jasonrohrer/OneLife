@@ -1263,3 +1263,32 @@ char checkSpriteAncestor( ObjectRecord *inObject, int inChildIndex,
 
 
 
+int getMaxDiameter( ObjectRecord *inObject ) {
+    int maxD = 0;
+    
+    for( int i=0; i<inObject->numSprites; i++ ) {
+        doublePair pos = inObject->spritePos[i];
+                
+        int rad = getSpriteRecord( inObject->sprites[i] )->maxD / 2;
+        
+        int xR = lrint( fabs( pos.x ) + rad );
+        int yR = lrint( fabs( pos.y ) + rad );
+        
+        int xD = 2 * xR;
+        int yD = 2 * yR;
+        
+        if( xD > maxD ) {
+            maxD = xD;
+            }
+        if( yD > maxD ) {
+            maxD = yD;
+            }
+        }
+
+    return maxD;
+    }
+
+
+
+
+

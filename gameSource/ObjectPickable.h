@@ -32,28 +32,8 @@ class ObjectPickable : public Pickable {
         virtual void draw( void *inObject, doublePair inPos ) {
             ObjectRecord *r = (ObjectRecord*)inObject;
 
-            int maxD = 0;
             
-            for( int i=0; i<r->numSprites; i++ ) {
-                doublePair pos = r->spritePos[i];
-                
-                int rad = getSpriteRecord( r->sprites[i] )->maxD / 2;
-                
-                int xR = lrint( fabs( pos.x ) + rad );
-                int yR = lrint( fabs( pos.y ) + rad );
-                
-                int xD = 2 * xR;
-                int yD = 2 * yR;
-
-                if( xD > maxD ) {
-                    maxD = xD;
-                    }
-                if( yD > maxD ) {
-                    maxD = yD;
-                    }
-                }
-            
-            double zoom = 64.0 / maxD;
+            double zoom = 64.0 / getMaxDiameter( r );
             
             drawObject( r, inPos, 0, false, -1, getEmptyClothingSet(), zoom );
             }
