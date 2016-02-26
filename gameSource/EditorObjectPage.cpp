@@ -1422,7 +1422,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
         double age = mPersonAgeSlider.getValue();
             
-        drawObject( getObject( mDemoPersonObject ), drawOffset, false, 
+        drawObject( getObject( mDemoPersonObject ), drawOffset, 0, false, 
                     age, getEmptyClothingSet() );
 
         drawOffset = add( mCurrentObject.heldOffset, drawOffset );
@@ -1456,7 +1456,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
                 
   
-        drawObject( getObject( mDemoPersonObject ), drawOffset, false, 
+        drawObject( getObject( mDemoPersonObject ), drawOffset, 0, false, 
                     age, s );
 
         // offset from body part
@@ -1527,7 +1527,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 
                 drawObject( demoObject, 
                             add( mCurrentObject.slotPos[i], drawOffset ),
-                            false, -1, getEmptyClothingSet() );
+                            0, false, -1, getEmptyClothingSet() );
                 }
             }
         

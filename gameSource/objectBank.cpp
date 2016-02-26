@@ -884,7 +884,8 @@ static char logicalXOR( char inA, char inB ) {
 
 
 void drawObject( ObjectRecord *inObject, doublePair inPos,
-                 char inFlipH, double inAge, ClothingSet inClothing,
+                 double inRot, char inFlipH, double inAge, 
+                 ClothingSet inClothing,
                  double inScale ) {
     
     // don't count aging layers here
@@ -937,12 +938,19 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             animHeadPos = spritePos;
             }
         
+        
         if( inFlipH ) {
-            spritePos.x *= -1;
+            spritePos.x *= -1;            
             }
 
-        spritePos = mult( spritePos, inScale );
 
+        if( inRot != 0 ) {    
+            spritePos = rotate( spritePos, -2 * M_PI * inRot );
+            }
+
+
+        spritePos = mult( spritePos, inScale );
+        
         doublePair pos = add( spritePos, inPos );
 
         char skipSprite = false;
@@ -961,7 +969,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
                 }
             cPos = add( cPos, inPos );
             
-            drawObject( inClothing.backShoe, cPos,
+            drawObject( inClothing.backShoe, cPos, inRot,
                         inFlipH, -1, emptyClothing );
             }
         else if( !agingLayer && bodyIndex == 1 && inClothing.tunic != NULL ) {
@@ -986,7 +994,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
                 cPos = add( cPos, inPos );
                 
             
-                drawObject( inClothing.tunic, cPos,
+                drawObject( inClothing.tunic, cPos, inRot,
                             inFlipH, -1, emptyClothing );
                 }
             
@@ -1000,7 +1008,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
                     }
                 cPos = add( cPos, inPos );
                 
-                drawObject( inClothing.frontShoe, cPos,
+                drawObject( inClothing.frontShoe, cPos, inRot,
                             inFlipH, -1, emptyClothing );
                 }
             }
@@ -1009,8 +1017,16 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
         if( ! skipSprite ) {
             setDrawColor( inObject->spriteColor[i] );
 
+            double rot = inObject->spriteRot[i];
+
+            if( inFlipH ) {
+                rot *= -1;
+                }
+            
+            rot += inRot;
+            
             drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
-                        inObject->spriteRot[i], 
+                        rot, 
                         logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
             
             }
@@ -1035,7 +1051,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             }
         cPos = add( cPos, inPos );
         
-        drawObject( inClothing.hat, cPos,
+        drawObject( inClothing.hat, cPos, inRot,
                     inFlipH, -1, emptyClothing );
         }
 
@@ -1043,7 +1059,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
 
 
 
-void drawObject( ObjectRecord *inObject, doublePair inPos,
+void drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                  char inFlipH, double inAge,
                  ClothingSet inClothing,
                  int inNumContained, int *inContainedIDs ) {
@@ -1057,16 +1073,22 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
     for( int i=0; i<inNumContained; i++ ) {
         doublePair slotPos = inObject->slotPos[i];
 
+        
+        if( inRot != 0 ) {    
+            slotPos = rotate( slotPos, -2 * M_PI * inRot );
+            }
+
         if( inFlipH ) {
             slotPos.x *= -1;
             }
 
+
         doublePair pos = add( slotPos, inPos );
-        drawObject( getObject( inContainedIDs[i] ), pos, inFlipH, inAge,
+        drawObject( getObject( inContainedIDs[i] ), pos, inRot, inFlipH, inAge,
                     emptyClothing );
         }
     
-    drawObject( inObject, inPos, inFlipH, inAge, inClothing );
+    drawObject( inObject, inPos, inRot, inFlipH, inAge, inClothing );
     }
 
 

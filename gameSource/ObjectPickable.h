@@ -55,7 +55,7 @@ class ObjectPickable : public Pickable {
             
             double zoom = 64.0 / maxD;
             
-            drawObject( r, inPos, false, -1, getEmptyClothingSet(), zoom );
+            drawObject( r, inPos, 0, false, -1, getEmptyClothingSet(), zoom );
             }
 
 

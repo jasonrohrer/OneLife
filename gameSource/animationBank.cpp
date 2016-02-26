@@ -595,7 +595,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
     
 
     if( r == NULL ) {
-        drawObject( getObject( inObjectID ), inPos, inFlipH, inAge, 
+        drawObject( getObject( inObjectID ), inPos, 0, inFlipH, inAge, 
                     inClothing );
         return;
         }
@@ -640,7 +640,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     
     if( obj->numSprites > MAX_WORKING_SPRITES ) {
         // cannot animate objects with this many sprites
-        drawObject( obj, inPos, inFlipH, inAge, inClothing );
+        drawObject( obj, inPos, 0, inFlipH, inAge, inClothing );
         }
     
 
@@ -653,7 +653,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     doublePair headPos = obj->spritePos[ obj->headIndex ];
     
     doublePair animHeadPos = headPos;
-
+    double animHeadRotDelta = 0;
 
     // when tunic should be drawn, behind shoe
     doublePair animBodyPos = { 0, 0 };
@@ -829,15 +829,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             rot += rock;
             }
         
-        if( i == obj->headIndex ) {
-            // this is the head
-            animHeadPos = spritePos;
-            }
 
-        if( inFlipH ) {
-            spritePos.x *= -1;
-            rot *= -1;
-            }
         
         workingSpritePos[i] = spritePos;
         workingRot[i] = rot;
@@ -911,7 +903,25 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             nextChild = nextParent;
             nextParent = obj->spriteParent[nextParent];
             }
+
+
+        if( i == obj->headIndex ) {
+            // this is the head
+            animHeadPos = spritePos;
+            animHeadRotDelta = rot - obj->spriteRot[i];
+            }
+
+
+        if( inFlipH ) {
+            spritePos.x *= -1;
+            rot *= -1;
+
+            animHeadPos.x *= -1;
+            animHeadRotDelta *= -1;
+            }
         
+        
+
         
         doublePair pos = add( spritePos, inPos );
 
@@ -919,19 +929,26 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         char skipSprite = false;
         
         
-        if( !agingLayer && ( ( bodyIndex == 0 && !inFlipH ) ||
-              ( bodyIndex == 2 && inFlipH ) ) 
+        if( !agingLayer && bodyIndex == 0 
             && inClothing.backShoe != NULL ) {
             
             skipSprite = true;
-            doublePair cPos = add( spritePos, 
-                                   inClothing.backShoe->clothingOffset );
+
+            doublePair offset = inClothing.backShoe->clothingOffset;
+
             if( inFlipH ) {
-                cPos.x *= -1;
+                offset.x *= -1;
                 }
+            
+            if( rot != 0 ) {
+                offset = rotate( offset, -2 * M_PI * rot );
+                }
+
+            doublePair cPos = add( spritePos, offset );
+
             cPos = add( cPos, inPos );
             
-            drawObject( inClothing.backShoe, cPos,
+            drawObject( inClothing.backShoe, cPos, rot,
                         inFlipH, -1, emptyClothing );
             }
         else if( !agingLayer && bodyIndex == 1 && inClothing.tunic != NULL ) {
@@ -942,40 +959,57 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             // wait to draw tunic until we're about to draw front shoe
             // (so it's drawn behind all aging layers on body)
             }
-        else if( !agingLayer && ( ( bodyIndex == 2 && !inFlipH ) ||
-                                  ( bodyIndex == 0 && inFlipH ) ) ) {
+        else if( !agingLayer && bodyIndex == 2 ) {
 
             if( inClothing.tunic != NULL ) {
                 
                 // first, draw tunic behind shoe
 
-                doublePair cPos = add( animBodyPos, 
-                                       inClothing.tunic->clothingOffset );
+                doublePair offset = inClothing.tunic->clothingOffset;
+                
                 if( inFlipH ) {
-                    cPos.x *= -1;
+                    offset.x *= -1;
                     }
+
+                if( rot != 0 ) {
+                    offset = rotate( offset, -2 * M_PI * rot );
+                    }
+                
+
+                doublePair cPos = add( animBodyPos, offset );
+
                 cPos = add( cPos, inPos );
                 
-                drawObject( inClothing.tunic, cPos,
+                drawObject( inClothing.tunic, cPos, rot,
                             inFlipH, -1, emptyClothing );
                 }
             
             if( inClothing.frontShoe != NULL ) {
 
                 skipSprite = true;
-                doublePair cPos = add( spritePos, 
-                                       inClothing.frontShoe->clothingOffset );
+
+                doublePair offset = inClothing.frontShoe->clothingOffset;
+                
                 if( inFlipH ) {
-                    cPos.x *= -1;
+                    offset.x *= -1;
                     }
+
+                if( rot != 0 ) {
+                    offset = rotate( offset, -2 * M_PI * rot );
+                    }
+                
+
+                doublePair cPos = add( spritePos, offset );
+
                 cPos = add( cPos, inPos );
                 
-                drawObject( inClothing.frontShoe, cPos,
+                drawObject( inClothing.frontShoe, cPos, rot,
                             inFlipH, -1, emptyClothing );
                 }
             }
         
 
+                
 
         if( !skipSprite ) {
             setDrawColor( obj->spriteColor[i] );
@@ -998,14 +1032,23 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             
         // relative to head
 
-        doublePair cPos = add( animHeadPos, 
-                               inClothing.hat->clothingOffset );
+        doublePair offset = inClothing.hat->clothingOffset;
+
+        
         if( inFlipH ) {
-            cPos.x *= -1;
+            offset.x *= -1;
+            }                
+        
+        if( animHeadRotDelta != 0 ) {
+            offset = rotate( offset, -2 * M_PI * animHeadRotDelta );
             }
+        
+        
+        doublePair cPos = add( animHeadPos, offset );
+
         cPos = add( cPos, inPos );
         
-        drawObject( inClothing.hat, cPos,
+        drawObject( inClothing.hat, cPos, animHeadRotDelta,
                     inFlipH, -1, emptyClothing );
         }
     }
@@ -1025,7 +1068,8 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
     AnimationRecord *r = getAnimation( inObjectID, inType );
  
     if( r == NULL ) {
-        drawObject( getObject( inObjectID ), inPos, inFlipH, inAge, inClothing,
+        drawObject( getObject( inObjectID ), inPos, 0, 
+                    inFlipH, inAge, inClothing,
                     inNumContained, inContainedIDs );
         }
     else {
@@ -1135,7 +1179,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 }
   
             pos = add( pos, inPos );
-            drawObject( getObject( inContainedIDs[i] ), pos, inFlipH,
+            drawObject( getObject( inContainedIDs[i] ), pos, 0, inFlipH,
                         inAge, emptyClothing );
             }
         

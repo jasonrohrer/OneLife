@@ -831,11 +831,11 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
             }
         else {
             if( demoSlots != NULL ) {
-                drawObject( obj, pos, mFlipDraw, age, mClothingSet,
+                drawObject( obj, pos, 0, mFlipDraw, age, mClothingSet,
                             obj->numSlots, demoSlots );
                 }
             else {
-                drawObject( obj, pos, mFlipDraw, age, mClothingSet );
+                drawObject( obj, pos, 0, mFlipDraw, age, mClothingSet );
                 }
             }
         

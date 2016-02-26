@@ -200,12 +200,13 @@ int addObject( const char *inDescription,
 // note that inScale, which is only used by the object picker, to draw objects
 // so that they fit in the picker, is not applied to clothing
 void drawObject( ObjectRecord *inObject, doublePair inPos, 
-                 char inFlipH, double inAge, ClothingSet inClothing,
+                 double inRot, char inFlipH, double inAge, 
+                 ClothingSet inClothing,
                  double inScale = 1.0 );
 
 
 void drawObject( ObjectRecord *inObject, doublePair inPos,
-                 char inFlipH,
+                 double inRot, char inFlipH,
                  double inAge,
                  ClothingSet inClothing,
                  int inNumContained, int *inContainedIDs );
