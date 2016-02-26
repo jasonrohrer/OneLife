@@ -651,7 +651,12 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     int bodyIndex = 0;
 
     doublePair headPos = obj->spritePos[ obj->headIndex ];
+
+    doublePair frontFootPos = obj->spritePos[ obj->frontFootIndex ];
+
+    doublePair bodyPos = obj->spritePos[ obj->bodyIndex ];
     
+
     doublePair animHeadPos = headPos;
     double animHeadRotDelta = 0;
 
@@ -712,7 +717,16 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             ( i == obj->headIndex ||
               checkSpriteAncestor( obj, i,
                                    obj->headIndex ) ) ) {
-            spritePos = add( spritePos, getAgeHeadOffset( inAge, headPos ) );
+            spritePos = add( spritePos, getAgeHeadOffset( inAge, headPos,
+                                                          frontFootPos ) );
+            }
+        else if( obj->person && 
+                 ( i == obj->bodyIndex ||
+                   ( checkSpriteAncestor( obj, i,
+                                          obj->bodyIndex ) &&
+                     !checkSpriteAncestor( obj, i,
+                                           obj->headIndex ) ) ) ) {
+            spritePos = add( spritePos, getAgeBodyOffset( inAge, bodyPos ) );
             }
 
         double rot = obj->spriteRot[i];

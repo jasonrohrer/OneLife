@@ -948,7 +948,11 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
 
     
     doublePair headPos = inObject->spritePos[ inObject->headIndex ];
-    
+
+    doublePair frontFootPos = inObject->spritePos[ inObject->frontFootIndex ];
+
+    doublePair bodyPos = inObject->spritePos[ inObject->bodyIndex ];
+
     doublePair animHeadPos = headPos;
     
 
@@ -982,7 +986,15 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
               checkSpriteAncestor( inObject, i,
                                    inObject->headIndex ) ) ) {
             
-            spritePos = add( spritePos, getAgeHeadOffset( inAge, headPos ) );
+            spritePos = add( spritePos, getAgeHeadOffset( inAge, headPos,
+                                                          frontFootPos ) );
+            }
+        if( inObject->person && 
+            ( i == inObject->headIndex ||
+              checkSpriteAncestor( inObject, i,
+                                   inObject->bodyIndex ) ) ) {
+            
+            spritePos = add( spritePos, getAgeBodyOffset( inAge, bodyPos ) );
             }
 
         if( i == inObject->headIndex ) {

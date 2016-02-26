@@ -81,11 +81,11 @@ EditorObjectPage::EditorObjectPage()
           mMoreSlotsButton( smallFont, -160, -110, "More" ),
           mLessSlotsButton( smallFont, -160, -190, "Less" ),
 
-          mAgingLayerCheckbox( 190, 0, 2 ),
-          mHeadLayerCheckbox( 190, 124, 2 ),
-          mBodyLayerCheckbox( 190, 104, 2 ),
-          mBackFootLayerCheckbox( 190, 84, 2 ),
-          mFrontFootLayerCheckbox( 190, 64, 2 ),
+          mAgingLayerCheckbox( 190, -22, 2 ),
+          mHeadLayerCheckbox( 190, 104, 2 ),
+          mBodyLayerCheckbox( 190, 84, 2 ),
+          mBackFootLayerCheckbox( 190, 64, 2 ),
+          mFrontFootLayerCheckbox( 190, 44, 2 ),
           mAgeInField( smallFont, 
                        160,  -52, 6,
                        false,
@@ -1678,6 +1678,21 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         headPos = mCurrentObject.spritePos[ mCurrentObject.headIndex ];
         }
 
+
+    doublePair frontFootPos = {0,0};
+
+    if( mCurrentObject.frontFootIndex <= mCurrentObject.numSprites ) {
+        frontFootPos = 
+            mCurrentObject.spritePos[ mCurrentObject.frontFootIndex ];
+        }
+
+
+    doublePair bodyPos = {0,0};
+
+    if( mCurrentObject.bodyIndex <= mCurrentObject.numSprites ) {
+        bodyPos = mCurrentObject.spritePos[ mCurrentObject.bodyIndex ];
+        }
+
     if( !skipDrawing )
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
         doublePair spritePos = mCurrentObject.spritePos[i];
@@ -1725,7 +1740,14 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 checkSpriteAncestor( &mCurrentObject, i,
                                      mCurrentObject.headIndex ) ) {
             
-                spritePos = add( spritePos, getAgeHeadOffset( age, headPos ) );
+                spritePos = add( spritePos, getAgeHeadOffset( age, headPos,
+                                                              frontFootPos ) );
+                }
+            if( i == mCurrentObject.bodyIndex ||
+                checkSpriteAncestor( &mCurrentObject, i,
+                                     mCurrentObject.bodyIndex ) ) {
+            
+                spritePos = add( spritePos, getAgeBodyOffset( age, bodyPos ) );
                 }
             }
                 
@@ -1995,6 +2017,22 @@ double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
         }
 
     
+    doublePair frontFootPos = {0,0};
+
+    if( mCurrentObject.frontFootIndex <= mCurrentObject.numSprites ) {
+        frontFootPos = 
+            mCurrentObject.spritePos[ mCurrentObject.frontFootIndex ];
+        }
+
+
+    doublePair bodyPos = {0,0};
+
+    if( mCurrentObject.bodyIndex <= mCurrentObject.numSprites ) {
+        bodyPos = mCurrentObject.spritePos[ mCurrentObject.bodyIndex ];
+        }
+
+
+    
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
 
         doublePair thisSpritePos = mCurrentObject.spritePos[i];
@@ -2018,13 +2056,21 @@ double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
                 }
 
             if( i == mCurrentObject.headIndex ||
-
                 checkSpriteAncestor( &mCurrentObject, i,
                                      mCurrentObject.headIndex ) ) {
             
                 thisSpritePos = add( thisSpritePos, 
-                                     getAgeHeadOffset( age, headPos ) );
+                                     getAgeHeadOffset( age, headPos,
+                                                       frontFootPos ) );
                 }
+            if( i == mCurrentObject.bodyIndex ||
+                checkSpriteAncestor( &mCurrentObject, i,
+                                     mCurrentObject.bodyIndex ) ) {
+            
+                thisSpritePos = add( thisSpritePos, 
+                                     getAgeBodyOffset( age, bodyPos ) );
+                }
+
             
             }
         
