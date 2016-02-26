@@ -2189,7 +2189,7 @@ void EditorObjectPage::pointerMove( float inX, float inY ) {
         double oldRot = mCurrentObject.spriteRot[ mPickedObjectLayer ];
         
         mCurrentObject.spriteRot[ mPickedObjectLayer ] =
-            ( inX - mRotStartMouseX ) / 200;
+            ( inX - mRotStartMouseX ) / 200 + mLayerOldRot;
 
         recursiveRotate( &mCurrentObject,
                          mPickedObjectLayer,
@@ -2397,6 +2397,7 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
     
     if( mPickedObjectLayer != -1 && inASCII == 'r' ) {
         mRotAdjustMode = true;
+        mLayerOldRot = mCurrentObject.spriteRot[ mPickedObjectLayer ];
         }
     if( mPickedObjectLayer != -1 && inASCII == 'c' ) {
         mColorClipboard = mCurrentObject.spriteColor[ mPickedObjectLayer ];

@@ -204,6 +204,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         char mRotAdjustMode;
         float mRotStartMouseX;
         
+        double mLayerOldRot;
+
 
         KeyLegend mKeyLegend;
         KeyLegend mKeyLegendB;
