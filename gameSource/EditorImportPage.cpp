@@ -49,7 +49,7 @@ EditorImportPage::EditorImportPage()
           mOverlayPicker( &overlayPickable, 310, 100 ),
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
-          mCenterSet( false ),
+          mCenterSet( true ),
           mCurrentOverlay( NULL ),
           mClearRotButton( smallFont, -300, -280, "0 Rot" ),
           mClearScaleButton( smallFont, -300, -240, "1 Scale" ),
@@ -57,6 +57,9 @@ EditorImportPage::EditorImportPage()
           mClearOverlayButton( smallFont, -230, -240, "X Ovly" ),
           mShowTagMessage( false ) {
 
+
+    mCenterPoint.x = 0;
+    mCenterPoint.y = 0;
 
     addComponent( &mShadowSlider );
     mShadowSlider.setValue( 1.0 );
@@ -640,15 +643,9 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
     
     if( mSettingSpriteCenter ) {
     
-        if( !mCenterSet ) {
-            mCenterPoint.x = inX;
-            mCenterPoint.y = inY;
-            
-            mCenterSet = true;
-            }
-        else {
-            mCenterSet = false;
-            }
+        mCenterPoint.x = inX;
+        mCenterPoint.y = inY;
+        
         return;
         }
     
@@ -682,10 +679,8 @@ void EditorImportPage::pointerDrag( float inX, float inY ) {
     
 
     if( mSettingSpriteCenter ) {
-        if( mCenterSet ) {
-            mCenterPoint.x = inX;
-            mCenterPoint.y = inY;
-            }
+        mCenterPoint.x = inX;
+        mCenterPoint.y = inY;
         return;
         }
 
