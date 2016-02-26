@@ -226,6 +226,17 @@ EditorAnimationPage::~EditorAnimationPage() {
 
 
 
+void EditorAnimationPage::clearClothing() {
+    mClothingSet.hat = NULL;
+    mClothingSet.frontShoe = NULL;
+    mClothingSet.backShoe = NULL;
+    mClothingSet.tunic = NULL;
+    mClearClothingButton.setVisible( false );
+    }
+
+
+
+
 void EditorAnimationPage::freeCurrentAnim() {
     
     for( int i=0; i<endAnimType; i++ ) {
@@ -611,11 +622,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             
                 mCurrentSpriteOrSlot = 0;
                 
-                mClothingSet.hat = NULL;
-                mClothingSet.frontShoe = NULL;
-                mClothingSet.backShoe = NULL;
-                mClothingSet.tunic = NULL;
-
+                clearClothing();
+                
                 checkNextPrevVisible();
                 
                 populateCurrentAnim();
@@ -654,10 +662,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mPickClothingButton.setVisible( true );
         mClearClothingButton.setVisible( false );
         
-        mClothingSet.hat = NULL;
-        mClothingSet.frontShoe = NULL;
-        mClothingSet.backShoe = NULL;
-        mClothingSet.tunic = NULL;
+        clearClothing();
         }
     else if( inTarget == &mNextSpriteOrSlotButton ) {
         mCurrentSpriteOrSlot ++;

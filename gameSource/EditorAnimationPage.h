@@ -34,6 +34,8 @@ class EditorAnimationPage : public GamePage, public ActionListener {
     public:
         EditorAnimationPage();
         ~EditorAnimationPage();        
+
+        void clearClothing();
         
         virtual void actionPerformed( GUIComponent *inTarget );
         

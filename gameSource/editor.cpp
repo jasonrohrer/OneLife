@@ -1004,6 +1004,7 @@ void drawFrame( char inUpdate ) {
                 }
             else if( objectPage->checkSignal( "animEditor" ) ) {
                 currentGamePage = animPage;
+                animPage->clearClothing();
                 currentGamePage->base_makeActive( true );
                 }
             }
