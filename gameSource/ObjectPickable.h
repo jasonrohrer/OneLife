@@ -33,7 +33,13 @@ class ObjectPickable : public Pickable {
             ObjectRecord *r = (ObjectRecord*)inObject;
 
             
-            double zoom = 64.0 / getMaxDiameter( r );
+            int maxD = getMaxDiameter( r );
+            
+            double zoom = 1;
+
+            if( maxD > 64 ) {    
+                zoom = 64.0 / maxD;
+                }
             
             drawObject( r, inPos, 0, false, -1, getEmptyClothingSet(), zoom );
             }
