@@ -293,7 +293,6 @@ float initObjectBankStep() {
                     r->spriteParent = new int[ r->numSprites ];
 
                     r->numNonAgingSprites = 0;
-                    r->headIndex = 0;
                     
                     for( int i=0; i< r->numSprites; i++ ) {
                         sscanf( lines[next], "spriteID=%d", 
@@ -341,7 +340,6 @@ float initObjectBankStep() {
                             r->spriteAgeEnd[i] == -1 ) {
                             
                             r->numNonAgingSprites ++;
-                            r->headIndex = i;
                             }
                         
 
@@ -350,6 +348,36 @@ float initObjectBankStep() {
                         
                         next++;
                         }
+
+
+                    r->headIndex = 0;
+                    sscanf( lines[next], "headIndex=%d", 
+                            &( r->headIndex ) );
+                      
+                    next++;
+                      
+                    
+                    r->bodyIndex = 0;
+                    sscanf( lines[next], "bodyIndex=%d", 
+                            &( r->bodyIndex ) );
+                      
+                    next++;
+
+                    
+                    r->backFootIndex = 0;
+                    sscanf( lines[next], "backFootIndex=%d", 
+                            &( r->backFootIndex ) );
+                      
+                    next++;
+                    
+
+                    r->frontFootIndex = 0;
+                    sscanf( lines[next], "frontFootIndex=%d", 
+                            &( r->frontFootIndex ) );
+                      
+                    next++;
+
+
                     records.push_back( r );
 
                             
@@ -502,6 +530,10 @@ void resaveAll() {
                        idMap[i]->spriteAgeStart,
                        idMap[i]->spriteAgeEnd,
                        idMap[i]->spriteParent,
+                       idMap[i]->headIndex,
+                       idMap[i]->bodyIndex,
+                       idMap[i]->backFootIndex,
+                       idMap[i]->frontFootIndex,
                        idMap[i]->id );
             }
         }
@@ -607,6 +639,10 @@ int addObject( const char *inDescription,
                double *inSpriteAgeStart,
                double *inSpriteAgeEnd,
                int *inSpriteParent,
+               int inHeadIndex,
+               int inBodyIndex,
+               int inBackFootIndex,
+               int inFrontFootIndex,
                int inReplaceID ) {
     
 
@@ -719,6 +755,20 @@ int addObject( const char *inDescription,
                                           inSpriteParent[i] ) );
             }
         
+
+        lines.push_back( autoSprintf( "headIndex=%d", 
+                                      inHeadIndex ) );
+
+        lines.push_back( autoSprintf( "bodyIndex=%d", 
+                                      inBodyIndex ) );
+
+        lines.push_back( autoSprintf( "backFootIndex=%d", 
+                                      inBackFootIndex ) );
+
+        lines.push_back( autoSprintf( "frontFootIndex=%d", 
+                                      inFrontFootIndex ) );
+        
+
         char **linesArray = lines.getElementArray();
         
         
@@ -840,7 +890,11 @@ int addObject( const char *inDescription,
             inNumSprites * sizeof( int ) );
     
     r->numNonAgingSprites = 0;
-    r->headIndex = 0;
+
+    r->headIndex = inHeadIndex;
+    r->bodyIndex = inBodyIndex;
+    r->backFootIndex = inBackFootIndex;
+    r->frontFootIndex = inFrontFootIndex;
     
     for( int i=0; i<inNumSprites; i++ ) {
 
@@ -848,7 +902,6 @@ int addObject( const char *inDescription,
             r->spriteAgeEnd[i] == -1 ) {
             
             r->numNonAgingSprites ++;
-            r->headIndex = i;
             }
         }
     
@@ -897,11 +950,10 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
     doublePair headPos = inObject->spritePos[ inObject->headIndex ];
     
     doublePair animHeadPos = headPos;
-
-    // when tunic should be drawn, behind shoe
-    doublePair animBodyPos = { 0, 0 };
     
 
+    char nonAgingDrawnAboveBody = false;
+    
     for( int i=0; i<inObject->numSprites; i++ ) {
         
         char agingLayer = false;
@@ -957,8 +1009,8 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
         
         
         
-        if( !agingLayer && ( ( bodyIndex == 0 && !inFlipH ) ||
-                             ( bodyIndex == 2 && inFlipH ) ) 
+        if( !agingLayer 
+            && i == inObject->backFootIndex 
             && inClothing.backShoe != NULL ) {
             
             skipSprite = true;
@@ -972,45 +1024,50 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             drawObject( inClothing.backShoe, cPos, inRot,
                         inFlipH, -1, emptyClothing );
             }
-        else if( !agingLayer && bodyIndex == 1 && inClothing.tunic != NULL ) {
+        
+        if( !agingLayer 
+                 && i == inObject->bodyIndex 
+                 && inClothing.tunic != NULL ) {
             skipSprite = true;
+
+
+            doublePair cPos = add( spritePos, 
+                                   inClothing.tunic->clothingOffset );
+            if( inFlipH ) {
+                cPos.x *= -1;
+                }
+            cPos = add( cPos, inPos );
             
-            animBodyPos = spritePos;
-            // wait to draw tunic until we're about to draw front shoe
-            // (so it's drawn behind all aging layers on body)
+            
+            drawObject( inClothing.tunic, cPos, inRot,
+                        inFlipH, -1, emptyClothing );
+            
+            // now skip aging layers drawn above body
+            nonAgingDrawnAboveBody = false;
             }
-        else if( !agingLayer && ( ( bodyIndex == 2 && !inFlipH ) ||
-                                  ( bodyIndex == 0 && inFlipH ) ) ) {
+        else if( inClothing.tunic != NULL && ! nonAgingDrawnAboveBody &&
+                 agingLayer ) {
+            // skip it, it's under tunic
+            skipSprite = true;
+            }
+        else if( inClothing.tunic != NULL && ! nonAgingDrawnAboveBody &&
+                 !agingLayer ) {
+            nonAgingDrawnAboveBody = true;
+            }
 
-            if( inClothing.tunic != NULL ) {
-                
-                // first, draw tunic behind shoe
-            
-                doublePair cPos = add( animBodyPos, 
-                                       inClothing.tunic->clothingOffset );
-                if( inFlipH ) {
-                    cPos.x *= -1;
-                    }
-                cPos = add( cPos, inPos );
-                
-            
-                drawObject( inClothing.tunic, cPos, inRot,
-                            inFlipH, -1, emptyClothing );
-                }
-            
-            if( inClothing.frontShoe != NULL ) {
+        if( !agingLayer && i == inObject->frontFootIndex 
+            && inClothing.frontShoe != NULL ) {
 
-                skipSprite = true;
-                doublePair cPos = add( spritePos, 
-                                       inClothing.frontShoe->clothingOffset );
-                if( inFlipH ) {
-                    cPos.x *= -1;
-                    }
-                cPos = add( cPos, inPos );
-                
-                drawObject( inClothing.frontShoe, cPos, inRot,
-                            inFlipH, -1, emptyClothing );
+            skipSprite = true;
+            doublePair cPos = add( spritePos, 
+                                   inClothing.frontShoe->clothingOffset );
+            if( inFlipH ) {
+                cPos.x *= -1;
                 }
+            cPos = add( cPos, inPos );
+            
+            drawObject( inClothing.frontShoe, cPos, inRot,
+                        inFlipH, -1, emptyClothing );
             }
         
         

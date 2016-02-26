@@ -99,6 +99,11 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
 
         CheckboxButton mAgingLayerCheckbox;
+
+        CheckboxButton mHeadLayerCheckbox;
+        CheckboxButton mBodyLayerCheckbox;
+        CheckboxButton mBackFootLayerCheckbox;
+        CheckboxButton mFrontFootLayerCheckbox;
         
         TextField mAgeInField;
         TextField mAgeOutField;

@@ -108,8 +108,14 @@ typedef struct ObjectRecord {
 
         // count of sprites that span entire life
         int numNonAgingSprites;
-        // index of top non aging sprite
+
+        // index of special body parts (aging, attaching clothing)
+        // these should be non-aging layers
         int headIndex;
+        int bodyIndex;
+        int backFootIndex;
+        int frontFootIndex;
+        
         
     } ObjectRecord;
 
@@ -190,6 +196,10 @@ int addObject( const char *inDescription,
                double *inSpriteAgeStart,
                double *inSpriteAgeEnd,
                int *inSpriteParent,
+               int inHeadIndex,
+               int inBodyIndex,
+               int inBackFootIndex,
+               int inFrontFootIndex,
                int inReplaceID = -1 );
 
 

@@ -82,6 +82,10 @@ EditorObjectPage::EditorObjectPage()
           mLessSlotsButton( smallFont, -160, -190, "Less" ),
 
           mAgingLayerCheckbox( 190, 0, 2 ),
+          mHeadLayerCheckbox( 190, 124, 2 ),
+          mBodyLayerCheckbox( 190, 104, 2 ),
+          mBackFootLayerCheckbox( 190, 84, 2 ),
+          mFrontFootLayerCheckbox( 190, 64, 2 ),
           mAgeInField( smallFont, 
                        160,  -52, 6,
                        false,
@@ -195,6 +199,10 @@ EditorObjectPage::EditorObjectPage()
     
 
     addComponent( &mAgingLayerCheckbox );
+    addComponent( &mHeadLayerCheckbox );
+    addComponent( &mBodyLayerCheckbox );
+    addComponent( &mBackFootLayerCheckbox );
+    addComponent( &mFrontFootLayerCheckbox );
     
     addComponent( &mAgeInField );
     addComponent( &mAgeOutField );
@@ -205,12 +213,22 @@ EditorObjectPage::EditorObjectPage()
     mAgingLayerCheckbox.addActionListener( this );
     mAgePunchInButton.addActionListener( this );
     mAgePunchOutButton.addActionListener( this );
+
+    mHeadLayerCheckbox.addActionListener( this );
+    mBodyLayerCheckbox.addActionListener( this );
+    mBackFootLayerCheckbox.addActionListener( this );
+    mFrontFootLayerCheckbox.addActionListener( this );
     
     mAgingLayerCheckbox.setVisible( false );
     mAgeInField.setVisible( false );
     mAgeOutField.setVisible( false );
     mAgePunchInButton.setVisible( false );
     mAgePunchOutButton.setVisible( false );
+
+    mHeadLayerCheckbox.setVisible( false );
+    mBodyLayerCheckbox.setVisible( false );
+    mBackFootLayerCheckbox.setVisible( false );
+    mFrontFootLayerCheckbox.setVisible( false );
     
 
     mPersonAgeSlider.setVisible( false );
@@ -287,6 +305,13 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.spriteAgeStart = new double[ 0 ];
     mCurrentObject.spriteAgeEnd = new double[ 0 ];
     mCurrentObject.spriteParent = new int[ 0 ];
+
+
+    mCurrentObject.headIndex = 0;
+    mCurrentObject.bodyIndex = 0;
+    mCurrentObject.backFootIndex = 0;
+    mCurrentObject.frontFootIndex = 0;
+    
 
     mCurrentObject.numNonAgingSprites = 0;
     mCurrentObject.headIndex = 0;
@@ -456,7 +481,6 @@ void EditorObjectPage::recomputeNumNonAgingSprites() {
             mCurrentObject.spriteAgeEnd[i] == -1 ) {
             
             mCurrentObject.numNonAgingSprites ++;
-            mCurrentObject.headIndex = i;
             }
         }
     }
@@ -472,10 +496,22 @@ void EditorObjectPage::updateAgingPanel() {
         agingPanelVisible = false;
         mAgingLayerCheckbox.setVisible( false );
             
+        mHeadLayerCheckbox.setVisible( false );
+        mBodyLayerCheckbox.setVisible( false );
+        mBackFootLayerCheckbox.setVisible( false );
+        mFrontFootLayerCheckbox.setVisible( false );
+
         for( int i=0; i<mCurrentObject.numSprites; i++ ) {
             mCurrentObject.spriteAgeStart[i] = -1;
             mCurrentObject.spriteAgeEnd[i] = -1;
             }
+        
+        mCurrentObject.headIndex = 0;
+        mCurrentObject.bodyIndex = 0;
+        mCurrentObject.backFootIndex = 0;
+        mCurrentObject.frontFootIndex = 0;
+
+
         mMaleCheckbox.setToggled( false );
         mMaleCheckbox.setVisible( false );
         
@@ -489,7 +525,13 @@ void EditorObjectPage::updateAgingPanel() {
         
         if( mPickedObjectLayer != -1 ) {
             mAgingLayerCheckbox.setVisible( true );
-        
+            
+            mHeadLayerCheckbox.setVisible( true );
+            mBodyLayerCheckbox.setVisible( true );
+            mBackFootLayerCheckbox.setVisible( true );
+            mFrontFootLayerCheckbox.setVisible( true );
+
+
             if( mCurrentObject.spriteAgeStart[mPickedObjectLayer] != -1 &&
                 mCurrentObject.spriteAgeEnd[mPickedObjectLayer] != -1 ) {
                 
@@ -505,11 +547,45 @@ void EditorObjectPage::updateAgingPanel() {
                 mAgingLayerCheckbox.setToggled( false );
                 agingPanelVisible = false;
                 }
+
+            if( mCurrentObject.headIndex == mPickedObjectLayer ) {
+                mHeadLayerCheckbox.setToggled( true );
+                }
+            else {
+                mHeadLayerCheckbox.setToggled( false );
+                }
+
+            if( mCurrentObject.bodyIndex == mPickedObjectLayer ) {
+                mBodyLayerCheckbox.setToggled( true );
+                }
+            else {
+                mBodyLayerCheckbox.setToggled( false );
+                }
+
+            if( mCurrentObject.backFootIndex == mPickedObjectLayer ) {
+                mBackFootLayerCheckbox.setToggled( true );
+                }
+            else {
+                mBackFootLayerCheckbox.setToggled( false );
+                }
+
+            if( mCurrentObject.frontFootIndex == mPickedObjectLayer ) {
+                mFrontFootLayerCheckbox.setToggled( true );
+                }
+            else {
+                mFrontFootLayerCheckbox.setToggled( false );
+                }
+            
             }
         else {
             mAgingLayerCheckbox.setVisible( false );
                 
             agingPanelVisible = false;
+
+            mHeadLayerCheckbox.setVisible( false );
+            mBodyLayerCheckbox.setVisible( false );
+            mBackFootLayerCheckbox.setVisible( false );
+            mFrontFootLayerCheckbox.setVisible( false );
             }
         
         }
@@ -568,7 +644,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteColor,
                    mCurrentObject.spriteAgeStart,
                    mCurrentObject.spriteAgeEnd,
-                   mCurrentObject.spriteParent );
+                   mCurrentObject.spriteParent,
+                   mCurrentObject.headIndex,
+                   mCurrentObject.bodyIndex,
+                   mCurrentObject.backFootIndex,
+                   mCurrentObject.frontFootIndex );
         
         delete [] text;
         
@@ -607,6 +687,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteAgeStart,
                    mCurrentObject.spriteAgeEnd,
                    mCurrentObject.spriteParent,
+                   mCurrentObject.headIndex,
+                   mCurrentObject.bodyIndex,
+                   mCurrentObject.backFootIndex,
+                   mCurrentObject.frontFootIndex,
                    mCurrentObject.id );
         
         delete [] text;
@@ -685,6 +769,13 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         delete [] mCurrentObject.spriteParent;
         mCurrentObject.spriteParent = new int[ 0 ];
 
+
+        mCurrentObject.headIndex = 0;
+        mCurrentObject.bodyIndex = 0;
+        mCurrentObject.backFootIndex = 0;
+        mCurrentObject.frontFootIndex = 0;
+
+        
 
         recomputeNumNonAgingSprites();
         
@@ -902,6 +993,38 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             recomputeNumNonAgingSprites();
             }
         updateAgingPanel();
+        }
+    else if( inTarget == &mHeadLayerCheckbox ) {
+        if( mHeadLayerCheckbox.getToggled() ) {
+            mCurrentObject.headIndex = mPickedObjectLayer;
+            }
+        else {
+            mCurrentObject.headIndex = 0;
+            }
+        }
+    else if( inTarget == &mBodyLayerCheckbox ) {
+        if( mBodyLayerCheckbox.getToggled() ) {
+            mCurrentObject.bodyIndex = mPickedObjectLayer;
+            }
+        else {
+            mCurrentObject.bodyIndex = 0;
+            }
+        }
+    else if( inTarget == &mBackFootLayerCheckbox ) {
+        if( mBackFootLayerCheckbox.getToggled() ) {
+            mCurrentObject.backFootIndex = mPickedObjectLayer;
+            }
+        else {
+            mCurrentObject.backFootIndex = 0;
+            }
+        }
+    else if( inTarget == &mFrontFootLayerCheckbox ) {
+        if( mFrontFootLayerCheckbox.getToggled() ) {
+            mCurrentObject.frontFootIndex = mPickedObjectLayer;
+            }
+        else {
+            mCurrentObject.frontFootIndex = 0;
+            }
         }
     else if( inTarget == &mAgePunchInButton ) {
         mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] =
@@ -1180,6 +1303,13 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                     pickedRecord->spriteParent,
                     sizeof( int ) * pickedRecord->numSprites );
             
+
+            mCurrentObject.headIndex = pickedRecord->headIndex;
+            mCurrentObject.bodyIndex = pickedRecord->bodyIndex;
+            mCurrentObject.backFootIndex = pickedRecord->backFootIndex;
+            mCurrentObject.frontFootIndex = pickedRecord->frontFootIndex;
+
+
             recomputeNumNonAgingSprites();
             
             mSaveObjectButton.setVisible( true );
@@ -1677,6 +1807,32 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         smallFont->drawString( "Death", pos, alignCenter );
         }
     
+
+
+    if( mHeadLayerCheckbox.isVisible() ) {
+        pos = mHeadLayerCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Head", pos, alignRight );
+        }
+
+    if( mBodyLayerCheckbox.isVisible() ) {
+        pos = mBodyLayerCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Body", pos, alignRight );
+        }
+
+    if( mBackFootLayerCheckbox.isVisible() ) {
+        pos = mBackFootLayerCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Back Foot", pos, alignRight );
+        }
+
+    if( mFrontFootLayerCheckbox.isVisible() ) {
+        pos = mFrontFootLayerCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Front Foot", pos, alignRight );
+        }
+
 
 
     doublePair legendPos = mImportEditorButton.getPosition();
