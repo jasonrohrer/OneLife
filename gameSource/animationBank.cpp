@@ -886,7 +886,6 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         
 
         int nextParent = obj->spriteParent[i];
-        int nextChild = i;
         
         while( nextParent != -1 ) {
             
@@ -918,8 +917,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                                  workingDeltaSpritePos[ nextParent ] );
                 }
                     
-            nextChild = nextParent;
-            nextParent = obj->spriteParent[nextParent];
+	    nextParent = obj->spriteParent[nextParent];
             }
 
 
