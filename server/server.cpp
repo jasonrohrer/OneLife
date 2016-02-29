@@ -3179,3 +3179,9 @@ void setDrawColor( float inR, float inG, float inB, float inA ) {
 
 
 
+
+#include "../gameSource/spriteBank.h"
+SpriteRecord *getSpriteRecord( int inSpriteID ) {
+    return NULL;
+    }
+
