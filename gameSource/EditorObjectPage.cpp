@@ -597,6 +597,39 @@ void EditorObjectPage::updateAgingPanel() {
     }
 
 
+
+
+static void recursiveRotate( ObjectRecord *inObject,
+                             int inRotatingParentIndex,
+                             doublePair inRotationCenter,
+                             double inRotationDelta ) {
+
+    // adjust children recursively
+    for( int i=0; i<inObject->numSprites; i++ ) {
+        if( inObject->spriteParent[i] == inRotatingParentIndex ) {
+            
+            inObject->spriteRot[i] += inRotationDelta;
+            
+            inObject->spritePos[i] = sub( inObject->spritePos[i],
+                                          inRotationCenter );
+            
+            inObject->spritePos[i] = rotate( inObject->spritePos[i],
+                                             -2 * M_PI * inRotationDelta );
+            
+            inObject->spritePos[i] = add( inObject->spritePos[i],
+                                          inRotationCenter );
+
+            recursiveRotate( inObject, i, 
+                             inRotationCenter, inRotationDelta );
+            }
+        }
+    
+    }
+
+
+
+
+
 void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
     
     if( inTarget == &mDescriptionField ) {
@@ -809,7 +842,16 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mClearRotButton ) {
         if( mPickedObjectLayer != -1 ) {
+            
+            double oldRot = mCurrentObject.spriteRot[ mPickedObjectLayer ];
+            
             mCurrentObject.spriteRot[mPickedObjectLayer] = 0;
+
+            recursiveRotate( &mCurrentObject,
+                             mPickedObjectLayer,
+                             mCurrentObject.spritePos[ mPickedObjectLayer ],
+                             mCurrentObject.spriteRot[ mPickedObjectLayer ] - 
+                             oldRot );
             }
         mClearRotButton.setVisible( false );
         }
@@ -2145,38 +2187,6 @@ void EditorObjectPage::pickedLayerChanged() {
         updateSliderColors();
         }
     updateAgingPanel();
-    }
-
-
-
-
-
-
-static void recursiveRotate( ObjectRecord *inObject,
-                             int inRotatingParentIndex,
-                             doublePair inRotationCenter,
-                             double inRotationDelta ) {
-
-    // adjust children recursively
-    for( int i=0; i<inObject->numSprites; i++ ) {
-        if( inObject->spriteParent[i] == inRotatingParentIndex ) {
-            
-            inObject->spriteRot[i] += inRotationDelta;
-            
-            inObject->spritePos[i] = sub( inObject->spritePos[i],
-                                          inRotationCenter );
-            
-            inObject->spritePos[i] = rotate( inObject->spritePos[i],
-                                             -2 * M_PI * inRotationDelta );
-            
-            inObject->spritePos[i] = add( inObject->spritePos[i],
-                                          inRotationCenter );
-
-            recursiveRotate( inObject, i, 
-                             inRotationCenter, inRotationDelta );
-            }
-        }
-    
     }
 
 
