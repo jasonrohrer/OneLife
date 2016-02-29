@@ -28,7 +28,8 @@ static ObjectPickable objectPickable;
 
 
 EditorAnimationPage::EditorAnimationPage()
-        : mObjectEditorButton( mainFont, 0, 260, "Objects" ),
+        : mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
+          mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mSaveButton( mainFont, 0, 180, "Save" ),
           mDeleteButton( mainFont, 140, 180, "Delete" ),
           mObjectPicker( &objectPickable, +310, 100 ),
@@ -46,6 +47,7 @@ EditorAnimationPage::EditorAnimationPage()
           mLastType( ground ),
           mLastTypeFade( 0 ),
           mCurrentSpriteOrSlot( 0 ),
+          mSettingRotCenter( false ),
           mPickSlotDemoButton( smallFont, 180, 0, "Fill Slots" ),
           mPickingSlotDemo( false ),
           mClearSlotDemoButton( smallFont, 180, -60, "Clear Slots" ),
@@ -222,6 +224,8 @@ EditorAnimationPage::~EditorAnimationPage() {
     for( int i=0; i<NUM_ANIM_SLIDERS; i++ ) {
         delete mSliders[i];
         }
+    
+    freeSprite( mCenterMarkSprite );
     }
 
 
@@ -804,6 +808,10 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
             animFade = 1.0;
             }
         
+        if( mSettingRotCenter ) {
+            anim = NULL;
+            }
+        
         double age = -1;
 
         if( mPersonAgeSlider.isVisible() ) {
@@ -849,6 +857,26 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
         if( demoSlots != NULL ) {
             delete [] demoSlots;
             }
+
+        if( mWiggleFade > 0 || mSettingRotCenter ) {
+        
+            ObjectRecord *r = getObject( mCurrentObjectID );
+
+            if( mCurrentSpriteOrSlot < r->numSprites ) {
+                
+                doublePair center = add( r->spritePos[ mCurrentSpriteOrSlot ],
+                                         pos );
+                center = add( center, 
+                              mCurrentAnim[ mCurrentType ]->
+                              spriteAnim[mCurrentSpriteOrSlot].
+                              rotationCenterOffset );
+                
+                setDrawColor( 1, 1, 1, 0.75 );
+                drawSprite( mCenterMarkSprite, center );
+                }
+            }
+        
+            
         }
     
     setDrawColor( 1, 1, 1, 1 );
@@ -934,6 +962,8 @@ void EditorAnimationPage::makeActive( char inFresh ) {
         }
     
     mObjectPicker.redoSearch();
+
+    mSettingRotCenter = false;
     }
 
 
@@ -954,7 +984,7 @@ int EditorAnimationPage::getClosestSpriteOrSlot( float inX, float inY ) {
         double closestDist = 99999;
 
 
-        doublePair mousePos = { inX, inY };
+        doublePair mousePos = { inX, inY + 64 };
         
         
         ObjectRecord *obj = getObject( mCurrentObjectID );
@@ -1019,6 +1049,14 @@ void EditorAnimationPage::pointerMove( float inX, float inY ) {
 
 
 void EditorAnimationPage::pointerDown( float inX, float inY ) {
+    
+    if( isLastMouseButtonRight() ) {
+        mSettingRotCenter = true;
+        return;
+        }
+    
+    mSettingRotCenter = false;
+    
     int closestSpriteOrSlot = getClosestSpriteOrSlot( inX, inY );
     
     if( closestSpriteOrSlot != -1 ) {
@@ -1037,11 +1075,35 @@ void EditorAnimationPage::pointerDown( float inX, float inY ) {
 
 
 void EditorAnimationPage::pointerDrag( float inX, float inY ) {
+
+    if( mSettingRotCenter ) {
+        doublePair pos = { 0, -64 };
+    
+        ObjectRecord *r = getObject( mCurrentObjectID );
+
+        if( mCurrentSpriteOrSlot < r->numSprites ) {
+                
+            doublePair center = add( r->spritePos[ mCurrentSpriteOrSlot ],
+                                     pos );
+            
+            doublePair delta;
+            
+
+            delta.x = inX - center.x;
+            delta.y = inY - center.y;
+            
+            mCurrentAnim[ mCurrentType ]->
+                spriteAnim[mCurrentSpriteOrSlot].rotationCenterOffset = delta;
+            }
+        }
+    
+        
     }
 
 
 
 void EditorAnimationPage::pointerUp( float inX, float inY ) {
+    mSettingRotCenter = false;
     }
 
 

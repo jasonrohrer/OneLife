@@ -57,6 +57,8 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         
     protected:
         
+        SpriteHandle mCenterMarkSprite;
+
         TextButton mObjectEditorButton;
 
         TextButton mSaveButton;
@@ -95,6 +97,8 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         
 
         int mCurrentSpriteOrSlot;
+
+        char mSettingRotCenter;
         
         TextButton mPickSlotDemoButton;
         
