@@ -26,6 +26,8 @@ typedef struct SpriteAnimationRecord {
         double yAmp;
         double yPhase;
 
+        doublePair rotationCenterOffset;
+
         // can be positive (CW) or negative (CCW)
         double rotPerSec;
         double rotPhase;

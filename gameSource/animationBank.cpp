@@ -117,7 +117,7 @@ float initAnimationBankStep() {
                                 
                         sscanf( lines[next], 
                                 "animParam="
-                                "%lf %lf %lf %lf %lf %lf %lf %lf "
+                                "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
                                 "%lf %lf %lf %lf %lf",
                                 &( r->spriteAnim[j].xOscPerSec ),
                                 &( r->spriteAnim[j].xAmp ),
@@ -127,6 +127,9 @@ float initAnimationBankStep() {
                                 &( r->spriteAnim[j].yAmp ),
                                 &( r->spriteAnim[j].yPhase ),
                                         
+                                &( r->spriteAnim[j].rotationCenterOffset.x ),
+                                &( r->spriteAnim[j].rotationCenterOffset.y ),
+
                                 &( r->spriteAnim[j].rotPerSec ),
                                 &( r->spriteAnim[j].rotPhase ),
                                         
@@ -320,7 +323,7 @@ void addAnimation( AnimationRecord *inRecord ) {
             lines.push_back( 
                 autoSprintf( 
                     "animParam="
-                    "%lf %lf %lf %lf %lf %lf %lf %lf "
+                    "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
                     "%lf %lf %lf %lf %lf",
                     inRecord->spriteAnim[j].xOscPerSec,
                     inRecord->spriteAnim[j].xAmp,
@@ -330,6 +333,9 @@ void addAnimation( AnimationRecord *inRecord ) {
                     inRecord->spriteAnim[j].yAmp,
                     inRecord->spriteAnim[j].yPhase,
                     
+                    inRecord->spriteAnim[j].rotationCenterOffset.x,
+                    inRecord->spriteAnim[j].rotationCenterOffset.y,
+
                     inRecord->spriteAnim[j].rotPerSec,
                     inRecord->spriteAnim[j].rotPhase,
                     
