@@ -1105,12 +1105,20 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         else {
             mSetHeldPos = false;
             mDemoPersonObject = -1;
-            mSetHeldPosButton.setVisible( true );
+            
+            if( ! mCheckboxes[2]->getToggled() ) {
+                mSetHeldPosButton.setVisible( true );
+
+                if( ! mClothingCheckboxes[0]->getToggled() ) {
+                    mDemoClothesButton.setVisible( true );
+                    mEndClothesDemoButton.setVisible( false );
+                    }
+                }
             mEndSetHeldPosButton.setVisible( false );
 
             mSetClothesPos = false;
             mDemoPersonObject = -1;
-            mDemoClothesButton.setVisible( true );
+            
             mEndClothesDemoButton.setVisible( false );
             }
         
