@@ -721,6 +721,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         
         if( obj->person && i == obj->headIndex ) {
             spritePos = add( spritePos, getAgeHeadOffset( inAge, headPos,
+                                                          bodyPos,
                                                           frontFootPos ) );
             }
         else if( obj->person && i == obj->bodyIndex ) {

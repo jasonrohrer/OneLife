@@ -1834,6 +1834,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                                      mCurrentObject.headIndex ) ) {
             
                 spritePos = add( spritePos, getAgeHeadOffset( age, headPos,
+                                                              bodyPos,
                                                               frontFootPos ) );
                 }
             if( i == mCurrentObject.bodyIndex ||
@@ -2154,6 +2155,7 @@ double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
             
                 thisSpritePos = add( thisSpritePos, 
                                      getAgeHeadOffset( age, headPos,
+                                                       bodyPos,
                                                        frontFootPos ) );
                 }
             if( i == mCurrentObject.bodyIndex ||

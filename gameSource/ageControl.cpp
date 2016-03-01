@@ -1,6 +1,7 @@
 #include "ageControl.h"
 
 doublePair getAgeHeadOffset( double inAge, doublePair inHeadSpritePos,
+                             doublePair inBodySpritePos,
                              doublePair inFrontFootSpritePos ) {
     if( inAge == -1 ) {
         return (doublePair){ 0, 0 };
@@ -8,9 +9,9 @@ doublePair getAgeHeadOffset( double inAge, doublePair inHeadSpritePos,
     
     if( inAge < 20 ) {
         
-        double maxHead = inHeadSpritePos.y;
+        double maxHead = inHeadSpritePos.y - inBodySpritePos.y;
         
-        double yOffset = ( ( 20 - inAge ) / 20 ) * .35 * maxHead;
+        double yOffset = ( ( 20 - inAge ) / 20 ) * .40 * maxHead;
         
         
         return (doublePair){ 0, -yOffset };
@@ -24,7 +25,7 @@ doublePair getAgeHeadOffset( double inAge, doublePair inHeadSpritePos,
             inAge = 60;
             }
 
-        double maxHead = inHeadSpritePos.y;
+        double maxHead = inHeadSpritePos.y - inBodySpritePos.y;
         
         double vertOffset = ( ( inAge - 40 ) / 20 ) * .35 * maxHead;
         
@@ -49,7 +50,7 @@ doublePair getAgeBodyOffset( double inAge, doublePair inBodySpritePos ) {
         
         double maxBody = inBodySpritePos.y;
         
-        double yOffset = ( ( 20 - inAge ) / 20 ) * .5 * maxBody;
+        double yOffset = ( ( 20 - inAge ) / 20 ) * .75 * maxBody;
         
         
         return (doublePair){ 0, -yOffset };

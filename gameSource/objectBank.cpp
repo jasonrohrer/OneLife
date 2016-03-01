@@ -987,6 +987,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
                                    inObject->headIndex ) ) ) {
             
             spritePos = add( spritePos, getAgeHeadOffset( inAge, headPos,
+                                                          bodyPos,
                                                           frontFootPos ) );
             }
         if( inObject->person && 
