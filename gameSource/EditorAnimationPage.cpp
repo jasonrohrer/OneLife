@@ -735,15 +735,6 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 }
 
             
-            // reset age slider when animation type changes
-            if( getObject( mCurrentObjectID )->person ) {
-                mPersonAgeSlider.setValue( 20 );
-                mPersonAgeSlider.setVisible( true );
-                }
-            else {
-                mPersonAgeSlider.setVisible( false );
-                }
-            
             checkNextPrevVisible();
             updateSlidersFromAnim();
             }
