@@ -969,7 +969,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             agingLayer = true;
             
             if( inAge < inObject->spriteAgeStart[i] ||
-                inAge > inObject->spriteAgeEnd[i] ) {
+                inAge >= inObject->spriteAgeEnd[i] ) {
                 
                 // skip drawing this aging layer entirely
                 continue;

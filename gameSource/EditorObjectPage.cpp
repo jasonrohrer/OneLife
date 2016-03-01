@@ -1778,7 +1778,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 mCurrentObject.spriteAgeEnd[i] != -1 ) {
                 
                 if( age < mCurrentObject.spriteAgeStart[i] || 
-                    age > mCurrentObject.spriteAgeEnd[i] ) {
+                    age >= mCurrentObject.spriteAgeEnd[i] ) {
                     
                     if( i != mPickedObjectLayer ) {
                         // skip drawing

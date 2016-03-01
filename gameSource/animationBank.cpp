@@ -873,7 +873,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             agingLayer = true;
             
             if( inAge < obj->spriteAgeStart[i] ||
-                inAge > obj->spriteAgeEnd[i] ) {
+                inAge >= obj->spriteAgeEnd[i] ) {
                 
                 // skip drawing this aging layer entirely
                 continue;
