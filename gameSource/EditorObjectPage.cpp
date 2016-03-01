@@ -1103,34 +1103,39 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         updateAgingPanel();
         }
     else if( inTarget == &mAgeInField ) {
-        float value = mAgeInField.getFloat();
-        if( value < 0 ) {
-            value = 0;
-            }
-        mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] = value;
-        
-        if( mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] >
-            mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] ) {
+        if( mPickedObjectLayer != -1 ) {
             
-            mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] =
-                mCurrentObject.spriteAgeStart[ mPickedObjectLayer ];
+            float value = mAgeInField.getFloat();
+            if( value < 0 ) {
+                value = 0;
+                }
+            mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] = value;
+            
+            if( mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] >
+                mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] ) {
+                
+                mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] =
+                    mCurrentObject.spriteAgeStart[ mPickedObjectLayer ];
+                }
+            updateAgingPanel();
             }
-        updateAgingPanel();
         }
     else if( inTarget == &mAgeOutField ) {
-        float value = mAgeOutField.getFloat();
-        if( value < 0 ) {
-            value = 0;
-            }
-        mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] = value;
-        
-        if( mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] >
-            mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] ) {
+        if( mPickedObjectLayer != -1 ) {
+            float value = mAgeOutField.getFloat();
+            if( value < 0 ) {
+                value = 0;
+                }
+            mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] = value;
             
-            mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] =
-                mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ];
+            if( mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] >
+                mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] ) {
+                
+                mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] =
+                    mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ];
+                }
+            updateAgingPanel();
             }
-        updateAgingPanel();
         }
     else if( inTarget == &mSpritePicker ) {
         
