@@ -2795,6 +2795,31 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                             mCurrentObject.spriteParent[i] = indexA;
                             }
                         }
+
+                    if( mCurrentObject.headIndex == indexA ) {
+                        mCurrentObject.headIndex = indexB;
+                        }
+                    else if( mCurrentObject.headIndex == indexB ) {
+                        mCurrentObject.headIndex = indexA;
+                        }
+                    if( mCurrentObject.bodyIndex == indexA ) {
+                        mCurrentObject.bodyIndex = indexB;
+                        }
+                    else if( mCurrentObject.bodyIndex == indexB ) {
+                        mCurrentObject.bodyIndex = indexA;
+                        }
+                    if( mCurrentObject.backFootIndex == indexA ) {
+                        mCurrentObject.backFootIndex = indexB;
+                        }
+                    else if( mCurrentObject.backFootIndex == indexB ) {
+                        mCurrentObject.backFootIndex = indexA;
+                        }
+                    if( mCurrentObject.frontFootIndex == indexA ) {
+                        mCurrentObject.frontFootIndex = indexB;
+                        }
+                    else if( mCurrentObject.frontFootIndex == indexB ) {
+                        mCurrentObject.frontFootIndex = indexA;
+                        }                    
                     }
                 }
                 break;
@@ -2898,6 +2923,31 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                         else if( mCurrentObject.spriteParent[i] == indexB ) {
                             mCurrentObject.spriteParent[i] = indexA;
                             }
+                        }
+                    
+                    if( mCurrentObject.headIndex == indexA ) {
+                        mCurrentObject.headIndex = indexB;
+                        }
+                    else if( mCurrentObject.headIndex == indexB ) {
+                        mCurrentObject.headIndex = indexA;
+                        }
+                    if( mCurrentObject.bodyIndex == indexA ) {
+                        mCurrentObject.bodyIndex = indexB;
+                        }
+                    else if( mCurrentObject.bodyIndex == indexB ) {
+                        mCurrentObject.bodyIndex = indexA;
+                        }
+                    if( mCurrentObject.backFootIndex == indexA ) {
+                        mCurrentObject.backFootIndex = indexB;
+                        }
+                    else if( mCurrentObject.backFootIndex == indexB ) {
+                        mCurrentObject.backFootIndex = indexA;
+                        }
+                    if( mCurrentObject.frontFootIndex == indexA ) {
+                        mCurrentObject.frontFootIndex = indexB;
+                        }
+                    else if( mCurrentObject.frontFootIndex == indexB ) {
+                        mCurrentObject.frontFootIndex = indexA;
                         }
                     }
                 break;
