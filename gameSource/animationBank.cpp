@@ -719,19 +719,11 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
         doublePair spritePos = obj->spritePos[i];
         
-        if( obj->person && 
-            ( i == obj->headIndex ||
-              checkSpriteAncestor( obj, i,
-                                   obj->headIndex ) ) ) {
+        if( obj->person && i == obj->headIndex ) {
             spritePos = add( spritePos, getAgeHeadOffset( inAge, headPos,
                                                           frontFootPos ) );
             }
-        else if( obj->person && 
-                 ( i == obj->bodyIndex ||
-                   ( checkSpriteAncestor( obj, i,
-                                          obj->bodyIndex ) &&
-                     !checkSpriteAncestor( obj, i,
-                                           obj->headIndex ) ) ) ) {
+        else if( obj->person && i == obj->bodyIndex ) {
             spritePos = add( spritePos, getAgeBodyOffset( inAge, bodyPos ) );
             }
 
