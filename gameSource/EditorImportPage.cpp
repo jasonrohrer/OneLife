@@ -115,6 +115,14 @@ EditorImportPage::EditorImportPage()
     mOverlayFlip = 0;
 
 
+    mSettingSpriteCenter = false;
+        
+    mMovingOverlay = false;
+    mScalingOverlay = false;
+    mRotatingOverlay = false;
+        
+
+
     addKeyClassDescription( &mSheetKeyLegend, "r-mouse", "Mv sheet" );
     addKeyDescription( &mSheetKeyLegend, 'c', "Mv sprite center" );
     addKeyDescription( &mOverlayKeyLegend, 't', "Mv overlay" );
