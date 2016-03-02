@@ -39,6 +39,7 @@ EditorImportPage::EditorImportPage()
           mShadowSlider( smallFont, 0, 200, 2,
                          100, 20,
                          0, 1, "Shadow" ),
+          mSolidCheckbox( 215, 200, 2 ),
           mSpriteTagField( mainFont, 
                            0,  -260, 6,
                            false,
@@ -63,6 +64,10 @@ EditorImportPage::EditorImportPage()
 
     addComponent( &mShadowSlider );
     mShadowSlider.setValue( 1.0 );
+    
+    addComponent( &mSolidCheckbox );
+    mSolidCheckbox.addActionListener( this );
+    mSolidCheckbox.setToggled( true );
     
     addComponent( &mImportButton );
     addComponent( &mImportOverlayButton );
@@ -358,7 +363,9 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         
         if( strcmp( tag, "" ) != 0 ) {
             
-            if( mShadowSlider.getValue() > 0 ) {
+            if( mShadowSlider.isVisible() &&
+                mShadowSlider.getValue() > 0 ) {
+                
                 addShadow( mProcessedSelection, mProcessedShadow,
                            mShadowSlider.getValue() );
                 
@@ -460,8 +467,14 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mObjectEditorButton ) {
         setSignal( "objectEditor" );
         }
-    
-
+    else if( inTarget == &mSolidCheckbox ) {
+        if( mSolidCheckbox.getToggled() ) {
+            mShadowSlider.setVisible( true );
+            }
+        else {
+            mShadowSlider.setVisible( false );
+            }
+        }
     }
 
 
@@ -513,9 +526,11 @@ void EditorImportPage::draw( doublePair inViewCenter,
         
         //drawSquare( pos, 100 );
 
-        setDrawColor( 1, 1, 1, mShadowSlider.getValue() );
-        drawSprite( mProcessedShadowSprite, pos );
-
+        if( mShadowSlider.isVisible() ) {
+            setDrawColor( 1, 1, 1, mShadowSlider.getValue() );
+            drawSprite( mProcessedShadowSprite, pos );
+            }
+            
         setDrawColor( 1, 1, 1, 1 );
         drawSprite( mProcessedSelectionSprite, pos );
         }
@@ -569,6 +584,13 @@ void EditorImportPage::draw( doublePair inViewCenter,
         
         smallFont->drawString( "Tag Required", pos, alignCenter );
         }
+
+
+    setDrawColor( 1, 1, 1, 1 );
+    doublePair pos = mSolidCheckbox.getPosition();
+    pos.x -= 20;
+    smallFont->drawString( "Solid", pos, alignRight );
+    
     }
 
 

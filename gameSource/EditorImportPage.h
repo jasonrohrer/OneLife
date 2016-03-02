@@ -12,6 +12,7 @@
 
 #include "GamePage.h"
 #include "TextButton.h"
+#include "CheckboxButton.h"
 #include "TextField.h"
 
 #include "Picker.h"
@@ -82,6 +83,7 @@ class EditorImportPage : public GamePage, public ActionListener {
         
 
         ValueSlider mShadowSlider;
+        CheckboxButton mSolidCheckbox;
         
 
         TextField mSpriteTagField;
