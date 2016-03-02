@@ -70,6 +70,12 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
         ValueSlider mPersonAgeSlider;
 
+        ValueSlider mTestSpeedSlider;
+        double mLastTestSpeed;
+
+        double mFrameTimeOffset;
+        
+
         CheckboxButton *mCheckboxes[NUM_ANIM_CHECKBOXES];
         const char *mCheckboxNames[NUM_ANIM_CHECKBOXES];
         AnimType mCheckboxAnimTypes[NUM_ANIM_CHECKBOXES];

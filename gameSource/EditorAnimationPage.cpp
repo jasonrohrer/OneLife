@@ -22,6 +22,7 @@ extern double frameRateFactor;
 
 
 #include "ObjectPickable.h"
+#include "whiteSprites.h"
 
 static ObjectPickable objectPickable;
 
@@ -29,7 +30,7 @@ static ObjectPickable objectPickable;
 
 EditorAnimationPage::EditorAnimationPage()
         : mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
-          mGroundSprite( loadSprite( "testGround.tga" ) ),
+          mGroundSprite( loadWhiteSprite( "testGround.tga" ) ),
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mSaveButton( mainFont, 0, 180, "Save" ),
           mDeleteButton( mainFont, 140, 180, "Delete" ),
@@ -37,6 +38,9 @@ EditorAnimationPage::EditorAnimationPage()
           mPersonAgeSlider( smallFont, 0, -220, 2,
                             100, 20,
                             0, 100, "Age" ),
+          mTestSpeedSlider( smallFont, 0, -170, 2,
+                            100, 20,
+                            0, 1, "Test Speed" ),
           mReverseRotationCheckbox( 0, 0, 2 ),
           mCurrentObjectID( -1 ),
           mCurrentSlotDemoID( -1 ),
@@ -78,6 +82,20 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mPersonAgeSlider );
     
     mPersonAgeSlider.setVisible( false );
+
+
+    addComponent( &mTestSpeedSlider );
+    
+    mTestSpeedSlider.setVisible( true );
+
+    mTestSpeedSlider.setValue( 1 );
+    
+
+    mTestSpeedSlider.addActionListener( this );
+    
+    mLastTestSpeed = 1.0;
+    mFrameTimeOffset = 0;
+    
 
     addComponent( &mPickSlotDemoButton );
     addComponent( &mClearSlotDemoButton );
@@ -124,10 +142,10 @@ EditorAnimationPage::EditorAnimationPage()
     checkNextPrevVisible();
     
     
-    double boxY = -150;
+    double boxY = 0;
     
     for( int i=0; i<NUM_ANIM_CHECKBOXES; i++ ) {
-        mCheckboxes[i] = new CheckboxButton( 150, boxY, 2 );
+        mCheckboxes[i] = new CheckboxButton( 210, boxY, 2 );
         addComponent( mCheckboxes[i] );
 
         mCheckboxes[i]->addActionListener( this );
@@ -694,6 +712,38 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mReverseRotationCheckbox ) {
         updateAnimFromSliders();
         }
+    else if( inTarget == &mTestSpeedSlider ) {
+        
+        // make sure frame time never goes backwards when we reduce speed
+        // nor jumps forward when we increase speed
+        double oldFrameTime = ( mFrameCount / 60.0 ) * frameRateFactor;
+            
+        oldFrameTime *= mLastTestSpeed;
+
+        oldFrameTime += mFrameTimeOffset;
+
+        double newFrameTime = oldFrameTime;
+
+        if( mTestSpeedSlider.getValue() > 0 ) {
+            
+            newFrameTime /= mTestSpeedSlider.getValue();
+            
+            newFrameTime /= frameRateFactor;
+            
+            mFrameCount = lrint( newFrameTime * 60.0 );
+        
+            mFrameTimeOffset = 0;
+            }
+        else {
+            mFrameCount = 0;
+            mFrameTimeOffset = oldFrameTime;
+            }
+        
+        
+        
+
+        mLastTestSpeed = mTestSpeedSlider.getValue();
+        }
     else {
         
         AnimType oldType = mCurrentType;
@@ -813,21 +863,23 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
             }
 
         if( anim != NULL ) {
-
+            
             double frameTime = ( mFrameCount / 60.0 ) * frameRateFactor;
             
-                    
+            frameTime *= mTestSpeedSlider.getValue();
+            
+            frameTime += mFrameTimeOffset;
+
             if( mCurrentType == moving ) {
                 doublePair groundPos = pos;
                 
-                setDrawColor( 1, 1, 1, 1 );
+                setDrawColor( 0, 0, 0, 1 );
 
                 double groundFrameTime = frameTime - floor( frameTime );
 
                 groundPos.x -= groundFrameTime * 4 * 128;
                 
-                groundPos.x = lrint( groundPos.x );
-
+                
                 groundPos.x -= 256;
 
                 while( groundPos.x < -256 ) {
