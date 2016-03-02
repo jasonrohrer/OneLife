@@ -29,6 +29,7 @@ static ObjectPickable objectPickable;
 
 EditorAnimationPage::EditorAnimationPage()
         : mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
+          mGroundSprite( loadSprite( "testGround.tga" ) ),
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mSaveButton( mainFont, 0, 180, "Save" ),
           mDeleteButton( mainFont, 140, 180, "Delete" ),
@@ -759,8 +760,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
 
 
 
-void EditorAnimationPage::draw( doublePair inViewCenter, 
-                   double inViewSize ) {
+void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter, 
+                                               double inViewSize ) {
 
     setDrawColor( 1, 1, 1, 1 );
     
@@ -770,7 +771,9 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
 
     pos.y -= 64;
 
+
     if( mCurrentObjectID != -1 ) {
+        
         
         ObjectRecord *obj = getObject( mCurrentObjectID );
 
@@ -813,6 +816,36 @@ void EditorAnimationPage::draw( doublePair inViewCenter,
 
             double frameTime = ( mFrameCount / 60.0 ) * frameRateFactor;
             
+                    
+            if( mCurrentType == moving ) {
+                doublePair groundPos = pos;
+                
+                setDrawColor( 1, 1, 1, 1 );
+
+                double groundFrameTime = frameTime - floor( frameTime );
+
+                groundPos.x -= groundFrameTime * 4 * 128;
+                
+                groundPos.x = lrint( groundPos.x );
+
+                groundPos.x -= 256;
+
+                while( groundPos.x < -256 ) {
+                    groundPos.x += 128;
+                    }
+                
+                while( groundPos.x <= 256 ) {
+                    
+                    //setDrawColor( 1, 1, 1, 
+                    //              1.0 - ( fabs( groundPos.x ) / 128.0 ) );
+
+                    drawSprite( mGroundSprite, groundPos );
+                    groundPos.x += 128;
+                    }
+                }
+                    
+            setDrawColor( 1, 1, 1, 1 );
+
             double rotFrameTime = frameTime;
             
             if( mWiggleFade == 0 && mLastTypeFade != 0 ) {

@@ -39,8 +39,8 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         
         virtual void actionPerformed( GUIComponent *inTarget );
         
-        virtual void draw( doublePair inViewCenter, 
-                           double inViewSize );
+        virtual void drawUnderComponents( doublePair inViewCenter, 
+                                          double inViewSize );
         
         virtual void step();
   
@@ -58,6 +58,9 @@ class EditorAnimationPage : public GamePage, public ActionListener {
     protected:
         
         SpriteHandle mCenterMarkSprite;
+
+        SpriteHandle mGroundSprite;
+        
 
         TextButton mObjectEditorButton;
 
