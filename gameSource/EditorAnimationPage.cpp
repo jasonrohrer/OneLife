@@ -233,6 +233,8 @@ EditorAnimationPage::EditorAnimationPage()
     mClothingSet = getEmptyClothingSet();
     mNextShoeToFill = &( mClothingSet.backShoe );
     mOtherShoe = &( mClothingSet.frontShoe );
+
+    addKeyClassDescription( &mKeyLegend, "R-Click", "Move layer rot anchor" );
     }
 
 
@@ -1091,7 +1093,19 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
         char *string = autoSprintf( "%s %d", tag, num );
         smallFont->drawString( string, pos, alignLeft );
         delete [] string;
+    
+
+        if( mCurrentSpriteOrSlot < anim->numSprites ) {
+            doublePair legendPos = mObjectEditorButton.getPosition();
+            
+            legendPos.x = 150;
+            legendPos.y += 20;
+            
+            drawKeyLegend( &mKeyLegend, legendPos );
+            }
         }
+    
+
     
     
     }

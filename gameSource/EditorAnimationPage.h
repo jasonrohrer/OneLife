@@ -23,6 +23,7 @@
 
 #include "animationBank.h"
 #include "objectBank.h"
+#include "keyLegend.h"
 
 
 #define NUM_ANIM_CHECKBOXES 3
@@ -168,6 +169,8 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         SpriteAnimationRecord *getRecordForCurrentSlot(
             char *outIsSprite = NULL );
         
+
+        KeyLegend mKeyLegend;
     };
 
 
