@@ -935,6 +935,14 @@ void EditorImportPage::processSelection() {
     
 
     char done = false;
+
+
+    if( ! mSolidCheckbox.getToggled() ) {
+        // don't search for solid areas at all
+        done = true;
+        memset( whiteMap, 1, numPixels );
+        }
+    
     
     while( !done ) {
         
