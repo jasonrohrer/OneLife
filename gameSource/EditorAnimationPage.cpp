@@ -53,13 +53,14 @@ EditorAnimationPage::EditorAnimationPage()
           mLastTypeFade( 0 ),
           mCurrentSpriteOrSlot( 0 ),
           mSettingRotCenter( false ),
-          mPickSlotDemoButton( smallFont, 180, 0, "Fill Slots" ),
+          mPickSlotDemoButton( smallFont, 180, 40, "Fill Slots" ),
           mPickingSlotDemo( false ),
-          mClearSlotDemoButton( smallFont, 180, -60, "Clear Slots" ),
+          mClearSlotDemoButton( smallFont, 180, -90, "Clear Slots" ),
           mPickClothingButton( smallFont, 180, 60, "+ Clothes" ),
           mPickingClothing( false ),
           mClearClothingButton( smallFont, 180, 120, "X Clothes" ),
           mCopyButton( smallFont, -290, 210, "Copy" ),
+          mCopyChainButton( smallFont, -290, 250, "Copy Child Chain" ),
           mPasteButton( smallFont, -230, 210, "Paste" ),
           mClearButton( smallFont, -170, 210, "Clear" ),
           mNextSpriteOrSlotButton( smallFont, 120, -270, "Next Layer" ),
@@ -105,6 +106,7 @@ EditorAnimationPage::EditorAnimationPage()
     
 
     addComponent( &mCopyButton );
+    addComponent( &mCopyChainButton );
     addComponent( &mPasteButton );
     addComponent( &mClearButton );
     
@@ -126,6 +128,7 @@ EditorAnimationPage::EditorAnimationPage()
     mClearClothingButton.addActionListener( this );
 
     mCopyButton.addActionListener( this );
+    mCopyChainButton.addActionListener( this );
     mPasteButton.addActionListener( this );
     mClearButton.addActionListener( this );
     
@@ -417,6 +420,8 @@ void EditorAnimationPage::checkNextPrevVisible() {
     
         mPickSlotDemoButton.setVisible( false );
         mPickClothingButton.setVisible( false );
+        
+        mCopyChainButton.setVisible( false );
         return;
         }
     
@@ -427,6 +432,14 @@ void EditorAnimationPage::checkNextPrevVisible() {
     mNextSpriteOrSlotButton.setVisible( mCurrentSpriteOrSlot < num - 1 );
     mPrevSpriteOrSlotButton.setVisible( mCurrentSpriteOrSlot > 0 );
     
+
+    if( mCurrentSpriteOrSlot < r->numSprites ) {
+        mCopyChainButton.setVisible( true );
+        }
+    else {
+        mCopyChainButton.setVisible( false );
+        mChainCopyBuffer.deleteAll();
+        }
     
     if( r->person ) {
         mPickClothingButton.setVisible( true );
@@ -597,14 +610,95 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mCopyButton ) {
         mCopyBuffer = *( getRecordForCurrentSlot() );
+        mChainCopyBuffer.deleteAll();
+        }
+    else if( inTarget == &mCopyChainButton ) {
+        zeroRecord( &mCopyBuffer );
+        
+        mChainCopyBuffer.deleteAll();
+
+        SpriteAnimationRecord *parentRecord = getRecordForCurrentSlot();
+        
+        mChainCopyBuffer.push_back( *parentRecord );
+        
+        int newParent = mCurrentSpriteOrSlot;
+        
+        ObjectRecord *r = getObject( mCurrentObjectID );
+
+        AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
+
+        while( newParent != -1 ) {
+            int oldParent = newParent;
+            newParent = -1;
+            
+            for( int i=0; i<r->numSprites; i++ ) {
+                if( r->spriteParent[i] == oldParent ) {
+                    // found a child
+
+                    if( i < anim->numSprites ) {
+                        mChainCopyBuffer.push_back( anim->spriteAnim[i] );
+                        }
+                    
+
+                    newParent = i;
+                    break;
+                    }
+                }
+            }
+        printf( "%d in copied chain\n", mChainCopyBuffer.size() );
         }
     else if( inTarget == &mPasteButton ) {
-        char isSprite;
-        SpriteAnimationRecord *r = getRecordForCurrentSlot( &isSprite );
-        *r = mCopyBuffer;
-        if( !isSprite ) {
-            r->rotPerSec = 0;
-            r->rotPhase = 0;
+        if( mChainCopyBuffer.size() > 0 ) {
+            // chain copy paste
+            
+            SpriteAnimationRecord *parentRecord = getRecordForCurrentSlot();
+            int newParent = mCurrentSpriteOrSlot;
+        
+            *parentRecord = mChainCopyBuffer.getElementDirect( 0 );
+            
+            int chainIndex = 1;
+            int chainLength = mChainCopyBuffer.size();
+
+            ObjectRecord *r = getObject( mCurrentObjectID );
+            
+            AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
+            
+            while( newParent != -1 && chainIndex < chainLength ) {
+                int oldParent = newParent;
+                newParent = -1;
+            
+                for( int i=0; i<r->numSprites; i++ ) {
+                    if( r->spriteParent[i] == oldParent ) {
+                        // found a child
+                        
+                        if( i < anim->numSprites ) {
+                            
+                            anim->spriteAnim[i] =
+                                mChainCopyBuffer.getElementDirect( 
+                                    chainIndex );
+                            
+                            chainIndex++;
+                            }   
+                        
+                        newParent = i;
+                        break;
+                        }
+                    }
+                }
+            }
+        else {
+            // regular single-layer copy-paste
+
+            char isSprite;
+            SpriteAnimationRecord *r = getRecordForCurrentSlot( &isSprite );
+            *r = mCopyBuffer;
+            if( !isSprite ) {
+                r->rotPerSec = 0;
+                r->rotPhase = 0;
+                r->rockOscPerSec = 0;
+                r->rockAmp = 0;
+                r->rockPhase = 0;
+                }
             }
         updateSlidersFromAnim();
         }

@@ -139,6 +139,7 @@ float initAnimationBankStep() {
 
                                 &( r->spriteAnim[j].durationSec ),
                                 &( r->spriteAnim[j].pauseSec ) );
+                        
                         next++;
                         }
 
@@ -1249,6 +1250,9 @@ void zeroRecord( SpriteAnimationRecord *inRecord ) {
 
     inRecord->durationSec = 1;
     inRecord->pauseSec = 0;
+    
+    inRecord->rotationCenterOffset.x = 0;
+    inRecord->rotationCenterOffset.y = 0;
     }
 
         

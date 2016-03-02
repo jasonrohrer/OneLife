@@ -133,7 +133,12 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
 
         SpriteAnimationRecord mCopyBuffer;
+
+        SimpleVector<SpriteAnimationRecord> mChainCopyBuffer;
+        
         TextButton mCopyButton;
+        TextButton mCopyChainButton;
+        
         TextButton mPasteButton;
         TextButton mClearButton;
         
