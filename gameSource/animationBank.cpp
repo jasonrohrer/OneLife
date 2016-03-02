@@ -731,6 +731,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
         double rot = obj->spriteRot[i];
         
+
         if( i < inAnim->numSprites ) {
             
 
@@ -755,7 +756,13 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                               inAnim->spriteAnim[i].rockOscPerSec,
                               inAnim->spriteAnim[i].rockAmp,
                               inAnim->spriteAnim[i].rockPhase );
+            
 
+            
+            doublePair rotCenterOffset = 
+                mult( inAnim->spriteAnim[i].rotationCenterOffset,
+                      inAnimFade );
+            
             if( inAnimFade < 1 ) {
                 double targetWeight = 1 - inAnimFade;
                 
@@ -782,6 +789,13 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                          inFadeTargetAnim->spriteAnim[i].rockOscPerSec,
                          inFadeTargetAnim->spriteAnim[i].rockAmp,
                          inFadeTargetAnim->spriteAnim[i].rockPhase );
+                 
+                 rotCenterOffset = 
+                     add( rotCenterOffset,
+                          mult( inFadeTargetAnim->
+                                spriteAnim[i].rotationCenterOffset,
+                                
+                                targetWeight ) );
                 }
             
 
@@ -838,6 +852,22 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 }
 
             rot += rock;
+
+
+            if( rotCenterOffset.x != 0 ||
+                rotCenterOffset.y != 0 ) {
+                
+                // move spritePos as if it were applying rot based
+                // on this offset
+                // the rot itself will be applied later
+
+                doublePair newCenter = rotate( rotCenterOffset,
+                                               - 2 * M_PI * rot );
+                
+                doublePair delta = sub( newCenter, rotCenterOffset );
+                spritePos = sub( spritePos, delta );
+                }
+                
             }
         
 
