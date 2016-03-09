@@ -15,6 +15,11 @@ typedef struct SpriteRecord {
         // (used for sizing in pickers)
         int maxD;
         
+        int w, h;
+        
+        // 0 where alpha <0.25, for registering mouse clicks on sprite
+        char *hitMap;
+
     } SpriteRecord;
 
 

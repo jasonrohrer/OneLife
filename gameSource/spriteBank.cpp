@@ -78,27 +78,54 @@ float initSpriteBankStep() {
                     printf( "Loading sprite from path %s, tag %s\n", 
                             fullName, tag );
                             
-                    SpriteHandle sprite =
-                        loadSpriteBase( fullName, false );
+
+                    Image *spriteImage = readTGAFileBase( fullName );
                             
                     delete [] fullName;
                             
                             
-                    if( sprite != NULL ) {
+                    if( spriteImage != NULL ) {
                         SpriteRecord *r = new SpriteRecord;
+
+                        
+                        r->sprite =
+                            fillSprite( spriteImage, false );
+
+                        r->w = spriteImage->getWidth();
+                        r->h = spriteImage->getHeight();
+                        
+                        int numPixels = r->w * r->h;
+                        r->hitMap = new char[ numPixels ];
+
+                        memset( r->hitMap, 1, numPixels );
+                        
+                        if( spriteImage->getNumChannels() == 4 ) {
+                            
+                            double *a = spriteImage->getChannel(3);
+                            
+                            for( int p=0; p<numPixels; p++ ) {
+                                if( a[p] < 0.25 ) {
+                                    r->hitMap[p] = 0;
+                                    }
+                                }
+                            }
+                                                
+                        
+                        delete spriteImage;
+                        
+
 
                         r->id = 0;
                                 
                         sscanf( tgaFileName, "%d.tga", &( r->id ) );
                                 
                         printf( "Scanned id = %d\n", r->id );
-                                
-                        r->sprite = sprite;
+                        
                         r->tag = stringDuplicate( tag );
                         
-                        r->maxD = getSpriteWidth( sprite );
-                        if( getSpriteHeight( sprite ) > r->maxD ) {
-                            r->maxD = getSpriteHeight( sprite );
+                        r->maxD = getSpriteWidth( r->sprite );
+                        if( getSpriteHeight( r->sprite ) > r->maxD ) {
+                            r->maxD = getSpriteHeight( r->sprite );
                             }
                         records.push_back( r );
 
@@ -170,10 +197,16 @@ static void freeSpriteRecord( int inID ) {
             delete [] lower;
 
             delete [] idMap[inID]->tag;
+                        
+            if( idMap[inID]->hitMap != NULL ) {
+                delete [] idMap[inID]->hitMap;    
+                }
+            
             
             delete idMap[inID];
             idMap[inID] = NULL;
-            return ;
+            
+            return;
             }
         }
     }
@@ -188,6 +221,10 @@ void freeSpriteBank() {
             
             freeSprite( idMap[i]->sprite );
             delete [] idMap[i]->tag;
+
+             if( idMap[i]->hitMap != NULL ) {
+                delete [] idMap[i]->hitMap;    
+                }
 
             delete idMap[i];
             }
@@ -366,6 +403,27 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     r->sprite = inSprite;
     r->tag = stringDuplicate( inTag );
     r->maxD = maxD;
+
+
+    r->w = inSourceImage->getWidth();
+    r->h = inSourceImage->getHeight();
+    
+    int numPixels = r->w * r->h;
+    r->hitMap = new char[ numPixels ];
+    
+    memset( r->hitMap, 1, numPixels );
+    
+    if( inSourceImage->getNumChannels() == 4 ) {
+        
+        double *a = inSourceImage->getChannel(3);
+        
+        for( int p=0; p<numPixels; p++ ) {
+            if( a[p] < 0.25 ) {
+                r->hitMap[p] = 0;
+                }
+            }
+        }
+
 
     // delete old
     freeSpriteRecord( newID );
