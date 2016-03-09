@@ -2089,8 +2089,8 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
 
 
 double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
-                                               int *outSprite,
-                                               int *outSlot ) {
+                                                 int *outSprite,
+                                                 int *outSlot ) {
 
     doublePair pos = { inX, inY };
     
@@ -2099,102 +2099,24 @@ double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
     int oldLayerPick = mPickedObjectLayer;
     int oldSlotPick = mPickedSlot;
     
-
-    *outSprite = -1;
-    double smallestDist = 9999999;
+    double age = 20;
     
-
-    doublePair headPos = {0,0};
-
-    if( mCurrentObject.headIndex <= mCurrentObject.numSprites ) {
-        headPos = mCurrentObject.spritePos[ mCurrentObject.headIndex ];
-        }
-
-    
-    doublePair frontFootPos = {0,0};
-
-    if( mCurrentObject.frontFootIndex <= mCurrentObject.numSprites ) {
-        frontFootPos = 
-            mCurrentObject.spritePos[ mCurrentObject.frontFootIndex ];
-        }
-
-
-    doublePair bodyPos = {0,0};
-
-    if( mCurrentObject.bodyIndex <= mCurrentObject.numSprites ) {
-        bodyPos = mCurrentObject.spritePos[ mCurrentObject.bodyIndex ];
-        }
-
-
-    
-    for( int i=0; i<mCurrentObject.numSprites; i++ ) {
-
-        doublePair thisSpritePos = mCurrentObject.spritePos[i];
+    if( mPersonAgeSlider.isVisible() && mCheckboxes[2]->getToggled() ) {
         
-
-        if( mPersonAgeSlider.isVisible() && mCheckboxes[2]->getToggled() ) {
-            
-            double age = mPersonAgeSlider.getValue();
-
-            if( mCurrentObject.spriteAgeStart[i] != -1 &&
-                mCurrentObject.spriteAgeEnd[i] != -1 ) {
-                
-                if( age < mCurrentObject.spriteAgeStart[i] || 
-                    age > mCurrentObject.spriteAgeEnd[i] ) {
-                    
-                    if( i != mPickedObjectLayer ) {
-                        // invisible, don't let them pick it
-                        continue;
-                        }
-                    }
-                }
-
-            if( i == mCurrentObject.headIndex ||
-                checkSpriteAncestor( &mCurrentObject, i,
-                                     mCurrentObject.headIndex ) ) {
-            
-                thisSpritePos = add( thisSpritePos, 
-                                     getAgeHeadOffset( age, headPos,
-                                                       bodyPos,
-                                                       frontFootPos ) );
-                }
-            if( i == mCurrentObject.bodyIndex ||
-                checkSpriteAncestor( &mCurrentObject, i,
-                                     mCurrentObject.bodyIndex ) ) {
-            
-                thisSpritePos = add( thisSpritePos, 
-                                     getAgeBodyOffset( age, bodyPos ) );
-                }
-
-            
-            }
+        mCurrentObject.person = true;
         
-        
-        
-        double dist = distance( pos, thisSpritePos );
-        
-        if( dist < smallestDist ) {
-            *outSprite = i;
-            
-            smallestDist = dist;
-            }
+        age = mPersonAgeSlider.getValue();
         }
     
-    *outSlot = -1;
-    for( int i=0; i<mCurrentObject.numSlots; i++ ) {
+    double smallestDist = getClosestObjectPart( &mCurrentObject, 
+                                                age,
+                                                mPickedObjectLayer,
+                                                pos.x, pos.y,
+                                                outSprite, outSlot );
         
-        double dist = distance( pos, mCurrentObject.slotPos[i] );
-        
-        if( dist < smallestDist ) {
-            *outSprite = -1;
-            *outSlot = i;
-            
-            smallestDist = dist;
-            }
-        }
 
 
-    if( smallestDist > 32 ) {
+    if( *outSprite == -1 && smallestDist > 32 ) {
         // too far to count as a new pick
 
         if( smallestDist < 52 ) {
@@ -2209,6 +2131,7 @@ double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
             *outSlot = -1;
             }
         }
+    
     return smallestDist;
     }
 
@@ -2344,7 +2267,7 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
                 sub( pos, mCurrentObject.slotPos[mPickedSlot] );
             }
         }
-    else if( smallestDist < 200 ) {
+    else {
         TextField::unfocusAll();
         // dragging whole object?
         doublePair center = {0,0};

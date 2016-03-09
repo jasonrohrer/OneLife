@@ -474,3 +474,27 @@ void deleteSpriteFromBank( int inID ) {
 
 
 
+
+char getSpriteHit( int inID, int inXCenterOffset, int inYCenterOffset ) {
+    if( inID < mapSize ) {
+        if( idMap[inID] != NULL ) {
+            
+            int pixX = inXCenterOffset + idMap[inID]->w / 2;
+            int pixY = - inYCenterOffset + idMap[inID]->h / 2;
+            
+            if( pixX >=0 && pixX < idMap[inID]->w 
+                &&
+                pixY >=0 && pixY < idMap[inID]->h ) {
+
+                int pixI = idMap[inID]->w * pixY + pixX;
+                
+                return idMap[inID]->hitMap[ pixI ];
+                }
+            }
+        }
+    
+    return false;
+    }
+
+
+

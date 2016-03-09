@@ -1163,42 +1163,41 @@ int EditorAnimationPage::getClosestSpriteOrSlot( float inX, float inY ) {
     if( inX > -128 && inX < 128
         &&
         inY > -128 && inY < 128 ) {
-        
-        
-        double closestDist = 99999;
 
-
+        
         doublePair mousePos = { inX, inY + 64 };
         
         
         ObjectRecord *obj = getObject( mCurrentObjectID );
         
-        int sprites = obj->numSprites;
-        int slots = obj->numSlots;
 
-        int totalCount = 0;
+        double age = 20;
+        if( mPersonAgeSlider.isVisible() ) {
+            age = mPersonAgeSlider.getValue();
+            }
         
-        for( int i=0; i<sprites; i++ ) {
-            double dist = distance( obj->spritePos[i], mousePos );
-            
-            if( dist < closestDist ) {
-                closestDist = dist;
-                closestSpriteOrSlot = totalCount;
-                }
-            
-            totalCount++;
-            }
 
-        for( int i=0; i<slots; i++ ) {
-            double dist = distance( obj->slotPos[i], mousePos );
-            
-            if( dist < closestDist ) {
-                closestDist = dist;
-                closestSpriteOrSlot = totalCount;
-                }
-            
-            totalCount++;
+        int pickedSprite;
+        int pickedSlot;
+        
+        getClosestObjectPart( obj, 
+                              age,
+                              -1,
+                              mousePos.x, mousePos.y,
+                              &pickedSprite,
+                              &pickedSlot );
+
+        
+
+        int sprites = obj->numSprites;
+       
+        if( pickedSprite != -1 ) {
+            closestSpriteOrSlot = pickedSprite;
             }
+        else if( pickedSlot != -1 ) {
+            closestSpriteOrSlot = pickedSlot + sprites;
+            }
+        
         }
     
     return closestSpriteOrSlot;

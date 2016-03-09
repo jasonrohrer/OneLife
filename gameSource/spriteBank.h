@@ -55,4 +55,8 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
 void deleteSpriteFromBank( int inID );
 
 
+
+char getSpriteHit( int inID, int inXCenterOffset, int inYCenterOffset );
+
+
 #endif

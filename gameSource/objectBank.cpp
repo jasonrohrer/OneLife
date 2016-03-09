@@ -1291,5 +1291,130 @@ int getMaxDiameter( ObjectRecord *inObject ) {
 
 
 
+double getClosestObjectPart( ObjectRecord *inObject,
+                             double inAge,
+                             int inPickedLayer,
+                             float inXCenterOffset, float inYCenterOffset,
+                             int *outSprite,
+                             int *outSlot ) {
+    
+    doublePair pos = { inXCenterOffset, inYCenterOffset };
+    
+    *outSprite = -1;
+    
+
+    doublePair headPos = {0,0};
+
+    if( inObject->headIndex <= inObject->numSprites ) {
+        headPos = inObject->spritePos[ inObject->headIndex ];
+        }
+
+    
+    doublePair frontFootPos = {0,0};
+
+    if( inObject->frontFootIndex <= inObject->numSprites ) {
+        frontFootPos = 
+            inObject->spritePos[ inObject->frontFootIndex ];
+        }
+
+
+    doublePair bodyPos = {0,0};
+
+    if( inObject->bodyIndex <= inObject->numSprites ) {
+        bodyPos = inObject->spritePos[ inObject->bodyIndex ];
+        }
+
+
+    
+    for( int i=inObject->numSprites-1; i>=0; i-- ) {
+
+        doublePair thisSpritePos = inObject->spritePos[i];
+        
+
+        if( inObject->person  ) {
+            
+            if( inObject->spriteAgeStart[i] != -1 &&
+                inObject->spriteAgeEnd[i] != -1 ) {
+                
+                if( inAge < inObject->spriteAgeStart[i] || 
+                    inAge > inObject->spriteAgeEnd[i] ) {
+                    
+                    if( i != inPickedLayer ) {
+                        // invisible, don't let them pick it
+                        continue;
+                        }
+                    }
+                }
+
+            if( i == inObject->headIndex ||
+                checkSpriteAncestor( inObject, i,
+                                     inObject->headIndex ) ) {
+            
+                thisSpritePos = add( thisSpritePos, 
+                                     getAgeHeadOffset( inAge, headPos,
+                                                       bodyPos,
+                                                       frontFootPos ) );
+                }
+            if( i == inObject->bodyIndex ||
+                checkSpriteAncestor( inObject, i,
+                                     inObject->bodyIndex ) ) {
+            
+                thisSpritePos = add( thisSpritePos, 
+                                     getAgeBodyOffset( inAge, bodyPos ) );
+                }
+
+            
+            }
+        
+        
+        
+        doublePair offset = sub( pos, thisSpritePos );
+        
+        
+
+        offset = rotate( offset, 2 * M_PI * inObject->spriteRot[i] );
+        
+        if( inObject->spriteHFlip[i] ) {
+            offset.x *= -1;
+            }
+
+        if( getSpriteHit( inObject->sprites[i], 
+                          lrint( offset.x ),
+                          lrint( offset.y ) ) ) {
+            *outSprite = i;
+            break;
+            }
+        }
+    
+    *outSlot = -1;
+
+    double smallestDist = 9999999;
+
+    if( *outSprite == -1 ) {
+        // consider slots
+        
+        
+        for( int i=0; i<inObject->numSlots; i++ ) {
+        
+            double dist = distance( pos, inObject->slotPos[i] );
+            
+            if( dist < smallestDist ) {
+                *outSprite = -1;
+                *outSlot = i;
+                
+                smallestDist = dist;
+                }
+            }
+        
+        }
+    else{ 
+        smallestDist = 0;
+        }
+
+    return smallestDist;
+    }
+
+
+
 
 

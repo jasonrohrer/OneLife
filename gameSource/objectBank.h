@@ -262,4 +262,13 @@ int getMaxDiameter( ObjectRecord *inObject );
 
 
 
+// picked layer can be -1 if nothing is picked
+double getClosestObjectPart( ObjectRecord *inObject,
+                             double inAge,
+                             int inPickedLayer,
+                             float inXCenterOffset, float inYCenterOffset,
+                             int *outSprite,
+                             int *outSlot );
+
+
 #endif
