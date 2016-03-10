@@ -940,7 +940,8 @@ static char logicalXOR( char inA, char inB ) {
 
 
 void drawObject( ObjectRecord *inObject, doublePair inPos,
-                 double inRot, char inFlipH, double inAge, 
+                 double inRot, char inFlipH, double inAge,
+                 char inHoldingSomething,
                  ClothingSet inClothing,
                  double inScale ) {
     
@@ -1038,7 +1039,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             cPos = add( cPos, inPos );
             
             drawObject( inClothing.backShoe, cPos, inRot,
-                        inFlipH, -1, emptyClothing );
+                        inFlipH, -1, false, emptyClothing );
             }
         
         if( !agingLayer 
@@ -1056,7 +1057,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             
             
             drawObject( inClothing.tunic, cPos, inRot,
-                        inFlipH, -1, emptyClothing );
+                        inFlipH, -1, false, emptyClothing );
             
             // now skip aging layers drawn above body
             nonAgingDrawnAboveBody = false;
@@ -1083,7 +1084,12 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
             cPos = add( cPos, inPos );
             
             drawObject( inClothing.frontShoe, cPos, inRot,
-                        inFlipH, -1, emptyClothing );
+                        inFlipH, -1, false, emptyClothing );
+            }
+        
+
+        if( inHoldingSomething && inObject->spriteInvisibleWhenHolding[i] ) {
+            skipSprite = true;
             }
         
         
@@ -1125,7 +1131,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
         cPos = add( cPos, inPos );
         
         drawObject( inClothing.hat, cPos, inRot,
-                    inFlipH, -1, emptyClothing );
+                    inFlipH, -1, false, emptyClothing );
         }
 
     }
@@ -1134,6 +1140,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
 
 void drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                  char inFlipH, double inAge,
+                 char inHoldingSomething,
                  ClothingSet inClothing,
                  int inNumContained, int *inContainedIDs ) {
 
@@ -1158,10 +1165,12 @@ void drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
 
         doublePair pos = add( slotPos, inPos );
         drawObject( getObject( inContainedIDs[i] ), pos, inRot, inFlipH, inAge,
+                    false,
                     emptyClothing );
         }
     
-    drawObject( inObject, inPos, inRot, inFlipH, inAge, inClothing );
+    drawObject( inObject, inPos, inRot, inFlipH, inAge, inHoldingSomething,
+                inClothing );
     }
 
 

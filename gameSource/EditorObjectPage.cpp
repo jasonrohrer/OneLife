@@ -86,6 +86,7 @@ EditorObjectPage::EditorObjectPage()
           mBodyLayerCheckbox( 190, 84, 2 ),
           mBackFootLayerCheckbox( 190, 64, 2 ),
           mFrontFootLayerCheckbox( 190, 44, 2 ),
+          mInvisibleWhenHoldingCheckbox( 190, 15, 2 ),
           mAgeInField( smallFont, 
                        160,  -52, 6,
                        false,
@@ -203,6 +204,7 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mBodyLayerCheckbox );
     addComponent( &mBackFootLayerCheckbox );
     addComponent( &mFrontFootLayerCheckbox );
+    addComponent( &mInvisibleWhenHoldingCheckbox );
     
     addComponent( &mAgeInField );
     addComponent( &mAgeOutField );
@@ -218,6 +220,7 @@ EditorObjectPage::EditorObjectPage()
     mBodyLayerCheckbox.addActionListener( this );
     mBackFootLayerCheckbox.addActionListener( this );
     mFrontFootLayerCheckbox.addActionListener( this );
+    mInvisibleWhenHoldingCheckbox.addActionListener( this );
     
 
     mAgeInField.addActionListener( this );
@@ -237,7 +240,7 @@ EditorObjectPage::EditorObjectPage()
     mBodyLayerCheckbox.setVisible( false );
     mBackFootLayerCheckbox.setVisible( false );
     mFrontFootLayerCheckbox.setVisible( false );
-    
+    mInvisibleWhenHoldingCheckbox.setVisible( false );
 
     mPersonAgeSlider.setVisible( false );
     
@@ -496,6 +499,8 @@ void EditorObjectPage::updateAgingPanel() {
         mBodyLayerCheckbox.setVisible( false );
         mBackFootLayerCheckbox.setVisible( false );
         mFrontFootLayerCheckbox.setVisible( false );
+        
+        mInvisibleWhenHoldingCheckbox.setVisible( false );
 
         for( int i=0; i<mCurrentObject.numSprites; i++ ) {
             mCurrentObject.spriteAgeStart[i] = -1;
@@ -527,6 +532,7 @@ void EditorObjectPage::updateAgingPanel() {
             mBackFootLayerCheckbox.setVisible( true );
             mFrontFootLayerCheckbox.setVisible( true );
 
+            mInvisibleWhenHoldingCheckbox.setVisible( true );
 
             if( mCurrentObject.spriteAgeStart[mPickedObjectLayer] != -1 &&
                 mCurrentObject.spriteAgeEnd[mPickedObjectLayer] != -1 ) {
@@ -543,6 +549,10 @@ void EditorObjectPage::updateAgingPanel() {
                 mAgingLayerCheckbox.setToggled( false );
                 agingPanelVisible = false;
                 }
+
+            mInvisibleWhenHoldingCheckbox.setToggled(
+                mCurrentObject.spriteInvisibleWhenHolding[
+                    mPickedObjectLayer] );
 
             if( mCurrentObject.headIndex == mPickedObjectLayer ) {
                 mHeadLayerCheckbox.setToggled( true );
@@ -582,6 +592,8 @@ void EditorObjectPage::updateAgingPanel() {
             mBodyLayerCheckbox.setVisible( false );
             mBackFootLayerCheckbox.setVisible( false );
             mFrontFootLayerCheckbox.setVisible( false );
+            
+            mInvisibleWhenHoldingCheckbox.setVisible( false );
             }
         
         }
@@ -1030,6 +1042,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }
         updateAgingPanel();
         }
+    else if( inTarget == &mInvisibleWhenHoldingCheckbox ) {
+        mCurrentObject.spriteInvisibleWhenHolding[ mPickedObjectLayer]
+            = mInvisibleWhenHoldingCheckbox.getToggled();
+        }
     else if( inTarget == &mHeadLayerCheckbox ) {
         if( mHeadLayerCheckbox.getToggled() ) {
             mCurrentObject.headIndex = mPickedObjectLayer;
@@ -1215,6 +1231,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             newSpriteAgeEnd[ mCurrentObject.numSprites ] = -1;
             
             newSpriteParent[ mCurrentObject.numSprites ] = -1;
+
+            newSpriteInvisibleWhenHolding[ mCurrentObject.numSprites ] = 0;
 
             delete [] mCurrentObject.sprites;
             delete [] mCurrentObject.spritePos;
@@ -1645,7 +1663,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         double age = mPersonAgeSlider.getValue();
             
         drawObject( getObject( mDemoPersonObject ), drawOffset, 0, false, 
-                    age, getEmptyClothingSet() );
+                    age, true, getEmptyClothingSet() );
 
         drawOffset = add( mCurrentObject.heldOffset, drawOffset );
         }
@@ -1679,7 +1697,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 
   
         drawObject( getObject( mDemoPersonObject ), drawOffset, 0, false, 
-                    age, s );
+                    age, false, s );
 
         // offset from body part
         //switch( mCurrentObject.clothing ) {
@@ -1749,7 +1767,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 
                 drawObject( demoObject, 
                             add( mCurrentObject.slotPos[i], drawOffset ),
-                            0, false, -1, getEmptyClothingSet() );
+                            0, false, -1, false, getEmptyClothingSet() );
                 }
             }
         
@@ -1907,6 +1925,13 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         pos = mAgingLayerCheckbox.getPosition();
         pos.x -= 20;
         smallFont->drawString( "Age Layer", pos, alignRight );
+        }
+
+
+    if( mInvisibleWhenHoldingCheckbox.isVisible() ) {
+        pos = mInvisibleWhenHoldingCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Holder", pos, alignRight );
         }
     
 

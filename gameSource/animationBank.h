@@ -114,7 +114,8 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      AnimType inFadeTargetType,
                      doublePair inPos,
                      char inFlipH,
-                     double inAge, ClothingSet inClothing );
+                     double inAge, char inHoldingSomething,
+                     ClothingSet inClothing );
 
 
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
@@ -124,7 +125,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      AnimationRecord *inFadeTargetAnim,
                      doublePair inPos,
                      char inFlipH,
-                     double inAge, ClothingSet inClothing );
+                     double inAge, char inHoldingSomething,
+                     ClothingSet inClothing );
 
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 
@@ -134,6 +136,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
+                     char inHoldingSomething,
                      ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs );
 
@@ -146,6 +149,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
+                     char inHoldingSomething,
                      ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs );
 

@@ -595,7 +595,8 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      AnimType inFadeTargetType,
                      doublePair inPos,
                      char inFlipH,
-                     double inAge, 
+                     double inAge,
+                     char inHoldingSomething,
                      ClothingSet inClothing ) {
     
     AnimationRecord *r = getAnimation( inObjectID, inType );
@@ -603,14 +604,15 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
 
     if( r == NULL ) {
         drawObject( getObject( inObjectID ), inPos, 0, inFlipH, inAge, 
-                    inClothing );
+                    inHoldingSomething, inClothing );
         return;
         }
     else {
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
         drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
-                        inAnimFade, rB, inPos, inFlipH, inAge, inClothing );
+                        inAnimFade, rB, inPos, inFlipH, inAge, 
+                        inHoldingSomething, inClothing );
         }
     }
 
@@ -640,14 +642,16 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      AnimationRecord *inFadeTargetAnim,
                      doublePair inPos,
                      char inFlipH,
-                     double inAge, 
+                     double inAge,
+                     char inHoldingSomething,
                      ClothingSet inClothing ) {
 
     ObjectRecord *obj = getObject( inObjectID );
     
     if( obj->numSprites > MAX_WORKING_SPRITES ) {
         // cannot animate objects with this many sprites
-        drawObject( obj, inPos, 0, inFlipH, inAge, inClothing );
+        drawObject( obj, inPos, 0, inFlipH, inAge, 
+                    inHoldingSomething, inClothing );
         }
     
 
@@ -990,7 +994,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             cPos = add( cPos, inPos );
             
             drawObject( inClothing.backShoe, cPos, rot,
-                        inFlipH, -1, emptyClothing );
+                        inFlipH, -1, false, emptyClothing );
             }
 
         if( !agingLayer 
@@ -1014,7 +1018,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             cPos = add( cPos, inPos );
             
             drawObject( inClothing.tunic, cPos, rot,
-                        inFlipH, -1, emptyClothing );
+                        inFlipH, -1, false, emptyClothing );
             
             // now skip aging layers drawn above body
             nonAgingDrawnAboveBody = false;
@@ -1051,11 +1055,13 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             cPos = add( cPos, inPos );
                 
             drawObject( inClothing.frontShoe, cPos, rot,
-                        inFlipH, -1, emptyClothing );
+                        inFlipH, -1, false, emptyClothing );
             }
         
 
-                
+        if( inHoldingSomething && obj->spriteInvisibleWhenHolding[i] ) {
+            skipSprite = true;
+            }
 
         if( !skipSprite ) {
             setDrawColor( obj->spriteColor[i] );
@@ -1095,7 +1101,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         cPos = add( cPos, inPos );
         
         drawObject( inClothing.hat, cPos, animHeadRotDelta,
-                    inFlipH, -1, emptyClothing );
+                    inFlipH, -1, false, emptyClothing );
         }
     }
 
@@ -1108,6 +1114,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
+                     char inHoldingSomething,
                      ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs ) {
     
@@ -1115,14 +1122,15 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
  
     if( r == NULL ) {
         drawObject( getObject( inObjectID ), inPos, 0, 
-                    inFlipH, inAge, inClothing,
+                    inFlipH, inAge, inHoldingSomething, inClothing,
                     inNumContained, inContainedIDs );
         }
     else {
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
         drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
-                        inAnimFade, rB, inPos, inFlipH, inAge, inClothing,
+                        inAnimFade, rB, inPos, inFlipH, inAge,
+                        inHoldingSomething, inClothing,
                         inNumContained, inContainedIDs );
         }
     }
@@ -1136,6 +1144,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
+                     char inHoldingSomething,
                      ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs ) {
     
@@ -1226,7 +1235,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
   
             pos = add( pos, inPos );
             drawObject( getObject( inContainedIDs[i] ), pos, 0, inFlipH,
-                        inAge, emptyClothing );
+                        inAge, false, emptyClothing );
             }
         
         } 
@@ -1234,7 +1243,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     // draw animating object on top of contained slots
     drawObjectAnim( inObjectID, inAnim, inFrameTime, inRotFrameTime,
                     inAnimFade, inFadeTargetAnim, inPos, inFlipH,
-                    inAge, inClothing );
+                    inAge, inHoldingSomething, inClothing );
     }
 
 

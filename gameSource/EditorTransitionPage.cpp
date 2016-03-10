@@ -591,7 +591,7 @@ static void drawTransObject( int inID, doublePair inPos ) {
             zoom = 256.0 / maxD;
             }
         
-        drawObject( getObject( inID ), inPos, 0, false, -1, 
+        drawObject( getObject( inID ), inPos, 0, false, -1, false, 
                     getEmptyClothingSet(), zoom );
         }
     }

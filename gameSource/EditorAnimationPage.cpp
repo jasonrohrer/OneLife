@@ -1006,6 +1006,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                 drawObjectAnim( mCurrentObjectID, 
                                 anim, frameTime, rotFrameTime, animFade, 
                                 fadeTargetAnim, pos, mFlipDraw, age,
+                                false,
                                 mClothingSet,
                                 obj->numSlots, demoSlots );
                 }
@@ -1013,16 +1014,17 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                 drawObjectAnim( mCurrentObjectID, 
                                 anim, frameTime, rotFrameTime, animFade, 
                                 fadeTargetAnim, pos, mFlipDraw, age,
+                                false,
                                 mClothingSet );
                 }
             }
         else {
             if( demoSlots != NULL ) {
-                drawObject( obj, pos, 0, mFlipDraw, age, mClothingSet,
+                drawObject( obj, pos, 0, mFlipDraw, age, false, mClothingSet,
                             obj->numSlots, demoSlots );
                 }
             else {
-                drawObject( obj, pos, 0, mFlipDraw, age, mClothingSet );
+                drawObject( obj, pos, 0, mFlipDraw, age, false, mClothingSet );
                 }
             }
         
