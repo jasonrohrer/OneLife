@@ -3185,3 +3185,10 @@ SpriteRecord *getSpriteRecord( int inSpriteID ) {
     return NULL;
     }
 
+
+
+char getSpriteHit( int inID, int inXCenterOffset, int inYCenterOffset ) {
+    return false;
+    }
+
+

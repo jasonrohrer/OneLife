@@ -982,6 +982,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 double age = o->age + 
                     o->ageRate * ( game_getCurrentTime() - o->lastAgeSetTime );
 
+                char holdingSomething = 
+                    ( o->holdingID != 0 );
+                
                 drawObjectAnim( o->displayID, curType, 
                                 timeVal, rotTimeVal,
                                 animFade,
@@ -989,6 +992,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 pos,
                                 o->holdingFlip,
                                 age,
+                                holdingSomething,
                                 o->clothing );
 
                 delete [] string;
@@ -1070,7 +1074,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                         heldAnimFade,
                                         fadeTargetHeldType,
                                         holdPos,
-                                        o->holdingFlip, -1,
+                                        o->holdingFlip, -1, false,
                                         getEmptyClothingSet() );
                         }
                     else {
@@ -1080,7 +1084,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                         fadeTargetHeldType,
                                         holdPos,
                                         o->holdingFlip,
-                                        -1,
+                                        -1, false,
                                         getEmptyClothingSet(),
                                         o->numContained,
                                         o->containedIDs );
@@ -1181,6 +1185,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                     fadeTargetType,
                                     pos, mMapTileFlips[ mapI ],
                                     -1,
+                                    false,
                                     getEmptyClothingSet(),
                                     mMapContainedStacks[ mapI ].size(),
                                     stackArray );
@@ -1192,6 +1197,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                     animFade,
                                     fadeTargetType, pos, 
                                     mMapTileFlips[ mapI ], -1,
+                                    false,
                                     getEmptyClothingSet() );
                     }
                 }
