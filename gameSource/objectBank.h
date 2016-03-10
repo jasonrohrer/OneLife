@@ -106,6 +106,11 @@ typedef struct ObjectRecord {
         // sprite, or -1 if this sprite doesn't follow the motion of another
         int *spriteParent;
 
+        // for person objects, should this sprite vanish when
+        // the person is holding something?
+        char *spriteInvisibleWhenHolding;
+        
+
         // index of special body parts (aging, attaching clothing)
         // these should be non-aging layers
         int headIndex;
@@ -193,6 +198,7 @@ int addObject( const char *inDescription,
                double *inSpriteAgeStart,
                double *inSpriteAgeEnd,
                int *inSpriteParent,
+               char *inSpriteInvisibleWhenHolding,
                int inHeadIndex,
                int inBodyIndex,
                int inBackFootIndex,

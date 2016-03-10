@@ -314,6 +314,8 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.spriteAgeEnd = new double[ 0 ];
     mCurrentObject.spriteParent = new int[ 0 ];
 
+    mCurrentObject.spriteInvisibleWhenHolding = new char[ 0 ];
+
 
     mCurrentObject.headIndex = 0;
     mCurrentObject.bodyIndex = 0;
@@ -422,6 +424,8 @@ EditorObjectPage::~EditorObjectPage() {
     delete [] mCurrentObject.spriteAgeStart;
     delete [] mCurrentObject.spriteAgeEnd;
     delete [] mCurrentObject.spriteParent;
+
+    delete [] mCurrentObject.spriteInvisibleWhenHolding;
 
 
     freeSprite( mSlotPlaceholderSprite );
@@ -670,6 +674,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteAgeStart,
                    mCurrentObject.spriteAgeEnd,
                    mCurrentObject.spriteParent,
+                   mCurrentObject.spriteInvisibleWhenHolding,
                    mCurrentObject.headIndex,
                    mCurrentObject.bodyIndex,
                    mCurrentObject.backFootIndex,
@@ -712,6 +717,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteAgeStart,
                    mCurrentObject.spriteAgeEnd,
                    mCurrentObject.spriteParent,
+                   mCurrentObject.spriteInvisibleWhenHolding,
                    mCurrentObject.headIndex,
                    mCurrentObject.bodyIndex,
                    mCurrentObject.backFootIndex,
@@ -793,6 +799,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         delete [] mCurrentObject.spriteParent;
         mCurrentObject.spriteParent = new int[ 0 ];
+
+        delete [] mCurrentObject.spriteInvisibleWhenHolding;
+        mCurrentObject.spriteInvisibleWhenHolding = new char[ 0 ];
 
 
         mCurrentObject.headIndex = 0;
@@ -1181,6 +1190,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             int *newSpriteParent = new int[ newNumSprites ];
             memcpy( newSpriteParent, mCurrentObject.spriteParent, 
                     mCurrentObject.numSprites * sizeof( int ) );
+
+            char *newSpriteInvisibleWhenHolding = new char[ newNumSprites ];
+            memcpy( newSpriteInvisibleWhenHolding, 
+                    mCurrentObject.spriteInvisibleWhenHolding, 
+                    mCurrentObject.numSprites * sizeof( char ) );
         
 
             newSprites[ mCurrentObject.numSprites ] = spriteID;
@@ -1211,6 +1225,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] mCurrentObject.spriteAgeStart;
             delete [] mCurrentObject.spriteAgeEnd;
             delete [] mCurrentObject.spriteParent;
+            
+            delete [] mCurrentObject.spriteInvisibleWhenHolding;
                         
 
             mCurrentObject.sprites = newSprites;
@@ -1222,6 +1238,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.spriteAgeStart = newSpriteAgeStart;
             mCurrentObject.spriteAgeEnd = newSpriteAgeEnd;
             mCurrentObject.spriteParent = newSpriteParent;
+
+            mCurrentObject.spriteInvisibleWhenHolding = 
+                newSpriteInvisibleWhenHolding;
 
             mCurrentObject.numSprites = newNumSprites;
             
@@ -1272,6 +1291,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] mCurrentObject.spriteAgeStart;
             delete [] mCurrentObject.spriteAgeEnd;
             delete [] mCurrentObject.spriteParent;
+            delete [] mCurrentObject.spriteInvisibleWhenHolding;
 
 
             mCurrentObject.id = objectID;
@@ -1344,6 +1364,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.spriteParent = 
                 new int[ pickedRecord->numSprites ];
 
+            mCurrentObject.spriteInvisibleWhenHolding = 
+                new char[ pickedRecord->numSprites ];
+
 
             memcpy( mCurrentObject.sprites, pickedRecord->sprites,
                     sizeof( int ) * pickedRecord->numSprites );
@@ -1370,6 +1393,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             memcpy( mCurrentObject.spriteParent, 
                     pickedRecord->spriteParent,
                     sizeof( int ) * pickedRecord->numSprites );
+            memcpy( mCurrentObject.spriteInvisibleWhenHolding, 
+                    pickedRecord->spriteInvisibleWhenHolding,
+                    sizeof( char ) * pickedRecord->numSprites );
             
 
             mCurrentObject.headIndex = pickedRecord->headIndex;
@@ -2016,6 +2042,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     double *newSpriteAgeStart = new double[ newNumSprites ];
     double *newSpriteAgeEnd = new double[ newNumSprites ];
     int *newSpriteParent = new int[ newNumSprites ];
+    char *newSpriteInvisibleWhenHolding = new char[ newNumSprites ];
 
     int j = 0;
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
@@ -2030,6 +2057,8 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
             newSpriteAgeStart[j] = mCurrentObject.spriteAgeStart[i];
             newSpriteAgeEnd[j] = mCurrentObject.spriteAgeEnd[i];
             newSpriteParent[j] = mCurrentObject.spriteParent[i];
+            newSpriteInvisibleWhenHolding[j] = 
+                mCurrentObject.spriteInvisibleWhenHolding[i];
             j++;
             }
         }
@@ -2043,6 +2072,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     delete [] mCurrentObject.spriteAgeStart;
     delete [] mCurrentObject.spriteAgeEnd;
     delete [] mCurrentObject.spriteParent;
+    delete [] mCurrentObject.spriteInvisibleWhenHolding;
             
     mCurrentObject.sprites = newSprites;
     mCurrentObject.spritePos = newSpritePos;
@@ -2052,6 +2082,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     mCurrentObject.spriteAgeStart = newSpriteAgeStart;
     mCurrentObject.spriteAgeEnd = newSpriteAgeEnd;
     mCurrentObject.spriteParent = newSpriteParent;
+    mCurrentObject.spriteInvisibleWhenHolding = newSpriteInvisibleWhenHolding;
     
     mCurrentObject.numSprites = newNumSprites;
     }
@@ -2448,6 +2479,19 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
 
 
 
+        char *newSpriteInvisibleWhenHolding = new char[ newNumSprites ];
+        
+        memcpy( newSpriteInvisibleWhenHolding, 
+                mCurrentObject.spriteInvisibleWhenHolding, 
+                mPickedObjectLayer * sizeof( char ) );
+        
+        memcpy( &( newSpriteInvisibleWhenHolding[mPickedObjectLayer] ), 
+                &( mCurrentObject.
+                     spriteInvisibleWhenHolding[mPickedObjectLayer+1] ), 
+                (newNumSprites - mPickedObjectLayer ) * sizeof( char ) );
+
+
+
 
         delete [] mCurrentObject.sprites;
         delete [] mCurrentObject.spritePos;
@@ -2457,6 +2501,7 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         delete [] mCurrentObject.spriteAgeStart;
         delete [] mCurrentObject.spriteAgeEnd;
         delete [] mCurrentObject.spriteParent;
+        delete [] mCurrentObject.spriteInvisibleWhenHolding;
             
         mCurrentObject.sprites = newSprites;
         mCurrentObject.spritePos = newSpritePos;
@@ -2466,6 +2511,8 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         mCurrentObject.spriteAgeStart = newSpriteAgeStart;
         mCurrentObject.spriteAgeEnd = newSpriteAgeEnd;
         mCurrentObject.spriteParent = newSpriteParent;
+        mCurrentObject.spriteInvisibleWhenHolding = 
+            newSpriteInvisibleWhenHolding;
         
         mCurrentObject.numSprites = newNumSprites;
         
@@ -2681,6 +2728,11 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                     int tempParent = 
                         mCurrentObject.spriteParent[mPickedObjectLayer + 
                                                     layerOffset];
+                    
+                    char tempInvisibleWhenHolding = 
+                        mCurrentObject.spriteInvisibleWhenHolding[
+                            mPickedObjectLayer + 
+                            layerOffset];
 
                     mCurrentObject.sprites[mPickedObjectLayer + layerOffset]
                         = mCurrentObject.sprites[mPickedObjectLayer];
@@ -2723,6 +2775,15 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                             mPickedObjectLayer];
                     mCurrentObject.spriteParent[mPickedObjectLayer] = 
                         tempParent;
+
+
+                    mCurrentObject.spriteInvisibleWhenHolding[
+                        mPickedObjectLayer 
+                        + layerOffset]
+                        = mCurrentObject.spriteInvisibleWhenHolding[
+                            mPickedObjectLayer];
+                    mCurrentObject.spriteInvisibleWhenHolding[
+                        mPickedObjectLayer] = tempInvisibleWhenHolding;
                 
                     
                     mPickedObjectLayer += layerOffset;
@@ -2805,7 +2866,11 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                     int tempParent = 
                         mCurrentObject.spriteParent[mPickedObjectLayer - 
                                                     layerOffset];
-
+                    
+                    char tempInvisibleWhenHolding = 
+                        mCurrentObject.spriteInvisibleWhenHolding[
+                            mPickedObjectLayer - 
+                            layerOffset];
 
                     mCurrentObject.sprites[mPickedObjectLayer - layerOffset]
                         = mCurrentObject.sprites[mPickedObjectLayer];
@@ -2850,6 +2915,14 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                     mCurrentObject.spriteParent[mPickedObjectLayer] = 
                         tempParent;
 
+                    
+                    mCurrentObject.spriteInvisibleWhenHolding[
+                        mPickedObjectLayer 
+                        - layerOffset]
+                        = mCurrentObject.spriteInvisibleWhenHolding[
+                            mPickedObjectLayer];
+                    mCurrentObject.spriteInvisibleWhenHolding[
+                        mPickedObjectLayer] = tempInvisibleWhenHolding;
 
 
                     mPickedObjectLayer -= layerOffset;

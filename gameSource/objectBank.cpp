@@ -291,6 +291,7 @@ float initObjectBankStep() {
                     r->spriteAgeEnd = new double[ r->numSprites ];
 
                     r->spriteParent = new int[ r->numSprites ];
+                    r->spriteInvisibleWhenHolding = new char[ r->numSprites ];
                     
                     for( int i=0; i< r->numSprites; i++ ) {
                         sscanf( lines[next], "spriteID=%d", 
@@ -309,7 +310,7 @@ float initObjectBankStep() {
                                 
                         next++;
                                 
-                                
+                        
                         int flipRead = 0;
                                 
                         sscanf( lines[next], "hFlip=%d", &flipRead );
@@ -337,6 +338,15 @@ float initObjectBankStep() {
                         sscanf( lines[next], "parent=%d", 
                                 &( r->spriteParent[i] ) );
                         
+                        next++;
+
+
+                        int invisRead = 0;
+                                
+                        sscanf( lines[next], "invisHolding=%d", &invisRead );
+                                
+                        r->spriteInvisibleWhenHolding[i] = invisRead;
+                                
                         next++;
                         }
 
@@ -450,6 +460,8 @@ static void freeObjectRecord( int inID ) {
             delete [] idMap[inID]->spriteAgeStart;
             delete [] idMap[inID]->spriteAgeEnd;
             delete [] idMap[inID]->spriteParent;
+
+            delete [] idMap[inID]->spriteInvisibleWhenHolding;
             
             delete idMap[inID];
             idMap[inID] = NULL;
@@ -479,6 +491,8 @@ void freeObjectBank() {
             delete [] idMap[i]->spriteAgeStart;
             delete [] idMap[i]->spriteAgeEnd;
             delete [] idMap[i]->spriteParent;
+
+            delete [] idMap[i]->spriteInvisibleWhenHolding;
 
             delete idMap[i];
             }
@@ -521,6 +535,7 @@ void resaveAll() {
                        idMap[i]->spriteAgeStart,
                        idMap[i]->spriteAgeEnd,
                        idMap[i]->spriteParent,
+                       idMap[i]->spriteInvisibleWhenHolding,
                        idMap[i]->headIndex,
                        idMap[i]->bodyIndex,
                        idMap[i]->backFootIndex,
@@ -630,6 +645,7 @@ int addObject( const char *inDescription,
                double *inSpriteAgeStart,
                double *inSpriteAgeEnd,
                int *inSpriteParent,
+               char *inSpriteInvisibleWhenHolding,
                int inHeadIndex,
                int inBodyIndex,
                int inBackFootIndex,
@@ -744,6 +760,10 @@ int addObject( const char *inDescription,
 
             lines.push_back( autoSprintf( "parent=%d", 
                                           inSpriteParent[i] ) );
+
+
+            lines.push_back( autoSprintf( "invisHolding=%d", 
+                                          inSpriteInvisibleWhenHolding[i] ) );
             }
         
 
@@ -863,6 +883,7 @@ int addObject( const char *inDescription,
     r->spriteAgeEnd = new double[ inNumSprites ];
     
     r->spriteParent = new int[ inNumSprites ];
+    r->spriteInvisibleWhenHolding = new char[ inNumSprites ];
 
 
     memcpy( r->sprites, inSprites, inNumSprites * sizeof( int ) );
@@ -879,6 +900,9 @@ int addObject( const char *inDescription,
 
     memcpy( r->spriteParent, inSpriteParent, 
             inNumSprites * sizeof( int ) );
+
+    memcpy( r->spriteInvisibleWhenHolding, inSpriteInvisibleWhenHolding, 
+            inNumSprites * sizeof( char ) );
     
     r->headIndex = inHeadIndex;
     r->bodyIndex = inBodyIndex;
