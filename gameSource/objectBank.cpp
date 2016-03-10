@@ -291,8 +291,6 @@ float initObjectBankStep() {
                     r->spriteAgeEnd = new double[ r->numSprites ];
 
                     r->spriteParent = new int[ r->numSprites ];
-
-                    r->numNonAgingSprites = 0;
                     
                     for( int i=0; i< r->numSprites; i++ ) {
                         sscanf( lines[next], "spriteID=%d", 
@@ -334,13 +332,6 @@ float initObjectBankStep() {
                                 &( r->spriteAgeEnd[i] ) );
                                 
                         next++;
-                        
-
-                        if( r->spriteAgeStart[i] == -1  &&
-                            r->spriteAgeEnd[i] == -1 ) {
-                            
-                            r->numNonAgingSprites ++;
-                            }
                         
 
                         sscanf( lines[next], "parent=%d", 
@@ -889,22 +880,10 @@ int addObject( const char *inDescription,
     memcpy( r->spriteParent, inSpriteParent, 
             inNumSprites * sizeof( int ) );
     
-    r->numNonAgingSprites = 0;
-
     r->headIndex = inHeadIndex;
     r->bodyIndex = inBodyIndex;
     r->backFootIndex = inBackFootIndex;
-    r->frontFootIndex = inFrontFootIndex;
-    
-    for( int i=0; i<inNumSprites; i++ ) {
-
-        if( r->spriteAgeStart[i] == -1  &&
-            r->spriteAgeEnd[i] == -1 ) {
-            
-            r->numNonAgingSprites ++;
-            }
-        }
-    
+    r->frontFootIndex = inFrontFootIndex;    
 
 
 

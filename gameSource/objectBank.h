@@ -106,9 +106,6 @@ typedef struct ObjectRecord {
         // sprite, or -1 if this sprite doesn't follow the motion of another
         int *spriteParent;
 
-        // count of sprites that span entire life
-        int numNonAgingSprites;
-
         // index of special body parts (aging, attaching clothing)
         // these should be non-aging layers
         int headIndex;

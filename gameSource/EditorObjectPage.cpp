@@ -321,7 +321,6 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.frontFootIndex = 0;
     
 
-    mCurrentObject.numNonAgingSprites = 0;
     mCurrentObject.headIndex = 0;
     
 
@@ -476,21 +475,6 @@ void EditorObjectPage::updateSliderColors() {
 
     mValueSlider.setBackFillColor( *totalColor );
     delete totalColor;
-    }
-
-
-
-void EditorObjectPage::recomputeNumNonAgingSprites() {
-    mCurrentObject.numNonAgingSprites = 0;
-    
-    for( int i=0; i<mCurrentObject.numSprites; i++ ) {
-        
-        if( mCurrentObject.spriteAgeStart[i] == -1 &&
-            mCurrentObject.spriteAgeEnd[i] == -1 ) {
-            
-            mCurrentObject.numNonAgingSprites ++;
-            }
-        }
     }
 
 
@@ -818,9 +802,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         
 
-        recomputeNumNonAgingSprites();
-        
-
         mSaveObjectButton.setVisible( false );
         mReplaceObjectButton.setVisible( false );
         mClearObjectButton.setVisible( false );
@@ -1033,14 +1014,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         if( mAgingLayerCheckbox.getToggled() ) {
             mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] = 0;
             mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] = 999;
-            
-            recomputeNumNonAgingSprites();
             }
         else {
             mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] = -1;
             mCurrentObject.spriteAgeEnd[ mPickedObjectLayer ] = -1;
-            
-            recomputeNumNonAgingSprites();
             }
         updateAgingPanel();
         }
@@ -1247,8 +1224,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.spriteParent = newSpriteParent;
 
             mCurrentObject.numSprites = newNumSprites;
-
-            recomputeNumNonAgingSprites();
             
 
             mClearObjectButton.setVisible( true );
@@ -1402,8 +1377,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.backFootIndex = pickedRecord->backFootIndex;
             mCurrentObject.frontFootIndex = pickedRecord->frontFootIndex;
 
-
-            recomputeNumNonAgingSprites();
             
             mSaveObjectButton.setVisible( true );
             mReplaceObjectButton.setVisible( true );
@@ -2081,8 +2054,6 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     mCurrentObject.spriteParent = newSpriteParent;
     
     mCurrentObject.numSprites = newNumSprites;
-
-    recomputeNumNonAgingSprites();
     }
 
 
@@ -2250,8 +2221,7 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
         }
     
     
-    double smallestDist = 
-        getClosestSpriteOrSlot( inX, inY, &mPickedObjectLayer, &mPickedSlot );
+    getClosestSpriteOrSlot( inX, inY, &mPickedObjectLayer, &mPickedSlot );
     
     pickedLayerChanged();
     
@@ -2498,8 +2468,6 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         mCurrentObject.spriteParent = newSpriteParent;
         
         mCurrentObject.numSprites = newNumSprites;
-
-        recomputeNumNonAgingSprites();
         
 
         for( int i=0; i<mCurrentObject.numSprites; i++ ) {
@@ -2759,8 +2727,6 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                     
                     mPickedObjectLayer += layerOffset;
                     
-                    recomputeNumNonAgingSprites();
-                    
                     // any children pointing to index A must now
                     // point to B and vice-versa
                     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
@@ -2887,8 +2853,6 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
 
 
                     mPickedObjectLayer -= layerOffset;
-                    recomputeNumNonAgingSprites();
-
 
                     // any children pointing to index A must now
                     // point to B and vice-versa
