@@ -1233,7 +1233,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         
         speechPos.x -= width / 2;
-        speechPos.y += 54;
+        speechPos.y += 130;
         
         drawChalkBackgroundString( speechPos, o->currentSpeech, 
                                    o->speechFade, widthLimit );
