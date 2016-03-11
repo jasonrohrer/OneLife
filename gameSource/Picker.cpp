@@ -11,6 +11,9 @@
 
 #include "minorGems/io/file/FileInputStream.h"
 
+#include "minorGems/game/game.h"
+
+
 
 
 #define PER_PAGE 5
@@ -33,7 +36,8 @@ Picker::Picker( Pickable *inPickable, double inX, double inY )
                         0,  100, 4,
                         false,
                         "", NULL, " " ),
-          mSelectionIndex( -1 ) {
+          mSelectionIndex( -1 ),
+          mSelectionRightClicked( false ) {
 
     addComponent( &mNextButton );
     addComponent( &mPrevButton );
@@ -91,7 +95,8 @@ void Picker::redoSearch() {
 
     int oldSelection = mSelectionIndex;
     mSelectionIndex = -1;
-
+    mSelectionRightClicked = false;
+    
     if( oldSelection != mSelectionIndex ) {
         fireActionPerformed( this );
         }
@@ -191,14 +196,17 @@ void Picker::pointerUp( float inX, float inY ) {
         
         int oldSelection = mSelectionIndex;
         
- 
+        mSelectionRightClicked = isLastMouseButtonRight();
+        
         mSelectionIndex = (int)( inY / 64 );
         
         if( mSelectionIndex >= mNumResults ) {
             mSelectionIndex = -1;
+            mSelectionRightClicked = false;
             }
         if( mSelectionIndex < 0 ) {
             mSelectionIndex = -1;
+            mSelectionRightClicked = false;
             }
 
         
@@ -227,7 +235,11 @@ void Picker::pointerUp( float inX, float inY ) {
 
 
 
-int Picker::getSelectedObject() {
+int Picker::getSelectedObject( char *inWasRightClick ) {
+    if( inWasRightClick != NULL ) {
+        *inWasRightClick = mSelectionRightClicked;
+        }
+    
     if( mSelectionIndex == -1 ) {
         return -1;
         }
@@ -239,6 +251,7 @@ int Picker::getSelectedObject() {
 
 void Picker::unselectObject() {
     mSelectionIndex = -1;
+    mSelectionRightClicked = false;
     
     mDelButton.setVisible( false );
     mDelConfirmButton.setVisible( false );

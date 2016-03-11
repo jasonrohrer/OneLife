@@ -33,7 +33,8 @@ void addKeyClassDescription( KeyLegend *inLegend,
 
 
 
-void drawKeyLegend( KeyLegend *inLegend, doublePair inPos ) {
+void drawKeyLegend( KeyLegend *inLegend, doublePair inPos,
+                    TextAlignment inAlign ) {
     setDrawColor( 1, 1, 1, 1 );
     
     int numKeys = inLegend->keys.size();
@@ -55,7 +56,7 @@ void drawKeyLegend( KeyLegend *inLegend, doublePair inPos ) {
             string = autoSprintf( "%c = %s", key, description );
             }
 
-        smallFont->drawString( string, inPos, alignLeft );
+        smallFont->drawString( string, inPos, inAlign );
 
         delete [] string;
 

@@ -4,6 +4,7 @@
 
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/game/doublePair.h"
+#include "minorGems/game/Font.h"
 
 
 
@@ -30,7 +31,8 @@ void addKeyClassDescription( KeyLegend *inLegend,
                              const char *inDescription );
 
 
-void drawKeyLegend( KeyLegend *inLegend, doublePair inPos );
+void drawKeyLegend( KeyLegend *inLegend, doublePair inPos, 
+                    TextAlignment inAlign = alignLeft );
 
 
 #endif

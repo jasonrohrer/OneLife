@@ -27,7 +27,8 @@ class Picker : public PageComponent, ActionListener,
 
 
         // -1 if none picked
-        int getSelectedObject();
+        // pass pointer to a char if you care about right-vs-left clicks
+        int getSelectedObject( char *inWasRightClick=NULL );
 
         void unselectObject();
         
@@ -61,7 +62,8 @@ class Picker : public PageComponent, ActionListener,
         TextField mSearchField;
         
         int mSelectionIndex;
-
+        
+        char mSelectionRightClicked;
     };
 
 

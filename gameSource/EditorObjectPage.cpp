@@ -407,6 +407,9 @@ EditorObjectPage::EditorObjectPage()
     addKeyClassDescription( &mKeyLegendB, "Bkspce", "Remv layer" );
 
 
+    addKeyClassDescription( &mKeyLegendC, "R-Click", "Replace layer" );
+    
+
     mColorClipboard.r = 1;
     mColorClipboard.g = 1;
     mColorClipboard.b = 1;
@@ -1168,9 +1171,16 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }
         
 
-        int spriteID = mSpritePicker.getSelectedObject();
+        char rightClick = false;
         
-        if( spriteID != -1 ) {            
+        int spriteID = mSpritePicker.getSelectedObject( &rightClick );
+        
+
+        if( spriteID != -1 && mPickedObjectLayer != -1 && rightClick ) {
+            // replace the current layer
+            mCurrentObject.sprites[ mPickedObjectLayer ] = spriteID;
+            }
+        else if( spriteID != -1 ) {
 
             int newNumSprites = mCurrentObject.numSprites + 1;
             
@@ -1988,6 +1998,15 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     legendPos.y += 20;
     
     drawKeyLegend( &mKeyLegendB, legendPos );
+
+
+    if( mPickedObjectLayer != -1 ) {
+        legendPos = mSpritePicker.getPosition();
+        legendPos.y -= 255;
+
+        drawKeyLegend( &mKeyLegendC, legendPos, alignCenter );
+        }
+    
     }
 
 
