@@ -1321,6 +1321,13 @@ void EditorAnimationPage::clearUseOfObject( int inObjectID ) {
 
 void EditorAnimationPage::objectLayersChanged( int inObjectID ) {
     if( mCurrentObjectID == inObjectID ) {
+
+        mCurrentSpriteOrSlot = 0;
+                
+        clearClothing();
+                
+        checkNextPrevVisible();
+        
         populateCurrentAnim();
         }
     }

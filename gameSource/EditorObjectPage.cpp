@@ -32,6 +32,11 @@ static SpritePickable spritePickable;
 static ObjectPickable objectPickable;
 
 
+#include "EditorAnimationPage.h"
+
+extern EditorAnimationPage *animPage;
+
+
 
 EditorObjectPage::EditorObjectPage()
         : mDescriptionField( mainFont, 
@@ -704,6 +709,18 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mReplaceObjectButton ) {
         char *text = mDescriptionField.getText();
+        
+        ObjectRecord *oldObject = getObject( mCurrentObject.id );
+                
+        int oldNumSprites = 0;
+        int oldNumSlots = 0;
+        
+
+        if( oldObject != NULL ) {
+            oldNumSprites = oldObject->numSprites;
+            oldNumSlots = oldObject->numSlots;
+            }
+                
 
         addObject( text,
                    mCheckboxes[0]->getToggled(),
@@ -744,6 +761,15 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mSpritePicker.unselectObject();
         
         mObjectPicker.redoSearch();
+        
+        
+        if( mCurrentObject.numSprites != oldNumSprites ||
+            mCurrentObject.numSlots != oldNumSlots ) {
+                    
+            animPage->objectLayersChanged( mCurrentObject.id );
+            }    
+
+
         actionPerformed( &mClearObjectButton );
         }
     else if( inTarget == &mClearObjectButton ) {
