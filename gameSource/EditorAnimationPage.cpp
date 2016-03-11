@@ -1308,3 +1308,20 @@ void EditorAnimationPage::specialKeyDown( int inKeyCode ) {
 
 
 
+
+
+void EditorAnimationPage::clearUseOfObject( int inObjectID ) {
+    if( mCurrentObjectID == inObjectID ) {
+        mCurrentObjectID = -1;
+        freeCurrentAnim();
+        }
+    }
+
+
+
+void EditorAnimationPage::objectLayersChanged( int inObjectID ) {
+    if( mCurrentObjectID == inObjectID ) {
+        populateCurrentAnim();
+        }
+    }
+

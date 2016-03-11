@@ -38,6 +38,11 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
         void clearClothing();
         
+        void clearUseOfObject( int inObjectID );
+
+        void objectLayersChanged( int inObjectID );
+        
+
         virtual void actionPerformed( GUIComponent *inTarget );
         
         virtual void drawUnderComponents( doublePair inViewCenter, 

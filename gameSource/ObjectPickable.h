@@ -14,6 +14,11 @@
 
 extern EditorTransitionPage *transPage;
 
+#include "EditorAnimationPage.h"
+
+extern EditorAnimationPage *animPage;
+
+
 
 class ObjectPickable : public Pickable {
         
@@ -63,6 +68,7 @@ class ObjectPickable : public Pickable {
         
         virtual void deleteID( int inID ) {
             transPage->clearUseOfObject( inID );
+            animPage->clearUseOfObject( inID );
             deleteObjectFromBank( inID );
             }
 
