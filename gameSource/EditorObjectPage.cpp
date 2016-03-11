@@ -2741,19 +2741,28 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
     
     if( mPickedObjectLayer != -1 ) {
         
+        doublePair delta = { 0, 0 };
         
         switch( inKeyCode ) {
             case MG_KEY_LEFT:
                 mCurrentObject.spritePos[mPickedObjectLayer].x -= offset;
+                delta.x = -offset;
+                recursiveMove( &mCurrentObject, mPickedObjectLayer, delta );
                 break;
             case MG_KEY_RIGHT:
                 mCurrentObject.spritePos[mPickedObjectLayer].x += offset;
+                delta.x = +offset;
+                recursiveMove( &mCurrentObject, mPickedObjectLayer, delta );
                 break;
             case MG_KEY_DOWN:
                 mCurrentObject.spritePos[mPickedObjectLayer].y -= offset;
+                delta.y = -offset;
+                recursiveMove( &mCurrentObject, mPickedObjectLayer, delta );
                 break;
             case MG_KEY_UP:
                 mCurrentObject.spritePos[mPickedObjectLayer].y += offset;
+                delta.y = +offset;
+                recursiveMove( &mCurrentObject, mPickedObjectLayer, delta );
                 break;
             case MG_KEY_PAGE_UP:  {
                 int layerOffset = offset;
