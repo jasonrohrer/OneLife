@@ -1,5 +1,7 @@
 #include "ageControl.h"
 
+#include <math.h>
+
 doublePair getAgeHeadOffset( double inAge, doublePair inHeadSpritePos,
                              doublePair inBodySpritePos,
                              doublePair inFrontFootSpritePos ) {
@@ -14,7 +16,7 @@ doublePair getAgeHeadOffset( double inAge, doublePair inHeadSpritePos,
         double yOffset = ( ( 20 - inAge ) / 20 ) * .40 * maxHead;
         
         
-        return (doublePair){ 0, -yOffset };
+        return (doublePair){ 0, lrint( -yOffset ) };
         }
     
 
@@ -33,7 +35,7 @@ doublePair getAgeHeadOffset( double inAge, doublePair inHeadSpritePos,
         
         double forwardOffset = ( ( inAge - 40 ) / 20 ) * 2 * footOffset;
 
-        return (doublePair){ forwardOffset, -vertOffset };
+        return (doublePair){ lrint( forwardOffset ), lrint( -vertOffset ) };
         }
 
     return (doublePair){ 0, 0 };
@@ -53,7 +55,7 @@ doublePair getAgeBodyOffset( double inAge, doublePair inBodySpritePos ) {
         double yOffset = ( ( 20 - inAge ) / 20 ) * .75 * maxBody;
         
         
-        return (doublePair){ 0, -yOffset };
+        return (doublePair){ 0, lrint( -yOffset ) };
         }
 
     return (doublePair){ 0, 0 };
