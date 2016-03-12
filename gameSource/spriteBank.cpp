@@ -48,6 +48,39 @@ void initSpriteBankStart() {
     }
 
 
+
+
+// expands true regions by making neighbor pixels true also
+void expandMap( char *inMap, int inW, int inH ) {
+    int numPixels = inW * inH;
+    
+    char *copy = new char[ numPixels ];
+    
+    memcpy( copy, inMap, numPixels );
+    
+    // avoid edges
+    for( int y = 1; y < inH-1; y++ ) {
+        for( int x = 1; x < inW-1; x++ ) {
+            int index = y * inW + x;
+            
+            if( copy[index] ) {
+                // make neighbors true also
+
+                inMap[index-1] = true;
+                inMap[index+1] = true;
+
+                inMap[index-inW] = true;
+                inMap[index+inW] = true;                
+                }
+            }
+        }
+    
+    delete [] copy;
+    }
+
+
+
+
 float initSpriteBankStep() {
     
     if( currentFile == numFiles ) {
@@ -109,7 +142,10 @@ float initSpriteBankStep() {
                                     }
                                 }
                             }
-                                                
+                                 
+                        for( int e=0; e<3; e++ ) {    
+                            expandMap( r->hitMap, r->w, r->h );
+                            }
                         
                         delete spriteImage;
                         
@@ -423,8 +459,12 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
                 }
             }
         }
-
-
+    
+    for( int e=0; e<3; e++ ) {    
+        expandMap( r->hitMap, r->w, r->h );
+        }
+    
+    
     // delete old
     freeSpriteRecord( newID );
     
