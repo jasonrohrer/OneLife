@@ -219,6 +219,7 @@ class LivingLifePage : public GamePage {
         SpriteHandle mFoodEmptySprite;
         SpriteHandle mFoodFullSprite;
         
+        SpriteHandle mGroundSprite;
 
         int mLastMouseOverID;
         int mCurMouseOverID;

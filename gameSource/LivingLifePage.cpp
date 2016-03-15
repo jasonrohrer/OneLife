@@ -455,6 +455,7 @@ LivingLifePage::LivingLifePage()
           mEKeyDown( false ),
           mFoodEmptySprite( loadSprite( "hungerEmpty.tga", false ) ),
           mFoodFullSprite( loadSprite( "hungerFull.tga", false ) ),
+          mGroundSprite( loadSprite( "ground512.tga", false ) ),
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
           mLastMouseOverFade( 0.0 ),
@@ -739,6 +740,22 @@ void LivingLifePage::draw( doublePair inViewCenter,
     setDrawColor( 1, 1, 1, 1 );
     drawSquare( lastScreenViewCenter, viewWidth );
     
+    doublePair groundCenterPos;
+    
+    groundCenterPos.x = lrint( lastScreenViewCenter.x / 512 ) * 512;
+    groundCenterPos.y = lrint( lastScreenViewCenter.y / 512 ) * 512;
+
+    for( int y=-2; y<=2; y++ ) {
+        doublePair pos = groundCenterPos;
+        pos.y = groundCenterPos.y + y * 512;
+        
+        for( int x=-3; x<=3; x++ ) {
+            pos.x = groundCenterPos.x + x * 512;
+            drawSprite( mGroundSprite, pos );
+            }
+        }
+    
+
     //if( currentGamePage != NULL ) {
     //    currentGamePage->base_draw( lastScreenViewCenter, viewWidth );
     //    }

@@ -42,6 +42,7 @@ graphics/font_32_64.tga \
 graphics/hungerFull.tga \
 graphics/hungerEmpty.tga \
 graphics/chalkBlot.tga \
+graphics/ground512.tga \
 
 
 NEEDED_MINOR_GEMS_OBJECTS = \
