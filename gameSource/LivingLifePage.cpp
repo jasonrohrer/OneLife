@@ -921,8 +921,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         }
                     
                     double offset =
-                        8 - 
-                        8 * 
+                        32 - 
+                        32 * 
                         cos( 2 * M_PI * o->pendingActionAnimationProgress );
                     
                     
@@ -2938,7 +2938,7 @@ void LivingLifePage::step() {
         if( o->id == ourID &&
             ( o->pendingAction || o->pendingActionAnimationProgress != 0 ) ) {
             
-            o->pendingActionAnimationProgress += 0.05 * frameRateFactor;
+            o->pendingActionAnimationProgress += 0.025 * frameRateFactor;
             
             if( o->pendingActionAnimationProgress > 1 ) {
                 if( o->pendingAction ) {
@@ -2977,7 +2977,7 @@ void LivingLifePage::step() {
             // start on first frame to force at least one cycle no
             // matter how fast the server responds
             ourLiveObject->pendingActionAnimationProgress = 
-                0.05 * frameRateFactor;
+                0.025 * frameRateFactor;
             }
         
         
