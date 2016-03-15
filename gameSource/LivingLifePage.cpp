@@ -807,6 +807,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
     // (probably only our own destination), so don't fix this for now
 
     // draw paths and destinations under everything
+    
+    // debug overlay
+    if( false )
     for( int i=0; i<gameObjects.size(); i++ ) {
         
         LiveObject *o = gameObjects.getElement( i );
@@ -1246,8 +1249,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
     setDrawColor( 0, 1, 0, 1 );
     
-    mainFont->drawString( "X", 
-                          lastChunkCenter, alignCenter );
+    // debug overlay
+    //mainFont->drawString( "X", 
+    //                      lastChunkCenter, alignCenter );
     
     
 
@@ -1269,6 +1273,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int screenGridOffsetX = lrint( lastScreenViewCenter.x / CELL_D );
     int screenGridOffsetY = lrint( lastScreenViewCenter.y / CELL_D );
     
+    // debug overlay
+    if( false )
     for( int y=-5; y<=5; y++ ) {
         for( int x=-8; x<=8; x++ ) {
             
