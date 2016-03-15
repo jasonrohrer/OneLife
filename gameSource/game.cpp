@@ -83,8 +83,8 @@ doublePair lastScreenViewCenter = {0, 0 };
 
 
 // world width of one view
-double viewWidth = 1920;
-double viewHeight = 1080;
+double viewWidth = 1280;
+double viewHeight = 720;
 
 
 // this is the desired visible width
@@ -1039,7 +1039,7 @@ void drawFrameNoUpdate( char inUpdate ) {
     // add letterboxes
     
     // red for now, testing
-    setDrawColor( 1, 0, 0, 0.75 );
+    setDrawColor( 0, 0, 0, 1.00 );
     drawRect( lastScreenViewCenter.x - viewWidth, 
               lastScreenViewCenter.y - viewHeight,
               lastScreenViewCenter.x - visibleViewWidth / 2, 
