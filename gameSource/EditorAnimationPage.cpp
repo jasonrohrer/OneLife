@@ -26,6 +26,7 @@ extern double frameRateFactor;
 
 static ObjectPickable objectPickable;
 
+extern double defaultAge;
 
 
 EditorAnimationPage::EditorAnimationPage()
@@ -748,7 +749,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 populateCurrentAnim();
 
                 if( getObject( mCurrentObjectID )->person ) {
-                    mPersonAgeSlider.setValue( 20 );
+                    mPersonAgeSlider.setValue( defaultAge );
                     mPersonAgeSlider.setVisible( true );
                     }
                 else {

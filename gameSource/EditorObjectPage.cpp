@@ -37,6 +37,9 @@ static ObjectPickable objectPickable;
 extern EditorAnimationPage *animPage;
 
 
+double defaultAge = 0;
+
+
 
 EditorObjectPage::EditorObjectPage()
         : mDescriptionField( mainFont, 
@@ -1001,7 +1004,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mSetHeldPosButton.setVisible( false );
             mEndSetHeldPosButton.setVisible( true );
             
-            mPersonAgeSlider.setValue( 20 );
+            mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
             }
         }
@@ -1013,7 +1016,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mEndSetHeldPosButton.setVisible( false );
 
         if( mCheckboxes[2]->getToggled() ) {
-            mPersonAgeSlider.setValue( 20 );
+            mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
             }
         else {
@@ -1038,7 +1041,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mSetHeldPosButton.setVisible( false );
             mEndSetHeldPosButton.setVisible( false );
 
-            mPersonAgeSlider.setValue( 20 );
+            mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
             }
         }
@@ -1050,7 +1053,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mEndClothesDemoButton.setVisible( false );
 
         if( mCheckboxes[2]->getToggled() ) {
-            mPersonAgeSlider.setValue( 20 );
+            mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
             }
         else {
@@ -1486,7 +1489,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mDeathMarkerCheckbox.setToggled( pickedRecord->deathMarker );
             
             if( mCheckboxes[2]->getToggled() ) {
-                mPersonAgeSlider.setValue( 20 );
+                mPersonAgeSlider.setValue( defaultAge );
                 mPersonAgeSlider.setVisible( true );
                 mSetHeldPosButton.setVisible( false );
                 }
@@ -1535,7 +1538,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == mCheckboxes[2] ) {
         if( mCheckboxes[2]->getToggled() ) {
-            mPersonAgeSlider.setValue( 20 );
+            mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
             mSetHeldPosButton.setVisible( false );
 
