@@ -152,7 +152,7 @@ char isNonIntegerScalingAllowed() {
 
 
 const char *getWindowTitle() {
-    return "One Dollar One Hour One Life";
+    return "OneLife";
     }
 
 
