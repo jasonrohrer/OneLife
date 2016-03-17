@@ -1,1 +1,3 @@
-dnotify . -e make outline.dvi
+while inotifywait . ; do
+    make outline.dvi
+done
