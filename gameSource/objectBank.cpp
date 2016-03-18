@@ -1231,6 +1231,21 @@ int getRandomPersonObject() {
     }
 
 
+int getRandomDeathMarker() {
+
+
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            if( idMap[i]->deathMarker ) {
+                return i;
+                }
+            }
+        }
+    return 0;
+    }
+
+
+
 
 
 ObjectRecord **getAllObjects( int *outNumResults ) {

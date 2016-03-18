@@ -2372,28 +2372,26 @@ int main() {
                 
                 nextPlayer->deleteSent = true;
 
+		GridPos dropPos;
+                
+		if( nextPlayer->xd == 
+		    nextPlayer->xs &&
+		    nextPlayer->yd ==
+		    nextPlayer->ys ) {
+		    // deleted player standing still
+                  
+		    dropPos.x = nextPlayer->xd;
+		    dropPos.y = nextPlayer->yd;
+		    }
+		else {
+		  // player moving
+                  
+		    dropPos = 
+		      computePartialMoveSpot( nextPlayer );
+		    }
 
                 if( nextPlayer->holdingID != 0 ) {
-                    
-                    GridPos dropPos;
-                
-                    if( nextPlayer->xd == 
-                        nextPlayer->xs &&
-                        nextPlayer->yd ==
-                        nextPlayer->ys ) {
-                        // deleted player standing still
-                        
-                        dropPos.x = nextPlayer->xd;
-                        dropPos.y = nextPlayer->yd;
-                        }
-                    else {
-                        // player moving
-                        
-                        dropPos = 
-                            computePartialMoveSpot( nextPlayer );
-                        }
-                
-                    
+                                        
                     // empty spot to drop what 
                     // they were holding
                 
@@ -2405,9 +2403,29 @@ int main() {
                             &mapChanges, 
                             &mapChangesPos,
                             &playerIndicesToSendUpdatesAbout );
+			
                         }
                     }
-                
+                else if( isMapSpotEmpty( dropPos.x, dropPos.y ) ) {
+                    int deathID = getRandomDeathMarker();
+                    
+                    if( deathID > 0 ) {
+                        
+                        setMapObject( dropPos.x, dropPos.y, 
+                                      getRandomDeathMarker() );
+                        
+                        
+                        char *changeLine =
+                            getMapChangeLineString( dropPos.x, dropPos.y );
+                        
+                        mapChanges.appendElementString( changeLine );
+                        
+                        ChangePosition p = { dropPos.x, dropPos.y, false };
+                        mapChangesPos.push_back( p );
+                        
+                        delete [] changeLine;
+                        }  
+                    }
                 }
             else {
                 // check if they are done moving
