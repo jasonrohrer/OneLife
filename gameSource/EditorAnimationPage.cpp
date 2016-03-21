@@ -251,6 +251,7 @@ EditorAnimationPage::~EditorAnimationPage() {
         }
     
     freeSprite( mCenterMarkSprite );
+    freeSprite( mGroundSprite );
     }
 
 
