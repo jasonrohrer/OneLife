@@ -151,6 +151,27 @@ float initObjectBankStep() {
                     next++;
 
 
+
+                    int heldInHandRead = 0;                            
+                    sscanf( lines[next], "heldInHand=%d", 
+                            &( heldInHandRead ) );
+                            
+                    r->heldInHand = heldInHandRead;
+
+                    next++;
+
+
+                    int blocksWalkingRead = 0;                            
+                    sscanf( lines[next], "blocksWalking=%d",
+                            &( blocksWalkingRead ) );
+                            
+                    r->blocksWalking = blocksWalkingRead;
+
+                    next++;
+
+
+
+
                     r->mapChance = 0;      
                     sscanf( lines[next], "mapChance=%f", 
                             &( r->mapChance ) );
@@ -293,6 +314,11 @@ float initObjectBankStep() {
                     r->spriteParent = new int[ r->numSprites ];
                     r->spriteInvisibleWhenHolding = new char[ r->numSprites ];
                     
+                    r->frontHandIndex = -1;
+
+                    double frontHandX = -9999999;
+                    
+
                     for( int i=0; i< r->numSprites; i++ ) {
                         sscanf( lines[next], "spriteID=%d", 
                                 &( r->sprites[i] ) );
@@ -348,6 +374,14 @@ float initObjectBankStep() {
                         r->spriteInvisibleWhenHolding[i] = invisRead;
                                 
                         next++;
+
+                        if( r->spriteInvisibleWhenHolding[i] ) {
+                            if( r->spritePos[i].x > frontHandX ) {
+                                r->frontHandIndex = i;
+                                frontHandX = r->spritePos[i].x;
+                                }
+                            }
+                        
                         }
 
 
@@ -511,6 +545,8 @@ void resaveAll() {
                        idMap[i]->containable,
                        idMap[i]->containSize,
                        idMap[i]->permanent,
+                       idMap[i]->heldInHand,
+                       idMap[i]->blocksWalking,
                        idMap[i]->mapChance,
                        idMap[i]->heatValue,
                        idMap[i]->rValue,
@@ -624,6 +660,8 @@ int addObject( const char *inDescription,
                char inContainable,
                int inContainSize,
                char inPermanent,
+               char inHeldInHand,
+               char inBlocksWalking,
                float inMapChance,
                int inHeatValue,
                float inRValue,
@@ -702,6 +740,9 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "containable=%d", (int)inContainable ) );
         lines.push_back( autoSprintf( "containSize=%d", (int)inContainSize ) );
         lines.push_back( autoSprintf( "permanent=%d", (int)inPermanent ) );
+        lines.push_back( autoSprintf( "heldInHand=%d", (int)inHeldInHand ) );
+        lines.push_back( autoSprintf( "blocksWalking=%d", 
+                                      (int)inBlocksWalking ) );
         
         lines.push_back( autoSprintf( "mapChance=%f", inMapChance ) );
         lines.push_back( autoSprintf( "heatValue=%d", inHeatValue ) );
@@ -764,6 +805,7 @@ int addObject( const char *inDescription,
 
             lines.push_back( autoSprintf( "invisHolding=%d", 
                                           inSpriteInvisibleWhenHolding[i] ) );
+
             }
         
 
@@ -847,6 +889,8 @@ int addObject( const char *inDescription,
     r->containable = inContainable;
     r->containSize = inContainSize;
     r->permanent = inPermanent;
+    r->heldInHand = inHeldInHand;
+    r->blocksWalking = inBlocksWalking;
     
     r->mapChance = inMapChance;
     
@@ -910,6 +954,18 @@ int addObject( const char *inDescription,
     r->frontFootIndex = inFrontFootIndex;    
 
 
+    r->frontHandIndex = -1;
+    double frontHandX = -9999999;
+
+    for( int i=0; i<inNumSprites; i++ ) {
+        if( r->spriteInvisibleWhenHolding[i] ) {
+            if( r->spritePos[i].x > frontHandX ) {
+                r->frontHandIndex = i;
+                frontHandX = r->spritePos[i].x;
+                }
+            }
+        }
+
 
     // delete old
 
@@ -939,12 +995,15 @@ static char logicalXOR( char inA, char inB ) {
 
 
 
-void drawObject( ObjectRecord *inObject, doublePair inPos,
-                 double inRot, char inFlipH, double inAge,
-                 char inHoldingSomething,
-                 ClothingSet inClothing,
-                 double inScale ) {
+HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
+                    double inRot, char inFlipH, double inAge,
+                    char inHoldingSomething,
+                    ClothingSet inClothing,
+                    double inScale ) {
     
+    HandPos returnHandPos = { false, {0, 0} };
+    
+
     // don't count aging layers here
     // thus we can determine body parts (feet, body, head) for clothing
     // and aging without letting age-ranged add-on layers interfere
@@ -1108,7 +1167,13 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
                         rot, 
                         logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
             
+            
+            if( i == inObject->frontHandIndex ) {
+                returnHandPos.valid = true;
+                returnHandPos.pos = pos;
+                }
             }
+        
             
         if( inObject->spriteAgeStart[i] == -1 &&
             inObject->spriteAgeEnd[i] == -1 ) {
@@ -1134,6 +1199,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos,
                     inFlipH, -1, false, emptyClothing );
         }
 
+    return returnHandPos;
     }
 
 

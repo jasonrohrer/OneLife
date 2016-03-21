@@ -110,6 +110,9 @@ EditorObjectPage::EditorObjectPage()
           mMaleCheckbox( 190, -190, 2 ),
           mDeathMarkerCheckbox( 190, -190, 2 ),
 
+          mHeldInHandCheckbox( 190, 32, 2 ),
+          mBlocksWalkingCheckbox( 190, 0, 2 ),
+
           mDemoClothesButton( smallFont, 200, 200, "Pos" ),
           mEndClothesDemoButton( smallFont, 200, 160, "XPos" ),
           mDemoSlotsButton( smallFont, 150, 32, "Demo Slots" ),
@@ -384,7 +387,16 @@ EditorObjectPage::EditorObjectPage()
 
     addComponent( &mDeathMarkerCheckbox );
     mDeathMarkerCheckbox.setVisible( true );
+
+
+    addComponent( &mHeldInHandCheckbox );
+    mHeldInHandCheckbox.setVisible( true );
+
+    addComponent( &mBlocksWalkingCheckbox );
+    mBlocksWalkingCheckbox.setVisible( true );
     
+
+
     boxY = 200;
 
     for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
@@ -526,14 +538,22 @@ void EditorObjectPage::updateAgingPanel() {
 
         mMaleCheckbox.setToggled( false );
         mMaleCheckbox.setVisible( false );
-        
+
         mDeathMarkerCheckbox.setVisible( true );
+        mHeldInHandCheckbox.setVisible( true );
+        mBlocksWalkingCheckbox.setVisible( true );
         }
     else {
         mMaleCheckbox.setVisible( true );
 
         mDeathMarkerCheckbox.setToggled( false );
         mDeathMarkerCheckbox.setVisible( false );
+
+        mHeldInHandCheckbox.setVisible( false );
+        mBlocksWalkingCheckbox.setVisible( false );
+
+        mHeldInHandCheckbox.setToggled( false );
+        mBlocksWalkingCheckbox.setToggled( false );
         
         if( mPickedObjectLayer != -1 ) {
             mAgingLayerCheckbox.setVisible( true );
@@ -674,6 +694,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCheckboxes[0]->getToggled(),
                    mContainSizeField.getInt(),
                    mCheckboxes[1]->getToggled(),
+                   mHeldInHandCheckbox.getToggled(),
+                   mBlocksWalkingCheckbox.getToggled(),
                    mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
                    mRValueField.getFloat(),
@@ -729,6 +751,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCheckboxes[0]->getToggled(),
                    mContainSizeField.getInt(),
                    mCheckboxes[1]->getToggled(),
+                   mHeldInHandCheckbox.getToggled(),
+                   mBlocksWalkingCheckbox.getToggled(),
                    mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
                    mRValueField.getFloat(),
@@ -1488,6 +1512,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mMaleCheckbox.setToggled( pickedRecord->male );
             mDeathMarkerCheckbox.setToggled( pickedRecord->deathMarker );
             
+            mHeldInHandCheckbox.setToggled( pickedRecord->heldInHand );
+            mBlocksWalkingCheckbox.setToggled( pickedRecord->blocksWalking );
+            
+
             if( mCheckboxes[2]->getToggled() ) {
                 mPersonAgeSlider.setValue( defaultAge );
                 mPersonAgeSlider.setVisible( true );
@@ -1700,11 +1728,26 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
 
         double age = mPersonAgeSlider.getValue();
+        
+        char hideHands = true;
+        
+        ObjectRecord *personObject = getObject( mDemoPersonObject );
+
+        if( mHeldInHandCheckbox.getToggled() && 
+            personObject->frontHandIndex != -1 ) {
             
-        drawObject( getObject( mDemoPersonObject ), drawOffset, 0, false, 
-                    age, true, getEmptyClothingSet() );
+            hideHands = false;
+            }
+        
+        HandPos frontHandPos =
+            drawObject( personObject, drawOffset, 0, false, 
+                        age, hideHands, getEmptyClothingSet() );
 
         drawOffset = add( mCurrentObject.heldOffset, drawOffset );
+
+        if( !hideHands && frontHandPos.valid ) {
+            drawOffset = add( frontHandPos.pos, drawOffset );
+            }
         }
 
     char skipDrawing = false;
@@ -1984,6 +2027,18 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         pos = mDeathMarkerCheckbox.getPosition();
         pos.y += 20;
         smallFont->drawString( "Death", pos, alignCenter );
+        }
+
+    if( mHeldInHandCheckbox.isVisible() ) {
+        pos = mHeldInHandCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Handheld", pos, alignRight );
+        }
+
+    if( mBlocksWalkingCheckbox.isVisible() ) {
+        pos = mBlocksWalkingCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Blocking", pos, alignRight );
         }
     
 

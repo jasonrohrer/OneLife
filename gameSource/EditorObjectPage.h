@@ -122,6 +122,9 @@ class EditorObjectPage : public GamePage, public ActionListener {
         CheckboxButton mMaleCheckbox;
         CheckboxButton mDeathMarkerCheckbox;
 
+        CheckboxButton mHeldInHandCheckbox;
+        CheckboxButton mBlocksWalkingCheckbox;
+
         CheckboxButton *mClothingCheckboxes[NUM_CLOTHING_CHECKBOXES];
         const char *mClothingCheckboxNames[NUM_CLOTHING_CHECKBOXES];
 

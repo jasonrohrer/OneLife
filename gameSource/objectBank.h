@@ -28,6 +28,16 @@ typedef struct ObjectRecord {
         char permanent;
 
 
+        // true for smaller objects that have heldOffsets relative to
+        // front, moving hand
+        char heldInHand;
+
+        
+        // true for objects that cannot be walked through
+        char blocksWalking;
+        
+        
+        
         // chance of occurrence naturally on map
         // value between 0 and 1 inclusive
         // Note that there's an overall chance-of-anything that is applied
@@ -119,6 +129,11 @@ typedef struct ObjectRecord {
         int frontFootIndex;
         
         
+        // these are computed at load time and NOT stored on disk
+        
+        // -1 if no hand present at all
+        int frontHandIndex;
+
     } ObjectRecord;
 
 
@@ -177,6 +192,8 @@ int addObject( const char *inDescription,
                char inContainable,
                int inContainSize,
                char inPermanent,
+               char inHeldInHand,
+               char inBlocksWalking,
                float inMapChance,
                int inHeatValue,
                float inRValue,
@@ -208,15 +225,21 @@ int addObject( const char *inDescription,
 
 
 
+typedef struct HandPos {
+        char valid;
+        doublePair pos;
+    } HandPos;
+
+
 // inAge -1 for no age modifier
 //
 // note that inScale, which is only used by the object picker, to draw objects
 // so that they fit in the picker, is not applied to clothing
-void drawObject( ObjectRecord *inObject, doublePair inPos, 
-                 double inRot, char inFlipH, double inAge,
-                 char inHoldingSomething,
-                 ClothingSet inClothing,
-                 double inScale = 1.0 );
+HandPos drawObject( ObjectRecord *inObject, doublePair inPos, 
+                    double inRot, char inFlipH, double inAge,
+                    char inHoldingSomething,
+                    ClothingSet inClothing,
+                    double inScale = 1.0 );
 
 
 void drawObject( ObjectRecord *inObject, doublePair inPos,

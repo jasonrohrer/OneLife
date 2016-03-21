@@ -589,30 +589,29 @@ static char logicalXOR( char inA, char inB ) {
 
 
 
-void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
-                     double inRotFrameTime,
-                     double inAnimFade,
-                     AnimType inFadeTargetType,
-                     doublePair inPos,
-                     char inFlipH,
-                     double inAge,
-                     char inHoldingSomething,
-                     ClothingSet inClothing ) {
+HandPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
+                        double inRotFrameTime,
+                        double inAnimFade,
+                        AnimType inFadeTargetType,
+                        doublePair inPos,
+                        char inFlipH,
+                        double inAge,
+                        char inHoldingSomething,
+                        ClothingSet inClothing ) {
     
     AnimationRecord *r = getAnimation( inObjectID, inType );
     
 
     if( r == NULL ) {
-        drawObject( getObject( inObjectID ), inPos, 0, inFlipH, inAge, 
-                    inHoldingSomething, inClothing );
-        return;
+        return drawObject( getObject( inObjectID ), inPos, 0, inFlipH, inAge, 
+                           inHoldingSomething, inClothing );
         }
     else {
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
-        drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
-                        inAnimFade, rB, inPos, inFlipH, inAge, 
-                        inHoldingSomething, inClothing );
+        return drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
+                               inAnimFade, rB, inPos, inFlipH, inAge, 
+                               inHoldingSomething, inClothing );
         }
     }
 
@@ -635,16 +634,19 @@ static double workingDeltaRot[1000];
 
 
 
-void drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
-                     double inFrameTime,
-                     double inRotFrameTime,
-                     double inAnimFade,
-                     AnimationRecord *inFadeTargetAnim,
-                     doublePair inPos,
-                     char inFlipH,
-                     double inAge,
-                     char inHoldingSomething,
-                     ClothingSet inClothing ) {
+HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
+                        double inFrameTime,
+                        double inRotFrameTime,
+                        double inAnimFade,
+                        AnimationRecord *inFadeTargetAnim,
+                        doublePair inPos,
+                        char inFlipH,
+                        double inAge,
+                        char inHoldingSomething,
+                        ClothingSet inClothing ) {
+
+    HandPos returnHandPos = { false, {0, 0} };
+
 
     ObjectRecord *obj = getObject( inObjectID );
     
@@ -1067,6 +1069,11 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             setDrawColor( obj->spriteColor[i] );
             drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, 
                         logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
+
+            if( i == obj->frontHandIndex ) {
+                returnHandPos.valid = true;
+                returnHandPos.pos = pos;
+                }
             }
         
 
@@ -1103,6 +1110,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         drawObject( inClothing.hat, cPos, animHeadRotDelta,
                     inFlipH, -1, false, emptyClothing );
         }
+
+    return returnHandPos;
     }
 
 
