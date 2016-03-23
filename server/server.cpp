@@ -745,8 +745,40 @@ char *getHoldingString( LiveObject *inObject ) {
 
 
 
+// checks both grid of objects and live, non-moving player positions
+char isMapSpotEmpty( int inX, int inY ) {
+    int target = getMapObject( inX, inY );
+    
+    if( target != 0 ) {
+        return false;
+        }
+    
+    int numLive = players.size();
+    
+    for( int i=0; i<numLive; i++ ) {
+        LiveObject *nextPlayer = players.getElement( i );
+        
+        if( // not about to be deleted
+            ! nextPlayer->error &&
+            // stationary
+            nextPlayer->xs == nextPlayer->xd &&
+            nextPlayer->ys == nextPlayer->yd &&
+            // in this spot
+            inX == nextPlayer->xd &&
+            inY == nextPlayer->yd ) {
+            return false;            
+            } 
+        }
+    
+    return true;
+    }
+
+
+
+
 // drops an object held by a player at target x,y location
 // doesn't check for adjacency (so works for thrown drops too)
+// if target spot blocked, will search for empty spot to throw object into
 void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                  SimpleVector<char> *inMapChanges, 
                  SimpleVector<ChangePosition> *inChangePosList,
@@ -754,14 +786,146 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     
     ObjectRecord *droppedObject = getObject( inDroppingPlayer->holdingID );
     
-    setMapObject( inX, inY, inDroppingPlayer->holdingID );
+    
+    int targetX = inX;
+    int targetY = inY;
+    
+
+    if( getMapObject( inX, inY ) != 0 ) {
+        // drop spot blocked
+        // search for another
+        // throw held into nearest empty spot
+                                    
+        char found = false;
+        int foundX, foundY;
+        
+        // change direction of throw
+        // to match direction of 
+        // drop action
+        int xDir = inX - inDroppingPlayer->xd;
+        int yDir = inY - inDroppingPlayer->yd;
+                                    
+        
+        // check in y dir first at each
+        // expanded radius?
+        char yFirst = false;
+        
+        if( yDir != 0 ) {
+            yFirst = true;
+            }
+        
+        for( int d=1; d<10 && !found; d++ ) {
+            
+            char doneY0 = false;
+            
+            for( int yD = -d; yD<=d && !found; 
+                 yD++ ) {
+                
+                if( ! doneY0 ) {
+                    yD = 0;
+                    }
+                
+                if( yDir != 0 ) {
+                    yD *= yDir;
+                    }
+                
+                char doneX0 = false;
+                
+                for( int xD = -d; 
+                     xD<=d && !found; 
+                     xD++ ) {
+                    
+                    if( ! doneX0 ) {
+                        xD = 0;
+                        }
+                    
+                    if( xDir != 0 ) {
+                        xD *= xDir;
+                        }
+                    
+                    
+                    if( yD == 0 && xD == 0 ) {
+                        if( ! doneX0 ) {
+                            doneX0 = true;
+                            
+                            // back up in loop
+                            xD = -d - 1;
+                            }
+                        continue;
+                        }
+                                                
+                    int x = 
+                        inDroppingPlayer->xd + xD;
+                    int y = 
+                        inDroppingPlayer->yd + yD;
+                                                
+                    if( yFirst ) {
+                        // swap them
+                        // to reverse order
+                        // of expansion
+                        x = 
+                            inDroppingPlayer->xd + yD;
+                        y =
+                            inDroppingPlayer->yd + xD;
+                        }
+                                                
+
+
+                    if( 
+                        isMapSpotEmpty( x, y ) ) {
+                                                    
+                        found = true;
+                        foundX = x;
+                        foundY = y;
+                        }
+                                                    
+                    if( ! doneX0 ) {
+                        doneX0 = true;
+                                                        
+                        // back up in loop
+                        xD = -d - 1;
+                        }
+                    }
+                                                
+                if( ! doneY0 ) {
+                    doneY0 = true;
+                                                
+                    // back up in loop
+                    yD = -d - 1;
+                    }
+                }
+            }
+
+        if( found ) {
+            targetX = foundX;
+            targetY = foundY;
+            }
+        else {
+            // no place to drop it, it disappears
+            inDroppingPlayer->holdingID = 0;
+            inDroppingPlayer->heldOriginValid = 0;
+            inDroppingPlayer->heldOriginX = 0;
+            inDroppingPlayer->heldOriginY = 0;
+
+            if( inDroppingPlayer->numContained != 0 ) {
+                delete [] inDroppingPlayer->containedIDs;
+                inDroppingPlayer->containedIDs = NULL;
+                inDroppingPlayer->numContained = 0;
+                }
+            return;
+            }            
+        }
+    
+
+
+    setMapObject( targetX, targetY, inDroppingPlayer->holdingID );
                                 
     if( inDroppingPlayer->numContained != 0 ) {
         for( int c=0;
              c < inDroppingPlayer->numContained;
              c++ ) {
             addContained( 
-                inX, inY,
+                targetX, targetY,
                 inDroppingPlayer->containedIDs[c] );
             }
         delete [] inDroppingPlayer->containedIDs;
@@ -772,12 +936,12 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                                 
     char *changeLine =
         getMapChangeLineString(
-            inX, inY, inDroppingPlayer->id );
+            targetX, targetY, inDroppingPlayer->id );
                                 
     inMapChanges->appendElementString( 
         changeLine );
                                 
-    ChangePosition p = { inX, inY, false };
+    ChangePosition p = { targetX, targetY, false };
     inChangePosList->push_back( p );
                 
     delete [] changeLine;
@@ -793,7 +957,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                          
     if( droppedObject->blocksWalking ) {
     
-        GridPos dropSpot = { inX, inY };
+        GridPos dropSpot = { targetX, targetY };
           
         int numLive = players.size();
                       
@@ -931,33 +1095,6 @@ char isMapSpotBlocking( int inX, int inY ) {
 
 
 
-// checks both grid of objects and live, non-moving player positions
-char isMapSpotEmpty( int inX, int inY ) {
-    int target = getMapObject( inX, inY );
-    
-    if( target != 0 ) {
-        return false;
-        }
-    
-    int numLive = players.size();
-    
-    for( int i=0; i<numLive; i++ ) {
-        LiveObject *nextPlayer = players.getElement( i );
-        
-        if( // not about to be deleted
-            ! nextPlayer->error &&
-            // stationary
-            nextPlayer->xs == nextPlayer->xd &&
-            nextPlayer->ys == nextPlayer->yd &&
-            // in this spot
-            inX == nextPlayer->xd &&
-            inY == nextPlayer->yd ) {
-            return false;            
-            } 
-        }
-    
-    return true;
-    }
 
 
 
@@ -1777,10 +1914,7 @@ int main() {
                                     
                                     if( hitPlayer != NULL ) {
                                         
-                                        if( hitPlayer->holdingID != 0
-                                            && getMapObject( 
-                                                m.x, 
-                                                m.y ) == 0 ) {
+                                        if( hitPlayer->holdingID != 0 ) {
                                 
                                             hitWillDropSomething = true;
                                             }
@@ -1807,8 +1941,19 @@ int main() {
                                         }
 
                                     if( ! hitWillDropSomething &&
-                                        isMapSpotEmpty( m.x, m.y ) ) {    
-                                        
+                                        hitPlayer != NULL ) {
+                                        // player hit, and their hands were
+                                        // empty.  Make them hold the new
+                                        // target result of the hit.
+
+                                        // they'll drop this later
+                                        // when their death is handled
+                                        hitPlayer->holdingID = r->newTarget;
+                                        }
+                                    else if( hitPlayer == NULL &&
+                                             isMapSpotEmpty( m.x, m.y ) ) {    
+                                        // no player hit, and target ground
+                                        // spot is empty
                                         setMapObject( m.x, m.y, 
                                                       r->newTarget );
 
@@ -1825,10 +1970,7 @@ int main() {
                                         delete [] changeLine;
                                         }
                                     // else new target, post-kill-attempt
-                                    // is lost (maybe in case where
-                                    // target player dropped what they
-                                    // were holding when killed
-                                    
+                                    // is lost
                                     }
                                 }
                             }
@@ -1960,136 +2102,13 @@ int main() {
                                         // surrounded while holding
                                     
                                         // throw held into nearest empty spot
-                                    
-                                        char found = false;
-                                        int foundX, foundY;
-                                    
-                                        // change direction of throw
-                                        // to match opposite direction of 
-                                        // action
-                                        int xDir = m.x - nextPlayer->xd;
-                                        int yDir = m.y - nextPlayer->yd;
-                                    
-
-                                        // check in y dir first at each
-                                        // expanded radius?
-                                        char yFirst = false;
                                         
-                                        if( yDir != 0 ) {
-                                            yFirst = true;
-                                            }
-                                    
-                                        for( int d=1; d<10 && !found; d++ ) {
-                                        
-                                            char doneY0 = false;
-                                        
-                                            for( int yD = -d; yD<=d && !found; 
-                                                 yD++ ) {
-                                                
-                                                if( ! doneY0 ) {
-                                                    yD = 0;
-                                                    }
-                                                
-                                                if( yDir != 0 ) {
-                                                    yD *= yDir;
-                                                    }
-                                                
-                                                char doneX0 = false;
-                                                
-                                                for( int xD = -d; 
-                                                     xD<=d && !found; 
-                                                     xD++ ) {
-                                                
-                                                    if( ! doneX0 ) {
-                                                        xD = 0;
-                                                        }
-                                                    
-                                                    if( xDir != 0 ) {
-                                                        xD *= xDir;
-                                                        }
-                                                    
-                                                    
-                                                    if( yD == 0 && xD == 0 ) {
-                                                        if( ! doneX0 ) {
-                                                            doneX0 = true;
-                                                            
-                                                            // back up in loop
-                                                            xD = -d - 1;
-                                                            }
-                                                        continue;
-                                                        }
-                                                
-                                                    int x = 
-                                                        nextPlayer->xd + xD;
-                                                    int y = 
-                                                        nextPlayer->yd + yD;
-                                                
-                                                    if( yFirst ) {
-                                                        // swap them
-                                                        // to reverse order
-                                                        // of expansion
-                                                        x = 
-                                                           nextPlayer->xd + yD;
-                                                        y =
-                                                           nextPlayer->yd + xD;
-                                                        }
-                                                
-
-
-                                                    if( 
-                                                     isMapSpotEmpty( x, y ) ) {
-                                                    
-                                                        found = true;
-                                                        foundX = x;
-                                                        foundY = y;
-                                                        }
-                                                    
-                                                    if( ! doneX0 ) {
-                                                        doneX0 = true;
-                                                        
-                                                        // back up in loop
-                                                        xD = -d - 1;
-                                                        }
-                                                    }
-                                                
-                                                if( ! doneY0 ) {
-                                                    doneY0 = true;
-                                                
-                                                    // back up in loop
-                                                    yD = -d - 1;
-                                                    }
-                                                }
-                                            }
-
-                                        if( found ) {
-                                            // drop what they're holding
-                                        
-                                            handleDrop( 
-                                                foundX, foundY, 
-                                                nextPlayer,
-                                                &mapChanges, 
-                                                &mapChangesPos,
+                                        handleDrop( 
+                                            m.x, m.y, 
+                                            nextPlayer,
+                                            &mapChanges, 
+                                            &mapChangesPos,
                                             &playerIndicesToSendUpdatesAbout );
-                                            }
-                                        else {
-                                            // no drop spot found
-                                            // what they're holding 
-                                            // must evaporate
-                                        
-                                            if( nextPlayer->containedIDs != 
-                                                NULL ) {
-                                            
-                                                delete 
-                                                  [] nextPlayer->containedIDs;
-                                                nextPlayer->containedIDs = 
-                                                    NULL;
-                                                nextPlayer->numContained = 0;
-                                                }
-                                            nextPlayer->holdingID = 0;
-                                            nextPlayer->heldOriginValid = 0;
-                                            nextPlayer->heldOriginX = 0;
-                                            nextPlayer->heldOriginY = 0;
-                                            }
                                         }
                                     
                                     // action doesn't happen, just the drop
@@ -2395,41 +2414,26 @@ int main() {
                 
                 nextPlayer->deleteSent = true;
 
-		GridPos dropPos;
+                GridPos dropPos;
                 
-		if( nextPlayer->xd == 
-		    nextPlayer->xs &&
-		    nextPlayer->yd ==
-		    nextPlayer->ys ) {
-		    // deleted player standing still
-                  
-		    dropPos.x = nextPlayer->xd;
-		    dropPos.y = nextPlayer->yd;
-		    }
-		else {
-		  // player moving
-                  
-		    dropPos = 
-		      computePartialMoveSpot( nextPlayer );
-		    }
-
-                if( nextPlayer->holdingID != 0 ) {
-                                        
-                    // empty spot to drop what 
-                    // they were holding
-                
-                    if( isMapSpotEmpty( dropPos.x, dropPos.y ) ) {
+                if( nextPlayer->xd == 
+                    nextPlayer->xs &&
+                    nextPlayer->yd ==
+                    nextPlayer->ys ) {
+                    // deleted player standing still
                     
-                        handleDrop( 
-                            dropPos.x, dropPos.y, 
-                            nextPlayer,
-                            &mapChanges, 
-                            &mapChangesPos,
-                            &playerIndicesToSendUpdatesAbout );
-			
-                        }
+                    dropPos.x = nextPlayer->xd;
+                    dropPos.y = nextPlayer->yd;
                     }
-                else if( isMapSpotEmpty( dropPos.x, dropPos.y ) ) {
+                else {
+                    // player moving
+                    
+                    dropPos = 
+                        computePartialMoveSpot( nextPlayer );
+                    }
+
+
+                if( isMapSpotEmpty( dropPos.x, dropPos.y ) ) {
                     int deathID = getRandomDeathMarker();
                     
                     if( deathID > 0 ) {
@@ -2448,6 +2452,18 @@ int main() {
                         
                         delete [] changeLine;
                         }  
+                    }
+                if( nextPlayer->holdingID != 0 ) {
+                                        
+                    // drop what they were holding
+                    // this will almost always involve a throw
+                    // (death marker, at least, will be in the way)
+                    handleDrop( 
+                        dropPos.x, dropPos.y, 
+                        nextPlayer,
+                        &mapChanges, 
+                        &mapChangesPos,
+                        &playerIndicesToSendUpdatesAbout );
                     }
                 }
             else {
