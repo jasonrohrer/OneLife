@@ -3400,7 +3400,12 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     x >= 0 && x < mMapD ) {
                  
                     
-                    if( mMap[ y * mMapD + x ] == 0 ) {
+                    int mapI = y * mMapD + x;
+                    
+                    if( mMap[ mapI ] == 0
+                        ||
+                        ( mMap[ mapI ] != -1 && 
+                          ! getObject( mMap[ mapI ] )->blocksWalking ) ) {
                         
                         int emptyX = clickDestX + nDX[n];
                         int emptyY = clickDestY + nDY[n];
