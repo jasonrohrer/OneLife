@@ -2442,6 +2442,36 @@ int main() {
                                       getRandomDeathMarker() );
                         
                         
+                        ObjectRecord *deathObject = getObject( deathID );
+                        
+                        if( deathObject->numSlots >= 4 ) {
+                            // room for clothing
+                            
+                            if( nextPlayer->clothing.tunic != NULL ) {
+                                
+                                addContained( 
+                                    dropPos.x, dropPos.y,
+                                    nextPlayer->clothing.tunic->id );
+                                }
+                            if( nextPlayer->clothing.backShoe != NULL ) {
+                                
+                                addContained( 
+                                    dropPos.x, dropPos.y,
+                                    nextPlayer->clothing.backShoe->id );
+                                }
+                            if( nextPlayer->clothing.frontShoe != NULL ) {
+                                
+                                addContained( 
+                                    dropPos.x, dropPos.y,
+                                    nextPlayer->clothing.frontShoe->id );
+                                }
+                            if( nextPlayer->clothing.hat != NULL ) {
+                                
+                                addContained( dropPos.x, dropPos.y,
+                                              nextPlayer->clothing.hat->id );
+                                }
+                            }
+
                         char *changeLine =
                             getMapChangeLineString( dropPos.x, dropPos.y );
                         
