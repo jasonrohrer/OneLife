@@ -752,6 +752,8 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                  SimpleVector<ChangePosition> *inChangePosList,
                  SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
     
+    ObjectRecord *droppedObject = getObject( inDroppingPlayer->holdingID );
+    
     setMapObject( inX, inY, inDroppingPlayer->holdingID );
                                 
     if( inDroppingPlayer->numContained != 0 ) {
@@ -788,122 +790,143 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                                 
     // watch out for truncations of in-progress
     // moves of other players
-                                
-    GridPos dropSpot = { inX, inY };
+                         
+    if( droppedObject->blocksWalking ) {
+    
+        GridPos dropSpot = { inX, inY };
           
-    int numLive = players.size();
+        int numLive = players.size();
                       
-    for( int j=0; j<numLive; j++ ) {
-        LiveObject *otherPlayer = 
-            players.getElement( j );
+        for( int j=0; j<numLive; j++ ) {
+            LiveObject *otherPlayer = 
+                players.getElement( j );
                                     
-        if( otherPlayer->xd != otherPlayer->xs ||
-            otherPlayer->yd != otherPlayer->ys ) {
+            if( otherPlayer->xd != otherPlayer->xs ||
+                otherPlayer->yd != otherPlayer->ys ) {
                 
-            GridPos cPos = 
-                computePartialMoveSpot( otherPlayer );
+                GridPos cPos = 
+                    computePartialMoveSpot( otherPlayer );
                                         
-            if( distance( cPos, dropSpot ) 
-                <= 2 * pathDeltaMax ) {
+                if( distance( cPos, dropSpot ) 
+                    <= 2 * pathDeltaMax ) {
                                             
-                // this is close enough
-                // to this path that it might
-                // block it
+                    // this is close enough
+                    // to this path that it might
+                    // block it
                 
-                int c = computePartialMovePathStep( otherPlayer );
+                    int c = computePartialMovePathStep( otherPlayer );
 
-                // -1 means starting, pre-path pos is closest
-                // push it up to first path step
-                if( c < 0 ) {
-                    c = 0;
-                    }
-
-                char blocked = false;
-                int blockedStep = -1;
-                                            
-                for( int p=c; 
-                     p<otherPlayer->pathLength;
-                     p++ ) {
-                                                
-                    if( equal( 
-                            otherPlayer->
-                            pathToDest[p],
-                            dropSpot ) ) {
-                                                    
-                        blocked = true;
-                        blockedStep = p;
-                        break;
+                    // -1 means starting, pre-path pos is closest
+                    // push it up to first path step
+                    if( c < 0 ) {
+                        c = 0;
                         }
-                    }
+
+                    char blocked = false;
+                    int blockedStep = -1;
                                             
-                if( blocked ) {
-                    printf( 
-                        "  Blocked by drop\n" );
-                    }
+                    for( int p=c; 
+                         p<otherPlayer->pathLength;
+                         p++ ) {
+                                                
+                        if( equal( 
+                                otherPlayer->
+                                pathToDest[p],
+                                dropSpot ) ) {
+                                                    
+                            blocked = true;
+                            blockedStep = p;
+                            break;
+                            }
+                        }
+                                            
+                    if( blocked ) {
+                        printf( 
+                            "  Blocked by drop\n" );
+                        }
                                             
 
-                if( blocked &&
-                    blockedStep > 0 ) {
+                    if( blocked &&
+                        blockedStep > 0 ) {
                                                 
-                    otherPlayer->pathLength
-                        = blockedStep;
-                    otherPlayer->pathTruncated
-                        = true;
+                        otherPlayer->pathLength
+                            = blockedStep;
+                        otherPlayer->pathTruncated
+                            = true;
 
-                    // update timing
-                    double dist = 
-                        otherPlayer->pathLength;
+                        // update timing
+                        double dist = 
+                            otherPlayer->pathLength;
                             
                                                 
-                    double distAlreadyDone = c;
+                        double distAlreadyDone = c;
                             
-                    double moveSpeed = computeMoveSpeed( otherPlayer );
+                        double moveSpeed = computeMoveSpeed( otherPlayer );
 
-                    otherPlayer->moveTotalSeconds 
-                        = 
-                        dist / 
-                        moveSpeed;
+                        otherPlayer->moveTotalSeconds 
+                            = 
+                            dist / 
+                            moveSpeed;
                             
-                    double secondsAlreadyDone = 
-                        distAlreadyDone / 
-                        moveSpeed;
+                        double secondsAlreadyDone = 
+                            distAlreadyDone / 
+                            moveSpeed;
                                 
-                    otherPlayer->moveStartTime = 
-                        Time::getCurrentTime() - 
-                        secondsAlreadyDone;
+                        otherPlayer->moveStartTime = 
+                            Time::getCurrentTime() - 
+                            secondsAlreadyDone;
                             
-                    otherPlayer->newMove = true;
+                        otherPlayer->newMove = true;
                                                 
-                    otherPlayer->xd 
-                        = otherPlayer->pathToDest[
-                            blockedStep - 1].x;
-                    otherPlayer->yd 
-                        = otherPlayer->pathToDest[
-                            blockedStep - 1].y;
+                        otherPlayer->xd 
+                            = otherPlayer->pathToDest[
+                                blockedStep - 1].x;
+                        otherPlayer->yd 
+                            = otherPlayer->pathToDest[
+                                blockedStep - 1].y;
                                                 
-                    }
-                else if( blocked ) {
-                    // cutting off path
-                    // right at the beginning
-                    // nothing left
+                        }
+                    else if( blocked ) {
+                        // cutting off path
+                        // right at the beginning
+                        // nothing left
 
-                    // end move now
-                    otherPlayer->xd = 
-                        otherPlayer->xs;
+                        // end move now
+                        otherPlayer->xd = 
+                            otherPlayer->xs;
                                                 
-                    otherPlayer->yd = 
-                        otherPlayer->ys;
+                        otherPlayer->yd = 
+                            otherPlayer->ys;
                              
-                    otherPlayer->posForced = true;
+                        otherPlayer->posForced = true;
                     
-                    inPlayerIndicesToSendUpdatesAbout->push_back( j );
-                    }
-                } 
+                        inPlayerIndicesToSendUpdatesAbout->push_back( j );
+                        }
+                    } 
                                         
+                }                                    
             }
-                                    
         }
+    
                                 
+    }
+
+
+
+char isMapSpotBlocking( int inX, int inY ) {
+    int target = getMapObject( inX, inY );
+
+    if( target == 0 ) {
+        return false;
+        }
+
+    ObjectRecord *obj = getObject( target );
+    
+    if( obj->blocksWalking ) {
+        return true;
+        }
+
+    return false;
     }
 
 
@@ -1560,7 +1583,7 @@ int main() {
                                     GridPos pos = 
                                         unfilteredPath.getElementDirect(p);
 
-                                    if( getMapObject( pos.x, pos.y ) != 0 ) {
+                                    if( isMapSpotBlocking( pos.x, pos.y ) ) {
                                         // blockage in middle of path
                                         // terminate path here
                                         truncated = 1;

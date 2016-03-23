@@ -264,7 +264,11 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
     GridPos end = { inObject->xd, inObject->yd };
         
     // window around player's start position
-    char *blockedMap = new char[ pathFindingD * pathFindingD ];
+    int numPathMapCells = pathFindingD * pathFindingD;
+    char *blockedMap = new char[ numPathMapCells ];
+
+    // assume all blocked
+    memset( blockedMap, true, numPathMapCells );
 
     int pathOffsetX = pathFindingD/2 - start.x;
     int pathOffsetY = pathFindingD/2 - start.y;
@@ -276,10 +280,17 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
         for( int x=0; x<pathFindingD; x++ ) {
             int mapX = ( x - pathOffsetX ) + mMapD / 2 - mMapOffsetX;
             
+
+            int mapI = mapY * mMapD + mapX;
+            
             // note that unknowns (-1) count as blocked too
-            blockedMap[ y * pathFindingD + x ]
-                =
-                ( mMap[ mapY * mMapD + mapX ] != 0 );
+            if( mMap[ mapI ] == 0
+                ||
+                ( mMap[ mapI ] != -1 && 
+                  ! getObject( mMap[ mapI ] )->blocksWalking ) ) {
+                      
+                blockedMap[ y * pathFindingD + x ] = false;
+                }
             }
         }
     
