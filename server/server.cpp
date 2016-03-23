@@ -1149,7 +1149,7 @@ int main() {
                     
                     char f = getFemale( players.getElement( i ) );
                     
-                    if( age >= 14 && f ) {
+                    if( age >= 14 && age <= 45 && f ) {
                         numOfAge ++;
                         parentChoices.push_back( players.getElement( i ) );
                         }
