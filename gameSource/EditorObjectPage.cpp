@@ -37,7 +37,7 @@ static ObjectPickable objectPickable;
 extern EditorAnimationPage *animPage;
 
 
-double defaultAge = 0;
+double defaultAge = 20;
 
 
 
