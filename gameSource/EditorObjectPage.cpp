@@ -1439,23 +1439,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.clothing = pickedRecord->clothing;
             mCurrentObject.clothingOffset = pickedRecord->clothingOffset;
 
-
-            switch( mCurrentObject.clothing ) {
-                case 'n':
-                    actionPerformed( mClothingCheckboxes[0] );
-                    break;
-                case 's':
-                    actionPerformed( mClothingCheckboxes[1] );
-                    break;
-                case 't':
-                    actionPerformed( mClothingCheckboxes[2] );
-                    break;
-                case 'h':
-                    actionPerformed( mClothingCheckboxes[3] );
-                    break;
-                }   
-
-
             mCurrentObject.numSlots = pickedRecord->numSlots;
 
             mCurrentObject.slotPos = 
@@ -1542,6 +1525,23 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 mDemoSlotsButton.setVisible( false );
                 mClearSlotsDemoButton.setVisible( false );
                 }
+
+            
+            switch( mCurrentObject.clothing ) {
+                case 'n':
+                    actionPerformed( mClothingCheckboxes[0] );
+                    break;
+                case 's':
+                    actionPerformed( mClothingCheckboxes[1] );
+                    break;
+                case 't':
+                    actionPerformed( mClothingCheckboxes[2] );
+                    break;
+                case 'h':
+                    actionPerformed( mClothingCheckboxes[3] );
+                    break;
+                }   
+
 
             mCheckboxes[0]->setToggled( pickedRecord->containable );
             mCheckboxes[1]->setToggled( pickedRecord->permanent );
@@ -1905,14 +1905,14 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     
     doublePair headPos = {0,0};
 
-    if( mCurrentObject.headIndex <= mCurrentObject.numSprites ) {
+    if( mCurrentObject.headIndex < mCurrentObject.numSprites ) {
         headPos = mCurrentObject.spritePos[ mCurrentObject.headIndex ];
         }
 
 
     doublePair frontFootPos = {0,0};
 
-    if( mCurrentObject.frontFootIndex <= mCurrentObject.numSprites ) {
+    if( mCurrentObject.frontFootIndex < mCurrentObject.numSprites ) {
         frontFootPos = 
             mCurrentObject.spritePos[ mCurrentObject.frontFootIndex ];
         }
@@ -1920,7 +1920,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
     doublePair bodyPos = {0,0};
 
-    if( mCurrentObject.bodyIndex <= mCurrentObject.numSprites ) {
+    if( mCurrentObject.bodyIndex < mCurrentObject.numSprites ) {
         bodyPos = mCurrentObject.spritePos[ mCurrentObject.bodyIndex ];
         }
 
@@ -2275,6 +2275,9 @@ double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
         mCurrentObject.person = true;
         
         age = mPersonAgeSlider.getValue();
+        }
+    else {
+        mCurrentObject.person = false;
         }
     
     double smallestDist = getClosestObjectPart( &mCurrentObject, 

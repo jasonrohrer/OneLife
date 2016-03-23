@@ -1440,14 +1440,14 @@ double getClosestObjectPart( ObjectRecord *inObject,
 
     doublePair headPos = {0,0};
 
-    if( inObject->headIndex <= inObject->numSprites ) {
+    if( inObject->headIndex < inObject->numSprites ) {
         headPos = inObject->spritePos[ inObject->headIndex ];
         }
 
     
     doublePair frontFootPos = {0,0};
 
-    if( inObject->frontFootIndex <= inObject->numSprites ) {
+    if( inObject->frontFootIndex < inObject->numSprites ) {
         frontFootPos = 
             inObject->spritePos[ inObject->frontFootIndex ];
         }
@@ -1455,7 +1455,7 @@ double getClosestObjectPart( ObjectRecord *inObject,
 
     doublePair bodyPos = {0,0};
 
-    if( inObject->bodyIndex <= inObject->numSprites ) {
+    if( inObject->bodyIndex < inObject->numSprites ) {
         bodyPos = inObject->spritePos[ inObject->bodyIndex ];
         }
 
