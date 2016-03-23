@@ -189,6 +189,8 @@ class LivingLifePage : public GamePage {
 
         int *mMap;
         
+        char *mMapCellDrawnFlags;
+
         int *mMapAnimationFrameCount;
         
         // all tiles on ground work their way toward animation type of
@@ -249,7 +251,16 @@ class LivingLifePage : public GamePage {
                                         double inFade,
                                         double inMaxWidth,
                                         int inForceMinChalkBlots = -1 );
+        
 
+        void drawLiveObject( LiveObject *inObj,
+                             SimpleVector<LiveObject *> *inSpeakers,
+                             SimpleVector<doublePair> *inSpeakersPos );
+        
+
+        void drawMapCell( int inMapI, 
+                          int inScreenX, int inScreenY );
+        
     };
 
 

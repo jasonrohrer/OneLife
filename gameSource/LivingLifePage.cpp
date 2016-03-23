@@ -494,6 +494,8 @@ LivingLifePage::LivingLifePage()
 
     mMap = new int[ mMapD * mMapD ];
     
+    mMapCellDrawnFlags = new char[ mMapD * mMapD ];
+
     mMapContainedStacks = new SimpleVector<int>[ mMapD * mMapD ];
     
     mMapAnimationFrameCount =  new int[ mMapD * mMapD ];
@@ -581,6 +583,7 @@ LivingLifePage::~LivingLifePage() {
     delete [] mMapContainedStacks;
     
     delete [] mMap;
+    delete [] mMapCellDrawnFlags;
 
     delete [] nextActionMessageToSend;
 
@@ -726,6 +729,355 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     }
 
 
+
+
+void LivingLifePage::drawMapCell( int inMapI, 
+                                  int inScreenX, int inScreenY ) {
+            
+    int oID = mMap[ inMapI ];
+            
+    if( oID > 0 ) {
+                
+        mMapAnimationFrameCount[ inMapI ] ++;
+                
+        if( mMapLastAnimFade[ inMapI ] > 0 ) {
+            mMapLastAnimFade[ inMapI ] -= 0.05 * frameRateFactor;
+            if( mMapLastAnimFade[ inMapI ] < 0 ) {
+                mMapLastAnimFade[ inMapI ] = 0;
+                // start current animation fresh after fade
+                mMapAnimationFrameCount[ inMapI ] = 0;
+
+                if( mMapCurAnimType[ inMapI ] != ground ) {
+                    // transition to ground now
+                    mMapLastAnimType[ inMapI ] = mMapCurAnimType[ inMapI ];
+                    mMapCurAnimType[ inMapI ] = ground;
+                    mMapLastAnimFade[ inMapI ] = 1;
+                    }
+                }
+            }
+                
+
+        doublePair pos = { (double)inScreenX, (double)inScreenY };
+
+        if( mMapDropOffsets[ inMapI ].x != 0 ||
+            mMapDropOffsets[ inMapI ].y != 0 ) {
+                    
+            pos = add( pos, mult( mMapDropOffsets[ inMapI ], CELL_D ) );
+                    
+            doublePair nullOffset = { 0, 0 };
+                    
+
+            doublePair delta = sub( nullOffset, 
+                                    mMapDropOffsets[ inMapI ] );
+                    
+            double step = frameRateFactor * 0.0625;
+                    
+            if( length( delta ) < step ) {
+                        
+                mMapDropOffsets[ inMapI ].x = 0;
+                mMapDropOffsets[ inMapI ].y = 0;
+                }
+            else {
+                mMapDropOffsets[ inMapI ] =
+                    add( mMapDropOffsets[ inMapI ],
+                         mult( normalize( delta ), step ) );
+                }
+            }
+                
+
+        setDrawColor( 1, 1, 1, 1 );
+                
+        AnimType curType = ground;
+        AnimType fadeTargetType = ground;
+        double animFade = 1;
+                
+        if( mMapLastAnimFade[ inMapI ] != 0 ) {
+            animFade = mMapLastAnimFade[ inMapI ];
+            curType = mMapLastAnimType[ inMapI ];
+            fadeTargetType = mMapCurAnimType[ inMapI ];
+            }
+                
+        double timeVal = frameRateFactor * 
+            mMapAnimationFrameCount[ inMapI ] / 60.0;
+                
+
+        if( mMapContainedStacks[ inMapI ].size() > 0 ) {
+            int *stackArray = 
+                mMapContainedStacks[ inMapI ].getElementArray();
+                    
+            drawObjectAnim( oID, 
+                            curType, timeVal, timeVal,
+                            animFade,
+                            fadeTargetType,
+                            pos, mMapTileFlips[ inMapI ],
+                            -1,
+                            false,
+                            getEmptyClothingSet(),
+                            mMapContainedStacks[ inMapI ].size(),
+                            stackArray );
+            delete [] stackArray;
+            }
+        else {
+            drawObjectAnim( oID, 
+                            curType, timeVal, timeVal,
+                            animFade,
+                            fadeTargetType, pos, 
+                            mMapTileFlips[ inMapI ], -1,
+                            false,
+                            getEmptyClothingSet() );
+            }
+        }
+    else if( oID == -1 ) {
+        // unknown
+        doublePair pos = { (double)inScreenX, (double)inScreenY };
+                
+        setDrawColor( 0, 0, 0, 0.5 );
+        drawSquare( pos, 14 );
+        }
+
+    }
+
+
+
+
+void LivingLifePage::drawLiveObject( 
+    LiveObject *inObj,
+    SimpleVector<LiveObject *> *inSpeakers,
+    SimpleVector<doublePair> *inSpeakersPos ) {    
+
+    // current pos
+    char *string = autoSprintf( "%c", inObj->displayChar );
+                
+    doublePair pos = mult( inObj->currentPos, CELL_D );
+                
+    doublePair actionOffset = { 0, 0 };
+                
+    //trail.push_back( pos );
+                
+    if( inObj->id == ourID && 
+        inObj->pendingActionAnimationProgress != 0 ) {
+                    
+        // wiggle toward target
+                    
+        float xDir = 0;
+        float yDir = 0;
+                    
+        if( inObj->xd < playerActionTargetX ) {
+            xDir = 1;
+            inObj->holdingFlip = false;
+            }
+        if( inObj->xd > playerActionTargetX ) {
+            xDir = -1;
+            inObj->holdingFlip = true;
+            }
+        if( inObj->yd < playerActionTargetY ) {
+            yDir = 1;
+            }
+        if( inObj->yd > playerActionTargetY ) {
+            yDir = -1;
+            }
+                    
+        double offset =
+            32 - 
+            32 * 
+            cos( 2 * M_PI * inObj->pendingActionAnimationProgress );
+                    
+                    
+        actionOffset.x += xDir * offset;
+        actionOffset.y += yDir * offset;
+        }
+                
+                
+    // bare hands action OR holding something
+    // character wiggle
+    if(  inObj->id == ourID && 
+         inObj->pendingActionAnimationProgress != 0 ) {
+                    
+        pos = add( pos, actionOffset );
+        }
+                
+                
+    float red, blue;
+                
+    red = 0;
+    blue = 0;
+                
+    if( inObj->heat > 0.75 ) {
+        red = 1;
+        }
+    else if( inObj->heat < 0.25 ) {
+        blue = 1;
+        }
+                
+
+                
+    AnimType curType = inObj->curAnim;
+    AnimType fadeTargetType = inObj->curAnim;
+                
+    double animFade = 1.0;
+                
+    double timeVal = frameRateFactor * 
+        inObj->animationFrameCount / 60.0;
+                
+    double rotTimeVal = timeVal;
+
+    if( inObj->lastAnimFade > 0 ) {
+        curType = inObj->lastAnim;
+        fadeTargetType = inObj->curAnim;
+        animFade = inObj->lastAnimFade;
+                    
+        rotTimeVal = frameRateFactor * 
+            inObj->animationFrozenRotFrameCount / 60.0;
+        }
+                
+
+    setDrawColor( 1, 1, 1, 1 );
+    //setDrawColor( red, 0, blue, 1 );
+    //mainFont->drawString( string, 
+    //                      pos, alignCenter );
+                
+    double age = inObj->age + 
+        inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
+
+    char hideHands = false;
+
+    if( inObj->holdingID != 0 ) {
+        ObjectRecord *heldObject = getObject( inObj->holdingID );
+                    
+        hideHands = true;
+                    
+        if( heldObject->heldInHand && 
+            getObject( inObj->displayID )->frontHandIndex != -1 ) {
+            
+            hideHands = false;
+            }
+        }
+                
+
+    HandPos frontHandPos =
+        drawObjectAnim( inObj->displayID, curType, 
+                        timeVal, rotTimeVal,
+                        animFade,
+                        fadeTargetType,
+                        pos,
+                        inObj->holdingFlip,
+                        age,
+                        hideHands,
+                        inObj->clothing );
+
+    delete [] string;
+                
+    if( inObj->holdingID != 0 ) { 
+        doublePair holdPos;
+
+        if( !hideHands && frontHandPos.valid ) {
+            holdPos = frontHandPos.pos;
+            }
+        else {
+            holdPos = pos;
+            }
+
+        ObjectRecord *heldObject = getObject( inObj->holdingID );
+                    
+        if( inObj->holdingFlip ) {
+            holdPos.x -= heldObject->heldOffset.x;
+            }
+        else {
+            holdPos.x += heldObject->heldOffset.x;
+            }
+                    
+        holdPos.y += heldObject->heldOffset.y;
+                    
+        holdPos = mult( holdPos, 1.0 / CELL_D );
+
+        if( inObj->heldPosOverride && 
+            ! equal( holdPos, inObj->heldObjectPos ) ) {
+                        
+            doublePair delta = sub( holdPos, inObj->heldObjectPos );
+                        
+            double step = frameRateFactor * 0.0625;
+                        
+            if( length( delta ) < step ) {
+                inObj->heldObjectPos = holdPos;
+                }
+            else {
+                inObj->heldObjectPos =
+                    add( inObj->heldObjectPos,
+                         mult( normalize( delta ),
+                               step ) );
+                            
+                holdPos = inObj->heldObjectPos;
+                }
+            }
+        else {
+            inObj->heldPosOverride = false;
+            // track it every frame so we have a good
+            // base point for smooth move when the object
+            // is dropped
+            inObj->heldObjectPos = holdPos;
+            }
+                    
+        holdPos = mult( holdPos, CELL_D );
+
+        setDrawColor( 1, 1, 1, 1 );
+                    
+                    
+        AnimType curHeldType = inObj->curHeldAnim;
+        AnimType fadeTargetHeldType = inObj->curHeldAnim;
+                
+        double heldAnimFade = 1.0;
+                    
+        double heldTimeVal = frameRateFactor * 
+            inObj->heldAnimationFrameCount / 60.0;
+
+        double heldRotTimeVal = heldTimeVal;
+
+        if( inObj->lastHeldAnimFade > 0 ) {
+            curHeldType = inObj->lastHeldAnim;
+            fadeTargetHeldType = inObj->curHeldAnim;
+            heldAnimFade = inObj->lastHeldAnimFade;
+
+            heldRotTimeVal = frameRateFactor * 
+                inObj->heldAnimationFrozenRotFrameCount / 60.0;
+            }
+
+                        
+                    
+
+        if( inObj->numContained == 0 ) {
+                        
+            drawObjectAnim( inObj->holdingID, curHeldType, 
+                            heldTimeVal, heldRotTimeVal,
+                            heldAnimFade,
+                            fadeTargetHeldType,
+                            holdPos,
+                            inObj->holdingFlip, -1, false,
+                            getEmptyClothingSet() );
+            }
+        else {
+            drawObjectAnim( inObj->holdingID, curHeldType, 
+                            heldTimeVal, heldTimeVal,
+                            heldAnimFade,
+                            fadeTargetHeldType,
+                            holdPos,
+                            inObj->holdingFlip,
+                            -1, false,
+                            getEmptyClothingSet(),
+                            inObj->numContained,
+                            inObj->containedIDs );
+            }
+        }
+                
+    if( inObj->currentSpeech != NULL ) {
+                    
+        inSpeakers->push_back( inObj );
+        inSpeakersPos->push_back( pos );
+        }
+    }
+
+
+
+
 SimpleVector<doublePair> trail;
 
 
@@ -814,8 +1166,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
     
-    int worldXStart = xStart + mMapOffsetX - mMapD / 2;
-    int worldXEnd = xEnd + mMapOffsetX - mMapD / 2;
+    //int worldXStart = xStart + mMapOffsetX - mMapD / 2;
+    //int worldXEnd = xEnd + mMapOffsetX - mMapD / 2;
 
     //int worldYStart = xStart + mMapOffsetY - mMapD / 2;
     //int worldYEnd = xEnd + mMapOffsetY - mMapD / 2;
@@ -887,379 +1239,71 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
 
+    int numCells = mMapD * mMapD;
+    memset( mMapCellDrawnFlags, false, numCells );
+    
+
     for( int y=yEnd; y>=yStart; y-- ) {
         
+        int worldY = y + mMapOffsetY - mMapD / 2;
+
         int screenY = CELL_D * ( y + mMapOffsetY - mMapD / 2 );
 
 
 
-
-        // draw any player objects that are in this row
-        // UNDER the objects in this row (so that pick up and set down
-        // looks correct
-
-        int worldY = y + mMapOffsetY - mMapD / 2;
-        
-
-        for( int i=0; i<gameObjects.size(); i++ ) {
-        
-            LiveObject *o = gameObjects.getElement( i );
-            
-            // first, check if it's on the screen
-            int oX = o->xd;
-            int oY = o->yd;
-            
-            if( o->currentSpeed != 0 ) {
-                oX = o->pathToDest[ o->currentPathStep ].x;
-                oY = o->pathToDest[ o->currentPathStep ].y;
-                }
-            
-            if( oY == worldY && oX >= worldXStart && oX <= worldXEnd ) {
-                // in this row
-                
-
-
-                // current pos
-                char *string = autoSprintf( "%c", o->displayChar );
-                
-                doublePair pos = mult( o->currentPos, CELL_D );
-                
-                doublePair actionOffset = { 0, 0 };
-                
-                //trail.push_back( pos );
-                
-                if( o->id == ourID && 
-                    o->pendingActionAnimationProgress != 0 ) {
-                    
-                    // wiggle toward target
-                    
-                    float xDir = 0;
-                    float yDir = 0;
-                    
-                    if( o->xd < playerActionTargetX ) {
-                        xDir = 1;
-                        o->holdingFlip = false;
-                        }
-                    if( o->xd > playerActionTargetX ) {
-                        xDir = -1;
-                        o->holdingFlip = true;
-                        }
-                    if( o->yd < playerActionTargetY ) {
-                        yDir = 1;
-                        }
-                    if( o->yd > playerActionTargetY ) {
-                        yDir = -1;
-                        }
-                    
-                    double offset =
-                        32 - 
-                        32 * 
-                        cos( 2 * M_PI * o->pendingActionAnimationProgress );
-                    
-                    
-                    actionOffset.x += xDir * offset;
-                    actionOffset.y += yDir * offset;
-                    }
-                
-                
-                // bare hands action OR holding something
-                // character wiggle
-                if(  o->id == ourID && 
-                     o->pendingActionAnimationProgress != 0 ) {
-                    
-                    pos = add( pos, actionOffset );
-                    }
-                
-                
-                float red, blue;
-                
-                red = 0;
-                blue = 0;
-                
-                if( o->heat > 0.75 ) {
-                    red = 1;
-                    }
-                else if( o->heat < 0.25 ) {
-                    blue = 1;
-                    }
-                
-
-                
-                AnimType curType = o->curAnim;
-                AnimType fadeTargetType = o->curAnim;
-                
-                double animFade = 1.0;
-                
-                double timeVal = frameRateFactor * 
-                    o->animationFrameCount / 60.0;
-                
-                double rotTimeVal = timeVal;
-
-                if( o->lastAnimFade > 0 ) {
-                    curType = o->lastAnim;
-                    fadeTargetType = o->curAnim;
-                    animFade = o->lastAnimFade;
-                    
-                    rotTimeVal = frameRateFactor * 
-                        o->animationFrozenRotFrameCount / 60.0;
-                    }
-                
-
-                setDrawColor( 1, 1, 1, 1 );
-                //setDrawColor( red, 0, blue, 1 );
-                //mainFont->drawString( string, 
-                //                      pos, alignCenter );
-                
-                double age = o->age + 
-                    o->ageRate * ( game_getCurrentTime() - o->lastAgeSetTime );
-
-                char hideHands = false;
-
-                if( o->holdingID != 0 ) {
-                    ObjectRecord *heldObject = getObject( o->holdingID );
-                    
-                    hideHands = true;
-                    
-                    if( heldObject->heldInHand && 
-                        getObject( o->displayID )->frontHandIndex != -1 ) {
-            
-                        hideHands = false;
-                        }
-                    }
-                
-
-                HandPos frontHandPos =
-                    drawObjectAnim( o->displayID, curType, 
-                                    timeVal, rotTimeVal,
-                                    animFade,
-                                    fadeTargetType,
-                                    pos,
-                                    o->holdingFlip,
-                                    age,
-                                    hideHands,
-                                    o->clothing );
-
-                delete [] string;
-                
-                if( o->holdingID != 0 ) { 
-                    doublePair holdPos;
-
-                    if( !hideHands && frontHandPos.valid ) {
-                        holdPos = frontHandPos.pos;
-                        }
-                    else {
-                        holdPos = pos;
-                        }
-
-                    ObjectRecord *heldObject = getObject( o->holdingID );
-                    
-                    if( o->holdingFlip ) {
-                        holdPos.x -= heldObject->heldOffset.x;
-                        }
-                    else {
-                        holdPos.x += heldObject->heldOffset.x;
-                        }
-                    
-                    holdPos.y += heldObject->heldOffset.y;
-                    
-                    holdPos = mult( holdPos, 1.0 / CELL_D );
-
-                    if( o->heldPosOverride && 
-                        ! equal( holdPos, o->heldObjectPos ) ) {
-                        
-                        doublePair delta = sub( holdPos, o->heldObjectPos );
-                        
-                        double step = frameRateFactor * 0.0625;
-                        
-                        if( length( delta ) < step ) {
-                            o->heldObjectPos = holdPos;
-                            }
-                        else {
-                            o->heldObjectPos =
-                                add( o->heldObjectPos,
-                                     mult( normalize( delta ),
-                                           step ) );
-                            
-                            holdPos = o->heldObjectPos;
-                            }
-                        }
-                    else {
-                        o->heldPosOverride = false;
-                        // track it every frame so we have a good
-                        // base point for smooth move when the object
-                        // is dropped
-                        o->heldObjectPos = holdPos;
-                        }
-                    
-                    holdPos = mult( holdPos, CELL_D );
-
-                    setDrawColor( 1, 1, 1, 1 );
-                    
-                    
-                    AnimType curHeldType = o->curHeldAnim;
-                    AnimType fadeTargetHeldType = o->curHeldAnim;
-                
-                    double heldAnimFade = 1.0;
-                    
-                    double heldTimeVal = frameRateFactor * 
-                        o->heldAnimationFrameCount / 60.0;
-
-                    double heldRotTimeVal = heldTimeVal;
-
-                    if( o->lastHeldAnimFade > 0 ) {
-                        curHeldType = o->lastHeldAnim;
-                        fadeTargetHeldType = o->curHeldAnim;
-                        heldAnimFade = o->lastHeldAnimFade;
-
-                        heldRotTimeVal = frameRateFactor * 
-                            o->heldAnimationFrozenRotFrameCount / 60.0;
-                        }
-
-                        
-                    
-
-                    if( o->numContained == 0 ) {
-                        
-                        drawObjectAnim( o->holdingID, curHeldType, 
-                                        heldTimeVal, heldRotTimeVal,
-                                        heldAnimFade,
-                                        fadeTargetHeldType,
-                                        holdPos,
-                                        o->holdingFlip, -1, false,
-                                        getEmptyClothingSet() );
-                        }
-                    else {
-                        drawObjectAnim( o->holdingID, curHeldType, 
-                                        heldTimeVal, heldTimeVal,
-                                        heldAnimFade,
-                                        fadeTargetHeldType,
-                                        holdPos,
-                                        o->holdingFlip,
-                                        -1, false,
-                                        getEmptyClothingSet(),
-                                        o->numContained,
-                                        o->containedIDs );
-                        }
-                    }
-                
-                if( o->currentSpeech != NULL ) {
-                    
-                    speakers.push_back( o );
-                    speakersPos.push_back( pos );
-                    }
-                }
-            }
-
-
-
-        // now draw tiles in this row
+        // now draw tiles in this row, but only if they
+        // are behind a live player object
         for( int x=xStart; x<=xEnd; x++ ) {
+            int worldX = x + mMapOffsetX - mMapD / 2;
+
+
+            for( int i=0; i<gameObjects.size(); i++ ) {
+        
+                LiveObject *o = gameObjects.getElement( i );
             
-            int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
-
-            int mapI = y * mMapD + x;
-            
-            int oID = mMap[ mapI ];
-            
-            if( oID > 0 ) {
+                int oX = o->xd;
+                int oY = o->yd;
                 
-                mMapAnimationFrameCount[ mapI ] ++;
-                
-                if( mMapLastAnimFade[ mapI ] > 0 ) {
-                    mMapLastAnimFade[ mapI ] -= 0.05 * frameRateFactor;
-                    if( mMapLastAnimFade[ mapI ] < 0 ) {
-                        mMapLastAnimFade[ mapI ] = 0;
-                        // start current animation fresh after fade
-                        mMapAnimationFrameCount[ mapI ] = 0;
-
-                        if( mMapCurAnimType[ mapI ] != ground ) {
-                            // transition to ground now
-                            mMapLastAnimType[ mapI ] = mMapCurAnimType[ mapI ];
-                            mMapCurAnimType[ mapI ] = ground;
-                            mMapLastAnimFade[ mapI ] = 1;
-                            }
-                        }
+                if( o->currentSpeed != 0 ) {
+                    oX = o->pathToDest[ o->currentPathStep ].x;
+                    oY = o->pathToDest[ o->currentPathStep ].y;
                     }
                 
+                if( oY == worldY && oX == worldX ) {
+                    
+                    // there's a player here, draw map cell and player now
+                    
+                    int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
+                    
+                    int mapI = y * mMapD + x;
+                    
+                    drawMapCell( mapI, screenX, screenY );
+                 
+                    mMapCellDrawnFlags[mapI] = true;
 
-                doublePair pos = { (double)screenX, (double)screenY };
-
-                if( mMapDropOffsets[ mapI ].x != 0 ||
-                    mMapDropOffsets[ mapI ].y != 0 ) {
-                    
-                    pos = add( pos, mult( mMapDropOffsets[ mapI ], CELL_D ) );
-                    
-                    doublePair nullOffset = { 0, 0 };
-                    
-
-                    doublePair delta = sub( nullOffset, 
-                                            mMapDropOffsets[ mapI ] );
-                    
-                    double step = frameRateFactor * 0.0625;
-                    
-                    if( length( delta ) < step ) {
-                        
-                        mMapDropOffsets[ mapI ].x = 0;
-                        mMapDropOffsets[ mapI ].y = 0;
-                        }
-                    else {
-                        mMapDropOffsets[ mapI ] =
-                            add( mMapDropOffsets[ mapI ],
-                                 mult( normalize( delta ), step ) );
-                        }
+                    drawLiveObject( o, &speakers, &speakersPos );
                     }
-                
-
-                setDrawColor( 1, 1, 1, 1 );
-                
-                AnimType curType = ground;
-                AnimType fadeTargetType = ground;
-                double animFade = 1;
-                
-                if( mMapLastAnimFade[ mapI ] != 0 ) {
-                    animFade = mMapLastAnimFade[ mapI ];
-                    curType = mMapLastAnimType[ mapI ];
-                    fadeTargetType = mMapCurAnimType[ mapI ];
-                    }
-                
-                double timeVal = frameRateFactor * 
-                    mMapAnimationFrameCount[ mapI ] / 60.0;
-                
-
-                if( mMapContainedStacks[ mapI ].size() > 0 ) {
-                    int *stackArray = 
-                        mMapContainedStacks[ mapI ].getElementArray();
-                    
-                    drawObjectAnim( oID, 
-                                    curType, timeVal, timeVal,
-                                    animFade,
-                                    fadeTargetType,
-                                    pos, mMapTileFlips[ mapI ],
-                                    -1,
-                                    false,
-                                    getEmptyClothingSet(),
-                                    mMapContainedStacks[ mapI ].size(),
-                                    stackArray );
-                    delete [] stackArray;
-                    }
-                else {
-                    drawObjectAnim( oID, 
-                                    curType, timeVal, timeVal,
-                                    animFade,
-                                    fadeTargetType, pos, 
-                                    mMapTileFlips[ mapI ], -1,
-                                    false,
-                                    getEmptyClothingSet() );
-                    }
-                }
-            else if( oID == -1 ) {
-                // unknown
-                doublePair pos = { (double)screenX, (double)screenY };
-                
-                setDrawColor( 0, 0, 0, 0.5 );
-                drawSquare( pos, 14 );
                 }
             }
+
+
+        // now draw any undrawn map objects in this row
+        // OVER the player objects in this row (so that pick up and set down
+        // looks correct)
+        for( int x=xStart; x<=xEnd; x++ ) {
+            int mapI = y * mMapD + x;
+
+            if( ! mMapCellDrawnFlags[ mapI ] ) {
+                
+            
+                int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
+                    
+                drawMapCell( mapI, screenX, screenY );
+                
+                mMapCellDrawnFlags[mapI] = true;
+                }
+            }
+
 
         } // end loop over rows on screen
 
