@@ -137,7 +137,11 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         TextButton mSetHeldPosButton;
         TextButton mEndSetHeldPosButton;
+
+        TextButton mNextHeldDemoButton;
+        TextButton mPrevHeldDemoButton;
         
+
 
         Picker mSpritePicker;
         Picker mObjectPicker;

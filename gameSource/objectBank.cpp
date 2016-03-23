@@ -1297,6 +1297,48 @@ int getRandomPersonObject() {
     }
 
 
+
+int getNextPersonObject( int inCurrentPersonObjectID ) {
+    if( personObjectIDs.size() == 0 ) {
+        return -1;
+        }
+    
+    int numPeople = personObjectIDs.size();
+
+    for( int i=0; i<numPeople - 1; i++ ) {
+        if( personObjectIDs.getElementDirect( i ) == 
+            inCurrentPersonObjectID ) {
+            
+            return personObjectIDs.getElementDirect( i + 1 );
+            }
+        }
+
+    return personObjectIDs.getElementDirect( 0 );
+    }
+
+
+
+int getPrevPersonObject( int inCurrentPersonObjectID ) {
+    if( personObjectIDs.size() == 0 ) {
+        return -1;
+        }
+    
+    int numPeople = personObjectIDs.size();
+
+    for( int i=1; i<numPeople; i++ ) {
+        if( personObjectIDs.getElementDirect( i ) == 
+            inCurrentPersonObjectID ) {
+            
+            return personObjectIDs.getElementDirect( i - 1 );
+            }
+        }
+
+    return personObjectIDs.getElementDirect( numPeople - 1 );
+    }
+
+
+
+
 int getRandomDeathMarker() {
 
 

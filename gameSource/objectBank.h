@@ -267,6 +267,9 @@ char isContainable( int inID );
 // -1 if no person object exists
 int getRandomPersonObject();
 
+int getNextPersonObject( int inCurrentPersonObjectID );
+int getPrevPersonObject( int inCurrentPersonObjectID );
+
 
 // -1 if no death marker object exists
 int getRandomDeathMarker();
