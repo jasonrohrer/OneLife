@@ -355,6 +355,7 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
         }
     
     inObject->currentPathStep = 0;
+    inObject->onFinalPathStep = false;
     
     delete [] blockedMap;
     }
@@ -1265,9 +1266,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 int oY = o->yd;
                 
                 if( o->currentSpeed != 0 ) {
-                    oX = o->pathToDest[ o->currentPathStep ].x;
-                    oY = o->pathToDest[ o->currentPathStep ].y;
+                    if( o->onFinalPathStep ) {
+                        oX = o->pathToDest[ o->pathLength - 1 ].x;
+                        oY = o->pathToDest[ o->pathLength - 1 ].y;
+                        }
+                    else {
+                        oX = o->pathToDest[ o->currentPathStep ].x;
+                        oY = o->pathToDest[ o->currentPathStep ].y;
+                        }
                     }
+                
                 
                 if( oY == worldY && oX == worldX ) {
                     
@@ -3018,6 +3026,15 @@ void LivingLifePage::step() {
                     o->currentPos = add( o->currentPos,
                                          mult( o->currentMoveDirection,
                                                o->currentSpeed ) );
+
+                    if( 1.5 * distance( o->currentPos,
+                                        startPos )
+                        >
+                        distance( o->currentPos,
+                                  endPos ) ) {
+                        
+                        o->onFinalPathStep = true;
+                        }
                     }
                 }
             
@@ -3568,6 +3585,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 
                 ourLiveObject->pathLength = 2;
                 ourLiveObject->currentPathStep = 0;
+                ourLiveObject->onFinalPathStep = false;
                 
                 ourLiveObject->currentMoveDirection =
                     normalize( 

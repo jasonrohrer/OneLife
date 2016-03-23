@@ -119,6 +119,8 @@ typedef struct LiveObject {
         int currentPathStep;
         doublePair currentMoveDirection;
         
+        char onFinalPathStep;
+
 
         // how long whole move should take
         double moveTotalTime;
