@@ -1743,10 +1743,11 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             drawObject( personObject, drawOffset, 0, false, 
                         age, hideHands, getEmptyClothingSet() );
 
-        drawOffset = add( mCurrentObject.heldOffset, drawOffset );
-
         if( !hideHands && frontHandPos.valid ) {
-            drawOffset = add( frontHandPos.pos, drawOffset );
+            drawOffset = add( mCurrentObject.heldOffset, frontHandPos.pos );
+            }
+        else {
+            drawOffset = add( mCurrentObject.heldOffset, drawOffset );
             }
         }
 

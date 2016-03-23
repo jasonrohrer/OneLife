@@ -1002,23 +1002,43 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 double age = o->age + 
                     o->ageRate * ( game_getCurrentTime() - o->lastAgeSetTime );
 
-                char holdingSomething = 
-                    ( o->holdingID != 0 );
+                char hideHands = false;
+
+                if( o->holdingID != 0 ) {
+                    ObjectRecord *heldObject = getObject( o->holdingID );
+                    
+                    hideHands = true;
+                    
+                    if( heldObject->heldInHand && 
+                        getObject( o->displayID )->frontHandIndex != -1 ) {
+            
+                        hideHands = false;
+                        }
+                    }
                 
-                drawObjectAnim( o->displayID, curType, 
-                                timeVal, rotTimeVal,
-                                animFade,
-                                fadeTargetType,
-                                pos,
-                                o->holdingFlip,
-                                age,
-                                holdingSomething,
-                                o->clothing );
+
+                HandPos frontHandPos =
+                    drawObjectAnim( o->displayID, curType, 
+                                    timeVal, rotTimeVal,
+                                    animFade,
+                                    fadeTargetType,
+                                    pos,
+                                    o->holdingFlip,
+                                    age,
+                                    hideHands,
+                                    o->clothing );
 
                 delete [] string;
                 
                 if( o->holdingID != 0 ) { 
-                    doublePair holdPos = pos;
+                    doublePair holdPos;
+
+                    if( !hideHands && frontHandPos.valid ) {
+                        holdPos = frontHandPos.pos;
+                        }
+                    else {
+                        holdPos = pos;
+                        }
 
                     ObjectRecord *heldObject = getObject( o->holdingID );
                     
