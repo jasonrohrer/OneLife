@@ -81,6 +81,8 @@ class EditorImportPage : public GamePage, public ActionListener {
         Image *mProcessedShadow;
         SpriteHandle mProcessedShadowSprite;
         
+        char mSelectionMultiplicative;
+
 
         ValueSlider mShadowSlider;
         CheckboxButton mSolidCheckbox;

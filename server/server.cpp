@@ -3279,3 +3279,11 @@ char getSpriteHit( int inID, int inXCenterOffset, int inYCenterOffset ) {
     }
 
 
+char getUsesMultiplicativeBlending( int inID ) {
+    return false;
+    }
+
+
+void toggleMultiplicativeBlend( char inMultiplicative ) {
+    }
+

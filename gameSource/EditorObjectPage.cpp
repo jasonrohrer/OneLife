@@ -1988,9 +1988,20 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         spritePos = add( spritePos, drawOffset );
 
         
+        char multiplicative = 
+            getUsesMultiplicativeBlending( mCurrentObject.sprites[i] );
+        
+        if( multiplicative ) {
+            toggleMultiplicativeBlend( true );
+            }
+
         drawSprite( getSprite( mCurrentObject.sprites[i] ), spritePos,
                     1.0, mCurrentObject.spriteRot[i],
                     mCurrentObject.spriteHFlip[i] );
+
+        if( multiplicative ) {
+            toggleMultiplicativeBlend( false );
+            }
 
         if( mCurrentObject.spriteAgeStart[i] == -1 &&
             mCurrentObject.spriteAgeEnd[i] == -1 ) {

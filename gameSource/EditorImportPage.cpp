@@ -36,6 +36,7 @@ EditorImportPage::EditorImportPage()
           mProcessedSelectionSprite( NULL ),
           mProcessedShadow( NULL ),
           mProcessedShadowSprite( NULL ),
+          mSelectionMultiplicative( false ),
           mShadowSlider( smallFont, 0, 200, 2,
                          100, 20,
                          0, 1, "Shadow" ),
@@ -379,7 +380,8 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
 
             addSprite( tag, 
                        mProcessedSelectionSprite,
-                       mProcessedSelection );
+                       mProcessedSelection,
+                       mSelectionMultiplicative );
 
             mSpritePicker.redoSearch();
             
@@ -470,9 +472,11 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mSolidCheckbox ) {
         if( mSolidCheckbox.getToggled() ) {
             mShadowSlider.setVisible( true );
+            mSelectionMultiplicative = false;
             }
         else {
             mShadowSlider.setVisible( false );
+            mSelectionMultiplicative = true;
             }
         }
     }
@@ -532,7 +536,16 @@ void EditorImportPage::draw( doublePair inViewCenter,
             }
             
         setDrawColor( 1, 1, 1, 1 );
+        
+        if( mSelectionMultiplicative ) {
+            toggleMultiplicativeBlend( true );
+            }
+        
         drawSprite( mProcessedSelectionSprite, pos );
+        
+        if( mSelectionMultiplicative ) {
+            toggleMultiplicativeBlend( false );
+            }
         }
     
     setDrawColor( 1, 1, 1, 1 );
@@ -941,6 +954,10 @@ void EditorImportPage::processSelection() {
         // don't search for solid areas at all
         done = true;
         memset( whiteMap, 1, numPixels );
+        mSelectionMultiplicative = true;
+        }
+    else {
+        mSelectionMultiplicative = false;
         }
     
     
@@ -1019,7 +1036,8 @@ void EditorImportPage::processSelection() {
     for( int i=0; i<numPixels; i++ ) {
         if( whiteMap[i] == 1 ) {
             
-            if( r[i] <= paperThreshold ) {
+            if( r[i] <= paperThreshold && g[i] <= paperThreshold &&
+                b[i] <= paperThreshold ) {
                 // a point in white areas that we can't count as paper 
                 
                 int x = i % w;
@@ -1046,7 +1064,9 @@ void EditorImportPage::processSelection() {
                         int nI = nY * w + nX;
                         
                         if( whiteMap[nI] != 1 ||
-                            r[nI] <= paperThreshold ) {
+                            ( r[nI] <= paperThreshold &&
+                              g[nI] <= paperThreshold &&
+                              b[nI] <= paperThreshold ) ) {
                             
                             foundNonPaperNeighbor = true;
                             break;
@@ -1060,12 +1080,16 @@ void EditorImportPage::processSelection() {
                     
                     // turn it full white so we make it transparent below
                     r[i] = 1;
+                    g[i] = 1;
+                    b[i] = 1;
                     printf( "Found noise point at %d, %d\n", x, y );
                     }
                 }
             }
         }
     
+    
+    if( !mSelectionMultiplicative )
     for( int i=0; i<numPixels; i++ ) {
         if( whiteMap[i] == 1 ) {
             
@@ -1374,6 +1398,53 @@ void EditorImportPage::processSelection() {
 
 
     mProcessedSelection = expandToPowersOfTwo( shadowImage );
+    
+
+    if( mSelectionMultiplicative ) {
+        // set all transparent areas to white (black border added by expansion)
+        r = mProcessedSelection->getChannel( 0 );
+        g = mProcessedSelection->getChannel( 1 );
+        b = mProcessedSelection->getChannel( 2 );
+        a = mProcessedSelection->getChannel( 3 );
+
+        int numPixels = mProcessedSelection->getWidth() *
+            mProcessedSelection->getHeight();
+        
+        for( int i=0; i<numPixels; i++ ) {
+            if( a[i] == 0 ) {
+                r[i] =  1;
+                g[i] =  1;
+                b[i] =  1;
+                }
+            else if( r[i] > paperThreshold &&
+                     g[i] > paperThreshold &&
+                     b[i] > paperThreshold ) {
+                // also make areas white that are close enough to white
+                // thus, we don't have square, slightly-darkening ghost
+                // around image
+                r[i] =  1;
+                g[i] =  1;
+                b[i] =  1;
+                }
+
+            double min = r[i];
+            
+            if( g[i] < min ) {
+                min = g[i];
+                }
+            if( b[i] < min ) {
+                min = b[i];
+                }
+            
+            // alpha is set to inverse of whiteness
+            // (for shadow making, in case user re-checks Solid after 
+            //  extraction)
+            // Note that if image remains multiplicative, alpha will be ignored
+            // when it is applied.
+            a[i] = 1 - min;
+            }
+        }
+    
 
     mProcessedShadow = getShadow( mProcessedSelection );    
     

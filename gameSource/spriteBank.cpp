@@ -153,8 +153,15 @@ float initSpriteBankStep() {
 
                         r->id = 0;
                                 
-                        sscanf( tgaFileName, "%d.tga", &( r->id ) );
-                                
+                        if( tgaFileName[0] == 'm' ) {
+                            r->multiplicativeBlend = true;
+                            sscanf( tgaFileName, "m%d.tga", &( r->id ) );
+                            }
+                        else {
+                            r->multiplicativeBlend = false;
+                            sscanf( tgaFileName, "%d.tga", &( r->id ) );
+                            }
+                        
                         printf( "Scanned id = %d\n", r->id );
                         
                         r->tag = stringDuplicate( tag );
@@ -283,6 +290,17 @@ SpriteRecord *getSpriteRecord( int inID ) {
 
 
 
+char getUsesMultiplicativeBlending( int inID ) {
+    if( inID < mapSize ) {
+        if( idMap[inID] != NULL ) {
+            return idMap[inID]->multiplicativeBlend;
+            }
+        }
+    return false;
+    }
+    
+
+
 SpriteHandle getSprite( int inID ) {
     if( inID < mapSize ) {
         if( idMap[inID] != NULL ) {
@@ -328,7 +346,8 @@ SpriteRecord **searchSprites( const char *inSearch,
 
 
 int addSprite( const char *inTag, SpriteHandle inSprite,
-               Image *inSourceImage ) {
+               Image *inSourceImage,
+               char inMultiplicativeBlending ) {
 
     int maxD = inSourceImage->getWidth();
     
@@ -376,7 +395,13 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
         
         if( tagDir->exists() && tagDir->isDirectory() ) {
             
-            char *fileName = autoSprintf( "%d.tga", nextSpriteNumber );
+            const char *printFormat = "%d.tga";
+            
+            if( inMultiplicativeBlending ) {
+                printFormat = "m%d.tga";
+                }
+
+            char *fileName = autoSprintf( printFormat, nextSpriteNumber );
             
             newID = nextSpriteNumber;
 
@@ -439,6 +464,7 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     r->sprite = inSprite;
     r->tag = stringDuplicate( inTag );
     r->maxD = maxD;
+    r->multiplicativeBlend = inMultiplicativeBlending;
 
 
     r->w = inSourceImage->getWidth();
@@ -494,7 +520,13 @@ void deleteSpriteFromBank( int inID ) {
         
         if( tagDir->exists() && tagDir->isDirectory() ) {
             
-            char *fileName = autoSprintf( "%d.tga", inID );
+            const char *printFormat = "%d.tga";
+            
+            if( r->multiplicativeBlend ) {
+                printFormat = "m%d.tga";
+                }
+
+            char *fileName = autoSprintf( printFormat, inID );
             
             File *spriteFile = tagDir->getChildFile( fileName );
             

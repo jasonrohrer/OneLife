@@ -1163,9 +1163,20 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
             
             rot += inRot;
             
+            char multiplicative = 
+                getUsesMultiplicativeBlending( inObject->sprites[i] );
+            
+            if( multiplicative ) {
+                toggleMultiplicativeBlend( true );
+                }
+            
             drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
                         rot, 
                         logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
+            
+            if( multiplicative ) {
+                toggleMultiplicativeBlend( false );
+                }
             
             
             if( i == inObject->frontHandIndex ) {

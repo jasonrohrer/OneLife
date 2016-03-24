@@ -1067,8 +1067,21 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
         if( !skipSprite ) {
             setDrawColor( obj->spriteColor[i] );
+            
+            char multiplicative = 
+                getUsesMultiplicativeBlending( obj->sprites[i] );
+            
+            if( multiplicative ) {
+                toggleMultiplicativeBlend( true );
+                }
+
             drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, 
                         logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
+
+            if( multiplicative ) {
+                toggleMultiplicativeBlend( false );
+                }
+
 
             if( i == obj->frontHandIndex ) {
                 returnHandPos.valid = true;

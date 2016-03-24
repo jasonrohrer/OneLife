@@ -11,6 +11,8 @@ typedef struct SpriteRecord {
         
         char *tag;
 
+        char multiplicativeBlend;
+
         // maximum pixel dimension
         // (used for sizing in pickers)
         int maxD;
@@ -37,6 +39,10 @@ void freeSpriteBank();
 
 SpriteRecord *getSpriteRecord( int inID );
 
+
+char getUsesMultiplicativeBlending( int inID );
+
+
 SpriteHandle getSprite( int inID );
 
 
@@ -49,7 +55,8 @@ SpriteRecord **searchSprites( const char *inSearch,
 
 // returns new ID, or -1 if adding failed
 int addSprite( const char *inTag, SpriteHandle inSprite, 
-               Image *inSourceImage );
+               Image *inSourceImage,
+               char inMultiplicativeBlending );
 
 
 void deleteSpriteFromBank( int inID );
