@@ -351,6 +351,8 @@ EditorObjectPage::EditorObjectPage()
 
     mCurrentObject.headIndex = 0;
     
+    mCurrentObject.frontHandIndex = -1;
+    
 
     mPickedObjectLayer = -1;
     mPickedSlot = -1;
