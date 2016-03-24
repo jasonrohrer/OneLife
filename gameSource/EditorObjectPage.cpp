@@ -1093,9 +1093,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mSetHeldPosButton.setVisible( false );
             mEndSetHeldPosButton.setVisible( false );
 
-            mNextHeldDemoButton.setVisible( false );
-            mPrevHeldDemoButton.setVisible( false );
-
+            mNextHeldDemoButton.setVisible( true );
+            mPrevHeldDemoButton.setVisible( true );
+            
             mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
             }
