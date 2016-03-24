@@ -1638,7 +1638,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
              inTarget == &mSaturationSlider ||
              inTarget == &mValueSlider ) {
         
-        if( mPickedObjectLayer != -1 ) {
+        if( mPickedObjectLayer != -1 &&
+            ! getUsesMultiplicativeBlending( 
+                mCurrentObject.sprites[mPickedObjectLayer] ) ) {
+            
             Color *c = Color::makeColorFromHSV(
                 mHueSlider.getValue(), mSaturationSlider.getValue(),
                 mValueSlider.getValue() );
@@ -1934,11 +1937,22 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         float red = 1;
         float green = 1;
         float alpha = 1;
+
+
+        char multiplicative = 
+            getUsesMultiplicativeBlending( mCurrentObject.sprites[i] );
+
         
         if( mHoverObjectLayer == i && mHoverStrength > 0 ) {
             blue = 1 - mHoverStrength;
             red = 1 - mHoverStrength;
             alpha *= mHoverFlash;
+            
+            if( multiplicative ) {
+                red = 1 - red;
+                green = 1 - green;
+                blue = 1 - blue;
+                }
             }
         else {
             FloatRGB color = mCurrentObject.spriteColor[i];
@@ -1988,12 +2002,14 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         spritePos = add( spritePos, drawOffset );
 
         
-        char multiplicative = 
-            getUsesMultiplicativeBlending( mCurrentObject.sprites[i] );
         
         if( multiplicative ) {
             toggleMultiplicativeBlend( true );
+            if( mHoverObjectLayer == i && mHoverStrength > 0 ) {
+                toggleAdditiveTextureColoring( true );
+                }
             }
+        
 
         drawSprite( getSprite( mCurrentObject.sprites[i] ), spritePos,
                     1.0, mCurrentObject.spriteRot[i],
@@ -2001,6 +2017,9 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
         if( multiplicative ) {
             toggleMultiplicativeBlend( false );
+            if( mHoverObjectLayer == i && mHoverStrength > 0 ) {
+                toggleAdditiveTextureColoring( false );
+                }
             }
 
         if( mCurrentObject.spriteAgeStart[i] == -1 &&
@@ -2329,23 +2348,35 @@ void EditorObjectPage::pickedLayerChanged() {
         mValueSlider.setVisible( false );
         }
     else {
-        mHueSlider.setVisible( true );
-        mSaturationSlider.setVisible( true );
-        mValueSlider.setVisible( true );
-        
 
-        FloatRGB rgb = mCurrentObject.spriteColor[ mPickedObjectLayer ];
-        
-        Color c( rgb.r, rgb.g, rgb.b );
-        
-        float h, s, v;
-        c.makeHSV( &h, &s, &v );
-        
-        mHueSlider.setValue( h );
-        mSaturationSlider.setValue( s );
-        mValueSlider.setValue( v );
-
-        updateSliderColors();
+        if( getUsesMultiplicativeBlending( 
+                mCurrentObject.sprites[ mPickedObjectLayer ] ) ) {
+            
+            // colors don't work for multiplicative blending sprites
+            mHueSlider.setVisible( false );
+            mSaturationSlider.setVisible( false );
+            mValueSlider.setVisible( false );
+            }
+        else {
+            
+            mHueSlider.setVisible( true );
+            mSaturationSlider.setVisible( true );
+            mValueSlider.setVisible( true );
+            
+            
+            FloatRGB rgb = mCurrentObject.spriteColor[ mPickedObjectLayer ];
+            
+            Color c( rgb.r, rgb.g, rgb.b );
+            
+            float h, s, v;
+            c.makeHSV( &h, &s, &v );
+            
+            mHueSlider.setValue( h );
+            mSaturationSlider.setValue( s );
+            mValueSlider.setValue( v );
+            
+            updateSliderColors();
+            }
         }
     updateAgingPanel();
     }
@@ -2570,11 +2601,19 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         mLayerOldRot = mCurrentObject.spriteRot[ mPickedObjectLayer ];
         }
     if( mPickedObjectLayer != -1 && inASCII == 'c' ) {
-        mColorClipboard = mCurrentObject.spriteColor[ mPickedObjectLayer ];
+        if( ! getUsesMultiplicativeBlending( 
+                mCurrentObject.sprites[ mPickedObjectLayer ] ) ) {
+            
+            mColorClipboard = mCurrentObject.spriteColor[ mPickedObjectLayer ];
+            }
         }
     if( mPickedObjectLayer != -1 && inASCII == 'v' ) {
-        mCurrentObject.spriteColor[ mPickedObjectLayer ] = mColorClipboard;
-        pickedLayerChanged();
+        if( ! getUsesMultiplicativeBlending( 
+                mCurrentObject.sprites[ mPickedObjectLayer ] ) ) {
+            
+            mCurrentObject.spriteColor[ mPickedObjectLayer ] = mColorClipboard;
+            pickedLayerChanged();
+            }
         }
     if( mPickedObjectLayer != -1 && inASCII == 8 ) {
         // backspace
