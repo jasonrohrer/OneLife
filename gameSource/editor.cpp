@@ -63,6 +63,15 @@ CustomRandomSource randSource( 34957197 );
 #include "overlayBank.h"
 
 
+#include "minorGems/io/file/File.h"
+#include "minorGems/system/Time.h"
+#include "testFileLoadThread.h"
+
+FileLoadHandle loadingFile = NULL;
+double loadingStartTime;
+
+
+
 
 EditorImportPage *importPage;
 EditorObjectPage *objectPage;
@@ -429,6 +438,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
 
     initDone = true;
+
+
+    initFileLoadThread();
     }
 
 
@@ -476,6 +488,9 @@ void freeFrameDrawer() {
     freeOverlayBank();
 
     freeAnimationBank();
+
+
+    freeFileLoadThread();
     }
 
 
@@ -768,6 +783,25 @@ void deleteCharFromUserTypedMessage() {
 
 void drawFrame( char inUpdate ) {    
 
+    if( loadingFile != NULL ) {
+        
+        if( isFileLoaded( loadingFile ) ) {
+
+            int length = 0;
+            unsigned char *data
+                = getFileContents( loadingFile, &length );
+            
+
+            printf( "Done with file read, %.2f sec\n", 
+                    Time::getCurrentTime() - loadingStartTime );
+            
+            if( data != NULL ) {
+                delete [] data;
+                }
+            loadingFile = NULL;
+            }
+        }
+    
 
     if( !inUpdate ) {
 
@@ -1160,6 +1194,31 @@ void keyDown( unsigned char inASCII ) {
             }
         }
     */
+
+    if( inASCII == 'F' ) {
+        if( loadingFile == NULL ) {
+            printf( "Starting file read\n" );
+            
+            loadingStartTime = Time::getCurrentTime();
+            
+            loadingFile = startLoadingFile( "20MegFile" );
+            }
+        }
+    if( inASCII == 'f' ) {
+        File testFile( NULL, "20MegFile" );
+        
+        printf( "Starting file read\n" );
+        double startTime = Time::getCurrentTime();
+        int length = 0;
+        unsigned char *data = testFile.readFileContents( &length );
+        printf( "Done with file read, %.2f sec\n", 
+                Time::getCurrentTime() - startTime );
+        if( data != NULL ) {
+            delete [] data;
+            }
+        }
+    
+    
 
     
     if( isPaused() ) {

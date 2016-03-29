@@ -41,6 +41,7 @@ ageControl.cpp \
 overlayBank.cpp \
 keyLegend.cpp \
 LoadingPage.cpp \
+testFileLoadThread.cpp \
 
 
 GAME_GRAPHICS = \
@@ -101,3 +102,4 @@ NEEDED_MINOR_GEMS_OBJECTS = \
  ${CRYPTO_RANDOM_O} \
  ${DIFF_BUNDLE_CLIENT_O} \
  ${STRING_TREE_O} \
+ ${BINARY_SEMAPHORE_O} \
