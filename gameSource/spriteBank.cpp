@@ -32,11 +32,11 @@ static SimpleVector<SpriteRecord*> records;
 static int maxID;
 
 
+static File spritesDir( NULL, "sprites" );
+
+
 void initSpriteBankStart() {
     maxID = 0;
-
-
-    File spritesDir( NULL, "sprites" );
     
     numFiles = 0;
     currentFile = 0;
@@ -89,105 +89,122 @@ float initSpriteBankStep() {
     
     int i = currentFile;
             
-    if( childFiles[i]->isDirectory() ) {
+    if( !childFiles[i]->isDirectory() ) {
                 
-        char *tag = childFiles[i]->getFileName();
+        char *fileName = childFiles[i]->getFileName();
+    
+        // skip all non-tga files
+        if( strstr( fileName, ".tga" ) != NULL ) {
+            
+            // a tga file!
+            
+            char *fullName = childFiles[i]->getFullFileName();
+                            
+            printf( "Loading sprite from path %s\n", fullName );
+                            
+
+            Image *spriteImage = readTGAFileBase( fullName );
+                            
+            delete [] fullName;
+                            
+                            
+            if( spriteImage != NULL ) {
+                SpriteRecord *r = new SpriteRecord;
+
+                        
+                r->sprite =
+                    fillSprite( spriteImage, false );
                 
-        int numTGAFiles;
-        File **tgaFiles = childFiles[i]->getChildFiles( &numTGAFiles );
-                
-        for( int t=0; t<numTGAFiles; t++ ) {
+                r->w = spriteImage->getWidth();
+                r->h = spriteImage->getHeight();
+                        
+                int numPixels = r->w * r->h;
+                r->hitMap = new char[ numPixels ];
+
+                memset( r->hitMap, 1, numPixels );
+                        
+                if( spriteImage->getNumChannels() == 4 ) {
+                            
+                    double *a = spriteImage->getChannel(3);
                     
-            if( ! tgaFiles[t]->isDirectory() ) {
-                        
-                char *tgaFileName = tgaFiles[t]->getFileName();
-                        
-                if( strstr( tgaFileName, ".tga" ) != NULL ) {
-                            
-                    // a tga file!
-
-                    char *fullName = tgaFiles[t]->getFullFileName();
-                            
-                    printf( "Loading sprite from path %s, tag %s\n", 
-                            fullName, tag );
-                            
-
-                    Image *spriteImage = readTGAFileBase( fullName );
-                            
-                    delete [] fullName;
-                            
-                            
-                    if( spriteImage != NULL ) {
-                        SpriteRecord *r = new SpriteRecord;
-
-                        
-                        r->sprite =
-                            fillSprite( spriteImage, false );
-
-                        r->w = spriteImage->getWidth();
-                        r->h = spriteImage->getHeight();
-                        
-                        int numPixels = r->w * r->h;
-                        r->hitMap = new char[ numPixels ];
-
-                        memset( r->hitMap, 1, numPixels );
-                        
-                        if( spriteImage->getNumChannels() == 4 ) {
-                            
-                            double *a = spriteImage->getChannel(3);
-                            
-                            for( int p=0; p<numPixels; p++ ) {
-                                if( a[p] < 0.25 ) {
-                                    r->hitMap[p] = 0;
-                                    }
-                                }
-                            }
-                                 
-                        for( int e=0; e<3; e++ ) {    
-                            expandMap( r->hitMap, r->w, r->h );
-                            }
-                        
-                        delete spriteImage;
-                        
-
-
-                        r->id = 0;
-                                
-                        if( tgaFileName[0] == 'm' ) {
-                            r->multiplicativeBlend = true;
-                            sscanf( tgaFileName, "m%d.tga", &( r->id ) );
-                            }
-                        else {
-                            r->multiplicativeBlend = false;
-                            sscanf( tgaFileName, "%d.tga", &( r->id ) );
-                            }
-                        
-                        printf( "Scanned id = %d\n", r->id );
-                        
-                        r->tag = stringDuplicate( tag );
-                        
-                        r->maxD = getSpriteWidth( r->sprite );
-                        if( getSpriteHeight( r->sprite ) > r->maxD ) {
-                            r->maxD = getSpriteHeight( r->sprite );
-                            }
-                        records.push_back( r );
-
-                        if( maxID < r->id ) {
-                            maxID = r->id;
+                    for( int p=0; p<numPixels; p++ ) {
+                        if( a[p] < 0.25 ) {
+                            r->hitMap[p] = 0;
                             }
                         }
                     }
-                delete [] tgaFileName;
-                }
+                                 
+                for( int e=0; e<3; e++ ) {    
+                    expandMap( r->hitMap, r->w, r->h );
+                    }
+                        
+                delete spriteImage;
+                        
+
+
+                r->id = 0;
+                                
+                sscanf( fileName, "%d.tga", &( r->id ) );
+                
+                char *textFileName = autoSprintf( "%d.txt", r->id );
+                
+                File *textFile = spritesDir.getChildFile( textFileName );
+                
+                delete [] textFileName;
+                
+                char *contents = textFile->readFileContents();
+                
+                delete textFile;
+                
+                r->tag = NULL;
+
+                if( contents != NULL ) {
                     
-            delete tgaFiles[t];
+                    SimpleVector<char *> *tokens = tokenizeString( contents );
+                    int numTokens = tokens->size();
+                    
+                    if( numTokens >= 2 ) {
+                        
+                        r->tag = 
+                            stringDuplicate( tokens->getElementDirect( 0 ) );
+                        
+                        int mult;
+                        sscanf( tokens->getElementDirect( 1 ),
+                                "%d", &mult );
+                        
+                        if( mult == 1 ) {
+                            r->multiplicativeBlend = true;
+                            }
+                        else {
+                            r->multiplicativeBlend = false;
+                            }
+                        }
+
+                    tokens->deallocateStringElements();
+                    delete tokens;
+                    
+                    delete [] contents;
+                    }
+                
+                if( r->tag == NULL ) {
+                    r->tag = stringDuplicate( "tag" );
+                    r->multiplicativeBlend = false;
+                    }
+                
+                r->maxD = getSpriteWidth( r->sprite );
+                if( getSpriteHeight( r->sprite ) > r->maxD ) {
+                    r->maxD = getSpriteHeight( r->sprite );
+                            }
+                records.push_back( r );
+
+                if( maxID < r->id ) {
+                    maxID = r->id;
+                    }
+                }
             }
-                
-        delete [] tag;
-                
-        delete [] tgaFiles;
+        delete [] fileName;
         }
-            
+                
     delete childFiles[i];
 
 
