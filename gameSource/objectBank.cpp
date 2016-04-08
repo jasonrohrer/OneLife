@@ -95,7 +95,7 @@ float initObjectBankStep() {
 
             char *fullName = childFiles[i]->getFullFileName();
                             
-            printf( "Loading object from path %s\n", fullName );
+            //printf( "Loading object from path %s\n", fullName );
                             
             delete [] fullName;
                     
@@ -538,6 +538,7 @@ void freeObjectBank() {
 
 
 void resaveAll() {
+    printf( "Starting to resave all objects\n..." );
     for( int i=0; i<mapSize; i++ ) {
         if( idMap[i] != NULL ) {
 
@@ -579,6 +580,7 @@ void resaveAll() {
                        idMap[i]->id );
             }
         }
+    printf( "...done with resave\n" );
     }
 
 

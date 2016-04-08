@@ -982,8 +982,11 @@ void drawFrame( char inUpdate ) {
                     break;
                     }
                 case 2: {
-                    float progress = initObjectBankStep();
-                    loadingPage->setCurrentProgress( progress );
+                    float progress;
+                    for( int i=0; i<10; i++ ) {    
+                        progress = initObjectBankStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
                     
                     if( progress == 1.0 ) {
                         initObjectBankFinish();
