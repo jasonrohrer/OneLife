@@ -325,7 +325,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
         }
     exit( 1 );
     */
-
+    /*
     for( int i=0; i<800; i++ ) {
         RawRGBAImage *spriteImage = readTGAFileRawBase( "sprites/94.tga" );
                                     
@@ -342,7 +342,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
             }
         }
     exit( 1 );
-
+    */
 
     
     toggleLinearMagFilter( true );
