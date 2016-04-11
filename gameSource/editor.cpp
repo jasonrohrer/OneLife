@@ -311,6 +311,39 @@ void freeDrawString() {
 void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                       const char *inCustomRecordedGameData,
                       char inPlayingBack ) {
+
+    /*
+    for( int i=0; i<800; i++ ) {
+        Image *spriteImage = readTGAFileBase( "sprites/94.tga" );
+                                    
+        if( spriteImage != NULL ) {
+            SpriteHandle h =
+                fillSprite( spriteImage, false );
+            freeSprite( h );
+            delete spriteImage;
+            }
+        }
+    exit( 1 );
+    */
+
+    for( int i=0; i<800; i++ ) {
+        RawRGBAImage *spriteImage = readTGAFileRawBase( "sprites/94.tga" );
+                                    
+        if( spriteImage != NULL ) {
+
+            if( spriteImage->mNumChannels == 4 ) {
+                
+                SpriteHandle h =
+                    fillSprite( spriteImage->mRGBABytes, spriteImage->mWidth,
+                                spriteImage->mHeight );
+                freeSprite( h );
+                }
+            delete spriteImage;
+            }
+        }
+    exit( 1 );
+
+
     
     toggleLinearMagFilter( true );
     toggleMipMapGeneration( true );
