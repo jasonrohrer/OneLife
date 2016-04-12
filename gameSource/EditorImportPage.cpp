@@ -754,7 +754,7 @@ void EditorImportPage::pointerUp( float inX, float inY ) {
 
 
 
-#include "minorGems/graphics/filters/FastBlurFilter.h"
+#include "minorGems/graphics/filters/BoxBlurFilter.h"
 
 
 
@@ -767,12 +767,10 @@ static Image *getShadow( Image *inImage ) {
     
     shadowImage->pasteChannel( inImage->getChannel( 3 ), 3 );
     
-    // now we have black, clear shadow
-    FastBlurFilter filter;
-    
-    for( int i=0; i<20; i++ ) {
-        shadowImage->filter( &filter, 3 );
-        }
+    BoxBlurFilter filter( 4 );
+        
+    shadowImage->filter( &filter, 3 );
+        
     
     double *shadowAlpha = shadowImage->getChannel( 3 );
     double *imageAlpha = inImage->getChannel( 3 );
@@ -922,10 +920,7 @@ void EditorImportPage::processSelection() {
     int w = cutImage->getWidth();
     int h = cutImage->getHeight();
     
-    int numPixels = w * h;
-    
-    char *doneMap = new char[numPixels];
-    memset( doneMap, 0, numPixels );
+    int numPixels = w * h;    
 
     // -1 for unvisited
     // 0 for non-white
@@ -960,15 +955,23 @@ void EditorImportPage::processSelection() {
         mSelectionMultiplicative = false;
         }
     
+    SimpleVector<int> whitePixelsWithUnexploredNeighbors;
+    
+    whitePixelsWithUnexploredNeighbors.push_back( 0 );
     
     while( !done ) {
         
         int foundI = -1;
-        for( int i=0; i<numPixels; i++ ) {
-            if( whiteMap[i] == 1 && !doneMap[i] ) {
-                foundI = i;
-                break;
-                }
+
+        int numFrontier = whitePixelsWithUnexploredNeighbors.size();
+
+        if( numFrontier > 0 ) {
+            
+            foundI = whitePixelsWithUnexploredNeighbors.getElementDirect(
+                numFrontier - 1 );
+            whitePixelsWithUnexploredNeighbors.deleteElement( 
+                numFrontier - 1 );
+            
             }
         
         if( foundI == -1 ) {
@@ -982,9 +985,6 @@ void EditorImportPage::processSelection() {
             
             int nDX[4] = { 0, 1, 0, -1 };
             int nDY[4] = { 1, 0, -1, 0 };
-            
-
-            char foundUnvisited = false;
             
             for( int n=0; n<4; n++ ) {
                 
@@ -1001,28 +1001,22 @@ void EditorImportPage::processSelection() {
                     
                     if( whiteMap[nI] == -1 ) {
                         
-                        foundUnvisited = true;
-                        
                         // is it white?
                         if( r[nI] > threshold &&
                             g[nI] > threshold &&
                             b[nI] > threshold ) {
                             
                             whiteMap[nI] = 1;
+                            
+                            whitePixelsWithUnexploredNeighbors.push_back( nI );
                             }
                         else {
                             whiteMap[nI] = 0;
                             }
-                        
-                        break;
                         }
                     }
                 }
             
-            if( !foundUnvisited ) {
-                // all neighbors visited
-                doneMap[foundI] = 1;
-                }
             }
         
 
@@ -1115,7 +1109,6 @@ void EditorImportPage::processSelection() {
             }
         }
    
-    delete [] doneMap;
     delete [] whiteMap;
 
 
