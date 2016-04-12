@@ -415,38 +415,43 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
             }
                 
                     
-        File *tagDir = spritesDir.getChildFile( inTag );
+            
+        const char *printFormatTGA = "%d.tga";
+        const char *printFormatTXT = "%d.txt";
         
-        if( !tagDir->exists() ) {
-            tagDir->makeDirectory();
-            }
-                
+        char *fileNameTGA = autoSprintf( printFormatTGA, nextSpriteNumber );
+        char *fileNameTXT = autoSprintf( printFormatTXT, nextSpriteNumber );
+            
+        newID = nextSpriteNumber;
+
+        File *spriteFile = spritesDir.getChildFile( fileNameTGA );
+            
+        TGAImageConverter tga;
+            
+        FileOutputStream stream( spriteFile );
         
-        if( tagDir->exists() && tagDir->isDirectory() ) {
-            
-            const char *printFormat = "%d.tga";
-            
-            if( inMultiplicativeBlending ) {
-                printFormat = "m%d.tga";
-                }
-
-            char *fileName = autoSprintf( printFormat, nextSpriteNumber );
-            
-            newID = nextSpriteNumber;
-
-            File *spriteFile = tagDir->getChildFile( fileName );
-            
-            TGAImageConverter tga;
-            
-            FileOutputStream stream( spriteFile );
-            
-            tga.formatImage( inSourceImage, &stream );
+        tga.formatImage( inSourceImage, &stream );
                     
-            delete [] fileName;
-            delete spriteFile;
+        delete [] fileNameTGA;
+        delete spriteFile;
 
-            nextSpriteNumber++;
+        File *metaFile = spritesDir.getChildFile( fileNameTXT );
+
+        int multFlag = 0;
+        if( inMultiplicativeBlending ) {
+            multFlag = 1;
             }
+        
+        char *metaContents = autoSprintf( "%s %d", inTag, multFlag );
+
+        metaFile->writeToFile( metaContents );
+        
+        delete [] metaContents;
+        delete [] fileNameTXT;
+        delete metaFile;
+
+        nextSpriteNumber++;
+        
 
                 
         char *nextNumberString = autoSprintf( "%d", nextSpriteNumber );
@@ -457,7 +462,6 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
                 
         
         delete nextNumberFile;
-        delete tagDir;
         }
     
     if( newID == -1 ) {
