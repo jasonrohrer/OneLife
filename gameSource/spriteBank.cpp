@@ -103,35 +103,47 @@ float initSpriteBankStep() {
             printf( "Loading sprite from path %s\n", fullName );
                             
 
-            Image *spriteImage = readTGAFileBase( fullName );
-                            
+            RawRGBAImage *spriteImage = readTGAFileRawBase( fullName );
+
+            if( spriteImage != NULL && spriteImage->mNumChannels != 4 ) {
+                printf( "Sprite at %s not a 4-channel image, "
+                        "failed to load.\n",
+                        fullName );
+                delete spriteImage;
+                spriteImage = NULL;
+                }
+
             delete [] fullName;
-                            
+
                             
             if( spriteImage != NULL ) {
                 SpriteRecord *r = new SpriteRecord;
 
                         
                 r->sprite =
-                    fillSprite( spriteImage, false );
+                    fillSprite( spriteImage->mRGBABytes, spriteImage->mWidth,
+                                spriteImage->mHeight );
                 
-                r->w = spriteImage->getWidth();
-                r->h = spriteImage->getHeight();
+                r->w = spriteImage->mWidth;
+                r->h = spriteImage->mHeight;
                         
                 int numPixels = r->w * r->h;
                 r->hitMap = new char[ numPixels ];
 
                 memset( r->hitMap, 1, numPixels );
                         
-                if( spriteImage->getNumChannels() == 4 ) {
-                            
-                    double *a = spriteImage->getChannel(3);
-                    
-                    for( int p=0; p<numPixels; p++ ) {
-                        if( a[p] < 0.25 ) {
-                            r->hitMap[p] = 0;
-                            }
+                
+                int numBytes = numPixels * 4;
+                
+                unsigned char *bytes = spriteImage->mRGBABytes;
+                
+                // alpha is 4th byte
+                int p=0;
+                for( int b=3; b<numBytes; b+=4 ) {
+                    if( bytes[b] < 64 ) {
+                        r->hitMap[p] = 0;
                         }
+                    p++;
                     }
                                  
                 for( int e=0; e<3; e++ ) {    
@@ -139,7 +151,7 @@ float initSpriteBankStep() {
                     }
                         
                 delete spriteImage;
-                        
+                      
 
 
                 r->id = 0;
