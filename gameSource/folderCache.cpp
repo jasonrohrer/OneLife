@@ -23,8 +23,6 @@ FolderCache initFolderCache( const char *inFolderName ) {
         }
     
     File *cacheFile = folderDir->getChildFile( "cache.fcz" );
-    File *cacheSerialFile = folderDir->getChildFile( "cacheSerial.txt" );
-    File *folderSerialFile = folderDir->getChildFile( "folderSerial.txt" );
     
 
     FolderCache c;
@@ -33,100 +31,87 @@ FolderCache initFolderCache( const char *inFolderName ) {
 
     char cacheGood = false;
 
-    if( cacheFile->exists() && cacheSerialFile->exists() &&
-        folderSerialFile->exists() ) {
+    if( cacheFile->exists() ) {
 
-        char *folderSerial = folderSerialFile->readFileContents();
-        char *cacheSerial = cacheSerialFile->readFileContents();
-        
-        if( strcmp( folderSerial, cacheSerial ) == 0 ) {
-            // cache not stale
+        int rawLength;
+        unsigned char *rawCacheContents = 
+            cacheFile->readFileContents( &rawLength );
 
-            int rawLength;
-            unsigned char *rawCacheContents = 
-                cacheFile->readFileContents( &rawLength );
-
-            char *nextRawScanPointer = (char*)rawCacheContents;
+        char *nextRawScanPointer = (char*)rawCacheContents;
             
-            // don't use sscanf here because it scans the entire buffer
-            // (and this buffer has binary data at end)
-            int rawSize = scanIntAndSkip( &nextRawScanPointer );
-            int compSize = scanIntAndSkip( &nextRawScanPointer );
+        // don't use sscanf here because it scans the entire buffer
+        // (and this buffer has binary data at end)
+        int rawSize = scanIntAndSkip( &nextRawScanPointer );
+        int compSize = scanIntAndSkip( &nextRawScanPointer );
             
-            if( rawSize > 0 && compSize > 0 ) {
+        if( rawSize > 0 && compSize > 0 ) {
                 
-                unsigned char *compData = (unsigned char*)nextRawScanPointer;
+            unsigned char *compData = (unsigned char*)nextRawScanPointer;
                             
-                double startTime = Time::getCurrentTime();
+            double startTime = Time::getCurrentTime();
                 
-                unsigned char *rawData = zipDecompress( compData,
-                                                        compSize,
-                                                        rawSize );
-                printf( "Decompressing took %f seconds\n", 
-                        Time::getCurrentTime() - startTime );
+            unsigned char *rawData = zipDecompress( compData,
+                                                    compSize,
+                                                    rawSize );
+            printf( "Decompressing took %f seconds\n", 
+                    Time::getCurrentTime() - startTime );
 
 
-                if( rawData != NULL ) {
-                    char *charData = new char[ rawSize + 1 ];
+            if( rawData != NULL ) {
+                char *charData = new char[ rawSize + 1 ];
                     
-                    memcpy( charData, rawData, rawSize );
+                memcpy( charData, rawData, rawSize );
                     
-                    charData[rawSize] = '\0';
+                charData[rawSize] = '\0';
 
-                    delete [] rawData;
+                delete [] rawData;
                     
                     
-                    char *nextScanPointer = charData;
+                char *nextScanPointer = charData;
                     
-                    c.numFiles = scanIntAndSkip( &nextScanPointer );
+                c.numFiles = scanIntAndSkip( &nextScanPointer );
                     
-                    c.fileRecords = new CacheFileRecord[ c.numFiles ];
+                c.fileRecords = new CacheFileRecord[ c.numFiles ];
                     
-                    for( int i=0; i<c.numFiles; i++ ) {
-                        c.fileRecords[i].file = NULL;
+                for( int i=0; i<c.numFiles; i++ ) {
+                    c.fileRecords[i].file = NULL;
 
-                        char *spacePos = strchr( nextScanPointer, ' ' );
+                    char *spacePos = strchr( nextScanPointer, ' ' );
                         
-                        spacePos[0] = '\0';
+                    spacePos[0] = '\0';
                         
-                        c.fileRecords[i].fileName = 
-                            stringDuplicate( nextScanPointer );
+                    c.fileRecords[i].fileName = 
+                        stringDuplicate( nextScanPointer );
                         
-                        nextScanPointer = &( spacePos[1] );
+                    nextScanPointer = &( spacePos[1] );
                         
-                        c.fileRecords[i].dataBlockOffset =
-                            scanIntAndSkip( &nextScanPointer );
+                    c.fileRecords[i].dataBlockOffset =
+                        scanIntAndSkip( &nextScanPointer );
                         
-                        c.fileRecords[i].length =
-                            scanIntAndSkip( &nextScanPointer );
-                        }
-
-                    char *dataBlockStart =
-                        strstr( nextScanPointer, "#" );
-                    
-                    
-                    if( dataBlockStart != NULL ) {
-                        dataBlockStart = &( dataBlockStart[ 1 ] );
-                        
-                        c.dataBlock = stringDuplicate( dataBlockStart );
-                        }
-
-                    cacheGood = true;
-                
-                    delete [] charData;
+                    c.fileRecords[i].length =
+                        scanIntAndSkip( &nextScanPointer );
                     }
+
+                char *dataBlockStart =
+                    strstr( nextScanPointer, "#" );
+                    
+                    
+                if( dataBlockStart != NULL ) {
+                    dataBlockStart = &( dataBlockStart[ 1 ] );
+                        
+                    c.dataBlock = stringDuplicate( dataBlockStart );
+                    }
+
+                cacheGood = true;
+                
+                delete [] charData;
                 }
-            delete [] rawCacheContents;
             }
-        
-        delete [] folderSerial;
-        delete [] cacheSerial;
+        delete [] rawCacheContents;
         }
-
+        
     delete cacheFile;
-    delete cacheSerialFile;
-    delete folderSerialFile;
-
+    
     if( !cacheGood ) {
         // cache stale or not present
         // read from raw files again
@@ -142,10 +127,8 @@ FolderCache initFolderCache( const char *inFolderName ) {
         for( int i=0; i<numChildFiles; i++ ) {
             char *fileName = childFiles[i]->getFileName();
             
-            // skip our special cache data files
-            if( strcmp( fileName, "cache.fcz" ) != 0 &&
-                strcmp( fileName, "cacheSerial.txt" ) != 0 &&
-                strcmp( fileName, "folderSerial.txt" ) != 0 ) {
+            // skip our special cache data file
+            if( strcmp( fileName, "cache.fcz" ) != 0 ) {
             
                 CacheFileRecord r;
                 r.fileName = NULL;
@@ -298,23 +281,6 @@ void freeFolderCache( FolderCache inCache ) {
         if( compData != NULL ) {
             
             File *cacheFile = inCache.folderDir->getChildFile( "cache.fcz" );
-        
-            File *cacheSerialFile = 
-                inCache.folderDir->getChildFile( "cacheSerial.txt" );
-            
-            File *folderSerialFile = 
-                inCache.folderDir->getChildFile( "folderSerial.txt" );
-            
-            char *newSerial = NULL;
-            
-            if( !folderSerialFile->exists() ) {
-                folderSerialFile->writeToFile( "1" );
-                newSerial = stringDuplicate( "1" );
-                }
-            else {
-                newSerial = folderSerialFile->readFileContents();
-                }
-            delete folderSerialFile;
             
             char *path = cacheFile->getFullFileName();
             
@@ -325,22 +291,21 @@ void freeFolderCache( FolderCache inCache ) {
                 fprintf( outFile, "%d %d ", rawLength, compSize );
                 
                 int numWritten = fwrite( compData, 1, compSize, outFile );
+            
+                fclose( outFile );
+                
                 if( numWritten != compSize ) {
                     printf( "Failed to write compressed data to file %s\n",
                             path );
-                    }
-                else {
-                    cacheSerialFile->writeToFile( newSerial );
+                    
+                    cacheFile->remove();
                     }
                 }
 
-            delete cacheSerialFile;
             delete cacheFile;
 
             delete [] path;
 
-            delete [] newSerial;
-        
             delete [] compData;
             }
         
