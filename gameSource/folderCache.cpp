@@ -12,7 +12,9 @@
 
 
 
-FolderCache initFolderCache( const char *inFolderName ) {
+FolderCache initFolderCache( const char *inFolderName, 
+                             char *outRebuildingCache ) {
+    
     File *folderDir = new File( NULL, inFolderName );
 
     if( ! folderDir->exists() || ! folderDir->isDirectory() ) {
@@ -104,6 +106,8 @@ FolderCache initFolderCache( const char *inFolderName ) {
 
                 cacheGood = true;
                 
+                *outRebuildingCache = false;
+
                 delete [] charData;
                 }
             }
@@ -115,6 +119,8 @@ FolderCache initFolderCache( const char *inFolderName ) {
     if( !cacheGood ) {
         // cache stale or not present
         // read from raw files again
+        
+        *outRebuildingCache = true;
 
         int numChildFiles;
         

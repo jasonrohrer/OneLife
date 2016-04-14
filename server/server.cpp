@@ -1167,7 +1167,9 @@ int main() {
     SetConsoleCtrlHandler( ctrlHandler, TRUE );
 #endif
 
-    initObjectBankStart();
+    char rebuilding;
+    initObjectBankStart( &rebuilding );
+    
     while( initObjectBankStep() < 1.0 );
     initObjectBankFinish();
         

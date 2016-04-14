@@ -1011,11 +1011,23 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initSpriteBankFinish();
-                        loadingPage->setCurrentPhase( "OBJECTS" );
-                        loadingPage->setCurrentProgress( 0 );
                         
                         loadingPhaseStartTime = Time::getCurrentTime();
-                        int numObjects = initObjectBankStart();
+                        
+                        char rebuilding;
+                        
+                        int numObjects = 
+                            initObjectBankStart( &rebuilding );
+                        
+                        if( rebuilding ) {
+                            loadingPage->setCurrentPhase( 
+                                "OBJECTS##(REBUILDING CACHE)" );
+                            }
+                        else {
+                            loadingPage->setCurrentPhase( "OBJECTS" );
+                            }
+                        loadingPage->setCurrentProgress( 0 );
+                        
 
                         loadingStepBatchSize = numObjects / 20;
                         

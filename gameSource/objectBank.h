@@ -165,7 +165,8 @@ ClothingSet getEmptyClothingSet();
 
 // loads from objects folder
 // returns number of objects that need to be loaded
-int initObjectBankStart();
+int initObjectBankStart( char *outRebuildingCache );
+
 // returns progress... ready for Finish when progress == 1.0
 float initObjectBankStep();
 void initObjectBankFinish();

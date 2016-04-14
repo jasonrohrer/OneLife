@@ -61,13 +61,13 @@ void setDrawColor( FloatRGB inColor ) {
 
 
 
-int initObjectBankStart() {
+int initObjectBankStart( char *outRebuildingCache ) {
     maxID = 0;
 
     currentFile = 0;
     
 
-    cache = initFolderCache( "objects" );
+    cache = initFolderCache( "objects", outRebuildingCache );
 
     return cache.numFiles;
     }
@@ -820,6 +820,13 @@ int addObject( const char *inDescription,
         delete [] linesArray;
         lines.deallocateStringElements();
         
+
+        File *cacheFile = objectsDir.getChildFile( "cache.fcz" );
+
+        cacheFile->remove();
+        
+        delete cacheFile;
+
 
         objectFile->writeToFile( contents );
         
