@@ -76,8 +76,6 @@ FolderCache initFolderCache( const char *inFolderName ) {
                     delete [] rawData;
                     
                     
-                    int bytesLeft = rawSize;
-                    
                     char *nextScanPointer = charData;
                     
                     c.numFiles = scanIntAndSkip( &nextScanPointer );
