@@ -17,6 +17,8 @@
 
 #include "ageControl.h"
 
+#include "folderCache.h"
+
 
 static int mapSize;
 // maps IDs to records
@@ -38,8 +40,7 @@ static ClothingSet emptyClothing = getEmptyClothingSet();
 
 
 
-static int numFiles;
-static File **childFiles;
+static FolderCache cache;
 
 static int currentFile;
 
@@ -60,388 +61,375 @@ void setDrawColor( FloatRGB inColor ) {
 
 
 
-void initObjectBankStart() {
+int initObjectBankStart() {
     maxID = 0;
 
-    numFiles = 0;
     currentFile = 0;
     
-    File objectsDir( NULL, "objects" );
-    if( objectsDir.exists() && objectsDir.isDirectory() ) {
 
-        childFiles = objectsDir.getChildFiles( &numFiles );
-        }
+    cache = initFolderCache( "objects" );
+
+    return cache.numFiles;
     }
 
 
 
 float initObjectBankStep() {
         
-    if( currentFile == numFiles ) {
+    if( currentFile == cache.numFiles ) {
         return 1.0;
         }
     
     int i = currentFile;
 
                 
-    if( ! childFiles[i]->isDirectory() ) {
-                                        
-        char *txtFileName = childFiles[i]->getFileName();
-                        
-        if( strstr( txtFileName, ".txt" ) != NULL &&
-            strcmp( txtFileName, "nextObjectNumber.txt" ) != 0 ) {
+    char *txtFileName = getFileName( cache, i );
+            
+    if( strstr( txtFileName, ".txt" ) != NULL &&
+        strcmp( txtFileName, "nextObjectNumber.txt" ) != 0 ) {
                             
-            // an object txt file!
-
-            char *fullName = childFiles[i]->getFullFileName();
-                            
-            //printf( "Loading object from path %s\n", fullName );
-                            
-            delete [] fullName;
+        // an object txt file!
                     
-            char *objectText = childFiles[i]->readFileContents();
-                    
+        char *objectText = getFileContents( cache, i );
         
-            if( objectText != NULL ) {
-                int numLines;
+        if( objectText != NULL ) {
+            int numLines;
                         
-                char **lines = split( objectText, "\n", &numLines );
+            char **lines = split( objectText, "\n", &numLines );
                         
-                delete [] objectText;
+            delete [] objectText;
 
-                if( numLines >= 14 ) {
-                    ObjectRecord *r = new ObjectRecord;
+            if( numLines >= 14 ) {
+                ObjectRecord *r = new ObjectRecord;
                             
-                    int next = 0;
-                            
-                    r->id = 0;
-                    sscanf( lines[next], "id=%d", 
-                            &( r->id ) );
-                            
-                    if( r->id > maxID ) {
-                        maxID = r->id;
-                        }
-                            
-                    next++;
-                            
-                    r->description = stringDuplicate( lines[next] );
-                            
-                    next++;
-                            
-                    int contRead = 0;                            
-                    sscanf( lines[next], "containable=%d", 
-                            &( contRead ) );
-                            
-                    r->containable = contRead;
-                            
-                    next++;
-                    
-                    r->containSize = 1;
-                    sscanf( lines[next], "containSize=%d", 
-                            &( r->containSize ) );
-                            
-                    next++;
-                            
-                    int permRead = 0;                            
-                    sscanf( lines[next], "permanent=%d", 
-                            &( permRead ) );
-                            
-                    r->permanent = permRead;
-
-                    next++;
-
-
-
-                    int heldInHandRead = 0;                            
-                    sscanf( lines[next], "heldInHand=%d", 
-                            &( heldInHandRead ) );
-                            
-                    r->heldInHand = heldInHandRead;
-
-                    next++;
-
-
-                    int blocksWalkingRead = 0;                            
-                    sscanf( lines[next], "blocksWalking=%d",
-                            &( blocksWalkingRead ) );
-                            
-                    r->blocksWalking = blocksWalkingRead;
-
-                    next++;
-
-
-
-
-                    r->mapChance = 0;      
-                    sscanf( lines[next], "mapChance=%f", 
-                            &( r->mapChance ) );
-                            
-                    next++;
-
-
-                    r->heatValue = 0;                            
-                    sscanf( lines[next], "heatValue=%d", 
-                            &( r->heatValue ) );
-                            
-                    next++;
-
-                            
-
-                    r->rValue = 0;                            
-                    sscanf( lines[next], "rValue=%f", 
-                            &( r->rValue ) );
-                            
-                    next++;
-
-
-
-                    int personRead = 0;                            
-                    sscanf( lines[next], "person=%d", 
-                            &( personRead ) );
-                            
-                    r->person = personRead;
-                            
-                    next++;
-
-
-                    int maleRead = 0;                            
-                    sscanf( lines[next], "male=%d", 
-                            &( maleRead ) );
-                    
-                    r->male = maleRead;
-                            
-                    next++;
-
-
-                    int deathMarkerRead = 0;     
-                    sscanf( lines[next], "deathMarker=%d", 
-                            &( deathMarkerRead ) );
-                    
-                    r->deathMarker = deathMarkerRead;
-                            
-                    next++;
-
-
-                            
-                    sscanf( lines[next], "foodValue=%d", 
-                            &( r->foodValue ) );
-                            
-                    next++;
-                            
-                            
-                            
-                    sscanf( lines[next], "speedMult=%f", 
-                            &( r->speedMult ) );
-                            
-                    next++;
-
-
-
-                    r->heldOffset.x = 0;
-                    r->heldOffset.y = 0;
-                            
-                    sscanf( lines[next], "heldOffset=%lf,%lf", 
-                            &( r->heldOffset.x ),
-                            &( r->heldOffset.y ) );
-                            
-                    next++;
-
-
-
-                    r->clothing = 'n';
-                            
-                    sscanf( lines[next], "clothing=%c", 
-                            &( r->clothing ));
-                            
-                    next++;
-                            
-                            
-                            
-                    r->clothingOffset.x = 0;
-                    r->clothingOffset.y = 0;
-                            
-                    sscanf( lines[next], "clothingOffset=%lf,%lf", 
-                            &( r->clothingOffset.x ),
-                            &( r->clothingOffset.y ) );
-                            
-                    next++;
-                            
-                    
-                    r->deadlyDistance = 0;
-                    sscanf( lines[next], "deadlyDistance=%d", 
-                            &( r->deadlyDistance ) );
-                            
-                    next++;
-
-
-                    r->numSlots = 0;
-                    sscanf( lines[next], "numSlots=%d", 
-                            &( r->numSlots ) );
-                            
-                    next++;
-
-                    r->slotSize = 1;
-                    sscanf( lines[next], "slotSize=%d", 
-                            &( r->slotSize ) );
-                            
-                    next++;
-
-                    r->slotPos = new doublePair[ r->numSlots ];
-                            
-                    for( int i=0; i< r->numSlots; i++ ) {
-                        sscanf( lines[ next ], "slotPos=%lf,%lf", 
-                                &( r->slotPos[i].x ),
-                                &( r->slotPos[i].y ) );
-                        next++;
-                        }
-                            
-
-                    r->numSprites = 0;
-                    sscanf( lines[next], "numSprites=%d", 
-                            &( r->numSprites ) );
-                            
-                    next++;
-
-                    r->sprites = new int[r->numSprites];
-                    r->spritePos = new doublePair[ r->numSprites ];
-                    r->spriteRot = new double[ r->numSprites ];
-                    r->spriteHFlip = new char[ r->numSprites ];
-                    r->spriteColor = new FloatRGB[ r->numSprites ];
-                    
-                    r->spriteAgeStart = new double[ r->numSprites ];
-                    r->spriteAgeEnd = new double[ r->numSprites ];
-
-                    r->spriteParent = new int[ r->numSprites ];
-                    r->spriteInvisibleWhenHolding = new char[ r->numSprites ];
-                    
-                    r->frontHandIndex = -1;
-
-                    double frontHandX = -9999999;
-                    
-
-                    for( int i=0; i< r->numSprites; i++ ) {
-                        sscanf( lines[next], "spriteID=%d", 
-                                &( r->sprites[i] ) );
-                                
-                        next++;
-                                
-                        sscanf( lines[next], "pos=%lf,%lf", 
-                                &( r->spritePos[i].x ),
-                                &( r->spritePos[i].y ) );
-                                
-                        next++;
-                                
-                        sscanf( lines[next], "rot=%lf", 
-                                &( r->spriteRot[i] ) );
-                                
-                        next++;
-                                
-                        
-                        int flipRead = 0;
-                                
-                        sscanf( lines[next], "hFlip=%d", &flipRead );
-                                
-                        r->spriteHFlip[i] = flipRead;
-                                
-                        next++;
-
-
-                        sscanf( lines[next], "color=%f,%f,%f", 
-                                &( r->spriteColor[i].r ),
-                                &( r->spriteColor[i].g ),
-                                &( r->spriteColor[i].b ) );
-                                
-                        next++;
-
-
-                        sscanf( lines[next], "ageRange=%lf,%lf", 
-                                &( r->spriteAgeStart[i] ),
-                                &( r->spriteAgeEnd[i] ) );
-                                
-                        next++;
-                        
-
-                        sscanf( lines[next], "parent=%d", 
-                                &( r->spriteParent[i] ) );
-                        
-                        next++;
-
-
-                        int invisRead = 0;
-                                
-                        sscanf( lines[next], "invisHolding=%d", &invisRead );
-                                
-                        r->spriteInvisibleWhenHolding[i] = invisRead;
-                                
-                        next++;
-
-                        if( r->spriteInvisibleWhenHolding[i] ) {
-                            if( r->spritePos[i].x > frontHandX ) {
-                                r->frontHandIndex = i;
-                                frontHandX = r->spritePos[i].x;
-                                }
-                            }
-                        
-                        }
-
-
-                    r->headIndex = 0;
-                    sscanf( lines[next], "headIndex=%d", 
-                            &( r->headIndex ) );
-                      
-                    next++;
-                      
-                    
-                    r->bodyIndex = 0;
-                    sscanf( lines[next], "bodyIndex=%d", 
-                            &( r->bodyIndex ) );
-                      
-                    next++;
-
-                    
-                    r->backFootIndex = 0;
-                    sscanf( lines[next], "backFootIndex=%d", 
-                            &( r->backFootIndex ) );
-                      
-                    next++;
-                    
-
-                    r->frontFootIndex = 0;
-                    sscanf( lines[next], "frontFootIndex=%d", 
-                            &( r->frontFootIndex ) );
-                      
-                    next++;
-
-
-                    records.push_back( r );
-
-                            
-                    if( r->person ) {
-                        personObjectIDs.push_back( r->id );
-                        }
-                    }
-                            
-                for( int i=0; i<numLines; i++ ) {
-                    delete [] lines[i];
-                    }
-                delete [] lines;
-                }
-            }
+                int next = 0;
                 
-        delete [] txtFileName;
+                r->id = 0;
+                sscanf( lines[next], "id=%d", 
+                        &( r->id ) );
+                
+                if( r->id > maxID ) {
+                    maxID = r->id;
+                    }
+                
+                next++;
+                            
+                r->description = stringDuplicate( lines[next] );
+                            
+                next++;
+                            
+                int contRead = 0;                            
+                sscanf( lines[next], "containable=%d", 
+                        &( contRead ) );
+                            
+                r->containable = contRead;
+                            
+                next++;
+                    
+                r->containSize = 1;
+                sscanf( lines[next], "containSize=%d", 
+                        &( r->containSize ) );
+                            
+                next++;
+                            
+                int permRead = 0;                            
+                sscanf( lines[next], "permanent=%d", 
+                        &( permRead ) );
+                            
+                r->permanent = permRead;
+
+                next++;
+
+
+
+                int heldInHandRead = 0;                            
+                sscanf( lines[next], "heldInHand=%d", 
+                        &( heldInHandRead ) );
+                            
+                r->heldInHand = heldInHandRead;
+
+                next++;
+
+
+                int blocksWalkingRead = 0;                            
+                sscanf( lines[next], "blocksWalking=%d",
+                        &( blocksWalkingRead ) );
+                            
+                r->blocksWalking = blocksWalkingRead;
+
+                next++;
+
+
+
+
+                r->mapChance = 0;      
+                sscanf( lines[next], "mapChance=%f", 
+                        &( r->mapChance ) );
+                            
+                next++;
+
+
+                r->heatValue = 0;                            
+                sscanf( lines[next], "heatValue=%d", 
+                        &( r->heatValue ) );
+                            
+                next++;
+
+                            
+
+                r->rValue = 0;                            
+                sscanf( lines[next], "rValue=%f", 
+                        &( r->rValue ) );
+                            
+                next++;
+
+
+
+                int personRead = 0;                            
+                sscanf( lines[next], "person=%d", 
+                        &( personRead ) );
+                            
+                r->person = personRead;
+                            
+                next++;
+
+
+                int maleRead = 0;                            
+                sscanf( lines[next], "male=%d", 
+                        &( maleRead ) );
+                    
+                r->male = maleRead;
+                            
+                next++;
+
+
+                int deathMarkerRead = 0;     
+                sscanf( lines[next], "deathMarker=%d", 
+                        &( deathMarkerRead ) );
+                    
+                r->deathMarker = deathMarkerRead;
+                            
+                next++;
+
+
+                            
+                sscanf( lines[next], "foodValue=%d", 
+                        &( r->foodValue ) );
+                            
+                next++;
+                            
+                            
+                            
+                sscanf( lines[next], "speedMult=%f", 
+                        &( r->speedMult ) );
+                            
+                next++;
+
+
+
+                r->heldOffset.x = 0;
+                r->heldOffset.y = 0;
+                            
+                sscanf( lines[next], "heldOffset=%lf,%lf", 
+                        &( r->heldOffset.x ),
+                        &( r->heldOffset.y ) );
+                            
+                next++;
+
+
+
+                r->clothing = 'n';
+                            
+                sscanf( lines[next], "clothing=%c", 
+                        &( r->clothing ));
+                            
+                next++;
+                            
+                            
+                            
+                r->clothingOffset.x = 0;
+                r->clothingOffset.y = 0;
+                            
+                sscanf( lines[next], "clothingOffset=%lf,%lf", 
+                        &( r->clothingOffset.x ),
+                        &( r->clothingOffset.y ) );
+                            
+                next++;
+                            
+                    
+                r->deadlyDistance = 0;
+                sscanf( lines[next], "deadlyDistance=%d", 
+                        &( r->deadlyDistance ) );
+                            
+                next++;
+
+
+                r->numSlots = 0;
+                sscanf( lines[next], "numSlots=%d", 
+                        &( r->numSlots ) );
+                            
+                next++;
+
+                r->slotSize = 1;
+                sscanf( lines[next], "slotSize=%d", 
+                        &( r->slotSize ) );
+                            
+                next++;
+
+                r->slotPos = new doublePair[ r->numSlots ];
+                            
+                for( int i=0; i< r->numSlots; i++ ) {
+                    sscanf( lines[ next ], "slotPos=%lf,%lf", 
+                            &( r->slotPos[i].x ),
+                            &( r->slotPos[i].y ) );
+                    next++;
+                    }
+                            
+
+                r->numSprites = 0;
+                sscanf( lines[next], "numSprites=%d", 
+                        &( r->numSprites ) );
+                            
+                next++;
+
+                r->sprites = new int[r->numSprites];
+                r->spritePos = new doublePair[ r->numSprites ];
+                r->spriteRot = new double[ r->numSprites ];
+                r->spriteHFlip = new char[ r->numSprites ];
+                r->spriteColor = new FloatRGB[ r->numSprites ];
+                    
+                r->spriteAgeStart = new double[ r->numSprites ];
+                r->spriteAgeEnd = new double[ r->numSprites ];
+
+                r->spriteParent = new int[ r->numSprites ];
+                r->spriteInvisibleWhenHolding = new char[ r->numSprites ];
+                    
+                r->frontHandIndex = -1;
+
+                double frontHandX = -9999999;
+                    
+
+                for( int i=0; i< r->numSprites; i++ ) {
+                    sscanf( lines[next], "spriteID=%d", 
+                            &( r->sprites[i] ) );
+                                
+                    next++;
+                                
+                    sscanf( lines[next], "pos=%lf,%lf", 
+                            &( r->spritePos[i].x ),
+                            &( r->spritePos[i].y ) );
+                                
+                    next++;
+                                
+                    sscanf( lines[next], "rot=%lf", 
+                            &( r->spriteRot[i] ) );
+                                
+                    next++;
+                                
+                        
+                    int flipRead = 0;
+                                
+                    sscanf( lines[next], "hFlip=%d", &flipRead );
+                                
+                    r->spriteHFlip[i] = flipRead;
+                                
+                    next++;
+
+
+                    sscanf( lines[next], "color=%f,%f,%f", 
+                            &( r->spriteColor[i].r ),
+                            &( r->spriteColor[i].g ),
+                            &( r->spriteColor[i].b ) );
+                                
+                    next++;
+
+
+                    sscanf( lines[next], "ageRange=%lf,%lf", 
+                            &( r->spriteAgeStart[i] ),
+                            &( r->spriteAgeEnd[i] ) );
+                                
+                    next++;
+                        
+
+                    sscanf( lines[next], "parent=%d", 
+                            &( r->spriteParent[i] ) );
+                        
+                    next++;
+
+
+                    int invisRead = 0;
+                                
+                    sscanf( lines[next], "invisHolding=%d", &invisRead );
+                                
+                    r->spriteInvisibleWhenHolding[i] = invisRead;
+                                
+                    next++;
+
+                    if( r->spriteInvisibleWhenHolding[i] ) {
+                        if( r->spritePos[i].x > frontHandX ) {
+                            r->frontHandIndex = i;
+                            frontHandX = r->spritePos[i].x;
+                            }
+                        }
+                        
+                    }
+
+
+                r->headIndex = 0;
+                sscanf( lines[next], "headIndex=%d", 
+                        &( r->headIndex ) );
+                      
+                next++;
+                      
+                    
+                r->bodyIndex = 0;
+                sscanf( lines[next], "bodyIndex=%d", 
+                        &( r->bodyIndex ) );
+                      
+                next++;
+
+                    
+                r->backFootIndex = 0;
+                sscanf( lines[next], "backFootIndex=%d", 
+                        &( r->backFootIndex ) );
+                      
+                next++;
+                    
+
+                r->frontFootIndex = 0;
+                sscanf( lines[next], "frontFootIndex=%d", 
+                        &( r->frontFootIndex ) );
+                      
+                next++;
+
+
+                records.push_back( r );
+
+                            
+                if( r->person ) {
+                    personObjectIDs.push_back( r->id );
+                    }
+                }
+                            
+            for( int i=0; i<numLines; i++ ) {
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
         }
-    delete childFiles[i];
+                
+    delete [] txtFileName;
 
 
     currentFile ++;
-    return (float)( currentFile ) / (float)( numFiles );
+    return (float)( currentFile ) / (float)( cache.numFiles );
     }
     
     
 
 void initObjectBankFinish() {
-    
-    delete [] childFiles;
+  
+    freeFolderCache( cache );
     
     mapSize = maxID + 1;
     

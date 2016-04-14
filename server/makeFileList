@@ -23,6 +23,7 @@ map.cpp \
 ../gameSource/transitionBank.cpp \
 ../gameSource/objectBank.cpp \
 ../gameSource/ageControl.cpp \
+../gameSource/folderCache.cpp \
 kissdb.cpp \
 
 

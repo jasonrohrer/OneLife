@@ -34,6 +34,7 @@ TextButton.cpp \
 RebirthChoicePage.cpp \
 TextField.cpp \
 LoadingPage.cpp \
+folderCache.cpp \
 
 
 

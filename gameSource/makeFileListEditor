@@ -42,6 +42,7 @@ overlayBank.cpp \
 keyLegend.cpp \
 LoadingPage.cpp \
 testFileLoadThread.cpp \
+folderCache.cpp \
 
 
 GAME_GRAPHICS = \

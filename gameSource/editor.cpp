@@ -83,6 +83,9 @@ LoadingPage *loadingPage;
 int loadingPhase = 0;
 
 
+int loadingStepBatchSize = 1;
+double loadingPhaseStartTime;
+
 
 GamePage *currentGamePage = NULL;
 
@@ -996,7 +999,8 @@ void drawFrame( char inUpdate ) {
                         initOverlayBankFinish();
                         initSpriteBankStart();
                         loadingPage->setCurrentPhase( "SPRITES" );
-                    
+                        loadingPage->setCurrentProgress( 0 );
+                        
                         loadingPhase ++;
                         }
                     break;
@@ -1008,22 +1012,37 @@ void drawFrame( char inUpdate ) {
                     if( progress == 1.0 ) {
                         initSpriteBankFinish();
                         loadingPage->setCurrentPhase( "OBJECTS" );
-                        initObjectBankStart();
+                        loadingPage->setCurrentProgress( 0 );
+                        
+                        loadingPhaseStartTime = Time::getCurrentTime();
+                        int numObjects = initObjectBankStart();
 
+                        loadingStepBatchSize = numObjects / 20;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+                        
                         loadingPhase ++;
                         }
                     break;
                     }
                 case 2: {
                     float progress;
-                    for( int i=0; i<10; i++ ) {    
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initObjectBankStep();
                         loadingPage->setCurrentProgress( progress );
                         }
                     
                     if( progress == 1.0 ) {
                         initObjectBankFinish();
+                        printf( "Finished loading object bank in %f sec\n",
+                                Time::getCurrentTime() - 
+                                loadingPhaseStartTime );
+                        
                         loadingPage->setCurrentPhase( "TRANSITIONS" );
+                        loadingPage->setCurrentProgress( 0 );
+                        
                         initTransBankStart();
                         loadingPhase ++;
                         }
@@ -1036,6 +1055,8 @@ void drawFrame( char inUpdate ) {
                     if( progress == 1.0 ) {
                         initTransBankFinish();
                         loadingPage->setCurrentPhase( "ANIMATIONS" );
+                        loadingPage->setCurrentProgress( 0 );
+
                         initAnimationBankStart();
                         loadingPhase ++;
                         }
