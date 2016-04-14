@@ -77,8 +77,83 @@ static char readServerSocketFull( int inServerSocket ) {
 
 
 
+typedef enum messageType {
+	MAP_CHUNK,
+    MAP_CHANGE,
+    PLAYER_UPDATE,
+    PLAYER_MOVES_START,
+    PLAYER_SAYS,
+    FOOD_CHANGE,
+    UNKNOWN
+    } messageType;
+
+
+
+messageType getMessageType( char *inMessage ) {
+    char *copy = stringDuplicate( inMessage );
+    
+    char *firstBreak = strstr( copy, "\n" );
+    
+    if( firstBreak == NULL ) {
+        delete [] copy;
+        return UNKNOWN;
+        }
+    
+    firstBreak[0] = '\0';
+    
+    messageType returnValue = UNKNOWN;
+
+    if( strcmp( copy, "MC" ) == 0 ) {
+        returnValue = MAP_CHUNK;
+        }
+    else if( strcmp( copy, "MX" ) == 0 ) {
+        returnValue = MAP_CHANGE;
+        }
+    else if( strcmp( copy, "PU" ) == 0 ) {
+        returnValue = PLAYER_UPDATE;
+        }
+    else if( strcmp( copy, "PM" ) == 0 ) {
+        returnValue = PLAYER_MOVES_START;
+        }
+    else if( strcmp( copy, "PS" ) == 0 ) {
+        returnValue = PLAYER_SAYS;
+        }
+    else if( strcmp( copy, "FX" ) == 0 ) {
+        returnValue = FOOD_CHANGE;
+        }
+    
+    delete [] copy;
+    return returnValue;
+    }
+
+
+
+
+char *pendingMapChunkMessage = NULL;
+int pendingCompressedChunkSize;
+
+
 // NULL if there's no full message available
 char *getNextServerMessage() {
+    if( pendingMapChunkMessage != NULL ) {
+        // wait for full binary data chunk to arrive completely
+        // after message before we report that the message is ready
+
+        if( serverSocketBuffer.size() >= pendingCompressedChunkSize ) {
+            char *returnMessage = pendingMapChunkMessage;
+            pendingMapChunkMessage = NULL;
+
+            return returnMessage;
+            }
+        else {
+            // wait for more data to arrive before saying this MC message
+            // is ready
+            return NULL;
+            }
+        }
+    
+
+
     // find first terminal character #
 
     int index = serverSocketBuffer.getElementIndex( '#' );
@@ -97,8 +172,20 @@ char *getNextServerMessage() {
     serverSocketBuffer.deleteElement( 0 );
     
     message[ index ] = '\0';
-    
-    return message;
+
+    if( getMessageType( message ) == MAP_CHUNK ) {
+        pendingMapChunkMessage = message;
+        
+        int size, x, y, binarySize;
+        sscanf( message, "MC\n%d %d %d\n%d %d\n", 
+                &size, &x, &y, &binarySize, &pendingCompressedChunkSize );
+
+
+        return getNextServerMessage();
+        }
+    else {
+        return message;
+        }
     }
 
 
@@ -142,55 +229,10 @@ static GridPos sub( GridPos inA, GridPos inB ) {
 
 
 
-typedef enum messageType {
-	MAP_CHUNK,
-    MAP_CHANGE,
-    PLAYER_UPDATE,
-    PLAYER_MOVES_START,
-    PLAYER_SAYS,
-    FOOD_CHANGE,
-    UNKNOWN
-    } messageType;
 
 
 
 
-messageType getMessageType( char *inMessage ) {
-    char *copy = stringDuplicate( inMessage );
-    
-    char *firstBreak = strstr( copy, "\n" );
-    
-    if( firstBreak == NULL ) {
-        delete [] copy;
-        return UNKNOWN;
-        }
-    
-    firstBreak[0] = '\0';
-    
-    messageType returnValue = UNKNOWN;
-
-    if( strcmp( copy, "MC" ) == 0 ) {
-        returnValue = MAP_CHUNK;
-        }
-    else if( strcmp( copy, "MX" ) == 0 ) {
-        returnValue = MAP_CHANGE;
-        }
-    else if( strcmp( copy, "PU" ) == 0 ) {
-        returnValue = PLAYER_UPDATE;
-        }
-    else if( strcmp( copy, "PM" ) == 0 ) {
-        returnValue = PLAYER_MOVES_START;
-        }
-    else if( strcmp( copy, "PS" ) == 0 ) {
-        returnValue = PLAYER_SAYS;
-        }
-    else if( strcmp( copy, "FX" ) == 0 ) {
-        returnValue = FOOD_CHANGE;
-        }
-    
-    delete [] copy;
-    return returnValue;
-    }
 
 
 
@@ -592,6 +634,7 @@ LivingLifePage::~LivingLifePage() {
     freeSprite( mFoodEmptySprite );
     freeSprite( mFoodFullSprite );
     freeSprite( mChalkBlotSprite );
+    freeSprite( mGroundSprite );
     }
 
 
@@ -1647,76 +1690,83 @@ void LivingLifePage::step() {
             
             delete [] compressedChunk;
             
+            if( decompressedChunk == NULL ) {
+                printf( "Decompressing chunk failed\n" );
+                }
+            else {
+                
+                unsigned char *binaryChunk = 
+                    new unsigned char[ binarySize + 1 ];
             
-            unsigned char *binaryChunk = new unsigned char[ binarySize + 1 ];
+                memcpy( binaryChunk, decompressedChunk, binarySize );
             
-            memcpy( binaryChunk, decompressedChunk, binarySize );
-            
-            delete [] decompressedChunk;
+                delete [] decompressedChunk;
  
             
-            // for now, binary chunk is actually just ASCII
-            binaryChunk[ binarySize ] = '\0';
+                // for now, binary chunk is actually just ASCII
+                binaryChunk[ binarySize ] = '\0';
             
-
-            SimpleVector<char *> *tokens = 
-                tokenizeString( (char*)binaryChunk );
-            
-            delete [] binaryChunk;
-
-
-            int numCells = size * size;
-
-            if( tokens->size() == numCells ) {
                 
-                for( int i=0; i<tokens->size(); i++ ) {
-                    int cX = i % size;
-                    int cY = i / size;
+                SimpleVector<char *> *tokens = 
+                    tokenizeString( (char*)binaryChunk );
+            
+                delete [] binaryChunk;
+
+
+                int numCells = size * size;
+                
+                if( tokens->size() == numCells ) {
                     
-                    int mapX = cX + x - mMapOffsetX + mMapD / 2;
-                    int mapY = cY + y - mMapOffsetY + mMapD / 2;
-                    
-                    if( mapX >= 0 && mapX < mMapD
-                        &&
-                        mapY >= 0 && mapY < mMapD ) {
+                    for( int i=0; i<tokens->size(); i++ ) {
+                        int cX = i % size;
+                        int cY = i / size;
                         
+                        int mapX = cX + x - mMapOffsetX + mMapD / 2;
+                        int mapY = cY + y - mMapOffsetY + mMapD / 2;
                         
-                        int mapI = mapY * mMapD + mapX;
-                        
-                        sscanf( tokens->getElementDirect(i),
-                                "%d", &( mMap[mapI] ) );
-
-                        mMapContainedStacks[mapI].deleteAll();
-                        
-
-                        if( strstr( tokens->getElementDirect(i), "," ) 
-                            != NULL ) {
+                        if( mapX >= 0 && mapX < mMapD
+                            &&
+                            mapY >= 0 && mapY < mMapD ) {
                             
-                            int numInts;
-                            char **ints = split( tokens->getElementDirect(i), 
-                                                 ",", &numInts );
                             
-                            delete [] ints[0];
+                            int mapI = mapY * mMapD + mapX;
+                            
+                            sscanf( tokens->getElementDirect(i),
+                                    "%d", &( mMap[mapI] ) );
 
-                            int numContained = numInts - 1;
-
-                            for( int c=0; c<numContained; c++ ) {
-                                int contained = atoi( ints[ c + 1 ] );
-                                mMapContainedStacks[mapI].push_back( 
-                                    contained );
+                            mMapContainedStacks[mapI].deleteAll();
+                            
+                            
+                            if( strstr( tokens->getElementDirect(i), "," ) 
+                                != NULL ) {
                                 
-                                delete [] ints[ c + 1 ];
+                                int numInts;
+                                char **ints = 
+                                    split( tokens->getElementDirect(i), 
+                                           ",", &numInts );
+                                
+                                delete [] ints[0];
+                                
+                                int numContained = numInts - 1;
+                                
+                                for( int c=0; c<numContained; c++ ) {
+                                    int contained = atoi( ints[ c + 1 ] );
+                                    mMapContainedStacks[mapI].push_back( 
+                                        contained );
+                                    
+                                    delete [] ints[ c + 1 ];
+                                    }
+                                delete [] ints;
                                 }
-                            delete [] ints;
                             }
                         }
-                    }
-                }   
-            
-            tokens->deallocateStringElements();
-            delete tokens;
+                    }   
+                
+                tokens->deallocateStringElements();
+                delete tokens;
 
-            mFirstServerMessagesReceived |= 1;
+                mFirstServerMessagesReceived |= 1;
+                }
             }
         else if( type == MAP_CHANGE ) {
             int numLines;
