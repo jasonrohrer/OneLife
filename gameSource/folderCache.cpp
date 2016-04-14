@@ -84,7 +84,6 @@ FolderCache initFolderCache( const char *inFolderName ) {
                     
                     for( int i=0; i<c.numFiles; i++ ) {
                         c.fileRecords[i].file = NULL;
-                        c.fileRecords[i].fileName = new char[50];
 
                         char *spacePos = strchr( nextScanPointer, ' ' );
                         
@@ -159,6 +158,8 @@ FolderCache initFolderCache( const char *inFolderName ) {
             else {
                 delete childFiles[i];
                 }
+            
+            delete [] fileName;
             }
         
         c.dataBlock = NULL;
@@ -243,7 +244,8 @@ void freeFolderCache( FolderCache inCache ) {
         SimpleVector<CacheFileRecord> usedRecords;
         
         for( int i=0; i<inCache.numFiles; i++ ) {
-            if( inCache.fileRecords[i].dataBlockOffset != -1 ) {
+            if( inCache.fileRecords[i].fileName != NULL &&
+                inCache.fileRecords[i].dataBlockOffset != -1 ) {
             
                 usedRecords.push_back( inCache.fileRecords[i] );
                 }
@@ -333,6 +335,7 @@ void freeFolderCache( FolderCache inCache ) {
                 }
 
             delete cacheSerialFile;
+            delete cacheFile;
 
             delete [] path;
 
