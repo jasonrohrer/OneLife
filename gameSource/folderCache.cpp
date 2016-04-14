@@ -7,6 +7,8 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
+
 
 FolderCache initFolderCache( const char *inFolderName ) {
     File *folderDir = new File( NULL, inFolderName );
@@ -44,15 +46,20 @@ FolderCache initFolderCache( const char *inFolderName ) {
 
             int rawSize, compSize;
             int bytesScanned;
-            int numRead =
-                sscanf( (char*)rawCacheContents, "%d %d %n", 
-                        &rawSize, &compSize, &bytesScanned );
             
-            // not sure whether %n counts as a read argument or not
-            // may differ by platform, so allow both
-            if( numRead == 2 || numRead == 3 ) {
+            char *nextRawScanPointer = (char*)rawCacheContents;
+            
+            // don't use sscanf here because it scans the entire buffer
+            // (and this buffer has binary data at end)
+            rawSize = strtol( nextRawScanPointer, &nextRawScanPointer, 10 );
+            compSize = strtol( nextRawScanPointer, &nextRawScanPointer, 10 );
+            
+            if( rawSize > 0 && compSize > 0 ) {
                 
-                unsigned char *compData = & rawCacheContents[ bytesScanned ];
+                // skip final space before binary data
+                nextRawScanPointer = &( nextRawScanPointer[1] );
+
+                unsigned char *compData = (unsigned char*)nextRawScanPointer;
                             
                 double startTime = Time::getCurrentTime();
                 
@@ -76,25 +83,32 @@ FolderCache initFolderCache( const char *inFolderName ) {
                     int bytesLeft = rawSize;
                     
                     char *nextScanPointer = charData;
-
-                    sscanf( nextScanPointer, "%d %n", 
-                            &( c.numFiles ), &bytesScanned );
                     
-                    nextScanPointer = &( nextScanPointer[ bytesScanned ] );
-
+                    c.numFiles = strtol( nextScanPointer,
+                                         &nextScanPointer, 10 );
+                    
                     c.fileRecords = new CacheFileRecord[ c.numFiles ];
                     
                     for( int i=0; i<c.numFiles; i++ ) {
                         c.fileRecords[i].file = NULL;
                         c.fileRecords[i].fileName = new char[50];
 
-                        sscanf( nextScanPointer, "%49s %d %d %n",
-                                c.fileRecords[i].fileName,
-                                &( c.fileRecords[i].dataBlockOffset ),
-                                &( c.fileRecords[i].length ),
-                                &bytesScanned );
+                        char *spacePos = strchr( nextScanPointer, ' ' );
+                        
+                        spacePos[0] = '\0';
+                        
+                        c.fileRecords[i].fileName = 
+                            stringDuplicate( nextScanPointer );
+                        
+                        nextScanPointer = &( spacePos[1] );
+                        
+                        c.fileRecords[i].dataBlockOffset
+                            = strtol( nextScanPointer,
+                                      &nextScanPointer, 10 );
 
-                        nextScanPointer = &( nextScanPointer[ bytesScanned ] );
+                        c.fileRecords[i].length
+                            = strtol( nextScanPointer,
+                                      &nextScanPointer, 10 );
                         }
 
                     char *dataBlockStart =
