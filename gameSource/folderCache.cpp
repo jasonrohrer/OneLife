@@ -10,6 +10,8 @@
 #include <stdlib.h>
 
 
+
+
 FolderCache initFolderCache( const char *inFolderName ) {
     File *folderDir = new File( NULL, inFolderName );
 
@@ -44,21 +46,15 @@ FolderCache initFolderCache( const char *inFolderName ) {
             unsigned char *rawCacheContents = 
                 cacheFile->readFileContents( &rawLength );
 
-            int rawSize, compSize;
-            int bytesScanned;
-            
             char *nextRawScanPointer = (char*)rawCacheContents;
             
             // don't use sscanf here because it scans the entire buffer
             // (and this buffer has binary data at end)
-            rawSize = strtol( nextRawScanPointer, &nextRawScanPointer, 10 );
-            compSize = strtol( nextRawScanPointer, &nextRawScanPointer, 10 );
+            int rawSize = scanIntAndSkip( &nextRawScanPointer );
+            int compSize = scanIntAndSkip( &nextRawScanPointer );
             
             if( rawSize > 0 && compSize > 0 ) {
                 
-                // skip final space before binary data
-                nextRawScanPointer = &( nextRawScanPointer[1] );
-
                 unsigned char *compData = (unsigned char*)nextRawScanPointer;
                             
                 double startTime = Time::getCurrentTime();
@@ -84,8 +80,7 @@ FolderCache initFolderCache( const char *inFolderName ) {
                     
                     char *nextScanPointer = charData;
                     
-                    c.numFiles = strtol( nextScanPointer,
-                                         &nextScanPointer, 10 );
+                    c.numFiles = scanIntAndSkip( &nextScanPointer );
                     
                     c.fileRecords = new CacheFileRecord[ c.numFiles ];
                     
@@ -102,13 +97,11 @@ FolderCache initFolderCache( const char *inFolderName ) {
                         
                         nextScanPointer = &( spacePos[1] );
                         
-                        c.fileRecords[i].dataBlockOffset
-                            = strtol( nextScanPointer,
-                                      &nextScanPointer, 10 );
-
-                        c.fileRecords[i].length
-                            = strtol( nextScanPointer,
-                                      &nextScanPointer, 10 );
+                        c.fileRecords[i].dataBlockOffset =
+                            scanIntAndSkip( &nextScanPointer );
+                        
+                        c.fileRecords[i].length =
+                            scanIntAndSkip( &nextScanPointer );
                         }
 
                     char *dataBlockStart =
