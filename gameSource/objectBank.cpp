@@ -1256,8 +1256,15 @@ void deleteObjectFromBank( int inID ) {
     File objectsDir( NULL, "objects" );
     
     
-    if( objectsDir.exists() && objectsDir.isDirectory() ) {                
-                    
+    if( objectsDir.exists() && objectsDir.isDirectory() ) {
+
+        File *cacheFile = objectsDir.getChildFile( "cache.fcz" );
+
+        cacheFile->remove();
+        
+        delete cacheFile;
+
+
         char *fileName = autoSprintf( "%d.txt", inID );
         
         File *objectFile = objectsDir.getChildFile( fileName );
