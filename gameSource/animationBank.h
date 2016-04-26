@@ -67,7 +67,9 @@ typedef struct AnimationRecord {
 AnimationRecord *copyRecord( AnimationRecord *inRecord );
 
 
-void initAnimationBankStart();
+// returns number of animations that need to be loaded
+int initAnimationBankStart( char *outRebuildingCache );
+
 float initAnimationBankStep();
 void initAnimationBankFinish();
 

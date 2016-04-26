@@ -1066,10 +1066,29 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initTransBankFinish();
-                        loadingPage->setCurrentPhase( "ANIMATIONS" );
                         loadingPage->setCurrentProgress( 0 );
+                        
 
-                        initAnimationBankStart();
+                        char rebuilding;
+                        
+                        int numAnims = initAnimationBankStart( &rebuilding );
+ 
+                        if( rebuilding ) {
+                            loadingPage->setCurrentPhase( 
+                                "ANIMATIONS##(REBUILDING CACHE)" );
+                            }
+                        else {
+                            loadingPage->setCurrentPhase( "ANIMATIONS" );
+                            }
+                        loadingPage->setCurrentProgress( 0 );
+                        
+
+                        loadingStepBatchSize = numAnims / 20;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+
                         loadingPhase ++;
                         }
                     break;

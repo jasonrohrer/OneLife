@@ -15,6 +15,8 @@
 #include "ageControl.h"
 
 
+#include "folderCache.h"
+
 
 static int mapSize;
 // maps IDs to records
@@ -27,8 +29,7 @@ static ClothingSet emptyClothing = getEmptyClothingSet();
 
 
 
-static int numFiles;
-static File **childFiles;
+static FolderCache cache;
 
 static int currentFile;
 
@@ -37,154 +38,152 @@ static SimpleVector<AnimationRecord*> records;
 static int maxID;
 
 
-void initAnimationBankStart() {
+int initAnimationBankStart( char *outRebuildingCache ) {
 
     maxID = 0;
 
-    numFiles = 0;
     currentFile = 0;
-    
-    File animationsDir( NULL, "animations" );
-    if( animationsDir.exists() && animationsDir.isDirectory() ) {
 
-        childFiles = animationsDir.getChildFiles( &numFiles );
-        }
+    
+    cache = initFolderCache( "animations", outRebuildingCache );
+
+    return cache.numFiles;
     }
 
 
 
 float initAnimationBankStep() {
         
-    if( currentFile == numFiles ) {
+    if( currentFile == cache.numFiles ) {
         return 1.0;
         }
     
     int i = currentFile;
 
-    if( ! childFiles[i]->isDirectory() ) {
-                                        
-        char *txtFileName = childFiles[i]->getFileName();
+
+    char *txtFileName = getFileName( cache, i );
                         
-        if( strstr( txtFileName, ".txt" ) != NULL ) {
-            char *animText = childFiles[i]->readFileContents();
-            if( animText != NULL ) {
-                AnimationRecord *r = new AnimationRecord;
+    if( strstr( txtFileName, ".txt" ) != NULL ) {
+        
+        // every .txt file is an animation file
+
+        char *animText = getFileContents( cache, i );
+        if( animText != NULL ) {
+            AnimationRecord *r = new AnimationRecord;
                         
-                int numLines;
+            int numLines;
                         
-                char **lines = split( animText, "\n", &numLines );
+            char **lines = split( animText, "\n", &numLines );
                         
-                delete [] animText;
+            delete [] animText;
 
-                if( numLines > 4 ) {
-                    int next = 0;
+            if( numLines > 4 ) {
+                int next = 0;
                             
-                    r->objectID = 0;
-                    sscanf( lines[next], "id=%d", 
-                            &( r->objectID ) );
+                r->objectID = 0;
+                sscanf( lines[next], "id=%d", 
+                        &( r->objectID ) );
                             
-                    if( r->objectID > maxID ) {
-                        maxID = r->objectID;
-                        }
-                            
-                    next++;
-
-                            
-                    int typeRead = 0;
-                    sscanf( lines[next], "type=%d", 
-                            &( typeRead ) );
-                    r->type = (AnimType)typeRead;
-                    next++;
-
-                    r->numSprites = 0;
-                    sscanf( lines[next], "numSprites=%d", 
-                            &( r->numSprites ) );
-                    next++;
-
-                    r->numSlots = 0;
-                    sscanf( lines[next], "numSlots=%d", 
-                            &( r->numSlots ) );
-                    next++;
-                            
-                    r->spriteAnim = 
-                        new SpriteAnimationRecord[ r->numSprites ];
-                            
-                    r->slotAnim = 
-                        new SpriteAnimationRecord[ r->numSlots ];
-                            
-                    for( int j=0; j< r->numSprites && next < numLines;
-                         j++ ) {
-                                
-                        sscanf( lines[next], 
-                                "animParam="
-                                "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
-                                "%lf %lf %lf %lf %lf",
-                                &( r->spriteAnim[j].xOscPerSec ),
-                                &( r->spriteAnim[j].xAmp ),
-                                &( r->spriteAnim[j].xPhase ),
-                                        
-                                &( r->spriteAnim[j].yOscPerSec ),
-                                &( r->spriteAnim[j].yAmp ),
-                                &( r->spriteAnim[j].yPhase ),
-                                        
-                                &( r->spriteAnim[j].rotationCenterOffset.x ),
-                                &( r->spriteAnim[j].rotationCenterOffset.y ),
-
-                                &( r->spriteAnim[j].rotPerSec ),
-                                &( r->spriteAnim[j].rotPhase ),
-                                        
-                                &( r->spriteAnim[j].rockOscPerSec ),
-                                &( r->spriteAnim[j].rockAmp ),
-                                &( r->spriteAnim[j].rockPhase ),
-
-                                &( r->spriteAnim[j].durationSec ),
-                                &( r->spriteAnim[j].pauseSec ) );
-                        
-                        next++;
-                        }
-
-                    for( int j=0; j< r->numSlots && next < numLines;
-                         j++ ) {
-                                
-                        sscanf( lines[next], 
-                                "animParam="
-                                "%lf %lf %lf %lf %lf %lf %lf %lf",
-                                &( r->slotAnim[j].xOscPerSec ),
-                                &( r->slotAnim[j].xAmp ),
-                                &( r->slotAnim[j].xPhase ),
-                                        
-                                &( r->slotAnim[j].yOscPerSec ),
-                                &( r->slotAnim[j].yAmp ),
-                                &( r->slotAnim[j].yPhase ) ,
-
-                                &( r->slotAnim[j].durationSec ),
-                                &( r->slotAnim[j].pauseSec ) );
-                        next++;
-                        }
-                            
-
-                    records.push_back( r );
+                if( r->objectID > maxID ) {
+                    maxID = r->objectID;
                     }
-                for( int j=0; j<numLines; j++ ) {
-                    delete [] lines[j];
+                            
+                next++;
+
+                            
+                int typeRead = 0;
+                sscanf( lines[next], "type=%d", 
+                        &( typeRead ) );
+                r->type = (AnimType)typeRead;
+                next++;
+
+                r->numSprites = 0;
+                sscanf( lines[next], "numSprites=%d", 
+                        &( r->numSprites ) );
+                next++;
+
+                r->numSlots = 0;
+                sscanf( lines[next], "numSlots=%d", 
+                        &( r->numSlots ) );
+                next++;
+                            
+                r->spriteAnim = 
+                    new SpriteAnimationRecord[ r->numSprites ];
+                            
+                r->slotAnim = 
+                    new SpriteAnimationRecord[ r->numSlots ];
+                            
+                for( int j=0; j< r->numSprites && next < numLines;
+                     j++ ) {
+                                
+                    sscanf( lines[next], 
+                            "animParam="
+                            "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
+                            "%lf %lf %lf %lf %lf",
+                            &( r->spriteAnim[j].xOscPerSec ),
+                            &( r->spriteAnim[j].xAmp ),
+                            &( r->spriteAnim[j].xPhase ),
+                                        
+                            &( r->spriteAnim[j].yOscPerSec ),
+                            &( r->spriteAnim[j].yAmp ),
+                            &( r->spriteAnim[j].yPhase ),
+                                        
+                            &( r->spriteAnim[j].rotationCenterOffset.x ),
+                            &( r->spriteAnim[j].rotationCenterOffset.y ),
+
+                            &( r->spriteAnim[j].rotPerSec ),
+                            &( r->spriteAnim[j].rotPhase ),
+                                        
+                            &( r->spriteAnim[j].rockOscPerSec ),
+                            &( r->spriteAnim[j].rockAmp ),
+                            &( r->spriteAnim[j].rockPhase ),
+
+                            &( r->spriteAnim[j].durationSec ),
+                            &( r->spriteAnim[j].pauseSec ) );
+                        
+                    next++;
                     }
-                delete [] lines;
+
+                for( int j=0; j< r->numSlots && next < numLines;
+                     j++ ) {
+                                
+                    sscanf( lines[next], 
+                            "animParam="
+                            "%lf %lf %lf %lf %lf %lf %lf %lf",
+                            &( r->slotAnim[j].xOscPerSec ),
+                            &( r->slotAnim[j].xAmp ),
+                            &( r->slotAnim[j].xPhase ),
+                                        
+                            &( r->slotAnim[j].yOscPerSec ),
+                            &( r->slotAnim[j].yAmp ),
+                            &( r->slotAnim[j].yPhase ) ,
+
+                            &( r->slotAnim[j].durationSec ),
+                            &( r->slotAnim[j].pauseSec ) );
+                    next++;
+                    }
+                            
+
+                records.push_back( r );
                 }
+            for( int j=0; j<numLines; j++ ) {
+                delete [] lines[j];
+                }
+            delete [] lines;
             }
-        delete [] txtFileName;
         }
-    delete childFiles[i];
+    delete [] txtFileName;
 
 
     currentFile ++;
-    return (float)( currentFile ) / (float)( numFiles );
+    return (float)( currentFile ) / (float)( cache.numFiles );
     }
 
 
 
 void initAnimationBankFinish() {
     
-    delete [] childFiles;
+    freeFolderCache( cache );
     
     mapSize = maxID + 1;
     
@@ -374,6 +373,15 @@ void addAnimation( AnimationRecord *inRecord ) {
         delete [] linesArray;
         lines.deallocateStringElements();
         
+        
+        File animationsDir( NULL, "animations" );
+        
+        File *cacheFile = animationsDir.getChildFile( "cache.fcz" );
+
+        cacheFile->remove();
+        
+        delete cacheFile;
+
 
         animationFile->writeToFile( contents );
         
@@ -398,6 +406,17 @@ void clearAnimation( int inObjectID, AnimType inType ) {
         
         idMap[inObjectID][inType] = NULL;
         }
+
+    
+    File animationsDir( NULL, "animations" );
+
+
+    File *cacheFile = animationsDir.getChildFile( "cache.fcz" );
+
+    cacheFile->remove();
+    
+    delete cacheFile;
+
 
     File *animationFile = getFile( inObjectID, inType );
     animationFile->remove();
