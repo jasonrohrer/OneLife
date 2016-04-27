@@ -22,7 +22,9 @@ typedef struct TransRecord {
 
 
 
-void initTransBankStart();
+// returns number of transitions that need to be loaded
+int initTransBankStart( char *outRebuildingCache );
+
 float initTransBankStep();
 void initTransBankFinish();
 

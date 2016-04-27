@@ -7,6 +7,9 @@
 #include "minorGems/io/file/File.h"
 
 
+#include "folderCache.h"
+
+
 
 // track pointers to all records
 static SimpleVector<TransRecord *> records;
@@ -27,24 +30,22 @@ static SimpleVector<TransRecord *> *producesMap;
 
 
 
-static int numFiles;
-static File **childFiles;
+static FolderCache cache;
 
 static int currentFile;
 
 static int maxID;
 
-void initTransBankStart() {
+int initTransBankStart( char *outRebuildingCache ) {
     
     maxID = 0;
-    numFiles = 0;
+
     currentFile = 0;
 
-    File transDir( NULL, "transitions" );
-                
-    if( transDir.exists() && transDir.isDirectory() ) {
-        childFiles = transDir.getChildFiles( &numFiles );
-        }
+
+    cache = initFolderCache( "transitions", outRebuildingCache );
+
+    return cache.numFiles;
     }
 
 
@@ -52,75 +53,72 @@ void initTransBankStart() {
 
 float initTransBankStep() {
         
-    if( currentFile == numFiles ) {
+    if( currentFile == cache.numFiles ) {
         return 1.0;
         }
     
     int i = currentFile;
 
-    if( ! childFiles[i]->isDirectory() ) {
-                                        
-        char *txtFileName = childFiles[i]->getFileName();
+    char *txtFileName = getFileName( cache, i );
                         
-        if( strstr( txtFileName, ".txt" ) != NULL ) {
+    if( strstr( txtFileName, ".txt" ) != NULL ) {
                     
-            int actor = 0;
-            int target = -1;
+        int actor = 0;
+        int target = -1;
                     
-            sscanf( txtFileName, "%d_%d.txt", &actor, &target );
+        sscanf( txtFileName, "%d_%d.txt", &actor, &target );
                     
-            if(  target != -1 ) {
-                char *contents = childFiles[i]->readFileContents();
-                        
-                if( contents != NULL ) {
-                            
-                    int newActor = 0;
-                    int newTarget = 0;
-                    int autoDecaySeconds = 0;
-                            
-                    sscanf( contents, "%d %d %d", 
-                            &newActor, &newTarget, &autoDecaySeconds );
-                            
-                    TransRecord *r = new TransRecord;
-                            
-                    r->actor = actor;
-                    r->target = target;
-                    r->newActor = newActor;
-                    r->newTarget = newTarget;
-                    r->autoDecaySeconds = autoDecaySeconds;
-                            
-                    records.push_back( r );
-                            
-                    if( actor > maxID ) {
-                        maxID = actor;
-                        }
-                    if( target > maxID ) {
-                        maxID = target;
-                        }
-                    if( newActor > maxID ) {
-                        maxID = newActor;
-                        }
-                    if( newTarget > maxID ) {
-                        maxID = newTarget;
-                        }
+        if(  target != -1 ) {
 
-                    delete [] contents;
+            char *contents = getFileContents( cache, i );
+                        
+            if( contents != NULL ) {
+                            
+                int newActor = 0;
+                int newTarget = 0;
+                int autoDecaySeconds = 0;
+                            
+                sscanf( contents, "%d %d %d", 
+                        &newActor, &newTarget, &autoDecaySeconds );
+                            
+                TransRecord *r = new TransRecord;
+                            
+                r->actor = actor;
+                r->target = target;
+                r->newActor = newActor;
+                r->newTarget = newTarget;
+                r->autoDecaySeconds = autoDecaySeconds;
+                            
+                records.push_back( r );
+                            
+                if( actor > maxID ) {
+                    maxID = actor;
                     }
+                if( target > maxID ) {
+                    maxID = target;
+                    }
+                if( newActor > maxID ) {
+                    maxID = newActor;
+                    }
+                if( newTarget > maxID ) {
+                    maxID = newTarget;
+                    }
+
+                delete [] contents;
                 }
             }
-        delete [] txtFileName;
         }
-    delete childFiles[i];
+    delete [] txtFileName;
 
     currentFile ++;
-    return (float)( currentFile ) / (float)( numFiles );
+    return (float)( currentFile ) / (float)( cache.numFiles );
     }
 
 
 
 void initTransBankFinish() {
     
-    delete [] childFiles;
+    freeFolderCache( cache );
     
     mapSize = maxID + 1;
     
@@ -413,8 +411,15 @@ void addTrans( int inActor, int inTarget,
             char *fileContents = autoSprintf( "%d %d %d", 
                                               inNewActor, inNewTarget,
                                               inAutoDecaySeconds );
+
+        
+            File *cacheFile = transDir.getChildFile( "cache.fcz" );
+
+            cacheFile->remove();
             
+            delete cacheFile;
             
+
             transFile->writeToFile( fileContents );
             
             delete [] fileContents;
@@ -443,6 +448,13 @@ void deleteTransFromBank( int inActor, int inTarget ) {
 
             File *transFile = transDir.getChildFile( fileName );
             
+
+            File *cacheFile = transDir.getChildFile( "cache.fcz" );
+            
+            cacheFile->remove();
+            
+            delete cacheFile;
+
         
             transFile->remove();
             delete transFile;

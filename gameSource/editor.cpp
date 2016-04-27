@@ -1051,11 +1051,29 @@ void drawFrame( char inUpdate ) {
                         printf( "Finished loading object bank in %f sec\n",
                                 Time::getCurrentTime() - 
                                 loadingPhaseStartTime );
+
+
+                        char rebuilding;
                         
-                        loadingPage->setCurrentPhase( "TRANSITIONS" );
+                        int numTrans = 
+                            initTransBankStart( &rebuilding );
+                        
+                        if( rebuilding ) {
+                            loadingPage->setCurrentPhase( 
+                                "TRANSITIONS##(REBUILDING CACHE)" );
+                            }
+                        else {
+                            loadingPage->setCurrentPhase( "TRANSITIONS" );
+                            }
                         loadingPage->setCurrentProgress( 0 );
                         
-                        initTransBankStart();
+
+                        loadingStepBatchSize = numTrans / 20;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+
                         loadingPhase ++;
                         }
                     break;
