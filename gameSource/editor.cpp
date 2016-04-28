@@ -68,6 +68,8 @@ CustomRandomSource randSource( 34957197 );
 #include "testFileLoadThread.h"
 
 FileLoadHandle loadingFile = NULL;
+int loadingFileHandle = -1;
+int loadingFileStepCount = 0;
 double loadingStartTime;
 
 
@@ -838,6 +840,29 @@ void drawFrame( char inUpdate ) {
             }
         }
     
+    if( loadingFileHandle != -1 ) {
+        char fileDone = checkAsyncFileReadDone( loadingFileHandle );
+        loadingFileStepCount++;
+        
+        if( fileDone ) {
+            int length = 0;
+            unsigned char *data
+                = getAsyncFileData( loadingFileHandle, &length );
+            
+
+            printf( "Done with file read (%d steps), %.2f sec\n", 
+                    loadingFileStepCount,
+                    Time::getCurrentTime() - loadingStartTime );
+            
+            if( data != NULL ) {
+                delete [] data;
+                }
+            loadingFileHandle = -1;
+            loadingFileStepCount = 0;
+            }
+        }
+    
+    
 
     if( !inUpdate ) {
 
@@ -1302,12 +1327,19 @@ void keyDown( unsigned char inASCII ) {
     */
 
     if( inASCII == 'F' ) {
+        /*
         if( loadingFile == NULL ) {
             printf( "Starting file read\n" );
             
             loadingStartTime = Time::getCurrentTime();
             
             loadingFile = startLoadingFile( "20MegFile" );
+            }
+        */
+        if( loadingFileHandle == -1 ) {
+            printf( "Starting file read\n" );
+            loadingStartTime = Time::getCurrentTime();
+            loadingFileHandle = startAsyncFileRead( "20MegFile" );
             }
         }
     if( inASCII == 'f' ) {
