@@ -7,6 +7,8 @@
 
 typedef struct SpriteRecord {
         int id;
+
+        // NULL if image not loaded
         SpriteHandle sprite;
         
         char *tag;
@@ -26,8 +28,10 @@ typedef struct SpriteRecord {
 
 
 
-// loads from sprites folder
-void initSpriteBankStart();
+// returns number of sprite metadata files that need to be loaded
+int initSpriteBankStart( char *outRebuildingCache );
+
+
 // returns progress... ready for Finish when progress == 1.0
 float initSpriteBankStep();
 void initSpriteBankFinish();

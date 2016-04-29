@@ -11,6 +11,9 @@
 #include "minorGems/graphics/converters/TGAImageConverter.h"
 
 
+#include "folderCache.h"
+
+
 
 static int mapSize;
 // maps IDs to records
@@ -21,9 +24,7 @@ static SpriteRecord **idMap;
 static StringTree tree;
 
 
-
-static int numFiles;
-static File **childFiles;
+static FolderCache cache;
 
 static int currentFile;
 
@@ -35,16 +36,14 @@ static int maxID;
 static File spritesDir( NULL, "sprites" );
 
 
-void initSpriteBankStart() {
+int initSpriteBankStart( char *outRebuildingCache ) {
     maxID = 0;
     
-    numFiles = 0;
     currentFile = 0;
 
-    if( spritesDir.exists() && spritesDir.isDirectory() ) {
+    cache = initFolderCache( "sprites", outRebuildingCache );
 
-        childFiles = spritesDir.getChildFiles( &numFiles );
-        }
+    return cache.numFiles;
     }
 
 
@@ -83,151 +82,87 @@ void expandMap( char *inMap, int inW, int inH ) {
 
 float initSpriteBankStep() {
     
-    if( currentFile == numFiles ) {
+    if( currentFile == cache.numFiles ) {
         return 1.0;
         }
     
     int i = currentFile;
-            
-    if( !childFiles[i]->isDirectory() ) {
-                
-        char *fileName = childFiles[i]->getFileName();
+
+    char *fileName = getFileName( cache, i );
     
-        // skip all non-tga files
-        if( strstr( fileName, ".tga" ) != NULL ) {
+    // skip all non-txt files (only read meta data files on init, 
+    // not bulk data tga files)
+    if( strstr( fileName, ".txt" ) != NULL &&
+        strcmp( fileName, "nextSpriteNumber.txt" ) != 0 ) {
+                            
+        //printf( "Loading sprite from path %s\n", fileName );
+
+        SpriteRecord *r = new SpriteRecord;
+
+
+        r->sprite = NULL;
+        r->hitMap = NULL;
+        
+        r->id = 0;
+        
+        sscanf( fileName, "%d.txt", &( r->id ) );
+                
+                
+        char *contents = getFileContents( cache, i );
+                
+        r->tag = NULL;
+
+        if( contents != NULL ) {
             
-            // a tga file!
+            SimpleVector<char *> *tokens = tokenizeString( contents );
+            int numTokens = tokens->size();
             
-            char *fullName = childFiles[i]->getFullFileName();
-                            
-            printf( "Loading sprite from path %s\n", fullName );
-                            
-
-            RawRGBAImage *spriteImage = readTGAFileRawBase( fullName );
-
-            if( spriteImage != NULL && spriteImage->mNumChannels != 4 ) {
-                printf( "Sprite at %s not a 4-channel image, "
-                        "failed to load.\n",
-                        fullName );
-                delete spriteImage;
-                spriteImage = NULL;
-                }
-
-            delete [] fullName;
-
-                            
-            if( spriteImage != NULL ) {
-                SpriteRecord *r = new SpriteRecord;
-
+            if( numTokens >= 2 ) {
                         
-                r->sprite =
-                    fillSprite( spriteImage->mRGBABytes, spriteImage->mWidth,
-                                spriteImage->mHeight );
-                
-                r->w = spriteImage->mWidth;
-                r->h = spriteImage->mHeight;
+                r->tag = 
+                    stringDuplicate( tokens->getElementDirect( 0 ) );
                         
-                int numPixels = r->w * r->h;
-                r->hitMap = new char[ numPixels ];
-
-                memset( r->hitMap, 1, numPixels );
+                int mult;
+                sscanf( tokens->getElementDirect( 1 ),
+                        "%d", &mult );
                         
-                
-                int numBytes = numPixels * 4;
-                
-                unsigned char *bytes = spriteImage->mRGBABytes;
-                
-                // alpha is 4th byte
-                int p=0;
-                for( int b=3; b<numBytes; b+=4 ) {
-                    if( bytes[b] < 64 ) {
-                        r->hitMap[p] = 0;
-                        }
-                    p++;
+                if( mult == 1 ) {
+                    r->multiplicativeBlend = true;
                     }
-                                 
-                for( int e=0; e<3; e++ ) {    
-                    expandMap( r->hitMap, r->w, r->h );
-                    }
-                        
-                delete spriteImage;
-                      
-
-
-                r->id = 0;
-                                
-                sscanf( fileName, "%d.tga", &( r->id ) );
-                
-                char *textFileName = autoSprintf( "%d.txt", r->id );
-                
-                File *textFile = spritesDir.getChildFile( textFileName );
-                
-                delete [] textFileName;
-                
-                char *contents = textFile->readFileContents();
-                
-                delete textFile;
-                
-                r->tag = NULL;
-
-                if( contents != NULL ) {
-                    
-                    SimpleVector<char *> *tokens = tokenizeString( contents );
-                    int numTokens = tokens->size();
-                    
-                    if( numTokens >= 2 ) {
-                        
-                        r->tag = 
-                            stringDuplicate( tokens->getElementDirect( 0 ) );
-                        
-                        int mult;
-                        sscanf( tokens->getElementDirect( 1 ),
-                                "%d", &mult );
-                        
-                        if( mult == 1 ) {
-                            r->multiplicativeBlend = true;
-                            }
-                        else {
-                            r->multiplicativeBlend = false;
-                            }
-                        }
-
-                    tokens->deallocateStringElements();
-                    delete tokens;
-                    
-                    delete [] contents;
-                    }
-                
-                if( r->tag == NULL ) {
-                    r->tag = stringDuplicate( "tag" );
+                else {
                     r->multiplicativeBlend = false;
                     }
-                
-                r->maxD = getSpriteWidth( r->sprite );
-                if( getSpriteHeight( r->sprite ) > r->maxD ) {
-                    r->maxD = getSpriteHeight( r->sprite );
-                            }
-                records.push_back( r );
-
-                if( maxID < r->id ) {
-                    maxID = r->id;
-                    }
                 }
+
+            tokens->deallocateStringElements();
+            delete tokens;
+                    
+            delete [] contents;
             }
-        delete [] fileName;
-        }
                 
-    delete childFiles[i];
+        if( r->tag == NULL ) {
+            r->tag = stringDuplicate( "tag" );
+            r->multiplicativeBlend = false;
+            }
+
+        records.push_back( r );
+
+        if( maxID < r->id ) {
+            maxID = r->id;
+            }
+        }
+    delete [] fileName;
 
 
     currentFile ++;
-    return (float)( currentFile ) / (float)( numFiles );
+    return (float)( currentFile ) / (float)( cache.numFiles );
     }
+
  
 
 void initSpriteBankFinish() {    
 
-    delete [] childFiles;
+    freeFolderCache( cache );
     
     mapSize = maxID + 1;
     
@@ -255,12 +190,99 @@ void initSpriteBankFinish() {
 
 
 
+static void loadSpriteImage( int inID ) {
+    SpriteRecord *r = getSpriteRecord( inID );
+    
+    if( r != NULL ) {
+        
+        if( r->sprite == NULL ) {
+                
+            File spritesDir( NULL, "sprites" );
+            
+
+            const char *printFormatTGA = "%d.tga";
+        
+            char *fileNameTGA = autoSprintf( printFormatTGA, inID );
+        
+
+            File *spriteFile = spritesDir.getChildFile( fileNameTGA );
+            
+            delete [] fileNameTGA;
+            
+
+            char *fullName = spriteFile->getFullFileName();
+        
+            delete spriteFile;
+            
+
+            RawRGBAImage *spriteImage = readTGAFileRawBase( fullName );
+
+            if( spriteImage != NULL && spriteImage->mNumChannels != 4 ) {
+                printf( "Sprite at %s not a 4-channel image, "
+                        "failed to load.\n",
+                        fullName );
+                delete spriteImage;
+                spriteImage = NULL;
+                }
+
+            delete [] fullName;
+                            
+            if( spriteImage != NULL ) {
+                
+                        
+                r->sprite =
+                    fillSprite( spriteImage->mRGBABytes, spriteImage->mWidth,
+                                spriteImage->mHeight );
+                
+                r->w = spriteImage->mWidth;
+                r->h = spriteImage->mHeight;                
+                
+                r->maxD = r->w;
+                if( r->h > r->maxD ) {
+                    r->maxD = r->h;
+                    }        
+
+                int numPixels = r->w * r->h;
+                r->hitMap = new char[ numPixels ];
+
+                memset( r->hitMap, 1, numPixels );
+                        
+                
+                int numBytes = numPixels * 4;
+                
+                unsigned char *bytes = spriteImage->mRGBABytes;
+                
+                // alpha is 4th byte
+                int p=0;
+                for( int b=3; b<numBytes; b+=4 ) {
+                    if( bytes[b] < 64 ) {
+                        r->hitMap[p] = 0;
+                        }
+                    p++;
+                    }
+                
+                for( int e=0; e<3; e++ ) {    
+                    expandMap( r->hitMap, r->w, r->h );
+                    }
+                        
+                delete spriteImage;
+                }
+            }
+        }
+    }
+
+
+
+
+
 
 static void freeSpriteRecord( int inID ) {
     if( inID < mapSize ) {
         if( idMap[inID] != NULL ) {
-         
-            freeSprite( idMap[inID]->sprite );
+            
+            if( idMap[inID]->sprite != NULL ) {    
+                freeSprite( idMap[inID]->sprite );
+                }
             
             char *lower = stringToLowerCase( idMap[inID]->tag );
             
@@ -333,6 +355,9 @@ char getUsesMultiplicativeBlending( int inID ) {
 SpriteHandle getSprite( int inID ) {
     if( inID < mapSize ) {
         if( idMap[inID] != NULL ) {
+            if( idMap[inID]->sprite == NULL ) {
+                loadSpriteImage( inID );
+                }
             return idMap[inID]->sprite;
             }
         }
@@ -423,6 +448,13 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
         char *fileNameTXT = autoSprintf( printFormatTXT, nextSpriteNumber );
             
         newID = nextSpriteNumber;
+
+        File *cacheFile = spritesDir.getChildFile( "cache.fcz" );
+        
+        cacheFile->remove();
+        
+        delete cacheFile;
+
 
         File *spriteFile = spritesDir.getChildFile( fileNameTGA );
             
@@ -541,36 +573,35 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
 
 
 void deleteSpriteFromBank( int inID ) {
-    SpriteRecord *r = idMap[ inID ];
-
-    
     File spritesDir( NULL, "sprites" );
     
     
-    if( spritesDir.exists() && spritesDir.isDirectory() ) {                
-                    
-        File *tagDir = spritesDir.getChildFile( r->tag );
-        
-        if( tagDir->exists() && tagDir->isDirectory() ) {
-            
-            const char *printFormat = "%d.tga";
-            
-            if( r->multiplicativeBlend ) {
-                printFormat = "m%d.tga";
-                }
+    if( spritesDir.exists() && spritesDir.isDirectory() ) {    
 
-            char *fileName = autoSprintf( printFormat, inID );
+        const char *printFormatTGA = "%d.tga";
+        const char *printFormatTXT = "%d.txt";
+
+        char *fileNameTGA = autoSprintf( printFormatTGA, inID );
+        char *fileNameTXT = autoSprintf( printFormatTXT, inID );
             
-            File *spriteFile = tagDir->getChildFile( fileName );
+        File *spriteFileTGA = spritesDir.getChildFile( fileNameTGA );
+        File *spriteFileTXT = spritesDir.getChildFile( fileNameTXT );
+
             
-            spriteFile->remove();
+        File *cacheFile = spritesDir.getChildFile( "cache.fcz" );
             
-            delete [] fileName;
-            delete spriteFile;
+        cacheFile->remove();
+        
+        delete cacheFile;
+
             
-            tagDir->remove();
-            }
-        delete tagDir;
+        spriteFileTGA->remove();
+        spriteFileTXT->remove();
+            
+        delete [] fileNameTGA;
+        delete [] fileNameTXT;
+        delete spriteFileTGA;
+        delete spriteFileTXT;
         }
     
     

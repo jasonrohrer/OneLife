@@ -31,13 +31,21 @@ class SpritePickable : public Pickable {
         virtual void draw( void *inObject, doublePair inPos ) {
             SpriteRecord *r = (SpriteRecord*)inObject;
 
+            // don't access r->sprite directly here
+            // getSprite needed to invoke dynamic sprite loading
+            SpriteHandle sprite = getSprite( r->id );
+
             double zoom = 1;
             
             if( r->maxD > 64 ) {
                 zoom = 64.0 / r->maxD;
                 }
             
-            drawSprite( r->sprite, inPos, zoom );
+            if( r->id == 0 ) {
+                printf( "Hey\n" );
+                }
+
+            drawSprite( sprite, inPos, zoom );
             }
 
 

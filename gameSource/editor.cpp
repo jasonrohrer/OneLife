@@ -998,17 +998,39 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initOverlayBankFinish();
-                        initSpriteBankStart();
-                        loadingPage->setCurrentPhase( "SPRITES" );
+                        
+
+                        char rebuilding;
+                        
+                        int numSprites = 
+                            initSpriteBankStart( &rebuilding );
+                        
+                        if( rebuilding ) {
+                            loadingPage->setCurrentPhase( 
+                                "SPRITES##(REBUILDING CACHE)" );
+                            }
+                        else {
+                            loadingPage->setCurrentPhase( "SPRITES" );
+                            }
                         loadingPage->setCurrentProgress( 0 );
+                        
+
+                        loadingStepBatchSize = numSprites / 20;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
                         
                         loadingPhase ++;
                         }
                     break;
                     }
                 case 1: {
-                    float progress = initSpriteBankStep();
-                    loadingPage->setCurrentProgress( progress );
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initSpriteBankStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
                     
                     if( progress == 1.0 ) {
                         initSpriteBankFinish();
@@ -1080,8 +1102,11 @@ void drawFrame( char inUpdate ) {
                     break;
                     }
                 case 3: {
-                    float progress = initTransBankStep();
-                    loadingPage->setCurrentProgress( progress );
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initTransBankStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
                     
                     if( progress == 1.0 ) {
                         initTransBankFinish();
@@ -1113,8 +1138,11 @@ void drawFrame( char inUpdate ) {
                     break;
                     }
                 case 4: {
-                    float progress = initAnimationBankStep();
-                    loadingPage->setCurrentProgress( progress );
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initAnimationBankStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
                     
                     if( progress == 1.0 ) {
                         initAnimationBankFinish();
