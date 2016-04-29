@@ -65,9 +65,7 @@ CustomRandomSource randSource( 34957197 );
 
 #include "minorGems/io/file/File.h"
 #include "minorGems/system/Time.h"
-#include "testFileLoadThread.h"
 
-FileLoadHandle loadingFile = NULL;
 int loadingFileHandle = -1;
 int loadingFileStepCount = 0;
 double loadingStartTime;
@@ -478,7 +476,6 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     initDone = true;
 
 
-    initFileLoadThread();
     }
 
 
@@ -526,9 +523,6 @@ void freeFrameDrawer() {
     freeOverlayBank();
 
     freeAnimationBank();
-
-
-    freeFileLoadThread();
     }
 
 
@@ -821,25 +815,7 @@ void deleteCharFromUserTypedMessage() {
 
 void drawFrame( char inUpdate ) {    
 
-    if( loadingFile != NULL ) {
-        
-        if( isFileLoaded( loadingFile ) ) {
-
-            int length = 0;
-            unsigned char *data
-                = getFileContents( loadingFile, &length );
-            
-
-            printf( "Done with file read, %.2f sec\n", 
-                    Time::getCurrentTime() - loadingStartTime );
-            
-            if( data != NULL ) {
-                delete [] data;
-                }
-            loadingFile = NULL;
-            }
-        }
-    
+    // test code for async file loading
     if( loadingFileHandle != -1 ) {
         char fileDone = checkAsyncFileReadDone( loadingFileHandle );
         loadingFileStepCount++;
@@ -1326,16 +1302,8 @@ void keyDown( unsigned char inASCII ) {
         }
     */
 
+    /*
     if( inASCII == 'F' ) {
-        /*
-        if( loadingFile == NULL ) {
-            printf( "Starting file read\n" );
-            
-            loadingStartTime = Time::getCurrentTime();
-            
-            loadingFile = startLoadingFile( "20MegFile" );
-            }
-        */
         if( loadingFileHandle == -1 ) {
             printf( "Starting file read\n" );
             loadingStartTime = Time::getCurrentTime();
@@ -1355,7 +1323,7 @@ void keyDown( unsigned char inASCII ) {
             delete [] data;
             }
         }
-    
+    */
     
 
     

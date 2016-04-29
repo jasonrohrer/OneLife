@@ -41,7 +41,6 @@ ageControl.cpp \
 overlayBank.cpp \
 keyLegend.cpp \
 LoadingPage.cpp \
-testFileLoadThread.cpp \
 folderCache.cpp \
 
 
