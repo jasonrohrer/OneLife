@@ -134,7 +134,9 @@ FolderCache initFolderCache( const char *inFolderName,
             char *fileName = childFiles[i]->getFileName();
             
             // skip our special cache data file
-            if( strcmp( fileName, "cache.fcz" ) != 0 ) {
+            if( ! childFiles[i]->isDirectory()
+                &&
+                strcmp( fileName, "cache.fcz" ) != 0 ) {
             
                 CacheFileRecord r;
                 r.fileName = NULL;
