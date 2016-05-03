@@ -10,6 +10,8 @@
 
 #include "minorGems/graphics/converters/TGAImageConverter.h"
 
+#include "minorGems/game/game.h"
+
 
 #include "folderCache.h"
 
@@ -36,6 +38,22 @@ static int maxID;
 static File spritesDir( NULL, "sprites" );
 
 
+static SpriteHandle blankSprite;
+
+
+
+typedef struct SpriteLoadingRecord {
+        int spriteID;
+        int asyncLoadHandle;
+        
+    } SpriteLoadingRecord;
+
+
+static SimpleVector<SpriteLoadingRecord> loadingSprites;
+
+
+
+
 int initSpriteBankStart( char *outRebuildingCache ) {
     maxID = 0;
     
@@ -43,6 +61,11 @@ int initSpriteBankStart( char *outRebuildingCache ) {
 
     cache = initFolderCache( "sprites", outRebuildingCache );
 
+    unsigned char onePixel[4] = { 0, 0, 0, 0 };
+    
+
+    blankSprite = fillSprite( onePixel, 1, 1 );
+    
     return cache.numFiles;
     }
 
@@ -102,6 +125,7 @@ float initSpriteBankStep() {
 
         r->sprite = NULL;
         r->hitMap = NULL;
+        r->loading = false;
         
         r->id = 0;
         
@@ -195,7 +219,7 @@ static void loadSpriteImage( int inID ) {
     
     if( r != NULL ) {
         
-        if( r->sprite == NULL ) {
+        if( r->sprite == NULL && ! r->loading ) {
                 
             File spritesDir( NULL, "sprites" );
             
@@ -215,59 +239,19 @@ static void loadSpriteImage( int inID ) {
             delete spriteFile;
             
 
-            RawRGBAImage *spriteImage = readTGAFileRawBase( fullName );
+            SpriteLoadingRecord loadingR;
+            
+            loadingR.spriteID = inID;
 
-            if( spriteImage != NULL && spriteImage->mNumChannels != 4 ) {
-                printf( "Sprite at %s not a 4-channel image, "
-                        "failed to load.\n",
-                        fullName );
-                delete spriteImage;
-                spriteImage = NULL;
-                }
-
+            loadingR.asyncLoadHandle = startAsyncFileRead( fullName );
+            
             delete [] fullName;
-                            
-            if( spriteImage != NULL ) {
-                
-                        
-                r->sprite =
-                    fillSprite( spriteImage->mRGBABytes, spriteImage->mWidth,
-                                spriteImage->mHeight );
-                
-                r->w = spriteImage->mWidth;
-                r->h = spriteImage->mHeight;                
-                
-                r->maxD = r->w;
-                if( r->h > r->maxD ) {
-                    r->maxD = r->h;
-                    }        
 
-                int numPixels = r->w * r->h;
-                r->hitMap = new char[ numPixels ];
-
-                memset( r->hitMap, 1, numPixels );
-                        
-                
-                int numBytes = numPixels * 4;
-                
-                unsigned char *bytes = spriteImage->mRGBABytes;
-                
-                // alpha is 4th byte
-                int p=0;
-                for( int b=3; b<numBytes; b+=4 ) {
-                    if( bytes[b] < 64 ) {
-                        r->hitMap[p] = 0;
-                        }
-                    p++;
-                    }
-                
-                for( int e=0; e<3; e++ ) {    
-                    expandMap( r->hitMap, r->w, r->h );
-                    }
-                        
-                delete spriteImage;
-                }
+            loadingSprites.push_back( loadingR );
+            
+            r->loading = true;
             }
+
         }
     }
 
@@ -325,7 +309,92 @@ void freeSpriteBank() {
         }
 
     delete [] idMap;
+
+    freeSprite( blankSprite );
     }
+
+
+
+void stepSpriteBank() {
+    for( int i=0; i<loadingSprites.size(); i++ ) {
+        SpriteLoadingRecord *loadingR = loadingSprites.getElement( i );
+        
+        if( checkAsyncFileReadDone( loadingR->asyncLoadHandle ) ) {
+            
+            int length;
+            unsigned char *data = getAsyncFileData( loadingR->asyncLoadHandle, 
+                                                    &length );
+
+            if( data == NULL ) {
+                printf( "Reading sprite data from file failed, sprite ID %d\n",
+                        loadingR->spriteID );
+                }
+            else {
+                SpriteRecord *r = getSpriteRecord( loadingR->spriteID );
+                
+                RawRGBAImage *spriteImage = readTGAFileRawFromBuffer( data, 
+                                                                      length );
+
+                if( spriteImage != NULL && spriteImage->mNumChannels != 4 ) {
+                    printf( "Sprite loading for id %d not a 4-channel image, "
+                            "failed to load.\n",
+                            loadingR->spriteID );
+                    delete spriteImage;
+                    spriteImage = NULL;
+                    }
+                            
+                if( spriteImage != NULL ) {
+                
+                        
+                    r->sprite =
+                        fillSprite( spriteImage->mRGBABytes, 
+                                    spriteImage->mWidth,
+                                    spriteImage->mHeight );
+                
+                    r->w = spriteImage->mWidth;
+                    r->h = spriteImage->mHeight;                
+                    
+                    r->maxD = r->w;
+                    if( r->h > r->maxD ) {
+                        r->maxD = r->h;
+                        }        
+                    
+                    int numPixels = r->w * r->h;
+                    r->hitMap = new char[ numPixels ];
+                    
+                    memset( r->hitMap, 1, numPixels );
+                    
+                    
+                    int numBytes = numPixels * 4;
+                    
+                    unsigned char *bytes = spriteImage->mRGBABytes;
+                    
+                    // alpha is 4th byte
+                    int p=0;
+                    for( int b=3; b<numBytes; b+=4 ) {
+                        if( bytes[b] < 64 ) {
+                            r->hitMap[p] = 0;
+                            }
+                        p++;
+                        }
+                    
+                    for( int e=0; e<3; e++ ) {    
+                        expandMap( r->hitMap, r->w, r->h );
+                        }
+                    
+                    delete spriteImage;
+                    }
+                
+                delete [] data;
+                }
+
+            loadingSprites.deleteElement( i );
+            i++;
+            }
+        }
+    
+    }
+
 
 
 
@@ -357,6 +426,7 @@ SpriteHandle getSprite( int inID ) {
         if( idMap[inID] != NULL ) {
             if( idMap[inID]->sprite == NULL ) {
                 loadSpriteImage( inID );
+                return blankSprite;
                 }
             return idMap[inID]->sprite;
             }

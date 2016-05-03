@@ -986,6 +986,9 @@ void drawFrame( char inUpdate ) {
 
     // updates here
     
+    stepSpriteBank();
+    
+
     if( currentGamePage != NULL ) {
         currentGamePage->base_step();
 

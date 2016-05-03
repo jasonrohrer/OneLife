@@ -24,6 +24,8 @@ typedef struct SpriteRecord {
         // 0 where alpha <0.25, for registering mouse clicks on sprite
         char *hitMap;
 
+        char loading;
+
     } SpriteRecord;
 
 
@@ -38,6 +40,10 @@ void initSpriteBankFinish();
 
 
 void freeSpriteBank();
+
+
+// processing for dynamic, asynchronous sprite loading
+void stepSpriteBank();
 
 
 
