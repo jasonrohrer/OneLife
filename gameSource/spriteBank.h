@@ -26,6 +26,8 @@ typedef struct SpriteRecord {
 
         char loading;
 
+        int numStepsUnused;
+
     } SpriteRecord;
 
 

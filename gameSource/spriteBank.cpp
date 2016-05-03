@@ -51,6 +51,7 @@ typedef struct SpriteLoadingRecord {
 
 static SimpleVector<SpriteLoadingRecord> loadingSprites;
 
+static SimpleVector<int> loadedSprites;
 
 
 
@@ -126,7 +127,8 @@ float initSpriteBankStep() {
         r->sprite = NULL;
         r->hitMap = NULL;
         r->loading = false;
-        
+        r->numStepsUnused = 0;
+
         r->id = 0;
         
         sscanf( fileName, "%d.txt", &( r->id ) );
@@ -297,7 +299,10 @@ void freeSpriteBank() {
     for( int i=0; i<mapSize; i++ ) {
         if( idMap[i] != NULL ) {
             
-            freeSprite( idMap[i]->sprite );
+            if( idMap[i]->sprite != NULL ) {    
+                freeSprite( idMap[i]->sprite );
+                }
+            
             delete [] idMap[i]->tag;
 
              if( idMap[i]->hitMap != NULL ) {
@@ -324,13 +329,15 @@ void stepSpriteBank() {
             int length;
             unsigned char *data = getAsyncFileData( loadingR->asyncLoadHandle, 
                                                     &length );
+            SpriteRecord *r = getSpriteRecord( loadingR->spriteID );
 
+            
             if( data == NULL ) {
                 printf( "Reading sprite data from file failed, sprite ID %d\n",
                         loadingR->spriteID );
                 }
             else {
-                SpriteRecord *r = getSpriteRecord( loadingR->spriteID );
+                
                 
                 RawRGBAImage *spriteImage = readTGAFileRawFromBuffer( data, 
                                                                       length );
@@ -387,12 +394,38 @@ void stepSpriteBank() {
                 
                 delete [] data;
                 }
+            
+            r->numStepsUnused = 0;
+            loadedSprites.push_back( loadingR->spriteID );
 
             loadingSprites.deleteElement( i );
             i++;
             }
         }
     
+
+    for( int i=0; i<loadedSprites.size(); i++ ) {
+        int id = loadedSprites.getElementDirect( i );
+    
+        SpriteRecord *r = getSpriteRecord( id );
+        
+        r->numStepsUnused ++;
+
+        if( r->numStepsUnused > 600 ) {
+            // 10 seconds not drawn
+            
+            freeSprite( r->sprite );
+            r->sprite = NULL;
+            
+            delete [] r->hitMap;
+            r->hitMap = NULL;
+
+            r->loading = false;
+
+            loadedSprites.deleteElement( i );
+            i--;
+            }
+        }
     }
 
 
@@ -428,6 +461,8 @@ SpriteHandle getSprite( int inID ) {
                 loadSpriteImage( inID );
                 return blankSprite;
                 }
+            
+            idMap[inID]->numStepsUnused = 0;
             return idMap[inID]->sprite;
             }
         }
