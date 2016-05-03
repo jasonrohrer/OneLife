@@ -35,3 +35,6 @@ done
 echo "New nextID = $nextID"
 
 echo -n "$nextID" > objects/nextObjectNumber.txt
+
+
+rm objects/cache.fcz
