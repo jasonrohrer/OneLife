@@ -17,6 +17,7 @@ LAYER_SOURCE = \
 game.cpp \
 spriteBank.cpp \
 objectBank.cpp \
+transitionBank.cpp \
 animationBank.cpp \
 whiteSprites.cpp \
 message.cpp \
@@ -35,6 +36,7 @@ RebirthChoicePage.cpp \
 TextField.cpp \
 LoadingPage.cpp \
 folderCache.cpp \
+liveObjectSet.cpp \
 
 
 
@@ -57,6 +59,7 @@ NEEDED_MINOR_GEMS_OBJECTS = \
  ${TIME_O} \
  ${THREAD_O} \
  ${MUTEX_LOCK_O} \
+ ${BINARY_SEMAPHORE_O} \
  ${TRANSLATION_MANAGER_O} \
  ${SOCKET_O} \
  ${HOST_ADDRESS_O} \

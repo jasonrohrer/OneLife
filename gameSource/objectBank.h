@@ -10,6 +10,8 @@ typedef struct FloatRGB {
     } FloatRGB;
 
 
+
+
 void setDrawColor( FloatRGB inColor );
 
 
@@ -170,6 +172,10 @@ int initObjectBankStart( char *outRebuildingCache );
 // returns progress... ready for Finish when progress == 1.0
 float initObjectBankStep();
 void initObjectBankFinish();
+
+
+// can only be called after bank init is complete
+int getMaxObjectID();
 
 
 void freeObjectBank();

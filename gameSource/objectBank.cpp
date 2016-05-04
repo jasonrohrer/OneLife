@@ -50,6 +50,10 @@ static int maxID;
 
 
 
+int getMaxObjectID() {
+    return maxID;
+    }
+
 
 void setDrawColor( FloatRGB inColor ) {
     setDrawColor( inColor.r, 

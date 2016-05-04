@@ -1173,7 +1173,7 @@ int main() {
     while( initObjectBankStep() < 1.0 );
     initObjectBankFinish();
         
-    initTransBankStart();
+    initTransBankStart( &rebuilding );
     while( initTransBankStep() < 1.0 );
     initTransBankFinish();
     

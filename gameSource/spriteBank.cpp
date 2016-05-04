@@ -55,6 +55,12 @@ static SimpleVector<int> loadedSprites;
 
 
 
+int getMaxSpriteID() {
+    return maxID;
+    }
+
+
+
 int initSpriteBankStart( char *outRebuildingCache ) {
     maxID = 0;
     
@@ -469,7 +475,31 @@ SpriteHandle getSprite( int inID ) {
     return NULL;
     }
 
+
     
+char markSpriteLive( int inID ) {
+    SpriteRecord *r = getSpriteRecord( inID );
+    
+    if( r == NULL ) {
+        return false;
+        }
+
+    r->numStepsUnused = 0;
+    
+    if( r->sprite == NULL && ! r->loading ) {
+        loadSpriteImage( inID );
+        return false;
+        }
+    
+
+    if( r->sprite != NULL ) {
+        return true;
+        }
+    else {
+        return false;
+        }
+    }
+
 
 
 // return array destroyed by caller, NULL if none found

@@ -5,7 +5,16 @@ loading "LOADING"
 
 sprites "SPRITES"
 objects "OBJECTS"
+transitions "TRANSITIONS"
 animations "ANIMATIONS"
+
+
+spritesRebuild "SPRITES##(REBUILDING CACHE)"
+objectsRebuild "OBJECTS##(REBUILDING CACHE)"
+transitionsRebuild "TRANSITIONS##(REBUILDING CACHE)"
+animationsRebuild "ANIMATIONS##(REBUILDING CACHE)"
+
+
 
 waitingBirth "WAITING TO BE BORN"
 

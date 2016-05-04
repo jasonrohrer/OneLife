@@ -41,6 +41,11 @@ float initSpriteBankStep();
 void initSpriteBankFinish();
 
 
+// can only be called after bank init is complete
+int getMaxSpriteID();
+
+
+
 void freeSpriteBank();
 
 
@@ -56,6 +61,11 @@ char getUsesMultiplicativeBlending( int inID );
 
 
 SpriteHandle getSprite( int inID );
+
+
+// returns true if sprite is already loaded
+char markSpriteLive( int inID );
+
 
 
 // return array destroyed by caller, NULL if none found
