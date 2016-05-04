@@ -85,6 +85,10 @@ void addBaseObjectToLiveObjectSet( int inID ) {
 
 
 void finalizeLiveObjectSet() {
+    // FIXME:
+    // need to check transition bank for objects that are one step
+    // away from what we have here
+
     for( int i=0; i<liveObjectSet.size(); i++ ) {
         
         
