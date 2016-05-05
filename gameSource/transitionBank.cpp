@@ -265,6 +265,10 @@ TransRecord **searchProduces( int inProducesID,
 
 
 SimpleVector<TransRecord*> *getAllUses( int inUsesID ) {
+    if( inUsesID >= mapSize ) {
+        return NULL;
+        }
+
     return &( usesMap[inUsesID] );
     }
 

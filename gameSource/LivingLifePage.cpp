@@ -3249,15 +3249,52 @@ void LivingLifePage::step() {
             }
         else {
             
+            clearLiveObjectSet();
+            
             // FIXME:
             // push all objects from grid, live players, what they're holding
             // and wearing into live set
 
+            // first, players
             for( int i=0; i<gameObjects.size(); i++ ) {
+                LiveObject *o = gameObjects.getElement( i );
                 
+                addBaseObjectToLiveObjectSet( o->displayID );
+                
+                // and what they're holding
+                if( o->holdingID != 0 ) {
+                    addBaseObjectToLiveObjectSet( o->holdingID );
+
+                    // and what it contains
+                    for( int j=0; j<o->numContained; j++ ) {
+                        addBaseObjectToLiveObjectSet(
+                            o->containedIDs[j] );
+                        }
+                    }
+                
+                // and their clothing
+                if( o->clothing.hat != NULL ) {
+                    addBaseObjectToLiveObjectSet( o->clothing.hat->id );
+                    }
+                if( o->clothing.tunic != NULL ) {
+                    addBaseObjectToLiveObjectSet( o->clothing.tunic->id );
+                    }
+                if( o->clothing.frontShoe != NULL ) {
+                    addBaseObjectToLiveObjectSet( o->clothing.frontShoe->id );
+                    }
+                if( o->clothing.backShoe != NULL ) {
+                    addBaseObjectToLiveObjectSet( o->clothing.backShoe->id );
+                    }
                 }
             
+            // FIXME:  next all objects in grid
 
+
+            // FIXME:  and what is contained in each object
+
+
+            finalizeLiveObjectSet();
+            
             mStartedLoadingFirstObjectSet = true;
             }
         }

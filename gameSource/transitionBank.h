@@ -57,6 +57,7 @@ TransRecord **searchProduces( int inProducesID,
 // an actor or a target
 //
 // This vector must NOT be destroyed or altered by caller
+// Can return NULL if no transitions use inUsesID
 SimpleVector<TransRecord*> *getAllUses( int inUsesID );
 
 

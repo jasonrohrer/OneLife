@@ -4,6 +4,8 @@
 
 #include "transitionBank.h"
 
+#include "liveObjectSet.h"
+
 
 #include "minorGems/util/SimpleVector.h"
 
@@ -30,6 +32,8 @@ void initLiveObjectSet() {
 
     liveObjectIDMap = new char[ objectMapSize ];
     liveSpriteIDMap = new char[ spriteMapSize ];
+
+    clearLiveObjectSet();
     }
 
 
@@ -101,19 +105,25 @@ void finalizeLiveObjectSet() {
         
         SimpleVector<TransRecord*> *list = getAllUses( id );
         
-        int num = list->size();
-        
-        for( int j=0; j<num; j++ ) {
-            TransRecord *t = list->getElementDirect( j );
-
-            addBaseObjectToLiveObjectSet( t->newActor );
-            addBaseObjectToLiveObjectSet( t->newTarget );            
+        if( list != NULL ) {
+            
+            int num = list->size();
+            
+            for( int j=0; j<num; j++ ) {
+                TransRecord *t = list->getElementDirect( j );
+                
+                addBaseObjectToLiveObjectSet( t->newActor );
+                addBaseObjectToLiveObjectSet( t->newTarget );            
+                }
             }
         
         }
     
 
     int numSprites = liveSpriteSet.size();
+
+    //printf( "Finalizing an object set resulting in %d live sprites\n",
+    //        numSprites );
     
     for( int i=0; i<numSprites; i++ ) {
         int id = liveSpriteSet.getElementDirect(i);
