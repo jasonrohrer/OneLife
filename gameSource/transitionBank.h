@@ -2,6 +2,9 @@
 #define TRANSITION_BANK_INCLUDED
 
 
+#include "minorGems/util/SimpleVector.h"
+
+
 
 typedef struct TransRecord {
         
@@ -47,6 +50,14 @@ TransRecord **searchProduces( int inProducesID,
                               int inNumToSkip, 
                               int inNumToGet, 
                               int *outNumResults, int *outNumRemaining );
+
+
+
+// returns internal vector of ALL transitions that use inUsesID as either
+// an actor or a target
+//
+// This vector must NOT be destroyed or altered by caller
+SimpleVector<TransRecord*> *getAllUses( int inUsesID );
 
 
 

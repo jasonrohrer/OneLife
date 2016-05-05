@@ -264,6 +264,11 @@ TransRecord **searchProduces( int inProducesID,
 
 
 
+SimpleVector<TransRecord*> *getAllUses( int inUsesID ) {
+    return &( usesMap[inUsesID] );
+    }
+
+
 
 
 void addTrans( int inActor, int inTarget,

@@ -85,12 +85,30 @@ void addBaseObjectToLiveObjectSet( int inID ) {
 
 
 void finalizeLiveObjectSet() {
-    // FIXME:
-    // need to check transition bank for objects that are one step
-    // away from what we have here
+    
+    // follow transitions one step and add any new objects at end of our
+    // list.
 
-    for( int i=0; i<liveObjectSet.size(); i++ ) {
+    // But DON'T keep going through them in list and processing THEIR 
+    // transitions (that would hit all reachable objects).
+
+    // so process up to the base set size and then stop, even though
+    // our list is growing
+    int baseSetSize = liveObjectSet.size();
+    
+    for( int i=0; i<baseSetSize; i++ ) {
+        int id = liveObjectSet.getElementDirect( i );
         
+        SimpleVector<TransRecord*> *list = getAllUses( id );
+        
+        int num = list->size();
+        
+        for( int j=0; j<num; j++ ) {
+            TransRecord *t = list->getElementDirect( j );
+
+            addBaseObjectToLiveObjectSet( t->newActor );
+            addBaseObjectToLiveObjectSet( t->newTarget );            
+            }
         
         }
     
