@@ -55,8 +55,8 @@ typedef struct LiveObject {
 
 
         // furture states that curAnim should fade to, one at a time
-        SimpleVector<AnimType> futureAnimStack;
-        SimpleVector<AnimType> futureHeldAnimStack;
+        SimpleVector<AnimType> *futureAnimStack;
+        SimpleVector<AnimType> *futureHeldAnimStack;
         
         // store frame counts in fractional form
         // this allows animations that can vary in speed without
@@ -183,6 +183,11 @@ class LivingLifePage : public GamePage {
         int mServerSocket;
 
         int mFirstServerMessagesReceived;
+        
+        char mStartedLoadingFirstObjectSet;
+        char mDoneLoadingFirstObjectSet;
+
+        float mFirstObjectSetLoadingProgress;
         
         
 

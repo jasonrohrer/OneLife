@@ -4,6 +4,8 @@
 #include "whiteSprites.h"
 #include "message.h"
 
+#include "liveObjectSet.h"
+
 #include "minorGems/util/SimpleVector.h"
 
 
@@ -410,12 +412,12 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
         if( inObject->lastAnimFade != 0 ) {
                         
             // don't double stack
-            if( inObject->futureAnimStack.size() == 0 ||
-                inObject->futureAnimStack.getElementDirect(
-                    inObject->futureAnimStack.size() - 1 ) 
+            if( inObject->futureAnimStack->size() == 0 ||
+                inObject->futureAnimStack->getElementDirect(
+                    inObject->futureAnimStack->size() - 1 ) 
                 != inNewAnim ) {
                 
-                inObject->futureAnimStack.push_back( inNewAnim );
+                inObject->futureAnimStack->push_back( inNewAnim );
                 }
             }
         else {
@@ -449,12 +451,12 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
             if( inObject->lastHeldAnimFade != 0 ) {
                         
                 // don't double stack
-                if( inObject->futureHeldAnimStack.size() == 0 ||
-                    inObject->futureHeldAnimStack.getElementDirect(
-                        inObject->futureHeldAnimStack.size() - 1 ) 
+                if( inObject->futureHeldAnimStack->size() == 0 ||
+                    inObject->futureHeldAnimStack->getElementDirect(
+                        inObject->futureHeldAnimStack->size() - 1 ) 
                     != inNewAnim ) {
                     
-                    inObject->futureHeldAnimStack.push_back( inNewAnim );
+                    inObject->futureHeldAnimStack->push_back( inNewAnim );
                     }
                 }
             else {
@@ -586,6 +588,9 @@ void LivingLifePage::clearLiveObjects() {
         if( nextObject->currentSpeech != NULL ) {
             delete [] nextObject->currentSpeech;
             }
+
+        delete nextObject->futureAnimStack;
+        delete nextObject->futureHeldAnimStack;
         }
     
     gameObjects.deleteAll();
@@ -1129,8 +1134,21 @@ SimpleVector<doublePair> trail;
 void LivingLifePage::draw( doublePair inViewCenter, 
                            double inViewSize ) {
     
-    if( gameObjects.size() == 0 ) {
-        // haven't gotten first message from server yet
+    char stillWaitingBirth = false;
+    
+
+    if( mFirstServerMessagesReceived != 3 ) {
+        // haven't gotten first messages from server yet
+        stillWaitingBirth = true;
+        }
+    else if( mFirstServerMessagesReceived == 3 ) {
+        if( !mDoneLoadingFirstObjectSet ) {
+            stillWaitingBirth = true;
+            }
+        }
+
+
+    if( stillWaitingBirth ) {
         
         // draw this to cover up utility text field, but not
         // waiting icon at top
@@ -1138,11 +1156,34 @@ void LivingLifePage::draw( doublePair inViewCenter,
         drawSquare( lastScreenViewCenter, 100 );
         
         setDrawColor( 1, 1, 1, 1 );
-        doublePair pos = { 0, 0 };
+        doublePair pos = { 0, -100 };
         drawMessage( "waitingBirth", pos );
+
+        if( mStartedLoadingFirstObjectSet ) {
+            
+            // border
+            setDrawColor( 1, 1, 1, 1 );
+    
+            drawRect( -100, -220, 
+                      100, -200 );
+
+            // inner black
+            setDrawColor( 0, 0, 0, 1 );
+            
+            drawRect( -98, -218, 
+                      98, -202 );
+    
+    
+            // progress
+            setDrawColor( .8, .8, .8, 1 );
+            drawRect( -98, -218, 
+                      -98 + mFirstObjectSetLoadingProgress * ( 98 * 2 ), 
+                      -202 );
+            }
+        
         return;
         }
-    
+
 
     setDrawColor( 1, 1, 1, 1 );
     drawSquare( lastScreenViewCenter, viewWidth );
@@ -2036,7 +2077,7 @@ void LivingLifePage::step() {
                             existing->lastHeldAnimFade = 1;
                             existing->curHeldAnim = held;
 
-                            existing->futureHeldAnimStack.deleteAll();
+                            existing->futureHeldAnimStack->deleteAll();
 
                             if( heldOriginValid ) {
                                 // transition from last ground animation
@@ -2078,7 +2119,7 @@ void LivingLifePage::step() {
                                         existing->lastHeldAnimFade =
                                             mMapLastAnimFade[ mapI ];
                                         
-                                        existing->futureHeldAnimStack.
+                                        existing->futureHeldAnimStack->
                                             push_back( held );
                                         }
                                     
@@ -2196,6 +2237,11 @@ void LivingLifePage::step() {
                                                 
                         o.moveTotalTime = 0;
                         
+                        o.futureAnimStack = 
+                            new SimpleVector<AnimType>();
+                        o.futureHeldAnimStack = 
+                            new SimpleVector<AnimType>();
+
                         
                         gameObjects.push_back( o );
                         }
@@ -2215,10 +2261,21 @@ void LivingLifePage::step() {
                         
                         if( nextObject->id == o.id ) {
                             
+                            if( nextObject->containedIDs != NULL ) {
+                                delete [] nextObject->containedIDs;
+                                }
+                            
                             if( nextObject->pathToDest != NULL ) {
                                 delete [] nextObject->pathToDest;
                                 }
                             
+                            if( nextObject->currentSpeech != NULL ) {
+                                delete [] nextObject->currentSpeech;
+                                }
+
+                            delete nextObject->futureAnimStack;
+                            delete nextObject->futureHeldAnimStack;
+
                             gameObjects.deleteElement( i );
                             break;
                             }
@@ -2927,7 +2984,7 @@ void LivingLifePage::step() {
                 o->animationFrameCount = 0;
                 o->animationFrozenRotFrameCount = 0;
                 
-                if( o->futureAnimStack.size() > 0 ) {
+                if( o->futureAnimStack->size() > 0 ) {
                     // move on to next in stack
                     o->lastAnim = o->curAnim;
                     
@@ -2935,8 +2992,8 @@ void LivingLifePage::step() {
                     
                     // pop from stack
                     o->curAnim = 
-                        o->futureAnimStack.getElementDirect( 0 );
-                    o->futureAnimStack.deleteElement( 0 );
+                        o->futureAnimStack->getElementDirect( 0 );
+                    o->futureAnimStack->deleteElement( 0 );
                     }
                 
                 }
@@ -2980,7 +3037,7 @@ void LivingLifePage::step() {
                 o->heldAnimationFrameCount = 0;
                 o->heldAnimationFrozenRotFrameCount = 0;
 
-                if( o->futureHeldAnimStack.size() > 0 ) {
+                if( o->futureHeldAnimStack->size() > 0 ) {
                     // move on to next in stack
                     o->lastHeldAnim = o->curHeldAnim;
                     
@@ -2988,8 +3045,8 @@ void LivingLifePage::step() {
                     
                     // pop from stack
                     o->curHeldAnim = 
-                        o->futureHeldAnimStack.getElementDirect( 0 );
-                    o->futureHeldAnimStack.deleteElement( 0 );
+                        o->futureHeldAnimStack->getElementDirect( 0 );
+                    o->futureHeldAnimStack->deleteElement( 0 );
                     }
                 
                 }
@@ -3183,6 +3240,28 @@ void LivingLifePage::step() {
             }
         }
     
+
+    if( mFirstServerMessagesReceived == 3 ) {
+
+        if( mStartedLoadingFirstObjectSet && ! mDoneLoadingFirstObjectSet ) {
+            mDoneLoadingFirstObjectSet = 
+                isLiveObjectSetFullyLoaded( &mFirstObjectSetLoadingProgress );
+            }
+        else {
+            
+            // FIXME:
+            // push all objects from grid, live players, what they're holding
+            // and wearing into live set
+
+            for( int i=0; i<gameObjects.size(); i++ ) {
+                
+                }
+            
+
+            mStartedLoadingFirstObjectSet = true;
+            }
+        }
+    
     }
 
 
@@ -3206,6 +3285,9 @@ void LivingLifePage::makeActive( char inFresh ) {
 
     clearLiveObjects();
     mFirstServerMessagesReceived = 0;
+    mStartedLoadingFirstObjectSet = false;
+    mDoneLoadingFirstObjectSet = false;
+    mFirstObjectSetLoadingProgress = 0;
     
     serverSocketBuffer.deleteAll();
     }

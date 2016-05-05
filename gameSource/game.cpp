@@ -58,6 +58,7 @@ CustomRandomSource randSource( 34957197 );
 #include "objectBank.h"
 #include "transitionBank.h"
 
+#include "liveObjectSet.h"
 
 
 #include "LoadingPage.h"
@@ -485,6 +486,10 @@ void freeFrameDrawer() {
     freeAnimationBank();
     freeObjectBank();
     freeSpriteBank();
+
+    freeTransBank();
+    
+    freeLiveObjectSet();
     }
 
 
@@ -1065,6 +1070,8 @@ void drawFrame( char inUpdate ) {
                     }
                 default:
                     loadingComplete();
+                    
+                    initLiveObjectSet();
                     currentGamePage = livingLifePage;
                     currentGamePage->base_makeActive( true );
                 }
