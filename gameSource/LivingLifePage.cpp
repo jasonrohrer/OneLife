@@ -1156,11 +1156,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
         drawSquare( lastScreenViewCenter, 100 );
         
         setDrawColor( 1, 1, 1, 1 );
-        doublePair pos = { 0, -100 };
+        doublePair pos = { 0, 0 };
         drawMessage( "waitingBirth", pos );
 
         if( mStartedLoadingFirstObjectSet ) {
             
+            pos.y = -100;
+            drawMessage( "loadingMap", pos );
+
             // border
             setDrawColor( 1, 1, 1, 1 );
     
@@ -3287,11 +3290,24 @@ void LivingLifePage::step() {
                     }
                 }
             
-            // FIXME:  next all objects in grid
-
-
-            // FIXME:  and what is contained in each object
-
+            
+            // next all objects in grid
+            int numMapCells = mMapD * mMapD;
+            
+            for( int i=0; i<numMapCells; i++ ) {
+                if( mMap[i] > 0 ) {
+                    
+                    addBaseObjectToLiveObjectSet( mMap[i] );
+            
+                    // and what is contained in each object
+                    int numCont = mMapContainedStacks[i].size();
+                    
+                    for( int j=0; j<numCont; j++ ) {
+                        addBaseObjectToLiveObjectSet(
+                            mMapContainedStacks[i].getElementDirect( j ) );
+                        }
+                    }
+                }
 
             finalizeLiveObjectSet();
             

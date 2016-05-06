@@ -18,6 +18,8 @@ animationsRebuild "ANIMATIONS##(REBUILDING CACHE)"
 
 waitingBirth "WAITING TO BE BORN"
 
+loadingMap "LOADING MAP"
+
 
 
 youDied "YOU DIED"

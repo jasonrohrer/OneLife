@@ -112,8 +112,13 @@ void finalizeLiveObjectSet() {
             for( int j=0; j<num; j++ ) {
                 TransRecord *t = list->getElementDirect( j );
                 
-                addBaseObjectToLiveObjectSet( t->newActor );
-                addBaseObjectToLiveObjectSet( t->newTarget );            
+                if( t->newActor > 0 ) {
+                    addBaseObjectToLiveObjectSet( t->newActor );
+                    }
+                
+                if( t->newTarget > 0 ) {
+                    addBaseObjectToLiveObjectSet( t->newTarget );
+                    }
                 }
             }
         
