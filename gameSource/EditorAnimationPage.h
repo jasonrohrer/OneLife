@@ -147,6 +147,9 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         SpriteAnimationRecord mCopyBuffer;
 
         SimpleVector<SpriteAnimationRecord> mChainCopyBuffer;
+
+        SimpleVector<SpriteAnimationRecord> mAllCopyBufferSprites;
+        SimpleVector<SpriteAnimationRecord> mAllCopyBufferSlots;
         
 
         char mWalkCopied;
@@ -163,6 +166,8 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextButton mCopyButton;
         TextButton mCopyChainButton;
         TextButton mCopyWalkButton;
+        TextButton mCopyAllButton;
+
 
         TextButton mPasteButton;
         TextButton mClearButton;

@@ -63,6 +63,7 @@ EditorAnimationPage::EditorAnimationPage()
           mCopyButton( smallFont, -290, 210, "Copy" ),
           mCopyChainButton( smallFont, -290, 250, "Copy Child Chain" ),
           mCopyWalkButton( smallFont, -160, 250, "Copy Walk" ),
+          mCopyAllButton( smallFont, -370, 210, "Copy All" ),
           mPasteButton( smallFont, -230, 210, "Paste" ),
           mClearButton( smallFont, -170, 210, "Clear" ),
           mNextSpriteOrSlotButton( smallFont, 120, -270, "Next Layer" ),
@@ -112,6 +113,7 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mCopyButton );
     addComponent( &mCopyChainButton );
     addComponent( &mCopyWalkButton );
+    addComponent( &mCopyAllButton );
     addComponent( &mPasteButton );
     addComponent( &mClearButton );
     
@@ -135,6 +137,7 @@ EditorAnimationPage::EditorAnimationPage()
     mCopyButton.addActionListener( this );
     mCopyChainButton.addActionListener( this );
     mCopyWalkButton.addActionListener( this );
+    mCopyAllButton.addActionListener( this );
     mPasteButton.addActionListener( this );
     mClearButton.addActionListener( this );
     
@@ -703,6 +706,22 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             mWalkCopied = true;
             }
         }
+    else if( inTarget == &mCopyAllButton ) {
+        mChainCopyBuffer.deleteAll();
+        mWalkCopied = false;
+        
+        mAllCopyBufferSprites.deleteAll();
+        mAllCopyBufferSlots.deleteAll();
+        
+        AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
+
+        for( int i=0; i<anim->numSprites; i++ ) {
+            mAllCopyBufferSprites.push_back( anim->spriteAnim[i] );
+            }
+        for( int i=0; i<anim->numSlots; i++ ) {
+            mAllCopyBufferSlots.push_back( anim->slotAnim[i] );
+            }
+        }
     else if( inTarget == &mPasteButton ) {
         ObjectRecord *r = getObject( mCurrentObjectID );
         if( mWalkCopied && r->person ) {
@@ -770,6 +789,27 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                         break;
                         }
                     }
+                }
+            }
+        else if( mAllCopyBufferSprites.size() > 0 ||
+                 mAllCopyBufferSlots.size() > 0 ) {
+            // paste all
+            
+            AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
+
+            for( int i=0; 
+                 i<anim->numSprites && i < mAllCopyBufferSprites.size(); 
+                 i++ ) {
+
+                anim->spriteAnim[i] = 
+                    mAllCopyBufferSprites.getElementDirect( i );
+                }
+            for( int i=0; 
+                 i<anim->numSlots && i < mAllCopyBufferSlots.size(); 
+                 i++ ) {
+
+                anim->slotAnim[i] = 
+                    mAllCopyBufferSlots.getElementDirect( i );
                 }
             }
         else {
