@@ -351,8 +351,6 @@ EditorObjectPage::EditorObjectPage()
 
     mCurrentObject.headIndex = 0;
     
-    mCurrentObject.frontHandIndex = -1;
-    
 
     mPickedObjectLayer = -1;
     mPickedSlot = -1;
@@ -1776,8 +1774,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         ObjectRecord *personObject = getObject( mDemoPersonObject );
 
-        if( mHeldInHandCheckbox.getToggled() && 
-            personObject->frontHandIndex != -1 ) {
+        if( mHeldInHandCheckbox.getToggled() ) {
             
             hideHands = false;
             }

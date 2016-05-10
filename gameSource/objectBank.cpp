@@ -307,11 +307,7 @@ float initObjectBankStep() {
 
                 r->spriteParent = new int[ r->numSprites ];
                 r->spriteInvisibleWhenHolding = new char[ r->numSprites ];
-                    
-                r->frontHandIndex = -1;
-
-                double frontHandX = -9999999;
-                    
+                
 
                 for( int i=0; i< r->numSprites; i++ ) {
                     sscanf( lines[next], "spriteID=%d", 
@@ -367,15 +363,7 @@ float initObjectBankStep() {
                                 
                     r->spriteInvisibleWhenHolding[i] = invisRead;
                                 
-                    next++;
-
-                    if( r->spriteInvisibleWhenHolding[i] ) {
-                        if( r->spritePos[i].x > frontHandX ) {
-                            r->frontHandIndex = i;
-                            frontHandX = r->spritePos[i].x;
-                            }
-                        }
-                        
+                    next++;                        
                     }
 
 
@@ -955,17 +943,6 @@ int addObject( const char *inDescription,
     r->frontFootIndex = inFrontFootIndex;    
 
 
-    r->frontHandIndex = -1;
-    double frontHandX = -9999999;
-
-    for( int i=0; i<inNumSprites; i++ ) {
-        if( r->spriteInvisibleWhenHolding[i] ) {
-            if( r->spritePos[i].x > frontHandX ) {
-                r->frontHandIndex = i;
-                frontHandX = r->spritePos[i].x;
-                }
-            }
-        }
 
 
     // delete old
@@ -1005,7 +982,8 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
     HandPos returnHandPos = { false, {0, 0} };
     
 
-
+    double frontHandPosX = -999999999;
+    
     
     doublePair headPos = inObject->spritePos[ inObject->headIndex ];
 
@@ -1187,8 +1165,15 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
                 }
             
             
-            if( i == inObject->frontHandIndex ) {
+            // compare raw sprite pos x to find front-most drawn hand
+            // in unanimated, unflipped object
+            if( inObject->spriteInvisibleWhenHolding[i] &&
+                inObject->spritePos[i].x > frontHandPosX ) {
+                
+                frontHandPosX = inObject->spritePos[i].x;
+
                 returnHandPos.valid = true;
+                // return screen pos for hand, which may be flipped, etc.
                 returnHandPos.pos = pos;
                 }
             }

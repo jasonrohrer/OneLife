@@ -130,12 +130,6 @@ typedef struct ObjectRecord {
         int backFootIndex;
         int frontFootIndex;
         
-        
-        // these are computed at load time and NOT stored on disk
-        
-        // -1 if no hand present at all
-        int frontHandIndex;
-
     } ObjectRecord;
 
 
