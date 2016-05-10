@@ -1005,10 +1005,6 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
     HandPos returnHandPos = { false, {0, 0} };
     
 
-    // don't count aging layers here
-    // thus we can determine body parts (feet, body, head) for clothing
-    // and aging without letting age-ranged add-on layers interfere
-    int bodyIndex = 0;
 
     
     doublePair headPos = inObject->spritePos[ inObject->headIndex ];
@@ -1019,8 +1015,11 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
 
     doublePair animHeadPos = headPos;
     
-
-    char nonAgingDrawnAboveBody = false;
+    
+    // if drawing a tunic, skip drawing body and ALL
+    // layers above body (except feet) until
+    // a holder (hand) or head has been drawn above the body
+    char holderOrHeadDrawnAboveBody = true;
     
     for( int i=0; i<inObject->numSprites; i++ ) {
         
@@ -1085,7 +1084,18 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
         char skipSprite = false;
         
         
-        
+        if( inObject->spriteInvisibleWhenHolding[i] ) {
+            holderOrHeadDrawnAboveBody = true;
+            
+            if( inHoldingSomething ) {
+                skipSprite = true;
+                }
+            }
+        if( i == inObject->headIndex ) {
+            holderOrHeadDrawnAboveBody = true;
+            }
+
+
         if( !agingLayer 
             && i == inObject->backFootIndex 
             && inClothing.backShoe != NULL ) {
@@ -1119,19 +1129,19 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
             drawObject( inClothing.tunic, cPos, inRot,
                         inFlipH, -1, false, emptyClothing );
             
-            // now skip aging layers drawn above body
-            nonAgingDrawnAboveBody = false;
+            // now skip all non-foot layers drawn above body
+            // until holder or head drawn
+            holderOrHeadDrawnAboveBody = false;
             }
-        else if( inClothing.tunic != NULL && ! nonAgingDrawnAboveBody &&
-                 agingLayer ) {
+        else if( inClothing.tunic != NULL && ! holderOrHeadDrawnAboveBody &&
+                 i != inObject->frontFootIndex  &&
+                 i != inObject->backFootIndex &&
+                 i != inObject->headIndex ) {
             // skip it, it's under tunic
             skipSprite = true;
             }
-        else if( inClothing.tunic != NULL && ! nonAgingDrawnAboveBody &&
-                 !agingLayer ) {
-            nonAgingDrawnAboveBody = true;
-            }
 
+        
         if( !agingLayer && i == inObject->frontFootIndex 
             && inClothing.frontShoe != NULL ) {
 
@@ -1148,9 +1158,6 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
             }
         
 
-        if( inHoldingSomething && inObject->spriteInvisibleWhenHolding[i] ) {
-            skipSprite = true;
-            }
         
         
         if( ! skipSprite ) {
@@ -1184,13 +1191,6 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
                 returnHandPos.valid = true;
                 returnHandPos.pos = pos;
                 }
-            }
-        
-            
-        if( inObject->spriteAgeStart[i] == -1 &&
-            inObject->spriteAgeEnd[i] == -1 ) {
-        
-            bodyIndex++;
             }
         }    
 
