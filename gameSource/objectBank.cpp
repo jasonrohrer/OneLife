@@ -1556,4 +1556,67 @@ double getClosestObjectPart( ObjectRecord *inObject,
 
 
 
+int getBackHandIndex( ObjectRecord *inObject,
+                      double inAge ) {
+    int backHandIndex = -1;
+    double backHandX = 999999;
+
+    for( int i=0; i< inObject->numSprites; i++ ) {
+        if( inObject->spriteInvisibleWhenHolding[i] ) {
+
+            if( inObject->spriteAgeStart[i] != -1 ||
+                inObject->spriteAgeEnd[i] != -1 ) {
+                        
+                if( inAge < inObject->spriteAgeStart[i] ||
+                    inAge >= inObject->spriteAgeEnd[i] ) {
+                
+                    // skip this layer
+                    continue;
+                    }
+                }
+            
+            if( inObject->spritePos[i].x < backHandX ) {
+                backHandIndex = i;
+                backHandX = inObject->spritePos[i].x;
+                }
+            }
+        }
+
+    return backHandIndex;
+    }
+
+
+
+int getFrontHandIndex( ObjectRecord *inObject,
+                      double inAge ) {
+    int frontHandIndex = -1;
+    double frontHandX = -999999;
+
+    for( int i=0; i< inObject->numSprites; i++ ) {
+        if( inObject->spriteInvisibleWhenHolding[i] ) {
+
+            if( inObject->spriteAgeStart[i] != -1 ||
+                inObject->spriteAgeEnd[i] != -1 ) {
+                        
+                if( inAge < inObject->spriteAgeStart[i] ||
+                    inAge >= inObject->spriteAgeEnd[i] ) {
+                
+                    // skip this layer
+                    continue;
+                    }
+                }
+            
+            if( inObject->spritePos[i].x > frontHandX ) {
+                frontHandIndex = i;
+                frontHandX = inObject->spritePos[i].x;
+                }
+            }
+        }
+
+    return frontHandIndex;
+    }
+
+
+
+
 

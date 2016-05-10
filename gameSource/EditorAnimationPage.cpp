@@ -62,6 +62,7 @@ EditorAnimationPage::EditorAnimationPage()
           mClearClothingButton( smallFont, 180, 120, "X Clothes" ),
           mCopyButton( smallFont, -290, 210, "Copy" ),
           mCopyChainButton( smallFont, -290, 250, "Copy Child Chain" ),
+          mCopyWalkButton( smallFont, -160, 250, "Copy Walk" ),
           mPasteButton( smallFont, -230, 210, "Paste" ),
           mClearButton( smallFont, -170, 210, "Clear" ),
           mNextSpriteOrSlotButton( smallFont, 120, -270, "Next Layer" ),
@@ -74,6 +75,8 @@ EditorAnimationPage::EditorAnimationPage()
         }
     
     zeroRecord( &mCopyBuffer );
+
+    mWalkCopied = false;
 
     addComponent( &mObjectEditorButton );
     addComponent( &mSaveButton );
@@ -108,6 +111,7 @@ EditorAnimationPage::EditorAnimationPage()
 
     addComponent( &mCopyButton );
     addComponent( &mCopyChainButton );
+    addComponent( &mCopyWalkButton );
     addComponent( &mPasteButton );
     addComponent( &mClearButton );
     
@@ -130,6 +134,7 @@ EditorAnimationPage::EditorAnimationPage()
 
     mCopyButton.addActionListener( this );
     mCopyChainButton.addActionListener( this );
+    mCopyWalkButton.addActionListener( this );
     mPasteButton.addActionListener( this );
     mClearButton.addActionListener( this );
     
@@ -426,6 +431,7 @@ void EditorAnimationPage::checkNextPrevVisible() {
         mPickClothingButton.setVisible( false );
         
         mCopyChainButton.setVisible( false );
+        mCopyWalkButton.setVisible( false );
         return;
         }
     
@@ -444,7 +450,16 @@ void EditorAnimationPage::checkNextPrevVisible() {
         mCopyChainButton.setVisible( false );
         mChainCopyBuffer.deleteAll();
         }
+
     
+    if( r->person ) {
+        mCopyWalkButton.setVisible( true );
+        }
+    else {
+        mCopyWalkButton.setVisible( false );
+        }
+
+
     if( r->person ) {
         mPickClothingButton.setVisible( true );
         }
@@ -615,8 +630,10 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mCopyButton ) {
         mCopyBuffer = *( getRecordForCurrentSlot() );
         mChainCopyBuffer.deleteAll();
+        mWalkCopied = false;
         }
     else if( inTarget == &mCopyChainButton ) {
+        mWalkCopied = false;
         zeroRecord( &mCopyBuffer );
         
         mChainCopyBuffer.deleteAll();
@@ -651,8 +668,73 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             }
         printf( "%d in copied chain\n", mChainCopyBuffer.size() );
         }
+    else if( inTarget == &mCopyWalkButton ) {
+        ObjectRecord *r = getObject( mCurrentObjectID );
+        if( r->person ) {
+            AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
+            
+            if( r->headIndex != -1 ) {
+                mCopiedHeadAnim = anim->spriteAnim[ r->headIndex ];
+                }
+            if( r->bodyIndex != -1 ) {
+                mCopiedBodyAnim = anim->spriteAnim[ r->bodyIndex ];
+                }
+            if( r->frontFootIndex != -1 ) {
+                mCopiedFrontFootAnim = anim->spriteAnim[ r->frontFootIndex ];
+                }
+            if( r->backFootIndex != -1 ) {
+                mCopiedBackFootAnim = anim->spriteAnim[ r->backFootIndex ];
+                }
+            
+            double age = mPersonAgeSlider.getValue();
+            
+            int frontHandIndex = getFrontHandIndex( r, age );
+            int backHandIndex = getBackHandIndex( r, age );
+            
+            if( frontHandIndex != -1 ) {
+                mCopiedFrontHandAnim = anim->spriteAnim[ frontHandIndex ];
+                }
+
+            if( backHandIndex != -1 ) {
+                mCopiedBackHandAnim = anim->spriteAnim[ backHandIndex ];
+                }
+            
+
+            mWalkCopied = true;
+            }
+        }
     else if( inTarget == &mPasteButton ) {
-        if( mChainCopyBuffer.size() > 0 ) {
+        ObjectRecord *r = getObject( mCurrentObjectID );
+        if( mWalkCopied && r->person ) {
+            AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
+            
+            if( r->headIndex != -1 ) {
+                anim->spriteAnim[ r->headIndex ] = mCopiedHeadAnim;
+                }
+            if( r->bodyIndex != -1 ) {
+                anim->spriteAnim[ r->bodyIndex ] = mCopiedBodyAnim;
+                }
+            if( r->frontFootIndex != -1 ) {
+                anim->spriteAnim[ r->frontFootIndex ] = mCopiedFrontFootAnim;
+                }
+            if( r->backFootIndex != -1 ) {
+                anim->spriteAnim[ r->backFootIndex ] = mCopiedBackFootAnim;
+                }
+            
+            double age = mPersonAgeSlider.getValue();
+            
+            int frontHandIndex = getFrontHandIndex( r, age );
+            int backHandIndex = getBackHandIndex( r, age );
+            
+            if( frontHandIndex != -1 ) {
+                anim->spriteAnim[ frontHandIndex ] = mCopiedFrontHandAnim;
+                }
+
+            if( backHandIndex != -1 ) {
+                anim->spriteAnim[ backHandIndex ] = mCopiedBackHandAnim;
+                }
+            }
+        else if( mChainCopyBuffer.size() > 0 ) {
             // chain copy paste
             
             SpriteAnimationRecord *parentRecord = getRecordForCurrentSlot();

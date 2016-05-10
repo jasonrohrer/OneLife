@@ -30,6 +30,12 @@
 #define NUM_ANIM_SLIDERS 13
 
 
+
+typedef struct WalkAnimationRecord {
+    } WalkAnimationRecord;
+
+
+
 class EditorAnimationPage : public GamePage, public ActionListener {
         
     public:
@@ -142,9 +148,22 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
         SimpleVector<SpriteAnimationRecord> mChainCopyBuffer;
         
+
+        char mWalkCopied;
+        SpriteAnimationRecord mCopiedHeadAnim;
+        SpriteAnimationRecord mCopiedBodyAnim;
+        
+        SpriteAnimationRecord mCopiedBackFootAnim;
+        SpriteAnimationRecord mCopiedFrontFootAnim;
+        
+        SpriteAnimationRecord mCopiedBackHandAnim;
+        SpriteAnimationRecord mCopiedFrontHandAnim;
+
+
         TextButton mCopyButton;
         TextButton mCopyChainButton;
-        
+        TextButton mCopyWalkButton;
+
         TextButton mPasteButton;
         TextButton mClearButton;
         

@@ -304,4 +304,11 @@ double getClosestObjectPart( ObjectRecord *inObject,
                              int *outSlot );
 
 
+int getBackHandIndex( ObjectRecord *inObject,
+                      double inAge );
+
+int getFrontHandIndex( ObjectRecord *inObject,
+                       double inAge );
+
+
 #endif
