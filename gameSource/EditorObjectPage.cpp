@@ -757,7 +757,18 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             oldNumSprites = oldObject->numSprites;
             oldNumSlots = oldObject->numSlots;
             }
-                
+        
+        
+        char layersSwapped = false;
+        
+
+        if( mObjectLayerSwaps.size() > 0 ) {
+            performLayerSwaps( mCurrentObject.id, &mObjectLayerSwaps,
+                               mCurrentObject.numSprites );
+            
+            layersSwapped = true;
+            }
+        
 
         addObject( text,
                    mCheckboxes[0]->getToggled(),
@@ -803,7 +814,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         
         if( mCurrentObject.numSprites != oldNumSprites ||
-            mCurrentObject.numSlots != oldNumSlots ) {
+            mCurrentObject.numSlots != oldNumSlots ||
+            layersSwapped ) {
                     
             animPage->objectLayersChanged( mCurrentObject.id );
             }    
@@ -1411,7 +1423,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] mCurrentObject.spriteAgeEnd;
             delete [] mCurrentObject.spriteParent;
             delete [] mCurrentObject.spriteInvisibleWhenHolding;
-
+            
+            mObjectLayerSwaps.deleteAll();
 
             mCurrentObject.id = objectID;
                 
@@ -2619,6 +2632,18 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
             
         int *newSprites = new int[ newNumSprites ];
         
+
+        if( newNumSprites != mPickedObjectLayer ) {
+            
+            for( int i=mPickedObjectLayer; i<=newNumSprites; i++ ) {
+                
+                LayerSwapRecord swap = { i,
+                                         i + 1 };
+                mObjectLayerSwaps.push_back( swap );
+                }
+            }
+            
+
         memcpy( newSprites, mCurrentObject.sprites, 
                 mPickedObjectLayer * sizeof( int ) );
         
@@ -2930,7 +2955,11 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                         // two indices being swapped
                         int indexA = mPickedObjectLayer;
                         int indexB = mPickedObjectLayer + layerOffset;
-                    
+                        
+                        LayerSwapRecord swap = { indexA, indexB };
+                        
+                        mObjectLayerSwaps.push_back( swap );
+                        
 
                         int tempSprite = 
                             mCurrentObject.sprites[mPickedObjectLayer + 
@@ -3085,6 +3114,12 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                         // two indices being swapped
                         int indexA = mPickedObjectLayer;
                         int indexB = mPickedObjectLayer - layerOffset;
+
+
+                        LayerSwapRecord swap = { indexA, indexB };
+                        
+                        mObjectLayerSwaps.push_back( swap );
+
 
                         int tempSprite = 
                             mCurrentObject.sprites[mPickedObjectLayer - 

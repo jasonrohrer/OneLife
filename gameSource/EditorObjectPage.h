@@ -22,6 +22,7 @@
 
 
 #include "objectBank.h"
+#include "animationBank.h"
 
 #include "keyLegend.h"
 
@@ -155,6 +156,10 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         ObjectRecord mCurrentObject;
         
+
+        SimpleVector<LayerSwapRecord> mObjectLayerSwaps;
+        
+
         char mDemoSlots;
         int mSlotsDemoObject;
 

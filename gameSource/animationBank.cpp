@@ -420,6 +420,8 @@ void clearAnimation( int inObjectID, AnimType inType ) {
 
     File *animationFile = getFile( inObjectID, inType );
     animationFile->remove();
+    
+    delete animationFile;
     }
 
 
@@ -1344,6 +1346,87 @@ void zeroRecord( SpriteAnimationRecord *inRecord ) {
     
     inRecord->rotationCenterOffset.x = 0;
     inRecord->rotationCenterOffset.y = 0;
+    }
+
+
+
+
+void performLayerSwaps( int inObjectID, 
+                        SimpleVector<LayerSwapRecord> *inSwapList,
+                        int inNewNumSprites ) {
+
+    int maxSwapIndex = inNewNumSprites;
+    for( int i=0; i<inSwapList->size(); i++ ) {
+        LayerSwapRecord *r = inSwapList->getElement(i);
+        
+        if( r->indexA > maxSwapIndex  ) {
+            maxSwapIndex = r->indexA;
+            }
+        if( r->indexB > maxSwapIndex  ) {
+            maxSwapIndex = r->indexB;
+            }
+        }
+    
+        
+
+    for( int i=0; i<endAnimType; i++ ) {
+        AnimationRecord *oldAnim = getAnimation( inObjectID, (AnimType)i );
+        
+        if( oldAnim == NULL ) {
+            continue;
+            }
+        
+        AnimationRecord *r = copyRecord( oldAnim );
+        
+        
+
+        int numTempSprites = maxSwapIndex + 1;
+        
+        SpriteAnimationRecord *tempSpriteAnim = 
+            new SpriteAnimationRecord[ numTempSprites ];
+        
+
+        for( int j=0; j<numTempSprites; j++ ) {
+            zeroRecord( &tempSpriteAnim[j] );
+            }
+        
+        // populate with old anim records (any extra are zeroed above)
+        for( int j=0; j<r->numSprites && j<numTempSprites; j++ ) {
+            tempSpriteAnim[j] = r->spriteAnim[j];
+            }
+        
+        // now apply swaps
+        for( int j=0; j<inSwapList->size(); j++ ) {
+            LayerSwapRecord *swap = inSwapList->getElement(j);
+
+            SpriteAnimationRecord temp = tempSpriteAnim[ swap->indexA ];
+            
+            tempSpriteAnim[ swap->indexA ] = tempSpriteAnim[ swap->indexB ];
+            
+            tempSpriteAnim[ swap->indexB ] = temp;
+            }
+        
+
+        delete [] r->spriteAnim;
+        
+        r->numSprites = inNewNumSprites;
+        
+        r->spriteAnim = new SpriteAnimationRecord[ r->numSprites ];
+        
+        for( int j=0; j<r->numSprites; j++ ) {
+            r->spriteAnim[j] = tempSpriteAnim[j];
+            }
+        
+        delete [] tempSpriteAnim;
+
+        addAnimation( r );
+        
+        delete [] r->spriteAnim;
+        delete [] r->slotAnim;
+        delete r;
+        }
+    
+
     }
 
         

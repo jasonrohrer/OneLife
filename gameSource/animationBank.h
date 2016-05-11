@@ -4,6 +4,8 @@
 
 #include "minorGems/game/doublePair.h"
 
+#include "minorGems/util/SimpleVector.h"
+
 #include "objectBank.h"
 
 
@@ -61,6 +63,14 @@ typedef struct AnimationRecord {
         SpriteAnimationRecord *slotAnim;
         
     } AnimationRecord;
+
+
+
+
+typedef struct LayerSwapRecord {
+        int indexA;
+        int indexB;
+    } LayerSwapRecord;
 
 
 
@@ -155,5 +165,10 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs );
 
+
+
+void performLayerSwaps( int inObjectID, 
+                        SimpleVector<LayerSwapRecord> *inSwapList,
+                        int inNewNumSprites );
 
 #endif
