@@ -1201,8 +1201,7 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
             }
 
 
-        if( !agingLayer 
-            && i == backFootIndex 
+        if( i == backFootIndex 
             && inClothing.backShoe != NULL ) {
             
             skipSprite = true;
@@ -1217,9 +1216,8 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
                         inFlipH, -1, false, emptyClothing );
             }
         
-        if( !agingLayer 
-                 && i == bodyIndex 
-                 && inClothing.tunic != NULL ) {
+        if( i == bodyIndex 
+            && inClothing.tunic != NULL ) {
             skipSprite = true;
 
 
@@ -1247,7 +1245,7 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
             }
 
         
-        if( !agingLayer && i == frontFootIndex 
+        if( i == frontFootIndex 
             && inClothing.frontShoe != NULL ) {
 
             skipSprite = true;
