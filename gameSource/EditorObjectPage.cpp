@@ -342,15 +342,11 @@ EditorObjectPage::EditorObjectPage()
 
     mCurrentObject.spriteInvisibleWhenHolding = new char[ 0 ];
 
-
-    mCurrentObject.headIndex = 0;
-    mCurrentObject.bodyIndex = 0;
-    mCurrentObject.backFootIndex = 0;
-    mCurrentObject.frontFootIndex = 0;
-    
-
-    mCurrentObject.headIndex = 0;
-    
+    mCurrentObject.spriteIsHead = new char[ 0 ];
+    mCurrentObject.spriteIsBody = new char[ 0 ];
+    mCurrentObject.spriteIsBackFoot = new char[ 0 ];
+    mCurrentObject.spriteIsFrontFoot = new char[ 0 ];
+        
 
     mPickedObjectLayer = -1;
     mPickedSlot = -1;
@@ -465,6 +461,11 @@ EditorObjectPage::~EditorObjectPage() {
 
     delete [] mCurrentObject.spriteInvisibleWhenHolding;
 
+    delete [] mCurrentObject.spriteIsHead;
+    delete [] mCurrentObject.spriteIsBody;
+    delete [] mCurrentObject.spriteIsBackFoot;
+    delete [] mCurrentObject.spriteIsFrontFoot;
+
 
     freeSprite( mSlotPlaceholderSprite );
     
@@ -540,13 +541,13 @@ void EditorObjectPage::updateAgingPanel() {
         for( int i=0; i<mCurrentObject.numSprites; i++ ) {
             mCurrentObject.spriteAgeStart[i] = -1;
             mCurrentObject.spriteAgeEnd[i] = -1;
+        
+            mCurrentObject.spriteIsHead[i] = false;
+            mCurrentObject.spriteIsBody[i] = false;
+            mCurrentObject.spriteIsBackFoot[i] = false;
+            mCurrentObject.spriteIsFrontFoot[i] = false;
             }
         
-        mCurrentObject.headIndex = 0;
-        mCurrentObject.bodyIndex = 0;
-        mCurrentObject.backFootIndex = 0;
-        mCurrentObject.frontFootIndex = 0;
-
 
         mMaleCheckbox.setToggled( false );
         mMaleCheckbox.setVisible( false );
@@ -597,34 +598,17 @@ void EditorObjectPage::updateAgingPanel() {
                 mCurrentObject.spriteInvisibleWhenHolding[
                     mPickedObjectLayer] );
 
-            if( mCurrentObject.headIndex == mPickedObjectLayer ) {
-                mHeadLayerCheckbox.setToggled( true );
-                }
-            else {
-                mHeadLayerCheckbox.setToggled( false );
-                }
+            mHeadLayerCheckbox.setToggled( 
+                mCurrentObject.spriteIsHead[ mPickedObjectLayer ] );
 
-            if( mCurrentObject.bodyIndex == mPickedObjectLayer ) {
-                mBodyLayerCheckbox.setToggled( true );
-                }
-            else {
-                mBodyLayerCheckbox.setToggled( false );
-                }
+            mBodyLayerCheckbox.setToggled( 
+                mCurrentObject.spriteIsBody[ mPickedObjectLayer ] );
 
-            if( mCurrentObject.backFootIndex == mPickedObjectLayer ) {
-                mBackFootLayerCheckbox.setToggled( true );
-                }
-            else {
-                mBackFootLayerCheckbox.setToggled( false );
-                }
+            mBackFootLayerCheckbox.setToggled( 
+                mCurrentObject.spriteIsBackFoot[ mPickedObjectLayer ] );
 
-            if( mCurrentObject.frontFootIndex == mPickedObjectLayer ) {
-                mFrontFootLayerCheckbox.setToggled( true );
-                }
-            else {
-                mFrontFootLayerCheckbox.setToggled( false );
-                }
-            
+            mFrontFootLayerCheckbox.setToggled( 
+                mCurrentObject.spriteIsFrontFoot[ mPickedObjectLayer ] );
             }
         else {
             mAgingLayerCheckbox.setVisible( false );
@@ -732,10 +716,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteAgeEnd,
                    mCurrentObject.spriteParent,
                    mCurrentObject.spriteInvisibleWhenHolding,
-                   mCurrentObject.headIndex,
-                   mCurrentObject.bodyIndex,
-                   mCurrentObject.backFootIndex,
-                   mCurrentObject.frontFootIndex );
+                   mCurrentObject.spriteIsHead,
+                   mCurrentObject.spriteIsBody,
+                   mCurrentObject.spriteIsBackFoot,
+                   mCurrentObject.spriteIsFrontFoot );
         
         delete [] text;
         
@@ -800,10 +784,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteAgeEnd,
                    mCurrentObject.spriteParent,
                    mCurrentObject.spriteInvisibleWhenHolding,
-                   mCurrentObject.headIndex,
-                   mCurrentObject.bodyIndex,
-                   mCurrentObject.backFootIndex,
-                   mCurrentObject.frontFootIndex,
+                   mCurrentObject.spriteIsHead,
+                   mCurrentObject.spriteIsBody,
+                   mCurrentObject.spriteIsBackFoot,
+                   mCurrentObject.spriteIsFrontFoot,
                    mCurrentObject.id );
         
         delete [] text;
@@ -896,10 +880,17 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mCurrentObject.spriteInvisibleWhenHolding = new char[ 0 ];
 
 
-        mCurrentObject.headIndex = 0;
-        mCurrentObject.bodyIndex = 0;
-        mCurrentObject.backFootIndex = 0;
-        mCurrentObject.frontFootIndex = 0;
+        delete [] mCurrentObject.spriteIsHead;
+        mCurrentObject.spriteIsHead = new char[ 0 ];
+
+        delete [] mCurrentObject.spriteIsBody;
+        mCurrentObject.spriteIsBody = new char[ 0 ];
+
+        delete [] mCurrentObject.spriteIsBackFoot;
+        mCurrentObject.spriteIsBackFoot = new char[ 0 ];
+
+        delete [] mCurrentObject.spriteIsFrontFoot;
+        mCurrentObject.spriteIsFrontFoot = new char[ 0 ];
 
         
 
@@ -1147,36 +1138,20 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             = mInvisibleWhenHoldingCheckbox.getToggled();
         }
     else if( inTarget == &mHeadLayerCheckbox ) {
-        if( mHeadLayerCheckbox.getToggled() ) {
-            mCurrentObject.headIndex = mPickedObjectLayer;
-            }
-        else {
-            mCurrentObject.headIndex = 0;
-            }
+        mCurrentObject.spriteIsHead[ mPickedObjectLayer ] =
+            mHeadLayerCheckbox.getToggled();
         }
     else if( inTarget == &mBodyLayerCheckbox ) {
-        if( mBodyLayerCheckbox.getToggled() ) {
-            mCurrentObject.bodyIndex = mPickedObjectLayer;
-            }
-        else {
-            mCurrentObject.bodyIndex = 0;
-            }
+        mCurrentObject.spriteIsBody[ mPickedObjectLayer ] =
+            mBodyLayerCheckbox.getToggled();
         }
     else if( inTarget == &mBackFootLayerCheckbox ) {
-        if( mBackFootLayerCheckbox.getToggled() ) {
-            mCurrentObject.backFootIndex = mPickedObjectLayer;
-            }
-        else {
-            mCurrentObject.backFootIndex = 0;
-            }
+        mCurrentObject.spriteIsBackFoot[ mPickedObjectLayer ] =
+            mBackFootLayerCheckbox.getToggled();
         }
     else if( inTarget == &mFrontFootLayerCheckbox ) {
-        if( mFrontFootLayerCheckbox.getToggled() ) {
-            mCurrentObject.frontFootIndex = mPickedObjectLayer;
-            }
-        else {
-            mCurrentObject.frontFootIndex = 0;
-            }
+        mCurrentObject.spriteIsFrontFoot[ mPickedObjectLayer ] =
+            mFrontFootLayerCheckbox.getToggled();
         }
     else if( inTarget == &mAgePunchInButton ) {
         mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] =
@@ -1321,7 +1296,28 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             memcpy( newSpriteInvisibleWhenHolding, 
                     mCurrentObject.spriteInvisibleWhenHolding, 
                     mCurrentObject.numSprites * sizeof( char ) );
-        
+
+
+            char *newSpriteIsHead = new char[ newNumSprites ];
+            memcpy( newSpriteIsHead, 
+                    mCurrentObject.spriteIsHead, 
+                    mCurrentObject.numSprites * sizeof( char ) );
+
+            char *newSpriteIsBody = new char[ newNumSprites ];
+            memcpy( newSpriteIsBody, 
+                    mCurrentObject.spriteIsBody, 
+                    mCurrentObject.numSprites * sizeof( char ) );
+
+            char *newSpriteIsBackFoot = new char[ newNumSprites ];
+            memcpy( newSpriteIsBackFoot, 
+                    mCurrentObject.spriteIsBackFoot, 
+                    mCurrentObject.numSprites * sizeof( char ) );
+
+            char *newSpriteIsFrontFoot = new char[ newNumSprites ];
+            memcpy( newSpriteIsFrontFoot, 
+                    mCurrentObject.spriteIsFrontFoot, 
+                    mCurrentObject.numSprites * sizeof( char ) );
+
 
             newSprites[ mCurrentObject.numSprites ] = spriteID;
             
@@ -1343,6 +1339,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             newSpriteParent[ mCurrentObject.numSprites ] = -1;
 
             newSpriteInvisibleWhenHolding[ mCurrentObject.numSprites ] = 0;
+            
+            newSpriteIsHead[ mCurrentObject.numSprites ] = false;
+            newSpriteIsBody[ mCurrentObject.numSprites ] = false;
+            newSpriteIsBackFoot[ mCurrentObject.numSprites ] = false;
+            newSpriteIsFrontFoot[ mCurrentObject.numSprites ] = false;
 
             delete [] mCurrentObject.sprites;
             delete [] mCurrentObject.spritePos;
@@ -1355,6 +1356,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] mCurrentObject.spriteParent;
             
             delete [] mCurrentObject.spriteInvisibleWhenHolding;
+
+            delete [] mCurrentObject.spriteIsHead;
+            delete [] mCurrentObject.spriteIsBody;
+            delete [] mCurrentObject.spriteIsBackFoot;
+            delete [] mCurrentObject.spriteIsFrontFoot;
                         
 
             mCurrentObject.sprites = newSprites;
@@ -1369,6 +1375,13 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mCurrentObject.spriteInvisibleWhenHolding = 
                 newSpriteInvisibleWhenHolding;
+
+
+            mCurrentObject.spriteIsHead = newSpriteIsHead;
+            mCurrentObject.spriteIsBody = newSpriteIsBody;
+            mCurrentObject.spriteIsBackFoot = newSpriteIsBackFoot;
+            mCurrentObject.spriteIsFrontFoot = newSpriteIsFrontFoot;
+
 
             mCurrentObject.numSprites = newNumSprites;
             
@@ -1423,6 +1436,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] mCurrentObject.spriteAgeEnd;
             delete [] mCurrentObject.spriteParent;
             delete [] mCurrentObject.spriteInvisibleWhenHolding;
+
+            delete [] mCurrentObject.spriteIsHead;
+            delete [] mCurrentObject.spriteIsBody;
+            delete [] mCurrentObject.spriteIsBackFoot;
+            delete [] mCurrentObject.spriteIsFrontFoot;
+
             
             mObjectLayerSwaps.deleteAll();
 
@@ -1483,6 +1502,20 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 new char[ pickedRecord->numSprites ];
 
 
+            mCurrentObject.spriteIsHead = 
+                new char[ pickedRecord->numSprites ];
+
+            mCurrentObject.spriteIsBody = 
+                new char[ pickedRecord->numSprites ];
+
+            mCurrentObject.spriteIsBackFoot = 
+                new char[ pickedRecord->numSprites ];
+
+            mCurrentObject.spriteIsFrontFoot = 
+                new char[ pickedRecord->numSprites ];
+
+
+
             memcpy( mCurrentObject.sprites, pickedRecord->sprites,
                     sizeof( int ) * pickedRecord->numSprites );
                 
@@ -1512,12 +1545,21 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                     pickedRecord->spriteInvisibleWhenHolding,
                     sizeof( char ) * pickedRecord->numSprites );
             
+            memcpy( mCurrentObject.spriteIsHead, 
+                    pickedRecord->spriteIsHead,
+                    sizeof( char ) * pickedRecord->numSprites );
+            memcpy( mCurrentObject.spriteIsBody, 
+                    pickedRecord->spriteIsBody,
+                    sizeof( char ) * pickedRecord->numSprites );
+            memcpy( mCurrentObject.spriteIsBackFoot, 
+                    pickedRecord->spriteIsBackFoot,
+                    sizeof( char ) * pickedRecord->numSprites );
+            memcpy( mCurrentObject.spriteIsFrontFoot, 
+                    pickedRecord->spriteIsFrontFoot,
+                    sizeof( char ) * pickedRecord->numSprites );
+            
 
-            mCurrentObject.headIndex = pickedRecord->headIndex;
-            mCurrentObject.bodyIndex = pickedRecord->bodyIndex;
-            mCurrentObject.backFootIndex = pickedRecord->backFootIndex;
-            mCurrentObject.frontFootIndex = pickedRecord->frontFootIndex;
-
+            
             
             mSaveObjectButton.setVisible( true );
             mReplaceObjectButton.setVisible( true );
@@ -1916,28 +1958,36 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     doublePair pos = { 0, 0 };
     
 
-    int bodyIndex = 0;
-    
     doublePair headPos = {0,0};
-
-    if( mCurrentObject.headIndex < mCurrentObject.numSprites ) {
-        headPos = mCurrentObject.spritePos[ mCurrentObject.headIndex ];
-        }
-
+    int headIndex = 0;
 
     doublePair frontFootPos = {0,0};
-
-    if( mCurrentObject.frontFootIndex < mCurrentObject.numSprites ) {
-        frontFootPos = 
-            mCurrentObject.spritePos[ mCurrentObject.frontFootIndex ];
-        }
-
+    int frontFootIndex = 0;
 
     doublePair bodyPos = {0,0};
+    int bodyIndex = 0;
 
-    if( mCurrentObject.bodyIndex < mCurrentObject.numSprites ) {
-        bodyPos = mCurrentObject.spritePos[ mCurrentObject.bodyIndex ];
+    if( !skipDrawing &&
+        mPersonAgeSlider.isVisible() &&
+        mCheckboxes[2]->getToggled() ) {
+        
+        double age = mPersonAgeSlider.getValue();
+
+        headIndex = getHeadIndex( &mCurrentObject, age );
+
+        headPos = mCurrentObject.spritePos[ headIndex ];
+
+        
+        frontFootIndex = getFrontFootIndex( &mCurrentObject, age );
+
+        frontFootPos = mCurrentObject.spritePos[ frontFootIndex ];
+
+
+        bodyIndex = getBodyIndex( &mCurrentObject, age );
+
+        bodyPos = mCurrentObject.spritePos[ bodyIndex ];
         }
+    
 
     if( !skipDrawing )
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
@@ -1993,17 +2043,18 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                         }
                     }
                 }
-            if( i == mCurrentObject.headIndex ||
+
+            if( i == headIndex ||
                 checkSpriteAncestor( &mCurrentObject, i,
-                                     mCurrentObject.headIndex ) ) {
+                                     headIndex ) ) {
             
                 spritePos = add( spritePos, getAgeHeadOffset( age, headPos,
                                                               bodyPos,
                                                               frontFootPos ) );
                 }
-            if( i == mCurrentObject.bodyIndex ||
+            if( i == bodyIndex ||
                 checkSpriteAncestor( &mCurrentObject, i,
-                                     mCurrentObject.bodyIndex ) ) {
+                                     bodyIndex ) ) {
             
                 spritePos = add( spritePos, getAgeBodyOffset( age, bodyPos ) );
                 }
@@ -2030,12 +2081,6 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             if( mHoverObjectLayer == i && mHoverStrength > 0 ) {
                 toggleAdditiveTextureColoring( false );
                 }
-            }
-
-        if( mCurrentObject.spriteAgeStart[i] == -1 &&
-            mCurrentObject.spriteAgeEnd[i] == -1 ) {
-            
-            bodyIndex++;
             }
         }
 
@@ -2253,6 +2298,11 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     int *newSpriteParent = new int[ newNumSprites ];
     char *newSpriteInvisibleWhenHolding = new char[ newNumSprites ];
 
+    char *newSpriteIsHead = new char[ newNumSprites ];
+    char *newSpriteIsBody = new char[ newNumSprites ];
+    char *newSpriteIsBackFoot = new char[ newNumSprites ];
+    char *newSpriteIsFrontFoot = new char[ newNumSprites ];
+
     int j = 0;
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
         
@@ -2268,6 +2318,10 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
             newSpriteParent[j] = mCurrentObject.spriteParent[i];
             newSpriteInvisibleWhenHolding[j] = 
                 mCurrentObject.spriteInvisibleWhenHolding[i];
+            newSpriteIsHead[j] = mCurrentObject.spriteIsHead[i];
+            newSpriteIsBody[j] = mCurrentObject.spriteIsBody[i];
+            newSpriteIsBackFoot[j] = mCurrentObject.spriteIsBackFoot[i];
+            newSpriteIsFrontFoot[j] = mCurrentObject.spriteIsFrontFoot[i];
             j++;
             }
         }
@@ -2282,6 +2336,11 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     delete [] mCurrentObject.spriteAgeEnd;
     delete [] mCurrentObject.spriteParent;
     delete [] mCurrentObject.spriteInvisibleWhenHolding;
+
+    delete [] mCurrentObject.spriteIsHead;
+    delete [] mCurrentObject.spriteIsBody;
+    delete [] mCurrentObject.spriteIsBackFoot;
+    delete [] mCurrentObject.spriteIsFrontFoot;
             
     mCurrentObject.sprites = newSprites;
     mCurrentObject.spritePos = newSpritePos;
@@ -2292,6 +2351,11 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     mCurrentObject.spriteAgeEnd = newSpriteAgeEnd;
     mCurrentObject.spriteParent = newSpriteParent;
     mCurrentObject.spriteInvisibleWhenHolding = newSpriteInvisibleWhenHolding;
+
+    mCurrentObject.spriteIsHead = newSpriteIsHead;
+    mCurrentObject.spriteIsBody = newSpriteIsBody;
+    mCurrentObject.spriteIsBackFoot = newSpriteIsBackFoot;
+    mCurrentObject.spriteIsFrontFoot = newSpriteIsFrontFoot;
     
     mCurrentObject.numSprites = newNumSprites;
     }
@@ -2600,6 +2664,27 @@ void EditorObjectPage::pointerUp( float inX, float inY ) {
 
 
 
+
+// makes a new array with element missing
+// does not delete old array
+static char *deleteFromCharArray( char *inArray, char inOldLength,
+                                  char inIndexToRemove ) {
+    
+    int newLength = inOldLength - 1;
+
+    char *newArray = new char[ newLength ];
+        
+    memcpy( newArray, inArray, inIndexToRemove * sizeof( char ) );
+    
+    memcpy( &( newArray[inIndexToRemove] ), 
+            &( inArray[inIndexToRemove + 1] ), 
+            (newLength - inIndexToRemove ) * sizeof( char ) );
+    
+    return newArray;
+    }
+
+
+
 void EditorObjectPage::keyDown( unsigned char inASCII ) {
     
     if( TextField::isAnyFocused() ) {
@@ -2723,18 +2808,30 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
 
 
 
-        char *newSpriteInvisibleWhenHolding = new char[ newNumSprites ];
+        char *newSpriteInvisibleWhenHolding = 
+            deleteFromCharArray( mCurrentObject.spriteInvisibleWhenHolding, 
+                                 mCurrentObject.numSprites,
+                                 mPickedObjectLayer );
         
-        memcpy( newSpriteInvisibleWhenHolding, 
-                mCurrentObject.spriteInvisibleWhenHolding, 
-                mPickedObjectLayer * sizeof( char ) );
-        
-        memcpy( &( newSpriteInvisibleWhenHolding[mPickedObjectLayer] ), 
-                &( mCurrentObject.
-                     spriteInvisibleWhenHolding[mPickedObjectLayer+1] ), 
-                (newNumSprites - mPickedObjectLayer ) * sizeof( char ) );
+        char *newSpriteIsHead = 
+            deleteFromCharArray( mCurrentObject.spriteIsHead, 
+                                 mCurrentObject.numSprites,
+                                 mPickedObjectLayer );
 
+        char *newSpriteIsBody = 
+            deleteFromCharArray( mCurrentObject.spriteIsBody, 
+                                 mCurrentObject.numSprites,
+                                 mPickedObjectLayer );
 
+        char *newSpriteIsBackFoot = 
+            deleteFromCharArray( mCurrentObject.spriteIsBackFoot, 
+                                 mCurrentObject.numSprites,
+                                 mPickedObjectLayer );
+
+        char *newSpriteIsFrontFoot = 
+            deleteFromCharArray( mCurrentObject.spriteIsFrontFoot, 
+                                 mCurrentObject.numSprites,
+                                 mPickedObjectLayer );
 
 
         delete [] mCurrentObject.sprites;
@@ -2746,6 +2843,10 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         delete [] mCurrentObject.spriteAgeEnd;
         delete [] mCurrentObject.spriteParent;
         delete [] mCurrentObject.spriteInvisibleWhenHolding;
+        delete [] mCurrentObject.spriteIsHead;
+        delete [] mCurrentObject.spriteIsBody;
+        delete [] mCurrentObject.spriteIsBackFoot;
+        delete [] mCurrentObject.spriteIsFrontFoot;
             
         mCurrentObject.sprites = newSprites;
         mCurrentObject.spritePos = newSpritePos;
@@ -2758,6 +2859,11 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         mCurrentObject.spriteInvisibleWhenHolding = 
             newSpriteInvisibleWhenHolding;
         
+        mCurrentObject.spriteIsHead = newSpriteIsHead;
+        mCurrentObject.spriteIsBody = newSpriteIsBody;
+        mCurrentObject.spriteIsBackFoot = newSpriteIsBackFoot;
+        mCurrentObject.spriteIsFrontFoot = newSpriteIsFrontFoot;
+
         mCurrentObject.numSprites = newNumSprites;
         
 
@@ -2993,6 +3099,23 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 mPickedObjectLayer + 
                                 layerOffset];
 
+                        char tempIsHead = 
+                            mCurrentObject.spriteIsHead[
+                                mPickedObjectLayer + 
+                                layerOffset];
+                        char tempIsBody = 
+                            mCurrentObject.spriteIsBody[
+                                mPickedObjectLayer + 
+                                layerOffset];
+                        char tempIsBackFoot = 
+                            mCurrentObject.spriteIsBackFoot[
+                                mPickedObjectLayer + 
+                                layerOffset];
+                        char tempIsFrontFoot = 
+                            mCurrentObject.spriteIsFrontFoot[
+                                mPickedObjectLayer + 
+                                layerOffset];
+
                         mCurrentObject.sprites[mPickedObjectLayer + 
                                                layerOffset]
                             = mCurrentObject.sprites[mPickedObjectLayer];
@@ -3056,6 +3179,33 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 mPickedObjectLayer];
                         mCurrentObject.spriteInvisibleWhenHolding[
                             mPickedObjectLayer] = tempInvisibleWhenHolding;
+
+
+                        mCurrentObject.spriteIsHead[ mPickedObjectLayer 
+                                                 + layerOffset ] =
+                            mCurrentObject.spriteIsHead[mPickedObjectLayer];
+                        mCurrentObject.spriteIsHead[mPickedObjectLayer] = 
+                            tempIsHead;
+                
+                        mCurrentObject.spriteIsBody[ mPickedObjectLayer 
+                                                 + layerOffset ] =
+                            mCurrentObject.spriteIsBody[mPickedObjectLayer];
+                        mCurrentObject.spriteIsBody[mPickedObjectLayer] = 
+                            tempIsBody;
+                
+                        mCurrentObject.spriteIsBackFoot[ mPickedObjectLayer 
+                                                 + layerOffset ] =
+                            mCurrentObject.spriteIsBackFoot[
+                                mPickedObjectLayer];
+                        mCurrentObject.spriteIsBackFoot[mPickedObjectLayer] = 
+                            tempIsBackFoot;
+                
+                        mCurrentObject.spriteIsFrontFoot[ mPickedObjectLayer 
+                                                 + layerOffset ] =
+                            mCurrentObject.spriteIsFrontFoot[
+                                mPickedObjectLayer];
+                        mCurrentObject.spriteIsFrontFoot[mPickedObjectLayer] = 
+                            tempIsFrontFoot;
                 
                     
                         mPickedObjectLayer += layerOffset;
@@ -3072,31 +3222,6 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 mCurrentObject.spriteParent[i] = indexA;
                                 }
                             }
-
-                        if( mCurrentObject.headIndex == indexA ) {
-                            mCurrentObject.headIndex = indexB;
-                            }
-                        else if( mCurrentObject.headIndex == indexB ) {
-                            mCurrentObject.headIndex = indexA;
-                            }
-                        if( mCurrentObject.bodyIndex == indexA ) {
-                            mCurrentObject.bodyIndex = indexB;
-                            }
-                        else if( mCurrentObject.bodyIndex == indexB ) {
-                            mCurrentObject.bodyIndex = indexA;
-                            }
-                        if( mCurrentObject.backFootIndex == indexA ) {
-                            mCurrentObject.backFootIndex = indexB;
-                            }
-                        else if( mCurrentObject.backFootIndex == indexB ) {
-                            mCurrentObject.backFootIndex = indexA;
-                            }
-                        if( mCurrentObject.frontFootIndex == indexA ) {
-                            mCurrentObject.frontFootIndex = indexB;
-                            }
-                        else if( mCurrentObject.frontFootIndex == indexB ) {
-                            mCurrentObject.frontFootIndex = indexA;
-                            }                    
                         }
                     }
                 break;
@@ -3154,6 +3279,25 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                             mCurrentObject.spriteInvisibleWhenHolding[
                                 mPickedObjectLayer - 
                                 layerOffset];
+
+
+                        char tempIsHead = 
+                            mCurrentObject.spriteIsHead[
+                                mPickedObjectLayer - 
+                                layerOffset];
+                        char tempIsBody = 
+                            mCurrentObject.spriteIsBody[
+                                mPickedObjectLayer - 
+                                layerOffset];
+                        char tempIsBackFoot = 
+                            mCurrentObject.spriteIsBackFoot[
+                                mPickedObjectLayer - 
+                                layerOffset];
+                        char tempIsFrontFoot = 
+                            mCurrentObject.spriteIsFrontFoot[
+                                mPickedObjectLayer - 
+                                layerOffset];
+
 
                         mCurrentObject.sprites[mPickedObjectLayer - 
                                                layerOffset]
@@ -3221,6 +3365,36 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                             mPickedObjectLayer] = tempInvisibleWhenHolding;
 
 
+
+                        mCurrentObject.spriteIsHead[ mPickedObjectLayer 
+                                                 - layerOffset ] =
+                            mCurrentObject.spriteIsHead[mPickedObjectLayer];
+                        mCurrentObject.spriteIsHead[mPickedObjectLayer] = 
+                            tempIsHead;
+                
+                        mCurrentObject.spriteIsBody[ mPickedObjectLayer 
+                                                 - layerOffset ] =
+                            mCurrentObject.spriteIsBody[mPickedObjectLayer];
+                        mCurrentObject.spriteIsBody[mPickedObjectLayer] = 
+                            tempIsBody;
+                
+                        mCurrentObject.spriteIsBackFoot[ mPickedObjectLayer 
+                                                 - layerOffset ] =
+                            mCurrentObject.spriteIsBackFoot[
+                                mPickedObjectLayer];
+                        mCurrentObject.spriteIsBackFoot[mPickedObjectLayer] = 
+                            tempIsBackFoot;
+                
+                        mCurrentObject.spriteIsFrontFoot[ mPickedObjectLayer 
+                                                 - layerOffset ] =
+                            mCurrentObject.spriteIsFrontFoot[
+                                mPickedObjectLayer];
+                        mCurrentObject.spriteIsFrontFoot[mPickedObjectLayer] = 
+                            tempIsFrontFoot;
+
+
+
+
                         mPickedObjectLayer -= layerOffset;
 
                         // any children pointing to index A must now
@@ -3233,31 +3407,6 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                      indexB ) {
                                 mCurrentObject.spriteParent[i] = indexA;
                                 }
-                            }
-                    
-                        if( mCurrentObject.headIndex == indexA ) {
-                            mCurrentObject.headIndex = indexB;
-                            }
-                        else if( mCurrentObject.headIndex == indexB ) {
-                            mCurrentObject.headIndex = indexA;
-                            }
-                        if( mCurrentObject.bodyIndex == indexA ) {
-                            mCurrentObject.bodyIndex = indexB;
-                            }
-                        else if( mCurrentObject.bodyIndex == indexB ) {
-                            mCurrentObject.bodyIndex = indexA;
-                            }
-                        if( mCurrentObject.backFootIndex == indexA ) {
-                            mCurrentObject.backFootIndex = indexB;
-                            }
-                        else if( mCurrentObject.backFootIndex == indexB ) {
-                            mCurrentObject.backFootIndex = indexA;
-                            }
-                        if( mCurrentObject.frontFootIndex == indexA ) {
-                            mCurrentObject.frontFootIndex = indexB;
-                            }
-                        else if( mCurrentObject.frontFootIndex == indexB ) {
-                            mCurrentObject.frontFootIndex = indexA;
                             }
                         }
                     }

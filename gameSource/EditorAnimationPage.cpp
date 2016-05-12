@@ -675,21 +675,19 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         ObjectRecord *r = getObject( mCurrentObjectID );
         if( r->person ) {
             AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
-            
-            if( r->headIndex != -1 ) {
-                mCopiedHeadAnim = anim->spriteAnim[ r->headIndex ];
-                }
-            if( r->bodyIndex != -1 ) {
-                mCopiedBodyAnim = anim->spriteAnim[ r->bodyIndex ];
-                }
-            if( r->frontFootIndex != -1 ) {
-                mCopiedFrontFootAnim = anim->spriteAnim[ r->frontFootIndex ];
-                }
-            if( r->backFootIndex != -1 ) {
-                mCopiedBackFootAnim = anim->spriteAnim[ r->backFootIndex ];
-                }
-            
+
             double age = mPersonAgeSlider.getValue();
+
+            int headIndex = getHeadIndex( r, age );
+            int bodyIndex = getBodyIndex( r, age );
+            int backFootIndex = getBackFootIndex( r, age );
+            int frontFootIndex = getFrontFootIndex( r, age );
+
+            mCopiedHeadAnim = anim->spriteAnim[ headIndex ];
+            mCopiedBodyAnim = anim->spriteAnim[ bodyIndex ];
+            mCopiedFrontFootAnim = anim->spriteAnim[ frontFootIndex ];
+            mCopiedBackFootAnim = anim->spriteAnim[ backFootIndex ];
+            
             
             int frontHandIndex = getFrontHandIndex( r, age );
             int backHandIndex = getBackHandIndex( r, age );
@@ -727,21 +725,20 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         if( mWalkCopied && r->person ) {
             AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
             
-            if( r->headIndex != -1 ) {
-                anim->spriteAnim[ r->headIndex ] = mCopiedHeadAnim;
-                }
-            if( r->bodyIndex != -1 ) {
-                anim->spriteAnim[ r->bodyIndex ] = mCopiedBodyAnim;
-                }
-            if( r->frontFootIndex != -1 ) {
-                anim->spriteAnim[ r->frontFootIndex ] = mCopiedFrontFootAnim;
-                }
-            if( r->backFootIndex != -1 ) {
-                anim->spriteAnim[ r->backFootIndex ] = mCopiedBackFootAnim;
-                }
-            
             double age = mPersonAgeSlider.getValue();
+
+            int headIndex = getHeadIndex( r, age );
+            int bodyIndex = getBodyIndex( r, age );
+            int backFootIndex = getBackFootIndex( r, age );
+            int frontFootIndex = getFrontFootIndex( r, age );
+
+
+            anim->spriteAnim[ headIndex ] = mCopiedHeadAnim;
+            anim->spriteAnim[ bodyIndex ] = mCopiedBodyAnim;
+            anim->spriteAnim[ frontFootIndex ] = mCopiedFrontFootAnim;
+            anim->spriteAnim[ backFootIndex ] = mCopiedBackFootAnim;
             
+                        
             int frontHandIndex = getFrontHandIndex( r, age );
             int backHandIndex = getBackHandIndex( r, age );
             

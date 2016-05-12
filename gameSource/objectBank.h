@@ -123,13 +123,12 @@ typedef struct ObjectRecord {
         char *spriteInvisibleWhenHolding;
         
 
-        // index of special body parts (aging, attaching clothing)
-        // these should be non-aging layers
-        int headIndex;
-        int bodyIndex;
-        int backFootIndex;
-        int frontFootIndex;
-        
+        // flags for sprites that are special body parts
+        char *spriteIsHead;
+        char *spriteIsBody;
+        char *spriteIsBackFoot;
+        char *spriteIsFrontFoot;
+                
     } ObjectRecord;
 
 
@@ -218,10 +217,10 @@ int addObject( const char *inDescription,
                double *inSpriteAgeEnd,
                int *inSpriteParent,
                char *inSpriteInvisibleWhenHolding,
-               int inHeadIndex,
-               int inBodyIndex,
-               int inBackFootIndex,
-               int inFrontFootIndex,
+               char *inSpriteIsHead,
+               char *inSpriteIsBody,
+               char *inSpriteIsBackFoot,
+               char *inSpriteIsFrontFoot,
                int inReplaceID = -1 );
 
 
@@ -309,6 +308,16 @@ int getBackHandIndex( ObjectRecord *inObject,
 
 int getFrontHandIndex( ObjectRecord *inObject,
                        double inAge );
+
+
+int getHeadIndex( ObjectRecord *inObject, double inAge );
+
+int getBodyIndex( ObjectRecord *inObject, double inAge );
+
+int getBackFootIndex( ObjectRecord *inObject, double inAge );
+
+int getFrontFootIndex( ObjectRecord *inObject, double inAge );
+
 
 
 #endif

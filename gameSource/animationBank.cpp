@@ -682,12 +682,17 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     
 
 
+    int headIndex = getHeadIndex( obj, inAge );
+    int bodyIndex = getBodyIndex( obj, inAge );
+    int backFootIndex = getBackFootIndex( obj, inAge );
+    int frontFootIndex = getFrontFootIndex( obj, inAge );
+    
 
-    doublePair headPos = obj->spritePos[ obj->headIndex ];
+    doublePair headPos = obj->spritePos[ headIndex ];
 
-    doublePair frontFootPos = obj->spritePos[ obj->frontFootIndex ];
+    doublePair frontFootPos = obj->spritePos[ frontFootIndex ];
 
-    doublePair bodyPos = obj->spritePos[ obj->bodyIndex ];
+    doublePair bodyPos = obj->spritePos[ bodyIndex ];
     
 
     doublePair animHeadPos = headPos;
@@ -746,12 +751,12 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
         doublePair spritePos = obj->spritePos[i];
         
-        if( obj->person && i == obj->headIndex ) {
+        if( obj->person && i == headIndex ) {
             spritePos = add( spritePos, getAgeHeadOffset( inAge, headPos,
                                                           bodyPos,
                                                           frontFootPos ) );
             }
-        else if( obj->person && i == obj->bodyIndex ) {
+        else if( obj->person && i == bodyIndex ) {
             spritePos = add( spritePos, getAgeBodyOffset( inAge, bodyPos ) );
             }
 
@@ -975,7 +980,7 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             }
 
 
-        if( i == obj->headIndex ) {
+        if( i == headIndex ) {
             // this is the head
             animHeadPos = spritePos;
             animHeadRotDelta = rot - obj->spriteRot[i];
@@ -1005,13 +1010,13 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 skipSprite = true;
                 }
             }
-        if( i == obj->headIndex ) {
+        if( i == headIndex ) {
             holderOrHeadDrawnAboveBody = true;
             }
 
 
         if( !agingLayer 
-            && i == obj->backFootIndex 
+            && i == backFootIndex 
             && inClothing.backShoe != NULL ) {
             
             skipSprite = true;
@@ -1035,7 +1040,7 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             }
 
         if( !agingLayer 
-            && i == obj->bodyIndex 
+            && i == bodyIndex 
             && inClothing.tunic != NULL ) {
             skipSprite = true;
 
@@ -1062,15 +1067,15 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             holderOrHeadDrawnAboveBody = false;
             }
         else if( inClothing.tunic != NULL && ! holderOrHeadDrawnAboveBody &&
-                 i != obj->frontFootIndex  &&
-                 i != obj->backFootIndex &&
-                 i != obj->headIndex ) {
+                 i != frontFootIndex  &&
+                 i != backFootIndex &&
+                 i != headIndex ) {
             // skip it, it's under tunic
             skipSprite = true;
             }
         
 
-        if( !agingLayer && i == obj->frontFootIndex 
+        if( !agingLayer && i == frontFootIndex 
             && inClothing.frontShoe != NULL ) {
         
             skipSprite = true;

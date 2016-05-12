@@ -78,6 +78,87 @@ int initObjectBankStart( char *outRebuildingCache ) {
 
 
 
+
+char *boolArrayToSparseCommaString( const char *inLineName,
+                                    char *inArray, int inLength ) {
+    char numberBuffer[20];
+    
+    SimpleVector<char> resultBuffer;
+
+
+    resultBuffer.appendElementString( inLineName );
+    resultBuffer.push_back( '=' );
+
+    char firstWritten = false;
+    for( int i=0; i<inLength; i++ ) {
+        if( inArray[i] ) {
+            
+            if( firstWritten ) {
+                resultBuffer.push_back( ',' );
+                }
+            
+            sprintf( numberBuffer, "%d", i );
+            
+            resultBuffer.appendElementString( numberBuffer );
+            
+            firstWritten = true;
+            }
+        }
+    
+    if( !firstWritten ) {
+        resultBuffer.appendElementString( "-1" );
+        }
+    
+    return resultBuffer.getElementString();
+    }
+
+
+
+void sparseCommaLineToBoolArray( const char *inExpectedLineName,
+                                 char *inLine,
+                                 char *inBoolArray,
+                                 int inBoolArrayLength ) {
+
+    if( strstr( inLine, inExpectedLineName ) == NULL ) {
+        printf( "Expected line name %s not found in line %s\n",
+                inExpectedLineName, inLine );
+        return;
+        }
+    
+
+    char *listStart = strstr( inLine, "=" );
+    
+    if( listStart == NULL ) {
+        printf( "Expected character '=' not found in line %s\n",
+                inLine );
+        return;
+        }
+    
+    listStart = &( listStart[1] );
+    
+    
+    int numParts;
+    char **listNumberStrings = split( listStart, ",", &numParts );
+    
+
+    for( int i=0; i<numParts; i++ ) {
+        
+        int scannedInt = -1;
+        
+        sscanf( listNumberStrings[i], "%d", &scannedInt );
+
+        if( scannedInt >= 0 &&
+            scannedInt < inBoolArrayLength ) {
+            inBoolArray[ scannedInt ] = true;
+            }
+
+        delete [] listNumberStrings[i];
+        }
+    delete [] listNumberStrings;
+    }
+
+
+
 float initObjectBankStep() {
         
     if( currentFile == cache.numFiles ) {
@@ -307,7 +388,22 @@ float initObjectBankStep() {
 
                 r->spriteParent = new int[ r->numSprites ];
                 r->spriteInvisibleWhenHolding = new char[ r->numSprites ];
+
+
+
+                r->spriteIsHead = new char[ r->numSprites ];
+                r->spriteIsBody = new char[ r->numSprites ];
+                r->spriteIsBackFoot = new char[ r->numSprites ];
+                r->spriteIsFrontFoot = new char[ r->numSprites ];
                 
+
+                memset( r->spriteIsHead, false, r->numSprites );
+                memset( r->spriteIsBody, false, r->numSprites );
+                memset( r->spriteIsBackFoot, false, r->numSprites );
+                memset( r->spriteIsFrontFoot, false, r->numSprites );
+                
+                
+
 
                 for( int i=0; i< r->numSprites; i++ ) {
                     sscanf( lines[next], "spriteID=%d", 
@@ -367,31 +463,26 @@ float initObjectBankStep() {
                     }
 
 
-                r->headIndex = 0;
-                sscanf( lines[next], "headIndex=%d", 
-                        &( r->headIndex ) );
-                      
-                next++;
-                      
-                    
-                r->bodyIndex = 0;
-                sscanf( lines[next], "bodyIndex=%d", 
-                        &( r->bodyIndex ) );
-                      
+
+                sparseCommaLineToBoolArray( "headIndex", lines[next],
+                                            r->spriteIsHead, r->numSprites );
                 next++;
 
-                    
-                r->backFootIndex = 0;
-                sscanf( lines[next], "backFootIndex=%d", 
-                        &( r->backFootIndex ) );
-                      
-                next++;
-                    
 
-                r->frontFootIndex = 0;
-                sscanf( lines[next], "frontFootIndex=%d", 
-                        &( r->frontFootIndex ) );
-                      
+                sparseCommaLineToBoolArray( "bodyIndex", lines[next],
+                                            r->spriteIsBody, r->numSprites );
+                next++;
+
+
+                sparseCommaLineToBoolArray( "backFootIndex", lines[next],
+                                            r->spriteIsBackFoot, 
+                                            r->numSprites );
+                next++;
+
+
+                sparseCommaLineToBoolArray( "frontFootIndex", lines[next],
+                                            r->spriteIsFrontFoot, 
+                                            r->numSprites );
                 next++;
 
 
@@ -476,6 +567,11 @@ static void freeObjectRecord( int inID ) {
             delete [] idMap[inID]->spriteParent;
 
             delete [] idMap[inID]->spriteInvisibleWhenHolding;
+
+            delete [] idMap[inID]->spriteIsHead;
+            delete [] idMap[inID]->spriteIsBody;
+            delete [] idMap[inID]->spriteIsBackFoot;
+            delete [] idMap[inID]->spriteIsFrontFoot;
             
             delete idMap[inID];
             idMap[inID] = NULL;
@@ -507,6 +603,11 @@ void freeObjectBank() {
             delete [] idMap[i]->spriteParent;
 
             delete [] idMap[i]->spriteInvisibleWhenHolding;
+
+            delete [] idMap[i]->spriteIsHead;
+            delete [] idMap[i]->spriteIsBody;
+            delete [] idMap[i]->spriteIsBackFoot;
+            delete [] idMap[i]->spriteIsFrontFoot;
 
             delete idMap[i];
             }
@@ -553,10 +654,10 @@ void resaveAll() {
                        idMap[i]->spriteAgeEnd,
                        idMap[i]->spriteParent,
                        idMap[i]->spriteInvisibleWhenHolding,
-                       idMap[i]->headIndex,
-                       idMap[i]->bodyIndex,
-                       idMap[i]->backFootIndex,
-                       idMap[i]->frontFootIndex,
+                       idMap[i]->spriteIsHead,
+                       idMap[i]->spriteIsBody,
+                       idMap[i]->spriteIsBackFoot,
+                       idMap[i]->spriteIsFrontFoot,
                        idMap[i]->id );
             }
         }
@@ -666,10 +767,10 @@ int addObject( const char *inDescription,
                double *inSpriteAgeEnd,
                int *inSpriteParent,
                char *inSpriteInvisibleWhenHolding,
-               int inHeadIndex,
-               int inBodyIndex,
-               int inBackFootIndex,
-               int inFrontFootIndex,
+               char *inSpriteIsHead,
+               char *inSpriteIsBody,
+               char *inSpriteIsBackFoot,
+               char *inSpriteIsFrontFoot,
                int inReplaceID ) {
     
 
@@ -791,17 +892,24 @@ int addObject( const char *inDescription,
             }
         
 
-        lines.push_back( autoSprintf( "headIndex=%d", 
-                                      inHeadIndex ) );
+        // FIXME
 
-        lines.push_back( autoSprintf( "bodyIndex=%d", 
-                                      inBodyIndex ) );
+        lines.push_back(
+            boolArrayToSparseCommaString( "headIndex",
+                                          inSpriteIsHead, inNumSprites ) );
 
-        lines.push_back( autoSprintf( "backFootIndex=%d", 
-                                      inBackFootIndex ) );
+        lines.push_back(
+            boolArrayToSparseCommaString( "bodyIndex",
+                                          inSpriteIsBody, inNumSprites ) );
 
-        lines.push_back( autoSprintf( "frontFootIndex=%d", 
-                                      inFrontFootIndex ) );
+        lines.push_back(
+            boolArrayToSparseCommaString( "backFootIndex",
+                                          inSpriteIsBackFoot, inNumSprites ) );
+
+        lines.push_back(
+            boolArrayToSparseCommaString( "frontFootIndex",
+                                          inSpriteIsFrontFoot, 
+                                          inNumSprites ) );
         
 
         char **linesArray = lines.getElementArray();
@@ -918,6 +1026,11 @@ int addObject( const char *inDescription,
     r->spriteParent = new int[ inNumSprites ];
     r->spriteInvisibleWhenHolding = new char[ inNumSprites ];
 
+    r->spriteIsHead = new char[ inNumSprites ];
+    r->spriteIsBody = new char[ inNumSprites ];
+    r->spriteIsBackFoot = new char[ inNumSprites ];
+    r->spriteIsFrontFoot = new char[ inNumSprites ];
+
 
     memcpy( r->sprites, inSprites, inNumSprites * sizeof( int ) );
     memcpy( r->spritePos, inSpritePos, inNumSprites * sizeof( doublePair ) );
@@ -936,11 +1049,19 @@ int addObject( const char *inDescription,
 
     memcpy( r->spriteInvisibleWhenHolding, inSpriteInvisibleWhenHolding, 
             inNumSprites * sizeof( char ) );
-    
-    r->headIndex = inHeadIndex;
-    r->bodyIndex = inBodyIndex;
-    r->backFootIndex = inBackFootIndex;
-    r->frontFootIndex = inFrontFootIndex;    
+
+
+    memcpy( r->spriteIsHead, inSpriteIsHead, 
+            inNumSprites * sizeof( char ) );
+
+    memcpy( r->spriteIsBody, inSpriteIsBody, 
+            inNumSprites * sizeof( char ) );
+
+    memcpy( r->spriteIsBackFoot, inSpriteIsBackFoot, 
+            inNumSprites * sizeof( char ) );
+
+    memcpy( r->spriteIsFrontFoot, inSpriteIsFrontFoot, 
+            inNumSprites * sizeof( char ) );
 
 
 
@@ -985,11 +1106,17 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
     double frontHandPosX = -999999999;
     
     
-    doublePair headPos = inObject->spritePos[ inObject->headIndex ];
+    int headIndex = getHeadIndex( inObject, inAge );
+    int bodyIndex = getBodyIndex( inObject, inAge );
+    int backFootIndex = getBackFootIndex( inObject, inAge );
+    int frontFootIndex = getFrontFootIndex( inObject, inAge );
+    
+    
+    doublePair headPos = inObject->spritePos[ headIndex ];
 
-    doublePair frontFootPos = inObject->spritePos[ inObject->frontFootIndex ];
+    doublePair frontFootPos = inObject->spritePos[ frontFootIndex ];
 
-    doublePair bodyPos = inObject->spritePos[ inObject->bodyIndex ];
+    doublePair bodyPos = inObject->spritePos[ bodyIndex ];
 
     doublePair animHeadPos = headPos;
     
@@ -1023,23 +1150,23 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
 
         
         if( inObject->person && 
-            ( i == inObject->headIndex ||
+            ( i == headIndex ||
               checkSpriteAncestor( inObject, i,
-                                   inObject->headIndex ) ) ) {
+                                   headIndex ) ) ) {
             
             spritePos = add( spritePos, getAgeHeadOffset( inAge, headPos,
                                                           bodyPos,
                                                           frontFootPos ) );
             }
         if( inObject->person && 
-            ( i == inObject->headIndex ||
+            ( i == headIndex ||
               checkSpriteAncestor( inObject, i,
-                                   inObject->bodyIndex ) ) ) {
+                                   bodyIndex ) ) ) {
             
             spritePos = add( spritePos, getAgeBodyOffset( inAge, bodyPos ) );
             }
 
-        if( i == inObject->headIndex ) {
+        if( i == headIndex ) {
             // this is the head
             animHeadPos = spritePos;
             }
@@ -1069,13 +1196,13 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
                 skipSprite = true;
                 }
             }
-        if( i == inObject->headIndex ) {
+        if( i == headIndex ) {
             holderOrHeadDrawnAboveBody = true;
             }
 
 
         if( !agingLayer 
-            && i == inObject->backFootIndex 
+            && i == backFootIndex 
             && inClothing.backShoe != NULL ) {
             
             skipSprite = true;
@@ -1091,7 +1218,7 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
             }
         
         if( !agingLayer 
-                 && i == inObject->bodyIndex 
+                 && i == bodyIndex 
                  && inClothing.tunic != NULL ) {
             skipSprite = true;
 
@@ -1112,15 +1239,15 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
             holderOrHeadDrawnAboveBody = false;
             }
         else if( inClothing.tunic != NULL && ! holderOrHeadDrawnAboveBody &&
-                 i != inObject->frontFootIndex  &&
-                 i != inObject->backFootIndex &&
-                 i != inObject->headIndex ) {
+                 i != frontFootIndex  &&
+                 i != backFootIndex &&
+                 i != headIndex ) {
             // skip it, it's under tunic
             skipSprite = true;
             }
 
         
-        if( !agingLayer && i == inObject->frontFootIndex 
+        if( !agingLayer && i == frontFootIndex 
             && inClothing.frontShoe != NULL ) {
 
             skipSprite = true;
@@ -1444,23 +1571,30 @@ double getClosestObjectPart( ObjectRecord *inObject,
 
     doublePair headPos = {0,0};
 
-    if( inObject->headIndex < inObject->numSprites ) {
-        headPos = inObject->spritePos[ inObject->headIndex ];
+    int headIndex = getHeadIndex( inObject, inAge );
+
+    if( headIndex < inObject->numSprites ) {
+        headPos = inObject->spritePos[ headIndex ];
         }
 
     
     doublePair frontFootPos = {0,0};
 
-    if( inObject->frontFootIndex < inObject->numSprites ) {
+    int frontFootIndex = getFrontFootIndex( inObject, inAge );
+
+    if( frontFootIndex < inObject->numSprites ) {
         frontFootPos = 
-            inObject->spritePos[ inObject->frontFootIndex ];
+            inObject->spritePos[ frontFootIndex ];
         }
 
 
     doublePair bodyPos = {0,0};
 
-    if( inObject->bodyIndex < inObject->numSprites ) {
-        bodyPos = inObject->spritePos[ inObject->bodyIndex ];
+
+    int bodyIndex = getBodyIndex( inObject, inAge );
+
+    if( bodyIndex < inObject->numSprites ) {
+        bodyPos = inObject->spritePos[ bodyIndex ];
         }
 
 
@@ -1485,18 +1619,18 @@ double getClosestObjectPart( ObjectRecord *inObject,
                     }
                 }
 
-            if( i == inObject->headIndex ||
+            if( i == headIndex ||
                 checkSpriteAncestor( inObject, i,
-                                     inObject->headIndex ) ) {
+                                     headIndex ) ) {
             
                 thisSpritePos = add( thisSpritePos, 
                                      getAgeHeadOffset( inAge, headPos,
                                                        bodyPos,
                                                        frontFootPos ) );
                 }
-            if( i == inObject->bodyIndex ||
+            if( i == bodyIndex ||
                 checkSpriteAncestor( inObject, i,
-                                     inObject->bodyIndex ) ) {
+                                     bodyIndex ) ) {
             
                 thisSpritePos = add( thisSpritePos, 
                                      getAgeBodyOffset( inAge, bodyPos ) );
@@ -1615,6 +1749,61 @@ int getFrontHandIndex( ObjectRecord *inObject,
 
     return frontHandIndex;
     }
+
+
+
+static int getBodyPartIndex( ObjectRecord *inObject,
+                             char *inBodyPartFlagArray,
+                             double inAge ) {
+    
+    for( int i=0; i< inObject->numSprites; i++ ) {
+        if( inBodyPartFlagArray[i] ) {
+            
+            if( inObject->spriteAgeStart[i] != -1 ||
+                inObject->spriteAgeEnd[i] != -1 ) {
+                        
+                if( inAge < inObject->spriteAgeStart[i] ||
+                    inAge >= inObject->spriteAgeEnd[i] ) {
+                
+                    // skip this layer
+                    continue;
+                    }
+                }
+            
+            return i;
+            }
+        }
+    
+    // default
+    // don't return -1 here, so it can be blindly used as an index
+    return 0;
+    }
+
+
+
+int getHeadIndex( ObjectRecord *inObject,
+                  double inAge ) {
+    return getBodyPartIndex( inObject, inObject->spriteIsHead, inAge );
+    }
+
+
+int getBodyIndex( ObjectRecord *inObject,
+                  double inAge ) {
+    return getBodyPartIndex( inObject, inObject->spriteIsBody, inAge );
+    }
+
+
+int getBackFootIndex( ObjectRecord *inObject,
+                  double inAge ) {
+    return getBodyPartIndex( inObject, inObject->spriteIsBackFoot, inAge );
+    }
+
+
+int getFrontFootIndex( ObjectRecord *inObject,
+                  double inAge ) {
+    return getBodyPartIndex( inObject, inObject->spriteIsFrontFoot, inAge );
+    }
+
 
 
 
