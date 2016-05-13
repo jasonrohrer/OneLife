@@ -2135,20 +2135,19 @@ int main() {
                                         nextPlayer->foodStore = cap;
                                         }
                                     
+                                    // get eat transtion
+                                    TransRecord *r = 
+                                        getTrans( nextPlayer->holdingID, 
+                                                  -1 );
 
-                                    // does eating it leave something
-                                    // behind (like seeds from apple)?
-                                    
-                                    // leave it as NO for now
-                                    // could be bare-handed trans, but
-                                    // would want it to be distinct from
-                                    // non-eating bare-handed action
-
-                                    // could extract seeds from an apple
-                                    // with a knife to make it explicit.
-
-
+                                    // default, holding nothing after eating
                                     nextPlayer->holdingID = 0;
+
+
+                                    if( r != NULL ) {
+                                        nextPlayer->holdingID = r->newActor;
+                                        }
+                                    
                                     nextPlayer->heldOriginValid = 0;
                                     nextPlayer->heldOriginX = 0;
                                     nextPlayer->heldOriginY = 0;
