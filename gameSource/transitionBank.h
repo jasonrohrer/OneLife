@@ -65,6 +65,9 @@ SimpleVector<TransRecord*> *getAllUses( int inUsesID );
 // inTarget can never be 0, except in the case of generic on-person transitions
 // (to define what happens to an actor object when it is used on any person)
 
+// inTarget can be -1 if inActor is > 0 and inNewTarget is 0
+// (to define what's left in hand if inActor is eaten)
+
 // inActor can be 0 (this is the bare-hands action on the target)
 
 // inActor can be -1 if inAutoDecaySeconds > 0 and inNewActor is 0

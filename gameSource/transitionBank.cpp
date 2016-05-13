@@ -64,11 +64,11 @@ float initTransBankStep() {
     if( strstr( txtFileName, ".txt" ) != NULL ) {
                     
         int actor = 0;
-        int target = -1;
+        int target = -2;
                     
         sscanf( txtFileName, "%d_%d.txt", &actor, &target );
                     
-        if(  target != -1 ) {
+        if(  target != -2 ) {
 
             char *contents = getFileContents( cache, i );
                         
@@ -139,7 +139,7 @@ void initTransBankFinish() {
             }
         
         // no duplicate records
-        if( t->target != t->actor ) {    
+        if( t->target >= 0 && t->target != t->actor ) {    
             usesMap[t->target].push_back( t );
             }
         
@@ -172,16 +172,25 @@ void freeTransBank() {
 
 
 TransRecord *getTrans( int inActor, int inTarget ) {
+    int mapIndex = inTarget;
+    
+    if( mapIndex < 0 ) {
+        mapIndex = inActor;
+        }
+    
+    if( mapIndex < 0 ) {
+        return NULL;
+        }
 
-    if( inTarget >= mapSize ) {
+    if( mapIndex >= mapSize ) {
         return NULL;
         }
     
-    int numRecords = usesMap[inTarget].size();
+    int numRecords = usesMap[mapIndex].size();
     
     for( int i=0; i<numRecords; i++ ) {
         
-        TransRecord *r = usesMap[inTarget].getElementDirect(i);
+        TransRecord *r = usesMap[mapIndex].getElementDirect(i);
         
         if( r->actor == inActor && r->target == inTarget ) {
             return r;
@@ -343,7 +352,7 @@ void addTrans( int inActor, int inTarget,
             }
         
         // no duplicate records when actor and target are the same
-        if( inTarget != inActor ) {    
+        if( inTarget >= 0 && inTarget != inActor ) {    
             usesMap[inTarget].push_back( t );
             }
         
@@ -481,7 +490,10 @@ void deleteTransFromBank( int inActor, int inTarget ) {
         if( inActor > 0 ) {
             usesMap[inActor].deleteElementEqualTo( t );
             }
-        usesMap[inTarget].deleteElementEqualTo( t );
+        
+        if( inTarget >= 0 ) {    
+            usesMap[inTarget].deleteElementEqualTo( t );
+            }
         
 
         records.deleteElementEqualTo( t );

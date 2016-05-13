@@ -135,7 +135,6 @@ EditorTransitionPage::EditorTransitionPage()
     int yP = 75;
     
     int i = 0;
-    int clearI = 0;
     
     for( int y = 0; y<2; y++ ) {
         int xP = - 200;
@@ -148,21 +147,16 @@ EditorTransitionPage::EditorTransitionPage()
             
             mPickButtons[i]->addActionListener( this );
             
-            if( i == 0 || i>= 2 ) {
-                int offset = -90;
-                if( i == 3 ) {
-                    offset = 90;
-                    }
-                
-                mClearButtons[clearI] = 
-                    new TextButton( smallFont, xP + offset, yP, "X" );
-                
-                addComponent( mClearButtons[clearI] );
-                mClearButtons[clearI]->addActionListener( this );
-
-                clearI++;
+            int offset = -90;
+            if( i == 1 || i == 3 ) {
+                offset = 90;
                 }
             
+            mClearButtons[i] = 
+                new TextButton( smallFont, xP + offset, yP, "X" );
+            
+            addComponent( mClearButtons[i] );
+            mClearButtons[i]->addActionListener( this );            
             
             i++;
             
@@ -207,7 +201,7 @@ EditorTransitionPage::~EditorTransitionPage() {
     for( int i=0; i<4; i++ ) {
         delete mPickButtons[i];
         }
-    for( int i=0; i<3; i++ ) {
+    for( int i=0; i<4; i++ ) {
         delete mClearButtons[i];
         }
     
@@ -235,14 +229,26 @@ void EditorTransitionPage::clearUseOfObject( int inObjectID ) {
 
 
 void EditorTransitionPage::checkIfSaveVisible() {
-    char vis = ( getObjectByIndex( &mCurrentTransition, 1 ) != 0 );
+    char saveVis = ( mCurrentTransition.target != 0
+                     ||
+                     ( mCurrentTransition.actor != 0
+                       &&
+                       getObject( mCurrentTransition.actor )->foodValue > 0
+                       &&
+                       mCurrentTransition.newActor != 0 ) );
     
-    mSaveTransitionButton.setVisible( vis );
+    mSaveTransitionButton.setVisible( saveVis );
     
-    mDelButton.setVisible( vis );
+
+    char delVis = saveVis ||
+        ( mCurrentTransition.actor != 0
+          &&
+          mCurrentTransition.newActor != 0 );
+
+    mDelButton.setVisible( delVis );
     mDelConfirmButton.setVisible( false );
 
-    if( vis && 
+    if( saveVis && 
         getObjectByIndex( &mCurrentTransition, 0 ) <= 0 &&
         getObjectByIndex( &mCurrentTransition, 2 ) == 0 ) {
         // no actor, no new actor, but there's a target
@@ -319,6 +325,9 @@ void EditorTransitionPage::redoTransSearches( int inObjectID,
             
             fillInGenericPersonTarget( &( mProducedBy[i] ) );
             
+            if( mProducedBy[i].target == -1 ) {
+                mProducedBy[i].target = 0;
+                }
             mProducedByButtons[i]->setVisible( true );
             }
     
@@ -357,6 +366,10 @@ void EditorTransitionPage::redoTransSearches( int inObjectID,
             
             fillInGenericPersonTarget( &( mProduces[i] ) );
             
+            if( mProducedBy[i].target == -1 ) {
+                mProducedBy[i].target = 0;
+                }
+
             mProducesButtons[i]->setVisible( true );
             }
         
@@ -404,13 +417,20 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
         
         int target = mCurrentTransition.target;
         
-        if( getObject( mCurrentTransition.target )->person ) {
+        if( target != 0 &&
+            getObject( mCurrentTransition.target )->person ) {
             // all transitions with person target define what happens
             // when this actor is used on ANY person target
             // (this specific person object is a placeholder)
             
             // use target 0 to inidicate this
             target = 0;
+            }
+        else if( target == 0 &&
+                 mCurrentTransition.actor != 0 &&
+                 getObject( mCurrentTransition.actor )->foodValue > 0 ) {
+            
+            target = -1;
             }
         
 
@@ -447,8 +467,26 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             actor = 0;
             }
 
-        deleteTransFromBank( actor,
-                             getObjectByIndex( &mCurrentTransition, 1 ) );
+        int target = mCurrentTransition.target;
+        
+        if( target != 0 &&
+            getObject( mCurrentTransition.target )->person ) {
+            // all transitions with person target define what happens
+            // when this actor is used on ANY person target
+            // (this specific person object is a placeholder)
+            
+            // use target 0 to inidicate this
+            target = 0;
+            }
+        else if( target == 0 &&
+                 mCurrentTransition.actor != 0 ) {
+            // don't check that actor is food when deleting
+            // (need to allow eat transition to be deleted after food
+            // status removed from actor object)
+            target = -1;
+            }
+
+        deleteTransFromBank( actor, target );
                              
         for( int i=0; i<4; i++ ) {
             setObjectByIndex( &mCurrentTransition, i, 0 );
@@ -517,17 +555,10 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             }
         
-        for( int i=0; i<3; i++ ) {
+        for( int i=0; i<4; i++ ) {
             if( inTarget == mClearButtons[i] ) {
                 
-                int index = i;
-                
-                if( i !=  0 ) {
-                    // skip target, can't be cleared
-                    index = i+1;
-                    }
-                
-                setObjectByIndex( &mCurrentTransition, index, 0 );
+                setObjectByIndex( &mCurrentTransition, i, 0 );
             
                 checkIfSaveVisible();
                 return;
@@ -539,8 +570,13 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                 
                 mCurrentTransition = mProducedBy[i];
                 
+                // -1 transition means blank target (eating)
+                if( mCurrentTransition.target == -1 ) {
+                    mCurrentTransition.target = 0;
+                    }
+
                 // select the obj we were searching for when
-                // we jump too this transition... thus, we don't redo search
+                // we jump to this transition... thus, we don't redo search
                 for( int j=0; j<4; j++ ) {
                     if( getObjectByIndex( &mCurrentTransition, j ) == 
                         mLastSearchID ) {
@@ -556,8 +592,13 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             
                 mCurrentTransition = mProduces[i];
                 
+                // -1 transition means blank target (eating)
+                if( mCurrentTransition.target == -1 ) {
+                    mCurrentTransition.target = 0;
+                    }
+
                 // select the obj we were searching for when
-                // we jump too this transition... thus, we don't redo search
+                // we jump to this transition... thus, we don't redo search
                 for( int j=0; j<4; j++ ) {
                     if( getObjectByIndex( &mCurrentTransition, j ) == 
                         mLastSearchID ) {
@@ -591,7 +632,7 @@ static void drawTransObject( int inID, doublePair inPos ) {
             zoom = 256.0 / maxD;
             }
         
-        drawObject( getObject( inID ), inPos, 0, false, -1, false, 
+        drawObject( getObject( inID ), inPos, 0, false, 20, false, 
                     getEmptyClothingSet(), zoom );
         }
     }
@@ -720,6 +761,21 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         
         smallFont->drawString( "Generic on-person Transition", 
                                pos, alignCenter );
+        }
+    else if( mCurrentTransition.target == 0 &&
+             mCurrentTransition.actor != 0 &&
+             getObject( mCurrentTransition.actor )->foodValue > 0 &&
+             mCurrentTransition.newActor != 0 ) {
+        
+        doublePair pos = mPickButtons[0]->getCenter();
+
+        pos.y += 75;
+        
+        setDrawColor( 1, 1, 1, 1 );
+        
+        smallFont->drawString( "Eating Transition", 
+                               pos, alignCenter );
+        
         }
     
     }
