@@ -995,8 +995,7 @@ void LivingLifePage::drawLiveObject(
                     
         hideHands = true;
                     
-        if( heldObject->heldInHand && 
-            getObject( inObj->displayID )->frontHandIndex != -1 ) {
+        if( heldObject->heldInHand ) {
             
             hideHands = false;
             }
