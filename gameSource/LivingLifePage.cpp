@@ -1058,8 +1058,8 @@ void LivingLifePage::drawLiveObject(
         else if( inObj->holdingID < 0 ) {
             // holding a baby
             
-            int babyXOffset = 32;
-            int babyYOffset = -64;
+            int babyXOffset = 16;
+            int babyYOffset = 16;
             
             if( inObj->holdingFlip ) {
                 holdPos.x -= babyXOffset;
