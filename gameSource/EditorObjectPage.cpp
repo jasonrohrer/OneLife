@@ -2668,7 +2668,7 @@ void EditorObjectPage::pointerUp( float inX, float inY ) {
 // makes a new array with element missing
 // does not delete old array
 static char *deleteFromCharArray( char *inArray, char inOldLength,
-                                  char inIndexToRemove ) {
+                                  int inIndexToRemove ) {
     
     int newLength = inOldLength - 1;
 
