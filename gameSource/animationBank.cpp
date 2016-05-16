@@ -921,15 +921,10 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     // walk through and follow parent chains to compute compound animations
     // for each one before drawing
     for( int i=0; i<obj->numSprites; i++ ) {
-
-
-        char agingLayer = false;
         
         if( obj->person &&
             ( obj->spriteAgeStart[i] != -1 ||
               obj->spriteAgeEnd[i] != -1 ) ) {
-            
-            agingLayer = true;
             
             if( inAge < obj->spriteAgeStart[i] ||
                 inAge >= obj->spriteAgeEnd[i] ) {

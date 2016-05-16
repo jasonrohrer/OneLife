@@ -1128,13 +1128,9 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
     
     for( int i=0; i<inObject->numSprites; i++ ) {
         
-        char agingLayer = false;
-        
         if( inObject->person &&
             ( inObject->spriteAgeStart[i] != -1 ||
               inObject->spriteAgeEnd[i] != -1 ) ) {
-            
-            agingLayer = true;
             
             if( inAge < inObject->spriteAgeStart[i] ||
                 inAge >= inObject->spriteAgeEnd[i] ) {
