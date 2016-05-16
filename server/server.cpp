@@ -125,6 +125,34 @@ SimpleVector<LiveObject> players;
 
 
 
+static LiveObject *getLiveObject( int inID ) {
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( o->id == inID ) {
+            return o;
+            }
+        }
+    
+    return NULL;
+    }
+
+
+
+static int getLiveObjectIndex( int inID ) {
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( o->id == inID ) {
+            return i;
+            }
+        }
+
+    return -1;
+    }
+
+
+
 
 
 int nextID = 0;
@@ -524,7 +552,7 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
         speed = 0.1;
         }
     
-    if( inPlayer->holdingID != 0 ) {
+    if( inPlayer->holdingID > 0 ) {
         ObjectRecord *r = getObject( inPlayer->holdingID );
 
         speed *= r->speedMult;
@@ -902,6 +930,27 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             }
         else {
             // no place to drop it, it disappears
+
+            // UNLESS we're holding a baby,
+            // then just put the baby where we are
+            if( inDroppingPlayer->holdingID < 0 ) {
+                int babyID = - inDroppingPlayer->holdingID;
+                
+                LiveObject *babyO = getLiveObject( babyID );
+                
+                if( babyO != NULL ) {
+                    babyO->xd = inDroppingPlayer->xd;
+                    babyO->xs = inDroppingPlayer->xd;
+                    
+                    babyO->yd = inDroppingPlayer->yd;
+                    babyO->ys = inDroppingPlayer->yd;
+
+                    inPlayerIndicesToSendUpdatesAbout->push_back( 
+                        getLiveObjectIndex( babyID ) );
+                    }
+                
+                }
+            
             inDroppingPlayer->holdingID = 0;
             inDroppingPlayer->heldOriginValid = 0;
             inDroppingPlayer->heldOriginX = 0;
@@ -916,7 +965,33 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             }            
         }
     
-
+    
+    if( inDroppingPlayer->holdingID < 0 ) {
+        // dropping a baby
+        
+        int babyID = - inDroppingPlayer->holdingID;
+                
+        LiveObject *babyO = getLiveObject( babyID );
+        
+        if( babyO != NULL ) {
+            babyO->xd = targetX;
+            babyO->xs = targetX;
+                    
+            babyO->yd = targetY;
+            babyO->ys = targetY;
+            
+            inPlayerIndicesToSendUpdatesAbout->push_back( 
+                getLiveObjectIndex( babyID ) );
+            }
+        
+        inDroppingPlayer->holdingID = 0;
+        inDroppingPlayer->heldOriginValid = 0;
+        inDroppingPlayer->heldOriginX = 0;
+        inDroppingPlayer->heldOriginY = 0;
+        
+        return;
+        }
+    
 
     setMapObject( targetX, targetY, inDroppingPlayer->holdingID );
                                 
@@ -1845,7 +1920,7 @@ int main() {
                         // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
-                        if( nextPlayer->holdingID != 0 &&
+                        if( nextPlayer->holdingID > 0 &&
                             ! (m.x == nextPlayer->xd &&
                                m.y == nextPlayer->yd ) ) {
 
@@ -1995,10 +2070,15 @@ int main() {
 
                                 // try using object on this target 
                                 
-                                TransRecord *r = 
-                                    getTrans( nextPlayer->holdingID, 
-                                              target );
-
+                                TransRecord *r = NULL;
+                                
+                                if( nextPlayer->holdingID >= 0 ) {
+                                    // negative holding is ID of baby
+                                    // which can't be used
+                                    // (and no bare hand action available)
+                                    getTrans( nextPlayer->holdingID, target );
+                                    }
+                                
                                 if( r != NULL ) {
                                     int oldContained = 
                                         nextPlayer->numContained;
@@ -2116,12 +2196,81 @@ int main() {
                                     // action doesn't happen, just the drop
                                     }
                                 }
+                            else if( nextPlayer->holdingID == 0 &&
+                                     ! (m.x == nextPlayer->xd &&
+                                        m.y == nextPlayer->yd ) ) {
+                                // target location empty and 
+                                // not where we're standing
+                                // and our hands are empty
+                                
+                                // check if there's a baby to pick up there
+                                
+                                GridPos targetPos = { m.x, m.y };
+                                
+                                // is anyone there?
+                                int numLive = players.size();
+                                
+                                int hitPlayerIndex = 0;
+                                
+                                LiveObject *hitPlayer = NULL;
+                                
+                                for( int j=0; j<numLive; j++ ) {
+                                    LiveObject *otherPlayer = 
+                                        players.getElement( j );
+                                    
+                                        
+
+                                    if( otherPlayer->xd == 
+                                        otherPlayer->xs &&
+                                        otherPlayer->yd ==
+                                        otherPlayer->ys ) {
+                                        // other player standing still
+                                            
+                                        if( otherPlayer->xd ==
+                                            m.x &&
+                                            otherPlayer->yd ==
+                                            m.y ) {
+                                                
+                                            // hit
+                                            hitPlayerIndex = j;
+                                            hitPlayer = otherPlayer;
+                                            break;
+                                            }
+                                        }
+                                    else {
+                                        // other player moving
+                                        
+                                        GridPos cPos = 
+                                            computePartialMoveSpot( 
+                                                otherPlayer );
+                                        
+                                        if( equal( cPos, targetPos ) ) {
+                                            // hit
+                                            hitPlayer = otherPlayer;
+                                            break;
+                                            }
+                                        }
+                                    }
+                                
+                                if( hitPlayer != NULL &&
+                                    computeAge( hitPlayer ) < 5  ) {
+                                    
+                                    // negative holding IDs to indicate
+                                    // holding another player
+                                    nextPlayer->holdingID = -hitPlayer->id;
+                                    
+                                    nextPlayer->heldOriginValid = 1;
+                                    nextPlayer->heldOriginX = m.x;
+                                    nextPlayer->heldOriginY = m.y;
+                                    }
+                                
+                                }
                             }
                         else if( m.x == nextPlayer->xd &&
                                  m.y == nextPlayer->yd ) {
                             
                             // use on self
-                            if( nextPlayer->holdingID != 0 ) {
+                            if( nextPlayer->holdingID > 0 ) {
                                 ObjectRecord *obj = 
                                     getObject( nextPlayer->holdingID );
                                 
@@ -2254,13 +2403,17 @@ int main() {
                                 if( isMapSpotEmpty( m.x, m.y ) ) {
                                 
                                     // empty spot to drop into
+                                    // either dropping object or baby
                                     
                                     handleDrop( 
                                         m.x, m.y, nextPlayer,
                                         &mapChanges, &mapChangesPos,
                                         &playerIndicesToSendUpdatesAbout );
                                     }
-                                else {
+                                else if( nextPlayer->holdingID > 0 ) {
+                                    // target not empty
+                                    // non-baby drop only
+                                    
                                     int target = getMapObject( m.x, m.y );
                             
                                     if( target != 0 ) {

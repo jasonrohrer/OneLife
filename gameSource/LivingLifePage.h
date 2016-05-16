@@ -36,8 +36,21 @@ typedef struct LiveObject {
         int foodCapacity;
 
 
-        int holdingID;
+        // -1 unless we're currently being held
+        // by an adult
+        int heldByAdultID;
         
+        // usually 0, unless we're being held by an adult
+        // and just got put down
+        // then we slide back into position
+        doublePair heldByDropOffset;
+
+
+        // 0 or positive holdingID means holding nothing or an object
+        // a negative number here means we're holding another player (baby)
+        // and the number, made positive, is the ID of the other player
+        int holdingID;
+
         char holdingFlip;
 
         char heldPosOverride;

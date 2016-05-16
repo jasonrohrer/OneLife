@@ -86,6 +86,9 @@ for x y.
 Clothing sets are in the format of hat_id,tunic_id,front_shoe_id,back_shoe_id
 If an ID is 0, player is not wearing anything in that spot.
 
+If o_id (held object ID) is negative, it represents the p_id of the other
+player (baby) that this player is holding.
+
 
 
 

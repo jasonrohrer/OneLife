@@ -244,6 +244,18 @@ static GridPos sub( GridPos inA, GridPos inB ) {
 SimpleVector<LiveObject> gameObjects;
 
 
+static LiveObject *getGameObject( int inID ) {
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        
+        LiveObject *o = gameObjects.getElement( i );
+        
+        if( o->id == inID ) {
+            return o;
+            }
+        }
+    return NULL;
+    }
+
 
 
 void updateMoveSpeed( LiveObject *inObject ) {
@@ -435,7 +447,7 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
         // special case:
         // looks better if we just freeze moving anim when we stop, if we can
         
-        if( inObject->holdingID != 0 &&
+        if( inObject->holdingID > 0 &&
             inObject->curHeldAnim == moving &&
             inNewAnim == held &&
             isAnimEmpty( inObject->holdingID, held ) ) {
@@ -990,7 +1002,7 @@ void LivingLifePage::drawLiveObject(
 
     char hideHands = false;
 
-    if( inObj->holdingID != 0 ) {
+    if( inObj->holdingID > 0 ) {
         ObjectRecord *heldObject = getObject( inObj->holdingID );
                     
         hideHands = true;
@@ -1000,6 +1012,11 @@ void LivingLifePage::drawLiveObject(
             hideHands = false;
             }
         }
+    else if( inObj->holdingID < 0 ) {
+        // carrying baby
+        hideHands = true;
+        }
+    
                 
 
     HandPos frontHandPos =
@@ -1025,17 +1042,35 @@ void LivingLifePage::drawLiveObject(
             holdPos = pos;
             }
 
-        ObjectRecord *heldObject = getObject( inObj->holdingID );
-                    
-        if( inObj->holdingFlip ) {
-            holdPos.x -= heldObject->heldOffset.x;
+        if( inObj->holdingID > 0 ) {
+            
+            ObjectRecord *heldObject = getObject( inObj->holdingID );
+            
+            if( inObj->holdingFlip ) {
+                holdPos.x -= heldObject->heldOffset.x;
+                }
+            else {
+                holdPos.x += heldObject->heldOffset.x;
+                }
+            
+            holdPos.y += heldObject->heldOffset.y;
             }
-        else {
-            holdPos.x += heldObject->heldOffset.x;
+        else if( inObj->holdingID < 0 ) {
+            // holding a baby
+            
+            int babyXOffset = 32;
+            int babyYOffset = -64;
+            
+            if( inObj->holdingFlip ) {
+                holdPos.x -= babyXOffset;
+                }
+            else {
+                holdPos.x += babyXOffset;
+                }
+            holdPos.y += babyYOffset;
             }
-                    
-        holdPos.y += heldObject->heldOffset.y;
-                    
+        
+
         holdPos = mult( holdPos, 1.0 / CELL_D );
 
         if( inObj->heldPosOverride && 
@@ -1079,20 +1114,52 @@ void LivingLifePage::drawLiveObject(
             inObj->heldAnimationFrameCount / 60.0;
 
         double heldRotTimeVal = heldTimeVal;
-
-        if( inObj->lastHeldAnimFade > 0 ) {
-            curHeldType = inObj->lastHeldAnim;
-            fadeTargetHeldType = inObj->curHeldAnim;
-            heldAnimFade = inObj->lastHeldAnimFade;
-
-            heldRotTimeVal = frameRateFactor * 
-                inObj->heldAnimationFrozenRotFrameCount / 60.0;
+        
+        if( inObj->holdingID < 0 ) {
+            // baby, special case, don't animate it when held
+            curHeldType = ground;
+            fadeTargetHeldType = ground;
+            }
+        else {
+            
+            if( inObj->lastHeldAnimFade > 0 ) {
+                curHeldType = inObj->lastHeldAnim;
+                fadeTargetHeldType = inObj->curHeldAnim;
+                heldAnimFade = inObj->lastHeldAnimFade;
+                
+                heldRotTimeVal = frameRateFactor * 
+                    inObj->heldAnimationFrozenRotFrameCount / 60.0;
+                }
             }
 
                         
                     
+        if( inObj->holdingID < 0 ) {
+            // draw baby here
+            int babyID = - inObj->holdingID;
+            
+            LiveObject *babyO = getGameObject( babyID );
+            
+            if( babyO != NULL ) {
+                
+                drawObjectAnim( babyO->displayID, curType, 
+                                timeVal, rotTimeVal,
+                                animFade,
+                                fadeTargetType,
+                                holdPos,
+                                inObj->holdingFlip,
+                                babyO->age,
+                                hideHands,
+                                babyO->clothing );
 
-        if( inObj->numContained == 0 ) {
+                if( babyO->currentSpeech != NULL ) {
+                    
+                    inSpeakers->push_back( babyO );
+                    inSpeakersPos->push_back( holdPos );
+                    }
+                }
+            }
+        else if( inObj->numContained == 0 ) {
                         
             drawObjectAnim( inObj->holdingID, curHeldType, 
                             heldTimeVal, heldRotTimeVal,
@@ -1347,7 +1414,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
             for( int i=0; i<gameObjects.size(); i++ ) {
         
                 LiveObject *o = gameObjects.getElement( i );
-            
+                
+                if( o->heldByAdultID != -1 ) {
+                    // held by someone else, don't draw now
+                    continue;
+                    }
+
                 int oX = o->xd;
                 int oY = o->yd;
                 
@@ -1978,6 +2050,9 @@ void LivingLifePage::step() {
                 o.currentSpeech = NULL;
                 o.speechFade = 1.0;
                 
+                o.heldByAdultID = -1;
+                o.heldByDropOffset.x = 0;
+                o.heldByDropOffset.y = 0;
                 
                 int forced = 0;
                 
@@ -2132,6 +2207,18 @@ void LivingLifePage::step() {
                                 }
                             
                             // otherwise, don't touch frame count
+                        
+
+                            if( existing->holdingID < 0 ) {
+                                // picked up a baby
+                                int babyID = - existing->holdingID;
+                                
+                                LiveObject *babyO = getGameObject( babyID );
+                                
+                                if( babyO != NULL ) {
+                                    babyO->heldByAdultID = existing->id;
+                                    }
+                                }
                             }
                         
                         existing->displayID = o.displayID;
@@ -3019,7 +3106,7 @@ void LivingLifePage::step() {
                 // fade just started
                 // check if it's necessary
                 
-                if( o->holdingID != 0 &&
+                if( o->holdingID > 0 &&
                     isAnimFadeNeeded( o->holdingID, 
                                       o->lastHeldAnim, o->curHeldAnim ) ) {
                     // fade needed, do nothing
@@ -3264,7 +3351,7 @@ void LivingLifePage::step() {
                 addBaseObjectToLiveObjectSet( o->displayID );
                 
                 // and what they're holding
-                if( o->holdingID != 0 ) {
+                if( o->holdingID > 0 ) {
                     addBaseObjectToLiveObjectSet( o->holdingID );
 
                     // and what it contains
@@ -3490,7 +3577,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     
 
     if( destID == 0 &&
-        modClick && ourLiveObject->holdingID != 0 &&
+        modClick && ourLiveObject->holdingID > 0 &&
         getObject( ourLiveObject->holdingID )->deadlyDistance > 0 ) {
         
         // special case
@@ -3556,6 +3643,37 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
     
 
+
+    char tryingToPickUpBaby = false;
+    
+    if( destID == 0 &&
+        modClick && ourLiveObject->holdingID == 0 &&
+        // only adults can pick up babies
+        ourLiveObject->age > 13 ) {
+        
+
+        doublePair targetPos = { clickDestX, clickDestY };
+
+        for( int i=0; i<gameObjects.size(); i++ ) {
+        
+            LiveObject *o = gameObjects.getElement( i );
+            
+            if( o->id != ourID ) {
+                if( distance( targetPos, o->currentPos ) < 1 ) {
+                    // clicked on someone
+
+                    if( o->age < 5 ) {
+
+                        // they're a baby
+                        
+                        tryingToPickUpBaby = true;
+                        break;
+                        }
+                    }
+                }
+            }
+        }
+
     
 
     if( destID == 0 && !modClick ) {
@@ -3565,6 +3683,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         mustMove = true;
         }
     else if( ( modClick && ourLiveObject->holdingID != 0 )
+             || tryingToPickUpBaby
              || ( ! modClick && destID != 0 )
              || ( modClick && ourLiveObject->holdingID == 0 &&
                   destNumContained > 0 ) ) {
@@ -3659,8 +3778,12 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             char send = false;
             
-                
-            if( modClick && destID == 0 && ourLiveObject->holdingID != 0 ) {
+            if( tryingToPickUpBaby ) {
+                action = "USE";
+                send = true;
+                }
+            else if( modClick && destID == 0 && 
+                     ourLiveObject->holdingID != 0 ) {
                 action = "DROP";
                 send = true;
 
