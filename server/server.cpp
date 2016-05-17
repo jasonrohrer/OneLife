@@ -1165,6 +1165,20 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
 
 
 
+LiveObject *getAdultHolding( LiveObject *inBabyObject ) {
+    int numLive = players.size();
+    
+    for( int j=0; j<numLive; j++ ) {
+        LiveObject *adultO = players.getElement( j );
+
+        if( - adultO->holdingID == inBabyObject->id ) {
+            return adultO;
+            }
+        }
+    return NULL;
+    }
+
+
 
 void handleForcedBabyDrop( 
     LiveObject *inBabyObject,
@@ -2370,6 +2384,15 @@ int main() {
                                             push_back( hitPlayerIndex );
                                         }
                                     
+                                    // if adult female, baby auto-fed
+                                    if( getFemale( nextPlayer ) ) {
+                                        
+                                        hitPlayer->foodStore = 
+                                            computeFoodCapacity( hitPlayer );
+                
+                                        hitPlayer->foodUpdate = true;
+                                        }
+                                    
                                     nextPlayer->heldOriginValid = 1;
                                     nextPlayer->heldOriginX = m.x;
                                     nextPlayer->heldOriginY = m.y;
@@ -2808,8 +2831,21 @@ int main() {
                 if( Time::getCurrentTime() > 
                     nextPlayer->foodDecrementETASeconds ) {
                     
-                    nextPlayer->foodStore --;
+                    char heldByFemale = false;
+
+                    if( nextPlayer->heldByOther ) {
+                        LiveObject *adultO = getAdultHolding( nextPlayer );
+                        
+                        if( adultO != NULL &&
+                            getFemale( adultO ) ) {
                     
+                            heldByFemale = true;
+                            }
+                        }
+                    
+                    if( !heldByFemale ) {
+                        nextPlayer->foodStore --;
+                        }
                     nextPlayer->foodDecrementETASeconds +=
                         computeFoodDecrementTimeSeconds( nextPlayer );
                     
@@ -3209,12 +3245,59 @@ int main() {
 
                     SimpleVector<char> chunkPlayerMoves;
                     
+
+                    // add chunk updates for held babies first
+                    for( int j=0; j<numLive; j++ ) {
+                        LiveObject *otherPlayer = players.getElement( j );
+                        
+                        if( otherPlayer->heldByOther ) {
+                            LiveObject *adultO = 
+                                getAdultHolding( otherPlayer );
+                            
+                            if( adultO != NULL ) {
+                                
+
+                                if( adultO->id != nextPlayer->id ) {
+                                    // not us
+
+                                    double d = intDist( nextPlayer->xd,
+                                                        nextPlayer->yd,
+                                                        adultO->xd,
+                                                        adultO->yd );
+                            
+                            
+                                    if( d <= getChunkDimension() / 2 ) {
+                                        // adult holding this baby
+                                        // is close enough
+                                        // send update about baby
+                                        char *updateLine = 
+                                            getUpdateLine( otherPlayer, 
+                                                           false ); 
+                                    
+                                        chunkPlayerUpdates.
+                                            appendElementString( updateLine );
+                                        delete [] updateLine;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    
+                    
+                    // now send updates about all non-held babies,
+                    // including any adults holding on-chunk babies
+                    // here, AFTER we update about the babies
+
+                    // (so their held status overrides the baby's stale
+                    //  position status).
                     for( int j=0; j<numLive; j++ ) {
                         LiveObject *otherPlayer = 
                             players.getElement( j );
                         
-                        if( otherPlayer->id != nextPlayer->id ) {
+                        if( !otherPlayer->heldByOther &&
+                            otherPlayer->id != nextPlayer->id ) {
                             // not us
+                            // not a held baby (covered above)
 
                             double d = intDist( nextPlayer->xd,
                                                 nextPlayer->yd,
