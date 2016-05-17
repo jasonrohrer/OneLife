@@ -50,6 +50,9 @@ typedef struct LiveObject {
         double lifeStartTimeSeconds;
         
 
+        // held by other player?
+        char heldByOther;
+        
         // start and dest for a move
         // same if reached destination
         int xs;
@@ -788,6 +791,8 @@ char isMapSpotEmpty( int inX, int inY ) {
         
         if( // not about to be deleted
             ! nextPlayer->error &&
+            // held players aren't on map (their coordinates are stale)
+            ! nextPlayer->heldByOther &&
             // stationary
             nextPlayer->xs == nextPlayer->xd &&
             nextPlayer->ys == nextPlayer->yd &&
@@ -945,6 +950,8 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                     babyO->yd = inDroppingPlayer->yd;
                     babyO->ys = inDroppingPlayer->yd;
 
+                    babyO->heldByOther = false;
+
                     inPlayerIndicesToSendUpdatesAbout->push_back( 
                         getLiveObjectIndex( babyID ) );
                     }
@@ -980,6 +987,8 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             babyO->yd = targetY;
             babyO->ys = targetY;
             
+            babyO->heldByOther = false;
+
             inPlayerIndicesToSendUpdatesAbout->push_back( 
                 getLiveObjectIndex( babyID ) );
             }
@@ -1350,6 +1359,8 @@ int main() {
                 newObject.displayID = getRandomPersonObject();
 
                 newObject.lifeStartTimeSeconds = Time::getCurrentTime();
+
+                newObject.heldByOther = false;
 
                 int numOfAge = 0;
                 
@@ -2258,6 +2269,8 @@ int main() {
                                     // negative holding IDs to indicate
                                     // holding another player
                                     nextPlayer->holdingID = -hitPlayer->id;
+                                    
+                                    hitPlayer->heldByOther = true;
                                     
                                     nextPlayer->heldOriginValid = 1;
                                     nextPlayer->heldOriginX = m.x;
