@@ -777,13 +777,17 @@ char *getHoldingString( LiveObject *inObject ) {
 
 
 // checks both grid of objects and live, non-moving player positions
-char isMapSpotEmpty( int inX, int inY ) {
+char isMapSpotEmpty( int inX, int inY, char inConsiderPlayers = true ) {
     int target = getMapObject( inX, inY );
     
     if( target != 0 ) {
         return false;
         }
     
+    if( !inConsiderPlayers ) {
+        return true;
+        }
+
     int numLive = players.size();
     
     for( int i=0; i<numLive; i++ ) {
@@ -2571,6 +2575,42 @@ int main() {
                 newUpdatesPos.push_back( p );
                 }
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
+                
+                if( nextPlayer->heldByOther ) {
+                    // find who is holding them FIXME
+                    
+                    for( int j=0; j<numLive; j++ ) {
+                        LiveObject *adultO = players.getElement( j );
+
+                        if( - adultO->holdingID == nextPlayer->id ) {
+                            
+                            GridPos dropPos;
+                            
+                            if( adultO->xd == 
+                                adultO->xs &&
+                                adultO->yd ==
+                                adultO->ys ) {
+                    
+                                dropPos.x = adultO->xd;
+                                dropPos.y = adultO->yd;
+                                }
+                            else {
+                                dropPos = 
+                                    computePartialMoveSpot( adultO );
+                                }
+
+
+                            handleDrop( 
+                                dropPos.x, dropPos.y, 
+                                adultO,
+                                &mapChanges, 
+                                &mapChangesPos,
+                                &playerIndicesToSendUpdatesAbout );
+                            break;
+                            }
+                        }
+                    }
+                
                 char *updateLine = getUpdateLine( nextPlayer, true );
 
                 newDeleteUpdates.appendElementString( updateLine );
@@ -2600,7 +2640,9 @@ int main() {
                     }
 
 
-                if( isMapSpotEmpty( dropPos.x, dropPos.y ) ) {
+                // assume death markes non-blocking, so it's safe
+                // to drop one even if other players standing here
+                if( isMapSpotEmpty( dropPos.x, dropPos.y, false ) ) {
                     int deathID = getRandomDeathMarker();
                     
                     if( deathID > 0 ) {
