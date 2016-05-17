@@ -1165,6 +1165,54 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
 
 
 
+
+void handleForcedBabyDrop( 
+    LiveObject *inBabyObject,
+    SimpleVector<char> *inMapChanges, 
+    SimpleVector<ChangePosition> *inChangePosList,
+    SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
+    
+    int numLive = players.size();
+    
+    for( int j=0; j<numLive; j++ ) {
+        LiveObject *adultO = players.getElement( j );
+
+        if( - adultO->holdingID == inBabyObject->id ) {
+
+            inPlayerIndicesToSendUpdatesAbout->push_back( j );
+            
+            GridPos dropPos;
+            
+            if( adultO->xd == 
+                adultO->xs &&
+                adultO->yd ==
+                adultO->ys ) {
+                
+                dropPos.x = adultO->xd;
+                dropPos.y = adultO->yd;
+                }
+            else {
+                dropPos = 
+                    computePartialMoveSpot( adultO );
+                }
+            
+            
+            handleDrop( 
+                dropPos.x, dropPos.y, 
+                adultO,
+                inMapChanges, 
+                inChangePosList,
+                inPlayerIndicesToSendUpdatesAbout );
+
+            
+            break;
+            }
+        }
+    }
+
+
+
+
 char isMapSpotBlocking( int inX, int inY ) {
     int target = getMapObject( inX, inY );
 
@@ -1561,8 +1609,22 @@ int main() {
                     m.type == MOVE ||
                     m.type == SAY ) {
                     
-                    if( m.type == MOVE ) {
+
+                    if( m.type == MOVE && nextPlayer->heldByOther ) {
+                        // baby wiggling out of parent's arms
+                        handleForcedBabyDrop( 
+                            nextPlayer,
+                            &mapChanges, 
+                            &mapChangesPos,
+                            &playerIndicesToSendUpdatesAbout );
+                        
+                        // drop them and ignore rest of their move
+                        // request, until they click again
+                        }
+                    else if( m.type == MOVE ) {
                         //Thread::staticSleep( 1000 );
+
+
                         printf( "  Processing move, "
                                 "we think player at old start pos %d,%d\n",
                                 nextPlayer->xs,
@@ -2577,38 +2639,11 @@ int main() {
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
                 
                 if( nextPlayer->heldByOther ) {
-                    // find who is holding them FIXME
                     
-                    for( int j=0; j<numLive; j++ ) {
-                        LiveObject *adultO = players.getElement( j );
-
-                        if( - adultO->holdingID == nextPlayer->id ) {
-                            
-                            GridPos dropPos;
-                            
-                            if( adultO->xd == 
-                                adultO->xs &&
-                                adultO->yd ==
-                                adultO->ys ) {
-                    
-                                dropPos.x = adultO->xd;
-                                dropPos.y = adultO->yd;
-                                }
-                            else {
-                                dropPos = 
-                                    computePartialMoveSpot( adultO );
-                                }
-
-
-                            handleDrop( 
-                                dropPos.x, dropPos.y, 
-                                adultO,
-                                &mapChanges, 
-                                &mapChangesPos,
-                                &playerIndicesToSendUpdatesAbout );
-                            break;
-                            }
-                        }
+                    handleForcedBabyDrop( nextPlayer,
+                                          &mapChanges, 
+                                          &mapChangesPos,
+                                          &playerIndicesToSendUpdatesAbout );
                     }
                 
                 char *updateLine = getUpdateLine( nextPlayer, true );
