@@ -1120,18 +1120,14 @@ void LivingLifePage::drawLiveObject(
             curHeldType = ground;
             fadeTargetHeldType = ground;
             }
-        else {
+        else if( inObj->lastHeldAnimFade > 0 ) {
+            curHeldType = inObj->lastHeldAnim;
+            fadeTargetHeldType = inObj->curHeldAnim;
+            heldAnimFade = inObj->lastHeldAnimFade;
             
-            if( inObj->lastHeldAnimFade > 0 ) {
-                curHeldType = inObj->lastHeldAnim;
-                fadeTargetHeldType = inObj->curHeldAnim;
-                heldAnimFade = inObj->lastHeldAnimFade;
-                
-                heldRotTimeVal = frameRateFactor * 
-                    inObj->heldAnimationFrozenRotFrameCount / 60.0;
-                }
+            heldRotTimeVal = frameRateFactor * 
+                inObj->heldAnimationFrozenRotFrameCount / 60.0;
             }
-
                         
                     
         if( inObj->holdingID < 0 ) {
@@ -1142,10 +1138,10 @@ void LivingLifePage::drawLiveObject(
             
             if( babyO != NULL ) {
                 
-                drawObjectAnim( babyO->displayID, curType, 
-                                timeVal, rotTimeVal,
-                                animFade,
-                                fadeTargetType,
+                drawObjectAnim( babyO->displayID, curHeldType, 
+                                heldTimeVal, heldRotTimeVal,
+                                heldAnimFade,
+                                fadeTargetHeldType,
                                 holdPos,
                                 inObj->holdingFlip,
                                 babyO->age,
