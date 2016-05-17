@@ -1295,12 +1295,15 @@ int main() {
 
     printf( "\nServer starting up\n\n" );
 
-    printf( "Press CTRL-C to shut down server gracefully\n\n" );
-
-    signal( SIGTSTP, intHandler );
 
 #ifdef WIN_32
+    printf( "Press CTRL-C to shut down server gracefully\n\n" );
+
     SetConsoleCtrlHandler( ctrlHandler, TRUE );
+#else
+    printf( "Press CTRL-Z to shut down server gracefully\n\n" );
+
+    signal( SIGTSTP, intHandler );
 #endif
 
     char rebuilding;
@@ -2153,7 +2156,8 @@ int main() {
                                     // negative holding is ID of baby
                                     // which can't be used
                                     // (and no bare hand action available)
-                                    getTrans( nextPlayer->holdingID, target );
+                                    r = getTrans( nextPlayer->holdingID,
+                                                  target );
                                     }
                                 
                                 if( r != NULL ) {
@@ -2337,6 +2341,16 @@ int main() {
                                     nextPlayer->holdingID = -hitPlayer->id;
                                     
                                     hitPlayer->heldByOther = true;
+                                    
+                                    // force baby to drop what they are
+                                    // holding
+
+                                    if( hitPlayer->holdingID != 0 ) {
+                                        handleDrop( 
+                                            m.x, m.y, hitPlayer,
+                                            &mapChanges, &mapChangesPos,
+                                            &playerIndicesToSendUpdatesAbout );
+                                        }
                                     
                                     nextPlayer->heldOriginValid = 1;
                                     nextPlayer->heldOriginX = m.x;
