@@ -3020,12 +3020,23 @@ void LivingLifePage::step() {
         
         mSayField.setMaxLength( sayCap );
 
-        doublePair screenTargetPos = mult( ourLiveObject->currentPos, CELL_D );
+
+
+        LiveObject *cameraFollowsObject = ourLiveObject;
+        
+        if( ourLiveObject->heldByAdultID != -1 ) {
+            cameraFollowsObject = 
+                getGameObject( ourLiveObject->heldByAdultID );
+            }
         
 
-        if( ourLiveObject->currentPos.x != ourLiveObject->xd
+        doublePair screenTargetPos = 
+            mult( cameraFollowsObject->currentPos, CELL_D );
+        
+
+        if( cameraFollowsObject->currentPos.x != cameraFollowsObject->xd
             ||
-            ourLiveObject->currentPos.y != ourLiveObject->yd ) {
+            cameraFollowsObject->currentPos.y != cameraFollowsObject->yd ) {
             
             // moving
 
@@ -3033,15 +3044,15 @@ void LivingLifePage::step() {
             
             doublePair farthestPathPos;
             
-            farthestPathPos.x = (double)ourLiveObject->xd;
-            farthestPathPos.y = (double)ourLiveObject->yd;
+            farthestPathPos.x = (double)cameraFollowsObject->xd;
+            farthestPathPos.y = (double)cameraFollowsObject->yd;
             
             doublePair moveDir = sub( farthestPathPos, 
-                                      ourLiveObject->currentPos );
+                                      cameraFollowsObject->currentPos );
                         
             
-            if( length( moveDir ) > 7 ) {
-                moveDir = mult( normalize( moveDir ), 7 );
+            if( length( moveDir ) > 2 ) {
+                moveDir = mult( normalize( moveDir ), 2 );
                 }
                 
             moveDir = mult( moveDir, CELL_D );
