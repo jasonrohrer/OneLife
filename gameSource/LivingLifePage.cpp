@@ -3679,7 +3679,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                          ( clickDestY - ourLiveObject->yd ) * 
                          ( clickDestY - ourLiveObject->yd ) );
 
-        doublePair targetPos = { clickDestX, clickDestY };
+        doublePair targetPos = { (double)clickDestX, (double)clickDestY };
         
 
 
@@ -3737,7 +3737,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         ourLiveObject->age > 13 ) {
         
 
-        doublePair targetPos = { clickDestX, clickDestY };
+        doublePair targetPos = { (double)clickDestX, (double)clickDestY };
 
         for( int i=0; i<gameObjects.size(); i++ ) {
         
