@@ -395,14 +395,15 @@ EditorObjectPage::EditorObjectPage()
 
     addComponent( &mDeathMarkerCheckbox );
     mDeathMarkerCheckbox.setVisible( true );
-
+    mDeathMarkerCheckbox.addActionListener( this );
+    
 
     addComponent( &mHeldInHandCheckbox );
     mHeldInHandCheckbox.setVisible( true );
 
     addComponent( &mBlocksWalkingCheckbox );
     mBlocksWalkingCheckbox.setVisible( true );
-    
+    mBlocksWalkingCheckbox.addActionListener( this );
 
 
     boxY = 200;
@@ -1121,6 +1122,16 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         mNextHeldDemoButton.setVisible( false );
         mPrevHeldDemoButton.setVisible( false );
+        }
+    else if( inTarget == &mDeathMarkerCheckbox ) {
+        if( mDeathMarkerCheckbox.getToggled() ) {
+            mBlocksWalkingCheckbox.setToggled( false );
+            }
+        }
+    else if( inTarget == &mBlocksWalkingCheckbox ) {
+        if( mBlocksWalkingCheckbox.getToggled() ) {
+            mDeathMarkerCheckbox.setToggled( false );
+            }
         }
     else if( inTarget == &mAgingLayerCheckbox ) {
         if( mAgingLayerCheckbox.getToggled() ) {
