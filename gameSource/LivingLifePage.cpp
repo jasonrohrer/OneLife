@@ -823,8 +823,6 @@ void LivingLifePage::drawMapCell( int inMapI,
         if( mMapDropOffsets[ inMapI ].x != 0 ||
             mMapDropOffsets[ inMapI ].y != 0 ) {
                     
-            pos = add( pos, mult( mMapDropOffsets[ inMapI ], CELL_D ) );
-                    
             doublePair nullOffset = { 0, 0 };
                     
 
@@ -843,6 +841,11 @@ void LivingLifePage::drawMapCell( int inMapI,
                     add( mMapDropOffsets[ inMapI ],
                          mult( normalize( delta ), step ) );
                 }
+
+                                        
+            // step offset BEFORE applying it
+            // (so we don't repeat starting position)
+            pos = add( pos, mult( mMapDropOffsets[ inMapI ], CELL_D ) );
             }
                 
 
@@ -911,6 +914,35 @@ void LivingLifePage::drawLiveObject(
                 
     doublePair pos = mult( inObj->currentPos, CELL_D );
                 
+
+    if( inObj->heldByDropOffset.x != 0 ||
+        inObj->heldByDropOffset.y != 0 ) {
+                    
+        doublePair nullOffset = { 0, 0 };
+                    
+        
+        doublePair delta = sub( nullOffset, 
+                                inObj->heldByDropOffset );
+                    
+        double step = frameRateFactor * 0.0625;
+
+        if( length( delta ) < step ) {
+            
+            inObj->heldByDropOffset.x = 0;
+            inObj->heldByDropOffset.y = 0;
+            }
+        else {
+            inObj->heldByDropOffset =
+                add( inObj->heldByDropOffset,
+                     mult( normalize( delta ), step ) );
+            }
+                            
+        // step offset BEFORE applying it
+        // (so we don't repeat starting position)
+        pos = add( pos, mult( inObj->heldByDropOffset, CELL_D ) );
+        }
+    
+
     doublePair actionOffset = { 0, 0 };
                 
     //trail.push_back( pos );
@@ -1099,7 +1131,9 @@ void LivingLifePage::drawLiveObject(
             // is dropped
             inObj->heldObjectPos = holdPos;
             }
-                    
+          
+        doublePair worldHoldPos = holdPos;
+          
         holdPos = mult( holdPos, CELL_D );
 
         setDrawColor( 1, 1, 1, 1 );
@@ -1138,6 +1172,12 @@ void LivingLifePage::drawLiveObject(
             
             if( babyO != NULL ) {
                 
+                // save flip so that it sticks when baby set down
+                babyO->holdingFlip = inObj->holdingFlip;
+                
+                // save world hold pos for smooth set-down of baby
+                babyO->lastHeldByRawPos = worldHoldPos;
+
                 drawObjectAnim( babyO->displayID, curHeldType, 
                                 heldTimeVal, heldRotTimeVal,
                                 heldAnimFade,
@@ -2237,7 +2277,25 @@ void LivingLifePage::step() {
                         existing->clothing = o.clothing;
                         
 
-                        if( existing->id != ourID || 
+                        if( existing->heldByAdultID != -1 ) {
+                            // got a move for a player that's being held
+                            // this means they've been dropped
+                            
+                            existing->currentPos.x = o.xd;
+                            existing->currentPos.y = o.yd;
+                            
+                            existing->currentSpeed = 0;
+                            
+                            existing->xd = o.xd;
+                            existing->yd = o.yd;
+                            
+                            existing->heldByDropOffset =
+                                sub( existing->lastHeldByRawPos,
+                                     existing->currentPos );
+
+                            existing->heldByAdultID = -1;
+                            }
+                        else if( existing->id != ourID || 
                             forced ) {
                             
                             // don't ever force-update these for
