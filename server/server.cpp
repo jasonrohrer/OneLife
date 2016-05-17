@@ -2327,6 +2327,7 @@ int main() {
                                         
                                         if( equal( cPos, targetPos ) ) {
                                             // hit
+                                            hitPlayerIndex = j;
                                             hitPlayer = otherPlayer;
                                             break;
                                             }
@@ -2350,6 +2351,23 @@ int main() {
                                             m.x, m.y, hitPlayer,
                                             &mapChanges, &mapChangesPos,
                                             &playerIndicesToSendUpdatesAbout );
+                                        }
+                                    
+                                    if( hitPlayer->xd != hitPlayer->xs
+                                        ||
+                                        hitPlayer->ys != hitPlayer->ys ) {
+                                        
+                                        // force baby to stop moving
+                                        hitPlayer->xd = m.x;
+                                        hitPlayer->yd = m.y;
+                                        hitPlayer->xs = m.x;
+                                        hitPlayer->ys = m.y;
+                                        
+                                        hitPlayer->posForced = true;
+                                        // send update about them to 
+                                        // end the move right now
+                                        playerIndicesToSendUpdatesAbout.
+                                            push_back( hitPlayerIndex );
                                         }
                                     
                                     nextPlayer->heldOriginValid = 1;
