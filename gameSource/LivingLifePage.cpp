@@ -1443,6 +1443,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         // now draw tiles in this row, but only if they
         // are behind a live player object
+
+        // run this loop twice, once for
+        // adults, and then afterward for recently-dropped babies
+        // that are still sliding into place (so that they remain
+        // visibly on top of the adult who dropped them
+        for( int d=0; d<2; d++ )
         for( int x=xStart; x<=xEnd; x++ ) {
             int worldX = x + mMapOffsetX - mMapD / 2;
 
@@ -1456,6 +1462,20 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     continue;
                     }
 
+                if( d == 0 &&
+                    ( o->heldByDropOffset.x != 0 ||
+                      o->heldByDropOffset.y != 0 ) ) {
+                    // recently dropped baby, skip
+                    continue;
+                    }
+                else if( d == 1 &&
+                         o->heldByDropOffset.x == 0 &&
+                         o->heldByDropOffset.y == 0 ) {
+                    // not a recently-dropped baby, skip
+                    continue;
+                    }
+                
+                
                 int oX = o->xd;
                 int oY = o->yd;
                 
