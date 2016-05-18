@@ -2316,6 +2316,20 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
             }
         }
 
+    if( numUses == 0 ) {
+        return;
+        }
+    
+    if( mPickedObjectLayer != -1 ) {
+        
+        mPickedObjectLayer -= numUses;
+        
+        if( mPickedObjectLayer < 0 ) {
+            mPickedObjectLayer = -1;
+            }
+        }
+    
+
     int newNumSprites = mCurrentObject.numSprites - numUses;
     
     int *newSprites = new int[ newNumSprites ];
