@@ -1238,8 +1238,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mDemoPersonObject = -1;
             
             if( ! mCheckboxes[2]->getToggled() ) {
-                mSetHeldPosButton.setVisible( true );
-
+                
+                if( mPickedObjectLayer != -1 ) {    
+                    mSetHeldPosButton.setVisible( true );
+                    }
+                
                 if( ! mClothingCheckboxes[0]->getToggled() ) {
                     mDemoClothesButton.setVisible( true );
                     mEndClothesDemoButton.setVisible( false );
@@ -1623,7 +1626,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             if( mCheckboxes[2]->getToggled() ) {
                 mPersonAgeSlider.setValue( defaultAge );
                 mPersonAgeSlider.setVisible( true );
-                mSetHeldPosButton.setVisible( false );
                 }
             else {
                 mPersonAgeSlider.setVisible( false );
@@ -1672,8 +1674,14 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         if( mCheckboxes[2]->getToggled() ) {
             mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
-            mSetHeldPosButton.setVisible( false );
+            
 
+            if( mPickedObjectLayer != -1 ) {
+                mSetHeldPosButton.setVisible( false );
+                }
+            else {
+                mSetHeldPosButton.setVisible( true );
+                }
             
             mContainSizeField.setInt( 1 );
             mContainSizeField.setVisible( false );
@@ -1984,6 +1992,13 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         double age = mPersonAgeSlider.getValue();
 
+        if( mSetHeldPos ) {
+            // we're setting the held pos of a person by another person
+            // hold the held person's aget constant at 0 (baby)
+            // and only apply slider to holding adult
+            age = 0;
+            }
+
         headIndex = getHeadIndex( &mCurrentObject, age );
 
         headPos = mCurrentObject.spritePos[ headIndex ];
@@ -2042,6 +2057,13 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
             double age = mPersonAgeSlider.getValue();
             
+            if( mSetHeldPos ) {
+                // we're setting the held pos of a person by another person
+                // hold the held person's aget constant at 0 (baby)
+                // and only apply slider to holding adult
+                age = 0;
+                }
+
             if( mCurrentObject.spriteAgeStart[i] != -1 &&
                 mCurrentObject.spriteAgeEnd[i] != -1 ) {
                 
@@ -2431,8 +2453,19 @@ void EditorObjectPage::pickedLayerChanged() {
         mHueSlider.setVisible( false );
         mSaturationSlider.setVisible( false );
         mValueSlider.setVisible( false );
+        
+        mSetHeldPosButton.setVisible( true );
         }
     else {
+        
+        if( mCheckboxes[2]->getToggled() ) {
+            // person, and a layer selected, disable held demo button
+            // because of overlap
+            mSetHeldPosButton.setVisible( false );
+            }
+        else {
+            mSetHeldPosButton.setVisible( true );
+            }
 
         if( getUsesMultiplicativeBlending( 
                 mCurrentObject.sprites[ mPickedObjectLayer ] ) ) {
@@ -2471,6 +2504,10 @@ void EditorObjectPage::pickedLayerChanged() {
 
 
 void EditorObjectPage::pointerMove( float inX, float inY ) {
+    if( mSetHeldPos ) {
+        return;
+        }
+
     if( mRotAdjustMode && mPickedObjectLayer != -1 ) {
         // mouse move adjusts rotation
         double oldRot = mCurrentObject.spriteRot[ mPickedObjectLayer ];
@@ -2698,7 +2735,7 @@ static char *deleteFromCharArray( char *inArray, char inOldLength,
 
 void EditorObjectPage::keyDown( unsigned char inASCII ) {
     
-    if( TextField::isAnyFocused() ) {
+    if( TextField::isAnyFocused() || mSetHeldPos ) {
         return;
         }
     
@@ -2992,6 +3029,26 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
         offset = 5;
         }
     
+
+    if( mSetHeldPos ) {
+        switch( inKeyCode ) {
+            case MG_KEY_LEFT:
+                mCurrentObject.heldOffset.x -= offset;
+                break;
+            case MG_KEY_RIGHT:
+                mCurrentObject.heldOffset.x += offset;
+                break;
+            case MG_KEY_DOWN:
+                mCurrentObject.heldOffset.y -= offset;
+                break;
+            case MG_KEY_UP:
+                mCurrentObject.heldOffset.y += offset;
+                break;
+            }
+        return;
+        }
+    
+
 
     if( mPickedObjectLayer == -1 && mPickedSlot == -1 ) {
 
