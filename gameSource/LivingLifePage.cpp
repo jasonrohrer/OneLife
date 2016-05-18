@@ -1074,9 +1074,21 @@ void LivingLifePage::drawLiveObject(
             holdPos = pos;
             }
 
+        ObjectRecord *heldObject = NULL;
+
         if( inObj->holdingID > 0 ) {
+            heldObject = getObject( inObj->holdingID );
+            }
+        else if( inObj->holdingID < 0 ) {
+            // held baby
+            LiveObject *babyO = getGameObject( - inObj->holdingID );
             
-            ObjectRecord *heldObject = getObject( inObj->holdingID );
+            if( babyO != NULL ) {    
+                heldObject = getObject( babyO->displayID );
+                }
+            }
+        
+        if( heldObject != NULL ) {
             
             if( inObj->holdingFlip ) {
                 holdPos.x -= heldObject->heldOffset.x;
@@ -1087,21 +1099,7 @@ void LivingLifePage::drawLiveObject(
             
             holdPos.y += heldObject->heldOffset.y;
             }
-        else if( inObj->holdingID < 0 ) {
-            // holding a baby
-            
-            int babyXOffset = 16;
-            int babyYOffset = 16;
-            
-            if( inObj->holdingFlip ) {
-                holdPos.x -= babyXOffset;
-                }
-            else {
-                holdPos.x += babyXOffset;
-                }
-            holdPos.y += babyYOffset;
-            }
-        
+                
 
         holdPos = mult( holdPos, 1.0 / CELL_D );
 
