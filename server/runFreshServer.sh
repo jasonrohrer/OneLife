@@ -1,0 +1,2 @@
+rm map.db
+./OneLifeServer
