@@ -134,6 +134,8 @@ float initSpriteBankStep() {
         r->hitMap = NULL;
         r->loading = false;
         r->numStepsUnused = 0;
+        
+        r->maxD = 2;
 
         r->id = 0;
         
@@ -709,6 +711,19 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
 
 void deleteSpriteFromBank( int inID ) {
     File spritesDir( NULL, "sprites" );
+
+    for( int i=0; i<loadingSprites.size(); i++ ) {
+        SpriteLoadingRecord *loadingR = loadingSprites.getElement( i );
+    
+        if( loadingR->spriteID == inID ) {
+            // block deletion of sprite that hasn't loaded yet
+
+            // this is a rare case of a user's clicks beating the disk
+            // but we still need to prevent a crash here.
+            return;
+            }
+        }
+
     
     
     if( spritesDir.exists() && spritesDir.isDirectory() ) {    
@@ -729,7 +744,9 @@ void deleteSpriteFromBank( int inID ) {
         
         delete cacheFile;
 
-            
+
+        loadedSprites.deleteElementEqualTo( inID );
+        
         spriteFileTGA->remove();
         spriteFileTXT->remove();
             
