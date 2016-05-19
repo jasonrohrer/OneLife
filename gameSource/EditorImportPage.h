@@ -105,8 +105,8 @@ class EditorImportPage : public GamePage, public ActionListener {
         doublePair mCenterPoint;
         
 
-        doublePair mOverlayOffset;
-        OverlayRecord *mCurrentOverlay;
+        SimpleVector<doublePair> mOverlayOffset;
+        SimpleVector<OverlayRecord *>mCurrentOverlay;
         
 
         char mMovingSheet;
@@ -119,10 +119,10 @@ class EditorImportPage : public GamePage, public ActionListener {
         char mMovingOverlay;
         char mScalingOverlay;
         char mRotatingOverlay;
-        double mOverlayScale;
-        double mOverlayRotation;
+        SimpleVector<double> mOverlayScale;
+        SimpleVector<double> mOverlayRotation;
         
-        char mOverlayFlip;
+        SimpleVector<char> mOverlayFlip;
         
 
         doublePair mMovingOverlayPointerStart;

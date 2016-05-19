@@ -52,7 +52,6 @@ EditorImportPage::EditorImportPage()
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
           mCenterSet( true ),
-          mCurrentOverlay( NULL ),
           mClearRotButton( smallFont, -300, -280, "0 Rot" ),
           mClearScaleButton( smallFont, -300, -240, "1 Scale" ),
           mFlipOverlayButton( smallFont, -230, -280, "Flip H" ),
@@ -109,16 +108,11 @@ EditorImportPage::EditorImportPage()
     mFlipOverlayButton.setVisible( false );
     mClearOverlayButton.setVisible( false );
 
-    mOverlayScale = 1;
-    mOverlayRotation = 0;
-
 
     mMovingSheet = false;
     doublePair offset = { 0, 0 };
     mSheetOffset = offset;
     mMovingSheetPointerStart = offset;
-
-    mOverlayFlip = 0;
 
 
     mSettingSpriteCenter = false;
@@ -189,7 +183,7 @@ static Image *expandToPowersOfTwo( Image *inImage ) {
 
 void EditorImportPage::clearUseOfOverlay( int inOverlayID ) {
     
-    if( mCurrentOverlay->id == inOverlayID ) {
+    if( mCurrentOverlay.getLastElementDirect()->id == inOverlayID ) {
         actionPerformed( &mClearOverlayButton );
         }
     }
@@ -427,43 +421,59 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mClearRotButton ) {
         mClearRotButton.setVisible( false );
-        mOverlayRotation = 0;
+        *( mOverlayRotation.getLastElement() ) = 0;
         }
     else if( inTarget == &mClearScaleButton ) {
         mClearScaleButton.setVisible( false );
-        mOverlayScale = 1;
+        *( mOverlayScale.getLastElement() ) = 1;
         }    
     else if( inTarget == &mFlipOverlayButton ) {
-        mOverlayFlip = !mOverlayFlip;
+        *( mOverlayFlip.getLastElement() ) = 
+            !( mOverlayFlip.getLastElementDirect() );
         }    
     else if( inTarget == &mClearOverlayButton ) {
-        mCurrentOverlay = NULL;
-        mOverlayRotation = 0;
-        mOverlayScale = 1 ;
-        mClearScaleButton.setVisible( false );
-        mClearRotButton.setVisible( false );
-        mFlipOverlayButton.setVisible( false );
-        mClearOverlayButton.setVisible( false );
+        if( mCurrentOverlay.size() > 0 ) {
+            int lastIndex = mCurrentOverlay.size() - 1;
+            
+            mCurrentOverlay.deleteElement( lastIndex );
+            mOverlayRotation.deleteElement( lastIndex );
+            mOverlayScale.deleteElement( lastIndex );
+            mOverlayFlip.deleteElement( lastIndex );
+            mOverlayOffset.deleteElement( lastIndex );
+            }
+        if( mCurrentOverlay.size() == 0 ) {
+            mClearScaleButton.setVisible( false );
+            mClearRotButton.setVisible( false );
+            mFlipOverlayButton.setVisible( false );
+            mClearOverlayButton.setVisible( false );
+            }
+        else {
+            mClearScaleButton.setVisible( 
+                mOverlayScale.getLastElementDirect() != 1 );
+            mClearRotButton.setVisible( 
+                mOverlayRotation.getLastElementDirect() != 0 );
+            }
         }    
     else if( inTarget == &mOverlayPicker ) {
         int overlayID = mOverlayPicker.getSelectedObject();
     
         if( overlayID != -1 ) {
-            mCurrentOverlay = getOverlay( overlayID );
-            mOverlayOffset.x = 0;
-            mOverlayOffset.y = 0;
+            mCurrentOverlay.push_back( getOverlay( overlayID ) );
+            doublePair offset = { 0, 0 };
             
+            mOverlayOffset.push_back( offset );
+
             mMovingOverlay = false;
             mScalingOverlay = false;
             mRotatingOverlay = false;
             
-            mOverlayFlip = 0;
+            mOverlayFlip.push_back( 0 );
             
             mFlipOverlayButton.setVisible( true );
             mClearOverlayButton.setVisible( true );
 
-            mOverlayScale = 1.0;
-            mOverlayRotation = 0;
+            mOverlayScale.push_back( 1.0 );
+            mOverlayRotation.push_back( 0 );
             }
         }
     else if( inTarget == &mObjectEditorButton ) {
@@ -506,13 +516,18 @@ void EditorImportPage::drawUnderComponents( doublePair inViewCenter,
             drawSprite( mCenterMarkSprite, mCenterPoint );
             }
         }
-    if( mCurrentOverlay != NULL ) {
-        setDrawColor( 1, 1, 1, 1 );
-        toggleMultiplicativeBlend( true );
-        drawSprite( mCurrentOverlay->thumbnailSprite, mOverlayOffset,
-                    mOverlayScale, mOverlayRotation, mOverlayFlip );
-        toggleMultiplicativeBlend( false );
+
+    setDrawColor( 1, 1, 1, 1 );
+    toggleMultiplicativeBlend( true );
+    for( int i=0; i<mCurrentOverlay.size(); i++ ) {
+        
+        drawSprite( mCurrentOverlay.getElementDirect(i)->thumbnailSprite, 
+                    mOverlayOffset.getElementDirect(i),
+                    mOverlayScale.getElementDirect(i), 
+                    mOverlayRotation.getElementDirect(i), 
+                    mOverlayFlip.getElementDirect(i) );
         }
+    toggleMultiplicativeBlend( false );
     }
 
 
@@ -550,28 +565,28 @@ void EditorImportPage::draw( doublePair inViewCenter,
     
     setDrawColor( 1, 1, 1, 1 );
 
-    if( mOverlayScale != 1.0 ) {
+    if( mOverlayScale.getLastElementDirect() != 1.0 ) {
         doublePair pos = { 300, -240 };
         char *string = 
             autoSprintf( "Scale: %.3f", 
-                         mOverlayScale );
+                         mOverlayScale.getLastElementDirect() );
     
         smallFont->drawString( string, pos, alignLeft );
         
         delete [] string;
         }
-    if( mOverlayRotation != 0 ) {
+    if( mOverlayRotation.getLastElementDirect() != 0 ) {
         doublePair pos = { 300, -260 };
         char *string = 
             autoSprintf( "Rot: %.3f", 
-                         mOverlayRotation );
+                         mOverlayRotation.getLastElementDirect() );
     
         smallFont->drawString( string, pos, alignLeft );
         
         delete [] string;
         }
 
-    if( mCurrentOverlay != NULL ) {
+    if( mCurrentOverlay.size() > 0 ) {
         doublePair pos = mObjectEditorButton.getPosition();
 
         pos.y += 20;
@@ -609,9 +624,14 @@ void EditorImportPage::draw( doublePair inViewCenter,
 
 
 void EditorImportPage::step() {
-    mClearRotButton.setVisible( mOverlayRotation != 0 );
-    mClearScaleButton.setVisible( mOverlayScale != 1 );
+    if( mCurrentOverlay.size() > 0 ) {        
+        mClearRotButton.setVisible( 
+            mOverlayRotation.getLastElementDirect() != 0 );
+        mClearScaleButton.setVisible( 
+            mOverlayScale.getLastElementDirect() != 1 );
+        }
     }
+
 
 
 
@@ -636,25 +656,27 @@ void EditorImportPage::pointerMove( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
 
-    if( mCurrentOverlay != NULL  ) {
+    if( mCurrentOverlay.size() > 0  ) {
         
         if( mMovingOverlay ) {
             doublePair pos = { inX, inY };
-            mOverlayOffset = sub( pos, mMovingOverlayPointerStart );
+            *( mOverlayOffset.getLastElement() ) = 
+                sub( pos, mMovingOverlayPointerStart );
             }
         if( mScalingOverlay ) {
             doublePair pos = { inX, inY };
-            mOverlayScale = mMovingOverlayScaleStart + 
+            *( mOverlayScale.getLastElement() ) = mMovingOverlayScaleStart + 
                 0.75 * mMovingOverlayScaleStart * 
                 ( pos.y - mMovingOverlayPointerStart.y ) / 100;
         
-            if( mOverlayScale < 0 ) {
-                mOverlayScale = 0;
+            if( mOverlayScale.getLastElement() < 0 ) {
+                *( mOverlayScale.getLastElement() ) = 0;
                 }
             }
         if( mRotatingOverlay ) {
             doublePair pos = { inX, inY };
-            mOverlayRotation = mMovingOverlayRotationStart + 
+            *( mOverlayRotation.getLastElement() ) = 
+                mMovingOverlayRotationStart + 
                 ( pos.x - mMovingOverlayPointerStart.x ) / 400;
             }
         }
@@ -819,20 +841,27 @@ void EditorImportPage::keyDown( unsigned char inASCII ) {
 
     if( inASCII == 't' ) {
         mMovingOverlay = true;
-        mMovingOverlayPointerStart.x = lastMouseX - mOverlayOffset.x;
-        mMovingOverlayPointerStart.y = lastMouseY - mOverlayOffset.y;
+        mMovingOverlayPointerStart.x = lastMouseX - 
+            mOverlayOffset.getLastElementDirect().x;
+        mMovingOverlayPointerStart.y = lastMouseY - 
+            mOverlayOffset.getLastElementDirect().y;
         }
     else if( inASCII == 's' ) {
         mScalingOverlay = true;
         mMovingOverlayPointerStart.x = lastMouseX;
         mMovingOverlayPointerStart.y = lastMouseY;
-        mMovingOverlayScaleStart = mOverlayScale;
+        if( mCurrentOverlay.size() > 0 ) {
+            mMovingOverlayScaleStart = mOverlayScale.getLastElementDirect();
+            }
         }
     else if( inASCII == 'r' ) {
         mRotatingOverlay = true;
         mMovingOverlayPointerStart.x = lastMouseX;
         mMovingOverlayPointerStart.y = lastMouseY;
-        mMovingOverlayRotationStart = mOverlayRotation;
+        if( mCurrentOverlay.size() > 0 ) {
+            mMovingOverlayRotationStart = 
+                mOverlayRotation.getLastElementDirect();
+            }
         }
     else if( inASCII == 'c' ) {
         mSettingSpriteCenter = true;
@@ -1113,12 +1142,13 @@ void EditorImportPage::processSelection() {
 
 
 
-
-    if( mCurrentOverlay != NULL ) {
+    for( int i=0; i<mCurrentOverlay.size(); i++ ) {
         // apply overlay as multiply to cut image
         
-        double cosAngle = cos( - 2 * M_PI * mOverlayRotation );
-        double sinAngle = sin( - 2 * M_PI * mOverlayRotation );
+        double cosAngle = 
+            cos( - 2 * M_PI * mOverlayRotation.getElementDirect(i) );
+        double sinAngle = 
+            sin( - 2 * M_PI * mOverlayRotation.getElementDirect(i) );
 
         int cutW = cutImage->getWidth();
         int cutH = cutImage->getHeight();
@@ -1126,13 +1156,15 @@ void EditorImportPage::processSelection() {
         int sheetW = mImportedSheet->getWidth();
         int sheetH = mImportedSheet->getHeight();
         
-        int overW = mCurrentOverlay->image->getWidth();
-        int overH = mCurrentOverlay->image->getHeight();
+        int overW = mCurrentOverlay.getElementDirect(i)->image->getWidth();
+        int overH = mCurrentOverlay.getElementDirect(i)->image->getHeight();
 
         // this is relative to our whole sheet
-        int offsetW = (overW - sheetW)/2 - (int)mOverlayOffset.x 
+        int offsetW = (overW - sheetW)/2 
+            - (int)mOverlayOffset.getElementDirect(i).x 
             + (int)mSheetOffset.x;
-        int offsetH = (overH - sheetH)/2 + (int)mOverlayOffset.y
+        int offsetH = (overH - sheetH)/2 
+            + (int)mOverlayOffset.getElementDirect(i).y
             - (int)mSheetOffset.y;
         
         // this is relative to what we cut out
@@ -1141,14 +1173,16 @@ void EditorImportPage::processSelection() {
         
 
         for( int c=0; c<3; c++ ) {
-            double *overC = mCurrentOverlay->image->getChannel( c );
+            double *overC = 
+                mCurrentOverlay.getElementDirect(i)->image->getChannel( c );
             double *cutC = cutImage->getChannel( c );
             
             for( int y=0; y<cutH; y++ ) {
                 int overY = y + offsetH;
 
                 // scale and rotate relative to center
-                double overScaledY = (overY - overH/2) / mOverlayScale;
+                double overScaledY = (overY - overH/2) / 
+                    mOverlayScale.getElementDirect(i);
 
                     
                 for( int x=0; x<cutW; x++ ) {
@@ -1157,13 +1191,14 @@ void EditorImportPage::processSelection() {
                     
                     // scale and rotate relative to center
                     double overScaledX = 
-                        (overX - overW/2) / mOverlayScale;
+                        (overX - overW/2) / 
+                        mOverlayScale.getElementDirect(i);
 
                     double overScaledFinalX = overScaledX;
                     double overScaledFinalY = overScaledY;
                     
 
-                    if( mOverlayRotation != 0 ) {
+                    if( mOverlayRotation.getElementDirect(i) != 0 ) {
                         
                         double rotX = 
                             overScaledX * cosAngle - overScaledY * sinAngle;
@@ -1178,7 +1213,7 @@ void EditorImportPage::processSelection() {
                     overScaledFinalX += overW/2 - 0.5;
                     overScaledFinalY += overH/2 - 0.5;
                     
-                    if( mOverlayFlip ) {
+                    if( mOverlayFlip.getElementDirect(i) ) {
                         overScaledFinalX = ( overW - 1 ) - overScaledFinalX;
                         overX = ( overW - 1 ) - overX;
                         }
@@ -1194,8 +1229,8 @@ void EditorImportPage::processSelection() {
                             
                             // interpolation?
                             
-                            if( mOverlayScale == 1 &&
-                                mOverlayRotation == 0 ) {
+                            if( mOverlayScale.getElementDirect(i) == 1 &&
+                                mOverlayRotation.getElementDirect(i) == 0 ) {
                                 // no interp needed
                                 
                                 int overI = overY * overW + overX;
