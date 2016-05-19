@@ -956,6 +956,13 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
 
                     babyO->heldByOther = false;
 
+                    if( getFemale( inDroppingPlayer ) ) {    
+                        // reset food decrement time
+                        babyO->foodDecrementETASeconds =
+                            Time::getCurrentTime() +
+                            computeFoodDecrementTimeSeconds( babyO );
+                        }
+                    
                     inPlayerIndicesToSendUpdatesAbout->push_back( 
                         getLiveObjectIndex( babyID ) );
                     }
@@ -992,6 +999,13 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             babyO->ys = targetY;
             
             babyO->heldByOther = false;
+
+            if( getFemale( inDroppingPlayer ) ) {    
+                // reset food decrement time
+                babyO->foodDecrementETASeconds =
+                    Time::getCurrentTime() +
+                    computeFoodDecrementTimeSeconds( babyO );
+                }
 
             inPlayerIndicesToSendUpdatesAbout->push_back( 
                 getLiveObjectIndex( babyID ) );
@@ -2369,7 +2383,7 @@ int main() {
                                     
                                     if( hitPlayer->xd != hitPlayer->xs
                                         ||
-                                        hitPlayer->ys != hitPlayer->ys ) {
+                                        hitPlayer->yd != hitPlayer->ys ) {
                                         
                                         // force baby to stop moving
                                         hitPlayer->xd = m.x;
@@ -2377,11 +2391,10 @@ int main() {
                                         hitPlayer->xs = m.x;
                                         hitPlayer->ys = m.y;
                                         
-                                        hitPlayer->posForced = true;
-                                        // send update about them to 
-                                        // end the move right now
-                                        playerIndicesToSendUpdatesAbout.
-                                            push_back( hitPlayerIndex );
+                                        // but don't send an update
+                                        // about this
+                                        // (everyone will get the pick-up
+                                        //  update for the holding adult)
                                         }
                                     
                                     // if adult female, baby auto-fed
@@ -2858,7 +2871,10 @@ int main() {
                         // no negative
                         nextPlayer->foodStore = 0;
                         }
-                    nextPlayer->foodUpdate = true;
+                    
+                    if( !heldByFemale ) {
+                        nextPlayer->foodUpdate = true;
+                        }
                     }
                 
                 }
