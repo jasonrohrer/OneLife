@@ -2052,8 +2052,6 @@ int main() {
                                     // is anyone there?
                                     int numLive = players.size();
                                     
-                                    int hitPlayerIndex = 0;
-                                    
                                     LiveObject *hitPlayer = NULL;
                                     
                                     for( int j=0; j<numLive; j++ ) {
@@ -2074,7 +2072,6 @@ int main() {
                                                 m.y ) {
                                                 
                                                 // hit
-                                                hitPlayerIndex = j;
                                                 hitPlayer = otherPlayer;
                                                 break;
                                                 }
@@ -2319,8 +2316,6 @@ int main() {
                                 // is anyone there?
                                 int numLive = players.size();
                                 
-                                int hitPlayerIndex = 0;
-                                
                                 LiveObject *hitPlayer = NULL;
                                 
                                 for( int j=0; j<numLive; j++ ) {
@@ -2341,7 +2336,6 @@ int main() {
                                             m.y ) {
                                                 
                                             // hit
-                                            hitPlayerIndex = j;
                                             hitPlayer = otherPlayer;
                                             break;
                                             }
@@ -2355,7 +2349,6 @@ int main() {
                                         
                                         if( equal( cPos, targetPos ) ) {
                                             // hit
-                                            hitPlayerIndex = j;
                                             hitPlayer = otherPlayer;
                                             break;
                                             }
