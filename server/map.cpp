@@ -380,7 +380,7 @@ static int getBaseMap( int inX, int inY ) {
 
 
 
-// two ints to an 8-byte key
+// three ints to an 12-byte key
 void intTripleToKey( int inX, int inY, int inSlot, unsigned char *outKey ) {
     for( int i=0; i<4; i++ ) {
         int offset = i * 8;
@@ -526,7 +526,66 @@ void initMap() {
             naturalMapIDs.size(), totalChanceWeight );
 
     delete [] allObjects;
+    
 
+
+    printf( "\nCleaning map of objects that have been removed...\n" );
+    
+
+    KISSDB_Iterator dbi;
+    
+    
+    KISSDB_Iterator_init( &db, &dbi );
+    
+    unsigned char key[12];
+    
+    unsigned char value[4];
+
+
+    // keep list of x,y coordinates in map that need clearing
+    SimpleVector<int> xToClear;
+    SimpleVector<int> yToClear;
+    
+    int totalSetCount = 0;
+    int numClearedCount = 0;
+    
+    while( KISSDB_Iterator_next( &dbi, key, value ) > 0 ) {
+        
+        int s = valueToInt( &( key[8] ) );
+       
+        if( s == 0 ) {
+            int id = valueToInt( value );
+            
+            if( id > 0 ) {
+                totalSetCount++;
+                
+                if( getObject( id ) == NULL ) {
+                    // id doesn't exist anymore
+                    
+                    numClearedCount++;
+                    
+                    int x = valueToInt( key );
+                    int y = valueToInt( &( key[4] ) );
+                    
+                    xToClear.push_back( x );
+                    yToClear.push_back( y );
+                    }
+                }
+            }
+        }
+    
+
+    for( int i=0; i<xToClear.size(); i++ ) {
+        int x = xToClear.getElementDirect( i );
+        int y = yToClear.getElementDirect( i );
+        
+        clearAllContained( x, y );
+        setMapObject( x, y, 0 );
+        }
+
+
+    printf( "...%d map cells were set, and %d needed to be cleared.\n\n",
+            totalSetCount, numClearedCount );
 
 
     // for debugging the map
