@@ -1309,7 +1309,8 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
         objectRecordToID( inPlayer->clothing.backShoe ) );
     
     delete [] holdingString;
-    
+    delete [] posString;
+
     return updateLine;
     }
 
@@ -3533,6 +3534,8 @@ int main() {
                     if( numSent == -1 ) {
                         nextPlayer->error = true;
                         }
+
+                    delete [] deleteUpdateMessage;
                     }
                 
 
