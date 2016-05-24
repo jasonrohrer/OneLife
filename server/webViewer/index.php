@@ -15,9 +15,13 @@ if( $update ) {
     echo "<br>";
     echo exec( "cd $hgPath/sprites; mogrify -format png *.tga" );
     echo "<br>";
+    echo exec( "cd $hgPath/overlays; mogrify -format png *.tga" );
+    echo "<br>";
     echo "...Done</br></br>";
     }
 
+
+echo "<a href=$hgPath/overlays>View Overlays</a><br><br>";
 
 
 $files = scandir( $path );
