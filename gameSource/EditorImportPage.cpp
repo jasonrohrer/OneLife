@@ -1120,6 +1120,9 @@ void EditorImportPage::processSelection() {
         }
     
     
+    // beyond this brightness, paper pixels become fully transparent
+    double blackEdgeThreshold = 0.9;
+    
     if( !mSelectionMultiplicative )
     for( int i=0; i<numPixels; i++ ) {
         if( whiteMap[i] == 1 ) {
@@ -1127,12 +1130,21 @@ void EditorImportPage::processSelection() {
             // alpha based on inverted color level
             // so image is transparent where it is most white
             // this gives our black outlines a proper feathered edge
-            a[i] = 1.0 - r[i];
+            
+            double maxColor = r[i];
+            if( g[i] > maxColor ) {
+                maxColor = g[i];
+                }
+            if( b[i] > maxColor ) {
+                maxColor = b[i];
+                }
+            
+            a[i] = 1.0 - maxColor;
             
             
             // however, make sure paper areas that aren't black at all
             // are totally transparent
-            if( r[i] > paperThreshold ) {
+            if( maxColor > blackEdgeThreshold ) {
                 a[i] = 0;
                 }            
             
