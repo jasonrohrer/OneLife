@@ -961,7 +961,7 @@ void EditorImportPage::processSelection() {
     whiteMap[ 0 ] = 1;
     
     // how dark do all channels have to be before we say it's not white.
-    double threshold = 0.1;
+    double threshold = 0.2;
 
 
     double *r = cutImage->getChannel( 0 );
