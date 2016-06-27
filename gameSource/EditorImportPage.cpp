@@ -1040,7 +1040,15 @@ void EditorImportPage::processSelection() {
                             whitePixelsWithUnexploredNeighbors.push_back( nI );
                             }
                         else {
-                            whiteMap[nI] = 0;
+                            // Treat these borders as the last white pixel
+                            // right at the frontier, but stop here
+                            // without exploring their neighbors further.
+                            // Thus, when we fill in black later for smooth
+                            // outlines, we won't have any light points
+                            // lingering in the outline.  This allows
+                            // us to have a higher threshold without
+                            // white points in the outline.
+                            whiteMap[nI] = 1;
                             }
                         }
                     }
