@@ -46,24 +46,26 @@ EditorObjectPage::EditorObjectPage()
                              0,  -260, 6,
                              false,
                              "Description", NULL, NULL ),
+          mBiomeField( smallFont, -150, 64, 4, false, "Biome",
+                       "0123456789", NULL ),
           mMapChanceField( smallFont, 
-                           -150,  64, 4,
+                           -150,  32, 4,
                            false,
                            "MapP", "0123456789.", NULL ),
           mHeatValueField( smallFont, 
-                           -150,  32, 4,
+                           -150,  0, 4,
                            false,
                            "Heat", "0123456789", NULL ),
           mRValueField( smallFont, 
-                        -150,  0, 4,
+                        -150,  -32, 4,
                         false,
                         "R", "0123456789.", NULL ),
           mFoodValueField( smallFont, 
-                           -150,  -32, 4,
+                           -150,  -64, 4,
                            false,
                            "Food", "0123456789", NULL ),
           mSpeedMultField( smallFont, 
-                           -150,  -64, 4,
+                           -150,  -96, 4,
                            false,
                            "Speed", "0123456789.", NULL ),
           mContainSizeField( smallFont, 
@@ -86,8 +88,8 @@ EditorObjectPage::EditorObjectPage()
           mImportEditorButton( mainFont, -210, 260, "Sprites" ),
           mTransEditorButton( mainFont, 210, 260, "Trans" ),
           mAnimEditorButton( mainFont, 330, 260, "Anim" ),
-          mMoreSlotsButton( smallFont, -160, -110, "More" ),
-          mLessSlotsButton( smallFont, -160, -190, "Less" ),
+          mMoreSlotsButton( smallFont, -160, -145, "More" ),
+          mLessSlotsButton( smallFont, -160, -195, "Less" ),
 
           mAgingLayerCheckbox( 190, -22, 2 ),
           mHeadLayerCheckbox( 190, 104, 2 ),
@@ -155,6 +157,7 @@ EditorObjectPage::EditorObjectPage()
 
     addComponent( &mDescriptionField );
     addComponent( &mMapChanceField );
+    addComponent( &mBiomeField );
     addComponent( &mHeatValueField );
     addComponent( &mRValueField );
     addComponent( &mFoodValueField );
@@ -361,6 +364,7 @@ EditorObjectPage::EditorObjectPage()
     mRotStartMouseX = 0;
     
     mMapChanceField.setText( "0.00" );
+    mBiomeField.setText( "0" );
     
     mHeatValueField.setText( "0" );
     mRValueField.setText( "0.00" );
@@ -693,6 +697,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCheckboxes[1]->getToggled(),
                    mHeldInHandCheckbox.getToggled(),
                    mBlocksWalkingCheckbox.getToggled(),
+                   mBiomeField.getInt(),
                    mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
                    mRValueField.getFloat(),
@@ -761,6 +766,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCheckboxes[1]->getToggled(),
                    mHeldInHandCheckbox.getToggled(),
                    mBlocksWalkingCheckbox.getToggled(),
+                   mBiomeField.getInt(),
                    mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
                    mRValueField.getFloat(),
@@ -824,6 +830,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }
 
         mMapChanceField.setText( "0.00" );
+        mBiomeField.setText( "0" );
 
         mHeatValueField.setText( "0" );
         mRValueField.setText( "0.00" );
@@ -1464,6 +1471,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mDescriptionField.setText( pickedRecord->description );
 
             mMapChanceField.setFloat( pickedRecord->mapChance, 2 );
+            mBiomeField.setInt( pickedRecord->biome );
             
             mHeatValueField.setInt( pickedRecord->heatValue );
             mRValueField.setFloat( pickedRecord->rValue, 2 );
@@ -2119,9 +2127,10 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
 
     setDrawColor( 1, 1, 1, 1 );
-    pos.y -= 150;
-    
     pos.x -= 200;
+    
+    pos.y = 0.5 * ( mMoreSlotsButton.getPosition().y + 
+                    mLessSlotsButton.getPosition().y );
 
     char *numSlotString = autoSprintf( "Slots: %d", mCurrentObject.numSlots );
     

@@ -40,6 +40,11 @@ typedef struct ObjectRecord {
         
         
         
+        // biome number where this object will naturally occur according
+        // to mapChance below
+        int biome;
+        
+
         // chance of occurrence naturally on map
         // value between 0 and 1 inclusive
         // Note that there's an overall chance-of-anything that is applied
@@ -195,6 +200,7 @@ int addObject( const char *inDescription,
                char inPermanent,
                char inHeldInHand,
                char inBlocksWalking,
+               int inBiome,
                float inMapChance,
                int inHeatValue,
                float inRValue,

@@ -68,6 +68,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
         TextField mDescriptionField;
         
+        TextField mBiomeField;
         TextField mMapChanceField;
         TextField mHeatValueField;
         TextField mRValueField;

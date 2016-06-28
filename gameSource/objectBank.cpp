@@ -248,9 +248,21 @@ float initObjectBankStep() {
 
 
                 r->mapChance = 0;      
-                sscanf( lines[next], "mapChance=%f", 
-                        &( r->mapChance ) );
-                            
+                int numRead = sscanf( lines[next], "mapChance=biome_%d#%f", 
+                                      &( r->biome ), &( r->mapChance ) );
+                
+                if( numRead != 2 ) {
+                    // biome not present (old format), treat as 0
+                    r->biome = 0;
+                    sscanf( lines[next], "mapChance=%f", &( r->mapChance ) );
+                
+                    // NOTE:  I've avoided too many of these format
+                    // bandaids, and forced whole-folder file rewrites 
+                    // in the past.
+                    // But now we're part way into production, so bandaids
+                    // are more effective.
+                    }
+                
                 next++;
 
 
@@ -629,6 +641,7 @@ void resaveAll() {
                        idMap[i]->permanent,
                        idMap[i]->heldInHand,
                        idMap[i]->blocksWalking,
+                       idMap[i]->biome,
                        idMap[i]->mapChance,
                        idMap[i]->heatValue,
                        idMap[i]->rValue,
@@ -745,6 +758,7 @@ int addObject( const char *inDescription,
                char inPermanent,
                char inHeldInHand,
                char inBlocksWalking,
+               int inBiome,
                float inMapChance,
                int inHeatValue,
                float inRValue,
@@ -827,7 +841,8 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "blocksWalking=%d", 
                                       (int)inBlocksWalking ) );
         
-        lines.push_back( autoSprintf( "mapChance=%f", inMapChance ) );
+        lines.push_back( autoSprintf( "mapChance=biome_%d#%f", 
+                                      inBiome, inMapChance ) );
         lines.push_back( autoSprintf( "heatValue=%d", inHeatValue ) );
         lines.push_back( autoSprintf( "rValue=%f", inRValue ) );
 
@@ -989,6 +1004,7 @@ int addObject( const char *inDescription,
     r->heldInHand = inHeldInHand;
     r->blocksWalking = inBlocksWalking;
     
+    r->biome = inBiome;
     r->mapChance = inMapChance;
     
     r->heatValue = inHeatValue;
