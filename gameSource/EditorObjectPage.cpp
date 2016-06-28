@@ -84,6 +84,8 @@ EditorObjectPage::EditorObjectPage()
           mReplaceObjectButton( smallFont, 310, -260, "Replace" ),
           mClearObjectButton( smallFont, -160, 200, "Blank" ),
           mClearRotButton( smallFont, -160, 120, "0 Rot" ),
+          mRot90ForwardButton( smallFont, -115, 120, ">" ),
+          mRot90BackwardButton( smallFont, -205, 120, "<" ),
           mFlipHButton( smallFont, -160, 160, "H Flip" ),
           mImportEditorButton( mainFont, -210, 260, "Sprites" ),
           mTransEditorButton( mainFont, 210, 260, "Trans" ),
@@ -209,7 +211,9 @@ EditorObjectPage::EditorObjectPage()
 
     addComponent( &mClearObjectButton );
     addComponent( &mClearRotButton );
-    
+    addComponent( &mRot90ForwardButton );
+    addComponent( &mRot90BackwardButton );
+
     addComponent( &mFlipHButton );
 
     addComponent( &mSpritePicker );
@@ -291,6 +295,11 @@ EditorObjectPage::EditorObjectPage()
 
     mClearRotButton.addActionListener( this );
     mClearRotButton.setVisible( false );
+
+    mRot90ForwardButton.addActionListener( this );
+    mRot90BackwardButton.addActionListener( this );
+    mRot90ForwardButton.setVisible( false );
+    mRot90BackwardButton.setVisible( false );
 
     mFlipHButton.addActionListener( this );
     mFlipHButton.setVisible( false );
@@ -945,6 +954,34 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                              oldRot );
             }
         mClearRotButton.setVisible( false );
+        }
+    else if( inTarget == &mRot90ForwardButton ) {
+        if( mPickedObjectLayer != -1 ) {
+            double oldRot = mCurrentObject.spriteRot[ mPickedObjectLayer ];
+
+            mCurrentObject.spriteRot[mPickedObjectLayer] = 
+                0.25 + floor( oldRot * 4 ) / 4;
+            
+            recursiveRotate( &mCurrentObject,
+                             mPickedObjectLayer,
+                             mCurrentObject.spritePos[ mPickedObjectLayer ],
+                             mCurrentObject.spriteRot[ mPickedObjectLayer ] - 
+                             oldRot );
+            }
+        }
+    else if( inTarget == &mRot90BackwardButton ) {
+        if( mPickedObjectLayer != -1 ) {
+            double oldRot = mCurrentObject.spriteRot[ mPickedObjectLayer ];
+
+            mCurrentObject.spriteRot[mPickedObjectLayer] = 
+                -0.25 + ceil( oldRot * 4 ) / 4;
+            
+            recursiveRotate( &mCurrentObject,
+                             mPickedObjectLayer,
+                             mCurrentObject.spritePos[ mPickedObjectLayer ],
+                             mCurrentObject.spriteRot[ mPickedObjectLayer ] - 
+                             oldRot );
+            }
         }
     else if( inTarget == &mFlipHButton ) {
         if( mPickedObjectLayer != -1 ) {
@@ -2478,6 +2515,9 @@ void EditorObjectPage::pickedLayerChanged() {
         mValueSlider.setVisible( false );
         
         mSetHeldPosButton.setVisible( true );
+        
+        mRot90ForwardButton.setVisible( false );
+        mRot90BackwardButton.setVisible( false );
         }
     else {
         
@@ -2489,6 +2529,10 @@ void EditorObjectPage::pickedLayerChanged() {
         else {
             mSetHeldPosButton.setVisible( true );
             }
+        
+        mRot90ForwardButton.setVisible( true );
+        mRot90BackwardButton.setVisible( true );
+
 
         if( getUsesMultiplicativeBlending( 
                 mCurrentObject.sprites[ mPickedObjectLayer ] ) ) {

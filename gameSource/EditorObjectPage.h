@@ -88,7 +88,10 @@ class EditorObjectPage : public GamePage, public ActionListener {
         TextButton mClearObjectButton;
 
         TextButton mClearRotButton;
+        TextButton mRot90ForwardButton;
+        TextButton mRot90BackwardButton;
         
+
         TextButton mFlipHButton;
         
 
