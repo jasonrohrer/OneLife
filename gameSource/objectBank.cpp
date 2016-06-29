@@ -159,6 +159,20 @@ void sparseCommaLineToBoolArray( const char *inExpectedLineName,
 
 
 
+static void fillObjectBiomeFromString( ObjectRecord *inRecord, 
+                                       char *inBiomes ) {    
+    char **biomeParts = split( inBiomes, ",", &( inRecord->numBiomes ) );    
+    inRecord->biomes = new int[ inRecord->numBiomes ];
+    for( int i=0; i< inRecord->numBiomes; i++ ) {
+        sscanf( biomeParts[i], "%d", &( inRecord->biomes[i] ) );
+        
+        delete [] biomeParts[i];
+        }
+    delete [] biomeParts;
+    }
+
+
+
 float initObjectBankStep() {
         
     if( currentFile == cache.numFiles ) {
@@ -245,15 +259,19 @@ float initObjectBankStep() {
                 next++;
 
 
-
-
+                
+                
                 r->mapChance = 0;      
-                int numRead = sscanf( lines[next], "mapChance=biome_%d#%f", 
-                                      &( r->biome ), &( r->mapChance ) );
+                char biomeString[200];
+                int numRead = sscanf( lines[next], 
+                                      "mapChance=%f#biomes_%199s", 
+                                      &( r->mapChance ), biomeString );
                 
                 if( numRead != 2 ) {
                     // biome not present (old format), treat as 0
-                    r->biome = 0;
+                    biomeString[0] = '0';
+                    biomeString[1] = '\0';
+                    
                     sscanf( lines[next], "mapChance=%f", &( r->mapChance ) );
                 
                     // NOTE:  I've avoided too many of these format
@@ -263,6 +281,8 @@ float initObjectBankStep() {
                     // are more effective.
                     }
                 
+                fillObjectBiomeFromString( r, biomeString );
+
                 next++;
 
 
@@ -567,6 +587,9 @@ static void freeObjectRecord( int inID ) {
             
 
             delete [] idMap[inID]->description;
+            
+            delete [] idMap[inID]->biomes;
+            
             delete [] idMap[inID]->slotPos;
             delete [] idMap[inID]->sprites;
             delete [] idMap[inID]->spritePos;
@@ -604,6 +627,8 @@ void freeObjectBank() {
             
             delete [] idMap[i]->slotPos;
             delete [] idMap[i]->description;
+            delete [] idMap[i]->biomes;
+            
             delete [] idMap[i]->sprites;
             delete [] idMap[i]->spritePos;
             delete [] idMap[i]->spriteRot;
@@ -635,13 +660,15 @@ void resaveAll() {
     for( int i=0; i<mapSize; i++ ) {
         if( idMap[i] != NULL ) {
 
+            char *biomeString = getBiomesString( idMap[i] );
+
             addObject( idMap[i]->description,
                        idMap[i]->containable,
                        idMap[i]->containSize,
                        idMap[i]->permanent,
                        idMap[i]->heldInHand,
                        idMap[i]->blocksWalking,
-                       idMap[i]->biome,
+                       biomeString,
                        idMap[i]->mapChance,
                        idMap[i]->heatValue,
                        idMap[i]->rValue,
@@ -672,6 +699,8 @@ void resaveAll() {
                        idMap[i]->spriteIsBackFoot,
                        idMap[i]->spriteIsFrontFoot,
                        idMap[i]->id );
+
+            delete [] biomeString;
             }
         }
     printf( "...done with resave\n" );
@@ -758,7 +787,7 @@ int addObject( const char *inDescription,
                char inPermanent,
                char inHeldInHand,
                char inBlocksWalking,
-               int inBiome,
+               char *inBiomes,
                float inMapChance,
                int inHeatValue,
                float inRValue,
@@ -841,8 +870,9 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "blocksWalking=%d", 
                                       (int)inBlocksWalking ) );
         
-        lines.push_back( autoSprintf( "mapChance=biome_%d#%f", 
-                                      inBiome, inMapChance ) );
+        lines.push_back( autoSprintf( "mapChance=%f#biomes_%s", 
+                                      inMapChance, inBiomes ) );
+        
         lines.push_back( autoSprintf( "heatValue=%d", inHeatValue ) );
         lines.push_back( autoSprintf( "rValue=%f", inRValue ) );
 
@@ -1004,7 +1034,10 @@ int addObject( const char *inDescription,
     r->heldInHand = inHeldInHand;
     r->blocksWalking = inBlocksWalking;
     
-    r->biome = inBiome;
+
+    fillObjectBiomeFromString( r, inBiomes );
+    
+    
     r->mapChance = inMapChance;
     
     r->heatValue = inHeatValue;
@@ -1813,6 +1846,26 @@ int getFrontFootIndex( ObjectRecord *inObject,
                   double inAge ) {
     return getBodyPartIndex( inObject, inObject->spriteIsFrontFoot, inAge );
     }
+
+
+
+char *getBiomesString( ObjectRecord *inObject ) {
+    SimpleVector <char>stringBuffer;
+    
+    for( int i=0; i<inObject->numBiomes; i++ ) {
+        
+        if( i != 0 ) {
+            stringBuffer.push_back( ',' );
+            }
+        char *intString = autoSprintf( "%d", inObject->biomes[i] );
+        
+        stringBuffer.appendElementString( intString );
+        delete [] intString;
+        }
+
+    return stringBuffer.getElementString();
+    }
+                       
 
 
 

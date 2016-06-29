@@ -46,26 +46,26 @@ EditorObjectPage::EditorObjectPage()
                              0,  -260, 6,
                              false,
                              "Description", NULL, NULL ),
-          mBiomeField( smallFont, -150, 64, 4, false, "Biome",
-                       "0123456789", NULL ),
+          mBiomeField( smallFont, -55, -220, 8, false, "Biomes",
+                       "0123456789,", NULL ),
           mMapChanceField( smallFont, 
-                           -150,  32, 4,
+                           -150,  64, 4,
                            false,
                            "MapP", "0123456789.", NULL ),
           mHeatValueField( smallFont, 
-                           -150,  0, 4,
+                           -150,  32, 4,
                            false,
                            "Heat", "0123456789", NULL ),
           mRValueField( smallFont, 
-                        -150,  -32, 4,
+                        -150,  0, 4,
                         false,
                         "R", "0123456789.", NULL ),
           mFoodValueField( smallFont, 
-                           -150,  -64, 4,
+                           -150,  -32, 4,
                            false,
                            "Food", "0123456789", NULL ),
           mSpeedMultField( smallFont, 
-                           -150,  -96, 4,
+                           -150,  -64, 4,
                            false,
                            "Speed", "0123456789.", NULL ),
           mContainSizeField( smallFont, 
@@ -90,8 +90,8 @@ EditorObjectPage::EditorObjectPage()
           mImportEditorButton( mainFont, -210, 260, "Sprites" ),
           mTransEditorButton( mainFont, 210, 260, "Trans" ),
           mAnimEditorButton( mainFont, 330, 260, "Anim" ),
-          mMoreSlotsButton( smallFont, -160, -145, "More" ),
-          mLessSlotsButton( smallFont, -160, -195, "Less" ),
+          mMoreSlotsButton( smallFont, -160, -113, "More" ),
+          mLessSlotsButton( smallFont, -160, -163, "Less" ),
 
           mAgingLayerCheckbox( 190, -22, 2 ),
           mHeadLayerCheckbox( 190, 104, 2 ),
@@ -130,13 +130,13 @@ EditorObjectPage::EditorObjectPage()
           mPersonAgeSlider( smallFont, -70, 175, 2,
                             100, 20,
                             0, 100, "Age" ),
-          mHueSlider( smallFont, -90, -130, 2,
+          mHueSlider( smallFont, -90, -125, 2,
                       75, 20,
                       0, 1, "H" ),
-          mSaturationSlider( smallFont, -90, -162, 2,
+          mSaturationSlider( smallFont, -90, -157, 2,
                              75, 20,
                              0, 1, "S" ),
-          mValueSlider( smallFont, -90, -194, 2,
+          mValueSlider( smallFont, -90, -189, 2,
                         75, 20,
                         0, 1, "V" ),
           mSlotPlaceholderSprite( loadSprite( "slotPlaceholder.tga" ) ) {
@@ -375,6 +375,9 @@ EditorObjectPage::EditorObjectPage()
     mMapChanceField.setText( "0.00" );
     mBiomeField.setText( "0" );
     
+    mBiomeField.setFireOnLoseFocus( true );
+    mBiomeField.addActionListener( this );
+
     mHeatValueField.setText( "0" );
     mRValueField.setText( "0.00" );
     
@@ -494,18 +497,63 @@ EditorObjectPage::~EditorObjectPage() {
 
 
 
-
-float getFloat( TextField *inField ) {
+static void fixCommaIntList( TextField *inField ) {
     char *text = inField->getText();
     
-    float f = 0;
+    if( text == "" ) {
+        inField->setText( "0" );
+        }
+    else {
+        int numParts;
+        char **parts = split( text, ",", &numParts );
     
-    sscanf( text, "%f", &f );
+
+        SimpleVector<int> seenInts;
+        
+        SimpleVector<char> goodParsedInts;
+
+        char firstAdded = false;
+    
+        for( int i=0; i<numParts; i++ ) {
+            int readInt;
+            
+            int numRead = sscanf( parts[i], "%d", &readInt );
+            
+            if( numRead == 1 ) {
+
+                if( seenInts.getElementIndex( readInt ) == -1 ) {
+                    
+                    if( firstAdded ) {
+                        goodParsedInts.push_back( ',' );
+                        }
+
+                    // reprint int to condense its formatting
+                    char *newIntString = autoSprintf( "%d", readInt );
+                
+                    goodParsedInts.appendElementString( newIntString );
+                
+                    seenInts.push_back( readInt );
+                    
+                    delete [] newIntString;
+                    
+                    firstAdded = true;
+                    }
+                }
+            delete [] parts[i];
+            }
+        delete [] parts;
+
+        char *newText = goodParsedInts.getElementString();
+        
+        inField->setText( newText );
+        delete [] newText;
+        }
+
 
     delete [] text;
-    
-    return f;
     }
+
+
 
 
 
@@ -697,8 +745,14 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         delete [] text;
         }
+    else if( inTarget == &mBiomeField ) {
+        fixCommaIntList( &mBiomeField );
+        }
     else if( inTarget == &mSaveObjectButton ) {
         char *text = mDescriptionField.getText();
+        
+        fixCommaIntList( &mBiomeField );
+        char *biomes = mBiomeField.getText();
 
         addObject( text,
                    mCheckboxes[0]->getToggled(),
@@ -706,7 +760,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCheckboxes[1]->getToggled(),
                    mHeldInHandCheckbox.getToggled(),
                    mBlocksWalkingCheckbox.getToggled(),
-                   mBiomeField.getInt(),
+                   biomes,
                    mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
                    mRValueField.getFloat(),
@@ -737,6 +791,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteIsFrontFoot );
         
         delete [] text;
+        delete [] biomes;
+        
         
         mSpritePicker.unselectObject();
 
@@ -745,7 +801,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mReplaceObjectButton ) {
         char *text = mDescriptionField.getText();
+
+        fixCommaIntList( &mBiomeField );
         
+        char *biomes = mBiomeField.getText();
+
         ObjectRecord *oldObject = getObject( mCurrentObject.id );
                 
         int oldNumSprites = 0;
@@ -775,7 +835,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCheckboxes[1]->getToggled(),
                    mHeldInHandCheckbox.getToggled(),
                    mBlocksWalkingCheckbox.getToggled(),
-                   mBiomeField.getInt(),
+                   biomes,
                    mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
                    mRValueField.getFloat(),
@@ -807,6 +867,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.id );
         
         delete [] text;
+        delete [] biomes;
         
         mSpritePicker.unselectObject();
         
@@ -1508,8 +1569,14 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mDescriptionField.setText( pickedRecord->description );
 
             mMapChanceField.setFloat( pickedRecord->mapChance, 2 );
-            mBiomeField.setInt( pickedRecord->biome );
             
+            char *biomeText = getBiomesString( pickedRecord );
+            
+            mBiomeField.setText( biomeText );
+            
+            delete [] biomeText;
+            
+
             mHeatValueField.setInt( pickedRecord->heatValue );
             mRValueField.setFloat( pickedRecord->rValue, 2 );
             

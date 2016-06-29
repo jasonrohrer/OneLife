@@ -40,9 +40,10 @@ typedef struct ObjectRecord {
         
         
         
-        // biome number where this object will naturally occur according
+        // biome numbers where this object will naturally occur according
         // to mapChance below
-        int biome;
+        int numBiomes;
+        int *biomes;
         
 
         // chance of occurrence naturally on map
@@ -200,7 +201,7 @@ int addObject( const char *inDescription,
                char inPermanent,
                char inHeldInHand,
                char inBlocksWalking,
-               int inBiome,
+               char *inBiomes,
                float inMapChance,
                int inHeatValue,
                float inRValue,
@@ -324,6 +325,8 @@ int getBackFootIndex( ObjectRecord *inObject, double inAge );
 
 int getFrontFootIndex( ObjectRecord *inObject, double inAge );
 
+
+char *getBiomesString( ObjectRecord *inObject );
 
 
 #endif
