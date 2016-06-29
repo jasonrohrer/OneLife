@@ -788,7 +788,7 @@ void TextField::specialKeyUp( int inKeyCode ) {
 
 void TextField::focus() {
     
-    if( sFocusedTextField != NULL ) {
+    if( sFocusedTextField != NULL && sFocusedTextField != this ) {
         // unfocus last focused
         sFocusedTextField->unfocus();
         }
