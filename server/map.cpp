@@ -104,6 +104,8 @@ static SimpleVector<ChangePosition> mapChangePosSinceLastStep;
 
 static int scaledRandSeed = randSeed * 131;
 
+/*
+// replaced with xxHash implementation below
 // in 0..1
 static double getXYRandom( int inX, int inY ) {
     
@@ -113,7 +115,7 @@ static double getXYRandom( int inX, int inY ) {
     
     return randSource.getRandomDouble();
     }
-
+*/
 
 // in -1..1
 static double getXYRandomN( int inX, int inY ) {
@@ -146,6 +148,7 @@ static double getXYRandomN( int inX, int inY ) {
 
 // original XX hash algorithm as found here:
 // https://bitbucket.org/runevision/random-numbers-testing/
+/*
 static uint32_t xxHash( uint32_t inValue ) {
     uint32_t h32 = XX_SEED + XX_PRIME32_5;
     h32 += 4U;
@@ -172,7 +175,7 @@ static uint32_t xxHash2D( uint32_t inX, uint32_t inY ) {
     h32 ^= h32 >> 16;
     return h32;
     }
-
+*/
 
 // tweaked to be faster by removing lines that don't seem to matter
 // for procedural content generation
@@ -192,6 +195,11 @@ static uint32_t xxTweakedHash2D( uint32_t inX, uint32_t inY ) {
 
 static double oneOverIntMax = 1.0 / ( (double)4294967295U );
 
+
+
+static double getXYRandom( int inX, int inY ) {
+    return xxTweakedHash2D( inX, inY ) * oneOverIntMax;
+    }
 
 
 // in -1..1
@@ -353,7 +361,7 @@ static int getBaseMap( int inX, int inY ) {
     
     // scale
     density *= .4;
-    //density = 1;
+    density = 1;
 
 
     int numObjects = naturalMapIDs[pickedBiome].size();
@@ -376,7 +384,7 @@ static int getBaseMap( int inX, int inY ) {
         
 
         // expand range around 0.5
-        double expandFactor = 4;
+        double expandFactor = 2;
         
         randVal = ( randVal - 0.5 ) * expandFactor + 0.5;
         
@@ -524,7 +532,7 @@ void outputMapImage() {
         objColors.push_back( *c );
         delete c;
         }
-
+    /*
     double startTime = Time::getCurrentTime();
     for( int y = 0; y<h; y++ ) {
         
@@ -538,6 +546,7 @@ void outputMapImage() {
     printf( "Generating %d map spots took %f sec\n",
             w * h, Time::getCurrentTime() - startTime );
     //exit(0);
+    */
 
     for( int y = 0; y<h; y++ ) {
         
@@ -591,7 +600,7 @@ void outputMapImage() {
     TGAImageConverter converter;
     
     converter.formatImage( &im, &tgaStream );
-    //exit(0);
+    exit(0);
     }
 
 
