@@ -31,13 +31,27 @@ static int chunkDimension = 22;
 
 
 
-// object ids that occur naturally on map at random
-static SimpleVector<int> naturalMapIDs;
-static SimpleVector<float> naturalMapChances;
+// object ids that occur naturally on map at random, per biome
+static int numBiomes;
+static int *biomes;
 
-static float totalChanceWeight;
+// one vector per biome
+static SimpleVector<int> *naturalMapIDs;
+static SimpleVector<float> *naturalMapChances;
+
+static SimpleVector<int> allNaturalMapIDs;
+
+static float *totalChanceWeight;
 
 
+static int getBiomeIndex( int inBiome ) {
+    for( int i=0; i<numBiomes; i++ ) {
+        if( biomes[i] == inBiome ) {
+            return i;
+            }
+        }
+    return -1;
+    }
 
 
 static KISSDB db;
@@ -88,10 +102,12 @@ static SimpleVector<ChangePosition> mapChangePosSinceLastStep;
 
 
 
+static int scaledRandSeed = randSeed * 131;
+
 // in 0..1
 static double getXYRandom( int inX, int inY ) {
     
-    unsigned int fullSeed = inX ^ (inY * 57) ^ ( randSeed * 131 );
+    unsigned int fullSeed = inX ^ (inY * 57) ^ scaledRandSeed;
     
     randSource.reseed( fullSeed );
     
@@ -102,7 +118,7 @@ static double getXYRandom( int inX, int inY ) {
 // in -1..1
 static double getXYRandomN( int inX, int inY ) {
     
-    unsigned int fullSeed = inX ^ (inY * 57) ^ ( randSeed * 131 );
+    unsigned int fullSeed = inX ^ (inY * 57) ^ scaledRandSeed;
     
     randSource.reseed( fullSeed );
     
@@ -111,22 +127,89 @@ static double getXYRandomN( int inX, int inY ) {
 
 
 
+// turns out that calling xxHash is faster and better than 
+// CustomRandomSource
+
+#include <stdint.h>
+
+#define XX_PRIME32_1 2654435761U
+#define XX_PRIME32_2 2246822519U
+#define XX_PRIME32_3 3266489917U
+#define XX_PRIME32_4 668265263U
+#define XX_PRIME32_5 374761393U
+
+#define XX_SEED 0U
+
+#define XX_ROTATE_LEFT( inValue, inCount ) \
+    ( (inValue << inCount) | (inValue >> (32 - inCount) ) )
+      
+
+// original XX hash algorithm as found here:
+// https://bitbucket.org/runevision/random-numbers-testing/
+static uint32_t xxHash( uint32_t inValue ) {
+    uint32_t h32 = XX_SEED + XX_PRIME32_5;
+    h32 += 4U;
+    h32 += inValue * XX_PRIME32_3;
+    h32 = XX_ROTATE_LEFT( h32, 17 ) * XX_PRIME32_4;
+    h32 ^= h32 >> 15;
+    h32 *= XX_PRIME32_2;
+    h32 ^= h32 >> 13;
+    h32 *= XX_PRIME32_3;
+    h32 ^= h32 >> 16;
+    return h32;
+    }
+
+// modified xxHash to take two int arguments
+static uint32_t xxHash2D( uint32_t inX, uint32_t inY ) {
+    uint32_t h32 = XX_SEED + inX + XX_PRIME32_5;
+    h32 += 4U;
+    h32 += inY * XX_PRIME32_3;
+    h32 = XX_ROTATE_LEFT( h32, 17 ) * XX_PRIME32_4;
+    h32 ^= h32 >> 15;
+    h32 *= XX_PRIME32_2;
+    h32 ^= h32 >> 13;
+    h32 *= XX_PRIME32_3;
+    h32 ^= h32 >> 16;
+    return h32;
+    }
+
+
+// tweaked to be faster by removing lines that don't seem to matter
+// for procedural content generation
+static uint32_t xxTweakedHash2D( uint32_t inX, uint32_t inY ) {
+    uint32_t h32 = XX_SEED + inX + XX_PRIME32_5;
+    //h32 += 4U;
+    h32 += inY * XX_PRIME32_3;
+    //h32 = XX_ROTATE_LEFT( h32, 17 ) * XX_PRIME32_4;
+    //h32 ^= h32 >> 15;
+    h32 *= XX_PRIME32_2;
+    h32 ^= h32 >> 13;
+    h32 *= XX_PRIME32_3;
+    h32 ^= h32 >> 16;
+    return h32;
+    }
+
+
+static double oneOverIntMax = 1.0 / ( (double)4294967295U );
+
+
+
 // in -1..1
 // interpolated for inX,inY that aren't integers
 static double getXYRandomBN( double inX, double inY ) {
     
-    int floorX = (int)floor(inX);
-    int ceilX = (int)ceil(inX);
-    int floorY = (int)floor(inY);
-    int ceilY = (int)ceil(inY);
+    int floorX = lrint( floor(inX) );
+    int ceilX = lrint( ceil(inX) );
+    int floorY = lrint( floor(inY) );
+    int ceilY = lrint( ceil(inY) );
     
 
-    double cornerA1 = getXYRandomN( floorX, floorY );
-    double cornerA2 = getXYRandomN( ceilX, floorY );
+    double cornerA1 = xxTweakedHash2D( floorX, floorY );
+    double cornerA2 = xxTweakedHash2D( ceilX, floorY );
 
-    double cornerB1 = getXYRandomN( floorX, ceilY );
-    double cornerB2 = getXYRandomN( ceilX, ceilY );
-    
+    double cornerB1 = xxTweakedHash2D( floorX, ceilY );
+    double cornerB2 = xxTweakedHash2D( ceilX, ceilY );
+
 
     double xOffset = inX - floorX;
     double yOffset = inY - floorY;
@@ -211,7 +294,7 @@ double getXYFractalB( int inX, int inY, double inRoughness, double inScale ) {
                             getXYRandomBN( inX / inScale, inY / inScale )
                             ) ) ) ) );
     
-    return ( sum + 1 ) * 0.5;
+    return sum * oneOverIntMax;
     }
 
     
@@ -255,6 +338,14 @@ double sigmoid( double inInput, double inKnee ) {
 // player modifications are overlayed on top of this
 static int getBaseMap( int inX, int inY ) {
 
+    // first step, pick a biome
+
+    // FIXME
+    int pickedBiome = 0;
+
+
+
+
     double density = getXYFractalB( inX, inY, 0.1, 1 );
     
     // correction
@@ -265,7 +356,7 @@ static int getBaseMap( int inX, int inY ) {
     //density = 1;
 
 
-    int numObjects = naturalMapIDs.size();
+    int numObjects = naturalMapIDs[pickedBiome].size();
 
     if( numObjects > 0 && 
         getXYRandom( 287 + inX, 383 + inY ) < density ) {
@@ -308,7 +399,7 @@ static int getBaseMap( int inX, int inY ) {
         // frequency across the map, we'll get a jump that changes 
         // infrequently,
         // but with discontinuities
-        int randJumpSeed = (int)( 5 * 
+        int randJumpSeed = lrint( 5 * 
                                   getXYFractalB(  3123 + inX, 
                                                   9753 + inY, 0.3, 6 ) );
 
@@ -326,31 +417,33 @@ static int getBaseMap( int inX, int inY ) {
 
 
         float oldSpecialChance = 
-            naturalMapChances.getElementDirect( specialObjectIndex );
+            naturalMapChances[pickedBiome].getElementDirect( 
+                specialObjectIndex );
         
         float newSpecialChance = oldSpecialChance * 10;
         
-        *( naturalMapChances.getElement( specialObjectIndex ) )
+        *( naturalMapChances[pickedBiome].getElement( specialObjectIndex ) )
             = newSpecialChance;
         
-        float oldTotalChanceWeight = totalChanceWeight;
+        float oldTotalChanceWeight = totalChanceWeight[pickedBiome];
         
-        totalChanceWeight -= oldSpecialChance;
-        totalChanceWeight += newSpecialChance;
+        totalChanceWeight[pickedBiome] -= oldSpecialChance;
+        totalChanceWeight[pickedBiome] += newSpecialChance;
         
 
         // pick one of our natural objects at random
 
         // pick value between 0 and total weight
 
-        double randValue = totalChanceWeight * getXYRandom( inX, inY );
+        double randValue = 
+            totalChanceWeight[pickedBiome] * getXYRandom( inX, inY );
 
         // walk through objects, summing weights, until one crosses threshold
         int i = 0;
         float weightSum = 0;        
         
         while( weightSum < randValue && i < numObjects ) {
-            weightSum += naturalMapChances.getElementDirect( i );
+            weightSum += naturalMapChances[pickedBiome].getElementDirect( i );
             i++;
             }
         
@@ -358,13 +451,13 @@ static int getBaseMap( int inX, int inY ) {
         
 
         // restore chance of special object
-        *( naturalMapChances.getElement( specialObjectIndex ) )
+        *( naturalMapChances[pickedBiome].getElement( specialObjectIndex ) )
             = oldSpecialChance;
 
-        totalChanceWeight = oldTotalChanceWeight;
+        totalChanceWeight[pickedBiome] = oldTotalChanceWeight;
 
         if( i >= 0 ) {
-            return naturalMapIDs.getElementDirect( i );
+            return naturalMapIDs[pickedBiome].getElementDirect( i );
             }
         else {
             return 0;
@@ -418,15 +511,15 @@ void outputMapImage() {
     
     // output a chunk of the map as an image
 
-    int w =  500;
-    int h = 500;
+    int w =  1000;
+    int h = 1000;
     
     Image im( w, h, 3, true );
     
     SimpleVector<Color> objColors;
-    for( int i=0; i<naturalMapIDs.size(); i++ ) {
+    for( int i=0; i<allNaturalMapIDs.size(); i++ ) {
         randSource.getRandomFloat();
-        Color *c = Color::makeColorFromHSV( (float)i / naturalMapIDs.size(),
+        Color *c = Color::makeColorFromHSV( (float)i / allNaturalMapIDs.size(),
                                             1, 1 );
         objColors.push_back( *c );
         delete c;
@@ -449,11 +542,39 @@ void outputMapImage() {
     for( int y = 0; y<h; y++ ) {
         
         for( int x = 0; x<w; x++ ) {
+
+            /*
+            // raw rand output and correlation test
+            uint32_t xHit = xxTweakedHash2D( x, y );
+            uint32_t yHit = xxTweakedHash2D( x+1, y+1 );
+            //uint32_t xHit = getXYRandom_test( x, y );
+            //uint32_t yHit = getXYRandom_test( x+1, y );
+            
+            xHit = xHit % w;
+            yHit = yHit % h;
+            
+            double val = xxTweakedHash2D( x, y ) * oneOverIntMax;
+            
+            Color c = im.getColor( yHit * w + xHit );
+            c.r += 0.1;
+            c.g += 0.1;
+            c.b += 0.1;
+            
+            im.setColor( yHit * w + xHit, c );
+              
+            c.r = val;
+            c.g = val;
+            c.b = val;
+            
+            //im.setColor( y * w + x, c );
+            */
+            
+            
             int id = getBaseMap( x, y );
     
             if( id > 0 ) {
-                for( int i=0; i<naturalMapIDs.size(); i++ ) {
-                    if( naturalMapIDs.getElementDirect(i) == id ) {
+                for( int i=0; i<allNaturalMapIDs.size(); i++ ) {
+                    if( allNaturalMapIDs.getElementDirect(i) == id ) {
                         im.setColor( y * w + x,
                                      objColors.getElementDirect( i ) );
                         break;
@@ -470,6 +591,7 @@ void outputMapImage() {
     TGAImageConverter converter;
     
     converter.formatImage( &im, &tgaStream );
+    //exit(0);
     }
 
 
@@ -508,23 +630,70 @@ void initMap() {
     int numObjects;
     ObjectRecord **allObjects = getAllObjects( &numObjects );
     
-    totalChanceWeight = 0;
+    
+    // first, find all biomes
+    SimpleVector<int> biomeList;
+    
     
     for( int i=0; i<numObjects; i++ ) {
         ObjectRecord *o = allObjects[i];
         
+        if( o->mapChance > 0 ) {
+            
+            for( int j=0; j< o->numBiomes; j++ ) {
+                int b = o->biomes[j];
+                
+                if( biomeList.getElementIndex(b) == -1 ) {
+                    biomeList.push_back( b );
+                    }
+                }
+            }
+        
+        }
+
+    
+    numBiomes = biomeList.size();
+    biomes = biomeList.getElementArray();
+    
+    naturalMapIDs = new SimpleVector<int>[ numBiomes ];
+    naturalMapChances = new SimpleVector<float>[ numBiomes ];
+    totalChanceWeight = new float[ numBiomes ];
+
+    for( int j=0; j<numBiomes; j++ ) {
+        totalChanceWeight[j] = 0;
+        }
+    
+
+    
+    for( int i=0; i<numObjects; i++ ) {
+        ObjectRecord *o = allObjects[i];
+
         float p = o->mapChance;
         if( p > 0 ) {
+            int id = o->id;
             
-            naturalMapIDs.push_back( o->id );
-            naturalMapChances.push_back( p );
+            allNaturalMapIDs.push_back( id );
             
-            totalChanceWeight += p;
+            for( int j=0; j< o->numBiomes; j++ ) {
+                int b = o->biomes[j];
+
+                int bIndex = getBiomeIndex( b );
+                
+            
+                naturalMapIDs[bIndex].push_back( id );
+                naturalMapChances[bIndex].push_back( p );
+            
+                totalChanceWeight[bIndex] += p;
+                }
             }
         }
-    printf( "Found %d natural objects with total weight %f\n",
-            naturalMapIDs.size(), totalChanceWeight );
 
+
+    for( int j=0; j<numBiomes; j++ ) {    
+        printf( "Biome %d:  Found %d natural objects with total weight %f\n",
+                biomes[j], naturalMapIDs[j].size(), totalChanceWeight[j] );
+        }
+    
     delete [] allObjects;
     
 
@@ -609,6 +778,12 @@ void freeMap() {
     if( dbOpen ) {
         KISSDB_close( &db );
         }
+    
+    delete [] biomes;
+    
+    delete [] naturalMapIDs;
+    delete [] naturalMapChances;
+    delete [] totalChanceWeight;
     }
 
 
