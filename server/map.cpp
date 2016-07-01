@@ -347,14 +347,9 @@ double sigmoid( double inInput, double inKnee ) {
 // player modifications are overlayed on top of this
 static int getBaseMap( int inX, int inY ) {
 
-    // first step, pick a biome
 
-    // FIXME
-    int pickedBiome = 0;
-
-
-
-
+    // first step:  save rest of work if density tells us that
+    // nothing is here anyway
     double density = getXYFractalB( inX, inY, 0.1, 1 );
     
     // correction
@@ -365,10 +360,38 @@ static int getBaseMap( int inX, int inY ) {
     //density = 1;
 
 
-    int numObjects = naturalMapIDs[pickedBiome].size();
+    if( getXYRandom( 287 + inX, 383 + inY ) < density ) {
 
-    if( numObjects > 0 && 
-        getXYRandom( 287 + inX, 383 + inY ) < density ) {
+
+
+
+        // next step, pick a biome
+        int pickedBiome = -1;
+        
+        double maxValue = DBL_MIN;
+        
+        
+        for( int i=0; i<numBiomes; i++ ) {
+            
+            double randVal = getXYFractalB(  123 + inX + 263 * i, 
+                                             753 + inY + 187 * i, 
+                                             0.3, 
+                                             1.5 + 0.16666 * numBiomes );
+            
+            if( randVal > maxValue ) {
+                maxValue = randVal;
+                pickedBiome = i;
+                }
+            }
+        
+
+
+        int numObjects = naturalMapIDs[pickedBiome].size();
+
+        if( numObjects == 0  ) {
+            return 0;
+            }
+
     
   
         // something present here
@@ -379,7 +402,7 @@ static int getBaseMap( int inX, int inY ) {
 
 
         int specialObjectIndex = -1;
-        double maxValue = DBL_MIN;
+        maxValue = DBL_MIN;
         
 
         for( int i=0; i<numObjects; i++ ) {
