@@ -213,6 +213,8 @@ class LivingLifePage : public GamePage {
 
         int *mMap;
         
+        int *mMapBiomes;
+
         char *mMapCellDrawnFlags;
 
         int *mMapAnimationFrameCount;

@@ -343,11 +343,41 @@ double sigmoid( double inInput, double inKnee ) {
 
 
 
+static int getMapBiome( int inX, int inY ) {
+    int pickedBiome = -1;
+        
+    double maxValue = DBL_MIN;
+        
+    
+    for( int i=0; i<numBiomes; i++ ) {
+        
+        double randVal = getXYFractalB(  723 + inX + 263 * i, 
+                                         1553 + inY + 187 * i, 
+                                         0.3, 
+                                         1.5 + 0.16666 * numBiomes );
+        
+        if( randVal > maxValue ) {
+            maxValue = randVal;
+            pickedBiome = i;
+            }
+        }
+    return pickedBiome;
+    }
+
+
+
+
 // gets procedurally-generated base map at a given spot
 // player modifications are overlayed on top of this
+
+// SIDE EFFECT:
+// if biome at x,y needed to be determined in order to compute map
+// at this spot, it is saved into lastCheckedBiome
+
+static int lastCheckedBiome = -1;
+
 static int getBaseMap( int inX, int inY ) {
-
-
+    
     // first step:  save rest of work if density tells us that
     // nothing is here anyway
     double density = getXYFractalB( inX, inY, 0.1, 1 );
@@ -366,25 +396,10 @@ static int getBaseMap( int inX, int inY ) {
 
 
         // next step, pick a biome
-        int pickedBiome = -1;
+        int pickedBiome = getMapBiome( inX, inY );
+                
+        lastCheckedBiome = pickedBiome;
         
-        double maxValue = DBL_MIN;
-        
-        
-        for( int i=0; i<numBiomes; i++ ) {
-            
-            double randVal = getXYFractalB(  123 + inX + 263 * i, 
-                                             753 + inY + 187 * i, 
-                                             0.3, 
-                                             1.5 + 0.16666 * numBiomes );
-            
-            if( randVal > maxValue ) {
-                maxValue = randVal;
-                pickedBiome = i;
-                }
-            }
-        
-
 
         int numObjects = naturalMapIDs[pickedBiome].size();
 
@@ -402,7 +417,7 @@ static int getBaseMap( int inX, int inY ) {
 
 
         int specialObjectIndex = -1;
-        maxValue = DBL_MIN;
+        double maxValue = DBL_MIN;
         
 
         for( int i=0; i<numObjects; i++ ) {
@@ -967,6 +982,8 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
     int chunkCells = chunkDimension * chunkDimension;
     
     int *chunk = new int[chunkCells];
+
+    int *chunkBiomes = new int[chunkCells];
     
     int *containedStackSizes = new int[ chunkCells ];
     int **containedStacks = new int*[ chunkCells ];
@@ -993,7 +1010,19 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
             
             int cI = chunkY * chunkDimension + chunkX;
             
+            lastCheckedBiome = -1;
+            
             chunk[cI] = getMapObject( x, y );
+
+            if( lastCheckedBiome == -1 ) {
+                // biome wasn't checked in order to compute
+                // getMapObject
+
+                // get it ourselves
+                lastCheckedBiome = getMapBiome( x, y );
+                }
+            chunkBiomes[ cI ] = lastCheckedBiome;
+            
 
             int numContained;
             int *contained = getContained( x, y, &numContained );
@@ -1021,7 +1050,7 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
             }
         
 
-        char *cell = autoSprintf( "%d", chunk[i] );
+        char *cell = autoSprintf( "%d:%d", chunkBiomes[i], chunk[i] );
         
         chunkDataBuffer.appendArray( (unsigned char*)cell, strlen(cell) );
         delete [] cell;
@@ -1038,8 +1067,10 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
             delete [] containedStacks[i];
             }
         }
-    delete [] chunk;
     
+    delete [] chunk;
+    delete [] chunkBiomes;
+
     delete [] containedStackSizes;
     delete [] containedStacks;
     

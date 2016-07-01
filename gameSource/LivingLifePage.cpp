@@ -550,6 +550,7 @@ LivingLifePage::LivingLifePage()
 
 
     mMap = new int[ mMapD * mMapD ];
+    mMapBiomes = new int[ mMapD * mMapD ];
     
     mMapCellDrawnFlags = new char[ mMapD * mMapD ];
 
@@ -567,6 +568,8 @@ LivingLifePage::LivingLifePage()
         // -1 represents unknown
         // 0 represents known empty
         mMap[i] = -1;
+        mMapBiomes[i] = -1;
+        
         mMapAnimationFrameCount[i] = randSource.getRandomBoundedInt( 0, 500 );
         mMapCurAnimType[i] = ground;
         mMapLastAnimType[i] = ground;
@@ -643,6 +646,8 @@ LivingLifePage::~LivingLifePage() {
     delete [] mMapContainedStacks;
     
     delete [] mMap;
+    delete [] mMapBiomes;
+
     delete [] mMapCellDrawnFlags;
 
     delete [] nextActionMessageToSend;
@@ -1353,6 +1358,34 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
 
+    // draw underlying ground biomes
+    for( int y=yEnd; y>=yStart; y-- ) {
+
+        int screenY = CELL_D * ( y + mMapOffsetY - mMapD / 2 );
+
+        
+        for( int x=xStart; x<=xEnd; x++ ) {
+            int mapI = y * mMapD + x;
+            
+
+            int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
+            
+            int b = mMapBiomes[mapI];
+            
+            setDrawColor( 5.0 - b / 5.0,
+                          b / 5.0,
+                          1.0,
+                          1.0 );
+            
+            doublePair pos = { screenX, screenY };
+            
+            drawSprite( mGroundSprite, pos, 0.25 );
+            }
+        }
+    
+
+
+
     
     //int worldXStart = xStart + mMapOffsetX - mMapD / 2;
     //int worldXEnd = xEnd + mMapOffsetX - mMapD / 2;
@@ -1760,6 +1793,7 @@ void LivingLifePage::step() {
             int yMove = mMapOffsetY - newMapOffsetY;
             
             int *newMap = new int[ mMapD * mMapD ];
+            int *newMapBiomes = new int[ mMapD * mMapD ];
             
 
             int *newMapAnimationFrameCount = new int[ mMapD * mMapD ];
@@ -1775,6 +1809,7 @@ void LivingLifePage::step() {
             for( int i=0; i<mMapD *mMapD; i++ ) {
                 // starts uknown, not empty
                 newMap[i] = -1;
+                newMapBiomes[i] = -1;
                 
                 newMapAnimationFrameCount[i] = 
                     randSource.getRandomBoundedInt( 0, 500 );;
@@ -1800,6 +1835,7 @@ void LivingLifePage::step() {
                     int oI = oldY * mMapD + oldX;
 
                     newMap[i] = mMap[oI];
+                    newMapBiomes[i] = mMapBiomes[oI];
 
                     newMapAnimationFrameCount[i] = mMapAnimationFrameCount[oI];
                     newMapCurAnimType[i] = mMapCurAnimType[oI];
@@ -1812,6 +1848,7 @@ void LivingLifePage::step() {
                 }
             
             memcpy( mMap, newMap, mMapD * mMapD * sizeof( int ) );
+            memcpy( mMapBiomes, newMapBiomes, mMapD * mMapD * sizeof( int ) );
 
             memcpy( mMapAnimationFrameCount, newMapAnimationFrameCount, 
                     mMapD * mMapD * sizeof( int ) );
@@ -1828,6 +1865,7 @@ void LivingLifePage::step() {
                     mMapD * mMapD * sizeof( char ) );
             
             delete [] newMap;
+            delete [] newMapBiomes;
             delete [] newMapAnimationFrameCount;
             delete [] newMapCurAnimType;
             delete [] newMapLastAnimType;
@@ -1901,7 +1939,9 @@ void LivingLifePage::step() {
                             int mapI = mapY * mMapD + mapX;
                             
                             sscanf( tokens->getElementDirect(i),
-                                    "%d", &( mMap[mapI] ) );
+                                    "%d:%d", 
+                                    &( mMapBiomes[mapI] ),
+                                    &( mMap[mapI] ) );
 
                             mMapContainedStacks[mapI].deleteAll();
                             
