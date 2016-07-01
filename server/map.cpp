@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <math.h>
+#include <values.h>
 
 
 #include "../gameSource/transitionBank.h"
@@ -361,7 +362,7 @@ static int getBaseMap( int inX, int inY ) {
     
     // scale
     density *= .4;
-    density = 1;
+    //density = 1;
 
 
     int numObjects = naturalMapIDs[pickedBiome].size();
@@ -376,51 +377,24 @@ static int getBaseMap( int inX, int inY ) {
         // special object in this region is 10x more common than it 
         // would be otherwise
 
-        double randVal = getXYFractalB(  123 + inX, 753 + inY, 0.3, 1 );
+
+        int specialObjectIndex = -1;
+        double maxValue = DBL_MIN;
         
 
+        for( int i=0; i<numObjects; i++ ) {
+            
         
-        
-        
+            double randVal = getXYFractalB(  123 + inX + 263 * i, 
+                                             753 + inY + 187 * i, 
+                                             0.3, 
+                                             0.15 + 0.016666 * numObjects );
 
-        // expand range around 0.5
-        double expandFactor = 2;
-        
-        randVal = ( randVal - 0.5 ) * expandFactor + 0.5;
-        
-        if( randVal < 0 ) {
-            randVal = 0;
+            if( randVal > maxValue ) {
+                maxValue = randVal;
+                specialObjectIndex = i;
+                }
             }
-        else if( randVal > 1 ) {
-            randVal = 1;
-            }
-        
-
-        int specialObjectIndex =
-            lrint( ( numObjects - 1 ) * randVal );
-        
-
-
-        // jump randomly amoung objects to avoid consistent banding
-        
-        // if we pick our seed for jumping using a fractal that is low
-        // frequency across the map, we'll get a jump that changes 
-        // infrequently,
-        // but with discontinuities
-        int randJumpSeed = lrint( 5 * 
-                                  getXYFractalB(  3123 + inX, 
-                                                  9753 + inY, 0.3, 6 ) );
-
-        randSource.reseed( 1457 + 327 * randJumpSeed + 
-                           293 * specialObjectIndex );
-    
-        // pick a large value and wrap around
-        int jump = randSource.getRandomBoundedInt( 0, numObjects * 10 );
-
-        specialObjectIndex += jump;
-        
-        specialObjectIndex = specialObjectIndex % numObjects;
-
 
 
 
@@ -519,8 +493,8 @@ void outputMapImage() {
     
     // output a chunk of the map as an image
 
-    int w =  1000;
-    int h = 1000;
+    int w =  500;
+    int h = 500;
     
     Image im( w, h, 3, true );
     
@@ -546,7 +520,9 @@ void outputMapImage() {
     printf( "Generating %d map spots took %f sec\n",
             w * h, Time::getCurrentTime() - startTime );
     //exit(0);
+    
     */
+
 
     for( int y = 0; y<h; y++ ) {
         
