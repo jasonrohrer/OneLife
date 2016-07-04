@@ -24,6 +24,7 @@ map.cpp \
 ../gameSource/objectBank.cpp \
 ../gameSource/ageControl.cpp \
 ../gameSource/folderCache.cpp \
+../commonSource/fractalNoise.cpp \
 kissdb.cpp \
 
 

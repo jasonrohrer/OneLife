@@ -103,134 +103,10 @@ static SimpleVector<ChangePosition> mapChangePosSinceLastStep;
 
 
 
-static int scaledRandSeed = randSeed * 131;
-
-/*
-// replaced with xxHash implementation below
-// in 0..1
-static double getXYRandom( int inX, int inY ) {
-    
-    unsigned int fullSeed = inX ^ (inY * 57) ^ scaledRandSeed;
-    
-    randSource.reseed( fullSeed );
-    
-    return randSource.getRandomDouble();
-    }
-*/
-
-// in -1..1
-static double getXYRandomN( int inX, int inY ) {
-    
-    unsigned int fullSeed = inX ^ (inY * 57) ^ scaledRandSeed;
-    
-    randSource.reseed( fullSeed );
-    
-    return 2 * randSource.getRandomDouble() - 1;
-    }
 
 
+#include "../commonSource/fractalNoise.h"
 
-// turns out that calling xxHash is faster and better than 
-// CustomRandomSource
-
-#include <stdint.h>
-
-#define XX_PRIME32_1 2654435761U
-#define XX_PRIME32_2 2246822519U
-#define XX_PRIME32_3 3266489917U
-#define XX_PRIME32_4 668265263U
-#define XX_PRIME32_5 374761393U
-
-#define XX_SEED 0U
-
-#define XX_ROTATE_LEFT( inValue, inCount ) \
-    ( (inValue << inCount) | (inValue >> (32 - inCount) ) )
-      
-
-// original XX hash algorithm as found here:
-// https://bitbucket.org/runevision/random-numbers-testing/
-/*
-static uint32_t xxHash( uint32_t inValue ) {
-    uint32_t h32 = XX_SEED + XX_PRIME32_5;
-    h32 += 4U;
-    h32 += inValue * XX_PRIME32_3;
-    h32 = XX_ROTATE_LEFT( h32, 17 ) * XX_PRIME32_4;
-    h32 ^= h32 >> 15;
-    h32 *= XX_PRIME32_2;
-    h32 ^= h32 >> 13;
-    h32 *= XX_PRIME32_3;
-    h32 ^= h32 >> 16;
-    return h32;
-    }
-
-// modified xxHash to take two int arguments
-static uint32_t xxHash2D( uint32_t inX, uint32_t inY ) {
-    uint32_t h32 = XX_SEED + inX + XX_PRIME32_5;
-    h32 += 4U;
-    h32 += inY * XX_PRIME32_3;
-    h32 = XX_ROTATE_LEFT( h32, 17 ) * XX_PRIME32_4;
-    h32 ^= h32 >> 15;
-    h32 *= XX_PRIME32_2;
-    h32 ^= h32 >> 13;
-    h32 *= XX_PRIME32_3;
-    h32 ^= h32 >> 16;
-    return h32;
-    }
-*/
-
-// tweaked to be faster by removing lines that don't seem to matter
-// for procedural content generation
-static uint32_t xxTweakedHash2D( uint32_t inX, uint32_t inY ) {
-    uint32_t h32 = XX_SEED + inX + XX_PRIME32_5;
-    //h32 += 4U;
-    h32 += inY * XX_PRIME32_3;
-    //h32 = XX_ROTATE_LEFT( h32, 17 ) * XX_PRIME32_4;
-    //h32 ^= h32 >> 15;
-    h32 *= XX_PRIME32_2;
-    h32 ^= h32 >> 13;
-    h32 *= XX_PRIME32_3;
-    h32 ^= h32 >> 16;
-    return h32;
-    }
-
-
-static double oneOverIntMax = 1.0 / ( (double)4294967295U );
-
-
-
-static double getXYRandom( int inX, int inY ) {
-    return xxTweakedHash2D( inX, inY ) * oneOverIntMax;
-    }
-
-
-// in -1..1
-// interpolated for inX,inY that aren't integers
-static double getXYRandomBN( double inX, double inY ) {
-    
-    int floorX = lrint( floor(inX) );
-    int ceilX = lrint( ceil(inX) );
-    int floorY = lrint( floor(inY) );
-    int ceilY = lrint( ceil(inY) );
-    
-
-    double cornerA1 = xxTweakedHash2D( floorX, floorY );
-    double cornerA2 = xxTweakedHash2D( ceilX, floorY );
-
-    double cornerB1 = xxTweakedHash2D( floorX, ceilY );
-    double cornerB2 = xxTweakedHash2D( ceilX, ceilY );
-
-
-    double xOffset = inX - floorX;
-    double yOffset = inY - floorY;
-    
-    
-    double topBlend = cornerA2 * xOffset + (1-xOffset) * cornerA1;
-    
-    double bottomBlend = cornerB2 * xOffset + (1-xOffset) * cornerB1;
-    
-
-    return bottomBlend * yOffset + (1-yOffset) * topBlend;
-    }
 
 
 
@@ -239,71 +115,6 @@ static double getXYRandomBN( double inX, double inY ) {
 
 int getChunkDimension() {
     return chunkDimension;
-    }
-
-
-
-double getXYFractal( int inX, int inY, double inRoughness, int inScale ) {
-
-    double b = inRoughness;
-    double a = 1 - b;
-
-    double sum =
-        a * getXYRandomN( inX / (32 * inScale), inY / (32 * inScale) )
-        +
-        b * (
-            a * getXYRandomN( inX / (16 * inScale), inY / (16 * inScale) )
-            +
-            b * (
-                a * getXYRandomN( inX / (8 * inScale), 
-                                   inY / (8 * inScale) )
-                +
-                b * (
-                    a * getXYRandomN( inX / (4 * inScale), 
-                                       inY / (4 * inScale) )
-                    +
-                    b * (
-                        a * getXYRandomN( inX / (2 * inScale), 
-                                           inY / (2 * inScale) )
-                        +
-                        b * (
-                            getXYRandomN( inX / inScale, inY / inScale )
-                            ) ) ) ) );
-    
-    return ( sum + 1 ) * 0.5;
-    }
-
-
-
-
-double getXYFractalB( int inX, int inY, double inRoughness, double inScale ) {
-
-    double b = inRoughness;
-    double a = 1 - b;
-
-    double sum =
-        a * getXYRandomBN( inX / (32 * inScale), inY / (32 * inScale) )
-        +
-        b * (
-            a * getXYRandomBN( inX / (16 * inScale), inY / (16 * inScale) )
-            +
-            b * (
-                a * getXYRandomBN( inX / (8 * inScale), 
-                                   inY / (8 * inScale) )
-                +
-                b * (
-                    a * getXYRandomBN( inX / (4 * inScale), 
-                                       inY / (4 * inScale) )
-                    +
-                    b * (
-                        a * getXYRandomBN( inX / (2 * inScale), 
-                                           inY / (2 * inScale) )
-                        +
-                        b * (
-                            getXYRandomBN( inX / inScale, inY / inScale )
-                            ) ) ) ) );
-    
-    return sum * oneOverIntMax;
     }
 
     
@@ -351,10 +162,10 @@ static int getMapBiome( int inX, int inY ) {
     
     for( int i=0; i<numBiomes; i++ ) {
         
-        double randVal = getXYFractalB(  723 + inX + 263 * i, 
-                                         1553 + inY + 187 * i, 
-                                         0.3, 
-                                         1.5 + 0.16666 * numBiomes );
+        double randVal = getXYFractal(  723 + inX + 263 * i, 
+                                        1553 + inY + 187 * i, 
+                                        0.3, 
+                                        1.5 + 0.16666 * numBiomes );
         
         if( randVal > maxValue ) {
             maxValue = randVal;
@@ -380,7 +191,7 @@ static int getBaseMap( int inX, int inY ) {
     
     // first step:  save rest of work if density tells us that
     // nothing is here anyway
-    double density = getXYFractalB( inX, inY, 0.1, 1 );
+    double density = getXYFractal( inX, inY, 0.1, 1 );
     
     // correction
     density = sigmoid( density, 0.1 );
@@ -423,10 +234,10 @@ static int getBaseMap( int inX, int inY ) {
         for( int i=0; i<numObjects; i++ ) {
             
         
-            double randVal = getXYFractalB(  123 + inX + 263 * i, 
-                                             753 + inY + 187 * i, 
-                                             0.3, 
-                                             0.15 + 0.016666 * numObjects );
+            double randVal = getXYFractal(  123 + inX + 263 * i, 
+                                            753 + inY + 187 * i, 
+                                            0.3, 
+                                            0.15 + 0.016666 * numObjects );
 
             if( randVal > maxValue ) {
                 maxValue = randVal;
