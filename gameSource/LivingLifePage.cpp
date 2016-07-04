@@ -19,6 +19,7 @@
 
 #include "minorGems/system/Thread.h"
 
+#include "minorGems/util/log/AppLog.h"
 
 #include <stdlib.h>//#include <math.h>
 
@@ -523,7 +524,6 @@ LivingLifePage::LivingLifePage()
           mEKeyDown( false ),
           mFoodEmptySprite( loadSprite( "hungerEmpty.tga", false ) ),
           mFoodFullSprite( loadSprite( "hungerFull.tga", false ) ),
-          mGroundSprite( loadSprite( "ground512.tga", false ) ),
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
           mLastMouseOverFade( 0.0 ),
@@ -580,7 +580,156 @@ LivingLifePage::LivingLifePage()
         
         mMapTileFlips[i] = false;
         }
+    
+    SimpleVector<int> allBiomes;
+    getAllBiomes( &allBiomes );
+    
+    int maxBiome = -1;
+    for( int i=0; i<allBiomes.size(); i++ ) {
+        int b = allBiomes.getElementDirect( i );
+        if( b > maxBiome ) {
+            maxBiome = b;
+            }
+        }
+    
+    mGroundSpritesArraySize = maxBiome + 1;
+    mGroundSprites = new GroundSpriteSet*[ mGroundSpritesArraySize ];
+    
+    for( int i=0; i<mGroundSpritesArraySize; i++ ) {
+        mGroundSprites[i] = NULL;
+        }
+    
+    for( int i=0; i<allBiomes.size(); i++ ) {
+        int b = allBiomes.getElementDirect( i );
+    
+        char *fileName = autoSprintf( "ground_%d.tga", b );
 
+        Image *image = readTGAFile( fileName );
+        
+        if( image != NULL ) {
+            
+            int w = image->getWidth();
+            int h = image->getHeight();
+            
+            if( w % CELL_D != 0 || h % CELL_D != 0 ) {
+                AppLog::printOutNextMessage();
+                AppLog::errorF( 
+                    "Ground texture %s with w=%d and h=%h does not "
+                    "have dimensions that are even multiples of the cell "
+                    "width %d",
+                    fileName, w, h, CELL_D );
+                }
+            else {    
+                mGroundSprites[b] = new GroundSpriteSet;
+                mGroundSprites[b]->numTilesWide = w / CELL_D;
+                mGroundSprites[b]->numTilesHigh = h / CELL_D;
+                
+                int tW = mGroundSprites[b]->numTilesWide;
+                int tH = mGroundSprites[b]->numTilesHigh;
+
+                mGroundSprites[b]->tiles = new SpriteHandle*[tH];
+                
+
+                int tileD = CELL_D * 2;
+                
+                for( int ty=0; ty<tH; ty++ ) {
+                    mGroundSprites[b]->tiles[ty] = new SpriteHandle[tW];
+                    
+                    for( int tx=0; tx<tW; tx++ ) {
+                        Image tileImage( tileD, tileD, 4, false );
+                        
+                        
+                        
+                        // first, copy from source image to fill 2x tile
+                        // centered on 1x tile of image, wrapping
+                        // around in source image as needed
+                        int imStartX = tx * CELL_D - CELL_D / 2;
+                        int imStartY = ty * CELL_D - CELL_D / 2;
+
+                        int imEndX = imStartX + tileD;
+                        int imEndY = imStartY + tileD;
+                        for( int c=0; c<3; c++ ) {
+                            double *chanSrc = image->getChannel( c );
+                            double *chanDest = tileImage.getChannel( c );
+                            
+                            int dY = 0;
+                            for( int y = imStartY; y<imEndY; y++ ) {
+                                int wrapY = y;
+                                
+                                if( wrapY >= h ) {
+                                    wrapY -= h;
+                                    }
+                                else if( wrapY < 0 ) {
+                                    wrapY += h;
+                                    }
+                                
+                                int dX = 0;
+                                for( int x = imStartX; x<imEndX; x++ ) {
+                                    int wrapX = x;
+                                    
+                                    if( wrapX >= w ) {
+                                        wrapX -= w;
+                                        }
+                                    else if( wrapX < 0 ) {
+                                        wrapX += w;
+                                        }
+                                    
+                                    chanDest[ dY * tileD + dX ] =
+                                        chanSrc[ wrapY * w + wrapX ];
+                                    dX++;
+                                    }
+                                dY++;
+                                }
+                            }
+
+                        // now set alpha based on radius
+
+                        int squareR = CELL_D / 2;
+                        
+                        // radius to corner
+                        int maxR = (int)sqrt( 2 * squareR * squareR ) + 2;
+
+                        double *tileAlpha = tileImage.getChannel( 3 );
+                        for( int y=0; y<tileD; y++ ) {
+                            int deltY = y - CELL_D;
+                            
+                            for( int x=0; x<tileD; x++ ) {    
+                                int deltX = x - CELL_D;
+                                
+                                double r = 
+                                    sqrt( deltY * deltY + deltX * deltX );
+                                
+                                int p = y * tileD + x;
+                                
+                                if( r > maxR ) {
+                                    tileAlpha[p] = 0;
+                                    }
+                                else {
+                                    tileAlpha[p] = 1;
+                                    }
+                                }
+                            }
+                        
+                        char *outFileName = 
+                            autoSprintf( "tileTest/biome_%d_x%d_y%d.tga",
+                                         b, tx, ty );
+                        
+                        writeTGAFile( outFileName, &tileImage );
+
+                        delete [] outFileName;
+
+                        mGroundSprites[b]->tiles[ty][tx] = 
+                            fillSprite( &tileImage, false );
+                        }
+                    }
+                }
+            
+            delete image;
+            }
+        
+        delete [] fileName;
+        }
+    
     }
 
 
@@ -656,7 +805,25 @@ LivingLifePage::~LivingLifePage() {
     freeSprite( mFoodEmptySprite );
     freeSprite( mFoodFullSprite );
     freeSprite( mChalkBlotSprite );
-    freeSprite( mGroundSprite );
+
+    
+    for( int i=0; i<mGroundSpritesArraySize; i++ ) {
+        if( mGroundSprites[i] != NULL ) {
+            
+            for( int y=0; y<mGroundSprites[i]->numTilesHigh; y++ ) {
+                for( int x=0; x<mGroundSprites[i]->numTilesWide; x++ ) {
+                    freeSprite( mGroundSprites[i]->tiles[y][x] );
+                    }
+                delete [] mGroundSprites[i]->tiles[y];
+                }
+            delete [] mGroundSprites[i]->tiles;
+            
+
+            delete mGroundSprites[i];
+            }
+        }
+    delete [] mGroundSprites;
+    
     }
 
 
@@ -1296,21 +1463,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
     setDrawColor( 1, 1, 1, 1 );
     drawSquare( lastScreenViewCenter, viewWidth );
     
-    doublePair groundCenterPos;
-    
-    groundCenterPos.x = lrint( lastScreenViewCenter.x / 512 ) * 512;
-    groundCenterPos.y = lrint( lastScreenViewCenter.y / 512 ) * 512;
-
-    for( int y=-2; y<=2; y++ ) {
-        doublePair pos = groundCenterPos;
-        pos.y = groundCenterPos.y + y * 512;
-        
-        for( int x=-3; x<=3; x++ ) {
-            pos.x = groundCenterPos.x + x * 512;
-            drawSprite( mGroundSprite, pos );
-            }
-        }
-    
 
     //if( currentGamePage != NULL ) {
     //    currentGamePage->base_draw( lastScreenViewCenter, viewWidth );
@@ -1363,6 +1515,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         int screenY = CELL_D * ( y + mMapOffsetY - mMapD / 2 );
 
+        int tileY = -lrint( screenY / CELL_D );
+
         
         for( int x=xStart; x<=xEnd; x++ ) {
             int mapI = y * mMapD + x;
@@ -1370,16 +1524,46 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
             
+            int tileX = lrint( screenX / CELL_D );
+
+            
             int b = mMapBiomes[mapI];
+                        
+            GroundSpriteSet *s = NULL;
             
-            setDrawColor( 5.0 - b / 5.0,
-                          b / 5.0,
-                          1.0,
-                          1.0 );
+            if( b < mGroundSpritesArraySize ) {
+                s = mGroundSprites[ b ];
+                }
             
-            doublePair pos = { screenX, screenY };
+            if( s == NULL ) {
+                // find another
+                for( int i=0; i<mGroundSpritesArraySize && s == NULL; i++ ) {
+                    s = mGroundSprites[ i ];
+                    }
+                }
             
-            drawSprite( mGroundSprite, pos, 0.25 );
+            
+            if( s != NULL ) {
+                
+                setDrawColor( 1, 1, 1, 1 );
+                            
+                doublePair pos = { screenX, screenY };
+                
+                
+                // wrap around
+                int setY = tileY % s->numTilesHigh;
+                int setX = tileX % s->numTilesWide;
+                
+                if( setY < 0 ) {
+                    setY += s->numTilesHigh;
+                    }
+                if( setX < 0 ) {
+                    setX += s->numTilesHigh;
+                    }
+                
+
+                drawSprite( s->tiles[setY][setX], pos );
+                }
             }
         }
     

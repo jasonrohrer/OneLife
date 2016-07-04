@@ -423,7 +423,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
 
     loadingPage = new LoadingPage;
-    livingLifePage = new LivingLifePage;
+    livingLifePage = NULL;
     extendedMessagePage = new ExtendedMessagePage;
     rebirthChoicePage = new RebirthChoicePage;
     
@@ -479,7 +479,11 @@ void freeFrameDrawer() {
     
     
     delete loadingPage;
-    delete livingLifePage;
+    if( livingLifePage != NULL ) {
+        delete livingLifePage;
+        livingLifePage = NULL;
+        }
+    
     delete extendedMessagePage;
     delete rebirthChoicePage;
     
@@ -1072,6 +1076,8 @@ void drawFrame( char inUpdate ) {
                     loadingComplete();
                     
                     initLiveObjectSet();
+
+                    livingLifePage = new LivingLifePage();
                     currentGamePage = livingLifePage;
                     currentGamePage->base_makeActive( true );
                 }

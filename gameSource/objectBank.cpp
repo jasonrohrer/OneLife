@@ -1868,6 +1868,24 @@ char *getBiomesString( ObjectRecord *inObject ) {
                        
 
 
+void getAllBiomes( SimpleVector<int> *inVectorToFill ) {
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            
+            for( int j=0; j< idMap[i]->numBiomes; j++ ) {
+                int b = idMap[i]->biomes[j];
+                
+                if( inVectorToFill->getElementIndex( b ) == -1 ) {
+                    inVectorToFill->push_back( b );
+                    }
+                }
+            }
+        }
+    }
+
+    
+
+
 
 
 

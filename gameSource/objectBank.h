@@ -3,6 +3,7 @@
 
 
 #include "minorGems/game/doublePair.h"
+#include "minorGems/util/SimpleVector.h"
 
 
 typedef struct FloatRGB {
@@ -327,6 +328,9 @@ int getFrontFootIndex( ObjectRecord *inObject, double inAge );
 
 
 char *getBiomesString( ObjectRecord *inObject );
+
+
+void getAllBiomes( SimpleVector<int> *inVectorToFill );
 
 
 #endif

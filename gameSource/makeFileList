@@ -39,13 +39,22 @@ folderCache.cpp \
 liveObjectSet.cpp \
 
 
+GROUND_PNG = $(wildcard graphicsSource/ground_*.png)
+
+GROUND_TGA = ${GROUND_PNG:.png=.tga}
+
+GROUND_TGA_PATH = $(patsubst graphicsSource/%,graphics/%,${GROUND_TGA})
+
+# enable to print list of ground TGAs to build
+# $(info $$GROUND_TGA_PATH is [${GROUND_TGA_PATH}])
+
 
 GAME_GRAPHICS = \
 graphics/font_32_64.tga \
 graphics/hungerFull.tga \
 graphics/hungerEmpty.tga \
 graphics/chalkBlot.tga \
-graphics/ground512.tga \
+${GROUND_TGA_PATH} \
 
 
 NEEDED_MINOR_GEMS_OBJECTS = \
