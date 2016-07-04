@@ -37,6 +37,7 @@ TextField.cpp \
 LoadingPage.cpp \
 folderCache.cpp \
 liveObjectSet.cpp \
+../commonSource/fractalNoise.cpp \
 
 
 GROUND_PNG = $(wildcard graphicsSource/ground_*.png)

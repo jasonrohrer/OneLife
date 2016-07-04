@@ -6,6 +6,8 @@
 
 #include "liveObjectSet.h"
 
+#include "../commonSource/fractalNoise.h"
+
 #include "minorGems/util/SimpleVector.h"
 
 
@@ -638,7 +640,7 @@ LivingLifePage::LivingLifePage()
                     for( int tx=0; tx<tW; tx++ ) {
                         Image tileImage( tileD, tileD, 4, false );
                         
-                        
+                        setXYRandomSeed( ty * 237 + tx );
                         
                         // first, copy from source image to fill 2x tile
                         // centered on 1x tile of image, wrapping
@@ -684,11 +686,21 @@ LivingLifePage::LivingLifePage()
 
                         // now set alpha based on radius
 
-                        int squareR = CELL_D / 2;
+                        int cellR = CELL_D / 2;
                         
-                        // radius to corner
-                        int maxR = (int)sqrt( 2 * squareR * squareR ) + 2;
+                        // radius to cornerof map tile
+                        int cellCornerR = (int)sqrt( 2 * cellR * cellR );
 
+                        int tileR = tileD / 2;
+
+                                                
+                        // halfway between
+                        int targetR = ( tileR + cellCornerR ) / 2;
+                        
+                        // for testing:
+                        //targetR = cellR;
+
+                        
                         double *tileAlpha = tileImage.getChannel( 3 );
                         for( int y=0; y<tileD; y++ ) {
                             int deltY = y - CELL_D;
@@ -701,7 +713,14 @@ LivingLifePage::LivingLifePage()
                                 
                                 int p = y * tileD + x;
                                 
-                                if( r > maxR ) {
+                                double wiggle = getXYFractal( x, y, .01, 0.6 );
+                                
+                                wiggle -= 0.5;
+                                
+                                wiggle *= targetR * 0.6;
+                                
+
+                                if( r > targetR + wiggle ) {
                                     tileAlpha[p] = 0;
                                     }
                                 else {
@@ -710,11 +729,17 @@ LivingLifePage::LivingLifePage()
                                 }
                             }
                         
+                        // FIXME:
+                        // need to cache these
+
                         char *outFileName = 
                             autoSprintf( "tileTest/biome_%d_x%d_y%d.tga",
                                          b, tx, ty );
                         
                         writeTGAFile( outFileName, &tileImage );
+
+                        // to test a single tile
+                        //exit(0);
 
                         delete [] outFileName;
 
@@ -1531,7 +1556,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         
             GroundSpriteSet *s = NULL;
             
-            if( b < mGroundSpritesArraySize ) {
+            if( b >= 0 && b < mGroundSpritesArraySize ) {
                 s = mGroundSprites[ b ];
                 }
             
