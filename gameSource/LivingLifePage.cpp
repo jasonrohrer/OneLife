@@ -515,6 +515,8 @@ char lastCharUsed = 'A';
 
 
 
+#include "minorGems/graphics/filters/BoxBlurFilter.h"
+
 
 LivingLifePage::LivingLifePage() 
         : mServerAddress( NULL ),
@@ -596,6 +598,8 @@ LivingLifePage::LivingLifePage()
     
     mGroundSpritesArraySize = maxBiome + 1;
     mGroundSprites = new GroundSpriteSet*[ mGroundSpritesArraySize ];
+
+    BoxBlurFilter blur( 12 );
     
     for( int i=0; i<mGroundSpritesArraySize; i++ ) {
         mGroundSprites[i] = NULL;
@@ -645,8 +649,8 @@ LivingLifePage::LivingLifePage()
                         // first, copy from source image to fill 2x tile
                         // centered on 1x tile of image, wrapping
                         // around in source image as needed
-                        int imStartX = tx * CELL_D - CELL_D / 2;
-                        int imStartY = ty * CELL_D - CELL_D / 2;
+                        int imStartX = tx * CELL_D - ( tileD - CELL_D ) / 2;
+                        int imStartY = ty * CELL_D - ( tileD - CELL_D ) / 2;
 
                         int imEndX = imStartX + tileD;
                         int imEndY = imStartY + tileD;
@@ -697,29 +701,30 @@ LivingLifePage::LivingLifePage()
                         // halfway between
                         int targetR = ( tileR + cellCornerR ) / 2;
                         
-                        // for testing:
-                        //targetR = cellR;
 
+                        // better:
+                        // grow out from min only
+                        targetR = cellCornerR + 1;
+                        
+                        double wiggleScale = 0.95 * tileR - targetR;
+                        
                         
                         double *tileAlpha = tileImage.getChannel( 3 );
                         for( int y=0; y<tileD; y++ ) {
-                            int deltY = y - CELL_D;
+                            int deltY = y - tileD/2;
                             
                             for( int x=0; x<tileD; x++ ) {    
-                                int deltX = x - CELL_D;
+                                int deltX = x - tileD/2;
                                 
                                 double r = 
                                     sqrt( deltY * deltY + deltX * deltX );
                                 
                                 int p = y * tileD + x;
                                 
-                                double wiggle = getXYFractal( x, y, .01, 0.6 );
+                                double wiggle = getXYFractal( x, y, 0, .5 );
                                 
-                                wiggle -= 0.5;
-                                
-                                wiggle *= targetR * 0.6;
-                                
-
+                                wiggle *= wiggleScale;
+ 
                                 if( r > targetR + wiggle ) {
                                     tileAlpha[p] = 0;
                                     }
@@ -729,6 +734,8 @@ LivingLifePage::LivingLifePage()
                                 }
                             }
                         
+                        tileImage.filter( &blur, 3 );
+
                         // FIXME:
                         // need to cache these
 
