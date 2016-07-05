@@ -677,8 +677,10 @@ LivingLifePage::LivingLifePage()
                             // first, copy from source image to fill 2x tile
                             // centered on 1x tile of image, wrapping
                             // around in source image as needed
-                            int imStartX = tx * CELL_D - ( tileD - CELL_D ) / 2;
-                            int imStartY = ty * CELL_D - ( tileD - CELL_D ) / 2;
+                            int imStartX = 
+                                tx * CELL_D - ( tileD - CELL_D ) / 2;
+                            int imStartY = 
+                                ty * CELL_D - ( tileD - CELL_D ) / 2;
 
                             int imEndX = imStartX + tileD;
                             int imEndY = imStartY + tileD;
