@@ -1040,11 +1040,12 @@ void drawFrame( char inUpdate ) {
                         int numAnims = initAnimationBankStart( &rebuilding );
  
                         if( rebuilding ) {
-                            loadingPage->setCurrentPhase( 
-                                "ANIMATIONS##(REBUILDING CACHE)" );
+                            loadingPage->setCurrentPhase(
+                                translate( "animationsRebuild" ) );
                             }
                         else {
-                            loadingPage->setCurrentPhase( "ANIMATIONS" );
+                            loadingPage->setCurrentPhase( 
+                                translate( "animations" ) );
                             }
                         loadingPage->setCurrentProgress( 0 );
                         
@@ -1068,16 +1069,36 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initAnimationBankFinish();
+                        loadingPage->setCurrentPhase( 
+                            translate( "groundTextures" ) );
+                     
+                        // no progress bar, not interactive
+                        loadingPage->showProgress( false );
+                        
                         loadingPhase ++;
                         }
                     break;
                     }
-                default:
-                    loadingComplete();
-                    
+                case 4: {
                     initLiveObjectSet();
 
+                    loadingPhaseStartTime = Time::getCurrentTime();
+
+                    // this constructor loads ground textures
+                    // and can take a while
+                    // (not interactive, no progress bar)
                     livingLifePage = new LivingLifePage();
+                    
+                    printf( "Loaded ground textures in %f sec\n",
+                            Time::getCurrentTime() - 
+                            loadingPhaseStartTime );
+
+                    loadingPhase ++;
+                    }
+                default:
+                    // NOW game engine can start measuring frame rate
+                    loadingComplete();
+                    
                     currentGamePage = livingLifePage;
                     currentGamePage->base_makeActive( true );
                 }
