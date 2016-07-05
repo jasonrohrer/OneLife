@@ -619,12 +619,13 @@ LivingLifePage::LivingLifePage()
     
         char *fileName = autoSprintf( "ground_%d.tga", b );
 
-        Image *image = readTGAFile( fileName );
+        RawRGBAImage *rawImage = readTGAFileRaw( fileName );
         
-        if( image != NULL ) {
+
+        if( rawImage != NULL ) {
             
-            int w = image->getWidth();
-            int h = image->getHeight();
+            int w = rawImage->mWidth;
+            int h = rawImage->mHeight;
             
             if( w % CELL_D != 0 || h % CELL_D != 0 ) {
                 AppLog::printOutNextMessage();
@@ -645,13 +646,14 @@ LivingLifePage::LivingLifePage()
                 mGroundSprites[b]->tiles = new SpriteHandle*[tH];
                 
 
-                int tileD = CELL_D * 2;
+                // check if all cache files exist
+                // if so, don't need to load double version of whole image
+                char allCacheFilesExist = true;
                 
                 for( int ty=0; ty<tH; ty++ ) {
                     mGroundSprites[b]->tiles[ty] = new SpriteHandle[tW];
-                    
                     for( int tx=0; tx<tW; tx++ ) {
-
+                        
                         char *cacheFileName = 
                             autoSprintf( 
                                 "groundTileCache/biome_%d_x%d_y%d.tga",
@@ -663,129 +665,164 @@ LivingLifePage::LivingLifePage()
                         
                         if( mGroundSprites[b]->tiles[ty][tx] == NULL ) {
                             // cache miss
-
-                            printf( "Cache file %s does not exist, "
-                                    "rebuilding.\n", cacheFileName );
                             
-
-                            // generate from scratch
-
-                            Image tileImage( tileD, tileD, 4, false );
-                        
-                            setXYRandomSeed( ty * 237 + tx );
-                        
-                            // first, copy from source image to fill 2x tile
-                            // centered on 1x tile of image, wrapping
-                            // around in source image as needed
-                            int imStartX = 
-                                tx * CELL_D - ( tileD - CELL_D ) / 2;
-                            int imStartY = 
-                                ty * CELL_D - ( tileD - CELL_D ) / 2;
-
-                            int imEndX = imStartX + tileD;
-                            int imEndY = imStartY + tileD;
-                            for( int c=0; c<3; c++ ) {
-                                double *chanSrc = image->getChannel( c );
-                                double *chanDest = tileImage.getChannel( c );
-                            
-                                int dY = 0;
-                                for( int y = imStartY; y<imEndY; y++ ) {
-                                    int wrapY = y;
-                                
-                                    if( wrapY >= h ) {
-                                        wrapY -= h;
-                                        }
-                                    else if( wrapY < 0 ) {
-                                        wrapY += h;
-                                        }
-                                
-                                    int dX = 0;
-                                    for( int x = imStartX; x<imEndX; x++ ) {
-                                        int wrapX = x;
-                                    
-                                        if( wrapX >= w ) {
-                                            wrapX -= w;
-                                            }
-                                        else if( wrapX < 0 ) {
-                                            wrapX += w;
-                                            }
-                                    
-                                        chanDest[ dY * tileD + dX ] =
-                                            chanSrc[ wrapY * w + wrapX ];
-                                        dX++;
-                                        }
-                                    dY++;
-                                    }
-                                }
-
-                            // now set alpha based on radius
-
-                            int cellR = CELL_D / 2;
-                        
-                            // radius to cornerof map tile
-                            int cellCornerR = (int)sqrt( 2 * cellR * cellR );
-
-                            int tileR = tileD / 2;
-
-                                                
-                            // halfway between
-                            int targetR = ( tileR + cellCornerR ) / 2;
-                        
-
-                            // better:
-                            // grow out from min only
-                            targetR = cellCornerR + 1;
-                        
-                            double wiggleScale = 0.95 * tileR - targetR;
-                        
-                        
-                            double *tileAlpha = tileImage.getChannel( 3 );
-                            for( int y=0; y<tileD; y++ ) {
-                                int deltY = y - tileD/2;
-                            
-                                for( int x=0; x<tileD; x++ ) {    
-                                    int deltX = x - tileD/2;
-                                
-                                    double r = 
-                                        sqrt( deltY * deltY + deltX * deltX );
-                                
-                                    int p = y * tileD + x;
-                                
-                                    double wiggle = 
-                                        getXYFractal( x, y, 0, .5 );
-                                
-                                    wiggle *= wiggleScale;
- 
-                                    if( r > targetR + wiggle ) {
-                                        tileAlpha[p] = 0;
-                                        }
-                                    else {
-                                        tileAlpha[p] = 1;
-                                        }
-                                    }
-                                }
-                        
-                            tileImage.filter( &blur, 3 );
-
-
-                            // cache for next time
-
-                        
-                            writeTGAFile( cacheFileName, &tileImage );
-
-                            // to test a single tile
-                            //exit(0);
-
-                            mGroundSprites[b]->tiles[ty][tx] = 
-                                fillSprite( &tileImage, false );
+                            allCacheFilesExist = false;
                             }
-
                         delete [] cacheFileName;
                         }
                     }
+                
+
+                if( !allCacheFilesExist ) {
+                    // need to regenerate some
+                    
+                    // spend time to load the double-converted image
+                    Image *image = readTGAFile( fileName );
+
+                    int tileD = CELL_D * 2;
+                
+                    for( int ty=0; ty<tH; ty++ ) {
+                        mGroundSprites[b]->tiles[ty] = new SpriteHandle[tW];
+                    
+                        for( int tx=0; tx<tW; tx++ ) {
+                        
+                            if( mGroundSprites[b]->tiles[ty][tx] == NULL ) {
+                                // cache miss
+
+                                char *cacheFileName = 
+                                    autoSprintf( 
+                                        "groundTileCache/biome_%d_x%d_y%d.tga",
+                                        b, tx, ty );
+
+                                printf( "Cache file %s does not exist, "
+                                    "rebuilding.\n", cacheFileName );
+
+                                // generate from scratch
+
+                                Image tileImage( tileD, tileD, 4, false );
+                        
+                                setXYRandomSeed( ty * 237 + tx );
+                        
+                                // first, copy from source image to 
+                                // fill 2x tile
+                                // centered on 1x tile of image, wrapping
+                                // around in source image as needed
+                                int imStartX = 
+                                    tx * CELL_D - ( tileD - CELL_D ) / 2;
+                                int imStartY = 
+                                    ty * CELL_D - ( tileD - CELL_D ) / 2;
+
+                                int imEndX = imStartX + tileD;
+                                int imEndY = imStartY + tileD;
+                                for( int c=0; c<3; c++ ) {
+                                    double *chanSrc = image->getChannel( c );
+                                    double *chanDest = 
+                                        tileImage.getChannel( c );
+                            
+                                    int dY = 0;
+                                    for( int y = imStartY; y<imEndY; y++ ) {
+                                        int wrapY = y;
+                                
+                                        if( wrapY >= h ) {
+                                            wrapY -= h;
+                                            }
+                                        else if( wrapY < 0 ) {
+                                            wrapY += h;
+                                            }
+                                
+                                        int dX = 0;
+                                        for( int x = imStartX;  x<imEndX; 
+                                             x++ ) {
+                                            
+                                            int wrapX = x;
+                                    
+                                            if( wrapX >= w ) {
+                                                wrapX -= w;
+                                                }
+                                            else if( wrapX < 0 ) {
+                                                wrapX += w;
+                                                }
+                                    
+                                            chanDest[ dY * tileD + dX ] =
+                                                chanSrc[ wrapY * w + wrapX ];
+                                            dX++;
+                                            }
+                                        dY++;
+                                        }
+                                    }
+
+                                // now set alpha based on radius
+
+                                int cellR = CELL_D / 2;
+                        
+                                // radius to cornerof map tile
+                                int cellCornerR = 
+                                    (int)sqrt( 2 * cellR * cellR );
+
+                                int tileR = tileD / 2;
+
+                                                
+                                // halfway between
+                                int targetR = ( tileR + cellCornerR ) / 2;
+                        
+
+                                // better:
+                                // grow out from min only
+                                targetR = cellCornerR + 1;
+                        
+                                double wiggleScale = 0.95 * tileR - targetR;
+                        
+                        
+                                double *tileAlpha = tileImage.getChannel( 3 );
+                                for( int y=0; y<tileD; y++ ) {
+                                    int deltY = y - tileD/2;
+                            
+                                    for( int x=0; x<tileD; x++ ) {    
+                                        int deltX = x - tileD/2;
+                                
+                                        double r = 
+                                            sqrt( deltY * deltY + 
+                                                  deltX * deltX );
+                                
+                                        int p = y * tileD + x;
+                                
+                                        double wiggle = 
+                                            getXYFractal( x, y, 0, .5 );
+                                
+                                        wiggle *= wiggleScale;
+ 
+                                        if( r > targetR + wiggle ) {
+                                            tileAlpha[p] = 0;
+                                            }
+                                        else {
+                                            tileAlpha[p] = 1;
+                                            }
+                                        }
+                                    }
+                        
+                                tileImage.filter( &blur, 3 );
+
+
+                                // cache for next time
+                                
+                                
+                                writeTGAFile( cacheFileName, &tileImage );
+
+                                delete [] cacheFileName;
+                                
+                                // to test a single tile
+                                //exit(0);
+                                
+                                mGroundSprites[b]->tiles[ty][tx] = 
+                                    fillSprite( &tileImage, false );
+                                }
+                            }
+                        }
+                    delete image;
+                    }
                 }
             
-            delete image;
+            delete rawImage;
             }
         
         delete [] fileName;
