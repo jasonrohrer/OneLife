@@ -500,7 +500,7 @@ EditorObjectPage::~EditorObjectPage() {
 static void fixCommaIntList( TextField *inField ) {
     char *text = inField->getText();
     
-    if( text == "" ) {
+    if( strcmp( text, "" ) == 0 ) {
         inField->setText( "0" );
         }
     else {
