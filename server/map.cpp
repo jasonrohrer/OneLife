@@ -161,9 +161,10 @@ static int getMapBiome( int inX, int inY ) {
         
     
     for( int i=0; i<numBiomes; i++ ) {
+        int biome = biomes[i];
         
-        double randVal = getXYFractal(  723 + inX + 263 * i, 
-                                        1553 + inY + 187 * i, 
+        double randVal = getXYFractal(  723 + inX + 263 * biome, 
+                                        1553 + inY + 187 * biome, 
                                         0.3, 
                                         1.5 + 0.16666 * numBiomes );
         
@@ -209,7 +210,7 @@ static int getBaseMap( int inX, int inY ) {
         // next step, pick a biome
         int pickedBiome = getMapBiome( inX, inY );
                 
-        lastCheckedBiome = pickedBiome;
+        lastCheckedBiome = biomes[pickedBiome];
         
 
         int numObjects = naturalMapIDs[pickedBiome].size();
@@ -830,7 +831,7 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
                 // getMapObject
 
                 // get it ourselves
-                lastCheckedBiome = getMapBiome( x, y );
+                lastCheckedBiome = biomes[getMapBiome( x, y )];
                 }
             chunkBiomes[ cI ] = lastCheckedBiome;
             
