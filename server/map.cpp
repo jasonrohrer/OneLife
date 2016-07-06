@@ -154,11 +154,17 @@ double sigmoid( double inInput, double inKnee ) {
 
 
 
-static int getMapBiome( int inX, int inY ) {
+static int getMapBiomeIndex( int inX, int inY, 
+                             int *outSecondPlaceIndex = NULL,
+                             double *outSecondPlaceGap = NULL ) {
     int pickedBiome = -1;
         
-    double maxValue = DBL_MIN;
+    double maxValue = -DBL_MAX;
         
+    int secondPlace = -1;
+    
+    double secondPlaceGap = 0;
+
     
     for( int i=0; i<numBiomes; i++ ) {
         int biome = biomes[i];
@@ -169,10 +175,33 @@ static int getMapBiome( int inX, int inY ) {
                                         1.5 + 0.16666 * numBiomes );
         
         if( randVal > maxValue ) {
+            // a new first place
+            
+            // old first moves into second
+            secondPlace = pickedBiome;
+            secondPlaceGap = randVal - maxValue;
+            
+
             maxValue = randVal;
             pickedBiome = i;
             }
+        else if( randVal > maxValue - secondPlaceGap ) {
+            // a better second place
+            secondPlace = i;
+            secondPlaceGap = maxValue - randVal;
+            }
         }
+    
+
+
+    if( outSecondPlaceIndex != NULL ) {
+        *outSecondPlaceIndex = secondPlace;
+        }
+    if( outSecondPlaceGap != NULL ) {
+        *outSecondPlaceGap = secondPlaceGap;
+        }
+    
+    
     return pickedBiome;
     }
 
@@ -189,7 +218,6 @@ static int getMapBiome( int inX, int inY ) {
 static int lastCheckedBiome = -1;
 
 static int getBaseMap( int inX, int inY ) {
-    
     // first step:  save rest of work if density tells us that
     // nothing is here anyway
     double density = getXYFractal( inX, inY, 0.1, 1 );
@@ -207,10 +235,37 @@ static int getBaseMap( int inX, int inY ) {
 
 
 
-        // next step, pick a biome
-        int pickedBiome = getMapBiome( inX, inY );
+        // next step, pick top two biomes
+        int secondPlace;
+        double secondPlaceGap;
+        
+        int pickedBiome = getMapBiomeIndex( inX, inY, &secondPlace,
+                                            &secondPlaceGap );
                 
         lastCheckedBiome = biomes[pickedBiome];
+        
+
+        
+        // randomly let objects from second place biome peek through
+        
+        // if gap is 0, this should happen 50 percent of the time
+
+        // if gap is 1.0, it should never happen
+
+        // larger values make second place more likely
+        double secondPlaceReduction = 5.0;
+
+        //printf( "Second place gap = %f, random(%d,%d)=%f\n", secondPlaceGap,
+        //        inX, inY, getXYRandom( 2087 + inX, 793 + inY ) );
+        
+        if( getXYRandom( 2087 + inX, 793 + inY ) > 
+            .5 + secondPlaceReduction * secondPlaceGap ) {
+        
+            // note that lastCheckedBiome is NOT changed, so ground
+            // shows the true, first-place biome, but object placement
+            // follows the second place biome
+            pickedBiome = secondPlace;
+            }
         
 
         int numObjects = naturalMapIDs[pickedBiome].size();
@@ -831,7 +886,7 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
                 // getMapObject
 
                 // get it ourselves
-                lastCheckedBiome = biomes[getMapBiome( x, y )];
+                lastCheckedBiome = biomes[getMapBiomeIndex( x, y )];
                 }
             chunkBiomes[ cI ] = lastCheckedBiome;
             
