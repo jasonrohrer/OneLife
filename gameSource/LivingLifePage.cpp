@@ -682,7 +682,6 @@ LivingLifePage::LivingLifePage()
                     int tileD = CELL_D * 2;
                 
                     for( int ty=0; ty<tH; ty++ ) {
-                        mGroundSprites[b]->tiles[ty] = new SpriteHandle[tW];
                     
                         for( int tx=0; tx<tW; tx++ ) {
                         
@@ -1645,7 +1644,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 setDrawColor( 1, 1, 1, 1 );
                             
-                doublePair pos = { screenX, screenY };
+                doublePair pos = { (double)screenX, (double)screenY };
                 
                 
                 // wrap around
