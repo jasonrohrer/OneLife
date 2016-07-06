@@ -1572,11 +1572,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int gridCenterY = 
         lrintf( lastScreenViewCenter.y / CELL_D ) - mMapOffsetY + mMapD/2;
     
-    int xStart = gridCenterX - 8;
-    int xEnd = gridCenterX + 8;
+    // more on left and right of screen to avoid wide object tops popping in
+    int xStart = gridCenterX - 6;
+    int xEnd = gridCenterX + 6;
 
-    int yStart = gridCenterY - 5;
-    int yEnd = gridCenterY + 5;
+    // more on bottom of screen so that tall objects don't pop in
+    int yStart = gridCenterY - 4;
+    int yEnd = gridCenterY + 3;
 
     if( xStart < 0 ) {
         xStart = 0;
