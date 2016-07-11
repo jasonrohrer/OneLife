@@ -231,11 +231,21 @@ void EditorTransitionPage::clearUseOfObject( int inObjectID ) {
 void EditorTransitionPage::checkIfSaveVisible() {
     char saveVis = ( mCurrentTransition.target != 0
                      ||
+                     // food-eating transition
                      ( mCurrentTransition.actor != 0
                        &&
                        getObject( mCurrentTransition.actor )->foodValue > 0
                        &&
-                       mCurrentTransition.newActor != 0 ) );
+                       mCurrentTransition.newActor != 0 
+                       &&
+                       mCurrentTransition.newTarget == 0 )
+                     ||
+                     // Use on bare ground transition
+                     ( mCurrentTransition.actor != 0
+                       &&
+                       getObject( mCurrentTransition.actor )->foodValue == 0
+                       &&
+                       mCurrentTransition.newTarget != 0 ) );
     
     mSaveTransitionButton.setVisible( saveVis );
     
@@ -428,11 +438,19 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             }
         else if( target == 0 &&
                  mCurrentTransition.actor != 0 &&
+                 mCurrentTransition.newActor != 0 &&
+                 mCurrentTransition.newTarget == 0 &&
                  getObject( mCurrentTransition.actor )->foodValue > 0 ) {
             
             target = -1;
             }
-        
+        else if( target == 0 &&
+                 mCurrentTransition.actor != 0 &&
+                 mCurrentTransition.newTarget != 0 &&
+                 getObject( mCurrentTransition.actor )->foodValue == 0 ) {
+            
+            target = -1;
+            }
 
         addTrans( actor,
                   target,
@@ -620,16 +638,14 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
 static void drawTransObject( int inID, doublePair inPos ) {
     if( inID > 0 ) {
 
-        inPos.y -= 40;
-
         ObjectRecord *r = getObject( inID );
         
         int maxD = getMaxDiameter( r );
         
         double zoom = 1;
         
-        if( maxD > 256 ) {
-            zoom = 256.0 / maxD;
+        if( maxD > 128 ) {
+            zoom = 128.0 / maxD;
             }
         
         drawObject( getObject( inID ), inPos, 0, false, 20, false, 
@@ -682,7 +698,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
     mainFont->drawString( "=", centerC, alignCenter );
 
 
-    setDrawColor( 1, 1, 1, 1 );
+    
     
     for( int i=0; i<NUM_TREE_TRANS_TO_SHOW; i++ ) {
 
@@ -694,14 +710,14 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             doublePair pos = mProducedByButtons[i]->getCenter();
             
             pos.x -= 75;
-            
+            setDrawColor( 1, 1, 1, 1 );
             drawSquare( pos, 50 );
 
             
             drawTransObject( actor, pos );
             
             pos.x += 150;
-            
+            setDrawColor( 1, 1, 1, 1 );
             drawSquare( pos, 50 );
 
             // target always non-blank
@@ -718,12 +734,14 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         
             pos.x -= 75;
             
+            setDrawColor( 1, 1, 1, 1 );
             drawSquare( pos, 50 );
             
             drawTransObject( newActor, pos );
             
             pos.x += 150;
             
+            setDrawColor( 1, 1, 1, 1 );
             drawSquare( pos, 50 );
             
             drawTransObject( newTarget, pos );
@@ -765,7 +783,8 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
     else if( mCurrentTransition.target == 0 &&
              mCurrentTransition.actor != 0 &&
              getObject( mCurrentTransition.actor )->foodValue > 0 &&
-             mCurrentTransition.newActor != 0 ) {
+             mCurrentTransition.newActor != 0 &&
+             mCurrentTransition.newTarget == 0 ) {
         
         doublePair pos = mPickButtons[0]->getCenter();
 
@@ -774,6 +793,21 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         setDrawColor( 1, 1, 1, 1 );
         
         smallFont->drawString( "Eating Transition", 
+                               pos, alignCenter );
+        
+        }
+    else if( mCurrentTransition.target == 0 &&
+             mCurrentTransition.actor != 0 &&
+             getObject( mCurrentTransition.actor )->foodValue == 0 &&
+             mCurrentTransition.newTarget != 0 ) {
+        
+        doublePair pos = mPickButtons[0]->getCenter();
+
+        pos.y += 75;
+        
+        setDrawColor( 1, 1, 1, 1 );
+        
+        smallFont->drawString( "Use on Bare Ground", 
                                pos, alignCenter );
         
         }

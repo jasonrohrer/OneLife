@@ -1,6 +1,7 @@
 #include "LivingLifePage.h"
 
 #include "objectBank.h"
+#include "transitionBank.h"
 #include "whiteSprites.h"
 #include "message.h"
 
@@ -1247,10 +1248,14 @@ void LivingLifePage::drawLiveObject(
         if( inObj->yd > playerActionTargetY ) {
             yDir = -1;
             }
-                    
+
+        double wiggleMax = CELL_D *.5 *.90;
+        
+        double halfWiggleMax = wiggleMax * 0.5;
+        
         double offset =
-            32 - 
-            32 * 
+            halfWiggleMax - 
+            halfWiggleMax * 
             cos( 2 * M_PI * inObj->pendingActionAnimationProgress );
                     
                     
@@ -4265,6 +4270,26 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 
                 if( killLater ) {
                     action = "KILL";
+                    }
+                else {
+                    // check for other special case
+                    // a use-on-ground transition
+                    ObjectRecord *held = getObject( ourLiveObject->holdingID );
+                    
+                    if( held->foodValue == 0 ) {
+                        
+                        TransRecord *r = getTrans( ourLiveObject->holdingID,
+                                                   -1 );
+                        
+                        if( r != NULL &&
+                            r->newTarget != 0 ) {
+                            
+                            // a use-on-ground transition exists!
+
+                            // override the drop action
+                            action = "USE";
+                            }
+                        }
                     }
                 }
             else if( modClick && ourLiveObject->holdingID == 0 &&

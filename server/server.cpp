@@ -2303,6 +2303,70 @@ int main() {
                                     // action doesn't happen, just the drop
                                     }
                                 }
+                            else if( nextPlayer->holdingID != 0 &&
+                                     ! (m.x == nextPlayer->xd &&
+                                        m.y == nextPlayer->yd ) ) {
+                                // target location emtpy
+                                // target not where we're standing
+                                // we're holding something
+                                
+                                // consider a use-on-bare-ground transtion
+                                
+                                ObjectRecord *obj = 
+                                    getObject( nextPlayer->holdingID );
+                                
+                                if( obj->foodValue == 0 ) {
+                                    
+                                    // get no-target transtion
+                                    // (not a food transition, since food
+                                    //   value is 0)
+                                    TransRecord *r = 
+                                        getTrans( nextPlayer->holdingID, 
+                                                  -1 );
+
+                                    if( r != NULL &&
+                                        r->newTarget != 0 ) {
+
+                                        int oldContained = 
+                                            nextPlayer->numContained;
+                                        
+                                        nextPlayer->holdingID = r->newActor;
+                                    
+                                        nextPlayer->heldOriginValid = 0;
+                                        nextPlayer->heldOriginX = 0;
+                                        nextPlayer->heldOriginY = 0;
+
+                                        // can newly changed container hold
+                                        // less than what it could contain
+                                        // before?
+
+                                        int newHeldSlots = 
+                                            getNumContainerSlots( 
+                                                nextPlayer->holdingID );
+
+                                        if( newHeldSlots < oldContained ) {
+                                            // truncate
+                                            nextPlayer->numContained
+                                                = newHeldSlots;
+                                            }
+                                                                        
+
+                                        setMapObject( m.x, m.y, r->newTarget );
+                                    
+                                    
+                                        char *changeLine =
+                                            getMapChangeLineString( m.x, m.y );
+                                        
+                                        mapChanges.
+                                            appendElementString( changeLine );
+                                    
+                                        ChangePosition p = { m.x, m.y, false };
+                                        mapChangesPos.push_back( p );
+                                    
+                                        delete [] changeLine;
+                                        }
+                                    }
+                                }
                             else if( nextPlayer->holdingID == 0 &&
                                      ! (m.x == nextPlayer->xd &&
                                         m.y == nextPlayer->yd ) ) {
