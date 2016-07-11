@@ -1827,7 +1827,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
 
-    memset( mMapCellDrawnFlags, false, numCells );
     
 
     for( int y=yEnd; y>=yStart; y-- ) {
@@ -1838,8 +1837,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
-        // now draw tiles in this row, but only if they
-        // are behind a live player object
+        // draw players behind the objects in this row
 
         // run this loop twice, once for
         // adults, and then afterward for recently-dropped babies
@@ -1890,37 +1888,22 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 if( oY == worldY && oX == worldX ) {
                     
-                    // there's a player here, draw map cell and player now
+                    // there's a player here, draw it
                     
-                    int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
-                    
-                    int mapI = y * mMapD + x;
-                    
-                    drawMapCell( mapI, screenX, screenY );
-                 
-                    mMapCellDrawnFlags[mapI] = true;
-
                     drawLiveObject( o, &speakers, &speakersPos );
                     }
                 }
             }
 
 
-        // now draw any undrawn map objects in this row
+        // now draw map objects in this row
         // OVER the player objects in this row (so that pick up and set down
-        // looks correct)
+        // looks correct, and so players are behind all same-row objects)
         for( int x=xStart; x<=xEnd; x++ ) {
             int mapI = y * mMapD + x;
-
-            if( ! mMapCellDrawnFlags[ mapI ] ) {
-                
+            int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
             
-                int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
-                    
-                drawMapCell( mapI, screenX, screenY );
-                
-                mMapCellDrawnFlags[mapI] = true;
-                }
+            drawMapCell( mapI, screenX, screenY );
             }
 
 
