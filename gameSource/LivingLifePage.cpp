@@ -635,6 +635,12 @@ LivingLifePage::LivingLifePage()
                     "width %d",
                     fileName, w, h, CELL_D );
                 }
+            else if( rawImage->mNumChannels != 4 ) {
+                AppLog::printOutNextMessage();
+                AppLog::errorF( 
+                    "Ground texture %s has % channels instead of 4",
+                    fileName, rawImage->mNumChannels );
+                }
             else {    
                 mGroundSprites[b] = new GroundSpriteSet;
                 mGroundSprites[b]->numTilesWide = w / CELL_D;
@@ -645,6 +651,7 @@ LivingLifePage::LivingLifePage()
 
                 mGroundSprites[b]->tiles = new SpriteHandle*[tH];
                 
+                mGroundSprites[b]->wholeSheet = fillSprite( rawImage );
 
                 // check if all cache files exist
                 // if so, don't need to load double version of whole image
@@ -916,6 +923,8 @@ LivingLifePage::~LivingLifePage() {
             delete [] mGroundSprites[i]->tiles;
             
 
+            freeSprite( mGroundSprites[i]->wholeSheet );
+            
             delete mGroundSprites[i];
             }
         }
@@ -1609,6 +1618,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
 
+    int numCells = mMapD * mMapD;
+
+    memset( mMapCellDrawnFlags, false, numCells );
+
     // draw underlying ground biomes
     for( int y=yEnd; y>=yStart; y-- ) {
 
@@ -1620,6 +1633,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
         for( int x=xStart; x<=xEnd; x++ ) {
             int mapI = y * mMapD + x;
             
+            if( mMapCellDrawnFlags[mapI] ) {
+                continue;
+                }
 
             int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
             
@@ -1661,7 +1677,75 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 
 
-                drawSprite( s->tiles[setY][setX], pos );
+                if( setY == 0 && setX == 0 ) {
+                    
+                    // check if we're on corner of all-same-biome region that
+                    // we can fill with one big sheet
+
+                    char allSameBiome = true;
+                    
+                    // check borders of would-be sheet too
+                    for( int nY = y+1; nY >= y - s->numTilesHigh; nY-- ) {
+                        
+                        if( nY >=0 && nY < mMapD ) {
+                            
+                            for( int nX = x-1; 
+                                 nX <= x + s->numTilesWide; nX++ ) {
+                                
+                                if( nX >=0 && nX < mMapD ) {
+                                    int nI = nY * mMapD + nX;
+                                    
+                                    if( mMapBiomes[nI] != b ) {
+                                        allSameBiome = false;
+                                        break;
+                                        }
+                                    }
+                                }
+
+                            }
+                        if( !allSameBiome ) {
+                            break;
+                            }
+                        }
+                    
+                    if( allSameBiome ) {
+                        
+                        doublePair lastCornerPos = 
+                            { pos.x + ( s->numTilesWide - 1 ) * CELL_D, 
+                              pos.y - ( s->numTilesHigh - 1 ) * CELL_D };
+
+                        doublePair sheetPos = mult( add( pos, lastCornerPos ),
+                                                    0.5 );
+                        
+                        drawSprite( s->wholeSheet, sheetPos );
+                        
+                        // mark all cells under sheet as drawn
+                        for( int sY = y; sY > y - s->numTilesHigh; sY-- ) {
+                        
+                            if( sY >=0 && sY < mMapD ) {
+                            
+                                for( int sX = x; 
+                                     sX < x + s->numTilesWide; sX++ ) {
+                                
+                                    if( sX >=0 && sX < mMapD ) {
+                                        int sI = sY * mMapD + sX;
+                                        
+                                        mMapCellDrawnFlags[sI] = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                
+                if( ! mMapCellDrawnFlags[mapI] ) {
+                    // not drawn as whole sheet
+
+                    drawSprite( s->tiles[setY][setX], pos );
+                    
+                    mMapCellDrawnFlags[mapI] = true;
+                    }
                 }
             }
         }
@@ -1743,7 +1827,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
 
-    int numCells = mMapD * mMapD;
     memset( mMapCellDrawnFlags, false, numCells );
     
 
