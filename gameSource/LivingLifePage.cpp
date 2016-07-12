@@ -3983,6 +3983,129 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     
     int clickDestY = lrintf( ( inY ) / CELL_D );
     
+    float clickExtraX = inX - clickDestX * CELL_D;
+    float clickExtraY = inY - clickDestY * CELL_D;
+
+
+    // consider 3x3 area around click and test true object pixel
+    // collisions in that area
+
+    int closestCellX = clickDestX;
+    int closestCellY = clickDestY;
+    
+    double minDistThatHits = 2.0;
+
+    char hit = false;
+    
+
+    // start in front row
+    // right to left
+    // (check things that are in front first
+    for( int y=clickDestY-1; y<=clickDestY+1 && !hit; y++ ) {
+        float clickOffsetY = ( clickDestY  - y ) * CELL_D + clickExtraY;
+
+        // first all map objects in this row (in front of people)
+        for( int x=clickDestX+1; x>=clickDestX-1  && !hit; x-- ) {
+            float clickOffsetX = ( clickDestX  - x ) * CELL_D + clickExtraX;
+
+            int mapX = x - mMapOffsetX + mMapD / 2;
+            int mapY = y - mMapOffsetY + mMapD / 2;
+
+            int mapI = mapY * mMapD + mapX;
+
+            int oID = mMap[ mapI ];
+            
+            
+
+            if( oID > 0 ) {
+                ObjectRecord *obj = getObject( oID );
+                
+                int sp, sl;
+                
+                double dist = getClosestObjectPart( obj,
+                                                    -1,
+                                                    -1,
+                                                    clickOffsetX,
+                                                    clickOffsetY,
+                                                    &sp, &sl );
+                if( dist < minDistThatHits ) {
+                    hit = true;
+                    closestCellX = x;
+                    closestCellY = y;
+                    }
+                }
+            }
+        
+        // next, people in this row
+        // recently dropped babies are in front and tested first
+        for( int d=0; d<2 && !hit; d++ )
+        for( int x=clickDestX+1; x>=clickDestX-1 && !hit; x-- ) {
+            float clickOffsetX = ( clickDestX  - x ) * CELL_D + clickExtraX;
+            
+            for( int i=0; i<gameObjects.size() && !hit; i++ ) {
+        
+                LiveObject *o = gameObjects.getElement( i );
+                
+                if( o->heldByAdultID != -1 ) {
+                    // held by someone else, don't draw now
+                    continue;
+                    }
+
+                if( d == 1 &&
+                    ( o->heldByDropOffset.x != 0 ||
+                      o->heldByDropOffset.y != 0 ) ) {
+                    // recently dropped baby, skip
+                    continue;
+                    }
+                else if( d == 0 &&
+                         o->heldByDropOffset.x == 0 &&
+                         o->heldByDropOffset.y == 0 ) {
+                    // not a recently-dropped baby, skip
+                    continue;
+                    }
+                
+                
+                int oX = o->xd;
+                int oY = o->yd;
+                
+                if( o->currentSpeed != 0 ) {
+                    if( o->onFinalPathStep ) {
+                        oX = o->pathToDest[ o->pathLength - 1 ].x;
+                        oY = o->pathToDest[ o->pathLength - 1 ].y;
+                        }
+                    else {
+                        oX = o->pathToDest[ o->currentPathStep ].x;
+                        oY = o->pathToDest[ o->currentPathStep ].y;
+                        }
+                    }
+                
+                
+                if( oY == y && oX == x ) {
+                    // here!
+                    ObjectRecord *obj = getObject( o->displayID );
+                    
+                    int sp, sl;
+                    
+                    double dist = getClosestObjectPart( obj,
+                                                        -1,
+                                                        -1,
+                                                        clickOffsetX,
+                                                        clickOffsetY,
+                                                        &sp, &sl );
+                    if( dist < minDistThatHits ) {
+                        hit = true;
+                        closestCellX = x;
+                        closestCellY = y;
+                        }
+                    }
+                }
+            
+            }
+        }
+    
+    clickDestX = closestCellX;
+    clickDestY = closestCellY;
+
 
     char modClick = false;
     
