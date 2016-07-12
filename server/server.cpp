@@ -284,6 +284,7 @@ char *getNextClientMessage( SimpleVector<char> *inBuffer ) {
 typedef enum messageType {
 	MOVE,
     USE,
+    SELF,
     REMV,
     DROP,
     KILL,
@@ -390,6 +391,9 @@ ClientMessage parseMessage( char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "USE" ) == 0 ) {
         m.type = USE;
+        }
+    else if( strcmp( nameBuffer, "SELF" ) == 0 ) {
+        m.type = SELF;
         }
     else if( strcmp( nameBuffer, "REMV" ) == 0 ) {
         m.type = REMV;
@@ -2471,8 +2475,12 @@ int main() {
                                 
                                 }
                             }
-                        else if( m.x == nextPlayer->xd &&
-                                 m.y == nextPlayer->yd ) {
+                        }
+                    else if( m.type == SELF ) {
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        
+                        if( m.x == nextPlayer->xd &&
+                            m.y == nextPlayer->yd ) {
                             
                             // use on self
                             if( nextPlayer->holdingID > 0 ) {

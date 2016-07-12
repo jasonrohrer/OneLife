@@ -3996,7 +3996,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     double minDistThatHits = 2.0;
 
     char hit = false;
-    
+    char hitSelf = false;
 
     // start in front row
     // right to left
@@ -4096,6 +4096,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         hit = true;
                         closestCellX = x;
                         closestCellY = y;
+                        if( o == ourLiveObject ) {
+                            hitSelf = true;
+                            }
                         }
                     }
                 }
@@ -4113,10 +4116,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         modClick = true;
         }
 
-    if( clickDestX == ourLiveObject->xd && clickDestY == ourLiveObject->yd ) {
-        // ignore clicks where we're already standing
+    if( hitSelf ) {
+        // click on self
 
-        // unless it's a use-on-self action and standing still
+        // ignore unless it's a use-on-self action and standing still
 
         if( ! ourLiveObject->inMotion && ! modClick ) {
             
@@ -4126,7 +4129,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 }
             
             nextActionMessageToSend = 
-                autoSprintf( "USE %d %d#",
+                autoSprintf( "SELF %d %d#",
                              clickDestX, clickDestY );
             playerActionTargetX = clickDestX;
             playerActionTargetY = clickDestY;
