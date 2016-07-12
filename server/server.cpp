@@ -2169,7 +2169,10 @@ int main() {
 
                         if( isGridAdjacent( m.x, m.y,
                                             nextPlayer->xd, 
-                                            nextPlayer->yd ) ) {
+                                            nextPlayer->yd ) 
+                            ||
+                            ( m.x == nextPlayer->xd &&
+                              m.y == nextPlayer->yd ) ) {
                             
                             // can only use on targets next to us for now,
                             // no diags
@@ -2607,11 +2610,12 @@ int main() {
 
                         if( isGridAdjacent( m.x, m.y,
                                             nextPlayer->xd, 
-                                            nextPlayer->yd ) ) {
+                                            nextPlayer->yd ) 
+                            ||
+                            ( m.x == nextPlayer->xd &&
+                              m.y == nextPlayer->yd ) ) {
                             
                             if( nextPlayer->holdingID != 0 ) {
-                                
-                                
                                 
                                 if( isMapSpotEmpty( m.x, m.y ) ) {
                                 
@@ -2675,6 +2679,27 @@ int main() {
                                             mapChangesPos.push_back( p );
                                             }
                                         }
+                                    else {
+                                        // no object here
+                                        
+                                        // maybe there's a person
+                                        // standing here
+
+                                        // only allow drop if what we're
+                                        // dropping is non-blocking
+                                        ObjectRecord *droppedObj
+                                            = getObject( 
+                                                nextPlayer->holdingID );
+                                        
+                                        if( ! droppedObj->blocksWalking ) {
+                                            
+                                             handleDrop( 
+                                              m.x, m.y, nextPlayer,
+                                              &mapChanges, &mapChangesPos,
+                                              &playerIndicesToSendUpdatesAbout 
+                                              );
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -2692,7 +2717,10 @@ int main() {
 
                         if( isGridAdjacent( m.x, m.y,
                                             nextPlayer->xd, 
-                                            nextPlayer->yd ) ) {
+                                            nextPlayer->yd ) 
+                            ||
+                            ( m.x == nextPlayer->xd &&
+                              m.y == nextPlayer->yd ) ) {
                             
                             // can only use on targets next to us for now,
                             // no diags

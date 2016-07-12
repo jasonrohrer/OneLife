@@ -1252,6 +1252,15 @@ void LivingLifePage::drawLiveObject(
         double wiggleMax = CELL_D *.5 *.90;
         
         double halfWiggleMax = wiggleMax * 0.5;
+
+        if( xDir == 0 && yDir == 0 ) {
+            // target where we're standing
+            // wiggle tiny bit down
+            yDir = -1;
+            
+            halfWiggleMax *= 0.25;
+            }
+
         
         double offset =
             halfWiggleMax - 
@@ -4301,9 +4310,12 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         char canExecute = false;
         
-        // direct click on adjacent cells?
+        // direct click on adjacent cells or self cell?
         if( isGridAdjacent( clickDestX, clickDestY,
-                            ourLiveObject->xd, ourLiveObject->yd ) ) {
+                            ourLiveObject->xd, ourLiveObject->yd )
+            || 
+            ( clickDestX == ourLiveObject->xd && 
+              clickDestY == ourLiveObject->yd ) ) {
             
             canExecute = true;
             }
