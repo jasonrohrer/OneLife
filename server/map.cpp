@@ -284,7 +284,7 @@ static int getBaseMap( int inX, int inY ) {
 
 
         int specialObjectIndex = -1;
-        double maxValue = DBL_MIN;
+        double maxValue = -DBL_MAX;
         
 
         for( int i=0; i<numObjects; i++ ) {
