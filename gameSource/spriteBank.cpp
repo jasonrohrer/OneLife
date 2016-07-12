@@ -146,6 +146,9 @@ float initSpriteBankStep() {
                 
         r->tag = NULL;
 
+        r->centerXOffset = 0;
+        r->centerYOffset = 0;
+
         if( contents != NULL ) {
             
             SimpleVector<char *> *tokens = tokenizeString( contents );
@@ -384,18 +387,56 @@ void stepSpriteBank() {
                     
                     unsigned char *bytes = spriteImage->mRGBABytes;
                     
+                    // track max/min x and y to compute average for center
+
+                    int minX = r->w;
+                    int maxX = 0;
+                    
+                    int minY = r->h;
+                    int maxY = 0;
+                    
+                    int w = r->w;
+                    
+
                     // alpha is 4th byte
                     int p=0;
                     for( int b=3; b<numBytes; b+=4 ) {
                         if( bytes[b] < 64 ) {
                             r->hitMap[p] = 0;
                             }
+                        else {
+                            int y = p / w;
+                            int x = p % w;
+
+                            if( y < minY ) {
+                                minY = y;
+                                }
+                            if( y > maxY ) {
+                                maxY = y;
+                                }
+
+                            if( x < minX ) {
+                                minX = x;
+                                }
+                            if( x > maxX ) {
+                                maxX = x;
+                                }
+                            }
+                        
                         p++;
                         }
                     
                     for( int e=0; e<3; e++ ) {    
                         expandMap( r->hitMap, r->w, r->h );
                         }
+
+                    r->centerXOffset = 
+                        ( maxX + minX ) / 2 - 
+                        r->w / 2;
+
+                    r->centerYOffset = 
+                        ( maxY + minY ) / 2 - 
+                        r->h / 2;
                     
                     delete spriteImage;
                     }

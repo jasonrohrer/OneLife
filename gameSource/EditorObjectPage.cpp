@@ -1975,6 +1975,9 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         else {
             drawOffset = add( mCurrentObject.heldOffset, drawOffset );
             }
+        
+        drawOffset = sub( drawOffset, 
+                          getObjectCenterOffset( &mCurrentObject ) );
         }
 
     char skipDrawing = false;
@@ -2075,7 +2078,8 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 setDrawColor( red, 1, blue, alpha );
                 
                 drawObject( demoObject, 
-                            add( mCurrentObject.slotPos[i], drawOffset ),
+                            sub( add( mCurrentObject.slotPos[i], drawOffset ),
+                                 getObjectCenterOffset( demoObject ) ),
                             0, false, -1, false, getEmptyClothingSet() );
                 }
             }

@@ -1373,14 +1373,19 @@ void LivingLifePage::drawLiveObject(
         
         if( heldObject != NULL ) {
             
+            doublePair heldOffset = heldObject->heldOffset;
+            
+            heldOffset = sub( heldOffset, 
+                              getObjectCenterOffset( heldObject ) );
+
             if( inObj->holdingFlip ) {
-                holdPos.x -= heldObject->heldOffset.x;
+                holdPos.x -= heldOffset.x;
                 }
             else {
-                holdPos.x += heldObject->heldOffset.x;
+                holdPos.x += heldOffset.x;
                 }
             
-            holdPos.y += heldObject->heldOffset.y;
+            holdPos.y += heldOffset.y;
             }
                 
 

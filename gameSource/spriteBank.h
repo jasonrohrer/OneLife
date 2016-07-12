@@ -21,6 +21,10 @@ typedef struct SpriteRecord {
         
         int w, h;
         
+        // center of non-transparent area of sprite
+        // offset relative to w/2, h/2
+        int centerXOffset, centerYOffset;
+
         // 0 where alpha <0.25, for registering mouse clicks on sprite
         char *hitMap;
 

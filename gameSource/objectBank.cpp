@@ -1384,8 +1384,12 @@ void drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
         }
     
     for( int i=0; i<inNumContained; i++ ) {
-        doublePair slotPos = inObject->slotPos[i];
 
+        ObjectRecord *contained = getObject( inContainedIDs[i] );
+        
+
+        doublePair slotPos = sub( inObject->slotPos[i], 
+                                  getObjectCenterOffset( contained ) );
         
         if( inRot != 0 ) {    
             slotPos = rotate( slotPos, -2 * M_PI * inRot );
@@ -1397,7 +1401,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
 
 
         doublePair pos = add( slotPos, inPos );
-        drawObject( getObject( inContainedIDs[i] ), pos, inRot, inFlipH, inAge,
+        drawObject( contained, pos, inRot, inFlipH, inAge,
                     false,
                     emptyClothing );
         }
@@ -1882,6 +1886,56 @@ void getAllBiomes( SimpleVector<int> *inVectorToFill ) {
             }
         }
     }
+
+
+
+doublePair getObjectCenterOffset( ObjectRecord *inObject ) {
+
+
+    // compute average of all sprite centers
+    
+    double minX = DBL_MAX;
+    double maxX = -DBL_MAX;
+
+    double minY = DBL_MAX;
+    double maxY = -DBL_MAX;
+    
+    
+    for( int i=0; i<inObject->numSprites; i++ ) {
+
+        doublePair thisSpritePos = inObject->spritePos[i];
+        
+        SpriteRecord *sprite = getSpriteRecord( inObject->sprites[i] );
+        
+        doublePair centerOffset = { sprite->centerXOffset,
+                                    sprite->centerYOffset };
+        
+        centerOffset = rotate( centerOffset, 
+                               2 * M_PI * inObject->spriteRot[i] );
+
+        doublePair spriteCenter = add( inObject->spritePos[i], centerOffset );
+        
+        if( spriteCenter.x < minX ) {
+            minX = spriteCenter.x;
+            }
+        if( spriteCenter.x > maxX ) {
+            maxX = spriteCenter.x;
+            }
+
+        if( spriteCenter.y < minY ) {
+            minY = spriteCenter.y;
+            }
+        if( spriteCenter.y > maxY ) {
+            maxY = spriteCenter.y;
+            }
+        }
+
+    doublePair result = { ( maxX + minX ) / 2, 
+                          ( maxY + minY ) / 2, };
+    
+    return result;
+    }
+
 
     
 

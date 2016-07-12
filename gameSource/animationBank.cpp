@@ -1240,7 +1240,12 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 }
             
 
+            ObjectRecord *contained = getObject( inContainedIDs[i] );
+
             doublePair pos = obj->slotPos[i];
+
+            pos = sub( pos, getObjectCenterOffset( contained ) );
+            
         
             if( i < inAnim->numSlots ) {
                 
@@ -1286,7 +1291,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 }
   
             pos = add( pos, inPos );
-            drawObject( getObject( inContainedIDs[i] ), pos, 0, inFlipH,
+            drawObject( contained, pos, 0, inFlipH,
                         inAge, false, emptyClothing );
             }
         
