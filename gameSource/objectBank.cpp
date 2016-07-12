@@ -1902,13 +1902,10 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject ) {
     
     
     for( int i=0; i<inObject->numSprites; i++ ) {
-
-        doublePair thisSpritePos = inObject->spritePos[i];
-        
         SpriteRecord *sprite = getSpriteRecord( inObject->sprites[i] );
         
-        doublePair centerOffset = { sprite->centerXOffset,
-                                    sprite->centerYOffset };
+        doublePair centerOffset = { (double)sprite->centerXOffset,
+                                    (double)sprite->centerYOffset };
         
         centerOffset = rotate( centerOffset, 
                                2 * M_PI * inObject->spriteRot[i] );
