@@ -69,7 +69,7 @@ SimpleVector<TransRecord*> *getAllUses( int inUsesID );
 // (to define what's left in hand if inActor is eaten)
 // OR 
 // if inActor > 0 and inNewTarget > 0
-// (to define use-on-bar-ground transition)
+// (to define use-on-bare-ground transition)
 
 // inActor can be 0 (this is the bare-hands action on the target)
 
