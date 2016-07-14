@@ -232,7 +232,7 @@ void EditorTransitionPage::checkIfSaveVisible() {
     char saveVis = ( mCurrentTransition.target != 0
                      ||
                      // food-eating transition
-                     ( mCurrentTransition.actor != 0
+                     ( mCurrentTransition.actor > 0
                        &&
                        getObject( mCurrentTransition.actor )->foodValue > 0
                        &&
@@ -241,7 +241,7 @@ void EditorTransitionPage::checkIfSaveVisible() {
                        mCurrentTransition.newTarget == 0 )
                      ||
                      // Use on bare ground transition
-                     ( mCurrentTransition.actor != 0
+                     ( mCurrentTransition.actor > 0
                        &&
                        getObject( mCurrentTransition.actor )->foodValue == 0
                        &&
@@ -251,7 +251,7 @@ void EditorTransitionPage::checkIfSaveVisible() {
     
 
     char delVis = saveVis ||
-        ( mCurrentTransition.actor != 0
+        ( mCurrentTransition.actor > 0
           &&
           mCurrentTransition.newActor != 0 );
 
@@ -437,7 +437,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             target = 0;
             }
         else if( target == 0 &&
-                 mCurrentTransition.actor != 0 &&
+                 mCurrentTransition.actor > 0 &&
                  mCurrentTransition.newActor != 0 &&
                  mCurrentTransition.newTarget == 0 &&
                  getObject( mCurrentTransition.actor )->foodValue > 0 ) {
@@ -445,7 +445,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             target = -1;
             }
         else if( target == 0 &&
-                 mCurrentTransition.actor != 0 &&
+                 mCurrentTransition.actor > 0 &&
                  mCurrentTransition.newTarget != 0 &&
                  getObject( mCurrentTransition.actor )->foodValue == 0 ) {
             
@@ -497,7 +497,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             target = 0;
             }
         else if( target == 0 &&
-                 mCurrentTransition.actor != 0 ) {
+                 mCurrentTransition.actor > 0 ) {
             // don't check that actor is food when deleting
             // (need to allow eat transition to be deleted after food
             // status removed from actor object)
@@ -564,7 +564,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                 int replacingID = getObjectByIndex( &mCurrentTransition,
                                                     mCurrentlyReplacing );
                 
-                if( replacingID != 0 ) {    
+                if( replacingID > 0 ) {    
                     redoTransSearches( replacingID, true );
                     }
                 
@@ -751,7 +751,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
     if( mCurrentlyReplacing != -1 ) {
         int id = getObjectByIndex( &mCurrentTransition, mCurrentlyReplacing );
         
-        if( id != 0 ) {
+        if( id > 0 ) {
             
             ObjectRecord *r = getObject( id );
             
@@ -781,7 +781,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
                                pos, alignCenter );
         }
     else if( mCurrentTransition.target == 0 &&
-             mCurrentTransition.actor != 0 &&
+             mCurrentTransition.actor > 0 &&
              getObject( mCurrentTransition.actor )->foodValue > 0 &&
              mCurrentTransition.newActor != 0 &&
              mCurrentTransition.newTarget == 0 ) {
@@ -797,7 +797,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         
         }
     else if( mCurrentTransition.target == 0 &&
-             mCurrentTransition.actor != 0 &&
+             mCurrentTransition.actor > 0 &&
              getObject( mCurrentTransition.actor )->foodValue == 0 &&
              mCurrentTransition.newTarget != 0 ) {
         
