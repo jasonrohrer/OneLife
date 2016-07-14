@@ -4006,6 +4006,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     char hit = false;
     char hitSelf = false;
+    
+    // when we click in a square, only count as hitting something
+    // if we actually clicked the object there.  Else, we can walk
+    // there if unblocked.
+    char hitAnObject = false;
 
     // start in front row
     // right to left
@@ -4041,6 +4046,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     hit = true;
                     closestCellX = x;
                     closestCellY = y;
+                    
+                    hitAnObject = true;
                     }
                 }
             }
@@ -4175,7 +4182,21 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     
         destNumContained = mMapContainedStacks[ mapY * mMapD + mapX ].size();
         }
-    
+
+
+    if( destID != 0 && ! hitAnObject ) {
+        
+        // clicked on empty space near an object
+        
+        if( ! getObject( destID )->blocksWalking ) {
+            
+            // object in this space not blocking
+            
+            // count as an attempt to walk to the spot where the object is
+            destID = 0;
+            }
+        }
+
     printf( "DestID = %d\n", destID );
         
 
