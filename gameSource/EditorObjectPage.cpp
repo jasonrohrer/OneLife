@@ -73,7 +73,7 @@ EditorObjectPage::EditorObjectPage()
                              false,
                              "Contain Size", "0123456789.", NULL ),
           mSlotSizeField( smallFont, 
-                          -160,  -230, 4,
+                          -180,  -230, 4,
                           false,
                           "Slot Size", "0123456789.", NULL ),
           mDeadlyDistanceField( smallFont, 
