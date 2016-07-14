@@ -439,12 +439,35 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
                 }
             }
         else {
-            inObject->lastAnim = inObject->curAnim;
-            inObject->curAnim = inNewAnim;
-            inObject->lastAnimFade = 1;
-            inObject->animationFrozenRotFrameCount = 
-                inObject->animationFrameCount;
+
+            // special case:
+            // looks better if we just freeze moving anim when we stop, 
+            // if we can
+            if( inObject->curAnim == moving &&
+                inNewAnim == held &&
+                isAnimEmpty( inObject->displayID, held ) ) {
+                
+                inObject->animationFrameFrozen = true;
+                }
+            else {
+                // not possible, normal fade instead
+                
+                inObject->animationFrameFrozen = false;
+
+                inObject->lastAnim = inObject->curAnim;
+                inObject->curAnim = inNewAnim;
+                inObject->lastAnimFade = 1;
+                inObject->animationFrozenRotFrameCount = 
+                    inObject->animationFrameCount;
+                }
             }
+        }
+    else if( inNewAnim == moving ) {
+        // moving never frozen
+        // we may need to unfreeze if we kept our moving frozen last
+        // time we transitioned to held
+        
+        inObject->animationFrameFrozen = false;
         }
 
 
@@ -482,7 +505,7 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
                 inObject->curHeldAnim = inNewAnim;
                 inObject->lastHeldAnimFade = 1;
                 inObject->heldAnimationFrozenRotFrameCount = 
-                inObject->heldAnimationFrameCount;
+                    inObject->heldAnimationFrameCount;
                 }
             }
         }
@@ -1957,8 +1980,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
         
-    doublePair lastChunkCenter = { (double)( CELL_D * mMapOffsetX ), 
-                                   (double)( CELL_D * mMapOffsetY ) };
+    //doublePair lastChunkCenter = { (double)( CELL_D * mMapOffsetX ), 
+    //                               (double)( CELL_D * mMapOffsetY ) };
     
     setDrawColor( 0, 1, 0, 1 );
     
@@ -2782,9 +2805,22 @@ void LivingLifePage::step() {
                         o.lastAnim = held;
                         o.lastAnimFade = 0;
 
+                        o.animationFrameFrozen = false;
+
+                        if( isAnimEmpty( o.displayID, held ) ) {
+                            // can freeze character in moving animation
+                            // instead
+                            
+                            o.curAnim = moving;
+                            o.lastAnim = moving;
+                            o.animationFrameFrozen = true;
+                            }
+                        
+
                         o.curHeldAnim = held;
                         o.lastHeldAnim = held;
                         o.lastHeldAnimFade = 0;
+                        
                         
                         o.heldAnimationFrameFrozen = false;
                         
@@ -3531,14 +3567,11 @@ void LivingLifePage::step() {
         
 
 
-        if( o->lastAnimFade > 0 ) {
-            // constant anim speed during anim fades
-            o->animationFrameCount++;
-            }
-        else {
+        if( ! o->animationFrameFrozen ) {
             o->animationFrameCount += o->lastSpeed / BASE_SPEED;
             }
-            
+        
+        
         if( o->lastAnimFade > 0 ) {
             
             if( o->lastAnimFade == 1 ) {
@@ -3581,14 +3614,7 @@ void LivingLifePage::step() {
 
 
         if( ! o->heldAnimationFrameFrozen ) {
-
-            if( o->lastHeldAnimFade > 0 ) {
-                // constant anim speed during anim fades
-                o->heldAnimationFrameCount++;
-                }
-            else {
-                o->heldAnimationFrameCount += o->lastSpeed / BASE_SPEED;
-                }
+            o->heldAnimationFrameCount += o->lastSpeed / BASE_SPEED;
             }
         
         if( o->lastHeldAnimFade > 0 ) {
