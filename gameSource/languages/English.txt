@@ -17,6 +17,25 @@ animationsRebuild "ANIMATIONS##(REBUILDING CACHE)"
 
 
 
+
+email "EMAIL"
+atSignTip "INSERT '@' SIGN (INTL KEYBOARDS)"
+
+
+loginButton "LOGIN"
+loginNoSaveButton "TEMP LOGIN"
+
+
+saveTip "LOGIN AND STORE DETAILS LOCALLY"
+noSaveTip "DO NOT STORE DETAILS LOCALLY"
+
+
+accountKey "KEY"
+paste "PASTE"
+
+
+
+
 waitingBirth "WAITING TO BE BORN"
 
 loadingMap "LOADING MAP"

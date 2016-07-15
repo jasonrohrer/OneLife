@@ -5,15 +5,9 @@
 #include "minorGems/crypto/hashes/sha1.h"
 
 
-/*
+
 extern char *accountKey;
 extern int serverSequenceNumber;
-extern int accountHmacVersionNumber;
-*/
-// make these local for now to get it to compile
-char *accountKey;
-int serverSequenceNumber;
-
 extern int accountHmacVersionNumber;
 
 

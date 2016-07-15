@@ -38,6 +38,9 @@ LoadingPage.cpp \
 folderCache.cpp \
 liveObjectSet.cpp \
 ../commonSource/fractalNoise.cpp \
+ExistingAccountPage.cpp \
+KeyEquivalentTextButton.cpp \
+ServerActionPage.cpp \
 
 
 GROUND_PNG = $(wildcard graphicsSource/ground_*.png)

@@ -63,11 +63,33 @@ CustomRandomSource randSource( 34957197 );
 
 #include "LoadingPage.h"
 #include "LivingLifePage.h"
+#include "ExistingAccountPage.h"
 #include "ExtendedMessagePage.h"
 #include "RebirthChoicePage.h"
 
+#include "ServerActionPage.h"
+
+
+// start at reflector URL
+char *reflectorURL = NULL;
+
+char *serverIP = NULL;
+int serverPort = 0;
+
+
+char *userEmail = NULL;
+char *accountKey = NULL;
+
+// these are needed by ServerActionPage, but we don't use them
+int userID = 0;
+int serverSequenceNumber = 0;
+
+
+ServerActionPage *getServerAddressPage;
+
 LoadingPage *loadingPage;
 LivingLifePage *livingLifePage;
+ExistingAccountPage *existingAccountPage;
 ExtendedMessagePage *extendedMessagePage;
 RebirthChoicePage *rebirthChoicePage;
 
@@ -397,8 +419,10 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                 readVersionNumber, versionNumber );
             }
         }
+
     
-    
+    userEmail = SettingsManager::getStringSetting( "email" );    
+    accountKey = SettingsManager::getStringSetting( "accountKey" );
 
     
     double mouseParam = 0.000976562;
@@ -411,22 +435,39 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     musicLoudness = musicLoudnessSetting;
     webRetrySeconds = webRetrySecondsSetting;
 
-    
+    reflectorURL = SettingsManager::getStringSetting( "reflectorURL" );
+
+    if( reflectorURL == NULL ) {
+        reflectorURL = 
+            stringDuplicate( 
+                "http://localhost/jcr13/oneLifeReflector/server.php" );
+        }
 
 
 
     setSoundLoudness( musicLoudness );
     setSoundPlaying( false );
 
+    
+    printf( "Starting fetching server URL from reflector %s\n",
+            reflectorURL );
 
+
+    const char *resultNamesA[2] = { "serverIP", "serverPort" };
+    
+    getServerAddressPage = new ServerActionPage( reflectorURL,
+                                                 "reflect", 
+                                                 2, resultNamesA, false );
     
     
 
     loadingPage = new LoadingPage;
     livingLifePage = NULL;
+    existingAccountPage = new ExistingAccountPage;
     extendedMessagePage = new ExtendedMessagePage;
     rebirthChoicePage = new RebirthChoicePage;
     
+
 
     char rebuilding;
     
@@ -447,7 +488,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     if( loadingStepBatchSize < 1 ) {
         loadingStepBatchSize = 1;
         }
-    
+
 
     currentGamePage = loadingPage;
     currentGamePage->base_makeActive( true );
@@ -483,7 +524,8 @@ void freeFrameDrawer() {
         delete livingLifePage;
         livingLifePage = NULL;
         }
-    
+
+    delete existingAccountPage;
     delete extendedMessagePage;
     delete rebirthChoicePage;
     
@@ -494,6 +536,18 @@ void freeFrameDrawer() {
     freeTransBank();
     
     freeLiveObjectSet();
+
+
+    if( reflectorURL != NULL ) {
+        delete [] reflectorURL;
+        reflectorURL = NULL;
+        }
+
+    if( serverIP != NULL ) {
+        delete [] serverIP;
+        serverIP = NULL;
+        }
+    
     }
 
 
@@ -1099,8 +1153,17 @@ void drawFrame( char inUpdate ) {
                     // NOW game engine can start measuring frame rate
                     loadingComplete();
                     
-                    currentGamePage = livingLifePage;
+                    currentGamePage = existingAccountPage;
                     currentGamePage->base_makeActive( true );
+                }
+            }
+        else if( currentGamePage == existingAccountPage ) {    
+            if( existingAccountPage->checkSignal( "quit" ) ) {
+                quitGame();
+                }
+            else if( existingAccountPage->checkSignal( "done" ) ) {
+                currentGamePage = livingLifePage;
+                currentGamePage->base_makeActive( true );
                 }
             }
         else if( currentGamePage == livingLifePage ) {
