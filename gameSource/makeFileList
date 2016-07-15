@@ -41,6 +41,10 @@ liveObjectSet.cpp \
 ExistingAccountPage.cpp \
 KeyEquivalentTextButton.cpp \
 ServerActionPage.cpp \
+FinalMessagePage.cpp \
+AutoUpdatePage.cpp \
+
+
 
 
 GROUND_PNG = $(wildcard graphicsSource/ground_*.png)

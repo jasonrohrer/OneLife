@@ -13,10 +13,17 @@ server.php?action=reflect&email=email_address
 Returns:
 serverIP
 serverPort
+requiredVersionNumber
+autoUpdateURL
 OK
 
 
 Where:
 email     = email address of connecting user (used for sorting users)
-serverURL = full URL of Cordial Minuet server.php that this user should
-            connect to.
+
+serverIP   = IP address of server this user should connect to
+serverPort = the port number to connect to
+
+requiredVersionNumber = the minimum client version number needed to connect
+                        to this server
+autoUpdateURL         = the URL of the diffBundle update server's server.php

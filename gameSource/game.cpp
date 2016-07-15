@@ -1,10 +1,10 @@
-int versionNumber = 26;
+int versionNumber = 1;
 
 // retain an older version number here if server is compatible
 // with older client versions.
 // Change this number (and number on server) if server has changed
 // in a way that breaks old clients.
-int accountHmacVersionNumber = 25;
+int accountHmacVersionNumber = 1;
 
 
 
@@ -61,7 +61,9 @@ CustomRandomSource randSource( 34957197 );
 #include "liveObjectSet.h"
 
 
+#include "FinalMessagePage.h"
 #include "LoadingPage.h"
+#include "AutoUpdatePage.h"
 #include "LivingLifePage.h"
 #include "ExistingAccountPage.h"
 #include "ExtendedMessagePage.h"
@@ -85,9 +87,12 @@ int userID = 0;
 int serverSequenceNumber = 0;
 
 
+FinalMessagePage *finalMessagePage;
+
 ServerActionPage *getServerAddressPage;
 
 LoadingPage *loadingPage;
+AutoUpdatePage *autoUpdatePage;
 LivingLifePage *livingLifePage;
 ExistingAccountPage *existingAccountPage;
 ExtendedMessagePage *extendedMessagePage;
@@ -451,15 +456,18 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
 
 
-    const char *resultNamesA[2] = { "serverIP", "serverPort" };
+    const char *resultNamesA[4] = { "serverIP", "serverPort",
+                                    "requiredVersionNumber",
+                                    "autoUpdateURL" };
     
     getServerAddressPage = new ServerActionPage( reflectorURL,
                                                  "reflect", 
-                                                 2, resultNamesA, false );
+                                                 4, resultNamesA, false );
     
     
-
+    finalMessagePage = new FinalMessagePage;
     loadingPage = new LoadingPage;
+    autoUpdatePage = new AutoUpdatePage;
     livingLifePage = NULL;
     existingAccountPage = new ExistingAccountPage;
     extendedMessagePage = new ExtendedMessagePage;
@@ -517,7 +525,9 @@ void freeFrameDrawer() {
         }
     
     
+    delete finalMessagePage;
     delete loadingPage;
+    delete autoUpdatePage;
     if( livingLifePage != NULL ) {
         delete livingLifePage;
         livingLifePage = NULL;
@@ -1208,7 +1218,55 @@ void drawFrame( char inUpdate ) {
 
                 printf( "Got server address: %s:%d\n", serverIP, serverPort );
 
-                currentGamePage = livingLifePage;
+                int requiredVersion =
+                    getServerAddressPage->getResponseInt( 
+                        "requiredVersionNumber" );
+                
+                if( versionNumber < requiredVersion ) {
+                    
+                    char *autoUpdateURL = 
+                        getServerAddressPage->getResponse( "autoUpdateURL" );
+
+                    
+                    char updateStarted = 
+                        startUpdate( autoUpdateURL, versionNumber );
+                    
+                    delete [] autoUpdateURL;
+
+                    if( ! updateStarted ) {
+                        currentGamePage = finalMessagePage;
+                        
+                        finalMessagePage->setMessageKey( "upgradeMessage" );
+                        
+                                                
+                        currentGamePage->base_makeActive( true );
+                        }
+                    else {
+                        currentGamePage = autoUpdatePage;
+                        currentGamePage->base_makeActive( true );
+                        }
+
+                    }
+                else {
+                    // up to date, okay to connect
+                    currentGamePage = livingLifePage;
+                    currentGamePage->base_makeActive( true );
+                    }
+                }
+            }
+        else  if( currentGamePage == autoUpdatePage ) {
+            if( autoUpdatePage->checkSignal( "failed" ) ) {
+                currentGamePage = finalMessagePage;
+                        
+                finalMessagePage->setMessageKey( "upgradeMessage" );
+                        
+                currentGamePage->base_makeActive( true );
+                }
+            else if( autoUpdatePage->checkSignal( "relaunchFailed" ) ) {
+                currentGamePage = finalMessagePage;
+                        
+                finalMessagePage->setMessageKey( "manualRestartMessage" );
+                                
                 currentGamePage->base_makeActive( true );
                 }
             }
@@ -1246,7 +1304,11 @@ void drawFrame( char inUpdate ) {
                 quitGame();
                 }
             }
-            
+        else if( currentGamePage == finalMessagePage ) {
+            if( finalMessagePage->checkSignal( "quit" ) ) {
+                quitGame();
+                }
+            }
         }
     
 

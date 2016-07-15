@@ -35,6 +35,16 @@ paste "PASTE"
 
 
 
+downloadingUpdate "DOWNLOADING UPDATE"
+applyingUpdate "APPLYING UPDATE"
+
+serverShutdownMessage "THE SERVER HAS BEEN##SHUT DOWN FOR MAINTENANCE.##PLEASE TRY AGAIN LATER."
+
+upgradeMessage "PLEASE DOWNLOAD##THE LATEST VERSION"
+
+manualRestartMessage "PRESS [ESC] TO QUIT AND##RESTART GAME TO APPLY UPDATE"
+
+
 
 waitingBirth "WAITING TO BE BORN"
 
