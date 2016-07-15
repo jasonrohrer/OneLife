@@ -1,0 +1,22 @@
+All returns are whitespace-delimited.
+
+
+
+Most calls can return 'DENIED' on failure
+
+
+
+
+=== Call:
+server.php?action=reflect&email=email_address
+
+Returns:
+serverIP
+serverPort
+OK
+
+
+Where:
+email     = email address of connecting user (used for sorting users)
+serverURL = full URL of Cordial Minuet server.php that this user should
+            connect to.

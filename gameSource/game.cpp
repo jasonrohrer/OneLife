@@ -449,8 +449,6 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     setSoundPlaying( false );
 
     
-    printf( "Starting fetching server URL from reflector %s\n",
-            reflectorURL );
 
 
     const char *resultNamesA[2] = { "serverIP", "serverPort" };
@@ -1162,6 +1160,54 @@ void drawFrame( char inUpdate ) {
                 quitGame();
                 }
             else if( existingAccountPage->checkSignal( "done" ) ) {
+                
+                if( SettingsManager::getIntSetting( "useCustomServer", 0 ) ) {
+                    
+                    if( serverIP != NULL ) {
+                        delete [] serverIP;
+                        serverIP = NULL;
+                        }
+                    serverIP = SettingsManager::getStringSetting( 
+                        "customServerAddress" );
+                    if( serverIP == NULL ) {
+                        serverIP = stringDuplicate( "127.0.0.1" );
+                        }
+                    serverPort = SettingsManager::getIntSetting( 
+                        "customServerPort", 8005 );
+
+                    printf( "Using custom server address: %s:%d\n", 
+                            serverIP, serverPort );
+                    
+                    currentGamePage = livingLifePage;
+                    currentGamePage->base_makeActive( true );
+                    }
+                else {
+                    printf( "Starting fetching server URL from reflector %s\n",
+                            reflectorURL );
+                
+                    getServerAddressPage->setActionParameter( "email", 
+                                                              userEmail );
+                    
+                    currentGamePage = getServerAddressPage;
+                    currentGamePage->base_makeActive( true );
+                    }
+                }
+            }
+        else if( currentGamePage == getServerAddressPage ) {
+            if( getServerAddressPage->isResponseReady() ) {
+                
+                if( serverIP != NULL ) {
+                    delete [] serverIP;
+                    }
+                
+                serverIP = getServerAddressPage->getResponse( "serverIP" );
+                
+                serverPort = 
+                    getServerAddressPage->getResponseInt( "serverPort" );
+                
+
+                printf( "Got server address: %s:%d\n", serverIP, serverPort );
+
                 currentGamePage = livingLifePage;
                 currentGamePage->base_makeActive( true );
                 }

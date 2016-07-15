@@ -208,9 +208,6 @@ class LivingLifePage : public GamePage {
 
         
     protected:
-        
-        char *mServerAddress;
-        int mServerPort;
 
         int mServerSocket;
 

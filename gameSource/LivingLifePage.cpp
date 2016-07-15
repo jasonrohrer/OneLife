@@ -39,6 +39,11 @@ extern doublePair lastScreenViewCenter;
 extern double viewWidth;
 
 
+extern char *serverIP;
+extern int serverPort;
+
+
+
 static JenkinsRandomSource randSource;
 
 #define CELL_D 128
@@ -545,8 +550,7 @@ char lastCharUsed = 'A';
 
 
 LivingLifePage::LivingLifePage() 
-        : mServerAddress( NULL ),
-          mServerSocket( -1 ), 
+        : mServerSocket( -1 ), 
           mFirstServerMessagesReceived( 0 ),
           mMapD( 64 ),
           mMapOffsetX( 0 ),
@@ -569,14 +573,6 @@ LivingLifePage::LivingLifePage()
     
 
     
-    mServerAddress = SettingsManager::getStringSetting( "serverAddress" );
-
-    if( mServerAddress == NULL ) {
-        mServerAddress = stringDuplicate( "127.0.0.1" );
-        }
-
-    mServerPort = SettingsManager::getIntSetting( "serverPort", 5077 );
-
 
 
     mMap = new int[ mMapD * mMapD ];
@@ -901,10 +897,6 @@ LivingLifePage::~LivingLifePage() {
     clearLiveObjects();
 
 
-    if( mServerAddress != NULL ) {    
-        delete [] mServerAddress;
-        mServerAddress = NULL;
-        }
     
     if( mServerSocket != -1 ) {
         closeSocket( mServerSocket );
@@ -2121,7 +2113,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 void LivingLifePage::step() {
     
     if( mServerSocket == -1 ) {
-        mServerSocket = openSocketConnection( mServerAddress, mServerPort );
+        mServerSocket = openSocketConnection( serverIP, serverPort );
         return;
         }
     
