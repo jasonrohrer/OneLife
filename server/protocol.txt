@@ -12,6 +12,61 @@ The first one is the base object ID (can be 0 if no object there),
 and subsequent IDs are the objects contained in that object
 
 
+HMAC_SHA1 below is the SHA-1 based HMAC as defined in RFC 2104, with the
+resulting hash in hex-encoded ASCII.
+The parameters are as follows:
+
+char *HMAC_SHA1( char *inKey, char *inData )
+
+
+
+
+
+Client login proceedure.
+
+1.  Upon receiving a client connection, the server will immediately send
+    a sequence number to the client in the following format:
+    
+SN
+sequence_number
+#
+
+Where sequence_number is a positive integer in base-10 ascii.
+
+
+2.  The client MUST respond with the following login message:
+
+LOGIN email password_hash account_key_hash#
+
+
+password_hash is based on the server access password, and is computed by:
+
+HMAC_SHA1( password, sequence_number )
+
+
+account_key_hash is based on the client's account key, all uppercase with
+hyphens removed, and is computed by:
+
+HMAC_SHA1( account_key, sequence_number )
+
+
+3.  The server responds with one of:
+
+ACCEPTED
+#
+
+-or-
+
+REJECTED
+#
+
+
+After ACCEPTED, normal client-server messaging commences.
+
+After REJECTED, the server will close the connection to the client.
+
+
+
 
 
 Each message from server is prefaced by a type tag.

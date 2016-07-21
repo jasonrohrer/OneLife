@@ -10,6 +10,9 @@
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/network/SocketServer.h"
 #include "minorGems/network/SocketPoll.h"
+#include "minorGems/network/web/WebRequest.h"
+
+#include "minorGems/crypto/hashes/sha1.h"
 
 #include "minorGems/system/Thread.h"
 
@@ -38,6 +41,35 @@ float targetHeat = 10;
 
 
 #define PERSON_OBJ_ID 12
+
+
+
+// keep a running sequence number to challenge each connecting client
+// to produce new login hashes, avoiding replay attacks.
+static unsigned int nextSequenceNumber = 1;
+
+
+static int requireClientPassword = 1;
+static int requireTicketServerCheck = 1;
+static char *clientPassword = NULL;
+static char *ticketServerURL = NULL;
+
+
+// for incoming socket connections that are still in the login process
+typedef struct FreshConnection {
+        Socket *sock;
+        SimpleVector<char> *sockBuffer;
+
+        unsigned int sequenceNumber;
+
+        WebRequest *ticketServerRequest;
+
+        char error;
+    };
+
+
+SimpleVector<FreshConnection> newConnections;
+
 
 
 typedef struct LiveObject {
@@ -166,6 +198,21 @@ void quitCleanup() {
     printf( "Cleaning up on quit...\n" );
     
 
+    for( int i=0; i<newConnections.size(); i++ ) {
+        FreshConnection *nextConnection = newConnections.getElement( i );
+        
+        delete nextConnection->sock;
+        delete nextConnection->sockBuffer;
+        
+
+        if( nextConnection->ticketServerRequest != NULL ) {
+            delete nextConnection->ticketServerRequest;
+            }
+        }
+    newConnections.deleteAll();
+    
+
+
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *nextPlayer = players.getElement(i);
         delete nextPlayer->sock;
@@ -180,11 +227,24 @@ void quitCleanup() {
             delete [] nextPlayer->pathToDest;
             }
         }
-    
+    players.deleteAll();
+
+
     freeMap();
 
     freeTransBank();
     freeObjectBank();
+
+    if( clientPassword != NULL ) {
+        delete [] clientPassword;
+        clientPassword = NULL;
+        }
+    
+
+    if( ticketServerURL != NULL ) {
+        delete [] ticketServerURL;
+        ticketServerURL = NULL;
+        }
     }
 
 
@@ -1322,11 +1382,184 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
 
 
 
+void processedLogggedInPlayer( Socket *inSock,
+                               SimpleVector<char> *inSockBuffer ) {
+    numConnections ++;
+                
+    LiveObject newObject;
+    newObject.id = nextID;
+    nextID++;
+                
+    newObject.displayID = getRandomPersonObject();
+                            
+    newObject.lifeStartTimeSeconds = Time::getCurrentTime();
+                            
+    newObject.heldByOther = false;
+                            
+    int numOfAge = 0;
+                            
+    int numPlayers = players.size();
+                            
+    SimpleVector<LiveObject*> parentChoices;
+                            
+    for( int i=0; i<numPlayers; i++ ) {
+                                
+        double age = computeAge( players.getElement( i ) );
+                    
+        char f = getFemale( players.getElement( i ) );
+                    
+        if( age >= 14 && age <= 45 && f ) {
+            numOfAge ++;
+            parentChoices.push_back( players.getElement( i ) );
+            }
+        }
+                
+
+    if( numOfAge == 0 ) {
+        // all existing children are good spawn spot for Eve
+                    
+        for( int i=0; i<numPlayers; i++ ) {
+            parentChoices.push_back( players.getElement( i ) );
+            }
+
+        // new Eve
+        // she starts almost full grown
+        newObject.lifeStartTimeSeconds -= 14 * 60;
+
+                    
+        int tryCount = 0;
+                    
+        while( ! getFemale( &newObject ) && tryCount < 100 ) {
+            newObject.displayID = getRandomPersonObject();
+            tryCount ++;
+            }
+        }
+                
+                
+    // else player starts as newborn
+                
+
+    // start full up to capacity with food
+    newObject.foodStore = computeFoodCapacity( &newObject );
+
+    newObject.heat = 0.5;
+
+    newObject.foodDecrementETASeconds =
+        Time::getCurrentTime() + 
+        computeFoodDecrementTimeSeconds( &newObject );
+                
+    newObject.foodUpdate = true;
+		
+    newObject.clothing = getEmptyClothingSet();
+
+    newObject.xs = 0;
+    newObject.ys = 0;
+    newObject.xd = 0;
+    newObject.yd = 0;
+                
+
+                
+    if( parentChoices.size() > 0 ) {
+        // born to an existing player
+        int parentIndex = 
+            randSource.getRandomBoundedInt( 0,
+                                            players.size() - 1 );
+                    
+        LiveObject *parent = players.getElement( parentIndex );
+                    
+        if( parent->xs == parent->xd && 
+            parent->ys == parent->yd ) {
+                        
+            // stationary parent
+            newObject.xs = parent->xs;
+            newObject.ys = parent->ys;
+                        
+            newObject.xd = parent->xs;
+            newObject.yd = parent->ys;
+            }
+        else {
+            // find where parent is along path
+            GridPos cPos = computePartialMoveSpot( parent );
+                        
+            newObject.xs = cPos.x;
+            newObject.ys = cPos.y;
+                        
+            newObject.xd = cPos.x;
+            newObject.yd = cPos.y;
+            }
+        }                    
+    // else starts at 0,0 by default (lone Eve)
+
+
+    
+    newObject.pathLength = 0;
+    newObject.pathToDest = NULL;
+    newObject.pathTruncated = 0;
+    newObject.lastSentMapX = 0;
+    newObject.lastSentMapY = 0;
+    newObject.moveTotalSeconds = 0;
+    newObject.holdingID = 0;
+    newObject.heldOriginValid = 0;
+    newObject.heldOriginX = 0;
+    newObject.heldOriginY = 0;
+    newObject.numContained = 0;
+    newObject.containedIDs = NULL;
+    newObject.sock = inSock;
+    newObject.sockBuffer = inSockBuffer;
+    newObject.isNew = true;
+    newObject.firstMessageSent = false;
+    newObject.error = false;
+    newObject.deleteSent = false;
+    newObject.newMove = false;
+                
+                
+                
+                
+                
+    for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
+        newObject.heatMap[i] = 0;
+        }
+
+    players.push_back( newObject );            
+            
+    printf( "New player connected as player %d\n", newObject.id );
+    }
+
+
+
+
 
 
 int main() {
 
     printf( "\nServer starting up\n\n" );
+
+    nextSequenceNumber = 
+        SettingsManager::getIntSetting( "sequenceNumber", 1 );
+
+    requireClientPassword =
+        SettingsManager::getIntSetting( "requireClientPassword", 1 );
+    
+    requireTicketServerCheck =
+        SettingsManager::getIntSetting( "requireTicketServerCheck", 1 );
+    
+    clientPassword = 
+        SettingsManager::getStringSetting( "clientPassword" );
+    
+
+    if( clientPassword == NULL ) {
+        requireClientPassword = 0;
+        }
+
+
+    ticketServerURL = 
+        SettingsManager::getStringSetting( "ticketServerURL" );
+    
+
+    if( ticketServerURL == NULL ) {
+        requireTicketServerCheck = 0;
+        }
+
 
 
 #ifdef WIN_32
@@ -1436,155 +1669,262 @@ int main() {
 
             if( sock != NULL ) {
                 
-                
                 printf( "Got connection\n" );
-                numConnections ++;
-                
-                LiveObject newObject;
-                newObject.id = nextID;
-                nextID++;
-                
-                newObject.displayID = getRandomPersonObject();
 
-                newObject.lifeStartTimeSeconds = Time::getCurrentTime();
-
-                newObject.heldByOther = false;
-
-                int numOfAge = 0;
+                FreshConnection newConnection;
                 
-                int numPlayers = players.size();
+                newConnection.sock = sock;
 
-                SimpleVector<LiveObject*> parentChoices;
+                newConnection.sequenceNumber = nextSequenceNumber;
                 
-                for( int i=0; i<numPlayers; i++ ) {
+                nextSequenceNumber ++;
+                
+                SettingsManager::setSetting( "sequenceNumber",
+                                             (int)nextSequenceNumber );
+                
+                // wait for email and hashes to come from client
+                // (and maybe ticket server check isn't required by settings)
+                newConnection.ticketServerRequest = NULL;
+                newConnection.error = false;
+
+                char *message = autoSprintf( "SN\n%lu\n#", 
+                                             newConnection.sequenceNumber );
+
+                int messageLength = strlen( message );
+                
+                int numSent = 
+                    sock->send( (unsigned char*)message, 
+                                messageLength, 
+                                false, false );
                     
-                    double age = computeAge( players.getElement( i ) );
+                delete [] message;
                     
-                    char f = getFemale( players.getElement( i ) );
-                    
-                    if( age >= 14 && age <= 45 && f ) {
-                        numOfAge ++;
-                        parentChoices.push_back( players.getElement( i ) );
-                        }
+
+                if( numSent != messageLength ) {
+                    // failed or blocked on our first send attempt
+
+                    // reject it right away
+
+                    delete sock;
+                    sock = NULL;
                     }
-                
-
-                if( numOfAge == 0 ) {
-                    // all existing children are good spawn spot for Eve
+                else {
+                    // first message sent okay
+                    newConnection.sockBuffer = new SimpleVector<char>();
                     
-                    for( int i=0; i<numPlayers; i++ ) {
-                        parentChoices.push_back( players.getElement( i ) );
-                        }
 
-                    // new Eve
-                    // she starts almost full grown
-                    newObject.lifeStartTimeSeconds -= 14 * 60;
+                    sockPoll.addSocket( sock );
 
-                    
-                    int tryCount = 0;
-                    
-                    while( ! getFemale( &newObject ) && tryCount < 100 ) {
-                        newObject.displayID = getRandomPersonObject();
-                        tryCount ++;
-                        }
+                    newConnections.push_back( newConnection );
                     }
-                
-                
-                // else player starts as newborn
-                
-
-                // start full up to capacity with food
-                newObject.foodStore = computeFoodCapacity( &newObject );
-
-                newObject.heat = 0.5;
-
-                newObject.foodDecrementETASeconds =
-                    Time::getCurrentTime() + 
-                    computeFoodDecrementTimeSeconds( &newObject );
-                
-                newObject.foodUpdate = true;
-		
-                newObject.clothing = getEmptyClothingSet();
-
-                newObject.xs = 0;
-                newObject.ys = 0;
-                newObject.xd = 0;
-                newObject.yd = 0;
-                
-
-                
-                if( parentChoices.size() > 0 ) {
-                    // born to an existing player
-                    int parentIndex = 
-                        randSource.getRandomBoundedInt( 0,
-                                                        players.size() - 1 );
-                    
-                    LiveObject *parent = players.getElement( parentIndex );
-                    
-                    if( parent->xs == parent->xd && 
-                        parent->ys == parent->yd ) {
-                        
-                        // stationary parent
-                        newObject.xs = parent->xs;
-                        newObject.ys = parent->ys;
-                        
-                        newObject.xd = parent->xs;
-                        newObject.yd = parent->ys;
-                        }
-                    else {
-                        // find where parent is along path
-                        GridPos cPos = computePartialMoveSpot( parent );
-                        
-                        newObject.xs = cPos.x;
-                        newObject.ys = cPos.y;
-                        
-                        newObject.xd = cPos.x;
-                        newObject.yd = cPos.y;
-                        }
-                    }
-                // else starts at 0,0 by default (lone Eve)
-
-
-
-                newObject.pathLength = 0;
-                newObject.pathToDest = NULL;
-                newObject.pathTruncated = 0;
-                newObject.lastSentMapX = 0;
-                newObject.lastSentMapY = 0;
-                newObject.moveTotalSeconds = 0;
-                newObject.holdingID = 0;
-                newObject.heldOriginValid = 0;
-                newObject.heldOriginX = 0;
-                newObject.heldOriginY = 0;
-                newObject.numContained = 0;
-                newObject.containedIDs = NULL;
-                newObject.sock = sock;
-                newObject.sockBuffer = new SimpleVector<char>();
-                newObject.isNew = true;
-                newObject.firstMessageSent = false;
-                newObject.error = false;
-                newObject.deleteSent = false;
-                newObject.newMove = false;
-                
-                
-                
-                
-                
-                for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
-                    newObject.heatMap[i] = 0;
-                    }
-
-                sockPoll.addSocket( sock );
-                
-                players.push_back( newObject );            
-            
-                printf( "New player connected as player %d\n", newObject.id );
 
                 printf( "Listening for another connection on port %d\n", 
                         port );
+    
                 }
             }
         
+
+
+        // listen for messages from new connections
+
+        for( int i=0; i<newConnections.size(); i++ ) {
+            
+            FreshConnection *nextConnection = newConnections.getElement( i );
+            
+
+            if( nextConnection->ticketServerRequest != NULL ) {
+                
+                int result = nextConnection->ticketServerRequest->step();
+                
+
+                if( result == -1 ) {
+                    nextConnection->error = true;
+                    }
+                else if( result == 1 ) {
+                    // done, have result
+
+                    char *webResult = 
+                        nextConnection->ticketServerRequest->getResult();
+                    
+                    if( strstr( webResult, "INVALID" ) != NULL ) {
+                        nextConnection->error = true;
+                        }
+                    else if( strstr( webResult, "VALID" ) != NULL ) {
+                        // correct!
+
+
+                        const char *message = "ACCEPTED\n#";
+                        int messageLength = strlen( message );
+                
+                        int numSent = 
+                            nextConnection->sock->send( 
+                                (unsigned char*)message, 
+                                messageLength, 
+                                false, false );
+                        
+
+                        if( numSent != messageLength ) {
+                            nextConnection->error = true;
+                            }
+                        else {
+                            // ready to start normal message exchange
+                            // with client
+                            
+                            printf( "Got new player logged in\n" );
+                            
+                            processedLogggedInPlayer( 
+                                nextConnection->sock,
+                                nextConnection->sockBuffer );
+                            
+                            delete nextConnection->ticketServerRequest;
+                            newConnections.deleteElement( i );
+                            i--;
+                            }
+                        }
+                    delete [] webResult;
+                    }
+                }
+            else {
+                char result = 
+                    readSocketFull( nextConnection->sock,
+                                    nextConnection->sockBuffer );
+                
+                if( ! result ) {
+                    nextConnection->error = true;
+                    }
+                
+                char *message = 
+                    getNextClientMessage( nextConnection->sockBuffer );
+                
+                if( message != NULL ) {
+                    
+                    
+                    if( strstr( message, "LOGIN" ) != NULL ) {
+                        
+                        SimpleVector<char *> *tokens =
+                            tokenizeString( message );
+                        
+                        if( tokens->size() == 4 ) {
+                            
+                            char *email = tokens->getElementDirect( 1 );
+                            char *pwHash = tokens->getElementDirect( 2 );
+                            char *keyHash = tokens->getElementDirect( 3 );
+                            
+                            if( requireClientPassword ) {
+
+                                char *value = 
+                                    autoSprintf( 
+                                        "%d",
+                                        nextConnection->sequenceNumber );
+                                
+                                char *trueHash = hmac_sha1( clientPassword, 
+                                                            value );
+                                delete [] value;
+                                
+                                if( strcmp( trueHash, pwHash ) != 0 ) {
+                                    nextConnection->error = true;
+                                    }
+                                }
+                            
+                            if( requireTicketServerCheck &&
+                                ! nextConnection->error ) {
+                                
+
+                                char *url = autoSprintf( 
+                                    "%s?action=check_ticket_hash"
+                                    "&email=%s"
+                                    "&hash_value=%s"
+                                    "&string_to_hash=%lu",
+                                    ticketServerURL,
+                                    email,
+                                    keyHash,
+                                    nextConnection->sequenceNumber );
+
+                                nextConnection->ticketServerRequest =
+                                    new WebRequest( "GET", url, NULL );
+                                }
+                            else if( !requireTicketServerCheck &&
+                                     !nextConnection->error ) {
+                                
+                                // let them in without checking
+                                
+                                const char *message = "ACCEPTED\n#";
+                                int messageLength = strlen( message );
+                
+                                int numSent = 
+                                    nextConnection->sock->send( 
+                                        (unsigned char*)message, 
+                                        messageLength, 
+                                        false, false );
+                        
+
+                                if( numSent != messageLength ) {
+                                    nextConnection->error = true;
+                                    }
+                                else {
+                                    // ready to start normal message exchange
+                                    // with client
+                            
+                                    printf( "Got new player logged in\n" );
+                                    
+                                    processedLogggedInPlayer( 
+                                        nextConnection->sock,
+                                        nextConnection->sockBuffer );
+                                    
+                                    delete nextConnection->ticketServerRequest;
+                                    newConnections.deleteElement( i );
+                                    i--;
+                                    }
+                                }
+                            }
+                        else {
+                            nextConnection->error = true;
+                            }
+
+
+                        tokens->deallocateStringElements();
+                        delete tokens;
+                        }
+                    else {
+                        nextConnection->error = true;
+                        }
+                    
+                    delete [] message;
+                    }
+                }
+            }
+            
+            
+        
+
+        // now clean up any new connections that have errors
+        
+        for( int i=0; i<newConnections.size(); i++ ) {
+            
+            FreshConnection *nextConnection = newConnections.getElement( i );
+            
+            if( nextConnection->error ) {
+                
+                // try sending REJECTED message at end
+
+                const char *message = "REJECTED\n#";
+                nextConnection->sock->send( (unsigned char*)message,
+                                            strlen( message ), false, false );
+                
+                delete nextConnection->sock;
+                delete nextConnection->sockBuffer;
+                
+                if( nextConnection->ticketServerRequest != NULL ) {
+                    delete nextConnection->ticketServerRequest;
+                    }
+                
+                newConnections.deleteElement( i );
+                i--;
+                }
+            }
+        
+    
         
 
         numLive = players.size();
