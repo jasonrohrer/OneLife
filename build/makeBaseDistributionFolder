@@ -33,11 +33,12 @@ cp ../documentation/Readme.txt $baseFolder
 cp ../no_copyright.txt $baseFolder
 
 
-cp -r ../gameSource/sprites/* $baseFolder/sprites
-cp ../gameSource/objects/* $baseFolder/objects
-cp ../gameSource/transitions/* $baseFolder/transitions
-cp ../gameSource/animations/* $baseFolder/animations
+cp ../../OneLifeData2/sprites/* $baseFolder/sprites
+cp ../../OneLifeData2/objects/* $baseFolder/objects
+cp ../../OneLifeData2/transitions/* $baseFolder/transitions
+cp ../../OneLifeData2/animations/* $baseFolder/animations
 
+cp ../../OneLifeData2/dataVersionNumber.txt $baseFolder/
 
 
 rm -f $baseFolder/settings/email.ini
