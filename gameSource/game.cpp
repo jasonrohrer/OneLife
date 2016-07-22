@@ -250,6 +250,27 @@ static int stepsBetweenDeleteRepeat;
 
 
 
+static void updateDataVersionNumber() {
+    File file( NULL, "dataVersionNumber.txt" );
+    
+    if( file.exists() ) {
+        char *contents = file.getFileContents();
+        
+        if( contents != NULL ) {
+            int v = 0;
+            
+            sscanf( contents, "%d", &v );
+        
+            delete [] contents;
+
+            if( v > versionNumber ) {
+                versionNumber = v;
+                }
+            }
+        }
+    }
+
+
 
 
 #define SETTINGS_HASH_SALT "another_loss"
@@ -266,6 +287,8 @@ static const char *customDataFormatReadString =
 
 char *getCustomRecordedGameData() {    
     
+    updateDataVersionNumber();
+
     float mouseSpeedSetting = 
         SettingsManager::getFloatSetting( "mouseSpeed", 1.0f );
     int musicOffSetting = 
@@ -337,6 +360,8 @@ void freeDrawString() {
 void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                       const char *inCustomRecordedGameData,
                       char inPlayingBack ) {
+
+    updateDataVersionNumber();
 
     toggleLinearMagFilter( true );
     toggleMipMapGeneration( true );
