@@ -1653,6 +1653,28 @@ int main() {
 
             pollTimeout = minMoveTime;
             }
+        
+
+
+        
+        char anyTicketServerRequestsOut = false;
+
+        for( int i=0; i<newConnections.size(); i++ ) {
+            
+            FreshConnection *nextConnection = newConnections.getElement( i );
+
+            if( nextConnection->ticketServerRequest != NULL ) {
+                anyTicketServerRequestsOut = true;
+                break;
+                }
+            }
+        
+        if( anyTicketServerRequestsOut ) {
+            // need to step outstanding ticket server web requests
+            // sleep a tiny amount of time to avoid cpu spin
+            pollTimeout = 0.01;
+            }
+        
 
         // we thus use zero CPU as long as no messages or new connections
         // come in, and only wake up when some timed action needs to be
@@ -1739,6 +1761,8 @@ int main() {
                 
 
                 if( result == -1 ) {
+                    printf( "Request to ticket server failed, "
+                            "client rejected.\n" );
                     nextConnection->error = true;
                     }
                 else if( result == 1 ) {
@@ -1748,6 +1772,8 @@ int main() {
                         nextConnection->ticketServerRequest->getResult();
                     
                     if( strstr( webResult, "INVALID" ) != NULL ) {
+                        printf( "Client key hmac rejected by ticket server, "
+                                "client rejected.\n" );
                         nextConnection->error = true;
                         }
                     else if( strstr( webResult, "VALID" ) != NULL ) {
@@ -1765,6 +1791,8 @@ int main() {
                         
 
                         if( numSent != messageLength ) {
+                            printf( "Failed to write to client socket, "
+                                    "client rejected.\n" );
                             nextConnection->error = true;
                             }
                         else {
@@ -1791,6 +1819,8 @@ int main() {
                                     nextConnection->sockBuffer );
                 
                 if( ! result ) {
+                    printf( "Failed to read from client socket, "
+                            "client rejected.\n" );
                     nextConnection->error = true;
                     }
                 
@@ -1820,11 +1850,17 @@ int main() {
                                 
                                 char *trueHash = hmac_sha1( clientPassword, 
                                                             value );
+
                                 delete [] value;
                                 
+
                                 if( strcmp( trueHash, pwHash ) != 0 ) {
+                                    printf( "Client password hmac bad, "
+                                            "client rejected.\n" );
                                     nextConnection->error = true;
                                     }
+
+                                delete [] trueHash;
                                 }
                             
                             if( requireTicketServerCheck &&
@@ -1860,6 +1896,8 @@ int main() {
                         
 
                                 if( numSent != messageLength ) {
+                                    printf( "Failed to send on client socket, "
+                                            "client rejected.\n" );
                                     nextConnection->error = true;
                                     }
                                 else {
@@ -1879,6 +1917,8 @@ int main() {
                                 }
                             }
                         else {
+                            printf( "LOGIN message has wrong format, "
+                                    "client rejected.\n" );
                             nextConnection->error = true;
                             }
 
@@ -1887,6 +1927,8 @@ int main() {
                         delete tokens;
                         }
                     else {
+                        printf( "Client's first message not LOGIN, "
+                                "client rejected.\n" );
                         nextConnection->error = true;
                         }
                     
