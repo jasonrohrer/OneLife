@@ -65,6 +65,10 @@ typedef struct FreshConnection {
         WebRequest *ticketServerRequest;
 
         char error;
+
+        // for tracking connections that have failed to LOGIN 
+        // in a timely manner
+        double connectionStartTimeSeconds;
     };
 
 
@@ -1695,6 +1699,9 @@ int main() {
 
                 FreshConnection newConnection;
                 
+                newConnection.connectionStartTimeSeconds = 
+                    Time::getCurrentTime();
+
                 newConnection.sock = sock;
 
                 newConnection.sequenceNumber = nextSequenceNumber;
@@ -1814,6 +1821,13 @@ int main() {
                     }
                 }
             else {
+
+                double timeDelta = Time::getCurrentTime() -
+                    nextConnection->connectionStartTimeSeconds;
+                
+
+                
+
                 char result = 
                     readSocketFull( nextConnection->sock,
                                     nextConnection->sockBuffer );
@@ -1935,6 +1949,11 @@ int main() {
                         }
                     
                     delete [] message;
+                    }
+                else if( timeDelta > 10 ) {
+                    printf( "Client failed to LOGIN after 10 seconds, "
+                            "client rejected.\n" );
+                    nextConnection->error = true;
                     }
                 }
             }
