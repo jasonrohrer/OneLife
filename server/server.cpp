@@ -1879,6 +1879,8 @@ int main() {
 
                                 nextConnection->ticketServerRequest =
                                     new WebRequest( "GET", url, NULL );
+                                
+                                delete [] url;
                                 }
                             else if( !requireTicketServerCheck &&
                                      !nextConnection->error ) {
@@ -2016,6 +2018,11 @@ int main() {
                 
                 delete [] message;
                 
+                if( m.type == UNKNOWN ) {
+                    printf( "Client error, unknown message type.\n" );
+                    nextPlayer->error = true;
+                    }
+
                 //Thread::staticSleep( 
                 //    testRandSource.getRandomBoundedInt( 0, 450 ) );
                 
