@@ -32,6 +32,8 @@ int accountHmacVersionNumber = 1;
 #include "minorGems/util/SettingsManager.h"
 #include "minorGems/util/random/CustomRandomSource.h"
 
+#include "minorGems/io/file/File.h"
+
 #include "minorGems/system/Time.h"
 
 
@@ -254,7 +256,7 @@ static void updateDataVersionNumber() {
     File file( NULL, "dataVersionNumber.txt" );
     
     if( file.exists() ) {
-        char *contents = file.getFileContents();
+        char *contents = file.readFileContents();
         
         if( contents != NULL ) {
             int v = 0;
@@ -1296,7 +1298,22 @@ void drawFrame( char inUpdate ) {
                 }
             }
         else if( currentGamePage == livingLifePage ) {
-            if( livingLifePage->checkSignal( "died" ) ) {
+            if( livingLifePage->checkSignal( "loginFailed" ) ) {
+                lastScreenViewCenter.x = 0;
+                lastScreenViewCenter.y = 0;
+
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
+                
+                currentGamePage = existingAccountPage;
+                
+                existingAccountPage->setStatus( "loginFailed", true );
+
+                existingAccountPage->setStatusPositiion( true );
+
+                currentGamePage->base_makeActive( true );
+                }
+            else if( livingLifePage->checkSignal( "died" ) ) {
                 
                 lastScreenViewCenter.x = 0;
                 lastScreenViewCenter.y = 0;

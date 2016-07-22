@@ -5,6 +5,8 @@
 #include "whiteSprites.h"
 #include "message.h"
 
+#include "accountHmac.h"
+
 #include "liveObjectSet.h"
 
 #include "../commonSource/fractalNoise.h"
@@ -26,6 +28,8 @@
 
 #include "minorGems/util/log/AppLog.h"
 
+#include "minorGems/crypto/hashes/sha1.h"
+
 #include <stdlib.h>//#include <math.h>
 
 
@@ -41,6 +45,8 @@ extern double viewWidth;
 
 extern char *serverIP;
 extern int serverPort;
+
+extern char *userEmail;
 
 
 
@@ -91,7 +97,10 @@ static char readServerSocketFull( int inServerSocket ) {
 
 
 typedef enum messageType {
-	MAP_CHUNK,
+	SEQUENCE_NUMBER,
+    ACCEPTED,
+    REJECTED,
+    MAP_CHUNK,
     MAP_CHANGE,
     PLAYER_UPDATE,
     PLAYER_MOVES_START,
@@ -116,7 +125,16 @@ messageType getMessageType( char *inMessage ) {
     
     messageType returnValue = UNKNOWN;
 
-    if( strcmp( copy, "MC" ) == 0 ) {
+    if( strcmp( copy, "SN" ) == 0 ) {
+        returnValue = SEQUENCE_NUMBER;
+        }
+    else if( strcmp( copy, "ACCEPTED" ) == 0 ) {
+        returnValue = ACCEPTED;
+        }
+    else if( strcmp( copy, "REJECTED" ) == 0 ) {
+        returnValue = REJECTED;
+        }
+    else if( strcmp( copy, "MC" ) == 0 ) {
         returnValue = MAP_CHUNK;
         }
     else if( strcmp( copy, "MX" ) == 0 ) {
@@ -2135,7 +2153,13 @@ void LivingLifePage::step() {
     if( ! readSuccess ) {
         closeSocket( mServerSocket );
         mServerSocket = -1;
-        setSignal( "died" );
+
+        if( mFirstServerMessagesReceived  ) {
+            setSignal( "died" );
+            }
+        else {
+            setSignal( "loginFailed" );
+            }
         return;
         }
     
@@ -2150,8 +2174,57 @@ void LivingLifePage::step() {
 
         messageType type = getMessageType( message );
         
+        
+        if( type == SEQUENCE_NUMBER ) {
+            // need to respond with LOGIN message
+            
+            int number = 0;
+            sscanf( message, "SN\n%d\n", &number );
+            
+            char *pureKey = getPureAccountKey();
+            
+            char *password = 
+                SettingsManager::getStringSetting( "serverPassword" );
+            
+            if( password == NULL ) {
+                password = stringDuplicate( "x" );
+                }
+            
+            char *numberString = autoSprintf( "%d", number );
 
-        if( type == MAP_CHUNK ) {
+
+            char *pwHash = hmac_sha1( password, numberString );
+
+            char *keyHash = hmac_sha1( pureKey, numberString );
+            
+            delete [] pureKey;
+            delete [] password;
+            delete [] numberString;
+            
+
+            char *message = autoSprintf( "LOGIN %s %s %s#",
+                                         userEmail, pwHash, keyHash );
+            
+            delete [] pwHash;
+            delete [] keyHash;
+
+            sendToSocket( mServerSocket, 
+                          (unsigned char*)message, 
+                          strlen( message ) );
+
+            delete [] message;
+            }
+        else if( type == ACCEPTED ) {
+            // logged in successfully, wait for next message
+            return;
+            }
+        else if( type == REJECTED ) {
+            closeSocket( mServerSocket );
+            mServerSocket = -1;
+            setSignal( "loginFailed" );
+            return;
+            }
+        else if( type == MAP_CHUNK ) {
             
             int size = 0;
             int x = 0;

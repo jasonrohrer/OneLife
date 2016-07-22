@@ -45,6 +45,8 @@ upgradeMessage "PLEASE DOWNLOAD##THE LATEST VERSION"
 manualRestartMessage "PRESS [ESC] TO QUIT AND##RESTART GAME TO APPLY UPDATE"
 
 
+loginFailed "LOGIN FAILED"
+
 
 waitingBirth "WAITING TO BE BORN"
 
