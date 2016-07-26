@@ -1,0 +1,7 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Name=Check In Data
+Exec=lxterminal --working-directory=/home/thomasbailey/checkout/CurrentOneLifeData  --command "/home/thomasbailey/checkout/CurrentOneLifeData/checkIn.sh"
+Comment=Push local changes to server.
+Categories=GTK;Utility;TerminalEmulator;

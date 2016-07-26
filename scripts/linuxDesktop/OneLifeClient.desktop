@@ -1,0 +1,7 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Name=GameClient
+Exec=lxterminal --working-directory=/home/thomasbailey/checkout/OneLife/gameSource  --command "/home/thomasbailey/checkout/OneLife/gameSource/OneLife"
+Comment=Launch Game
+Categories=GTK;Utility;TerminalEmulator;

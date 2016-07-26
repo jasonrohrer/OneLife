@@ -1,0 +1,7 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Name=Pull Data
+Exec=lxterminal --working-directory=/home/thomasbailey/checkout/CurrentOneLifeData  --command "/home/thomasbailey/checkout/CurrentOneLifeData/pull.sh"
+Comment=Pull latest data from server.
+Categories=GTK;Utility;TerminalEmulator;

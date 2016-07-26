@@ -1,0 +1,7 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Name=GameServer
+Exec=lxterminal --working-directory=/home/thomasbailey/checkout/OneLife/server  --command "/home/thomasbailey/checkout/OneLife/server/OneLifeServer"
+Comment=Launch Server.
+Categories=GTK;Utility;TerminalEmulator;
