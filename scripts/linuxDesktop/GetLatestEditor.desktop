@@ -2,6 +2,6 @@
 Encoding=UTF-8
 Type=Application
 Name=Update Editor
-Exec=lxterminal --working-directory=/home/thomasbailey/checkout/OneLifeData  --command "/home/thomasbailey/checkout/OneLifeData/pullAndRebuildEditor.sh"
+Exec=lxterminal --working-directory=/home/thomasbailey/checkout/OneLife/scripts  --command "/home/thomasbailey/checkout/OneLife/scripts/pullAndRebuildEditor.sh"
 Comment=Pull latest editor updates from reserver and rebuild it.
 Categories=GTK;Utility;TerminalEmulator;
