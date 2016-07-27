@@ -551,6 +551,8 @@ void freeFrameDrawer() {
         shutdownMessage = NULL;
         }
     
+
+    delete getServerAddressPage;
     
     delete finalMessagePage;
     delete loadingPage;
@@ -583,6 +585,13 @@ void freeFrameDrawer() {
         serverIP = NULL;
         }
     
+
+    if( userEmail != NULL ) {
+        delete [] userEmail;
+        }
+    if( accountKey != NULL ) {
+        delete [] accountKey;
+        }
     }
 
 

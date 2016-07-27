@@ -2189,26 +2189,33 @@ void LivingLifePage::step() {
             delete [] numberString;
             
 
-            char *message = autoSprintf( "LOGIN %s %s %s#",
+            char *outMessage = autoSprintf( "LOGIN %s %s %s#",
                                          userEmail, pwHash, keyHash );
             
             delete [] pwHash;
             delete [] keyHash;
 
             sendToSocket( mServerSocket, 
-                          (unsigned char*)message, 
-                          strlen( message ) );
-
+                          (unsigned char*)outMessage, 
+                          strlen( outMessage ) );
+            
+            delete [] outMessage;
+            
             delete [] message;
+            return;
             }
         else if( type == ACCEPTED ) {
             // logged in successfully, wait for next message
+            
+            delete [] message;
             return;
             }
         else if( type == REJECTED ) {
             closeSocket( mServerSocket );
             mServerSocket = -1;
             setSignal( "loginFailed" );
+            
+            delete [] message;
             return;
             }
         else if( type == MAP_CHUNK ) {
