@@ -83,8 +83,9 @@ typedef struct LiveObject {
         double animationFrameCount;
         double heldAnimationFrameCount;
 
-        double animationFrozenRotFrameCount;
-        double heldAnimationFrozenRotFrameCount;
+        double lastAnimationFrameCount;
+        double lastHeldAnimationFrameCount;
+        
 
         // for special case where held animation is all-zero
         // we can freeze moving animation when player stops moving and
@@ -230,6 +231,7 @@ class LivingLifePage : public GamePage {
         char *mMapCellDrawnFlags;
 
         int *mMapAnimationFrameCount;
+        int *mMapAnimationLastFrameCount;
         
         // all tiles on ground work their way toward animation type of
         // "ground" but may have a lingering types after being dropped

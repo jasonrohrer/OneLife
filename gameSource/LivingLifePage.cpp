@@ -480,8 +480,6 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
                 inObject->lastAnim = inObject->curAnim;
                 inObject->curAnim = inNewAnim;
                 inObject->lastAnimFade = 1;
-                inObject->animationFrozenRotFrameCount = 
-                    inObject->animationFrameCount;
                 }
             }
         }
@@ -527,8 +525,6 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
                 inObject->lastHeldAnim = inObject->curHeldAnim;
                 inObject->curHeldAnim = inNewAnim;
                 inObject->lastHeldAnimFade = 1;
-                inObject->heldAnimationFrozenRotFrameCount = 
-                    inObject->heldAnimationFrameCount;
                 }
             }
         }
@@ -601,6 +597,7 @@ LivingLifePage::LivingLifePage()
     mMapContainedStacks = new SimpleVector<int>[ mMapD * mMapD ];
     
     mMapAnimationFrameCount =  new int[ mMapD * mMapD ];
+    mMapAnimationLastFrameCount =  new int[ mMapD * mMapD ];
     mMapCurAnimType =  new AnimType[ mMapD * mMapD ];
     mMapLastAnimType =  new AnimType[ mMapD * mMapD ];
     mMapLastAnimFade =  new double[ mMapD * mMapD ];
@@ -615,6 +612,8 @@ LivingLifePage::LivingLifePage()
         mMapBiomes[i] = -1;
         
         mMapAnimationFrameCount[i] = randSource.getRandomBoundedInt( 0, 500 );
+        mMapAnimationLastFrameCount[i] = 
+            randSource.getRandomBoundedInt( 0, 500 );
         mMapCurAnimType[i] = ground;
         mMapLastAnimType[i] = ground;
         mMapLastAnimFade[i] = 0;
@@ -922,6 +921,8 @@ LivingLifePage::~LivingLifePage() {
 
     
     delete [] mMapAnimationFrameCount;
+    delete [] mMapAnimationLastFrameCount;
+    
     delete [] mMapCurAnimType;
     delete [] mMapLastAnimType;
     delete [] mMapLastAnimFade;
@@ -1110,21 +1111,25 @@ void LivingLifePage::drawMapCell( int inMapI,
     int oID = mMap[ inMapI ];
             
     if( oID > 0 ) {
-                
+        
         mMapAnimationFrameCount[ inMapI ] ++;
+        mMapAnimationLastFrameCount[ inMapI ] ++;
                 
         if( mMapLastAnimFade[ inMapI ] > 0 ) {
             mMapLastAnimFade[ inMapI ] -= 0.05 * frameRateFactor;
             if( mMapLastAnimFade[ inMapI ] < 0 ) {
                 mMapLastAnimFade[ inMapI ] = 0;
-                // start current animation fresh after fade
-                mMapAnimationFrameCount[ inMapI ] = 0;
 
                 if( mMapCurAnimType[ inMapI ] != ground ) {
                     // transition to ground now
                     mMapLastAnimType[ inMapI ] = mMapCurAnimType[ inMapI ];
                     mMapCurAnimType[ inMapI ] = ground;
                     mMapLastAnimFade[ inMapI ] = 1;
+                    
+                    mMapAnimationLastFrameCount[ inMapI ] =
+                        mMapAnimationFrameCount[ inMapI ];
+
+                    mMapAnimationFrameCount[ inMapI ] = 0;
                     }
                 }
             }
@@ -1166,15 +1171,22 @@ void LivingLifePage::drawMapCell( int inMapI,
         AnimType curType = ground;
         AnimType fadeTargetType = ground;
         double animFade = 1;
+
+
+        double timeVal = frameRateFactor * 
+            mMapAnimationFrameCount[ inMapI ] / 60.0;
                 
+        double targetTimeVal = timeVal;
+
         if( mMapLastAnimFade[ inMapI ] != 0 ) {
             animFade = mMapLastAnimFade[ inMapI ];
             curType = mMapLastAnimType[ inMapI ];
             fadeTargetType = mMapCurAnimType[ inMapI ];
+            
+            timeVal = frameRateFactor * 
+                mMapAnimationLastFrameCount[ inMapI ] / 60.0;
             }
                 
-        double timeVal = frameRateFactor * 
-            mMapAnimationFrameCount[ inMapI ] / 60.0;
                 
 
         if( mMapContainedStacks[ inMapI ].size() > 0 ) {
@@ -1182,9 +1194,10 @@ void LivingLifePage::drawMapCell( int inMapI,
                 mMapContainedStacks[ inMapI ].getElementArray();
                     
             drawObjectAnim( oID, 
-                            curType, timeVal, timeVal,
+                            curType, timeVal,
                             animFade,
                             fadeTargetType,
+                            targetTimeVal,
                             pos, mMapTileFlips[ inMapI ],
                             -1,
                             false,
@@ -1195,9 +1208,11 @@ void LivingLifePage::drawMapCell( int inMapI,
             }
         else {
             drawObjectAnim( oID, 
-                            curType, timeVal, timeVal,
+                            curType, timeVal,
                             animFade,
-                            fadeTargetType, pos, 
+                            fadeTargetType, 
+                            targetTimeVal,
+                            pos, 
                             mMapTileFlips[ inMapI ], -1,
                             false,
                             getEmptyClothingSet() );
@@ -1336,16 +1351,16 @@ void LivingLifePage::drawLiveObject(
                 
     double timeVal = frameRateFactor * 
         inObj->animationFrameCount / 60.0;
-                
-    double rotTimeVal = timeVal;
+    
+    double targetTimeVal = timeVal;
 
     if( inObj->lastAnimFade > 0 ) {
         curType = inObj->lastAnim;
         fadeTargetType = inObj->curAnim;
         animFade = inObj->lastAnimFade;
-                    
-        rotTimeVal = frameRateFactor * 
-            inObj->animationFrozenRotFrameCount / 60.0;
+        
+        timeVal = frameRateFactor * 
+            inObj->lastAnimationFrameCount / 60.0;
         }
                 
 
@@ -1378,9 +1393,10 @@ void LivingLifePage::drawLiveObject(
 
     HandPos frontHandPos =
         drawObjectAnim( inObj->displayID, curType, 
-                        timeVal, rotTimeVal,
+                        timeVal,
                         animFade,
                         fadeTargetType,
+                        targetTimeVal,
                         pos,
                         inObj->holdingFlip,
                         age,
@@ -1474,9 +1490,10 @@ void LivingLifePage::drawLiveObject(
                     
         double heldTimeVal = frameRateFactor * 
             inObj->heldAnimationFrameCount / 60.0;
-
-        double heldRotTimeVal = heldTimeVal;
         
+        double targetHeldTimeVal = heldTimeVal;
+        
+
         if( inObj->holdingID < 0 ) {
             // baby, special case, don't animate it when held
             curHeldType = ground;
@@ -1487,8 +1504,8 @@ void LivingLifePage::drawLiveObject(
             fadeTargetHeldType = inObj->curHeldAnim;
             heldAnimFade = inObj->lastHeldAnimFade;
             
-            heldRotTimeVal = frameRateFactor * 
-                inObj->heldAnimationFrozenRotFrameCount / 60.0;
+            heldTimeVal = frameRateFactor * 
+                inObj->lastHeldAnimationFrameCount / 60.0;
             }
                         
                     
@@ -1507,9 +1524,10 @@ void LivingLifePage::drawLiveObject(
                 babyO->lastHeldByRawPos = worldHoldPos;
 
                 drawObjectAnim( babyO->displayID, curHeldType, 
-                                heldTimeVal, heldRotTimeVal,
+                                heldTimeVal,
                                 heldAnimFade,
                                 fadeTargetHeldType,
+                                targetHeldTimeVal,
                                 holdPos,
                                 inObj->holdingFlip,
                                 babyO->age,
@@ -1526,18 +1544,20 @@ void LivingLifePage::drawLiveObject(
         else if( inObj->numContained == 0 ) {
                         
             drawObjectAnim( inObj->holdingID, curHeldType, 
-                            heldTimeVal, heldRotTimeVal,
+                            heldTimeVal,
                             heldAnimFade,
                             fadeTargetHeldType,
+                            targetHeldTimeVal,
                             holdPos,
                             inObj->holdingFlip, -1, false,
                             getEmptyClothingSet() );
             }
         else {
             drawObjectAnim( inObj->holdingID, curHeldType, 
-                            heldTimeVal, heldTimeVal,
+                            heldTimeVal,
                             heldAnimFade,
                             fadeTargetHeldType,
+                            targetHeldTimeVal,
                             holdPos,
                             inObj->holdingFlip,
                             -1, false,
@@ -2253,6 +2273,7 @@ void LivingLifePage::step() {
             
 
             int *newMapAnimationFrameCount = new int[ mMapD * mMapD ];
+            int *newMapAnimationLastFrameCount = new int[ mMapD * mMapD ];
         
             AnimType *newMapCurAnimType = new AnimType[ mMapD * mMapD ];
             AnimType *newMapLastAnimType = new AnimType[ mMapD * mMapD ];
@@ -2294,6 +2315,8 @@ void LivingLifePage::step() {
                     newMapBiomes[i] = mMapBiomes[oI];
 
                     newMapAnimationFrameCount[i] = mMapAnimationFrameCount[oI];
+                    newMapAnimationLastFrameCount[i] = 
+                        mMapAnimationLastFrameCount[oI];
                     newMapCurAnimType[i] = mMapCurAnimType[oI];
                     newMapLastAnimFade[i] = mMapLastAnimFade[oI];
                     newMapLastAnimFade[i] = mMapLastAnimFade[oI];
@@ -2308,6 +2331,10 @@ void LivingLifePage::step() {
 
             memcpy( mMapAnimationFrameCount, newMapAnimationFrameCount, 
                     mMapD * mMapD * sizeof( int ) );
+            memcpy( mMapAnimationLastFrameCount, 
+                    newMapAnimationLastFrameCount, 
+                    mMapD * mMapD * sizeof( int ) );
+
             memcpy( mMapCurAnimType, newMapCurAnimType, 
                     mMapD * mMapD * sizeof( AnimType ) );
             memcpy( mMapLastAnimFade, newMapLastAnimFade,
@@ -2323,6 +2350,7 @@ void LivingLifePage::step() {
             delete [] newMap;
             delete [] newMapBiomes;
             delete [] newMapAnimationFrameCount;
+            delete [] newMapAnimationLastFrameCount;
             delete [] newMapCurAnimType;
             delete [] newMapLastAnimType;
             delete [] newMapLastAnimFade;
@@ -2499,12 +2527,13 @@ void LivingLifePage::step() {
                                     responsiblePlayerID );
 
                             mMapAnimationFrameCount[mapI] = 0;
+                            mMapAnimationLastFrameCount[mapI] = 0;
                             mMapCurAnimType[mapI] = ground;
                             mMapLastAnimType[mapI] = held;
                             mMapLastAnimFade[mapI] = 1;
                             
                             
-                            // copy frame count from last holder
+                            // copy last frame count from last holder
                             // of this object (server tracks
                             // who was holding it and tell us about it)
                             if( responsiblePlayerID != -1 ) {
@@ -2515,13 +2544,15 @@ void LivingLifePage::step() {
                                     
                                     if( nextObject->id ==
                                         responsiblePlayerID ) {
-
-                                        mMapAnimationFrameCount[mapI] =
-                                            lrint( nextObject->
-                                                   heldAnimationFrameCount );
+                                        
                                         
                                         if( nextObject->lastAnimFade == 
                                             0 ) {
+                                            
+                                            mMapAnimationLastFrameCount[mapI] =
+                                                lrint( 
+                                                    nextObject->
+                                                    heldAnimationFrameCount );
                                             
                                             mMapLastAnimType[mapI] = 
                                                 nextObject->curHeldAnim;
@@ -2532,9 +2563,20 @@ void LivingLifePage::step() {
                                             mMapCurAnimType[mapI] =
                                                 nextObject->curHeldAnim;
                                             
+                                            mMapAnimationFrameCount[mapI] =
+                                                lrint( 
+                                                    nextObject->
+                                                    heldAnimationFrameCount );
+
                                             mMapLastAnimType[mapI] =
                                                 nextObject->lastHeldAnim;
                                             
+                                            mMapAnimationLastFrameCount[mapI] =
+                                                lrint( 
+                                                 nextObject->
+                                                 lastHeldAnimationFrameCount );
+
+
                                             mMapLastAnimFade[mapI] =
                                                 nextObject->lastHeldAnimFade;
                                             }
@@ -2726,7 +2768,7 @@ void LivingLifePage::step() {
                         
                                     int mapI = mapY * mMapD + mapX;
                                 
-                                    existing->heldAnimationFrameCount =
+                                    existing->lastHeldAnimationFrameCount =
                                         mMapAnimationFrameCount[ mapI ];
                                     
                                     if( mMapLastAnimFade[ mapI ] == 0 ) {
@@ -2734,15 +2776,23 @@ void LivingLifePage::step() {
                                             mMapCurAnimType[ mapI ];
                                         existing->lastHeldAnimFade = 1;
                                         existing->curHeldAnim = held;
+                                        existing->heldAnimationFrameCount = 0;
                                         }
                                     else {
                                         // map spot is in the middle of
                                         // an animation fade
                                         existing->lastHeldAnim = 
                                             mMapLastAnimType[ mapI ];
+                                        existing->lastHeldAnimationFrameCount =
+                                           mMapAnimationLastFrameCount[ mapI ];
+                                        
                                         existing->curHeldAnim = 
                                             mMapCurAnimType[ mapI ];
                                         
+                                        existing->heldAnimationFrameCount =
+                                            mMapAnimationFrameCount[ mapI ];
+                                        
+
                                         existing->lastHeldAnimFade =
                                             mMapLastAnimFade[ mapI ];
                                         
@@ -3658,16 +3708,16 @@ void LivingLifePage::step() {
             o->lastAnimFade -= 0.05 * frameRateFactor;
             if( o->lastAnimFade < 0 ) {
                 o->lastAnimFade = 0;
-                // start current animation fresh after fade
-                o->animationFrameCount = 0;
-                o->animationFrozenRotFrameCount = 0;
-                
+
                 if( o->futureAnimStack->size() > 0 ) {
                     // move on to next in stack
                     o->lastAnim = o->curAnim;
                     
                     o->lastAnimFade = 1;
                     
+                    o->lastAnimationFrameCount = o->animationFrameCount;
+                    o->animationFrameCount = 0;
+
                     // pop from stack
                     o->curAnim = 
                         o->futureAnimStack->getElementDirect( 0 );
@@ -3704,16 +3754,18 @@ void LivingLifePage::step() {
             o->lastHeldAnimFade -= 0.05 * frameRateFactor;
             if( o->lastHeldAnimFade < 0 ) {
                 o->lastHeldAnimFade = 0;
-                // start current animation fresh after fade
-                o->heldAnimationFrameCount = 0;
-                o->heldAnimationFrozenRotFrameCount = 0;
-
+                
                 if( o->futureHeldAnimStack->size() > 0 ) {
                     // move on to next in stack
                     o->lastHeldAnim = o->curHeldAnim;
                     
                     o->lastHeldAnimFade = 1;
                     
+                    o->lastHeldAnimationFrameCount = 
+                        o->heldAnimationFrameCount;
+                    
+                    o->heldAnimationFrameCount = 0;
+
                     // pop from stack
                     o->curHeldAnim = 
                         o->futureHeldAnimStack->getElementDirect( 0 );

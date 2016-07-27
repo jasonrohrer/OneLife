@@ -118,12 +118,12 @@ char isAnimEmpty( int inObjectID, AnimType inType );
 
 
 HandPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
-                        double inRotFrameTime,
                         double inAnimFade,
                         // if inAnimFade < 1, this is the animation
                         // that we are fading to (fading to the time-0 config
                         // for this animation)
                         AnimType inFadeTargetType,
+                        double inFadeTargetFrameTime,
                         doublePair inPos,
                         char inFlipH,
                         double inAge, char inHoldingSomething,
@@ -132,9 +132,9 @@ HandPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
 
 HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
                         double inFrameTime,
-                        double inRotFrameTime,
                         double inAnimFade,
                         AnimationRecord *inFadeTargetAnim,
+                        double inFadeTargetFrameTime,
                         doublePair inPos,
                         char inFlipH,
                         double inAge, char inHoldingSomething,
@@ -142,9 +142,9 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 
-                     double inRotFrameTime,
                      double inAnimFade,
                      AnimType inFadeTargetType,
+                     double inFadeTargetFrameTime,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
@@ -155,9 +155,9 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
 
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      double inFrameTime,
-                     double inRotFrameTime,
                      double inAnimFade,
                      AnimationRecord *inFadeTargetAnim,
+                     double inFadeTargetFrameTime,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,

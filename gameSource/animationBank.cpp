@@ -611,9 +611,9 @@ static char logicalXOR( char inA, char inB ) {
 
 
 HandPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
-                        double inRotFrameTime,
                         double inAnimFade,
                         AnimType inFadeTargetType,
+                        double inFadeTargetFrameTime,
                         doublePair inPos,
                         char inFlipH,
                         double inAge,
@@ -630,8 +630,9 @@ HandPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
     else {
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
-        return drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
-                               inAnimFade, rB, inPos, inFlipH, inAge, 
+        return drawObjectAnim( inObjectID, r, inFrameTime,
+                               inAnimFade, rB, 
+                               inFadeTargetFrameTime, inPos, inFlipH, inAge, 
                                inHoldingSomething, inClothing );
         }
     }
@@ -655,11 +656,70 @@ static double workingDeltaRot[1000];
 
 
 
+
+static double processFrameTimeWithPauses( AnimationRecord *inAnim,
+                                          int inLayerIndex,
+                                          // true if sprite, false if slot
+                                          char inSpriteOrSlot,
+                                          double inFrameTime ) {
+    SpriteAnimationRecord *layerAnimation = NULL;
+    
+    int i = inLayerIndex;
+
+    if( inSpriteOrSlot ) {
+        if( i < inAnim->numSprites ) {
+            layerAnimation = &( inAnim->spriteAnim[i] );
+            }
+        }
+    else {
+        if( i < inAnim->numSlots ) {
+            layerAnimation = &( inAnim->slotAnim[i] );
+            }
+        }
+    
+    if( layerAnimation == NULL ) {
+        return inFrameTime;
+        }
+    
+
+    if( layerAnimation->pauseSec == 0 ) {
+        return inFrameTime;
+        }
+    
+
+    double dur = layerAnimation->durationSec;
+    double pause = layerAnimation->pauseSec;
+            
+
+    double blockTime = dur + pause;
+    
+    double blockFraction = inFrameTime / blockTime;
+            
+    double numFullBlocksPassed = floor( blockFraction );
+
+    double thisBlockFraction = blockFraction - numFullBlocksPassed;
+
+    double thisBlockTime = thisBlockFraction * blockTime;
+            
+    if( thisBlockTime > dur ) {
+        // in pause, freeze time at end of last dur
+        return ( numFullBlocksPassed + 1 ) * dur;
+        }
+    else {
+        // in a dur block
+        return numFullBlocksPassed * dur + thisBlockTime;
+        }
+    }
+
+
+
+
+
 HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
                         double inFrameTime,
-                        double inRotFrameTime,
                         double inAnimFade,
                         AnimationRecord *inFadeTargetAnim,
+                        double inFadeTargetFrameTime,
                         doublePair inPos,
                         char inFlipH,
                         double inAge,
@@ -702,51 +762,22 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     for( int i=0; i<obj->numSprites; i++ ) {
         
         double spriteFrameTime = inFrameTime;
-        double spriteRotFrameTime = inRotFrameTime;
         
-        if( inAnim->spriteAnim[i].pauseSec != 0 ) {
-            double dur = inAnim->spriteAnim[i].durationSec;
-            double pause = inAnim->spriteAnim[i].pauseSec;
-            
+        double targetSpriteFrameTime = inFadeTargetFrameTime;
+        
 
-            double blockTime = dur + pause;
-            
-            double blockFraction = inFrameTime / blockTime;
-            double blockRotFraction = inRotFrameTime / blockTime;
-            
-            double numFullBlocksPassed = floor( blockFraction );
-            double numFullRotBlocksPassed = floor( blockRotFraction );
-
-            double thisBlockFraction = blockFraction - numFullBlocksPassed;
-            double thisRotBlockFraction = 
-                blockRotFraction - numFullRotBlocksPassed;
-
-            double thisBlockTime = thisBlockFraction * blockTime;
-            double thisRotBlockTime = thisRotBlockFraction * blockTime;
-            
-            if( thisBlockTime > dur ) {
-                // in pause, freeze time at end of last dur 
-                
-                spriteFrameTime = ( numFullBlocksPassed + 1 ) * dur;
-                }
-            else {
-                // in a dur block
-                spriteFrameTime = numFullBlocksPassed * dur + thisBlockTime;
-                }
-
-            if( thisRotBlockTime > dur ) {
-                // in pause, freeze time at end of last dur 
-                
-                spriteRotFrameTime = ( numFullRotBlocksPassed + 1 ) * dur;
-                }
-            else {
-                // in a dur block
-                spriteRotFrameTime = numFullRotBlocksPassed * dur + 
-                    thisRotBlockTime;
-                }
+        spriteFrameTime = processFrameTimeWithPauses( inAnim,
+                                                      i,
+                                                      true,
+                                                      spriteFrameTime );
+        if( inAnimFade < 1 ) {
+            targetSpriteFrameTime = 
+                processFrameTimeWithPauses( inFadeTargetAnim,
+                                            i,
+                                            true,
+                                            targetSpriteFrameTime );
             }
         
-
 
 
         doublePair spritePos = obj->spritePos[i];
@@ -794,13 +825,14 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 mult( inAnim->spriteAnim[i].rotationCenterOffset,
                       inAnimFade );
             
-            if( inAnimFade < 1 ) {
-                double targetWeight = 1 - inAnimFade;
+            double targetWeight = 1 - inAnimFade;
+            
+            if( inAnimFade < 1 && i < inFadeTargetAnim->numSprites ) {
                 
                 spritePos.x += 
                     targetWeight *
                     getOscOffset( 
-                        0,
+                        targetSpriteFrameTime,
                         inFadeTargetAnim->spriteAnim[i].xOscPerSec,
                         inFadeTargetAnim->spriteAnim[i].xAmp,
                         inFadeTargetAnim->spriteAnim[i].xPhase );
@@ -808,7 +840,7 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 spritePos.y += 
                     targetWeight *
                     getOscOffset( 
-                        0,
+                        targetSpriteFrameTime,
                         inFadeTargetAnim->spriteAnim[i].yOscPerSec,
                         inFadeTargetAnim->spriteAnim[i].yAmp,
                         inFadeTargetAnim->spriteAnim[i].yPhase );
@@ -816,7 +848,7 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                  rock += 
                      targetWeight *
                      getOscOffset( 
-                         0,
+                         targetSpriteFrameTime,
                          inFadeTargetAnim->spriteAnim[i].rockOscPerSec,
                          inFadeTargetAnim->spriteAnim[i].rockAmp,
                          inFadeTargetAnim->spriteAnim[i].rockPhase );
@@ -830,57 +862,72 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 }
             
 
-            rot += inAnim->spriteAnim[i].rotPerSec * spriteRotFrameTime + 
+            double totalRotOffset = 
+                inAnim->spriteAnim[i].rotPerSec * 
+                spriteFrameTime + 
                 inAnim->spriteAnim[i].rotPhase;
+            
 
-            if( inAnimFade < 1 ) {
-                double targetRot;
+            // relative to 0 on circle
+            double relativeRotOffset = 
+                totalRotOffset - floor( totalRotOffset );
+            
+            // make positive
+            if( relativeRotOffset < 0 ) {
+                relativeRotOffset += 1;
+                }
+            
+            // to take average of two rotations
+            // rotate them both so that one is at 0.5,
+            // take average, and then rotate them back
+            // This ensures that we always move through closest average
+            // point on circle (shortest path along circle).
 
-                // rotate toward starting pos of fade target
-                if( inAnim->spriteAnim[i].rotPerSec > 0 
-                    ||
-                    ( inAnim->spriteAnim[i].rotPerSec == 0 &&
-                      inFadeTargetAnim->spriteAnim[i].rotPerSec > 0 ) ) {
-                    
-                    // one or other has positive rotation, keep going
-                    // in that direction to come back to 0 point of target
-                    
-                    targetRot = floor( rot ) +
-                        obj->spriteRot[i] +
-                        inFadeTargetAnim->spriteAnim[i].rotPhase;
-                    
-                    while( targetRot < rot ) {
-                        // behind us, push ahead one more rotation CW
-                        targetRot += 1;
-                        }
+            double offset = 0.5 - relativeRotOffset;
+            
+
+
+            if( inAnimFade < 1  && i < inFadeTargetAnim->numSprites ) {
+                double totalTargetRotOffset =
+                    inFadeTargetAnim->spriteAnim[i].rotPerSec * 
+                    targetSpriteFrameTime + 
+                    inFadeTargetAnim->spriteAnim[i].rotPhase;
+                
+
+                // relative to 0 on circle
+                double relativeTargetRotOffset = 
+                    totalTargetRotOffset - floor( totalTargetRotOffset );
+            
+                // make positive
+                if( relativeTargetRotOffset < 0 ) {
+                    relativeTargetRotOffset += 1;
                     }
-                else if( inAnim->spriteAnim[i].rotPerSec == 0 &&
-                         inFadeTargetAnim->spriteAnim[i].rotPerSec == 0 ) {
-                    // both are not rotating
 
-                    // blend between phases
-                    targetRot = 
-                        obj->spriteRot[i] +
-                        inFadeTargetAnim->spriteAnim[i].rotPhase;
+                
+                double centeredOffset = offset + relativeRotOffset;
+                double centeredTargetOffset = offset + relativeTargetRotOffset;
+                
+                if( centeredTargetOffset < 0 ) {
+                    centeredTargetOffset += 1;
                     }
-                else {
-                    // one has negative rotation, continue around
-                    // to zero point of target
-
-                    targetRot = ceil( rot ) +
-                        obj->spriteRot[i] +
-                        inFadeTargetAnim->spriteAnim[i].rotPhase;
-                    
-                    while( targetRot > rot ) {
-                        // behind us, push ahead one more rotation CCW
-                        targetRot -= 1;
-                        }
+                else if( centeredTargetOffset > 1 ) {
+                    centeredTargetOffset -= 1;
                     }
                 
-                if( rot != targetRot ) {
-                    rot = inAnimFade * rot + (1 - inAnimFade) * targetRot;
-                    }
+
+                double aveCenteredOffset = 
+                    inAnimFade * centeredOffset +
+                    targetWeight * centeredTargetOffset;
+                
+                // remove to-0.5 offset
+                double aveOffset = aveCenteredOffset - offset;
+
+                rot += aveOffset;
                 }
+            else {
+                rot += relativeRotOffset;
+                }
+            
 
             rot += rock;
 
@@ -1160,9 +1207,9 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
-                     double inRotFrameTime,
                      double inAnimFade, 
                      AnimType inFadeTargetType,
+                     double inFadeTargetFrameTime,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
@@ -1180,8 +1227,9 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
     else {
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
-        drawObjectAnim( inObjectID, r, inFrameTime, inRotFrameTime,
-                        inAnimFade, rB, inPos, inFlipH, inAge,
+        drawObjectAnim( inObjectID, r, inFrameTime,
+                        inAnimFade, rB, inFadeTargetFrameTime,
+                        inPos, inFlipH, inAge,
                         inHoldingSomething, inClothing,
                         inNumContained, inContainedIDs );
         }
@@ -1190,9 +1238,10 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
 
 
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
-                     double inFrameTime, double inRotFrameTime, 
+                     double inFrameTime, 
                      double inAnimFade,
                      AnimationRecord *inFadeTargetAnim,
+                     double inFadeTargetFrameTime,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
@@ -1212,33 +1261,20 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
 
             double slotFrameTime = inFrameTime;
+            double targetSlotFrameTime = inFadeTargetFrameTime;
             
-            if( inAnim->slotAnim[i].pauseSec != 0 ) {
-                double dur = inAnim->slotAnim[i].durationSec;
-                double pause = inAnim->slotAnim[i].pauseSec;
-                
-                
-                double blockTime = dur + pause;
-                
-                double blockFraction = inFrameTime / blockTime;
-                
-                double numFullBlocksPassed = floor( blockFraction );
-                
-                double thisBlockFraction = blockFraction - numFullBlocksPassed;
-                
-                double thisBlockTime = thisBlockFraction * blockTime;
-                
-                if( thisBlockTime > dur ) {
-                    // in pause, freeze time at end of last dur 
-                
-                    slotFrameTime = ( numFullBlocksPassed + 1 ) * dur;
-                    }
-                else {
-                    // in a dur block
-                    slotFrameTime = numFullBlocksPassed * dur + thisBlockTime;
-                    }
+            slotFrameTime = processFrameTimeWithPauses( inAnim,
+                                                        i,
+                                                        false,
+                                                        slotFrameTime );
+            
+            if( inAnimFade < 1 ) {
+                targetSlotFrameTime = 
+                    processFrameTimeWithPauses( inFadeTargetAnim,
+                                                i,
+                                                false,
+                                                targetSlotFrameTime );
                 }
-            
 
             ObjectRecord *contained = getObject( inContainedIDs[i] );
 
@@ -1271,7 +1307,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     pos.x += 
                         targetWeight *
                         getOscOffset( 
-                            0,
+                            targetSlotFrameTime,
                             inFadeTargetAnim->slotAnim[i].xOscPerSec,
                             inFadeTargetAnim->slotAnim[i].xAmp,
                             inFadeTargetAnim->slotAnim[i].xPhase );
@@ -1279,7 +1315,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     pos.y += 
                         targetWeight *
                         getOscOffset( 
-                            0,
+                            targetSlotFrameTime,
                             inFadeTargetAnim->slotAnim[i].yOscPerSec,
                             inFadeTargetAnim->slotAnim[i].yAmp,
                             inFadeTargetAnim->slotAnim[i].yPhase );
@@ -1298,8 +1334,9 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         } 
 
     // draw animating object on top of contained slots
-    drawObjectAnim( inObjectID, inAnim, inFrameTime, inRotFrameTime,
-                    inAnimFade, inFadeTargetAnim, inPos, inFlipH,
+    drawObjectAnim( inObjectID, inAnim, inFrameTime,
+                    inAnimFade, inFadeTargetAnim, inFadeTargetFrameTime,
+                    inPos, inFlipH,
                     inAge, inHoldingSomething, inClothing );
     }
 

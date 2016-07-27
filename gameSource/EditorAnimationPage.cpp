@@ -989,9 +989,9 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
 
             mLastType = oldType;
             mLastTypeFade = 1.0;
-            mLastTypeFrozenRotFrameCount = mFrameCount;
-
-            mCurrentSpriteOrSlot = 0;
+            mLastTypeFrameCount = mFrameCount;
+            
+            mFrameCount = 0;
             
             if( ! isAnimFadeNeeded( mCurrentObjectID,
                                     mCurrentAnim[ mLastType ],
@@ -999,7 +999,6 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 
                 // jump right to start of new animation with no fade
                 mLastTypeFade = 0;
-                mFrameCount = 0;
                 }
 
             
@@ -1083,6 +1082,14 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
             
             double frameTime = ( mFrameCount / 60.0 ) * frameRateFactor;
             
+            double fadeTargetFrameTime = frameTime;
+            
+
+            if( animFade < 1 ) {
+                frameTime = ( mLastTypeFrameCount / 60.0 ) * frameRateFactor;
+                }
+            
+
             frameTime *= mTestSpeedSlider.getValue();
             
             frameTime += mFrameTimeOffset;
@@ -1115,26 +1122,21 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                     
             setDrawColor( 1, 1, 1, 1 );
 
-            double rotFrameTime = frameTime;
-            
-            if( mWiggleFade == 0 && mLastTypeFade != 0 ) {
-                // freeze rotation frame time for smooth return to 0;
-                rotFrameTime = 
-                    ( mLastTypeFrozenRotFrameCount / 60.0 ) * frameRateFactor;
-                }
             
             if( demoSlots != NULL ) {
                 drawObjectAnim( mCurrentObjectID, 
-                                anim, frameTime, rotFrameTime, animFade, 
-                                fadeTargetAnim, pos, mFlipDraw, age,
+                                anim, frameTime, animFade, 
+                                fadeTargetAnim, fadeTargetFrameTime, 
+                                pos, mFlipDraw, age,
                                 false,
                                 mClothingSet,
                                 obj->numSlots, demoSlots );
                 }
             else {
                 drawObjectAnim( mCurrentObjectID, 
-                                anim, frameTime, rotFrameTime, animFade, 
-                                fadeTargetAnim, pos, mFlipDraw, age,
+                                anim, frameTime, animFade,
+                                fadeTargetAnim, fadeTargetFrameTime, 
+                                pos, mFlipDraw, age,
                                 false,
                                 mClothingSet );
                 }
@@ -1254,7 +1256,6 @@ void EditorAnimationPage::step() {
         mLastTypeFade -= 0.05 * frameRateFactor;
         if( mLastTypeFade < 0 ) {
             mLastTypeFade = 0;
-            mFrameCount = 0;
             }
         }
     
