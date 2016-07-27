@@ -4405,8 +4405,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     
 
-    if( destID == 0 && !modClick ) {
-        // a move to an empty spot
+    if( destID == 0 && !modClick &&
+        ! ( clickDestX == ourLiveObject->xd && 
+            clickDestY == ourLiveObject->yd ) ) {
+        // a move to an empty spot where we're not already standing
         // can interrupt current move
         
         mustMove = true;
@@ -4702,6 +4704,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
 
         char *message = moveMessageBuffer.getElementString();
+
+        printf( "Sending message to server:  %s\n", message );
+        
         sendToSocket( mServerSocket, (unsigned char*)message, 
                       strlen( message ) );
             
