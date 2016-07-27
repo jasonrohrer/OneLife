@@ -481,7 +481,11 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
 
         newHeldAnim = held;
         }
-    
+    else if( inObject->holdingID > 0 && newHeldAnim == ground ) {
+        // ground is used when person comes to a hault,
+        // but for the held item, we should still show the held animation
+        newHeldAnim = held;
+        }
 
     if( inObject->curHeldAnim != newHeldAnim ) {
 
