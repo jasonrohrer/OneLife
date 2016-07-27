@@ -462,80 +462,41 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
                 }
             }
         else {
-
-            // special case:
-            // looks better if we just freeze moving anim when we stop, 
-            // if we can
-            if( inObject->curAnim == moving &&
-                inNewAnim == held &&
-                isAnimEmpty( inObject->displayID, held ) ) {
-                
-                inObject->animationFrameFrozen = true;
-                }
-            else {
-                // not possible, normal fade instead
-                
-                inObject->animationFrameFrozen = false;
-
-                inObject->lastAnim = inObject->curAnim;
-                inObject->curAnim = inNewAnim;
-                inObject->lastAnimFade = 1;
-                }
+            
+            inObject->lastAnim = inObject->curAnim;
+            inObject->curAnim = inNewAnim;
+            inObject->lastAnimFade = 1;
+            
+            inObject->lastAnimationFrameCount = inObject->animationFrameCount;
+            inObject->animationFrameCount = 0;
             }
-        }
-    else if( inNewAnim == moving ) {
-        // moving never frozen
-        // we may need to unfreeze if we kept our moving frozen last
-        // time we transitioned to held
-        
-        inObject->animationFrameFrozen = false;
         }
 
 
     if( inObject->curHeldAnim != inNewAnim ) {
 
-        // special case:
-        // looks better if we just freeze moving anim when we stop, if we can
-        
-        if( inObject->holdingID > 0 &&
-            inObject->curHeldAnim == moving &&
-            inNewAnim == held &&
-            isAnimEmpty( inObject->holdingID, held ) ) {
+        if( inObject->lastHeldAnimFade != 0 ) {
             
-            inObject->heldAnimationFrameFrozen = true;
-        
-            // just keep moving animation in place
+            // don't double stack
+            if( inObject->futureHeldAnimStack->size() == 0 ||
+                inObject->futureHeldAnimStack->getElementDirect(
+                    inObject->futureHeldAnimStack->size() - 1 ) 
+                != inNewAnim ) {
+                
+                inObject->futureHeldAnimStack->push_back( inNewAnim );
+                }
             }
         else {
-            inObject->heldAnimationFrameFrozen = false;
-        
-
-            if( inObject->lastHeldAnimFade != 0 ) {
-                        
-                // don't double stack
-                if( inObject->futureHeldAnimStack->size() == 0 ||
-                    inObject->futureHeldAnimStack->getElementDirect(
-                        inObject->futureHeldAnimStack->size() - 1 ) 
-                    != inNewAnim ) {
-                    
-                    inObject->futureHeldAnimStack->push_back( inNewAnim );
-                    }
-                }
-            else {
-                inObject->lastHeldAnim = inObject->curHeldAnim;
-                inObject->curHeldAnim = inNewAnim;
-                inObject->lastHeldAnimFade = 1;
-                }
+            inObject->lastHeldAnim = inObject->curHeldAnim;
+            inObject->curHeldAnim = inNewAnim;
+            inObject->lastHeldAnimFade = 1;
+            
+            inObject->lastHeldAnimationFrameCount = 
+                inObject->heldAnimationFrameCount;
+            inObject->heldAnimationFrameCount = 0;
+            
             }
-        }
-    else if( inNewAnim == moving ) {
-        // moving never frozen
-        // we may need to unfreeze if we kept our moving frozen last
-        // time we transitioned to held
-        
-        inObject->heldAnimationFrameFrozen = false;
-        }
-    
+        }    
         
     }
 
@@ -2920,24 +2881,9 @@ void LivingLifePage::step() {
                         o.lastAnim = held;
                         o.lastAnimFade = 0;
 
-                        o.animationFrameFrozen = false;
-
-                        if( isAnimEmpty( o.displayID, held ) ) {
-                            // can freeze character in moving animation
-                            // instead
-                            
-                            o.curAnim = moving;
-                            o.lastAnim = moving;
-                            o.animationFrameFrozen = true;
-                            }
-                        
-
                         o.curHeldAnim = held;
                         o.lastHeldAnim = held;
                         o.lastHeldAnimFade = 0;
-                        
-                        
-                        o.heldAnimationFrameFrozen = false;
                         
 
                         o.inMotion = false;
@@ -3681,10 +3627,8 @@ void LivingLifePage::step() {
             }
         
 
-
-        if( ! o->animationFrameFrozen ) {
-            o->animationFrameCount += o->lastSpeed / BASE_SPEED;
-            }
+        o->animationFrameCount += o->lastSpeed / BASE_SPEED;
+        o->lastAnimationFrameCount += o->lastSpeed / BASE_SPEED;
         
         
         if( o->lastAnimFade > 0 ) {
@@ -3727,10 +3671,8 @@ void LivingLifePage::step() {
                 }
             }
 
-
-        if( ! o->heldAnimationFrameFrozen ) {
-            o->heldAnimationFrameCount += o->lastSpeed / BASE_SPEED;
-            }
+        o->heldAnimationFrameCount += o->lastSpeed / BASE_SPEED;
+        o->lastHeldAnimationFrameCount += o->lastSpeed / BASE_SPEED;
         
         if( o->lastHeldAnimFade > 0 ) {
             
@@ -3900,7 +3842,8 @@ void LivingLifePage::step() {
         }
     
 
-    if( nextActionMessageToSend != NULL 
+    if( nextActionMessageToSend != NULL
+        && ourLiveObject != NULL
         && ourLiveObject->currentSpeed == 0 
         && (
             isGridAdjacent( ourLiveObject->xd, ourLiveObject->yd,
@@ -4063,6 +4006,11 @@ void LivingLifePage::makeActive( char inFresh ) {
     mFirstObjectSetLoadingProgress = 0;
     
     serverSocketBuffer.deleteAll();
+
+    if( nextActionMessageToSend != NULL ) {    
+        delete [] nextActionMessageToSend;
+        nextActionMessageToSend = NULL;
+        }
     }
 
 
