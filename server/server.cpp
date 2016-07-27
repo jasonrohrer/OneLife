@@ -4042,8 +4042,6 @@ int main() {
                     if( numSent == -1 ) {
                         nextPlayer->error = true;
                         }
-
-                    delete [] deleteUpdateMessage;
                     }
                 
 
@@ -4088,7 +4086,9 @@ int main() {
         if( speechMessage != NULL ) {
             delete [] speechMessage;
             }
-        
+        if( deleteUpdateMessage != NULL ) {
+            delete [] deleteUpdateMessage;
+            }
 
         
         // handle closing any that have an error
