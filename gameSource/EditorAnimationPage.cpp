@@ -633,6 +633,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mCopyButton ) {
         mCopyBuffer = *( getRecordForCurrentSlot() );
         mChainCopyBuffer.deleteAll();
+        mAllCopyBufferSprites.deleteAll();
+        mAllCopyBufferSlots.deleteAll();
         mWalkCopied = false;
         }
     else if( inTarget == &mCopyChainButton ) {
@@ -702,12 +704,20 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             
 
             mWalkCopied = true;
+
+            zeroRecord( &mCopyBuffer );
+            
+            mChainCopyBuffer.deleteAll();
+
+            mAllCopyBufferSprites.deleteAll();
+            mAllCopyBufferSlots.deleteAll();
             }
         }
     else if( inTarget == &mCopyAllButton ) {
         mChainCopyBuffer.deleteAll();
         mWalkCopied = false;
-        
+        zeroRecord( &mCopyBuffer );
+
         mAllCopyBufferSprites.deleteAll();
         mAllCopyBufferSlots.deleteAll();
         
