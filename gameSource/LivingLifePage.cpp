@@ -472,8 +472,18 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
             }
         }
 
+    AnimType newHeldAnim = inNewAnim;
+    
+    if( inObject->holdingID < 0 ) {
+        // holding a baby
+        // never show baby's moving animation
+        // baby always stuck in held animation when being held
 
-    if( inObject->curHeldAnim != inNewAnim ) {
+        newHeldAnim = held;
+        }
+    
+
+    if( inObject->curHeldAnim != newHeldAnim ) {
 
         if( inObject->lastHeldAnimFade != 0 ) {
             
@@ -481,14 +491,14 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
             if( inObject->futureHeldAnimStack->size() == 0 ||
                 inObject->futureHeldAnimStack->getElementDirect(
                     inObject->futureHeldAnimStack->size() - 1 ) 
-                != inNewAnim ) {
+                != newHeldAnim ) {
                 
-                inObject->futureHeldAnimStack->push_back( inNewAnim );
+                inObject->futureHeldAnimStack->push_back( newHeldAnim );
                 }
             }
         else {
             inObject->lastHeldAnim = inObject->curHeldAnim;
-            inObject->curHeldAnim = inNewAnim;
+            inObject->curHeldAnim = newHeldAnim;
             inObject->lastHeldAnimFade = 1;
             
             inObject->lastHeldAnimationFrameCount = 
@@ -1455,12 +1465,8 @@ void LivingLifePage::drawLiveObject(
         double targetHeldTimeVal = heldTimeVal;
         
 
-        if( inObj->holdingID < 0 ) {
-            // baby, special case, don't animate it when held
-            curHeldType = ground;
-            fadeTargetHeldType = ground;
-            }
-        else if( inObj->lastHeldAnimFade > 0 ) {
+        // animate baby with held anim just like any other held object
+        if( inObj->lastHeldAnimFade > 0 ) {
             curHeldType = inObj->lastHeldAnim;
             fadeTargetHeldType = inObj->curHeldAnim;
             heldAnimFade = inObj->lastHeldAnimFade;
@@ -2778,6 +2784,42 @@ void LivingLifePage::step() {
                                 
                                 if( babyO != NULL ) {
                                     babyO->heldByAdultID = existing->id;
+
+
+                                    if( babyO->lastAnimFade == 0 ) {
+                                        
+                                        existing->lastHeldAnim = 
+                                            babyO->curAnim;
+                                        
+                                        existing->lastHeldAnimationFrameCount
+                                            = babyO->animationFrameCount;
+                                        
+                                        existing->lastHeldAnimFade = 1;
+                                        existing->curHeldAnim = held;
+                                        existing->heldAnimationFrameCount = 0;
+                                        }
+                                    else {
+                                        // baby that we're picking up
+                                        // in the middle of an existing fade
+                                        
+                                        existing->lastHeldAnim = 
+                                            babyO->lastAnim;
+                                        existing->lastHeldAnimationFrameCount =
+                                           babyO->lastAnimationFrameCount;
+                                        
+                                        existing->curHeldAnim = 
+                                            babyO->curAnim;
+                                        
+                                        existing->heldAnimationFrameCount =
+                                            babyO->animationFrameCount;
+                                        
+
+                                        existing->lastHeldAnimFade =
+                                            babyO->lastAnimFade;
+                                        
+                                        existing->futureHeldAnimStack->
+                                            push_back( held );
+                                        }
                                     }
                                 }
                             }
@@ -2837,7 +2879,7 @@ void LivingLifePage::step() {
                             existing->xd = o.xd;
                             existing->yd = o.yd;
 
-                            addNewAnim( existing, held );
+                            addNewAnim( existing, ground );
                             }
                         
                         if( existing->id == ourID ) {
@@ -2877,8 +2919,8 @@ void LivingLifePage::step() {
                     
                         lastCharUsed = o.displayChar;
                     
-                        o.curAnim = held;
-                        o.lastAnim = held;
+                        o.curAnim = ground;
+                        o.lastAnim = ground;
                         o.lastAnimFade = 0;
 
                         o.curHeldAnim = held;
@@ -3680,8 +3722,23 @@ void LivingLifePage::step() {
                 // fade just started
                 // check if it's necessary
                 
-                if( o->holdingID > 0 &&
-                    isAnimFadeNeeded( o->holdingID, 
+                int heldDisplayID = o->holdingID;
+                
+
+                if( o->holdingID < 0 ) {
+                    LiveObject *babyO = getGameObject( - o->holdingID );
+            
+                    if( babyO != NULL ) {    
+                        heldDisplayID = babyO->displayID;
+                        }
+                    else {
+                        heldDisplayID = 0;
+                        }
+                    }
+                
+
+                if( heldDisplayID > 0 &&
+                    isAnimFadeNeeded( heldDisplayID, 
                                       o->lastHeldAnim, o->curHeldAnim ) ) {
                     // fade needed, do nothing
                     }
@@ -3785,7 +3842,7 @@ void LivingLifePage::step() {
                     o->currentSpeed = 0;
 
 
-                    addNewAnim( o, held );
+                    addNewAnim( o, ground );
                                         
 
                     printf( "Reached dest %f seconds early\n",
@@ -4531,20 +4588,26 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 else {
                     // check for other special case
                     // a use-on-ground transition
-                    ObjectRecord *held = getObject( ourLiveObject->holdingID );
-                    
-                    if( held->foodValue == 0 ) {
-                        
-                        TransRecord *r = getTrans( ourLiveObject->holdingID,
-                                                   -1 );
-                        
-                        if( r != NULL &&
-                            r->newTarget != 0 ) {
-                            
-                            // a use-on-ground transition exists!
 
-                            // override the drop action
-                            action = "USE";
+                    if( ourLiveObject->holdingID > 0 ) {
+                        
+                        ObjectRecord *held = 
+                            getObject( ourLiveObject->holdingID );
+                        
+                        if( held->foodValue == 0 ) {
+                            
+                            TransRecord *r = 
+                                getTrans( ourLiveObject->holdingID,
+                                          -1 );
+                            
+                            if( r != NULL &&
+                                r->newTarget != 0 ) {
+                                
+                                // a use-on-ground transition exists!
+                                
+                                // override the drop action
+                                action = "USE";
+                                }
                             }
                         }
                     }
