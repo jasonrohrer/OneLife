@@ -69,6 +69,8 @@ typedef struct FreshConnection {
         // for tracking connections that have failed to LOGIN 
         // in a timely manner
         double connectionStartTimeSeconds;
+
+        char *email;
     };
 
 
@@ -77,6 +79,8 @@ SimpleVector<FreshConnection> newConnections;
 
 
 typedef struct LiveObject {
+        char *email;
+        
         int id;
         
         // object ID used to visually represent this player
@@ -212,6 +216,10 @@ void quitCleanup() {
         if( nextConnection->ticketServerRequest != NULL ) {
             delete nextConnection->ticketServerRequest;
             }
+
+        if( nextConnection->email != NULL ) {
+            delete [] nextConnection->email;
+            }
         }
     newConnections.deleteAll();
     
@@ -223,6 +231,10 @@ void quitCleanup() {
         delete nextPlayer->sockBuffer;
 
         
+        if( nextPlayer->email != NULL  ) {
+            delete [] nextPlayer->email;
+            }
+
         if( nextPlayer->containedIDs != NULL ) {
             delete [] nextPlayer->containedIDs;
             }
@@ -1387,10 +1399,14 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
 
 
 void processedLogggedInPlayer( Socket *inSock,
-                               SimpleVector<char> *inSockBuffer ) {
+                               SimpleVector<char> *inSockBuffer,
+                               char *inEmail ) {
     numConnections ++;
                 
     LiveObject newObject;
+
+    newObject.email = inEmail;
+    
     newObject.id = nextID;
     nextID++;
                 
@@ -1702,6 +1718,8 @@ int main() {
                 newConnection.connectionStartTimeSeconds = 
                     Time::getCurrentTime();
 
+                newConnection.email = NULL;
+
                 newConnection.sock = sock;
 
                 newConnection.sequenceNumber = nextSequenceNumber;
@@ -1810,7 +1828,8 @@ int main() {
                             
                             processedLogggedInPlayer( 
                                 nextConnection->sock,
-                                nextConnection->sockBuffer );
+                                nextConnection->sockBuffer,
+                                nextConnection->email );
                             
                             delete nextConnection->ticketServerRequest;
                             newConnections.deleteElement( i );
@@ -1851,11 +1870,38 @@ int main() {
                         
                         if( tokens->size() == 4 ) {
                             
-                            char *email = tokens->getElementDirect( 1 );
+                            nextConnection->email = 
+                                stringDuplicate( 
+                                    tokens->getElementDirect( 1 ) );
                             char *pwHash = tokens->getElementDirect( 2 );
                             char *keyHash = tokens->getElementDirect( 3 );
                             
-                            if( requireClientPassword ) {
+
+                            char emailAlreadyLoggedIn = false;
+                            
+
+                            for( int p=0; p<players.size(); p++ ) {
+                                LiveObject *o = players.getElement( p );
+                                
+
+                                if( strcmp( o->email, 
+                                            nextConnection->email ) == 0 ) {
+                                    emailAlreadyLoggedIn = true;
+                                    break;
+                                    }
+                                }
+
+                            if( emailAlreadyLoggedIn ) {
+                                    printf( 
+                                        "Another client already "
+                                        "connected as %s, "
+                                        "client rejected.\n",
+                                        nextConnection->email );
+                                    nextConnection->error = true;
+                                    }
+
+                            if( requireClientPassword &&
+                                ! nextConnection->error  ) {
 
                                 char *value = 
                                     autoSprintf( 
@@ -1887,7 +1933,7 @@ int main() {
                                     "&hash_value=%s"
                                     "&string_to_hash=%lu",
                                     ticketServerURL,
-                                    email,
+                                    nextConnection->email,
                                     keyHash,
                                     nextConnection->sequenceNumber );
 
@@ -1924,7 +1970,8 @@ int main() {
                                     
                                     processedLogggedInPlayer( 
                                         nextConnection->sock,
-                                        nextConnection->sockBuffer );
+                                        nextConnection->sockBuffer,
+                                        nextConnection->email );
                                     
                                     delete nextConnection->ticketServerRequest;
                                     newConnections.deleteElement( i );
@@ -1982,6 +2029,10 @@ int main() {
                     delete nextConnection->ticketServerRequest;
                     }
                 
+                if( nextConnection->email != NULL ) {
+                    delete [] nextConnection->email;
+                    }
+
                 newConnections.deleteElement( i );
                 i--;
                 }
@@ -4111,6 +4162,11 @@ int main() {
                 if( nextPlayer->pathToDest != NULL ) {
                     delete [] nextPlayer->pathToDest;
                     }
+
+                if( nextPlayer->email != NULL ) {
+                    delete [] nextPlayer->email;
+                    }
+                
                 players.deleteElement( i );
                 i--;
                 }
