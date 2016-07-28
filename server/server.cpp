@@ -71,7 +71,7 @@ typedef struct FreshConnection {
         double connectionStartTimeSeconds;
 
         char *email;
-    };
+    } FreshConnection;
 
 
 SimpleVector<FreshConnection> newConnections;
