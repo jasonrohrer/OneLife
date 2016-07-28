@@ -1275,7 +1275,8 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
 
 void EditorAnimationPage::step() {
     mFrameCount++;
-
+    mLastTypeFrameCount++;
+    
     if( mCurrentType == moving ) {
         mFrozenRotFrameCount++;
         }

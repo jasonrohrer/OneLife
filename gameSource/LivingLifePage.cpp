@@ -2853,9 +2853,6 @@ void LivingLifePage::step() {
                                     mapY >= 0 && mapY < mMapD ) {
                         
                                     int mapI = mapY * mMapD + mapX;
-                                
-                                    existing->lastHeldAnimationFrameCount =
-                                        mMapAnimationFrameCount[ mapI ];
                                     
                                     existing->heldFrozenRotFrameCount =
                                         mMapAnimationFrozenRotFrameCount
@@ -2868,7 +2865,12 @@ void LivingLifePage::step() {
                                             mMapCurAnimType[ mapI ];
                                         existing->lastHeldAnimFade = 1;
                                         existing->curHeldAnim = held;
-                                        existing->heldAnimationFrameCount = 0;
+
+                                        existing->lastHeldAnimationFrameCount =
+                                            mMapAnimationFrameCount[ mapI ];
+                                        
+                                        existing->heldAnimationFrameCount =
+                                            mMapAnimationFrameCount[ mapI ];
                                         }
                                     else {
                                         // map spot is in the middle of
@@ -2916,18 +2918,21 @@ void LivingLifePage::step() {
                                     
                                     existing->heldFrozenRotFrameCountUsed =
                                         false;
+                                    
 
                                     if( babyO->lastAnimFade == 0 ) {
                                         
                                         existing->lastHeldAnim = 
                                             babyO->curAnim;
                                         
-                                        existing->lastHeldAnimationFrameCount
-                                            = babyO->animationFrameCount;
-                                        
+                                        existing->heldAnimationFrameCount =
+                                            babyO->animationFrameCount;
+
+                                        existing->lastHeldAnimationFrameCount =
+                                            babyO->lastAnimationFrameCount;
+
                                         existing->lastHeldAnimFade = 1;
                                         existing->curHeldAnim = held;
-                                        existing->heldAnimationFrameCount = 0;
                                         }
                                     else {
                                         // baby that we're picking up
