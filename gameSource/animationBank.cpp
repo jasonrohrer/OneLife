@@ -805,7 +805,7 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             spritePos = add( spritePos, getAgeBodyOffset( inAge, bodyPos ) );
             }
 
-        double rot = obj->spriteRot[i];
+        double rot = 0;
         
 
         if( i < inAnim->numSprites ) {
@@ -1024,6 +1024,8 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 
             }
         
+        
+        rot += obj->spriteRot[i];
 
         
         workingSpritePos[i] = spritePos;
@@ -1094,7 +1096,7 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                                  workingDeltaSpritePos[ nextParent ] );
                 }
                     
-	    nextParent = obj->spriteParent[nextParent];
+            nextParent = obj->spriteParent[nextParent];
             }
 
 
