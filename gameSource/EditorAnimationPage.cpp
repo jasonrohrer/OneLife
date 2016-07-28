@@ -1010,7 +1010,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 mFrameCount = 0;
                 }
             else if( mCurrentType == moving &&
-                     oldType == held &&
+                     oldType != moving &&
                      mFrozenRotFrameCountUsed ) {
                 // switching back to moving
                 // resume from where frozen
@@ -1025,10 +1025,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             else {
                 // transition from ground to held
-                // everything back to 0
                 mFrameCount = 0;
-                mFrozenRotFrameCount = 0;
-                mFrozenRotFrameCountUsed = false;
                 }
             
             if( ! isAnimFadeNeeded( mCurrentObjectID,
@@ -1290,6 +1287,10 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
 
 void EditorAnimationPage::step() {
     mFrameCount++;
+
+    if( mCurrentType == moving ) {
+        mFrozenRotFrameCount++;
+        }
 
     if( mWiggleFade > 0 ) {
         

@@ -460,7 +460,7 @@ static void addNewAnimDirect( LiveObject *inObject, AnimType inNewAnim ) {
         inObject->frozenRotFrameCountUsed = false;
         }
     else if( inObject->curAnim == moving &&
-             inObject->lastAnim == held &&
+             inObject->lastAnim != moving &&
              inObject->frozenRotFrameCountUsed ) {
         // switching back to moving
         // resume from where frozen
@@ -470,12 +470,6 @@ static void addNewAnimDirect( LiveObject *inObject, AnimType inNewAnim ) {
              inObject->lastAnim == held ) {
         // keep old frozen frame count as we transition away
         // from held
-        }
-    else {
-        // transition from ground to held
-        // everything back to 0
-        inObject->frozenRotFrameCount = 0;
-        inObject->frozenRotFrameCountUsed = false;
         }
     }
 
@@ -496,7 +490,7 @@ static void addNewHeldAnimDirect( LiveObject *inObject, AnimType inNewAnim ) {
         inObject->heldFrozenRotFrameCountUsed = false;
         }
     else if( inObject->curHeldAnim == moving &&
-             inObject->lastHeldAnim == held &&
+             inObject->lastHeldAnim != moving &&
              inObject->heldFrozenRotFrameCountUsed ) {
         // switching back to moving
         // resume from where frozen
@@ -506,12 +500,6 @@ static void addNewHeldAnimDirect( LiveObject *inObject, AnimType inNewAnim ) {
              inObject->lastHeldAnim == held ) {
         // keep old frozen frame count as we transition away
         // from held
-        }
-    else {
-        // transition from ground to held
-        // everything back to 0
-        inObject->heldFrozenRotFrameCount = 0;
-        inObject->heldFrozenRotFrameCountUsed = false;
         }
     }
 
@@ -1168,11 +1156,6 @@ void LivingLifePage::drawMapCell( int inMapI,
                         mMapAnimationFrameCount[ inMapI ];
 
                     mMapAnimationFrameCount[ inMapI ] = 0;
-                    }
-                else {
-                    // reached ground state
-                    // clear frozen rot frame count
-                    mMapAnimationFrozenRotFrameCount[ inMapI ] = 0;
                     }
                 }
             }
@@ -3822,6 +3805,11 @@ void LivingLifePage::step() {
         o->animationFrameCount += o->lastSpeed / BASE_SPEED;
         o->lastAnimationFrameCount += o->lastSpeed / BASE_SPEED;
         
+
+        if( o->curAnim == moving ) {
+            o->frozenRotFrameCount += o->lastSpeed / BASE_SPEED;
+            }
+        
         
         if( o->lastAnimFade > 0 ) {
             
@@ -3862,6 +3850,11 @@ void LivingLifePage::step() {
         o->heldAnimationFrameCount += o->lastSpeed / BASE_SPEED;
         o->lastHeldAnimationFrameCount += o->lastSpeed / BASE_SPEED;
         
+        if( o->curHeldAnim == moving ) {
+            o->heldFrozenRotFrameCount += o->lastSpeed / BASE_SPEED;
+            }
+        
+
         if( o->lastHeldAnimFade > 0 ) {
             
             if( o->lastHeldAnimFade == 1 ) {

@@ -884,7 +884,7 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             
             // use frozen rot instead if either current or
             // target satisfies 
-            if( inAnim->type == held 
+            if( inAnim->type != moving 
                 &&
                 inAnim->spriteAnim[i].rotPerSec == 0 &&
                 inAnim->spriteAnim[i].rotPhase == 0 &&
@@ -904,7 +904,7 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 }
             else if( inAnimFade < 1  && i < inFadeTargetAnim->numSprites
                      &&
-                     inFadeTargetAnim->type == held 
+                     inFadeTargetAnim->type != moving 
                      &&
                      inFadeTargetAnim->spriteAnim[i].rotPerSec == 0 &&
                      inFadeTargetAnim->spriteAnim[i].rotPhase == 0 &&
@@ -950,7 +950,7 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     inFadeTargetAnim->spriteAnim[i].rotPhase;
                 
 
-                if( inFadeTargetAnim->type == held 
+                if( inFadeTargetAnim->type != moving
                     &&
                     inFadeTargetAnim->spriteAnim[i].rotPerSec == 0 &&
                     inFadeTargetAnim->spriteAnim[i].rotPhase == 0 &&
