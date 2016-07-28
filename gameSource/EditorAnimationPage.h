@@ -114,8 +114,13 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         AnimType mLastType;
 
         double mLastTypeFade;
+        
+        int mFrameCount;
         int mLastTypeFrameCount;
         
+        int mFrozenRotFrameCount;
+
+        char mFrozenRotFrameCountUsed;
 
         int mCurrentSpriteOrSlot;
 
@@ -183,7 +188,6 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         void updateSlidersFromAnim();
 
 
-        int mFrameCount;
 
         void freeCurrentAnim();
         void populateCurrentAnim();

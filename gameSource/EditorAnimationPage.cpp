@@ -52,6 +52,10 @@ EditorAnimationPage::EditorAnimationPage()
           mCurrentType( ground ),
           mLastType( ground ),
           mLastTypeFade( 0 ),
+          mFrameCount( 0 ),
+          mLastTypeFrameCount( 0 ),
+          mFrozenRotFrameCount( 0 ),
+          mFrozenRotFrameCountUsed( false ),
           mCurrentSpriteOrSlot( 0 ),
           mSettingRotCenter( false ),
           mPickSlotDemoButton( smallFont, 180, 40, "Fill Slots" ),
@@ -67,8 +71,7 @@ EditorAnimationPage::EditorAnimationPage()
           mPasteButton( smallFont, -230, 210, "Paste" ),
           mClearButton( smallFont, -170, 210, "Clear" ),
           mNextSpriteOrSlotButton( smallFont, 120, -270, "Next Layer" ),
-          mPrevSpriteOrSlotButton( smallFont, -120, -270, "Prev Layer" ),
-          mFrameCount( 0 ) {
+          mPrevSpriteOrSlotButton( smallFont, -120, -270, "Prev Layer" ) {
     
     
     for( int i=0; i<endAnimType; i++ ) {
@@ -1001,7 +1004,32 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             mLastTypeFade = 1.0;
             mLastTypeFrameCount = mFrameCount;
             
-            mFrameCount = 0;
+            if( oldType == moving ) {
+                mFrozenRotFrameCount = mFrameCount;
+                mFrozenRotFrameCountUsed = false;
+                mFrameCount = 0;
+                }
+            else if( mCurrentType == moving &&
+                     oldType == held &&
+                     mFrozenRotFrameCountUsed ) {
+                // switching back to moving
+                // resume from where frozen
+                mFrameCount = mFrozenRotFrameCount;
+                }
+            else if( mCurrentType == ground &&
+                     oldType == held ) {
+                mFrameCount = 0;
+                
+                // keep old frozen frame count as we transition away
+                // from held
+                }
+            else {
+                // transition from ground to held
+                // everything back to 0
+                mFrameCount = 0;
+                mFrozenRotFrameCount = 0;
+                mFrozenRotFrameCountUsed = false;
+                }
             
             if( ! isAnimFadeNeeded( mCurrentObjectID,
                                     mCurrentAnim[ mLastType ],
@@ -1072,6 +1100,8 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
         AnimationRecord *anim = mCurrentAnim[ t ];
         AnimationRecord *fadeTargetAnim = mCurrentAnim[ mCurrentType ];
         
+        AnimationRecord *animRotFrozen = mCurrentAnim[ moving ];
+        
         if( mWiggleFade > 0 ) {
             anim = mWiggleAnim;
             fadeTargetAnim = mWiggleAnim;
@@ -1094,7 +1124,9 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
             
             double fadeTargetFrameTime = frameTime;
             
-
+            double frozenRotFrameTime = 
+                ( mFrozenRotFrameCount / 60.0 ) * frameRateFactor;
+            
             if( animFade < 1 ) {
                 frameTime = ( mLastTypeFrameCount / 60.0 ) * frameRateFactor;
                 }
@@ -1135,8 +1167,12 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
             
             if( demoSlots != NULL ) {
                 drawObjectAnim( mCurrentObjectID, 
-                                anim, frameTime, animFade, 
+                                anim, frameTime,
+                                animFade, 
                                 fadeTargetAnim, fadeTargetFrameTime, 
+                                frozenRotFrameTime,
+                                &mFrozenRotFrameCountUsed,
+                                animRotFrozen,
                                 pos, mFlipDraw, age,
                                 false,
                                 mClothingSet,
@@ -1144,8 +1180,12 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                 }
             else {
                 drawObjectAnim( mCurrentObjectID, 
-                                anim, frameTime, animFade,
+                                anim, frameTime,
+                                animFade,
                                 fadeTargetAnim, fadeTargetFrameTime, 
+                                frozenRotFrameTime,
+                                &mFrozenRotFrameCountUsed,
+                                animRotFrozen,
                                 pos, mFlipDraw, age,
                                 false,
                                 mClothingSet );

@@ -614,6 +614,8 @@ HandPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                         double inAnimFade,
                         AnimType inFadeTargetType,
                         double inFadeTargetFrameTime,
+                        double inFrozenRotFrameTime,
+                        char *outFrozenRotFrameTimeUsed,
                         doublePair inPos,
                         char inFlipH,
                         double inAge,
@@ -630,9 +632,15 @@ HandPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
     else {
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
+        AnimationRecord *rF = getAnimation( inObjectID, moving );
+        
         return drawObjectAnim( inObjectID, r, inFrameTime,
                                inAnimFade, rB, 
-                               inFadeTargetFrameTime, inPos, inFlipH, inAge, 
+                               inFadeTargetFrameTime, 
+                               inFrozenRotFrameTime,
+                               outFrozenRotFrameTimeUsed,
+                               rF,
+                               inPos, inFlipH, inAge, 
                                inHoldingSomething, inClothing );
         }
     }
@@ -720,6 +728,9 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                         double inAnimFade,
                         AnimationRecord *inFadeTargetAnim,
                         double inFadeTargetFrameTime,
+                        double inFrozenRotFrameTime,
+                        char *outFrozenRotFrameTimeUsed,
+                        AnimationRecord *inFrozenRotAnim,
                         doublePair inPos,
                         char inFlipH,
                         double inAge,
@@ -727,6 +738,9 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                         ClothingSet inClothing ) {
 
     HandPos returnHandPos = { false, {0, 0} };
+
+
+    *outFrozenRotFrameTimeUsed = false;
 
 
     double frontHandPosX = -999999999;
@@ -867,6 +881,48 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 spriteFrameTime + 
                 inAnim->spriteAnim[i].rotPhase;
             
+            
+            // use frozen rot instead if either current or
+            // target satisfies 
+            if( inAnim->type == held 
+                &&
+                inAnim->spriteAnim[i].rotPerSec == 0 &&
+                inAnim->spriteAnim[i].rotPhase == 0 &&
+                inAnim->spriteAnim[i].rockOscPerSec == 0 &&
+                inAnim->spriteAnim[i].rockPhase == 0 
+                &&
+                inFrozenRotAnim->spriteAnim[i].rotPerSec != 0 ) {
+                
+                // use frozen instead
+                totalRotOffset = 
+                    inFrozenRotAnim->spriteAnim[i].rotPerSec * 
+                    inFrozenRotFrameTime + 
+                    inFrozenRotAnim->spriteAnim[i].rotPhase;
+                
+                *outFrozenRotFrameTimeUsed = 
+                    *outFrozenRotFrameTimeUsed || true;
+                }
+            else if( inAnimFade < 1  && i < inFadeTargetAnim->numSprites
+                     &&
+                     inFadeTargetAnim->type == held 
+                     &&
+                     inFadeTargetAnim->spriteAnim[i].rotPerSec == 0 &&
+                     inFadeTargetAnim->spriteAnim[i].rotPhase == 0 &&
+                     inFadeTargetAnim->spriteAnim[i].rockOscPerSec == 0 &&
+                     inFadeTargetAnim->spriteAnim[i].rockPhase == 0 
+                     &&
+                     inFrozenRotAnim->spriteAnim[i].rotPerSec != 0 ) {
+                
+                // use frozen instead
+                totalRotOffset = 
+                    inFrozenRotAnim->spriteAnim[i].rotPerSec * 
+                    inFrozenRotFrameTime + 
+                    inFrozenRotAnim->spriteAnim[i].rotPhase;
+
+                *outFrozenRotFrameTimeUsed = 
+                    *outFrozenRotFrameTimeUsed || true;
+                }
+            
 
             // relative to 0 on circle
             double relativeRotOffset = 
@@ -893,6 +949,26 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     targetSpriteFrameTime + 
                     inFadeTargetAnim->spriteAnim[i].rotPhase;
                 
+
+                if( inFadeTargetAnim->type == held 
+                    &&
+                    inFadeTargetAnim->spriteAnim[i].rotPerSec == 0 &&
+                    inFadeTargetAnim->spriteAnim[i].rotPhase == 0 &&
+                    inFadeTargetAnim->spriteAnim[i].rockOscPerSec == 0 &&
+                    inFadeTargetAnim->spriteAnim[i].rockPhase == 0 
+                    &&
+                    inFrozenRotAnim->spriteAnim[i].rotPerSec != 0 ) {
+                
+                    // use frozen instead
+                    totalTargetRotOffset = 
+                        inFrozenRotAnim->spriteAnim[i].rotPerSec * 
+                        inFrozenRotFrameTime + 
+                        inFrozenRotAnim->spriteAnim[i].rotPhase;
+                    
+                    *outFrozenRotFrameTimeUsed = 
+                        *outFrozenRotFrameTimeUsed || true;
+                    }
+
 
                 // relative to 0 on circle
                 double relativeTargetRotOffset = 
@@ -1210,6 +1286,8 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      double inAnimFade, 
                      AnimType inFadeTargetType,
                      double inFadeTargetFrameTime,
+                     double inFrozenRotFrameTime,
+                     char *outFrozenRotFrameTimeUsed,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
@@ -1227,8 +1305,13 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
     else {
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
+        AnimationRecord *rF = getAnimation( inObjectID, moving );
+        
         drawObjectAnim( inObjectID, r, inFrameTime,
                         inAnimFade, rB, inFadeTargetFrameTime,
+                        inFrozenRotFrameTime,
+                        outFrozenRotFrameTimeUsed,
+                        rF,
                         inPos, inFlipH, inAge,
                         inHoldingSomething, inClothing,
                         inNumContained, inContainedIDs );
@@ -1242,6 +1325,9 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      double inAnimFade,
                      AnimationRecord *inFadeTargetAnim,
                      double inFadeTargetFrameTime,
+                     double inFrozenRotFrameTime,
+                     char *outFrozenRotFrameTimeUsed,
+                     AnimationRecord *inFrozenRotAnim,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
@@ -1336,6 +1422,9 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     // draw animating object on top of contained slots
     drawObjectAnim( inObjectID, inAnim, inFrameTime,
                     inAnimFade, inFadeTargetAnim, inFadeTargetFrameTime,
+                    inFrozenRotFrameTime,
+                    outFrozenRotFrameTimeUsed,
+                    inFrozenRotAnim,
                     inPos, inFlipH,
                     inAge, inHoldingSomething, inClothing );
     }
