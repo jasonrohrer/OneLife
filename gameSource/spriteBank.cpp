@@ -279,8 +279,17 @@ static void freeSpriteRecord( int inID ) {
             
             if( idMap[inID]->sprite != NULL ) {    
                 freeSprite( idMap[inID]->sprite );
+                
+                for( int i=0; i<loadedSprites.size(); i++ ) {
+                    int id = loadedSprites.getElementDirect( i );
+                    
+                    if( id == inID ) {
+                        loadedSprites.deleteElement( i );
+                        break;
+                        }
+                    }
                 }
-            
+
             char *lower = stringToLowerCase( idMap[inID]->tag );
             
             tree.remove( lower, idMap[inID] );
@@ -708,7 +717,7 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     r->tag = stringDuplicate( inTag );
     r->maxD = maxD;
     r->multiplicativeBlend = inMultiplicativeBlending;
-
+    
 
     r->w = inSourceImage->getWidth();
     r->h = inSourceImage->getHeight();
@@ -744,6 +753,11 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     tree.insert( lower, idMap[newID] );
 
     delete [] lower;
+
+    loadedSprites.push_back( r->id );
+
+    r->loading = false;
+    r->numStepsUnused = 0;
 
     return newID;
     }
