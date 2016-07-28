@@ -1007,7 +1007,6 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             if( oldType == moving ) {
                 mFrozenRotFrameCount = mFrameCount;
                 mFrozenRotFrameCountUsed = false;
-                mFrameCount = 0;
                 }
             else if( mCurrentType == moving &&
                      oldType != moving &&
@@ -1015,17 +1014,6 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 // switching back to moving
                 // resume from where frozen
                 mFrameCount = mFrozenRotFrameCount;
-                }
-            else if( mCurrentType == ground &&
-                     oldType == held ) {
-                mFrameCount = 0;
-                
-                // keep old frozen frame count as we transition away
-                // from held
-                }
-            else {
-                // transition from ground to held
-                mFrameCount = 0;
                 }
             
             if( ! isAnimFadeNeeded( mCurrentObjectID,

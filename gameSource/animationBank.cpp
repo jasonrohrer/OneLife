@@ -904,7 +904,9 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 }
             else if( inAnimFade < 1  && i < inFadeTargetAnim->numSprites
                      &&
-                     inFadeTargetAnim->type != moving 
+                     inAnim->type == moving
+                     && 
+                     inFadeTargetAnim->type != moving
                      &&
                      inFadeTargetAnim->spriteAnim[i].rotPerSec == 0 &&
                      inFadeTargetAnim->spriteAnim[i].rotPhase == 0 &&
@@ -922,7 +924,6 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 *outFrozenRotFrameTimeUsed = 
                     *outFrozenRotFrameTimeUsed || true;
                 }
-            
 
             // relative to 0 on circle
             double relativeRotOffset = 

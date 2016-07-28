@@ -453,7 +453,6 @@ static void addNewAnimDirect( LiveObject *inObject, AnimType inNewAnim ) {
     inObject->lastAnimFade = 1;
             
     inObject->lastAnimationFrameCount = inObject->animationFrameCount;
-    inObject->animationFrameCount = 0;
 
     if( inObject->lastAnim == moving ) {
         inObject->frozenRotFrameCount = inObject->lastAnimationFrameCount;
@@ -482,7 +481,6 @@ static void addNewHeldAnimDirect( LiveObject *inObject, AnimType inNewAnim ) {
     
     inObject->lastHeldAnimationFrameCount = 
         inObject->heldAnimationFrameCount;
-    inObject->heldAnimationFrameCount = 0;
 
     if( inObject->lastHeldAnim == moving ) {
         inObject->heldFrozenRotFrameCount = 
