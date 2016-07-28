@@ -87,6 +87,13 @@ typedef struct LiveObject {
         double lastHeldAnimationFrameCount;
         
 
+        double frozenRotFrameCount;
+        double heldFrozenRotFrameCount;
+        
+        char frozenRotFrameCountUsed;
+        char heldFrozenRotFrameCountUsed;
+        
+
         float heat;
         
 
@@ -226,6 +233,9 @@ class LivingLifePage : public GamePage {
         int *mMapAnimationFrameCount;
         int *mMapAnimationLastFrameCount;
         
+        int *mMapAnimationFrozenRotFrameCount;
+        
+
         // all tiles on ground work their way toward animation type of
         // "ground" but may have a lingering types after being dropped
         AnimType *mMapCurAnimType;
