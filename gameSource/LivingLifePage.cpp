@@ -1169,6 +1169,11 @@ void LivingLifePage::drawMapCell( int inMapI,
 
                     mMapAnimationFrameCount[ inMapI ] = 0;
                     }
+                else {
+                    // reached ground state
+                    // clear frozen rot frame count
+                    mMapAnimationFrozenRotFrameCount[ inMapI ] = 0;
+                    }
                 }
             }
                 
@@ -2427,6 +2432,7 @@ void LivingLifePage::step() {
             delete [] newMapBiomes;
             delete [] newMapAnimationFrameCount;
             delete [] newMapAnimationLastFrameCount;
+            delete [] newMapAnimationFrozenRotFameCount;
             delete [] newMapCurAnimType;
             delete [] newMapLastAnimType;
             delete [] newMapLastAnimFade;
