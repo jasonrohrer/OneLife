@@ -3080,10 +3080,23 @@ int main() {
                             
                             if( nextPlayer->holdingID != 0 ) {
                                 
-                                if( isMapSpotEmpty( m.x, m.y ) ) {
+                                if( nextPlayer->holdingID < 0 ) {
+                                    // baby drop
+                                    int target = getMapObject( m.x, m.y );
+                                    
+                                    if( target == 0 // nothing here
+                                        ||
+                                        ! getObject( target )->
+                                            blocksWalking ) {
+                                        handleDrop( 
+                                            m.x, m.y, nextPlayer,
+                                            &mapChanges, &mapChangesPos,
+                                            &playerIndicesToSendUpdatesAbout );
+                                        }    
+                                    }
+                                else if( isMapSpotEmpty( m.x, m.y ) ) {
                                 
-                                    // empty spot to drop into
-                                    // either dropping object or baby
+                                    // empty spot to drop non-baby into
                                     
                                     handleDrop( 
                                         m.x, m.y, nextPlayer,
