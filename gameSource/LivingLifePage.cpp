@@ -2997,6 +2997,23 @@ void LivingLifePage::step() {
                                 sub( existing->lastHeldByRawPos,
                                      existing->currentPos );
 
+                            
+                            
+                            LiveObject *adultO = 
+                                getGameObject( existing->heldByAdultID );
+                            
+                            if( adultO != NULL ) {
+                                // fade from held animation
+                                existing->lastAnim = 
+                                    adultO->curHeldAnim;
+                                        
+                                existing->animationFrameCount =
+                                    adultO->heldAnimationFrameCount;
+
+                                existing->lastAnimFade = 1;
+                                existing->curAnim = ground;
+                                }
+
                             existing->heldByAdultID = -1;
                             }
                         else if( existing->id != ourID || 
