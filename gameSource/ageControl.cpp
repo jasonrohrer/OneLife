@@ -11,9 +11,9 @@ doublePair getAgeHeadOffset( double inAge, doublePair inHeadSpritePos,
     
     if( inAge < 20 ) {
         
-        double maxHead = inHeadSpritePos.y - inBodySpritePos.y;
+        double maxHead = inHeadSpritePos.y - inFrontFootSpritePos.y;
         
-        double yOffset = ( ( 20 - inAge ) / 20 ) * .40 * maxHead;
+        double yOffset = ( ( 20 - inAge ) / 20 ) * .90 * maxHead;
         
         
         return (doublePair){ 0, lrint( -yOffset ) };
