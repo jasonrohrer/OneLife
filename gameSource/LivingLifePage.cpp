@@ -8,6 +8,7 @@
 #include "accountHmac.h"
 
 #include "liveObjectSet.h"
+#include "ageControl.h"
 
 #include "../commonSource/fractalNoise.h"
 
@@ -2033,9 +2034,32 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         doublePair pos = speakersPos.getElementDirect( i );
         
-
+        
         doublePair speechPos = pos;
-                    
+
+        speechPos.y += 48;
+
+        ObjectRecord *displayObj = getObject( o->displayID );
+ 
+
+        
+        doublePair headPos = 
+            displayObj->spritePos[ getHeadIndex( displayObj, o->age ) ];
+        
+        doublePair bodyPos = 
+            displayObj->spritePos[ getBodyIndex( displayObj, o->age ) ];
+
+        doublePair frontFootPos = 
+            displayObj->spritePos[ getFrontFootIndex( displayObj, o->age ) ];
+        
+        headPos = add( headPos, 
+                       getAgeHeadOffset( o->age, headPos, 
+                                         bodyPos, frontFootPos ) );
+        headPos = add( headPos,
+                       getAgeBodyOffset( o->age, bodyPos ) );
+        
+        speechPos.y += headPos.y;
+        
         int width = 250;
         int widthLimit = 250;
         
@@ -2048,7 +2072,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         
         speechPos.x -= width / 2;
-        speechPos.y += 130;
+
         
         drawChalkBackgroundString( speechPos, o->currentSpeech, 
                                    o->speechFade, widthLimit );
