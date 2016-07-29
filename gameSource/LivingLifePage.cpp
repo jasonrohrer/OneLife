@@ -4384,7 +4384,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         for( int x=clickDestX+1; x>=clickDestX-1 && !hit; x-- ) {
             float clickOffsetX = ( clickDestX  - x ) * CELL_D + clickExtraX;
             
-            for( int i=0; i<gameObjects.size() && !hit; i++ ) {
+            for( int i=gameObjects.size()-1; i>=0 && !hit; i-- ) {
         
                 LiveObject *o = gameObjects.getElement( i );
                 
@@ -4429,7 +4429,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     int sp, sl;
                     
                     double dist = getClosestObjectPart( obj,
-                                                        -1,
+                                                        o->age,
                                                         -1,
                                                         clickOffsetX,
                                                         clickOffsetY,
@@ -4611,6 +4611,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     char tryingToPickUpBaby = false;
     
     if( destID == 0 &&
+        hit &&
+        ! hitAnObject &&
         modClick && ourLiveObject->holdingID == 0 &&
         // only adults can pick up babies
         ourLiveObject->age > 13 ) {

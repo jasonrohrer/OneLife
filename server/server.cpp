@@ -2837,11 +2837,8 @@ int main() {
                                         }
                                     }
                                 }
-                            else if( nextPlayer->holdingID == 0 &&
-                                     ! (m.x == nextPlayer->xd &&
-                                        m.y == nextPlayer->yd ) ) {
+                            else if( nextPlayer->holdingID == 0 ) {
                                 // target location empty and 
-                                // not where we're standing
                                 // and our hands are empty
                                 
                                 // check if there's a baby to pick up there
@@ -2857,7 +2854,10 @@ int main() {
                                     LiveObject *otherPlayer = 
                                         players.getElement( j );
                                     
-                                        
+                                    if( otherPlayer == nextPlayer ) {
+                                        // don't consider click on self
+                                        continue;
+                                        }
 
                                     if( otherPlayer->xd == 
                                         otherPlayer->xs &&
