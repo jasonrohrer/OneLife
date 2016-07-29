@@ -1572,7 +1572,8 @@ void LivingLifePage::drawLiveObject(
                                 holdPos,
                                 inObj->holdingFlip,
                                 babyO->age,
-                                hideHands,
+                                // don't hide baby's hands when it is held
+                                false,
                                 babyO->clothing );
 
                 if( babyO->currentSpeech != NULL ) {
