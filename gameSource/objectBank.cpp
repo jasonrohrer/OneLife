@@ -1927,8 +1927,8 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject ) {
             }
         }
 
-    doublePair result = { ( maxX + minX ) / 2, 
-                          ( maxY + minY ) / 2, };
+    doublePair result = { round( ( maxX + minX ) / 2 ), 
+                          round( ( maxY + minY ) / 2 ) };
     
     return result;
     }
