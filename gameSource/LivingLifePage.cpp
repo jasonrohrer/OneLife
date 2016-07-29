@@ -4750,7 +4750,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             char send = false;
             
             if( tryingToPickUpBaby ) {
-                action = "USE";
+                action = "BABY";
                 send = true;
                 }
             else if( modClick && destID == 0 && 

@@ -361,6 +361,7 @@ typedef enum messageType {
 	MOVE,
     USE,
     SELF,
+    BABY,
     REMV,
     DROP,
     KILL,
@@ -470,6 +471,9 @@ ClientMessage parseMessage( char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "SELF" ) == 0 ) {
         m.type = SELF;
+        }
+    else if( strcmp( nameBuffer, "BABY" ) == 0 ) {
+        m.type = BABY;
         }
     else if( strcmp( nameBuffer, "REMV" ) == 0 ) {
         m.type = REMV;
@@ -906,9 +910,18 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     
     int targetX = inX;
     int targetY = inY;
+
+    int mapID = getMapObject( inX, inY );
+    char mapSpotBlocking = false;
+    if( mapID > 0 ) {
+        mapSpotBlocking = getObject( mapID )->blocksWalking;
+        }
     
 
-    if( getMapObject( inX, inY ) != 0 ) {
+    if( ( inDroppingPlayer->holdingID < 0 && mapSpotBlocking )
+        ||
+        ( inDroppingPlayer->holdingID > 0 && mapID != 0 ) ) {
+        
         // drop spot blocked
         // search for another
         // throw held into nearest empty spot
@@ -2837,7 +2850,19 @@ int main() {
                                         }
                                     }
                                 }
-                            else if( nextPlayer->holdingID == 0 ) {
+                            }
+                        }
+                    else if( m.type == BABY ) {
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+
+                        if( isGridAdjacent( m.x, m.y,
+                                            nextPlayer->xd, 
+                                            nextPlayer->yd ) 
+                            ||
+                            ( m.x == nextPlayer->xd &&
+                              m.y == nextPlayer->yd ) ) {
+                            
+                            if( nextPlayer->holdingID == 0 ) {
                                 // target location empty and 
                                 // and our hands are empty
                                 
