@@ -4613,7 +4613,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     if( destID == 0 &&
         hit &&
         ! hitAnObject &&
-        modClick && ourLiveObject->holdingID == 0 &&
+        ! modClick && ourLiveObject->holdingID == 0 &&
         // only adults can pick up babies
         ourLiveObject->age > 13 ) {
         
@@ -4642,7 +4642,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     
 
-    if( destID == 0 && !modClick &&
+    if( destID == 0 && !modClick && !tryingToPickUpBaby && 
         ! ( clickDestX == ourLiveObject->xd && 
             clickDestY == ourLiveObject->yd ) ) {
         // a move to an empty spot where we're not already standing
