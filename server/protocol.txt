@@ -144,6 +144,13 @@ If an ID is 0, player is not wearing anything in that spot.
 If o_id (held object ID) is negative, it represents the p_id of the other
 player (baby) that this player is holding.
 
+NOTE:
+If a baby wriggles out of an adult's arms, there is no PU sent about
+the adult, only about the baby.  The fact that there was a PU about
+the baby indicates that they are no longer held by the adult.
+This is so PU's can be interpreted as "the player is HERE right now"
+and a baby can wriggle out of an adult's arms while the adult is in transit.
+
 
 
 

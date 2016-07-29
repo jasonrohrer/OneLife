@@ -1287,7 +1287,11 @@ void handleForcedBabyDrop(
 
         if( - adultO->holdingID == inBabyObject->id ) {
 
-            inPlayerIndicesToSendUpdatesAbout->push_back( j );
+            // don't need to send update about this adult's
+            // holding status.
+            // the update sent about the baby will inform clients
+            // that the baby is no longer held by this adult
+            //inPlayerIndicesToSendUpdatesAbout->push_back( j );
             
             GridPos dropPos;
             
