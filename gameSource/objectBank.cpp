@@ -1152,14 +1152,13 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
     HandPos returnHandPos = { false, {0, 0} };
     
 
-    double frontHandPosX = -999999999;
-    
     
     int headIndex = getHeadIndex( inObject, inAge );
     int bodyIndex = getBodyIndex( inObject, inAge );
     int backFootIndex = getBackFootIndex( inObject, inAge );
     int frontFootIndex = getFrontFootIndex( inObject, inAge );
-    
+
+    int frontHandIndex = getFrontHandIndex( inObject, inAge );
     
     doublePair headPos = inObject->spritePos[ headIndex ];
 
@@ -1335,13 +1334,9 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
                 }
             
             
-            // compare raw sprite pos x to find front-most drawn hand
+            // this is the front-most drawn hand
             // in unanimated, unflipped object
-            if( inObject->spriteInvisibleWhenHolding[i] &&
-                inObject->spritePos[i].x > frontHandPosX ) {
-                
-                frontHandPosX = inObject->spritePos[i].x;
-
+            if( i == frontHandIndex ) {
                 returnHandPos.valid = true;
                 // return screen pos for hand, which may be flipped, etc.
                 returnHandPos.pos = pos;
@@ -1736,15 +1731,22 @@ double getClosestObjectPart( ObjectRecord *inObject,
 
 
 
-
-int getBackHandIndex( ObjectRecord *inObject,
-                      double inAge ) {
-    int backHandIndex = -1;
-    double backHandX = 999999;
-
+// gets index of hands in no order by finding lowest two holders
+static void getHandIndices( ObjectRecord *inObject, double inAge,
+                            int *outHandOneIndex, int *outHandTwoIndex ) {
+    *outHandOneIndex = -1;
+    *outHandTwoIndex = -1;
+    
+    double handOneY = 9999999;
+    double handTwoY = 9999999;
+    
     for( int i=0; i< inObject->numSprites; i++ ) {
         if( inObject->spriteInvisibleWhenHolding[i] ) {
-
+            
+            if( strcmp( inObject->description, "Mickey" ) == 0 ) {
+                printf( "hey\n" );
+                }
+            
             if( inObject->spriteAgeStart[i] != -1 ||
                 inObject->spriteAgeEnd[i] != -1 ) {
                         
@@ -1756,45 +1758,81 @@ int getBackHandIndex( ObjectRecord *inObject,
                     }
                 }
             
-            if( inObject->spritePos[i].x < backHandX ) {
-                backHandIndex = i;
-                backHandX = inObject->spritePos[i].x;
+            if( inObject->spritePos[i].y < handOneY ) {
+                *outHandTwoIndex = *outHandOneIndex;
+                handTwoY = handOneY;
+                
+                *outHandOneIndex = i;
+                handOneY = inObject->spritePos[i].y;
+                }
+            else if( inObject->spritePos[i].y < handTwoY ) {
+                *outHandTwoIndex = i;
+                handTwoY = inObject->spritePos[i].y;
                 }
             }
         }
 
-    return backHandIndex;
+    }
+
+
+
+
+int getBackHandIndex( ObjectRecord *inObject,
+                      double inAge ) {
+    
+    int handOneIndex;
+    int handTwoIndex;
+    
+    getHandIndices( inObject, inAge, &handOneIndex, &handTwoIndex );
+    
+    if( handOneIndex != -1 ) {
+        
+        if( handTwoIndex != -1 ) {
+            if( inObject->spritePos[handOneIndex].x <
+                inObject->spritePos[handTwoIndex].x ) {
+                return handOneIndex;
+                }
+            else {
+                return handTwoIndex;
+                }
+            }
+        else {
+            return handTwoIndex;
+            }
+        }
+    else {
+        return -1;
+        }
     }
 
 
 
 int getFrontHandIndex( ObjectRecord *inObject,
                       double inAge ) {
-    int frontHandIndex = -1;
-    double frontHandX = -999999;
-
-    for( int i=0; i< inObject->numSprites; i++ ) {
-        if( inObject->spriteInvisibleWhenHolding[i] ) {
-
-            if( inObject->spriteAgeStart[i] != -1 ||
-                inObject->spriteAgeEnd[i] != -1 ) {
-                        
-                if( inAge < inObject->spriteAgeStart[i] ||
-                    inAge >= inObject->spriteAgeEnd[i] ) {
-                
-                    // skip this layer
-                    continue;
-                    }
+        
+    int handOneIndex;
+    int handTwoIndex;
+    
+    getHandIndices( inObject, inAge, &handOneIndex, &handTwoIndex );
+    
+    if( handOneIndex != -1 ) {
+        
+        if( handTwoIndex != -1 ) {
+            if( inObject->spritePos[handOneIndex].x >
+                inObject->spritePos[handTwoIndex].x ) {
+                return handOneIndex;
                 }
-            
-            if( inObject->spritePos[i].x > frontHandX ) {
-                frontHandIndex = i;
-                frontHandX = inObject->spritePos[i].x;
+            else {
+                return handTwoIndex;
                 }
             }
+        else {
+            return handTwoIndex;
+            }
         }
-
-    return frontHandIndex;
+    else {
+        return -1;
+        }
     }
 
 

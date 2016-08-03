@@ -743,8 +743,6 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     *outFrozenRotFrameTimeUsed = false;
 
 
-    double frontHandPosX = -999999999;
-
 
     ObjectRecord *obj = getObject( inObjectID );
     
@@ -761,7 +759,8 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     int backFootIndex = getBackFootIndex( obj, inAge );
     int frontFootIndex = getFrontFootIndex( obj, inAge );
     
-
+    int frontHandIndex = getFrontHandIndex( obj, inAge );
+    
     doublePair headPos = obj->spritePos[ headIndex ];
 
     doublePair frontFootPos = obj->spritePos[ frontFootIndex ];
@@ -1238,13 +1237,10 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 }
 
 
-            // compare raw sprite pos x to find front-most drawn hand
+            // this is front-most drawn hand
             // in unanimated, unflipped object
-            if( obj->spriteInvisibleWhenHolding[i] &&
-                obj->spritePos[i].x > frontHandPosX ) {
+            if( i == frontHandIndex ) {
                 
-                frontHandPosX = obj->spritePos[i].x;
-
                 returnHandPos.valid = true;
                 // return screen pos for hand, which may be flipped, etc.
                 returnHandPos.pos = pos;
