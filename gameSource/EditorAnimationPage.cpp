@@ -1299,6 +1299,16 @@ void EditorAnimationPage::step() {
             }
         }
     
+    if( mCurrentObjectID != -1 ) {
+        // make sure sprites stay loaded
+        // (may not be drawn each step if clothing replaces them)
+        ObjectRecord *obj = getObject( mCurrentObjectID );
+        
+        for( int i=0; i<obj->numSprites; i++ ) {
+            markSpriteLive( obj->sprites[i] );
+            }
+        }
+    
     }
 
 
