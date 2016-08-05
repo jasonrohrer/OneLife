@@ -2163,7 +2163,9 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             green = color.g;
             blue = color.b;
 
-            if( mHoverObjectLayer != -1 && mHoverStrength > 0 ) {
+            if( ( mHoverObjectLayer != -1 || mHoverSlot != -1 )
+                && mHoverStrength > 0 ) {
+                
                 alpha = 0.25;
                 }
             }
@@ -3238,20 +3240,28 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                 mCurrentObject.spritePos[mPickedObjectLayer].x -= offset;
                 delta.x = -offset;
                 recursiveMove( &mCurrentObject, mPickedObjectLayer, delta );
+                mHoverStrength = 1;
+                mHoverObjectLayer = mPickedObjectLayer;
                 break;
             case MG_KEY_RIGHT:
                 mCurrentObject.spritePos[mPickedObjectLayer].x += offset;
                 delta.x = +offset;
                 recursiveMove( &mCurrentObject, mPickedObjectLayer, delta );
+                mHoverStrength = 1;
+                mHoverObjectLayer = mPickedObjectLayer;
                 break;
             case MG_KEY_DOWN:
                 mCurrentObject.spritePos[mPickedObjectLayer].y -= offset;
                 delta.y = -offset;
                 recursiveMove( &mCurrentObject, mPickedObjectLayer, delta );
+                mHoverStrength = 1;
+                mHoverObjectLayer = mPickedObjectLayer;
                 break;
             case MG_KEY_UP:
                 mCurrentObject.spritePos[mPickedObjectLayer].y += offset;
                 delta.y = +offset;
+                mHoverStrength = 1;
+                mHoverObjectLayer = mPickedObjectLayer;
                 recursiveMove( &mCurrentObject, mPickedObjectLayer, delta );
                 break;
             case MG_KEY_PAGE_UP:  {
@@ -3628,15 +3638,23 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
         switch( inKeyCode ) {
             case MG_KEY_LEFT:
                 mCurrentObject.slotPos[mPickedSlot].x -= offset;
+                mHoverSlot = mPickedSlot;
+                mHoverStrength = 1;
                 break;
             case MG_KEY_RIGHT:
                 mCurrentObject.slotPos[mPickedSlot].x += offset;
+                mHoverSlot = mPickedSlot;
+                mHoverStrength = 1;
                 break;
             case MG_KEY_DOWN:
                 mCurrentObject.slotPos[mPickedSlot].y -= offset;
+                mHoverSlot = mPickedSlot;
+                mHoverStrength = 1;
                 break;
             case MG_KEY_UP:
                 mCurrentObject.slotPos[mPickedSlot].y += offset;
+                mHoverSlot = mPickedSlot;
+                mHoverStrength = 1;
                 break;
             }
         
