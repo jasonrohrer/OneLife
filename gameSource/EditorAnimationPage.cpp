@@ -49,6 +49,7 @@ EditorAnimationPage::EditorAnimationPage()
           mWiggleAnim( NULL ),
           mWiggleFade( 0.0 ),
           mWiggleSpriteOrSlot( 0 ),
+          mRotCenterFade( 0.0 ),
           mCurrentType( ground ),
           mLastType( ground ),
           mLastTypeFade( 0 ),
@@ -1277,7 +1278,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
             delete [] demoSlots;
             }
 
-        if( mWiggleFade > 0 || mSettingRotCenter ) {
+        if( mWiggleFade > 0 || mSettingRotCenter || mRotCenterFade > 0 ) {
         
             ObjectRecord *r = getObject( mCurrentObjectID );
 
@@ -1377,6 +1378,15 @@ void EditorAnimationPage::step() {
             mFrameCount = 0;
             }
         setWiggle();
+        }
+
+    if( mRotCenterFade > 0 ) {
+        
+        mRotCenterFade -= 0.025 * frameRateFactor;
+        
+        if( mRotCenterFade < 0 ) {
+            mRotCenterFade = 0;
+            }
         }
 
     if( mLastTypeFade > 0 ) {
@@ -1572,6 +1582,45 @@ void EditorAnimationPage::keyDown( unsigned char inASCII ) {
 
 
 void EditorAnimationPage::specialKeyDown( int inKeyCode ) {
+    int offset = 1;
+    
+    if( isCommandKeyDown() ) {
+        offset = 5;
+        }
+    
+    if( mCurrentObjectID != -1 ) {
+        ObjectRecord *obj = getObject( mCurrentObjectID );
+
+        if( mCurrentSpriteOrSlot < obj->numSprites ) {
+            
+            switch( inKeyCode ) {
+                case MG_KEY_LEFT:
+                    mCurrentAnim[ mCurrentType ]->
+                        spriteAnim[mCurrentSpriteOrSlot].
+                        rotationCenterOffset.x -= offset;
+                    mRotCenterFade = 1.0;
+                    break;
+                case MG_KEY_RIGHT:
+                    mCurrentAnim[ mCurrentType ]->
+                        spriteAnim[mCurrentSpriteOrSlot].
+                        rotationCenterOffset.x += offset;
+                    mRotCenterFade = 1.0;
+                    break;
+                case MG_KEY_DOWN:
+                    mCurrentAnim[ mCurrentType ]->
+                        spriteAnim[mCurrentSpriteOrSlot].
+                        rotationCenterOffset.y -= offset;
+                    mRotCenterFade = 1.0;
+                    break;
+                case MG_KEY_UP:
+                    mCurrentAnim[ mCurrentType ]->
+                        spriteAnim[mCurrentSpriteOrSlot].
+                        rotationCenterOffset.y += offset;
+                    mRotCenterFade = 1.0;
+                    break;
+                }
+            }
+        }
     }
 
 

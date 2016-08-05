@@ -109,6 +109,8 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         double mWiggleFade;
         int mWiggleSpriteOrSlot;
 
+        double mRotCenterFade;
+        
 
         AnimType mCurrentType;
         AnimType mLastType;
