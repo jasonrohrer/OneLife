@@ -2162,6 +2162,10 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             red = color.r;
             green = color.g;
             blue = color.b;
+
+            if( mHoverObjectLayer != -1 && mHoverStrength > 0 ) {
+                alpha = 0.25;
+                }
             }
         
         setDrawColor( red, green, blue, alpha );
