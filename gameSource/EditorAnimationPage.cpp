@@ -421,8 +421,8 @@ void EditorAnimationPage::setWiggle() {
         }
 
     if( r != NULL ) {
-        r->yOscPerSec = 2;
-        r->yAmp = 16 * mWiggleFade;
+        //r->yOscPerSec = 2;
+        //r->yAmp = 16 * mWiggleFade;
         }
     }
 
@@ -1223,6 +1223,19 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                     
             setDrawColor( 1, 1, 1, 1 );
 
+            if( mWiggleFade > 0 ) {
+                int numLayers = obj->numSprites + obj->numSlots;
+                
+                float *animLayerFades = new float[ numLayers ];
+                for( int i=0; i<numLayers; i++ ) {
+                    animLayerFades[i] = .25f;
+                    }
+                if( mWiggleSpriteOrSlot != -1 ) {
+                    animLayerFades[ mWiggleSpriteOrSlot ] = 1.0f;
+                    }
+                setAnimLayerFades( animLayerFades );
+                }
+            
             
             if( demoSlots != NULL ) {
                 drawObjectAnim( mCurrentObjectID, 
@@ -1357,7 +1370,7 @@ void EditorAnimationPage::step() {
 
     if( mWiggleFade > 0 ) {
         
-        mWiggleFade -= 0.05 * frameRateFactor;
+        mWiggleFade -= 0.025 * frameRateFactor;
         
         if( mWiggleFade < 0 ) {
             mWiggleFade = 0;
@@ -1469,6 +1482,16 @@ void EditorAnimationPage::pointerMove( float inX, float inY ) {
             }
         else {
             // increase amplitude again
+            mWiggleFade += 0.1;
+            if( mWiggleFade > 1 ) {
+                mWiggleFade = 1;
+                }
+            }
+        }
+    else if( inX < 128 && inX > -128 &&
+             inY < 128 && inY > -128 ) {
+        // keep frozen as long as mouse is there
+        if( mWiggleSpriteOrSlot != -1 ) {
             mWiggleFade += 0.1;
             if( mWiggleFade > 1 ) {
                 mWiggleFade = 1;

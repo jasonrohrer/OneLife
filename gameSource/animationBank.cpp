@@ -209,8 +209,24 @@ void initAnimationBankFinish() {
 
 
 
+static float *animLayerFades = NULL;
+
+void setAnimLayerFades( float *inFades ) {
+    if( animLayerFades != NULL ) {
+        delete [] animLayerFades;
+        animLayerFades = NULL;
+        }
+    animLayerFades = inFades;
+    }
+
+
 
 void freeAnimationBank() {
+    if( animLayerFades != NULL ) {
+        delete [] animLayerFades;
+        animLayerFades = NULL;
+        }
+    
     for( int i=0; i<mapSize; i++ ) {
         for( int j=0; j<endAnimType; j++ ) {
             if( idMap[i][j] != NULL ) {
@@ -1216,6 +1232,10 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         if( !skipSprite ) {
             setDrawColor( obj->spriteColor[i] );
             
+            if( animLayerFades != NULL ) {
+                setDrawFade( animLayerFades[i] );
+                }
+
             char multiplicative = 
                 getUsesMultiplicativeBlending( obj->sprites[i] );
             
@@ -1269,7 +1289,12 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         drawObject( inClothing.hat, cPos, animHeadRotDelta,
                     inFlipH, -1, false, emptyClothing );
         }
-
+    
+    if( animLayerFades != NULL ) {
+        delete [] animLayerFades;
+        animLayerFades = NULL;
+        }
+    
     return returnHandPos;
     }
 

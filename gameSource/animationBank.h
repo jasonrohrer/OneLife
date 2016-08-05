@@ -116,6 +116,14 @@ char isAnimEmpty( int inObjectID, AnimType inType );
 
 
 
+// sets per-sprite/slot alpha fades to use for next drawObjectAnim call
+// must match number of sprites and slot of next object drawn
+// sprites fades come first, followed by slot fades
+// inFades will be destroyed internally and cleared after
+// the next drawObjectAnim call
+void setAnimLayerFades( float *inFades );
+
+
 
 HandPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                         double inAnimFade,
