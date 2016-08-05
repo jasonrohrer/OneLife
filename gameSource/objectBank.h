@@ -311,6 +311,11 @@ double getClosestObjectPart( ObjectRecord *inObject,
                              int *outSlot );
 
 
+char isSpriteVisibleAtAge( ObjectRecord *inObject,
+                           int inSpriteIndex,
+                           double inAge );
+
+
 int getBackHandIndex( ObjectRecord *inObject,
                       double inAge );
 

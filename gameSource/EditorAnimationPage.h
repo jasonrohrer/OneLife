@@ -161,11 +161,11 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         SpriteAnimationRecord mCopiedHeadAnim;
         SpriteAnimationRecord mCopiedBodyAnim;
         
-        SpriteAnimationRecord mCopiedBackFootAnim;
-        SpriteAnimationRecord mCopiedFrontFootAnim;
+        SimpleVector<SpriteAnimationRecord> mCopiedBackFootAnimChain;
+        SimpleVector<SpriteAnimationRecord> mCopiedFrontFootAnimChain;
         
-        SpriteAnimationRecord mCopiedBackHandAnim;
-        SpriteAnimationRecord mCopiedFrontHandAnim;
+        SimpleVector<SpriteAnimationRecord> mCopiedBackHandAnimChain;
+        SimpleVector<SpriteAnimationRecord> mCopiedFrontHandAnimChain;
 
 
         TextButton mCopyButton;

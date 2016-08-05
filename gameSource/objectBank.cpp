@@ -1177,15 +1177,9 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
     for( int i=0; i<inObject->numSprites; i++ ) {
         
         if( inObject->person &&
-            ( inObject->spriteAgeStart[i] != -1 ||
-              inObject->spriteAgeEnd[i] != -1 ) ) {
-            
-            if( inAge < inObject->spriteAgeStart[i] ||
-                inAge >= inObject->spriteAgeEnd[i] ) {
-                
-                // skip drawing this aging layer entirely
-                continue;
-                }
+            ! isSpriteVisibleAtAge( inObject, i, inAge ) ) {    
+            // skip drawing this aging layer entirely
+            continue;
             }
 
 
@@ -1648,16 +1642,11 @@ double getClosestObjectPart( ObjectRecord *inObject,
 
         if( inObject->person  ) {
             
-            if( inObject->spriteAgeStart[i] != -1 &&
-                inObject->spriteAgeEnd[i] != -1 ) {
-                
-                if( inAge < inObject->spriteAgeStart[i] || 
-                    inAge > inObject->spriteAgeEnd[i] ) {
+            if( ! isSpriteVisibleAtAge( inObject, i, inAge ) ) {
                     
-                    if( i != inPickedLayer ) {
-                        // invisible, don't let them pick it
-                        continue;
-                        }
+                if( i != inPickedLayer ) {
+                    // invisible, don't let them pick it
+                    continue;
                     }
                 }
 
@@ -1837,6 +1826,24 @@ int getFrontHandIndex( ObjectRecord *inObject,
 
 
 
+char isSpriteVisibleAtAge( ObjectRecord *inObject,
+                           int inSpriteIndex,
+                           double inAge ) {
+    
+    if( inObject->spriteAgeStart[inSpriteIndex] != -1 ||
+        inObject->spriteAgeEnd[inSpriteIndex] != -1 ) {
+                        
+        if( inAge < inObject->spriteAgeStart[inSpriteIndex] ||
+            inAge >= inObject->spriteAgeEnd[inSpriteIndex] ) {
+         
+            return false;
+            }
+        }
+    return true;
+    }
+
+
+
 static int getBodyPartIndex( ObjectRecord *inObject,
                              char *inBodyPartFlagArray,
                              double inAge ) {
@@ -1844,17 +1851,11 @@ static int getBodyPartIndex( ObjectRecord *inObject,
     for( int i=0; i< inObject->numSprites; i++ ) {
         if( inBodyPartFlagArray[i] ) {
             
-            if( inObject->spriteAgeStart[i] != -1 ||
-                inObject->spriteAgeEnd[i] != -1 ) {
-                        
-                if( inAge < inObject->spriteAgeStart[i] ||
-                    inAge >= inObject->spriteAgeEnd[i] ) {
-                
-                    // skip this layer
-                    continue;
-                    }
+            if( ! isSpriteVisibleAtAge( inObject, i, inAge ) ) {
+                // skip this layer
+                continue;
                 }
-            
+                            
             return i;
             }
         }

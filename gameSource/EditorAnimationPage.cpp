@@ -605,7 +605,54 @@ void EditorAnimationPage::updateSlidersFromAnim() {
     }
 
     
+// copies animations starting at a given index and following
+// the parent chain up to, but not including, the body
+// puts the results in the passed-in vector (clearing it first)
+static void copyChainToBody( ObjectRecord *inObject,
+                             double inAge,
+                             int inStartSpriteIndex,
+                             int inBodyIndex,
+                             AnimationRecord *inAnim,
+                             SimpleVector<SpriteAnimationRecord> *inVector ) {
+    inVector->deleteAll();
     
+    inVector->push_back( inAnim->spriteAnim[ inStartSpriteIndex ] );
+
+    int parent = inObject->spriteParent[ inStartSpriteIndex ];
+    
+    while( parent != -1 && parent != inBodyIndex ) {
+        if( isSpriteVisibleAtAge( inObject, parent, inAge ) ) {
+            inVector->push_back( inAnim->spriteAnim[ parent ] );
+            }
+        parent = inObject->spriteParent[ parent ];
+        }
+    }
+
+
+static void pasteChainToBody( ObjectRecord *inObject,
+                              double inAge,
+                              int inStartSpriteIndex,
+                              int inBodyIndex,
+                              AnimationRecord *inAnim,
+                              SimpleVector<SpriteAnimationRecord> *inVector ) {
+    
+    int i = 0;
+    inAnim->spriteAnim[ inStartSpriteIndex ] = inVector->getElementDirect( i );
+    i++;
+    
+    int parent = inObject->spriteParent[ inStartSpriteIndex ];
+    
+    while( parent != -1 && parent != inBodyIndex ) {
+        if( isSpriteVisibleAtAge( inObject, parent, inAge ) ) {
+            inAnim->spriteAnim[ parent ] = inVector->getElementDirect( i );
+            i++;
+            }
+        
+        parent = inObject->spriteParent[ parent ];
+        }
+    }
+
+
 
 
 
@@ -688,21 +735,35 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             int backFootIndex = getBackFootIndex( r, age );
             int frontFootIndex = getFrontFootIndex( r, age );
 
-            mCopiedHeadAnim = anim->spriteAnim[ headIndex ];
-            mCopiedBodyAnim = anim->spriteAnim[ bodyIndex ];
-            mCopiedFrontFootAnim = anim->spriteAnim[ frontFootIndex ];
-            mCopiedBackFootAnim = anim->spriteAnim[ backFootIndex ];
+            if( headIndex != -1 ) {
+                mCopiedHeadAnim = anim->spriteAnim[ headIndex ];
+                }
             
+            if( bodyIndex != -1 ) {
+                mCopiedBodyAnim = anim->spriteAnim[ bodyIndex ];
+                }
+            
+            if( frontFootIndex != -1 ) {
+                copyChainToBody( r, age, frontFootIndex, bodyIndex, anim,
+                                 &mCopiedFrontFootAnimChain );
+                }
+            
+            if( backFootIndex != -1 ) {
+                copyChainToBody( r, age, backFootIndex, bodyIndex, anim,
+                                 &mCopiedBackFootAnimChain );
+                }
             
             int frontHandIndex = getFrontHandIndex( r, age );
             int backHandIndex = getBackHandIndex( r, age );
             
             if( frontHandIndex != -1 ) {
-                mCopiedFrontHandAnim = anim->spriteAnim[ frontHandIndex ];
+                copyChainToBody( r, age, frontHandIndex, bodyIndex, anim,
+                                 &mCopiedFrontHandAnimChain );
                 }
 
             if( backHandIndex != -1 ) {
-                mCopiedBackHandAnim = anim->spriteAnim[ backHandIndex ];
+                copyChainToBody( r, age, backHandIndex, bodyIndex, anim,
+                                 &mCopiedBackHandAnimChain );
                 }
             
 
@@ -745,22 +806,35 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             int backFootIndex = getBackFootIndex( r, age );
             int frontFootIndex = getFrontFootIndex( r, age );
 
-
-            anim->spriteAnim[ headIndex ] = mCopiedHeadAnim;
-            anim->spriteAnim[ bodyIndex ] = mCopiedBodyAnim;
-            anim->spriteAnim[ frontFootIndex ] = mCopiedFrontFootAnim;
-            anim->spriteAnim[ backFootIndex ] = mCopiedBackFootAnim;
+            if( headIndex != -1 ) {
+                anim->spriteAnim[ headIndex ] = mCopiedHeadAnim;
+                }
+            if( bodyIndex != -1 ) {
+                anim->spriteAnim[ bodyIndex ] = mCopiedBodyAnim;
+                }
+            
+            if( frontFootIndex != -1 ) {
+                pasteChainToBody( r, age, frontFootIndex, bodyIndex,
+                                  anim, &mCopiedFrontFootAnimChain );
+                }
+            
+            if( backFootIndex != -1 ) {
+                pasteChainToBody( r, age, backFootIndex, bodyIndex,
+                                  anim, &mCopiedBackFootAnimChain );
+                }
             
                         
             int frontHandIndex = getFrontHandIndex( r, age );
             int backHandIndex = getBackHandIndex( r, age );
             
             if( frontHandIndex != -1 ) {
-                anim->spriteAnim[ frontHandIndex ] = mCopiedFrontHandAnim;
+                pasteChainToBody( r, age, frontHandIndex, bodyIndex,
+                                  anim, &mCopiedFrontHandAnimChain );
                 }
 
             if( backHandIndex != -1 ) {
-                anim->spriteAnim[ backHandIndex ] = mCopiedBackHandAnim;
+                pasteChainToBody( r, age, backHandIndex, bodyIndex,
+                                  anim, &mCopiedBackHandAnimChain );
                 }
             }
         else if( mChainCopyBuffer.size() > 0 ) {

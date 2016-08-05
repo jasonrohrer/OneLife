@@ -1048,15 +1048,9 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     for( int i=0; i<obj->numSprites; i++ ) {
         
         if( obj->person &&
-            ( obj->spriteAgeStart[i] != -1 ||
-              obj->spriteAgeEnd[i] != -1 ) ) {
-            
-            if( inAge < obj->spriteAgeStart[i] ||
-                inAge >= obj->spriteAgeEnd[i] ) {
-                
-                // skip drawing this aging layer entirely
-                continue;
-                }
+            ! isSpriteVisibleAtAge( obj, i, inAge ) ) {    
+            // skip drawing this aging layer entirely
+            continue;
             }
 
         
