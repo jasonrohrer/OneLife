@@ -3185,13 +3185,6 @@ void LivingLifePage::step() {
                 ourID = ourObject->id;
                 
                 ourObject->displayChar = 'A';
-
-                // center view on player's starting position
-                lastScreenViewCenter.x = CELL_D * ourObject->xd;
-                lastScreenViewCenter.y = CELL_D * ourObject->yd;
-
-                setViewCenterPosition( lastScreenViewCenter.x, 
-                                       lastScreenViewCenter.y );
                 }
             
             mFirstServerMessagesReceived |= 2;
@@ -3730,7 +3723,7 @@ void LivingLifePage::step() {
         }
 
     
-    if( ourLiveObject != NULL ) {
+    if( mDoneLoadingFirstObjectSet && ourLiveObject != NULL ) {
         
 
         // current age
@@ -4147,6 +4140,15 @@ void LivingLifePage::step() {
         if( mStartedLoadingFirstObjectSet && ! mDoneLoadingFirstObjectSet ) {
             mDoneLoadingFirstObjectSet = 
                 isLiveObjectSetFullyLoaded( &mFirstObjectSetLoadingProgress );
+            
+            if( mDoneLoadingFirstObjectSet ) {
+                // center view on player's starting position
+                lastScreenViewCenter.x = CELL_D * ourLiveObject->xd;
+                lastScreenViewCenter.y = CELL_D * ourLiveObject->yd;
+
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
+                }
             }
         else {
             
