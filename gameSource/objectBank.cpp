@@ -1732,10 +1732,6 @@ static void getHandIndices( ObjectRecord *inObject, double inAge,
     for( int i=0; i< inObject->numSprites; i++ ) {
         if( inObject->spriteInvisibleWhenHolding[i] ) {
             
-            if( strcmp( inObject->description, "Mickey" ) == 0 ) {
-                printf( "hey\n" );
-                }
-            
             if( inObject->spriteAgeStart[i] != -1 ||
                 inObject->spriteAgeEnd[i] != -1 ) {
                         
