@@ -241,7 +241,11 @@ static int getBaseMap( int inX, int inY ) {
         
         int pickedBiome = getMapBiomeIndex( inX, inY, &secondPlace,
                                             &secondPlaceGap );
-                
+        
+        if( pickedBiome == -1 ) {
+            return 0;
+            }
+        
         lastCheckedBiome = biomes[pickedBiome];
         
 
