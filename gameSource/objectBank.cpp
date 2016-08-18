@@ -610,11 +610,10 @@ static void freeObjectRecord( int inID ) {
             
             delete idMap[inID];
             idMap[inID] = NULL;
-            return ;
+
+            personObjectIDs.deleteElementEqualTo( inID );
             }
-        }
-    
-    personObjectIDs.deleteElementEqualTo( inID );
+        }    
     }
 
 
@@ -651,6 +650,8 @@ void freeObjectBank() {
         }
 
     delete [] idMap;
+
+    personObjectIDs.deleteAll();
     }
 
 
