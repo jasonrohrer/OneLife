@@ -80,7 +80,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         TextField mSlotSizeField;
 
         TextField mDeadlyDistanceField;
-
+        
+        TextField mRaceField;
 
         TextButton mSaveObjectButton;
         TextButton mReplaceObjectButton;

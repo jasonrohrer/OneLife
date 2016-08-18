@@ -80,6 +80,10 @@ EditorObjectPage::EditorObjectPage()
                                 150,  -220, 4,
                                 false,
                                 "Deadly Distance", "0123456789.", NULL ),
+          mRaceField( smallFont, 
+                      150, -120, 2,
+                      true,
+                      "Race", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", NULL ),
           mSaveObjectButton( smallFont, 210, -260, "Save New" ),
           mReplaceObjectButton( smallFont, 310, -260, "Replace" ),
           mClearObjectButton( smallFont, -160, 200, "Blank" ),
@@ -172,6 +176,8 @@ EditorObjectPage::EditorObjectPage()
     mSlotSizeField.setVisible( false );
 
     addComponent( &mDeadlyDistanceField );
+    
+    addComponent( &mRaceField );
 
     addComponent( &mSaveObjectButton );
     addComponent( &mReplaceObjectButton );
@@ -389,7 +395,10 @@ EditorObjectPage::EditorObjectPage()
     
     mDeadlyDistanceField.setInt( 0 );
     
-
+    mRaceField.setText( "A" );
+    mRaceField.setMaxLength( 1 );
+    mRaceField.setVisible( false );
+    
     double boxY = -150;
     
     for( int i=0; i<NUM_OBJECT_CHECKBOXES; i++ ) {
@@ -754,6 +763,18 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         fixCommaIntList( &mBiomeField );
         char *biomes = mBiomeField.getText();
 
+        int race = 0;
+        
+        if( mCheckboxes[2]->getToggled() ) {
+            race = 1;
+            char *raceText = mRaceField.getText();
+            
+            if( strlen( raceText ) > 0 ) {
+                race = ( raceText[0] - 'A' ) + 1;
+                }
+            delete [] raceText;
+            }
+
         addObject( text,
                    mCheckboxes[0]->getToggled(),
                    mContainSizeField.getInt(),
@@ -766,6 +787,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mRValueField.getFloat(),
                    mCheckboxes[2]->getToggled(),
                    mMaleCheckbox.getToggled(),
+                   race,
                    mDeathMarkerCheckbox.getToggled(),
                    mFoodValueField.getInt(),
                    mSpeedMultField.getFloat(),
@@ -828,6 +850,18 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             layersSwapped = true;
             }
         
+        int race = 0;
+        
+        if( mCheckboxes[2]->getToggled() ) {
+            race = 1;
+            char *raceText = mRaceField.getText();
+            
+            if( strlen( raceText ) > 0 ) {
+                race = ( raceText[0] - 'A' ) + 1;
+                }
+            delete [] raceText;
+            }
+
 
         addObject( text,
                    mCheckboxes[0]->getToggled(),
@@ -841,6 +875,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mRValueField.getFloat(),
                    mCheckboxes[2]->getToggled(),
                    mMaleCheckbox.getToggled(),
+                   race,
                    mDeathMarkerCheckbox.getToggled(),
                    mFoodValueField.getInt(),
                    mSpeedMultField.getFloat(),
@@ -894,7 +929,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         
         mPersonAgeSlider.setVisible( false );
-
+        
+        mRaceField.setVisible( false );
+        
         for( int i=0; i<NUM_OBJECT_CHECKBOXES; i++ ) {
             mCheckboxes[i]->setToggled( false );
             }
@@ -1103,6 +1140,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mCheckboxes[0]->setToggled( false );
 
         mPersonAgeSlider.setVisible( false );
+
+        mRaceField.setVisible( false );
+        
         mCheckboxes[2]->setToggled( false );
         updateAgingPanel();
         
@@ -1171,9 +1211,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         if( mCheckboxes[2]->getToggled() ) {
             mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
+            mRaceField.setVisible( true );
             }
         else {
             mPersonAgeSlider.setVisible( false );
+            mRaceField.setVisible( false );
             }
         
         if( ! mClothingCheckboxes[0]->getToggled() ) {
@@ -1217,9 +1259,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         if( mCheckboxes[2]->getToggled() ) {
             mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
+            mRaceField.setVisible( true );
             }
         else {
             mPersonAgeSlider.setVisible( false );
+            mRaceField.setVisible( false );
             }
 
         mSetHeldPosButton.setVisible( true );
@@ -1731,6 +1775,17 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mMaleCheckbox.setToggled( pickedRecord->male );
             mDeathMarkerCheckbox.setToggled( pickedRecord->deathMarker );
             
+            mRaceField.setText( "A" );
+            
+            if( pickedRecord->person ) {
+                char raceChar = 'A';
+                raceChar += pickedRecord->race - 1;
+                
+                char *raceText = autoSprintf( "%c", raceChar );
+                mRaceField.setText( raceText );
+                delete [] raceText;
+                }
+
             mHeldInHandCheckbox.setToggled( pickedRecord->heldInHand );
             mBlocksWalkingCheckbox.setToggled( pickedRecord->blocksWalking );
             
@@ -1738,9 +1793,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             if( mCheckboxes[2]->getToggled() ) {
                 mPersonAgeSlider.setValue( defaultAge );
                 mPersonAgeSlider.setVisible( true );
+                mRaceField.setVisible( true );
                 }
             else {
                 mPersonAgeSlider.setVisible( false );
+                mRaceField.setVisible( false );
                 }
             pickedLayerChanged();
 
@@ -1774,6 +1831,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mPersonAgeSlider.setVisible( false );
             mCheckboxes[2]->setToggled( false );
             mSetHeldPosButton.setVisible( true );
+            
+            mRaceField.setVisible( false );
             }
         else {
             mContainSizeField.setInt( 1 );
@@ -1786,7 +1845,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         if( mCheckboxes[2]->getToggled() ) {
             mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
-            
+            mRaceField.setVisible( true );
 
             if( mPickedObjectLayer != -1 ) {
                 mSetHeldPosButton.setVisible( false );
@@ -1814,6 +1873,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         else {
             mPersonAgeSlider.setVisible( false );
             mSetHeldPosButton.setVisible( true );
+            mRaceField.setVisible( false );
             }
                     
         updateAgingPanel();    

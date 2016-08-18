@@ -65,6 +65,10 @@ typedef struct ObjectRecord {
         
         char male;
         
+        // if a person, what race number?  1, 2, 3, ....
+        // 0 if not a person
+        int race;
+
         // true if this object can be placed by server to mark a death
         char deathMarker;
         
@@ -208,6 +212,7 @@ int addObject( const char *inDescription,
                float inRValue,
                char inPerson,
                char inMale,
+               int inRace,
                char inDeathMarker,
                int inFoodValue,
                float inSpeedMult,
