@@ -396,6 +396,10 @@ void EditorAnimationPage::populateCurrentAnim() {
 
 
 void EditorAnimationPage::setWiggle() {
+    if( mWiggleAnim == NULL ) {
+        return;
+        }
+    
     int sprites = mWiggleAnim->numSprites;
     int slots = mWiggleAnim->numSlots;
 
