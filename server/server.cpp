@@ -1463,12 +1463,11 @@ void processedLogggedInPlayer( Socket *inSock,
         // she starts almost full grown
         newObject.lifeStartTimeSeconds -= 14 * 60;
 
-                    
-        int tryCount = 0;
-                    
-        while( ! getFemale( &newObject ) && tryCount < 100 ) {
-            newObject.displayID = getRandomPersonObject();
-            tryCount ++;
+        
+        int femaleID = getRandomFemalePersonObject();
+        
+        if( femaleID != -1 ) {
+            newObject.displayID = femaleID;
             }
         }
                 

@@ -32,6 +32,9 @@ static StringTree tree;
 // track objects that are marked with the person flag
 static SimpleVector<int> personObjectIDs;
 
+// track female people
+static SimpleVector<int> femalePersonObjectIDs;
+
 
 static JenkinsRandomSource randSource;
 
@@ -525,6 +528,10 @@ float initObjectBankStep() {
                             
                 if( r->person ) {
                     personObjectIDs.push_back( r->id );
+                    
+                    if( ! r->male ) {
+                        femalePersonObjectIDs.push_back( r->id );
+                        }
                     }
                 }
                             
@@ -614,6 +621,7 @@ static void freeObjectRecord( int inID ) {
             idMap[inID] = NULL;
 
             personObjectIDs.deleteElementEqualTo( inID );
+            femalePersonObjectIDs.deleteElementEqualTo( inID );
             }
         }    
     }
@@ -654,6 +662,7 @@ void freeObjectBank() {
     delete [] idMap;
 
     personObjectIDs.deleteAll();
+    femalePersonObjectIDs.deleteAll();
     }
 
 
@@ -1141,6 +1150,10 @@ int addObject( const char *inDescription,
     
     if( r->person ) {    
         personObjectIDs.push_back( newID );
+        
+        if( ! r->male ) {
+            femalePersonObjectIDs.push_back( newID );
+            }
         }
     
     return newID;
@@ -1471,6 +1484,20 @@ int getRandomPersonObject() {
     return personObjectIDs.getElementDirect( 
         randSource.getRandomBoundedInt( 0, 
                                         personObjectIDs.size() - 1  ) );
+    }
+
+
+
+int getRandomFemalePersonObject() {
+    
+    if( femalePersonObjectIDs.size() == 0 ) {
+        return -1;
+        }
+    
+        
+    return femalePersonObjectIDs.getElementDirect( 
+        randSource.getRandomBoundedInt( 0, 
+                                        femalePersonObjectIDs.size() - 1  ) );
     }
 
 
