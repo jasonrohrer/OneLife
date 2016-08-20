@@ -722,10 +722,23 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     r->w = inSourceImage->getWidth();
     r->h = inSourceImage->getHeight();
     
+    r->centerXOffset = 0;
+    r->centerYOffset = 0;
+
+
     int numPixels = r->w * r->h;
     r->hitMap = new char[ numPixels ];
     
     memset( r->hitMap, 1, numPixels );
+
+    int minX = r->w;
+    int maxX = 0;
+    
+    int minY = r->h;
+    int maxY = 0;
+    
+    int w = r->w;
+    
     
     if( inSourceImage->getNumChannels() == 4 ) {
         
@@ -735,6 +748,24 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
             if( a[p] < 0.25 ) {
                 r->hitMap[p] = 0;
                 }
+            else {
+                int y = p / w;
+                int x = p % w;
+                
+                if( y < minY ) {
+                    minY = y;
+                    }
+                if( y > maxY ) {
+                    maxY = y;
+                    }
+                
+                if( x < minX ) {
+                    minX = x;
+                    }
+                if( x > maxX ) {
+                    maxX = x;
+                    }
+                }
             }
         }
     
@@ -742,6 +773,15 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
         expandMap( r->hitMap, r->w, r->h );
         }
     
+    
+    r->centerXOffset = 
+        ( maxX + minX ) / 2 - 
+        r->w / 2;
+    
+    r->centerYOffset = 
+        ( maxY + minY ) / 2 - 
+        r->h / 2;
+
     
     // delete old
     freeSpriteRecord( newID );
