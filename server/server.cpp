@@ -54,6 +54,9 @@ static int requireTicketServerCheck = 1;
 static char *clientPassword = NULL;
 static char *ticketServerURL = NULL;
 
+static double childSameRaceLikelihood = 0.9;
+static int familySpan = 2;
+
 
 // for incoming socket connections that are still in the login process
 typedef struct FreshConnection {
@@ -1502,7 +1505,61 @@ void processedLogggedInPlayer( Socket *inSock,
                                             players.size() - 1 );
                     
         LiveObject *parent = players.getElement( parentIndex );
-                    
+        
+        
+        ObjectRecord *parentObject = getObject( parent->displayID );
+
+        // pick race of child
+        
+        int numRaces;
+        int *races = getRaces( &numRaces );
+        
+        int parentRaceIndex = -1;
+        
+        for( int i=0; i<numRaces; i++ ) {
+            if( parentObject->race == races[i] ) {
+                parentRaceIndex = i;
+                break;
+                }
+            }
+
+
+        if( parentRaceIndex != -1 ) {
+            
+            int childRace = parentObject->race;
+            
+            if( randSource.getRandomDouble() > childSameRaceLikelihood ) {
+                // different race than parent
+                
+                int offset = 1;
+                
+                if( randSource.getRandomBoolean() ) {
+                    offset = -1;
+                    }
+                int childRaceIndex = parentRaceIndex + offset;
+                
+                if( childRaceIndex >= numRaces ) {
+                    childRaceIndex -= numRaces;
+                    }
+                else if( childRaceIndex < 0 ) {
+                    childRaceIndex += numRaces;
+                    }
+
+                childRace = races[ childRaceIndex ];
+                }
+
+            if( childRace == parentObject->race ) {
+                newObject.displayID = getRandomFamilyMember( 
+                    parentObject->race, parent->displayID, familySpan );
+                }
+            else {
+                newObject.displayID = getRandomPersonObjectOfRace( childRace );
+                }
+            
+            }
+        
+        
+                
         if( parent->xs == parent->xd && 
             parent->ys == parent->yd ) {
                         
@@ -1596,6 +1653,13 @@ int main() {
         requireTicketServerCheck = 0;
         }
 
+
+    childSameRaceLikelihood =
+        (double)SettingsManager::getFloatSetting( "childSameRaceLikelihood",
+                                                  0.90 );
+    
+    familySpan =
+        SettingsManager::getIntSetting( "familySpan", 2 );
 
 
 #ifdef WIN_32

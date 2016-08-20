@@ -285,6 +285,19 @@ int getRandomPersonObject();
 // -1 if no female
 int getRandomFemalePersonObject();
 
+// get a list of all races for which we have at least one person
+// these are returned in order by race number
+int *getRaces( int *outNumRaces );
+
+
+// -1 if no person of this race exists
+int getRandomPersonObjectOfRace( int inRace );
+
+// gets a family member near inMotherID with max distance away in family
+// spectrum 
+int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan );
+
+
 
 int getNextPersonObject( int inCurrentPersonObjectID );
 int getPrevPersonObject( int inCurrentPersonObjectID );

@@ -36,6 +36,28 @@ static SimpleVector<int> personObjectIDs;
 static SimpleVector<int> femalePersonObjectIDs;
 
 
+// anything above race 100 is put in bin for race 100
+#define MAX_RACE 100
+
+static SimpleVector<int> racePersonObjectIDs[ MAX_RACE + 1 ];
+
+static SimpleVector<int> raceList;
+
+
+static void rebuildRaceList() {
+    raceList.deleteAll();
+    
+    for( int i=0; i <= MAX_RACE; i++ ) {
+        if( racePersonObjectIDs[ i ].size() > 0 ) {
+            raceList.push_back( i );
+            }
+        }
+    
+    }
+
+
+
+
 static JenkinsRandomSource randSource;
 
 
@@ -532,6 +554,15 @@ float initObjectBankStep() {
                     if( ! r->male ) {
                         femalePersonObjectIDs.push_back( r->id );
                         }
+
+                    if( r->race <= MAX_RACE ) {
+                        racePersonObjectIDs[ r->race ].push_back( r->id );
+                        }
+                    else {
+                        racePersonObjectIDs[ MAX_RACE ].push_back( r->id );
+                        }
+                    
+                    rebuildRaceList();
                     }
                 }
                             
@@ -594,6 +625,7 @@ static void freeObjectRecord( int inID ) {
             
             delete [] lower;
             
+            int race = idMap[inID]->race;
 
             delete [] idMap[inID]->description;
             
@@ -622,6 +654,16 @@ static void freeObjectRecord( int inID ) {
 
             personObjectIDs.deleteElementEqualTo( inID );
             femalePersonObjectIDs.deleteElementEqualTo( inID );
+            
+            
+            if( race <= MAX_RACE ) {
+                racePersonObjectIDs[ race ].deleteElementEqualTo( inID );
+                }
+            else {
+                racePersonObjectIDs[ MAX_RACE ].deleteElementEqualTo( inID );
+                }
+            
+            rebuildRaceList();
             }
         }    
     }
@@ -663,6 +705,11 @@ void freeObjectBank() {
 
     personObjectIDs.deleteAll();
     femalePersonObjectIDs.deleteAll();
+    
+    for( int i=0; i<= MAX_RACE; i++ ) {
+        racePersonObjectIDs[i].deleteAll();
+        }
+    rebuildRaceList();
     }
 
 
@@ -1154,6 +1201,15 @@ int addObject( const char *inDescription,
         if( ! r->male ) {
             femalePersonObjectIDs.push_back( newID );
             }
+        
+        
+        if( r->race <= MAX_RACE ) {
+            racePersonObjectIDs[ r->race ].push_back( r->id );
+            }
+        else {
+            racePersonObjectIDs[ MAX_RACE ].push_back( r->id );
+            }
+        rebuildRaceList();
         }
     
     return newID;
@@ -1499,6 +1555,67 @@ int getRandomFemalePersonObject() {
         randSource.getRandomBoundedInt( 0, 
                                         femalePersonObjectIDs.size() - 1  ) );
     }
+
+
+int *getRaces( int *outNumRaces ) {
+    *outNumRaces = raceList.size();
+    
+    return raceList.getElementArray();
+    }
+
+
+
+int getRandomPersonObjectOfRace( int inRace ) {
+    if( inRace > MAX_RACE ) {
+        inRace = MAX_RACE;
+        }
+    
+    if( racePersonObjectIDs[ inRace ].size() == 0 ) {
+        return -1;
+        }
+    
+        
+    return racePersonObjectIDs[ inRace ].getElementDirect( 
+        randSource.getRandomBoundedInt( 
+            0, 
+            racePersonObjectIDs[ inRace ].size() - 1  ) );
+    }
+
+
+
+int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
+    
+    if( inRace > MAX_RACE ) {
+        inRace = MAX_RACE;
+        }
+    
+    if( racePersonObjectIDs[ inRace ].size() == 0 ) {
+        return -1;
+        }
+    
+    int motherIndex = 
+        racePersonObjectIDs[ inRace ].getElementIndex( inMotherID );
+
+    if( motherIndex == -1 ) {
+        return getRandomPersonObjectOfRace( inRace );
+        }
+    
+
+    int offset = randSource.getRandomBoundedInt( -inFamilySpan, inFamilySpan );
+    
+    int familyIndex = motherIndex + offset;
+    
+    if( familyIndex >= racePersonObjectIDs[ inRace ].size() ) {
+        familyIndex -= racePersonObjectIDs[ inRace ].size();
+        }
+    else if( familyIndex < 0  ) {
+        familyIndex += racePersonObjectIDs[ inRace ].size();
+        }
+    
+    return racePersonObjectIDs[ inRace ].getElementDirect( familyIndex );
+    }
+
+
 
 
 
