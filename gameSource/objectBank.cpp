@@ -50,9 +50,60 @@ static void rebuildRaceList() {
     for( int i=0; i <= MAX_RACE; i++ ) {
         if( racePersonObjectIDs[ i ].size() > 0 ) {
             raceList.push_back( i );
+
+            // now sort into every-other gender order
+            int num = racePersonObjectIDs[i].size();
+
+            SimpleVector<int> boys;
+            SimpleVector<int> girls;
+            
+            for( int j=0; j<num; j++ ) {
+                
+                int id = racePersonObjectIDs[i].getElementDirect( j );
+                
+                ObjectRecord *o = getObject( id );
+                
+                if( o->male ) {
+                    boys.push_back( id );
+                    }
+                else {
+                    girls.push_back( id );
+                    }
+                }
+            
+            racePersonObjectIDs[i].deleteAll();
+            
+            int boyIndex = 0;
+            int girlIndex = 0;
+            
+            int boysLeft = boys.size();
+            int girlsLeft = girls.size();
+
+            int flip = 0;
+            
+            for( int j=0; j<num; j++ ) {
+                
+                if( ( flip && boysLeft > 0 ) 
+                    ||
+                    girlsLeft == 0 ) {
+                    
+                    racePersonObjectIDs[i].push_back( 
+                        boys.getElementDirect( boyIndex ) );
+                    
+                    boysLeft--;
+                    boyIndex++;
+                    }
+                else {
+                    racePersonObjectIDs[i].push_back( 
+                        girls.getElementDirect( girlIndex ) );
+                    
+                    girlsLeft--;
+                    girlIndex++;
+                    }
+                flip = !flip;
+                }
             }
         }
-    
     }
 
 
