@@ -561,8 +561,6 @@ float initObjectBankStep() {
                     else {
                         racePersonObjectIDs[ MAX_RACE ].push_back( r->id );
                         }
-                    
-                    rebuildRaceList();
                     }
                 }
                             
@@ -606,6 +604,9 @@ void initObjectBankFinish() {
 
         delete [] lowercase;
         }
+    
+                        
+    rebuildRaceList();
 
     printf( "Loaded %d objects from objects folder\n", numRecords );
 
