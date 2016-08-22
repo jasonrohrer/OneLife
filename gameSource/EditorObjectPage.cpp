@@ -3300,29 +3300,41 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                 mCurrentObject.spritePos[mPickedObjectLayer].x -= offset;
                 delta.x = -offset;
                 recursiveMove( &mCurrentObject, mPickedObjectLayer, delta );
-                mHoverStrength = 1;
-                mHoverObjectLayer = mPickedObjectLayer;
+                if( isCommandKeyDown() ) {
+                    // only show highlighting for big jumps
+                    mHoverStrength = 1;
+                    mHoverObjectLayer = mPickedObjectLayer;
+                    }
                 break;
             case MG_KEY_RIGHT:
                 mCurrentObject.spritePos[mPickedObjectLayer].x += offset;
                 delta.x = +offset;
                 recursiveMove( &mCurrentObject, mPickedObjectLayer, delta );
-                mHoverStrength = 1;
-                mHoverObjectLayer = mPickedObjectLayer;
+                if( isCommandKeyDown() ) {
+                    // only show highlighting for big jumps
+                    mHoverStrength = 1;
+                    mHoverObjectLayer = mPickedObjectLayer;
+                    }
                 break;
             case MG_KEY_DOWN:
                 mCurrentObject.spritePos[mPickedObjectLayer].y -= offset;
                 delta.y = -offset;
                 recursiveMove( &mCurrentObject, mPickedObjectLayer, delta );
-                mHoverStrength = 1;
-                mHoverObjectLayer = mPickedObjectLayer;
+                if( isCommandKeyDown() ) {
+                    // only show highlighting for big jumps
+                    mHoverStrength = 1;
+                    mHoverObjectLayer = mPickedObjectLayer;
+                    }
                 break;
             case MG_KEY_UP:
                 mCurrentObject.spritePos[mPickedObjectLayer].y += offset;
                 delta.y = +offset;
-                mHoverStrength = 1;
-                mHoverObjectLayer = mPickedObjectLayer;
                 recursiveMove( &mCurrentObject, mPickedObjectLayer, delta );
+                if( isCommandKeyDown() ) {
+                    // only show highlighting for big jumps
+                    mHoverStrength = 1;
+                    mHoverObjectLayer = mPickedObjectLayer;
+                    }
                 break;
             case MG_KEY_PAGE_UP:  {
                 for( int o=0; o<offset; o++ ) {
