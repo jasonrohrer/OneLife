@@ -1602,7 +1602,12 @@ int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
         }
     
 
-    int offset = randSource.getRandomBoundedInt( -inFamilySpan, inFamilySpan );
+    // never have offset 0, so we can't ever have ourself as a baby
+    int offset = randSource.getRandomBoundedInt( 1, inFamilySpan );
+    
+    if( randSource.getRandomBoolean() ) {
+        offset = -offset;
+        }
     
     int familyIndex = motherIndex + offset;
     
