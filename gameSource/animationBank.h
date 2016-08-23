@@ -125,42 +125,42 @@ void setAnimLayerFades( float *inFades );
 
 
 
-HandPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
-                        double inAnimFade,
-                        // if inAnimFade < 1, this is the animation
-                        // that we are fading to (fading to the time-0 config
-                        // for this animation)
-                        AnimType inFadeTargetType,
-                        double inFadeTargetFrameTime,
-                        // for any zero rotations in current anim or fade
-                        // target, if either is 'held',
-                        // we apply frozen rotations from the 'moving' 
-                        // animation using this frame time
-                        double inFrozenRotFrameTime,
-                        // or'd with true on return 
-                        // if inFrozenRotFrameTime was applied
-                        // to some sprite layer (and thus that frame
-                        // time should be used as the resume point when
-                        // returning to 'moving' animation later)
-                        char *outFrozenRotFrameTimeUsed,
-                        doublePair inPos,
-                        char inFlipH,
-                        double inAge, char inHideFrontArm,
-                        ClothingSet inClothing );
+HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
+                           double inAnimFade,
+                           // if inAnimFade < 1, this is the animation
+                           // that we are fading to (fading to the time-0 config
+                           // for this animation)
+                           AnimType inFadeTargetType,
+                           double inFadeTargetFrameTime,
+                           // for any zero rotations in current anim or fade
+                           // target, if either is 'held',
+                           // we apply frozen rotations from the 'moving' 
+                           // animation using this frame time
+                           double inFrozenRotFrameTime,
+                           // or'd with true on return 
+                           // if inFrozenRotFrameTime was applied
+                           // to some sprite layer (and thus that frame
+                           // time should be used as the resume point when
+                           // returning to 'moving' animation later)
+                           char *outFrozenRotFrameTimeUsed,
+                           doublePair inPos,
+                           char inFlipH,
+                           double inAge, char inHideFrontArm,
+                           ClothingSet inClothing );
 
 
-HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
-                        double inFrameTime,
-                        double inAnimFade,
-                        AnimationRecord *inFadeTargetAnim,
-                        double inFadeTargetFrameTime,
-                        double inFrozenRotFrameTime,
-                        char *outFrozenRotFrameTimeUsed,
-                        AnimationRecord *inFrozenRotAnim,
-                        doublePair inPos,
-                        char inFlipH,
-                        double inAge, char inHideFrontArm,
-                        ClothingSet inClothing );
+HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
+                           double inFrameTime,
+                           double inAnimFade,
+                           AnimationRecord *inFadeTargetAnim,
+                           double inFadeTargetFrameTime,
+                           double inFrozenRotFrameTime,
+                           char *outFrozenRotFrameTimeUsed,
+                           AnimationRecord *inFrozenRotAnim,
+                           doublePair inPos,
+                           char inFlipH,
+                           double inAge, char inHideFrontArm,
+                           ClothingSet inClothing );
 
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 

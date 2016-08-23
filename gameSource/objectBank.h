@@ -239,29 +239,32 @@ int addObject( const char *inDescription,
 
 
 
-typedef struct HandPos {
+typedef struct HoldingPos {
         char valid;
         doublePair pos;
-    } HandPos;
+        double rot;
+    } HoldingPos;
 
 
 // inAge -1 for no age modifier
 //
 // note that inScale, which is only used by the object picker, to draw objects
 // so that they fit in the picker, is not applied to clothing
-HandPos drawObject( ObjectRecord *inObject, doublePair inPos, 
-                    double inRot, char inFlipH, double inAge,
-                    char inHideFrontArm,
-                    ClothingSet inClothing,
-                    double inScale = 1.0 );
+//
+// returns the position used to hold something 
+HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, 
+                       double inRot, char inFlipH, double inAge,
+                       char inHideFrontArm,
+                       ClothingSet inClothing,
+                       double inScale = 1.0 );
 
 
-void drawObject( ObjectRecord *inObject, doublePair inPos,
-                 double inRot, char inFlipH,
-                 double inAge,
-                 char inHideFrontArm,
-                 ClothingSet inClothing,
-                 int inNumContained, int *inContainedIDs );
+HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
+                       double inRot, char inFlipH,
+                       double inAge,
+                       char inHideFrontArm,
+                       ClothingSet inClothing,
+                       int inNumContained, int *inContainedIDs );
 
 
 

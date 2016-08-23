@@ -1274,13 +1274,13 @@ static char logicalXOR( char inA, char inB ) {
 
 
 
-HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
-                    double inRot, char inFlipH, double inAge,
-                    char inHideFrontArm,
-                    ClothingSet inClothing,
-                    double inScale ) {
+HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
+                       double inRot, char inFlipH, double inAge,
+                       char inHideFrontArm,
+                       ClothingSet inClothing,
+                       double inScale ) {
     
-    HandPos returnHandPos = { false, {0, 0} };
+    HoldingPos returnHoldingPos = { false, {0, 0}, 0 };
     
     SimpleVector <int> frontArmIndices;
     getFrontArmIndices( inObject, inAge, &frontArmIndices );
@@ -1465,9 +1465,16 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
             // this is the front-most drawn hand
             // in unanimated, unflipped object
             if( i == frontHandIndex ) {
-                returnHandPos.valid = true;
+                returnHoldingPos.valid = true;
                 // return screen pos for hand, which may be flipped, etc.
-                returnHandPos.pos = pos;
+                returnHoldingPos.pos = pos;
+                returnHoldingPos.rot = rot;
+                }
+            else if( i == bodyIndex && inHideFrontArm ) {
+                returnHoldingPos.valid = true;
+                // return screen pos for body, which may be flipped, etc.
+                returnHoldingPos.pos = pos;
+                returnHoldingPos.rot = rot;
                 }
             }
         }    
@@ -1489,17 +1496,17 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
                     inFlipH, -1, false, emptyClothing );
         }
 
-    return returnHandPos;
+    return returnHoldingPos;
     }
 
 
 
-void drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
-                 char inFlipH, double inAge,
-                 char inHideFrontArm,
-                 ClothingSet inClothing,
-                 int inNumContained, int *inContainedIDs ) {
-
+HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
+                       char inFlipH, double inAge,
+                       char inHideFrontArm,
+                       ClothingSet inClothing,
+                       int inNumContained, int *inContainedIDs ) {
+    
     int numSlots = getNumContainerSlots( inObject->id );
     
     if( inNumContained > numSlots ) {
@@ -1529,8 +1536,8 @@ void drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                     emptyClothing );
         }
     
-    drawObject( inObject, inPos, inRot, inFlipH, inAge, inHideFrontArm,
-                inClothing );
+    return drawObject( inObject, inPos, inRot, inFlipH, inAge, inHideFrontArm,
+                       inClothing );
     }
 
 

@@ -2016,21 +2016,29 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
         double age = mPersonAgeSlider.getValue();
         
-        char hideHands = true;
+        char hideFrontArm = true;
         
         ObjectRecord *personObject = getObject( mDemoPersonObject );
 
         if( mHeldInHandCheckbox.getToggled() ) {
             
-            hideHands = false;
+            hideFrontArm = false;
             }
         
-        HandPos frontHandPos =
+        HoldingPos holdingPos =
             drawObject( personObject, drawOffset, 0, false, 
-                        age, hideHands, getEmptyClothingSet() );
+                        age, hideFrontArm, getEmptyClothingSet() );
 
-        if( !hideHands && frontHandPos.valid ) {
-            drawOffset = add( mCurrentObject.heldOffset, frontHandPos.pos );
+        if( holdingPos.valid ) {
+            doublePair rotatedOffset = mCurrentObject.heldOffset;
+            
+            if( hideFrontArm ) {
+                // only rotate held pos for non-handheld objects
+                rotatedOffset = rotate( mCurrentObject.heldOffset, 
+                                        -2 * M_PI * holdingPos.rot );
+                }
+                    
+            drawOffset = add( rotatedOffset, holdingPos.pos );
             }
         else {
             drawOffset = add( mCurrentObject.heldOffset, drawOffset );

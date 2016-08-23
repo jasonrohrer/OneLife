@@ -626,7 +626,7 @@ static char logicalXOR( char inA, char inB ) {
 
 
 
-HandPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
+HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                         double inAnimFade,
                         AnimType inFadeTargetType,
                         double inFadeTargetFrameTime,
@@ -739,7 +739,7 @@ static double processFrameTimeWithPauses( AnimationRecord *inAnim,
 
 
 
-HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
+HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
                         double inFrameTime,
                         double inAnimFade,
                         AnimationRecord *inFadeTargetAnim,
@@ -753,7 +753,7 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                         char inHideFrontArm,
                         ClothingSet inClothing ) {
 
-    HandPos returnHandPos = { false, {0, 0} };
+    HoldingPos returnHoldingPos = { false, {0, 0}, 0 };
 
 
 
@@ -767,7 +767,7 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         // cannot animate objects with this many sprites
         drawObject( obj, inPos, 0, inFlipH, inAge, 
                     inHideFrontArm, inClothing );
-        return returnHandPos;
+        return returnHoldingPos;
         }
 
     SimpleVector <int> frontArmIndices;
@@ -1261,11 +1261,18 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             // this is front-most drawn hand
             // in unanimated, unflipped object
             if( i == frontHandIndex ) {
-                
-                returnHandPos.valid = true;
+                returnHoldingPos.valid = true;
                 // return screen pos for hand, which may be flipped, etc.
-                returnHandPos.pos = pos;
+                returnHoldingPos.pos = pos;
+                returnHoldingPos.rot = rot;
                 }
+            else if( i == bodyIndex && inHideFrontArm ) {
+                returnHoldingPos.valid = true;
+                // return screen pos for body, which may be flipped, etc.
+                returnHoldingPos.pos = pos;
+                returnHoldingPos.rot = rot;
+                }
+            
             }
         
         } 
@@ -1302,7 +1309,7 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         animLayerFades = NULL;
         }
     
-    return returnHandPos;
+    return returnHoldingPos;
     }
 
 

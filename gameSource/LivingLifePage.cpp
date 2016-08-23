@@ -1410,26 +1410,26 @@ void LivingLifePage::drawLiveObject(
     double age = inObj->age + 
         inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
 
-    char hideHands = false;
+    char hideFrontArm = false;
 
     if( inObj->holdingID > 0 ) {
         ObjectRecord *heldObject = getObject( inObj->holdingID );
                     
-        hideHands = true;
+        hideFrontArm = true;
                     
         if( heldObject->heldInHand ) {
             
-            hideHands = false;
+            hideFrontArm = false;
             }
         }
     else if( inObj->holdingID < 0 ) {
         // carrying baby
-        hideHands = true;
+        hideFrontArm = true;
         }
     
                 
 
-    HandPos frontHandPos =
+    HoldingPos holdingPos =
         drawObjectAnim( inObj->displayID, curType, 
                         timeVal,
                         animFade,
@@ -1440,7 +1440,7 @@ void LivingLifePage::drawLiveObject(
                         pos,
                         inObj->holdingFlip,
                         age,
-                        hideHands,
+                        hideFrontArm,
                         inObj->clothing );
 
     delete [] string;
@@ -1448,8 +1448,8 @@ void LivingLifePage::drawLiveObject(
     if( inObj->holdingID != 0 ) { 
         doublePair holdPos;
 
-        if( !hideHands && frontHandPos.valid ) {
-            holdPos = frontHandPos.pos;
+        if( holdingPos.valid ) {
+            holdPos = holdingPos.pos;
             }
         else {
             holdPos = pos;
@@ -1473,16 +1473,22 @@ void LivingLifePage::drawLiveObject(
             
             doublePair heldOffset = heldObject->heldOffset;
             
+            
+
             heldOffset = sub( heldOffset, 
                               getObjectCenterOffset( heldObject ) );
 
             if( inObj->holdingFlip ) {
-                holdPos.x -= heldOffset.x;
-                }
-            else {
-                holdPos.x += heldOffset.x;
+                heldOffset.x *= -1;
                 }
             
+            if( holdingPos.valid && holdingPos.rot != 0  &&
+                hideFrontArm ) {
+                heldOffset = rotate( heldOffset, -2 * M_PI * holdingPos.rot );
+                }
+
+            holdPos.x += heldOffset.x;
+
             holdPos.y += heldOffset.y;
             }
                 
