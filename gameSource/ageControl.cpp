@@ -2,6 +2,37 @@
 
 #include <math.h>
 
+
+static double babyHeadDownFactor = 0.6;
+
+static double babyBodyDownFactor = 0.75;
+
+static double oldHeadDownFactor = 0.35;
+
+static double oldHeadForwardFactor = 2;
+
+
+#include "minorGems/util/SettingsManager.h"
+
+
+void initAgeControl() {
+    babyHeadDownFactor = 
+        SettingsManager::getFloatSetting( "babyHeadDownFactor", 0.6 );
+    
+    babyBodyDownFactor = 
+        SettingsManager::getFloatSetting( "babyBodyDownFactor", 0.75 );
+
+    oldHeadDownFactor = 
+        SettingsManager::getFloatSetting( "oldHeadDownFactor", 0.35 );
+
+    oldHeadForwardFactor = 
+        SettingsManager::getFloatSetting( "oldHeadForwardFactor", 2 );
+    
+    }
+
+
+
+
 doublePair getAgeHeadOffset( double inAge, doublePair inHeadSpritePos,
                              doublePair inBodySpritePos,
                              doublePair inFrontFootSpritePos ) {
@@ -13,7 +44,7 @@ doublePair getAgeHeadOffset( double inAge, doublePair inHeadSpritePos,
         
         double maxHead = inHeadSpritePos.y - inFrontFootSpritePos.y;
         
-        double yOffset = ( ( 20 - inAge ) / 20 ) * .60 * maxHead;
+        double yOffset = ( ( 20 - inAge ) / 20 ) * babyHeadDownFactor * maxHead;
         
         
         return (doublePair){ 0, lrint( -yOffset ) };
@@ -29,11 +60,13 @@ doublePair getAgeHeadOffset( double inAge, doublePair inHeadSpritePos,
 
         double maxHead = inHeadSpritePos.y - inBodySpritePos.y;
         
-        double vertOffset = ( ( inAge - 40 ) / 20 ) * .35 * maxHead;
+        double vertOffset = 
+            ( ( inAge - 40 ) / 20 ) * oldHeadDownFactor * maxHead;
         
         double footOffset = inFrontFootSpritePos.x - inHeadSpritePos.x;
         
-        double forwardOffset = ( ( inAge - 40 ) / 20 ) * 2 * footOffset;
+        double forwardOffset = 
+            ( ( inAge - 40 ) / 20 ) * oldHeadForwardFactor * footOffset;
 
         return (doublePair){ lrint( forwardOffset ), lrint( -vertOffset ) };
         }
@@ -52,7 +85,7 @@ doublePair getAgeBodyOffset( double inAge, doublePair inBodySpritePos ) {
         
         double maxBody = inBodySpritePos.y;
         
-        double yOffset = ( ( 20 - inAge ) / 20 ) * .75 * maxBody;
+        double yOffset = ( ( 20 - inAge ) / 20 ) * babyBodyDownFactor * maxBody;
         
         
         return (doublePair){ 0, lrint( -yOffset ) };

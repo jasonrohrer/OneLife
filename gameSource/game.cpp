@@ -73,6 +73,8 @@ CustomRandomSource randSource( 34957197 );
 
 #include "ServerActionPage.h"
 
+#include "ageControl.h"
+
 
 // start at reflector URL
 char *reflectorURL = NULL;
@@ -362,7 +364,9 @@ void freeDrawString() {
 void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                       const char *inCustomRecordedGameData,
                       char inPlayingBack ) {
-
+    
+    initAgeControl();
+    
     updateDataVersionNumber();
 
     toggleLinearMagFilter( true );

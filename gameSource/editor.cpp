@@ -63,6 +63,7 @@ int accountHmacVersionNumber = 0;
 #include "objectBank.h"
 #include "overlayBank.h"
 
+#include "ageControl.h"
 
 #include "minorGems/io/file/File.h"
 #include "minorGems/system/Time.h"
@@ -315,6 +316,8 @@ void freeDrawString() {
 void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                       const char *inCustomRecordedGameData,
                       char inPlayingBack ) {
+
+    initAgeControl();
 
     /*
     for( int i=0; i<800; i++ ) {
