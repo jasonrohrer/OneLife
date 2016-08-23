@@ -1276,13 +1276,15 @@ static char logicalXOR( char inA, char inB ) {
 
 HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
                     double inRot, char inFlipH, double inAge,
-                    char inHoldingSomething,
+                    char inHideFrontArm,
                     ClothingSet inClothing,
                     double inScale ) {
     
     HandPos returnHandPos = { false, {0, 0} };
     
-
+    SimpleVector <int> frontArmIndices;
+    getFrontArmIndices( inObject, inAge, &frontArmIndices );
+    
     
     int headIndex = getHeadIndex( inObject, inAge );
     int bodyIndex = getBodyIndex( inObject, inAge );
@@ -1360,11 +1362,12 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
         
         if( inObject->spriteInvisibleWhenHolding[i] ) {
             holderOrHeadDrawnAboveBody = true;
-            
-            if( inHoldingSomething ) {
-                skipSprite = true;
-                }
             }
+        
+        if( inHideFrontArm && frontArmIndices.getElementIndex( i ) != -1 ) {
+            skipSprite = true;
+            }
+
         if( i == headIndex ) {
             holderOrHeadDrawnAboveBody = true;
             }
@@ -1493,7 +1496,7 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
 
 void drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                  char inFlipH, double inAge,
-                 char inHoldingSomething,
+                 char inHideFrontArm,
                  ClothingSet inClothing,
                  int inNumContained, int *inContainedIDs ) {
 
@@ -1526,7 +1529,7 @@ void drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                     emptyClothing );
         }
     
-    drawObject( inObject, inPos, inRot, inFlipH, inAge, inHoldingSomething,
+    drawObject( inObject, inPos, inRot, inFlipH, inAge, inHideFrontArm,
                 inClothing );
     }
 
@@ -2004,7 +2007,7 @@ int getBackHandIndex( ObjectRecord *inObject,
 
 
 int getFrontHandIndex( ObjectRecord *inObject,
-                      double inAge ) {
+                       double inAge ) {
         
     int handOneIndex;
     int handTwoIndex;
@@ -2030,6 +2033,25 @@ int getFrontHandIndex( ObjectRecord *inObject,
         return -1;
         }
     }
+
+
+
+void getFrontArmIndices( ObjectRecord *inObject,
+                         double inAge, SimpleVector<int> *outList ) {
+    int frontHand = getFrontHandIndex( inObject, inAge );
+    
+    if( frontHand == -1 ) {
+        return;
+        }
+    
+    int nextArmPart = frontHand;
+    
+    while( nextArmPart != -1 && ! inObject->spriteIsBody[ nextArmPart ] ) {
+        outList->push_back( nextArmPart );
+        nextArmPart = inObject->spriteParent[ nextArmPart ];
+        }
+    }
+
 
 
 

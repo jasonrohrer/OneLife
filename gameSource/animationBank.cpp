@@ -635,7 +635,7 @@ HandPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                         doublePair inPos,
                         char inFlipH,
                         double inAge,
-                        char inHoldingSomething,
+                        char inHideFrontArm,
                         ClothingSet inClothing ) {
     
     AnimationRecord *r = getAnimation( inObjectID, inType );
@@ -643,7 +643,7 @@ HandPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
 
     if( r == NULL ) {
         return drawObject( getObject( inObjectID ), inPos, 0, inFlipH, inAge, 
-                           inHoldingSomething, inClothing );
+                           inHideFrontArm, inClothing );
         }
     else {
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
@@ -657,7 +657,7 @@ HandPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                                outFrozenRotFrameTimeUsed,
                                rF,
                                inPos, inFlipH, inAge, 
-                               inHoldingSomething, inClothing );
+                               inHideFrontArm, inClothing );
         }
     }
 
@@ -750,10 +750,11 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                         doublePair inPos,
                         char inFlipH,
                         double inAge,
-                        char inHoldingSomething,
+                        char inHideFrontArm,
                         ClothingSet inClothing ) {
 
     HandPos returnHandPos = { false, {0, 0} };
+
 
 
     *outFrozenRotFrameTimeUsed = false;
@@ -765,8 +766,13 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     if( obj->numSprites > MAX_WORKING_SPRITES ) {
         // cannot animate objects with this many sprites
         drawObject( obj, inPos, 0, inFlipH, inAge, 
-                    inHoldingSomething, inClothing );
+                    inHideFrontArm, inClothing );
+        return returnHandPos;
         }
+
+    SimpleVector <int> frontArmIndices;
+    getFrontArmIndices( obj, inAge, &frontArmIndices );
+
     
 
 
@@ -1135,11 +1141,12 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         
         if( obj->spriteInvisibleWhenHolding[i] ) {
             holderOrHeadDrawnAboveBody = true;
-            
-            if( inHoldingSomething ) {
-                skipSprite = true;
-                }
             }
+
+        if( inHideFrontArm && frontArmIndices.getElementIndex( i ) != -1 ) {
+            skipSprite = true;
+            }
+
         if( i == headIndex ) {
             holderOrHeadDrawnAboveBody = true;
             }
@@ -1309,7 +1316,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
-                     char inHoldingSomething,
+                     char inHideFrontArm,
                      ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs ) {
     
@@ -1317,7 +1324,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
  
     if( r == NULL ) {
         drawObject( getObject( inObjectID ), inPos, 0, 
-                    inFlipH, inAge, inHoldingSomething, inClothing,
+                    inFlipH, inAge, inHideFrontArm, inClothing,
                     inNumContained, inContainedIDs );
         }
     else {
@@ -1331,7 +1338,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                         outFrozenRotFrameTimeUsed,
                         rF,
                         inPos, inFlipH, inAge,
-                        inHoldingSomething, inClothing,
+                        inHideFrontArm, inClothing,
                         inNumContained, inContainedIDs );
         }
     }
@@ -1349,7 +1356,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
-                     char inHoldingSomething,
+                     char inHideFrontArm,
                      ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs ) {
     
@@ -1444,7 +1451,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     outFrozenRotFrameTimeUsed,
                     inFrozenRotAnim,
                     inPos, inFlipH,
-                    inAge, inHoldingSomething, inClothing );
+                    inAge, inHideFrontArm, inClothing );
     }
 
 

@@ -251,7 +251,7 @@ typedef struct HandPos {
 // so that they fit in the picker, is not applied to clothing
 HandPos drawObject( ObjectRecord *inObject, doublePair inPos, 
                     double inRot, char inFlipH, double inAge,
-                    char inHoldingSomething,
+                    char inHideFrontArm,
                     ClothingSet inClothing,
                     double inScale = 1.0 );
 
@@ -259,7 +259,7 @@ HandPos drawObject( ObjectRecord *inObject, doublePair inPos,
 void drawObject( ObjectRecord *inObject, doublePair inPos,
                  double inRot, char inFlipH,
                  double inAge,
-                 char inHoldingSomething,
+                 char inHideFrontArm,
                  ClothingSet inClothing,
                  int inNumContained, int *inContainedIDs );
 
@@ -353,6 +353,11 @@ int getBodyIndex( ObjectRecord *inObject, double inAge );
 int getBackFootIndex( ObjectRecord *inObject, double inAge );
 
 int getFrontFootIndex( ObjectRecord *inObject, double inAge );
+
+
+void getFrontArmIndices( ObjectRecord *inObject, double inAge, 
+                         SimpleVector<int> *outList );
+
 
 
 char *getBiomesString( ObjectRecord *inObject );

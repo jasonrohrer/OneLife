@@ -145,7 +145,7 @@ HandPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                         char *outFrozenRotFrameTimeUsed,
                         doublePair inPos,
                         char inFlipH,
-                        double inAge, char inHoldingSomething,
+                        double inAge, char inHideFrontArm,
                         ClothingSet inClothing );
 
 
@@ -159,7 +159,7 @@ HandPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                         AnimationRecord *inFrozenRotAnim,
                         doublePair inPos,
                         char inFlipH,
-                        double inAge, char inHoldingSomething,
+                        double inAge, char inHideFrontArm,
                         ClothingSet inClothing );
 
 
@@ -172,7 +172,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
-                     char inHoldingSomething,
+                     char inHideFrontArm,
                      ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs );
 
@@ -188,7 +188,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
-                     char inHoldingSomething,
+                     char inHideFrontArm,
                      ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs );
 
