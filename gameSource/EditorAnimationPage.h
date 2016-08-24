@@ -101,7 +101,8 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
         char mFlipDraw;
         
-
+        double mCurrentObjectFrameRateFactor;
+        
         AnimationRecord *mCurrentAnim[ endAnimType ];
         
         AnimationRecord *mWiggleAnim;

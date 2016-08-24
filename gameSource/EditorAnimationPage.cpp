@@ -334,7 +334,10 @@ void EditorAnimationPage::populateCurrentAnim() {
     freeCurrentAnim();
 
     ObjectRecord *obj = getObject( mCurrentObjectID );
-    
+
+    mCurrentObjectFrameRateFactor =  frameRateFactor * obj->speedMult;
+
+
     for( int i=0; i<endAnimType; i++ ) {
 
         AnimationRecord *oldRecord =
@@ -1025,7 +1028,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         
         // make sure frame time never goes backwards when we reduce speed
         // nor jumps forward when we increase speed
-        double oldFrameTime = ( mFrameCount / 60.0 ) * frameRateFactor;
+        double oldFrameTime = 
+            ( mFrameCount / 60.0 ) * mCurrentObjectFrameRateFactor;
             
         oldFrameTime *= mLastTestSpeed;
 
@@ -1037,7 +1041,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             
             newFrameTime /= mTestSpeedSlider.getValue();
             
-            newFrameTime /= frameRateFactor;
+            newFrameTime /= mCurrentObjectFrameRateFactor;
             
             mFrameCount = lrint( newFrameTime * 60.0 );
         
@@ -1184,15 +1188,18 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
 
         if( anim != NULL ) {
             
-            double frameTime = ( mFrameCount / 60.0 ) * frameRateFactor;
+            double frameTime = 
+                ( mFrameCount / 60.0 ) * mCurrentObjectFrameRateFactor;
             
             double fadeTargetFrameTime = frameTime;
             
             double frozenRotFrameTime = 
-                ( mFrozenRotFrameCount / 60.0 ) * frameRateFactor;
+                ( mFrozenRotFrameCount / 60.0 ) * mCurrentObjectFrameRateFactor;
             
             if( animFade < 1 ) {
-                frameTime = ( mLastTypeFrameCount / 60.0 ) * frameRateFactor;
+                frameTime = 
+                    ( mLastTypeFrameCount / 60.0 ) * 
+                    mCurrentObjectFrameRateFactor;
                 }
             
 

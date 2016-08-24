@@ -845,10 +845,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         int oldNumSprites = 0;
         int oldNumSlots = 0;
         
+        int oldSpeedMult = 1.0;
 
         if( oldObject != NULL ) {
             oldNumSprites = oldObject->numSprites;
             oldNumSlots = oldObject->numSlots;
+            oldSpeedMult = oldObject->speedMult;
             }
         
         
@@ -924,6 +926,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         if( mCurrentObject.numSprites != oldNumSprites ||
             mCurrentObject.numSlots != oldNumSlots ||
+            mSpeedMultField.getFloat() != oldSpeedMult || 
             layersSwapped ) {
                     
             animPage->objectLayersChanged( mCurrentObject.id );
