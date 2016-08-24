@@ -795,6 +795,15 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     int bodyIndex = getBodyIndex( obj, inAge );
     int backFootIndex = getBackFootIndex( obj, inAge );
     int frontFootIndex = getFrontFootIndex( obj, inAge );
+
+
+    int topBackArmIndex = -1;
+    
+    if( backArmIndices.size() > 0 ) {
+        topBackArmIndex =
+            backArmIndices.getElementDirect( backArmIndices.size() - 1 );
+        }
+
     
     int frontHandIndex = getFrontHandIndex( obj, inAge );
     
@@ -1073,11 +1082,8 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         }
 
 
-    // if drawing a tunic, skip drawing body and ALL
-    // layers above body (except feet) until
-    // a holder (hand) or head has been drawn above the body
-    char holderOrHeadDrawnAboveBody = true;
-    
+    doublePair tunicPos = { 0, 0 };
+    double tunicRot = 0;
     
     // now that their individual animations have been computed
     // walk through and follow parent chains to compute compound animations
@@ -1157,9 +1163,6 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
         char skipSprite = false;
         
-        if( obj->spriteInvisibleWhenHolding[i] ) {
-            holderOrHeadDrawnAboveBody = true;
-            }
 
         if( !inHeldNotInPlaceYet && 
             inHideClosestArm == 1 && 
@@ -1182,9 +1185,6 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 }
             }
 
-        if( i == headIndex ) {
-            holderOrHeadDrawnAboveBody = true;
-            }
 
 
         if( i == backFootIndex 
@@ -1212,7 +1212,6 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
         if( i == bodyIndex 
             && inClothing.tunic != NULL ) {
-            skipSprite = true;
 
             doublePair offset = inClothing.tunic->clothingOffset;
             
@@ -1229,19 +1228,13 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             
             cPos = add( cPos, inPos );
             
-            drawObject( inClothing.tunic, cPos, rot,
-                        inFlipH, -1, 0, false, false, emptyClothing );
-            
-            // now skip all non-foot layers drawn above body
-            // until holder or head drawn
-            holderOrHeadDrawnAboveBody = false;
+            tunicPos = cPos;
+            tunicRot = rot;
             }
-        else if( inClothing.tunic != NULL && ! holderOrHeadDrawnAboveBody &&
-                 i != frontFootIndex  &&
-                 i != backFootIndex &&
-                 i != headIndex ) {
-            // skip it, it's under tunic
-            skipSprite = true;
+        else if( inClothing.tunic != NULL && i == topBackArmIndex ) {
+            // draw under top of back arm
+            drawObject( inClothing.tunic, tunicPos, tunicRot,
+                        inFlipH, -1, 0, false, false, emptyClothing );
             }
         
 
