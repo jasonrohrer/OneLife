@@ -118,8 +118,9 @@ EditorObjectPage::EditorObjectPage()
           mMaleCheckbox( 190, -190, 2 ),
           mDeathMarkerCheckbox( 190, -190, 2 ),
 
-          mHeldInHandCheckbox( 190, 20, 2 ),
-          mBlocksWalkingCheckbox( 190, 0, 2 ),
+          mHeldInHandCheckbox( 190, 36, 2 ),
+          mRideableCheckbox( 190, 16, 2 ),
+          mBlocksWalkingCheckbox( 190, -4, 2 ),
 
           mDemoClothesButton( smallFont, 200, 200, "Pos" ),
           mEndClothesDemoButton( smallFont, 200, 160, "XPos" ),
@@ -426,6 +427,13 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mHeldInHandCheckbox );
     mHeldInHandCheckbox.setVisible( true );
 
+    addComponent( &mRideableCheckbox );
+    mRideableCheckbox.setVisible( true );
+
+    mHeldInHandCheckbox.addActionListener( this );
+    mRideableCheckbox.addActionListener( this );
+    
+
     addComponent( &mBlocksWalkingCheckbox );
     mBlocksWalkingCheckbox.setVisible( true );
     mBlocksWalkingCheckbox.addActionListener( this );
@@ -625,6 +633,7 @@ void EditorObjectPage::updateAgingPanel() {
 
         mDeathMarkerCheckbox.setVisible( true );
         mHeldInHandCheckbox.setVisible( true );
+        mRideableCheckbox.setVisible( true );
         mBlocksWalkingCheckbox.setVisible( true );
         }
     else {
@@ -634,9 +643,11 @@ void EditorObjectPage::updateAgingPanel() {
         mDeathMarkerCheckbox.setVisible( false );
 
         mHeldInHandCheckbox.setVisible( false );
+        mRideableCheckbox.setVisible( false );
         mBlocksWalkingCheckbox.setVisible( false );
 
         mHeldInHandCheckbox.setToggled( false );
+        mRideableCheckbox.setToggled( false );
         mBlocksWalkingCheckbox.setToggled( false );
         
         if( mPickedObjectLayer != -1 ) {
@@ -780,6 +791,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mContainSizeField.getInt(),
                    mCheckboxes[1]->getToggled(),
                    mHeldInHandCheckbox.getToggled(),
+                   mRideableCheckbox.getToggled(),
                    mBlocksWalkingCheckbox.getToggled(),
                    biomes,
                    mMapChanceField.getFloat(),
@@ -868,6 +880,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mContainSizeField.getInt(),
                    mCheckboxes[1]->getToggled(),
                    mHeldInHandCheckbox.getToggled(),
+                   mRideableCheckbox.getToggled(),
                    mBlocksWalkingCheckbox.getToggled(),
                    biomes,
                    mMapChanceField.getFloat(),
@@ -1271,6 +1284,16 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         mNextHeldDemoButton.setVisible( false );
         mPrevHeldDemoButton.setVisible( false );
+        }
+    else if( inTarget == &mHeldInHandCheckbox ) {
+        if( mHeldInHandCheckbox.getToggled() ) {
+            mRideableCheckbox.setToggled( false );
+            }
+        }
+    else if( inTarget == &mRideableCheckbox ) {
+        if( mRideableCheckbox.getToggled() ) {
+            mHeldInHandCheckbox.setToggled( false );
+            }
         }
     else if( inTarget == &mDeathMarkerCheckbox ) {
         if( mDeathMarkerCheckbox.getToggled() ) {
@@ -1787,8 +1810,16 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 }
 
             mHeldInHandCheckbox.setToggled( pickedRecord->heldInHand );
+            mRideableCheckbox.setToggled( pickedRecord->rideable );
             mBlocksWalkingCheckbox.setToggled( pickedRecord->blocksWalking );
             
+            if( mRideableCheckbox.getToggled() ) {
+                mHeldInHandCheckbox.setToggled( false );
+                }
+            else if( mHeldInHandCheckbox.getToggled() ) {
+                mRideableCheckbox.setToggled( false );
+                }
+
 
             if( mCheckboxes[2]->getToggled() ) {
                 mPersonAgeSlider.setValue( defaultAge );
@@ -1826,11 +1857,17 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mSlotSizeField.setInt( 1 );
             mSlotSizeField.setVisible( false );
             mDemoSlotsButton.setVisible( false );
+            mDemoSlots = false;
+            mClearSlotsDemoButton.setVisible( false );
+                        
             mCurrentObject.numSlots = 0;
 
             mPersonAgeSlider.setVisible( false );
             mCheckboxes[2]->setToggled( false );
-            mSetHeldPosButton.setVisible( true );
+            
+            if( ! mSetHeldPos ) {
+                mSetHeldPosButton.setVisible( true );
+                }
             
             mRaceField.setVisible( false );
             }
@@ -2018,12 +2055,19 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         char hideFrontArm = true;
         
+        char hideAllLimbs = false;
+
         ObjectRecord *personObject = getObject( mDemoPersonObject );
 
         if( mHeldInHandCheckbox.getToggled() ) {
             
             hideFrontArm = false;
             }
+
+        if( mRideableCheckbox.getToggled() ) {
+            hideAllLimbs = true;
+            }
+        
         
         HoldingPos holdingPos =
             drawObject( personObject, drawOffset, 0, false, 
@@ -2383,6 +2427,11 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         pos = mHeldInHandCheckbox.getPosition();
         pos.x -= 20;
         smallFont->drawString( "Handheld", pos, alignRight );
+        }
+    if( mRideableCheckbox.isVisible() ) {
+        pos = mRideableCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Rideable", pos, alignRight );
         }
 
     if( mBlocksWalkingCheckbox.isVisible() ) {

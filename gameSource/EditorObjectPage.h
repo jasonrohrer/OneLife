@@ -129,6 +129,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
         CheckboxButton mDeathMarkerCheckbox;
 
         CheckboxButton mHeldInHandCheckbox;
+        CheckboxButton mRideableCheckbox;
         CheckboxButton mBlocksWalkingCheckbox;
 
         CheckboxButton *mClothingCheckboxes[NUM_CLOTHING_CHECKBOXES];

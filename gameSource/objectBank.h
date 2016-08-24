@@ -33,8 +33,17 @@ typedef struct ObjectRecord {
 
         // true for smaller objects that have heldOffsets relative to
         // front, moving hand
+        // non-handheld objects held relative to body
         char heldInHand;
 
+        // true for huge objects that are ridden when held (horses, cars, etc.)
+        // held offset is not relative to any body part, but relative to
+        // ground under body
+        // note that objects cannot be BOTH heldInHand and rideable
+        // (rideable overrides heldInHand)
+        char rideable;
+
+        
         
         // true for objects that cannot be walked through
         char blocksWalking;
@@ -205,6 +214,7 @@ int addObject( const char *inDescription,
                int inContainSize,
                char inPermanent,
                char inHeldInHand,
+               char inRideable,
                char inBlocksWalking,
                char *inBiomes,
                float inMapChance,

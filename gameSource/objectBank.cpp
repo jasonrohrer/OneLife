@@ -320,8 +320,16 @@ float initObjectBankStep() {
                 int heldInHandRead = 0;                            
                 sscanf( lines[next], "heldInHand=%d", 
                         &( heldInHandRead ) );
-                            
-                r->heldInHand = heldInHandRead;
+                          
+                r->heldInHand = false;
+                r->rideable = false;
+                
+                if( heldInHandRead == 1 ) {
+                    r->heldInHand = true;
+                    }
+                else if( heldInHandRead == 2 ) {
+                    r->rideable = true;
+                    }
 
                 next++;
 
@@ -778,6 +786,7 @@ void resaveAll() {
                        idMap[i]->containSize,
                        idMap[i]->permanent,
                        idMap[i]->heldInHand,
+                       idMap[i]->rideable,
                        idMap[i]->blocksWalking,
                        biomeString,
                        idMap[i]->mapChance,
@@ -898,6 +907,7 @@ int addObject( const char *inDescription,
                int inContainSize,
                char inPermanent,
                char inHeldInHand,
+               char inRideable,
                char inBlocksWalking,
                char *inBiomes,
                float inMapChance,
@@ -979,7 +989,20 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "containable=%d", (int)inContainable ) );
         lines.push_back( autoSprintf( "containSize=%d", (int)inContainSize ) );
         lines.push_back( autoSprintf( "permanent=%d", (int)inPermanent ) );
-        lines.push_back( autoSprintf( "heldInHand=%d", (int)inHeldInHand ) );
+        
+        
+        int heldInHandNumber = 0;
+        
+        if( inHeldInHand ) {
+            heldInHandNumber = 1;
+            }
+        if( inRideable ) {
+            // override
+            heldInHandNumber = 2;
+            }
+
+        lines.push_back( autoSprintf( "heldInHand=%d", heldInHandNumber ) );
+        
         lines.push_back( autoSprintf( "blocksWalking=%d", 
                                       (int)inBlocksWalking ) );
         
@@ -1149,6 +1172,12 @@ int addObject( const char *inDescription,
     r->containSize = inContainSize;
     r->permanent = inPermanent;
     r->heldInHand = inHeldInHand;
+    r->rideable = inRideable;
+    
+    if( r->heldInHand && r->rideable ) {
+        r->heldInHand = false;
+        }
+    
     r->blocksWalking = inBlocksWalking;
     
 
