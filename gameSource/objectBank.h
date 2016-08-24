@@ -266,6 +266,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
                        double inRot, char inFlipH, double inAge,
                        char inHideFrontArm,
                        char inHideAllLimbs,
+                       char inHeldNotInPlaceYet,
                        ClothingSet inClothing,
                        double inScale = 1.0 );
 
@@ -275,6 +276,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
                        double inAge,
                        char inHideFrontArm,
                        char inHideAllLimbs,
+                       char inHeldNotInPlaceYet,
                        ClothingSet inClothing,
                        int inNumContained, int *inContainedIDs );
 

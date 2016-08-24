@@ -48,7 +48,7 @@ class ObjectPickable : public Pickable {
             
             inPos = sub( inPos, mult( getObjectCenterOffset( r ), zoom ) );
 
-            drawObject( r, inPos, 0, false, 20, false, false,
+            drawObject( r, inPos, 0, false, 20, false, false, false,
                         getEmptyClothingSet(), zoom );
             }
 

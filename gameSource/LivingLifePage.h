@@ -58,6 +58,7 @@ typedef struct LiveObject {
         char holdingFlip;
 
         char heldPosOverride;
+        char heldPosOverrideAlmostOver;
         doublePair heldObjectPos;
 
         AnimType curAnim;

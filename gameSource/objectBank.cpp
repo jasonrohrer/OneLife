@@ -1307,6 +1307,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
                        double inRot, char inFlipH, double inAge,
                        char inHideFrontArm,
                        char inHideAllLimbs,
+                       char inHeldNotInPlaceYet,
                        ClothingSet inClothing,
                        double inScale ) {
     
@@ -1400,10 +1401,12 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             holderOrHeadDrawnAboveBody = true;
             }
         
-        if( inHideFrontArm && frontArmIndices.getElementIndex( i ) != -1 ) {
+        if( !inHeldNotInPlaceYet &&
+            inHideFrontArm && frontArmIndices.getElementIndex( i ) != -1 ) {
             skipSprite = true;
             }
-        else if( inHideAllLimbs ) {
+        else if( !inHeldNotInPlaceYet &&
+                 inHideAllLimbs ) {
             if( frontArmIndices.getElementIndex( i ) != -1 
                 ||
                 backArmIndices.getElementIndex( i ) != -1
@@ -1432,7 +1435,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             cPos = add( cPos, inPos );
             
             drawObject( inClothing.backShoe, cPos, inRot,
-                        inFlipH, -1, false, false, emptyClothing );
+                        inFlipH, -1, false, false, false, emptyClothing );
             }
         
         if( i == bodyIndex 
@@ -1449,7 +1452,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             
             
             drawObject( inClothing.tunic, cPos, inRot,
-                        inFlipH, -1, false, false, emptyClothing );
+                        inFlipH, -1, false, false, false, emptyClothing );
             
             // now skip all non-foot layers drawn above body
             // until holder or head drawn
@@ -1476,7 +1479,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             cPos = add( cPos, inPos );
             
             drawObject( inClothing.frontShoe, cPos, inRot,
-                        inFlipH, -1, false, false, emptyClothing );
+                        inFlipH, -1, false, false, false, emptyClothing );
             }
         
 
@@ -1511,7 +1514,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             
             // this is the front-most drawn hand
             // in unanimated, unflipped object
-            if( i == frontHandIndex ) {
+            if( i == frontHandIndex && !inHideFrontArm && !inHideAllLimbs ) {
                 returnHoldingPos.valid = true;
                 // return screen pos for hand, which may be flipped, etc.
                 returnHoldingPos.pos = pos;
@@ -1540,7 +1543,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
         cPos = add( cPos, inPos );
         
         drawObject( inClothing.hat, cPos, inRot,
-                    inFlipH, -1, false, false, emptyClothing );
+                    inFlipH, -1, false, false, false, emptyClothing );
         }
 
     return returnHoldingPos;
@@ -1552,6 +1555,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                        char inFlipH, double inAge,
                        char inHideFrontArm,
                        char inHideAllLimbs,
+                       char inHeldNotInPlaceYet,
                        ClothingSet inClothing,
                        int inNumContained, int *inContainedIDs ) {
     
@@ -1582,12 +1586,14 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
         drawObject( contained, pos, inRot, inFlipH, inAge,
                     false,
                     false,
+                    false,
                     emptyClothing );
         }
     
     return drawObject( inObject, inPos, inRot, inFlipH, inAge, 
                        inHideFrontArm,
                        inHideAllLimbs,
+                       inHeldNotInPlaceYet,
                        inClothing );
     }
 

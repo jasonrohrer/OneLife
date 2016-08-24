@@ -2072,7 +2072,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         HoldingPos holdingPos =
             drawObject( personObject, drawOffset, 0, false, 
-                        age, hideFrontArm, hideAllLimbs,
+                        age, hideFrontArm, hideAllLimbs, false,
                         getEmptyClothingSet() );
 
         if( holdingPos.valid ) {
@@ -2123,7 +2123,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 
   
         drawObject( getObject( mDemoPersonObject ), drawOffset, 0, false, 
-                    age, false, false, s );
+                    age, false, false, false, s );
 
         // offset from body part
         //switch( mCurrentObject.clothing ) {
@@ -2194,7 +2194,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 drawObject( demoObject, 
                             sub( add( mCurrentObject.slotPos[i], drawOffset ),
                                  getObjectCenterOffset( demoObject ) ),
-                            0, false, -1, false, false, 
+                            0, false, -1, false, false, false, 
                             getEmptyClothingSet() );
                 }
             }

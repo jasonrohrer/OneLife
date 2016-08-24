@@ -650,7 +650,8 @@ static void drawTransObject( int inID, doublePair inPos ) {
         
         inPos = sub( inPos, mult( getObjectCenterOffset( r ), zoom ) );
 
-        drawObject( getObject( inID ), inPos, 0, false, 20, false, false, 
+        drawObject( getObject( inID ), inPos, 0, false, 20, false, false,
+                    false,
                     getEmptyClothingSet(), zoom );
         }
     }

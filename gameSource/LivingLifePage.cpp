@@ -1233,7 +1233,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             &used,
                             pos, mMapTileFlips[ inMapI ],
                             -1,
-                            false, false,
+                            false, false, false,
                             getEmptyClothingSet(),
                             mMapContainedStacks[ inMapI ].size(),
                             stackArray );
@@ -1249,7 +1249,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             &used,
                             pos, 
                             mMapTileFlips[ inMapI ], -1,
-                            false, false,
+                            false, false, false,
                             getEmptyClothingSet() );
             }
         }
@@ -1445,8 +1445,12 @@ void LivingLifePage::drawLiveObject(
                         pos,
                         inObj->holdingFlip,
                         age,
+                        // don't actually hide body parts until
+                        // held object is done sliding into place
                         hideFrontArm,
                         hideAllLimbs,
+                        inObj->heldPosOverride && 
+                        ! inObj->heldPosOverrideAlmostOver,
                         inObj->clothing );
 
     delete [] string;
@@ -1510,6 +1514,7 @@ void LivingLifePage::drawLiveObject(
                         
             if( length( delta ) < step ) {
                 inObj->heldObjectPos = holdPos;
+                inObj->heldPosOverrideAlmostOver = true;
                 }
             else {
                 inObj->heldObjectPos =
@@ -1522,6 +1527,7 @@ void LivingLifePage::drawLiveObject(
             }
         else {
             inObj->heldPosOverride = false;
+            inObj->heldPosOverrideAlmostOver = false;
             // track it every frame so we have a good
             // base point for smooth move when the object
             // is dropped
@@ -1588,6 +1594,7 @@ void LivingLifePage::drawLiveObject(
                                 // don't hide baby's hands when it is held
                                 false,
                                 false,
+                                false,
                                 babyO->clothing );
 
                 if( babyO->currentSpeech != NULL ) {
@@ -1607,7 +1614,7 @@ void LivingLifePage::drawLiveObject(
                             frozenRotHeldTimeVal,
                             &( inObj->heldFrozenRotFrameCountUsed ),
                             holdPos,
-                            inObj->holdingFlip, -1, false, false,
+                            inObj->holdingFlip, -1, false, false, false,
                             getEmptyClothingSet() );
             }
         else {
@@ -1620,7 +1627,7 @@ void LivingLifePage::drawLiveObject(
                             &( inObj->heldFrozenRotFrameCountUsed ),
                             holdPos,
                             inObj->holdingFlip,
-                            -1, false, false,
+                            -1, false, false, false,
                             getEmptyClothingSet(),
                             inObj->numContained,
                             inObj->containedIDs );
@@ -2878,6 +2885,7 @@ void LivingLifePage::step() {
                                 // for smooth transition
                                 
                                 existing->heldPosOverride = true;
+                                existing->heldPosOverrideAlmostOver = false;
                                 existing->heldObjectPos.x = heldOriginX;
                                 existing->heldObjectPos.y = heldOriginY;
                                 
@@ -3130,6 +3138,7 @@ void LivingLifePage::step() {
                         o.currentPos.y = o.yd;
 
                         o.heldPosOverride = false;
+                        o.heldPosOverrideAlmostOver = false;
                         o.heldObjectPos = o.currentPos;
                         
                         o.currentSpeed = 0;

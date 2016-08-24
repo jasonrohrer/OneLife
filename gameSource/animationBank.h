@@ -147,6 +147,8 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                            char inFlipH,
                            double inAge, char inHideFrontArm,
                            char inHideAllLimbs,
+                           // if true, we draw holding parts anyway
+                           char inHeldNotInPlaceYet,
                            ClothingSet inClothing );
 
 
@@ -162,6 +164,7 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                            char inFlipH,
                            double inAge, char inHideFrontArm,
                            char inHideAllLimbs,
+                           char inHeldNotInPlaceYet,
                            ClothingSet inClothing );
 
 
@@ -176,6 +179,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      double inAge,
                      char inHideFrontArm,
                      char inHideAllLimbs,
+                     char inHeldNotInPlaceYet,
                      ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs );
 
@@ -193,6 +197,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      double inAge,
                      char inHideFrontArm,
                      char inHideAllLimbs,
+                     char inHeldNotInPlaceYet,
                      ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs );
 
