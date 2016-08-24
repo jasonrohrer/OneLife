@@ -1135,15 +1135,18 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             // this is the head
             animHeadPos = spritePos;
             animHeadRotDelta = rot - obj->spriteRot[i];
+            
+            if( inFlipH ) {    
+                animHeadPos.x *= -1;
+                animHeadRotDelta *= -1;
+                }
+            
             }
 
 
         if( inFlipH ) {
             spritePos.x *= -1;
             rot *= -1;
-
-            animHeadPos.x *= -1;
-            animHeadRotDelta *= -1;
             }
         
         
