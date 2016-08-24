@@ -1305,7 +1305,7 @@ static char logicalXOR( char inA, char inB ) {
 
 HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
                        double inRot, char inFlipH, double inAge,
-                       char inHideFrontArm,
+                       int inHideClosestArm,
                        char inHideAllLimbs,
                        char inHeldNotInPlaceYet,
                        ClothingSet inClothing,
@@ -1402,7 +1402,13 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             }
         
         if( !inHeldNotInPlaceYet &&
-            inHideFrontArm && frontArmIndices.getElementIndex( i ) != -1 ) {
+            inHideClosestArm == 1 && 
+            frontArmIndices.getElementIndex( i ) != -1 ) {
+            skipSprite = true;
+            }
+        else if( !inHeldNotInPlaceYet &&
+            inHideClosestArm == -1 && 
+            backArmIndices.getElementIndex( i ) != -1 ) {
             skipSprite = true;
             }
         else if( !inHeldNotInPlaceYet &&
@@ -1435,7 +1441,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             cPos = add( cPos, inPos );
             
             drawObject( inClothing.backShoe, cPos, inRot,
-                        inFlipH, -1, false, false, false, emptyClothing );
+                        inFlipH, -1, 0, false, false, emptyClothing );
             }
         
         if( i == bodyIndex 
@@ -1452,7 +1458,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             
             
             drawObject( inClothing.tunic, cPos, inRot,
-                        inFlipH, -1, false, false, false, emptyClothing );
+                        inFlipH, -1, 0, false, false, emptyClothing );
             
             // now skip all non-foot layers drawn above body
             // until holder or head drawn
@@ -1479,7 +1485,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             cPos = add( cPos, inPos );
             
             drawObject( inClothing.frontShoe, cPos, inRot,
-                        inFlipH, -1, false, false, false, emptyClothing );
+                        inFlipH, -1, 0, false, false, emptyClothing );
             }
         
 
@@ -1514,13 +1520,15 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             
             // this is the front-most drawn hand
             // in unanimated, unflipped object
-            if( i == frontHandIndex && !inHideFrontArm && !inHideAllLimbs ) {
+            if( i == frontHandIndex && ( inHideClosestArm == 0 ) 
+                && !inHideAllLimbs ) {
+                
                 returnHoldingPos.valid = true;
                 // return screen pos for hand, which may be flipped, etc.
                 returnHoldingPos.pos = pos;
                 returnHoldingPos.rot = rot;
                 }
-            else if( i == bodyIndex && inHideFrontArm ) {
+            else if( i == bodyIndex && inHideClosestArm != 0 ) {
                 returnHoldingPos.valid = true;
                 // return screen pos for body, which may be flipped, etc.
                 returnHoldingPos.pos = pos;
@@ -1543,7 +1551,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
         cPos = add( cPos, inPos );
         
         drawObject( inClothing.hat, cPos, inRot,
-                    inFlipH, -1, false, false, false, emptyClothing );
+                    inFlipH, -1, 0, false, false, emptyClothing );
         }
 
     return returnHoldingPos;
@@ -1553,7 +1561,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
 
 HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                        char inFlipH, double inAge,
-                       char inHideFrontArm,
+                       int inHideClosestArm,
                        char inHideAllLimbs,
                        char inHeldNotInPlaceYet,
                        ClothingSet inClothing,
@@ -1584,14 +1592,14 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
 
         doublePair pos = add( slotPos, inPos );
         drawObject( contained, pos, inRot, inFlipH, inAge,
-                    false,
+                    0,
                     false,
                     false,
                     emptyClothing );
         }
     
     return drawObject( inObject, inPos, inRot, inFlipH, inAge, 
-                       inHideFrontArm,
+                       inHideClosestArm,
                        inHideAllLimbs,
                        inHeldNotInPlaceYet,
                        inClothing );

@@ -264,7 +264,8 @@ typedef struct HoldingPos {
 // returns the position used to hold something 
 HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, 
                        double inRot, char inFlipH, double inAge,
-                       char inHideFrontArm,
+                       // 1 for front arm, -1 for back arm, 0 for no hiding
+                       int inHideClosestArm,
                        char inHideAllLimbs,
                        char inHeldNotInPlaceYet,
                        ClothingSet inClothing,
@@ -274,7 +275,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
 HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
                        double inRot, char inFlipH,
                        double inAge,
-                       char inHideFrontArm,
+                       int inHideClosestArm,
                        char inHideAllLimbs,
                        char inHeldNotInPlaceYet,
                        ClothingSet inClothing,

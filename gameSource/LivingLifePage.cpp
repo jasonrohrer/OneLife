@@ -1410,26 +1410,52 @@ void LivingLifePage::drawLiveObject(
     double age = inObj->age + 
         inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
 
-    char hideFrontArm = false;
+
+    ObjectRecord *heldObject = NULL;
+
+    int hideClosestArm = 0;
     char hideAllLimbs = false;
+
+
+    if( inObj->holdingID != 0 ) { 
+        if( inObj->holdingID > 0 ) {
+            heldObject = getObject( inObj->holdingID );
+            }
+        else if( inObj->holdingID < 0 ) {
+            // held baby
+            LiveObject *babyO = getGameObject( - inObj->holdingID );
+            
+            if( babyO != NULL ) {    
+                heldObject = getObject( babyO->displayID );
+                }
+            }
+        }
     
-    if( inObj->holdingID > 0 ) {
-        ObjectRecord *heldObject = getObject( inObj->holdingID );
-                    
-        hideFrontArm = true;
+        
+    
+    if( inObj->holdingID != 0  && heldObject != NULL ) {
                     
         if( heldObject->heldInHand ) {
             
-            hideFrontArm = false;
+            hideClosestArm = 0;
             }
-        if( heldObject->rideable ) {
-            hideFrontArm = false;
+        else if( heldObject->rideable ) {
+            hideClosestArm = 0;
             hideAllLimbs = true;
+            }
+        else {
+            // find closest arm
+            if( heldObject->heldOffset.x > 0 ) {
+                hideClosestArm = 1;
+                }
+            else {
+                hideClosestArm = -1;
+                }
             }
         }
     else if( inObj->holdingID < 0 ) {
         // carrying baby
-        hideFrontArm = true;
+        hideClosestArm = true;
         }
     
                 
@@ -1447,7 +1473,7 @@ void LivingLifePage::drawLiveObject(
                         age,
                         // don't actually hide body parts until
                         // held object is done sliding into place
-                        hideFrontArm,
+                        hideClosestArm,
                         hideAllLimbs,
                         inObj->heldPosOverride && 
                         ! inObj->heldPosOverrideAlmostOver,
@@ -1465,19 +1491,8 @@ void LivingLifePage::drawLiveObject(
             holdPos = pos;
             }
 
-        ObjectRecord *heldObject = NULL;
+        
 
-        if( inObj->holdingID > 0 ) {
-            heldObject = getObject( inObj->holdingID );
-            }
-        else if( inObj->holdingID < 0 ) {
-            // held baby
-            LiveObject *babyO = getGameObject( - inObj->holdingID );
-            
-            if( babyO != NULL ) {    
-                heldObject = getObject( babyO->displayID );
-                }
-            }
         
         if( heldObject != NULL ) {
             
@@ -1493,7 +1508,7 @@ void LivingLifePage::drawLiveObject(
                 }
             
             if( holdingPos.valid && holdingPos.rot != 0  &&
-                hideFrontArm ) {
+                hideClosestArm ) {
                 heldOffset = rotate( heldOffset, -2 * M_PI * holdingPos.rot );
                 }
 

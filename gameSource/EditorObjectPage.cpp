@@ -2053,7 +2053,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
         double age = mPersonAgeSlider.getValue();
         
-        char hideFrontArm = true;
+        int hideClosestArm = 0;
         
         char hideAllLimbs = false;
 
@@ -2061,24 +2061,33 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
         if( mHeldInHandCheckbox.getToggled() ) {
             
-            hideFrontArm = false;
+            hideClosestArm = 0;
             }
-
-        if( mRideableCheckbox.getToggled() ) {
+        else if( mRideableCheckbox.getToggled() ) {
             hideAllLimbs = true;
-            hideFrontArm = false;
+            hideClosestArm = 0;
             }
+        else {
+            // find closest arm
+            if( mCurrentObject.heldOffset.x > 0 ) {
+                hideClosestArm = 1;
+                }
+            else {
+                hideClosestArm = -1;
+                }
+            }
+        
         
         
         HoldingPos holdingPos =
             drawObject( personObject, drawOffset, 0, false, 
-                        age, hideFrontArm, hideAllLimbs, false,
+                        age, hideClosestArm, hideAllLimbs, false,
                         getEmptyClothingSet() );
 
         if( holdingPos.valid ) {
             doublePair rotatedOffset = mCurrentObject.heldOffset;
             
-            if( hideFrontArm ) {
+            if( hideClosestArm ) {
                 // only rotate held pos for non-handheld objects
                 rotatedOffset = rotate( mCurrentObject.heldOffset, 
                                         -2 * M_PI * holdingPos.rot );
@@ -2123,7 +2132,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 
   
         drawObject( getObject( mDemoPersonObject ), drawOffset, 0, false, 
-                    age, false, false, false, s );
+                    age, 0, false, false, s );
 
         // offset from body part
         //switch( mCurrentObject.clothing ) {
@@ -2194,7 +2203,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 drawObject( demoObject, 
                             sub( add( mCurrentObject.slotPos[i], drawOffset ),
                                  getObjectCenterOffset( demoObject ) ),
-                            0, false, -1, false, false, false, 
+                            0, false, -1, 0, false, false, 
                             getEmptyClothingSet() );
                 }
             }
