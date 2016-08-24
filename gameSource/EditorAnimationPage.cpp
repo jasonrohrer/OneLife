@@ -1252,6 +1252,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 animRotFrozen,
                                 pos, mFlipDraw, age,
                                 false,
+                                false,
                                 mClothingSet,
                                 obj->numSlots, demoSlots );
                 }
@@ -1265,16 +1266,19 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 animRotFrozen,
                                 pos, mFlipDraw, age,
                                 false,
+                                false,
                                 mClothingSet );
                 }
             }
         else {
             if( demoSlots != NULL ) {
-                drawObject( obj, pos, 0, mFlipDraw, age, false, mClothingSet,
+                drawObject( obj, pos, 0, mFlipDraw, age, false, false, 
+                            mClothingSet,
                             obj->numSlots, demoSlots );
                 }
             else {
-                drawObject( obj, pos, 0, mFlipDraw, age, false, mClothingSet );
+                drawObject( obj, pos, 0, mFlipDraw, age, false, false, 
+                            mClothingSet );
                 }
             }
         

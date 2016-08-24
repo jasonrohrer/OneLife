@@ -1306,6 +1306,7 @@ static char logicalXOR( char inA, char inB ) {
 HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
                        double inRot, char inFlipH, double inAge,
                        char inHideFrontArm,
+                       char inHideAllLimbs,
                        ClothingSet inClothing,
                        double inScale ) {
     
@@ -1313,6 +1314,12 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
     
     SimpleVector <int> frontArmIndices;
     getFrontArmIndices( inObject, inAge, &frontArmIndices );
+
+    SimpleVector <int> backArmIndices;
+    getBackArmIndices( inObject, inAge, &backArmIndices );
+
+    SimpleVector <int> legIndices;
+    getAllLegIndices( inObject, inAge, &legIndices );
     
     
     int headIndex = getHeadIndex( inObject, inAge );
@@ -1396,6 +1403,17 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
         if( inHideFrontArm && frontArmIndices.getElementIndex( i ) != -1 ) {
             skipSprite = true;
             }
+        else if( inHideAllLimbs ) {
+            if( frontArmIndices.getElementIndex( i ) != -1 
+                ||
+                backArmIndices.getElementIndex( i ) != -1
+                ||
+                legIndices.getElementIndex( i ) != -1 ) {
+        
+                skipSprite = true;
+                }
+            }
+        
 
         if( i == headIndex ) {
             holderOrHeadDrawnAboveBody = true;
@@ -1414,7 +1432,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             cPos = add( cPos, inPos );
             
             drawObject( inClothing.backShoe, cPos, inRot,
-                        inFlipH, -1, false, emptyClothing );
+                        inFlipH, -1, false, false, emptyClothing );
             }
         
         if( i == bodyIndex 
@@ -1431,7 +1449,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             
             
             drawObject( inClothing.tunic, cPos, inRot,
-                        inFlipH, -1, false, emptyClothing );
+                        inFlipH, -1, false, false, emptyClothing );
             
             // now skip all non-foot layers drawn above body
             // until holder or head drawn
@@ -1458,7 +1476,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             cPos = add( cPos, inPos );
             
             drawObject( inClothing.frontShoe, cPos, inRot,
-                        inFlipH, -1, false, emptyClothing );
+                        inFlipH, -1, false, false, emptyClothing );
             }
         
 
@@ -1522,7 +1540,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
         cPos = add( cPos, inPos );
         
         drawObject( inClothing.hat, cPos, inRot,
-                    inFlipH, -1, false, emptyClothing );
+                    inFlipH, -1, false, false, emptyClothing );
         }
 
     return returnHoldingPos;
@@ -1533,6 +1551,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
 HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                        char inFlipH, double inAge,
                        char inHideFrontArm,
+                       char inHideAllLimbs,
                        ClothingSet inClothing,
                        int inNumContained, int *inContainedIDs ) {
     
@@ -1562,10 +1581,13 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
         doublePair pos = add( slotPos, inPos );
         drawObject( contained, pos, inRot, inFlipH, inAge,
                     false,
+                    false,
                     emptyClothing );
         }
     
-    return drawObject( inObject, inPos, inRot, inFlipH, inAge, inHideFrontArm,
+    return drawObject( inObject, inPos, inRot, inFlipH, inAge, 
+                       inHideFrontArm,
+                       inHideAllLimbs,
                        inClothing );
     }
 
@@ -2072,20 +2094,49 @@ int getFrontHandIndex( ObjectRecord *inObject,
 
 
 
-void getFrontArmIndices( ObjectRecord *inObject,
-                         double inAge, SimpleVector<int> *outList ) {
-    int frontHand = getFrontHandIndex( inObject, inAge );
+static void getLimbIndices( ObjectRecord *inObject,
+                           double inAge, SimpleVector<int> *outList,
+                           int inHandOrFootIndex ) {
     
-    if( frontHand == -1 ) {
+    if( inHandOrFootIndex == -1 ) {
         return;
         }
     
-    int nextArmPart = frontHand;
+    int nextLimbPart = inHandOrFootIndex;
     
-    while( nextArmPart != -1 && ! inObject->spriteIsBody[ nextArmPart ] ) {
-        outList->push_back( nextArmPart );
-        nextArmPart = inObject->spriteParent[ nextArmPart ];
+    while( nextLimbPart != -1 && ! inObject->spriteIsBody[ nextLimbPart ] ) {
+        outList->push_back( nextLimbPart );
+        nextLimbPart = inObject->spriteParent[ nextLimbPart ];
         }
+    }
+
+
+
+void getFrontArmIndices( ObjectRecord *inObject,
+                         double inAge, SimpleVector<int> *outList ) {
+    getLimbIndices( inObject, inAge, outList,
+                    getFrontHandIndex( inObject, inAge ) );
+    }
+
+
+
+void getBackArmIndices( ObjectRecord *inObject,
+                        double inAge, SimpleVector<int> *outList ) {
+    
+    getLimbIndices( inObject, inAge, outList,
+                    getBackHandIndex( inObject, inAge ) );
+
+    }
+
+
+
+void getAllLegIndices( ObjectRecord *inObject,
+                       double inAge, SimpleVector<int> *outList ) {
+    getLimbIndices( inObject, inAge, outList,
+                    getBackFootIndex( inObject, inAge ) );
+    
+    getLimbIndices( inObject, inAge, outList,
+                    getFrontFootIndex( inObject, inAge ) );
     }
 
 

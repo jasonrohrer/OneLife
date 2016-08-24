@@ -265,6 +265,7 @@ typedef struct HoldingPos {
 HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, 
                        double inRot, char inFlipH, double inAge,
                        char inHideFrontArm,
+                       char inHideAllLimbs,
                        ClothingSet inClothing,
                        double inScale = 1.0 );
 
@@ -273,6 +274,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
                        double inRot, char inFlipH,
                        double inAge,
                        char inHideFrontArm,
+                       char inHideAllLimbs,
                        ClothingSet inClothing,
                        int inNumContained, int *inContainedIDs );
 
@@ -370,6 +372,13 @@ int getFrontFootIndex( ObjectRecord *inObject, double inAge );
 
 void getFrontArmIndices( ObjectRecord *inObject, double inAge, 
                          SimpleVector<int> *outList );
+
+void getBackArmIndices( ObjectRecord *inObject, double inAge, 
+                        SimpleVector<int> *outList );
+
+
+void getAllLegIndices( ObjectRecord *inObject, double inAge, 
+                       SimpleVector<int> *outList );
 
 
 

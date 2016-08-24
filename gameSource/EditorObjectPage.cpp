@@ -2066,12 +2066,14 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
         if( mRideableCheckbox.getToggled() ) {
             hideAllLimbs = true;
+            hideFrontArm = false;
             }
         
         
         HoldingPos holdingPos =
             drawObject( personObject, drawOffset, 0, false, 
-                        age, hideFrontArm, getEmptyClothingSet() );
+                        age, hideFrontArm, hideAllLimbs,
+                        getEmptyClothingSet() );
 
         if( holdingPos.valid ) {
             doublePair rotatedOffset = mCurrentObject.heldOffset;
@@ -2121,7 +2123,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 
   
         drawObject( getObject( mDemoPersonObject ), drawOffset, 0, false, 
-                    age, false, s );
+                    age, false, false, s );
 
         // offset from body part
         //switch( mCurrentObject.clothing ) {
@@ -2192,7 +2194,8 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 drawObject( demoObject, 
                             sub( add( mCurrentObject.slotPos[i], drawOffset ),
                                  getObjectCenterOffset( demoObject ) ),
-                            0, false, -1, false, getEmptyClothingSet() );
+                            0, false, -1, false, false, 
+                            getEmptyClothingSet() );
                 }
             }
         

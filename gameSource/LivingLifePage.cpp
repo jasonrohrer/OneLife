@@ -1233,7 +1233,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             &used,
                             pos, mMapTileFlips[ inMapI ],
                             -1,
-                            false,
+                            false, false,
                             getEmptyClothingSet(),
                             mMapContainedStacks[ inMapI ].size(),
                             stackArray );
@@ -1249,7 +1249,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             &used,
                             pos, 
                             mMapTileFlips[ inMapI ], -1,
-                            false,
+                            false, false,
                             getEmptyClothingSet() );
             }
         }
@@ -1411,7 +1411,8 @@ void LivingLifePage::drawLiveObject(
         inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
 
     char hideFrontArm = false;
-
+    char hideAllLimbs = false;
+    
     if( inObj->holdingID > 0 ) {
         ObjectRecord *heldObject = getObject( inObj->holdingID );
                     
@@ -1420,6 +1421,10 @@ void LivingLifePage::drawLiveObject(
         if( heldObject->heldInHand ) {
             
             hideFrontArm = false;
+            }
+        if( heldObject->rideable ) {
+            hideFrontArm = false;
+            hideAllLimbs = true;
             }
         }
     else if( inObj->holdingID < 0 ) {
@@ -1441,6 +1446,7 @@ void LivingLifePage::drawLiveObject(
                         inObj->holdingFlip,
                         age,
                         hideFrontArm,
+                        hideAllLimbs,
                         inObj->clothing );
 
     delete [] string;
@@ -1581,6 +1587,7 @@ void LivingLifePage::drawLiveObject(
                                 babyO->age,
                                 // don't hide baby's hands when it is held
                                 false,
+                                false,
                                 babyO->clothing );
 
                 if( babyO->currentSpeech != NULL ) {
@@ -1600,7 +1607,7 @@ void LivingLifePage::drawLiveObject(
                             frozenRotHeldTimeVal,
                             &( inObj->heldFrozenRotFrameCountUsed ),
                             holdPos,
-                            inObj->holdingFlip, -1, false,
+                            inObj->holdingFlip, -1, false, false,
                             getEmptyClothingSet() );
             }
         else {
@@ -1613,7 +1620,7 @@ void LivingLifePage::drawLiveObject(
                             &( inObj->heldFrozenRotFrameCountUsed ),
                             holdPos,
                             inObj->holdingFlip,
-                            -1, false,
+                            -1, false, false,
                             getEmptyClothingSet(),
                             inObj->numContained,
                             inObj->containedIDs );
