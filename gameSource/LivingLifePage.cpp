@@ -466,7 +466,8 @@ static void addNewAnimDirect( LiveObject *inObject, AnimType inNewAnim ) {
         // resume from where frozen
         inObject->animationFrameCount = inObject->frozenRotFrameCount;
         }
-    else if( inObject->curAnim == ground &&
+    else if( ( inObject->curAnim == ground || inObject->curAnim == ground2 )
+             &&
              inObject->lastAnim == held ) {
         // keep old frozen frame count as we transition away
         // from held
@@ -495,7 +496,9 @@ static void addNewHeldAnimDirect( LiveObject *inObject, AnimType inNewAnim ) {
         // resume from where frozen
         inObject->heldAnimationFrameCount = inObject->heldFrozenRotFrameCount;
         }
-    else if( inObject->curHeldAnim == ground &&
+    else if( ( inObject->curHeldAnim == ground || 
+               inObject->curHeldAnim == ground2 ) 
+             &&
              inObject->lastHeldAnim == held ) {
         // keep old frozen frame count as we transition away
         // from held
@@ -503,9 +506,7 @@ static void addNewHeldAnimDirect( LiveObject *inObject, AnimType inNewAnim ) {
     }
 
 
-
-
-static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
+static void addNewAnimPlayerOnly( LiveObject *inObject, AnimType inNewAnim ) {
     if( inObject->curAnim != inNewAnim ) {
         if( inObject->lastAnimFade != 0 ) {
                         
@@ -522,6 +523,11 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
             addNewAnimDirect( inObject, inNewAnim );
             }
         }
+    }
+
+
+static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
+    addNewAnimPlayerOnly( inObject, inNewAnim );
 
     AnimType newHeldAnim = inNewAnim;
     
@@ -532,7 +538,8 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
 
         newHeldAnim = held;
         }
-    else if( inObject->holdingID > 0 && newHeldAnim == ground ) {
+    else if( inObject->holdingID > 0 && 
+             ( newHeldAnim == ground || newHeldAnim == ground2 ) ) {
         // ground is used when person comes to a hault,
         // but for the held item, we should still show the held animation
         newHeldAnim = held;
@@ -1231,6 +1238,8 @@ void LivingLifePage::drawMapCell( int inMapI,
                             targetTimeVal,
                             frozenRotTimeVal,
                             &used,
+                            endAnimType,
+                            endAnimType,
                             pos, mMapTileFlips[ inMapI ],
                             -1,
                             false, false, false,
@@ -1247,6 +1256,8 @@ void LivingLifePage::drawMapCell( int inMapI,
                             targetTimeVal,
                             frozenRotTimeVal,
                             &used,
+                            endAnimType,
+                            endAnimType,
                             pos, 
                             mMapTileFlips[ inMapI ], -1,
                             false, false, false,
@@ -1458,8 +1469,27 @@ void LivingLifePage::drawLiveObject(
         hideClosestArm = true;
         }
     
-                
 
+    // override animation types for people who are riding in something
+    // animationBank will freeze the time on their arms whenever they are
+    // in a moving animation.
+    AnimType frozenArmType = endAnimType;
+    AnimType frozenArmFadeTargetType = endAnimType;
+    
+    if( ( inObj->holdingID > 0 && getObject( inObj->holdingID )->rideable )
+        ||
+        ( inObj->lastHoldingID > 0 && 
+          getObject( inObj->lastHoldingID )->rideable ) ) {
+    
+        if( curType == ground2 || curType == moving ) {
+            frozenArmType = moving;
+            }
+        if( fadeTargetType == ground2 || fadeTargetType == moving ) {
+            frozenArmFadeTargetType = moving;
+            }
+        }
+    
+    
     HoldingPos holdingPos =
         drawObjectAnim( inObj->displayID, curType, 
                         timeVal,
@@ -1468,6 +1498,8 @@ void LivingLifePage::drawLiveObject(
                         targetTimeVal,
                         frozenRotTimeVal,
                         &( inObj->frozenRotFrameCountUsed ),
+                        frozenArmType,
+                        frozenArmFadeTargetType,
                         pos,
                         inObj->holdingFlip,
                         age,
@@ -1603,6 +1635,8 @@ void LivingLifePage::drawLiveObject(
                                 targetHeldTimeVal,
                                 frozenRotHeldTimeVal,
                                 &( inObj->heldFrozenRotFrameCountUsed ),
+                                endAnimType,
+                                endAnimType,
                                 holdPos,
                                 inObj->holdingFlip,
                                 babyO->age,
@@ -1628,6 +1662,8 @@ void LivingLifePage::drawLiveObject(
                             targetHeldTimeVal,
                             frozenRotHeldTimeVal,
                             &( inObj->heldFrozenRotFrameCountUsed ),
+                            endAnimType,
+                            endAnimType,
                             holdPos,
                             inObj->holdingFlip, -1, false, false, false,
                             getEmptyClothingSet() );
@@ -1640,6 +1676,8 @@ void LivingLifePage::drawLiveObject(
                             targetHeldTimeVal,
                             frozenRotHeldTimeVal,
                             &( inObj->heldFrozenRotFrameCountUsed ),
+                            endAnimType,
+                            endAnimType,
                             holdPos,
                             inObj->holdingFlip,
                             -1, false, false, false,
@@ -2870,6 +2908,7 @@ void LivingLifePage::step() {
                     if( existing != NULL ) {
                         int oldHeld = existing->holdingID;
                         
+                        existing->lastHoldingID = oldHeld;
                         existing->holdingID = o.holdingID;
                         
                         if( existing->holdingID == 0 ) {
@@ -2882,6 +2921,9 @@ void LivingLifePage::step() {
                             
                             //existing->lastAnim = ground;
                             //existing->lastAnimFade = 0;
+                            if( oldHeld != 0 ) {
+                                addNewAnimPlayerOnly( existing, ground );
+                                }
                             }
                         else if( oldHeld == 0 ) {
                             // holding something new
@@ -2893,6 +2935,8 @@ void LivingLifePage::step() {
                             existing->heldFrozenRotFrameCount = 0;
 
                             existing->futureHeldAnimStack->deleteAll();
+
+                            addNewAnimPlayerOnly( existing, ground2 );
 
                             if( heldOriginValid ) {
                                 // transition from last ground animation
@@ -3132,7 +3176,9 @@ void LivingLifePage::step() {
                         o.displayChar = lastCharUsed + 1;
                     
                         lastCharUsed = o.displayChar;
-                    
+                        
+                        o.lastHoldingID = o.holdingID;
+                        
                         o.curAnim = ground;
                         o.lastAnim = ground;
                         o.lastAnimFade = 0;
@@ -4050,8 +4096,12 @@ void LivingLifePage::step() {
                     o->currentSpeed = 0;
 
 
-                    addNewAnim( o, ground );
-                                        
+                    if( o->holdingID != 0 ) {
+                        addNewAnim( o, ground2 );
+                        }
+                    else {
+                        addNewAnim( o, ground );
+                        }
 
                     printf( "Reached dest %f seconds early\n",
                             o->moveEtaTime - game_getCurrentTime() );

@@ -272,7 +272,7 @@ static File *getFile( int inID, AnimType inType ) {
 
 
 AnimationRecord *getAnimation( int inID, AnimType inType ) {
-    if( inID < mapSize ) {
+    if( inID < mapSize && inType < ground2 ) {
         return idMap[inID][inType];
         }
     return NULL;
@@ -454,6 +454,13 @@ static double getOscOffset( double inFrameTime,
 
 char isAnimFadeNeeded( int inObjectID, AnimType inCurType, 
                        AnimType inTargetType ) {
+
+    if( ( inCurType != ground2 && inTargetType == ground2 )
+        ||
+        ( inCurType == ground2 && inTargetType != ground2 ) ) {
+        
+        return true;
+        }
     AnimationRecord *curR = getAnimation( inObjectID, inCurType );
     AnimationRecord *targetR = getAnimation( inObjectID, inTargetType );
 
@@ -632,6 +639,8 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                            double inFadeTargetFrameTime,
                            double inFrozenRotFrameTime,
                            char *outFrozenRotFrameTimeUsed,
+                           AnimType inFrozenArmType,
+                           AnimType inFrozenArmFadeTargetType,
                            doublePair inPos,
                            char inFlipH,
                            double inAge,
@@ -640,6 +649,10 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                            char inHeldNotInPlaceYet,
                            ClothingSet inClothing ) {
     
+    if( inType == ground2 ) {
+        inType = ground;
+        }
+
     AnimationRecord *r = getAnimation( inObjectID, inType );
     
 
@@ -650,16 +663,27 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                            inClothing );
         }
     else {
+        if( inFadeTargetType == ground2 ) {
+            inFadeTargetType = ground;
+            }
+
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
         AnimationRecord *rF = getAnimation( inObjectID, moving );
         
+        AnimationRecord *rArm = getAnimation( inObjectID, inFrozenArmType );
+        AnimationRecord *rArmFade = getAnimation( inObjectID, 
+                                                  inFrozenArmFadeTargetType );
+        
+                
         return drawObjectAnim( inObjectID, r, inFrameTime,
                                inAnimFade, rB, 
                                inFadeTargetFrameTime, 
                                inFrozenRotFrameTime,
                                outFrozenRotFrameTimeUsed,
                                rF,
+                               rArm,
+                               rArmFade,
                                inPos, inFlipH, inAge, 
                                inHideClosestArm, inHideAllLimbs, 
                                inHeldNotInPlaceYet,
@@ -753,6 +777,8 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                            double inFrozenRotFrameTime,
                            char *outFrozenRotFrameTimeUsed,
                            AnimationRecord *inFrozenRotAnim,
+                           AnimationRecord *inFrozenArmAnim,
+                           AnimationRecord *inFrozenArmFadeTargetAnim,
                            doublePair inPos,
                            char inFlipH,
                            double inAge,
@@ -824,14 +850,30 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         
         double targetSpriteFrameTime = inFadeTargetFrameTime;
         
+        AnimationRecord *spriteAnim = inAnim;
+        AnimationRecord *spriteFadeTargetAnim = inFadeTargetAnim;
+        
+        if( frontArmIndices.getElementIndex( i ) != -1 ||
+            backArmIndices.getElementIndex( i ) != -1 ) {
+            
+            if( inFrozenArmAnim != NULL ) {
+                spriteAnim = inFrozenArmAnim;
+                spriteFrameTime = 0;
+                }
+            if( inFrozenArmFadeTargetAnim != NULL ) {
+                spriteFadeTargetAnim = inFrozenArmFadeTargetAnim;
+                targetSpriteFrameTime = 0;
+                }
+            }
+        
 
-        spriteFrameTime = processFrameTimeWithPauses( inAnim,
+        spriteFrameTime = processFrameTimeWithPauses( spriteAnim,
                                                       i,
                                                       true,
                                                       spriteFrameTime );
         if( inAnimFade < 1 ) {
             targetSpriteFrameTime = 
-                processFrameTimeWithPauses( inFadeTargetAnim,
+                processFrameTimeWithPauses( spriteFadeTargetAnim,
                                             i,
                                             true,
                                             targetSpriteFrameTime );
@@ -853,68 +895,68 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         double rot = 0;
         
 
-        if( i < inAnim->numSprites ) {
+        if( i < spriteAnim->numSprites ) {
             
 
             spritePos.x += 
                 inAnimFade * 
                 getOscOffset( 
                     spriteFrameTime,
-                    inAnim->spriteAnim[i].xOscPerSec,
-                    inAnim->spriteAnim[i].xAmp,
-                    inAnim->spriteAnim[i].xPhase );
+                    spriteAnim->spriteAnim[i].xOscPerSec,
+                    spriteAnim->spriteAnim[i].xAmp,
+                    spriteAnim->spriteAnim[i].xPhase );
             
             spritePos.y += 
                 inAnimFade *
                 getOscOffset( 
                     spriteFrameTime,
-                    inAnim->spriteAnim[i].yOscPerSec,
-                    inAnim->spriteAnim[i].yAmp,
-                    inAnim->spriteAnim[i].yPhase );
+                    spriteAnim->spriteAnim[i].yOscPerSec,
+                    spriteAnim->spriteAnim[i].yAmp,
+                    spriteAnim->spriteAnim[i].yPhase );
             
             double rock = inAnimFade * 
                 getOscOffset( spriteFrameTime,
-                              inAnim->spriteAnim[i].rockOscPerSec,
-                              inAnim->spriteAnim[i].rockAmp,
-                              inAnim->spriteAnim[i].rockPhase );
+                              spriteAnim->spriteAnim[i].rockOscPerSec,
+                              spriteAnim->spriteAnim[i].rockAmp,
+                              spriteAnim->spriteAnim[i].rockPhase );
             
 
             
             doublePair rotCenterOffset = 
-                mult( inAnim->spriteAnim[i].rotationCenterOffset,
+                mult( spriteAnim->spriteAnim[i].rotationCenterOffset,
                       inAnimFade );
             
             double targetWeight = 1 - inAnimFade;
             
-            if( inAnimFade < 1 && i < inFadeTargetAnim->numSprites ) {
+            if( inAnimFade < 1 && i < spriteFadeTargetAnim->numSprites ) {
                 
                 spritePos.x += 
                     targetWeight *
                     getOscOffset( 
                         targetSpriteFrameTime,
-                        inFadeTargetAnim->spriteAnim[i].xOscPerSec,
-                        inFadeTargetAnim->spriteAnim[i].xAmp,
-                        inFadeTargetAnim->spriteAnim[i].xPhase );
+                        spriteFadeTargetAnim->spriteAnim[i].xOscPerSec,
+                        spriteFadeTargetAnim->spriteAnim[i].xAmp,
+                        spriteFadeTargetAnim->spriteAnim[i].xPhase );
                 
                 spritePos.y += 
                     targetWeight *
                     getOscOffset( 
                         targetSpriteFrameTime,
-                        inFadeTargetAnim->spriteAnim[i].yOscPerSec,
-                        inFadeTargetAnim->spriteAnim[i].yAmp,
-                        inFadeTargetAnim->spriteAnim[i].yPhase );
+                        spriteFadeTargetAnim->spriteAnim[i].yOscPerSec,
+                        spriteFadeTargetAnim->spriteAnim[i].yAmp,
+                        spriteFadeTargetAnim->spriteAnim[i].yPhase );
 
                  rock += 
                      targetWeight *
                      getOscOffset( 
                          targetSpriteFrameTime,
-                         inFadeTargetAnim->spriteAnim[i].rockOscPerSec,
-                         inFadeTargetAnim->spriteAnim[i].rockAmp,
-                         inFadeTargetAnim->spriteAnim[i].rockPhase );
+                         spriteFadeTargetAnim->spriteAnim[i].rockOscPerSec,
+                         spriteFadeTargetAnim->spriteAnim[i].rockAmp,
+                         spriteFadeTargetAnim->spriteAnim[i].rockPhase );
                  
                  rotCenterOffset = 
                      add( rotCenterOffset,
-                          mult( inFadeTargetAnim->
+                          mult( spriteFadeTargetAnim->
                                 spriteAnim[i].rotationCenterOffset,
                                 
                                 targetWeight ) );
@@ -922,19 +964,19 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             
 
             double totalRotOffset = 
-                inAnim->spriteAnim[i].rotPerSec * 
+                spriteAnim->spriteAnim[i].rotPerSec * 
                 spriteFrameTime + 
-                inAnim->spriteAnim[i].rotPhase;
+                spriteAnim->spriteAnim[i].rotPhase;
             
             
             // use frozen rot instead if either current or
             // target satisfies 
             if( inAnim->type != moving 
                 &&
-                inAnim->spriteAnim[i].rotPerSec == 0 &&
-                inAnim->spriteAnim[i].rotPhase == 0 &&
-                inAnim->spriteAnim[i].rockOscPerSec == 0 &&
-                inAnim->spriteAnim[i].rockPhase == 0 
+                spriteAnim->spriteAnim[i].rotPerSec == 0 &&
+                spriteAnim->spriteAnim[i].rotPhase == 0 &&
+                spriteAnim->spriteAnim[i].rockOscPerSec == 0 &&
+                spriteAnim->spriteAnim[i].rockPhase == 0 
                 &&
                 inFrozenRotAnim->spriteAnim[i].rotPerSec != 0 ) {
                 
@@ -947,16 +989,16 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 *outFrozenRotFrameTimeUsed = 
                     *outFrozenRotFrameTimeUsed || true;
                 }
-            else if( inAnimFade < 1  && i < inFadeTargetAnim->numSprites
+            else if( inAnimFade < 1  && i < spriteFadeTargetAnim->numSprites
                      &&
-                     inAnim->type == moving
+                     spriteAnim->type == moving
                      && 
-                     inFadeTargetAnim->type != moving
+                     spriteFadeTargetAnim->type != moving
                      &&
-                     inFadeTargetAnim->spriteAnim[i].rotPerSec == 0 &&
-                     inFadeTargetAnim->spriteAnim[i].rotPhase == 0 &&
-                     inFadeTargetAnim->spriteAnim[i].rockOscPerSec == 0 &&
-                     inFadeTargetAnim->spriteAnim[i].rockPhase == 0 
+                     spriteFadeTargetAnim->spriteAnim[i].rotPerSec == 0 &&
+                     spriteFadeTargetAnim->spriteAnim[i].rotPhase == 0 &&
+                     spriteFadeTargetAnim->spriteAnim[i].rockOscPerSec == 0 &&
+                     spriteFadeTargetAnim->spriteAnim[i].rockPhase == 0 
                      &&
                      inFrozenRotAnim->spriteAnim[i].rotPerSec != 0 ) {
                 
@@ -989,19 +1031,19 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             
 
 
-            if( inAnimFade < 1  && i < inFadeTargetAnim->numSprites ) {
+            if( inAnimFade < 1  && i < spriteFadeTargetAnim->numSprites ) {
                 double totalTargetRotOffset =
-                    inFadeTargetAnim->spriteAnim[i].rotPerSec * 
+                    spriteFadeTargetAnim->spriteAnim[i].rotPerSec * 
                     targetSpriteFrameTime + 
-                    inFadeTargetAnim->spriteAnim[i].rotPhase;
+                    spriteFadeTargetAnim->spriteAnim[i].rotPhase;
                 
 
-                if( inFadeTargetAnim->type != moving
+                if( spriteFadeTargetAnim->type != moving
                     &&
-                    inFadeTargetAnim->spriteAnim[i].rotPerSec == 0 &&
-                    inFadeTargetAnim->spriteAnim[i].rotPhase == 0 &&
-                    inFadeTargetAnim->spriteAnim[i].rockOscPerSec == 0 &&
-                    inFadeTargetAnim->spriteAnim[i].rockPhase == 0 
+                    spriteFadeTargetAnim->spriteAnim[i].rotPerSec == 0 &&
+                    spriteFadeTargetAnim->spriteAnim[i].rotPhase == 0 &&
+                    spriteFadeTargetAnim->spriteAnim[i].rockOscPerSec == 0 &&
+                    spriteFadeTargetAnim->spriteAnim[i].rockPhase == 0 
                     &&
                     inFrozenRotAnim->spriteAnim[i].rotPerSec != 0 ) {
                 
@@ -1182,11 +1224,7 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             skipSprite = true;
             }
         else if( !inHeldNotInPlaceYet && inHideAllLimbs ) {
-            if( frontArmIndices.getElementIndex( i ) != -1 
-                ||
-                backArmIndices.getElementIndex( i ) != -1
-                ||
-                legIndices.getElementIndex( i ) != -1 ) {
+            if( legIndices.getElementIndex( i ) != -1 ) {
              
                 skipSprite = true;
                 }
@@ -1365,6 +1403,8 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      double inFadeTargetFrameTime,
                      double inFrozenRotFrameTime,
                      char *outFrozenRotFrameTimeUsed,
+                     AnimType inFrozenArmType,
+                     AnimType inFrozenArmFadeTargetType,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
@@ -1373,6 +1413,10 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      char inHeldNotInPlaceYet,
                      ClothingSet inClothing,
                      int inNumContained, int *inContainedIDs ) {
+    
+    if( inType == ground2 ) {
+        inType = ground;
+        }
     
     AnimationRecord *r = getAnimation( inObjectID, inType );
  
@@ -1383,15 +1427,24 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                     inNumContained, inContainedIDs );
         }
     else {
+        if( inFadeTargetType == ground2 ) {
+            inFadeTargetType = ground;
+            }
+    
         AnimationRecord *rB = getAnimation( inObjectID, inFadeTargetType );
         
         AnimationRecord *rF = getAnimation( inObjectID, moving );
         
+        AnimationRecord *rArm = getAnimation( inObjectID, inFrozenArmType );
+        AnimationRecord *rArmFade = getAnimation( inObjectID, 
+                                                  inFrozenArmFadeTargetType );
         drawObjectAnim( inObjectID, r, inFrameTime,
                         inAnimFade, rB, inFadeTargetFrameTime,
                         inFrozenRotFrameTime,
                         outFrozenRotFrameTimeUsed,
                         rF,
+                        rArm,
+                        rArmFade,
                         inPos, inFlipH, inAge,
                         inHideClosestArm, inHideAllLimbs, inHeldNotInPlaceYet,
                         inClothing,
@@ -1409,6 +1462,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      double inFrozenRotFrameTime,
                      char *outFrozenRotFrameTimeUsed,
                      AnimationRecord *inFrozenRotAnim,
+                     AnimationRecord *inFrozenArmAnim,
+                     AnimationRecord *inFrozenArmFadeTargetAnim,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
@@ -1508,6 +1563,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     inFrozenRotFrameTime,
                     outFrozenRotFrameTimeUsed,
                     inFrozenRotAnim,
+                    inFrozenArmAnim,
+                    inFrozenArmFadeTargetAnim,
                     inPos, inFlipH,
                     inAge, inHideClosestArm, inHideAllLimbs, 
                     inHeldNotInPlaceYet,

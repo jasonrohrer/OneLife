@@ -13,6 +13,15 @@ typedef enum AnimType {
     ground = 0,
     held,
     moving,
+    // special case of ground
+    // for person who is now holding something
+    // forces them to go through an animation fade (ground -> ground)
+    // in case they are now holding a rideable object, because the second
+    // ground animation will have frozen moving arms
+    // NOTE that ground2 is NOT a separate animation stored in the
+    // animation bank or modified by the editor, and that it will
+    // be automatically replaced by ground when drawn
+    ground2,
     endAnimType
     } AnimType;
 
@@ -143,6 +152,9 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                            // time should be used as the resume point when
                            // returning to 'moving' animation later)
                            char *outFrozenRotFrameTimeUsed,
+                           // set endAnimType for no frozen arms
+                           AnimType inFrozenArmType,
+                           AnimType inFrozenArmFadeTargetType,
                            doublePair inPos,
                            char inFlipH,
                            double inAge, int inHideClosestArm,
@@ -160,6 +172,9 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                            double inFrozenRotFrameTime,
                            char *outFrozenRotFrameTimeUsed,
                            AnimationRecord *inFrozenRotAnim,
+                           // set NULL for no frozen arms
+                           AnimationRecord *inFrozenArmAnim,
+                           AnimationRecord *inFrozenArmFadeTargetAnim,
                            doublePair inPos,
                            char inFlipH,
                            double inAge, int inHideClosestArm,
@@ -174,6 +189,9 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      double inFadeTargetFrameTime,
                      double inFrozenRotFrameTime,
                      char *outFrozenRotFrameTimeUsed,
+                     // set endAnimType for no frozen arms
+                     AnimType inFrozenArmType,
+                     AnimType inFrozenArmFadeTargetType,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,
@@ -192,6 +210,9 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      double inFrozenRotFrameTime,
                      char *outFrozenRotFrameTimeUsed,
                      AnimationRecord *inFrozenRotAnim,
+                     // set NULL for no frozen arms
+                     AnimationRecord *inFrozenArmAnim,
+                     AnimationRecord *inFrozenArmFadeTargetAnim,
                      doublePair inPos,
                      char inFlipH,
                      double inAge,

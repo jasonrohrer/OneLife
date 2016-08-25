@@ -54,6 +54,7 @@ typedef struct LiveObject {
         // a negative number here means we're holding another player (baby)
         // and the number, made positive, is the ID of the other player
         int holdingID;
+        int lastHoldingID;
 
         char holdingFlip;
 
