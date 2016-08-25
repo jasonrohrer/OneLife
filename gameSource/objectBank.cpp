@@ -1351,6 +1351,11 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
     doublePair tunicPos = { 0, 0 };
     double tunicRot = 0;
     
+    doublePair backShoePos = { 0, 0 };
+    double backShoeRot = 0;
+    
+    doublePair frontShoePos = { 0, 0 };
+    double frontShoeRot = 0;
     
     
     for( int i=0; i<inObject->numSprites; i++ ) {
@@ -1434,8 +1439,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
 
         if( i == backFootIndex 
             && inClothing.backShoe != NULL ) {
-            
-            skipSprite = true;
+                        
             doublePair cPos = add( spritePos, 
                                    inClothing.backShoe->clothingOffset );
             if( inFlipH ) {
@@ -1443,8 +1447,8 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
                 }
             cPos = add( cPos, inPos );
             
-            drawObject( inClothing.backShoe, cPos, inRot,
-                        inFlipH, -1, 0, false, false, emptyClothing );
+            backShoePos = cPos;
+            backShoeRot = inRot;
             }
         
         if( i == bodyIndex
@@ -1473,7 +1477,6 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
         if( i == frontFootIndex 
             && inClothing.frontShoe != NULL ) {
 
-            skipSprite = true;
             doublePair cPos = add( spritePos, 
                                    inClothing.frontShoe->clothingOffset );
             if( inFlipH ) {
@@ -1481,8 +1484,8 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
                 }
             cPos = add( cPos, inPos );
             
-            drawObject( inClothing.frontShoe, cPos, inRot,
-                        inFlipH, -1, 0, false, false, emptyClothing );
+            frontShoePos = cPos;
+            frontShoeRot = inRot;
             }
         
 
@@ -1532,6 +1535,17 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
                 returnHoldingPos.rot = rot;
                 }
             }
+        
+        // shoes on top of feet
+        if( inClothing.backShoe != NULL && i == backFootIndex ) {
+            drawObject( inClothing.backShoe, backShoePos, backShoeRot,
+                        inFlipH, -1, 0, false, false, emptyClothing );
+            }
+        else if( inClothing.frontShoe != NULL && i == frontFootIndex ) {
+            drawObject( inClothing.backShoe, frontShoePos, frontShoeRot,
+                        inFlipH, -1, 0, false, false, emptyClothing );
+            }
+
         }    
 
     

@@ -1084,6 +1084,13 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
     doublePair tunicPos = { 0, 0 };
     double tunicRot = 0;
+
+    doublePair backShoePos = { 0, 0 };
+    double backShoeRot = 0;
+    
+    doublePair frontShoePos = { 0, 0 };
+    double frontShoeRot = 0;
+
     
     // now that their individual animations have been computed
     // walk through and follow parent chains to compute compound animations
@@ -1190,24 +1197,23 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         if( i == backFootIndex 
             && inClothing.backShoe != NULL ) {
             
-            skipSprite = true;
-
             doublePair offset = inClothing.backShoe->clothingOffset;
 
             if( inFlipH ) {
                 offset.x *= -1;
                 }
             
-            if( rot != 0 ) {
-                offset = rotate( offset, -2 * M_PI * rot );
+            backShoeRot = rot - obj->spriteRot[i];
+
+            if( backShoeRot != 0 ) {
+                offset = rotate( offset, -2 * M_PI * backShoeRot );
                 }
 
             doublePair cPos = add( spritePos, offset );
 
             cPos = add( cPos, inPos );
             
-            drawObject( inClothing.backShoe, cPos, rot,
-                        inFlipH, -1, 0, false, false, emptyClothing );
+            backShoePos = cPos;
             }
 
         if( i == bodyIndex 
@@ -1218,9 +1224,11 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             if( inFlipH ) {
                 offset.x *= -1;
                 }
+
+            tunicRot = rot - obj->spriteRot[i];
             
-            if( rot != 0 ) {
-                offset = rotate( offset, -2 * M_PI * rot );
+            if( tunicRot != 0 ) {
+                offset = rotate( offset, -2 * M_PI * tunicRot );
                 }
             
             
@@ -1229,7 +1237,6 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             cPos = add( cPos, inPos );
             
             tunicPos = cPos;
-            tunicRot = rot;
             }
         else if( inClothing.tunic != NULL && i == topBackArmIndex ) {
             // draw under top of back arm
@@ -1241,25 +1248,24 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         if( i == frontFootIndex 
             && inClothing.frontShoe != NULL ) {
         
-            skipSprite = true;
-            
             doublePair offset = inClothing.frontShoe->clothingOffset;
                 
             if( inFlipH ) {
                 offset.x *= -1;
                 }
+            
+            frontShoeRot = rot - obj->spriteRot[i];
 
-            if( rot != 0 ) {
-                offset = rotate( offset, -2 * M_PI * rot );
+            if( frontShoeRot != 0 ) {
+                offset = rotate( offset, -2 * M_PI * frontShoeRot );
                 }
                 
 
             doublePair cPos = add( spritePos, offset );
 
             cPos = add( cPos, inPos );
-                
-            drawObject( inClothing.frontShoe, cPos, rot,
-                        inFlipH, -1, 0, false, false, emptyClothing );
+            
+            frontShoePos = cPos;
             }
         
 
@@ -1302,6 +1308,16 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 returnHoldingPos.rot = rot;
                 }
             
+            }
+
+        // shoes on top of feet
+        if( inClothing.backShoe != NULL && i == backFootIndex ) {
+            drawObject( inClothing.backShoe, backShoePos, backShoeRot,
+                        inFlipH, -1, 0, false, false, emptyClothing );
+            }
+        else if( inClothing.frontShoe != NULL && i == frontFootIndex ) {
+            drawObject( inClothing.frontShoe, frontShoePos, frontShoeRot,
+                        inFlipH, -1, 0, false, false, emptyClothing );
             }
         
         } 
