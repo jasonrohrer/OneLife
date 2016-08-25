@@ -845,7 +845,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         int oldNumSprites = 0;
         int oldNumSlots = 0;
         
-        int oldSpeedMult = 1.0;
+        double oldSpeedMult = 1.0;
 
         if( oldObject != NULL ) {
             oldNumSprites = oldObject->numSprites;
