@@ -2761,11 +2761,12 @@ void LivingLifePage::step() {
                                         mMapTileFlips[mapI] =
                                             nextObject->holdingFlip;
                                         
-                                        if( mMapDropOffsets[mapI].x > 0 ) {
+                                        if( x > 
+                                            nextObject->xServer ) {
                                             nextObject->holdingFlip = false;
                                             }
-                                        else if( 
-                                            mMapDropOffsets[mapI].x < 0 ) {
+                                        else if( x < 
+                                                 nextObject->xServer ) {
                                             
                                             nextObject->holdingFlip = true;
                                             }
