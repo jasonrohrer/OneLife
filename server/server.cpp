@@ -1389,12 +1389,22 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
 
     char *holdingString = getHoldingString( inPlayer );
     
+    int doneMoving = 0;
+    
+    if( inPlayer->xs == inPlayer->xd &&
+        inPlayer->ys == inPlayer->yd ) {
+        doneMoving = 1;
+        }
+    
+        
+
     char *posString;
     if( inDelete ) {
-        posString = stringDuplicate( "0 X X" );
+        posString = stringDuplicate( "0 0 X X" );
         }
     else {
-        posString = autoSprintf( "%d %d %d",          
+        posString = autoSprintf( "%d %d %d %d",          
+                                 doneMoving,
                                  inPlayer->posForced,
                                  inPlayer->xs, 
                                  inPlayer->ys );
@@ -1484,7 +1494,11 @@ void processedLogggedInPlayer( Socket *inSock,
             newObject.displayID = femaleID;
             }
         }
-                
+    else {
+        // testing
+        newObject.lifeStartTimeSeconds -= 14 * 60;
+        }
+    
                 
     // else player starts as newborn
                 

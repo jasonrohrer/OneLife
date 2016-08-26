@@ -2831,7 +2831,7 @@ void LivingLifePage::step() {
 
 
                 int forced = 0;
-                
+                int done_moving = 0;
                 
                 char *holdingIDBuffer = new char[500];
 
@@ -2841,7 +2841,7 @@ void LivingLifePage::step() {
                 
                 int numRead = sscanf( lines[i], 
                                       "%d %d "
-                                      "%499s %d %d %d %f %d %d %d "
+                                      "%499s %d %d %d %f %d %d %d %d "
                                       "%lf %lf %lf %d,%d,%d,%d",
                                       &( o.id ),
                                       &( o.displayID ),
@@ -2850,6 +2850,7 @@ void LivingLifePage::step() {
                                       &heldOriginX,
                                       &heldOriginY,
                                       &( o.heat ),
+                                      &done_moving,
                                       &forced,
                                       &( o.xd ),
                                       &( o.yd ),
@@ -2861,7 +2862,7 @@ void LivingLifePage::step() {
                                       &( frontShoe ),
                                       &( backShoe ) );
                 
-                if( numRead == 17 ) {
+                if( numRead == 18 ) {
                     o.lastAgeSetTime = game_getCurrentTime();
 
                     o.clothing.hat = getObject( hat );
@@ -3121,8 +3122,8 @@ void LivingLifePage::step() {
 
                             existing->heldByAdultID = -1;
                             }
-                        else if( existing->id != ourID || 
-                            forced ) {
+                        else if( done_moving && 
+                                 ( existing->id != ourID || forced ) ) {
                             
                             // don't ever force-update these for
                             // our locally-controlled object

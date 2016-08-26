@@ -110,17 +110,19 @@ a few other tricks to reduce it's size.  Check the code in map.cpp for details.
 
 
 PU
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s c
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s c
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s c
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s c
+p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c
+p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c
+p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c
+p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c
 ...
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat force x y age age_r s c
+p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c
 #
 
 List of player ids with their display object ids, held object ids, 
 whether held origin is valid (1 or 0), origin position on map of that held 
-object (where it was picked up from), and x,y grid positions of player,
+object (where it was picked up from), player's current heat value, 
+done_moving flag (to signal destination reached), force flag (to signal
+a move truncated unexpectedly), x,y grid positions of player,
 floating point age in "years", floating point aging rate in years/sec, and
 floating point s move speeds (in grid square widths per second) and clothing
 set.
@@ -128,7 +130,10 @@ set.
 Heat is the player's warmth between 0 and 1, where 0 is coldest, 1 is hottest,
 and 0.5 is ideal.
 
-This means the player is stationary at this position.
+If done_moving is 1, this means the player is stationary at this position.
+Otherwise, player may still be in the middle of a move (for example, if what
+they are holding decays while they are moving, a PU will be sent with
+done_moving set to 0).
 
 force is usually 0 except in special cases of move truncation where it is 1.
 A player receiving force for itself must snap back to that location
@@ -174,7 +179,8 @@ This can happen in immediate response to the move request or later, mid-move,
 if the path gets cut off (a new PM will be sent to truncate the path at that
 point)
 
-A PLAYER_UPDATE will be sent when these players reach their destination.
+A PLAYER_UPDATE will be sent with done_moving set to 1 when these players 
+reach their destination.
 Until that has happened, client must assume player is still in transit.
 
 
