@@ -123,6 +123,11 @@ typedef struct LiveObject {
 
         int holdingID;
 
+        // absolute time in seconds that what we're holding should decay
+        // or 0 if it never decays
+        unsigned int holdingEtaDecay;
+
+
         // where on map held object was picked up from
         char heldOriginValid;
         int heldOriginX;
@@ -162,7 +167,9 @@ typedef struct LiveObject {
 
 
         ClothingSet clothing;
-        
+
+
+        char updateSent;
     } LiveObject;
 
 
@@ -1066,6 +1073,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                 }
             
             inDroppingPlayer->holdingID = 0;
+            inDroppingPlayer->holdingEtaDecay = 0;
             inDroppingPlayer->heldOriginValid = 0;
             inDroppingPlayer->heldOriginX = 0;
             inDroppingPlayer->heldOriginY = 0;
@@ -1108,6 +1116,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             }
         
         inDroppingPlayer->holdingID = 0;
+        inDroppingPlayer->holdingEtaDecay = 0;
         inDroppingPlayer->heldOriginValid = 0;
         inDroppingPlayer->heldOriginX = 0;
         inDroppingPlayer->heldOriginY = 0;
@@ -1117,7 +1126,8 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     
 
     setMapObject( targetX, targetY, inDroppingPlayer->holdingID );
-                                
+    setEtaDecay( targetX, targetY, inDroppingPlayer->holdingEtaDecay );
+    
     if( inDroppingPlayer->numContained != 0 ) {
         for( int c=0;
              c < inDroppingPlayer->numContained;
@@ -1145,6 +1155,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     delete [] changeLine;
                                 
     inDroppingPlayer->holdingID = 0;
+    inDroppingPlayer->holdingEtaDecay = 0;
     inDroppingPlayer->heldOriginValid = 0;
     inDroppingPlayer->heldOriginX = 0;
     inDroppingPlayer->heldOriginY = 0;
@@ -1592,6 +1603,7 @@ void processedLogggedInPlayer( Socket *inSock,
     newObject.lastSentMapY = 0;
     newObject.moveTotalSeconds = 0;
     newObject.holdingID = 0;
+    newObject.holdingEtaDecay = 0;
     newObject.heldOriginValid = 0;
     newObject.heldOriginX = 0;
     newObject.heldOriginY = 0;
@@ -1604,7 +1616,8 @@ void processedLogggedInPlayer( Socket *inSock,
     newObject.error = false;
     newObject.deleteSent = false;
     newObject.newMove = false;
-                
+    
+    newObject.updateSent = false;
                 
                 
                 
@@ -1709,6 +1722,8 @@ int main() {
         // so that we wake up from listening to socket to handle it
         double minMoveTime = 999999;
         
+        double curTime = Time::getCurrentTime();
+
         for( int i=0; i<numLive; i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
             
@@ -1717,7 +1732,7 @@ int main() {
                 
                 double moveTimeLeft =
                     nextPlayer->moveTotalSeconds -
-                    ( Time::getCurrentTime() - nextPlayer->moveStartTime );
+                    ( curTime - nextPlayer->moveStartTime );
                 
                 if( moveTimeLeft < 0 ) {
                     moveTimeLeft = 0;
@@ -1731,14 +1746,32 @@ int main() {
             // look at food decrement time too
                 
             double timeLeft =
-                nextPlayer->foodDecrementETASeconds - Time::getCurrentTime();
+                nextPlayer->foodDecrementETASeconds - curTime;
                         
             if( timeLeft < 0 ) {
                 timeLeft = 0;
                 }
             if( timeLeft < minMoveTime ) {
                 minMoveTime = timeLeft;
-                }                
+                }           
+
+            // look at held decay too
+            if( nextPlayer->holdingEtaDecay != 0 ) {
+                
+                timeLeft = nextPlayer->holdingEtaDecay - curTime;
+                
+                if( timeLeft < 0 ) {
+                    timeLeft = 0;
+                    }
+                if( timeLeft < minMoveTime ) {
+                    minMoveTime = timeLeft;
+                    }
+                }
+            
+            // as low as it can get, no need to check other players
+            if( minMoveTime == 0 ) {
+                break;
+                }
             }
         
         SocketOrServer *readySock =  NULL;
@@ -2151,6 +2184,7 @@ int main() {
         for( int i=0; i<numLive; i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
             
+            nextPlayer->updateSent = false;
 
             char result = 
                 readSocketFull( nextPlayer->sock, nextPlayer->sockBuffer );
@@ -2785,6 +2819,9 @@ int main() {
                                     
                                     // treat it like pick up
                                     
+                                    nextPlayer->holdingEtaDecay = 
+                                        getEtaDecay( m.x, m.y );
+
                                     nextPlayer->containedIDs =
                                         getContained( 
                                             m.x, m.y,
@@ -2985,6 +3022,8 @@ int main() {
                                     // holding another player
                                     nextPlayer->holdingID = -hitPlayer->id;
                                     
+                                    nextPlayer->holdingEtaDecay = 0;
+
                                     hitPlayer->heldByOther = true;
                                     
                                     // force baby to drop what they are
@@ -3058,6 +3097,7 @@ int main() {
 
                                     // default, holding nothing after eating
                                     nextPlayer->holdingID = 0;
+                                    nextPlayer->holdingEtaDecay = 0;
 
 
                                     if( r != NULL ) {
@@ -3125,6 +3165,7 @@ int main() {
                                             break;
                                         }
                                     }
+                                nextPlayer->holdingEtaDecay = 0;
                                 }
                             else {
                                 // empty hand on self, remove clothing
@@ -3224,6 +3265,7 @@ int main() {
                                                 nextPlayer->holdingID );
                                         
                                             nextPlayer->holdingID = 0;
+                                            nextPlayer->holdingEtaDecay = 0;
                                             nextPlayer->heldOriginValid = 0;
                                             nextPlayer->heldOriginX = 0;
                                             nextPlayer->heldOriginY = 0;
@@ -3466,6 +3508,48 @@ int main() {
                         &playerIndicesToSendUpdatesAbout );
                     }
                 }
+            else if( nextPlayer->holdingEtaDecay != 0 &&
+                     nextPlayer->holdingEtaDecay < Time::getCurrentTime() ) {
+                
+                // what they're holding has decayed
+
+                int oldID = nextPlayer->holdingID;
+                
+                TransRecord *t = getTrans( -1, oldID );
+
+                if( t != NULL ) {
+
+                    int newID = t->newTarget;
+
+                    nextPlayer->holdingID = newID;
+                    
+                    
+                    int oldSlots = 
+                        getNumContainerSlots( oldID );
+
+                    int newSlots = getNumContainerSlots( newID );
+                    
+                    if( newSlots < oldSlots ) {
+                        // new container can hold less
+                        // truncate
+                        nextPlayer->numContained = newSlots;
+                        }
+
+                    // does newly-held object have a decay defined?
+                    TransRecord *newDecayT = getTrans( -1, newID );
+                    
+                    if( newDecayT != NULL ) {
+                        nextPlayer->holdingEtaDecay = 
+                            time(NULL) + newDecayT->autoDecaySeconds;
+                        }
+                    else {
+                        // no further decay
+                        nextPlayer->holdingEtaDecay = 0;
+                        }
+                    
+                    playerIndicesToSendUpdatesAbout.push_back( i );
+                    }
+                }
             else {
                 // check if they are done moving
                 // if so, send an update
@@ -3549,6 +3633,10 @@ int main() {
             LiveObject *nextPlayer = players.getElement( 
                 playerIndicesToSendUpdatesAbout.getElementDirect( i ) );
 
+            if( nextPlayer->updateSent ) {
+                continue;
+                }
+            
 
             // recompute heat map
             
@@ -3719,6 +3807,8 @@ int main() {
             newUpdatesPos.push_back( p );
 
             delete [] updateLine;
+
+            nextPlayer->updateSent = true;
             }
         
 
