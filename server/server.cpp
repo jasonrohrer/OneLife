@@ -2732,9 +2732,16 @@ int main() {
                                                   0 );
 
                                     if( r != NULL ) {
+                                        int oldHolding = nextPlayer->holdingID;
+                                        
                                         nextPlayer->holdingID = r->newActor;
 
-                                        setFreshEtaDecayForHeld( nextPlayer );
+                                        if( oldHolding != 
+                                            nextPlayer->holdingID ) {
+                                            
+                                            setFreshEtaDecayForHeld( 
+                                                nextPlayer );
+                                            }
                                         }
 
                                     if( ! hitWillDropSomething &&
@@ -2806,10 +2813,13 @@ int main() {
                                 if( r != NULL ) {
                                     int oldContained = 
                                         nextPlayer->numContained;
-
+                                    
+                                    int oldHolding = nextPlayer->holdingID;
                                     nextPlayer->holdingID = r->newActor;
                                     
-                                    setFreshEtaDecayForHeld( nextPlayer );
+                                    if( oldHolding != nextPlayer->holdingID ) {
+                                        setFreshEtaDecayForHeld( nextPlayer );
+                                        }
                                     
                                     nextPlayer->heldOriginValid = 0;
                                     nextPlayer->heldOriginX = 0;
@@ -2952,8 +2962,15 @@ int main() {
                                         int oldContained = 
                                             nextPlayer->numContained;
                                         
+                                        int oldHolding = nextPlayer->holdingID;
                                         nextPlayer->holdingID = r->newActor;
-                                        setFreshEtaDecayForHeld( nextPlayer );
+                                        
+                                        if( oldHolding != 
+                                            nextPlayer->holdingID ) {
+                                            
+                                            setFreshEtaDecayForHeld( 
+                                                nextPlayer );
+                                            }
                                         
                                         nextPlayer->heldOriginValid = 0;
                                         nextPlayer->heldOriginX = 0;
@@ -3135,14 +3152,23 @@ int main() {
                                         getTrans( nextPlayer->holdingID, 
                                                   -1 );
 
-                                    // default, holding nothing after eating
-                                    nextPlayer->holdingID = 0;
-                                    nextPlayer->holdingEtaDecay = 0;
-
+                                    
 
                                     if( r != NULL ) {
+                                        int oldHolding = nextPlayer->holdingID;
                                         nextPlayer->holdingID = r->newActor;
-                                        setFreshEtaDecayForHeld( nextPlayer );
+                                        
+                                        if( oldHolding !=
+                                            nextPlayer->holdingID ) {
+                                            
+                                            setFreshEtaDecayForHeld( 
+                                                nextPlayer );
+                                            }
+                                        }
+                                    else {
+                                        // default, holding nothing after eating
+                                        nextPlayer->holdingID = 0;
+                                        nextPlayer->holdingEtaDecay = 0;
                                         }
                                     
                                     nextPlayer->heldOriginValid = 0;
