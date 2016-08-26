@@ -2731,11 +2731,14 @@ int main() {
                                         getTrans( nextPlayer->holdingID, 
                                                   0 );
 
+                                    int oldHolding = nextPlayer->holdingID;
+                                    unsigned int oldEtaDecay = 
+                                        nextPlayer->holdingEtaDecay;
+
                                     if( r != NULL ) {
-                                        int oldHolding = nextPlayer->holdingID;
                                         
                                         nextPlayer->holdingID = r->newActor;
-
+                                        
                                         if( oldHolding != 
                                             nextPlayer->holdingID ) {
                                             
@@ -2760,6 +2763,16 @@ int main() {
                                         // spot is empty
                                         setMapObject( m.x, m.y, 
                                                       r->newTarget );
+                                        
+                                        // if we're thowing a weapon
+                                        // target is same as what we
+                                        // were holding
+                                        if( oldHolding == r->newTarget ) {
+                                            // preserve old decay time 
+                                            // of what we were holding
+                                            setEtaDecay( m.x, m.y,
+                                                         oldEtaDecay );
+                                            }
 
                                         char *changeLine =
                                             getMapChangeLineString(
@@ -2844,9 +2857,16 @@ int main() {
  
                                     shrinkContainer( m.x, m.y, newSlots );
                                                                         
-
+                                    unsigned int oldEtaDecay = 
+                                        getEtaDecay( m.x, m.y );
+                                    
                                     setMapObject( m.x, m.y, r->newTarget );
                                     
+                                    if( target == r->newTarget ) {
+                                        // target not changed
+                                        // keep old decay in place
+                                        setEtaDecay( m.x, m.y, oldEtaDecay );
+                                        }                                    
                                     
                                     char *changeLine =
                                         getMapChangeLineString(
