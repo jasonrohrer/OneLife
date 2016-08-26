@@ -1844,6 +1844,44 @@ ClothingSet getEmptyClothingSet() {
 
 
 
+static ObjectRecord **clothingPointerByIndex( ClothingSet *inSet, 
+                                              int inIndex ) {
+    switch( inIndex ) {
+        case 0:
+            return &( inSet->hat );
+        case 1:
+            return &( inSet->tunic );
+        case 2:
+            return &( inSet->frontShoe );
+        case 3:
+            return &( inSet->backShoe );
+        }
+    return NULL;
+    }
+
+
+
+ObjectRecord *clothingByIndex( ClothingSet inSet, int inIndex ) {
+    ObjectRecord **pointer = clothingPointerByIndex( &inSet, inIndex );
+    
+    if( pointer != NULL ) {    
+        return *( pointer );
+        }
+    
+    return NULL;
+    }
+
+
+
+void setClothingByIndex( ClothingSet *inSet, int inIndex, 
+                         ObjectRecord *inClothing ) {
+    ObjectRecord **pointer = clothingPointerByIndex( inSet, inIndex );
+
+    *pointer = inClothing;
+    }
+
+
+
 
 char checkSpriteAncestor( ObjectRecord *inObject, int inChildIndex,
                           int inPossibleAncestorIndex ) {

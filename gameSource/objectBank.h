@@ -152,6 +152,7 @@ typedef struct ObjectRecord {
     } ObjectRecord;
 
 
+#define NUM_CLOTHING_PIECES 4
 
 
 // can be applied to a person object when drawing it 
@@ -175,6 +176,11 @@ typedef struct ClothingSet {
 
 ClothingSet getEmptyClothingSet();
 
+// 0 hat, 1, tunic, 2, front shoe, 3 back shoe
+ObjectRecord *clothingByIndex( ClothingSet inSet, int inIndex );
+
+void setClothingByIndex( ClothingSet *inSet, int inIndex, 
+                         ObjectRecord *inClothing );
 
 
 

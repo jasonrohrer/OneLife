@@ -167,7 +167,8 @@ typedef struct LiveObject {
 
 
         ClothingSet clothing;
-
+        
+        unsigned int clothingEtaDecay[NUM_CLOTHING_PIECES];
 
         char updateSent;
     } LiveObject;
@@ -1803,6 +1804,19 @@ int main() {
                     }
                 }
             
+            for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+                if( nextPlayer->clothingEtaDecay[c] != 0 ) {
+                    timeLeft = nextPlayer->clothingEtaDecay[c] - curTime;
+                    
+                    if( timeLeft < 0 ) {
+                        timeLeft = 0;
+                        }
+                    if( timeLeft < minMoveTime ) {
+                        minMoveTime = timeLeft;
+                        }
+                    }
+                }
+            
             // as low as it can get, no need to check other players
             if( minMoveTime == 0 ) {
                 break;
@@ -3201,29 +3215,51 @@ int main() {
                                     // wearable
                                     
                                     nextPlayer->holdingID = 0;
+                                    unsigned int oldEtaDecay = 
+                                        nextPlayer->holdingEtaDecay;
+                                    
                                     nextPlayer->holdingEtaDecay = 0;
                                     
                                     nextPlayer->heldOriginValid = 0;
                                     nextPlayer->heldOriginX = 0;
                                     nextPlayer->heldOriginY = 0;
-
+                                    
                                     ObjectRecord *oldC = NULL;
+                                    unsigned int oldCEtaDecay = 0;
                                     
                                     switch( obj->clothing ) {
                                         case 'h':
                                             oldC = nextPlayer->clothing.hat;
+                                            
+                                            oldCEtaDecay = 
+                                                nextPlayer->clothingEtaDecay[0];
+                                            
                                             nextPlayer->clothing.hat = obj;
+                                            nextPlayer->clothingEtaDecay[0] =
+                                                oldEtaDecay;
+                                            
                                             if( oldC != NULL ) {
                                                 nextPlayer->holdingID =
                                                     oldC->id;
+                                                nextPlayer->holdingEtaDecay
+                                                    = oldCEtaDecay;
                                                 }
                                             break;
                                         case 't':
                                             oldC = nextPlayer->clothing.tunic;
+
+                                            oldCEtaDecay = 
+                                                nextPlayer->clothingEtaDecay[1];
+                                            
                                             nextPlayer->clothing.tunic = obj;
+                                            nextPlayer->clothingEtaDecay[1] =
+                                                oldEtaDecay;
+                                            
                                             if( oldC != NULL ) {
                                                 nextPlayer->holdingID =
                                                     oldC->id;
+                                                nextPlayer->holdingEtaDecay
+                                                    = oldCEtaDecay;
                                                 }
                                             break;
                                         case 's':
@@ -3231,24 +3267,42 @@ int main() {
                                                 == NULL ) {
                                                 nextPlayer->clothing.backShoe 
                                                     = obj;
+                                                nextPlayer->
+                                                    clothingEtaDecay[3] =
+                                                    oldEtaDecay;
                                                 }
                                             else if( 
                                                 nextPlayer->clothing.frontShoe
                                                 == NULL ) {
                                                 nextPlayer->clothing.frontShoe 
                                                     = obj;
+                                                nextPlayer->
+                                                    clothingEtaDecay[2] =
+                                                    oldEtaDecay;
                                                 }
                                             else {
-                                                // replace a shoe
+                                                // replace front shoe
                                                 
                                                 oldC = 
                                                     nextPlayer->
                                                     clothing.frontShoe;
+                                                oldCEtaDecay = 
+                                                    nextPlayer->
+                                                    clothingEtaDecay[2];
+                                            
+
                                                 nextPlayer->clothing.frontShoe 
                                                     = obj;
+                                                
+                                                nextPlayer->
+                                                    clothingEtaDecay[2] =
+                                                    oldEtaDecay;
+                                                
                                                 if( oldC != NULL ) {
                                                     nextPlayer->holdingID =
                                                         oldC->id;
+                                                    nextPlayer->holdingEtaDecay
+                                                        = oldCEtaDecay;
                                                     }
                                                 }
                                             break;
@@ -3261,22 +3315,35 @@ int main() {
                                     nextPlayer->holdingID =
                                         nextPlayer->clothing.frontShoe->id;
                                     nextPlayer->clothing.frontShoe = NULL;
+                                    nextPlayer->holdingEtaDecay =
+                                        nextPlayer->clothingEtaDecay[2];
+                                    nextPlayer->clothingEtaDecay[2] = 0;
                                     }
                                 else if( nextPlayer->clothing.backShoe 
                                          != NULL ) {
                                     nextPlayer->holdingID =
                                         nextPlayer->clothing.backShoe->id;
                                     nextPlayer->clothing.backShoe = NULL;
+                                    nextPlayer->holdingEtaDecay =
+                                        nextPlayer->clothingEtaDecay[3];
+                                    nextPlayer->clothingEtaDecay[3] = 0;
                                     }
                                 else if( nextPlayer->clothing.hat != NULL ) {
                                     nextPlayer->holdingID =
                                         nextPlayer->clothing.hat->id;
                                     nextPlayer->clothing.hat = NULL;
+                                    nextPlayer->holdingEtaDecay =
+                                        nextPlayer->clothingEtaDecay[0];
+                                    nextPlayer->clothingEtaDecay[0] = 0;
+                                    
                                     }
                                 else if( nextPlayer->clothing.tunic != NULL ) {
                                     nextPlayer->holdingID =
                                         nextPlayer->clothing.tunic->id;
                                     nextPlayer->clothing.tunic = NULL;
+                                    nextPlayer->holdingEtaDecay =
+                                        nextPlayer->clothingEtaDecay[1];
+                                    nextPlayer->clothingEtaDecay[1] = 0;
                                     }
                                 }
                             }
@@ -3629,6 +3696,56 @@ int main() {
                     }
                 }
             else {
+
+                // check if their clothing has decayed
+                for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+                    ObjectRecord *cObj = 
+                        clothingByIndex( nextPlayer->clothing, c );
+                    
+                    if( cObj != NULL &&
+                        nextPlayer->clothingEtaDecay[c] != 0 &&
+                        nextPlayer->clothingEtaDecay[c] < 
+                          Time::getCurrentTime() ) {
+                
+                        // what they're wearing has decayed
+
+                        int oldID = cObj->id;
+                
+                        TransRecord *t = getTrans( -1, oldID );
+
+                        if( t != NULL ) {
+
+                            int newID = t->newTarget;
+                            
+                            ObjectRecord *newCObj = NULL;
+                            if( newID != 0 ) {
+                                newCObj = getObject( newID );
+                                
+                                TransRecord *newDecayT = getTrans( -1, newID );
+                                
+                                if( newDecayT != NULL ) {
+                                    nextPlayer->clothingEtaDecay[c] = 
+                                        time(NULL) + 
+                                        newDecayT->autoDecaySeconds;
+                                    }
+                                else {
+                                    // no further decay
+                                    nextPlayer->clothingEtaDecay[c] = 0;
+                                    }
+                                }
+                            else {
+                                nextPlayer->clothingEtaDecay[c] = 0;
+                                }
+                            
+                            setClothingByIndex( &( nextPlayer->clothing ),
+                                                c, newCObj );
+                            
+                            playerIndicesToSendUpdatesAbout.push_back( i );
+                            }
+                        }
+                    }
+                
+
                 // check if they are done moving
                 // if so, send an update
                 
