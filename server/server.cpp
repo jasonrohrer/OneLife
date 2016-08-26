@@ -906,6 +906,27 @@ char isMapSpotEmpty( int inX, int inY, char inConsiderPlayers = true ) {
 
 
 
+static void setFreshEtaDecayForHeld( LiveObject *inPlayer ) {
+    
+    if( inPlayer->holdingID == 0 ) {
+        inPlayer->holdingEtaDecay = 0;
+        }
+    
+    // does newly-held object have a decay defined?
+    TransRecord *newDecayT = getTrans( -1, inPlayer->holdingID );
+                    
+    if( newDecayT != NULL ) {
+        inPlayer->holdingEtaDecay = 
+            time(NULL) + newDecayT->autoDecaySeconds;
+        }
+    else {
+        // no further decay
+        inPlayer->holdingEtaDecay = 0;
+        }
+    }
+
+
+
 
 // drops an object held by a player at target x,y location
 // doesn't check for adjacency (so works for thrown drops too)
@@ -2712,6 +2733,8 @@ int main() {
 
                                     if( r != NULL ) {
                                         nextPlayer->holdingID = r->newActor;
+
+                                        setFreshEtaDecayForHeld( nextPlayer );
                                         }
 
                                     if( ! hitWillDropSomething &&
@@ -2785,6 +2808,8 @@ int main() {
                                         nextPlayer->numContained;
 
                                     nextPlayer->holdingID = r->newActor;
+                                    
+                                    setFreshEtaDecayForHeld( nextPlayer );
                                     
                                     nextPlayer->heldOriginValid = 0;
                                     nextPlayer->heldOriginX = 0;
@@ -2928,7 +2953,8 @@ int main() {
                                             nextPlayer->numContained;
                                         
                                         nextPlayer->holdingID = r->newActor;
-                                    
+                                        setFreshEtaDecayForHeld( nextPlayer );
+                                        
                                         nextPlayer->heldOriginValid = 0;
                                         nextPlayer->heldOriginX = 0;
                                         nextPlayer->heldOriginY = 0;
@@ -3116,6 +3142,7 @@ int main() {
 
                                     if( r != NULL ) {
                                         nextPlayer->holdingID = r->newActor;
+                                        setFreshEtaDecayForHeld( nextPlayer );
                                         }
                                     
                                     nextPlayer->heldOriginValid = 0;
@@ -3128,6 +3155,8 @@ int main() {
                                     // wearable
                                     
                                     nextPlayer->holdingID = 0;
+                                    nextPlayer->holdingEtaDecay = 0;
+                                    
                                     nextPlayer->heldOriginValid = 0;
                                     nextPlayer->heldOriginX = 0;
                                     nextPlayer->heldOriginY = 0;
@@ -3179,7 +3208,6 @@ int main() {
                                             break;
                                         }
                                     }
-                                nextPlayer->holdingEtaDecay = 0;
                                 }
                             else {
                                 // empty hand on self, remove clothing
@@ -3548,18 +3576,8 @@ int main() {
                         // truncate
                         nextPlayer->numContained = newSlots;
                         }
-
-                    // does newly-held object have a decay defined?
-                    TransRecord *newDecayT = getTrans( -1, newID );
                     
-                    if( newDecayT != NULL ) {
-                        nextPlayer->holdingEtaDecay = 
-                            time(NULL) + newDecayT->autoDecaySeconds;
-                        }
-                    else {
-                        // no further decay
-                        nextPlayer->holdingEtaDecay = 0;
-                        }
+                    setFreshEtaDecayForHeld( nextPlayer );
                     
                     playerIndicesToSendUpdatesAbout.push_back( i );
                     }
