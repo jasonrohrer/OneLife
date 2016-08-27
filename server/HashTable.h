@@ -11,11 +11,11 @@ class HashTable {
         
         ~HashTable();
         
-        Type lookup( int inKeyA, int inKeyB, char *outFound );
+        Type lookup( int inKeyA, int inKeyB, int inKeyC, char *outFound );
         
-        void insert( int inKeyA, int inKeyB, Type inItem );
+        void insert( int inKeyA, int inKeyB, int inKeyC, Type inItem );
 
-        void remove( int inKeyA, int inKeyB );
+        void remove( int inKeyA, int inKeyB, int inKeyC );
         
 
         int getNumElements() {
@@ -29,16 +29,17 @@ class HashTable {
         int mSize;
         
         int mNumElements;
-
+        
 
         SimpleVector<Type> *mTable;
         
         SimpleVector<int> *mKeysA;
         SimpleVector<int> *mKeysB;
+        SimpleVector<int> *mKeysC;
         
-        int computeHash( int inKeyA, int inKeyB );
+        int computeHash( int inKeyA, int inKeyB, int inKeyC );
         
-        char lookupBin( int inKeyA, int inKeyB,
+        char lookupBin( int inKeyA, int inKeyB, int inKeyC,
                         int *outHashKey, 
                         int *outBin );
         
@@ -56,7 +57,8 @@ HashTable<Type>::HashTable( int inSize )
           mNumElements( 0 ),
           mTable( new SimpleVector<Type>[ inSize ] ),
           mKeysA( new SimpleVector<int>[ inSize ] ),
-          mKeysB( new SimpleVector<int>[ inSize ] ) {
+          mKeysB( new SimpleVector<int>[ inSize ] ),
+          mKeysC( new SimpleVector<int>[ inSize ] ) {
     
         
     }
@@ -70,14 +72,15 @@ HashTable<Type>::~HashTable() {
     delete [] mTable;
     delete [] mKeysA;
     delete [] mKeysB;
+    delete [] mKeysC;
     }
 
 
 
 template <class Type> 
-inline int HashTable<Type>::computeHash( int inKeyA, int inKeyB ) {
+inline int HashTable<Type>::computeHash( int inKeyA, int inKeyB, int inKeyC ) {
     
-    int hashKey = ( inKeyA * 734727 + inKeyB * 263474 ) % mSize;
+    int hashKey = ( inKeyA * 734727 + inKeyB * 263474 + inKeyC * 2753 ) % mSize;
     if( hashKey < 0 ) {
         hashKey += mSize;
         }
@@ -87,11 +90,11 @@ inline int HashTable<Type>::computeHash( int inKeyA, int inKeyB ) {
 
 
 template <class Type> 
-char HashTable<Type>::lookupBin( int inKeyA, int inKeyB,
+char HashTable<Type>::lookupBin( int inKeyA, int inKeyB, int inKeyC,
                                  int *outHashKey, 
                                  int *outBin ) {
 
-    int hashKey = computeHash( inKeyA, inKeyB );
+    int hashKey = computeHash( inKeyA, inKeyB, inKeyC );
         
     int numBins = mTable[hashKey].size();
     
@@ -100,7 +103,8 @@ char HashTable<Type>::lookupBin( int inKeyA, int inKeyB,
     
     for( int i=0; i<numBins; i++ ) {
         if( mKeysA[hashKey].getElementDirect( i ) == inKeyA &&
-            mKeysB[hashKey].getElementDirect( i ) == inKeyB ) {
+            mKeysB[hashKey].getElementDirect( i ) == inKeyB &&
+            mKeysC[hashKey].getElementDirect( i ) == inKeyC ) {
             
             *outBin = i;
             return true;
@@ -113,13 +117,14 @@ char HashTable<Type>::lookupBin( int inKeyA, int inKeyB,
 
         
 template <class Type> 
-Type HashTable<Type>::lookup( int inKeyA, int inKeyB, char *outFound ) {
+Type HashTable<Type>::lookup( int inKeyA, int inKeyB, int inKeyC, 
+                              char *outFound ) {
     
     int hashKey;
 
     int bin;
     
-    *outFound = lookupBin( inKeyA, inKeyB, &hashKey, &bin );
+    *outFound = lookupBin( inKeyA, inKeyB, inKeyC, &hashKey, &bin );
 
     if( *outFound ) {
                 
@@ -135,13 +140,14 @@ Type HashTable<Type>::lookup( int inKeyA, int inKeyB, char *outFound ) {
 
 
 template <class Type> 
-void HashTable<Type>::insert( int inKeyA, int inKeyB, Type inItem ) {
+void HashTable<Type>::insert( int inKeyA, int inKeyB, int inKeyC, 
+                              Type inItem ) {
     
     int hashKey;
 
     int bin;
     
-    char found = lookupBin( inKeyA, inKeyB, &hashKey, &bin );
+    char found = lookupBin( inKeyA, inKeyB, inKeyC, &hashKey, &bin );
 
 
     if( found ) {
@@ -153,6 +159,7 @@ void HashTable<Type>::insert( int inKeyA, int inKeyB, Type inItem ) {
         mTable[ hashKey ].push_back( inItem );
         mKeysA[ hashKey ].push_back( inKeyA );
         mKeysB[ hashKey ].push_back( inKeyB );
+        mKeysC[ hashKey ].push_back( inKeyC );
         
         mNumElements++;
         }
@@ -161,18 +168,19 @@ void HashTable<Type>::insert( int inKeyA, int inKeyB, Type inItem ) {
 
 
 template <class Type>
-void HashTable<Type>::remove( int inKeyA, int inKeyB ) {
+void HashTable<Type>::remove( int inKeyA, int inKeyB, int inKeyC ) {
     int hashKey;
 
     int bin;
     
-    char found = lookupBin( inKeyA, inKeyB, &hashKey, &bin );
+    char found = lookupBin( inKeyA, inKeyB, inKeyC, &hashKey, &bin );
 
     if( found ) {
         // remove
         mTable[ hashKey ].deleteElement( bin );
         mKeysA[ hashKey ].deleteElement( bin );
         mKeysB[ hashKey ].deleteElement( bin );
+        mKeysC[ hashKey ].deleteElement( bin );
         
         mNumElements--;
         }
@@ -187,6 +195,7 @@ void HashTable<Type>::clear() {
         mTable[i].deleteAll();
         mKeysA[i].deleteAll();
         mKeysB[i].deleteAll();
+        mKeysC[i].deleteAll();
         }
 
     mNumElements = 0;

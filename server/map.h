@@ -41,17 +41,28 @@ void setEtaDecay( int inX, int inY, unsigned int inAbsoluteTimeInSeconds );
 
 unsigned int getEtaDecay( int inX, int inY );
 
+// for container slots
+void setSlotEtaDecay( int inX, int inY, int inSlot,
+                      unsigned int inAbsoluteTimeInSeconds );
+unsigned int getSlotEtaDecay( int inX, int inY, int inSlot );
+
+
 
 // adds to top of stack
-void addContained( int inX, int inY, int inContainedID );
+void addContained( int inX, int inY, int inContainedID, 
+                   unsigned int inEtaDecay );
 
 int getNumContained( int inX, int inY );
 
 // destroyed by caller, returns NULL if empty
 int *getContained( int inX, int inY, int *outNumContained );
+unsigned int *getContainedEtaDecay( int inX, int inY, int *outNumContained );
 
+void setContained( int inX, int inY, int inNumContained, int *inContained );
+void setContainedEtaDecay( int inX, int inY, int inNumContained, 
+                           unsigned int *inContainedEtaDecay );
 // removes from top of stack
-int removeContained( int inX, int inY );
+int removeContained( int inX, int inY, unsigned int *outEtaDecay );
 
 void clearAllContained( int inX, int inY );
 

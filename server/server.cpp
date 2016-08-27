@@ -135,7 +135,8 @@ typedef struct LiveObject {
 
         int numContained;
         int *containedIDs;
-
+        unsigned int *containedEtaDecays;
+        
         Socket *sock;
         SimpleVector<char> *sockBuffer;
 
@@ -1102,7 +1103,10 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
 
             if( inDroppingPlayer->numContained != 0 ) {
                 delete [] inDroppingPlayer->containedIDs;
+                delete [] inDroppingPlayer->containedEtaDecays;
+                
                 inDroppingPlayer->containedIDs = NULL;
+                inDroppingPlayer->containedEtaDecays = NULL;
                 inDroppingPlayer->numContained = 0;
                 }
             return;
@@ -1156,10 +1160,13 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
              c++ ) {
             addContained( 
                 targetX, targetY,
-                inDroppingPlayer->containedIDs[c] );
+                inDroppingPlayer->containedIDs[c],
+                inDroppingPlayer->containedEtaDecays[c] );
             }
         delete [] inDroppingPlayer->containedIDs;
+        delete [] inDroppingPlayer->containedEtaDecays;
         inDroppingPlayer->containedIDs = NULL;
+        inDroppingPlayer->containedEtaDecays = NULL;
         inDroppingPlayer->numContained = 0;
         }
                                 
@@ -1645,6 +1652,7 @@ void processedLogggedInPlayer( Socket *inSock,
     newObject.heldOriginY = 0;
     newObject.numContained = 0;
     newObject.containedIDs = NULL;
+    newObject.containedEtaDecays = NULL;
     newObject.sock = inSock;
     newObject.sockBuffer = inSockBuffer;
     newObject.isNew = true;
@@ -2783,7 +2791,7 @@ int main() {
                                         // were holding
                                         if( oldHolding == r->newTarget ) {
                                             // preserve old decay time 
-                                            // of what we were holding
+                                            // of what we were holing
                                             setEtaDecay( m.x, m.y,
                                                          oldEtaDecay );
                                             }
@@ -2909,6 +2917,11 @@ int main() {
                                         getContained( 
                                             m.x, m.y,
                                             &( nextPlayer->numContained ) );
+                                    
+                                    int numCont;
+                                    nextPlayer->containedEtaDecays =
+                                        getContainedEtaDecay( m.x, m.y,
+                                                              &numCont );
                                     
                                     clearAllContained( m.x, m.y );
                                     setMapObject( m.x, m.y, 0 );
@@ -3417,7 +3430,8 @@ int main() {
                                         
                                             addContained( 
                                                 m.x, m.y,
-                                                nextPlayer->holdingID );
+                                                nextPlayer->holdingID,
+                                                nextPlayer->holdingEtaDecay );
                                         
                                             nextPlayer->holdingID = 0;
                                             nextPlayer->holdingEtaDecay = 0;
@@ -3499,7 +3513,9 @@ int main() {
                                     // get from container
                                     
                                     nextPlayer->holdingID =
-                                        removeContained( m.x, m.y );
+                                        removeContained( 
+                                            m.x, m.y,
+                                            &( nextPlayer->holdingEtaDecay ) );
                                     
                                     // contained objects aren't animating
                                     // in a way that needs to be smooth
@@ -3618,24 +3634,28 @@ int main() {
                                 
                                 addContained( 
                                     dropPos.x, dropPos.y,
-                                    nextPlayer->clothing.tunic->id );
+                                    nextPlayer->clothing.tunic->id,
+                                    nextPlayer->clothingEtaDecay[1] );
                                 }
                             if( nextPlayer->clothing.backShoe != NULL ) {
                                 
                                 addContained( 
                                     dropPos.x, dropPos.y,
-                                    nextPlayer->clothing.backShoe->id );
+                                    nextPlayer->clothing.backShoe->id,
+                                    nextPlayer->clothingEtaDecay[3] );
                                 }
                             if( nextPlayer->clothing.frontShoe != NULL ) {
                                 
                                 addContained( 
                                     dropPos.x, dropPos.y,
-                                    nextPlayer->clothing.frontShoe->id );
+                                    nextPlayer->clothing.frontShoe->id,
+                                    nextPlayer->clothingEtaDecay[2] );
                                 }
                             if( nextPlayer->clothing.hat != NULL ) {
                                 
                                 addContained( dropPos.x, dropPos.y,
-                                              nextPlayer->clothing.hat->id );
+                                              nextPlayer->clothing.hat->id,
+                                              nextPlayer->clothingEtaDecay[0] );
                                 }
                             }
 
@@ -4547,6 +4567,10 @@ int main() {
                 
                 if( nextPlayer->containedIDs != NULL ) {
                     delete [] nextPlayer->containedIDs;
+                    }
+                
+                if( nextPlayer->containedEtaDecays != NULL ) {
+                    delete [] nextPlayer->containedEtaDecays;
                     }
                 
                 if( nextPlayer->pathToDest != NULL ) {
