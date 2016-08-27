@@ -3716,6 +3716,77 @@ int main() {
                     }
                 }
             else {
+                
+                // check if anything in the container they are holding
+                // has decayed
+                if( nextPlayer->holdingID > 0 &&
+                    nextPlayer->numContained > 0 ) {
+                    
+                    char change = false;
+                    
+                    SimpleVector<int> newContained;
+                    SimpleVector<unsigned int> newContainedETA;
+                    
+                    for( int c=0; c< nextPlayer->numContained; c++ ) {
+                        int oldID = nextPlayer->containedIDs[c];
+                        int newID = oldID;
+                        
+                        unsigned int newDecay = 
+                            nextPlayer->containedEtaDecays[c];
+
+                        if( nextPlayer->containedEtaDecays[c] != 0 &&
+                            nextPlayer->containedEtaDecays[c] <
+                            Time::getCurrentTime() ) {
+                            
+                            change = true;
+                            
+                            TransRecord *t = getTrans( -1, oldID );
+
+                            newDecay = 0;
+
+                            if( t != NULL ) {
+
+                                newID = t->newTarget;
+                            
+                                if( newID != 0 ) {
+                                    TransRecord *newDecayT = 
+                                        getTrans( -1, newID );
+                                
+                                    if( newDecayT != NULL ) {
+                                        newDecay = 
+                                            time(NULL) + 
+                                            newDecayT->autoDecaySeconds;
+                                        }
+                                    else {
+                                        // no further decay
+                                        newDecay = 0;
+                                        }
+                                    }
+                                }
+                            }
+                        
+                        if( newID != 0 ) {
+                            newContained.push_back( newID );
+                            newContainedETA.push_back( newDecay );
+                            }
+                        }
+
+                    if( change ) {
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+                    
+                        delete [] nextPlayer->containedIDs;
+                        delete [] nextPlayer->containedEtaDecays;
+                        
+                        nextPlayer->numContained = newContained.size();
+                        
+                        nextPlayer->containedIDs = 
+                            newContained.getElementArray();
+                        nextPlayer->containedEtaDecays = 
+                            newContainedETA.getElementArray();
+                        }
+                    }
+                
+
 
                 // check if their clothing has decayed
                 for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
