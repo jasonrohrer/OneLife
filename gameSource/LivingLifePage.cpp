@@ -4418,6 +4418,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     int closestCellX = clickDestX;
     int closestCellY = clickDestY;
+    int hitSlotIndex = -1;
     
     double minDistThatHits = 2.0;
 
@@ -4456,19 +4457,24 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 
                 int sp, cl, sl;
                 
-                double dist = getClosestObjectPart( obj,
-                                                    NULL,
-                                                    -1,
-                                                    -1,
-                                                    mMapTileFlips[ mapI ],
-                                                    clickOffsetX,
-                                                    clickOffsetY,
-                                                    &sp, &cl, &sl );
+                double dist = getClosestObjectPart( 
+                    obj,
+                    NULL,
+                    &( mMapContainedStacks[mapI] ),
+                    -1,
+                    -1,
+                    mMapTileFlips[ mapI ],
+                    clickOffsetX,
+                    clickOffsetY,
+                    &sp, &cl, &sl );
+                
                 if( dist < minDistThatHits ) {
                     hit = true;
                     closestCellX = x;
                     closestCellY = y;
                     
+                    hitSlotIndex = sl;
+
                     hitAnObject = true;
                     }
                 }
@@ -4526,6 +4532,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     
                     double dist = getClosestObjectPart( obj,
                                                         &( o->clothing ),
+                                                        NULL,
                                                         o->age,
                                                         -1,
                                                         o->holdingFlip,
@@ -4848,6 +4855,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         if( canExecute ) {
             
             const char *action = "";
+            char *extra = stringDuplicate( "" );
             
             char send = false;
             
@@ -4899,6 +4907,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                      getNumContainerSlots( destID ) > 0 ) {
                 action = "REMV";
                 send = true;
+                delete [] extra;
+                extra = autoSprintf( " %d", hitSlotIndex );
                 }
             else if( modClick && ourLiveObject->holdingID != 0 &&
                      destID != 0 &&
@@ -4916,11 +4926,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( send ) {
                 // queue this until after we are done moving, if we are
                 nextActionMessageToSend = 
-                    autoSprintf( "%s %d %d#", action,
-                                 clickDestX, clickDestY );
+                    autoSprintf( "%s %d %d%s#", action,
+                                 clickDestX, clickDestY, extra );
                 playerActionTargetX = clickDestX;
                 playerActionTargetY = clickDestY;
                 }
+
+            delete [] extra;
             }
         }
     

@@ -61,8 +61,10 @@ unsigned int *getContainedEtaDecay( int inX, int inY, int *outNumContained );
 void setContained( int inX, int inY, int inNumContained, int *inContained );
 void setContainedEtaDecay( int inX, int inY, int inNumContained, 
                            unsigned int *inContainedEtaDecay );
-// removes from top of stack
-int removeContained( int inX, int inY, unsigned int *outEtaDecay );
+
+// removes contained item from specified slot, or remove from top of stack
+// if inSlot is -1
+int removeContained( int inX, int inY, int inSlot, unsigned int *outEtaDecay );
 
 void clearAllContained( int inX, int inY );
 

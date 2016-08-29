@@ -351,7 +351,10 @@ int getMaxDiameter( ObjectRecord *inObject );
 
 // picked layer can be -1 if nothing is picked
 double getClosestObjectPart( ObjectRecord *inObject,
+                             // can be NULL
                              ClothingSet *inClothing,
+                             // can be NULL
+                             SimpleVector<int> *inContained,
                              double inAge,
                              int inPickedLayer,
                              char inFlip,

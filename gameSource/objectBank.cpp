@@ -1930,6 +1930,7 @@ int getMaxDiameter( ObjectRecord *inObject ) {
 
 double getClosestObjectPart( ObjectRecord *inObject,
                              ClothingSet *inClothing,
+                             SimpleVector<int> *inContained,
                              double inAge,
                              int inPickedLayer,
                              char inFlip,
@@ -2056,6 +2057,7 @@ double getClosestObjectPart( ObjectRecord *inObject,
                 
                 getClosestObjectPart( cObj[c],
                                       NULL,
+                                      NULL,
                                       -1,
                                       -1,
                                       inFlip,
@@ -2141,15 +2143,54 @@ double getClosestObjectPart( ObjectRecord *inObject,
         // consider slots
         
         
-        for( int i=0; i<inObject->numSlots; i++ ) {
-        
-            double dist = distance( pos, inObject->slotPos[i] );
+        for( int i=inObject->numSlots-1; i>=0; i-- ) {
+            doublePair slotPos = inObject->slotPos[i];
             
-            if( dist < smallestDist ) {
-                *outSprite = -1;
-                *outSlot = i;
+            if( inFlip ) {
+                slotPos.x *= -1;
+                }
+            
+            if( inContained != NULL && i <inContained->size() ) {
+                ObjectRecord *contained = 
+                    getObject( inContained->getElementDirect( i ) );
+            
+                doublePair centOffset = getObjectCenterOffset( contained );
                 
-                smallestDist = dist;
+                if( inFlip ) {
+                    centOffset.x *= -1;
+                    }
+            
+                slotPos = sub( slotPos, centOffset );
+
+                doublePair slotOffset = sub( pos, slotPos );
+                
+
+                int sp, cl, sl;
+                
+                getClosestObjectPart( contained,
+                                      NULL,
+                                      NULL,
+                                      -1,
+                                      -1,
+                                      inFlip,
+                                      slotOffset.x, slotOffset.y,
+                                      &sp, &cl, &sl );
+                if( sp != -1 ) {
+                    *outSlot = i;
+                    smallestDist = 0;
+                    break;
+                    }
+                }
+            else {
+                
+                double dist = distance( pos, inObject->slotPos[i] );
+            
+                if( dist < smallestDist ) {
+                    *outSprite = -1;
+                    *outSlot = i;
+                    
+                    smallestDist = dist;
+                    }
                 }
             }
         

@@ -497,6 +497,14 @@ ClientMessage parseMessage( char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "REMV" ) == 0 ) {
         m.type = REMV;
+        
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.i ) );
+        
+        if( numRead != 4 ) {
+            m.type = UNKNOWN;
+            }
         }
     else if( strcmp( nameBuffer, "DROP" ) == 0 ) {
         m.type = DROP;
@@ -3527,7 +3535,7 @@ int main() {
                                     
                                     nextPlayer->holdingID =
                                         removeContained( 
-                                            m.x, m.y,
+                                            m.x, m.y, m.i,
                                             &( nextPlayer->holdingEtaDecay ) );
                                     
                                     // contained objects aren't animating

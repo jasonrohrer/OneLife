@@ -1321,31 +1321,49 @@ void setContainedEtaDecay( int inX, int inY, int inNumContained,
     
 
 // removes from top of stack
-int removeContained( int inX, int inY, unsigned int *outEtaDecay ) {
+int removeContained( int inX, int inY, int inSlot, unsigned int *outEtaDecay ) {
     int num = getNumContained( inX, inY );
     
     if( num == 0 ) {
         return 0;
         }
-    
-    int result = dbGet( inX, inY, FIRST_CONT_SLOT + num - 1 );
 
-    unsigned int resultEta = dbGet( inX, inY, FIRST_CONT_SLOT + num + num - 1 );
+    if( inSlot == -1 || inSlot > num - 1 ) {
+        inSlot = num - 1;
+        }
+    
+    
+    int result = dbGet( inX, inY, FIRST_CONT_SLOT + inSlot );
+
+    unsigned int resultEta = dbGet( inX, inY, FIRST_CONT_SLOT + num + inSlot );
     
     *outEtaDecay = resultEta;
     
     int oldNum;
+    int *oldContained = getContained( inX, inY, &oldNum );
+
     unsigned int *oldContainedETA = getContainedEtaDecay( inX, inY, &oldNum );
 
-    // shrink number of slots
-    num -= 1;
-    dbPut( inX, inY, NUM_CONT_SLOT, num );
+    SimpleVector<int> newContainedList;
+    SimpleVector<unsigned int> newContainedETAList;
     
+    for( int i=0; i<oldNum; i++ ) {
+        if( i != inSlot ) {
+            newContainedList.push_back( oldContained[i] );
+            newContainedETAList.push_back( oldContainedETA[i] );
+            }
+        }
+    
+    int *newContained = newContainedList.getElementArray();
+    unsigned int *newContainedETA = newContainedETAList.getElementArray();
 
-    // shrink eta decay slots
-    setContainedEtaDecay( inX, inY, oldNum - 1, oldContainedETA );
+    setContained( inX, inY, oldNum - 1, newContained );
+    setContainedEtaDecay( inX, inY, oldNum - 1, newContainedETA );
     
+    delete [] oldContained;
     delete [] oldContainedETA;
+    delete [] newContained;
+    delete [] newContainedETA;
 
     if( result != -1 ) {    
         return result;

@@ -246,7 +246,7 @@ Clients send moves in the following format:
 
 USE x y#
 SELF x y i#
-REMV x y#
+REMV x y i#
 DROP x y#
 KILL x y#
 
@@ -270,6 +270,8 @@ BABY is special case of USE action taken on a baby to pick them up.
      They are dropped with the normal DROP action.
 
 REMV is special case of removing an object from a container.
+     i specifies the index of the container item to remove, or -1 to
+	 remove top of stack.
 
 KILL is for using a deadly object on the target square.  Square can
      be non-adjacent depending on deadly distance of held object.
