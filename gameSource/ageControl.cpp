@@ -47,7 +47,7 @@ doublePair getAgeHeadOffset( double inAge, doublePair inHeadSpritePos,
         double yOffset = ( ( 20 - inAge ) / 20 ) * babyHeadDownFactor * maxHead;
         
         
-        return (doublePair){ 0, lrint( -yOffset ) };
+        return (doublePair){ 0, round( -yOffset ) };
         }
     
 
@@ -68,7 +68,7 @@ doublePair getAgeHeadOffset( double inAge, doublePair inHeadSpritePos,
         double forwardOffset = 
             ( ( inAge - 40 ) / 20 ) * oldHeadForwardFactor * footOffset;
 
-        return (doublePair){ lrint( forwardOffset ), lrint( -vertOffset ) };
+        return (doublePair){ round( forwardOffset ), round( -vertOffset ) };
         }
 
     return (doublePair){ 0, 0 };
@@ -88,7 +88,7 @@ doublePair getAgeBodyOffset( double inAge, doublePair inBodySpritePos ) {
         double yOffset = ( ( 20 - inAge ) / 20 ) * babyBodyDownFactor * maxBody;
         
         
-        return (doublePair){ 0, lrint( -yOffset ) };
+        return (doublePair){ 0, round( -yOffset ) };
         }
 
     return (doublePair){ 0, 0 };
