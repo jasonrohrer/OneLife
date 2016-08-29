@@ -2688,11 +2688,15 @@ double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
         mCurrentObject.person = false;
         }
     
-    double smallestDist = getClosestObjectPart( &mCurrentObject, 
+    int cl;
+    
+    double smallestDist = getClosestObjectPart( &mCurrentObject,
+                                                NULL,
                                                 age,
                                                 mPickedObjectLayer,
+                                                false,
                                                 pos.x, pos.y,
-                                                outSprite, outSlot );
+                                                outSprite, &cl, outSlot );
         
 
 

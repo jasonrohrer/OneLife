@@ -351,10 +351,14 @@ int getMaxDiameter( ObjectRecord *inObject );
 
 // picked layer can be -1 if nothing is picked
 double getClosestObjectPart( ObjectRecord *inObject,
+                             ClothingSet *inClothing,
                              double inAge,
                              int inPickedLayer,
+                             char inFlip,
                              float inXCenterOffset, float inYCenterOffset,
                              int *outSprite,
+                             // 0, 1, 2, 3 if clothing hit
+                             int *outClothing,
                              int *outSlot );
 
 
@@ -384,6 +388,8 @@ void getFrontArmIndices( ObjectRecord *inObject, double inAge,
 
 void getBackArmIndices( ObjectRecord *inObject, double inAge, 
                         SimpleVector<int> *outList );
+
+int getBackArmTopIndex( ObjectRecord *inObject, double inAge );
 
 
 void getAllLegIndices( ObjectRecord *inObject, double inAge, 

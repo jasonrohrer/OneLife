@@ -386,7 +386,7 @@ typedef enum messageType {
 
 typedef struct ClientMessage {
         messageType type;
-        int x, y;
+        int x, y, i;
 
         // some messages have extra positions attached
         int numExtraPos;
@@ -483,6 +483,14 @@ ClientMessage parseMessage( char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "SELF" ) == 0 ) {
         m.type = SELF;
+
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.i ) );
+        
+        if( numRead != 4 ) {
+            m.type = UNKNOWN;
+            }
         }
     else if( strcmp( nameBuffer, "BABY" ) == 0 ) {
         m.type = BABY;
@@ -3324,7 +3332,9 @@ int main() {
                                 }
                             else {
                                 // empty hand on self, remove clothing
-                                if( nextPlayer->clothing.frontShoe != NULL ) {
+                                if( m.i == 2 &&
+                                    nextPlayer->clothing.frontShoe != NULL ) {
+                                    
                                     nextPlayer->holdingID =
                                         nextPlayer->clothing.frontShoe->id;
                                     nextPlayer->clothing.frontShoe = NULL;
@@ -3332,7 +3342,8 @@ int main() {
                                         nextPlayer->clothingEtaDecay[2];
                                     nextPlayer->clothingEtaDecay[2] = 0;
                                     }
-                                else if( nextPlayer->clothing.backShoe 
+                                else if( m.i == 3 &&
+                                         nextPlayer->clothing.backShoe 
                                          != NULL ) {
                                     nextPlayer->holdingID =
                                         nextPlayer->clothing.backShoe->id;
@@ -3341,7 +3352,8 @@ int main() {
                                         nextPlayer->clothingEtaDecay[3];
                                     nextPlayer->clothingEtaDecay[3] = 0;
                                     }
-                                else if( nextPlayer->clothing.hat != NULL ) {
+                                else if( m.i == 0 && 
+                                         nextPlayer->clothing.hat != NULL ) {
                                     nextPlayer->holdingID =
                                         nextPlayer->clothing.hat->id;
                                     nextPlayer->clothing.hat = NULL;
@@ -3350,7 +3362,8 @@ int main() {
                                     nextPlayer->clothingEtaDecay[0] = 0;
                                     
                                     }
-                                else if( nextPlayer->clothing.tunic != NULL ) {
+                                else if( m.i == 1 &&
+                                         nextPlayer->clothing.tunic != NULL ) {
                                     nextPlayer->holdingID =
                                         nextPlayer->clothing.tunic->id;
                                     nextPlayer->clothing.tunic = NULL;

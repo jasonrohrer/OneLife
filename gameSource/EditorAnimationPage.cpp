@@ -1470,13 +1470,17 @@ int EditorAnimationPage::getClosestSpriteOrSlot( float inX, float inY ) {
         
 
         int pickedSprite;
+        int pickedClothing;
         int pickedSlot;
         
-        getClosestObjectPart( obj, 
+        getClosestObjectPart( obj,
+                              NULL,
                               age,
                               -1,
+                              false,
                               mousePos.x, mousePos.y,
                               &pickedSprite,
+                              &pickedClothing,
                               &pickedSlot );
 
         

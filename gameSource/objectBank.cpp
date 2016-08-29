@@ -1929,15 +1929,19 @@ int getMaxDiameter( ObjectRecord *inObject ) {
 
 
 double getClosestObjectPart( ObjectRecord *inObject,
+                             ClothingSet *inClothing,
                              double inAge,
                              int inPickedLayer,
+                             char inFlip,
                              float inXCenterOffset, float inYCenterOffset,
                              int *outSprite,
+                             int *outClothing,
                              int *outSlot ) {
     
     doublePair pos = { inXCenterOffset, inYCenterOffset };
     
     *outSprite = -1;
+    *outClothing = -1;
     
 
     doublePair headPos = {0,0};
@@ -1958,6 +1962,15 @@ double getClosestObjectPart( ObjectRecord *inObject,
             inObject->spritePos[ frontFootIndex ];
         }
 
+    doublePair backFootPos = {0,0};
+
+    int backFootIndex = getBackFootIndex( inObject, inAge );
+
+    if( backFootIndex < inObject->numSprites ) {
+        backFootPos = 
+            inObject->spritePos[ backFootIndex ];
+        }
+
 
     doublePair bodyPos = {0,0};
 
@@ -1968,9 +1981,100 @@ double getClosestObjectPart( ObjectRecord *inObject,
         bodyPos = inObject->spritePos[ bodyIndex ];
         }
 
-
+    int backArmTopIndex = getBackArmTopIndex( inObject, inAge );
+    
+    char tunicChecked = false;
+    char hatChecked = false;
     
     for( int i=inObject->numSprites-1; i>=0; i-- ) {
+
+        // first check for clothing that is above this part
+        ObjectRecord *cObj[2] = { NULL, NULL };
+        // for backpack later (two pieces of clothing attached to body)
+        //ObjectRecord *cObjB = NULL;
+
+        int cObjIndex[2] = { -1, -1 };
+        //int cObjBIndex = -1;        
+        
+        doublePair cObjBodyPartPos[2];
+        
+        if( inClothing != NULL ) {
+            
+            if( i <= inObject->numSprites - 1 && !hatChecked ) {
+                // hat above everything
+                cObj[0] = inClothing->hat;
+                cObjIndex[0] = 0;
+                cObjBodyPartPos[0] = add( headPos, 
+                                          getAgeHeadOffset( inAge, headPos,
+                                                            bodyPos,
+                                                            frontFootPos ) );
+                if( checkSpriteAncestor( inObject, headIndex, bodyIndex ) ) {
+                    cObjBodyPartPos[0] = add( cObjBodyPartPos[0],
+                                              getAgeBodyOffset( inAge, 
+                                                                bodyPos ) );
+                    }
+                hatChecked = true;
+                }
+            else if( i < backArmTopIndex && ! tunicChecked ) {
+                // tunic behind back arm
+                cObj[0] = inClothing->tunic;        
+                cObjIndex[0] = 1;
+                cObjBodyPartPos[0] = add( bodyPos, 
+                                          getAgeBodyOffset( inAge, bodyPos ) );
+                tunicChecked = true;
+                }
+            else if( i == frontFootIndex ) {
+                cObj[0] = inClothing->frontShoe;        
+                cObjIndex[0] = 2;
+                cObjBodyPartPos[0] = frontFootPos;
+                }
+            else if( i == backFootIndex ) {
+                cObj[0] = inClothing->backShoe;        
+                cObjIndex[0] = 3;
+                cObjBodyPartPos[0] = backFootPos;
+                }
+            }
+        
+        for( int c=0; c<2; c++ ) {
+            
+            if( cObj[c] != NULL ) {
+                int sp, cl, sl;
+            
+                doublePair clothingOffset = cObj[c]->clothingOffset;
+                
+                if( inFlip ) {
+                    clothingOffset.x *= -1;
+                    cObjBodyPartPos[c].x *= -1;
+                    }
+
+                
+                doublePair cSpritePos = add( cObjBodyPartPos[c], 
+                                             clothingOffset );
+                                
+                doublePair cOffset = sub( pos, cSpritePos );
+                
+                
+                getClosestObjectPart( cObj[c],
+                                      NULL,
+                                      -1,
+                                      -1,
+                                      inFlip,
+                                      cOffset.x, cOffset.y,
+                                      &sp, &cl, &sl );
+                if( sp != -1 ) {
+                    *outClothing = cObjIndex[c];
+                    break;
+                    }
+                }
+            }
+        
+        if( *outClothing != -1 ) {
+            break;
+            }
+
+
+        
+        // clothing not hit, check sprite layer
 
         doublePair thisSpritePos = inObject->spritePos[i];
         
@@ -2005,18 +2109,21 @@ double getClosestObjectPart( ObjectRecord *inObject,
             
             }
         
-        
+        if( inFlip ) {
+            thisSpritePos.x *= -1;
+            }
         
         doublePair offset = sub( pos, thisSpritePos );
-        
-        
 
         offset = rotate( offset, 2 * M_PI * inObject->spriteRot[i] );
         
         if( inObject->spriteHFlip[i] ) {
             offset.x *= -1;
             }
-
+        if( inFlip ) {
+            offset.x *= -1;
+            }
+        
         if( getSpriteHit( inObject->sprites[i], 
                           lrint( offset.x ),
                           lrint( offset.y ) ) ) {
@@ -2025,11 +2132,12 @@ double getClosestObjectPart( ObjectRecord *inObject,
             }
         }
     
+    
     *outSlot = -1;
 
     double smallestDist = 9999999;
 
-    if( *outSprite == -1 ) {
+    if( *outSprite == -1 && *outClothing == -1 ) {
         // consider slots
         
         
@@ -2158,8 +2266,8 @@ int getFrontHandIndex( ObjectRecord *inObject,
 
 
 static void getLimbIndices( ObjectRecord *inObject,
-                           double inAge, SimpleVector<int> *outList,
-                           int inHandOrFootIndex ) {
+                            double inAge, SimpleVector<int> *outList,
+                            int inHandOrFootIndex ) {
     
     if( inHandOrFootIndex == -1 ) {
         return;
@@ -2189,6 +2297,20 @@ void getBackArmIndices( ObjectRecord *inObject,
     getLimbIndices( inObject, inAge, outList,
                     getBackHandIndex( inObject, inAge ) );
 
+    }
+
+
+
+int getBackArmTopIndex( ObjectRecord *inObject, double inAge ) {
+    SimpleVector<int> list;
+    getBackArmIndices( inObject, inAge, &list );
+    
+    if( list.size() > 0 ) {
+        return list.getElementDirect( list.size() - 1 );
+        }
+    else {
+        return -1;
+        }
     }
 
 

@@ -245,7 +245,7 @@ a full player update message for ALL players on entire server.
 Clients send moves in the following format:
 
 USE x y#
-SELF x y#
+SELF x y i#
 REMV x y#
 DROP x y#
 KILL x y#
@@ -262,7 +262,10 @@ SELF is special case of USE action taken on self (to eat what we're holding
      or add/remove clothing).
      This differentiates between use actions on the object at our feet
      (same grid cell as us) and actions on ourself.
-
+     If holding food i is ignored.
+	 If not holding food, then SELF removes clothing, and i specifies
+	 clothing slot:  0=hat, 1=tunic, 2=frontShoe, 3=backShoe
+	 
 BABY is special case of USE action taken on a baby to pick them up.
      They are dropped with the normal DROP action.
 

@@ -4424,6 +4424,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     char hit = false;
     char hitSelf = false;
     
+    int hitSelfClothingIndex = -1;
+    
+
     // when we click in a square, only count as hitting something
     // if we actually clicked the object there.  Else, we can walk
     // there if unblocked.
@@ -4451,14 +4454,16 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( oID > 0 ) {
                 ObjectRecord *obj = getObject( oID );
                 
-                int sp, sl;
+                int sp, cl, sl;
                 
                 double dist = getClosestObjectPart( obj,
+                                                    NULL,
                                                     -1,
                                                     -1,
+                                                    mMapTileFlips[ mapI ],
                                                     clickOffsetX,
                                                     clickOffsetY,
-                                                    &sp, &sl );
+                                                    &sp, &cl, &sl );
                 if( dist < minDistThatHits ) {
                     hit = true;
                     closestCellX = x;
@@ -4517,20 +4522,26 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     // here!
                     ObjectRecord *obj = getObject( o->displayID );
                     
-                    int sp, sl;
+                    int sp, cl, sl;
                     
                     double dist = getClosestObjectPart( obj,
+                                                        &( o->clothing ),
                                                         o->age,
                                                         -1,
+                                                        o->holdingFlip,
                                                         clickOffsetX,
                                                         clickOffsetY,
-                                                        &sp, &sl );
+                                                        &sp, &cl, &sl );
                     if( dist < minDistThatHits ) {
                         hit = true;
                         closestCellX = x;
                         closestCellY = y;
                         if( o == ourLiveObject ) {
                             hitSelf = true;
+
+                            if( cl != -1 ) {
+                                hitSelfClothingIndex = cl;
+                                }
                             }
                         }
                     }
@@ -4562,8 +4573,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 }
             
             nextActionMessageToSend = 
-                autoSprintf( "SELF %d %d#",
-                             clickDestX, clickDestY );
+                autoSprintf( "SELF %d %d %d#",
+                             clickDestX, clickDestY, hitSelfClothingIndex );
             playerActionTargetX = clickDestX;
             playerActionTargetY = clickDestY;
             printf( "Use on self\n" );
