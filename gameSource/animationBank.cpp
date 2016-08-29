@@ -647,7 +647,8 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                            int inHideClosestArm,
                            char inHideAllLimbs,
                            char inHeldNotInPlaceYet,
-                           ClothingSet inClothing ) {
+                           ClothingSet inClothing,
+                           SimpleVector<int> *inClothingContained ) {
     
     if( inType == ground2 ) {
         inType = ground;
@@ -687,7 +688,8 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                                inPos, inFlipH, inAge, 
                                inHideClosestArm, inHideAllLimbs, 
                                inHeldNotInPlaceYet,
-                               inClothing );
+                               inClothing,
+                               inClothingContained );
         }
     }
 
@@ -785,7 +787,8 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                            int inHideClosestArm,
                            char inHideAllLimbs,
                            char inHeldNotInPlaceYet,
-                           ClothingSet inClothing ) {
+                           ClothingSet inClothing,
+                           SimpleVector<int> *inClothingContained ) {
 
     HoldingPos returnHoldingPos = { false, {0, 0}, 0 };
 
@@ -1278,8 +1281,20 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             }
         else if( inClothing.tunic != NULL && i == topBackArmIndex ) {
             // draw under top of back arm
+            int numCont = 0;
+            int *cont = NULL;
+            if( inClothingContained != NULL ) {    
+                numCont = inClothingContained[1].size();
+                cont = inClothingContained[1].getElementArray();
+                }
+
             drawObject( inClothing.tunic, tunicPos, tunicRot,
-                        inFlipH, -1, 0, false, false, emptyClothing );
+                        inFlipH, -1, 0, false, false, emptyClothing,
+                        numCont, cont );
+            
+            if( cont != NULL ) {
+                delete [] cont;
+                }
             }
         
 
@@ -1350,12 +1365,34 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
         // shoes on top of feet
         if( inClothing.backShoe != NULL && i == backFootIndex ) {
+            int numCont = 0;
+            int *cont = NULL;
+            if( inClothingContained != NULL ) {    
+                numCont = inClothingContained[3].size();
+                cont = inClothingContained[3].getElementArray();
+                }
+
             drawObject( inClothing.backShoe, backShoePos, backShoeRot,
-                        inFlipH, -1, 0, false, false, emptyClothing );
+                        inFlipH, -1, 0, false, false, emptyClothing,
+                        numCont, cont );
+            if( cont != NULL ) {
+                delete [] cont;
+                }
             }
         else if( inClothing.frontShoe != NULL && i == frontFootIndex ) {
+            int numCont = 0;
+            int *cont = NULL;
+            if( inClothingContained != NULL ) {    
+                numCont = inClothingContained[2].size();
+                cont = inClothingContained[2].getElementArray();
+                }
+
             drawObject( inClothing.frontShoe, frontShoePos, frontShoeRot,
-                        inFlipH, -1, 0, false, false, emptyClothing );
+                        inFlipH, -1, 0, false, false, emptyClothing,
+                        numCont, cont );
+            if( cont != NULL ) {
+                delete [] cont;
+                }
             }
         
         } 
@@ -1383,8 +1420,19 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
         cPos = add( cPos, inPos );
         
+        int numCont = 0;
+        int *cont = NULL;
+        if( inClothingContained != NULL ) {    
+            numCont = inClothingContained[0].size();
+            cont = inClothingContained[0].getElementArray();
+            }
+        
         drawObject( inClothing.hat, cPos, animHeadRotDelta,
-                    inFlipH, -1, 0, false, false, emptyClothing );
+                    inFlipH, -1, 0, false, false, emptyClothing,
+                    numCont, cont );
+        if( cont != NULL ) {
+            delete [] cont;
+            }
         }
     
     if( animLayerFades != NULL ) {
@@ -1412,6 +1460,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      char inHideAllLimbs,
                      char inHeldNotInPlaceYet,
                      ClothingSet inClothing,
+                     SimpleVector<int> *inClothingContained,
                      int inNumContained, int *inContainedIDs ) {
     
     if( inType == ground2 ) {
@@ -1448,6 +1497,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                         inPos, inFlipH, inAge,
                         inHideClosestArm, inHideAllLimbs, inHeldNotInPlaceYet,
                         inClothing,
+                        inClothingContained,
                         inNumContained, inContainedIDs );
         }
     }
@@ -1471,6 +1521,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      char inHideAllLimbs,
                      char inHeldNotInPlaceYet,
                      ClothingSet inClothing,
+                     SimpleVector<int> *inClothingContained,
                      int inNumContained, int *inContainedIDs ) {
     
     ClothingSet emptyClothing = getEmptyClothingSet();
@@ -1568,7 +1619,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     inPos, inFlipH,
                     inAge, inHideClosestArm, inHideAllLimbs, 
                     inHeldNotInPlaceYet,
-                    inClothing );
+                    inClothing,
+                    inClothingContained );
     }
 
 

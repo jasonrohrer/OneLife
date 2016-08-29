@@ -103,7 +103,8 @@ typedef struct LiveObject {
         int *containedIDs;
         
         ClothingSet clothing;
-        
+        // stacks of items contained in each piece of clothing
+        SimpleVector<int> clothingContained[ NUM_CLOTHING_PIECES ];
 
         // current fractional grid position and speed
         doublePair currentPos;

@@ -1163,13 +1163,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         updateAgingPanel();
         
         mSetHeldPosButton.setVisible( true );
-
-        mDemoClothesButton.setVisible( false );
-        mCurrentObject.clothing = 'n';
-        for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
-            mClothingCheckboxes[i]->setToggled( false );
-            }
-        mClothingCheckboxes[0]->setToggled( true );
         }
     else if( inTarget == &mLessSlotsButton ) {
         if( mCurrentObject.numSlots > 0 ) {
@@ -1974,11 +1967,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 if( i != 0 ) {
                     mDemoClothesButton.setVisible( true );
                     
-                    mSlotSizeField.setInt( 1 );
-                    mSlotSizeField.setVisible( false );
-                    mCurrentObject.numSlots = 0;
-                    mDemoSlotsButton.setVisible( false );
-
                     mPersonAgeSlider.setVisible( false );
                     mCheckboxes[2]->setToggled( false );
                     mSetHeldPosButton.setVisible( true );
@@ -2691,6 +2679,7 @@ double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
     int cl;
     
     double smallestDist = getClosestObjectPart( &mCurrentObject,
+                                                NULL,
                                                 NULL,
                                                 age,
                                                 mPickedObjectLayer,

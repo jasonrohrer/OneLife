@@ -1244,6 +1244,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             -1,
                             false, false, false,
                             getEmptyClothingSet(),
+                            NULL,
                             mMapContainedStacks[ inMapI ].size(),
                             stackArray );
             delete [] stackArray;
@@ -1261,7 +1262,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             pos, 
                             mMapTileFlips[ inMapI ], -1,
                             false, false, false,
-                            getEmptyClothingSet() );
+                            getEmptyClothingSet(), NULL );
             }
         }
     else if( oID == -1 ) {
@@ -1509,7 +1510,8 @@ void LivingLifePage::drawLiveObject(
                         hideAllLimbs,
                         inObj->heldPosOverride && 
                         ! inObj->heldPosOverrideAlmostOver,
-                        inObj->clothing );
+                        inObj->clothing,
+                        inObj->clothingContained );
 
     delete [] string;
                 
@@ -1644,7 +1646,8 @@ void LivingLifePage::drawLiveObject(
                                 false,
                                 false,
                                 false,
-                                babyO->clothing );
+                                babyO->clothing,
+                                babyO->clothingContained );
 
                 if( babyO->currentSpeech != NULL ) {
                     
@@ -1666,7 +1669,7 @@ void LivingLifePage::drawLiveObject(
                             endAnimType,
                             holdPos,
                             inObj->holdingFlip, -1, false, false, false,
-                            getEmptyClothingSet() );
+                            getEmptyClothingSet(), NULL );
             }
         else {
             drawObjectAnim( inObj->holdingID, curHeldType, 
@@ -1682,6 +1685,7 @@ void LivingLifePage::drawLiveObject(
                             inObj->holdingFlip,
                             -1, false, false, false,
                             getEmptyClothingSet(),
+                            NULL,
                             inObj->numContained,
                             inObj->containedIDs );
             }
@@ -2828,21 +2832,21 @@ void LivingLifePage::step() {
                 
                 o.frozenRotFrameCountUsed = false;
                 o.heldFrozenRotFrameCountUsed = false;
-
-
+                o.clothing = getEmptyClothingSet();
+                
                 int forced = 0;
                 int done_moving = 0;
                 
                 char *holdingIDBuffer = new char[500];
 
                 int heldOriginValid, heldOriginX, heldOriginY;
-
-                int hat, tunic, frontShoe, backShoe;
+                
+                char *clothingBuffer = new char[500];
                 
                 int numRead = sscanf( lines[i], 
                                       "%d %d "
                                       "%499s %d %d %d %f %d %d %d %d "
-                                      "%lf %lf %lf %d,%d,%d,%d",
+                                      "%lf %lf %lf %499s",
                                       &( o.id ),
                                       &( o.displayID ),
                                       holdingIDBuffer,
@@ -2857,20 +2861,59 @@ void LivingLifePage::step() {
                                       &( o.age ),
                                       &( o.ageRate ),
                                       &( o.lastSpeed ),
-                                      &( hat ),
-                                      &( tunic ),
-                                      &( frontShoe ),
-                                      &( backShoe ) );
+                                      clothingBuffer );
                 
-                if( numRead == 18 ) {
+                if( numRead == 15 ) {
                     o.lastAgeSetTime = game_getCurrentTime();
 
-                    o.clothing.hat = getObject( hat );
-                    o.clothing.tunic = getObject( tunic );
-                    o.clothing.frontShoe = getObject( frontShoe );
-                    o.clothing.backShoe = getObject( backShoe );
-                    
+                    int numClothes;
+                    char **clothes = split( clothingBuffer, ";", &numClothes );
+                        
+                    if( numClothes == NUM_CLOTHING_PIECES ) {
+                        
+                        for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+                            
+                            int numParts;
+                            char **parts = split( clothes[c], ",", &numParts );
+                            
+                            if( numParts > 0 ) {
+                                int id = 0;
+                                sscanf( parts[0], "%d", &id );
+                                
+                                if( id != 0 ) {
+                                    setClothingByIndex( &( o.clothing ), 
+                                                        c, 
+                                                        getObject( id ) );
+                                    
+                                    if( numParts > 1 ) {
+                                        for( int p=1; p<numParts; p++ ) {
+                                            
+                                            int cID = 0;
+                                            sscanf( parts[p], "%d", &cID );
+                                            
+                                            if( cID != 0 ) {
+                                                
+                                                o.clothingContained[c].
+                                                    push_back( cID );
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            for( int p=0; p<numParts; p++ ) {
+                                delete [] parts[p];
+                                }
+                            delete [] parts;
+                            }
 
+                        }
+                    
+                    for( int c=0; c<numClothes; c++ ) {
+                        delete [] clothes[c];
+                        }
+                    delete [] clothes;
+
+                    
                     if( strstr( holdingIDBuffer, "," ) != NULL ) {
                         int numInts;
                         char **ints = split( holdingIDBuffer, ",", &numInts );
@@ -3173,6 +3216,20 @@ void LivingLifePage::step() {
                         existing->inMotion = false;
                         
                         existing->moveTotalTime = 0;
+
+                        for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+                            
+                            existing->clothingContained[c].deleteAll();
+
+                            int newNumClothingCont = 
+                                o.clothingContained[c].size();
+                            int *newClothingCont = 
+                                o.clothingContained[c].getElementArray();
+                        
+                            existing->clothingContained[c].appendArray(
+                                newClothingCont, newNumClothingCont );
+                            delete [] newClothingCont;
+                            }
                         }
                     else {    
                         o.displayChar = lastCharUsed + 1;

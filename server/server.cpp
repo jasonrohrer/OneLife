@@ -171,6 +171,11 @@ typedef struct LiveObject {
         
         unsigned int clothingEtaDecay[NUM_CLOTHING_PIECES];
 
+        SimpleVector<int> clothingContained[NUM_CLOTHING_PIECES];
+        
+        SimpleVector<unsigned int> 
+            clothingContainedEtaDecays[NUM_CLOTHING_PIECES];
+
         char updateSent;
     } LiveObject;
 
@@ -1455,9 +1460,43 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
                                  inPlayer->ys );
         }
     
+    SimpleVector<char> clothingListBuffer;
+    
+    for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+        ObjectRecord *cObj = clothingByIndex( inPlayer->clothing, c );
+        int id = 0;
+        
+        if( cObj != NULL ) {
+            id = objectRecordToID( cObj );
+            }
+        
+        char *idString = autoSprintf( "%d", id );
+        
+        clothingListBuffer.appendElementString( idString );
+        delete [] idString;
+        
+        if( cObj != NULL && cObj->numSlots > 0 ) {
+            
+            for( int cc=0; cc<inPlayer->clothingContained[c].size(); cc++ ) {
+                char *contString = 
+                    autoSprintf( 
+                        ",%d", 
+                        inPlayer->clothingContained[c].getElementDirect( cc ) );
+                clothingListBuffer.appendElementString( contString );
+                delete [] contString;
+                }
+            }
+
+        if( c < NUM_CLOTHING_PIECES - 1 ) {
+            clothingListBuffer.push_back( ';' );
+            }
+        }
+    
+    char *clothingList = clothingListBuffer.getElementString();
+
 
     char *updateLine = autoSprintf( 
-        "%d %d %s %d %d %d %.2f %s %.2f %.2f %.2f %d,%d,%d,%d\n",
+        "%d %d %s %d %d %d %.2f %s %.2f %.2f %.2f %s\n",
         inPlayer->id,
         inPlayer->displayID,
         holdingString,
@@ -1469,14 +1508,12 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
         computeAge( inPlayer ),
         getAgeRate(),
         computeMoveSpeed( inPlayer ),
-        objectRecordToID( inPlayer->clothing.hat ),
-        objectRecordToID( inPlayer->clothing.tunic ),
-        objectRecordToID( inPlayer->clothing.frontShoe ),
-        objectRecordToID( inPlayer->clothing.backShoe ) );
+        clothingList );
     
     delete [] holdingString;
     delete [] posString;
-
+    delete [] clothingList;
+    
     return updateLine;
     }
 
@@ -3255,129 +3292,192 @@ int main() {
                                     
                                     ObjectRecord *oldC = NULL;
                                     unsigned int oldCEtaDecay = 0;
+                                    int oldNumContained = 0;
+                                    int *oldContainedIDs = NULL;
+                                    unsigned int *oldContainedETADecays = NULL;
                                     
+
+                                    ObjectRecord **clothingSlot = NULL;
+                                    int clothingSlotIndex;
+
                                     switch( obj->clothing ) {
                                         case 'h':
-                                            oldC = nextPlayer->clothing.hat;
-                                            
-                                            oldCEtaDecay = 
-                                                nextPlayer->clothingEtaDecay[0];
-                                            
-                                            nextPlayer->clothing.hat = obj;
-                                            nextPlayer->clothingEtaDecay[0] =
-                                                oldEtaDecay;
-                                            
-                                            if( oldC != NULL ) {
-                                                nextPlayer->holdingID =
-                                                    oldC->id;
-                                                nextPlayer->holdingEtaDecay
-                                                    = oldCEtaDecay;
-                                                }
+                                            clothingSlot = 
+                                                &( nextPlayer->clothing.hat );
+                                            clothingSlotIndex = 0;
                                             break;
                                         case 't':
-                                            oldC = nextPlayer->clothing.tunic;
-
-                                            oldCEtaDecay = 
-                                                nextPlayer->clothingEtaDecay[1];
-                                            
-                                            nextPlayer->clothing.tunic = obj;
-                                            nextPlayer->clothingEtaDecay[1] =
-                                                oldEtaDecay;
-                                            
-                                            if( oldC != NULL ) {
-                                                nextPlayer->holdingID =
-                                                    oldC->id;
-                                                nextPlayer->holdingEtaDecay
-                                                    = oldCEtaDecay;
-                                                }
+                                            clothingSlot = 
+                                                &( nextPlayer->clothing.tunic );
+                                            clothingSlotIndex = 1;
                                             break;
                                         case 's':
                                             if( nextPlayer->clothing.backShoe
                                                 == NULL ) {
-                                                nextPlayer->clothing.backShoe 
-                                                    = obj;
-                                                nextPlayer->
-                                                    clothingEtaDecay[3] =
-                                                    oldEtaDecay;
+
+                                                clothingSlot = 
+                                                    &( nextPlayer->
+                                                       clothing.backShoe );
+                                                clothingSlotIndex = 3;
+
                                                 }
                                             else if( 
                                                 nextPlayer->clothing.frontShoe
                                                 == NULL ) {
-                                                nextPlayer->clothing.frontShoe 
-                                                    = obj;
-                                                nextPlayer->
-                                                    clothingEtaDecay[2] =
-                                                    oldEtaDecay;
+                                                
+                                                clothingSlot = 
+                                                    &( nextPlayer->
+                                                       clothing.frontShoe );
+                                                clothingSlotIndex = 2;
                                                 }
                                             else {
                                                 // replace front shoe
-                                                
-                                                oldC = 
-                                                    nextPlayer->
-                                                    clothing.frontShoe;
-                                                oldCEtaDecay = 
-                                                    nextPlayer->
-                                                    clothingEtaDecay[2];
-                                            
 
-                                                nextPlayer->clothing.frontShoe 
-                                                    = obj;
-                                                
-                                                nextPlayer->
-                                                    clothingEtaDecay[2] =
-                                                    oldEtaDecay;
-                                                
-                                                if( oldC != NULL ) {
-                                                    nextPlayer->holdingID =
-                                                        oldC->id;
-                                                    nextPlayer->holdingEtaDecay
-                                                        = oldCEtaDecay;
-                                                    }
+                                                clothingSlot = 
+                                                    &( nextPlayer->
+                                                       clothing.frontShoe );
+                                                clothingSlotIndex = 2;
                                                 }
                                             break;
+                                        }
+                                    
+                                    if( clothingSlot != NULL ) {
+                                        
+                                        oldC = *clothingSlot;
+                                        int ind = clothingSlotIndex;
+                                        
+                                        oldCEtaDecay = 
+                                            nextPlayer->clothingEtaDecay[ind];
+                                        
+                                        oldNumContained = 
+                                            nextPlayer->
+                                            clothingContained[ind].size();
+                                        
+                                        if( oldNumContained > 0 ) {
+                                            oldContainedIDs = 
+                                                nextPlayer->
+                                                clothingContained[ind].
+                                                getElementArray();
+                                            oldContainedETADecays =
+                                                nextPlayer->
+                                                clothingContainedEtaDecays[ind].
+                                                getElementArray();
+                                            }
+                                        
+                                        *clothingSlot = obj;
+                                        nextPlayer->clothingEtaDecay[ind] =
+                                            oldEtaDecay;
+                                        
+                                        nextPlayer->
+                                            clothingContained[ind].
+                                            deleteAll();
+                                        nextPlayer->
+                                            clothingContainedEtaDecays[ind].
+                                            deleteAll();
+                                            
+                                        if( nextPlayer->numContained > 0 ) {
+                                            
+                                            nextPlayer->clothingContained[ind]
+                                                .appendArray( 
+                                                    nextPlayer->containedIDs,
+                                                    nextPlayer->numContained );
+                                            
+                                            delete [] 
+                                                nextPlayer->containedIDs;
+                                            
+                                            nextPlayer->
+                                                clothingContainedEtaDecays[ind]
+                                                .appendArray( 
+                                                    nextPlayer->
+                                                    containedEtaDecays,
+                                                    nextPlayer->numContained );
+                                                
+                                            nextPlayer->numContained = 0;
+                                            delete [] 
+                                                nextPlayer->
+                                                containedEtaDecays;
+                                            }
+                                            
+                                        
+                                        if( oldC != NULL ) {
+                                            nextPlayer->holdingID =
+                                                oldC->id;
+                                            nextPlayer->holdingEtaDecay
+                                                = oldCEtaDecay;
+                                            
+                                            nextPlayer->numContained =
+                                                oldNumContained;
+                                            nextPlayer->containedIDs =
+                                                oldContainedIDs;
+                                            nextPlayer->containedEtaDecays =
+                                                oldContainedETADecays;
+                                            }
                                         }
                                     }
                                 }
                             else {
                                 // empty hand on self, remove clothing
+
+                                ObjectRecord **clothingSlot = NULL;
+                                int clothingSlotIndex;
+                                
+
                                 if( m.i == 2 &&
                                     nextPlayer->clothing.frontShoe != NULL ) {
-                                    
-                                    nextPlayer->holdingID =
-                                        nextPlayer->clothing.frontShoe->id;
-                                    nextPlayer->clothing.frontShoe = NULL;
-                                    nextPlayer->holdingEtaDecay =
-                                        nextPlayer->clothingEtaDecay[2];
-                                    nextPlayer->clothingEtaDecay[2] = 0;
+                                    clothingSlot = 
+                                        &( nextPlayer->clothing.frontShoe );
+                                    clothingSlotIndex = 2;
                                     }
                                 else if( m.i == 3 &&
                                          nextPlayer->clothing.backShoe 
                                          != NULL ) {
-                                    nextPlayer->holdingID =
-                                        nextPlayer->clothing.backShoe->id;
-                                    nextPlayer->clothing.backShoe = NULL;
-                                    nextPlayer->holdingEtaDecay =
-                                        nextPlayer->clothingEtaDecay[3];
-                                    nextPlayer->clothingEtaDecay[3] = 0;
+                                    clothingSlot = 
+                                        &( nextPlayer->clothing.backShoe );
+                                    clothingSlotIndex = 3;
                                     }
                                 else if( m.i == 0 && 
                                          nextPlayer->clothing.hat != NULL ) {
-                                    nextPlayer->holdingID =
-                                        nextPlayer->clothing.hat->id;
-                                    nextPlayer->clothing.hat = NULL;
-                                    nextPlayer->holdingEtaDecay =
-                                        nextPlayer->clothingEtaDecay[0];
-                                    nextPlayer->clothingEtaDecay[0] = 0;
-                                    
+                                    clothingSlot = 
+                                        &( nextPlayer->clothing.hat );
+                                    clothingSlotIndex = 0;
                                     }
                                 else if( m.i == 1 &&
                                          nextPlayer->clothing.tunic != NULL ) {
+                                    clothingSlot = 
+                                        &( nextPlayer->clothing.tunic );
+                                    clothingSlotIndex = 1;
+                                    }
+
+                                if( clothingSlot != NULL ) {
+                                    
+                                    int ind = clothingSlotIndex;
+                                    
                                     nextPlayer->holdingID =
-                                        nextPlayer->clothing.tunic->id;
-                                    nextPlayer->clothing.tunic = NULL;
+                                        ( *clothingSlot )->id;
+                                    *clothingSlot = NULL;
                                     nextPlayer->holdingEtaDecay =
-                                        nextPlayer->clothingEtaDecay[1];
-                                    nextPlayer->clothingEtaDecay[1] = 0;
+                                        nextPlayer->clothingEtaDecay[ind];
+                                    nextPlayer->clothingEtaDecay[ind] = 0;
+                                    
+                                    nextPlayer->numContained =
+                                        nextPlayer->
+                                        clothingContained[ind].size();
+                                    
+                                    nextPlayer->containedIDs =
+                                        nextPlayer->
+                                        clothingContained[ind].
+                                        getElementArray();
+                                    
+                                    nextPlayer->clothingContained[ind].
+                                        deleteAll();
+                                    
+                                    nextPlayer->containedEtaDecays =
+                                        nextPlayer->
+                                        clothingContainedEtaDecays[ind].
+                                        getElementArray();
+                                    
+                                    nextPlayer->clothingContainedEtaDecays[ind].
+                                        deleteAll();
                                     }
                                 }
                             }

@@ -143,8 +143,19 @@ Deleted players reported in update with
 X X 
 for x y.
 
-Clothing sets are in the format of hat_id,tunic_id,front_shoe_id,back_shoe_id
-If an ID is 0, player is not wearing anything in that spot.
+Clothing sets are in the format of 
+hat;tunic;front_shoe;back_shoe
+
+Each clothing piece in the list is in the following format:
+
+clothing_obj_id
+
+or
+
+clothing_obj_id,contained_id,contained_id,...
+
+If clothing ID is 0, player is not wearing anything in that spot.
+
 
 If o_id (held object ID) is negative, it represents the p_id of the other
 player (baby) that this player is holding.

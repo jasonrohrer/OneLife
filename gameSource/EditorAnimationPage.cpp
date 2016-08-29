@@ -1264,6 +1264,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 false,
                                 false,
                                 mClothingSet,
+                                NULL,
                                 obj->numSlots, demoSlots );
                 }
             else {
@@ -1280,7 +1281,8 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 false,
                                 false,
                                 false,
-                                mClothingSet );
+                                mClothingSet,
+                                NULL );
                 }
             }
         else {
@@ -1474,6 +1476,7 @@ int EditorAnimationPage::getClosestSpriteOrSlot( float inX, float inY ) {
         int pickedSlot;
         
         getClosestObjectPart( obj,
+                              NULL,
                               NULL,
                               age,
                               -1,

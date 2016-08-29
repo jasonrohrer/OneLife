@@ -161,7 +161,8 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                            char inHideAllLimbs,
                            // if true, we draw holding parts anyway
                            char inHeldNotInPlaceYet,
-                           ClothingSet inClothing );
+                           ClothingSet inClothing,
+                           SimpleVector<int> *inClothingContained );
 
 
 HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
@@ -180,7 +181,8 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                            double inAge, int inHideClosestArm,
                            char inHideAllLimbs,
                            char inHeldNotInPlaceYet,
-                           ClothingSet inClothing );
+                           ClothingSet inClothing,
+                           SimpleVector<int> *inClothingContained );
 
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 
@@ -199,7 +201,9 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      char inHideAllLimbs,
                      char inHeldNotInPlaceYet,
                      ClothingSet inClothing,
+                     SimpleVector<int> *inClothingContained,
                      int inNumContained, int *inContainedIDs );
+                     
 
 
 void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
@@ -220,6 +224,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      char inHideAllLimbs,
                      char inHeldNotInPlaceYet,
                      ClothingSet inClothing,
+                     SimpleVector<int> *inClothingContained,
                      int inNumContained, int *inContainedIDs );
 
 
