@@ -1896,6 +1896,23 @@ int main() {
                         minMoveTime = timeLeft;
                         }
                     }
+                for( int cc=0; cc<nextPlayer->clothingContained[c].size();
+                     cc++ ) {
+                    unsigned int decay =
+                        nextPlayer->clothingContainedEtaDecays[c].
+                        getElementDirect( cc );
+                    
+                    if( decay != 0 ) {
+                        timeLeft = decay - curTime;
+                        
+                        if( timeLeft < 0 ) {
+                            timeLeft = 0;
+                            }
+                        if( timeLeft < minMoveTime ) {
+                            minMoveTime = timeLeft;
+                            }
+                        }
+                    }
                 }
             
             // as low as it can get, no need to check other players
@@ -3785,6 +3802,8 @@ int main() {
         for( int i=0; i<numLive; i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
             
+            double curTime = Time::getCurrentTime();
+            
                 
             if( nextPlayer->isNew ) {
                 // their first position is an update
@@ -3907,7 +3926,7 @@ int main() {
                     }
                 }
             else if( nextPlayer->holdingEtaDecay != 0 &&
-                     nextPlayer->holdingEtaDecay < Time::getCurrentTime() ) {
+                     nextPlayer->holdingEtaDecay < curTime ) {
                 
                 // what they're holding has decayed
 
@@ -3959,7 +3978,7 @@ int main() {
 
                         if( nextPlayer->containedEtaDecays[c] != 0 &&
                             nextPlayer->containedEtaDecays[c] <
-                            Time::getCurrentTime() ) {
+                            curTime ) {
                             
                             change = true;
                             
@@ -4009,9 +4028,9 @@ int main() {
                         }
                     }
                 
-
-
+                
                 // check if their clothing has decayed
+                // or what's in their clothing
                 for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
                     ObjectRecord *cObj = 
                         clothingByIndex( nextPlayer->clothing, c );
@@ -4019,7 +4038,7 @@ int main() {
                     if( cObj != NULL &&
                         nextPlayer->clothingEtaDecay[c] != 0 &&
                         nextPlayer->clothingEtaDecay[c] < 
-                          Time::getCurrentTime() ) {
+                        curTime ) {
                 
                         // what they're wearing has decayed
 
@@ -4054,9 +4073,99 @@ int main() {
                             setClothingByIndex( &( nextPlayer->clothing ),
                                                 c, newCObj );
                             
+                            int oldSlots = 
+                                getNumContainerSlots( oldID );
+
+                            int newSlots = getNumContainerSlots( newID );
+                    
+                            if( newSlots < oldSlots ) {
+                                // new container can hold less
+                                // truncate
+                                nextPlayer->
+                                    clothingContained[c].
+                                    shrink( newSlots );
+                                
+                                nextPlayer->
+                                    clothingContainedEtaDecays[c].
+                                    shrink( newSlots );
+                                }
+
                             playerIndicesToSendUpdatesAbout.push_back( i );
                             }
                         }
+                    
+                    if( cObj != NULL &&
+                        nextPlayer->clothingContainedEtaDecays[c].size() > 0 ) {
+                        
+                        char change = false;
+                        
+                        SimpleVector<int> newContained;
+                        SimpleVector<unsigned int> newContainedETA;
+
+                        for( int cc=0; 
+                             cc <
+                                 nextPlayer->
+                                 clothingContainedEtaDecays[c].size();
+                             cc++ ) {
+                            
+                            int oldID = nextPlayer->
+                                clothingContained[c].getElementDirect( cc );
+                            int newID = oldID;
+                        
+                            unsigned int decay = 
+                                nextPlayer->clothingContainedEtaDecays[c]
+                                .getElementDirect( cc );
+
+                            unsigned int newDecay = decay;
+                            
+                            if( decay != 0 && decay < curTime ) {
+                                
+                                change = true;
+                            
+                                TransRecord *t = getTrans( -1, oldID );
+
+                                if( t != NULL ) {
+                                    newDecay = 0;
+                                    newID = t->newTarget;
+                            
+                                    if( newID != 0 ) {
+                                        TransRecord *newDecayT = 
+                                            getTrans( -1, newID );
+                                        
+                                        if( newDecayT != NULL ) {
+                                            newDecay = 
+                                                time(NULL) + 
+                                                newDecayT->autoDecaySeconds;
+                                            }
+                                        else {
+                                            // no further decay
+                                            newDecay = 0;
+                                            }
+                                        }
+                                    }
+                                }
+                        
+                            if( newID != 0 ) {
+                                newContained.push_back( newID );
+                                newContainedETA.push_back( newDecay );
+                                } 
+                            }
+                        
+                        if( change ) {
+                            playerIndicesToSendUpdatesAbout.push_back( i );
+                            
+                            // assignment operator for vectors
+                            // copies one vector into another
+                            // replacing old contents
+                            nextPlayer->clothingContained[c] =
+                                newContained;
+                            nextPlayer->clothingContainedEtaDecays[c] =
+                                newContainedETA;
+                            }
+                        
+                        }
+                    
+                    
                     }
                 
 
