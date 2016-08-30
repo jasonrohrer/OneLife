@@ -2719,7 +2719,7 @@ void LivingLifePage::step() {
                                                 heldFrozenRotFrameCount );
                                         
                                         
-                                        if( nextObject->lastAnimFade == 
+                                        if( nextObject->lastHeldAnimFade == 
                                             0 ) {
                                             
                                             mMapAnimationLastFrameCount[mapI] =
