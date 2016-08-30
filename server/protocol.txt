@@ -259,12 +259,15 @@ USE x y#
 SELF x y i#
 REMV x y i#
 SREMV x y c i#
-DROP x y#
+DROP x y c#
 KILL x y#
 
 
 DROP is for setting held object down on empty grid square OR
 	 for adding something to a container
+     c is -1 except when adding something to own clothing, then c
+     indicates clothing with:
+     0=hat, 1=tunic, 2=frontShoe, 3=backShoe
 
 USE  is for bare-hand or held-object action on target object in non-empty 
      grid square, including picking something up (if there's no bare-handed 

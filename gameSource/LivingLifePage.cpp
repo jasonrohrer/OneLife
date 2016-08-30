@@ -4650,11 +4650,21 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 printf( "Use on self\n" );
                 }
             else {
-                nextActionMessageToSend = 
-                    autoSprintf( "SREMV %d %d %d %d#",
-                                 clickDestX, clickDestY, hitSelfClothingIndex,
-                                 hitSlotIndex );
-                printf( "Remove from own clothing container\n" );
+                if( ourLiveObject->holdingID > 0 ) {
+                    nextActionMessageToSend = 
+                        autoSprintf( "DROP %d %d %d#",
+                                     clickDestX, clickDestY, 
+                                     hitSelfClothingIndex  );
+
+                    }
+                else {
+                    nextActionMessageToSend = 
+                        autoSprintf( "SREMV %d %d %d %d#",
+                                     clickDestX, clickDestY, 
+                                     hitSelfClothingIndex,
+                                     hitSlotIndex );
+                    printf( "Remove from own clothing container\n" );
+                    }
                 }
 
             playerActionTargetX = clickDestX;
@@ -4995,6 +5005,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             else if( ! modClick && destID != 0 ) {
                 action = "USE";
                 send = true;
+                }
+            
+            if( strcmp( action, "DROP" ) == 0 ) {
+                delete [] extra;
+                extra = stringDuplicate( " -1" );
                 }
             
             

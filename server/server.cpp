@@ -526,6 +526,13 @@ ClientMessage parseMessage( char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "DROP" ) == 0 ) {
         m.type = DROP;
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.c ) );
+        
+        if( numRead != 4 ) {
+            m.type = UNKNOWN;
+            }
         }
     else if( strcmp( nameBuffer, "KILL" ) == 0 ) {
         m.type = KILL;
@@ -3491,6 +3498,10 @@ int main() {
                                     
                                     nextPlayer->clothingContainedEtaDecays[ind].
                                         deleteAll();
+                                    
+                                    nextPlayer->heldOriginValid = 0;
+                                    nextPlayer->heldOriginX = 0;
+                                    nextPlayer->heldOriginY = 0;
                                     }
                                 }
                             }
@@ -3534,9 +3545,43 @@ int main() {
                                         &mapChanges, &mapChangesPos,
                                         &playerIndicesToSendUpdatesAbout );
                                     }
+                                else if( m.c >= 0 && 
+                                         m.c < NUM_CLOTHING_PIECES &&
+                                         m.x == nextPlayer->xd &&
+                                         m.y == nextPlayer->yd  &&
+                                         nextPlayer->holdingID > 0 ) {
+                                        // drop into own clothing
+                                    ObjectRecord *cObj = 
+                                        clothingByIndex( 
+                                            nextPlayer->clothing,
+                                            m.c );
+                                    
+                                    if( cObj != NULL ) {
+                                        int oldNum =
+                                            nextPlayer->
+                                            clothingContained[m.c].size();
+                                        
+                                        if( oldNum < cObj->numSlots ) {
+                                            // room
+                                            nextPlayer->clothingContained[m.c].
+                                                push_back( 
+                                                    nextPlayer->holdingID );
+                                            nextPlayer->
+                                                clothingContainedEtaDecays[m.c].
+                                                push_back(
+                                                    nextPlayer->
+                                                    holdingEtaDecay );
+                                        
+                                            nextPlayer->holdingID = 0;
+                                            nextPlayer->holdingEtaDecay = 0;
+                                            nextPlayer->heldOriginValid = 0;
+                                            nextPlayer->heldOriginX = 0;
+                                            nextPlayer->heldOriginY = 0;
+                                            }
+                                        }
+                                    }
                                 else if( nextPlayer->holdingID > 0 ) {
-                                    // target not empty
-                                    // non-baby drop only
+                                    // non-baby drop
                                     
                                     int target = getMapObject( m.x, m.y );
                             
@@ -3713,6 +3758,10 @@ int main() {
                                         deleteElement( slotToRemove );
                                     nextPlayer->clothingContainedEtaDecays[m.c].
                                         deleteElement( slotToRemove );
+
+                                    nextPlayer->heldOriginValid = 0;
+                                    nextPlayer->heldOriginX = 0;
+                                    nextPlayer->heldOriginY = 0;
                                     }
                                 }
                             }
