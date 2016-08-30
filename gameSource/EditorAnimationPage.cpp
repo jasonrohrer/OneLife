@@ -1478,6 +1478,7 @@ int EditorAnimationPage::getClosestSpriteOrSlot( float inX, float inY ) {
         getClosestObjectPart( obj,
                               NULL,
                               NULL,
+                              NULL,
                               age,
                               -1,
                               false,

@@ -380,6 +380,7 @@ typedef enum messageType {
     SELF,
     BABY,
     REMV,
+    SREMV,
     DROP,
     KILL,
     SAY,
@@ -391,7 +392,7 @@ typedef enum messageType {
 
 typedef struct ClientMessage {
         messageType type;
-        int x, y, i;
+        int x, y, c, i;
 
         // some messages have extra positions attached
         int numExtraPos;
@@ -499,6 +500,18 @@ ClientMessage parseMessage( char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "BABY" ) == 0 ) {
         m.type = BABY;
+        }
+    else if( strcmp( nameBuffer, "SREMV" ) == 0 ) {
+        m.type = SREMV;
+        
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.c ),
+                          &( m.i ) );
+        
+        if( numRead != 5 ) {
+            m.type = UNKNOWN;
+            }
         }
     else if( strcmp( nameBuffer, "REMV" ) == 0 ) {
         m.type = REMV;
@@ -3663,7 +3676,47 @@ int main() {
                             }
                         
                         }
-                    
+                    else if( m.type == SREMV ) {
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        
+                        // remove contained object from clothing
+                        
+                        if( m.x == nextPlayer->xd &&
+                            m.y == nextPlayer->yd &&
+                            nextPlayer->holdingID == 0 ) {
+                            
+                            if( m.c >= 0 && m.c < NUM_CLOTHING_PIECES ) {
+                                int oldNumContained = 
+                                    nextPlayer->clothingContained[m.c].size();
+                                
+                                int slotToRemove = m.i;
+                                
+                                if( slotToRemove < 0 ) {
+                                    slotToRemove = oldNumContained - 1;
+                                    }
+
+                                if( oldNumContained > 0 &&
+                                    oldNumContained > slotToRemove &&
+                                    slotToRemove >= 0 ) {
+                                    
+
+                                    nextPlayer->holdingID = 
+                                        nextPlayer->clothingContained[m.c].
+                                        getElementDirect( slotToRemove );
+
+                                    nextPlayer->holdingEtaDecay = 
+                                        nextPlayer->
+                                        clothingContainedEtaDecays[m.c].
+                                        getElementDirect( slotToRemove );
+                                    
+                                    nextPlayer->clothingContained[m.c].
+                                        deleteElement( slotToRemove );
+                                    nextPlayer->clothingContainedEtaDecays[m.c].
+                                        deleteElement( slotToRemove );
+                                    }
+                                }
+                            }
+                        }
                     
                     if( m.numExtraPos > 0 ) {
                         delete [] m.extraPos;

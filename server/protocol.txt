@@ -258,6 +258,7 @@ Clients send moves in the following format:
 USE x y#
 SELF x y i#
 REMV x y i#
+SREMV x y c i#
 DROP x y#
 KILL x y#
 
@@ -283,6 +284,13 @@ BABY is special case of USE action taken on a baby to pick them up.
 REMV is special case of removing an object from a container.
      i specifies the index of the container item to remove, or -1 to
 	 remove top of stack.
+
+SREMV is special case of removing an object contained in a piece of worn 
+      clothing.
+      c specifies the clothing slot to remove from:  0=hat, 1=tunic, 
+         2=frontShoe, 3=backShoe
+      i specifies the index of the container item to remove, or -1 to
+	  remove top of stack.
 
 KILL is for using a deadly object on the target square.  Square can
      be non-adjacent depending on deadly distance of held object.

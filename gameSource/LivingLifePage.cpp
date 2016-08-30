@@ -4518,6 +4518,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     obj,
                     NULL,
                     &( mMapContainedStacks[mapI] ),
+                    NULL,
                     -1,
                     -1,
                     mMapTileFlips[ mapI ],
@@ -4587,15 +4588,18 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     
                     int sp, cl, sl;
                     
-                    double dist = getClosestObjectPart( obj,
-                                                        &( o->clothing ),
-                                                        NULL,
-                                                        o->age,
-                                                        -1,
-                                                        o->holdingFlip,
-                                                        clickOffsetX,
-                                                        clickOffsetY,
-                                                        &sp, &cl, &sl );
+                    double dist = getClosestObjectPart( 
+                        obj,
+                        &( o->clothing ),
+                        NULL,
+                        o->clothingContained,
+                        o->age,
+                        -1,
+                        o->holdingFlip,
+                        clickOffsetX,
+                        clickOffsetY,
+                        &sp, &cl, &sl );
+                    
                     if( dist < minDistThatHits ) {
                         hit = true;
                         closestCellX = x;
@@ -4605,6 +4609,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
                             if( cl != -1 ) {
                                 hitSelfClothingIndex = cl;
+                                hitSlotIndex = sl;
                                 }
                             }
                         }
@@ -4629,19 +4634,32 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
         // ignore unless it's a use-on-self action and standing still
 
-        if( ! ourLiveObject->inMotion && ! modClick ) {
+        if( ! ourLiveObject->inMotion ) {
             
             if( nextActionMessageToSend != NULL ) {
                 delete [] nextActionMessageToSend;
                 nextActionMessageToSend = NULL;
                 }
-            
-            nextActionMessageToSend = 
-                autoSprintf( "SELF %d %d %d#",
-                             clickDestX, clickDestY, hitSelfClothingIndex );
+
+            if( !modClick ) {
+                
+
+                nextActionMessageToSend = 
+                    autoSprintf( "SELF %d %d %d#",
+                                 clickDestX, clickDestY, hitSelfClothingIndex );
+                printf( "Use on self\n" );
+                }
+            else {
+                nextActionMessageToSend = 
+                    autoSprintf( "SREMV %d %d %d %d#",
+                                 clickDestX, clickDestY, hitSelfClothingIndex,
+                                 hitSlotIndex );
+                printf( "Remove from own clothing container\n" );
+                }
+
             playerActionTargetX = clickDestX;
             playerActionTargetY = clickDestY;
-            printf( "Use on self\n" );
+            
             }
         
 

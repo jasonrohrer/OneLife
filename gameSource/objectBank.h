@@ -355,6 +355,9 @@ double getClosestObjectPart( ObjectRecord *inObject,
                              ClothingSet *inClothing,
                              // can be NULL
                              SimpleVector<int> *inContained,
+                             // array of vectors, one for each clothing slot
+                             // can be NULL
+                             SimpleVector<int> *inClothingContained,
                              double inAge,
                              int inPickedLayer,
                              char inFlip,

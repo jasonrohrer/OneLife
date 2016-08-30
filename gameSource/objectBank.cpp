@@ -1931,6 +1931,7 @@ int getMaxDiameter( ObjectRecord *inObject ) {
 double getClosestObjectPart( ObjectRecord *inObject,
                              ClothingSet *inClothing,
                              SimpleVector<int> *inContained,
+                             SimpleVector<int> *inClothingContained,
                              double inAge,
                              int inPickedLayer,
                              char inFlip,
@@ -1943,7 +1944,7 @@ double getClosestObjectPart( ObjectRecord *inObject,
     
     *outSprite = -1;
     *outClothing = -1;
-    
+    *outSlot = -1;
 
     doublePair headPos = {0,0};
 
@@ -2054,17 +2055,28 @@ double getClosestObjectPart( ObjectRecord *inObject,
                                 
                 doublePair cOffset = sub( pos, cSpritePos );
                 
+                SimpleVector<int> *clothingCont = NULL;
                 
-                getClosestObjectPart( cObj[c],
-                                      NULL,
-                                      NULL,
-                                      -1,
-                                      -1,
-                                      inFlip,
-                                      cOffset.x, cOffset.y,
-                                      &sp, &cl, &sl );
+                if( inClothingContained != NULL ) {
+                    clothingCont = &( inClothingContained[ cObjIndex[c] ] );
+                    }
+                
+                double dist = getClosestObjectPart( cObj[c],
+                                                    NULL,
+                                                    clothingCont,
+                                                    NULL,
+                                                    -1,
+                                                    -1,
+                                                    inFlip,
+                                                    cOffset.x, cOffset.y,
+                                                    &sp, &cl, &sl );
                 if( sp != -1 ) {
                     *outClothing = cObjIndex[c];
+                    break;
+                    }
+                else if( sl != -1  && dist == 0 ) {
+                    *outClothing = cObjIndex[c];
+                    *outSlot = sl;
                     break;
                     }
                 }
@@ -2135,11 +2147,9 @@ double getClosestObjectPart( ObjectRecord *inObject,
         }
     
     
-    *outSlot = -1;
-
     double smallestDist = 9999999;
 
-    if( *outSprite == -1 && *outClothing == -1 ) {
+    if( *outSprite == -1 && *outClothing == -1 && *outSlot == -1 ) {
         // consider slots
         
         
@@ -2168,6 +2178,7 @@ double getClosestObjectPart( ObjectRecord *inObject,
                 int sp, cl, sl;
                 
                 getClosestObjectPart( contained,
+                                      NULL,
                                       NULL,
                                       NULL,
                                       -1,
