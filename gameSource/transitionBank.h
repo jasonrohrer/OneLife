@@ -76,6 +76,10 @@ SimpleVector<TransRecord*> *getAllUses( int inUsesID );
 // inActor can be -1 if inAutoDecaySeconds > 0 and inNewActor is 0
 // (this signals an auto-decay from inTarget to inNewTarget after X seconds)
 
+// inActor can be -2 if inNewActor is 0 and inTarget is not 0
+// (this signals default transition to execute on target when no other 
+//  transition is defined)
+
 // only one trans allowed per actor/target pair, so replacement is automatic
 
 // 0 for inNewActor or inNewTarget means actor or target consumed

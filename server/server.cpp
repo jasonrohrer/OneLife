@@ -2922,10 +2922,12 @@ int main() {
                             int target = getMapObject( m.x, m.y );
                             
                             if( target != 0 ) {                                
-
+                                ObjectRecord *targetObj = getObject( target );
+                                
                                 // try using object on this target 
                                 
                                 TransRecord *r = NULL;
+                                char defaultTrans = false;
                                 
                                 if( nextPlayer->holdingID >= 0 ) {
                                     // negative holding is ID of baby
@@ -2933,6 +2935,18 @@ int main() {
                                     // (and no bare hand action available)
                                     r = getTrans( nextPlayer->holdingID,
                                                   target );
+                                
+                                    if( r == NULL && 
+                                        ( nextPlayer->holdingID > 0 || 
+                                          targetObj->permanent ) ) {
+                                        
+                                        // search for default 
+                                        r = getTrans( -2, target );
+                                        
+                                        if( r != NULL ) {
+                                            defaultTrans = true;
+                                            }
+                                        }
                                     }
                                 
                                 if( r != NULL ) {
@@ -2940,7 +2954,10 @@ int main() {
                                         nextPlayer->numContained;
                                     
                                     int oldHolding = nextPlayer->holdingID;
-                                    nextPlayer->holdingID = r->newActor;
+                                    
+                                    if( ! defaultTrans ) {    
+                                        nextPlayer->holdingID = r->newActor;
+                                        }
                                     
                                     if( oldHolding != nextPlayer->holdingID ) {
                                         setFreshEtaDecayForHeld( nextPlayer );
@@ -2994,7 +3011,7 @@ int main() {
                                     delete [] changeLine;
                                     }
                                 else if( nextPlayer->holdingID == 0 &&
-                                         ! getObject( target )->permanent ) {
+                                         ! targetObj->permanent ) {
                                     // no bare-hand transition applies to
                                     // this non-permanent target object
                                     

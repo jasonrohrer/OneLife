@@ -298,6 +298,18 @@ static void fillInGenericPersonTarget( TransRecord *inRecord ) {
     }
 
 
+static void fillInGenericPersonActor( TransRecord *inRecord ) {
+    if( inRecord->actor == -2 ) {
+        inRecord->actor = getRandomPersonObject();
+        
+        if( inRecord->actor == -1 ) {
+            // no people in object bank?
+            inRecord->actor = 0;
+            }
+        }
+    }
+
+
 
 void EditorTransitionPage::redoTransSearches( int inObjectID,
                                               char inClearSkip ) {
@@ -334,7 +346,8 @@ void EditorTransitionPage::redoTransSearches( int inObjectID,
             mProducedBy[i] = *( resultsA[i] );
             
             fillInGenericPersonTarget( &( mProducedBy[i] ) );
-            
+            fillInGenericPersonActor(  &( mProducedBy[i] ) );
+
             if( mProducedBy[i].target == -1 ) {
                 mProducedBy[i].target = 0;
                 }
@@ -375,6 +388,7 @@ void EditorTransitionPage::redoTransSearches( int inObjectID,
             mProduces[i] = *( resultsB[i] );
             
             fillInGenericPersonTarget( &( mProduces[i] ) );
+            fillInGenericPersonActor( &( mProduces[i] ) );
             
             if( mProducedBy[i].target == -1 ) {
                 mProducedBy[i].target = 0;
@@ -451,7 +465,14 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             
             target = -1;
             }
-
+        else if( target != 0 &&
+                 mCurrentTransition.newActor == 0 &&
+                 mCurrentTransition.actor > 0 &&
+                 getObject( mCurrentTransition.actor )->person ) {
+            // default transition
+            actor = -2;
+            }
+        
         addTrans( actor,
                   target,
                   mCurrentTransition.newActor,
@@ -502,6 +523,13 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             // (need to allow eat transition to be deleted after food
             // status removed from actor object)
             target = -1;
+            }
+        else if( target != 0 &&
+                 mCurrentTransition.newActor == 0 &&
+                 mCurrentTransition.actor > 0 &&
+                 getObject( mCurrentTransition.actor )->person ) {
+            // default transition
+            actor = -2;
             }
 
         deleteTransFromBank( actor, target );
@@ -781,6 +809,20 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         setDrawColor( 1, 1, 1, 1 );
         
         smallFont->drawString( "Generic on-person Transition", 
+                               pos, alignCenter );
+        }
+    else if( mCurrentTransition.target != 0 &&
+             mCurrentTransition.newActor == 0 &&
+             mCurrentTransition.actor > 0 &&
+             getObject( mCurrentTransition.actor )->person ) {
+
+        doublePair pos = mPickButtons[1]->getCenter();
+
+        pos.y += 75;
+        
+        setDrawColor( 1, 1, 1, 1 );
+        
+        smallFont->drawString( "Default Transition", 
                                pos, alignCenter );
         }
     else if( mCurrentTransition.target == 0 &&
