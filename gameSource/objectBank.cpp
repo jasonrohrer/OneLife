@@ -1350,6 +1350,12 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
 
     doublePair tunicPos = { 0, 0 };
     double tunicRot = 0;
+
+    doublePair bottomPos = { 0, 0 };
+    double bottomRot = 0;
+
+    doublePair backpackPos = { 0, 0 };
+    double backpackRot = 0;
     
     doublePair backShoePos = { 0, 0 };
     double backShoeRot = 0;
@@ -1451,26 +1457,68 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             backShoeRot = inRot;
             }
         
-        if( i == bodyIndex
-            && inClothing.tunic != NULL ) {
+        if( i == bodyIndex ) {
+            if( inClothing.tunic != NULL ) {
             
 
 
-            doublePair cPos = add( spritePos, 
-                                   inClothing.tunic->clothingOffset );
-            if( inFlipH ) {
-                cPos.x *= -1;
+                doublePair cPos = add( spritePos, 
+                                       inClothing.tunic->clothingOffset );
+                if( inFlipH ) {
+                    cPos.x *= -1;
+                    }
+                cPos = add( cPos, inPos );
+            
+                
+                tunicPos = cPos;
+                tunicRot = inRot;
                 }
-            cPos = add( cPos, inPos );
+            if( inClothing.bottom != NULL ) {
             
+
+
+                doublePair cPos = add( spritePos, 
+                                       inClothing.bottom->clothingOffset );
+                if( inFlipH ) {
+                    cPos.x *= -1;
+                    }
+                cPos = add( cPos, inPos );
             
-            tunicPos = cPos;
-            tunicRot = inRot;
+                
+                bottomPos = cPos;
+                bottomRot = inRot;
+                }
+            if( inClothing.backpack != NULL ) {
+            
+
+
+                doublePair cPos = add( spritePos, 
+                                       inClothing.backpack->clothingOffset );
+                if( inFlipH ) {
+                    cPos.x *= -1;
+                    }
+                cPos = add( cPos, inPos );
+            
+                
+                backpackPos = cPos;
+                backpackRot = inRot;
+                }
             }
-        else if( inClothing.tunic != NULL && i == topBackArmIndex ) {
+        else if( i == topBackArmIndex ) {
             // draw under top of back arm
-            drawObject( inClothing.tunic, tunicPos, tunicRot,
-                        inFlipH, -1, 0, false, false, emptyClothing );
+
+            if( inClothing.bottom != NULL ) {
+                drawObject( inClothing.bottom, bottomPos, bottomRot,
+                            inFlipH, -1, 0, false, false, emptyClothing );
+                }
+            if( inClothing.tunic != NULL ) {
+                drawObject( inClothing.tunic, tunicPos, tunicRot,
+                            inFlipH, -1, 0, false, false, emptyClothing );
+                }
+            if( inClothing.backpack != NULL ) {
+                drawObject( inClothing.backpack, backpackPos, backpackRot,
+                            inFlipH, -1, 0, false, false, emptyClothing );
+                }
             }
 
         
@@ -1855,6 +1903,10 @@ static ObjectRecord **clothingPointerByIndex( ClothingSet *inSet,
             return &( inSet->frontShoe );
         case 3:
             return &( inSet->backShoe );
+        case 4:
+            return &( inSet->bottom );
+        case 5:
+            return &( inSet->backpack );        
         }
     return NULL;
     }
@@ -1991,14 +2043,13 @@ double getClosestObjectPart( ObjectRecord *inObject,
     for( int i=inObject->numSprites-1; i>=0; i-- ) {
 
         // first check for clothing that is above this part
-        ObjectRecord *cObj[2] = { NULL, NULL };
-        // for backpack later (two pieces of clothing attached to body)
-        //ObjectRecord *cObjB = NULL;
-
-        int cObjIndex[2] = { -1, -1 };
-        //int cObjBIndex = -1;        
+        // (array because 3 pieces of clothing attached to body)
+        ObjectRecord *cObj[3] = { NULL, NULL, NULL };
         
-        doublePair cObjBodyPartPos[2];
+        int cObjIndex[3] = { -1, -1, -1 };
+        
+        
+        doublePair cObjBodyPartPos[3];
         
         if( inClothing != NULL ) {
             
@@ -2018,10 +2069,21 @@ double getClosestObjectPart( ObjectRecord *inObject,
                 hatChecked = true;
                 }
             else if( i < backArmTopIndex && ! tunicChecked ) {
-                // tunic behind back arm
-                cObj[0] = inClothing->tunic;        
-                cObjIndex[0] = 1;
+                // bottom, tunic, and backpack behind back arm
+                
+                
+                cObj[0] = inClothing->backpack;        
+                cObjIndex[0] = 5;
                 cObjBodyPartPos[0] = add( bodyPos, 
+                                          getAgeBodyOffset( inAge, bodyPos ) );
+                cObj[1] = inClothing->tunic;        
+                cObjIndex[1] = 1;
+                cObjBodyPartPos[1] = add( bodyPos, 
+                                          getAgeBodyOffset( inAge, bodyPos ) );
+                
+                cObj[2] = inClothing->bottom;        
+                cObjIndex[2] = 4;
+                cObjBodyPartPos[2] = add( bodyPos, 
                                           getAgeBodyOffset( inAge, bodyPos ) );
                 tunicChecked = true;
                 }
@@ -2037,7 +2099,7 @@ double getClosestObjectPart( ObjectRecord *inObject,
                 }
             }
         
-        for( int c=0; c<2; c++ ) {
+        for( int c=0; c<3; c++ ) {
             
             if( cObj[c] != NULL ) {
                 int sp, cl, sl;

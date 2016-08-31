@@ -30,7 +30,7 @@
 
 #define NUM_OBJECT_CHECKBOXES 3
 
-#define NUM_CLOTHING_CHECKBOXES 4
+#define NUM_CLOTHING_CHECKBOXES 5
 
 
 
@@ -206,6 +206,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
 
         void updateAgingPanel();
+        
+        char anyClothingToggled();
         
 
         FloatRGB mColorClipboard;

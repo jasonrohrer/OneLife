@@ -96,6 +96,8 @@ typedef struct ObjectRecord {
         // s = shoe
         // t = tunic
         // h = hat
+        // b = bottom
+        // p = backpack
         char clothing;
         
         // offset of clothing from it's default location
@@ -152,7 +154,7 @@ typedef struct ObjectRecord {
     } ObjectRecord;
 
 
-#define NUM_CLOTHING_PIECES 4
+#define NUM_CLOTHING_PIECES 6
 
 
 // can be applied to a person object when drawing it 
@@ -162,21 +164,27 @@ typedef struct ClothingSet {
         // drawn above top layer
         ObjectRecord *hat;
 
-        // drawn to replace second layer
+        // drawn behind top of back arm
         ObjectRecord *tunic;
 
 
-        // drawn to replace third layer
+        // drawn over front foot
         ObjectRecord *frontShoe;
 
-        // drawn to replace bottom layer
+        // drawn over back foot
         ObjectRecord *backShoe;
+
+        // drawn under tunic
+        ObjectRecord *bottom;
+        
+        // drawn on top of tunic
+        ObjectRecord *backpack;
     } ClothingSet;
 
 
 ClothingSet getEmptyClothingSet();
 
-// 0 hat, 1, tunic, 2, front shoe, 3 back shoe
+// 0 hat, 1, tunic, 2, front shoe, 3 back shoe, 4 bottom, 5 backpack
 ObjectRecord *clothingByIndex( ClothingSet inSet, int inIndex );
 
 void setClothingByIndex( ClothingSet *inSet, int inIndex, 

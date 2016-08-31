@@ -3348,6 +3348,18 @@ int main() {
                                                 &( nextPlayer->clothing.tunic );
                                             clothingSlotIndex = 1;
                                             break;
+                                        case 'b':
+                                            clothingSlot = 
+                                                &( nextPlayer->
+                                                   clothing.bottom );
+                                            clothingSlotIndex = 4;
+                                            break;
+                                        case 'p':
+                                            clothingSlot = 
+                                                &( nextPlayer->
+                                                   clothing.backpack );
+                                            clothingSlotIndex = 5;
+                                            break;
                                         case 's':
                                             if( nextPlayer->clothing.backShoe
                                                 == NULL ) {
@@ -3483,6 +3495,20 @@ int main() {
                                     clothingSlot = 
                                         &( nextPlayer->clothing.tunic );
                                     clothingSlotIndex = 1;
+                                    }
+                                else if( m.i == 4 &&
+                                         nextPlayer->clothing.bottom != NULL ) {
+                                    clothingSlot = 
+                                        &( nextPlayer->clothing.bottom );
+                                    clothingSlotIndex = 4;
+                                    }
+                                else if( m.i == 5 &&
+                                         nextPlayer->
+                                         clothing.backpack != NULL ) {
+                                    
+                                    clothingSlot = 
+                                        &( nextPlayer->clothing.backpack );
+                                    clothingSlotIndex = 5;
                                     }
 
                                 if( clothingSlot != NULL ) {
@@ -3869,7 +3895,7 @@ int main() {
                         
                         ObjectRecord *deathObject = getObject( deathID );
                         
-                        if( deathObject->numSlots >= 4 ) {
+                        if( deathObject->numSlots >= 5 ) {
                             // room for clothing
                             
                             if( nextPlayer->clothing.tunic != NULL ) {
@@ -3878,6 +3904,20 @@ int main() {
                                     dropPos.x, dropPos.y,
                                     nextPlayer->clothing.tunic->id,
                                     nextPlayer->clothingEtaDecay[1] );
+                                }
+                            if( nextPlayer->clothing.bottom != NULL ) {
+                                
+                                addContained( 
+                                    dropPos.x, dropPos.y,
+                                    nextPlayer->clothing.bottom->id,
+                                    nextPlayer->clothingEtaDecay[4] );
+                                }
+                            if( nextPlayer->clothing.backpack != NULL ) {
+                                
+                                addContained( 
+                                    dropPos.x, dropPos.y,
+                                    nextPlayer->clothing.backpack->id,
+                                    nextPlayer->clothingEtaDecay[5] );
                                 }
                             if( nextPlayer->clothing.backShoe != NULL ) {
                                 
@@ -4312,6 +4352,12 @@ int main() {
                 }
             if( nextPlayer->clothing.backShoe != NULL ) {
                 clothingR += nextPlayer->clothing.backShoe->rValue;
+                }
+            if( nextPlayer->clothing.bottom != NULL ) {
+                clothingR += nextPlayer->clothing.bottom->rValue;
+                }
+            if( nextPlayer->clothing.backpack != NULL ) {
+                clothingR += nextPlayer->clothing.backpack->rValue;
                 }
             
             int playerMapIndex = 

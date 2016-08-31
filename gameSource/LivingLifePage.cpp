@@ -4322,17 +4322,20 @@ void LivingLifePage::step() {
                     }
                 
                 // and their clothing
-                if( o->clothing.hat != NULL ) {
-                    addBaseObjectToLiveObjectSet( o->clothing.hat->id );
-                    }
-                if( o->clothing.tunic != NULL ) {
-                    addBaseObjectToLiveObjectSet( o->clothing.tunic->id );
-                    }
-                if( o->clothing.frontShoe != NULL ) {
-                    addBaseObjectToLiveObjectSet( o->clothing.frontShoe->id );
-                    }
-                if( o->clothing.backShoe != NULL ) {
-                    addBaseObjectToLiveObjectSet( o->clothing.backShoe->id );
+                for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+                    ObjectRecord *cObj = clothingByIndex( o->clothing, c );
+                    
+                    if( cObj != NULL ) {
+                        addBaseObjectToLiveObjectSet( cObj->id );
+
+                        // and what it containes
+                        for( int cc=0; 
+                             cc< o->clothingContained[c].size(); cc++ ) {
+                            int ccID = 
+                                o->clothingContained[c].getElementDirect( cc );
+                            addBaseObjectToLiveObjectSet( ccID );
+                            }
+                        }
                     }
                 }
             

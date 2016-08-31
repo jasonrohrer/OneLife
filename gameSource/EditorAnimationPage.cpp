@@ -273,6 +273,8 @@ void EditorAnimationPage::clearClothing() {
     mClothingSet.frontShoe = NULL;
     mClothingSet.backShoe = NULL;
     mClothingSet.tunic = NULL;
+    mClothingSet.bottom = NULL;
+    mClothingSet.backpack = NULL;
     mClearClothingButton.setVisible( false );
     }
 
@@ -947,6 +949,12 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                         break;
                     case 't':
                         mClothingSet.tunic = r;
+                        break;
+                    case 'b':
+                        mClothingSet.bottom = r;
+                        break;
+                    case 'p':
+                        mClothingSet.backpack = r;
                         break;
                     }   
                         

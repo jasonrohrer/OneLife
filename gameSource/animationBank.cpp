@@ -1130,6 +1130,12 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     doublePair tunicPos = { 0, 0 };
     double tunicRot = 0;
 
+    doublePair bottomPos = { 0, 0 };
+    double bottomRot = 0;
+
+    doublePair backpackPos = { 0, 0 };
+    double backpackRot = 0;
+
     doublePair backShoePos = { 0, 0 };
     double backShoeRot = 0;
     
@@ -1257,43 +1263,123 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             backShoePos = cPos;
             }
 
-        if( i == bodyIndex 
-            && inClothing.tunic != NULL ) {
+        if( i == bodyIndex ) {
+            
+            if( inClothing.tunic != NULL ) {
 
-            doublePair offset = inClothing.tunic->clothingOffset;
+                doublePair offset = inClothing.tunic->clothingOffset;
             
-            if( inFlipH ) {
-                offset.x *= -1;
+                if( inFlipH ) {
+                    offset.x *= -1;
+                    }
+                
+                tunicRot = rot - obj->spriteRot[i];
+            
+                if( tunicRot != 0 ) {
+                    offset = rotate( offset, -2 * M_PI * tunicRot );
+                    }
+                
+            
+                doublePair cPos = add( spritePos, offset );
+                
+                cPos = add( cPos, inPos );
+                
+                tunicPos = cPos;
                 }
+            if( inClothing.bottom != NULL ) {
 
-            tunicRot = rot - obj->spriteRot[i];
+                doublePair offset = inClothing.bottom->clothingOffset;
             
-            if( tunicRot != 0 ) {
-                offset = rotate( offset, -2 * M_PI * tunicRot );
+                if( inFlipH ) {
+                    offset.x *= -1;
+                    }
+                
+                bottomRot = rot - obj->spriteRot[i];
+            
+                if( bottomRot != 0 ) {
+                    offset = rotate( offset, -2 * M_PI * bottomRot );
+                    }
+                
+            
+                doublePair cPos = add( spritePos, offset );
+                
+                cPos = add( cPos, inPos );
+                
+                bottomPos = cPos;
+                }
+            if( inClothing.backpack != NULL ) {
+
+                doublePair offset = inClothing.backpack->clothingOffset;
+            
+                if( inFlipH ) {
+                    offset.x *= -1;
+                    }
+                
+                backpackRot = rot - obj->spriteRot[i];
+            
+                if( backpackRot != 0 ) {
+                    offset = rotate( offset, -2 * M_PI * backpackRot );
+                    }
+                
+            
+                doublePair cPos = add( spritePos, offset );
+                
+                cPos = add( cPos, inPos );
+                
+                backpackPos = cPos;
                 }
             
-            
-            doublePair cPos = add( spritePos, offset );
-            
-            cPos = add( cPos, inPos );
-            
-            tunicPos = cPos;
             }
-        else if( inClothing.tunic != NULL && i == topBackArmIndex ) {
+        else if( i == topBackArmIndex ) {
             // draw under top of back arm
-            int numCont = 0;
-            int *cont = NULL;
-            if( inClothingContained != NULL ) {    
-                numCont = inClothingContained[1].size();
-                cont = inClothingContained[1].getElementArray();
-                }
-
-            drawObject( inClothing.tunic, tunicPos, tunicRot,
-                        inFlipH, -1, 0, false, false, emptyClothing,
-                        numCont, cont );
             
-            if( cont != NULL ) {
-                delete [] cont;
+            if( inClothing.bottom != NULL ) {
+                int numCont = 0;
+                int *cont = NULL;
+                if( inClothingContained != NULL ) {    
+                    numCont = inClothingContained[4].size();
+                    cont = inClothingContained[4].getElementArray();
+                    }
+                
+                drawObject( inClothing.bottom, bottomPos, bottomRot,
+                            inFlipH, -1, 0, false, false, emptyClothing,
+                            numCont, cont );
+                
+                if( cont != NULL ) {
+                    delete [] cont;
+                    }
+                }
+            if( inClothing.tunic != NULL ) {
+                int numCont = 0;
+                int *cont = NULL;
+                if( inClothingContained != NULL ) {    
+                    numCont = inClothingContained[1].size();
+                    cont = inClothingContained[1].getElementArray();
+                    }
+                
+                drawObject( inClothing.tunic, tunicPos, tunicRot,
+                            inFlipH, -1, 0, false, false, emptyClothing,
+                            numCont, cont );
+                
+                if( cont != NULL ) {
+                    delete [] cont;
+                    }
+                }
+            if( inClothing.backpack != NULL ) {
+                int numCont = 0;
+                int *cont = NULL;
+                if( inClothingContained != NULL ) {    
+                    numCont = inClothingContained[5].size();
+                    cont = inClothingContained[5].getElementArray();
+                    }
+                
+                drawObject( inClothing.backpack, backpackPos, backpackRot,
+                            inFlipH, -1, 0, false, false, emptyClothing,
+                            numCont, cont );
+                
+                if( cont != NULL ) {
+                    delete [] cont;
+                    }
                 }
             }
         

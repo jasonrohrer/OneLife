@@ -205,7 +205,7 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mSetHeldPosButton );
     addComponent( &mEndSetHeldPosButton );
 
-    mSetHeldPosButton.setVisible( false );
+    mSetHeldPosButton.setVisible( true );
     mEndSetHeldPosButton.setVisible( false );    
     
     addComponent( &mNextHeldDemoButton );
@@ -439,22 +439,22 @@ EditorObjectPage::EditorObjectPage()
     mBlocksWalkingCheckbox.addActionListener( this );
 
 
-    boxY = 200;
+    boxY = 217;
 
     for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
-        mClothingCheckboxes[i] = new CheckboxButton( 160, boxY, 2 );
+        mClothingCheckboxes[i] = new CheckboxButton( 161, boxY, 2 );
         addComponent( mClothingCheckboxes[i] );
         
         mClothingCheckboxes[i]->addActionListener( this );
     
         boxY -= 20;
         }
-    mClothingCheckboxNames[0] = "No wear";
-    mClothingCheckboxNames[1] = "Shoe";
-    mClothingCheckboxNames[2] = "Tunic";
-    mClothingCheckboxNames[3] = "Hat";
-    mClothingCheckboxes[0]->setToggled( true );
-
+    mClothingCheckboxNames[0] = "Bottom";
+    mClothingCheckboxNames[1] = "Backpack";
+    mClothingCheckboxNames[2] = "Shoe";
+    mClothingCheckboxNames[3] = "Tunic";
+    mClothingCheckboxNames[4] = "Hat";
+    
 
 
     addKeyClassDescription( &mKeyLegend, "n/m", "Switch layers" );
@@ -714,6 +714,15 @@ void EditorObjectPage::updateAgingPanel() {
     }
 
 
+char EditorObjectPage::anyClothingToggled() {
+    for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
+        if( mClothingCheckboxes[i]->getToggled() ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
 
 
 static void recursiveRotate( ObjectRecord *inObject,
@@ -972,8 +981,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         mCurrentObject.heldOffset.x = 0;
         mCurrentObject.heldOffset.y = 0;
-
-        actionPerformed( mClothingCheckboxes[0] );
+        
+        for( int c=0; c<NUM_CLOTHING_CHECKBOXES; c++ ) {
+            mClothingCheckboxes[c]->setToggled( false );
+            }
         
 
         delete [] mCurrentObject.slotPos;
@@ -1227,7 +1238,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mRaceField.setVisible( false );
             }
         
-        if( ! mClothingCheckboxes[0]->getToggled() ) {
+        if( anyClothingToggled() ) {
             mDemoClothesButton.setVisible( true );
             mEndClothesDemoButton.setVisible( false );
             }
@@ -1411,7 +1422,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                     mSetHeldPosButton.setVisible( true );
                     }
                 
-                if( ! mClothingCheckboxes[0]->getToggled() ) {
+                if( anyClothingToggled() ) {
                     mDemoClothesButton.setVisible( true );
                     mEndClothesDemoButton.setVisible( false );
                     }
@@ -1770,19 +1781,30 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 mClearSlotsDemoButton.setVisible( false );
                 }
 
+            for( int c=0; c<NUM_CLOTHING_CHECKBOXES; c++ ) {
+                mClothingCheckboxes[c]->setToggled( false );
+                }
             
             switch( mCurrentObject.clothing ) {
-                case 'n':
+                case 'b':
+                    mClothingCheckboxes[0]->setToggled( true );
                     actionPerformed( mClothingCheckboxes[0] );
                     break;
-                case 's':
+                case 'p':
+                    mClothingCheckboxes[1]->setToggled( true );
                     actionPerformed( mClothingCheckboxes[1] );
                     break;
-                case 't':
+                case 's':
+                    mClothingCheckboxes[2]->setToggled( true );
                     actionPerformed( mClothingCheckboxes[2] );
                     break;
-                case 'h':
+                case 't':
+                    mClothingCheckboxes[3]->setToggled( true );
                     actionPerformed( mClothingCheckboxes[3] );
+                    break;
+                case 'h':
+                    mClothingCheckboxes[4]->setToggled( true );
+                    actionPerformed( mClothingCheckboxes[4] );
                     break;
                 }   
 
@@ -1901,7 +1923,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
                 mClothingCheckboxes[i]->setToggled( false );
                 }
-            mClothingCheckboxes[0]->setToggled( true );
             }
         else {
             mPersonAgeSlider.setVisible( false );
@@ -1937,34 +1958,43 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 
         for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
             if( inTarget == mClothingCheckboxes[i] ) {
-                        
-                mClothingCheckboxes[i]->setToggled( true );
-                
-                for( int j=0; j<NUM_CLOTHING_CHECKBOXES; j++ ) {
-                    if( i != j ) {
-                        mClothingCheckboxes[j]->setToggled( false );
+                char c = 'n';
+
+                if( mClothingCheckboxes[i]->getToggled() ) {
+                    for( int j=0; j<NUM_CLOTHING_CHECKBOXES; j++ ) {
+                        if( i != j ) {
+                            mClothingCheckboxes[j]->setToggled( false );
+                            }
+                        }
+
+                    switch( i ) {
+                        case 0:
+                            c = 'b';
+                            break;
+                        case 1:
+                            c = 'p';
+                            break;                            
+                        case 2:
+                            c = 's';
+                            break;
+                        case 3:
+                            c = 't';
+                            break;
+                        case 4:
+                            c = 'h';
+                            break;
                         }
                     }
                 
-                char c = 'n';
                 
-                switch( i ) {
-                    case 1:
-                        c = 's';
-                        break;
-                    case 2:
-                        c = 't';
-                        break;
-                    case 3:
-                        c = 'h';
-                        break;   
-                    }
+                
+                
                 mCurrentObject.clothing = c;
 
                 mEndClothesDemoButton.setVisible( false );
                 mSetClothesPos = false;
 
-                if( i != 0 ) {
+                if( c != 'n' ) {
                     mDemoClothesButton.setVisible( true );
                     
                     mPersonAgeSlider.setVisible( false );
@@ -2108,6 +2138,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         ClothingSet s = getEmptyClothingSet();
         
         switch( mCurrentObject.clothing ) {
+            case 'b':
+                s.bottom = &mCurrentObject;
+                break;
+            case 'p':
+                s.backpack = &mCurrentObject;
+                break;
             case 's':
                 s.backShoe = &mCurrentObject;
                 s.frontShoe = &mCurrentObject;
