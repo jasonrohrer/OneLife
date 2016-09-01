@@ -76,6 +76,10 @@ EditorObjectPage::EditorObjectPage()
                           -180,  -230, 4,
                           false,
                           "Slot Size", "0123456789.", NULL ),
+          mSlotTimeStretchField( smallFont, 
+                                 150,  -120, 6,
+                                 false,
+                                 "Time Strech", "0123456789.", NULL ),
           mDeadlyDistanceField( smallFont, 
                                 150,  -220, 4,
                                 false,
@@ -172,9 +176,11 @@ EditorObjectPage::EditorObjectPage()
 
     addComponent( &mContainSizeField );
     addComponent( &mSlotSizeField );
+    addComponent( &mSlotTimeStretchField );
 
     mContainSizeField.setVisible( false );
     mSlotSizeField.setVisible( false );
+    mSlotTimeStretchField.setVisible( false );
 
     addComponent( &mDeadlyDistanceField );
     
@@ -393,7 +399,8 @@ EditorObjectPage::EditorObjectPage()
 
     mContainSizeField.setInt( 1 );
     mSlotSizeField.setInt( 1 );
-    
+    mSlotTimeStretchField.setText( "1.0" );
+
     mDeadlyDistanceField.setInt( 0 );
     
     mRaceField.setText( "A" );
@@ -819,6 +826,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.numSlots,
                    mSlotSizeField.getInt(),
                    mCurrentObject.slotPos,
+                   mSlotTimeStretchField.getFloat(),
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
                    mCurrentObject.spriteRot,
@@ -910,6 +918,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.numSlots,
                    mSlotSizeField.getInt(), 
                    mCurrentObject.slotPos,
+                   mSlotTimeStretchField.getFloat(), 
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
                    mCurrentObject.spriteRot,
@@ -972,9 +981,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         mContainSizeField.setInt( 1 );
         mSlotSizeField.setInt( 1 );
+        mSlotTimeStretchField.setText( "1.0" );
+        
         mContainSizeField.setVisible( false );
         mSlotSizeField.setVisible( false );
-
+        mSlotTimeStretchField.setVisible( false );
+        
         mDeadlyDistanceField.setInt( 0 );
 
         mCurrentObject.numSlots = 0;
@@ -1161,6 +1173,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mCurrentObject.numSlots = numSlots + 1;
         
         mSlotSizeField.setVisible( true );
+        mSlotTimeStretchField.setVisible( true );
         
         mContainSizeField.setInt( 1 );
         mContainSizeField.setVisible( false );
@@ -1188,6 +1201,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 
                 mSlotSizeField.setInt( 1 );
                 mSlotSizeField.setVisible( false );
+                
+                mSlotTimeStretchField.setText( "1.0" );
+                mSlotTimeStretchField.setVisible( false );
                 }
             }
         }
@@ -1660,6 +1676,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mContainSizeField.setInt( pickedRecord->containSize );
             mSlotSizeField.setInt( pickedRecord->slotSize );
+            mSlotTimeStretchField.setFloat( pickedRecord->slotTimeStretch,
+                                            -1, true );
             
             mDeadlyDistanceField.setInt( pickedRecord->deadlyDistance );
 
@@ -1861,9 +1879,13 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             if( pickedRecord->numSlots == 0 ) {
                 mSlotSizeField.setInt( 1 );
                 mSlotSizeField.setVisible( false );
+                
+                mSlotTimeStretchField.setText( "1.0" );
+                mSlotTimeStretchField.setVisible( false );
                 }
             else {
                 mSlotSizeField.setVisible( true );
+                mSlotTimeStretchField.setVisible( true );
                 }
             }
         }
@@ -1874,6 +1896,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             mSlotSizeField.setInt( 1 );
             mSlotSizeField.setVisible( false );
+            mSlotTimeStretchField.setText( "1.0" );
+            mSlotTimeStretchField.setVisible( false );
+            
+
             mDemoSlotsButton.setVisible( false );
             mDemoSlots = false;
             mClearSlotsDemoButton.setVisible( false );
@@ -1915,6 +1941,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mSlotSizeField.setInt( 1 );
             mSlotSizeField.setVisible( false );
+            mSlotTimeStretchField.setText( "1.0" );
+            mSlotTimeStretchField.setVisible( false );
+            
             mDemoSlotsButton.setVisible( false );
             mCurrentObject.numSlots = 0;
 

@@ -83,3 +83,12 @@ char *getMapChangeLineString( int inX, int inY,
 // any change positions are added to end of inChangePosList
 void stepMap( SimpleVector<char> *inMapChanges, 
                SimpleVector<ChangePosition> *inChangePosList );
+
+
+
+void restretchDecays( int inNumDecays, unsigned int *inDecayEtas,
+                      int inOldContainerID, int inNewContainerID );
+
+
+void restretchMapContainedDecays( int inX, int inY,
+                                  int inOldContainerID, int inNewContainerID );

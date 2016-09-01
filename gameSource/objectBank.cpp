@@ -468,9 +468,23 @@ float initObjectBankStep() {
 
 
                 r->numSlots = 0;
-                sscanf( lines[next], "numSlots=%d", 
-                        &( r->numSlots ) );
-                            
+                r->slotTimeStretch = 1.0f;
+                
+                
+                if( strstr( lines[next], "#" ) != NULL ) {
+                    sscanf( lines[next], "numSlots=%d#timeStretch=%f", 
+                            &( r->numSlots ),
+                            &( r->slotTimeStretch ) );
+                    printf( "Read from line '%s' strech %f\n",
+                            lines[next],
+                            r->slotTimeStretch );
+                    }
+                else {
+                    sscanf( lines[next], "numSlots=%d", 
+                            &( r->numSlots ) );
+                    }
+                
+
                 next++;
 
                 r->slotSize = 1;
@@ -805,6 +819,7 @@ void resaveAll() {
                        idMap[i]->numSlots, 
                        idMap[i]->slotSize, 
                        idMap[i]->slotPos,
+                       idMap[i]->slotTimeStretch,
                        idMap[i]->numSprites, 
                        idMap[i]->sprites, 
                        idMap[i]->spritePos,
@@ -924,6 +939,7 @@ int addObject( const char *inDescription,
                doublePair inClothingOffset,
                int inDeadlyDistance,
                int inNumSlots, int inSlotSize, doublePair *inSlotPos,
+               float inSlotTimeStretch,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
                double *inSpriteRot,
@@ -939,7 +955,9 @@ int addObject( const char *inDescription,
                char *inSpriteIsFrontFoot,
                int inReplaceID ) {
     
-
+    if( inSlotTimeStretch < 0.0001 ) {
+        inSlotTimeStretch = 0.0001;
+        }
     
     int newID = inReplaceID;
 
@@ -1037,7 +1055,8 @@ int addObject( const char *inDescription,
                                       inDeadlyDistance ) );
         
         
-        lines.push_back( autoSprintf( "numSlots=%d", inNumSlots ) );
+        lines.push_back( autoSprintf( "numSlots=%d#timeStretch=%f", 
+                                      inNumSlots, inSlotTimeStretch ) );
         lines.push_back( autoSprintf( "slotSize=%d", inSlotSize ) );
 
         for( int i=0; i<inNumSlots; i++ ) {
@@ -1206,6 +1225,8 @@ int addObject( const char *inDescription,
     r->slotPos = new doublePair[ inNumSlots ];
     
     memcpy( r->slotPos, inSlotPos, inNumSlots * sizeof( doublePair ) );
+    
+    r->slotTimeStretch = inSlotTimeStretch;
     
 
     r->numSprites = inNumSprites;

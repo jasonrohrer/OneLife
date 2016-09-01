@@ -891,7 +891,8 @@ void TextField::setInt( int inI ) {
 
         
 
-void TextField::setFloat( float inF, int inDigitsAfterDecimal ) {
+void TextField::setFloat( float inF, int inDigitsAfterDecimal, 
+                          char inTrimZeros ) {
 
     char *formatString;
     
@@ -904,6 +905,19 @@ void TextField::setFloat( float inF, int inDigitsAfterDecimal ) {
 
     char *text = autoSprintf( formatString, inF );
     
+    if( inTrimZeros && strstr( text, "." ) != NULL ) {
+        int index = strlen( text ) - 1;
+        
+        while( index > 1 && text[index] == '0' ) {
+            if( text[index-1] == '.' ) {
+                // leave one zero after .
+                break;
+                }
+            text[index] = '\0';
+            index --;
+            }
+        }
+
     delete [] formatString;
 
     setText( text );

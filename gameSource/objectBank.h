@@ -119,6 +119,14 @@ typedef struct ObjectRecord {
         
         doublePair *slotPos;
         
+        // does being contained in one of this object's slots
+        // adjust the passage of decay time?
+        // 1.0 means normal time rate
+        // > 1.0 means decay time passes faster
+        // < 1.0 means longer decay times
+        // must be larger than 0.0001
+        float slotTimeStretch;
+        
 
         int numSprites;
         
@@ -245,6 +253,7 @@ int addObject( const char *inDescription,
                doublePair inClothingOffset,
                int inDeadlyDistance,
                int inNumSlots, int inSlotSize, doublePair *inSlotPos,
+               float inSlotTimeStretch,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
                double *inSpriteRot,

@@ -1196,9 +1196,25 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     setEtaDecay( targetX, targetY, inDroppingPlayer->holdingEtaDecay );
     
     if( inDroppingPlayer->numContained != 0 ) {
+        unsigned int curTime = time(NULL);
+        float stretch = 
+            getObject( inDroppingPlayer->holdingID )->slotTimeStretch;
+        
         for( int c=0;
              c < inDroppingPlayer->numContained;
              c++ ) {
+            
+            if( stretch != 1.0 &&
+                inDroppingPlayer->containedEtaDecays[c] != 0 ) {
+                
+                int offset = inDroppingPlayer->containedEtaDecays[c] - curTime;
+                
+                offset = lrint( offset * stretch );
+                
+                inDroppingPlayer->containedEtaDecays[c] =
+                    curTime + offset;
+                }
+
             addContained( 
                 targetX, targetY,
                 inDroppingPlayer->containedIDs[c],
@@ -2979,13 +2995,27 @@ int main() {
                                         nextPlayer->numContained
                                             = newHeldSlots;
                                         }
+                                    
+                                    if( newHeldSlots > 0 ) {
+                                        restretchDecays( 
+                                            newHeldSlots,
+                                            nextPlayer->containedEtaDecays,
+                                            oldHolding,
+                                            nextPlayer->holdingID );
+                                        }
+                                    
+
 
                                     // has target shrunken as a container?
                                     int newSlots = 
                                         getNumContainerSlots( r->newTarget );
  
                                     shrinkContainer( m.x, m.y, newSlots );
-                                                                        
+
+                                    restretchMapContainedDecays( m.x, m.y,
+                                                                 target,
+                                                                 r->newTarget );
+
                                     unsigned int oldEtaDecay = 
                                         getEtaDecay( m.x, m.y );
                                     
@@ -3626,11 +3656,31 @@ int main() {
                                             nextPlayer->clothingContained[m.c].
                                                 push_back( 
                                                     nextPlayer->holdingID );
+
+                                            if( nextPlayer->
+                                                holdingEtaDecay != 0 ) {
+                                                
+                                                unsigned int curTime = 
+                                                    time(NULL);
+                                            
+                                                int offset = 
+                                                    nextPlayer->
+                                                    holdingEtaDecay - 
+                                                    curTime;
+                                            
+                                                offset = 
+                                                    lrint( offset / 
+                                                           cObj->
+                                                           slotTimeStretch );
+                                                
+                                                nextPlayer->holdingEtaDecay =
+                                                    curTime + offset;
+                                                }
+                                            
                                             nextPlayer->
                                                 clothingContainedEtaDecays[m.c].
-                                                push_back(
-                                                    nextPlayer->
-                                                    holdingEtaDecay );
+                                                push_back( nextPlayer->
+                                                           holdingEtaDecay );
                                         
                                             nextPlayer->holdingID = 0;
                                             nextPlayer->holdingEtaDecay = 0;
@@ -3791,6 +3841,17 @@ int main() {
                             nextPlayer->holdingID == 0 ) {
                             
                             if( m.c >= 0 && m.c < NUM_CLOTHING_PIECES ) {
+
+                                ObjectRecord *cObj = 
+                                    clothingByIndex( nextPlayer->clothing, 
+                                                     m.c );
+                                
+                                float stretch = 1.0f;
+                                
+                                if( cObj != NULL ) {
+                                    stretch = cObj->slotTimeStretch;
+                                    }
+
                                 int oldNumContained = 
                                     nextPlayer->clothingContained[m.c].size();
                                 
@@ -3814,6 +3875,17 @@ int main() {
                                         clothingContainedEtaDecays[m.c].
                                         getElementDirect( slotToRemove );
                                     
+                                    unsigned int curTime = time(NULL);
+
+                                    if( nextPlayer->holdingEtaDecay != 0 ) {
+                                        
+                                        int offset = nextPlayer->holdingEtaDecay
+                                            - curTime;
+                                        offset = lrint( offset * stretch );
+                                        nextPlayer->holdingEtaDecay =
+                                            curTime + offset;
+                                        }
+
                                     nextPlayer->clothingContained[m.c].
                                         deleteElement( slotToRemove );
                                     nextPlayer->clothingContainedEtaDecays[m.c].
@@ -4011,6 +4083,13 @@ int main() {
                     
                     setFreshEtaDecayForHeld( nextPlayer );
                     
+                    if( nextPlayer->numContained > 0 ) {    
+                        restretchDecays( nextPlayer->numContained,
+                                         nextPlayer->containedEtaDecays,
+                                         oldID, newID );
+                        }
+                    
+                        
                     playerIndicesToSendUpdatesAbout.push_back( i );
                     }
                 }
@@ -4044,17 +4123,22 @@ int main() {
                             newDecay = 0;
 
                             if( t != NULL ) {
-
+                                
                                 newID = t->newTarget;
                             
                                 if( newID != 0 ) {
+                                    float stretch = 
+                                        getObject( nextPlayer->holdingID )->
+                                        slotTimeStretch;
+                                    
                                     TransRecord *newDecayT = 
                                         getTrans( -1, newID );
                                 
                                     if( newDecayT != NULL ) {
                                         newDecay = 
-                                            time(NULL) + 
-                                            newDecayT->autoDecaySeconds;
+                                            time(NULL) +
+                                            newDecayT->autoDecaySeconds /
+                                            stretch;
                                         }
                                     else {
                                         // no further decay
@@ -4146,11 +4230,46 @@ int main() {
                                     clothingContainedEtaDecays[c].
                                     shrink( newSlots );
                                 }
+                            
+                            float oldStretch = 
+                                cObj->slotTimeStretch;
+                            float newStretch = 
+                                newCObj->slotTimeStretch;
+                            
+                            if( oldStretch != newStretch ) {
+                                unsigned int curTime = time( NULL );
+                                
+                                for( int cc=0;
+                                     cc < nextPlayer->
+                                          clothingContainedEtaDecays[c].size();
+                                     cc++ ) {
+                                    
+                                    if( nextPlayer->
+                                        clothingContainedEtaDecays[c].
+                                        getElementDirect( cc ) != 0 ) {
+                                        
+                                        int offset = 
+                                            nextPlayer->
+                                            clothingContainedEtaDecays[c].
+                                            getElementDirect( cc ) - 
+                                            curTime;
+                                        
+                                        offset = lrint( offset * oldStretch );
+                                        offset = lrint( offset / newStretch );
+                                        
+                                        *( nextPlayer->
+                                           clothingContainedEtaDecays[c].
+                                           getElement( cc ) ) =
+                                            curTime + offset;
+                                        }
+                                    }
+                                }
 
                             playerIndicesToSendUpdatesAbout.push_back( i );
                             }
                         }
                     
+                    // check for decay of what's contained in clothing
                     if( cObj != NULL &&
                         nextPlayer->clothingContainedEtaDecays[c].size() > 0 ) {
                         
@@ -4191,8 +4310,9 @@ int main() {
                                         
                                         if( newDecayT != NULL ) {
                                             newDecay = 
-                                                time(NULL) + 
-                                                newDecayT->autoDecaySeconds;
+                                                time(NULL) +
+                                                newDecayT->autoDecaySeconds /
+                                                cObj->slotTimeStretch;
                                             }
                                         else {
                                             // no further decay

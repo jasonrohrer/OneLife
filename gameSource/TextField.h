@@ -69,7 +69,9 @@ class TextField : public PageComponent, public ActionListenerList {
         void setInt( int inI );
         
         // if inDigitsAfterDecimal = -1 (default), no limit
-        void setFloat( float inF, int inDigitsAfterDecimal=-1 );
+        // if inTrimZeros is true, extra zeros after decimal point are removed
+        void setFloat( float inF, int inDigitsAfterDecimal=-1, 
+                       char inTrimZeros = false );
         
 
         

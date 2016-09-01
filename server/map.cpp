@@ -752,6 +752,23 @@ static void trackETA( int inX, int inY, int inSlot, unsigned int inETA ) {
     }
 
 
+int getMapObjectRaw( int inX, int inY );
+
+
+
+float getMapContainerTimeStretch( int inX, int inY ) {
+    
+    float stretch = 1.0f;
+                        
+    int containerID = getMapObjectRaw( inX, inY );
+                        
+    if( containerID != 0 ) {
+        stretch = getObject( containerID )->slotTimeStretch;
+        }
+    return stretch;
+    }                        
+
+
 
 void checkDecayContained( int inX, int inY );
 
@@ -851,6 +868,8 @@ int checkDecayObject( int inX, int inY, int inID ) {
             if( newSlots < oldSlots ) {
                 shrinkContainer( inX, inY, newSlots );
                 }
+            
+            restretchMapContainedDecays( inX, inY, inID, newID );
             
             // set it in DB
             dbPut( inX, inY, 0, newID );
@@ -953,8 +972,11 @@ void checkDecayContained( int inX, int inY ) {
                     TransRecord *newDecayT = getTrans( -1, newID );
 
                     if( newDecayT != NULL ) {
+                        
                         mapETA = 
-                            time(NULL) + newDecayT->autoDecaySeconds;
+                            time(NULL) +
+                            newDecayT->autoDecaySeconds / 
+                            getMapContainerTimeStretch( inX, inY );
                         }
                     else {
                         // no further decay
@@ -1254,6 +1276,25 @@ void addContained( int inX, int inY, int inContainedID,
                    unsigned int inEtaDecay ) {
     int oldNum;
     
+
+    unsigned int curTime = time( NULL );
+
+    printf( "CURRENT:  passed in decay in %d sec\n",
+            inEtaDecay - curTime );
+    
+    if( inEtaDecay != 0 ) {    
+        int etaOffset = inEtaDecay - curTime;
+        
+        printf( "CURRENT:  time stretch %f \n",
+                getMapContainerTimeStretch( inX, inY ) );
+
+        inEtaDecay = curTime + 
+            lrint( etaOffset / getMapContainerTimeStretch( inX, inY ) );
+        }
+    
+    printf( "CURRENT:  adding to container with decay in %d sec\n",
+            inEtaDecay - curTime );
+
     int *oldContained = getContained( inX, inY, &oldNum );
 
     unsigned int *oldContainedETA = getContainedEtaDecay( inX, inY, &oldNum );
@@ -1335,7 +1376,17 @@ int removeContained( int inX, int inY, int inSlot, unsigned int *outEtaDecay ) {
     
     int result = dbGet( inX, inY, FIRST_CONT_SLOT + inSlot );
 
+    unsigned int curTime = time(NULL);
+    
     unsigned int resultEta = dbGet( inX, inY, FIRST_CONT_SLOT + num + inSlot );
+
+    if( resultEta != 0 ) {    
+        int etaOffset = resultEta - curTime;
+        
+        etaOffset = lrint( etaOffset * getMapContainerTimeStretch( inX, inY ) );
+        
+        resultEta = curTime + etaOffset;
+        }
     
     *outEtaDecay = resultEta;
     
@@ -1508,5 +1559,52 @@ void stepMap( SimpleVector<char> *inMapChanges,
     mapChangesSinceLastStep.deleteAll();
     mapChangePosSinceLastStep.deleteAll();
     }
+
+
+
+void restretchDecays( int inNumDecays, unsigned int *inDecayEtas,
+                      int inOldContainerID, int inNewContainerID ) {
+    
+    float oldStrech = getObject( inOldContainerID )->slotTimeStretch;
+    float newStetch = getObject( inNewContainerID )->slotTimeStretch;
+            
+    if( oldStrech != newStetch ) {
+        unsigned int curTime = time( NULL );
+
+        for( int i=0; i<inNumDecays; i++ ) {
+            if( inDecayEtas[i] != 0 ) {
+                int offset = inDecayEtas[i] - curTime;
+                        
+                offset = lrint( offset * oldStrech );
+                offset = lrint( offset / newStetch );
+                inDecayEtas[i] = curTime + offset;
+                }
+            }    
+        }
+    }
+
+
+
+void restretchMapContainedDecays( int inX, int inY,
+                                  int inOldContainerID, 
+                                  int inNewContainerID ) {
+    
+    float oldStrech = getObject( inOldContainerID )->slotTimeStretch;
+    float newStetch = getObject( inNewContainerID )->slotTimeStretch;
+            
+    if( oldStrech != newStetch ) {
+                
+        int oldNum;
+        unsigned int *oldContDecay =
+            getContainedEtaDecay( inX, inY, &oldNum );
+                
+        restretchDecays( oldNum, oldContDecay, 
+                         inOldContainerID, inNewContainerID );        
+        
+        setContainedEtaDecay( inX, inY, oldNum, oldContDecay );
+        delete [] oldContDecay;
+        }
+    }
+
 
 
