@@ -497,6 +497,8 @@ void outputMapImage() {
 
 
 
+int getMapObjectRaw( int inX, int inY );
+int *getContainedRaw( int inX, int inY, int *outNumContained );
 
 
 
@@ -615,9 +617,16 @@ void initMap() {
     // keep list of x,y coordinates in map that need clearing
     SimpleVector<int> xToClear;
     SimpleVector<int> yToClear;
+
+    // container slots that need clearing
+    SimpleVector<int> xContToCheck;
+    SimpleVector<int> yContToCheck;
+    
     
     int totalSetCount = 0;
     int numClearedCount = 0;
+    int totalNumContained = 0;
+    int numContainedCleared = 0;
     
     while( KISSDB_Iterator_next( &dbi, key, value ) > 0 ) {
         
@@ -642,6 +651,17 @@ void initMap() {
                     }
                 }
             }
+        if( s == 2 ) {
+            int numSlots = valueToInt( value );
+            if( numSlots > 0 ) {
+                totalNumContained += numSlots;
+                
+                int x = valueToInt( key );
+                int y = valueToInt( &( key[4] ) );
+                xContToCheck.push_back( x );
+                yContToCheck.push_back( y );
+                }
+            }
         }
     
 
@@ -653,9 +673,46 @@ void initMap() {
         setMapObject( x, y, 0 );
         }
 
+    for( int i=0; i<xContToCheck.size(); i++ ) {
+        int x = xContToCheck.getElementDirect( i );
+        int y = yContToCheck.getElementDirect( i );
+        
+        if( getMapObjectRaw( x, y ) != 0 ) {
+            int numCont;
+            int *cont = getContainedRaw( x, y, &numCont );
+            unsigned int *decay = getContainedEtaDecay( x, y, &numCont );
+            
+            SimpleVector<int> newCont;
+            SimpleVector<unsigned int> newDecay;
+            
+            for( int c=0; c<numCont; c++ ) {
+                if( getObject( cont[c] ) != NULL ) {
+                    newCont.push_back( cont[c] );
+                    newDecay.push_back( decay[c] );
+                    }
+                }
+            delete [] cont;
+            delete [] decay;
+            
+            numContainedCleared +=
+                ( numCont - newCont.size() );
 
-    printf( "...%d map cells were set, and %d needed to be cleared.\n\n",
+            int *newContArray = newCont.getElementArray();
+            unsigned int *newDecayArray = newDecay.getElementArray();
+            
+            setContained( x, y, newCont.size(), newContArray );
+            setContainedEtaDecay( x, y, newDecay.size(), newDecayArray );
+            
+            delete [] newContArray;
+            delete [] newDecayArray;
+            }
+        }
+    
+
+    printf( "...%d map cells were set, and %d needed to be cleared.\n",
             totalSetCount, numClearedCount );
+    printf( "...%d contained objects present, and %d needed to be cleared.\n\n",
+            totalNumContained, numContainedCleared );
 
 
     // for debugging the map
@@ -752,7 +809,6 @@ static void trackETA( int inX, int inY, int inSlot, unsigned int inETA ) {
     }
 
 
-int getMapObjectRaw( int inX, int inY );
 
 
 
