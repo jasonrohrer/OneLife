@@ -2863,7 +2863,12 @@ void LivingLifePage::step() {
                                       &( o.lastSpeed ),
                                       clothingBuffer );
                 
+            
                 if( numRead == 15 ) {
+                    printf( "PLAYER_UPDATE with orVal=%d, orx=%d, ory=%d, "
+                            "pX =%d, pY=%d\n",
+                            heldOriginValid, heldOriginX, heldOriginY,
+                            o.xd, o.yd );
                     o.lastAgeSetTime = game_getCurrentTime();
 
                     int numClothes;
