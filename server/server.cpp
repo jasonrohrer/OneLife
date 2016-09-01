@@ -678,7 +678,9 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
         speed -= (age - 40 ) * 2.0 / 20.0;
         
         }
-    
+
+    // no longer slow down with hunger
+    /*
     int foodCap = computeFoodCapacity( inPlayer );
     
     
@@ -686,7 +688,9 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
         // jumps instantly to 1/2 speed at half food, then decays after that
         speed *= inPlayer->foodStore / (double) foodCap;
         }
-    
+    */
+
+
     // never move at 0 speed, divide by 0 errors for eta times
     if( speed < 0.1 ) {
         speed = 0.1;
