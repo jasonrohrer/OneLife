@@ -1279,22 +1279,13 @@ void addContained( int inX, int inY, int inContainedID,
 
     unsigned int curTime = time( NULL );
 
-    printf( "CURRENT:  passed in decay in %d sec\n",
-            inEtaDecay - curTime );
-    
     if( inEtaDecay != 0 ) {    
         int etaOffset = inEtaDecay - curTime;
         
-        printf( "CURRENT:  time stretch %f \n",
-                getMapContainerTimeStretch( inX, inY ) );
-
         inEtaDecay = curTime + 
             lrint( etaOffset / getMapContainerTimeStretch( inX, inY ) );
         }
     
-    printf( "CURRENT:  adding to container with decay in %d sec\n",
-            inEtaDecay - curTime );
-
     int *oldContained = getContained( inX, inY, &oldNum );
 
     unsigned int *oldContainedETA = getContainedEtaDecay( inX, inY, &oldNum );
