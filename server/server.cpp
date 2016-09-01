@@ -3983,12 +3983,13 @@ int main() {
                     if( deathID > 0 ) {
                         
                         setMapObject( dropPos.x, dropPos.y, 
-                                      getRandomDeathMarker() );
+                                      deathID );
                         
                         
                         ObjectRecord *deathObject = getObject( deathID );
                         
-                        if( deathObject->numSlots >= 5 ) {
+                        int roomLeft = deathObject->numSlots;
+                        if( roomLeft >= 5 ) {
                             // room for clothing
                             
                             if( nextPlayer->clothing.tunic != NULL ) {
@@ -3997,6 +3998,7 @@ int main() {
                                     dropPos.x, dropPos.y,
                                     nextPlayer->clothing.tunic->id,
                                     nextPlayer->clothingEtaDecay[1] );
+                                roomLeft--;
                                 }
                             if( nextPlayer->clothing.bottom != NULL ) {
                                 
@@ -4004,6 +4006,7 @@ int main() {
                                     dropPos.x, dropPos.y,
                                     nextPlayer->clothing.bottom->id,
                                     nextPlayer->clothingEtaDecay[4] );
+                                roomLeft--;
                                 }
                             if( nextPlayer->clothing.backpack != NULL ) {
                                 
@@ -4011,6 +4014,7 @@ int main() {
                                     dropPos.x, dropPos.y,
                                     nextPlayer->clothing.backpack->id,
                                     nextPlayer->clothingEtaDecay[5] );
+                                roomLeft--;
                                 }
                             if( nextPlayer->clothing.backShoe != NULL ) {
                                 
@@ -4018,6 +4022,7 @@ int main() {
                                     dropPos.x, dropPos.y,
                                     nextPlayer->clothing.backShoe->id,
                                     nextPlayer->clothingEtaDecay[3] );
+                                roomLeft--;
                                 }
                             if( nextPlayer->clothing.frontShoe != NULL ) {
                                 
@@ -4025,15 +4030,73 @@ int main() {
                                     dropPos.x, dropPos.y,
                                     nextPlayer->clothing.frontShoe->id,
                                     nextPlayer->clothingEtaDecay[2] );
+                                roomLeft--;
                                 }
                             if( nextPlayer->clothing.hat != NULL ) {
                                 
                                 addContained( dropPos.x, dropPos.y,
                                               nextPlayer->clothing.hat->id,
                                               nextPlayer->clothingEtaDecay[0] );
+                                roomLeft--;
                                 }
                             }
+                        
+                        // room for what clothing contained
+                        unsigned int curTime = time(NULL);
+                        
+                        for( int c=0; c < NUM_CLOTHING_PIECES && roomLeft > 0; 
+                             c++ ) {
+                            
+                            float oldStretch = 1.0;
+                            
+                            ObjectRecord *cObj = clothingByIndex( 
+                                nextPlayer->clothing, c );
+                            
+                            if( cObj != NULL ) {
+                                oldStretch = cObj->slotTimeStretch;
+                                }
+                            
+                            float newStretch = deathObject->slotTimeStretch;
+                            
+                            for( int cc=0; 
+                                 cc < nextPlayer->clothingContained[c].size() 
+                                     &&
+                                     roomLeft > 0;
+                                 cc++ ) {
+                                
+                                if( nextPlayer->
+                                    clothingContainedEtaDecays[c].
+                                    getElementDirect( cc ) != 0 &&
+                                    oldStretch != newStretch ) {
+                                        
+                                    int offset = 
+                                        nextPlayer->
+                                        clothingContainedEtaDecays[c].
+                                        getElementDirect( cc ) - 
+                                        curTime;
+                                        
+                                    offset = lrint( offset * oldStretch );
+                                    offset = lrint( offset / newStretch );
+                                        
+                                    *( nextPlayer->
+                                       clothingContainedEtaDecays[c].
+                                       getElement( cc ) ) =
+                                        curTime + offset;
+                                    }
 
+                                addContained( 
+                                    dropPos.x, dropPos.y,
+                                    nextPlayer->
+                                    clothingContained[c].
+                                    getElementDirect( cc ),
+                                    nextPlayer->
+                                    clothingContainedEtaDecays[c].
+                                    getElementDirect( cc ) );
+                                roomLeft --;
+                                }
+                            }
+                            
+                        
                         char *changeLine =
                             getMapChangeLineString( dropPos.x, dropPos.y );
                         
