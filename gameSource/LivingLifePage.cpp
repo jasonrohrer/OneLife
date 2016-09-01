@@ -3316,6 +3316,7 @@ void LivingLifePage::step() {
                     }
                 
                 delete [] holdingIDBuffer;
+                delete [] clothingBuffer;
                 
                 delete [] lines[i];
                 }

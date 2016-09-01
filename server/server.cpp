@@ -3484,7 +3484,9 @@ int main() {
                                             
                                             delete [] 
                                                 nextPlayer->containedIDs;
+                                            nextPlayer->containedIDs = NULL;
                                             
+
                                             nextPlayer->
                                                 clothingContainedEtaDecays[ind]
                                                 .appendArray( 
@@ -3496,6 +3498,8 @@ int main() {
                                             delete [] 
                                                 nextPlayer->
                                                 containedEtaDecays;
+                                            nextPlayer->containedEtaDecays = 
+                                                NULL;
                                             }
                                             
                                         
@@ -3590,7 +3594,8 @@ int main() {
                                         clothingContainedEtaDecays[ind].
                                         getElementArray();
                                     
-                                    nextPlayer->clothingContainedEtaDecays[ind].
+                                    nextPlayer->
+                                        clothingContainedEtaDecays[ind].
                                         deleteAll();
                                     
                                     nextPlayer->heldOriginValid = 0;
@@ -4204,8 +4209,9 @@ int main() {
                                     if( newDecayT != NULL ) {
                                         newDecay = 
                                             time(NULL) +
-                                            newDecayT->autoDecaySeconds /
-                                            stretch;
+                                            lrint( 
+                                                newDecayT->autoDecaySeconds /
+                                                stretch );
                                         }
                                     else {
                                         // no further decay
@@ -4378,8 +4384,9 @@ int main() {
                                         if( newDecayT != NULL ) {
                                             newDecay = 
                                                 time(NULL) +
-                                                newDecayT->autoDecaySeconds /
-                                                cObj->slotTimeStretch;
+                                                lrint( newDecayT->
+                                                       autoDecaySeconds /
+                                                       cObj->slotTimeStretch );
                                             }
                                         else {
                                             // no further decay

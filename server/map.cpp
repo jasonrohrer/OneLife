@@ -1031,8 +1031,8 @@ void checkDecayContained( int inX, int inY ) {
                         
                         mapETA = 
                             time(NULL) +
-                            newDecayT->autoDecaySeconds / 
-                            getMapContainerTimeStretch( inX, inY );
+                            lrint( newDecayT->autoDecaySeconds / 
+                                   getMapContainerTimeStretch( inX, inY ) );
                         }
                     else {
                         // no further decay
@@ -1078,6 +1078,10 @@ void checkDecayContained( int inX, int inY ) {
         ChangePosition p = { inX, inY, false };
         
         mapChangePosSinceLastStep.push_back( p );
+        }
+
+    if( contained != NULL ) {
+        delete [] contained;
         }
     }
 
@@ -1348,17 +1352,28 @@ void addContained( int inX, int inY, int inContainedID,
 
     int *newContained = new int[ oldNum + 1 ];
     
-    memcpy( newContained, oldContained, oldNum * sizeof( int ) );
+    if( oldNum != 0 ) {
+        memcpy( newContained, oldContained, oldNum * sizeof( int ) );
+        }
+    
     newContained[ oldNum ] = inContainedID;
     
-    delete [] oldContained;
+    if( oldContained != NULL ) {
+        delete [] oldContained;
+        }
     
     unsigned int *newContainedETA = new unsigned int[ oldNum + 1 ];
     
-    memcpy( newContainedETA, oldContainedETA, oldNum * sizeof( unsigned int ) );
+    if( oldNum != 0 ) {    
+        memcpy( newContainedETA, 
+                oldContainedETA, oldNum * sizeof( unsigned int ) );
+        }
+    
     newContainedETA[ oldNum ] = inEtaDecay;
     
-    delete [] oldContainedETA;
+    if( oldContainedETA != NULL ) {
+        delete [] oldContainedETA;
+        }
     
     int newNum = oldNum + 1;
     
@@ -1515,16 +1530,16 @@ char *getMapChangeLineString( int inX, int inY,
     int numContained;
     int *contained = getContained( inX, inY, &numContained );
 
-    if( numContained > 0 ) {
-        for( int i=0; i<numContained; i++ ) {
-            
-            char *idString = autoSprintf( ",%d", contained[i] );
-    
-            buffer.appendElementString( idString );
-    
-            delete [] idString;
-            }
+    for( int i=0; i<numContained; i++ ) {
         
+        char *idString = autoSprintf( ",%d", contained[i] );
+        
+        buffer.appendElementString( idString );
+        
+        delete [] idString;
+        }
+    
+    if( contained != NULL ) {
         delete [] contained;
         }
     
