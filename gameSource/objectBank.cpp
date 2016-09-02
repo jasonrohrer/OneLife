@@ -1817,10 +1817,10 @@ int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
     
     int familyIndex = motherIndex + offset;
     
-    if( familyIndex >= racePersonObjectIDs[ inRace ].size() ) {
+    while( familyIndex >= racePersonObjectIDs[ inRace ].size() ) {
         familyIndex -= racePersonObjectIDs[ inRace ].size();
         }
-    else if( familyIndex < 0  ) {
+    while( familyIndex < 0  ) {
         familyIndex += racePersonObjectIDs[ inRace ].size();
         }
     

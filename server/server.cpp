@@ -1618,7 +1618,7 @@ void processedLogggedInPlayer( Socket *inSock,
         }
     else {
         // testing
-        newObject.lifeStartTimeSeconds -= 14 * 60;
+        //newObject.lifeStartTimeSeconds -= 14 * 60;
         }
     
                 
