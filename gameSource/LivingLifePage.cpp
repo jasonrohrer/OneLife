@@ -602,6 +602,7 @@ LivingLifePage::LivingLifePage()
           mCurMouseOverID( 0 ),
           mLastMouseOverFade( 0.0 ),
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
+          mGroundOverlaySprite( loadSprite( "ground.tga" ) ),
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,'?! " ) {
     
@@ -976,7 +977,7 @@ LivingLifePage::~LivingLifePage() {
     freeSprite( mFoodEmptySprite );
     freeSprite( mFoodFullSprite );
     freeSprite( mChalkBlotSprite );
-
+    freeSprite( mGroundOverlaySprite );
     
     for( int i=0; i<mGroundSpritesArraySize; i++ ) {
         if( mGroundSprites[i] != NULL ) {
@@ -1948,6 +1949,37 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
 
+    // draw overlay evenly over all biomes
+    doublePair groundCenterPos;
+
+    int groundW = getSpriteWidth( mGroundOverlaySprite );
+    int groundH = getSpriteHeight( mGroundOverlaySprite );
+    
+    groundCenterPos.x = lrint( lastScreenViewCenter.x / groundW ) * groundW;
+    groundCenterPos.y = lrint( lastScreenViewCenter.y / groundH ) * groundH;
+
+    toggleMultiplicativeBlend( true );
+    
+    // use this to lighten ground overlay
+    //toggleAdditiveTextureColoring( true );
+    setDrawColor( 1, 1, 1, 1 );
+    
+    for( int y=-2; y<=2; y++ ) {
+
+        doublePair pos = groundCenterPos;
+
+        pos.y = groundCenterPos.y + y * groundH;
+
+        for( int x=-3; x<=3; x++ ) {
+
+            pos.x = groundCenterPos.x + x * groundW;
+
+            drawSprite( mGroundOverlaySprite, pos );
+            }
+        }
+    //toggleAdditiveTextureColoring( false );
+    toggleMultiplicativeBlend( false );
+    
 
     
     //int worldXStart = xStart + mMapOffsetX - mMapD / 2;
