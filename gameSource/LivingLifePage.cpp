@@ -1964,13 +1964,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
     //toggleAdditiveTextureColoring( true );
     setDrawColor( 1, 1, 1, 1 );
     
-    for( int y=-2; y<=2; y++ ) {
+    for( int y=-1; y<=1; y++ ) {
 
         doublePair pos = groundCenterPos;
 
         pos.y = groundCenterPos.y + y * groundH;
 
-        for( int x=-3; x<=3; x++ ) {
+        for( int x=-1; x<=1; x++ ) {
 
             pos.x = groundCenterPos.x + x * groundW;
 
