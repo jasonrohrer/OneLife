@@ -290,7 +290,8 @@ void initDrawString( int inWidth, int inHeight ) {
     toggleLinearMagFilter( true );
     toggleMipMapGeneration( true );
     toggleMipMapMinFilter( true );
-
+    toggleTransparentCropping( true );
+    
 
     mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16 );
     mainFont->setMinimumPositionPrecision( 1 );
@@ -355,7 +356,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     toggleLinearMagFilter( true );
     toggleMipMapGeneration( true );
     toggleMipMapMinFilter( true );
-    
+    toggleTransparentCropping( true );
+
     gamePlayingBack = inPlayingBack;
     
     screenW = inWidth;

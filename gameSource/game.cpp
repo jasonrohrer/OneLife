@@ -70,6 +70,7 @@ CustomRandomSource randSource( 34957197 );
 #include "ExistingAccountPage.h"
 #include "ExtendedMessagePage.h"
 #include "RebirthChoicePage.h"
+//#include "TestPage.h"
 
 #include "ServerActionPage.h"
 
@@ -101,6 +102,8 @@ LivingLifePage *livingLifePage;
 ExistingAccountPage *existingAccountPage;
 ExtendedMessagePage *extendedMessagePage;
 RebirthChoicePage *rebirthChoicePage;
+//TestPage *testPage = NULL;
+
 
 GamePage *currentGamePage = NULL;
 
@@ -336,7 +339,8 @@ void initDrawString( int inWidth, int inHeight ) {
     toggleLinearMagFilter( true );
     toggleMipMapGeneration( true );
     toggleMipMapMinFilter( true );
-
+    toggleTransparentCropping( true );
+    
     mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16 );
     mainFont->setMinimumPositionPrecision( 1 );
 
@@ -372,7 +376,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     toggleLinearMagFilter( true );
     toggleMipMapGeneration( true );
     toggleMipMapMinFilter( true );
-
+    toggleTransparentCropping( true );
+    
     gamePlayingBack = inPlayingBack;
     
     screenW = inWidth;
@@ -528,6 +533,10 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
 
     currentGamePage = loadingPage;
+
+    //testPage = new TestPage;
+    //currentGamePage = testPage;
+
     currentGamePage->base_makeActive( true );
 
     initDone = true;
@@ -569,6 +578,12 @@ void freeFrameDrawer() {
     delete existingAccountPage;
     delete extendedMessagePage;
     delete rebirthChoicePage;
+
+    //if( testPage != NULL ) {
+    //    delete testPage;
+    //    testPage = NULL;
+    //    }
+
     
     freeAnimationBank();
     freeObjectBank();
@@ -1524,13 +1539,14 @@ void keyDown( unsigned char inASCII ) {
     if( inASCII == '=' ) {    
         saveScreenShot( "screen" );
         }
+    /*
     if( inASCII == 'N' ) {
         toggleMipMapMinFilter( true );
         }
     if( inASCII == 'n' ) {
         toggleMipMapMinFilter( false );
         }
-    
+    */
 
     
     if( isPaused() ) {
