@@ -25,6 +25,12 @@ typedef struct SpriteRecord {
         // offset relative to w/2, h/2
         int centerXOffset, centerYOffset;
 
+        // center around which sprite is rotated and drawn
+        // note that is is loaded into SpriteHandle and is used 
+        // automatically by drawSprite
+        int centerAnchorXOffset, centerAnchorYOffset;
+        
+
         // 0 where alpha <0.25, for registering mouse clicks on sprite
         char *hitMap;
 
@@ -82,7 +88,9 @@ SpriteRecord **searchSprites( const char *inSearch,
 // returns new ID, or -1 if adding failed
 int addSprite( const char *inTag, SpriteHandle inSprite, 
                Image *inSourceImage,
-               char inMultiplicativeBlending );
+               char inMultiplicativeBlending,
+               int inCenterAnchorXOffset = 0,
+               int inCenterAnchorYOffset = 0 );
 
 
 void deleteSpriteFromBank( int inID );

@@ -148,6 +148,9 @@ float initSpriteBankStep() {
 
         r->centerXOffset = 0;
         r->centerYOffset = 0;
+        
+        r->centerAnchorXOffset = 0;
+        r->centerAnchorYOffset = 0;
 
         if( contents != NULL ) {
             
@@ -170,6 +173,14 @@ float initSpriteBankStep() {
                     r->multiplicativeBlend = false;
                     }
                 }
+            if( numTokens >= 4 ) {
+                sscanf( tokens->getElementDirect( 2 ),
+                        "%d", &( r->centerAnchorXOffset ) );
+
+                sscanf( tokens->getElementDirect( 3 ),
+                        "%d", &( r->centerAnchorYOffset ) );
+                }
+            
 
             tokens->deallocateStringElements();
             delete tokens;
@@ -381,6 +392,13 @@ void stepSpriteBank() {
                     r->w = spriteImage->mWidth;
                     r->h = spriteImage->mHeight;                
                     
+                    doublePair offset = { (double)( r->centerAnchorXOffset ),
+                                          (double)( r->centerAnchorYOffset ) };
+                    
+                    setSpriteCenterOffset( r->sprite, offset );
+
+                                          
+
                     r->maxD = r->w;
                     if( r->h > r->maxD ) {
                         r->maxD = r->h;
@@ -588,7 +606,9 @@ SpriteRecord **searchSprites( const char *inSearch,
 
 int addSprite( const char *inTag, SpriteHandle inSprite,
                Image *inSourceImage,
-               char inMultiplicativeBlending ) {
+               char inMultiplicativeBlending,
+               int inCenterAnchorXOffset,
+               int inCenterAnchorYOffset ) {
 
     int maxD = inSourceImage->getWidth();
     
@@ -661,7 +681,9 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
             multFlag = 1;
             }
         
-        char *metaContents = autoSprintf( "%s %d", inTag, multFlag );
+        char *metaContents = autoSprintf( "%s %d %d %d", inTag, multFlag,
+                                          inCenterAnchorXOffset, 
+                                          inCenterAnchorYOffset );
 
         metaFile->writeToFile( metaContents );
         
@@ -724,7 +746,10 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     
     r->centerXOffset = 0;
     r->centerYOffset = 0;
-
+    
+    r->centerAnchorXOffset = inCenterAnchorXOffset;
+    r->centerAnchorYOffset = inCenterAnchorYOffset;
+    
 
     int numPixels = r->w * r->h;
     r->hitMap = new char[ numPixels ];
@@ -862,16 +887,18 @@ char getSpriteHit( int inID, int inXCenterOffset, int inYCenterOffset ) {
     if( inID < mapSize ) {
         if( idMap[inID] != NULL && idMap[inID]->sprite != NULL ) {
             
-            int pixX = inXCenterOffset + idMap[inID]->w / 2;
-            int pixY = - inYCenterOffset + idMap[inID]->h / 2;
-            
-            if( pixX >=0 && pixX < idMap[inID]->w 
-                &&
-                pixY >=0 && pixY < idMap[inID]->h ) {
+            SpriteRecord *r = idMap[inID];
 
-                int pixI = idMap[inID]->w * pixY + pixX;
+            int pixX = inXCenterOffset + r->w / 2;
+            int pixY = - inYCenterOffset + r->h / 2;
+            
+            if( pixX >=0 && pixX < r->w 
+                &&
+                pixY >=0 && pixY < r->h ) {
+
+                int pixI = r->w * pixY + pixX;
                 
-                return idMap[inID]->hitMap[ pixI ];
+                return r->hitMap[ pixI ];
                 }
             }
         }

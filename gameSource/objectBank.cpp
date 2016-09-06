@@ -2211,7 +2211,11 @@ double getClosestObjectPart( ObjectRecord *inObject,
             }
         
         doublePair offset = sub( pos, thisSpritePos );
-
+        
+        SpriteRecord *sr = getSpriteRecord( inObject->sprites[i] );
+        
+        
+        
         offset = rotate( offset, 2 * M_PI * inObject->spriteRot[i] );
         
         if( inObject->spriteHFlip[i] ) {
@@ -2220,7 +2224,10 @@ double getClosestObjectPart( ObjectRecord *inObject,
         if( inFlip ) {
             offset.x *= -1;
             }
-        
+
+        offset.x += sr->centerAnchorXOffset;
+        offset.y -= sr->centerAnchorYOffset;
+
         if( getSpriteHit( inObject->sprites[i], 
                           lrint( offset.x ),
                           lrint( offset.y ) ) ) {
