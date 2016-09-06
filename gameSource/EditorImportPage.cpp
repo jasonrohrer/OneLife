@@ -375,7 +375,9 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             addSprite( tag, 
                        mProcessedSelectionSprite,
                        mProcessedSelection,
-                       mSelectionMultiplicative );
+                       mSelectionMultiplicative,
+                       mProcessedCenterOffset.x,
+                       mProcessedCenterOffset.y );
 
             mSpritePicker.redoSearch();
             
@@ -542,6 +544,9 @@ void EditorImportPage::draw( doublePair inViewCenter,
         pos.y = lastMouseY;
         
         setDrawColor( 1, 1, 1, 1 );
+        
+        pos.x -= mProcessedCenterOffset.x;
+        pos.y += mProcessedCenterOffset.y;
         
         //drawSquare( pos, 100 );
 
@@ -1365,66 +1370,13 @@ void EditorImportPage::processSelection() {
     w = trimmedImage->getWidth();
     h = trimmedImage->getHeight();
     
-    Image *shadowImage = trimmedImage->expandImage( w + 20 + 20, h + 20 + 20 );
+    Image *shadowImage = trimmedImage->expandImage( w + 6 + 6, h + 6 + 6 );
     
     delete trimmedImage;
 
-    centerX += 20;
-    centerY += 20;
+    centerX += 6;
+    centerY += 6;
 
-
-
-    if( usingCenter ) {
-        w = shadowImage->getWidth();
-        h = shadowImage->getHeight();
-
-        if( centerX != w / 2 ||
-            centerY != h / 2 ) {
-            
-            // not currently centered
-
-            // make room to center.
-            Image *bigImage = 
-                shadowImage->expandImage( 3 * w, 
-                                          3 * h );
-
-            int xRadA = centerX;
-            int xRadB = w - centerX;
-
-            int xRad = xRadA;
-            
-            if( xRadB > xRad ) {
-                xRad = xRadB;
-                }
-
-            
-            int yRadA = centerY;
-            int yRadB = h - centerY;
-
-            int yRad = yRadA;
-            
-            if( yRadB > yRad ) {
-                yRad = yRadB;
-                }
-            
-
-
-            delete shadowImage;
-            
-            centerX += w;
-            centerY += h;
-
-            
-
-            shadowImage = 
-                bigImage->getSubImage( centerX - xRad, centerY - yRad, 
-                                       2 * xRad, 2 * yRad );
-
-            delete bigImage;
-            }
-            
-        }
-    
 
     
     /*
@@ -1444,9 +1396,18 @@ void EditorImportPage::processSelection() {
         }
     */
 
+    w = shadowImage->getWidth();
+    h = shadowImage->getHeight();
 
     mProcessedSelection = expandToPowersOfTwo( shadowImage );
     
+    int newW = mProcessedSelection->getWidth();
+    int newH = mProcessedSelection->getHeight();
+    
+    centerX += ( newW - w ) / 2;
+    centerY += ( newH - h ) / 2;
+    
+
 
     if( mSelectionMultiplicative ) {
         // set all transparent areas to white (black border added by expansion)
@@ -1501,8 +1462,22 @@ void EditorImportPage::processSelection() {
 
     
 
-
-
+    if( usingCenter ) {    
+        mProcessedCenterOffset.x = centerX - (newW/2);
+        mProcessedCenterOffset.y = centerY - (newH/2);
+        
+        if( fabs( mProcessedCenterOffset.x ) >= newW/2 ) {
+            mProcessedCenterOffset.x = 0;
+            }
+        if( fabs( mProcessedCenterOffset.y ) >= newH/2 ) {
+            mProcessedCenterOffset.y = 0;
+            }
+        }
+    else {
+        mProcessedCenterOffset.x = 0;
+        mProcessedCenterOffset.y = 0;
+        }
+    
 
     if( mProcessedSelectionSprite != NULL ) {
         freeSprite( mProcessedSelectionSprite );
