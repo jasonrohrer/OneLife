@@ -1369,14 +1369,22 @@ void EditorImportPage::processSelection() {
     // expand to make it big enough for shadow
     w = trimmedImage->getWidth();
     h = trimmedImage->getHeight();
-    
-    Image *shadowImage = trimmedImage->expandImage( w + 6 + 6, h + 6 + 6 );
-    
-    delete trimmedImage;
 
-    centerX += 6;
-    centerY += 6;
-
+    Image *shadowImage;
+    
+    if( ! mSelectionMultiplicative ) {
+        
+        shadowImage = trimmedImage->expandImage( w + 6 + 6, h + 6 + 6 );
+    
+        delete trimmedImage;
+        
+        centerX += 6;
+        centerY += 6;
+        }
+    else {
+        shadowImage = trimmedImage;
+        }
+    
 
     
     /*
