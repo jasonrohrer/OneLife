@@ -750,6 +750,10 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     r->centerAnchorXOffset = inCenterAnchorXOffset;
     r->centerAnchorYOffset = inCenterAnchorYOffset;
     
+    doublePair offset = { (double)( r->centerAnchorXOffset ), 
+                          (double)( r->centerAnchorYOffset ) };
+    
+    setSpriteCenterOffset( r->sprite, offset );
 
     int numPixels = r->w * r->h;
     r->hitMap = new char[ numPixels ];
