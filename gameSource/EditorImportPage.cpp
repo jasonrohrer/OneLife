@@ -1076,6 +1076,18 @@ void EditorImportPage::processSelection() {
         imH -= 0 - startImY;
         startImY = 0;
         }
+    
+    if( startImX + imW > mSheetW ) {
+        imW = mSheetW - startImX;
+        }
+    if( startImY + imH > mSheetH ) {
+        imH = mSheetH - startImY;
+        }
+    
+    if( imH <= 0 || imW <= 0 ) {
+        return;
+        }
+
 
     Image *cutImage = 
         mImportedSheet->getSubImage( startImX, startImY, imW, imH );
@@ -1114,8 +1126,8 @@ void EditorImportPage::processSelection() {
             
             int linesRawW = linesW;
 
-            int startLinesImX = startImX - offset.x;
-            int startLinesImY = startImY + offset.y;
+            int startLinesImX = startImX - offset.x + ( linesW - mSheetW ) / 2;
+            int startLinesImY = startImY + offset.y + ( linesH - mSheetH ) / 2;;
             
             int imStartX = 0;
             int imStartY = 0;
