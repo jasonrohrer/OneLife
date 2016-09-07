@@ -54,7 +54,7 @@ class EditorImportPage : public GamePage, public ActionListener {
 
         virtual void keyDown( unsigned char inASCII );
         virtual void keyUp( unsigned char inASCII );
-
+        virtual void specialKeyDown( int inKeyCode );
 
     protected:
         
@@ -62,7 +62,12 @@ class EditorImportPage : public GamePage, public ActionListener {
         void processSelection();
         
 
+        void clearLines();
+        
+
         TextButton mImportButton;
+        TextButton mImportLinesButton;
+        TextButton mXTopLinesButton;
         TextButton mImportOverlayButton;
 
         int mSheetW, mSheetH;
@@ -111,6 +116,11 @@ class EditorImportPage : public GamePage, public ActionListener {
         SimpleVector<OverlayRecord *>mCurrentOverlay;
         
 
+        SimpleVector<doublePair> mLinesOffset;
+        SimpleVector<Image*> mLinesImages;
+        SimpleVector<SpriteHandle> mLinesSprites;
+        
+
         char mMovingSheet;
         doublePair mSheetOffset;
         doublePair mMovingSheetPointerStart;
@@ -140,6 +150,7 @@ class EditorImportPage : public GamePage, public ActionListener {
         TextButton mClearOverlayButton;
         
         KeyLegend mSheetKeyLegend;
+        KeyLegend mLinesKeyLegend;
         KeyLegend mOverlayKeyLegend;
         
         char mShowTagMessage;

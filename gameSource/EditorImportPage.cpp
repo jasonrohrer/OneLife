@@ -27,7 +27,9 @@ static OverlayPickable overlayPickable;
 
 
 EditorImportPage::EditorImportPage()
-        : mImportButton( smallFont, +180, 260, "Sprite Import" ),
+        : mImportButton( smallFont, +170, 280, "Sprite Import" ),
+          mImportLinesButton( smallFont, +170, 240, "Lines Import" ),
+          mXTopLinesButton( smallFont, +100, 240, "X" ),
           mImportOverlayButton( smallFont, +310, 260, "Overlay Import" ),
           mSelect( false ),
           mImportedSheet( NULL ),
@@ -70,6 +72,8 @@ EditorImportPage::EditorImportPage()
     mSolidCheckbox.setToggled( true );
     
     addComponent( &mImportButton );
+    addComponent( &mImportLinesButton );
+    addComponent( &mXTopLinesButton );
     addComponent( &mImportOverlayButton );
     addComponent( &mSpriteTagField );
     addComponent( &mSaveSpriteButton );
@@ -85,6 +89,10 @@ EditorImportPage::EditorImportPage()
     
 
     mImportButton.addActionListener( this );
+    mImportLinesButton.addActionListener( this );
+    mXTopLinesButton.addActionListener( this );
+    mXTopLinesButton.setVisible( false );
+    
     mImportOverlayButton.addActionListener( this );
     
     mSaveSpriteButton.addActionListener( this );
@@ -125,6 +133,11 @@ EditorImportPage::EditorImportPage()
 
     addKeyClassDescription( &mSheetKeyLegend, "r-mouse", "Mv sheet" );
     addKeyDescription( &mSheetKeyLegend, 'c', "Mv sprite center" );
+
+    addKeyClassDescription( &mLinesKeyLegend, "arrows", "Mv lines" );
+    addKeyClassDescription( &mLinesKeyLegend, "Ctr/Shft", "Bigger jumps" );
+    
+
     addKeyDescription( &mOverlayKeyLegend, 't', "Mv overlay" );
     addKeyDescription( &mOverlayKeyLegend, 's', "Scale overlay" );
     addKeyDescription( &mOverlayKeyLegend, 'r', "Rot overlay" );
@@ -159,6 +172,8 @@ EditorImportPage::~EditorImportPage() {
         }
 
     freeSprite( mCenterMarkSprite );
+
+    clearLines();
     }
 
 
@@ -215,6 +230,7 @@ static void addShadow( Image *inImage, Image *inShadow, double inWeight ) {
 
 void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mImportButton ||
+        inTarget == &mImportLinesButton ||
         inTarget == &mImportOverlayButton ) {
         
         if( mProcessedSelectionSprite != NULL ) {
@@ -234,7 +250,7 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
 
         File *importFile = NULL;
         
-        if( inTarget == &mImportButton ) {
+        if( inTarget == &mImportButton || inTarget == &mImportLinesButton ) {
             
             char *importPath = 
                 SettingsManager::getStringSetting( "editorImportPath" );
@@ -284,8 +300,6 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
 
         if( importFile != NULL ) {
     
-            mSheetOffset.x = 0;
-            mSheetOffset.y = 0;
             mMovingSheet = false;
 
 
@@ -301,26 +315,74 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
                 if( image != NULL ) {
                     
                     // expand to powers of 2
-
-                    if( mImportedSheet != NULL ) {
-                        delete mImportedSheet;
-                        mImportedSheet = NULL;
+                    Image *expanded  = expandToPowersOfTwo( image );
+                    
+                    if( inTarget == &mImportButton ) {
+                        
+                        if( mImportedSheet != NULL ) {
+                            delete mImportedSheet;
+                            mImportedSheet = NULL;
+                            }
+                        
+                        mSheetOffset.x = 0;
+                        mSheetOffset.y = 0;
+                        
+                        mImportedSheet = expanded;
+                        
+                        mSheetW = mImportedSheet->getWidth();
+                        mSheetH = mImportedSheet->getHeight();
+                        
+                    
+                        if( mImportedSheetSprite != NULL ) {
+                            freeSprite( mImportedSheetSprite );
+                            mImportedSheetSprite = NULL;
+                            }
+                        mImportedSheetSprite = 
+                            fillSprite( mImportedSheet, false );
                         }
+                    else {
+                        // convert to grayscale
+                        // luminosity formula:
+                        // 0.21 R + 0.72 G + 0.07 B
+                        int numPixels = 
+                            expanded->getWidth() * expanded->getHeight();
+                        double *r = expanded->getChannel( 0 );
+                        double *g = expanded->getChannel( 1 );
+                        double *b = expanded->getChannel( 2 );
+                        double *a = expanded->getChannel( 3 );
+                        
+                        for( int i=0; i<numPixels; i++ ) {
+                            double l = 0.21 * r[i] + 0.72 * g[i] + 0.07 * b[i];
+                            r[i] = l;
+                            g[i] = l;
+                            b[i] = l;
+                            // any alpha-0 areas are white for multiplicative
+                            // blend
+                            // expanded border left black and transparent
+                            if( a[i] == 0 ) {
+                                r[i] = 1;
+                                g[i] = 1;
+                                b[i] = 1;
+                                }
+                            }
+                        
+                        
+                        SpriteHandle sprite = fillSprite( expanded, false );
+                        
+                        doublePair offset = { 0, 0 };
+                        
+                        mLinesOffset.push_back( offset );
+                        mLinesImages.push_back( expanded );
+                        mLinesSprites.push_back( sprite );
 
-                    mImportedSheet = expandToPowersOfTwo( image );
-                    
-                    mSheetW = mImportedSheet->getWidth();
-                    mSheetH = mImportedSheet->getHeight();
-                    
-                    
-                    if( mImportedSheetSprite != NULL ) {
-                        freeSprite( mImportedSheetSprite );
-                        mImportedSheetSprite = NULL;
+                        mXTopLinesButton.setVisible( true );
                         }
-                    mImportedSheetSprite = fillSprite( mImportedSheet, false );
+                    
                     
                     imported = true;
                     delete image;
+                    
+                    setStatusDirect( NULL, false );
                     }
                 }
             
@@ -352,6 +414,22 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             }
         
         
+        }
+    else if( inTarget == &mXTopLinesButton ) {
+        int numLines = mLinesOffset.size();
+        
+        if( numLines > 0 ) {
+            int i = numLines - 1;
+            
+            mLinesOffset.deleteElement( i );
+            delete mLinesImages.getElementDirect( i );
+            mLinesImages.deleteElement( i );
+            freeSprite( mLinesSprites.getElementDirect( i ) );
+            mLinesSprites.deleteElement( i );
+            }
+        if( mLinesOffset.size() == 0 ) {
+            mXTopLinesButton.setVisible( false );
+            }
         }
     else if( inTarget == &mSaveSpriteButton ) {
         char *tag = mSpriteTagField.getText();
@@ -504,6 +582,14 @@ void EditorImportPage::drawUnderComponents( doublePair inViewCenter,
         setDrawColor( 1, 1, 1, 1 );
         drawSprite( mImportedSheetSprite, mSheetOffset );
 
+        toggleMultiplicativeBlend( true );
+        
+        for( int i=0; i<mLinesOffset.size(); i++ ) {
+            doublePair pos = 
+                add( mSheetOffset, mLinesOffset.getElementDirect( i ) );
+            drawSprite( mLinesSprites.getElementDirect( i ), pos );
+            }
+        toggleMultiplicativeBlend( false );
 
         if( mSelect ) {
             setDrawColor( 0, 0, 1, 0.25 );
@@ -606,6 +692,11 @@ void EditorImportPage::draw( doublePair inViewCenter,
         pos.x -= 240;
         
         drawKeyLegend( &mSheetKeyLegend, pos );
+
+        if( mLinesOffset.size() > 0 ) {
+            pos.y -= 32;
+            drawKeyLegend( &mLinesKeyLegend, pos );
+            }
         }
     
     if( mShowTagMessage ) {
@@ -892,8 +983,47 @@ void EditorImportPage::keyUp( unsigned char inASCII ) {
 
 
 
+void EditorImportPage::specialKeyDown( int inKeyCode ) {
+    
+    if( mLinesOffset.size() > 0 ) {
+        int i = mLinesOffset.size() - 1;
+        
+        int offset = 1;
+        
+        if( isCommandKeyDown() ) {
+            offset = 5;
+            }
+        if( isShiftKeyDown() ) {
+            offset = 10;
+            }
+        if( isCommandKeyDown() && isShiftKeyDown() ) {
+            offset = 20;
+            }
+    
+
+        switch( inKeyCode ) {
+            case MG_KEY_LEFT:
+                mLinesOffset.getElement( i )->x -= offset;
+            break;
+        case MG_KEY_RIGHT:
+                mLinesOffset.getElement( i )->x += offset;
+            break;
+        case MG_KEY_DOWN:
+                mLinesOffset.getElement( i )->y -= offset;
+            break;
+        case MG_KEY_UP:
+                mLinesOffset.getElement( i )->y += offset;
+            break;
+            }
+        }
+    }
+
+
 
 void EditorImportPage::processSelection() {
+
+    double paperThreshold = 0.88;
+
     
     if( mProcessedSelection != NULL ) {
         delete mProcessedSelection;
@@ -949,6 +1079,109 @@ void EditorImportPage::processSelection() {
 
     Image *cutImage = 
         mImportedSheet->getSubImage( startImX, startImY, imW, imH );
+
+
+    // since this is grayscale, only deal with red channel
+    Image *cutLinesImage = NULL;
+    double *cutLinesR = NULL;
+    
+    if( mLinesOffset.size() > 0 ) {
+    
+        cutLinesImage = new Image( imW, imH, 4, false );
+        
+        cutLinesR = cutLinesImage->getChannel( 0 );
+        //double *cutLinesG = cutLinesImage->getChannel( 1 );
+        //double *cutLinesB = cutLinesImage->getChannel( 2 );
+        double *cutLinesA = cutLinesImage->getChannel( 3 );
+
+        // start white, then multiply line layers into it
+        int numPixels = imW * imH;
+        for( int i=0; i<numPixels; i++ ) {
+            cutLinesR[i] = 1;
+            //cutLinesG[i] = 0;
+            //cutLinesB[i] = 0;
+            cutLinesA[i] = 1;
+            }
+        
+        // apply line overlays
+        for( int i=0; i<mLinesOffset.size(); i++ ) {
+            doublePair offset = mLinesOffset.getElementDirect( i );
+            
+            Image *image = mLinesImages.getElementDirect( i );
+            
+            int linesW = image->getWidth();
+            int linesH = image->getHeight();
+            
+            int linesRawW = linesW;
+
+            int startLinesImX = startImX - offset.x;
+            int startLinesImY = startImY + offset.y;
+            
+            int imStartX = 0;
+            int imStartY = 0;
+
+            if( startLinesImX < linesW && startLinesImY < linesH ) {
+                
+                if( startLinesImX < 0 ) {
+                    linesW += startLinesImX;
+                    imStartX += startLinesImX;
+                    startLinesImX = 0;
+                    }
+                if( startLinesImY < 0 ) {
+                    linesH += startLinesImY;
+                    imStartY += startLinesImY;
+                    startLinesImY = 0;
+                    }
+                
+                if( linesW - startLinesImX > imW - imStartX ) {
+                    linesW = startLinesImX + ( imW - imStartX );
+                    }
+                if( linesH - startLinesImY > imH - imStartY ) {
+                    linesH = startLinesImY + ( imH - imStartY );
+                    }
+                
+
+                if( linesH > 0 && linesW > 0 ) {
+                    double *linesR = image->getChannel( 0 );
+                    
+                    int imY = imStartY;
+                    for( int y=startLinesImY; y<linesH; y++ ) {
+                        int imX = imStartX;
+                        for( int x=startLinesImX; x<linesW; x++ ) {
+                            int imP = imY * imW + imX;
+                            int linesP = y * linesRawW + x;
+                            
+                            cutLinesR[imP] *= linesR[linesP];
+                            
+                            imX ++;
+                            }
+                        imY ++;
+                        }
+                    }
+                // else skip
+                }
+            // else skip
+            }
+
+        
+        for( int i=0; i<numPixels; i++ ) {
+            if( cutLinesR[i] > paperThreshold ) {
+                // make areas white that are close enough to white
+                // thus, we don't have square, slightly-darkening ghost
+                // around image
+                cutLinesR[i] =  1;
+                }
+            }
+
+        PNGImageConverter converter;
+        
+        File outFile( NULL, "linesTest.png" );
+        FileOutputStream stream( &outFile );
+        converter.formatImage( cutLinesImage, &stream );
+
+        }
+    
+
         
     
     int w = cutImage->getWidth();
@@ -1065,7 +1298,6 @@ void EditorImportPage::processSelection() {
         }
 
 
-    double paperThreshold = 0.88;
     
     // first, clean up isolated noise points in paper
     
@@ -1308,6 +1540,7 @@ void EditorImportPage::processSelection() {
             }
         }
 
+    
 
 
     // now trim down image just around non-transparent part so
@@ -1323,7 +1556,7 @@ void EditorImportPage::processSelection() {
         for( int x=0; x<w; x++ ) {
             int i = y * w + x;
             
-            if( a[i] > 0.0 ) {
+            if( a[i] > 0.0 || ( cutLinesR != NULL && cutLinesR[i] < 1.0 ) ) {
                 //printf( "a at (%d,%d) = %f\n", x, y, a[i] );
                 
                 if( x < firstX ) {
@@ -1346,20 +1579,32 @@ void EditorImportPage::processSelection() {
             }
         }
     
+
     Image *trimmedImage = NULL;
+    Image *trimmedLinesImage = NULL;
     
     if( lastX > firstX && lastY > firstY ) {
         
         trimmedImage = 
             cutImage->getSubImage( firstX, firstY, 
                                    1 + lastX - firstX, 1 + lastY - firstY );
+        
+        delete cutImage;
+        
+        if( cutLinesImage != NULL ) {
+            trimmedLinesImage = 
+                cutLinesImage->getSubImage( firstX, firstY, 
+                                            1 + lastX - firstX, 
+                                            1 + lastY - firstY );
+            delete cutLinesImage;
+            }
         }
     else {
         // no non-trans areas, don't trim it
-        trimmedImage = cutImage->copy();
+        trimmedImage = cutImage;
+        trimmedLinesImage = cutLinesImage;
         }
-    
-    delete cutImage;
+
     
     // make relative to new trim
     centerX -= firstX;
@@ -1370,19 +1615,28 @@ void EditorImportPage::processSelection() {
     w = trimmedImage->getWidth();
     h = trimmedImage->getHeight();
 
-    Image *shadowImage;
+    Image *shadowImage = NULL;
+    Image *shadowLinesImage = NULL;
     
     if( ! mSelectionMultiplicative ) {
         
         shadowImage = trimmedImage->expandImage( w + 6 + 6, h + 6 + 6 );
-    
         delete trimmedImage;
+        
+        if( trimmedLinesImage != NULL ) {
+            
+            shadowLinesImage = 
+                trimmedLinesImage->expandImage( w + 6 + 6, h + 6 + 6 );
+    
+            delete trimmedLinesImage;
+            }
         
         centerX += 6;
         centerY += 6;
         }
     else {
         shadowImage = trimmedImage;
+        shadowLinesImage = trimmedLinesImage;
         }
     
 
@@ -1408,13 +1662,39 @@ void EditorImportPage::processSelection() {
     h = shadowImage->getHeight();
 
     mProcessedSelection = expandToPowersOfTwo( shadowImage );
+    delete shadowImage;
     
+    Image *expandedLines = NULL;
+
+    if( shadowLinesImage != NULL ) {
+        expandedLines = expandToPowersOfTwo( shadowLinesImage );
+        delete shadowLinesImage;
+        }
+    
+
     int newW = mProcessedSelection->getWidth();
     int newH = mProcessedSelection->getHeight();
     
     centerX += ( newW - w ) / 2;
     centerY += ( newH - h ) / 2;
     
+    
+    if( expandedLines != NULL ) {
+        // set all transparent areas to white (black border added by expansion)
+        // grayscale, so only deal with red channel
+        r = expandedLines->getChannel( 0 );
+        a = expandedLines->getChannel( 3 );
+
+        int numPixels = expandedLines->getWidth() *
+            expandedLines->getHeight();
+        
+        for( int i=0; i<numPixels; i++ ) {
+            if( a[i] == 0 ) {
+                r[i] =  1;
+                }
+            }
+        }
+
 
 
     if( mSelectionMultiplicative ) {
@@ -1466,8 +1746,36 @@ void EditorImportPage::processSelection() {
     mProcessedShadow = getShadow( mProcessedSelection );    
     
 
-    delete shadowImage;
 
+
+    if( expandedLines != NULL ) {
+        r = mProcessedSelection->getChannel( 0 );
+        g = mProcessedSelection->getChannel( 1 );
+        b = mProcessedSelection->getChannel( 2 );
+        a = mProcessedSelection->getChannel( 3 );
+        
+        double *linesR = expandedLines->getChannel( 0 );
+        
+        int numPixels = mProcessedSelection->getWidth() *
+            mProcessedSelection->getHeight();
+        
+        for( int i=0; i<numPixels; i++ ) {
+            if( linesR[i] < 1.0 ) {
+                r[i] *= linesR[i];
+                g[i] *= linesR[i];
+                b[i] *= linesR[i];
+                
+                a[i] += 1.0 - linesR[i];
+                
+                if( a[i] > 1.0 ) {
+                    a[i] = 1.0;
+                    }
+                }
+            }
+        
+        delete expandedLines;
+        }
+    
     
 
     if( usingCenter ) {    
@@ -1502,4 +1810,17 @@ void EditorImportPage::processSelection() {
 
     mSaveSpriteButton.setVisible( true );
     mSaveOverlayButton.setVisible( false );
+    }
+
+
+
+void EditorImportPage::clearLines() {
+    
+    for( int i=0; i<mLinesOffset.size(); i++ ) {
+        delete mLinesImages.getElementDirect(i);
+        freeSprite( mLinesSprites.getElementDirect(i) );
+        }
+    mLinesOffset.deleteAll();
+    mLinesImages.deleteAll();
+    mLinesSprites.deleteAll();
     }

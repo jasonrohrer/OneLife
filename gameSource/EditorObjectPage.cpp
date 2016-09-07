@@ -467,7 +467,7 @@ EditorObjectPage::EditorObjectPage()
     addKeyClassDescription( &mKeyLegend, "n/m", "Switch layers" );
     addKeyClassDescription( &mKeyLegend, "arrows", "Move layer" );
     addKeyClassDescription( &mKeyLegend, "Pg Up/Down", "Layer order" );
-    addKeyClassDescription( &mKeyLegend, "Ctrl", "Bigger jumps" );
+    addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger jumps" );
     addKeyDescription( &mKeyLegend, 'r', "Rotate layer" );
     addKeyClassDescription( &mKeyLegend, "c/v", "Copy/paste color" );
 
@@ -3362,6 +3362,12 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
     
     if( isCommandKeyDown() ) {
         offset = 5;
+        }
+    if( isShiftKeyDown() ) {
+        offset = 10;
+        }
+    if( isCommandKeyDown() && isShiftKeyDown() ) {
+        offset = 20;
         }
     
 
