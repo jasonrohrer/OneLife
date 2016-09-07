@@ -1182,13 +1182,6 @@ void EditorImportPage::processSelection() {
                 }
             // else skip
             }
-
-        PNGImageConverter converter;
-        
-        File outFile( NULL, "linesTest.png" );
-        FileOutputStream stream( &outFile );
-        converter.formatImage( cutLinesImage, &stream );
-
         }
     
 
