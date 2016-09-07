@@ -597,7 +597,15 @@ void EditorImportPage::drawUnderComponents( doublePair inViewCenter,
             drawRect( mSelectStart.x, mSelectStart.y,
                       mSelectEnd.x, mSelectEnd.y );
             }
-
+        else {
+            setDrawColor( 0, 0, 1, 0.50 );
+            
+            doublePair mouseCenter = { lastMouseX + 1, lastMouseY - 1 };
+            
+            drawRect( mouseCenter, 1000, 0.5 );
+            drawRect( mouseCenter, 0.5, 1000 );
+            }
+        
             
         if( mCenterSet ) {
             setDrawColor( 1, 1, 1, 0.75 );
