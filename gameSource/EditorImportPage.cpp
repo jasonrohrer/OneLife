@@ -1163,16 +1163,6 @@ void EditorImportPage::processSelection() {
             // else skip
             }
 
-        
-        for( int i=0; i<numPixels; i++ ) {
-            if( cutLinesR[i] > paperThreshold ) {
-                // make areas white that are close enough to white
-                // thus, we don't have square, slightly-darkening ghost
-                // around image
-                cutLinesR[i] =  1;
-                }
-            }
-
         PNGImageConverter converter;
         
         File outFile( NULL, "linesTest.png" );
@@ -1761,14 +1751,25 @@ void EditorImportPage::processSelection() {
         
         for( int i=0; i<numPixels; i++ ) {
             if( linesR[i] < 1.0 ) {
+
+                // this will only make things darker
+                // and areas outside paper cut-out are already black
+                // so places where lines stick out from paper won't
+                // be affected
                 r[i] *= linesR[i];
                 g[i] *= linesR[i];
                 b[i] *= linesR[i];
                 
-                a[i] += 1.0 - linesR[i];
+                if( linesR[i] <= paperThreshold ) {
+                    // change alpha outside paper cut-out
+                    // but only if lines image is darker than
+                    // paper
+                    // this prevents dark halos
+                    a[i] += 1.0 - linesR[i];
                 
-                if( a[i] > 1.0 ) {
-                    a[i] = 1.0;
+                    if( a[i] > 1.0 ) {
+                        a[i] = 1.0;
+                        }
                     }
                 }
             }
