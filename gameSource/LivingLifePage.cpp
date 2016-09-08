@@ -2135,14 +2135,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 int oY = o->yd;
                 
                 if( o->currentSpeed != 0 ) {
-                    if( o->onFinalPathStep ) {
-                        oX = o->pathToDest[ o->pathLength - 1 ].x;
-                        oY = o->pathToDest[ o->pathLength - 1 ].y;
-                        }
-                    else {
-                        oX = o->pathToDest[ o->currentPathStep ].x;
-                        oY = o->pathToDest[ o->currentPathStep ].y;
-                        }
+                    oX = lrint( o->currentPos.x );
+                    oY = lrint( o->currentPos.y - 0.15 );
                     }
                 
                 
