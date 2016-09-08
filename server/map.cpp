@@ -931,16 +931,6 @@ int checkDecayObject( int inX, int inY, int inID ) {
             dbPut( inX, inY, 0, newID );
             
 
-            char *changeString = getMapChangeLineString( inX, inY );
-            
-            mapChangesSinceLastStep.appendElementString( changeString );
-
-            delete [] changeString;
-            
-
-            ChangePosition p = { inX, inY, false };
-            
-            mapChangePosSinceLastStep.push_back( p );
 
 
 
@@ -955,12 +945,34 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 }
 
             setEtaDecay( inX, inY, mapETA );
+            
+            
+            char *changeString = getMapChangeLineString( inX, inY );
+            
+            mapChangesSinceLastStep.appendElementString( changeString );
+
+            delete [] changeString;
+            
+
+            ChangePosition p = { inX, inY, false };
+            
+            mapChangePosSinceLastStep.push_back( p );
+
             }
 
         }
     else {
+        // an object on the map that has never been seen by anyone before
+        // not decaying yet
+        
         // update map with decay for the applicable transition
-        mapETA = time( NULL ) + t->autoDecaySeconds;
+        
+        // randomize it so that every same object on map
+        // doesn't cycle at same time
+        
+        mapETA = time( NULL ) + 
+            randSource.getRandomBoundedInt( t->autoDecaySeconds / 2 , 
+                                            t->autoDecaySeconds );
         
         setEtaDecay( inX, inY, mapETA );
         }
