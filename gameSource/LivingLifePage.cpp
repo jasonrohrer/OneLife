@@ -1789,7 +1789,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int xEnd = gridCenterX + 6;
 
     // more on bottom of screen so that tall objects don't pop in
-    int yStart = gridCenterY - 5;
+    int yStart = gridCenterY - 6;
     int yEnd = gridCenterY + 3;
 
     if( xStart < 0 ) {
