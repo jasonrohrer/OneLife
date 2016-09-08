@@ -793,8 +793,12 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
         return;
         }
 
-    if( inX > -210 && inX < 210 && 
-        inY > -210 && inY < 190 ) {
+    // middle of scree?
+    if( ( inX > -210 && inX < 210 && 
+          inY > -210 && inY < 190 ) 
+        || 
+        // or top-left middle of screen (no gui compoents up there
+        ( inX > -210 && inX < -64  && inY > 0 ) ) {
         TextField::unfocusAll();
         }
     else {
