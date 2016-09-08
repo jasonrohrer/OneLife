@@ -1135,7 +1135,7 @@ void EditorImportPage::processSelection() {
             int linesRawW = linesW;
 
             int startLinesImX = startImX - offset.x + ( linesW - mSheetW ) / 2;
-            int startLinesImY = startImY + offset.y + ( linesH - mSheetH ) / 2;;
+            int startLinesImY = startImY + offset.y + ( linesH - mSheetH ) / 2;
             
             int imStartX = 0;
             int imStartY = 0;
@@ -1144,12 +1144,12 @@ void EditorImportPage::processSelection() {
                 
                 if( startLinesImX < 0 ) {
                     linesW += startLinesImX;
-                    imStartX += startLinesImX;
+                    imStartX -= startLinesImX;
                     startLinesImX = 0;
                     }
                 if( startLinesImY < 0 ) {
                     linesH += startLinesImY;
-                    imStartY += startLinesImY;
+                    imStartY -= startLinesImY;
                     startLinesImY = 0;
                     }
                 
