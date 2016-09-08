@@ -1705,6 +1705,12 @@ void LivingLifePage::drawLiveObject(
 SimpleVector<doublePair> trail;
 
 
+char drawAdd = true;
+char drawMult = true;
+
+double multAmount = 0.15;
+double addAmount = 0.25;
+
 
 void LivingLifePage::draw( doublePair inViewCenter, 
                            double inViewSize ) {
@@ -1961,8 +1967,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
     toggleMultiplicativeBlend( true );
     
     // use this to lighten ground overlay
-    //toggleAdditiveTextureColoring( true );
-    setDrawColor( 1, 1, 1, 1 );
+    toggleAdditiveTextureColoring( true );
+    setDrawColor( multAmount, multAmount, multAmount, 1 );
     
     for( int y=-1; y<=1; y++ ) {
 
@@ -1973,12 +1979,38 @@ void LivingLifePage::draw( doublePair inViewCenter,
         for( int x=-1; x<=1; x++ ) {
 
             pos.x = groundCenterPos.x + x * groundW;
+            
+            if( drawMult ) drawSprite( mGroundOverlaySprite, pos );
+            }
+        }
+    toggleAdditiveTextureColoring( false );
+    toggleMultiplicativeBlend( false );
 
-            drawSprite( mGroundOverlaySprite, pos );
+
+    toggleAdditiveBlend( true );
+    
+    // use this to lighten ground overlay
+    //toggleAdditiveTextureColoring( true );
+    setDrawColor( 1, 1, 1, addAmount );
+    
+    for( int y=-1; y<=1; y++ ) {
+
+        doublePair pos = groundCenterPos;
+        
+        pos.x += 512;
+        pos.y += 512;
+
+        pos.y = groundCenterPos.y + y * groundH;
+
+        for( int x=-1; x<=1; x++ ) {
+
+            pos.x = groundCenterPos.x + x * groundW;
+
+            if( drawAdd ) drawSprite( mGroundOverlaySprite, pos );
             }
         }
     //toggleAdditiveTextureColoring( false );
-    toggleMultiplicativeBlend( false );
+    toggleAdditiveBlend( false );
     
 
     
@@ -5234,6 +5266,30 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
 void LivingLifePage::keyDown( unsigned char inASCII ) {
 
     switch( inASCII ) {
+        /*
+        case 'a':
+            drawAdd = ! drawAdd;
+            break;
+        case 'm':
+            drawMult = ! drawMult;
+            break;
+        case 'n':
+            multAmount += 0.05;
+            printf( "Mult amount = %f\n", multAmount );
+            break;
+        case 'b':
+            multAmount -= 0.05;
+            printf( "Mult amount = %f\n", multAmount );
+            break;
+        case 's':
+            addAmount += 0.05;
+            printf( "Add amount = %f\n", addAmount );
+            break;
+        case 'd':
+            addAmount -= 0.05;
+            printf( "Add amount = %f\n", addAmount );
+            break;
+        */
         case 'e':
         case 'E':
             mEKeyDown = true;
