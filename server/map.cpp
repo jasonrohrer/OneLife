@@ -924,8 +924,9 @@ int checkDecayObject( int inX, int inY, int inID ) {
             if( newSlots < oldSlots ) {
                 shrinkContainer( inX, inY, newSlots );
                 }
-            
-            restretchMapContainedDecays( inX, inY, inID, newID );
+            if( newSlots > 0 ) {    
+                restretchMapContainedDecays( inX, inY, inID, newID );
+                }
             
             // set it in DB
             dbPut( inX, inY, 0, newID );
