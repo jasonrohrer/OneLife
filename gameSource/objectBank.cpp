@@ -1662,7 +1662,12 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                                   getObjectCenterOffset( contained ) );
         
         if( inRot != 0 ) {    
-            slotPos = rotate( slotPos, -2 * M_PI * inRot );
+            if( inFlipH ) {
+                slotPos = rotate( slotPos, 2 * M_PI * inRot );
+                }
+            else {
+                slotPos = rotate( slotPos, -2 * M_PI * inRot );
+                }
             }
 
         if( inFlipH ) {
