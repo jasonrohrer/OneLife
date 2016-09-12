@@ -116,14 +116,20 @@ float initAnimationBankStep() {
                 for( int j=0; j< r->numSprites && next < numLines;
                      j++ ) {
                     
-                    r->spriteAnim[j].spriteInvisible = false;
                     
-                    int spriteInvisRead = 0;
+                    r->spriteAnim[j].fadeOscPerSec = 0;
+                    r->spriteAnim[j].fadeHardness = 0;
+                    
+                    r->spriteAnim[j].fadeMin = 0;
+                    r->spriteAnim[j].fadeMax = 1;
+
+                    r->spriteAnim[j].fadePhase = 0;
                     
                     sscanf( lines[next], 
                             "animParam="
                             "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
-                            "%lf %lf %lf %lf %lf %d",
+                            "%lf %lf %lf %lf %lf "
+                            "%lf %lf %lf %lf %lf",
                             &( r->spriteAnim[j].xOscPerSec ),
                             &( r->spriteAnim[j].xAmp ),
                             &( r->spriteAnim[j].xPhase ),
@@ -145,11 +151,11 @@ float initAnimationBankStep() {
                             &( r->spriteAnim[j].durationSec ),
                             &( r->spriteAnim[j].pauseSec ),
                             
-                            &spriteInvisRead );
-                    
-                    if( spriteInvisRead ) {
-                        r->spriteAnim[j].spriteInvisible = true;
-                        }
+                            &( r->spriteAnim[j].fadeOscPerSec ),
+                            &( r->spriteAnim[j].fadeHardness ),
+                            &( r->spriteAnim[j].fadeMin ),
+                            &( r->spriteAnim[j].fadeMax ),
+                            &( r->spriteAnim[j].fadePhase ) );
 
                     next++;
                     }
@@ -350,7 +356,8 @@ void addAnimation( AnimationRecord *inRecord ) {
                 autoSprintf( 
                     "animParam="
                     "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
-                    "%lf %lf %lf %lf %lf %d",
+                    "%lf %lf %lf %lf %lf "
+                    "%lf %lf %lf %lf %lf",
                     inRecord->spriteAnim[j].xOscPerSec,
                     inRecord->spriteAnim[j].xAmp,
                     inRecord->spriteAnim[j].xPhase,
@@ -371,7 +378,12 @@ void addAnimation( AnimationRecord *inRecord ) {
                     
                     inRecord->spriteAnim[j].durationSec,
                     inRecord->spriteAnim[j].pauseSec,
-                    inRecord->spriteAnim[j].spriteInvisible ) );
+
+                    inRecord->spriteAnim[j].fadeOscPerSec,
+                    inRecord->spriteAnim[j].fadeHardness,
+                    inRecord->spriteAnim[j].fadeMin,
+                    inRecord->spriteAnim[j].fadeMax,
+                    inRecord->spriteAnim[j].fadePhase ) );
             }
         for( int j=0; j<inRecord->numSlots; j++ ) {
             lines.push_back( 
@@ -518,7 +530,14 @@ char isAnimFadeNeeded( int inObjectID,
         
         if( inCurR->spriteAnim[i].rotPhase != 0 ) return true;
         
-        
+
+        if( inCurR->spriteAnim[i].fadeOscPerSec > 0 ) return true;
+
+        if( inCurR->spriteAnim[i].fadeMax != 1 &&
+            inCurR->spriteAnim[i].fadePhase != 0 &&
+            inCurR->spriteAnim[i].fadePhase != 0.5 ) return true;
+
+
 
         // if target starts out of phase, must fade
         
@@ -537,10 +556,10 @@ char isAnimFadeNeeded( int inObjectID,
         if( inTargetR->spriteAnim[i].rotPerSec != 0 || 
             inTargetR->spriteAnim[i].rotPhase != 0 ) return true;
 
-
-        // if they differ in terms of visibilty, must fade
-        if( inCurR->spriteAnim[i].spriteInvisible !=
-            inTargetR->spriteAnim[i].spriteInvisible ) return true;
+        
+        if( inTargetR->spriteAnim[i].fadeMax != 1 &&
+            inTargetR->spriteAnim[i].fadePhase != 0 &&
+            inTargetR->spriteAnim[i].fadePhase != 0.5 ) return true;
         }
     
     
@@ -725,7 +744,7 @@ static doublePair workingSpritePos[1000];
 static doublePair workingDeltaSpritePos[1000];
 static double workingRot[1000];
 static double workingDeltaRot[1000];
-static float workingSpriteFade[1000];
+static double workingSpriteFade[1000];
 
 
 
@@ -916,13 +935,47 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         workingSpriteFade[i] = 1.0f;
         
         if( i < spriteAnim->numSprites ) {
+
+            double sinVal = getOscOffset( 
+                spriteFrameTime,
+                spriteAnim->spriteAnim[i].fadeOscPerSec,
+                1.0,
+                spriteAnim->spriteAnim[i].fadePhase + .25 );
             
-            if( spriteAnim->spriteAnim[i].spriteInvisible ) {
-                workingSpriteFade[i] = 0.0f;
+            double hardVersion;
+            
+            // hardened sin formula found here:
+            // https://thatsmaths.com/2015/12/31/
+            //         squaring-the-circular-functions/
+            double hardness = spriteAnim->spriteAnim[i].fadeHardness;
+
+            if( hardness == 1 ) {
+                
+                if( sinVal > 0  ) {
+                    hardVersion = 1;
+                    }
+                else {
+                    hardVersion = -1;
+                    }
                 }
             else {
-                workingSpriteFade[i] = (float)inAnimFade;
+                double absSinVal = fabs( sinVal );
+                
+                hardVersion = ( sinVal / absSinVal ) * 
+                    pow( absSinVal, 
+                         1.0 / ( ( hardness + 1 ) * 100 ) ); 
+                printf( "hardness = %f, "
+                        "sinVal = %f, absSinVal = %f, hard version = %f\n", 
+                        hardness, sinVal, absSinVal, hardVersion );
                 }
+
+            double fade =
+                (spriteAnim->spriteAnim[i].fadeMax - 
+                 spriteAnim->spriteAnim[i].fadeMin ) *
+                ( 0.5 * hardVersion + 0.5 )
+                + spriteAnim->spriteAnim[i].fadeMin;
+
+            workingSpriteFade[i] = inAnimFade * fade;
             
 
             spritePos.x += 
@@ -957,9 +1010,46 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             
             if( inAnimFade < 1 && i < spriteFadeTargetAnim->numSprites ) {
                 
-                if( ! spriteFadeTargetAnim->spriteAnim[i].spriteInvisible ) {
-                    workingSpriteFade[i] += (float)targetWeight;
+                
+                double sinValB = getOscOffset( 
+                    targetSpriteFrameTime,
+                    spriteFadeTargetAnim->spriteAnim[i].fadeOscPerSec,
+                    1.0,
+                    spriteFadeTargetAnim->spriteAnim[i].fadePhase + .25 );
+            
+                double hardVersionB;
+            
+                // hardened sin formula found here:
+                // https://thatsmaths.com/2015/12/31/
+                //         squaring-the-circular-functions/
+                double hardnessB = 
+                    spriteFadeTargetAnim->spriteAnim[i].fadeHardness;
+
+                if( hardnessB == 1 ) {
+                
+                    if( sinValB > 0  ) {
+                        hardVersionB = 1;
+                        }
+                    else {
+                        hardVersionB = -1;
+                        }
                     }
+                else {
+                    double absSinValB = abs( sinValB );
+                
+                    hardVersionB = ( sinValB / absSinValB ) * 
+                        pow( absSinValB, 1.0 / ( hardnessB * 100 ) ); 
+                    }
+
+                double fadeB =
+                    (spriteFadeTargetAnim->spriteAnim[i].fadeMax - 
+                     spriteFadeTargetAnim->spriteAnim[i].fadeMin ) *
+                    ( 0.5 * hardVersionB + 0.5 )
+                    + spriteFadeTargetAnim->spriteAnim[i].fadeMin;
+
+                workingSpriteFade[i] += targetWeight * fadeB;
+
+
                 
                 spritePos.x += 
                     targetWeight *
@@ -1795,7 +1885,11 @@ void zeroRecord( SpriteAnimationRecord *inRecord ) {
     inRecord->rotationCenterOffset.x = 0;
     inRecord->rotationCenterOffset.y = 0;
     
-    inRecord->spriteInvisible = false;
+    inRecord->fadeOscPerSec = 0;
+    inRecord->fadeHardness = 0;
+    inRecord->fadeMin = 0;
+    inRecord->fadeMax = 1;
+    inRecord->fadePhase = 0;
     }
 
 

@@ -27,7 +27,7 @@
 
 
 #define NUM_ANIM_CHECKBOXES 3
-#define NUM_ANIM_SLIDERS 13
+#define NUM_ANIM_SLIDERS 18
 
 
 
@@ -95,8 +95,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         ValueSlider *mSliders[ NUM_ANIM_SLIDERS ];
         
         CheckboxButton mReverseRotationCheckbox;
-        CheckboxButton mSpriteInvisibleCheckbox;
-
+        
         int mCurrentObjectID;
         int mCurrentSlotDemoID;
 

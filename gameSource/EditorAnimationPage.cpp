@@ -43,7 +43,6 @@ EditorAnimationPage::EditorAnimationPage()
                             100, 20,
                             0, 1, "Test Speed" ),
           mReverseRotationCheckbox( 0, 0, 2 ),
-          mSpriteInvisibleCheckbox( 0, 0, 2 ),
           mCurrentObjectID( -1 ),
           mCurrentSlotDemoID( -1 ),
           mFlipDraw( false ),
@@ -66,12 +65,12 @@ EditorAnimationPage::EditorAnimationPage()
           mPickClothingButton( smallFont, 180, 60, "+ Clothes" ),
           mPickingClothing( false ),
           mClearClothingButton( smallFont, 180, 120, "X Clothes" ),
-          mCopyButton( smallFont, -290, 210, "Copy" ),
-          mCopyChainButton( smallFont, -290, 250, "Copy Child Chain" ),
-          mCopyWalkButton( smallFont, -160, 250, "Copy Walk" ),
-          mCopyAllButton( smallFont, -370, 210, "Copy All" ),
-          mPasteButton( smallFont, -230, 210, "Paste" ),
-          mClearButton( smallFont, -170, 210, "Clear" ),
+          mCopyButton( smallFont, -290, 230, "Copy" ),
+          mCopyChainButton( smallFont, -290, 270, "Copy Child Chain" ),
+          mCopyWalkButton( smallFont, -160, 270, "Copy Walk" ),
+          mCopyAllButton( smallFont, -370, 230, "Copy All" ),
+          mPasteButton( smallFont, -230, 230, "Paste" ),
+          mClearButton( smallFont, -170, 230, "Clear" ),
           mNextSpriteOrSlotButton( smallFont, 120, -270, "Next Layer" ),
           mPrevSpriteOrSlotButton( smallFont, -120, -270, "Prev Layer" ) {
     
@@ -180,9 +179,9 @@ EditorAnimationPage::EditorAnimationPage()
 
 
 
-    boxY = 190;
+    boxY = 220;
     
-    double space = 32;
+    double space = 28;
     double x = -290;
     
     mSliders[0] = new ValueSlider( smallFont, x, boxY -= space, 2,
@@ -234,10 +233,23 @@ EditorAnimationPage::EditorAnimationPage()
                                     100, 20,
                                     0, 20, "Pause Sec" );
 
-    mSpriteInvisibleCheckbox.setPosition( x, boxY -= space );
+    mSliders[13] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 6, "Fade Osc" );
+    mSliders[14] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 1, "Fade Hard" );
+    mSliders[15] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 1, "Fade Min" );
+    mSliders[16] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 1, "Fade Max" );
+    mSliders[17] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                   100, 20,
+                                   0, 1, "Fade Phase" );
 
-    addComponent( &mSpriteInvisibleCheckbox );
-    mSpriteInvisibleCheckbox.addActionListener( this );
+
 
 
 
@@ -248,8 +260,7 @@ EditorAnimationPage::EditorAnimationPage()
         mSliders[i]->setVisible( false );
         }
     mReverseRotationCheckbox.setVisible( false );
-    mSpriteInvisibleCheckbox.setVisible( false );
-
+    
     mClothingSet = getEmptyClothingSet();
     mNextShoeToFill = &( mClothingSet.backShoe );
     mOtherShoe = &( mClothingSet.frontShoe );
@@ -531,8 +542,6 @@ void EditorAnimationPage::updateAnimFromSliders() {
         r->rotPhase *= -1;
         }
     
-    r->spriteInvisible = mSpriteInvisibleCheckbox.getToggled();
-    
     r->rockOscPerSec = mSliders[8]->getValue();
     r->rockAmp = mSliders[9]->getValue();
     r->rockPhase = mSliders[10]->getValue();
@@ -540,6 +549,12 @@ void EditorAnimationPage::updateAnimFromSliders() {
 
     r->durationSec = mSliders[11]->getValue();
     r->pauseSec = mSliders[12]->getValue();
+
+    r->fadeOscPerSec = mSliders[13]->getValue();
+    r->fadeHardness = mSliders[14]->getValue();
+    r->fadeMin = mSliders[15]->getValue();
+    r->fadeMax = mSliders[16]->getValue();
+    r->fadePhase = mSliders[17]->getValue();
     }
 
 
@@ -585,22 +600,34 @@ void EditorAnimationPage::updateSlidersFromAnim() {
         mSliders[6]->setVisible( false );
         mSliders[7]->setVisible( false );
         mReverseRotationCheckbox.setVisible( false );
-        mSpriteInvisibleCheckbox.setVisible( false );
         
         mSliders[8]->setVisible( false );
         mSliders[9]->setVisible( false );
         mSliders[10]->setVisible( false );
+
+        // no fade
+        mSliders[13]->setVisible( false );
+        mSliders[14]->setVisible( false );
+        mSliders[15]->setVisible( false );
+        mSliders[16]->setVisible( false );
+        mSliders[17]->setVisible( false );
         }
     else {
         // last two sliders (rotation) are available for sprites
         mSliders[6]->setVisible( true );
         mSliders[7]->setVisible( true );
         mReverseRotationCheckbox.setVisible( true );
-        mSpriteInvisibleCheckbox.setVisible( true );
         
         mSliders[8]->setVisible( true );
         mSliders[9]->setVisible( true );
         mSliders[10]->setVisible( true );
+
+        // yes fade
+        mSliders[13]->setVisible( true );
+        mSliders[14]->setVisible( true );
+        mSliders[15]->setVisible( true );
+        mSliders[16]->setVisible( true );
+        mSliders[17]->setVisible( true );
         }
     
     
@@ -617,14 +644,18 @@ void EditorAnimationPage::updateSlidersFromAnim() {
     mReverseRotationCheckbox.setToggled( r->rotPerSec < 0 ||
                                          r->rotPhase < 0 );
 
-    mSpriteInvisibleCheckbox.setToggled( r->spriteInvisible );
-
     mSliders[8]->setValue( r->rockOscPerSec );
     mSliders[9]->setValue( r->rockAmp );
     mSliders[10]->setValue( r->rockPhase );
     
     mSliders[11]->setValue( r->durationSec );
     mSliders[12]->setValue( r->pauseSec );
+
+    mSliders[13]->setValue( r->fadeOscPerSec );
+    mSliders[14]->setValue( r->fadeHardness );
+    mSliders[15]->setValue( r->fadeMin );
+    mSliders[16]->setValue( r->fadeMax );
+    mSliders[17]->setValue( r->fadePhase );
     }
 
     
@@ -1045,9 +1076,6 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mReverseRotationCheckbox ) {
         updateAnimFromSliders();
         }
-    else if( inTarget == &mSpriteInvisibleCheckbox ) {
-        updateAnimFromSliders();
-        }
     else if( inTarget == &mTestSpeedSlider ) {
         
         // make sure frame time never goes backwards when we reduce speed
@@ -1360,11 +1388,6 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
         pos = mReverseRotationCheckbox.getPosition();
         pos.x -= 10;
         smallFont->drawString( "CCW", pos, alignRight );
-        }
-    if( mSpriteInvisibleCheckbox.isVisible() ) {
-        pos = mSpriteInvisibleCheckbox.getPosition();
-        pos.x -= 10;
-        smallFont->drawString( "Invis", pos, alignRight );
         }
         
     

@@ -53,8 +53,19 @@ typedef struct SpriteAnimationRecord {
         double durationSec;
         double pauseSec;
         
-        // if true, sprite is not drawn during this animation
-        char spriteInvisible;
+
+        double fadeOscPerSec;
+        
+        // 0 is sine wave, 1 is square wave, in between is a mix
+        double fadeHardness;
+
+        // what fade oscillates between
+        double fadeMin;
+        double fadeMax;
+
+        // between 0 and 1
+        double fadePhase;
+
         
     } SpriteAnimationRecord;
 
