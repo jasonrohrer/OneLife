@@ -115,11 +115,15 @@ float initAnimationBankStep() {
                             
                 for( int j=0; j< r->numSprites && next < numLines;
                      j++ ) {
-                                
+                    
+                    r->spriteAnim[j].spriteInvisible = false;
+                    
+                    int spriteInvisRead = 0;
+                    
                     sscanf( lines[next], 
                             "animParam="
                             "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
-                            "%lf %lf %lf %lf %lf",
+                            "%lf %lf %lf %lf %lf %d",
                             &( r->spriteAnim[j].xOscPerSec ),
                             &( r->spriteAnim[j].xAmp ),
                             &( r->spriteAnim[j].xPhase ),
@@ -139,8 +143,14 @@ float initAnimationBankStep() {
                             &( r->spriteAnim[j].rockPhase ),
 
                             &( r->spriteAnim[j].durationSec ),
-                            &( r->spriteAnim[j].pauseSec ) );
-                        
+                            &( r->spriteAnim[j].pauseSec ),
+                            
+                            &spriteInvisRead );
+                    
+                    if( spriteInvisRead ) {
+                        r->spriteAnim[j].spriteInvisible = true;
+                        }
+
                     next++;
                     }
 
@@ -340,7 +350,7 @@ void addAnimation( AnimationRecord *inRecord ) {
                 autoSprintf( 
                     "animParam="
                     "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
-                    "%lf %lf %lf %lf %lf",
+                    "%lf %lf %lf %lf %lf %d",
                     inRecord->spriteAnim[j].xOscPerSec,
                     inRecord->spriteAnim[j].xAmp,
                     inRecord->spriteAnim[j].xPhase,
@@ -360,7 +370,8 @@ void addAnimation( AnimationRecord *inRecord ) {
                     inRecord->spriteAnim[j].rockPhase,
                     
                     inRecord->spriteAnim[j].durationSec,
-                    inRecord->spriteAnim[j].pauseSec ) );
+                    inRecord->spriteAnim[j].pauseSec,
+                    inRecord->spriteAnim[j].spriteInvisible ) );
             }
         for( int j=0; j<inRecord->numSlots; j++ ) {
             lines.push_back( 
@@ -525,6 +536,11 @@ char isAnimFadeNeeded( int inObjectID,
         
         if( inTargetR->spriteAnim[i].rotPerSec != 0 || 
             inTargetR->spriteAnim[i].rotPhase != 0 ) return true;
+
+
+        // if they differ in terms of visibilty, must fade
+        if( inCurR->spriteAnim[i].spriteInvisible !=
+            inTargetR->spriteAnim[i].spriteInvisible ) return true;
         }
     
     
@@ -709,7 +725,7 @@ static doublePair workingSpritePos[1000];
 static doublePair workingDeltaSpritePos[1000];
 static double workingRot[1000];
 static double workingDeltaRot[1000];
-
+static float workingSpriteFade[1000];
 
 
 
@@ -897,8 +913,16 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
         double rot = 0;
         
-
+        workingSpriteFade[i] = 1.0f;
+        
         if( i < spriteAnim->numSprites ) {
+            
+            if( spriteAnim->spriteAnim[i].spriteInvisible ) {
+                workingSpriteFade[i] = 0.0f;
+                }
+            else {
+                workingSpriteFade[i] = (float)inAnimFade;
+                }
             
 
             spritePos.x += 
@@ -932,6 +956,10 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             double targetWeight = 1 - inAnimFade;
             
             if( inAnimFade < 1 && i < spriteFadeTargetAnim->numSprites ) {
+                
+                if( ! spriteFadeTargetAnim->spriteAnim[i].spriteInvisible ) {
+                    workingSpriteFade[i] += (float)targetWeight;
+                    }
                 
                 spritePos.x += 
                     targetWeight *
@@ -1421,13 +1449,24 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             
             if( multiplicative ) {
                 toggleMultiplicativeBlend( true );
+                
+                if( workingSpriteFade[i] < 1 ) {
+                    toggleAdditiveTextureColoring( true );
+                    
+                    float invFade = 1.0f - workingSpriteFade[i];
+                    setDrawColor( invFade, invFade, invFade, 1.0f );
+                    }
                 }
-
+            else if( workingSpriteFade[i] < 1 ) {
+                setDrawFade( workingSpriteFade[i] );
+                }
+            
             drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, 
                         logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
 
             if( multiplicative ) {
                 toggleMultiplicativeBlend( false );
+                toggleAdditiveTextureColoring( false );
                 }
 
 
@@ -1755,6 +1794,8 @@ void zeroRecord( SpriteAnimationRecord *inRecord ) {
     
     inRecord->rotationCenterOffset.x = 0;
     inRecord->rotationCenterOffset.y = 0;
+    
+    inRecord->spriteInvisible = false;
     }
 
 

@@ -95,6 +95,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         ValueSlider *mSliders[ NUM_ANIM_SLIDERS ];
         
         CheckboxButton mReverseRotationCheckbox;
+        CheckboxButton mSpriteInvisibleCheckbox;
 
         int mCurrentObjectID;
         int mCurrentSlotDemoID;

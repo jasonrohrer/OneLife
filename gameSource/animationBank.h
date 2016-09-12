@@ -53,13 +53,13 @@ typedef struct SpriteAnimationRecord {
         double durationSec;
         double pauseSec;
         
+        // if true, sprite is not drawn during this animation
+        char spriteInvisible;
+        
     } SpriteAnimationRecord;
 
 
 void zeroRecord( SpriteAnimationRecord *inRecord );
-
-
-
 typedef struct AnimationRecord {
         int objectID;
         
