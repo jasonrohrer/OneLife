@@ -71,8 +71,8 @@ EditorAnimationPage::EditorAnimationPage()
           mCopyAllButton( smallFont, -370, 230, "Copy All" ),
           mPasteButton( smallFont, -230, 230, "Paste" ),
           mClearButton( smallFont, -170, 230, "Clear" ),
-          mNextSpriteOrSlotButton( smallFont, 120, -270, "Next Layer" ),
-          mPrevSpriteOrSlotButton( smallFont, -120, -270, "Prev Layer" ) {
+          mNextSpriteOrSlotButton( smallFont, 180, -270, "Next Layer" ),
+          mPrevSpriteOrSlotButton( smallFont, -60, -270, "Prev Layer" ) {
     
     
     for( int i=0; i<endAnimType; i++ ) {
@@ -226,29 +226,31 @@ EditorAnimationPage::EditorAnimationPage()
     mSliders[10] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                     100, 20,
                                     0, 1, "Rock Phase" );
-    mSliders[11] = new ValueSlider( smallFont, x, boxY -= space, 2,
-                                    100, 20,
-                                    0, 20, "Duration Sec" );
-    mSliders[12] = new ValueSlider( smallFont, x, boxY -= space, 2,
-                                    100, 20,
-                                    0, 20, "Pause Sec" );
 
-    mSliders[13] = new ValueSlider( smallFont, x, boxY -= space, 2,
+
+    mSliders[11] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 6, "Fade Osc" );
-    mSliders[14] = new ValueSlider( smallFont, x, boxY -= space, 2,
+    mSliders[12] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "Fade Hard" );
-    mSliders[15] = new ValueSlider( smallFont, x, boxY -= space, 2,
+    mSliders[13] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "Fade Min" );
-    mSliders[16] = new ValueSlider( smallFont, x, boxY -= space, 2,
+    mSliders[14] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "Fade Max" );
-    mSliders[17] = new ValueSlider( smallFont, x, boxY -= space, 2,
+    mSliders[15] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "Fade Phase" );
 
+    
+    mSliders[16] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                    100, 20,
+                                    0, 20, "Duration Sec" );
+    mSliders[17] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                    100, 20,
+                                    0, 20, "Pause Sec" );
 
 
 
@@ -547,14 +549,14 @@ void EditorAnimationPage::updateAnimFromSliders() {
     r->rockPhase = mSliders[10]->getValue();
 
 
-    r->durationSec = mSliders[11]->getValue();
-    r->pauseSec = mSliders[12]->getValue();
+    r->fadeOscPerSec = mSliders[11]->getValue();
+    r->fadeHardness = mSliders[12]->getValue();
+    r->fadeMin = mSliders[13]->getValue();
+    r->fadeMax = mSliders[14]->getValue();
+    r->fadePhase = mSliders[15]->getValue();
 
-    r->fadeOscPerSec = mSliders[13]->getValue();
-    r->fadeHardness = mSliders[14]->getValue();
-    r->fadeMin = mSliders[15]->getValue();
-    r->fadeMax = mSliders[16]->getValue();
-    r->fadePhase = mSliders[17]->getValue();
+    r->durationSec = mSliders[16]->getValue();
+    r->pauseSec = mSliders[17]->getValue();
     }
 
 
@@ -606,11 +608,11 @@ void EditorAnimationPage::updateSlidersFromAnim() {
         mSliders[10]->setVisible( false );
 
         // no fade
+        mSliders[11]->setVisible( false );
+        mSliders[12]->setVisible( false );
         mSliders[13]->setVisible( false );
         mSliders[14]->setVisible( false );
         mSliders[15]->setVisible( false );
-        mSliders[16]->setVisible( false );
-        mSliders[17]->setVisible( false );
         }
     else {
         // last two sliders (rotation) are available for sprites
@@ -623,11 +625,11 @@ void EditorAnimationPage::updateSlidersFromAnim() {
         mSliders[10]->setVisible( true );
 
         // yes fade
+        mSliders[11]->setVisible( true );
+        mSliders[12]->setVisible( true );
         mSliders[13]->setVisible( true );
         mSliders[14]->setVisible( true );
         mSliders[15]->setVisible( true );
-        mSliders[16]->setVisible( true );
-        mSliders[17]->setVisible( true );
         }
     
     
@@ -648,14 +650,15 @@ void EditorAnimationPage::updateSlidersFromAnim() {
     mSliders[9]->setValue( r->rockAmp );
     mSliders[10]->setValue( r->rockPhase );
     
-    mSliders[11]->setValue( r->durationSec );
-    mSliders[12]->setValue( r->pauseSec );
 
-    mSliders[13]->setValue( r->fadeOscPerSec );
-    mSliders[14]->setValue( r->fadeHardness );
-    mSliders[15]->setValue( r->fadeMin );
-    mSliders[16]->setValue( r->fadeMax );
-    mSliders[17]->setValue( r->fadePhase );
+    mSliders[11]->setValue( r->fadeOscPerSec );
+    mSliders[12]->setValue( r->fadeHardness );
+    mSliders[13]->setValue( r->fadeMin );
+    mSliders[14]->setValue( r->fadeMax );
+    mSliders[15]->setValue( r->fadePhase );
+
+    mSliders[16]->setValue( r->durationSec );
+    mSliders[17]->setValue( r->pauseSec );
     }
 
     
