@@ -2220,8 +2220,13 @@ double getClosestObjectPart( ObjectRecord *inObject,
         SpriteRecord *sr = getSpriteRecord( inObject->sprites[i] );
         
         
+        if( inFlip ) {
+            offset = rotate( offset, -2 * M_PI * inObject->spriteRot[i] );
+            }
+        else {
+            offset = rotate( offset, 2 * M_PI * inObject->spriteRot[i] );
+            }
         
-        offset = rotate( offset, 2 * M_PI * inObject->spriteRot[i] );
         
         if( inObject->spriteHFlip[i] ) {
             offset.x *= -1;

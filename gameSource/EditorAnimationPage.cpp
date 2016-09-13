@@ -1546,7 +1546,7 @@ int EditorAnimationPage::getClosestSpriteOrSlot( float inX, float inY ) {
                               NULL,
                               age,
                               -1,
-                              false,
+                              mFlipDraw,
                               mousePos.x, mousePos.y,
                               &pickedSprite,
                               &pickedClothing,
