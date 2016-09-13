@@ -288,7 +288,7 @@ static File *getFile( int inID, AnimType inType ) {
 
 
 AnimationRecord *getAnimation( int inID, AnimType inType ) {
-    if( inID < mapSize && inType < ground2 ) {
+    if( inID < mapSize && inType < endAnimType && inType != ground2 ) {
         return idMap[inID][inType];
         }
     return NULL;

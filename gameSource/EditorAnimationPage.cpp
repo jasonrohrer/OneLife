@@ -170,13 +170,16 @@ EditorAnimationPage::EditorAnimationPage()
     mCheckboxNames[0] = "Ground";
     mCheckboxNames[1] = "Held";
     mCheckboxNames[2] = "Moving";
+    mCheckboxNames[3] = "Eating";
 
     mCheckboxAnimTypes[0] = ground;
     mCheckboxAnimTypes[1] = held;
     mCheckboxAnimTypes[2] = moving;
+    mCheckboxAnimTypes[3] = eating;
 
     mCheckboxes[0]->setToggled( true );
-
+    
+    mCheckboxes[3]->setVisible( false );
 
 
     boxY = 220;
@@ -1021,9 +1024,14 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 if( getObject( mCurrentObjectID )->person ) {
                     mPersonAgeSlider.setValue( defaultAge );
                     mPersonAgeSlider.setVisible( true );
+                    mCheckboxes[3]->setVisible( true );
                     }
                 else {
                     mPersonAgeSlider.setVisible( false );
+                    if( mCheckboxes[3]->getToggled() ) {
+                        actionPerformed( mCheckboxes[0] );
+                        }
+                    mCheckboxes[3]->setVisible( false );
                     }
                 }
             }
@@ -1380,11 +1388,13 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
     setDrawColor( 1, 1, 1, 1 );
 
     for( int i=0; i<NUM_ANIM_CHECKBOXES; i++ ) {
-        pos = mCheckboxes[i]->getPosition();
+        if( mCheckboxes[i]->isVisible() ) {
+            pos = mCheckboxes[i]->getPosition();
     
-        pos.x -= 20;
-        
-        smallFont->drawString( mCheckboxNames[i], pos, alignRight );
+            pos.x -= 20;
+            
+            smallFont->drawString( mCheckboxNames[i], pos, alignRight );
+            }
         }
 
     if( mReverseRotationCheckbox.isVisible() ) {

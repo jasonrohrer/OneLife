@@ -26,7 +26,7 @@
 #include "keyLegend.h"
 
 
-#define NUM_ANIM_CHECKBOXES 3
+#define NUM_ANIM_CHECKBOXES 4
 #define NUM_ANIM_SLIDERS 18
 
 

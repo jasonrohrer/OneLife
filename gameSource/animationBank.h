@@ -22,6 +22,8 @@ typedef enum AnimType {
     // animation bank or modified by the editor, and that it will
     // be automatically replaced by ground when drawn
     ground2,
+    // animation that only applies to a person as they eat something
+    eating,
     endAnimType
     } AnimType;
 

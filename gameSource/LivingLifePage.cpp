@@ -4718,7 +4718,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
             if( !modClick ) {
                 
-
+                if( ourLiveObject->holdingID > 0 &&
+                    getObject( ourLiveObject->holdingID )->foodValue > 0 ) {
+                    addNewAnimPlayerOnly( ourLiveObject, eating );
+                    }
+                
                 nextActionMessageToSend = 
                     autoSprintf( "SELF %d %d %d#",
                                  clickDestX, clickDestY, hitSelfClothingIndex );
