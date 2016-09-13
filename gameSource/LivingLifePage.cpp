@@ -2751,7 +2751,7 @@ void LivingLifePage::step() {
                             mMapContainedStacks[mapI].deleteAll();
                             }
 
-                        if( old == 0 && mMap[mapI] != 0 ) {
+                        if( old != mMap[mapI] && mMap[mapI] != 0 ) {
                             // new placement
                             
                             printf( "New placement, responsible=%d\n",
@@ -3041,7 +3041,7 @@ void LivingLifePage::step() {
                                 addNewAnimPlayerOnly( existing, ground );
                                 }
                             }
-                        else if( oldHeld == 0 ) {
+                        else if( oldHeld != existing->holdingID ) {
                             // holding something new
 
                             // start new anim

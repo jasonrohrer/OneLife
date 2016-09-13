@@ -3708,8 +3708,11 @@ int main() {
                                         int targetSlots = 
                                             getNumContainerSlots( target );
                                         
+                                        ObjectRecord *targetObj =
+                                            getObject( target );
+
                                         int slotSize =
-                                            getObject( target )->slotSize;
+                                            targetObj->slotSize;
                                         
                                         int containSize =
                                             getObject( 
@@ -3750,6 +3753,53 @@ int main() {
                                             ChangePosition p = { m.x, m.y, 
                                                          false };
                                             mapChangesPos.push_back( p );
+                                            }
+                                        else if( targetSlots == 0 &&
+                                                 ! targetObj->permanent ) {
+                                            // drop onto a spot where
+                                            // something exists, and it's
+                                            // not a container
+
+                                            // swap what we're holding for
+                                            // target
+                                            
+                                            unsigned int newHoldingEtaDecay = 
+                                                getEtaDecay( m.x, m.y );
+
+                                            int *newContainedIDs = 
+                                                getContained( 
+                                                    m.x, m.y,
+                                                    &( nextPlayer->
+                                                       numContained ) );
+                                    
+                                            int numCont;
+                                            unsigned 
+                                                int *newContainedEtaDecays =
+                                                getContainedEtaDecay( 
+                                                    m.x, m.y,
+                                                    &numCont );
+                                            
+                                            clearAllContained( m.x, m.y );
+                                            setMapObject( m.x, m.y, 0 );
+                                    
+                                            handleDrop(
+                                             m.x, m.y, nextPlayer,
+                                             &mapChanges, &mapChangesPos,
+                                             &playerIndicesToSendUpdatesAbout );
+                                    
+                                            
+                                            nextPlayer->holdingID = target;
+                                            nextPlayer->holdingEtaDecay =
+                                                newHoldingEtaDecay;
+                                            nextPlayer->containedIDs =
+                                                newContainedIDs;
+                                            nextPlayer->containedEtaDecays =
+                                                newContainedEtaDecays;
+                                            
+                                    
+                                            nextPlayer->heldOriginValid = 1;
+                                            nextPlayer->heldOriginX = m.x;
+                                            nextPlayer->heldOriginY = m.y;
                                             }
                                         }
                                     else {
