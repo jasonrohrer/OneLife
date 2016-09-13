@@ -534,8 +534,7 @@ char isAnimFadeNeeded( int inObjectID,
         if( inCurR->spriteAnim[i].fadeOscPerSec > 0 ) return true;
 
         if( inCurR->spriteAnim[i].fadeMax != 1 &&
-            inCurR->spriteAnim[i].fadePhase != 0 &&
-            inCurR->spriteAnim[i].fadePhase != 0.5 ) return true;
+            inCurR->spriteAnim[i].fadePhase != 0 ) return true;
 
 
 
@@ -558,8 +557,7 @@ char isAnimFadeNeeded( int inObjectID,
 
         
         if( inTargetR->spriteAnim[i].fadeMax != 1 &&
-            inTargetR->spriteAnim[i].fadePhase != 0 &&
-            inTargetR->spriteAnim[i].fadePhase != 0.5 ) return true;
+            inTargetR->spriteAnim[i].fadePhase != 0 ) return true;
         }
     
     
@@ -961,12 +959,14 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             else {
                 double absSinVal = fabs( sinVal );
                 
-                hardVersion = ( sinVal / absSinVal ) * 
-                    pow( absSinVal, 
-                         1.0 / ( ( hardness + 1 ) * 100 ) ); 
-                printf( "hardness = %f, "
-                        "sinVal = %f, absSinVal = %f, hard version = %f\n", 
-                        hardness, sinVal, absSinVal, hardVersion );
+                if( absSinVal != 0 ) {
+                    hardVersion = ( sinVal / absSinVal ) * 
+                        pow( absSinVal, 
+                             1.0 / ( hardness * 10 + 1 ) );
+                    }
+                else {
+                    hardVersion = 0;
+                    }
                 }
 
             double fade =
@@ -1035,10 +1035,16 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                         }
                     }
                 else {
-                    double absSinValB = abs( sinValB );
+                    double absSinValB = fabs( sinValB );
                 
-                    hardVersionB = ( sinValB / absSinValB ) * 
-                        pow( absSinValB, 1.0 / ( hardnessB * 100 ) ); 
+                    if( absSinValB != 0 ) {
+                        hardVersionB = ( sinValB / absSinValB ) * 
+                            pow( absSinValB, 
+                             1.0 / ( hardnessB * 10 + 1 ) );
+                        }
+                    else {
+                        hardVersionB = 0;
+                        }
                     }
 
                 double fadeB =
