@@ -533,7 +533,7 @@ char isAnimFadeNeeded( int inObjectID,
 
         if( inCurR->spriteAnim[i].fadeOscPerSec > 0 ) return true;
 
-        if( inCurR->spriteAnim[i].fadeMax != 1 &&
+        if( inCurR->spriteAnim[i].fadeMax != 1 ||
             inCurR->spriteAnim[i].fadePhase != 0 ) return true;
 
 
@@ -554,9 +554,9 @@ char isAnimFadeNeeded( int inObjectID,
         
         if( inTargetR->spriteAnim[i].rotPerSec != 0 || 
             inTargetR->spriteAnim[i].rotPhase != 0 ) return true;
-
         
-        if( inTargetR->spriteAnim[i].fadeMax != 1 &&
+        
+        if( inTargetR->spriteAnim[i].fadeMax != 1 ||
             inTargetR->spriteAnim[i].fadePhase != 0 ) return true;
         }
     
