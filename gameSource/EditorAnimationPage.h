@@ -145,9 +145,14 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         ObjectRecord **mNextShoeToFill;
         ObjectRecord **mOtherShoe;
         
-
-
         TextButton mClearClothingButton;
+
+
+        TextButton mPickHeldButton;
+        char mPickingHeld;
+        int mHeldID;
+
+        TextButton mClearHeldButton;
 
         
 

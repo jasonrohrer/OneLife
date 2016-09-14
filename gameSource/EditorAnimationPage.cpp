@@ -65,6 +65,10 @@ EditorAnimationPage::EditorAnimationPage()
           mPickClothingButton( smallFont, 180, 60, "+ Clothes" ),
           mPickingClothing( false ),
           mClearClothingButton( smallFont, 180, 120, "X Clothes" ),
+          mPickHeldButton( smallFont, 180, -100, "+ Held" ),
+          mPickingHeld( false ),
+          mHeldID( -1 ),
+          mClearHeldButton( smallFont, 180, -140, "X Held" ),
           mCopyButton( smallFont, -290, 230, "Copy" ),
           mCopyChainButton( smallFont, -290, 270, "Copy Child Chain" ),
           mCopyWalkButton( smallFont, -160, 270, "Copy Walk" ),
@@ -113,6 +117,8 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mPickClothingButton );
     addComponent( &mClearClothingButton );
     
+    addComponent( &mPickHeldButton );
+    addComponent( &mClearHeldButton );
 
     addComponent( &mCopyButton );
     addComponent( &mCopyChainButton );
@@ -138,6 +144,9 @@ EditorAnimationPage::EditorAnimationPage()
     mPickClothingButton.addActionListener( this );
     mClearClothingButton.addActionListener( this );
 
+    mPickHeldButton.addActionListener( this );
+    mClearHeldButton.addActionListener( this );
+
     mCopyButton.addActionListener( this );
     mCopyChainButton.addActionListener( this );
     mCopyWalkButton.addActionListener( this );
@@ -154,6 +163,8 @@ EditorAnimationPage::EditorAnimationPage()
     mPickClothingButton.setVisible( false );
     mClearClothingButton.setVisible( false );
     
+    mPickHeldButton.setVisible( false );
+    mClearHeldButton.setVisible( false );
 
     checkNextPrevVisible();
     
@@ -469,6 +480,8 @@ void EditorAnimationPage::checkNextPrevVisible() {
         mPickSlotDemoButton.setVisible( false );
         mPickClothingButton.setVisible( false );
         
+        mPickHeldButton.setVisible( false );
+        
         mCopyChainButton.setVisible( false );
         mCopyWalkButton.setVisible( false );
         return;
@@ -501,10 +514,15 @@ void EditorAnimationPage::checkNextPrevVisible() {
 
     if( r->person ) {
         mPickClothingButton.setVisible( true );
+        mPickHeldButton.setVisible( true );
         }
     else {
         mPickClothingButton.setVisible( false );
         mClearClothingButton.setVisible( false );
+        mPickHeldButton.setVisible( false );
+        mClearHeldButton.setVisible( false );
+        
+        mHeldID = -1;
         }
     
     if( r->numSlots > 0 ) {
@@ -1010,6 +1028,13 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                         
                 mPickClothingButton.setVisible( true );
                 }
+            else if( mPickingHeld ) {
+                mHeldID = newPickID;
+
+                ObjectRecord *obj = getObject( mHeldID );
+                mCurrentObjectFrameRateFactor =  
+                    frameRateFactor * obj->speedMult;
+                }
             else {
                 mCurrentObjectID = newPickID;
             
@@ -1039,6 +1064,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mPickSlotDemoButton ) {
         mPickingSlotDemo = true;
         mPickingClothing = false;
+        mPickingHeld = false;
         mCurrentSlotDemoID = -1;
         mPickSlotDemoButton.setVisible( false );
         mClearSlotDemoButton.setVisible( true );
@@ -1052,6 +1078,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mPickClothingButton ) {
         mPickingSlotDemo = false;
         mPickingClothing = true;
+        mPickingHeld = false;
         mPickClothingButton.setVisible( false );
         mClearClothingButton.setVisible( true );
         }
@@ -1061,6 +1088,23 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mClearClothingButton.setVisible( false );
         
         clearClothing();
+        }
+    else if( inTarget == &mPickHeldButton ) {
+        mPickingSlotDemo = false;
+        mPickingClothing = false;
+        mPickingHeld = true;
+        mPickHeldButton.setVisible( false );
+        mClearHeldButton.setVisible( true );
+        }
+    else if( inTarget == &mClearHeldButton ) {
+        mPickingHeld = false;
+        mPickClothingButton.setVisible( true );
+        mPickHeldButton.setVisible( true );
+        mClearHeldButton.setVisible( false );
+        mHeldID = -1;
+        
+        ObjectRecord *obj = getObject( mCurrentObjectID );
+        mCurrentObjectFrameRateFactor =  frameRateFactor * obj->speedMult;
         }
     else if( inTarget == &mNextSpriteOrSlotButton ) {
         mCurrentSpriteOrSlot ++;
@@ -1331,21 +1375,120 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 obj->numSlots, demoSlots );
                 }
             else {
-                drawObjectAnim( mCurrentObjectID, 
+                
+                int hideClosestArm = 0;
+                char hideAllLimbs = false;
+                
+                ObjectRecord *heldObject = NULL;
+                
+                AnimationRecord *frozenArmAnim = NULL;
+
+                if( mHeldID != -1 ) {
+                    heldObject = getObject( mHeldID );
+                    }
+                
+
+                if( heldObject != NULL ) {
+                    
+                    if( heldObject->person ) {
+                        hideClosestArm = true;
+                        }
+                    else if( heldObject->heldInHand ) {
+                        hideClosestArm = 0;
+                        }
+                    else if( heldObject->rideable ) {
+                        hideClosestArm = 0;
+                        hideAllLimbs = true;
+                        frozenArmAnim = mCurrentAnim[ moving ];
+                        }
+                    else {
+                        // find closest arm
+                        if( heldObject->heldOffset.x > 0 ) {
+                            hideClosestArm = 1;
+                            }
+                        else {
+                            hideClosestArm = -1;
+                            }
+                        }
+                    }
+
+
+                HoldingPos holdingPos = 
+                    drawObjectAnim( mCurrentObjectID, 
                                 anim, frameTime,
                                 animFade,
                                 fadeTargetAnim, fadeTargetFrameTime, 
                                 frozenRotFrameTime,
                                 &mFrozenRotFrameCountUsed,
                                 animRotFrozen,
-                                NULL,
-                                NULL,
+                                frozenArmAnim,
+                                frozenArmAnim,
                                 pos, mFlipDraw, age,
-                                false,
-                                false,
+                                hideClosestArm,
+                                hideAllLimbs,
                                 false,
                                 mClothingSet,
                                 NULL );
+                
+                doublePair holdPos;
+                
+                if( holdingPos.valid ) {
+                    holdPos = holdingPos.pos;
+                    }
+                else {
+                    holdPos = pos;
+                    }
+
+        
+
+        
+                if( heldObject != NULL ) {
+                    
+                    doublePair heldOffset = heldObject->heldOffset;
+                        
+                    if( holdingPos.valid && holdingPos.rot != 0  &&
+                        ! heldObject->rideable ) {
+                            
+                        if( mFlipDraw ) {
+                            heldOffset = 
+                                rotate( heldOffset, 
+                                        2 * M_PI * holdingPos.rot );
+                            }
+                        else {
+                            heldOffset = 
+                                rotate( heldOffset, 
+                                        -2 * M_PI * holdingPos.rot );
+                            }
+                        }
+            
+            
+                    heldOffset = sub( heldOffset, 
+                                      getObjectCenterOffset( heldObject ) );
+
+                    if( mFlipDraw ) {
+                        heldOffset.x *= -1;
+                        }
+            
+
+                    holdPos.x += heldOffset.x;
+                    holdPos.y += heldOffset.y;
+                    
+
+                    drawObjectAnim( mHeldID, 
+                                    t, frameTime,
+                                    animFade, 
+                                    mCurrentType, fadeTargetFrameTime, 
+                                    frozenRotFrameTime,
+                                    &mFrozenRotFrameCountUsed,
+                                    moving,
+                                    moving,
+                                    holdPos, mFlipDraw, -1,
+                                    false,
+                                    false,
+                                    false,
+                                    getEmptyClothingSet(),
+                                    NULL );
+                    }
                 }
             }
         else {
