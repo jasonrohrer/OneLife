@@ -3000,7 +3000,9 @@ int main() {
                                             = newHeldSlots;
                                         }
                                     
-                                    if( newHeldSlots > 0 ) {
+                                    if( newHeldSlots > 0 && 
+                                        oldHolding != 0 ) {
+                                        
                                         restretchDecays( 
                                             newHeldSlots,
                                             nextPlayer->containedEtaDecays,
