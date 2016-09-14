@@ -61,6 +61,7 @@ typedef struct LiveObject {
         char heldPosOverride;
         char heldPosOverrideAlmostOver;
         doublePair heldObjectPos;
+        double heldObjectRot;
 
         AnimType curAnim;
         AnimType lastAnim;
@@ -248,7 +249,7 @@ class LivingLifePage : public GamePage {
         // 0,0 for most, except for a newly-dropped object
         // as it slides back into grid position
         doublePair *mMapDropOffsets;
-        
+        double *mMapDropRot;
 
         // true if left-right flipped (to match last drop)
         // not tracked on server, so resets when object goes off of screen

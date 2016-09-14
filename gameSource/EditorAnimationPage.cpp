@@ -1366,7 +1366,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 animRotFrozen,
                                 NULL,
                                 NULL,
-                                pos, mFlipDraw, age,
+                                pos, 0, mFlipDraw, age,
                                 false,
                                 false,
                                 false,
@@ -1423,7 +1423,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 animRotFrozen,
                                 frozenArmAnim,
                                 frozenArmAnim,
-                                pos, mFlipDraw, age,
+                                pos, 0, mFlipDraw, age,
                                 hideClosestArm,
                                 hideAllLimbs,
                                 false,
@@ -1445,7 +1445,13 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                 if( heldObject != NULL ) {
                     
                     doublePair heldOffset = heldObject->heldOffset;
-                        
+            
+                    
+                    heldOffset = sub( heldOffset, 
+                                      getObjectCenterOffset( heldObject ) );
+                    
+                    double heldRot = 0;
+                    
                     if( holdingPos.valid && holdingPos.rot != 0  &&
                         ! heldObject->rideable ) {
                             
@@ -1459,12 +1465,14 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 rotate( heldOffset, 
                                         -2 * M_PI * holdingPos.rot );
                             }
+
+                        if( ! heldObject->person ) {
+                            // baby doesn't rotate when held
+                            heldRot = holdingPos.rot;
+                            }
                         }
             
             
-                    heldOffset = sub( heldOffset, 
-                                      getObjectCenterOffset( heldObject ) );
-
                     if( mFlipDraw ) {
                         heldOffset.x *= -1;
                         }
@@ -1473,7 +1481,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                     holdPos.x += heldOffset.x;
                     holdPos.y += heldOffset.y;
                     
-
+                    
                     drawObjectAnim( mHeldID, 
                                     t, frameTime,
                                     animFade, 
@@ -1482,7 +1490,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                     &mFrozenRotFrameCountUsed,
                                     moving,
                                     moving,
-                                    holdPos, mFlipDraw, -1,
+                                    holdPos, heldRot, mFlipDraw, -1,
                                     false,
                                     false,
                                     false,

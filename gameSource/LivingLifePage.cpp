@@ -632,6 +632,7 @@ LivingLifePage::LivingLifePage()
     mMapLastAnimFade =  new double[ mMapD * mMapD ];
     
     mMapDropOffsets = new doublePair[ mMapD * mMapD ];
+    mMapDropRot = new double[ mMapD * mMapD ];
     mMapTileFlips = new char[ mMapD * mMapD ];
 
     for( int i=0; i<mMapD *mMapD; i++ ) {
@@ -652,6 +653,7 @@ LivingLifePage::LivingLifePage()
 
         mMapDropOffsets[i].x = 0;
         mMapDropOffsets[i].y = 0;
+        mMapDropRot[i] = 0;
         
         mMapTileFlips[i] = false;
         }
@@ -961,6 +963,7 @@ LivingLifePage::~LivingLifePage() {
     delete [] mMapLastAnimFade;
     
     delete [] mMapDropOffsets;
+    delete [] mMapDropRot;
 
     delete [] mMapTileFlips;
     
@@ -1169,7 +1172,8 @@ void LivingLifePage::drawMapCell( int inMapI,
                 
 
         doublePair pos = { (double)inScreenX, (double)inScreenY };
-
+        double rot = 0;
+        
         if( mMapDropOffsets[ inMapI ].x != 0 ||
             mMapDropOffsets[ inMapI ].y != 0 ) {
                     
@@ -1180,6 +1184,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                                     mMapDropOffsets[ inMapI ] );
                     
             double step = frameRateFactor * 0.0625;
+            double rotStep = frameRateFactor * 0.03125;
                     
             if( length( delta ) < step ) {
                         
@@ -1192,10 +1197,36 @@ void LivingLifePage::drawMapCell( int inMapI,
                          mult( normalize( delta ), step ) );
                 }
 
+            
+            double rotDelta = 0 - mMapDropRot[ inMapI ];
+            
+            if( rotDelta > 0.5 ) {
+                rotDelta = rotDelta - 1;
+                }
+            else if( rotDelta < -0.5 ) {
+                rotDelta = 1 + rotDelta;
+                }
+
+            if( fabs( rotDelta ) < rotStep ) {
+                mMapDropRot[ inMapI ] = 0;
+                }
+            else {
+                double rotSign = 1;
+                if( rotDelta < 0 ) {
+                    rotSign = -1;
+                    }
+                
+                mMapDropRot[ inMapI ] = 
+                    mMapDropRot[ inMapI ] + rotSign * rotStep;
+                }
+            
+
                                         
             // step offset BEFORE applying it
             // (so we don't repeat starting position)
             pos = add( pos, mult( mMapDropOffsets[ inMapI ], CELL_D ) );
+            
+            rot = mMapDropRot[ inMapI ];
             }
                 
 
@@ -1241,7 +1272,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             &used,
                             endAnimType,
                             endAnimType,
-                            pos, mMapTileFlips[ inMapI ],
+                            pos, rot, mMapTileFlips[ inMapI ],
                             -1,
                             false, false, false,
                             getEmptyClothingSet(),
@@ -1260,7 +1291,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             &used,
                             endAnimType,
                             endAnimType,
-                            pos, 
+                            pos, rot,
                             mMapTileFlips[ inMapI ], -1,
                             false, false, false,
                             getEmptyClothingSet(), NULL );
@@ -1503,6 +1534,7 @@ void LivingLifePage::drawLiveObject(
                         frozenArmType,
                         frozenArmFadeTargetType,
                         pos,
+                        0,
                         inObj->holdingFlip,
                         age,
                         // don't actually hide body parts until
@@ -1518,6 +1550,8 @@ void LivingLifePage::drawLiveObject(
                 
     if( inObj->holdingID != 0 ) { 
         doublePair holdPos;
+        
+        double holdRot = 0;
 
         if( holdingPos.valid ) {
             holdPos = holdingPos.pos;
@@ -1532,6 +1566,9 @@ void LivingLifePage::drawLiveObject(
         if( heldObject != NULL ) {
             
             doublePair heldOffset = heldObject->heldOffset;
+
+            heldOffset = sub( heldOffset, 
+                              getObjectCenterOffset( heldObject ) );
                         
             if( holdingPos.valid && holdingPos.rot != 0  &&
                 ! heldObject->rideable ) {
@@ -1544,11 +1581,9 @@ void LivingLifePage::drawLiveObject(
                     heldOffset = rotate( heldOffset, 
                                          -2 * M_PI * holdingPos.rot );
                     }
+                holdRot = holdingPos.rot;
                 }
             
-            
-            heldOffset = sub( heldOffset, 
-                              getObjectCenterOffset( heldObject ) );
 
             if( inObj->holdingFlip ) {
                 heldOffset.x *= -1;
@@ -1564,12 +1599,22 @@ void LivingLifePage::drawLiveObject(
         holdPos = mult( holdPos, 1.0 / CELL_D );
 
         if( inObj->heldPosOverride && 
+            ! inObj->heldPosOverrideAlmostOver &&
             ! equal( holdPos, inObj->heldObjectPos ) ) {
                         
             doublePair delta = sub( holdPos, inObj->heldObjectPos );
-                        
+            double rotDelta = holdRot - inObj->heldObjectRot;
+
+            if( rotDelta > 0.5 ) {
+                rotDelta = rotDelta - 1;
+                }
+            else if( rotDelta < -0.5 ) {
+                rotDelta = 1 + rotDelta;
+                }
+
             double step = frameRateFactor * 0.0625;
-                        
+            double rotStep = frameRateFactor * 0.03125;
+            
             if( length( delta ) < step ) {
                 inObj->heldObjectPos = holdPos;
                 inObj->heldPosOverrideAlmostOver = true;
@@ -1579,9 +1624,27 @@ void LivingLifePage::drawLiveObject(
                     add( inObj->heldObjectPos,
                          mult( normalize( delta ),
                                step ) );
-                            
+                
                 holdPos = inObj->heldObjectPos;
                 }
+
+            if( fabs( rotDelta ) < rotStep ) {
+                inObj->heldObjectRot = holdRot;
+                }
+            else {
+
+                double rotDir = 1;
+                if( rotDelta < 0 ) {
+                    rotDir = -1;
+                    }
+
+                inObj->heldObjectRot =
+                    inObj->heldObjectRot + rotDir * rotStep;
+                
+                holdRot = inObj->heldObjectRot;
+                }
+
+            
             }
         else {
             inObj->heldPosOverride = false;
@@ -1590,6 +1653,7 @@ void LivingLifePage::drawLiveObject(
             // base point for smooth move when the object
             // is dropped
             inObj->heldObjectPos = holdPos;
+            inObj->heldObjectRot = holdRot;
             }
           
         doublePair worldHoldPos = holdPos;
@@ -1649,6 +1713,8 @@ void LivingLifePage::drawLiveObject(
                                 endAnimType,
                                 endAnimType,
                                 holdPos,
+                                // never apply held rot to baby
+                                0,
                                 inObj->holdingFlip,
                                 babyO->age,
                                 // don't hide baby's hands when it is held
@@ -1677,6 +1743,7 @@ void LivingLifePage::drawLiveObject(
                             endAnimType,
                             endAnimType,
                             holdPos,
+                            holdRot,
                             inObj->holdingFlip, -1, false, false, false,
                             getEmptyClothingSet(), NULL );
             }
@@ -1691,6 +1758,7 @@ void LivingLifePage::drawLiveObject(
                             endAnimType,
                             endAnimType,
                             holdPos,
+                            holdRot,
                             inObj->holdingFlip,
                             -1, false, false, false,
                             getEmptyClothingSet(),
@@ -2502,6 +2570,7 @@ void LivingLifePage::step() {
             double *newMapLastAnimFade = new double[ mMapD * mMapD ];
             
             doublePair *newMapDropOffsets = new doublePair[ mMapD * mMapD ];
+            double *newMapDropRot = new double[ mMapD * mMapD ];
             char *newMapTileFlips= new char[ mMapD * mMapD ];
 
             
@@ -2547,6 +2616,7 @@ void LivingLifePage::step() {
                     newMapLastAnimFade[i] = mMapLastAnimFade[oI];
                     newMapLastAnimFade[i] = mMapLastAnimFade[oI];
                     newMapDropOffsets[i] = mMapDropOffsets[oI];
+                    newMapDropRot[i] = mMapDropRot[oI];
 
                     newMapTileFlips[i] = mMapTileFlips[oI];
                     }
@@ -2573,6 +2643,8 @@ void LivingLifePage::step() {
                     mMapD * mMapD * sizeof( double ) );
             memcpy( mMapDropOffsets, newMapDropOffsets,
                     mMapD * mMapD * sizeof( doublePair ) );
+            memcpy( mMapDropRot, newMapDropRot,
+                    mMapD * mMapD * sizeof( double ) );
             
             memcpy( mMapTileFlips, newMapTileFlips,
                     mMapD * mMapD * sizeof( char ) );
@@ -2586,6 +2658,7 @@ void LivingLifePage::step() {
             delete [] newMapLastAnimType;
             delete [] newMapLastAnimFade;
             delete [] newMapDropOffsets;
+            delete [] newMapDropRot;
             delete [] newMapTileFlips;
             
             
@@ -2828,6 +2901,9 @@ void LivingLifePage::step() {
                                         mMapDropOffsets[mapI].y = 
                                             nextObject->heldObjectPos.y - y;
                                         
+                                        mMapDropRot[mapI] = 
+                                            nextObject->heldObjectRot;
+
                                         mMapTileFlips[mapI] =
                                             nextObject->holdingFlip;
                                         
@@ -3063,6 +3139,7 @@ void LivingLifePage::step() {
                                 existing->heldPosOverrideAlmostOver = false;
                                 existing->heldObjectPos.x = heldOriginX;
                                 existing->heldObjectPos.y = heldOriginY;
+                                existing->heldObjectRot = 0;
                                 
                                 int mapX = 
                                     heldOriginX - mMapOffsetX + mMapD / 2;
@@ -3119,6 +3196,7 @@ void LivingLifePage::step() {
                                 }
                             else {
                                 existing->heldObjectPos = existing->currentPos;
+                                existing->heldObjectRot = 0;
                                 }
                             
                             // otherwise, don't touch frame count
@@ -3331,7 +3409,8 @@ void LivingLifePage::step() {
                         o.heldPosOverride = false;
                         o.heldPosOverrideAlmostOver = false;
                         o.heldObjectPos = o.currentPos;
-                        
+                        o.heldObjectRot = 0;
+
                         o.currentSpeed = 0;
                                                 
                         o.moveTotalTime = 0;

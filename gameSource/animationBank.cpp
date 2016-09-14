@@ -675,6 +675,7 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                            AnimType inFrozenArmType,
                            AnimType inFrozenArmFadeTargetType,
                            doublePair inPos,
+                           double inRot,
                            char inFlipH,
                            double inAge,
                            int inHideClosestArm,
@@ -691,7 +692,8 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
     
 
     if( r == NULL ) {
-        return drawObject( getObject( inObjectID ), inPos, 0, inFlipH, inAge, 
+        return drawObject( getObject( inObjectID ), inPos, inRot, 
+                           inFlipH, inAge, 
                            inHideClosestArm, inHideAllLimbs, 
                            inHeldNotInPlaceYet,
                            inClothing );
@@ -718,7 +720,7 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                                rF,
                                rArm,
                                rArmFade,
-                               inPos, inFlipH, inAge, 
+                               inPos, inRot, inFlipH, inAge, 
                                inHideClosestArm, inHideAllLimbs, 
                                inHeldNotInPlaceYet,
                                inClothing,
@@ -815,7 +817,7 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                            AnimationRecord *inFrozenArmAnim,
                            AnimationRecord *inFrozenArmFadeTargetAnim,
                            doublePair inPos,
-                           char inFlipH,
+                           double inRot, char inFlipH,
                            double inAge,
                            int inHideClosestArm,
                            char inHideAllLimbs,
@@ -835,7 +837,7 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     
     if( obj->numSprites > MAX_WORKING_SPRITES ) {
         // cannot animate objects with this many sprites
-        drawObject( obj, inPos, 0, inFlipH, inAge, 
+        drawObject( obj, inPos, inRot, inFlipH, inAge, 
                     inHideClosestArm, inHideAllLimbs, inHeldNotInPlaceYet,
                     inClothing );
         return returnHoldingPos;
@@ -1337,7 +1339,11 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             rot *= -1;
             }
         
-        
+        if( inRot != 0 ) {
+            rot += inRot;
+            spritePos = rotate( spritePos, -2 * M_PI * inRot );
+            }
+            
 
         
         doublePair pos = add( spritePos, inPos );
@@ -1675,6 +1681,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      AnimType inFrozenArmType,
                      AnimType inFrozenArmFadeTargetType,
                      doublePair inPos,
+                     double inRot,
                      char inFlipH,
                      double inAge,
                      int inHideClosestArm,
@@ -1691,7 +1698,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
     AnimationRecord *r = getAnimation( inObjectID, inType );
  
     if( r == NULL ) {
-        drawObject( getObject( inObjectID ), inPos, 0, 
+        drawObject( getObject( inObjectID ), inPos, inRot, 
                     inFlipH, inAge, inHideClosestArm, inHideAllLimbs, 
                     inHeldNotInPlaceYet, inClothing,
                     inNumContained, inContainedIDs );
@@ -1715,7 +1722,7 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                         rF,
                         rArm,
                         rArmFade,
-                        inPos, inFlipH, inAge,
+                        inPos, inRot, inFlipH, inAge,
                         inHideClosestArm, inHideAllLimbs, inHeldNotInPlaceYet,
                         inClothing,
                         inClothingContained,
@@ -1736,6 +1743,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      AnimationRecord *inFrozenArmAnim,
                      AnimationRecord *inFrozenArmFadeTargetAnim,
                      doublePair inPos,
+                     double inRot,
                      char inFlipH,
                      double inAge,
                      int inHideClosestArm,
@@ -1822,8 +1830,13 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 pos.x *= -1;
                 }
   
+            if( inRot != 0 ) {
+                pos = rotate( pos, -2 * M_PI * inRot );
+                }
+            
+
             pos = add( pos, inPos );
-            drawObject( contained, pos, 0, inFlipH,
+            drawObject( contained, pos, inRot, inFlipH,
                         inAge, 0, false, false, emptyClothing );
             }
         
@@ -1837,7 +1850,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     inFrozenRotAnim,
                     inFrozenArmAnim,
                     inFrozenArmFadeTargetAnim,
-                    inPos, inFlipH,
+                    inPos, inRot, inFlipH,
                     inAge, inHideClosestArm, inHideAllLimbs, 
                     inHeldNotInPlaceYet,
                     inClothing,
