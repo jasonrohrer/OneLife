@@ -36,7 +36,7 @@ EditorAnimationPage::EditorAnimationPage()
           mSaveButton( mainFont, 0, 180, "Save" ),
           mDeleteButton( mainFont, 140, 180, "Delete" ),
           mObjectPicker( &objectPickable, +310, 100 ),
-          mPersonAgeSlider( smallFont, 0, -220, 2,
+          mPersonAgeSlider( smallFont, 0, -212, 2,
                             100, 20,
                             0, 100, "Age" ),
           mTestSpeedSlider( smallFont, 0, -170, 2,
@@ -288,6 +288,8 @@ EditorAnimationPage::EditorAnimationPage()
                             "Move layer rot anchor" );
     addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger jumps" );
     addKeyDescription( &mKeyLegend, 'f', "Flip horizontally" );
+    
+    addKeyClassDescription( &mKeyLegendB, "R-Click", "Copy animations" );
     }
 
 
@@ -1042,8 +1044,26 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                     frameRateFactor * obj->speedMult;
                 }
             else {
+                int oldID = mCurrentObjectID;
+
+                char keepOldID = false;
+
                 mCurrentObjectID = newPickID;
             
+                if( oldID != -1 &&
+                    oldID != mCurrentObjectID &&
+                    isLastMouseButtonRight() ) {
+                    // consider keeping old id and just copying all animations
+                    ObjectRecord *oldObj = getObject( oldID );
+                    ObjectRecord *newObj = getObject( mCurrentObjectID );
+                    
+                    if( oldObj->numSprites == newObj->numSprites &&
+                        oldObj->numSlots == newObj->numSlots ) {
+                        keepOldID = true;
+                        }    
+                    }
+                
+
                 mCurrentSpriteOrSlot = 0;
                 
                 clearClothing();
@@ -1051,6 +1071,14 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 checkNextPrevVisible();
                 
                 populateCurrentAnim();
+
+                if( keepOldID ) {
+                    mCurrentObjectID = oldID;
+                    
+                    for( int i=0; i<endAnimType; i++ ) {
+                        mCurrentAnim[ i ]->objectID = mCurrentObjectID;
+                        }
+                    }
 
                 if( getObject( mCurrentObjectID )->person ) {
                     mPersonAgeSlider.setValue( defaultAge );
@@ -1598,7 +1626,10 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
         smallFont->drawString( string, pos, alignLeft );
         delete [] string;
     
-
+        pos.y += 28;
+        smallFont->drawString( getObject( mCurrentObjectID )->description,
+                               pos, alignLeft );
+        
         if( mCurrentSpriteOrSlot < anim->numSprites ) {
             doublePair legendPos = mObjectEditorButton.getPosition();
             
@@ -1607,6 +1638,11 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
             
             drawKeyLegend( &mKeyLegend, legendPos );
             }
+
+        doublePair legendPos = mObjectPicker.getPosition();
+        legendPos.y -= 255;
+
+        drawKeyLegend( &mKeyLegendB, legendPos, alignCenter );
         }
     
 

@@ -211,7 +211,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
             char *outIsSprite = NULL );
         
 
-        KeyLegend mKeyLegend;
+        KeyLegend mKeyLegend, mKeyLegendB;
     };
 
 
