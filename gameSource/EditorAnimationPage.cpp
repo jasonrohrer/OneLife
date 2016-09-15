@@ -284,7 +284,9 @@ EditorAnimationPage::EditorAnimationPage()
     mNextShoeToFill = &( mClothingSet.backShoe );
     mOtherShoe = &( mClothingSet.frontShoe );
 
-    addKeyClassDescription( &mKeyLegend, "R-Click", "Move layer rot anchor" );
+    addKeyClassDescription( &mKeyLegend, "R-Click/arrows", 
+                            "Move layer rot anchor" );
+    addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger jumps" );
     }
 
 
@@ -1846,7 +1848,13 @@ void EditorAnimationPage::specialKeyDown( int inKeyCode ) {
     if( isCommandKeyDown() ) {
         offset = 5;
         }
-    
+    if( isShiftKeyDown() ) {
+        offset = 10;
+        }
+    if( isCommandKeyDown() && isShiftKeyDown() ) {
+        offset = 20;
+        }
+
     if( mCurrentObjectID != -1 ) {
         ObjectRecord *obj = getObject( mCurrentObjectID );
 
