@@ -3656,18 +3656,30 @@ int main() {
                                          m.x == nextPlayer->xd &&
                                          m.y == nextPlayer->yd  &&
                                          nextPlayer->holdingID > 0 ) {
-                                        // drop into own clothing
+                                    
+                                    // drop into own clothing
                                     ObjectRecord *cObj = 
                                         clothingByIndex( 
                                             nextPlayer->clothing,
                                             m.c );
                                     
-                                    if( cObj != NULL ) {
+                                    if( cObj != NULL &&
+                                        isContainable( 
+                                            nextPlayer->holdingID ) ) {
+                                        
                                         int oldNum =
                                             nextPlayer->
                                             clothingContained[m.c].size();
                                         
-                                        if( oldNum < cObj->numSlots ) {
+                                        int slotSize =
+                                            cObj->slotSize;
+                                        
+                                        int containSize =
+                                            getObject( nextPlayer->holdingID )->
+                                            containSize;
+    
+                                        if( oldNum < cObj->numSlots &&
+                                            containSize <= slotSize ) {
                                             // room
                                             nextPlayer->clothingContained[m.c].
                                                 push_back( 
