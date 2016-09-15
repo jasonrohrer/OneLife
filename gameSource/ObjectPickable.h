@@ -72,6 +72,9 @@ class ObjectPickable : public Pickable {
             transPage->clearUseOfObject( inID );
             animPage->clearUseOfObject( inID );
             deleteObjectFromBank( inID );
+            for( int i=0; i<endAnimType; i++ ) {
+                clearAnimation( inID, (AnimType)i );
+                }
             }
 
 
