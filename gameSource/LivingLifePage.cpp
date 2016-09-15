@@ -1569,6 +1569,10 @@ void LivingLifePage::drawLiveObject(
 
             heldOffset = sub( heldOffset, 
                               getObjectCenterOffset( heldObject ) );
+
+            if( inObj->holdingFlip ) {
+                heldOffset.x *= -1;
+                }
                         
             if( holdingPos.valid && holdingPos.rot != 0  &&
                 ! heldObject->rideable ) {
@@ -1581,13 +1585,16 @@ void LivingLifePage::drawLiveObject(
                     heldOffset = rotate( heldOffset, 
                                          -2 * M_PI * holdingPos.rot );
                     }
-                holdRot = holdingPos.rot;
+                if( inObj->holdingFlip ) {
+                    holdRot = -holdingPos.rot;
+                    }
+                else {        
+                    holdRot = holdingPos.rot;
+                    }
                 }
             
+            
 
-            if( inObj->holdingFlip ) {
-                heldOffset.x *= -1;
-                }
             
 
             holdPos.x += heldOffset.x;
