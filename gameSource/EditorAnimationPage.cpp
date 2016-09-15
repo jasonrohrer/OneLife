@@ -1450,11 +1450,15 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                     heldOffset = sub( heldOffset, 
                                       getObjectCenterOffset( heldObject ) );
                     
+                    if( mFlipDraw ) {
+                        heldOffset.x *= -1;
+                        }
+
                     double heldRot = 0;
                     
                     if( holdingPos.valid && holdingPos.rot != 0  &&
                         ! heldObject->rideable ) {
-                            
+                        
                         if( mFlipDraw ) {
                             heldOffset = 
                                 rotate( heldOffset, 
@@ -1465,17 +1469,20 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 rotate( heldOffset, 
                                         -2 * M_PI * holdingPos.rot );
                             }
-
+                        
                         if( ! heldObject->person ) {
                             // baby doesn't rotate when held
-                            heldRot = holdingPos.rot;
+                        
+                            if( mFlipDraw ) {
+                                heldRot = -holdingPos.rot;
+                                }
+                            else {
+                                heldRot = holdingPos.rot;
+                                }
                             }
                         }
             
             
-                    if( mFlipDraw ) {
-                        heldOffset.x *= -1;
-                        }
             
 
                     holdPos.x += heldOffset.x;

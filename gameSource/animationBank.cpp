@@ -1378,13 +1378,22 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
             if( inFlipH ) {
                 offset.x *= -1;
+                backShoeRot = -rot - obj->spriteRot[i];
+                }
+            else {
+                backShoeRot = rot - obj->spriteRot[i];
                 }
             
-            backShoeRot = rot - obj->spriteRot[i];
-
             if( backShoeRot != 0 ) {
-                offset = rotate( offset, -2 * M_PI * backShoeRot );
+                if( inFlipH ) {      
+                    offset = rotate( offset, 2 * M_PI * backShoeRot );
+                    backShoeRot *= -1;
+                    }
+                else { 
+                    offset = rotate( offset, -2 * M_PI * backShoeRot );
+                    }
                 }
+            
 
             doublePair cPos = add( spritePos, offset );
 
@@ -1401,12 +1410,20 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             
                 if( inFlipH ) {
                     offset.x *= -1;
+                    tunicRot = -rot - obj->spriteRot[i];
+                    }
+                else {
+                    tunicRot = rot - obj->spriteRot[i];
                     }
                 
-                tunicRot = rot - obj->spriteRot[i];
-            
                 if( tunicRot != 0 ) {
-                    offset = rotate( offset, -2 * M_PI * tunicRot );
+                    if( inFlipH ) {
+                        offset = rotate( offset, 2 * M_PI * tunicRot );
+                        tunicRot *= -1;
+                        }
+                    else {
+                        offset = rotate( offset, -2 * M_PI * tunicRot );
+                        }
                     }
                 
             
@@ -1422,13 +1439,22 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             
                 if( inFlipH ) {
                     offset.x *= -1;
+                    bottomRot = -rot - obj->spriteRot[i];
+                    }
+                else {
+                    bottomRot = rot - obj->spriteRot[i];
                     }
                 
-                bottomRot = rot - obj->spriteRot[i];
-            
                 if( bottomRot != 0 ) {
-                    offset = rotate( offset, -2 * M_PI * bottomRot );
+                    if( inFlipH ) {
+                        offset = rotate( offset, 2 * M_PI * bottomRot );
+                        bottomRot *= -1;
+                        }
+                    else {
+                        offset = rotate( offset, -2 * M_PI * bottomRot );
+                        }
                     }
+                
                 
             
                 doublePair cPos = add( spritePos, offset );
@@ -1443,12 +1469,20 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             
                 if( inFlipH ) {
                     offset.x *= -1;
+                    backpackRot = -rot - obj->spriteRot[i];
+                    }
+                else {
+                    backpackRot = rot - obj->spriteRot[i];
                     }
                 
-                backpackRot = rot - obj->spriteRot[i];
-            
                 if( backpackRot != 0 ) {
-                    offset = rotate( offset, -2 * M_PI * backpackRot );
+                    if( inFlipH ) {
+                        offset = rotate( offset, 2 * M_PI * backpackRot );
+                        backpackRot *= -1;
+                        }
+                    else {
+                        offset = rotate( offset, -2 * M_PI * backpackRot );
+                        }
                     }
                 
             
@@ -1521,14 +1555,21 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 
             if( inFlipH ) {
                 offset.x *= -1;
+                frontShoeRot = -rot - obj->spriteRot[i];
+                }
+            else {
+                frontShoeRot = rot - obj->spriteRot[i];
                 }
             
-            frontShoeRot = rot - obj->spriteRot[i];
-
             if( frontShoeRot != 0 ) {
-                offset = rotate( offset, -2 * M_PI * frontShoeRot );
+                if( inFlipH ) {
+                    offset = rotate( offset, 2 * M_PI * frontShoeRot );
+                    frontShoeRot *= -1;
+                    }
+                else {
+                    offset = rotate( offset, -2 * M_PI * frontShoeRot );
+                    }
                 }
-                
 
             doublePair cPos = add( spritePos, offset );
 
@@ -1579,13 +1620,25 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 returnHoldingPos.valid = true;
                 // return screen pos for hand, which may be flipped, etc.
                 returnHoldingPos.pos = pos;
-                returnHoldingPos.rot = rot;
+                
+                if( inFlipH ) {
+                    returnHoldingPos.rot = -rot - obj->spriteRot[i];
+                    }
+                else {
+                    returnHoldingPos.rot = rot - obj->spriteRot[i];
+                    }
                 }
             else if( i == bodyIndex && inHideClosestArm != 0 ) {
                 returnHoldingPos.valid = true;
                 // return screen pos for body, which may be flipped, etc.
                 returnHoldingPos.pos = pos;
-                returnHoldingPos.rot = rot;
+                
+                if( inFlipH ) {
+                    returnHoldingPos.rot = -rot - obj->spriteRot[i];
+                    }
+                else {
+                    returnHoldingPos.rot = rot - obj->spriteRot[i];
+                    }
                 }
             
             }
