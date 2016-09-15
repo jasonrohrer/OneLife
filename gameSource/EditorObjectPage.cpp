@@ -474,7 +474,7 @@ EditorObjectPage::EditorObjectPage()
 
     addKeyClassDescription( &mKeyLegendB, "R-Click", "Layer parent" );
     addKeyClassDescription( &mKeyLegendB, "Bkspce", "Remv layer" );
-
+    addKeyDescription( &mKeyLegendB, 'd', "Dupe Layer" );
 
     addKeyClassDescription( &mKeyLegendC, "R-Click", "Replace layer" );
     
@@ -759,6 +759,138 @@ static void recursiveRotate( ObjectRecord *inObject,
     
     }
 
+
+
+void EditorObjectPage::addNewSprite( int inSpriteID ) {
+    int newNumSprites = mCurrentObject.numSprites + 1;
+            
+    int *newSprites = new int[ newNumSprites ];
+    memcpy( newSprites, mCurrentObject.sprites, 
+            mCurrentObject.numSprites * sizeof( int ) );
+            
+    doublePair *newSpritePos = new doublePair[ newNumSprites ];
+    memcpy( newSpritePos, mCurrentObject.spritePos, 
+            mCurrentObject.numSprites * sizeof( doublePair ) );
+
+    double *newSpriteRot = new double[ newNumSprites ];
+    memcpy( newSpriteRot, mCurrentObject.spriteRot, 
+            mCurrentObject.numSprites * sizeof( double ) );
+
+    char *newSpriteHFlip = new char[ newNumSprites ];
+    memcpy( newSpriteHFlip, mCurrentObject.spriteHFlip, 
+            mCurrentObject.numSprites * sizeof( char ) );
+
+    FloatRGB *newSpriteColor = new FloatRGB[ newNumSprites ];
+    memcpy( newSpriteColor, mCurrentObject.spriteColor, 
+            mCurrentObject.numSprites * sizeof( FloatRGB ) );
+
+
+    double *newSpriteAgeStart = new double[ newNumSprites ];
+    memcpy( newSpriteAgeStart, mCurrentObject.spriteAgeStart, 
+            mCurrentObject.numSprites * sizeof( double ) );
+
+    double *newSpriteAgeEnd = new double[ newNumSprites ];
+    memcpy( newSpriteAgeEnd, mCurrentObject.spriteAgeEnd, 
+            mCurrentObject.numSprites * sizeof( double ) );
+
+    int *newSpriteParent = new int[ newNumSprites ];
+    memcpy( newSpriteParent, mCurrentObject.spriteParent, 
+            mCurrentObject.numSprites * sizeof( int ) );
+
+    char *newSpriteInvisibleWhenHolding = new char[ newNumSprites ];
+    memcpy( newSpriteInvisibleWhenHolding, 
+            mCurrentObject.spriteInvisibleWhenHolding, 
+            mCurrentObject.numSprites * sizeof( char ) );
+
+
+    char *newSpriteIsHead = new char[ newNumSprites ];
+    memcpy( newSpriteIsHead, 
+            mCurrentObject.spriteIsHead, 
+            mCurrentObject.numSprites * sizeof( char ) );
+
+    char *newSpriteIsBody = new char[ newNumSprites ];
+    memcpy( newSpriteIsBody, 
+            mCurrentObject.spriteIsBody, 
+            mCurrentObject.numSprites * sizeof( char ) );
+
+    char *newSpriteIsBackFoot = new char[ newNumSprites ];
+    memcpy( newSpriteIsBackFoot, 
+            mCurrentObject.spriteIsBackFoot, 
+            mCurrentObject.numSprites * sizeof( char ) );
+
+    char *newSpriteIsFrontFoot = new char[ newNumSprites ];
+    memcpy( newSpriteIsFrontFoot, 
+            mCurrentObject.spriteIsFrontFoot, 
+            mCurrentObject.numSprites * sizeof( char ) );
+
+
+    newSprites[ mCurrentObject.numSprites ] = inSpriteID;
+            
+    doublePair pos = {0,0};
+            
+    newSpritePos[ mCurrentObject.numSprites ] = pos;
+
+    newSpriteRot[ mCurrentObject.numSprites ] = 0;
+
+    newSpriteHFlip[ mCurrentObject.numSprites ] = 0;
+
+    FloatRGB white = { 1, 1, 1 };
+            
+    newSpriteColor[ mCurrentObject.numSprites ] = white;
+
+    newSpriteAgeStart[ mCurrentObject.numSprites ] = -1;
+    newSpriteAgeEnd[ mCurrentObject.numSprites ] = -1;
+            
+    newSpriteParent[ mCurrentObject.numSprites ] = -1;
+
+    newSpriteInvisibleWhenHolding[ mCurrentObject.numSprites ] = 0;
+            
+    newSpriteIsHead[ mCurrentObject.numSprites ] = false;
+    newSpriteIsBody[ mCurrentObject.numSprites ] = false;
+    newSpriteIsBackFoot[ mCurrentObject.numSprites ] = false;
+    newSpriteIsFrontFoot[ mCurrentObject.numSprites ] = false;
+
+    delete [] mCurrentObject.sprites;
+    delete [] mCurrentObject.spritePos;
+    delete [] mCurrentObject.spriteRot;
+    delete [] mCurrentObject.spriteHFlip;
+    delete [] mCurrentObject.spriteColor;
+
+    delete [] mCurrentObject.spriteAgeStart;
+    delete [] mCurrentObject.spriteAgeEnd;
+    delete [] mCurrentObject.spriteParent;
+            
+    delete [] mCurrentObject.spriteInvisibleWhenHolding;
+
+    delete [] mCurrentObject.spriteIsHead;
+    delete [] mCurrentObject.spriteIsBody;
+    delete [] mCurrentObject.spriteIsBackFoot;
+    delete [] mCurrentObject.spriteIsFrontFoot;
+                        
+
+    mCurrentObject.sprites = newSprites;
+    mCurrentObject.spritePos = newSpritePos;
+    mCurrentObject.spriteRot = newSpriteRot;
+    mCurrentObject.spriteHFlip = newSpriteHFlip;
+    mCurrentObject.spriteColor = newSpriteColor;
+
+    mCurrentObject.spriteAgeStart = newSpriteAgeStart;
+    mCurrentObject.spriteAgeEnd = newSpriteAgeEnd;
+    mCurrentObject.spriteParent = newSpriteParent;
+
+    mCurrentObject.spriteInvisibleWhenHolding = 
+        newSpriteInvisibleWhenHolding;
+
+
+    mCurrentObject.spriteIsHead = newSpriteIsHead;
+    mCurrentObject.spriteIsBody = newSpriteIsBody;
+    mCurrentObject.spriteIsBackFoot = newSpriteIsBackFoot;
+    mCurrentObject.spriteIsFrontFoot = newSpriteIsFrontFoot;
+
+
+    mCurrentObject.numSprites = newNumSprites;
+            
+    }
 
 
 
@@ -1465,134 +1597,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.sprites[ mPickedObjectLayer ] = spriteID;
             }
         else if( spriteID != -1 ) {
-
-            int newNumSprites = mCurrentObject.numSprites + 1;
             
-            int *newSprites = new int[ newNumSprites ];
-            memcpy( newSprites, mCurrentObject.sprites, 
-                    mCurrentObject.numSprites * sizeof( int ) );
+            addNewSprite( spriteID );
             
-            doublePair *newSpritePos = new doublePair[ newNumSprites ];
-            memcpy( newSpritePos, mCurrentObject.spritePos, 
-                    mCurrentObject.numSprites * sizeof( doublePair ) );
 
-            double *newSpriteRot = new double[ newNumSprites ];
-            memcpy( newSpriteRot, mCurrentObject.spriteRot, 
-                    mCurrentObject.numSprites * sizeof( double ) );
-
-            char *newSpriteHFlip = new char[ newNumSprites ];
-            memcpy( newSpriteHFlip, mCurrentObject.spriteHFlip, 
-                    mCurrentObject.numSprites * sizeof( char ) );
-
-            FloatRGB *newSpriteColor = new FloatRGB[ newNumSprites ];
-            memcpy( newSpriteColor, mCurrentObject.spriteColor, 
-                    mCurrentObject.numSprites * sizeof( FloatRGB ) );
-
-
-            double *newSpriteAgeStart = new double[ newNumSprites ];
-            memcpy( newSpriteAgeStart, mCurrentObject.spriteAgeStart, 
-                    mCurrentObject.numSprites * sizeof( double ) );
-
-            double *newSpriteAgeEnd = new double[ newNumSprites ];
-            memcpy( newSpriteAgeEnd, mCurrentObject.spriteAgeEnd, 
-                    mCurrentObject.numSprites * sizeof( double ) );
-
-            int *newSpriteParent = new int[ newNumSprites ];
-            memcpy( newSpriteParent, mCurrentObject.spriteParent, 
-                    mCurrentObject.numSprites * sizeof( int ) );
-
-            char *newSpriteInvisibleWhenHolding = new char[ newNumSprites ];
-            memcpy( newSpriteInvisibleWhenHolding, 
-                    mCurrentObject.spriteInvisibleWhenHolding, 
-                    mCurrentObject.numSprites * sizeof( char ) );
-
-
-            char *newSpriteIsHead = new char[ newNumSprites ];
-            memcpy( newSpriteIsHead, 
-                    mCurrentObject.spriteIsHead, 
-                    mCurrentObject.numSprites * sizeof( char ) );
-
-            char *newSpriteIsBody = new char[ newNumSprites ];
-            memcpy( newSpriteIsBody, 
-                    mCurrentObject.spriteIsBody, 
-                    mCurrentObject.numSprites * sizeof( char ) );
-
-            char *newSpriteIsBackFoot = new char[ newNumSprites ];
-            memcpy( newSpriteIsBackFoot, 
-                    mCurrentObject.spriteIsBackFoot, 
-                    mCurrentObject.numSprites * sizeof( char ) );
-
-            char *newSpriteIsFrontFoot = new char[ newNumSprites ];
-            memcpy( newSpriteIsFrontFoot, 
-                    mCurrentObject.spriteIsFrontFoot, 
-                    mCurrentObject.numSprites * sizeof( char ) );
-
-
-            newSprites[ mCurrentObject.numSprites ] = spriteID;
-            
-            doublePair pos = {0,0};
-            
-            newSpritePos[ mCurrentObject.numSprites ] = pos;
-
-            newSpriteRot[ mCurrentObject.numSprites ] = 0;
-
-            newSpriteHFlip[ mCurrentObject.numSprites ] = 0;
-
-            FloatRGB white = { 1, 1, 1 };
-            
-            newSpriteColor[ mCurrentObject.numSprites ] = white;
-
-            newSpriteAgeStart[ mCurrentObject.numSprites ] = -1;
-            newSpriteAgeEnd[ mCurrentObject.numSprites ] = -1;
-            
-            newSpriteParent[ mCurrentObject.numSprites ] = -1;
-
-            newSpriteInvisibleWhenHolding[ mCurrentObject.numSprites ] = 0;
-            
-            newSpriteIsHead[ mCurrentObject.numSprites ] = false;
-            newSpriteIsBody[ mCurrentObject.numSprites ] = false;
-            newSpriteIsBackFoot[ mCurrentObject.numSprites ] = false;
-            newSpriteIsFrontFoot[ mCurrentObject.numSprites ] = false;
-
-            delete [] mCurrentObject.sprites;
-            delete [] mCurrentObject.spritePos;
-            delete [] mCurrentObject.spriteRot;
-            delete [] mCurrentObject.spriteHFlip;
-            delete [] mCurrentObject.spriteColor;
-
-            delete [] mCurrentObject.spriteAgeStart;
-            delete [] mCurrentObject.spriteAgeEnd;
-            delete [] mCurrentObject.spriteParent;
-            
-            delete [] mCurrentObject.spriteInvisibleWhenHolding;
-
-            delete [] mCurrentObject.spriteIsHead;
-            delete [] mCurrentObject.spriteIsBody;
-            delete [] mCurrentObject.spriteIsBackFoot;
-            delete [] mCurrentObject.spriteIsFrontFoot;
-                        
-
-            mCurrentObject.sprites = newSprites;
-            mCurrentObject.spritePos = newSpritePos;
-            mCurrentObject.spriteRot = newSpriteRot;
-            mCurrentObject.spriteHFlip = newSpriteHFlip;
-            mCurrentObject.spriteColor = newSpriteColor;
-
-            mCurrentObject.spriteAgeStart = newSpriteAgeStart;
-            mCurrentObject.spriteAgeEnd = newSpriteAgeEnd;
-            mCurrentObject.spriteParent = newSpriteParent;
-
-            mCurrentObject.spriteInvisibleWhenHolding = 
-                newSpriteInvisibleWhenHolding;
-
-
-            mCurrentObject.spriteIsHead = newSpriteIsHead;
-            mCurrentObject.spriteIsBody = newSpriteIsBody;
-            mCurrentObject.spriteIsBackFoot = newSpriteIsBackFoot;
-            mCurrentObject.spriteIsFrontFoot = newSpriteIsFrontFoot;
-
-
-            mCurrentObject.numSprites = newNumSprites;
             
 
             mClearObjectButton.setVisible( true );
@@ -3092,6 +3100,40 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
             mCurrentObject.spriteColor[ mPickedObjectLayer ] = mColorClipboard;
             pickedLayerChanged();
             }
+        }
+    if( mPickedObjectLayer != -1 && inASCII == 'd' ) {
+        // duplicate layer
+        
+        int layerToDupe = mPickedObjectLayer;
+        int idToDupe = mCurrentObject.sprites[ mPickedObjectLayer ];
+        
+        addNewSprite( idToDupe );
+        
+        mPickedObjectLayer = mCurrentObject.numSprites - 1;
+
+        doublePair offset = { 16, 16 };
+        
+        mCurrentObject.spritePos[mPickedObjectLayer] =
+            add( mCurrentObject.spritePos[layerToDupe], offset );
+
+        mCurrentObject.spriteRot[mPickedObjectLayer] =
+            mCurrentObject.spriteRot[layerToDupe];
+        
+        mCurrentObject.spriteHFlip[mPickedObjectLayer] =
+            mCurrentObject.spriteHFlip[layerToDupe];
+
+        mCurrentObject.spriteColor[mPickedObjectLayer] =
+            mCurrentObject.spriteColor[layerToDupe];
+
+        mCurrentObject.spriteAgeStart[mPickedObjectLayer] =
+            mCurrentObject.spriteAgeStart[layerToDupe];
+
+        mCurrentObject.spriteAgeEnd[mPickedObjectLayer] =
+            mCurrentObject.spriteAgeEnd[layerToDupe];
+
+        mCurrentObject.spriteParent[mPickedObjectLayer] =
+            mCurrentObject.spriteParent[layerToDupe];
+        // don't dupe body part status
         }
     if( mPickedObjectLayer != -1 && inASCII == 8 ) {
         // backspace

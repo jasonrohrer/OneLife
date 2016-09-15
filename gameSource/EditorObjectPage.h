@@ -210,7 +210,9 @@ class EditorObjectPage : public GamePage, public ActionListener {
         void updateAgingPanel();
         
         char anyClothingToggled();
-        
+
+        void addNewSprite( int inSpriteID );
+
 
         FloatRGB mColorClipboard;
         
