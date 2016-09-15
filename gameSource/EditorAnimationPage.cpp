@@ -287,6 +287,7 @@ EditorAnimationPage::EditorAnimationPage()
     addKeyClassDescription( &mKeyLegend, "R-Click/arrows", 
                             "Move layer rot anchor" );
     addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger jumps" );
+    addKeyDescription( &mKeyLegend, 'f', "Flip horizontally" );
     }
 
 
@@ -1795,6 +1796,13 @@ void EditorAnimationPage::pointerDown( float inX, float inY ) {
         checkNextPrevVisible();
         updateSlidersFromAnim();
         }
+
+    if( inX > -128 && inX < 128 &&
+        inY > -128 && inY < 128 ) {
+        
+        TextField::unfocusAll();
+        }
+    
     }
 
 
@@ -1835,6 +1843,10 @@ void EditorAnimationPage::pointerUp( float inX, float inY ) {
 
 
 void EditorAnimationPage::keyDown( unsigned char inASCII ) {
+    if( TextField::isAnyFocused() ) {
+        return;
+        }
+
     if( inASCII == 'f' ) {
         mFlipDraw = ! mFlipDraw;
         }
