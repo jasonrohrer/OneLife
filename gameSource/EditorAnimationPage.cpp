@@ -59,7 +59,7 @@ EditorAnimationPage::EditorAnimationPage()
           mFrozenRotFrameCountUsed( false ),
           mCurrentSpriteOrSlot( 0 ),
           mSettingRotCenter( false ),
-          mPickSlotDemoButton( smallFont, 180, 40, "Fill Slots" ),
+          mPickSlotDemoButton( smallFont, 180, 60, "Fill Slots" ),
           mPickingSlotDemo( false ),
           mClearSlotDemoButton( smallFont, 180, -90, "Clear Slots" ),
           mPickClothingButton( smallFont, 180, 60, "+ Clothes" ),
@@ -169,7 +169,7 @@ EditorAnimationPage::EditorAnimationPage()
     checkNextPrevVisible();
     
     
-    double boxY = 0;
+    double boxY = 20;
     
     for( int i=0; i<NUM_ANIM_CHECKBOXES; i++ ) {
         mCheckboxes[i] = new CheckboxButton( 210, boxY, 2 );
@@ -182,15 +182,18 @@ EditorAnimationPage::EditorAnimationPage()
     mCheckboxNames[1] = "Held";
     mCheckboxNames[2] = "Moving";
     mCheckboxNames[3] = "Eating";
+    mCheckboxNames[4] = "Doing";
 
     mCheckboxAnimTypes[0] = ground;
     mCheckboxAnimTypes[1] = held;
     mCheckboxAnimTypes[2] = moving;
     mCheckboxAnimTypes[3] = eating;
+    mCheckboxAnimTypes[4] = doing;
 
     mCheckboxes[0]->setToggled( true );
     
     mCheckboxes[3]->setVisible( false );
+    mCheckboxes[4]->setVisible( false );
 
 
     boxY = 220;
@@ -1050,13 +1053,17 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                     mPersonAgeSlider.setValue( defaultAge );
                     mPersonAgeSlider.setVisible( true );
                     mCheckboxes[3]->setVisible( true );
+                    mCheckboxes[4]->setVisible( true );
                     }
                 else {
                     mPersonAgeSlider.setVisible( false );
-                    if( mCheckboxes[3]->getToggled() ) {
+                    if( mCheckboxes[3]->getToggled() || 
+                        mCheckboxes[4]->getToggled() ) {
+                        
                         actionPerformed( mCheckboxes[0] );
                         }
                     mCheckboxes[3]->setVisible( false );
+                    mCheckboxes[4]->setVisible( false );
                     }
                 }
             }

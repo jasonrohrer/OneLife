@@ -24,6 +24,7 @@ typedef enum AnimType {
     ground2,
     // animation that only applies to a person as they eat something
     eating,
+    doing,
     endAnimType
     } AnimType;
 

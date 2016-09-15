@@ -4801,7 +4801,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     getObject( ourLiveObject->holdingID )->foodValue > 0 ) {
                     addNewAnimPlayerOnly( ourLiveObject, eating );
                     }
-                
+                else {
+                    addNewAnimPlayerOnly( ourLiveObject, doing );
+                    }
                 nextActionMessageToSend = 
                     autoSprintf( "SELF %d %d %d#",
                                  clickDestX, clickDestY, hitSelfClothingIndex );
@@ -4813,7 +4815,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         autoSprintf( "DROP %d %d %d#",
                                      clickDestX, clickDestY, 
                                      hitSelfClothingIndex  );
-
+                    addNewAnimPlayerOnly( ourLiveObject, doing );
                     }
                 else {
                     nextActionMessageToSend = 
@@ -4821,6 +4823,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                                      clickDestX, clickDestY, 
                                      hitSelfClothingIndex,
                                      hitSlotIndex );
+                    addNewAnimPlayerOnly( ourLiveObject, doing );
                     printf( "Remove from own clothing container\n" );
                     }
                 }
@@ -4935,6 +4938,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         nextActionMessageToSend = 
                             autoSprintf( "KILL %d %d#",
                                          clickDestX, clickDestY );
+                        
+                        addNewAnimPlayerOnly( ourLiveObject, doing );
+                        
                         playerActionTargetX = clickDestX;
                         playerActionTargetY = clickDestY;
                         
@@ -5176,6 +5182,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 nextActionMessageToSend = 
                     autoSprintf( "%s %d %d%s#", action,
                                  clickDestX, clickDestY, extra );
+                
+                addNewAnimPlayerOnly( ourLiveObject, doing );
                 playerActionTargetX = clickDestX;
                 playerActionTargetY = clickDestY;
                 }
