@@ -43,6 +43,8 @@ float targetHeat = 10;
 #define PERSON_OBJ_ID 12
 
 
+static double minFoodDecrementSeconds = 5.0;
+
 
 // keep a running sequence number to challenge each connecting client
 // to produce new login hashes, avoiding replay attacks.
@@ -621,8 +623,8 @@ double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
         value = foodDecrementTimeSeconds - extra;
         }
     
-    if( value < 5 ) {
-        value = 5;
+    if( value < minFoodDecrementSeconds ) {
+        value = minFoodDecrementSeconds;
         }
     return value;
     }
@@ -1788,6 +1790,9 @@ int main() {
     
     clientPassword = 
         SettingsManager::getStringSetting( "clientPassword" );
+
+    minFoodDecrementSeconds = 
+        SettingsManager::getFloatSetting( "minFoodDecrementSeconds", 5.0f );
     
 
     if( clientPassword == NULL ) {
