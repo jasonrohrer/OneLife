@@ -539,9 +539,11 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
         newHeldAnim = held;
         }
     else if( inObject->holdingID > 0 && 
-             ( newHeldAnim == ground || newHeldAnim == ground2 ) ) {
+             ( newHeldAnim == ground || newHeldAnim == ground2 || 
+               newHeldAnim == doing || newHeldAnim == eating ) ) {
         // ground is used when person comes to a hault,
         // but for the held item, we should still show the held animation
+        // same if person is starting a doing or eating animation
         newHeldAnim = held;
         }
 
@@ -573,6 +575,7 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
 // if user clicks to initiate an action while still moving, we
 // queue it here
 static char *nextActionMessageToSend = NULL;
+static char nextActionEating = false;
 
 // block move until next PLAYER_UPDATE received after action sent
 static char playerActionPending = false;
@@ -1361,18 +1364,18 @@ void LivingLifePage::drawLiveObject(
         float xDir = 0;
         float yDir = 0;
                     
-        if( inObj->xd < playerActionTargetX ) {
+        if( inObj->currentPos.x < playerActionTargetX ) {
             xDir = 1;
             inObj->holdingFlip = false;
             }
-        if( inObj->xd > playerActionTargetX ) {
+        if( inObj->currentPos.x > playerActionTargetX ) {
             xDir = -1;
             inObj->holdingFlip = true;
             }
-        if( inObj->yd < playerActionTargetY ) {
+        if( inObj->currentPos.y < playerActionTargetY ) {
             yDir = 1;
             }
-        if( inObj->yd > playerActionTargetY ) {
+        if( inObj->currentPos.y > playerActionTargetY ) {
             yDir = -1;
             }
 
@@ -4313,11 +4316,14 @@ void LivingLifePage::step() {
                     o->currentSpeed = 0;
 
 
-                    if( o->holdingID != 0 ) {
-                        addNewAnim( o, ground2 );
-                        }
-                    else {
-                        addNewAnim( o, ground );
+                    if( nextActionMessageToSend == NULL ) {
+                        // simply stop walking
+                        if( o->holdingID != 0 ) {
+                            addNewAnim( o, ground2 );
+                            }
+                        else {
+                            addNewAnim( o, ground );
+                            }
                         }
 
                     printf( "Reached dest %f seconds early\n",
@@ -4398,6 +4404,13 @@ void LivingLifePage::step() {
             // matter how fast the server responds
             ourLiveObject->pendingActionAnimationProgress = 
                 0.025 * frameRateFactor;
+            
+            if( nextActionEating ) {
+                addNewAnim( ourLiveObject, eating );
+                }
+            else {
+                addNewAnim( ourLiveObject, doing );
+                }
             }
         
         
@@ -4783,6 +4796,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     clickDestX = closestCellX;
     clickDestY = closestCellY;
 
+    nextActionEating = false;
 
     char modClick = false;
     
@@ -4806,11 +4820,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 
                 if( ourLiveObject->holdingID > 0 &&
                     getObject( ourLiveObject->holdingID )->foodValue > 0 ) {
-                    addNewAnimPlayerOnly( ourLiveObject, eating );
+                    nextActionEating = true;
                     }
-                else {
-                    addNewAnimPlayerOnly( ourLiveObject, doing );
-                    }
+    
                 nextActionMessageToSend = 
                     autoSprintf( "SELF %d %d %d#",
                                  clickDestX, clickDestY, hitSelfClothingIndex );
@@ -4822,7 +4834,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         autoSprintf( "DROP %d %d %d#",
                                      clickDestX, clickDestY, 
                                      hitSelfClothingIndex  );
-                    addNewAnimPlayerOnly( ourLiveObject, doing );
                     }
                 else {
                     nextActionMessageToSend = 
@@ -4830,7 +4841,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                                      clickDestX, clickDestY, 
                                      hitSelfClothingIndex,
                                      hitSlotIndex );
-                    addNewAnimPlayerOnly( ourLiveObject, doing );
                     printf( "Remove from own clothing container\n" );
                     }
                 }
@@ -4946,7 +4956,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                             autoSprintf( "KILL %d %d#",
                                          clickDestX, clickDestY );
                         
-                        addNewAnimPlayerOnly( ourLiveObject, doing );
                         
                         playerActionTargetX = clickDestX;
                         playerActionTargetY = clickDestY;
@@ -5190,7 +5199,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     autoSprintf( "%s %d %d%s#", action,
                                  clickDestX, clickDestY, extra );
                 
-                addNewAnimPlayerOnly( ourLiveObject, doing );
                 playerActionTargetX = clickDestX;
                 playerActionTargetY = clickDestY;
                 }
