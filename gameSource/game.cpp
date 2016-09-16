@@ -1400,7 +1400,10 @@ void drawFrame( char inUpdate ) {
 
         // if we're seeing a speedup, this might be correcting
         // for a previous slowdown that we already adjusted for
+        double old = frameRateFactor;
         frameRateFactor = 60.0 / recentFPS;
+
+        livingLifePage->adjustAllFrameCounts( old, frameRateFactor );
 
         printf( "Adjusting framerate factor to %f\n", frameRateFactor );
         }

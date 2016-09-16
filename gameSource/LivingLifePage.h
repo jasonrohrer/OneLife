@@ -194,6 +194,10 @@ class LivingLifePage : public GamePage {
         ~LivingLifePage();
         
 
+        // prevent a jitter when frameRateFactor changes due to fps lag
+        void adjustAllFrameCounts( double inOldFrameRateFactor,
+                                   double inNewFrameRateFactor );
+
         virtual void draw( doublePair inViewCenter, 
                            double inViewSize );
         

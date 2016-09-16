@@ -1008,6 +1008,50 @@ LivingLifePage::~LivingLifePage() {
 
 
 
+void LivingLifePage::adjustAllFrameCounts( double inOldFrameRateFactor,
+                                           double inNewFrameRateFactor ) {
+    int numMapCells = mMapD * mMapD;
+    
+    for( int i=0; i<numMapCells; i++ ) {
+        
+        double timeVal = inOldFrameRateFactor * mMapAnimationFrameCount[ i ];
+        mMapAnimationFrameCount[i] = lrint( timeVal / inNewFrameRateFactor );
+        
+        timeVal = inOldFrameRateFactor * mMapAnimationFrozenRotFrameCount[ i ];
+        mMapAnimationFrozenRotFrameCount[i] = 
+            lrint( timeVal / inNewFrameRateFactor );
+
+        timeVal = inOldFrameRateFactor * mMapAnimationLastFrameCount[ i ];
+        mMapAnimationLastFrameCount[i] = 
+            lrint( timeVal / inNewFrameRateFactor );
+        }
+
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        
+        LiveObject *o = gameObjects.getElement( i );
+
+        double timeVal = inOldFrameRateFactor * o->animationFrameCount;
+        o->animationFrameCount = timeVal / inNewFrameRateFactor;
+        
+        timeVal = inOldFrameRateFactor * o->heldAnimationFrameCount;
+        o->heldAnimationFrameCount = timeVal / inNewFrameRateFactor;
+        
+        timeVal = inOldFrameRateFactor * o->lastAnimationFrameCount;
+        o->lastAnimationFrameCount = timeVal / inNewFrameRateFactor;
+
+        timeVal = inOldFrameRateFactor * o->lastHeldAnimationFrameCount;
+        o->lastHeldAnimationFrameCount = timeVal / inNewFrameRateFactor;
+
+        timeVal = inOldFrameRateFactor * o->frozenRotFrameCount;
+        o->frozenRotFrameCount = timeVal / inNewFrameRateFactor;
+
+        timeVal = inOldFrameRateFactor * o->heldFrozenRotFrameCount;
+        o->heldFrozenRotFrameCount = timeVal / inNewFrameRateFactor;
+        }
+    }
+
+
+
 LiveObject *LivingLifePage::getOurLiveObject() {
     
     LiveObject *ourLiveObject = NULL;
