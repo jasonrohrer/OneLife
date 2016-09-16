@@ -3124,7 +3124,13 @@ void LivingLifePage::step() {
                             //existing->lastAnim = ground;
                             //existing->lastAnimFade = 0;
                             if( oldHeld != 0 ) {
-                                addNewAnimPlayerOnly( existing, ground );
+                                if( o.id == ourID ) {
+                                    addNewAnimPlayerOnly( existing, ground );
+                                    }
+                                else {
+                                    addNewAnimPlayerOnly( existing, doing );
+                                    addNewAnimPlayerOnly( existing, ground );
+                                    }
                                 }
                             }
                         else if( oldHeld != existing->holdingID ) {
@@ -3137,9 +3143,15 @@ void LivingLifePage::step() {
                             existing->heldFrozenRotFrameCount = 0;
 
                             existing->futureHeldAnimStack->deleteAll();
-
-                            addNewAnimPlayerOnly( existing, ground2 );
-
+                            
+                            if( o.id == ourID ) {
+                                addNewAnimPlayerOnly( existing, ground2 );
+                                }
+                            else {
+                                addNewAnimPlayerOnly( existing, doing );
+                                addNewAnimPlayerOnly( existing, ground );
+                                }
+                            
                             if( heldOriginValid ) {
                                 // transition from last ground animation
                                 // of object, keeping that frame count
