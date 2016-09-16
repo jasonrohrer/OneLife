@@ -711,6 +711,19 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
         AnimationRecord *rArmFade = getAnimation( inObjectID, 
                                                   inFrozenArmFadeTargetType );
         
+        if( rB == NULL ) {
+            rB = getAnimation( inObjectID, ground );
+            }
+        if( rF == NULL ) {
+            rF = getAnimation( inObjectID, ground );
+            }
+        if( rArm == NULL ) {
+            rArm = getAnimation( inObjectID, ground );
+            }
+        if( rArmFade == NULL ) {
+            rArmFade = getAnimation( inObjectID, ground );
+            }
+        
                 
         return drawObjectAnim( inObjectID, r, inFrameTime,
                                inAnimFade, rB, 
@@ -1768,6 +1781,21 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
         AnimationRecord *rArm = getAnimation( inObjectID, inFrozenArmType );
         AnimationRecord *rArmFade = getAnimation( inObjectID, 
                                                   inFrozenArmFadeTargetType );
+        
+        if( rB == NULL ) {
+            rB = getAnimation( inObjectID, ground );
+            }
+        if( rF == NULL ) {
+            rF = getAnimation( inObjectID, ground );
+            }
+        if( rArm == NULL ) {
+            rArm = getAnimation( inObjectID, ground );
+            }
+        if( rArmFade == NULL ) {
+            rArmFade = getAnimation( inObjectID, ground );
+            }
+
+
         drawObjectAnim( inObjectID, r, inFrameTime,
                         inAnimFade, rB, inFadeTargetFrameTime,
                         inFrozenRotFrameTime,
