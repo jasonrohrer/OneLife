@@ -167,7 +167,8 @@ typedef struct LiveObject {
         
         // should we send player a food status message
         char foodUpdate;
-
+        
+        char justAte;
 
         ClothingSet clothing;
         
@@ -1538,7 +1539,7 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
 
 
     char *updateLine = autoSprintf( 
-        "%d %d %s %d %d %d %.2f %s %.2f %.2f %.2f %s\n",
+        "%d %d %s %d %d %d %.2f %s %.2f %.2f %.2f %s %d\n",
         inPlayer->id,
         inPlayer->displayID,
         holdingString,
@@ -1550,8 +1551,11 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
         computeAge( inPlayer ),
         getAgeRate(),
         computeMoveSpeed( inPlayer ),
-        clothingList );
+        clothingList,
+        inPlayer->justAte );
     
+    inPlayer->justAte = false;
+
     delete [] holdingString;
     delete [] posString;
     delete [] clothingList;
@@ -1637,7 +1641,8 @@ void processedLogggedInPlayer( Socket *inSock,
         computeFoodDecrementTimeSeconds( &newObject );
                 
     newObject.foodUpdate = true;
-		
+    newObject.justAte = false;
+    
     newObject.clothing = getEmptyClothingSet();
 
     newObject.xs = 0;
@@ -3333,6 +3338,7 @@ int main() {
                                     getObject( nextPlayer->holdingID );
                                 
                                 if( obj->foodValue > 0 ) {
+                                    nextPlayer->justAte = true;
                                     nextPlayer->foodStore += obj->foodValue;
                                     
                                     int cap =

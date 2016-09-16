@@ -2995,10 +2995,12 @@ void LivingLifePage::step() {
                 
                 char *clothingBuffer = new char[500];
                 
+                int justAte = 0;
+
                 int numRead = sscanf( lines[i], 
                                       "%d %d "
                                       "%499s %d %d %d %f %d %d %d %d "
-                                      "%lf %lf %lf %499s",
+                                      "%lf %lf %lf %499s %d",
                                       &( o.id ),
                                       &( o.displayID ),
                                       holdingIDBuffer,
@@ -3013,10 +3015,11 @@ void LivingLifePage::step() {
                                       &( o.age ),
                                       &( o.ageRate ),
                                       &( o.lastSpeed ),
-                                      clothingBuffer );
+                                      clothingBuffer,
+                                      &justAte );
                 
             
-                if( numRead == 15 ) {
+                if( numRead == 16 ) {
                     printf( "PLAYER_UPDATE with orVal=%d, orx=%d, ory=%d, "
                             "pX =%d, pY=%d\n",
                             heldOriginValid, heldOriginX, heldOriginY,
@@ -3128,7 +3131,15 @@ void LivingLifePage::step() {
                                     addNewAnimPlayerOnly( existing, ground );
                                     }
                                 else {
-                                    addNewAnimPlayerOnly( existing, doing );
+                                    if( justAte ) {
+                                        addNewAnimPlayerOnly( 
+                                            existing, eating );
+                                        }
+                                    else {
+                                        addNewAnimPlayerOnly( 
+                                            existing, doing );
+                                        }
+                                    
                                     addNewAnimPlayerOnly( existing, ground );
                                     }
                                 }
@@ -3148,7 +3159,14 @@ void LivingLifePage::step() {
                                 addNewAnimPlayerOnly( existing, ground2 );
                                 }
                             else {
-                                addNewAnimPlayerOnly( existing, doing );
+                                if( justAte ) {
+                                    addNewAnimPlayerOnly( 
+                                        existing, eating );
+                                    }
+                                else {
+                                    addNewAnimPlayerOnly( 
+                                        existing, doing );
+                                    }
                                 addNewAnimPlayerOnly( existing, ground );
                                 }
                             
