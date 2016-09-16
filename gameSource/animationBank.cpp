@@ -717,12 +717,6 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
         if( rF == NULL ) {
             rF = getAnimation( inObjectID, ground );
             }
-        if( rArm == NULL ) {
-            rArm = getAnimation( inObjectID, ground );
-            }
-        if( rArmFade == NULL ) {
-            rArmFade = getAnimation( inObjectID, ground );
-            }
         
                 
         return drawObjectAnim( inObjectID, r, inFrameTime,
@@ -1787,12 +1781,6 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
             }
         if( rF == NULL ) {
             rF = getAnimation( inObjectID, ground );
-            }
-        if( rArm == NULL ) {
-            rArm = getAnimation( inObjectID, ground );
-            }
-        if( rArmFade == NULL ) {
-            rArmFade = getAnimation( inObjectID, ground );
             }
 
 
