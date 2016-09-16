@@ -40,6 +40,9 @@ extern EditorAnimationPage *animPage;
 double defaultAge = 20;
 
 
+static float lastMouseX, lastMouseY;
+
+
 
 EditorObjectPage::EditorObjectPage()
         : mDescriptionField( mainFont, 
@@ -2566,6 +2569,13 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         drawKeyLegend( &mKeyLegendC, legendPos, alignCenter );
         }
     
+
+    setDrawColor( 0, 0, 1, 0.50 );
+            
+    doublePair mouseCenter = { lastMouseX + 1, lastMouseY - 1 };
+    
+    drawRect( mouseCenter, 1000, 0.5 );
+    drawRect( mouseCenter, 0.5, 1000 );
     }
 
 
@@ -2847,6 +2857,9 @@ void EditorObjectPage::pickedLayerChanged() {
 
 
 void EditorObjectPage::pointerMove( float inX, float inY ) {
+    lastMouseX = inX;
+    lastMouseY = inY;
+
     if( mSetHeldPos ) {
         return;
         }
