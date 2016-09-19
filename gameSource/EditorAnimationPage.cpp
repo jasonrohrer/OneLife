@@ -206,7 +206,7 @@ EditorAnimationPage::EditorAnimationPage()
                                    0, 6, "X Osc" );
     mSliders[1] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 96, "X Amp" );
+                                   0, 256, "X Amp" );
     mSliders[2] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "X Phase" );
@@ -216,7 +216,7 @@ EditorAnimationPage::EditorAnimationPage()
                                    0, 6, "Y Osc" );
     mSliders[4] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 96, "Y Amp" );
+                                   0, 256, "Y Amp" );
     mSliders[5] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "Y Phase" );
