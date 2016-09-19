@@ -4087,17 +4087,8 @@ void LivingLifePage::step() {
     
         
     // check if we're about to move off the screen
-    LiveObject *ourLiveObject = NULL;
+    LiveObject *ourLiveObject = getOurLiveObject();
 
-    for( int i=0; i<gameObjects.size(); i++ ) {
-        
-        LiveObject *o = gameObjects.getElement( i );
-        
-        if( o->id == ourID ) {
-            ourLiveObject = o;
-            break;
-            }
-        }
 
     
     if( mDoneLoadingFirstObjectSet && ourLiveObject != NULL ) {
