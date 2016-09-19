@@ -4201,47 +4201,48 @@ int main() {
                         &playerIndicesToSendUpdatesAbout );
                     }
                 }
-            else if( nextPlayer->holdingEtaDecay != 0 &&
-                     nextPlayer->holdingEtaDecay < curTime ) {
-                
-                // what they're holding has decayed
-
-                int oldID = nextPlayer->holdingID;
-                
-                TransRecord *t = getTrans( -1, oldID );
-
-                if( t != NULL ) {
-
-                    int newID = t->newTarget;
-
-                    nextPlayer->holdingID = newID;
-                    
-                    
-                    int oldSlots = 
-                        getNumContainerSlots( oldID );
-
-                    int newSlots = getNumContainerSlots( newID );
-                    
-                    if( newSlots < oldSlots ) {
-                        // new container can hold less
-                        // truncate
-                        nextPlayer->numContained = newSlots;
-                        }
-                    
-                    setFreshEtaDecayForHeld( nextPlayer );
-                    
-                    if( nextPlayer->numContained > 0 ) {    
-                        restretchDecays( nextPlayer->numContained,
-                                         nextPlayer->containedEtaDecays,
-                                         oldID, newID );
-                        }
-                    
-                        
-                    playerIndicesToSendUpdatesAbout.push_back( i );
-                    }
-                }
             else {
                 
+                if( nextPlayer->holdingEtaDecay != 0 &&
+                    nextPlayer->holdingEtaDecay < curTime ) {
+                
+                    // what they're holding has decayed
+
+                    int oldID = nextPlayer->holdingID;
+                
+                    TransRecord *t = getTrans( -1, oldID );
+
+                    if( t != NULL ) {
+
+                        int newID = t->newTarget;
+
+                        nextPlayer->holdingID = newID;
+                    
+                    
+                        int oldSlots = 
+                            getNumContainerSlots( oldID );
+
+                        int newSlots = getNumContainerSlots( newID );
+                    
+                        if( newSlots < oldSlots ) {
+                            // new container can hold less
+                            // truncate
+                            nextPlayer->numContained = newSlots;
+                            }
+                    
+                        setFreshEtaDecayForHeld( nextPlayer );
+                    
+                        if( nextPlayer->numContained > 0 ) {    
+                            restretchDecays( nextPlayer->numContained,
+                                             nextPlayer->containedEtaDecays,
+                                             oldID, newID );
+                            }
+                    
+                        
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        }
+                    }
+
                 // check if anything in the container they are holding
                 // has decayed
                 if( nextPlayer->holdingID > 0 &&
