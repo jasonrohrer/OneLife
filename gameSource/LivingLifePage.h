@@ -186,6 +186,27 @@ typedef struct GroundSpriteSet {
 
 
 
+typedef struct PointerHitRecord {
+        int closestCellX;
+        int closestCellY;
+        int hitSlotIndex;
+
+        char hit;
+        char hitSelf;
+    
+        int hitSelfClothingIndex;
+
+        // when we click in a square, only count as hitting something
+        // if we actually clicked the object there.  Else, we can walk
+        // there if unblocked.
+        char hitAnObject;
+
+    } PointerHitRecord;
+
+
+
+
+
 class LivingLifePage : public GamePage {
         
     public:
@@ -317,6 +338,9 @@ class LivingLifePage : public GamePage {
         void drawMapCell( int inMapI, 
                           int inScreenX, int inScreenY );
         
+        void checkForPointerHit( PointerHitRecord *inRecord,
+                                 float inX, float inY );
+
     };
 
 

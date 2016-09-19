@@ -4646,70 +4646,17 @@ void LivingLifePage::makeActive( char inFresh ) {
 
 
 
-        
 
 
 
 
-
-void LivingLifePage::pointerMove( float inX, float inY ) {
-    int clickDestX = lrintf( ( inX ) / CELL_D );
+void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
+                                         float inX, float inY ) {
     
-    int clickDestY = lrintf( ( inY ) / CELL_D );
-    
-    int destID = 0;
-        
-    int mapX = clickDestX - mMapOffsetX + mMapD / 2;
-    int mapY = clickDestY - mMapOffsetY + mMapD / 2;
-    if( mapY >= 0 && mapY < mMapD &&
-        mapX >= 0 && mapX < mMapD ) {
-        
-        destID = mMap[ mapY * mMapD + mapX ];
-        }
+    LiveObject *ourLiveObject = getOurLiveObject();
 
-    if( destID > 0 ) {
-        mCurMouseOverID = destID;
-        
-        }
-    else if( mCurMouseOverID != 0 ) {
-        mLastMouseOverID = mCurMouseOverID;
-        mLastMouseOverFade = 1.0;
-        mCurMouseOverID = 0;
-        }
-    
-    }
+    double minDistThatHits = 2.0;
 
-
-
-
-
-
-
-void LivingLifePage::pointerDown( float inX, float inY ) {
-    
-    if( mFirstServerMessagesReceived != 3 ) {
-        return;
-        }
-
-    if( playerActionPending ) {
-        // block further actions until update received to confirm last
-        // action
-        return;
-        }
-    
-
-    LiveObject *ourLiveObject;
-
-    for( int i=0; i<gameObjects.size(); i++ ) {
-        
-        LiveObject *o = gameObjects.getElement( i );
-        
-        if( o->id == ourID ) {
-            ourLiveObject = o;
-            break;
-            }
-        }
-    
     int clickDestX = lrintf( ( inX ) / CELL_D );
     
     int clickDestY = lrintf( ( inY ) / CELL_D );
@@ -4717,35 +4664,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     float clickExtraX = inX - clickDestX * CELL_D;
     float clickExtraY = inY - clickDestY * CELL_D;
 
-
-    // consider 3x3 area around click and test true object pixel
-    // collisions in that area
-
-    int closestCellX = clickDestX;
-    int closestCellY = clickDestY;
-    int hitSlotIndex = -1;
+    PointerHitRecord *p = inRecord;
     
-    double minDistThatHits = 2.0;
-
-    char hit = false;
-    char hitSelf = false;
+    p->closestCellX = clickDestX;
+    p->closestCellY = clickDestY;
     
-    int hitSelfClothingIndex = -1;
-    
-
-    // when we click in a square, only count as hitting something
-    // if we actually clicked the object there.  Else, we can walk
-    // there if unblocked.
-    char hitAnObject = false;
 
     // start in front row
     // right to left
     // (check things that are in front first
-    for( int y=clickDestY-1; y<=clickDestY+1 && !hit; y++ ) {
+    for( int y=clickDestY-1; y<=clickDestY+1 && ! p->hit; y++ ) {
         float clickOffsetY = ( clickDestY  - y ) * CELL_D + clickExtraY;
 
         // first all map objects in this row (in front of people)
-        for( int x=clickDestX+1; x>=clickDestX-1  && !hit; x-- ) {
+        for( int x=clickDestX+1; x>=clickDestX-1  && ! p->hit; x-- ) {
             float clickOffsetX = ( clickDestX  - x ) * CELL_D + clickExtraX;
 
             int mapX = x - mMapOffsetX + mMapD / 2;
@@ -4775,24 +4707,24 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     &sp, &cl, &sl );
                 
                 if( dist < minDistThatHits ) {
-                    hit = true;
-                    closestCellX = x;
-                    closestCellY = y;
+                    p->hit = true;
+                    p->closestCellX = x;
+                    p->closestCellY = y;
                     
-                    hitSlotIndex = sl;
+                    p->hitSlotIndex = sl;
 
-                    hitAnObject = true;
+                    p->hitAnObject = true;
                     }
                 }
             }
         
         // next, people in this row
         // recently dropped babies are in front and tested first
-        for( int d=0; d<2 && !hit; d++ )
-        for( int x=clickDestX+1; x>=clickDestX-1 && !hit; x-- ) {
+        for( int d=0; d<2 && ! p->hit; d++ )
+        for( int x=clickDestX+1; x>=clickDestX-1 && ! p->hit; x-- ) {
             float clickOffsetX = ( clickDestX  - x ) * CELL_D + clickExtraX;
             
-            for( int i=gameObjects.size()-1; i>=0 && !hit; i-- ) {
+            for( int i=gameObjects.size()-1; i>=0 && ! p->hit; i-- ) {
         
                 LiveObject *o = gameObjects.getElement( i );
                 
@@ -4849,15 +4781,15 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         &sp, &cl, &sl );
                     
                     if( dist < minDistThatHits ) {
-                        hit = true;
-                        closestCellX = x;
-                        closestCellY = y;
+                        p->hit = true;
+                        p->closestCellX = x;
+                        p->closestCellY = y;
                         if( o == ourLiveObject ) {
-                            hitSelf = true;
+                            p->hitSelf = true;
 
                             if( cl != -1 ) {
-                                hitSelfClothingIndex = cl;
-                                hitSlotIndex = sl;
+                                p->hitSelfClothingIndex = cl;
+                                p->hitSlotIndex = sl;
                                 }
                             }
                         }
@@ -4866,9 +4798,112 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             }
         }
+    }
+
     
-    clickDestX = closestCellX;
-    clickDestY = closestCellY;
+
+
+        
+
+
+
+
+
+void LivingLifePage::pointerMove( float inX, float inY ) {
+
+
+    PointerHitRecord p;
+    
+    p.hitSlotIndex = -1;
+    
+
+    p.hit = false;
+    p.hitSelf = false;
+    
+    p.hitSelfClothingIndex = -1;
+    
+
+    // when we click in a square, only count as hitting something
+    // if we actually clicked the object there.  Else, we can walk
+    // there if unblocked.
+    p.hitAnObject = false;
+
+
+    checkForPointerHit( &p, inX, inY );
+    
+    
+    int clickDestX = p.closestCellX;
+    int clickDestY = p.closestCellY;
+    
+
+    int destID = 0;
+        
+    int mapX = clickDestX - mMapOffsetX + mMapD / 2;
+    int mapY = clickDestY - mMapOffsetY + mMapD / 2;
+    if( mapY >= 0 && mapY < mMapD &&
+        mapX >= 0 && mapX < mMapD ) {
+        
+        destID = mMap[ mapY * mMapD + mapX ];
+        }
+
+    if( destID > 0 ) {
+        mCurMouseOverID = destID;
+        
+        }
+    else if( mCurMouseOverID != 0 ) {
+        mLastMouseOverID = mCurMouseOverID;
+        mLastMouseOverFade = 1.0;
+        mCurMouseOverID = 0;
+        }
+    
+    }
+
+
+
+
+
+
+
+void LivingLifePage::pointerDown( float inX, float inY ) {
+    
+    if( mFirstServerMessagesReceived != 3 ) {
+        return;
+        }
+
+    if( playerActionPending ) {
+        // block further actions until update received to confirm last
+        // action
+        return;
+        }
+    
+
+    LiveObject *ourLiveObject = getOurLiveObject();
+
+    
+
+    // consider 3x3 area around click and test true object pixel
+    // collisions in that area
+    PointerHitRecord p;
+    
+    p.hitSlotIndex = -1;
+    
+    p.hit = false;
+    p.hitSelf = false;
+    
+    p.hitSelfClothingIndex = -1;
+    
+
+    // when we click in a square, only count as hitting something
+    // if we actually clicked the object there.  Else, we can walk
+    // there if unblocked.
+    p.hitAnObject = false;
+
+
+    checkForPointerHit( &p, inX, inY );
+    
+    
+    int clickDestX = p.closestCellX;
+    int clickDestY = p.closestCellY;
 
     nextActionEating = false;
 
@@ -4878,7 +4913,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         modClick = true;
         }
 
-    if( hitSelf ) {
+    if( p.hitSelf ) {
         // click on self
 
         // ignore unless it's a use-on-self action and standing still
@@ -4899,7 +4934,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     
                 nextActionMessageToSend = 
                     autoSprintf( "SELF %d %d %d#",
-                                 clickDestX, clickDestY, hitSelfClothingIndex );
+                                 clickDestX, clickDestY, 
+                                 p.hitSelfClothingIndex );
                 printf( "Use on self\n" );
                 }
             else {
@@ -4907,14 +4943,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     nextActionMessageToSend = 
                         autoSprintf( "DROP %d %d %d#",
                                      clickDestX, clickDestY, 
-                                     hitSelfClothingIndex  );
+                                     p.hitSelfClothingIndex  );
                     }
                 else {
                     nextActionMessageToSend = 
                         autoSprintf( "SREMV %d %d %d %d#",
                                      clickDestX, clickDestY, 
-                                     hitSelfClothingIndex,
-                                     hitSlotIndex );
+                                     p.hitSelfClothingIndex,
+                                     p.hitSlotIndex );
                     printf( "Remove from own clothing container\n" );
                     }
                 }
@@ -4956,7 +4992,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
 
 
-    if( destID != 0 && ! hitAnObject ) {
+    if( destID != 0 && ! p.hitAnObject ) {
         
         // clicked on empty space near an object
         
@@ -5059,8 +5095,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     char tryingToPickUpBaby = false;
     
     if( destID == 0 &&
-        hit &&
-        ! hitAnObject &&
+        p.hit &&
+        ! p.hitAnObject &&
         ! modClick && ourLiveObject->holdingID == 0 &&
         // only adults can pick up babies
         ourLiveObject->age > 13 ) {
@@ -5247,7 +5283,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 action = "REMV";
                 send = true;
                 delete [] extra;
-                extra = autoSprintf( " %d", hitSlotIndex );
+                extra = autoSprintf( " %d", p.hitSlotIndex );
                 }
             else if( modClick && ourLiveObject->holdingID != 0 &&
                      destID != 0 &&
