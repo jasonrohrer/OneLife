@@ -4241,6 +4241,11 @@ int main() {
                         
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         }
+                    else {
+                        // no decay transition exists
+                        // clear it
+                        setFreshEtaDecayForHeld( nextPlayer );
+                        }
                     }
 
                 // check if anything in the container they are holding
@@ -4416,6 +4421,11 @@ int main() {
 
                             playerIndicesToSendUpdatesAbout.push_back( i );
                             }
+                        else {
+                            // no valid decay transition, end it
+                            nextPlayer->clothingEtaDecay[c] = 0;
+                            }
+                        
                         }
                     
                     // check for decay of what's contained in clothing
@@ -4448,9 +4458,10 @@ int main() {
                                 change = true;
                             
                                 TransRecord *t = getTrans( -1, oldID );
+                                
+                                newDecay = 0;
 
                                 if( t != NULL ) {
-                                    newDecay = 0;
                                     newID = t->newTarget;
                             
                                     if( newID != 0 ) {
