@@ -67,10 +67,10 @@ void ValueSlider::setValue( double inValue ) {
 void ValueSlider::setFieldFromValue() {
     int numD = 3;
     
-    if( mLowValue < -10 || mHighValue > 10 ) {
+    if( mLowValue <= -100 || mHighValue >= 100 ) {
         numD = 1;
         }
-    if( mLowValue < -1 || mHighValue > 1 ) {
+    else if( mLowValue <= -10 || mHighValue >= 10 ) {
         numD = 2;
         }
     
