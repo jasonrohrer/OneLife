@@ -1307,8 +1307,9 @@ void LivingLifePage::drawMapCell( int inMapI,
             
         char flip = mMapTileFlips[ inMapI ];
         
-        if( getObject( oID )->permanent ) {
-            // permanent objects are never drawn flipped
+        ObjectRecord *obj = getObject( oID );
+        if( obj->permanent && obj->blocking ) {
+            // permanent, blocking objects (e.g., walls) are never drawn flipped
             flip = false;
             }
 
