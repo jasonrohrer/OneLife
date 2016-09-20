@@ -1305,6 +1305,12 @@ void LivingLifePage::drawMapCell( int inMapI,
         // ignore
         char used = false;
             
+        char flip = mMapTileFlips[ inMapI ];
+        
+        if( getObject( oID )->permanent ) {
+            // permanent objects are never drawn flipped
+            flip = false;
+            }
 
         if( mMapContainedStacks[ inMapI ].size() > 0 ) {
             int *stackArray = 
@@ -1319,7 +1325,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             &used,
                             endAnimType,
                             endAnimType,
-                            pos, rot, mMapTileFlips[ inMapI ],
+                            pos, rot, flip,
                             -1,
                             false, false, false,
                             getEmptyClothingSet(),
@@ -1339,7 +1345,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             endAnimType,
                             endAnimType,
                             pos, rot,
-                            mMapTileFlips[ inMapI ], -1,
+                            flip, -1,
                             false, false, false,
                             getEmptyClothingSet(), NULL );
             }
