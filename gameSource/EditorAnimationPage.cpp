@@ -264,10 +264,10 @@ EditorAnimationPage::EditorAnimationPage()
     
     mSliders[16] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                     100, 20,
-                                    0, 20, "Duration Sec" );
+                                    0, 100, "Duration Sec" );
     mSliders[17] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                     100, 20,
-                                    0, 20, "Pause Sec" );
+                                    0, 100, "Pause Sec" );
 
 
 
