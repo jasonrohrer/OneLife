@@ -1408,6 +1408,8 @@ void LivingLifePage::drawLiveObject(
     //trail.push_back( pos );
                 
     if( inObj->id == ourID && 
+        inObj->curAnim != eating &&
+        inObj->lastAnim != eating &&
         inObj->pendingActionAnimationProgress != 0 ) {
                     
         // wiggle toward target
