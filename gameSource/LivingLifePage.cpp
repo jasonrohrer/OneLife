@@ -3169,6 +3169,21 @@ void LivingLifePage::step() {
                         existing->lastHoldingID = oldHeld;
                         existing->holdingID = o.holdingID;
                         
+
+                        // what we're holding hasn't changed
+                        // maybe action failed
+                        if( o.id == ourID && existing->holdingID == oldHeld ) {
+                            
+                            LiveObject *ourObj = getOurLiveObject();
+                            
+                            if( ourObj->pendingActionAnimationProgress != 0 &&
+                                ! ourObj->inMotion ) {
+                                
+                                addNewAnimPlayerOnly( existing, ground );
+                                }
+                            }
+                        
+
                         if( existing->holdingID == 0 ) {
                                                         
                             // don't reset these when dropping something
