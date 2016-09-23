@@ -35,7 +35,7 @@ EditorAnimationPage::EditorAnimationPage()
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mSaveButton( smallFont, 0, 200, "Save" ),
           mDeleteButton( smallFont, 140, 200, "Delete" ),
-          mObjectPicker( &objectPickable, +310, 100 ),
+          mObjectPicker( &objectPickable, +410, 100 ),
           mPersonAgeSlider( smallFont, 0, -212, 2,
                             100, 20,
                             0, 100, "Age" ),
@@ -59,22 +59,22 @@ EditorAnimationPage::EditorAnimationPage()
           mFrozenRotFrameCountUsed( false ),
           mCurrentSpriteOrSlot( 0 ),
           mSettingRotCenter( false ),
-          mPickSlotDemoButton( smallFont, 180, 60, "Fill Slots" ),
+          mPickSlotDemoButton( smallFont, 280, 60, "Fill Slots" ),
           mPickingSlotDemo( false ),
-          mClearSlotDemoButton( smallFont, 180, -90, "Clear Slots" ),
-          mPickClothingButton( smallFont, 180, 60, "+ Clothes" ),
+          mClearSlotDemoButton( smallFont, 280, -90, "Clear Slots" ),
+          mPickClothingButton( smallFont, 280, 60, "+ Clothes" ),
           mPickingClothing( false ),
-          mClearClothingButton( smallFont, 180, 120, "X Clothes" ),
-          mPickHeldButton( smallFont, 180, -100, "+ Held" ),
+          mClearClothingButton( smallFont, 280, 120, "X Clothes" ),
+          mPickHeldButton( smallFont, 280, -100, "+ Held" ),
           mPickingHeld( false ),
           mHeldID( -1 ),
-          mClearHeldButton( smallFont, 180, -140, "X Held" ),
-          mCopyButton( smallFont, -290, 230, "Copy" ),
-          mCopyChainButton( smallFont, -290, 270, "Copy Child Chain" ),
-          mCopyWalkButton( smallFont, -160, 270, "Copy Walk" ),
-          mCopyAllButton( smallFont, -370, 230, "Copy All" ),
-          mPasteButton( smallFont, -230, 230, "Paste" ),
-          mClearButton( smallFont, -170, 230, "Clear" ),
+          mClearHeldButton( smallFont, 280, -140, "X Held" ),
+          mCopyButton( smallFont, -390, 230, "Copy" ),
+          mCopyChainButton( smallFont, -390, 270, "Copy Child Chain" ),
+          mCopyWalkButton( smallFont, -260, 270, "Copy Walk" ),
+          mCopyAllButton( smallFont, -470, 230, "Copy All" ),
+          mPasteButton( smallFont, -330, 230, "Paste" ),
+          mClearButton( smallFont, -270, 230, "Clear" ),
           mNextSpriteOrSlotButton( smallFont, 180, -270, "Next Layer" ),
           mPrevSpriteOrSlotButton( smallFont, -60, -270, "Prev Layer" ) {
     
@@ -172,7 +172,7 @@ EditorAnimationPage::EditorAnimationPage()
     double boxY = 20;
     
     for( int i=0; i<NUM_ANIM_CHECKBOXES; i++ ) {
-        mCheckboxes[i] = new CheckboxButton( 210, boxY, 2 );
+        mCheckboxes[i] = new CheckboxButton( 310, boxY, 2 );
         addComponent( mCheckboxes[i] );
 
         mCheckboxes[i]->addActionListener( this );
@@ -199,7 +199,7 @@ EditorAnimationPage::EditorAnimationPage()
     boxY = 220;
     
     double space = 28;
-    double x = -290;
+    double x = -390;
     
     mSliders[0] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
@@ -1286,7 +1286,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
     
     doublePair nudgedPos = pos;
     nudgedPos.y += 16;
-    drawRect( nudgedPos, 128, 144 );
+    drawRect( nudgedPos, 228, 144 );
     
 
     pos.y -= 64;
@@ -1726,9 +1726,9 @@ int EditorAnimationPage::getClosestSpriteOrSlot( float inX, float inY ) {
     int closestSpriteOrSlot = -1;
     
     
-    if( inX > -128 && inX < 128
+    if( inX > -228 && inX < 228
         &&
-        inY > -128 && inY < 128 ) {
+        inY > -128 && inY < 160 ) {
 
         
         doublePair mousePos = { inX, inY + 64 };
@@ -1799,8 +1799,8 @@ void EditorAnimationPage::pointerMove( float inX, float inY ) {
                 }
             }
         }
-    else if( inX < 128 && inX > -128 &&
-             inY < 128 && inY > -128 ) {
+    else if( inX < 228 && inX > -228 &&
+             inY < 160 && inY > -128 ) {
         // keep frozen as long as mouse is there
         if( mWiggleSpriteOrSlot != -1 ) {
             mWiggleFade += 0.1;
@@ -1836,8 +1836,8 @@ void EditorAnimationPage::pointerDown( float inX, float inY ) {
         updateSlidersFromAnim();
         }
 
-    if( inX > -128 && inX < 128 &&
-        inY > -128 && inY < 128 ) {
+    if( inX > -228 && inX < 228 &&
+        inY > -128 && inY < 160 ) {
         
         TextField::unfocusAll();
         }
