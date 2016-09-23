@@ -45,8 +45,8 @@ static float lastMouseX, lastMouseY;
 
 
 EditorObjectPage::EditorObjectPage()
-        : mDescriptionField( mainFont, 
-                             0,  -260, 6,
+        : mDescriptionField( smallFont, 
+                             -50,  -260, 18,
                              false,
                              "Description", NULL, NULL ),
           mBiomeField( smallFont, -55, -220, 8, false, "Biomes",
@@ -146,7 +146,7 @@ EditorObjectPage::EditorObjectPage()
           mPrevHeldDemoButton( smallFont, 190, -76, "<" ),
           mSpritePicker( &spritePickable, -310, 100 ),
           mObjectPicker( &objectPickable, +310, 100 ),
-          mPersonAgeSlider( smallFont, -70, -300, 2,
+          mPersonAgeSlider( smallFont, -55, -220, 2,
                             100, 20,
                             0, 100, "Age" ),
           mHueSlider( smallFont, -90, -125, 2,
@@ -629,9 +629,10 @@ void EditorObjectPage::updateSliderColors() {
 void EditorObjectPage::updateAgingPanel() {
     
     char agingPanelVisible = true;
-    
+    char person = true;
 
     if( ! mCheckboxes[2]->getToggled() ) {
+        person = false;
         agingPanelVisible = false;
         mAgingLayerCheckbox.setVisible( false );
             
@@ -736,6 +737,9 @@ void EditorObjectPage::updateAgingPanel() {
     mAgeOutField.setVisible( agingPanelVisible );
     mAgePunchInButton.setVisible( agingPanelVisible );
     mAgePunchOutButton.setVisible( agingPanelVisible );
+
+    mBiomeField.setVisible( !person );
+    mDeadlyDistanceField.setVisible( !person );
     }
 
 
@@ -1386,6 +1390,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
+            
+            mBiomeField.setVisible( false );
+            mDeadlyDistanceField.setVisible( false );
             }
         }
     else if( inTarget == &mEndSetHeldPosButton ) {
@@ -1402,10 +1409,16 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
             mRaceField.setVisible( true );
+            
+            mBiomeField.setVisible( false );
+            mDeadlyDistanceField.setVisible( false );
             }
         else {
             mPersonAgeSlider.setVisible( false );
             mRaceField.setVisible( false );
+            
+            mBiomeField.setVisible( true );
+            mDeadlyDistanceField.setVisible( true );
             }
         
         if( anyClothingToggled() ) {
@@ -1437,6 +1450,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
+
+            mBiomeField.setVisible( false );
+            mDeadlyDistanceField.setVisible( false );
             }
         }
     else if( inTarget == &mEndClothesDemoButton ) {
@@ -1450,10 +1466,16 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
             mRaceField.setVisible( true );
+            
+            mBiomeField.setVisible( false );
+            mDeadlyDistanceField.setVisible( false );
             }
         else {
             mPersonAgeSlider.setVisible( false );
             mRaceField.setVisible( false );
+
+            mBiomeField.setVisible( true );
+            mDeadlyDistanceField.setVisible( true );
             }
 
         mSetHeldPosButton.setVisible( true );
