@@ -33,8 +33,8 @@ EditorAnimationPage::EditorAnimationPage()
         : mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
           mGroundSprite( loadWhiteSprite( "testGround.tga" ) ),
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
-          mSaveButton( mainFont, 0, 180, "Save" ),
-          mDeleteButton( mainFont, 140, 180, "Delete" ),
+          mSaveButton( smallFont, 0, 200, "Save" ),
+          mDeleteButton( smallFont, 140, 200, "Delete" ),
           mObjectPicker( &objectPickable, +310, 100 ),
           mPersonAgeSlider( smallFont, 0, -212, 2,
                             100, 20,
@@ -1284,7 +1284,10 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
     
     doublePair pos = { 0, 0 };
     
-    drawSquare( pos, 128 );
+    doublePair nudgedPos = pos;
+    nudgedPos.y += 16;
+    drawRect( nudgedPos, 128, 144 );
+    
 
     pos.y -= 64;
 

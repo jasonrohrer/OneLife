@@ -146,7 +146,7 @@ EditorObjectPage::EditorObjectPage()
           mPrevHeldDemoButton( smallFont, 190, -76, "<" ),
           mSpritePicker( &spritePickable, -310, 100 ),
           mObjectPicker( &objectPickable, +310, 100 ),
-          mPersonAgeSlider( smallFont, -70, 175, 2,
+          mPersonAgeSlider( smallFont, -70, -300, 2,
                             100, 20,
                             0, 100, "Age" ),
           mHueSlider( smallFont, -90, -125, 2,
@@ -2169,6 +2169,11 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     setDrawColor( .85, .85, .85, 1 );
 
     drawRect( barPos, 96, 32 );
+
+    barPos.y += 64 - 16;
+    setDrawColor( 1, 1, 1, 1 );
+
+    drawRect( barPos, 96, 16 );
 
     
 
