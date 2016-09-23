@@ -49,15 +49,15 @@ EditorImportPage::EditorImportPage()
                            "Tag", NULL, " " ),
           mSaveSpriteButton( mainFont, 210, -260, "Save" ),
           mSaveOverlayButton( smallFont, 310, -260, "Save Overlay" ),
-          mSpritePicker( &spritePickable, -310, 100 ),
-          mOverlayPicker( &overlayPickable, 310, 100 ),
+          mSpritePicker( &spritePickable, -410, 100 ),
+          mOverlayPicker( &overlayPickable, 410, 100 ),
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
           mCenterSet( true ),
-          mClearRotButton( smallFont, -300, -280, "0 Rot" ),
-          mClearScaleButton( smallFont, -300, -240, "1 Scale" ),
-          mFlipOverlayButton( smallFont, -230, -280, "Flip H" ),
-          mClearOverlayButton( smallFont, -230, -240, "X Ovly" ),
+          mClearRotButton( smallFont, -400, -280, "0 Rot" ),
+          mClearScaleButton( smallFont, -400, -240, "1 Scale" ),
+          mFlipOverlayButton( smallFont, -330, -280, "Flip H" ),
+          mClearOverlayButton( smallFont, -330, -240, "X Ovly" ),
           mShowTagMessage( false ) {
 
 
@@ -662,28 +662,32 @@ void EditorImportPage::draw( doublePair inViewCenter,
             }
         }
     
-    setDrawColor( 1, 1, 1, 1 );
 
     if( mOverlayScale.getLastElementDirect() != 1.0 ) {
-        doublePair pos = { 300, -240 };
+        doublePair pos = { 400, -240 };
         char *string = 
             autoSprintf( "Scale: %.3f", 
                          mOverlayScale.getLastElementDirect() );
     
+        setDrawColor( .5, .5, .5, 1 );
         smallFont->drawString( string, pos, alignLeft );
-        
+
         delete [] string;
         }
     if( mOverlayRotation.getLastElementDirect() != 0 ) {
-        doublePair pos = { 300, -260 };
+        doublePair pos = { 400, -260 };
         char *string = 
             autoSprintf( "Rot: %.3f", 
                          mOverlayRotation.getLastElementDirect() );
     
+        setDrawColor( .5, .5, .5, 1 );
         smallFont->drawString( string, pos, alignLeft );
         
         delete [] string;
         }
+
+
+    setDrawColor( 1, 1, 1, 1 );
 
     if( mCurrentOverlay.size() > 0 ) {
         doublePair pos = mObjectEditorButton.getPosition();
@@ -793,12 +797,12 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
         return;
         }
 
-    // middle of scree?
-    if( ( inX > -210 && inX < 210 && 
+    // middle of screen?
+    if( ( inX > -310 && inX < 310 && 
           inY > -210 && inY < 190 ) 
         || 
         // or top-left middle of screen (no gui compoents up there
-        ( inX > -210 && inX < -64  && inY > 0 ) ) {
+        ( inX > -310 && inX < -64  && inY > 0 ) ) {
         TextField::unfocusAll();
         }
     else {
