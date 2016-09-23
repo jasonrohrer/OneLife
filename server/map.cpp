@@ -1105,6 +1105,54 @@ int getMapObjectRaw( int inX, int inY ) {
     if( result == -1 ) {
         // nothing in map
         result = getBaseMap( inX, inY );
+        
+        if( result > 0 ) {
+            ObjectRecord *o = getObject( result );
+            
+            if( o->wide ) {
+                // make sure there's not possibly another wide object too close
+                int maxR = getMaxWideRadius();
+                
+                for( int dx = -( o->leftBlockingRadius + maxR );
+                     dx <= ( o->rightBlockingRadius + maxR ); dx++ ) {
+                    
+                    if( dx != 0 ) {
+                        int nID = getBaseMap( inX + dx, inY );
+                        
+                        if( nID > 0 ) {
+                            ObjectRecord *nO = getObject( nID );
+                            
+                            if( nO->wide ) {
+                                
+                                int minDist;
+                                int dist;
+                                
+                                if( dx < 0 ) {
+                                    minDist = nO->rightBlockingRadius +
+                                        o->leftBlockingRadius;
+                                    dist = -dx;
+                                    }
+                                else {
+                                    minDist = nO->leftBlockingRadius +
+                                        o->rightBlockingRadius;
+                                    
+                                    dist = dx;
+                                    }
+
+                                if( dist < minDist ) {
+                                    // collision
+                                    // don't allow this wide object here
+                                    return 0;
+                                    }
+                                }
+                            }
+                        }
+                    
+                    
+                    }
+                }
+            }
+        
         }
     
     return result;

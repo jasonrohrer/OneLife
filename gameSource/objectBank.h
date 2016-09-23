@@ -442,4 +442,8 @@ void getAllBiomes( SimpleVector<int> *inVectorToFill );
 doublePair getObjectCenterOffset( ObjectRecord *inObject );
 
 
+// gets the largest possible radius of all wide objects
+int getMaxWideRadius();
+
+
 #endif

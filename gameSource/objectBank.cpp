@@ -125,6 +125,9 @@ static SimpleVector<ObjectRecord*> records;
 static int maxID;
 
 
+static int maxWideRadius = 0;
+
+
 
 int getMaxObjectID() {
     return maxID;
@@ -350,6 +353,16 @@ float initObjectBankStep() {
                 
                 r->wide = ( r->leftBlockingRadius > 0 || 
                             r->rightBlockingRadius > 0 );
+
+                if( r->wide ) {
+                    if( r->leftBlockingRadius > maxWideRadius ) {
+                        maxWideRadius = r->leftBlockingRadius;
+                        }
+                    if( r->rightBlockingRadius > maxWideRadius ) {
+                        maxWideRadius = r->rightBlockingRadius;
+                        }
+                    }
+                    
 
                 next++;
 
@@ -1222,6 +1235,16 @@ int addObject( const char *inDescription,
     
     r->wide = ( r->leftBlockingRadius > 0 || r->rightBlockingRadius > 0 );
     
+    if( r->wide ) {
+        if( r->leftBlockingRadius > maxWideRadius ) {
+            maxWideRadius = r->leftBlockingRadius;
+            }
+        if( r->rightBlockingRadius > maxWideRadius ) {
+            maxWideRadius = r->rightBlockingRadius;
+            }
+        }
+
+
 
     fillObjectBiomeFromString( r, inBiomes );
     
@@ -2648,6 +2671,11 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject ) {
     return result;
     }
 
+
+
+int getMaxWideRadius() {
+    return maxWideRadius;
+    }
 
     
 
