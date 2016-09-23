@@ -379,7 +379,34 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
                 }
             }
         }
-    
+
+    // now add extra blocked spots for wide objects
+    for( int y=0; y<pathFindingD; y++ ) {
+        int mapY = ( y - pathOffsetY ) + mMapD / 2 - mMapOffsetY;
+        
+        for( int x=0; x<pathFindingD; x++ ) {
+            int mapX = ( x - pathOffsetX ) + mMapD / 2 - mMapOffsetX;
+            
+            int mapI = mapY * mMapD + mapX;
+
+            if( mMap[ mapI ] > 0 ) {
+                ObjectRecord *o = getObject( mMap[ mapI ] );
+                
+                if( o->wide ) {
+                    
+                    for( int dx = - o->leftBlockingRadius;
+                         dx <= o->rightBlockingRadius; dx++ ) {
+                        
+                        int newX = x + dx;
+                        
+                        if( newX >=0 && newX < pathFindingD ) {
+                            blockedMap[ y * pathFindingD + newX ] = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     
     
     start.x += pathOffsetX;
