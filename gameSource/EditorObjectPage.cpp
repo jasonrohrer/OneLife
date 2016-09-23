@@ -52,31 +52,31 @@ EditorObjectPage::EditorObjectPage()
           mBiomeField( smallFont, -55, -220, 8, false, "Biomes",
                        "0123456789,", NULL ),
           mMapChanceField( smallFont, 
-                           -150,  64, 4,
+                           -250,  64, 4,
                            false,
                            "MapP", "0123456789.", NULL ),
           mHeatValueField( smallFont, 
-                           -150,  32, 4,
+                           -250,  32, 4,
                            false,
                            "Heat", "0123456789", NULL ),
           mRValueField( smallFont, 
-                        -150,  0, 4,
+                        -250,  0, 4,
                         false,
                         "R", "0123456789.", NULL ),
           mFoodValueField( smallFont, 
-                           -150,  -32, 4,
+                           -250,  -32, 4,
                            false,
                            "Food", "0123456789", NULL ),
           mSpeedMultField( smallFont, 
-                           -150,  -64, 4,
+                           -250,  -64, 4,
                            false,
                            "Speed", "0123456789.", NULL ),
           mContainSizeField( smallFont, 
-                             150,  -120, 4,
+                             250,  -120, 4,
                              false,
                              "Contain Size", "0123456789.", NULL ),
           mSlotSizeField( smallFont, 
-                          -180,  -230, 4,
+                          -280,  -230, 4,
                           false,
                           "Slot Size", "0123456789.", NULL ),
           mSlotTimeStretchField( smallFont, 
@@ -93,59 +93,59 @@ EditorObjectPage::EditorObjectPage()
                       "Race", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", NULL ),
           mSaveObjectButton( smallFont, 210, -260, "Save New" ),
           mReplaceObjectButton( smallFont, 310, -260, "Replace" ),
-          mClearObjectButton( smallFont, -160, 200, "Blank" ),
-          mClearRotButton( smallFont, -160, 120, "0 Rot" ),
-          mRot90ForwardButton( smallFont, -115, 120, ">" ),
-          mRot90BackwardButton( smallFont, -205, 120, "<" ),
-          mFlipHButton( smallFont, -160, 160, "H Flip" ),
+          mClearObjectButton( smallFont, -260, 200, "Blank" ),
+          mClearRotButton( smallFont, -260, 120, "0 Rot" ),
+          mRot90ForwardButton( smallFont, -215, 120, ">" ),
+          mRot90BackwardButton( smallFont, -305, 120, "<" ),
+          mFlipHButton( smallFont, -260, 160, "H Flip" ),
           mImportEditorButton( mainFont, -210, 260, "Sprites" ),
           mTransEditorButton( mainFont, 210, 260, "Trans" ),
           mAnimEditorButton( mainFont, 330, 260, "Anim" ),
-          mMoreSlotsButton( smallFont, -160, -113, "More" ),
-          mLessSlotsButton( smallFont, -160, -163, "Less" ),
+          mMoreSlotsButton( smallFont, -260, -113, "More" ),
+          mLessSlotsButton( smallFont, -260, -163, "Less" ),
 
-          mAgingLayerCheckbox( 190, -22, 2 ),
-          mHeadLayerCheckbox( 190, 104, 2 ),
-          mBodyLayerCheckbox( 190, 84, 2 ),
-          mBackFootLayerCheckbox( 190, 64, 2 ),
-          mFrontFootLayerCheckbox( 190, 44, 2 ),
-          mInvisibleWhenHoldingCheckbox( 190, 15, 2 ),
+          mAgingLayerCheckbox( 290, -22, 2 ),
+          mHeadLayerCheckbox( 290, 104, 2 ),
+          mBodyLayerCheckbox( 290, 84, 2 ),
+          mBackFootLayerCheckbox( 290, 64, 2 ),
+          mFrontFootLayerCheckbox( 290, 44, 2 ),
+          mInvisibleWhenHoldingCheckbox( 290, 15, 2 ),
           mAgeInField( smallFont, 
-                       160,  -52, 6,
+                       260,  -52, 6,
                        false,
                        "In", "0123456789.", NULL ),
           mAgeOutField( smallFont, 
-                        160,  -90, 6,
+                        260,  -90, 6,
                         false,
                         "Out", "0123456789.", NULL ),
-          mAgePunchInButton( smallFont, 210, -52, "S" ),
-          mAgePunchOutButton( smallFont, 210, -90, "S" ),
+          mAgePunchInButton( smallFont, 310, -52, "S" ),
+          mAgePunchOutButton( smallFont, 310, -90, "S" ),
 
           // these are in same spot because they're never shown at same time
-          mMaleCheckbox( 190, -190, 2 ),
-          mDeathMarkerCheckbox( 190, -190, 2 ),
+          mMaleCheckbox( 290, -190, 2 ),
+          mDeathMarkerCheckbox( 290, -190, 2 ),
 
-          mHeldInHandCheckbox( 190, 36, 2 ),
-          mRideableCheckbox( 190, 16, 2 ),
-          mBlocksWalkingCheckbox( 190, -4, 2 ),
+          mHeldInHandCheckbox( 290, 36, 2 ),
+          mRideableCheckbox( 290, 16, 2 ),
+          mBlocksWalkingCheckbox( 290, -4, 2 ),
           mLeftBlockingRadiusField( smallFont, 
-                                    190,  -30, 2,
+                                    290,  -30, 2,
                                     false,
                                     "L Radius", "0123456789", NULL ),
           mRightBlockingRadiusField( smallFont, 
-                                     190,  -60, 2,
+                                     290,  -60, 2,
                                      false,
                                      "R Radius", "0123456789", NULL ),
-          mDemoClothesButton( smallFont, 200, 200, "Pos" ),
-          mEndClothesDemoButton( smallFont, 200, 160, "XPos" ),
-          mDemoSlotsButton( smallFont, 150, 110, "Demo Slots" ),
-          mClearSlotsDemoButton( smallFont, 150, -32, "End Demo" ),
-          mSetHeldPosButton( smallFont, 150, 64, "Held Pos" ),
-          mEndSetHeldPosButton( smallFont, 140, -76, "End Held" ),
-          mNextHeldDemoButton( smallFont, 212, -76, ">" ),
-          mPrevHeldDemoButton( smallFont, 190, -76, "<" ),
-          mSpritePicker( &spritePickable, -310, 100 ),
-          mObjectPicker( &objectPickable, +310, 100 ),
+          mDemoClothesButton( smallFont, 300, 200, "Pos" ),
+          mEndClothesDemoButton( smallFont, 300, 160, "XPos" ),
+          mDemoSlotsButton( smallFont, 250, 110, "Demo Slots" ),
+          mClearSlotsDemoButton( smallFont, 250, -32, "End Demo" ),
+          mSetHeldPosButton( smallFont, 250, 64, "Held Pos" ),
+          mEndSetHeldPosButton( smallFont, 240, -76, "End Held" ),
+          mNextHeldDemoButton( smallFont, 312, -76, ">" ),
+          mPrevHeldDemoButton( smallFont, 290, -76, "<" ),
+          mSpritePicker( &spritePickable, -410, 100 ),
+          mObjectPicker( &objectPickable, +410, 100 ),
           mPersonAgeSlider( smallFont, -55, -220, 2,
                             100, 20,
                             0, 100, "Age" ),
@@ -420,7 +420,7 @@ EditorObjectPage::EditorObjectPage()
     double boxY = -150;
     
     for( int i=0; i<NUM_OBJECT_CHECKBOXES; i++ ) {
-        mCheckboxes[i] = new CheckboxButton( 150, boxY, 2 );
+        mCheckboxes[i] = new CheckboxButton( 250, boxY, 2 );
         addComponent( mCheckboxes[i] );
 
         boxY -= 20;
@@ -467,7 +467,7 @@ EditorObjectPage::EditorObjectPage()
     boxY = 217;
 
     for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
-        mClothingCheckboxes[i] = new CheckboxButton( 161, boxY, 2 );
+        mClothingCheckboxes[i] = new CheckboxButton( 261, boxY, 2 );
         addComponent( mClothingCheckboxes[i] );
         
         mClothingCheckboxes[i]->addActionListener( this );
@@ -1704,6 +1704,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         // (also, potentially enable the setting button for the first time) 
         if( objectID != -1 && ! mDemoSlots ) {
             mSetHeldPos = false;
+            mSetClothesPos = false;
             mDemoPersonObject = -1;
             mSetHeldPosButton.setVisible( true );
             mEndSetHeldPosButton.setVisible( false );
@@ -2156,33 +2157,45 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     
     setDrawColor( 1, 1, 1, 1 );
     for( int y=0; y<3; y++ ) {
-        for( int x=0; x<3; x++ ) {
+        for( int x=0; x<6; x++ ) {
             
-            doublePair pos = { (double)( x * 64 - 64 ), 
+            doublePair pos = { (double)( x * 64 - 160 ), 
                                (double)( y * 64 - 64 ) };
             
             drawSquare( pos, 32 );
             }
         }
 
-    int i = 0;
-    for( int y=0; y<2; y++ ) {
-        for( int x=0; x<2; x++ ) {
-            
-            doublePair pos = { (double)( x * 64 - 32), 
-                               (double)( y * 64 - 64 ) };
-            
-            if( i%2 == 0 ) {
-                setDrawColor( .85, .85, .85, 1 );
+    doublePair basePos = { -128, 0 };
+    
+
+    for( int c =-1; c<2; c++ ) {
+        float f = 1.0;
+        
+        if( c != 0 ) {
+            f = 0.75f;
+            }
+        
+        int i = 0;
+        for( int y=0; y<2; y++ ) {
+            for( int x=0; x<2; x++ ) {
+                
+                doublePair pos = { (double)( x * 64 - 32), 
+                                   (double)( y * 64 - 64 ) };
+                pos = add( basePos, pos );
+                if( i%2 == 0 ) {
+                    setDrawColor( .85, .85 * f, .85 * f, 1 );
+                    }
+                else {
+                    setDrawColor( 0.75, 0.75 * f, 0.75 * f, 1 );
+                    }
+                
+                drawSquare( pos, 32 );
+                i++;
                 }
-            else {
-                setDrawColor( 0.75, 0.75, 0.75, 1 );
-                }
-            
-            drawSquare( pos, 32 );
             i++;
             }
-        i++;
+        basePos.x += 128;
         }
 
     
@@ -2190,12 +2203,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     
     setDrawColor( .85, .85, .85, 1 );
 
-    drawRect( barPos, 96, 32 );
+    drawRect( barPos, 192, 32 );
 
     barPos.y += 64 - 16;
     setDrawColor( 1, 1, 1, 1 );
 
-    drawRect( barPos, 96, 16 );
+    drawRect( barPos, 192, 16 );
 
     
 
@@ -2542,7 +2555,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
     
     if( mPickedObjectLayer != -1 ) {
-        pos.x = -210;
+        pos.x = -310;
         pos.y = 90;
 
         char *rotString = 
@@ -2986,8 +2999,8 @@ void EditorObjectPage::pointerMove( float inX, float inY ) {
 void EditorObjectPage::pointerDown( float inX, float inY ) {
     mHoverStrength = 0;
     
-    if( inX < -96 || inX > 96 || 
-        inY < -96 || inY > 160 ) {
+    if( inX < -192 || inX > 192 || 
+        inY < -96 || inY > 224 ) {
         return;
         }
     
@@ -3098,8 +3111,8 @@ void EditorObjectPage::pointerDrag( float inX, float inY ) {
         return;
         }
 
-    if( inX < -96 || inX > 96 || 
-        inY < -96 || inY > 160 ) {
+    if( inX < -192 || inX > 192 || 
+        inY < -96 || inY > 224 ) {
         return;
         }
     
@@ -3144,7 +3157,7 @@ void EditorObjectPage::pointerDrag( float inX, float inY ) {
         
         double centerDist = distance( center, pos );
         
-        if( centerDist < 200 ) {
+        if( centerDist < 300 ) {
             for( int i=0; i<mCurrentObject.numSprites; i++ ) {
                 mCurrentObject.spritePos[i] =
                     add( mCurrentObject.spritePos[i],
