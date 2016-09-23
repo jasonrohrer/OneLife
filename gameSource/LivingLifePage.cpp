@@ -2233,6 +2233,20 @@ void LivingLifePage::draw( doublePair inViewCenter,
         int worldY = y + mMapOffsetY - mMapD / 2;
 
         int screenY = CELL_D * ( y + mMapOffsetY - mMapD / 2 );
+        
+
+        // draw wide objects behind everything else, including players
+        
+        for( int x=xStart; x<=xEnd; x++ ) {
+            int mapI = y * mMapD + x;
+            int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
+            
+            if( mMap[ mapI ] > 0 && 
+                getObject( mMap[ mapI ] )->wide ) {
+                
+                drawMapCell( mapI, screenX, screenY );
+                }
+            }
 
 
 
@@ -2289,14 +2303,19 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
 
 
-        // now draw map objects in this row
+        // now draw non-wide map objects in this row
         // OVER the player objects in this row (so that pick up and set down
         // looks correct, and so players are behind all same-row objects)
         for( int x=xStart; x<=xEnd; x++ ) {
             int mapI = y * mMapD + x;
             int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
-            
-            drawMapCell( mapI, screenX, screenY );
+
+
+            if( mMap[ mapI ] > 0 && 
+                ! getObject( mMap[ mapI ] )->wide ) {
+                
+                drawMapCell( mapI, screenX, screenY );
+                }
             }
 
 
