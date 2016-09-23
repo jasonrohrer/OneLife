@@ -3061,6 +3061,10 @@ static void recursiveMove( ObjectRecord *inObject,
 
 
 void EditorObjectPage::pointerDrag( float inX, float inY ) {
+
+    lastMouseX = inX;
+    lastMouseY = inY;
+
     mHoverStrength = 0;
     
     if( ! mDragging ) {
