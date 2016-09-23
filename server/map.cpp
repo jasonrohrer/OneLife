@@ -1135,11 +1135,10 @@ int getMapObjectRaw( int inX, int inY ) {
                                 else {
                                     minDist = nO->leftBlockingRadius +
                                         o->rightBlockingRadius;
-                                    
                                     dist = dx;
                                     }
 
-                                if( dist < minDist ) {
+                                if( dist <= minDist ) {
                                     // collision
                                     // don't allow this wide object here
                                     return 0;
