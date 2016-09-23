@@ -128,7 +128,14 @@ EditorObjectPage::EditorObjectPage()
           mHeldInHandCheckbox( 190, 36, 2 ),
           mRideableCheckbox( 190, 16, 2 ),
           mBlocksWalkingCheckbox( 190, -4, 2 ),
-
+          mLeftBlockingRadiusField( smallFont, 
+                                    190,  -30, 2,
+                                    false,
+                                    "L Radius", "0123456789", NULL ),
+          mRightBlockingRadiusField( smallFont, 
+                                     190,  -60, 2,
+                                     false,
+                                     "R Radius", "0123456789", NULL ),
           mDemoClothesButton( smallFont, 200, 200, "Pos" ),
           mEndClothesDemoButton( smallFont, 200, 160, "XPos" ),
           mDemoSlotsButton( smallFont, 150, 110, "Demo Slots" ),
@@ -423,6 +430,7 @@ EditorObjectPage::EditorObjectPage()
     mCheckboxNames[2] = "Person";
     
     mCheckboxes[0]->addActionListener( this );
+    mCheckboxes[1]->addActionListener( this );
     mCheckboxes[2]->addActionListener( this );
 
 
@@ -447,6 +455,13 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mBlocksWalkingCheckbox );
     mBlocksWalkingCheckbox.setVisible( true );
     mBlocksWalkingCheckbox.addActionListener( this );
+
+    addComponent( &mLeftBlockingRadiusField );
+    mLeftBlockingRadiusField.setVisible( false );
+    
+    addComponent( &mRightBlockingRadiusField );
+    mRightBlockingRadiusField.setVisible( false );
+    
 
 
     boxY = 217;
@@ -944,6 +959,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mHeldInHandCheckbox.getToggled(),
                    mRideableCheckbox.getToggled(),
                    mBlocksWalkingCheckbox.getToggled(),
+                   mLeftBlockingRadiusField.getInt(),
+                   mRightBlockingRadiusField.getInt(),
                    biomes,
                    mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
@@ -1036,6 +1053,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mHeldInHandCheckbox.getToggled(),
                    mRideableCheckbox.getToggled(),
                    mBlocksWalkingCheckbox.getToggled(),
+                   mLeftBlockingRadiusField.getInt(),
+                   mRightBlockingRadiusField.getInt(),
                    biomes,
                    mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
@@ -1456,11 +1475,44 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mDeathMarkerCheckbox ) {
         if( mDeathMarkerCheckbox.getToggled() ) {
             mBlocksWalkingCheckbox.setToggled( false );
+            
+            mLeftBlockingRadiusField.setVisible( false );
+            mRightBlockingRadiusField.setVisible( false );
+            mLeftBlockingRadiusField.setInt( 0 );
+            mRightBlockingRadiusField.setInt( 0 );
             }
         }
     else if( inTarget == &mBlocksWalkingCheckbox ) {
+        mLeftBlockingRadiusField.setVisible( false );
+        mRightBlockingRadiusField.setVisible( false );
+        
         if( mBlocksWalkingCheckbox.getToggled() ) {
             mDeathMarkerCheckbox.setToggled( false );
+            
+            if( mCheckboxes[1]->getToggled() ) {
+                mLeftBlockingRadiusField.setVisible( true );
+                mRightBlockingRadiusField.setVisible( true );
+                }
+            }
+        if( ! mLeftBlockingRadiusField.isVisible() ) {
+            mLeftBlockingRadiusField.setInt( 0 );
+            mRightBlockingRadiusField.setInt( 0 );
+            }
+        }
+    else if( inTarget == mCheckboxes[1] ) {
+        mLeftBlockingRadiusField.setVisible( false );
+        mRightBlockingRadiusField.setVisible( false );
+        
+        if( mBlocksWalkingCheckbox.getToggled() ) {
+
+            if( mCheckboxes[1]->getToggled() ) {
+                mLeftBlockingRadiusField.setVisible( true );
+                mRightBlockingRadiusField.setVisible( true );
+                }
+            }
+        if( ! mLeftBlockingRadiusField.isVisible() ) {
+            mLeftBlockingRadiusField.setInt( 0 );
+            mRightBlockingRadiusField.setInt( 0 );
             }
         }
     else if( inTarget == &mAgingLayerCheckbox ) {
@@ -1860,6 +1912,23 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mRideableCheckbox.setToggled( pickedRecord->rideable );
             mBlocksWalkingCheckbox.setToggled( pickedRecord->blocksWalking );
             
+            mLeftBlockingRadiusField.setInt( pickedRecord->leftBlockingRadius );
+            
+            mRightBlockingRadiusField.setInt( 
+                pickedRecord->rightBlockingRadius );
+            
+            if( mBlocksWalkingCheckbox.getToggled() &&
+                mCheckboxes[1]->getToggled() ) {
+                mLeftBlockingRadiusField.setVisible( true );
+                mRightBlockingRadiusField.setVisible( true );
+                } 
+            else {
+                mLeftBlockingRadiusField.setVisible( false );
+                mRightBlockingRadiusField.setVisible( false );
+                }
+            
+
+
             if( mRideableCheckbox.getToggled() ) {
                 mHeldInHandCheckbox.setToggled( false );
                 }

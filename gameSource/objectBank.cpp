@@ -335,10 +335,21 @@ float initObjectBankStep() {
 
 
                 int blocksWalkingRead = 0;                            
-                sscanf( lines[next], "blocksWalking=%d",
-                        &( blocksWalkingRead ) );
+                
+                r->leftBlockingRadius = 0;
+                r->rightBlockingRadius = 0;
+                
+                sscanf( lines[next], 
+                        "blocksWalking=%d,"
+                        "leftBlockingRadius=%d,rightBlockingRadius=%d",
+                        &( blocksWalkingRead ),
+                        &( r->leftBlockingRadius ),
+                        &( r->rightBlockingRadius ) );
                             
                 r->blocksWalking = blocksWalkingRead;
+                
+                r->wide = ( r->leftBlockingRadius > 0 || 
+                            r->rightBlockingRadius > 0 );
 
                 next++;
 
@@ -802,6 +813,8 @@ void resaveAll() {
                        idMap[i]->heldInHand,
                        idMap[i]->rideable,
                        idMap[i]->blocksWalking,
+                       idMap[i]->leftBlockingRadius,
+                       idMap[i]->rightBlockingRadius,
                        biomeString,
                        idMap[i]->mapChance,
                        idMap[i]->heatValue,
@@ -924,6 +937,7 @@ int addObject( const char *inDescription,
                char inHeldInHand,
                char inRideable,
                char inBlocksWalking,
+               int inLeftBlockingRadius, int inRightBlockingRadius,
                char *inBiomes,
                float inMapChance,
                int inHeatValue,
@@ -1021,8 +1035,13 @@ int addObject( const char *inDescription,
 
         lines.push_back( autoSprintf( "heldInHand=%d", heldInHandNumber ) );
         
-        lines.push_back( autoSprintf( "blocksWalking=%d", 
-                                      (int)inBlocksWalking ) );
+        lines.push_back( autoSprintf( 
+                             "blocksWalking=%d,"
+                             "leftBlockingRadius=%d," 
+                             "rightBlockingRadius=%d", 
+                             (int)inBlocksWalking,
+                             inLeftBlockingRadius, 
+                             inRightBlockingRadius ) );
         
         lines.push_back( autoSprintf( "mapChance=%f#biomes_%s", 
                                       inMapChance, inBiomes ) );
@@ -1198,6 +1217,10 @@ int addObject( const char *inDescription,
         }
     
     r->blocksWalking = inBlocksWalking;
+    r->leftBlockingRadius = inLeftBlockingRadius;
+    r->rightBlockingRadius = inRightBlockingRadius;
+    
+    r->wide = ( r->leftBlockingRadius > 0 || r->rightBlockingRadius > 0 );
     
 
     fillObjectBiomeFromString( r, inBiomes );

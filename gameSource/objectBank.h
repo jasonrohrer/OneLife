@@ -48,6 +48,11 @@ typedef struct ObjectRecord {
         // true for objects that cannot be walked through
         char blocksWalking;
         
+        // true if sticks out and blocks on left or right of center tile
+        char wide;
+        
+        int leftBlockingRadius, rightBlockingRadius;
+        
         
         
         // biome numbers where this object will naturally occur according
@@ -238,6 +243,7 @@ int addObject( const char *inDescription,
                char inHeldInHand,
                char inRideable,
                char inBlocksWalking,
+               int inLeftBlockingRadius, int inRightBlockingRadius,
                char *inBiomes,
                float inMapChance,
                int inHeatValue,
