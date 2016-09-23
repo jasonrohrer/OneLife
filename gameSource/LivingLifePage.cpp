@@ -5053,7 +5053,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
 
 
-    if( destID != 0 && ! p.hitAnObject ) {
+    if( destID > 0 && ! p.hitAnObject ) {
         
         // clicked on empty space near an object
         
