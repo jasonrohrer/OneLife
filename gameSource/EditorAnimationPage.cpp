@@ -35,7 +35,7 @@ EditorAnimationPage::EditorAnimationPage()
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mSaveButton( smallFont, 0, 200, "Save" ),
           mDeleteButton( smallFont, 140, 200, "Delete" ),
-          mObjectPicker( &objectPickable, +410, 100 ),
+          mObjectPicker( &objectPickable, +410, 90 ),
           mPersonAgeSlider( smallFont, 0, -212, 2,
                             100, 20,
                             0, 100, "Age" ),

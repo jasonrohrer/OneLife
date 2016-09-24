@@ -27,10 +27,26 @@ class ObjectPickable : public Pickable {
                                int inNumToSkip, 
                                int inNumToGet, 
                                int *outNumResults, int *outNumRemaining ) {
+            
+            if( strcmp( inSearch, "." ) == 0 ) {
+                int *stackResults = 
+                    getStackRange( inNumToSkip, inNumToGet,
+                                   outNumResults, outNumRemaining );
+                void **results = new void *[ *outNumResults ];
+                
+                for( int i=0; i< *outNumResults; i++ ) {
+                    results[i] = (void*)getObject( stackResults[i] );
+                    }                
 
-            return (void**)searchObjects( inSearch, inNumToSkip, inNumToGet,
-                                          outNumResults, outNumRemaining );
+                delete [] stackResults;
+                return results;
+                }
+            else {
+                return (void**)searchObjects( inSearch, inNumToSkip, inNumToGet,
+                                              outNumResults, outNumRemaining );
+                }
             }
+        
         
 
 
@@ -69,6 +85,8 @@ class ObjectPickable : public Pickable {
 
         
         virtual void deleteID( int inID ) {
+            Pickable::deleteID( inID );
+            
             transPage->clearUseOfObject( inID );
             animPage->clearUseOfObject( inID );
             deleteObjectFromBank( inID );
@@ -85,6 +103,16 @@ class ObjectPickable : public Pickable {
             return r->description;
             }
         
+    protected:
+        
+
+        virtual SimpleVector<int> *getStack() {
+            return &sStack;
+            }
+
+        
+        static SimpleVector<int> sStack;
+
     };
         
 

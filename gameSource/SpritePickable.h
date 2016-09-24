@@ -22,8 +22,24 @@ class SpritePickable : public Pickable {
                                int inNumToGet, 
                                int *outNumResults, int *outNumRemaining ) {
 
-            return (void**)searchSprites( inSearch, inNumToSkip, inNumToGet,
-                                          outNumResults, outNumRemaining );
+            if( strcmp( inSearch, "." ) == 0 ) {
+                int *stackResults = 
+                    getStackRange( inNumToSkip, inNumToGet,
+                                   outNumResults, outNumRemaining );
+                void **results = new void *[ *outNumResults ];
+                
+                for( int i=0; i< *outNumResults; i++ ) {
+                    results[i] = (void*)getSpriteRecord( stackResults[i] );
+                    }
+
+                delete [] stackResults;
+                return results;
+                }
+            else {
+                return (void**)searchSprites( inSearch, inNumToSkip, inNumToGet,
+                                              outNumResults, outNumRemaining );
+                }
+                        
             }
         
 
@@ -63,6 +79,8 @@ class SpritePickable : public Pickable {
         
         
         virtual void deleteID( int inID ) {
+            Pickable::deleteID( inID );
+            
             objectPage->clearUseOfSprite( inID );
             deleteSpriteFromBank( inID );
             }
@@ -74,7 +92,18 @@ class SpritePickable : public Pickable {
             
             return r->tag;
             }
+
         
+    protected:
+        
+
+        virtual SimpleVector<int> *getStack() {
+            return &sStack;
+            }
+
+        
+        static SimpleVector<int> sStack;
+
     };
         
 

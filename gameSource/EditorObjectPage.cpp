@@ -144,8 +144,8 @@ EditorObjectPage::EditorObjectPage()
           mEndSetHeldPosButton( smallFont, 240, -76, "End Held" ),
           mNextHeldDemoButton( smallFont, 312, -76, ">" ),
           mPrevHeldDemoButton( smallFont, 290, -76, "<" ),
-          mSpritePicker( &spritePickable, -410, 100 ),
-          mObjectPicker( &objectPickable, +410, 100 ),
+          mSpritePicker( &spritePickable, -410, 90 ),
+          mObjectPicker( &objectPickable, +410, 90 ),
           mPersonAgeSlider( smallFont, -55, -220, 2,
                             100, 20,
                             0, 100, "Age" ),
@@ -956,6 +956,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] raceText;
             }
 
+        int newID =
         addObject( text,
                    mCheckboxes[0]->getToggled(),
                    mContainSizeField.getInt(),
@@ -996,6 +997,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteIsBody,
                    mCurrentObject.spriteIsBackFoot,
                    mCurrentObject.spriteIsFrontFoot );
+        
+        objectPickable.usePickable( newID );
         
         delete [] text;
         delete [] biomes;
@@ -1091,6 +1094,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteIsBackFoot,
                    mCurrentObject.spriteIsFrontFoot,
                    mCurrentObject.id );
+        
+        objectPickable.usePickable( mCurrentObject.id );
         
         delete [] text;
         delete [] biomes;

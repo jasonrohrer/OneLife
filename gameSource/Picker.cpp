@@ -180,6 +180,13 @@ void Picker::draw() {
             }
         }
     
+
+    setDrawColor( 1, 1, 1, 1 );
+    
+    doublePair pos = { 0, -85 + 216 };
+    
+    smallFont->drawString( "Type . for recent", pos, alignCenter );
+    
     }
 
         
@@ -224,8 +231,20 @@ void Picker::pointerUp( float inX, float inY ) {
         if( mSelectionIndex != -1 ) {
             mSearchField.unfocusAll();
             
-            if( mPickable->canDelete( 
-                    mPickable->getID( mResults[ mSelectionIndex ] ) ) ) {
+            int pickedID = mPickable->getID( mResults[ mSelectionIndex ] );
+            
+            mPickable->usePickable( pickedID );
+            
+            char *text = mSearchField.getText();
+            
+            if( strcmp( text, "." ) == 0 ) {
+                mSkip = 0;
+                redoSearch();
+                mSelectionIndex = 0;
+                }
+            delete [] text;
+
+            if( mPickable->canDelete( pickedID ) ) {
                 mDelButton.setVisible( true );
                 }
             }

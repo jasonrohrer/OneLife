@@ -21,8 +21,26 @@ class OverlayPickable : public Pickable {
                                int inNumToGet, 
                                int *outNumResults, int *outNumRemaining ) {
 
-            return (void**)searchOverlays( inSearch, inNumToSkip, inNumToGet,
-                                          outNumResults, outNumRemaining );
+            if( strcmp( inSearch, "." ) == 0 ) {
+                int *stackResults = 
+                    getStackRange( inNumToSkip, inNumToGet,
+                                   outNumResults, outNumRemaining );
+                void **results = new void *[ *outNumResults ];
+                
+                for( int i=0; i< *outNumResults; i++ ) {
+                    results[i] = (void*)getOverlay( stackResults[i] );
+                    }
+
+                delete [] stackResults;
+                return results;
+                }
+            else {
+                return (void**)searchOverlays( inSearch, inNumToSkip, 
+                                               inNumToGet,
+                                               outNumResults, 
+                                               outNumRemaining );
+                }
+            
             }
         
 
@@ -68,7 +86,17 @@ class OverlayPickable : public Pickable {
             
             return r->tag;
             }
+
+
+    protected:
+
+        virtual SimpleVector<int> *getStack() {
+            return &sStack;
+            }
+
         
+        static SimpleVector<int> sStack;
+
     };
         
 

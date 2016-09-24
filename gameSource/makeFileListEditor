@@ -42,6 +42,7 @@ overlayBank.cpp \
 keyLegend.cpp \
 LoadingPage.cpp \
 folderCache.cpp \
+PickableStatics.cpp \
 
 
 GAME_GRAPHICS = \
