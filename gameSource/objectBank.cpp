@@ -499,9 +499,6 @@ float initObjectBankStep() {
                     sscanf( lines[next], "numSlots=%d#timeStretch=%f", 
                             &( r->numSlots ),
                             &( r->slotTimeStretch ) );
-                    printf( "Read from line '%s' strech %f\n",
-                            lines[next],
-                            r->slotTimeStretch );
                     }
                 else {
                     sscanf( lines[next], "numSlots=%d", 
