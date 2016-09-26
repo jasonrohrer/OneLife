@@ -356,6 +356,7 @@ void initDrawString( int inWidth, int inHeight ) {
     
 
     setViewSize( viewWidth );
+    setLetterbox( visibleViewWidth, viewHeight );
     }
 
 
@@ -403,6 +404,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
         }
     
     setViewSize( viewWidth );
+    setLetterbox( visibleViewWidth, viewHeight );
 
 
     
@@ -1423,32 +1425,6 @@ void drawFrameNoUpdate( char inUpdate ) {
     if( currentGamePage != NULL ) {
         currentGamePage->base_draw( lastScreenViewCenter, viewWidth );
         }
-
-    // add letterboxes
-    
-    // red for now, testing
-    setDrawColor( 0, 0, 0, 1.00 );
-    drawRect( lastScreenViewCenter.x - viewWidth, 
-              lastScreenViewCenter.y - viewHeight,
-              lastScreenViewCenter.x - visibleViewWidth / 2, 
-              lastScreenViewCenter.y + viewHeight );
-    
-    drawRect( lastScreenViewCenter.x + viewWidth, 
-              lastScreenViewCenter.y - viewHeight,
-              lastScreenViewCenter.x + visibleViewWidth / 2, 
-              lastScreenViewCenter.y + viewHeight );
-    
-    // top/bottom bars
-            
-    drawRect( lastScreenViewCenter.x - viewWidth, 
-              lastScreenViewCenter.y - viewHeight,
-              lastScreenViewCenter.x + viewWidth, 
-              lastScreenViewCenter.y - viewHeight / 2 );
-    
-    drawRect( lastScreenViewCenter.x - viewWidth, 
-              lastScreenViewCenter.y + viewHeight,
-              lastScreenViewCenter.x + viewWidth, 
-              lastScreenViewCenter.y + viewHeight / 2 );
     }
 
 
