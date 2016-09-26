@@ -450,13 +450,16 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             
 
 
-            addSprite( tag, 
-                       mProcessedSelectionSprite,
-                       mProcessedSelection,
-                       mSelectionMultiplicative,
-                       mProcessedCenterOffset.x,
-                       mProcessedCenterOffset.y );
-
+            int newID = 
+                addSprite( tag, 
+                           mProcessedSelectionSprite,
+                           mProcessedSelection,
+                           mSelectionMultiplicative,
+                           mProcessedCenterOffset.x,
+                           mProcessedCenterOffset.y );
+            
+            spritePickable.usePickable( newID );
+            
             mSpritePicker.redoSearch();
             
             // don't let it get freed now
@@ -481,8 +484,10 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         
         if( strcmp( tag, "" ) != 0 ) {
                                 
-            addOverlay( tag, mImportedSheet );
+            int newID = addOverlay( tag, mImportedSheet );
 
+            overlayPickable.usePickable( newID );
+            
             // don't let it get freed now
             mImportedSheet = NULL;
             
