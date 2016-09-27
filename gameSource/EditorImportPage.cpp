@@ -43,6 +43,10 @@ EditorImportPage::EditorImportPage()
                          100, 20,
                          0, 1, "Shadow" ),
           mSolidCheckbox( 215, 200, 2 ),
+          mBlackLineThresholdSlider( smallFont, 0, 170, 2,
+                                 100, 20,
+                                 0, 1, "Black Threshold" ),
+          mBlackLineThresholdDefaultButton( smallFont, 215, 170, "D" ),
           mSpriteTagField( mainFont, 
                            0,  -260, 6,
                            false,
@@ -67,6 +71,14 @@ EditorImportPage::EditorImportPage()
     addComponent( &mShadowSlider );
     mShadowSlider.setValue( 1.0 );
     
+    addComponent( &mBlackLineThresholdSlider );
+    mBlackLineThresholdSlider.setValue( 0.2 );
+    mBlackLineThresholdSlider.addActionListener( this );
+
+    addComponent( &mBlackLineThresholdDefaultButton );
+    mBlackLineThresholdDefaultButton.addActionListener( this );
+
+
     addComponent( &mSolidCheckbox );
     mSolidCheckbox.addActionListener( this );
     mSolidCheckbox.setToggled( true );
@@ -415,6 +427,13 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         
         
         }
+    else if( inTarget == &mBlackLineThresholdSlider ) {
+        processSelection();
+        }
+    else if( inTarget == &mBlackLineThresholdDefaultButton ) {
+        mBlackLineThresholdSlider.setValue( 0.2 );
+        processSelection();
+        }
     else if( inTarget == &mXTopLinesButton ) {
         int numLines = mLinesOffset.size();
         
@@ -567,11 +586,17 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mSolidCheckbox ) {
         if( mSolidCheckbox.getToggled() ) {
             mShadowSlider.setVisible( true );
+            mBlackLineThresholdSlider.setVisible( true );
+            mBlackLineThresholdDefaultButton.setVisible( true );
             mSelectionMultiplicative = false;
+            processSelection();
             }
         else {
-            mShadowSlider.setVisible( false );
+            mShadowSlider.setVisible( false ); 
+            mBlackLineThresholdSlider.setVisible( false );
+            mBlackLineThresholdDefaultButton.setVisible( false );
             mSelectionMultiplicative = true;
+            processSelection();
             }
         }
     }
@@ -1215,7 +1240,7 @@ void EditorImportPage::processSelection() {
     whiteMap[ 0 ] = 1;
     
     // how dark do all channels have to be before we say it's not white.
-    double threshold = 0.2;
+    double threshold = mBlackLineThresholdSlider.getValue();
 
 
     double *r = cutImage->getChannel( 0 );

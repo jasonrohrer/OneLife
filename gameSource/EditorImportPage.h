@@ -94,6 +94,9 @@ class EditorImportPage : public GamePage, public ActionListener {
         ValueSlider mShadowSlider;
         CheckboxButton mSolidCheckbox;
         
+        ValueSlider mBlackLineThresholdSlider;
+        TextButton mBlackLineThresholdDefaultButton;
+
 
         TextField mSpriteTagField;
         
