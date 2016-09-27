@@ -2942,8 +2942,8 @@ void LivingLifePage::step() {
                             mMapAnimationFrameCount[mapI] = 0;
                             mMapAnimationLastFrameCount[mapI] = 0;
                             mMapCurAnimType[mapI] = ground;
-                            mMapLastAnimType[mapI] = held;
-                            mMapLastAnimFade[mapI] = 1;
+                            mMapLastAnimType[mapI] = ground;
+                            mMapLastAnimFade[mapI] = 0;
                             
                             mMapAnimationFrozenRotFrameCount[mapI] = 0;
                             
@@ -2960,6 +2960,9 @@ void LivingLifePage::step() {
                                     if( nextObject->id ==
                                         responsiblePlayerID ) {
                                         
+                                        mMapLastAnimType[mapI] = held;
+                                        mMapLastAnimFade[mapI] = 1;
+
                                         mMapAnimationFrozenRotFrameCount
                                             [mapI] =
                                             lrint( 
