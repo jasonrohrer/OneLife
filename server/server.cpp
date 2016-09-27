@@ -3063,11 +3063,14 @@ int main() {
                                         getNumContainerSlots( r->newTarget );
  
                                     shrinkContainer( m.x, m.y, newSlots );
-
-                                    restretchMapContainedDecays( m.x, m.y,
-                                                                 target,
-                                                                 r->newTarget );
-
+                                    
+                                    if( newSlots > 0 ) {    
+                                        restretchMapContainedDecays( 
+                                            m.x, m.y,
+                                            target,
+                                            r->newTarget );
+                                        }
+                                    
                                     unsigned int oldEtaDecay = 
                                         getEtaDecay( m.x, m.y );
                                     
