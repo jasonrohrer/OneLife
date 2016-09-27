@@ -172,8 +172,38 @@ void Picker::draw() {
             textPos.x += 52;
             
             setDrawColor( 0, 0, 0, 1 );
-            smallFont->drawString( mPickable->getText( mResults[i] ), 
-                                   textPos, alignLeft );
+            
+            const char *text = mPickable->getText( mResults[i] );
+            
+            int textLen = strlen( text );
+            
+            int charsLeft = textLen;
+            
+            SimpleVector<char*> parts;
+            
+            while( charsLeft > 0 ) {
+                char *part =
+                    autoSprintf( "%.9s", &( text[ textLen - charsLeft ] ) );
+                charsLeft -= strlen( part );
+                
+                
+                parts.push_back( part );
+                }
+            
+            textPos.y += ( parts.size() - 1 ) * 12 / 2;
+            
+            for( int i=0; i<parts.size(); i++ ) {
+                
+                char *text = parts.getElementDirect( i );
+                char *trimmed = trimWhitespace( text );
+                
+                smallFont->drawString( trimmed, 
+                                       textPos, alignLeft );
+                textPos.y -= 12;
+
+                delete [] trimmed;
+                delete [] text;
+                }
             
 
             pos.y -= 64;
