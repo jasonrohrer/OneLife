@@ -34,6 +34,8 @@ var loadedImagesCount = 0;
 var imageNames = [];
 var imagesArray = [];
 
+var clientArray = [];
+
 var drawingCalled = 0;
 
 function doDrawing() {
@@ -89,6 +91,7 @@ function processObjectFile() {
     currentLine++;
 
     for( i=0; i<numSprites; i++ ) {
+        (function() {  // start closure
         var image = new Image();
 
         image.s_id = lines[currentLine].split("=")[1];
@@ -113,19 +116,57 @@ function processObjectFile() {
         currentLine+=2;
 
         var path = "";
-        
-        image.src = path.concat( "readOnlyOneLifeData/sprites/",
-                                 image.s_id, ".png" );
 
-        image.onload = function(){
-            loadedImagesCount++;
-            if( loadedImagesCount >= numSprites && drawingCalled == 0 ) {
-                //loaded all pictures
-                drawingCalled = 1;
-                doDrawing();
+            
+        var spriteInfoClient = new XMLHttpRequest();
+        
+        var infoPath = "readOnlyOneLifeData/sprites/" + image.s_id + ".txt";
+        //alert( infoPath );
+        //      spritInfoClient.myPath = infoPath;
+        
+        spriteInfoClient.open( 'GET', infoPath );
+        
+        
+        spriteInfoClient.onreadystatechange = function() {
+            //alert( spriteInfoClient.statusText );
+            
+            if( spriteInfoClient.readyState === XMLHttpRequest.DONE 
+                && spriteInfoClient.status === 200 ) {
+
+                //alert( spriteInfoClient.responseText );
+                
+                var infoParts = spriteInfoClient.responseText.split(" ");
+
+                var xOff = infoParts[2];
+                var yOff = infoParts[3];
+                //alert( infoParts[0] + " "  + infoParts[1] + " offset = " +
+                //       xOff + " " + yOff );
+
+                image.s_offset[0] = parseFloat( image.s_offset[0] ) -
+                    parseFloat( xOff );
+                image.s_offset[1] = parseFloat( image.s_offset[1] ) +
+                    parseFloat( yOff );
+                
+                
+                image.src = path.concat( "readOnlyOneLifeData/sprites/",
+                                         image.s_id, ".png" );
+	
+                image.onload = function(){
+                    loadedImagesCount++;
+                    if( loadedImagesCount >= numSprites &&
+                        drawingCalled == 0 ) {
+                        //loaded all pictures
+                        drawingCalled = 1;
+                        doDrawing();
+                        }
+                    }
                 }
             }
-        imagesArray.push(image);    
+        
+        imagesArray.push(image);
+        clientArray.push( spriteInfoClient );
+        spriteInfoClient.send();
+        
         /*
           spriteID=6
           pos=15.000000,5.000000
@@ -136,6 +177,8 @@ function processObjectFile() {
           parent=-1
           invisHolding=0
          */
+            }
+         )(); // end closure
         
         }
     }
