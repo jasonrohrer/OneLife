@@ -115,7 +115,7 @@ char initDone = false;
 
 float mouseSpeed;
 
-int musicOff;
+int musicOff = true;
 float musicLoudness;
 
 int webRetrySeconds;
