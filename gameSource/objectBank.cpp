@@ -542,6 +542,7 @@ float initObjectBankStep() {
                 r->spriteParent = new int[ r->numSprites ];
                 r->spriteInvisibleWhenHolding = new char[ r->numSprites ];
                 r->spriteInvisibleWhenWorn = new char[ r->numSprites ];
+                r->spriteBehindSlots = new char[ r->numSprites ];
 
 
 
@@ -609,12 +610,16 @@ float initObjectBankStep() {
 
                     int invisRead = 0;
                     int invisWornRead = 0;
+                    int behindSlotsRead = 0;
                     
-                    sscanf( lines[next], "invisHolding=%d,invisWorn=%d", 
-                            &invisRead, &invisWornRead );
+                    sscanf( lines[next], 
+                            "invisHolding=%d,invisWorn=%d,behindSlots=%d", 
+                            &invisRead, &invisWornRead,
+                            &behindSlotsRead );
                                 
                     r->spriteInvisibleWhenHolding[i] = invisRead;
                     r->spriteInvisibleWhenWorn[i] = invisWornRead;
+                    r->spriteBehindSlots[i] = behindSlotsRead;
                                 
                     next++;                        
                     }
@@ -743,6 +748,7 @@ static void freeObjectRecord( int inID ) {
 
             delete [] idMap[inID]->spriteInvisibleWhenHolding;
             delete [] idMap[inID]->spriteInvisibleWhenWorn;
+            delete [] idMap[inID]->spriteBehindSlots;
 
             delete [] idMap[inID]->spriteIsHead;
             delete [] idMap[inID]->spriteIsBody;
@@ -792,6 +798,7 @@ void freeObjectBank() {
 
             delete [] idMap[i]->spriteInvisibleWhenHolding;
             delete [] idMap[i]->spriteInvisibleWhenWorn;
+            delete [] idMap[i]->spriteBehindSlots;
 
             delete [] idMap[i]->spriteIsHead;
             delete [] idMap[i]->spriteIsBody;
@@ -860,6 +867,7 @@ void resaveAll() {
                        idMap[i]->spriteParent,
                        idMap[i]->spriteInvisibleWhenHolding,
                        idMap[i]->spriteInvisibleWhenWorn,
+                       idMap[i]->spriteBehindSlots,
                        idMap[i]->spriteIsHead,
                        idMap[i]->spriteIsBody,
                        idMap[i]->spriteIsBackFoot,
@@ -981,6 +989,7 @@ int addObject( const char *inDescription,
                int *inSpriteParent,
                char *inSpriteInvisibleWhenHolding,
                char *inSpriteInvisibleWhenWorn,
+               char *inSpriteBehindSlots,
                char *inSpriteIsHead,
                char *inSpriteIsBody,
                char *inSpriteIsBackFoot,
@@ -1127,9 +1136,11 @@ int addObject( const char *inDescription,
                                           inSpriteParent[i] ) );
 
 
-            lines.push_back( autoSprintf( "invisHolding=%d,invisWorn=%d", 
+            lines.push_back( autoSprintf( "invisHolding=%d,invisWorn=%d,"
+                                          "behindSlots=%d", 
                                           inSpriteInvisibleWhenHolding[i],
-                                          inSpriteInvisibleWhenWorn[i] ) );
+                                          inSpriteInvisibleWhenWorn[i],
+                                          inSpriteBehindSlots[i] ) );
 
             }
         
@@ -1295,6 +1306,7 @@ int addObject( const char *inDescription,
     r->spriteParent = new int[ inNumSprites ];
     r->spriteInvisibleWhenHolding = new char[ inNumSprites ];
     r->spriteInvisibleWhenWorn = new char[ inNumSprites ];
+    r->spriteBehindSlots = new char[ inNumSprites ];
 
     r->spriteIsHead = new char[ inNumSprites ];
     r->spriteIsBody = new char[ inNumSprites ];
@@ -1321,6 +1333,9 @@ int addObject( const char *inDescription,
             inNumSprites * sizeof( char ) );
 
     memcpy( r->spriteInvisibleWhenWorn, inSpriteInvisibleWhenWorn, 
+            inNumSprites * sizeof( char ) );
+
+    memcpy( r->spriteBehindSlots, inSpriteBehindSlots, 
             inNumSprites * sizeof( char ) );
 
 
@@ -1380,7 +1395,8 @@ static char logicalXOR( char inA, char inB ) {
 
 
 
-HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
+HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
+                       doublePair inPos,
                        double inRot, char inWorn, char inFlipH, double inAge,
                        int inHideClosestArm,
                        char inHideAllLimbs,
@@ -1455,6 +1471,18 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             // skip invisible layer in worn clothing
             continue;
             }
+        
+        if( inDrawBehindSlots != 2 ) {    
+            if( inDrawBehindSlots == 0 && 
+                ! inObject->spriteBehindSlots[i] ) {
+                continue;
+                }
+            else if( inDrawBehindSlots == 1 && 
+                     inObject->spriteBehindSlots[i] ) {
+                continue;
+                }
+            }
+        
         
 
         doublePair spritePos = inObject->spritePos[i];
@@ -1592,15 +1620,18 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             // draw under top of back arm
 
             if( inClothing.bottom != NULL ) {
-                drawObject( inClothing.bottom, bottomPos, bottomRot, true,
+                drawObject( inClothing.bottom, 2, 
+                            bottomPos, bottomRot, true,
                             inFlipH, -1, 0, false, false, emptyClothing );
                 }
             if( inClothing.tunic != NULL ) {
-                drawObject( inClothing.tunic, tunicPos, tunicRot, true,
+                drawObject( inClothing.tunic, 2,
+                            tunicPos, tunicRot, true,
                             inFlipH, -1, 0, false, false, emptyClothing );
                 }
             if( inClothing.backpack != NULL ) {
-                drawObject( inClothing.backpack, backpackPos, backpackRot,
+                drawObject( inClothing.backpack, 2, 
+                            backpackPos, backpackRot,
                             true,
                             inFlipH, -1, 0, false, false, emptyClothing );
                 }
@@ -1671,11 +1702,13 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
         
         // shoes on top of feet
         if( inClothing.backShoe != NULL && i == backFootIndex ) {
-            drawObject( inClothing.backShoe, backShoePos, backShoeRot, true,
+            drawObject( inClothing.backShoe, 2,
+                        backShoePos, backShoeRot, true,
                         inFlipH, -1, 0, false, false, emptyClothing );
             }
         else if( inClothing.frontShoe != NULL && i == frontFootIndex ) {
-            drawObject( inClothing.backShoe, frontShoePos, frontShoeRot, true,
+            drawObject( inClothing.backShoe, 2,
+                        frontShoePos, frontShoeRot, true,
                         inFlipH, -1, 0, false, false, emptyClothing );
             }
 
@@ -1694,7 +1727,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
             }
         cPos = add( cPos, inPos );
         
-        drawObject( inClothing.hat, cPos, inRot, true,
+        drawObject( inClothing.hat, 2, cPos, inRot, true,
                     inFlipH, -1, 0, false, false, emptyClothing );
         }
 
@@ -1710,6 +1743,13 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                        char inHeldNotInPlaceYet,
                        ClothingSet inClothing,
                        int inNumContained, int *inContainedIDs ) {
+    
+    drawObject( inObject, 0, inPos, inRot, inWorn, inFlipH, inAge, 
+                inHideClosestArm,
+                inHideAllLimbs,
+                inHeldNotInPlaceYet,
+                inClothing );
+
     
     int numSlots = getNumContainerSlots( inObject->id );
     
@@ -1740,14 +1780,14 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
 
 
         doublePair pos = add( slotPos, inPos );
-        drawObject( contained, pos, inRot, false, inFlipH, inAge,
+        drawObject( contained, 2, pos, inRot, false, inFlipH, inAge,
                     0,
                     false,
                     false,
                     emptyClothing );
         }
     
-    return drawObject( inObject, inPos, inRot, inWorn, inFlipH, inAge, 
+    return drawObject( inObject, 1, inPos, inRot, inWorn, inFlipH, inAge, 
                        inHideClosestArm,
                        inHideAllLimbs,
                        inHeldNotInPlaceYet,
@@ -2313,8 +2353,22 @@ double getClosestObjectPart( ObjectRecord *inObject,
     
     double smallestDist = 9999999;
 
-    if( *outSprite == -1 && *outClothing == -1 && *outSlot == -1 ) {
+    char closestBehindSlots = false;
+    
+    if( *outSprite != -1 && inObject->spriteBehindSlots[ *outSprite ] ) {
+        closestBehindSlots = true;
+        }
+    
+    
+    if( ( *outSprite == -1 || closestBehindSlots )
+        && *outClothing == -1 && *outSlot == -1 ) {
         // consider slots
+        
+        if( closestBehindSlots ) {
+            // consider only direct contianed 
+            // object hits or slot placeholder hits
+            smallestDist = 16;
+            }
         
         
         for( int i=inObject->numSlots-1; i>=0; i-- ) {
@@ -2369,6 +2423,10 @@ double getClosestObjectPart( ObjectRecord *inObject,
                 }
             }
         
+        if( closestBehindSlots && smallestDist == 16 ) {
+            // hit no slot, stick with sprite behind
+            smallestDist = 0;
+            }
         }
     else{ 
         smallestDist = 0;

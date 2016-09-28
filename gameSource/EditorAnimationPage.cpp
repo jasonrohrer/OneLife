@@ -1457,7 +1457,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
 
 
                 HoldingPos holdingPos = 
-                    drawObjectAnim( mCurrentObjectID, 
+                    drawObjectAnim( mCurrentObjectID, 2, 
                                 anim, frameTime,
                                 animFade,
                                 fadeTargetAnim, fadeTargetFrameTime, 
@@ -1532,7 +1532,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                     holdPos.y += heldOffset.y;
                     
                     
-                    drawObjectAnim( mHeldID, 
+                    drawObjectAnim( mHeldID, 2,  
                                     t, frameTime,
                                     animFade, 
                                     mCurrentType, fadeTargetFrameTime, 
@@ -1557,7 +1557,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                             obj->numSlots, demoSlots );
                 }
             else {
-                drawObject( obj, pos, 0, false, 
+                drawObject( obj, 2, pos, 0, false, 
                             mFlipDraw, age, false, false, false,
                             mClothingSet );
                 }

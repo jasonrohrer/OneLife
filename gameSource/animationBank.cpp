@@ -666,7 +666,8 @@ static char logicalXOR( char inA, char inB ) {
 
 
 
-HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
+HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
+                           AnimType inType, double inFrameTime,
                            double inAnimFade,
                            AnimType inFadeTargetType,
                            double inFadeTargetFrameTime,
@@ -693,7 +694,8 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
     
 
     if( r == NULL ) {
-        return drawObject( getObject( inObjectID ), inPos, inRot, inWorn, 
+        return drawObject( getObject( inObjectID ), inDrawBehindSlots,
+                           inPos, inRot, inWorn, 
                            inFlipH, inAge, 
                            inHideClosestArm, inHideAllLimbs, 
                            inHeldNotInPlaceYet,
@@ -720,7 +722,8 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
             }
         
                 
-        return drawObjectAnim( inObjectID, r, inFrameTime,
+        return drawObjectAnim( inObjectID, inDrawBehindSlots, 
+                               r, inFrameTime,
                                inAnimFade, rB, 
                                inFadeTargetFrameTime, 
                                inFrozenRotFrameTime,
@@ -814,7 +817,8 @@ static double processFrameTimeWithPauses( AnimationRecord *inAnim,
 
 
 
-HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
+HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
+                           AnimationRecord *inAnim, 
                            double inFrameTime,
                            double inAnimFade,
                            AnimationRecord *inFadeTargetAnim,
@@ -847,7 +851,8 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     
     if( obj->numSprites > MAX_WORKING_SPRITES ) {
         // cannot animate objects with this many sprites
-        drawObject( obj, inPos, inRot, inWorn, inFlipH, inAge, 
+        drawObject( obj, inDrawBehindSlots,
+                    inPos, inRot, inWorn, inFlipH, inAge, 
                     inHideClosestArm, inHideAllLimbs, inHeldNotInPlaceYet,
                     inClothing );
         return returnHoldingPos;
@@ -1379,6 +1384,25 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 }
             }
 
+
+        if( inWorn &&
+            obj->clothing != 'n' &&
+            obj->spriteInvisibleWhenWorn[i] ) {
+        
+            // skip invisible layer in worn clothing
+            skipSprite = true;
+            }
+        
+        if( inDrawBehindSlots != 2 ) {    
+            if( inDrawBehindSlots == 0 && 
+                ! obj->spriteBehindSlots[i] ) {
+                skipSprite = true;
+                }
+            else if( inDrawBehindSlots == 1 && 
+                     obj->spriteBehindSlots[i] ) {
+                skipSprite = true;
+                }
+            }
 
 
         if( i == backFootIndex 
@@ -1946,8 +1970,24 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      int inNumContained, int *inContainedIDs ) {
     
     ClothingSet emptyClothing = getEmptyClothingSet();
+
+
+    // draw portion of animating object behind slots
+    drawObjectAnim( inObjectID, 0, inAnim, inFrameTime,
+                    inAnimFade, inFadeTargetAnim, inFadeTargetFrameTime,
+                    inFrozenRotFrameTime,
+                    outFrozenRotFrameTimeUsed,
+                    inFrozenRotAnim,
+                    inFrozenArmAnim,
+                    inFrozenArmFadeTargetAnim,
+                    inPos, inRot, inWorn, inFlipH,
+                    inAge, inHideClosestArm, inHideAllLimbs, 
+                    inHeldNotInPlaceYet,
+                    inClothing,
+                    inClothingContained );
+
     
-    // first, draw jiggling (never rotating) objects in slots
+    // next, draw jiggling (never rotating) objects in slots
     // can't safely rotate them, because they may be compound objects
     
     ObjectRecord *obj = getObject( inObjectID );
@@ -2028,14 +2068,14 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             
 
             pos = add( pos, inPos );
-            drawObject( contained, pos, inRot, false, inFlipH,
+            drawObject( contained, 2, pos, inRot, false, inFlipH,
                         inAge, 0, false, false, emptyClothing );
             }
         
         } 
 
-    // draw animating object on top of contained slots
-    drawObjectAnim( inObjectID, inAnim, inFrameTime,
+    // draw portion of animating object on top of contained slots
+    drawObjectAnim( inObjectID, 1, inAnim, inFrameTime,
                     inAnimFade, inFadeTargetAnim, inFadeTargetFrameTime,
                     inFrozenRotFrameTime,
                     outFrozenRotFrameTimeUsed,

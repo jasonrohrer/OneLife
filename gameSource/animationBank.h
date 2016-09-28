@@ -148,7 +148,8 @@ void setAnimLayerFades( float *inFades );
 
 
 
-HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
+HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots, 
+                           AnimType inType, double inFrameTime,
                            double inAnimFade,
                            // if inAnimFade < 1, this is the animation
                            // that we are fading to (fading to the time-0 config
@@ -181,7 +182,8 @@ HoldingPos drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                            SimpleVector<int> *inClothingContained );
 
 
-HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim, 
+HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
+                           AnimationRecord *inAnim, 
                            double inFrameTime,
                            double inAnimFade,
                            AnimationRecord *inFadeTargetAnim,

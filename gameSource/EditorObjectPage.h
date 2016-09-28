@@ -116,6 +116,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         CheckboxButton mInvisibleWhenHoldingCheckbox;
 
         CheckboxButton mInvisibleWhenWornCheckbox;
+
+        CheckboxButton mBehindSlotsCheckbox;
         
         TextField mAgeInField;
         TextField mAgeOutField;
@@ -218,6 +220,9 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         void addNewSprite( int inSpriteID );
 
+        
+        void drawSpriteLayers( char inBehindSlots );
+        
 
         FloatRGB mColorClipboard;
         

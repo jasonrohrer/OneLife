@@ -161,7 +161,9 @@ typedef struct ObjectRecord {
         // all false for non-clothing objects
         char *spriteInvisibleWhenWorn;
         
-
+        char *spriteBehindSlots;
+        
+        
         // flags for sprites that are special body parts
         char *spriteIsHead;
         char *spriteIsBody;
@@ -274,6 +276,7 @@ int addObject( const char *inDescription,
                int *inSpriteParent,
                char *inSpriteInvisibleWhenHolding,
                char *inSpriteInvisibleWhenWorn,
+               char *inSpriteBehindSlots,
                char *inSpriteIsHead,
                char *inSpriteIsBody,
                char *inSpriteIsBackFoot,
@@ -296,7 +299,10 @@ typedef struct HoldingPos {
 // so that they fit in the picker, is not applied to clothing
 //
 // returns the position used to hold something 
-HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, 
+//
+// inDrawBehindSlots = 0 for back layer, 1 for front layer, 2 for both
+HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
+                       doublePair inPos, 
                        double inRot, char inWorn, char inFlipH, double inAge,
                        // 1 for front arm, -1 for back arm, 0 for no hiding
                        int inHideClosestArm,
