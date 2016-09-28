@@ -485,7 +485,7 @@ EditorObjectPage::EditorObjectPage()
     mClothingCheckboxNames[3] = "Tunic";
     mClothingCheckboxNames[4] = "Hat";
     
-    mInvisibleWhenWornCheckbox.setPosition( 261, boxY );
+    mInvisibleWhenWornCheckbox.setPosition( 168, 217 );
 
 
     addKeyClassDescription( &mKeyLegend, "n/m", "Switch layers" );
@@ -747,6 +747,18 @@ void EditorObjectPage::updateAgingPanel() {
 
     mBiomeField.setVisible( !person );
     mDeadlyDistanceField.setVisible( !person );
+
+
+    if( mPickedObjectLayer == -1 || ! anyClothingToggled() ) {
+        mInvisibleWhenWornCheckbox.setVisible( false );
+        }
+    else {
+        mInvisibleWhenWornCheckbox.setVisible( true );
+        
+        mInvisibleWhenWornCheckbox.setToggled(
+            mCurrentObject.spriteInvisibleWhenWorn[
+                mPickedObjectLayer] );
+        }
     }
 
 
@@ -831,6 +843,11 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
             mCurrentObject.spriteInvisibleWhenHolding, 
             mCurrentObject.numSprites * sizeof( char ) );
 
+    char *newSpriteInvisibleWhenWorn = new char[ newNumSprites ];
+    memcpy( newSpriteInvisibleWhenWorn, 
+            mCurrentObject.spriteInvisibleWhenWorn, 
+            mCurrentObject.numSprites * sizeof( char ) );
+
 
     char *newSpriteIsHead = new char[ newNumSprites ];
     memcpy( newSpriteIsHead, 
@@ -873,6 +890,7 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
     newSpriteParent[ mCurrentObject.numSprites ] = -1;
 
     newSpriteInvisibleWhenHolding[ mCurrentObject.numSprites ] = 0;
+    newSpriteInvisibleWhenWorn[ mCurrentObject.numSprites ] = false;
             
     newSpriteIsHead[ mCurrentObject.numSprites ] = false;
     newSpriteIsBody[ mCurrentObject.numSprites ] = false;
@@ -890,6 +908,7 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
     delete [] mCurrentObject.spriteParent;
             
     delete [] mCurrentObject.spriteInvisibleWhenHolding;
+    delete [] mCurrentObject.spriteInvisibleWhenWorn;
 
     delete [] mCurrentObject.spriteIsHead;
     delete [] mCurrentObject.spriteIsBody;
@@ -909,6 +928,8 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
 
     mCurrentObject.spriteInvisibleWhenHolding = 
         newSpriteInvisibleWhenHolding;
+    mCurrentObject.spriteInvisibleWhenWorn = 
+        newSpriteInvisibleWhenWorn;
 
 
     mCurrentObject.spriteIsHead = newSpriteIsHead;
@@ -2959,21 +2980,9 @@ void EditorObjectPage::pickedLayerChanged() {
         
         mRot90ForwardButton.setVisible( false );
         mRot90BackwardButton.setVisible( false );
-        
-        
-        mInvisibleWhenWornCheckbox.setVisible( false );
         }
     else {
         
-        
-        if( anyClothingToggled() ) {
-            mInvisibleWhenWornCheckbox.setVisible( true );
-        
-            mInvisibleWhenWornCheckbox.setToggled(
-                mCurrentObject.spriteInvisibleWhenWorn[
-                    mPickedObjectLayer] );
-            }
-
         if( mCheckboxes[2]->getToggled() ) {
             // person, and a layer selected, disable held demo button
             // because of overlap
