@@ -1353,7 +1353,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             &used,
                             endAnimType,
                             endAnimType,
-                            pos, rot, flip,
+                            pos, rot, false, flip,
                             -1,
                             false, false, false,
                             getEmptyClothingSet(),
@@ -1373,6 +1373,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             endAnimType,
                             endAnimType,
                             pos, rot,
+                            false,
                             flip, -1,
                             false, false, false,
                             getEmptyClothingSet(), NULL );
@@ -1618,6 +1619,7 @@ void LivingLifePage::drawLiveObject(
                         frozenArmFadeTargetType,
                         pos,
                         0,
+                        false,
                         inObj->holdingFlip,
                         age,
                         // don't actually hide body parts until
@@ -1805,6 +1807,7 @@ void LivingLifePage::drawLiveObject(
                                 holdPos,
                                 // never apply held rot to baby
                                 0,
+                                false,
                                 inObj->holdingFlip,
                                 babyO->age,
                                 // don't hide baby's hands when it is held
@@ -1834,6 +1837,7 @@ void LivingLifePage::drawLiveObject(
                             endAnimType,
                             holdPos,
                             holdRot,
+                            false,
                             inObj->holdingFlip, -1, false, false, false,
                             getEmptyClothingSet(), NULL );
             }
@@ -1849,6 +1853,7 @@ void LivingLifePage::drawLiveObject(
                             endAnimType,
                             holdPos,
                             holdRot,
+                            false,
                             inObj->holdingFlip,
                             -1, false, false, false,
                             getEmptyClothingSet(),
