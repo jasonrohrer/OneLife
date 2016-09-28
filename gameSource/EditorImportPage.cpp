@@ -829,7 +829,7 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
 
     // middle of screen?
     if( ( inX > -310 && inX < 310 && 
-          inY > -210 && inY < 190 ) 
+          inY > -210 && inY < 160 ) 
         || 
         // or top-left middle of screen (no gui compoents up there
         ( inX > -310 && inX < -64  && inY > 0 ) ) {
