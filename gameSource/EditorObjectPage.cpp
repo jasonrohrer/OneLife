@@ -110,6 +110,7 @@ EditorObjectPage::EditorObjectPage()
           mBackFootLayerCheckbox( 290, 64, 2 ),
           mFrontFootLayerCheckbox( 290, 44, 2 ),
           mInvisibleWhenHoldingCheckbox( 290, 15, 2 ),
+          mInvisibleWhenWornCheckbox( 290, 0, 2 ),
           mAgeInField( smallFont, 
                        260,  -52, 6,
                        false,
@@ -255,6 +256,8 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mBackFootLayerCheckbox );
     addComponent( &mFrontFootLayerCheckbox );
     addComponent( &mInvisibleWhenHoldingCheckbox );
+    addComponent( &mInvisibleWhenWornCheckbox );
+    mInvisibleWhenWornCheckbox.setVisible( false );
     
     addComponent( &mAgeInField );
     addComponent( &mAgeOutField );
@@ -271,6 +274,7 @@ EditorObjectPage::EditorObjectPage()
     mBackFootLayerCheckbox.addActionListener( this );
     mFrontFootLayerCheckbox.addActionListener( this );
     mInvisibleWhenHoldingCheckbox.addActionListener( this );
+    mInvisibleWhenWornCheckbox.addActionListener( this );
     
 
     mAgeInField.addActionListener( this );
@@ -376,6 +380,7 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.spriteParent = new int[ 0 ];
 
     mCurrentObject.spriteInvisibleWhenHolding = new char[ 0 ];
+    mCurrentObject.spriteInvisibleWhenWorn = new char[ 0 ];
 
     mCurrentObject.spriteIsHead = new char[ 0 ];
     mCurrentObject.spriteIsBody = new char[ 0 ];
@@ -480,6 +485,7 @@ EditorObjectPage::EditorObjectPage()
     mClothingCheckboxNames[3] = "Tunic";
     mClothingCheckboxNames[4] = "Hat";
     
+    mInvisibleWhenWornCheckbox.setPosition( 261, boxY );
 
 
     addKeyClassDescription( &mKeyLegend, "n/m", "Switch layers" );
@@ -519,6 +525,7 @@ EditorObjectPage::~EditorObjectPage() {
     delete [] mCurrentObject.spriteParent;
 
     delete [] mCurrentObject.spriteInvisibleWhenHolding;
+    delete [] mCurrentObject.spriteInvisibleWhenWorn;
 
     delete [] mCurrentObject.spriteIsHead;
     delete [] mCurrentObject.spriteIsBody;
@@ -993,6 +1000,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteAgeEnd,
                    mCurrentObject.spriteParent,
                    mCurrentObject.spriteInvisibleWhenHolding,
+                   mCurrentObject.spriteInvisibleWhenWorn,
                    mCurrentObject.spriteIsHead,
                    mCurrentObject.spriteIsBody,
                    mCurrentObject.spriteIsBackFoot,
@@ -1089,6 +1097,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteAgeEnd,
                    mCurrentObject.spriteParent,
                    mCurrentObject.spriteInvisibleWhenHolding,
+                   mCurrentObject.spriteInvisibleWhenWorn,
                    mCurrentObject.spriteIsHead,
                    mCurrentObject.spriteIsBody,
                    mCurrentObject.spriteIsBackFoot,
@@ -1160,6 +1169,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         for( int c=0; c<NUM_CLOTHING_CHECKBOXES; c++ ) {
             mClothingCheckboxes[c]->setToggled( false );
             }
+        mInvisibleWhenWornCheckbox.setToggled( false );
+        mInvisibleWhenWornCheckbox.setVisible( false );
         
 
         delete [] mCurrentObject.slotPos;
@@ -1557,6 +1568,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mCurrentObject.spriteInvisibleWhenHolding[ mPickedObjectLayer]
             = mInvisibleWhenHoldingCheckbox.getToggled();
         }
+    else if( inTarget == &mInvisibleWhenWornCheckbox ) {
+        mCurrentObject.spriteInvisibleWhenWorn[ mPickedObjectLayer ]
+            = mInvisibleWhenWornCheckbox.getToggled();
+        }
     else if( inTarget == &mHeadLayerCheckbox ) {
         mCurrentObject.spriteIsHead[ mPickedObjectLayer ] =
             mHeadLayerCheckbox.getToggled();
@@ -1736,6 +1751,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] mCurrentObject.spriteAgeEnd;
             delete [] mCurrentObject.spriteParent;
             delete [] mCurrentObject.spriteInvisibleWhenHolding;
+            delete [] mCurrentObject.spriteInvisibleWhenWorn;
 
             delete [] mCurrentObject.spriteIsHead;
             delete [] mCurrentObject.spriteIsBody;
@@ -1810,6 +1826,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.spriteInvisibleWhenHolding = 
                 new char[ pickedRecord->numSprites ];
 
+            mCurrentObject.spriteInvisibleWhenWorn = 
+                new char[ pickedRecord->numSprites ];
+
 
             mCurrentObject.spriteIsHead = 
                 new char[ pickedRecord->numSprites ];
@@ -1852,6 +1871,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                     sizeof( int ) * pickedRecord->numSprites );
             memcpy( mCurrentObject.spriteInvisibleWhenHolding, 
                     pickedRecord->spriteInvisibleWhenHolding,
+                    sizeof( char ) * pickedRecord->numSprites );
+            
+            memcpy( mCurrentObject.spriteInvisibleWhenWorn, 
+                    pickedRecord->spriteInvisibleWhenWorn,
                     sizeof( char ) * pickedRecord->numSprites );
             
             memcpy( mCurrentObject.spriteIsHead, 
@@ -1917,7 +1940,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                     break;
                 }   
 
-
+            mInvisibleWhenWornCheckbox.setToggled( false );
+            mInvisibleWhenWornCheckbox.setVisible( false );
+            
             mCheckboxes[0]->setToggled( pickedRecord->containable );
             mCheckboxes[1]->setToggled( pickedRecord->permanent );
             mCheckboxes[2]->setToggled( pickedRecord->person );
@@ -2138,9 +2163,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                     mCheckboxes[2]->setToggled( false );
                     mSetHeldPosButton.setVisible( true );
 
-                    updateAgingPanel();
+                    pickedLayerChanged();
                     }
                 else {
+                    mInvisibleWhenWornCheckbox.setVisible( false );
                     mDemoClothesButton.setVisible( false );
                     }
                 
@@ -2255,7 +2281,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         
         HoldingPos holdingPos =
-            drawObject( personObject, drawOffset, 0, false, 
+            drawObject( personObject, drawOffset, 0, false, false, 
                         age, hideClosestArm, hideAllLimbs, false,
                         getEmptyClothingSet() );
 
@@ -2312,7 +2338,8 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
                 
   
-        drawObject( getObject( mDemoPersonObject ), drawOffset, 0, false, 
+        drawObject( getObject( mDemoPersonObject ), drawOffset, 0, 
+                    false, false, 
                     age, 0, false, false, s );
 
         // offset from body part
@@ -2384,7 +2411,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 drawObject( demoObject, 
                             sub( add( mCurrentObject.slotPos[i], drawOffset ),
                                  getObjectCenterOffset( demoObject ) ),
-                            0, false, -1, 0, false, false, 
+                            0, false, false, -1, 0, false, false, 
                             getEmptyClothingSet() );
                 }
             }
@@ -2589,6 +2616,15 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         smallFont->drawString( mClothingCheckboxNames[i], pos, alignRight );
         }
+    
+    if( mInvisibleWhenWornCheckbox.isVisible() ) {
+        pos = mInvisibleWhenWornCheckbox.getPosition();
+    
+        pos.x -= 20;
+        
+        smallFont->drawString( "Worn X", pos, alignRight );
+        }
+    
 
     if( mAgingLayerCheckbox.isVisible() ) {
         pos = mAgingLayerCheckbox.getPosition();
@@ -2784,6 +2820,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     double *newSpriteAgeEnd = new double[ newNumSprites ];
     int *newSpriteParent = new int[ newNumSprites ];
     char *newSpriteInvisibleWhenHolding = new char[ newNumSprites ];
+    char *newSpriteInvisibleWhenWorn = new char[ newNumSprites ];
 
     char *newSpriteIsHead = new char[ newNumSprites ];
     char *newSpriteIsBody = new char[ newNumSprites ];
@@ -2805,6 +2842,8 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
             newSpriteParent[j] = mCurrentObject.spriteParent[i];
             newSpriteInvisibleWhenHolding[j] = 
                 mCurrentObject.spriteInvisibleWhenHolding[i];
+            newSpriteInvisibleWhenWorn[j] = 
+                mCurrentObject.spriteInvisibleWhenWorn[i];
             newSpriteIsHead[j] = mCurrentObject.spriteIsHead[i];
             newSpriteIsBody[j] = mCurrentObject.spriteIsBody[i];
             newSpriteIsBackFoot[j] = mCurrentObject.spriteIsBackFoot[i];
@@ -2823,6 +2862,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     delete [] mCurrentObject.spriteAgeEnd;
     delete [] mCurrentObject.spriteParent;
     delete [] mCurrentObject.spriteInvisibleWhenHolding;
+    delete [] mCurrentObject.spriteInvisibleWhenWorn;
 
     delete [] mCurrentObject.spriteIsHead;
     delete [] mCurrentObject.spriteIsBody;
@@ -2838,6 +2878,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     mCurrentObject.spriteAgeEnd = newSpriteAgeEnd;
     mCurrentObject.spriteParent = newSpriteParent;
     mCurrentObject.spriteInvisibleWhenHolding = newSpriteInvisibleWhenHolding;
+    mCurrentObject.spriteInvisibleWhenWorn = newSpriteInvisibleWhenWorn;
 
     mCurrentObject.spriteIsHead = newSpriteIsHead;
     mCurrentObject.spriteIsBody = newSpriteIsBody;
@@ -2918,9 +2959,21 @@ void EditorObjectPage::pickedLayerChanged() {
         
         mRot90ForwardButton.setVisible( false );
         mRot90BackwardButton.setVisible( false );
+        
+        
+        mInvisibleWhenWornCheckbox.setVisible( false );
         }
     else {
         
+        
+        if( anyClothingToggled() ) {
+            mInvisibleWhenWornCheckbox.setVisible( true );
+        
+            mInvisibleWhenWornCheckbox.setToggled(
+                mCurrentObject.spriteInvisibleWhenWorn[
+                    mPickedObjectLayer] );
+            }
+
         if( mCheckboxes[2]->getToggled() ) {
             // person, and a layer selected, disable held demo button
             // because of overlap
@@ -3368,6 +3421,11 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
             deleteFromCharArray( mCurrentObject.spriteInvisibleWhenHolding, 
                                  mCurrentObject.numSprites,
                                  mPickedObjectLayer );
+
+        char *newSpriteInvisibleWhenWorn = 
+            deleteFromCharArray( mCurrentObject.spriteInvisibleWhenWorn, 
+                                 mCurrentObject.numSprites,
+                                 mPickedObjectLayer );
         
         char *newSpriteIsHead = 
             deleteFromCharArray( mCurrentObject.spriteIsHead, 
@@ -3399,6 +3457,7 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         delete [] mCurrentObject.spriteAgeEnd;
         delete [] mCurrentObject.spriteParent;
         delete [] mCurrentObject.spriteInvisibleWhenHolding;
+        delete [] mCurrentObject.spriteInvisibleWhenWorn;
         delete [] mCurrentObject.spriteIsHead;
         delete [] mCurrentObject.spriteIsBody;
         delete [] mCurrentObject.spriteIsBackFoot;
@@ -3414,6 +3473,8 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         mCurrentObject.spriteParent = newSpriteParent;
         mCurrentObject.spriteInvisibleWhenHolding = 
             newSpriteInvisibleWhenHolding;
+        mCurrentObject.spriteInvisibleWhenWorn = 
+            newSpriteInvisibleWhenWorn;
         
         mCurrentObject.spriteIsHead = newSpriteIsHead;
         mCurrentObject.spriteIsBody = newSpriteIsBody;
@@ -3701,6 +3762,11 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 mPickedObjectLayer + 
                                 layerOffset];
 
+                        char tempInvisibleWhenWorn = 
+                            mCurrentObject.spriteInvisibleWhenWorn[
+                                mPickedObjectLayer + 
+                                layerOffset];
+
                         char tempIsHead = 
                             mCurrentObject.spriteIsHead[
                                 mPickedObjectLayer + 
@@ -3781,6 +3847,14 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 mPickedObjectLayer];
                         mCurrentObject.spriteInvisibleWhenHolding[
                             mPickedObjectLayer] = tempInvisibleWhenHolding;
+
+                        mCurrentObject.spriteInvisibleWhenWorn[
+                            mPickedObjectLayer 
+                            + layerOffset]
+                            = mCurrentObject.spriteInvisibleWhenWorn[
+                                mPickedObjectLayer];
+                        mCurrentObject.spriteInvisibleWhenWorn[
+                            mPickedObjectLayer] = tempInvisibleWhenWorn;
 
 
                         mCurrentObject.spriteIsHead[ mPickedObjectLayer 
@@ -3882,6 +3956,11 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 mPickedObjectLayer - 
                                 layerOffset];
 
+                        char tempInvisibleWhenWorn = 
+                            mCurrentObject.spriteInvisibleWhenWorn[
+                                mPickedObjectLayer - 
+                                layerOffset];
+
 
                         char tempIsHead = 
                             mCurrentObject.spriteIsHead[
@@ -3965,6 +4044,14 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 mPickedObjectLayer];
                         mCurrentObject.spriteInvisibleWhenHolding[
                             mPickedObjectLayer] = tempInvisibleWhenHolding;
+
+                        mCurrentObject.spriteInvisibleWhenWorn[
+                            mPickedObjectLayer 
+                            - layerOffset]
+                            = mCurrentObject.spriteInvisibleWhenWorn[
+                                mPickedObjectLayer];
+                        mCurrentObject.spriteInvisibleWhenWorn[
+                            mPickedObjectLayer] = tempInvisibleWhenWorn;
 
 
 

@@ -115,6 +115,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         CheckboxButton mInvisibleWhenHoldingCheckbox;
 
+        CheckboxButton mInvisibleWhenWornCheckbox;
         
         TextField mAgeInField;
         TextField mAgeOutField;

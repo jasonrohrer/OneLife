@@ -157,6 +157,10 @@ typedef struct ObjectRecord {
         // the person is holding something?
         char *spriteInvisibleWhenHolding;
         
+        // true for parts of clothing that disappear when clothing put on
+        // all false for non-clothing objects
+        char *spriteInvisibleWhenWorn;
+        
 
         // flags for sprites that are special body parts
         char *spriteIsHead;
@@ -269,6 +273,7 @@ int addObject( const char *inDescription,
                double *inSpriteAgeEnd,
                int *inSpriteParent,
                char *inSpriteInvisibleWhenHolding,
+               char *inSpriteInvisibleWhenWorn,
                char *inSpriteIsHead,
                char *inSpriteIsBody,
                char *inSpriteIsBackFoot,
@@ -292,7 +297,7 @@ typedef struct HoldingPos {
 //
 // returns the position used to hold something 
 HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, 
-                       double inRot, char inFlipH, double inAge,
+                       double inRot, char inWorn, char inFlipH, double inAge,
                        // 1 for front arm, -1 for back arm, 0 for no hiding
                        int inHideClosestArm,
                        char inHideAllLimbs,
@@ -302,8 +307,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
 
 
 HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
-                       double inRot, char inFlipH,
-                       double inAge,
+                       double inRot, char inWorn, char inFlipH, double inAge,
                        int inHideClosestArm,
                        char inHideAllLimbs,
                        char inHeldNotInPlaceYet,

@@ -1409,7 +1409,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 animRotFrozen,
                                 NULL,
                                 NULL,
-                                pos, 0, mFlipDraw, age,
+                                pos, 0, false, mFlipDraw, age,
                                 false,
                                 false,
                                 false,
@@ -1466,7 +1466,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 animRotFrozen,
                                 frozenArmAnim,
                                 frozenArmAnim,
-                                pos, 0, mFlipDraw, age,
+                                pos, 0, false, mFlipDraw, age,
                                 hideClosestArm,
                                 hideAllLimbs,
                                 false,
@@ -1540,7 +1540,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                     &mFrozenRotFrameCountUsed,
                                     moving,
                                     moving,
-                                    holdPos, heldRot, mFlipDraw, -1,
+                                    holdPos, heldRot, false, mFlipDraw, -1,
                                     false,
                                     false,
                                     false,
@@ -1551,12 +1551,14 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
             }
         else {
             if( demoSlots != NULL ) {
-                drawObject( obj, pos, 0, mFlipDraw, age, false, false, false, 
+                drawObject( obj, pos, 0, false,
+                            mFlipDraw, age, false, false, false, 
                             mClothingSet,
                             obj->numSlots, demoSlots );
                 }
             else {
-                drawObject( obj, pos, 0, mFlipDraw, age, false, false, false,
+                drawObject( obj, pos, 0, false, 
+                            mFlipDraw, age, false, false, false,
                             mClothingSet );
                 }
             }
