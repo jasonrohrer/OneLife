@@ -1512,9 +1512,28 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     cont = inClothingContained[4].getElementArray();
                     }
                 
-                drawObject( inClothing.bottom, bottomPos, bottomRot,
-                            inFlipH, -1, 0, false, false, emptyClothing,
-                            numCont, cont );
+
+                char used;
+                drawObjectAnim( inClothing.bottom->id, 
+                                inAnim->type, 
+                                inFrameTime,
+                                inAnimFade, 
+                                inFadeTargetAnim->type,
+                                inFadeTargetFrameTime,
+                                inFrozenRotFrameTime,
+                                &used,
+                                endAnimType,
+                                endAnimType,
+                                bottomPos,
+                                bottomRot,
+                                inFlipH,
+                                -1,
+                                0,
+                                false,
+                                false,
+                                emptyClothing,
+                                NULL,
+                                numCont, cont );
                 
                 if( cont != NULL ) {
                     delete [] cont;
@@ -1528,10 +1547,28 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     cont = inClothingContained[1].getElementArray();
                     }
                 
-                drawObject( inClothing.tunic, tunicPos, tunicRot,
-                            inFlipH, -1, 0, false, false, emptyClothing,
-                            numCont, cont );
-                
+                char used;
+                drawObjectAnim( inClothing.tunic->id, 
+                                inAnim->type, 
+                                inFrameTime,
+                                inAnimFade, 
+                                inFadeTargetAnim->type,
+                                inFadeTargetFrameTime,
+                                inFrozenRotFrameTime,
+                                &used,
+                                endAnimType,
+                                endAnimType,
+                                tunicPos,
+                                tunicRot,
+                                inFlipH,
+                                -1,
+                                0,
+                                false,
+                                false,
+                                emptyClothing,
+                                NULL,
+                                numCont, cont );
+
                 if( cont != NULL ) {
                     delete [] cont;
                     }
@@ -1543,11 +1580,29 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     numCont = inClothingContained[5].size();
                     cont = inClothingContained[5].getElementArray();
                     }
-                
-                drawObject( inClothing.backpack, backpackPos, backpackRot,
-                            inFlipH, -1, 0, false, false, emptyClothing,
-                            numCont, cont );
-                
+
+                char used;
+                drawObjectAnim( inClothing.backpack->id, 
+                                inAnim->type, 
+                                inFrameTime,
+                                inAnimFade, 
+                                inFadeTargetAnim->type,
+                                inFadeTargetFrameTime,
+                                inFrozenRotFrameTime,
+                                &used,
+                                endAnimType,
+                                endAnimType,
+                                backpackPos,
+                                backpackRot,
+                                inFlipH,
+                                -1,
+                                0,
+                                false,
+                                false,
+                                emptyClothing,
+                                NULL,
+                                numCont, cont );
+
                 if( cont != NULL ) {
                     delete [] cont;
                     }
@@ -1659,9 +1714,28 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 cont = inClothingContained[3].getElementArray();
                 }
 
-            drawObject( inClothing.backShoe, backShoePos, backShoeRot,
-                        inFlipH, -1, 0, false, false, emptyClothing,
-                        numCont, cont );
+            char used;
+            drawObjectAnim( inClothing.backShoe->id, 
+                            inAnim->type, 
+                            inFrameTime,
+                            inAnimFade, 
+                            inFadeTargetAnim->type,
+                            inFadeTargetFrameTime,
+                            inFrozenRotFrameTime,
+                            &used,
+                            endAnimType,
+                            endAnimType,
+                            backShoePos,
+                            backShoeRot,
+                            inFlipH,
+                            -1,
+                            0,
+                            false,
+                            false,
+                            emptyClothing,
+                            NULL,
+                            numCont, cont );
+
             if( cont != NULL ) {
                 delete [] cont;
                 }
@@ -1673,10 +1747,29 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 numCont = inClothingContained[2].size();
                 cont = inClothingContained[2].getElementArray();
                 }
+            
+            char used;
+            drawObjectAnim( inClothing.frontShoe->id, 
+                            inAnim->type, 
+                            inFrameTime,
+                            inAnimFade, 
+                            inFadeTargetAnim->type,
+                            inFadeTargetFrameTime,
+                            inFrozenRotFrameTime,
+                            &used,
+                            endAnimType,
+                            endAnimType,
+                            frontShoePos,
+                            frontShoeRot,
+                            inFlipH,
+                            -1,
+                            0,
+                            false,
+                            false,
+                            emptyClothing,
+                            NULL,
+                            numCont, cont );
 
-            drawObject( inClothing.frontShoe, frontShoePos, frontShoeRot,
-                        inFlipH, -1, 0, false, false, emptyClothing,
-                        numCont, cont );
             if( cont != NULL ) {
                 delete [] cont;
                 }
@@ -1714,9 +1807,28 @@ HoldingPos drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             cont = inClothingContained[0].getElementArray();
             }
         
-        drawObject( inClothing.hat, cPos, animHeadRotDelta,
-                    inFlipH, -1, 0, false, false, emptyClothing,
-                    numCont, cont );
+        char used;
+        drawObjectAnim( inClothing.hat->id, 
+                        inAnim->type, 
+                        inFrameTime,
+                        inAnimFade, 
+                        inFadeTargetAnim->type,
+                        inFadeTargetFrameTime,
+                        inFrozenRotFrameTime,
+                        &used,
+                        endAnimType,
+                        endAnimType,
+                        cPos,
+                        animHeadRotDelta,
+                        inFlipH,
+                        -1,
+                        0,
+                        false,
+                        false,
+                        emptyClothing,
+                        NULL,
+                        numCont, cont );
+        
         if( cont != NULL ) {
             delete [] cont;
             }
