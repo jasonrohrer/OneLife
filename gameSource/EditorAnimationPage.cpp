@@ -48,7 +48,7 @@ EditorAnimationPage::EditorAnimationPage()
           mFlipDraw( false ),
           mWiggleAnim( NULL ),
           mWiggleFade( 0.0 ),
-          mWiggleSpriteOrSlot( 0 ),
+          mWiggleSpriteOrSlot( -1 ),
           mRotCenterFade( 0.0 ),
           mCurrentType( ground ),
           mLastType( ground ),
@@ -1045,7 +1045,9 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             else {
                 int oldID = mCurrentObjectID;
-
+                
+                mWiggleSpriteOrSlot = -1;
+                
                 char keepOldID = false;
 
                 mCurrentObjectID = newPickID;
