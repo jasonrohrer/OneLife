@@ -2247,8 +2247,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
 
 
-void EditorObjectPage::drawSpriteLayers( char inBehindSlots ) {
-    doublePair drawOffset = mObjectCenterOnScreen;
+void EditorObjectPage::drawSpriteLayers( doublePair inDrawOffset, 
+                                         char inBehindSlots ) {
+    doublePair drawOffset = inDrawOffset;
 
     doublePair headPos = {0,0};
     int headIndex = 0;
@@ -2573,7 +2574,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
 
     if( !skipDrawing ) {
-        drawSpriteLayers( true );
+        drawSpriteLayers( drawOffset, true );
         }
     
     if( ! skipDrawing && mCurrentObject.numSlots > 0 ) {
@@ -2644,7 +2645,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     
 
     if( !skipDrawing ) {
-        drawSpriteLayers( false );
+        drawSpriteLayers( drawOffset, false );
         }
     
 
@@ -3712,7 +3713,24 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
             }
         return;
         }
-    
+    else if( mSetClothesPos ) {    
+        
+        switch( inKeyCode ) {
+            case MG_KEY_LEFT:
+                mCurrentObject.clothingOffset.x -= offset;
+                break;
+            case MG_KEY_RIGHT:
+                mCurrentObject.clothingOffset.x += offset;
+                break;
+            case MG_KEY_DOWN:
+                mCurrentObject.clothingOffset.y -= offset;
+                break;
+            case MG_KEY_UP:
+                mCurrentObject.clothingOffset.y += offset;
+                break;
+            }
+        return;
+        }
 
 
     if( mPickedObjectLayer == -1 && mPickedSlot == -1 ) {

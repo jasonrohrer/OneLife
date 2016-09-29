@@ -221,7 +221,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         void addNewSprite( int inSpriteID );
 
         
-        void drawSpriteLayers( char inBehindSlots );
+        void drawSpriteLayers( doublePair inDrawOffset,
+                               char inBehindSlots );
         
 
         FloatRGB mColorClipboard;
