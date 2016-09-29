@@ -157,9 +157,10 @@ typedef struct ObjectRecord {
         // the person is holding something?
         char *spriteInvisibleWhenHolding;
         
-        // true for parts of clothing that disappear when clothing put on
-        // all false for non-clothing objects
-        char *spriteInvisibleWhenWorn;
+        // 1 for parts of clothing that disappear when clothing put on
+        // 2 for parts of clothing that disappear when clothing taken off
+        // all 0 for non-clothing objects
+        int *spriteInvisibleWhenWorn;
         
         char *spriteBehindSlots;
         
@@ -275,7 +276,7 @@ int addObject( const char *inDescription,
                double *inSpriteAgeEnd,
                int *inSpriteParent,
                char *inSpriteInvisibleWhenHolding,
-               char *inSpriteInvisibleWhenWorn,
+               int *inSpriteInvisibleWhenWorn,
                char *inSpriteBehindSlots,
                char *inSpriteIsHead,
                char *inSpriteIsBody,

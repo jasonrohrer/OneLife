@@ -111,6 +111,7 @@ EditorObjectPage::EditorObjectPage()
           mFrontFootLayerCheckbox( 290, 44, 2 ),
           mInvisibleWhenHoldingCheckbox( 290, 15, 2 ),
           mInvisibleWhenWornCheckbox( 290, 0, 2 ),
+          mInvisibleWhenUnwornCheckbox( 290, 0, 2 ),
           mBehindSlotsCheckbox( -190, 0, 2 ),
           mAgeInField( smallFont, 
                        260,  -52, 6,
@@ -258,9 +259,12 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mFrontFootLayerCheckbox );
     addComponent( &mInvisibleWhenHoldingCheckbox );
     addComponent( &mInvisibleWhenWornCheckbox );
+    addComponent( &mInvisibleWhenUnwornCheckbox );
     addComponent( &mBehindSlotsCheckbox );
     
     mInvisibleWhenWornCheckbox.setVisible( false );
+    mInvisibleWhenUnwornCheckbox.setVisible( false );
+
     mBehindSlotsCheckbox.setVisible( false );
     
     addComponent( &mAgeInField );
@@ -279,6 +283,7 @@ EditorObjectPage::EditorObjectPage()
     mFrontFootLayerCheckbox.addActionListener( this );
     mInvisibleWhenHoldingCheckbox.addActionListener( this );
     mInvisibleWhenWornCheckbox.addActionListener( this );
+    mInvisibleWhenUnwornCheckbox.addActionListener( this );
     mBehindSlotsCheckbox.addActionListener( this );
     
 
@@ -385,7 +390,7 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.spriteParent = new int[ 0 ];
 
     mCurrentObject.spriteInvisibleWhenHolding = new char[ 0 ];
-    mCurrentObject.spriteInvisibleWhenWorn = new char[ 0 ];
+    mCurrentObject.spriteInvisibleWhenWorn = new int[ 0 ];
     mCurrentObject.spriteBehindSlots = new char[ 0 ];
 
     mCurrentObject.spriteIsHead = new char[ 0 ];
@@ -492,6 +497,7 @@ EditorObjectPage::EditorObjectPage()
     mClothingCheckboxNames[4] = "Hat";
     
     mInvisibleWhenWornCheckbox.setPosition( 168, 217 );
+    mInvisibleWhenUnwornCheckbox.setPosition( 168, 197 );
     mBehindSlotsCheckbox.setPosition( -118, 217 );
 
 
@@ -759,13 +765,26 @@ void EditorObjectPage::updateAgingPanel() {
 
     if( mPickedObjectLayer == -1 || ! anyClothingToggled() ) {
         mInvisibleWhenWornCheckbox.setVisible( false );
+        mInvisibleWhenUnwornCheckbox.setVisible( false );
         }
     else {
         mInvisibleWhenWornCheckbox.setVisible( true );
+        mInvisibleWhenUnwornCheckbox.setVisible( true );
         
-        mInvisibleWhenWornCheckbox.setToggled(
-            mCurrentObject.spriteInvisibleWhenWorn[
-                mPickedObjectLayer] );
+        switch( mCurrentObject.spriteInvisibleWhenWorn[ mPickedObjectLayer ] ) {
+            case 0:
+                mInvisibleWhenWornCheckbox.setToggled( false );
+                mInvisibleWhenUnwornCheckbox.setToggled( false );
+                break;
+            case 1:
+                mInvisibleWhenWornCheckbox.setToggled( true );
+                mInvisibleWhenUnwornCheckbox.setToggled( false );
+                break;
+            case 2:
+                mInvisibleWhenWornCheckbox.setToggled( false );
+                mInvisibleWhenUnwornCheckbox.setToggled( true );
+                break;
+            }
         }
     if( mPickedObjectLayer != -1 && mCurrentObject.numSlots > 0 ) {
         mBehindSlotsCheckbox.setVisible( true );
@@ -859,10 +878,10 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
             mCurrentObject.spriteInvisibleWhenHolding, 
             mCurrentObject.numSprites * sizeof( char ) );
 
-    char *newSpriteInvisibleWhenWorn = new char[ newNumSprites ];
+    int *newSpriteInvisibleWhenWorn = new int[ newNumSprites ];
     memcpy( newSpriteInvisibleWhenWorn, 
             mCurrentObject.spriteInvisibleWhenWorn, 
-            mCurrentObject.numSprites * sizeof( char ) );
+            mCurrentObject.numSprites * sizeof( int ) );
 
     char *newSpriteBehindSlots = new char[ newNumSprites ];
     memcpy( newSpriteBehindSlots, 
@@ -911,7 +930,7 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
     newSpriteParent[ mCurrentObject.numSprites ] = -1;
 
     newSpriteInvisibleWhenHolding[ mCurrentObject.numSprites ] = 0;
-    newSpriteInvisibleWhenWorn[ mCurrentObject.numSprites ] = false;
+    newSpriteInvisibleWhenWorn[ mCurrentObject.numSprites ] = 0;
     newSpriteBehindSlots[ mCurrentObject.numSprites ] = false;
             
     newSpriteIsHead[ mCurrentObject.numSprites ] = false;
@@ -1219,6 +1238,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }
         mInvisibleWhenWornCheckbox.setToggled( false );
         mInvisibleWhenWornCheckbox.setVisible( false );
+
+        mInvisibleWhenUnwornCheckbox.setToggled( false );
+        mInvisibleWhenUnwornCheckbox.setVisible( false );
 
         mBehindSlotsCheckbox.setToggled( false );
         mBehindSlotsCheckbox.setVisible( false );
@@ -1622,8 +1644,22 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             = mInvisibleWhenHoldingCheckbox.getToggled();
         } 
     else if( inTarget == &mInvisibleWhenWornCheckbox ) {
-        mCurrentObject.spriteInvisibleWhenWorn[ mPickedObjectLayer ]
-            = mInvisibleWhenWornCheckbox.getToggled();
+        if( mInvisibleWhenWornCheckbox.getToggled() ) {
+            mInvisibleWhenUnwornCheckbox.setToggled( false );
+            mCurrentObject.spriteInvisibleWhenWorn[ mPickedObjectLayer ] = 1;
+            }
+        else {
+            mCurrentObject.spriteInvisibleWhenWorn[ mPickedObjectLayer ] = 0;
+            }
+        }
+    else if( inTarget == &mInvisibleWhenUnwornCheckbox ) {
+        if( mInvisibleWhenUnwornCheckbox.getToggled() ) {
+            mInvisibleWhenWornCheckbox.setToggled( false );
+            mCurrentObject.spriteInvisibleWhenWorn[ mPickedObjectLayer ] = 2;
+            }
+        else {
+            mCurrentObject.spriteInvisibleWhenWorn[ mPickedObjectLayer ] = 0;
+            }
         }
     else if( inTarget == &mBehindSlotsCheckbox ) {
         mCurrentObject.spriteBehindSlots[ mPickedObjectLayer ]
@@ -1885,7 +1921,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 new char[ pickedRecord->numSprites ];
 
             mCurrentObject.spriteInvisibleWhenWorn = 
-                new char[ pickedRecord->numSprites ];
+                new int[ pickedRecord->numSprites ];
 
             mCurrentObject.spriteBehindSlots = 
                 new char[ pickedRecord->numSprites ];
@@ -1936,7 +1972,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             memcpy( mCurrentObject.spriteInvisibleWhenWorn, 
                     pickedRecord->spriteInvisibleWhenWorn,
-                    sizeof( char ) * pickedRecord->numSprites );
+                    sizeof( int ) * pickedRecord->numSprites );
 
             memcpy( mCurrentObject.spriteBehindSlots, 
                     pickedRecord->spriteBehindSlots,
@@ -2007,6 +2043,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mInvisibleWhenWornCheckbox.setToggled( false );
             mInvisibleWhenWornCheckbox.setVisible( false );
+
+            mInvisibleWhenUnwornCheckbox.setToggled( false );
+            mInvisibleWhenUnwornCheckbox.setVisible( false );
 
             mBehindSlotsCheckbox.setToggled( false );
             mBehindSlotsCheckbox.setVisible( false );
@@ -2235,6 +2274,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                     }
                 else {
                     mInvisibleWhenWornCheckbox.setVisible( false );
+                    mInvisibleWhenUnwornCheckbox.setVisible( false );
                     mDemoClothesButton.setVisible( false );
                     }
                 
@@ -2706,6 +2746,13 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         smallFont->drawString( "Worn X", pos, alignRight );
         }
+    if( mInvisibleWhenUnwornCheckbox.isVisible() ) {
+        pos = mInvisibleWhenUnwornCheckbox.getPosition();
+    
+        pos.x -= 20;
+        
+        smallFont->drawString( "Unworn X", pos, alignRight );
+        }
 
     if( mBehindSlotsCheckbox.isVisible() ) {
         pos = mBehindSlotsCheckbox.getPosition();
@@ -2910,7 +2957,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     double *newSpriteAgeEnd = new double[ newNumSprites ];
     int *newSpriteParent = new int[ newNumSprites ];
     char *newSpriteInvisibleWhenHolding = new char[ newNumSprites ];
-    char *newSpriteInvisibleWhenWorn = new char[ newNumSprites ];
+    int *newSpriteInvisibleWhenWorn = new int[ newNumSprites ];
     char *newSpriteBehindSlots = new char[ newNumSprites ];
 
     char *newSpriteIsHead = new char[ newNumSprites ];
@@ -3325,7 +3372,7 @@ void EditorObjectPage::pointerUp( float inX, float inY ) {
 
 // makes a new array with element missing
 // does not delete old array
-static char *deleteFromCharArray( char *inArray, char inOldLength,
+static char *deleteFromCharArray( char *inArray, int inOldLength,
                                   int inIndexToRemove ) {
     
     int newLength = inOldLength - 1;
@@ -3337,6 +3384,22 @@ static char *deleteFromCharArray( char *inArray, char inOldLength,
     memcpy( &( newArray[inIndexToRemove] ), 
             &( inArray[inIndexToRemove + 1] ), 
             (newLength - inIndexToRemove ) * sizeof( char ) );
+    
+    return newArray;
+    }
+
+static int *deleteFromIntArray( int *inArray, int inOldLength,
+                                int inIndexToRemove ) {
+    
+    int newLength = inOldLength - 1;
+
+    int *newArray = new int[ newLength ];
+        
+    memcpy( newArray, inArray, inIndexToRemove * sizeof( int ) );
+    
+    memcpy( &( newArray[inIndexToRemove] ), 
+            &( inArray[inIndexToRemove + 1] ), 
+            (newLength - inIndexToRemove ) * sizeof( int ) );
     
     return newArray;
     }
@@ -3505,10 +3568,10 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
                                  mCurrentObject.numSprites,
                                  mPickedObjectLayer );
 
-        char *newSpriteInvisibleWhenWorn = 
-            deleteFromCharArray( mCurrentObject.spriteInvisibleWhenWorn, 
-                                 mCurrentObject.numSprites,
-                                 mPickedObjectLayer );
+        int *newSpriteInvisibleWhenWorn = 
+            deleteFromIntArray( mCurrentObject.spriteInvisibleWhenWorn, 
+                                mCurrentObject.numSprites,
+                                mPickedObjectLayer );
 
         char *newSpriteBehindSlots = 
             deleteFromCharArray( mCurrentObject.spriteBehindSlots, 
@@ -3870,7 +3933,7 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 mPickedObjectLayer + 
                                 layerOffset];
 
-                        char tempInvisibleWhenWorn = 
+                        int tempInvisibleWhenWorn = 
                             mCurrentObject.spriteInvisibleWhenWorn[
                                 mPickedObjectLayer + 
                                 layerOffset];
@@ -4076,7 +4139,7 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 mPickedObjectLayer - 
                                 layerOffset];
 
-                        char tempInvisibleWhenWorn = 
+                        int tempInvisibleWhenWorn = 
                             mCurrentObject.spriteInvisibleWhenWorn[
                                 mPickedObjectLayer - 
                                 layerOffset];

@@ -541,7 +541,7 @@ float initObjectBankStep() {
 
                 r->spriteParent = new int[ r->numSprites ];
                 r->spriteInvisibleWhenHolding = new char[ r->numSprites ];
-                r->spriteInvisibleWhenWorn = new char[ r->numSprites ];
+                r->spriteInvisibleWhenWorn = new int[ r->numSprites ];
                 r->spriteBehindSlots = new char[ r->numSprites ];
 
 
@@ -988,7 +988,7 @@ int addObject( const char *inDescription,
                double *inSpriteAgeEnd,
                int *inSpriteParent,
                char *inSpriteInvisibleWhenHolding,
-               char *inSpriteInvisibleWhenWorn,
+               int *inSpriteInvisibleWhenWorn,
                char *inSpriteBehindSlots,
                char *inSpriteIsHead,
                char *inSpriteIsBody,
@@ -1305,7 +1305,7 @@ int addObject( const char *inDescription,
     
     r->spriteParent = new int[ inNumSprites ];
     r->spriteInvisibleWhenHolding = new char[ inNumSprites ];
-    r->spriteInvisibleWhenWorn = new char[ inNumSprites ];
+    r->spriteInvisibleWhenWorn = new int[ inNumSprites ];
     r->spriteBehindSlots = new char[ inNumSprites ];
 
     r->spriteIsHead = new char[ inNumSprites ];
@@ -1333,7 +1333,7 @@ int addObject( const char *inDescription,
             inNumSprites * sizeof( char ) );
 
     memcpy( r->spriteInvisibleWhenWorn, inSpriteInvisibleWhenWorn, 
-            inNumSprites * sizeof( char ) );
+            inNumSprites * sizeof( int ) );
 
     memcpy( r->spriteBehindSlots, inSpriteBehindSlots, 
             inNumSprites * sizeof( char ) );
@@ -1464,13 +1464,22 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             // skip drawing this aging layer entirely
             continue;
             }
-        if( inWorn &&
-            inObject->clothing != 'n' &&
-            inObject->spriteInvisibleWhenWorn[i] ) {
+        if( inObject->clothing != 'n' && 
+            inObject->spriteInvisibleWhenWorn[i] != 0 ) {
+            
+            if( inWorn &&
+                inObject->spriteInvisibleWhenWorn[i] == 1 ) {
         
-            // skip invisible layer in worn clothing
-            continue;
+                // skip invisible layer in worn clothing
+                continue;
+                }
+            else if( ! inWorn &&
+                     inObject->spriteInvisibleWhenWorn[i] == 2 ) {
+                // skip invisible layer in unworn clothing
+                continue;
+                }
             }
+        
         
         if( inDrawBehindSlots != 2 ) {    
             if( inDrawBehindSlots == 0 && 

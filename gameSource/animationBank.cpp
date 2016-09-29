@@ -1385,13 +1385,23 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             }
 
 
-        if( inWorn &&
-            obj->clothing != 'n' &&
-            obj->spriteInvisibleWhenWorn[i] ) {
+        if( obj->clothing != 'n' &&
+            obj->spriteInvisibleWhenWorn[i] != 0 ) {
+            
+            if( inWorn &&
+                obj->spriteInvisibleWhenWorn[i] == 1 ) {
         
-            // skip invisible layer in worn clothing
-            skipSprite = true;
+                // skip invisible layer in worn clothing
+                skipSprite = true;
+                }
+            else if( ! inWorn &&
+                     obj->spriteInvisibleWhenWorn[i] == 2 ) {
+        
+                // skip invisible layer in unworn clothing
+                skipSprite = true;
+                }
             }
+        
         
         if( inDrawBehindSlots != 2 ) {    
             if( inDrawBehindSlots == 0 && 
