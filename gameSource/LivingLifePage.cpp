@@ -1363,7 +1363,7 @@ void LivingLifePage::drawMapCell( int inMapI,
             delete [] stackArray;
             }
         else {
-            drawObjectAnim( oID, 
+            drawObjectAnim( oID, 2, 
                             curType, timeVal,
                             animFade,
                             fadeTargetType, 
@@ -1608,7 +1608,7 @@ void LivingLifePage::drawLiveObject(
     
     
     HoldingPos holdingPos =
-        drawObjectAnim( inObj->displayID, curType, 
+        drawObjectAnim( inObj->displayID, 2, curType, 
                         timeVal,
                         animFade,
                         fadeTargetType,
@@ -1795,7 +1795,7 @@ void LivingLifePage::drawLiveObject(
                 // save world hold pos for smooth set-down of baby
                 babyO->lastHeldByRawPos = worldHoldPos;
 
-                drawObjectAnim( babyO->displayID, curHeldType, 
+                drawObjectAnim( babyO->displayID, 2, curHeldType, 
                                 heldTimeVal,
                                 heldAnimFade,
                                 fadeTargetHeldType,
@@ -1826,7 +1826,7 @@ void LivingLifePage::drawLiveObject(
             }
         else if( inObj->numContained == 0 ) {
                         
-            drawObjectAnim( inObj->holdingID, curHeldType, 
+            drawObjectAnim( inObj->holdingID, 2, curHeldType, 
                             heldTimeVal,
                             heldAnimFade,
                             fadeTargetHeldType,
