@@ -68,10 +68,10 @@ static ObjectPickable objectPickable;
 
 EditorTransitionPage::EditorTransitionPage()
         : mAutoDecayTimeField( smallFont, 
-                               0,  -160, 6,
+                               0,  -170, 6,
                                false,
                                "AutoDecay Seconds", "0123456789", NULL ),
-          mSaveTransitionButton( mainFont, -310, 0, "Save" ),
+          mSaveTransitionButton( mainFont, -320, 0, "Save" ),
           mObjectPicker( &objectPickable, +410, 90 ),
           mObjectEditorButton( mainFont, -300, 260, "Objects" ),
           mProducedByNext( smallFont, 180, 260, "Next" ),
@@ -707,6 +707,21 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         int id = getObjectByIndex( &mCurrentTransition, i );
         
         drawTransObject( id, pos );
+
+        if( id > 0 ) {
+            if( i > 1 ) {
+                pos.y -= 70;
+                }
+            else {
+                pos.y += 70;
+                }
+            
+            ObjectRecord *r = getObject( id );
+            
+            
+            smallFont->drawString( r->description, pos, alignCenter );
+            }
+        
         }
 
     doublePair centerA = mult( add( mPickButtons[0]->getCenter(),
@@ -779,24 +794,6 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             }
         }
     
-    if( mCurrentlyReplacing != -1 ) {
-        int id = getObjectByIndex( &mCurrentTransition, mCurrentlyReplacing );
-        
-        if( id > 0 ) {
-            
-            ObjectRecord *r = getObject( id );
-            
-            setDrawColor( 1, 1, 1, 1 );
-            
-            doublePair desPos = centerA;
-            
-            desPos.y += 100;
-
-            smallFont->drawString( r->description, desPos, alignCenter );
-
-            
-            }
-        }
     
 
     if( mCurrentTransition.target != 0 &&
