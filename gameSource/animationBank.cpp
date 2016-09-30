@@ -92,9 +92,12 @@ float initAnimationBankStep() {
 
                             
                 int typeRead = 0;
-                sscanf( lines[next], "type=%d", 
-                        &( typeRead ) );
+                int randomStartPhaseRead = 0;
+                
+                sscanf( lines[next], "type=%d,randStartPhase=%d", 
+                        &( typeRead ), &randomStartPhaseRead );
                 r->type = (AnimType)typeRead;
+                r->randomStartPhase = randomStartPhaseRead;
                 next++;
 
                 r->numSprites = 0;
@@ -343,7 +346,9 @@ void addAnimation( AnimationRecord *inRecord ) {
         SimpleVector<char*> lines;
         
         lines.push_back( autoSprintf( "id=%d", newID ) );
-        lines.push_back( autoSprintf( "type=%d", inRecord->type ) );
+        lines.push_back( autoSprintf( "type=%d,randStartPhase=%d", 
+                                      inRecord->type, 
+                                      inRecord->randomStartPhase ) );
         
         lines.push_back( 
             autoSprintf( "numSprites=%d", inRecord->numSprites ) );
@@ -2106,6 +2111,7 @@ AnimationRecord *copyRecord( AnimationRecord *inRecord ) {
     
     newRecord->objectID = inRecord->objectID;
     newRecord->type = inRecord->type;
+    newRecord->randomStartPhase = inRecord->randomStartPhase;
     
     newRecord->numSprites = inRecord->numSprites;
     newRecord->numSlots = inRecord->numSlots;

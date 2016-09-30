@@ -671,9 +671,9 @@ LivingLifePage::LivingLifePage()
         mMap[i] = -1;
         mMapBiomes[i] = -1;
         
-        mMapAnimationFrameCount[i] = randSource.getRandomBoundedInt( 0, 500 );
+        mMapAnimationFrameCount[i] = randSource.getRandomBoundedInt( 0, 10000 );
         mMapAnimationLastFrameCount[i] = 
-            randSource.getRandomBoundedInt( 0, 500 );
+            randSource.getRandomBoundedInt( 0, 10000 );
         
         mMapAnimationFrozenRotFrameCount[i] = 0;
 
@@ -2694,7 +2694,7 @@ void LivingLifePage::step() {
                 newMapBiomes[i] = -1;
                 
                 newMapAnimationFrameCount[i] = 
-                    randSource.getRandomBoundedInt( 0, 500 );;
+                    randSource.getRandomBoundedInt( 0, 10000 );
                 newMapCurAnimType[i] = ground;
                 newMapLastAnimFade[i] = ground;
                 newMapLastAnimFade[i] = 0;
@@ -2953,10 +2953,24 @@ void LivingLifePage::step() {
                             mMapAnimationFrozenRotFrameCount[mapI] = 0;
                             
                             
-                            // copy last frame count from last holder
-                            // of this object (server tracks
-                            // who was holding it and tell us about it)
-                            if( responsiblePlayerID != -1 ) {
+                            if( responsiblePlayerID == -1 ) {
+                                AnimationRecord *animR = 
+                                    getAnimation( mMap[mapI], ground );
+
+                                if( animR != NULL && 
+                                    animR->randomStartPhase ) {
+                                    mMapAnimationFrameCount[mapI] = 
+                                        randSource.getRandomBoundedInt( 
+                                            0, 10000 );
+                                    mMapAnimationLastFrameCount[i] = 
+                                        mMapAnimationFrameCount[mapI];
+                                    }
+                                }
+                            else {
+                                // copy last frame count from last holder
+                                // of this object (server tracks
+                                // who was holding it and tell us about it)
+                            
                                 for( int i=0; i<gameObjects.size(); i++ ) {
         
                                     LiveObject *nextObject =

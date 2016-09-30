@@ -19,6 +19,9 @@ extern Font *smallFont;
 extern double frameRateFactor;
 
 
+#include "minorGems/util/random/JenkinsRandomSource.h"
+static JenkinsRandomSource randSource;
+
 
 
 #include "ObjectPickable.h"
@@ -43,6 +46,7 @@ EditorAnimationPage::EditorAnimationPage()
                             100, 20,
                             0, 1, "Test Speed" ),
           mReverseRotationCheckbox( 0, 0, 2 ),
+          mRandomStartPhaseCheckbox( -80, 200, 2 ),
           mCurrentObjectID( -1 ),
           mCurrentSlotDemoID( -1 ),
           mFlipDraw( false ),
@@ -279,6 +283,9 @@ EditorAnimationPage::EditorAnimationPage()
         mSliders[i]->setVisible( false );
         }
     mReverseRotationCheckbox.setVisible( false );
+
+    addComponent( &mRandomStartPhaseCheckbox );
+    mRandomStartPhaseCheckbox.addActionListener( this );
     
     mClothingSet = getEmptyClothingSet();
     mNextShoeToFill = &( mClothingSet.backShoe );
@@ -397,6 +404,7 @@ void EditorAnimationPage::populateCurrentAnim() {
             mCurrentAnim[i]->objectID = mCurrentObjectID;
             mCurrentAnim[i]->type = (AnimType)i;
         
+            mCurrentAnim[i]->randomStartPhase = false;
         
             mCurrentAnim[i]->numSprites = sprites;
             mCurrentAnim[i]->numSlots = slots;
@@ -431,13 +439,21 @@ void EditorAnimationPage::populateCurrentAnim() {
             }        
     
         }
-
+    
+    mRandomStartPhaseCheckbox.setToggled( 
+        mCurrentAnim[ mCurrentType ]->randomStartPhase );
+    
     mWiggleAnim = copyRecord( mCurrentAnim[0] );
 
     
     updateSlidersFromAnim();
         
-    mFrameCount = 0;
+    if( mCurrentAnim[ mCurrentType ]->randomStartPhase ) {
+        mFrameCount = randSource.getRandomBoundedInt( 0, 10000 );
+        }
+    else {
+        mFrameCount = 0;
+        }
     }
 
 
@@ -1171,6 +1187,10 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mReverseRotationCheckbox ) {
         updateAnimFromSliders();
         }
+    else if( inTarget == &mRandomStartPhaseCheckbox ) {
+        mCurrentAnim[ mCurrentType ]->randomStartPhase =
+            mRandomStartPhaseCheckbox.getToggled();
+        }
     else if( inTarget == &mTestSpeedSlider ) {
         
         // make sure frame time never goes backwards when we reduce speed
@@ -1604,6 +1624,12 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
         pos = mReverseRotationCheckbox.getPosition();
         pos.x -= 10;
         smallFont->drawString( "CCW", pos, alignRight );
+        }
+
+    if( mRandomStartPhaseCheckbox.isVisible() ) {
+        pos = mRandomStartPhaseCheckbox.getPosition();
+        pos.x -= 10;
+        smallFont->drawString( "Random Start Point", pos, alignRight );
         }
         
     

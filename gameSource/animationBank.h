@@ -79,6 +79,12 @@ typedef struct AnimationRecord {
         
         AnimType type;
         
+        // true if start of animation should be randomized in time
+        // (animation can start from anywhere along its timeline and
+        //  loop from there)
+        // false means animation always starts at 0-point on timeline
+        char randomStartPhase;
+
         int numSprites;
         int numSlots;
         
