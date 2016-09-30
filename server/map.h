@@ -77,6 +77,11 @@ char *getMapChangeLineString( int inX, int inY,
                               int inResponsiblePlayerID = -1  );
 
 
+// returns number of seconds from now until when next decay is supposed
+// to happen
+// returns -1 if no decay pending
+int getNextDecayDelta();
+
 
 
 // any change lines resulting from step are appended to inMapChanges

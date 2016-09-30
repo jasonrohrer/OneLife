@@ -909,7 +909,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
     
     if( mapETA != 0 ) {
         
-        if( (int)mapETA < time( NULL ) ) {
+        if( (int)mapETA <= time( NULL ) ) {
             
             // object in map has decayed (eta expired)
 
@@ -1025,7 +1025,7 @@ void checkDecayContained( int inX, int inY ) {
     
         if( mapETA != 0 ) {
         
-            if( (int)mapETA < time( NULL ) ) {
+            if( (int)mapETA <= time( NULL ) ) {
             
                 // object in container slot has decayed (eta expired)
                 
@@ -1476,7 +1476,10 @@ void setContainedEtaDecay( int inX, int inY, int inNumContained,
     for( int i=0; i<inNumContained; i++ ) {
         dbPut( inX, inY, FIRST_CONT_SLOT + inNumContained + i, 
                (int)( inContainedEtaDecay[i] ) );
-        trackETA( inX, inY, i + 1, inContainedEtaDecay[i] );
+        
+        if( inContainedEtaDecay[i] != 0 ) {
+            trackETA( inX, inY, i + 1, inContainedEtaDecay[i] );
+            }
         }
     }
 
@@ -1618,6 +1621,25 @@ char *getMapChangeLineString( int inX, int inY,
 
 
 
+int getNextDecayDelta() {
+    if( liveDecayQueue.size() == 0 ) {
+        return -1;
+        }
+    
+    unsigned int curTime = time( NULL );
+
+    unsigned int minTime = liveDecayQueue.checkMinPriority();
+    
+    
+    if( minTime <= curTime ) {
+        return 0;
+        }
+    
+    return minTime - curTime;
+    }
+
+
+
 
 void stepMap( SimpleVector<char> *inMapChanges, 
               SimpleVector<ChangePosition> *inChangePosList ) {
@@ -1625,7 +1647,7 @@ void stepMap( SimpleVector<char> *inMapChanges,
     unsigned int curTime = time( NULL );
 
     while( liveDecayQueue.size() > 0 && 
-           liveDecayQueue.checkMinPriority() < curTime ) {
+           liveDecayQueue.checkMinPriority() <= curTime ) {
         
         // another expired
 

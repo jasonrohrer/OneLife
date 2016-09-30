@@ -1681,6 +1681,10 @@ void processedLogggedInPlayer( Socket *inSock,
     
     newObject.clothing = getEmptyClothingSet();
 
+    for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+        newObject.clothingEtaDecay[c] = 0;
+        }
+    
     newObject.xs = 0;
     newObject.ys = 0;
     newObject.xd = 0;
@@ -2000,7 +2004,16 @@ int main() {
             pollTimeout = minMoveTime;
             }
         
-
+        if( pollTimeout > 0 ) {
+            int shortestDecay = getNextDecayDelta();
+            
+            if( shortestDecay != -1 ) {
+                
+                if( shortestDecay < pollTimeout ) {
+                    pollTimeout = shortestDecay;
+                    }
+                }
+            }
 
         
         char anyTicketServerRequestsOut = false;
@@ -2021,7 +2034,8 @@ int main() {
             pollTimeout = 0.01;
             }
         
-
+        printf( "pollTimeout = %f\n", pollTimeout );
+        
         // we thus use zero CPU as long as no messages or new connections
         // come in, and only wake up when some timed action needs to be
         // handled
