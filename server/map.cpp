@@ -938,7 +938,15 @@ int checkDecayObject( int inX, int inY, int inID ) {
             TransRecord *newDecayT = getTrans( -1, newID );
 
             if( newDecayT != NULL ) {
-                mapETA = time(NULL) + newDecayT->autoDecaySeconds;
+
+                // add some random variation to avoid lock-step
+                // especially after a server restart
+                int tweakedSeconds = 
+                    randSource.getRandomBoundedInt( 
+                        newDecayT->autoDecaySeconds * 0.9, 
+                        newDecayT->autoDecaySeconds );
+
+                mapETA = time(NULL) + tweakedSeconds;
                 }
             else {
                 // no further decay
@@ -1042,9 +1050,16 @@ void checkDecayContained( int inX, int inY ) {
 
                     if( newDecayT != NULL ) {
                         
+                        // add some random variation to avoid lock-step
+                        // especially after a server restart
+                        int tweakedSeconds = 
+                            randSource.getRandomBoundedInt( 
+                                newDecayT->autoDecaySeconds * 0.9, 
+                                newDecayT->autoDecaySeconds );
+
                         mapETA = 
                             time(NULL) +
-                            lrint( newDecayT->autoDecaySeconds / 
+                            lrint( tweakedSeconds / 
                                    getMapContainerTimeStretch( inX, inY ) );
                         }
                     else {
