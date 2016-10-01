@@ -1398,8 +1398,7 @@ void LivingLifePage::drawLiveObject(
     SimpleVector<doublePair> *inSpeakersPos ) {    
 
     // current pos
-    char *string = autoSprintf( "%c", inObj->displayChar );
-                
+                    
     doublePair pos = mult( inObj->currentPos, CELL_D );
                 
 
@@ -1606,33 +1605,45 @@ void LivingLifePage::drawLiveObject(
             }
         }
     
+    char alreadyDrawnPerson = false;
     
-    HoldingPos holdingPos =
-        drawObjectAnim( inObj->displayID, 2, curType, 
-                        timeVal,
-                        animFade,
-                        fadeTargetType,
-                        targetTimeVal,
-                        frozenRotTimeVal,
-                        &( inObj->frozenRotFrameCountUsed ),
-                        frozenArmType,
-                        frozenArmFadeTargetType,
-                        pos,
-                        0,
-                        false,
-                        inObj->holdingFlip,
-                        age,
-                        // don't actually hide body parts until
-                        // held object is done sliding into place
-                        hideClosestArm,
-                        hideAllLimbs,
-                        inObj->heldPosOverride && 
-                        ! inObj->heldPosOverrideAlmostOver,
-                        inObj->clothing,
-                        inObj->clothingContained );
+    HoldingPos holdingPos;
+    holdingPos.valid = false;
+    
 
-    delete [] string;
-                
+    if( inObj->holdingID > 0 &&
+        heldObject->rideable ) {
+        // don't draw now,
+        // wait until we know rideable's offset
+        }
+    else {
+        alreadyDrawnPerson = true;
+        holdingPos =
+            drawObjectAnim( inObj->displayID, 2, curType, 
+                            timeVal,
+                            animFade,
+                            fadeTargetType,
+                            targetTimeVal,
+                            frozenRotTimeVal,
+                            &( inObj->frozenRotFrameCountUsed ),
+                            frozenArmType,
+                            frozenArmFadeTargetType,
+                            pos,
+                            0,
+                            false,
+                            inObj->holdingFlip,
+                            age,
+                            // don't actually hide body parts until
+                            // held object is done sliding into place
+                            hideClosestArm,
+                            hideAllLimbs,
+                            inObj->heldPosOverride && 
+                            ! inObj->heldPosOverrideAlmostOver,
+                            inObj->clothing,
+                            inObj->clothingContained );
+        }
+    
+        
     if( inObj->holdingID != 0 ) { 
         doublePair holdPos;
         
@@ -1687,14 +1698,20 @@ void LivingLifePage::drawLiveObject(
             holdPos.y += heldOffset.y;
             }
                 
+        doublePair heldObjectDrawPos = holdPos;
+        
+        if( heldObject->rideable ) {
+            heldObjectDrawPos = pos;
+            }
+        
 
-        holdPos = mult( holdPos, 1.0 / CELL_D );
-
+        heldObjectDrawPos = mult( heldObjectDrawPos, 1.0 / CELL_D );
+        
         if( inObj->heldPosOverride && 
             ! inObj->heldPosOverrideAlmostOver &&
-            ! equal( holdPos, inObj->heldObjectPos ) ) {
+            ! equal( heldObjectDrawPos, inObj->heldObjectPos ) ) {
                         
-            doublePair delta = sub( holdPos, inObj->heldObjectPos );
+            doublePair delta = sub( heldObjectDrawPos, inObj->heldObjectPos );
             double rotDelta = holdRot - inObj->heldObjectRot;
 
             if( rotDelta > 0.5 ) {
@@ -1708,7 +1725,7 @@ void LivingLifePage::drawLiveObject(
             double rotStep = frameRateFactor * 0.03125;
             
             if( length( delta ) < step ) {
-                inObj->heldObjectPos = holdPos;
+                inObj->heldObjectPos = heldObjectDrawPos;
                 inObj->heldPosOverrideAlmostOver = true;
                 }
             else {
@@ -1717,7 +1734,7 @@ void LivingLifePage::drawLiveObject(
                          mult( normalize( delta ),
                                step ) );
                 
-                holdPos = inObj->heldObjectPos;
+                heldObjectDrawPos = inObj->heldObjectPos;
                 }
 
             if( fabs( rotDelta ) < rotStep ) {
@@ -1744,13 +1761,17 @@ void LivingLifePage::drawLiveObject(
             // track it every frame so we have a good
             // base point for smooth move when the object
             // is dropped
-            inObj->heldObjectPos = holdPos;
+            inObj->heldObjectPos = heldObjectDrawPos;
             inObj->heldObjectRot = holdRot;
             }
           
-        doublePair worldHoldPos = holdPos;
+        doublePair worldHoldPos = heldObjectDrawPos;
           
-        holdPos = mult( holdPos, CELL_D );
+        heldObjectDrawPos = mult( heldObjectDrawPos, CELL_D );
+        
+        if( ! heldObject->rideable ) {
+            holdPos = heldObjectDrawPos;
+            }
 
         setDrawColor( 1, 1, 1, 1 );
                     
@@ -1767,6 +1788,38 @@ void LivingLifePage::drawLiveObject(
         
         double frozenRotHeldTimeVal = frameRateFactor * 
             inObj->heldFrozenRotFrameCount / 60.0;
+        
+
+        if( !alreadyDrawnPerson ) {
+            doublePair personPos = pos;
+            personPos = add( personPos, 
+                             sub( personPos, holdPos ) );
+
+            // rideable object
+            holdingPos =
+                drawObjectAnim( inObj->displayID, 2, curType, 
+                                timeVal,
+                                animFade,
+                                fadeTargetType,
+                                targetTimeVal,
+                                frozenRotTimeVal,
+                                &( inObj->frozenRotFrameCountUsed ),
+                                frozenArmType,
+                                frozenArmFadeTargetType,
+                                personPos,
+                                0,
+                                false,
+                                inObj->holdingFlip,
+                                age,
+                                // don't actually hide body parts until
+                                // held object is done sliding into place
+                                hideClosestArm,
+                                hideAllLimbs,
+                                inObj->heldPosOverride && 
+                                ! inObj->heldPosOverrideAlmostOver,
+                                inObj->clothing,
+                                inObj->clothingContained );
+            }
         
 
 
@@ -1835,7 +1888,7 @@ void LivingLifePage::drawLiveObject(
                             &( inObj->heldFrozenRotFrameCountUsed ),
                             endAnimType,
                             endAnimType,
-                            holdPos,
+                            heldObjectDrawPos,
                             holdRot,
                             false,
                             inObj->holdingFlip, -1, false, false, false,
@@ -1851,7 +1904,7 @@ void LivingLifePage::drawLiveObject(
                             &( inObj->heldFrozenRotFrameCountUsed ),
                             endAnimType,
                             endAnimType,
-                            holdPos,
+                            heldObjectDrawPos,
                             holdRot,
                             false,
                             inObj->holdingFlip,
