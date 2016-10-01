@@ -2034,8 +2034,6 @@ int main() {
             pollTimeout = 0.01;
             }
         
-        printf( "pollTimeout = %f\n", pollTimeout );
-        
         // we thus use zero CPU as long as no messages or new connections
         // come in, and only wake up when some timed action needs to be
         // handled
