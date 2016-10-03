@@ -1193,10 +1193,16 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mTestSpeedSlider ) {
         
+        double factor = frameRateFactor;
+        
+        if( mCurrentType == moving ) {
+            factor = mCurrentObjectFrameRateFactor;
+            }
+        
         // make sure frame time never goes backwards when we reduce speed
         // nor jumps forward when we increase speed
         double oldFrameTime = 
-            ( mFrameCount / 60.0 ) * mCurrentObjectFrameRateFactor;
+            ( mFrameCount / 60.0 ) * factor;
             
         oldFrameTime *= mLastTestSpeed;
 
@@ -1208,7 +1214,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             
             newFrameTime /= mTestSpeedSlider.getValue();
             
-            newFrameTime /= mCurrentObjectFrameRateFactor;
+            newFrameTime /= factor;
             
             mFrameCount = lrint( newFrameTime * 60.0 );
         
@@ -1357,19 +1363,30 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
             }
 
         if( anim != NULL ) {
+            double factor = frameRateFactor;
+            
+            if( mCurrentType == moving ) {
+                factor = mCurrentObjectFrameRateFactor;
+                }
             
             double frameTime = 
-                ( mFrameCount / 60.0 ) * mCurrentObjectFrameRateFactor;
+                ( mFrameCount / 60.0 ) * factor;
             
             double fadeTargetFrameTime = frameTime;
             
             double frozenRotFrameTime = 
-                ( mFrozenRotFrameCount / 60.0 ) * mCurrentObjectFrameRateFactor;
+                ( mFrozenRotFrameCount / 60.0 ) * factor;
             
             if( animFade < 1 ) {
+                factor = frameRateFactor;
+
+                if( mLastType == moving ) {
+                    factor = mCurrentObjectFrameRateFactor;
+                    }
+                
                 frameTime = 
                     ( mLastTypeFrameCount / 60.0 ) * 
-                    mCurrentObjectFrameRateFactor;
+                    factor;
                 }
             
 
