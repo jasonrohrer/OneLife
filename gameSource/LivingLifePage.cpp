@@ -4403,14 +4403,29 @@ void LivingLifePage::step() {
                 }
             }
         
+        double animSpeed = o->lastSpeed;
+        
 
-        o->animationFrameCount += o->lastSpeed / BASE_SPEED;
-        o->lastAnimationFrameCount += o->lastSpeed / BASE_SPEED;
+        if( o->holdingID > 0 ) {
+            ObjectRecord *heldObj = getObject( o->holdingID );
+            
+            if( heldObj->speedMult > 1.0 ) {
+                // don't speed up animations just because movement
+                // speed has increased
+                // but DO slow animations down
+                animSpeed /= heldObj->speedMult;
+                }
+            }
+
+
+        o->animationFrameCount += animSpeed / BASE_SPEED;
+        o->lastAnimationFrameCount += animSpeed / BASE_SPEED;
         
 
         if( o->curAnim == moving ) {
-            o->frozenRotFrameCount += o->lastSpeed / BASE_SPEED;
+            o->frozenRotFrameCount += animSpeed / BASE_SPEED;
             }
+        
         
         
         if( o->lastAnimFade > 0 ) {
@@ -4449,11 +4464,11 @@ void LivingLifePage::step() {
                 }
             }
 
-        o->heldAnimationFrameCount += o->lastSpeed / BASE_SPEED;
-        o->lastHeldAnimationFrameCount += o->lastSpeed / BASE_SPEED;
+        o->heldAnimationFrameCount += animSpeed / BASE_SPEED;
+        o->lastHeldAnimationFrameCount += animSpeed / BASE_SPEED;
         
         if( o->curHeldAnim == moving ) {
-            o->heldFrozenRotFrameCount += o->lastSpeed / BASE_SPEED;
+            o->heldFrozenRotFrameCount += animSpeed / BASE_SPEED;
             }
         
 

@@ -386,8 +386,12 @@ void EditorAnimationPage::populateCurrentAnim() {
 
     ObjectRecord *obj = getObject( mCurrentObjectID );
 
-    mCurrentObjectFrameRateFactor =  frameRateFactor * obj->speedMult;
-
+    mCurrentObjectFrameRateFactor = frameRateFactor;
+    
+    if( obj->speedMult < 1.0 ) {    
+        mCurrentObjectFrameRateFactor =  frameRateFactor * obj->speedMult;
+        }
+    
 
     for( int i=0; i<endAnimType; i++ ) {
 
@@ -1056,8 +1060,13 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 mHeldID = newPickID;
 
                 ObjectRecord *obj = getObject( mHeldID );
-                mCurrentObjectFrameRateFactor =  
-                    frameRateFactor * obj->speedMult;
+                
+                mCurrentObjectFrameRateFactor = frameRateFactor;
+                
+                if( obj->speedMult < 1.0 ) {
+                    mCurrentObjectFrameRateFactor =  
+                        frameRateFactor * obj->speedMult;
+                    }
                 }
             else {
                 int oldID = mCurrentObjectID;
@@ -1160,7 +1169,12 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mHeldID = -1;
         
         ObjectRecord *obj = getObject( mCurrentObjectID );
-        mCurrentObjectFrameRateFactor =  frameRateFactor * obj->speedMult;
+        
+        mCurrentObjectFrameRateFactor = frameRateFactor;
+        
+        if( obj->speedMult < 1.0 ) {
+            mCurrentObjectFrameRateFactor =  frameRateFactor * obj->speedMult;
+            }
         }
     else if( inTarget == &mNextSpriteOrSlotButton ) {
         mCurrentSpriteOrSlot ++;
@@ -1399,7 +1413,17 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                 
                 setDrawColor( 0, 0, 0, 1 );
 
-                double groundFrameTime = frameTime - floor( frameTime );
+                double groundFrameTime = frameTime;
+
+                if( obj->speedMult > 1.0 ) {                    
+                    groundFrameTime *= obj->speedMult;
+                    }
+                if( mHeldID != -1 &&  getObject( mHeldID )->speedMult > 1.0 ) {
+                    groundFrameTime *= getObject( mHeldID )->speedMult;
+                    }
+                
+
+                groundFrameTime = groundFrameTime - floor( groundFrameTime );
 
                 groundPos.x -= groundFrameTime * 4 * 128;
                 
