@@ -1618,6 +1618,37 @@ void LivingLifePage::drawLiveObject(
         }
     else {
         alreadyDrawnPerson = true;
+        doublePair personPos = pos;
+        
+        // decay away from riding offset, if any
+        if( inObj->ridingOffset.x != 0 ||
+            inObj->ridingOffset.y != 0 ) {
+            
+            doublePair nullOffset = { 0, 0 };
+            
+            
+            doublePair delta = sub( nullOffset, inObj->ridingOffset );
+            
+            double step = frameRateFactor * 8;
+
+            if( length( delta ) < step ) {
+            
+                inObj->ridingOffset.x = 0;
+                inObj->ridingOffset.y = 0;
+                }
+            else {
+                inObj->ridingOffset =
+                    add( inObj->ridingOffset,
+                         mult( normalize( delta ), step ) );
+                }
+                            
+            // step offset BEFORE applying it
+            // (so we don't repeat starting position)
+            personPos = add( personPos, inObj->ridingOffset );
+            }
+        
+
+
         holdingPos =
             drawObjectAnim( inObj->displayID, 2, curType, 
                             timeVal,
@@ -1628,7 +1659,7 @@ void LivingLifePage::drawLiveObject(
                             &( inObj->frozenRotFrameCountUsed ),
                             frozenArmType,
                             frozenArmFadeTargetType,
-                            pos,
+                            personPos,
                             0,
                             false,
                             inObj->holdingFlip,
@@ -1792,8 +1823,25 @@ void LivingLifePage::drawLiveObject(
 
         if( !alreadyDrawnPerson ) {
             doublePair personPos = pos;
-            personPos = add( personPos, 
-                             sub( personPos, holdPos ) );
+            
+            doublePair targetRidingOffset = sub( personPos, holdPos );
+            
+            // step toward target to smooth
+            doublePair delta = sub( targetRidingOffset, 
+                                    inObj->ridingOffset );
+            
+            double step = frameRateFactor * 8;
+
+            if( length( delta ) < step ) {            
+                inObj->ridingOffset = targetRidingOffset;
+                }
+            else {
+                inObj->ridingOffset =
+                    add( inObj->ridingOffset,
+                         mult( normalize( delta ), step ) );
+                }
+
+            personPos = add( personPos, inObj->ridingOffset );
 
             // rideable object
             holdingPos =
@@ -3146,6 +3194,9 @@ void LivingLifePage::step() {
                 o.heldByDropOffset.x = 0;
                 o.heldByDropOffset.y = 0;
                 
+                o.ridingOffset.x = 0;
+                o.ridingOffset.y = 0;
+
                 o.animationFrameCount = 0;
                 o.heldAnimationFrameCount = 0;
 

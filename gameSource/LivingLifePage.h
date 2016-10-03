@@ -48,7 +48,10 @@ typedef struct LiveObject {
         // the actual world pos we were last held at
         doublePair lastHeldByRawPos;
         
-
+        
+        // usually 0, but used to slide into and out of riding position
+        doublePair ridingOffset;
+        
 
         // 0 or positive holdingID means holding nothing or an object
         // a negative number here means we're holding another player (baby)
