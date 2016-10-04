@@ -801,7 +801,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
 
         doublePair pos = mPickButtons[1]->getCenter();
 
-        pos.y += 75;
+        pos.y += 95;
         
         setDrawColor( 1, 1, 1, 1 );
         
