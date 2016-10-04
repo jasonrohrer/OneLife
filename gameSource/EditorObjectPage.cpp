@@ -514,6 +514,8 @@ EditorObjectPage::EditorObjectPage()
     addKeyDescription( &mKeyLegendB, 'd', "Dupe Layer" );
 
     addKeyClassDescription( &mKeyLegendC, "R-Click", "Replace layer" );
+
+    addKeyClassDescription( &mKeyLegendD, "R-Click", "Insert object" );
     
 
     mColorClipboard.r = 1;
@@ -1810,7 +1812,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         }
     
     else if( inTarget == &mObjectPicker ) {
-        int objectID = mObjectPicker.getSelectedObject();
+        char rightClick;
+        
+        int objectID = mObjectPicker.getSelectedObject( &rightClick );
 
         
         // auto-end the held-pos setting if a new object is picked
@@ -1830,9 +1834,40 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         if( objectID != -1 && mDemoSlots ) {
             mSlotsDemoObject = objectID;
             }
-        else if( objectID != -1 ) {
+        else if( objectID != -1 && rightClick ) {
             ObjectRecord *pickedRecord = getObject( objectID );
 
+            int oldNumSprites = mCurrentObject.numSprites;
+            
+            for( int i=0; i<pickedRecord->numSprites; i++ ) {
+                
+                addNewSprite( pickedRecord->sprites[i] );
+                
+                mCurrentObject.spritePos[i + oldNumSprites] = 
+                    pickedRecord->spritePos[i];
+                mCurrentObject.spriteRot[i + oldNumSprites] = 
+                    pickedRecord->spriteRot[i];
+                mCurrentObject.spriteHFlip[i + oldNumSprites] = 
+                    pickedRecord->spriteHFlip[i];
+                mCurrentObject.spriteColor[i + oldNumSprites] = 
+                    pickedRecord->spriteColor[i];
+                
+                mCurrentObject.spriteInvisibleWhenHolding[i + oldNumSprites] = 
+                    pickedRecord->spriteInvisibleWhenHolding[i];
+                mCurrentObject.spriteInvisibleWhenWorn[i + oldNumSprites] = 
+                    pickedRecord->spriteInvisibleWhenWorn[i];
+                
+                mCurrentObject.spriteBehindSlots[i + oldNumSprites] = 
+                    pickedRecord->spriteBehindSlots[i];
+                
+                if( pickedRecord->spriteParent[i] != -1 ) {
+                    mCurrentObject.spriteParent[i + oldNumSprites] = 
+                        pickedRecord->spriteParent[i] + oldNumSprites;
+                    }
+                }
+            }
+        else if( objectID != -1 ) {
+            ObjectRecord *pickedRecord = getObject( objectID );
                 
             delete [] mCurrentObject.slotPos;
             delete [] mCurrentObject.sprites;
@@ -2856,6 +2891,11 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         drawKeyLegend( &mKeyLegendC, legendPos, alignCenter );
         }
     
+    legendPos = mObjectPicker.getPosition();
+    legendPos.y -= 255;
+
+    drawKeyLegend( &mKeyLegendD, legendPos, alignCenter );
+        
 
     setDrawColor( 0, 0, 1, 0.50 );
             
