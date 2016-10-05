@@ -3038,7 +3038,17 @@ void LivingLifePage::step() {
                             mMap[mapI] = atoi( idBuffer );
                             mMapContainedStacks[mapI].deleteAll();
                             }
-
+                        
+                        if( mMap[mapI] != 0 ) {
+                            ObjectRecord *newObj = getObject( mMap[mapI] );
+                            
+                            if( newObj->permanent && newObj->blocksWalking ) {
+                                // clear the locally-stored flip for this
+                                // tile
+                                mMapTileFlips[mapI] = false;
+                                }    
+                            }
+                        
                         if( old != mMap[mapI] && mMap[mapI] != 0 ) {
                             // new placement
                             
