@@ -1731,7 +1731,7 @@ void LivingLifePage::drawLiveObject(
                 
         doublePair heldObjectDrawPos = holdPos;
         
-        if( heldObject->rideable ) {
+        if( heldObject != NULL && heldObject->rideable ) {
             heldObjectDrawPos = pos;
             }
         
@@ -3620,6 +3620,8 @@ void LivingLifePage::step() {
 
                                 existing->lastAnimFade = 1;
                                 existing->curAnim = ground;
+                                
+                                adultO->holdingID = 0;
                                 }
 
                             existing->heldByAdultID = -1;
