@@ -3066,6 +3066,9 @@ void LivingLifePage::step() {
                                     mMapAnimationLastFrameCount[i] = 
                                         mMapAnimationFrameCount[mapI];
                                     }
+                                mMapDropOffsets[mapI].x = 0;
+                                mMapDropOffsets[mapI].y = 0;
+                                mMapDropRot[mapI] = 0;
                                 }
                             else {
                                 // copy last frame count from last holder
@@ -3139,6 +3142,27 @@ void LivingLifePage::step() {
                                         mMapTileFlips[mapI] =
                                             nextObject->holdingFlip;
                                         
+                                        if( nextObject->holdingID > 0 &&
+                                            old == 0 ) {
+                                            // use on bare ground transition
+                                            
+                                            // don't use drop offset
+                                            mMapDropOffsets[mapI].x = 0;
+                                            mMapDropOffsets[mapI].y = 0;
+                                            
+                                            mMapDropRot[mapI] = 0;
+
+                                            if( getObject( mMap[ mapI ] )->
+                                                permanent ) {
+                                                // resulting in something 
+                                                // permanent
+                                                // on ground.  Never flip it
+                                                mMapTileFlips[mapI] = false;
+                                                }
+                                            }
+                                        
+                                        
+
                                         if( x > 
                                             nextObject->xServer ) {
                                             nextObject->holdingFlip = false;

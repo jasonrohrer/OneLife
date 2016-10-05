@@ -3246,7 +3246,9 @@ int main() {
                                     
                                     
                                         char *changeLine =
-                                            getMapChangeLineString( m.x, m.y );
+                                            getMapChangeLineString( 
+                                                m.x, m.y,
+                                                nextPlayer->id );
                                         
                                         mapChanges.
                                             appendElementString( changeLine );
