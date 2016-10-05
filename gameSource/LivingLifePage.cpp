@@ -3411,13 +3411,9 @@ void LivingLifePage::step() {
                         else if( oldHeld != existing->holdingID ) {
                             // holding something new
 
-                            // start new anim
-                            existing->lastHeldAnim = ground;
-                            existing->lastHeldAnimFade = 1;
-                            existing->curHeldAnim = held;
-                            existing->heldFrozenRotFrameCount = 0;
-
-                            existing->futureHeldAnimStack->deleteAll();
+                            // what we're holding has gone through
+                            // transition.  Keep old animation going
+                            // for what's held
                             
                             if( o.id == ourID ) {
                                 addNewAnimPlayerOnly( existing, ground2 );
