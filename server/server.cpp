@@ -3211,9 +3211,7 @@ int main() {
                                     // action doesn't happen, just the drop
                                     }
                                 }
-                            else if( nextPlayer->holdingID != 0 &&
-                                     ! (m.x == nextPlayer->xd &&
-                                        m.y == nextPlayer->yd ) ) {
+                            else if( nextPlayer->holdingID != 0 ) {
                                 // target location emtpy
                                 // target not where we're standing
                                 // we're holding something
@@ -3232,8 +3230,27 @@ int main() {
                                         getTrans( nextPlayer->holdingID, 
                                                   -1 );
 
+
+                                    char canPlace = false;
+                                    
                                     if( r != NULL &&
                                         r->newTarget != 0 ) {
+                                        
+                                        canPlace = true;
+
+                                        if( getObject( r->newTarget )->
+                                            blocksWalking
+                                            &&
+                                            m.x == nextPlayer->xd &&
+                                            m.y == nextPlayer->yd ) {
+                                            // can't do on-bare ground
+                                            // transition where we're standing
+                                            // if it creates a blocking object
+                                            canPlace = false;
+                                            }
+                                        }
+                                    
+                                    if( canPlace ) {
 
                                         int oldContained = 
                                             nextPlayer->numContained;
