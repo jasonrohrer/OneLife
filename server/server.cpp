@@ -3239,13 +3239,14 @@ int main() {
                                         canPlace = true;
 
                                         if( getObject( r->newTarget )->
-                                            blocksWalking
-                                            &&
-                                            m.x == nextPlayer->xd &&
-                                            m.y == nextPlayer->yd ) {
+                                            blocksWalking &&
+                                            ! isMapSpotEmpty( m.x, m.y ) ) {
+                                            
                                             // can't do on-bare ground
-                                            // transition where we're standing
-                                            // if it creates a blocking object
+                                            // transition where person 
+                                            // standing
+                                            // if it creates a blocking 
+                                            // object
                                             canPlace = false;
                                             }
                                         }
