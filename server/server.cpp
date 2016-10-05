@@ -138,6 +138,11 @@ typedef struct LiveObject {
         int numContained;
         int *containedIDs;
         unsigned int *containedEtaDecays;
+
+        // if they've been killed and part of a weapon (bullet?) has hit them
+        // this will be included in their grave
+        int embeddedWeaponID;
+        unsigned int embeddedWeaponEtaDecay;
         
         Socket *sock;
         SimpleVector<char> *sockBuffer;
@@ -1793,6 +1798,8 @@ void processedLogggedInPlayer( Socket *inSock,
     newObject.numContained = 0;
     newObject.containedIDs = NULL;
     newObject.containedEtaDecays = NULL;
+    newObject.embeddedWeaponID = 0;
+    newObject.embeddedWeaponEtaDecay = 0;
     newObject.sock = inSock;
     newObject.sockBuffer = inSockBuffer;
     newObject.isNew = true;
@@ -2894,17 +2901,7 @@ int main() {
                                             }
                                         }
 
-                                    
-                                    char hitWillDropSomething = false;
-                                    
                                     if( hitPlayer != NULL ) {
-                                        
-                                        if( hitPlayer->holdingID != 0 ) {
-                                
-                                            hitWillDropSomething = true;
-                                            }
-
-
                                         // break the connection with 
                                         // them
                                         hitPlayer->error = true;
@@ -2935,49 +2932,77 @@ int main() {
                                             setFreshEtaDecayForHeld( 
                                                 nextPlayer );
                                             }
-                                        }
-
-                                    if( ! hitWillDropSomething &&
-                                        hitPlayer != NULL ) {
-                                        // player hit, and their hands were
-                                        // empty.  Make them hold the new
-                                        // target result of the hit.
-
-                                        // they'll drop this later
-                                        // when their death is handled
-                                        hitPlayer->holdingID = r->newTarget;
-                                        }
-                                    else if( hitPlayer == NULL &&
-                                             isMapSpotEmpty( m.x, m.y ) ) {    
-                                        // no player hit, and target ground
-                                        // spot is empty
-                                        setMapObject( m.x, m.y, 
-                                                      r->newTarget );
+                                    
+                                        if( hitPlayer != NULL &&
+                                            r->newTarget != 0 ) {
                                         
-                                        // if we're thowing a weapon
-                                        // target is same as what we
-                                        // were holding
-                                        if( oldHolding == r->newTarget ) {
-                                            // preserve old decay time 
-                                            // of what we were holing
-                                            setEtaDecay( m.x, m.y,
-                                                         oldEtaDecay );
+                                            hitPlayer->embeddedWeaponID = 
+                                                r->newTarget;
+                                        
+                                            if( oldHolding == r->newTarget ) {
+                                                // what we are holding
+                                                // is now embedded in them
+                                                // keep old decay
+                                                hitPlayer->
+                                                    embeddedWeaponEtaDecay =
+                                                    oldEtaDecay;
+                                                }
+                                            else {
+                                            
+                                                TransRecord *newDecayT = 
+                                                    getTrans( -1, 
+                                                              r->newTarget );
+                    
+                                                if( newDecayT != NULL ) {
+                                                    hitPlayer->
+                                                     embeddedWeaponEtaDecay = 
+                                                        time(NULL) + 
+                                                        newDecayT->
+                                                        autoDecaySeconds;
+                                                    }
+                                                else {
+                                                    // no further decay
+                                                    hitPlayer->
+                                                        embeddedWeaponEtaDecay 
+                                                        = 0;
+                                                    }
+                                                }
                                             }
+                                        else if( hitPlayer == NULL &&
+                                                 isMapSpotEmpty( m.x, 
+                                                                 m.y ) ) {    
+                                            // no player hit, and target ground
+                                            // spot is empty
+                                            setMapObject( m.x, m.y, 
+                                                          r->newTarget );
+                                        
+                                            // if we're thowing a weapon
+                                            // target is same as what we
+                                            // were holding
+                                            if( oldHolding == r->newTarget ) {
+                                                // preserve old decay time 
+                                                // of what we were holing
+                                                setEtaDecay( m.x, m.y,
+                                                             oldEtaDecay );
+                                                }
 
-                                        char *changeLine =
-                                            getMapChangeLineString(
-                                                m.x, m.y );
+                                            char *changeLine =
+                                                getMapChangeLineString(
+                                                    m.x, m.y );
                                     
-                                        mapChanges.
-                                            appendElementString( changeLine );
+                                            mapChanges.
+                                                appendElementString( 
+                                                    changeLine );
                                     
-                                        ChangePosition p = { m.x, m.y, false };
-                                        mapChangesPos.push_back( p );
+                                            ChangePosition p = 
+                                                { m.x, m.y, false };
+                                            mapChangesPos.push_back( p );
                                     
-                                        delete [] changeLine;
+                                            delete [] changeLine;
+                                            }
+                                        // else new target, post-kill-attempt
+                                        // is lost
                                         }
-                                    // else new target, post-kill-attempt
-                                    // is lost
                                     }
                                 }
                             }
@@ -4122,6 +4147,19 @@ int main() {
                         ObjectRecord *deathObject = getObject( deathID );
                         
                         int roomLeft = deathObject->numSlots;
+                        
+                        if( roomLeft >= 1 ) {
+                            // room for weapon remant
+                            if( nextPlayer->embeddedWeaponID != 0 ) {
+                                addContained( 
+                                    dropPos.x, dropPos.y,
+                                    nextPlayer->embeddedWeaponID,
+                                    nextPlayer->embeddedWeaponEtaDecay );
+                                roomLeft--;
+                                }
+                            }
+                        
+                            
                         if( roomLeft >= 5 ) {
                             // room for clothing
                             
