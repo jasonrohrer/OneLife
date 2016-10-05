@@ -4869,6 +4869,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     mStartedLoadingFirstObjectSet = false;
     mDoneLoadingFirstObjectSet = false;
     mFirstObjectSetLoadingProgress = 0;
+
+    playerActionPending = false;
     
     serverSocketBuffer.deleteAll();
 
