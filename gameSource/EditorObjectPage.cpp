@@ -378,6 +378,7 @@ EditorObjectPage::EditorObjectPage()
     
     mCurrentObject.numSlots = 0;
     mCurrentObject.slotPos = new doublePair[ 0 ];
+    mCurrentObject.slotVert = new char[ 0 ];
     
     mCurrentObject.numSprites = 0;
     mCurrentObject.sprites = new int[ 0 ];
@@ -534,6 +535,7 @@ EditorObjectPage::~EditorObjectPage() {
 
     delete [] mCurrentObject.description;
     delete [] mCurrentObject.slotPos;
+    delete [] mCurrentObject.slotVert;
     delete [] mCurrentObject.sprites;
     delete [] mCurrentObject.spritePos;
     delete [] mCurrentObject.spriteRot;
@@ -1063,6 +1065,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.numSlots,
                    mSlotSizeField.getInt(),
                    mCurrentObject.slotPos,
+                   mCurrentObject.slotVert,
                    mSlotTimeStretchField.getFloat(),
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
@@ -1162,6 +1165,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.numSlots,
                    mSlotSizeField.getInt(), 
                    mCurrentObject.slotPos,
+                   mCurrentObject.slotVert,
                    mSlotTimeStretchField.getFloat(), 
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
@@ -1257,6 +1261,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         delete [] mCurrentObject.slotPos;
         mCurrentObject.slotPos = new doublePair[ 0 ];
+
+        delete [] mCurrentObject.slotVert;
+        mCurrentObject.slotVert = new char[ 0 ];
 
         
         mCurrentObject.numSprites = 0;
@@ -1403,12 +1410,18 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         memcpy( slots, mCurrentObject.slotPos, 
                 sizeof( doublePair ) * numSlots );
+
+        char *slotsVert = new char[ numSlots + 1 ];
         
+        memcpy( slotsVert, mCurrentObject.slotPos, 
+                sizeof( char ) * numSlots );
+        
+        slotsVert[numSlots] = false;
+
         if( mCurrentObject.numSlots == 0 ) {
             
             slots[numSlots].x = 0;
             slots[numSlots].y = 0;
-            
             mDemoSlotsButton.setVisible( true );
             mClearSlotsDemoButton.setVisible( false );
             }
@@ -1425,6 +1438,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         delete [] mCurrentObject.slotPos;
         mCurrentObject.slotPos = slots;
+
+        delete [] mCurrentObject.slotVert;
+        mCurrentObject.slotVert = slotsVert;
 
         mCurrentObject.numSlots = numSlots + 1;
         
@@ -1905,6 +1921,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             ObjectRecord *pickedRecord = getObject( objectID );
                 
             delete [] mCurrentObject.slotPos;
+            delete [] mCurrentObject.slotVert;
             delete [] mCurrentObject.sprites;
             delete [] mCurrentObject.spritePos;
             delete [] mCurrentObject.spriteRot;
@@ -1967,6 +1984,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 
             memcpy( mCurrentObject.slotPos, pickedRecord->slotPos,
                     sizeof( doublePair ) * pickedRecord->numSlots );
+
+            mCurrentObject.slotVert = 
+                new char[ pickedRecord->numSlots ];
+                
+            memcpy( mCurrentObject.slotVert, pickedRecord->slotVert,
+                    sizeof( char ) * pickedRecord->numSlots );
 
             mCurrentObject.numSprites = pickedRecord->numSprites;
                 
@@ -2713,7 +2736,13 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                     alpha *= mHoverFlash;
                     }
                 
-                setDrawColor( red, 1, blue, alpha );
+                float green = 1;
+                
+                if( mCurrentObject.slotVert[i] ) {
+                    green = 0;
+                    }
+
+                setDrawColor( red, green, blue, alpha );
                 drawSprite( mSlotPlaceholderSprite, 
                             add( mCurrentObject.slotPos[i],
                                  drawOffset ) );
@@ -2750,10 +2779,16 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
                 setDrawColor( red, 1, blue, alpha );
                 
+                double rot = 0;
+                
+                if( mCurrentObject.slotVert[i] ) {
+                    rot = 0.25;
+                    }
+                
                 drawObject( demoObject, 2, 
                             sub( add( mCurrentObject.slotPos[i], drawOffset ),
                                  getObjectCenterOffset( demoObject ) ),
-                            0, false, false, -1, 0, false, false, 
+                            rot, false, false, -1, 0, false, false, 
                             getEmptyClothingSet() );
                 }
             }

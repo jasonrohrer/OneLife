@@ -2083,7 +2083,14 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             
 
             pos = add( pos, inPos );
-            drawObject( contained, 2, pos, inRot, false, inFlipH,
+
+            double rot = inRot;
+            
+            if( obj->slotVert[i] ) {
+                rot += 0.25;
+                }
+            
+            drawObject( contained, 2, pos, rot, false, inFlipH,
                         inAge, 0, false, false, emptyClothing );
             }
         

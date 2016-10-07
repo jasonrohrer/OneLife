@@ -127,7 +127,10 @@ typedef struct ObjectRecord {
         int slotSize;
         
         doublePair *slotPos;
-        
+
+        // should objects be flipped vertically?
+        char *slotVert;
+
         // does being contained in one of this object's slots
         // adjust the passage of decay time?
         // 1.0 means normal time rate
@@ -271,6 +274,7 @@ int addObject( const char *inDescription,
                doublePair inClothingOffset,
                int inDeadlyDistance,
                int inNumSlots, int inSlotSize, doublePair *inSlotPos,
+               char *inSlotVert,
                float inSlotTimeStretch,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,

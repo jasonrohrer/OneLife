@@ -522,11 +522,16 @@ float initObjectBankStep() {
                 next++;
 
                 r->slotPos = new doublePair[ r->numSlots ];
+                r->slotVert = new char[ r->numSlots ];
                             
                 for( int i=0; i< r->numSlots; i++ ) {
-                    sscanf( lines[ next ], "slotPos=%lf,%lf", 
+                    r->slotVert[i] = false;
+                    int vertRead = 0;
+                    sscanf( lines[ next ], "slotPos=%lf,%lf,vert=%d", 
                             &( r->slotPos[i].x ),
-                            &( r->slotPos[i].y ) );
+                            &( r->slotPos[i].y ),
+                            &vertRead );
+                    r->slotVert[i] = vertRead;
                     next++;
                     }
                             
@@ -743,6 +748,7 @@ static void freeObjectRecord( int inID ) {
             delete [] idMap[inID]->biomes;
             
             delete [] idMap[inID]->slotPos;
+            delete [] idMap[inID]->slotVert;
             delete [] idMap[inID]->sprites;
             delete [] idMap[inID]->spritePos;
             delete [] idMap[inID]->spriteRot;
@@ -790,6 +796,7 @@ void freeObjectBank() {
         if( idMap[i] != NULL ) {
             
             delete [] idMap[i]->slotPos;
+            delete [] idMap[i]->slotVert;
             delete [] idMap[i]->description;
             delete [] idMap[i]->biomes;
             
@@ -863,6 +870,7 @@ void resaveAll() {
                        idMap[i]->numSlots, 
                        idMap[i]->slotSize, 
                        idMap[i]->slotPos,
+                       idMap[i]->slotVert,
                        idMap[i]->slotTimeStretch,
                        idMap[i]->numSprites, 
                        idMap[i]->sprites, 
@@ -987,6 +995,7 @@ int addObject( const char *inDescription,
                doublePair inClothingOffset,
                int inDeadlyDistance,
                int inNumSlots, int inSlotSize, doublePair *inSlotPos,
+               char *inSlotVert,
                float inSlotTimeStretch,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
@@ -1117,9 +1126,10 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "slotSize=%d", inSlotSize ) );
 
         for( int i=0; i<inNumSlots; i++ ) {
-            lines.push_back( autoSprintf( "slotPos=%f,%f", 
+            lines.push_back( autoSprintf( "slotPos=%f,%f,vert=%d", 
                                           inSlotPos[i].x,
-                                          inSlotPos[i].y ) );
+                                          inSlotPos[i].y,
+                                          (int)( inSlotVert[i] ) ) );
             }
 
         
@@ -1300,8 +1310,10 @@ int addObject( const char *inDescription,
     r->slotSize = inSlotSize;
     
     r->slotPos = new doublePair[ inNumSlots ];
+    r->slotVert = new char[ inNumSlots ];
     
     memcpy( r->slotPos, inSlotPos, inNumSlots * sizeof( doublePair ) );
+    memcpy( r->slotVert, inSlotVert, inNumSlots * sizeof( char ) );
     
     r->slotTimeStretch = inSlotTimeStretch;
     
@@ -1803,7 +1815,14 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
 
 
         doublePair pos = add( slotPos, inPos );
-        drawObject( contained, 2, pos, inRot, false, inFlipH, inAge,
+
+        double rot = inRot;
+        
+        if( inObject->slotVert[i] ) {
+            rot += 0.25;
+            }
+        
+        drawObject( contained, 2, pos, rot, false, inFlipH, inAge,
                     0,
                     false,
                     false,
@@ -2415,6 +2434,9 @@ double getClosestObjectPart( ObjectRecord *inObject,
 
                 doublePair slotOffset = sub( pos, slotPos );
                 
+                if( inObject->slotVert[i] ) {
+                    slotOffset = rotate( slotOffset, 0.5 * M_PI );
+                    }
 
                 int sp, cl, sl;
                 
