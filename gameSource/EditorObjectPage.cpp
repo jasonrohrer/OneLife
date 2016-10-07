@@ -142,8 +142,8 @@ EditorObjectPage::EditorObjectPage()
           mDemoClothesButton( smallFont, 300, 200, "Pos" ),
           mEndClothesDemoButton( smallFont, 300, 160, "XPos" ),
           mDemoSlotsButton( smallFont, 250, 110, "Demo Slots" ),
-          mClearSlotsDemoButton( smallFont, 250, -32, "End Demo" ),
-          mSetHeldPosButton( smallFont, 250, 64, "Held Pos" ),
+          mClearSlotsDemoButton( smallFont, 250, 64, "End Demo" ),
+          mSetHeldPosButton( smallFont, 250, -32, "Held Pos" ),
           mEndSetHeldPosButton( smallFont, 240, -76, "End Held" ),
           mNextHeldDemoButton( smallFont, 312, -76, ">" ),
           mPrevHeldDemoButton( smallFont, 290, -76, "<" ),
@@ -1601,12 +1601,20 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mLeftBlockingRadiusField.setVisible( false );
         mRightBlockingRadiusField.setVisible( false );
         
+        if( !mSetHeldPos ) {
+            mSetHeldPosButton.setVisible( true );
+            }
+
         if( mBlocksWalkingCheckbox.getToggled() ) {
             mDeathMarkerCheckbox.setToggled( false );
             
             if( mCheckboxes[1]->getToggled() ) {
                 mLeftBlockingRadiusField.setVisible( true );
                 mRightBlockingRadiusField.setVisible( true );
+                if( mSetHeldPos ) {
+                    actionPerformed( &mEndSetHeldPosButton );
+                    }
+                mSetHeldPosButton.setVisible( false );
                 }
             }
         if( ! mLeftBlockingRadiusField.isVisible() ) {
@@ -1617,12 +1625,20 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == mCheckboxes[1] ) {
         mLeftBlockingRadiusField.setVisible( false );
         mRightBlockingRadiusField.setVisible( false );
+
+        if( !mSetHeldPos ) {
+            mSetHeldPosButton.setVisible( true );
+            }
         
         if( mBlocksWalkingCheckbox.getToggled() ) {
 
             if( mCheckboxes[1]->getToggled() ) {
                 mLeftBlockingRadiusField.setVisible( true );
                 mRightBlockingRadiusField.setVisible( true );
+                if( mSetHeldPos ) {
+                    actionPerformed( &mEndSetHeldPosButton );
+                    }
+                mSetHeldPosButton.setVisible( false );
                 }
             }
         if( ! mLeftBlockingRadiusField.isVisible() ) {
@@ -2116,10 +2132,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 mCheckboxes[1]->getToggled() ) {
                 mLeftBlockingRadiusField.setVisible( true );
                 mRightBlockingRadiusField.setVisible( true );
+                mSetHeldPosButton.setVisible( false );
                 } 
             else {
                 mLeftBlockingRadiusField.setVisible( false );
                 mRightBlockingRadiusField.setVisible( false );
+                mSetHeldPosButton.setVisible( true );
                 }
             
 
@@ -3137,16 +3155,23 @@ void EditorObjectPage::pickedLayerChanged() {
         mSaturationSlider.setVisible( false );
         mValueSlider.setVisible( false );
         
-        mSetHeldPosButton.setVisible( true );
+        if( mLeftBlockingRadiusField.isVisible() ) {
+            mSetHeldPosButton.setVisible( false );
+            }
+        else {
+            mSetHeldPosButton.setVisible( true );
+            }
         
         mRot90ForwardButton.setVisible( false );
         mRot90BackwardButton.setVisible( false );
         }
     else {
         
-        if( mCheckboxes[2]->getToggled() ) {
+        if( mCheckboxes[2]->getToggled() ||
+            mLeftBlockingRadiusField.isVisible() ) {
             // person, and a layer selected, disable held demo button
             // because of overlap
+            // or if blocking radius visible
             mSetHeldPosButton.setVisible( false );
             }
         else {
