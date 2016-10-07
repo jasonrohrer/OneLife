@@ -1160,7 +1160,7 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         return;
         }
 
-    double lineSpacing = handwritingFont->getFontHeight() + 5;
+    double lineSpacing = handwritingFont->getFontHeight() / 2 + 5;
     
     double firstLineY =  inPos.y + ( lines.size() - 1 ) * lineSpacing;
     
