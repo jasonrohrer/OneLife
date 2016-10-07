@@ -53,6 +53,10 @@ typedef struct ObjectRecord {
         
         int leftBlockingRadius, rightBlockingRadius;
         
+
+        // true for objects that are forced behind player
+        // wide objects have this set to true automatically
+        char drawBehindPlayer;
         
         
         // biome numbers where this object will naturally occur according
@@ -251,6 +255,7 @@ int addObject( const char *inDescription,
                char inRideable,
                char inBlocksWalking,
                int inLeftBlockingRadius, int inRightBlockingRadius,
+               char inDrawBehindPlayer,
                char *inBiomes,
                float inMapChance,
                int inHeatValue,

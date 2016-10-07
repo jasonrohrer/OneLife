@@ -342,19 +342,26 @@ float initObjectBankStep() {
                 r->leftBlockingRadius = 0;
                 r->rightBlockingRadius = 0;
                 
+                int drawBehindPlayerRead = 0;
+                
                 sscanf( lines[next], 
                         "blocksWalking=%d,"
-                        "leftBlockingRadius=%d,rightBlockingRadius=%d",
+                        "leftBlockingRadius=%d,rightBlockingRadius=%d,"
+                        "drawBehindPlayer=%d",
                         &( blocksWalkingRead ),
                         &( r->leftBlockingRadius ),
-                        &( r->rightBlockingRadius ) );
+                        &( r->rightBlockingRadius ),
+                        &( drawBehindPlayerRead ) );
                             
                 r->blocksWalking = blocksWalkingRead;
+                r->drawBehindPlayer = drawBehindPlayerRead;
                 
                 r->wide = ( r->leftBlockingRadius > 0 || 
                             r->rightBlockingRadius > 0 );
 
                 if( r->wide ) {
+                    r->drawBehindPlayer = true;
+                    
                     if( r->leftBlockingRadius > maxWideRadius ) {
                         maxWideRadius = r->leftBlockingRadius;
                         }
@@ -838,6 +845,7 @@ void resaveAll() {
                        idMap[i]->blocksWalking,
                        idMap[i]->leftBlockingRadius,
                        idMap[i]->rightBlockingRadius,
+                       idMap[i]->drawBehindPlayer,
                        biomeString,
                        idMap[i]->mapChance,
                        idMap[i]->heatValue,
@@ -963,6 +971,7 @@ int addObject( const char *inDescription,
                char inRideable,
                char inBlocksWalking,
                int inLeftBlockingRadius, int inRightBlockingRadius,
+               char inDrawBehindPlayer,
                char *inBiomes,
                float inMapChance,
                int inHeatValue,
@@ -1065,10 +1074,12 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( 
                              "blocksWalking=%d,"
                              "leftBlockingRadius=%d," 
-                             "rightBlockingRadius=%d", 
+                             "rightBlockingRadius=%d,"
+                             "drawBehindPlayer=%d", 
                              (int)inBlocksWalking,
                              inLeftBlockingRadius, 
-                             inRightBlockingRadius ) );
+                             inRightBlockingRadius,
+                             (int)inDrawBehindPlayer ) );
         
         lines.push_back( autoSprintf( "mapChance=%f#biomes_%s", 
                                       inMapChance, inBiomes ) );
@@ -1249,10 +1260,13 @@ int addObject( const char *inDescription,
     r->blocksWalking = inBlocksWalking;
     r->leftBlockingRadius = inLeftBlockingRadius;
     r->rightBlockingRadius = inRightBlockingRadius;
+    r->drawBehindPlayer = inDrawBehindPlayer;
     
     r->wide = ( r->leftBlockingRadius > 0 || r->rightBlockingRadius > 0 );
     
     if( r->wide ) {
+        r->drawBehindPlayer = true;
+        
         if( r->leftBlockingRadius > maxWideRadius ) {
             maxWideRadius = r->leftBlockingRadius;
             }

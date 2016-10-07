@@ -131,6 +131,7 @@ EditorObjectPage::EditorObjectPage()
           mHeldInHandCheckbox( 290, 36, 2 ),
           mRideableCheckbox( 290, 16, 2 ),
           mBlocksWalkingCheckbox( 290, -4, 2 ),
+          mDrawBehindPlayerCheckbox( 290, -90, 2 ),
           mLeftBlockingRadiusField( smallFont, 
                                     290,  -30, 2,
                                     false,
@@ -471,6 +472,10 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mBlocksWalkingCheckbox );
     mBlocksWalkingCheckbox.setVisible( true );
     mBlocksWalkingCheckbox.addActionListener( this );
+
+    addComponent( &mDrawBehindPlayerCheckbox );
+    mDrawBehindPlayerCheckbox.setVisible( false );
+    mDrawBehindPlayerCheckbox.addActionListener( this );
 
     addComponent( &mLeftBlockingRadiusField );
     mLeftBlockingRadiusField.setVisible( false );
@@ -1040,6 +1045,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mBlocksWalkingCheckbox.getToggled(),
                    mLeftBlockingRadiusField.getInt(),
                    mRightBlockingRadiusField.getInt(),
+                   mDrawBehindPlayerCheckbox.getToggled(),
                    biomes,
                    mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
@@ -1138,6 +1144,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mBlocksWalkingCheckbox.getToggled(),
                    mLeftBlockingRadiusField.getInt(),
                    mRightBlockingRadiusField.getInt(),
+                   mDrawBehindPlayerCheckbox.getToggled(),
                    biomes,
                    mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
@@ -1595,11 +1602,16 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mRightBlockingRadiusField.setVisible( false );
             mLeftBlockingRadiusField.setInt( 0 );
             mRightBlockingRadiusField.setInt( 0 );
+            mDrawBehindPlayerCheckbox.setToggled( false );
+            mDrawBehindPlayerCheckbox.setVisible( false );
             }
         }
     else if( inTarget == &mBlocksWalkingCheckbox ) {
         mLeftBlockingRadiusField.setVisible( false );
         mRightBlockingRadiusField.setVisible( false );
+        
+        mDrawBehindPlayerCheckbox.setToggled( false );
+        mDrawBehindPlayerCheckbox.setVisible( false );
         
         if( !mSetHeldPos ) {
             mSetHeldPosButton.setVisible( true );
@@ -1611,6 +1623,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             if( mCheckboxes[1]->getToggled() ) {
                 mLeftBlockingRadiusField.setVisible( true );
                 mRightBlockingRadiusField.setVisible( true );
+                mDrawBehindPlayerCheckbox.setVisible( true );
                 if( mSetHeldPos ) {
                     actionPerformed( &mEndSetHeldPosButton );
                     }
@@ -1626,6 +1639,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mLeftBlockingRadiusField.setVisible( false );
         mRightBlockingRadiusField.setVisible( false );
 
+        mDrawBehindPlayerCheckbox.setToggled( false );
+        mDrawBehindPlayerCheckbox.setVisible( false );
+
         if( !mSetHeldPos ) {
             mSetHeldPosButton.setVisible( true );
             }
@@ -1635,6 +1651,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             if( mCheckboxes[1]->getToggled() ) {
                 mLeftBlockingRadiusField.setVisible( true );
                 mRightBlockingRadiusField.setVisible( true );
+     
+                mDrawBehindPlayerCheckbox.setVisible( true );
+                
                 if( mSetHeldPos ) {
                     actionPerformed( &mEndSetHeldPosButton );
                     }
@@ -2132,11 +2151,16 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 mCheckboxes[1]->getToggled() ) {
                 mLeftBlockingRadiusField.setVisible( true );
                 mRightBlockingRadiusField.setVisible( true );
+                mDrawBehindPlayerCheckbox.setVisible( true );
+                mDrawBehindPlayerCheckbox.setToggled( 
+                    pickedRecord->drawBehindPlayer );
                 mSetHeldPosButton.setVisible( false );
                 } 
             else {
                 mLeftBlockingRadiusField.setVisible( false );
                 mRightBlockingRadiusField.setVisible( false );
+                mDrawBehindPlayerCheckbox.setToggled( false );
+                mDrawBehindPlayerCheckbox.setVisible( false );
                 mSetHeldPosButton.setVisible( true );
                 }
             
@@ -2857,6 +2881,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         pos = mBlocksWalkingCheckbox.getPosition();
         pos.x -= 20;
         smallFont->drawString( "Blocking", pos, alignRight );
+        }
+
+    if( mDrawBehindPlayerCheckbox.isVisible() ) {
+        pos = mDrawBehindPlayerCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Behind", pos, alignRight );
         }
     
 
