@@ -2374,8 +2374,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
             int mapI = y * mMapD + x;
             int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
             
+            ObjectRecord *obj = getObject( mMap[ mapI ] );
+            
             if( mMap[ mapI ] > 0 && 
-                getObject( mMap[ mapI ] )->wide ) {
+                obj->permanent && obj->blocksWalking ) {
                 
                 drawMapCell( mapI, screenX, screenY );
                 }
@@ -2443,9 +2445,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
             int mapI = y * mMapD + x;
             int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
 
-
+            ObjectRecord *obj = getObject( mMap[ mapI ] );
+            
             if( mMap[ mapI ] > 0 && 
-                ! getObject( mMap[ mapI ] )->wide ) {
+                ! ( obj->permanent && obj->blocksWalking ) ) {
                 
                 drawMapCell( mapI, screenX, screenY );
                 }
