@@ -428,7 +428,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     numbersFontFixed->setMinimumPositionPrecision( 1 );
     
     handwritingFont = 
-        new Font( "font_handwriting_16_16.tga", 1, 6, false, 16 );
+        new Font( "font_handwriting_32_32.tga", 2, 6, false, 16 );
 
     handwritingFont->setMinimumPositionPrecision( 1 );
 
