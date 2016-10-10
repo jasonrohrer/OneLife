@@ -2795,14 +2795,18 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 setDrawColor( red, 1, blue, alpha );
                 
                 double rot = 0;
-                
+                doublePair centerOffset = getObjectCenterOffset( demoObject );
+
                 if( mCurrentObject.slotVert[i] ) {
                     rot = 0.25;
+
+                    centerOffset = rotate( centerOffset, -rot * 2 * M_PI );
                     }
                 
+
                 drawObject( demoObject, 2, 
                             sub( add( mCurrentObject.slotPos[i], drawOffset ),
-                                 getObjectCenterOffset( demoObject ) ),
+                                 centerOffset ),
                             rot, false, false, -1, 0, false, false, 
                             getEmptyClothingSet() );
                 }

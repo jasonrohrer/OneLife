@@ -2030,8 +2030,24 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             ObjectRecord *contained = getObject( inContainedIDs[i] );
 
             doublePair pos = obj->slotPos[i];
+            
+            doublePair centerOffset = getObjectCenterOffset( contained );
+            
+            double rot = inRot;
+            
+            if( obj->slotVert[i] ) {
+                if( inFlipH ) {
+                    centerOffset = rotate( centerOffset, - 0.5 * M_PI );
+                    rot -= 0.25;
+                    }
+                else {
+                    centerOffset = rotate( centerOffset, - 0.5 * M_PI );
+                    rot += 0.25;
+                    }
+                }
 
-            pos = sub( pos, getObjectCenterOffset( contained ) );
+
+            pos = sub( pos, centerOffset );
             
         
             if( i < inAnim->numSlots ) {
@@ -2084,11 +2100,6 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
             pos = add( pos, inPos );
 
-            double rot = inRot;
-            
-            if( obj->slotVert[i] ) {
-                rot += 0.25;
-                }
             
             drawObject( contained, 2, pos, rot, false, inFlipH,
                         inAge, 0, false, false, emptyClothing );

@@ -1797,8 +1797,24 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
         ObjectRecord *contained = getObject( inContainedIDs[i] );
         
 
+        doublePair centerOffset = getObjectCenterOffset( contained );
+        
+        double rot = inRot;
+        
+        if( inObject->slotVert[i] ) {
+            if( inFlipH ) {
+                centerOffset = rotate( centerOffset, - 0.5 * M_PI );
+                rot -= 0.25;
+                }
+            else {
+                centerOffset = rotate( centerOffset, - 0.5 * M_PI );
+                rot += 0.25;
+                }
+            }
+
+
         doublePair slotPos = sub( inObject->slotPos[i], 
-                                  getObjectCenterOffset( contained ) );
+                                  centerOffset );
         
         if( inRot != 0 ) {    
             if( inFlipH ) {
@@ -1816,11 +1832,6 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
 
         doublePair pos = add( slotPos, inPos );
 
-        double rot = inRot;
-        
-        if( inObject->slotVert[i] ) {
-            rot += 0.25;
-            }
         
         drawObject( contained, 2, pos, rot, false, inFlipH, inAge,
                     0,
@@ -2426,7 +2437,16 @@ double getClosestObjectPart( ObjectRecord *inObject,
             
                 doublePair centOffset = getObjectCenterOffset( contained );
                 
-                if( inFlip ) {
+                if( inObject->slotVert[i] ) {
+                    if( inFlip ) {
+                        centOffset = rotate( centOffset, -0.5 * M_PI );
+                        centOffset.x *= -1;
+                        }
+                    else {
+                        centOffset = rotate( centOffset, -0.5 * M_PI );
+                        }
+                    }
+                else if( inFlip ) {
                     centOffset.x *= -1;
                     }
             
@@ -2434,10 +2454,16 @@ double getClosestObjectPart( ObjectRecord *inObject,
 
                 doublePair slotOffset = sub( pos, slotPos );
                 
-                if( inObject->slotVert[i] ) {
-                    slotOffset = rotate( slotOffset, 0.5 * M_PI );
-                    }
 
+                if( inObject->slotVert[i] ) {
+                    if( inFlip ) {
+                        slotOffset = rotate( slotOffset, -0.5 * M_PI );
+                        }
+                    else {
+                        slotOffset = rotate( slotOffset, 0.5 * M_PI );
+                        }
+                    }
+                
                 int sp, cl, sl;
                 
                 getClosestObjectPart( contained,
