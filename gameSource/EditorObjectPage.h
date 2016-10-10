@@ -170,7 +170,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         ValueSlider mHueSlider;
         ValueSlider mSaturationSlider;
         ValueSlider mValueSlider;
-
+        
+        CheckboxButton mSlotVertCheckbox;
 
         ObjectRecord mCurrentObject;
         

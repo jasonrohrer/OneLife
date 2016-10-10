@@ -162,6 +162,7 @@ EditorObjectPage::EditorObjectPage()
           mValueSlider( smallFont, -90, -189, 2,
                         75, 20,
                         0, 1, "V" ),
+          mSlotVertCheckbox( -90, -157, 2 ),
           mSlotPlaceholderSprite( loadSprite( "slotPlaceholder.tga" ) ) {
 
 
@@ -252,6 +253,9 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mSaturationSlider );
     addComponent( &mValueSlider );
     
+    addComponent( &mSlotVertCheckbox );
+    mSlotVertCheckbox.setVisible( false );
+    mSlotVertCheckbox.addActionListener( this );
 
     addComponent( &mAgingLayerCheckbox );
     addComponent( &mHeadLayerCheckbox );
@@ -1413,19 +1417,19 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         char *slotsVert = new char[ numSlots + 1 ];
         
-        memcpy( slotsVert, mCurrentObject.slotPos, 
+        memcpy( slotsVert, mCurrentObject.slotVert, 
                 sizeof( char ) * numSlots );
         
-        slotsVert[numSlots] = false;
 
         if( mCurrentObject.numSlots == 0 ) {
-            
+            slotsVert[numSlots] = false;
             slots[numSlots].x = 0;
             slots[numSlots].y = 0;
             mDemoSlotsButton.setVisible( true );
             mClearSlotsDemoButton.setVisible( false );
             }
         else {
+            slotsVert[numSlots] = slotsVert[ numSlots - 1 ];
             slots[numSlots].x = 
                 slots[numSlots - 1].x + 16;
             slots[numSlots].y = 
@@ -1434,7 +1438,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         mPickedSlot = numSlots;
         mPickedObjectLayer = -1;
-        pickedLayerChanged();
 
         delete [] mCurrentObject.slotPos;
         mCurrentObject.slotPos = slots;
@@ -1443,6 +1446,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mCurrentObject.slotVert = slotsVert;
 
         mCurrentObject.numSlots = numSlots + 1;
+        
+        pickedLayerChanged();
         
         mSlotSizeField.setVisible( true );
         mSlotTimeStretchField.setVisible( true );
@@ -2322,6 +2327,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }
         
         }
+    else if( inTarget == &mSlotVertCheckbox ) {
+        if( mPickedSlot != -1 ) {
+            mCurrentObject.slotVert[ mPickedSlot ] = 
+                mSlotVertCheckbox.getToggled();
+            }
+        }
     else {
         // check clothing checkboxes
                 
@@ -2950,6 +2961,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         smallFont->drawString( "Front Foot", pos, alignRight );
         }
 
+    if( mSlotVertCheckbox.isVisible() ) {
+        pos = mSlotVertCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Vertical Slot", pos, alignRight );
+        }
+
 
 
     doublePair legendPos = mImportEditorButton.getPosition();
@@ -3229,8 +3246,18 @@ void EditorObjectPage::pickedLayerChanged() {
         
         mRot90ForwardButton.setVisible( false );
         mRot90BackwardButton.setVisible( false );
+
+        if( mPickedSlot != -1 ) {
+            mSlotVertCheckbox.setToggled( 
+                mCurrentObject.slotVert[ mPickedSlot ] );
+            mSlotVertCheckbox.setVisible( true );
+            }
+        else {
+            mSlotVertCheckbox.setVisible( false );
+            }
         }
     else {
+        mSlotVertCheckbox.setVisible( false );
         
         if( mCheckboxes[2]->getToggled() ||
             mLeftBlockingRadiusField.isVisible() ) {
@@ -3791,16 +3818,12 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
     else if( inASCII == 'm' ) {
         if( mPickedObjectLayer == -1 && mPickedSlot == -1 ) {
             mPickedObjectLayer = 0; 
-            pickedLayerChanged();
             }
         else if( mPickedObjectLayer != -1 ) {
             mPickedObjectLayer ++;
             
-            pickedLayerChanged();
-                
             if( mPickedObjectLayer >= mCurrentObject.numSprites ) {
                 mPickedObjectLayer = -1;
-                pickedLayerChanged();
 
                 if( mCurrentObject.numSlots > 0 ) {
                     
@@ -3816,6 +3839,8 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
                 }
             }        
         
+        pickedLayerChanged();
+
         mHoverObjectLayer = mPickedObjectLayer;
         mHoverSlot = mPickedSlot;
         mHoverStrength = 1;
@@ -3827,15 +3852,13 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
                 }
             else if( mCurrentObject.numSprites > 0 ) {
                 mPickedObjectLayer = mCurrentObject.numSprites - 1;
-                pickedLayerChanged();
                 }
             }
         else if( mPickedObjectLayer != -1 ) {
             mPickedObjectLayer --;
-            pickedLayerChanged();
+            
             if( mPickedObjectLayer < 0 ) {
                 mPickedObjectLayer = -1;
-                pickedLayerChanged();
                 }
             }
         else if( mPickedSlot != -1 ) {
@@ -3845,10 +3868,11 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
                 mPickedSlot = -1;
                 if( mCurrentObject.numSprites > 0 ) {
                     mPickedObjectLayer = mCurrentObject.numSprites - 1;
-                    pickedLayerChanged();
                     }
                 }
             }        
+
+        pickedLayerChanged();
         
         mHoverObjectLayer = mPickedObjectLayer;
         mHoverSlot = mPickedSlot;
