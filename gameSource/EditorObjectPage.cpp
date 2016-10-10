@@ -2761,6 +2761,10 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 
                 setDrawColor( 0, 1, 1, 0.5 );
                 
+                if( mCurrentObject.slotVert[i] ) {
+                    setDrawColor( 1, 1, 1, 0.5 );
+                    }
+                
                 char *numberString = autoSprintf( "%d", i + 1 );
                 
                 mainFont->drawString( numberString, 
