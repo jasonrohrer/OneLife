@@ -332,3 +332,13 @@ SAY text cannot contain the # character and will be truncated at the
 
     The x y parameters to SAY are currently ignored and can be 0, but must
     be present.
+
+
+
+
+Finally, a special command client can send, but only if the server
+is configured to allow it (if disabled on server, it has no effect)
+
+MAP x y#
+
+Requests a map chunk centered on (x,y)

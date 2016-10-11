@@ -622,6 +622,7 @@ int mapPullEndY = 10;
 
 int mapPullCurrentX;
 int mapPullCurrentY;
+char mapPullCurrentSaved = false;
 
 
 #include "minorGems/graphics/filters/BoxBlurFilter.h"
@@ -2993,6 +2994,46 @@ void LivingLifePage::step() {
 
                 mFirstServerMessagesReceived |= 1;
                 }
+
+            if( mapPullMode ) {
+                
+                if( x == mapPullCurrentX - size/2 && 
+                    y == mapPullCurrentY - size/2 ) {
+                    
+                    lastScreenViewCenter.x = x * 128;
+                    lastScreenViewCenter.y = y * 128;
+                    setViewCenterPosition( lastScreenViewCenter.x,
+                                           lastScreenViewCenter.y );
+                    
+                    mapPullCurrentX += 10;
+                    
+                    if( mapPullCurrentX > mapPullEndX ) {
+                        mapPullCurrentX = mapPullStartX;
+                        mapPullCurrentY += 6;
+                        
+                        if( mapPullCurrentY > mapPullEndY ) {
+                            mapPullMode = false;
+                            }
+                        }
+                    mapPullCurrentSaved = false;
+                    }
+                
+                if( mapPullMode ) {
+                    
+                    char *message = autoSprintf( "MAP %d %d#",
+                                                 mapPullCurrentX,
+                                                 mapPullCurrentY );
+                    printf( "Sending message to server: %s\n", message );
+                    sendToSocket( mServerSocket, 
+                                  (unsigned char*)message, 
+                                  strlen( message ) );
+            
+                    numServerBytesSent += strlen( message );
+                    overheadServerBytesSent += 52;
+                    
+                    delete [] message;
+                    }
+                }
             }
         else if( type == MAP_CHANGE ) {
             int numLines;
@@ -3804,9 +3845,6 @@ void LivingLifePage::step() {
                 ourID = ourObject->id;
                 
                 ourObject->displayChar = 'A';
-                
-                mapPullMode = 
-                    SettingsManager::getIntSetting( "mapPullMode", 0 );
                 }
             
             mFirstServerMessagesReceived |= 2;
@@ -4423,7 +4461,7 @@ void LivingLifePage::step() {
             }
         
 
-        if( viewChange ) {
+        if( viewChange && ! mapPullMode ) {
             
             setViewCenterPosition( lastScreenViewCenter.x, 
                                    lastScreenViewCenter.y );
@@ -4790,6 +4828,38 @@ void LivingLifePage::step() {
 
                 setViewCenterPosition( lastScreenViewCenter.x, 
                                        lastScreenViewCenter.y );
+
+                mapPullMode = 
+                    SettingsManager::getIntSetting( "mapPullMode", 0 );
+                mapPullStartX = 
+                    SettingsManager::getIntSetting( "mapPullStartX", -10 );
+                mapPullStartY = 
+                    SettingsManager::getIntSetting( "mapPullStartY", -10 );
+                mapPullEndX = 
+                    SettingsManager::getIntSetting( "mapPullEndX", 10 );
+                mapPullEndY = 
+                    SettingsManager::getIntSetting( "mapPullEndY", 10 );
+                
+                mapPullCurrentX = mapPullStartX;
+                mapPullCurrentY = mapPullStartY;
+
+                if( mapPullMode ) {
+                    mapPullCurrentSaved = false;
+                    char *message = autoSprintf( "MAP %d %d#",
+                                                 mapPullCurrentX,
+                                                 mapPullCurrentY );
+
+                    printf( "Sending message to server: %s\n", message );
+
+                    sendToSocket( mServerSocket, 
+                                  (unsigned char*)message, 
+                                  strlen( message ) );
+            
+                    numServerBytesSent += strlen( message );
+                    overheadServerBytesSent += 52;
+                    
+                    delete [] message;
+                    }
                 }
             }
         else {

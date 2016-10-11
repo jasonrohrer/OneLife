@@ -392,6 +392,7 @@ typedef enum messageType {
     DROP,
     KILL,
     SAY,
+    MAP,
     UNKNOWN
     } messageType;
 
@@ -544,6 +545,9 @@ ClientMessage parseMessage( char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "KILL" ) == 0 ) {
         m.type = KILL;
+        }
+    else if( strcmp( nameBuffer, "MAP" ) == 0 ) {
+        m.type = MAP;
         }
     else if( strcmp( nameBuffer, "SAY" ) == 0 ) {
         m.type = SAY;
@@ -2451,9 +2455,32 @@ int main() {
                 //Thread::staticSleep( 
                 //    testRandSource.getRandomBoundedInt( 0, 450 ) );
                 
+                
+                if( m.type == MAP ) {
+                    
+                    int allow = 
+                        SettingsManager::getIntSetting( "allowMapRequests", 0 );
+                    
+                    if( allow ) {
+                        int length;
+                        unsigned char *mapChunkMessage = 
+                            getChunkMessage( m.x, m.y, &length );
+                        
+                        int numSent = 
+                            nextPlayer->sock->send( mapChunkMessage, 
+                                                    length, 
+                                                    false, false );
+                
+                        delete [] mapChunkMessage;
+
+                        if( numSent == -1 ) {
+                            nextPlayer->error = true;
+                            }
+                        }
+                    }
                 // if player is still moving, ignore all actions
                 // except for move interrupts
-                if( ( nextPlayer->xs == nextPlayer->xd &&
+                else if( ( nextPlayer->xs == nextPlayer->xd &&
                       nextPlayer->ys == nextPlayer->yd ) 
                     ||
                     m.type == MOVE ||
