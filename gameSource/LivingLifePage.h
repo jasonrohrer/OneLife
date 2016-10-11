@@ -293,6 +293,8 @@ class LivingLifePage : public GamePage {
         char mEKeyDown;
         
 
+        SpriteHandle mGuiPanelSprite;
+        
         SpriteHandle mFoodEmptySprite;
         SpriteHandle mFoodFullSprite;
         

@@ -614,6 +614,14 @@ int ourID;
 
 char lastCharUsed = 'A';
 
+char mapPullMode = false;
+int mapPullStartX = -10;
+int mapPullEndX = 10;
+int mapPullStartY = -10;
+int mapPullEndY = 10;
+
+int mapPullCurrentX;
+int mapPullCurrentY;
 
 
 #include "minorGems/graphics/filters/BoxBlurFilter.h"
@@ -626,6 +634,7 @@ LivingLifePage::LivingLifePage()
           mMapOffsetX( 0 ),
           mMapOffsetY( 0 ),
           mEKeyDown( false ),
+          mGuiPanelSprite( loadSprite( "guiPanel.tga", false ) ),
           mFoodEmptySprite( loadSprite( "hungerEmpty.tga", false ) ),
           mFoodFullSprite( loadSprite( "hungerFull.tga", false ) ),
           mLastMouseOverID( 0 ),
@@ -1007,6 +1016,7 @@ LivingLifePage::~LivingLifePage() {
     delete [] nextActionMessageToSend;
 
 
+    freeSprite( mGuiPanelSprite );
     freeSprite( mFoodEmptySprite );
     freeSprite( mFoodFullSprite );
     freeSprite( mChalkBlotSprite );
@@ -2547,7 +2557,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
             drawSquare( pos, CELL_D * .45 );
             }
         }    
-
+    
+    setDrawColor( 1, 1, 1, 1 );
+    doublePair panelPos = lastScreenViewCenter;
+    panelPos.y -= 242 + 32 + 16 + 6;
+    drawSprite( mGuiPanelSprite, panelPos );
 
     // info panel at bottom
     setDrawColor( 0.5, 0.5, 0.5, .75 );
@@ -3790,6 +3804,9 @@ void LivingLifePage::step() {
                 ourID = ourObject->id;
                 
                 ourObject->displayChar = 'A';
+                
+                mapPullMode = 
+                    SettingsManager::getIntSetting( "mapPullMode", 0 );
                 }
             
             mFirstServerMessagesReceived |= 2;

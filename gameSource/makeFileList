@@ -64,6 +64,7 @@ graphics/hungerFull.tga \
 graphics/hungerEmpty.tga \
 graphics/chalkBlot.tga \
 graphics/ground.tga \
+graphics/guiPanel.tga \
 ${GROUND_TGA_PATH} \
 
 
