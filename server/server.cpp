@@ -3905,11 +3905,11 @@ int main() {
                                             unsigned int newHoldingEtaDecay = 
                                                 getEtaDecay( m.x, m.y );
 
+                                            int newNumContained = 0;
                                             int *newContainedIDs = 
                                                 getContained( 
                                                     m.x, m.y,
-                                                    &( nextPlayer->
-                                                       numContained ) );
+                                                    &newNumContained );
                                     
                                             int numCont;
                                             unsigned 
@@ -3930,6 +3930,8 @@ int main() {
                                             nextPlayer->holdingID = target;
                                             nextPlayer->holdingEtaDecay =
                                                 newHoldingEtaDecay;
+                                            nextPlayer->numContained =
+                                                newNumContained;
                                             nextPlayer->containedIDs =
                                                 newContainedIDs;
                                             nextPlayer->containedEtaDecays =
