@@ -154,6 +154,69 @@ void setAnimLayerFades( float *inFades );
 
 
 
+// packed version of all object animation call parameters
+// used for version of call that can be saved to be applied later
+typedef struct ObjectAnimPack {
+        int inObjectID;
+        AnimType inType;
+        double inFrameTime;
+        double inAnimFade;
+        AnimType inFadeTargetType;
+        double inFadeTargetFrameTime;
+        double inFrozenRotFrameTime;
+        char *outFrozenRotFrameTimeUsed;
+        // set endAnimType for no frozen arms
+        AnimType inFrozenArmType;
+        AnimType inFrozenArmFadeTargetType;
+        doublePair inPos;
+        double inRot;
+        char inWorn;
+        char inFlipH;
+        double inAge;
+        int inHideClosestArm;
+        char inHideAllLimbs;
+        char inHeldNotInPlaceYet;
+        ClothingSet inClothing;
+        SimpleVector<int> *inClothingContained;
+        int inNumContained;
+        // can be NULL if there are none contained
+        int *inContainedIDs;
+    } ObjectAnimPack;
+
+
+
+// prepare a packed animation, but don't draw it yet
+ObjectAnimPack drawObjectAnimPacked( 
+    int inObjectID, AnimType inType, double inFrameTime, 
+    double inAnimFade,
+    AnimType inFadeTargetType,
+    double inFadeTargetFrameTime,
+    double inFrozenRotFrameTime,
+    char *outFrozenRotFrameTimeUsed,
+    // set endAnimType for no frozen arms
+    AnimType inFrozenArmType,
+    AnimType inFrozenArmFadeTargetType,
+    doublePair inPos,
+    double inRot,
+    char inWorn,
+    char inFlipH,
+    double inAge,
+    int inHideClosestArm,
+    char inHideAllLimbs,
+    char inHeldNotInPlaceYet,
+    ClothingSet inClothing,
+    SimpleVector<int> *inClothingContained,
+    int inNumContained, 
+    // set to NULL if not used
+    int *inContainedIDs );
+
+
+// draw a packed animation now
+void drawObjectAnim( ObjectAnimPack inPack );
+
+        
+
+
 HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots, 
                            AnimType inType, double inFrameTime,
                            double inAnimFade,

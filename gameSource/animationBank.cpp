@@ -671,6 +671,114 @@ static char logicalXOR( char inA, char inB ) {
 
 
 
+ObjectAnimPack drawObjectAnimPacked( 
+    int inObjectID,
+    AnimType inType, double inFrameTime, 
+    double inAnimFade,
+    AnimType inFadeTargetType,
+    double inFadeTargetFrameTime,
+    double inFrozenRotFrameTime,
+    char *outFrozenRotFrameTimeUsed,
+    // set endAnimType for no frozen arms
+    AnimType inFrozenArmType,
+    AnimType inFrozenArmFadeTargetType,
+    doublePair inPos,
+    double inRot,
+    char inWorn,
+    char inFlipH,
+    double inAge,
+    int inHideClosestArm,
+    char inHideAllLimbs,
+    char inHeldNotInPlaceYet,
+    ClothingSet inClothing,
+    SimpleVector<int> *inClothingContained,
+    int inNumContained, int *inContainedIDs ) {
+    
+    ObjectAnimPack outPack = {
+        inObjectID,
+        inType,
+        inFrameTime, 
+        inAnimFade,
+        inFadeTargetType,
+        inFadeTargetFrameTime,
+        inFrozenRotFrameTime,
+        outFrozenRotFrameTimeUsed,
+        inFrozenArmType,
+        inFrozenArmFadeTargetType,
+        inPos,
+        inRot,
+        inWorn,
+        inFlipH,
+        inAge,
+        inHideClosestArm,
+        inHideAllLimbs,
+        inHeldNotInPlaceYet,
+        inClothing,
+        inClothingContained,
+        inNumContained,
+        inContainedIDs };
+    
+    return outPack;
+    }
+
+        
+
+
+void drawObjectAnim( ObjectAnimPack inPack ) {
+    if( inPack.inContainedIDs == NULL ) {
+        drawObjectAnim( 
+            inPack.inObjectID,
+            2,
+            inPack.inType,
+            inPack.inFrameTime, 
+            inPack.inAnimFade,
+            inPack.inFadeTargetType,
+            inPack.inFadeTargetFrameTime,
+            inPack.inFrozenRotFrameTime,
+            inPack.outFrozenRotFrameTimeUsed,
+            inPack.inFrozenArmType,
+            inPack.inFrozenArmFadeTargetType,
+            inPack.inPos,
+            inPack.inRot,
+            inPack.inWorn,
+            inPack.inFlipH,
+            inPack.inAge,
+            inPack.inHideClosestArm,
+            inPack.inHideAllLimbs,
+            inPack.inHeldNotInPlaceYet,
+            inPack.inClothing,
+            inPack.inClothingContained );
+        }
+    else {
+        drawObjectAnim( 
+            inPack.inObjectID,
+            inPack.inType,
+            inPack.inFrameTime, 
+            inPack.inAnimFade,
+            inPack.inFadeTargetType,
+            inPack.inFadeTargetFrameTime,
+            inPack.inFrozenRotFrameTime,
+            inPack.outFrozenRotFrameTimeUsed,
+            inPack.inFrozenArmType,
+            inPack.inFrozenArmFadeTargetType,
+            inPack.inPos,
+            inPack.inRot,
+            inPack.inWorn,
+            inPack.inFlipH,
+            inPack.inAge,
+            inPack.inHideClosestArm,
+            inPack.inHideAllLimbs,
+            inPack.inHeldNotInPlaceYet,
+            inPack.inClothing,
+            inPack.inClothingContained,
+            inPack.inNumContained,
+            inPack.inContainedIDs );
+        }
+    }
+
+
+
+
 HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                            AnimType inType, double inFrameTime,
                            double inAnimFade,

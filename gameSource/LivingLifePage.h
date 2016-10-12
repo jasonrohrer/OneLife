@@ -335,9 +335,12 @@ class LivingLifePage : public GamePage {
                                         int inForceMinChalkBlots = -1 );
         
 
-        void drawLiveObject( LiveObject *inObj,
-                             SimpleVector<LiveObject *> *inSpeakers,
-                             SimpleVector<doublePair> *inSpeakersPos );
+        // returns an animation pack that can be used to draw the
+        // held object.  The pack's object ID is -1 if nothing is held
+        ObjectAnimPack drawLiveObject( 
+            LiveObject *inObj,
+            SimpleVector<LiveObject *> *inSpeakers,
+            SimpleVector<doublePair> *inSpeakersPos );
         
 
         void drawMapCell( int inMapI, 

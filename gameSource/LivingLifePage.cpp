@@ -1409,7 +1409,7 @@ void LivingLifePage::drawMapCell( int inMapI,
 
 
 
-void LivingLifePage::drawLiveObject( 
+ObjectAnimPack LivingLifePage::drawLiveObject( 
     LiveObject *inObj,
     SimpleVector<LiveObject *> *inSpeakers,
     SimpleVector<doublePair> *inSpeakersPos ) {    
@@ -1417,7 +1417,9 @@ void LivingLifePage::drawLiveObject(
     // current pos
                     
     doublePair pos = mult( inObj->currentPos, CELL_D );
-                
+    
+    ObjectAnimPack returnPack;
+    returnPack.inObjectID = -1;
 
     if( inObj->heldByDropOffset.x != 0 ||
         inObj->heldByDropOffset.y != 0 ) {
@@ -1919,7 +1921,9 @@ void LivingLifePage::drawLiveObject(
                 // save world hold pos for smooth set-down of baby
                 babyO->lastHeldByRawPos = worldHoldPos;
 
-                drawObjectAnim( babyO->displayID, 2, curHeldType, 
+                returnPack =
+                    drawObjectAnimPacked( 
+                                babyO->displayID, curHeldType, 
                                 heldTimeVal,
                                 heldAnimFade,
                                 fadeTargetHeldType,
@@ -1939,7 +1943,8 @@ void LivingLifePage::drawLiveObject(
                                 false,
                                 false,
                                 babyO->clothing,
-                                babyO->clothingContained );
+                                babyO->clothingContained,
+                                0, NULL );
 
                 if( babyO->currentSpeech != NULL ) {
                     
@@ -1950,7 +1955,9 @@ void LivingLifePage::drawLiveObject(
             }
         else if( inObj->numContained == 0 ) {
                         
-            drawObjectAnim( inObj->holdingID, 2, curHeldType, 
+            returnPack = 
+                drawObjectAnimPacked(
+                            inObj->holdingID, curHeldType, 
                             heldTimeVal,
                             heldAnimFade,
                             fadeTargetHeldType,
@@ -1963,10 +1970,13 @@ void LivingLifePage::drawLiveObject(
                             holdRot,
                             false,
                             inObj->holdingFlip, -1, false, false, false,
-                            getEmptyClothingSet(), NULL );
+                            getEmptyClothingSet(), NULL,
+                            0, NULL );
             }
         else {
-            drawObjectAnim( inObj->holdingID, curHeldType, 
+            returnPack =
+                drawObjectAnimPacked( 
+                            inObj->holdingID, curHeldType, 
                             heldTimeVal,
                             heldAnimFade,
                             fadeTargetHeldType,
@@ -1992,6 +2002,8 @@ void LivingLifePage::drawLiveObject(
         inSpeakers->push_back( inObj );
         inSpeakersPos->push_back( pos );
         }
+
+    return returnPack;
     }
 
 
@@ -2404,7 +2416,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 }
             }
 
-
+        
+        SimpleVector<ObjectAnimPack> heldToDrawOnTop;
 
         // draw players behind the objects in this row
 
@@ -2453,7 +2466,21 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     // there's a player here, draw it
                     
-                    drawLiveObject( o, &speakers, &speakersPos );
+                    ObjectAnimPack heldPack =
+                        drawLiveObject( o, &speakers, &speakersPos );
+
+                    if( heldPack.inObjectID != -1 ) {
+                        // holding something, not drawn yet
+
+                        if( ! o->heldPosOverride ) {
+                            // not sliding into place
+                            // draw it now
+                            drawObjectAnim( heldPack );
+                            }
+                        else {
+                            heldToDrawOnTop.push_back( heldPack );
+                            }
+                        }
                     }
                 }
             }
@@ -2474,6 +2501,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 }
             }
 
+        // now draw held flying objects on top of objects in this row
+        for( int i=0; i<heldToDrawOnTop.size(); i++ ) {
+            drawObjectAnim( heldToDrawOnTop.getElementDirect( i ) );
+            }
 
         } // end loop over rows on screen
 
