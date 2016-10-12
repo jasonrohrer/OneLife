@@ -43,6 +43,7 @@ extern doublePair lastScreenViewCenter;
 
 extern double viewWidth;
 
+extern int screenW, screenH;
 
 extern char *serverIP;
 extern int serverPort;
@@ -623,6 +624,11 @@ int mapPullEndY = 10;
 int mapPullCurrentX;
 int mapPullCurrentY;
 char mapPullCurrentSaved = false;
+char mapPullModeFinalImage = false;
+
+Image *mapPullTotalImage = NULL;
+int numScreensWritten = 0;
+
 
 
 #include "minorGems/graphics/filters/BoxBlurFilter.h"
@@ -2559,6 +2565,90 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }    
     
+    if( mapPullMode ) {
+        
+        if( ! mapPullCurrentSaved ) {
+            int screenWidth, screenHeight;
+            getScreenDimensions( &screenWidth, &screenHeight );
+            
+            Image *screen = 
+                getScreenRegionRaw( 0, 0, screenWidth, screenHeight );
+
+            int startX = lastScreenViewCenter.x - screenW / 2;
+            int startY = lastScreenViewCenter.y + screenH / 2;
+            startY = -startY;
+            double scale = (double)screenWidth / (double)screenW;
+            startX = lrint( startX * scale );
+            startY = lrint( startY * scale );
+
+            int totalW = mapPullTotalImage->getWidth();
+            int totalH = mapPullTotalImage->getHeight();
+            
+            int totalImStartX = startX + totalW / 2;
+            int totalImStartY = startY + totalH / 2;
+
+            double gridCenterOffsetX = ( mapPullEndX + mapPullStartX ) / 2.0;
+            double gridCenterOffsetY = ( mapPullEndY + mapPullStartY ) / 2.0;
+            
+            totalImStartX -= lrint( gridCenterOffsetX * CELL_D  * scale );
+            totalImStartY += lrint( gridCenterOffsetY * CELL_D * scale );
+            
+            //totalImStartY =  totalH - totalImStartY;
+
+            if( totalImStartX >= 0 && totalImStartX < totalW &&
+                totalImStartY >= 0 && totalImStartY < totalH ) {
+                
+                mapPullTotalImage->setSubImage( totalImStartX,
+                                                totalImStartY,
+                                                screenWidth, screenHeight,
+                                                screen );
+                numScreensWritten++;
+                }
+            
+
+            delete screen;
+            
+            mapPullCurrentSaved = true;
+            
+            if( mapPullModeFinalImage ) {
+                mapPullMode = false;
+
+                writeTGAFile( "mapOut.tga", mapPullTotalImage );
+                delete mapPullTotalImage;
+                
+
+                // pull over
+                // send request for our character's center
+
+                LiveObject *ourLiveObject = getOurLiveObject();
+                
+                lastScreenViewCenter.x = CELL_D * ourLiveObject->xd;
+                lastScreenViewCenter.y = CELL_D * ourLiveObject->yd;
+                
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
+                
+                char *message = autoSprintf( "MAP %d %d#",
+                                             ourLiveObject->xd,
+                                             ourLiveObject->yd );
+                
+                printf( "Sending message to server: %s\n", message );
+                sendToSocket( mServerSocket, 
+                              (unsigned char*)message, 
+                              strlen( message ) );
+                
+                numServerBytesSent += strlen( message );
+                overheadServerBytesSent += 52;
+                
+                delete [] message;
+                }
+            }
+        
+        // skip gui
+        return;
+        }
+    
+
     setDrawColor( 1, 1, 1, 1 );
     doublePair panelPos = lastScreenViewCenter;
     panelPos.y -= 242 + 32 + 16 + 6;
@@ -3000,8 +3090,8 @@ void LivingLifePage::step() {
                 if( x == mapPullCurrentX - size/2 && 
                     y == mapPullCurrentY - size/2 ) {
                     
-                    lastScreenViewCenter.x = x * 128;
-                    lastScreenViewCenter.y = y * 128;
+                    lastScreenViewCenter.x = mapPullCurrentX * 128;
+                    lastScreenViewCenter.y = mapPullCurrentY * 128;
                     setViewCenterPosition( lastScreenViewCenter.x,
                                            lastScreenViewCenter.y );
                     
@@ -3009,30 +3099,32 @@ void LivingLifePage::step() {
                     
                     if( mapPullCurrentX > mapPullEndX ) {
                         mapPullCurrentX = mapPullStartX;
-                        mapPullCurrentY += 6;
+                        mapPullCurrentY += 5;
                         
                         if( mapPullCurrentY > mapPullEndY ) {
-                            mapPullMode = false;
+                            mapPullModeFinalImage = true;
                             }
                         }
                     mapPullCurrentSaved = false;
                     }
                 
+                
                 if( mapPullMode ) {
-                    
                     char *message = autoSprintf( "MAP %d %d#",
                                                  mapPullCurrentX,
                                                  mapPullCurrentY );
+                    
                     printf( "Sending message to server: %s\n", message );
                     sendToSocket( mServerSocket, 
                                   (unsigned char*)message, 
                                   strlen( message ) );
-            
+                    
                     numServerBytesSent += strlen( message );
                     overheadServerBytesSent += 52;
                     
                     delete [] message;
                     }
+                
                 }
             }
         else if( type == MAP_CHANGE ) {
@@ -4845,6 +4937,8 @@ void LivingLifePage::step() {
 
                 if( mapPullMode ) {
                     mapPullCurrentSaved = false;
+                    mapPullModeFinalImage = false;
+                    
                     char *message = autoSprintf( "MAP %d %d#",
                                                  mapPullCurrentX,
                                                  mapPullCurrentY );
@@ -4859,6 +4953,20 @@ void LivingLifePage::step() {
                     overheadServerBytesSent += 52;
                     
                     delete [] message;
+
+                    int screenWidth, screenHeight;
+                    getScreenDimensions( &screenWidth, &screenHeight );
+
+                    double scale = screenWidth / (double)screenW;
+
+                    mapPullTotalImage = 
+                        new Image( lrint(
+                                       ( 10 + mapPullEndX - mapPullStartX ) 
+                                       * CELL_D * scale ),
+                                   lrint( ( 6 + mapPullEndY - mapPullStartY ) 
+                                          * CELL_D * scale ),
+                                   3, false );
+                    numScreensWritten = 0;
                     }
                 }
             }
