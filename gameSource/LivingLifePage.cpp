@@ -1487,6 +1487,12 @@ void LivingLifePage::drawLiveObject(
             
             halfWiggleMax *= 0.25;
             }
+        else if( xDir == 0 && yDir == -1 ) {
+            // moving down causes feet to cross object in our same tile
+            // move less
+            halfWiggleMax *= 0.5;
+            }
+        
 
         
         double offset =
