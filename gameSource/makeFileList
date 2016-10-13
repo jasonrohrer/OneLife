@@ -67,6 +67,7 @@ graphics/hungerBoxFillsErased.tga \
 graphics/chalkBlot.tga \
 graphics/ground.tga \
 graphics/guiPanel.tga \
+graphics/tempArrows.tga \
 ${GROUND_TGA_PATH} \
 
 

@@ -22,6 +22,9 @@
 
 #define NUM_HUNGER_BOX_SPRITES 20
 
+#define NUM_TEMP_ARROWS 6
+
+
 
 typedef struct LiveObject {
         int id;
@@ -304,6 +307,8 @@ class LivingLifePage : public GamePage {
         SpriteHandle mHungerBoxErasedSprites[ NUM_HUNGER_BOX_SPRITES ];
         SpriteHandle mHungerBoxFillErasedSprites[ NUM_HUNGER_BOX_SPRITES ];
         
+        SpriteHandle mTempArrowSprites[ NUM_TEMP_ARROWS ];
+        SpriteHandle mTempArrowErasedSprites[ NUM_TEMP_ARROWS ];
 
         // array sized for largest biome ID for direct indexing
         // sparse, with NULL entries

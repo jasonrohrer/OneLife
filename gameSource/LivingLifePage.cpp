@@ -1020,6 +1020,45 @@ LivingLifePage::LivingLifePage()
         delete boxesErased;
         delete fillsErased;
         }
+
+
+
+    Image *arrows = readTGAFile( "tempArrows.tga" );
+    Image *arrowsErased = readTGAFile( "tempArrows.tga" );
+    
+    if( arrows != NULL && 
+        arrowsErased != NULL ) {
+        
+        int arrowW = arrows->getWidth() / NUM_TEMP_ARROWS;
+        
+        int arrowH = arrows->getHeight();
+        
+        for( int i=0; i<NUM_TEMP_ARROWS; i++ ) {
+            
+            Image *arrow = arrows->getSubImage( i * arrowW, 0, 
+                                                arrowW, arrowH );
+            Image *arrowExpanded = expandToPowersOfTwoWhite( arrow );
+            
+            Image *arrowErased = arrowsErased->getSubImage( i * arrowW, 0, 
+                                                         arrowW, arrowH );
+            
+            Image *arrowErasedExpanded = 
+                expandToPowersOfTwoWhite( arrowErased );
+            
+            delete arrow;
+            delete arrowErased;
+            
+            mTempArrowSprites[i] = fillSprite( arrowExpanded, false );
+            mTempArrowErasedSprites[i] = 
+                fillSprite( arrowErasedExpanded, false );
+            
+            delete arrowExpanded;
+            delete arrowErasedExpanded;
+            }
+
+        delete arrows;
+        delete arrowsErased;
+        }
     
 
     }
@@ -2798,8 +2837,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         for( int i=ourLiveObject->foodCapacity; 
              i < ourLiveObject->maxFoodCapacity; i++ ) {
-            doublePair pos = { lastScreenViewCenter.x - 588, 
-                               lastScreenViewCenter.y - 341 };
+            doublePair pos = { lastScreenViewCenter.x - 542, 
+                               lastScreenViewCenter.y - 339 };
             
             pos.x += i * 30;
             drawSprite( 
@@ -2814,19 +2853,19 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         
         
-        toggleMultiplicativeBlend( false );
                 
-        setDrawColor( 0, 0, 0, 1 );
+        setDrawColor( 1, 1, 1, 1 );
         
-        doublePair pos = { lastScreenViewCenter.x - 300, 
-                           lastScreenViewCenter.y - 317 };
-        pos.x += 128;
+        doublePair pos = { lastScreenViewCenter.x + 542, 
+                           lastScreenViewCenter.y - 319 };
         
+        pos.x += ( ourLiveObject->heat - 0.5 ) * 120;
 
-        char *heatString = autoSprintf( "%.2f", ourLiveObject->heat );
-        mainFont->drawString( heatString, pos, alignCenter );
-        delete [] heatString;
+        drawSprite( mTempArrowSprites[0], pos );
+        
+        toggleMultiplicativeBlend( false );
 
+        
         if( mCurMouseOverID != 0 || mLastMouseOverID != 0 ) {
             int idToDescribe = mCurMouseOverID;
             
