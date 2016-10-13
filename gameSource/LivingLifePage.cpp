@@ -630,6 +630,21 @@ Image *mapPullTotalImage = NULL;
 int numScreensWritten = 0;
 
 
+static Image *expandToPowersOfTwoWhite( Image *inImage ) {
+    
+    int w = 1;
+    int h = 1;
+                    
+    while( w < inImage->getWidth() ) {
+        w *= 2;
+        }
+    while( h < inImage->getHeight() ) {
+        h *= 2;
+        }
+    
+    return inImage->expandImage( w, h, true );
+    }
+
 
 #include "minorGems/graphics/filters/BoxBlurFilter.h"
 
@@ -642,8 +657,6 @@ LivingLifePage::LivingLifePage()
           mMapOffsetY( 0 ),
           mEKeyDown( false ),
           mGuiPanelSprite( loadSprite( "guiPanel.tga", false ) ),
-          mFoodEmptySprite( loadSprite( "hungerEmpty.tga", false ) ),
-          mFoodFullSprite( loadSprite( "hungerFull.tga", false ) ),
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
           mLastMouseOverFade( 0.0 ),
@@ -951,6 +964,43 @@ LivingLifePage::LivingLifePage()
         delete [] fileName;
         }
     
+
+    
+    Image *boxes = readTGAFile( "hungerBoxes.tga" );
+    Image *fills = readTGAFile( "hungerBoxFills.tga" );
+
+    if( boxes != NULL && fills != NULL ) {
+        
+        int boxW = boxes->getWidth() / NUM_HUNGER_BOX_SPRITES;
+        int fillW = fills->getWidth() / NUM_HUNGER_BOX_SPRITES;
+        
+        int boxH = boxes->getHeight();
+        int fillH = fills->getHeight();
+
+        for( int i=0; i<NUM_HUNGER_BOX_SPRITES; i++ ) {
+            
+            Image *box = boxes->getSubImage( i * boxW, 0, 
+                                             boxW, boxH );
+            Image *fill = fills->getSubImage( i * fillW, 0, 
+                                              fillW, fillH );
+            Image *boxExpanded = expandToPowersOfTwoWhite( box );
+            Image *fillExpanded = expandToPowersOfTwoWhite( fill );
+            
+            delete box;
+            delete fill;
+            
+            mHungerBoxSprites[i] = fillSprite( boxExpanded, false );
+            mHungerBoxFillSprites[i] = fillSprite( fillExpanded, false );
+            
+            delete boxExpanded;
+            delete fillExpanded;
+            }
+
+        delete boxes;
+        delete fills;
+        }
+    
+
     }
 
 
@@ -1024,8 +1074,6 @@ LivingLifePage::~LivingLifePage() {
 
 
     freeSprite( mGuiPanelSprite );
-    freeSprite( mFoodEmptySprite );
-    freeSprite( mFoodFullSprite );
     freeSprite( mChalkBlotSprite );
     freeSprite( mGroundOverlaySprite );
     
@@ -1048,6 +1096,11 @@ LivingLifePage::~LivingLifePage() {
         }
     delete [] mGroundSprites;
     
+
+    for( int i=0; i<NUM_HUNGER_BOX_SPRITES; i++ ) {
+        freeSprite( mHungerBoxSprites[i] );
+        freeSprite( mHungerBoxFillSprites[i] );
+        }
     }
 
 
@@ -2686,42 +2739,37 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
 
+    // info panel at bottom
     setDrawColor( 1, 1, 1, 1 );
     doublePair panelPos = lastScreenViewCenter;
     panelPos.y -= 242 + 32 + 16 + 6;
     drawSprite( mGuiPanelSprite, panelPos );
 
-    // info panel at bottom
-    setDrawColor( 0.5, 0.5, 0.5, .75 );
-    drawRect( lastScreenViewCenter.x - 333, lastScreenViewCenter.y - 300, 
-              lastScreenViewCenter.x + 333, lastScreenViewCenter.y - 333 );
-    
+
     LiveObject *ourLiveObject = getOurLiveObject();
 
     if( ourLiveObject != NULL ) {
-        
-        if( ourLiveObject->foodStore <= ourLiveObject->foodCapacity / 2 ) {
-            setDrawColor( 1, .5, .5, 1 );
-            }
-        else {
-            setDrawColor( 1, 1, 1, 1 );
-            }
-    
+        setDrawColor( 1, 1, 1, 1 );
+        toggleMultiplicativeBlend( true );
 
         for( int i=0; i<ourLiveObject->foodCapacity; i++ ) {
-            doublePair pos = { lastScreenViewCenter.x - 300, 
-                               lastScreenViewCenter.y - 317 };
+            doublePair pos = { lastScreenViewCenter.x - 588, 
+                               lastScreenViewCenter.y - 341 };
         
-            pos.x += i * 32;
-            
+            pos.x += i * 30;
+            drawSprite( 
+                    mHungerBoxSprites[ i % NUM_HUNGER_BOX_SPRITES ], 
+                    pos );
+                
             if( i < ourLiveObject->foodStore ) {                
-                drawSprite( mFoodFullSprite, pos );
-                }
-            else {
-                drawSprite( mFoodEmptySprite, pos );
+                drawSprite( 
+                    mHungerBoxFillSprites[ i % NUM_HUNGER_BOX_SPRITES ], 
+                    pos );
                 }
             }
         
+        toggleMultiplicativeBlend( false );
+                
         setDrawColor( 0, 0, 0, 1 );
         
         doublePair pos = { lastScreenViewCenter.x - 300, 

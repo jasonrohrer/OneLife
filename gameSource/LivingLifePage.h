@@ -20,6 +20,7 @@
 #include "TextField.h"
 
 
+#define NUM_HUNGER_BOX_SPRITES 20
 
 
 typedef struct LiveObject {
@@ -295,9 +296,10 @@ class LivingLifePage : public GamePage {
 
         SpriteHandle mGuiPanelSprite;
         
-        SpriteHandle mFoodEmptySprite;
-        SpriteHandle mFoodFullSprite;
+        SpriteHandle mHungerBoxSprites[ NUM_HUNGER_BOX_SPRITES ];
+        SpriteHandle mHungerBoxFillSprites[ NUM_HUNGER_BOX_SPRITES ];
         
+
         // array sized for largest biome ID for direct indexing
         // sparse, with NULL entries
         int mGroundSpritesArraySize;
