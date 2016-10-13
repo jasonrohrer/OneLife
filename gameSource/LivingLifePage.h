@@ -36,6 +36,8 @@ typedef struct LiveObject {
         int foodStore;
         int foodCapacity;
 
+        int maxFoodStore;
+        int maxFoodCapacity;
 
         // -1 unless we're currently being held
         // by an adult
@@ -298,6 +300,9 @@ class LivingLifePage : public GamePage {
         
         SpriteHandle mHungerBoxSprites[ NUM_HUNGER_BOX_SPRITES ];
         SpriteHandle mHungerBoxFillSprites[ NUM_HUNGER_BOX_SPRITES ];
+
+        SpriteHandle mHungerBoxErasedSprites[ NUM_HUNGER_BOX_SPRITES ];
+        SpriteHandle mHungerBoxFillErasedSprites[ NUM_HUNGER_BOX_SPRITES ];
         
 
         // array sized for largest biome ID for direct indexing

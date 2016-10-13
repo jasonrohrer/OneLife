@@ -62,6 +62,8 @@ graphics/font_32_64.tga \
 graphics/font_handwriting_32_32.tga \
 graphics/hungerBoxes.tga \
 graphics/hungerBoxFills.tga \
+graphics/hungerBoxesErased.tga \
+graphics/hungerBoxFillsErased.tga \
 graphics/chalkBlot.tga \
 graphics/ground.tga \
 graphics/guiPanel.tga \

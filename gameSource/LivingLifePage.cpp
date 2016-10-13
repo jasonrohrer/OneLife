@@ -969,7 +969,11 @@ LivingLifePage::LivingLifePage()
     Image *boxes = readTGAFile( "hungerBoxes.tga" );
     Image *fills = readTGAFile( "hungerBoxFills.tga" );
 
-    if( boxes != NULL && fills != NULL ) {
+    Image *boxesErased = readTGAFile( "hungerBoxesErased.tga" );
+    Image *fillsErased = readTGAFile( "hungerBoxFillsErased.tga" );
+
+    if( boxes != NULL && fills != NULL && 
+        boxesErased != NULL && fillsErased != NULL ) {
         
         int boxW = boxes->getWidth() / NUM_HUNGER_BOX_SPRITES;
         int fillW = fills->getWidth() / NUM_HUNGER_BOX_SPRITES;
@@ -986,18 +990,35 @@ LivingLifePage::LivingLifePage()
             Image *boxExpanded = expandToPowersOfTwoWhite( box );
             Image *fillExpanded = expandToPowersOfTwoWhite( fill );
             
+            Image *boxErased = boxesErased->getSubImage( i * boxW, 0, 
+                                                         boxW, boxH );
+            Image *fillErased = fillsErased->getSubImage( i * fillW, 0, 
+                                                          fillW, fillH );
+            Image *boxErasedExpanded = expandToPowersOfTwoWhite( boxErased );
+            Image *fillErasedExpanded = expandToPowersOfTwoWhite( fillErased );
+            
             delete box;
             delete fill;
+            delete boxErased;
+            delete fillErased;
             
             mHungerBoxSprites[i] = fillSprite( boxExpanded, false );
             mHungerBoxFillSprites[i] = fillSprite( fillExpanded, false );
+
+            mHungerBoxErasedSprites[i] = fillSprite( boxErasedExpanded, false );
+            mHungerBoxFillErasedSprites[i] = 
+                fillSprite( fillErasedExpanded, false );
             
             delete boxExpanded;
             delete fillExpanded;
+            delete boxErasedExpanded;
+            delete fillErasedExpanded;
             }
 
         delete boxes;
         delete fills;
+        delete boxesErased;
+        delete fillsErased;
         }
     
 
@@ -1100,6 +1121,9 @@ LivingLifePage::~LivingLifePage() {
     for( int i=0; i<NUM_HUNGER_BOX_SPRITES; i++ ) {
         freeSprite( mHungerBoxSprites[i] );
         freeSprite( mHungerBoxFillSprites[i] );
+        
+        freeSprite( mHungerBoxErasedSprites[i] );
+        freeSprite( mHungerBoxFillErasedSprites[i] );
         }
     }
 
@@ -2766,7 +2790,29 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     mHungerBoxFillSprites[ i % NUM_HUNGER_BOX_SPRITES ], 
                     pos );
                 }
+            else if( i < ourLiveObject->maxFoodStore ) {
+                drawSprite( 
+                    mHungerBoxFillErasedSprites[ i % NUM_HUNGER_BOX_SPRITES ], 
+                    pos );
+                }
             }
+        for( int i=ourLiveObject->foodCapacity; 
+             i < ourLiveObject->maxFoodCapacity; i++ ) {
+            doublePair pos = { lastScreenViewCenter.x - 588, 
+                               lastScreenViewCenter.y - 341 };
+            
+            pos.x += i * 30;
+            drawSprite( 
+                mHungerBoxErasedSprites[ i % NUM_HUNGER_BOX_SPRITES ], 
+                pos );
+            
+            if( i < ourLiveObject->maxFoodStore ) {
+                drawSprite( 
+                    mHungerBoxFillErasedSprites[ i % NUM_HUNGER_BOX_SPRITES ], 
+                    pos );
+                }
+            }
+        
         
         toggleMultiplicativeBlend( false );
                 
@@ -3453,6 +3499,9 @@ void LivingLifePage::step() {
                 o.foodStore = 0;
                 o.foodCapacity = 0;
                 
+                o.maxFoodStore = 0;
+                o.maxFoodCapacity = 0;
+
                 o.currentSpeech = NULL;
                 o.speechFade = 1.0;
                 
@@ -4526,6 +4575,8 @@ void LivingLifePage::step() {
             
             if( ourLiveObject != NULL ) {
                 
+                
+
                 sscanf( message, "FX\n%d %d %lf", 
                         &( ourLiveObject->foodStore ),
                         &( ourLiveObject->foodCapacity ),
@@ -4534,6 +4585,17 @@ void LivingLifePage::step() {
                 printf( "Our food = %d/%d\n", 
                         ourLiveObject->foodStore,
                         ourLiveObject->foodCapacity );
+                
+                if( ourLiveObject->foodStore > ourLiveObject->maxFoodStore ) {
+                    ourLiveObject->maxFoodStore = ourLiveObject->foodStore;
+                    }
+                if( ourLiveObject->foodCapacity > 
+                    ourLiveObject->maxFoodCapacity ) {
+                    
+                    ourLiveObject->maxFoodCapacity = 
+                        ourLiveObject->foodCapacity;
+                    }
+                
                 }
             }
         
