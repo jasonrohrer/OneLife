@@ -214,6 +214,13 @@ typedef struct PointerHitRecord {
 
 
 
+typedef struct OldArrow {
+        int i;
+        float heat;
+        float fade;
+    } OldArrow;
+        
+
 
 
 class LivingLifePage : public GamePage {
@@ -309,6 +316,12 @@ class LivingLifePage : public GamePage {
         
         SpriteHandle mTempArrowSprites[ NUM_TEMP_ARROWS ];
         SpriteHandle mTempArrowErasedSprites[ NUM_TEMP_ARROWS ];
+
+        int mCurrentArrowI;
+        float mCurrentArrowHeat;
+        
+        SimpleVector<OldArrow> mOldArrows;
+        
 
         // array sized for largest biome ID for direct indexing
         // sparse, with NULL entries

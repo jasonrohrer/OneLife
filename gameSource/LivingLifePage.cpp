@@ -1024,7 +1024,7 @@ LivingLifePage::LivingLifePage()
 
 
     Image *arrows = readTGAFile( "tempArrows.tga" );
-    Image *arrowsErased = readTGAFile( "tempArrows.tga" );
+    Image *arrowsErased = readTGAFile( "tempArrowsErased.tga" );
     
     if( arrows != NULL && 
         arrowsErased != NULL ) {
@@ -1060,7 +1060,8 @@ LivingLifePage::LivingLifePage()
         delete arrowsErased;
         }
     
-
+    mCurrentArrowI = 0;
+    mCurrentArrowHeat = -1;
     }
 
 
@@ -2837,8 +2838,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         for( int i=ourLiveObject->foodCapacity; 
              i < ourLiveObject->maxFoodCapacity; i++ ) {
-            doublePair pos = { lastScreenViewCenter.x - 542, 
-                               lastScreenViewCenter.y - 339 };
+            doublePair pos = { lastScreenViewCenter.x - 588, 
+                               lastScreenViewCenter.y - 341 };
             
             pos.x += i * 30;
             drawSprite( 
@@ -2854,14 +2855,58 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         
                 
-        setDrawColor( 1, 1, 1, 1 );
         
         doublePair pos = { lastScreenViewCenter.x + 542, 
                            lastScreenViewCenter.y - 319 };
-        
-        pos.x += ( ourLiveObject->heat - 0.5 ) * 120;
 
-        drawSprite( mTempArrowSprites[0], pos );
+        if( mCurrentArrowHeat != -1 ) {
+            
+            if( mCurrentArrowHeat != ourLiveObject->heat ) {
+                
+                for( int i=0; i<mOldArrows.size(); i++ ) {
+                    OldArrow *a = mOldArrows.getElement( i );
+                    
+                    a->fade -= 0.01;
+                    if( a->fade < 0 ) {
+                        mOldArrows.deleteElement( i );
+                        i--;
+                        }
+                    }
+                
+
+                OldArrow a;
+                a.i = mCurrentArrowI;
+                a.heat = mCurrentArrowHeat;
+                a.fade = 1.0;
+
+                mOldArrows.push_back( a );
+
+                mCurrentArrowI++;
+                mCurrentArrowI = mCurrentArrowI % NUM_TEMP_ARROWS;
+                }
+            }
+
+        toggleAdditiveTextureColoring( true );
+        
+        for( int i=0; i<mOldArrows.size(); i++ ) {
+            doublePair pos2 = pos;
+            OldArrow *a = mOldArrows.getElement( i );
+            
+            float v = 1.0 - a->fade;
+            setDrawColor( v, v, v, 1 );
+            pos2.x += ( a->heat - 0.5 ) * 120;
+
+            drawSprite( mTempArrowErasedSprites[a->i], pos2 );
+            }
+        toggleAdditiveTextureColoring( false );
+        
+        setDrawColor( 1, 1, 1, 1 );
+
+        mCurrentArrowHeat = ourLiveObject->heat;
+        
+        pos.x += ( mCurrentArrowHeat - 0.5 ) * 120;
+
+        drawSprite( mTempArrowSprites[mCurrentArrowI], pos );
         
         toggleMultiplicativeBlend( false );
 
