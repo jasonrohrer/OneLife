@@ -41,8 +41,6 @@ extern Font *handwritingFont;
 extern Font *pencilFont;
 extern Font *pencilErasedFont;
 
-Font *ourPencilFont;
-
 
 extern doublePair lastScreenViewCenter;
 
@@ -677,8 +675,6 @@ LivingLifePage::LivingLifePage()
     mSayField.unfocus();
     
 
-    ourPencilFont = pencilFont;
-
 
     mMap = new int[ mMapD * mMapD ];
     mMapBiomes = new int[ mMapD * mMapD ];
@@ -1067,6 +1063,7 @@ LivingLifePage::LivingLifePage()
     
     mCurrentArrowI = 0;
     mCurrentArrowHeat = -1;
+    mCurrentDes = NULL;
     }
 
 
@@ -1109,7 +1106,11 @@ LivingLifePage::~LivingLifePage() {
     
     clearLiveObjects();
 
-
+    mOldDesStrings.deallocateStringElements();
+    if( mCurrentDes != NULL ) {
+        delete [] mCurrentDes;
+        }
+    
     
     if( mServerSocket != -1 ) {
         closeSocket( mServerSocket );
@@ -1169,6 +1170,11 @@ LivingLifePage::~LivingLifePage() {
         
         freeSprite( mHungerBoxErasedSprites[i] );
         freeSprite( mHungerBoxFillErasedSprites[i] );
+        }
+
+    for( int i=0; i<NUM_TEMP_ARROWS; i++ ) {
+        freeSprite( mTempArrowSprites[i] );
+        freeSprite( mTempArrowErasedSprites[i] );
         }
     }
 
@@ -2914,6 +2920,18 @@ void LivingLifePage::draw( doublePair inViewCenter,
         drawSprite( mTempArrowSprites[mCurrentArrowI], pos );
         
         toggleMultiplicativeBlend( false );
+        
+
+        for( int i=0; i<mOldDesStrings.size(); i++ ) {
+            doublePair pos = { lastScreenViewCenter.x, 
+                               lastScreenViewCenter.y - 317 };
+            float fade =
+                mOldDesFades.getElementDirect( i );
+            
+            setDrawColor( 0, 0, 0, fade );
+            pencilErasedFont->drawString( 
+                mOldDesStrings.getElementDirect( i ), pos, alignCenter );
+            }
 
         
         if( mCurMouseOverID != 0 || mLastMouseOverID != 0 ) {
@@ -2933,11 +2951,69 @@ void LivingLifePage::draw( doublePair inViewCenter,
             char *des = getObject( idToDescribe )->description;
 
             char *stringUpper = stringToUpperCase( des );
+
+            if( mCurrentDes == NULL ) {
+                mCurrentDes = stringDuplicate( stringUpper );
+                }
+            else {
+                if( strcmp( mCurrentDes, stringUpper ) != 0 ) {
+                    // adding a new one to stack, fade out old
+                    
+                    for( int i=0; i<mOldDesStrings.size(); i++ ) {
+                        float fade =
+                            mOldDesFades.getElementDirect( i );
+                        
+                        fade -= 0.1;
+                        *( mOldDesFades.getElement( i ) ) = fade;
+                        if( fade <= 0 ) {
+                            mOldDesStrings.deallocateStringElement( i );
+                            mOldDesFades.deleteElement( i );
+                            i--;
+                            }
+                        else if( strcmp( mCurrentDes, 
+                                         mOldDesStrings.getElementDirect(i) )
+                                 == 0 ) {
+                            // already in stack, move to top
+                            mOldDesStrings.deallocateStringElement( i );
+                            mOldDesFades.deleteElement( i );
+                            i--;
+                            }
+                        }
+                    
+                    mOldDesStrings.push_back( mCurrentDes );
+                    mOldDesFades.push_back( 1.0f );
+                    mCurrentDes = stringDuplicate( stringUpper );
+                    }
+                }
+            
+            
             setDrawColor( 0, 0, 0, 1 );
-            ourPencilFont->drawString( stringUpper, pos, alignCenter );
+            pencilFont->drawString( stringUpper, pos, alignCenter );
+            
             delete [] stringUpper;
             }
-        
+        else {
+            if( mCurrentDes != NULL ) {
+                // done with this des
+
+                // move to top of stack
+                for( int i=0; i<mOldDesStrings.size(); i++ ) {
+                    if( strcmp( mCurrentDes, 
+                                mOldDesStrings.getElementDirect(i) )
+                        == 0 ) {
+                        // already in stack, move to top
+                        mOldDesStrings.deallocateStringElement( i );
+                        mOldDesFades.deleteElement( i );
+                        i--;
+                        }
+                    }
+                
+                mOldDesStrings.push_back( mCurrentDes );
+                mOldDesFades.push_back( 1.0f );
+                mCurrentDes = NULL;
+                }
+            }
+            
 
         if( mSayField.isFocused() ) {
             char *partialSay = mSayField.getText();
@@ -5289,6 +5365,18 @@ void LivingLifePage::makeActive( char inFresh ) {
         return;
         }
     
+    mOldArrows.deleteAll();
+    mOldDesStrings.deallocateStringElements();
+    mOldDesFades.deleteAll();
+
+    mCurrentArrowI = 0;
+    mCurrentArrowHeat = -1;
+    if( mCurrentDes != NULL ) {
+        delete [] mCurrentDes;
+        }
+    mCurrentDes = NULL;
+
+
     lastScreenViewCenter.x = 0;
     lastScreenViewCenter.y = 0;
     
@@ -6154,14 +6242,6 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
 void LivingLifePage::keyDown( unsigned char inASCII ) {
 
     switch( inASCII ) {
-        case 'f':
-            if( ourPencilFont == pencilFont ) {
-                ourPencilFont = pencilErasedFont;
-                }
-            else {
-                ourPencilFont = pencilFont;
-                }
-            break;
         /*
         case 'a':
             drawAdd = ! drawAdd;

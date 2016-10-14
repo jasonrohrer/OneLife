@@ -219,6 +219,7 @@ typedef struct OldArrow {
         float heat;
         float fade;
     } OldArrow;
+
         
 
 
@@ -322,6 +323,11 @@ class LivingLifePage : public GamePage {
         
         SimpleVector<OldArrow> mOldArrows;
         
+        char *mCurrentDes;
+        SimpleVector<char*> mOldDesStrings;
+        SimpleVector<float> mOldDesFades;
+        
+
 
         // array sized for largest biome ID for direct indexing
         // sparse, with NULL entries
