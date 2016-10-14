@@ -2963,7 +2963,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         float fade =
                             mOldDesFades.getElementDirect( i );
                         
-                        fade -= 0.1;
+                        if( fade > 0.5 ) {
+                            fade -= 0.20;
+                            }
+                        else {
+                            fade -= 0.1;
+                            }
+                        
                         *( mOldDesFades.getElement( i ) ) = fade;
                         if( fade <= 0 ) {
                             mOldDesStrings.deallocateStringElement( i );
