@@ -39,6 +39,10 @@ extern double frameRateFactor;
 extern Font *mainFont;
 extern Font *handwritingFont;
 extern Font *pencilFont;
+extern Font *pencilErasedFont;
+
+Font *ourPencilFont;
+
 
 extern doublePair lastScreenViewCenter;
 
@@ -673,7 +677,7 @@ LivingLifePage::LivingLifePage()
     mSayField.unfocus();
     
 
-    
+    ourPencilFont = pencilFont;
 
 
     mMap = new int[ mMapD * mMapD ];
@@ -2930,7 +2934,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             char *stringUpper = stringToUpperCase( des );
             setDrawColor( 0, 0, 0, 1 );
-            pencilFont->drawString( stringUpper, pos, alignCenter );
+            ourPencilFont->drawString( stringUpper, pos, alignCenter );
             delete [] stringUpper;
             }
         
@@ -6150,6 +6154,14 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
 void LivingLifePage::keyDown( unsigned char inASCII ) {
 
     switch( inASCII ) {
+        case 'f':
+            if( ourPencilFont == pencilFont ) {
+                ourPencilFont = pencilErasedFont;
+                }
+            else {
+                ourPencilFont = pencilFont;
+                }
+            break;
         /*
         case 'a':
             drawAdd = ! drawAdd;

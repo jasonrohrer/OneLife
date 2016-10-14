@@ -61,6 +61,7 @@ GAME_GRAPHICS = \
 graphics/font_32_64.tga \
 graphics/font_handwriting_32_32.tga \
 graphics/font_pencil_32_32.tga \
+graphics/font_pencil_erased_32_32.tga \
 graphics/hungerBoxes.tga \
 graphics/hungerBoxFills.tga \
 graphics/hungerBoxesErased.tga \
