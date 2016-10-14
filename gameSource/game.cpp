@@ -233,6 +233,7 @@ Font *mainFont;
 Font *mainFontFixed;
 Font *numbersFontFixed;
 Font *handwritingFont;
+Font *pencilFont;
 
 
 char *shutdownMessage = NULL;
@@ -432,6 +433,11 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
     handwritingFont->setMinimumPositionPrecision( 1 );
 
+    pencilFont = 
+        new Font( "font_pencil_32_32.tga", 2, 6, false, 16 );
+
+    pencilFont->setMinimumPositionPrecision( 1 );
+
     
     float mouseSpeedSetting = 1.0f;
     
@@ -553,6 +559,7 @@ void freeFrameDrawer() {
     delete numbersFontFixed;
     
     delete handwritingFont;
+    delete pencilFont;
 
     if( currentUserTypedMessage != NULL ) {
         delete [] currentUserTypedMessage;

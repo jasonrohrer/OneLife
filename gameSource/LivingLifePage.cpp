@@ -38,6 +38,7 @@ extern double frameRateFactor;
 
 extern Font *mainFont;
 extern Font *handwritingFont;
+extern Font *pencilFont;
 
 extern doublePair lastScreenViewCenter;
 
@@ -2923,11 +2924,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             
             
-            doublePair pos = { lastScreenViewCenter.x - 300, 
+            doublePair pos = { lastScreenViewCenter.x, 
                                lastScreenViewCenter.y - 317 };
             char *des = getObject( idToDescribe )->description;
 
-            drawChalkBackgroundString( pos, des, fade, 10 );
+            char *stringUpper = stringToUpperCase( des );
+            setDrawColor( 0, 0, 0, 1 );
+            pencilFont->drawString( stringUpper, pos, alignCenter );
+            delete [] stringUpper;
             }
         
 
