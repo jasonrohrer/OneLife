@@ -71,6 +71,7 @@ graphics/ground.tga \
 graphics/guiPanel.tga \
 graphics/tempArrows.tga \
 graphics/tempArrowsErased.tga \
+graphics/notePaper.tga \
 ${GROUND_TGA_PATH} \
 
 

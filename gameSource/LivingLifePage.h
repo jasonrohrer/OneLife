@@ -318,6 +318,14 @@ class LivingLifePage : public GamePage {
         SpriteHandle mTempArrowSprites[ NUM_TEMP_ARROWS ];
         SpriteHandle mTempArrowErasedSprites[ NUM_TEMP_ARROWS ];
 
+        SpriteHandle mNotePaperSprite;
+
+        // offset from current view center
+        doublePair mNotePaperHideOffset;
+        doublePair mNotePaperPosOffset;
+        doublePair mNotePaperPosTargetOffset;
+        
+
         int mCurrentArrowI;
         float mCurrentArrowHeat;
         

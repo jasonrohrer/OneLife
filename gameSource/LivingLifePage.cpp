@@ -660,6 +660,7 @@ LivingLifePage::LivingLifePage()
           mMapOffsetY( 0 ),
           mEKeyDown( false ),
           mGuiPanelSprite( loadSprite( "guiPanel.tga", false ) ),
+          mNotePaperSprite( loadSprite( "notePaper.tga", false ) ),
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
           mLastMouseOverFade( 0.0 ),
@@ -674,6 +675,9 @@ LivingLifePage::LivingLifePage()
     
     mSayField.unfocus();
     
+    
+    mNotePaperHideOffset.x = 0;
+    mNotePaperHideOffset.y = -420;
 
 
     mMap = new int[ mMapD * mMapD ];
@@ -1141,6 +1145,7 @@ LivingLifePage::~LivingLifePage() {
 
 
     freeSprite( mGuiPanelSprite );
+    freeSprite( mNotePaperSprite );
     freeSprite( mChalkBlotSprite );
     freeSprite( mGroundOverlaySprite );
     
@@ -1242,6 +1247,61 @@ LiveObject *LivingLifePage::getOurLiveObject() {
 
 
 
+SimpleVector<char*> *splitLines( const char *inString,
+                                 double inMaxWidth ) {
+    
+    // break into lines
+    SimpleVector<char *> *tokens = 
+        tokenizeString( inString );
+    
+    
+    // collect all lines before drawing them
+    SimpleVector<char *> *lines = new SimpleVector<char*>();
+    
+    
+    if( tokens->size() > 0 ) {
+        // start with firt token
+        char *firstToken = tokens->getElementDirect( 0 );
+        
+        lines->push_back( firstToken );
+        
+        tokens->deleteElement( 0 );
+        }
+    
+    
+    while( tokens->size() > 0 ) {
+        char *nextToken = tokens->getElementDirect( 0 );
+        
+        char *currentLine = lines->getElementDirect( lines->size() - 1 );
+         
+        char *expandedLine = autoSprintf( "%s %s", currentLine, nextToken );
+         
+        if( handwritingFont->measureString( expandedLine ) <= inMaxWidth ) {
+            // replace current line
+            delete [] currentLine;
+            lines->deleteElement(  lines->size() - 1 );
+             
+            lines->push_back( expandedLine );
+            }
+        else {
+            // expanded is too long
+            // put token at start of next line
+            delete [] expandedLine;
+             
+            lines->push_back( stringDuplicate( nextToken ) );
+            }
+         
+
+        delete [] nextToken;
+        tokens->deleteElement( 0 );
+        }
+    
+    delete tokens;
+    
+    return lines;
+    }
+
+
 
 // forces uppercase
 void LivingLifePage::drawChalkBackgroundString( doublePair inPos, 
@@ -1252,62 +1312,19 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     
     char *stringUpper = stringToUpperCase( inString );
 
-    // break into lines
-    SimpleVector<char *> *tokens = 
-        tokenizeString( stringUpper );
+    SimpleVector<char*> *lines = splitLines( inString, inMaxWidth );
     
     delete [] stringUpper;
-    
-    // collect all lines before drawing them
-    SimpleVector<char *> lines;
-    
-    
-    if( tokens->size() > 0 ) {
-        // start with firt token
-        char *firstToken = tokens->getElementDirect( 0 );
-        
-        lines.push_back( firstToken );
-        
-        tokens->deleteElement( 0 );
-        }
-    
-    
-    while( tokens->size() > 0 ) {
-        char *nextToken = tokens->getElementDirect( 0 );
-        
-        char *currentLine = lines.getElementDirect( lines.size() - 1 );
-         
-        char *expandedLine = autoSprintf( "%s %s", currentLine, nextToken );
-         
-        if( handwritingFont->measureString( expandedLine ) <= inMaxWidth ) {
-            // replace current line
-            delete [] currentLine;
-            lines.deleteElement(  lines.size() - 1 );
-             
-            lines.push_back( expandedLine );
-            }
-        else {
-            // expanded is too long
-            // put token at start of next line
-            delete [] expandedLine;
-             
-            lines.push_back( stringDuplicate( nextToken ) );
-            }
-         
 
-        delete [] nextToken;
-        tokens->deleteElement( 0 );
-        }
     
-    delete tokens;
-    
-    if( lines.size() == 0 ) {
+    if( lines->size() == 0 ) {
+        delete lines;
         return;
         }
 
     double lineSpacing = handwritingFont->getFontHeight() / 2 + 5;
     
-    double firstLineY =  inPos.y + ( lines.size() - 1 ) * lineSpacing;
+    double firstLineY =  inPos.y + ( lines->size() - 1 ) * lineSpacing;
     
 
     setDrawColor( 1, 1, 1, inFade );
@@ -1315,8 +1332,8 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     // with a fixed seed
     JenkinsRandomSource blotRandSource( 0 );
         
-    for( int i=0; i<lines.size(); i++ ) {
-        char *line = lines.getElementDirect( i );
+    for( int i=0; i<lines->size(); i++ ) {
+        char *line = lines->getElementDirect( i );
         
 
         double length = handwritingFont->measureString( line );
@@ -1345,8 +1362,8 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     
     setDrawColor( 0, 0, 0, inFade );
 
-    for( int i=0; i<lines.size(); i++ ) {
-        char *line = lines.getElementDirect( i );
+    for( int i=0; i<lines->size(); i++ ) {
+        char *line = lines->getElementDirect( i );
         
         doublePair lineStart = 
             { inPos.x, firstLineY - i * lineSpacing};
@@ -1354,7 +1371,8 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         handwritingFont->drawString( line, lineStart, alignLeft );
         delete [] line;
         }
-    
+
+    delete lines;
     }
 
 
@@ -2814,6 +2832,77 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
 
+    doublePair notePos = add( mNotePaperPosOffset, lastScreenViewCenter );
+
+    
+    setDrawColor( 1, 1, 1, 1 );
+    drawSprite( mNotePaperSprite, notePos );
+
+
+    
+
+
+    if( mSayField.isFocused() ) {
+        // FIXME
+        char *partialSay = mSayField.getText();
+
+        char *strUpper = stringToUpperCase( partialSay );
+        
+        SimpleVector<char*> *lines = splitLines( strUpper, 345 );
+        
+        delete [] strUpper;
+
+        mNotePaperPosTargetOffset.y = mNotePaperHideOffset.y + 58;
+        
+        if( lines->size() > 1 ) {    
+            mNotePaperPosTargetOffset.y += 20 * ( lines->size() - 1 );
+            }
+        
+        doublePair drawPos = add( mNotePaperPosOffset, lastScreenViewCenter );
+        
+        drawPos.x -= 160;
+        drawPos.y += 79;
+        
+        setDrawColor( 0, 0, 0, 1 );
+        
+        for( int i=0; i<lines->size(); i++ ) {
+            pencilFont->drawString( lines->getElementDirect( i ), drawPos,
+                                    alignLeft );
+            drawPos.y -= 20;
+            }
+        lines->deallocateStringElements();
+        delete lines;
+        
+        /*
+        int charsLeft = mSayField.getMaxLength() - strlen( partialSay );
+        
+        char *drawString = autoSprintf( "SAY:  %s\n", 
+                                            partialSay, charsLeft );
+            delete [] partialSay;
+
+            doublePair pos = { lastScreenViewCenter.x, 
+                               lastScreenViewCenter.y - 317 };
+            
+            drawChalkBackgroundString( pos, drawString, 1.0, 250 );
+            
+            delete [] drawString;
+
+            drawString = autoSprintf( "%d\n", charsLeft );
+            
+            pos.x -= 64;
+            
+            drawChalkBackgroundString( pos, drawString, 1.0, 250, 2 );
+
+            delete [] drawString;
+        */
+        }
+    else {
+        mNotePaperPosTargetOffset = mNotePaperHideOffset;
+        }
+    
+
+
+
     // info panel at bottom
     setDrawColor( 1, 1, 1, 1 );
     doublePair panelPos = lastScreenViewCenter;
@@ -3021,30 +3110,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
             
 
-        if( mSayField.isFocused() ) {
-            char *partialSay = mSayField.getText();
-            
-            int charsLeft = mSayField.getMaxLength() - strlen( partialSay );
-
-            char *drawString = autoSprintf( "SAY:  %s\n", 
-                                            partialSay, charsLeft );
-            delete [] partialSay;
-
-            doublePair pos = { lastScreenViewCenter.x, 
-                               lastScreenViewCenter.y - 317 };
-            
-            drawChalkBackgroundString( pos, drawString, 1.0, 250 );
-            
-            delete [] drawString;
-
-            drawString = autoSprintf( "%d\n", charsLeft );
-            
-            pos.x -= 64;
-            
-            drawChalkBackgroundString( pos, drawString, 1.0, 250, 2 );
-
-            delete [] drawString;
-            }
         
         }
     
@@ -3089,6 +3154,38 @@ void LivingLifePage::step() {
         return;
         }
     
+
+    if( ! equal( mNotePaperPosOffset, mNotePaperPosTargetOffset ) ) {
+        doublePair delta = 
+            sub( mNotePaperPosTargetOffset, mNotePaperPosOffset );
+        
+        double d = distance( mNotePaperPosTargetOffset, mNotePaperPosOffset );
+        
+        
+        if( d < 1 ) {
+            mNotePaperPosTargetOffset = mNotePaperPosOffset;
+            }
+        else {
+            int speed = 4;
+
+            if( d < 8 ) {
+                speed = lrint( d / 2 );
+                }
+
+            if( speed < 1 ) {
+                speed = 1;
+                }
+            
+            doublePair dir = normalize( delta );
+            
+            mNotePaperPosOffset = 
+                add( mNotePaperPosOffset,
+                     mult( dir, frameRateFactor * speed ) );
+            }
+        
+        }
+    
+
 
     char *message = getNextServerMessage();
 
@@ -5371,6 +5468,10 @@ void LivingLifePage::makeActive( char inFresh ) {
         return;
         }
     
+    mNotePaperPosOffset = mNotePaperHideOffset;
+
+    mNotePaperPosTargetOffset = mNotePaperPosOffset;
+
     mOldArrows.deleteAll();
     mOldDesStrings.deallocateStringElements();
     mOldDesFades.deleteAll();
