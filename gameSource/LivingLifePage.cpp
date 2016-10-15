@@ -2838,68 +2838,135 @@ void LivingLifePage::draw( doublePair inViewCenter,
     setDrawColor( 1, 1, 1, 1 );
     drawSprite( mNotePaperSprite, notePos );
 
+    int lineSpacing = 20;
 
     
 
+    doublePair paperPos = add( mNotePaperPosOffset, lastScreenViewCenter );
 
     if( mSayField.isFocused() ) {
-        // FIXME
         char *partialSay = mSayField.getText();
 
         char *strUpper = stringToUpperCase( partialSay );
         
         SimpleVector<char*> *lines = splitLines( strUpper, 345 );
         
-        delete [] strUpper;
-
         mNotePaperPosTargetOffset.y = mNotePaperHideOffset.y + 58;
         
         if( lines->size() > 1 ) {    
             mNotePaperPosTargetOffset.y += 20 * ( lines->size() - 1 );
             }
         
-        doublePair drawPos = add( mNotePaperPosOffset, lastScreenViewCenter );
-        
+        doublePair drawPos = paperPos;
+
         drawPos.x -= 160;
         drawPos.y += 79;
+
+
+        doublePair drawPosTemp = drawPos;
+        
+
+        for( int i=0; i<mLastKnownNoteLines.size(); i++ ) {
+            char *oldString = mLastKnownNoteLines.getElementDirect( i );
+            int oldLen = strlen( oldString );
+            
+            SimpleVector<doublePair> charPos;        
+                    
+            pencilFont->getCharPos( &charPos, 
+                                    oldString,
+                                    drawPosTemp,
+                                    alignLeft );
+            
+            int newLen = 0;
+            
+            if( i < lines->size() ) {
+                // compare lines
+
+                newLen = strlen( lines->getElementDirect( i ) );
+                
+                }
+            
+
+            // any extra chars?
+                    
+            for( int j=newLen; j<oldLen; j++ ) {
+                mErasedNoteChars.push_back( oldString[j] );
+                       
+                mErasedNoteCharOffsets.push_back(
+                    sub( charPos.getElementDirect( j ),
+                         paperPos ) );
+                }
+            
+            drawPosTemp.y -= lineSpacing;
+            }
+        mLastKnownNoteLines.deallocateStringElements();
+        
+        for( int i=0; i<lines->size(); i++ ) {
+            mLastKnownNoteLines.push_back( 
+                stringDuplicate( lines->getElementDirect(i) ) );
+            }
+        
+
+    
+        delete [] strUpper;
+
+        
         
         setDrawColor( 0, 0, 0, 1 );
         
         for( int i=0; i<lines->size(); i++ ) {
             pencilFont->drawString( lines->getElementDirect( i ), drawPos,
                                     alignLeft );
-            drawPos.y -= 20;
+            drawPos.y -= lineSpacing;
             }
         lines->deallocateStringElements();
         delete lines;
-        
-        /*
-        int charsLeft = mSayField.getMaxLength() - strlen( partialSay );
-        
-        char *drawString = autoSprintf( "SAY:  %s\n", 
-                                            partialSay, charsLeft );
-            delete [] partialSay;
-
-            doublePair pos = { lastScreenViewCenter.x, 
-                               lastScreenViewCenter.y - 317 };
-            
-            drawChalkBackgroundString( pos, drawString, 1.0, 250 );
-            
-            delete [] drawString;
-
-            drawString = autoSprintf( "%d\n", charsLeft );
-            
-            pos.x -= 64;
-            
-            drawChalkBackgroundString( pos, drawString, 1.0, 250, 2 );
-
-            delete [] drawString;
-        */
         }
     else {
         mNotePaperPosTargetOffset = mNotePaperHideOffset;
+
+        doublePair drawPos = paperPos;
+
+        drawPos.x -= 160;
+        drawPos.y += 79;
+
+        for( int i=0; i<mLastKnownNoteLines.size(); i++ ) {
+            // whole line gone
+            
+            char *oldString = mLastKnownNoteLines.getElementDirect( i );
+            int oldLen = strlen( oldString );
+            
+            SimpleVector<doublePair> charPos;        
+                    
+            pencilFont->getCharPos( &charPos, 
+                                    oldString,
+                                    drawPos,
+                                    alignLeft );
+                    
+            for( int j=0; j<oldLen; j++ ) {
+                mErasedNoteChars.push_back( oldString[j] );
+                        
+                mErasedNoteCharOffsets.push_back(
+                    sub( charPos.getElementDirect( j ),
+                         paperPos ) );
+                }
+            
+            drawPos.y -= lineSpacing;
+
+            }
+        mLastKnownNoteLines.deallocateStringElements();
         }
-    
+
+
+
+    setDrawColor( 0, 0, 0, 1 );
+    for( int i=0; i<mErasedNoteChars.size(); i++ ) {
+        pencilErasedFont->
+            drawCharacterSprite( 
+                mErasedNoteChars.getElementDirect( i ), 
+                add( paperPos, 
+                     mErasedNoteCharOffsets.getElementDirect( i ) ) );
+        }
 
 
 
@@ -3163,7 +3230,13 @@ void LivingLifePage::step() {
         
         
         if( d < 1 ) {
-            mNotePaperPosTargetOffset = mNotePaperPosOffset;
+            mNotePaperPosOffset = mNotePaperPosTargetOffset;
+            
+            if( equal( mNotePaperPosTargetOffset, mNotePaperHideOffset ) ) {
+                mLastKnownNoteLines.deallocateStringElements();
+                mErasedNoteChars.deleteAll();
+                mErasedNoteCharOffsets.deleteAll();
+                }
             }
         else {
             int speed = 4;
@@ -5471,6 +5544,13 @@ void LivingLifePage::makeActive( char inFresh ) {
     mNotePaperPosOffset = mNotePaperHideOffset;
 
     mNotePaperPosTargetOffset = mNotePaperPosOffset;
+
+    mLastKnownNoteLines.deallocateStringElements();
+    mErasedNoteChars.deleteAll();
+    mErasedNoteCharOffsets.deleteAll();
+
+    mSayField.setText( "" );
+    mSayField.unfocus();
 
     mOldArrows.deleteAll();
     mOldDesStrings.deallocateStringElements();

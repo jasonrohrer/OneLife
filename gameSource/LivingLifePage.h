@@ -325,6 +325,11 @@ class LivingLifePage : public GamePage {
         doublePair mNotePaperPosOffset;
         doublePair mNotePaperPosTargetOffset;
         
+        SimpleVector<char*> mLastKnownNoteLines;
+        
+        SimpleVector<char> mErasedNoteChars;
+        SimpleVector<doublePair> mErasedNoteCharOffsets;
+
 
         int mCurrentArrowI;
         float mCurrentArrowHeat;
