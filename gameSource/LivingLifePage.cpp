@@ -2849,6 +2849,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         char *strUpper = stringToUpperCase( partialSay );
         
+        delete [] partialSay;
+
         SimpleVector<char*> *lines = splitLines( strUpper, 345 );
         
         mNotePaperPosTargetOffset.y = mNotePaperHideOffset.y + 58;
