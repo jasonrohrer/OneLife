@@ -3299,6 +3299,8 @@ void EditorObjectPage::pickedLayerChanged() {
 
         char *des = mDescriptionField.getText();
         
+        mBakeButton.setVisible( false );
+
         if( strcmp( des, "" ) != 0 ) {
             char allLayersOpaque = true;
             
