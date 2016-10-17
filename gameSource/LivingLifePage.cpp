@@ -2238,11 +2238,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
         lrintf( lastScreenViewCenter.y / CELL_D ) - mMapOffsetY + mMapD/2;
     
     // more on left and right of screen to avoid wide object tops popping in
-    int xStart = gridCenterX - 6;
-    int xEnd = gridCenterX + 6;
+    int xStart = gridCenterX - 7;
+    int xEnd = gridCenterX + 7;
 
     // more on bottom of screen so that tall objects don't pop in
-    int yStart = gridCenterY - 6;
+    int yStart = gridCenterY - 5;
     int yEnd = gridCenterY + 3;
 
     if( xStart < 0 ) {
@@ -2266,27 +2266,78 @@ void LivingLifePage::draw( doublePair inViewCenter,
         xEnd = mMapD - 1;
         }
     
-    if( yStart < 0 ) {
-        yStart = 0;
+    if( yEnd < 0 ) {
+        yEnd = 0;
         }
     if( yEnd >= mMapD ) {
         yEnd = mMapD - 1;
         }
+
+
+    int yStartFloor = gridCenterY - 3;
+    int yEndFloor = gridCenterY + 3;
+
+    int xStartFloor = gridCenterX - 5;
+    int xEndFloor = gridCenterX + 5;
+
+
+    // make floor area larger, so we can draw full sheets of biome
+    // wherever possible
+    // This will result in much larger areas being drawn, but since
+    // they are offscreen, it won't consume pixel fill capacity (trimming
+    //   to view port).
+    // assuming that all sheets are 4x4 tiles wide
     
+    yStartFloor -= 3;
+    yEndFloor += 3;
+    
+    xStartFloor -= 3;
+    xEndFloor += 3;
+    
+
+    if( xStartFloor < 0 ) {
+        xStartFloor = 0;
+        }
+    if( xStartFloor >= mMapD ) {
+        xStartFloor = mMapD - 1;
+        }
+    
+    if( yStartFloor < 0 ) {
+        yStartFloor = 0;
+        }
+    if( yStartFloor >= mMapD ) {
+        yStartFloor = mMapD - 1;
+        }
+
+    if( xEndFloor < 0 ) {
+        xEndFloor = 0;
+        }
+    if( xEndFloor >= mMapD ) {
+        xEndFloor = mMapD - 1;
+        }
+    
+    if( yEndFloor < 0 ) {
+        yEndFloor = 0;
+        }
+    if( yEndFloor >= mMapD ) {
+        yEndFloor = mMapD - 1;
+        }
+
+
 
     int numCells = mMapD * mMapD;
 
     memset( mMapCellDrawnFlags, false, numCells );
 
     // draw underlying ground biomes
-    for( int y=yEnd; y>=yStart; y-- ) {
+    for( int y=yEndFloor; y>=yStartFloor; y-- ) {
 
         int screenY = CELL_D * ( y + mMapOffsetY - mMapD / 2 );
 
         int tileY = -lrint( screenY / CELL_D );
 
         
-        for( int x=xStart; x<=xEnd; x++ ) {
+        for( int x=xStartFloor; x<=xEndFloor; x++ ) {
             int mapI = y * mMapD + x;
             
             if( mMapCellDrawnFlags[mapI] ) {
@@ -2340,13 +2391,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                     char allSameBiome = true;
                     
-                    // check borders of would-be sheet too
-                    for( int nY = y+1; nY >= y - s->numTilesHigh; nY-- ) {
+                    // check upper and left borders of would-be sheet too
+                    for( int nY = y+1; nY > y - s->numTilesHigh; nY-- ) {
                         
                         if( nY >=0 && nY < mMapD ) {
                             
                             for( int nX = x-1; 
-                                 nX <= x + s->numTilesWide; nX++ ) {
+                                 nX < x + s->numTilesWide; nX++ ) {
                                 
                                 if( nX >=0 && nX < mMapD ) {
                                     int nI = nY * mMapD + nX;
