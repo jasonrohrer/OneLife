@@ -2995,7 +2995,19 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         pos.x -= 20;
         smallFont->drawString( "Vertical Slot", pos, alignRight );
         }
+    
 
+    if( mPickedObjectLayer != -1 ) {
+        char *tag = getSpriteRecord( 
+            mCurrentObject.sprites[ mPickedObjectLayer ] )->tag;
+        
+        pos = mDescriptionField.getPosition();
+        
+        pos.x -= 400;
+        
+        smallFont->drawString( tag, pos, alignLeft );
+        }
+    
 
 
     doublePair legendPos = mImportEditorButton.getPosition();
