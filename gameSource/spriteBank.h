@@ -93,6 +93,18 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
                int inCenterAnchorYOffset = 0 );
 
 
+
+// bakes multiple sprite layers into a single sprite and saves it in the bank
+// returns the new ID
+// does NOT work for multiplicative blending sprites
+int bakeSprite( const char *inTag,
+                int inNumSprites,
+                int *inSpriteIDs,
+                // offset of each sprite center relative to center point
+                doublePair *inSpritePos );
+
+
+                
 void deleteSpriteFromBank( int inID );
 
 

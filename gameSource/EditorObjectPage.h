@@ -97,6 +97,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         TextButton mFlipHButton;
         
+        TextButton mBakeButton;
+
 
         TextButton mImportEditorButton;
         TextButton mTransEditorButton;

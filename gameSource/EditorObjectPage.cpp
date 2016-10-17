@@ -98,6 +98,7 @@ EditorObjectPage::EditorObjectPage()
           mRot90ForwardButton( smallFont, -215, 120, ">" ),
           mRot90BackwardButton( smallFont, -305, 120, "<" ),
           mFlipHButton( smallFont, -260, 160, "H Flip" ),
+          mBakeButton( smallFont, -260, 160, "< Bake" ),
           mImportEditorButton( mainFont, -210, 260, "Sprites" ),
           mTransEditorButton( mainFont, 210, 260, "Trans" ),
           mAnimEditorButton( mainFont, 330, 260, "Anim" ),
@@ -243,6 +244,7 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mRot90BackwardButton );
 
     addComponent( &mFlipHButton );
+    addComponent( &mBakeButton );
 
     addComponent( &mSpritePicker );
     addComponent( &mObjectPicker );
@@ -345,6 +347,9 @@ EditorObjectPage::EditorObjectPage()
 
     mFlipHButton.addActionListener( this );
     mFlipHButton.setVisible( false );
+
+    mBakeButton.addActionListener( this );
+    mBakeButton.setVisible( false );
 
     mMoreSlotsButton.addActionListener( this );
     mLessSlotsButton.addActionListener( this );
@@ -1395,6 +1400,22 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         else {
             mFlipHButton.setVisible( false );
             }
+        }
+    else if( inTarget == &mBakeButton ) {
+        char *des = mDescriptionField.getText();
+
+        char found;
+        char *tag = replaceAll( des, " ", "", &found );
+
+        bakeSprite( tag,
+                    mCurrentObject.numSprites,
+                    mCurrentObject.sprites,
+                    mCurrentObject.spritePos );
+        
+        mSpritePicker.redoSearch();
+        
+        delete [] des;
+        delete [] tag;
         }
     else if( inTarget == &mImportEditorButton ) {
         setSignal( "importEditor" );
@@ -3263,6 +3284,25 @@ void EditorObjectPage::pickedLayerChanged() {
         else {
             mSlotVertCheckbox.setVisible( false );
             }
+
+        char *des = mDescriptionField.getText();
+        
+        if( strcmp( des, "" ) != 0 ) {
+            char allLayersOpaque = true;
+            
+            for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+                if( getUsesMultiplicativeBlending( 
+                        mCurrentObject.sprites[i] ) ) {
+                    
+                    allLayersOpaque = false;
+                    break;
+                    }
+                }
+            if( allLayersOpaque ) {
+                mBakeButton.setVisible( true );
+                }
+            }
+        delete [] des;
         }
     else {
         mSlotVertCheckbox.setVisible( false );
@@ -3280,7 +3320,8 @@ void EditorObjectPage::pickedLayerChanged() {
         
         mRot90ForwardButton.setVisible( true );
         mRot90BackwardButton.setVisible( true );
-
+        
+        mBakeButton.setVisible( false );
 
         if( getUsesMultiplicativeBlending( 
                 mCurrentObject.sprites[ mPickedObjectLayer ] ) ) {

@@ -1,6 +1,8 @@
 
 #include "spriteBank.h"
 
+#include <stdlib.h>
+
 #include "minorGems/util/StringTree.h"
 
 #include "minorGems/util/SimpleVector.h"
@@ -830,6 +832,193 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
 
     return newID;
     }
+
+
+
+
+int bakeSprite( const char *inTag,
+                int inNumSprites,
+                int *inSpriteIDs,
+                doublePair *inSpritePos ) {
+    
+    File spritesDir( NULL, "sprites" );
+            
+    // first, find max dimensions of base image
+    int baseRadiusX = 0;
+    int baseRadiusY = 0;
+    
+    int *xOffsets = new int[ inNumSprites ];
+    int *yOffsets = new int[ inNumSprites ];
+
+
+    for( int i=0; i<inNumSprites; i++ ) {
+        xOffsets[i] = lrint( inSpritePos[i].x );
+        yOffsets[i] = lrint( inSpritePos[i].y );
+
+        SpriteRecord *r = getSpriteRecord( inSpriteIDs[i] );
+        int radiusX = r->w / 2 + 
+            abs( r->centerAnchorXOffset ) + 
+            abs( xOffsets[i] );
+        int radiusY = r->h / 2 + 
+                 abs( r->centerAnchorYOffset )  + 
+                 abs( yOffsets[i] );
+        
+        if( radiusX > baseRadiusX ) {
+            baseRadiusX = radiusX;
+            }
+        if( radiusY > baseRadiusY ) {
+            baseRadiusY = radiusY;
+            }
+        }
+
+    int baseW = baseRadiusX * 2;
+    int baseH = baseRadiusY * 2;
+
+    int baseCenterX = baseW / 2;
+    int baseCenterY = baseH / 2;
+
+    Image baseImage( baseW, baseH, 4, true );
+
+    double *baseChan[4];
+    for( int c=0; c<4; c++ ) {
+        baseChan[c] = baseImage.getChannel( c );
+        }
+            
+    
+    for( int i=0; i<inNumSprites; i++ ) {
+        SpriteRecord *r = getSpriteRecord( inSpriteIDs[i] );
+        
+        char *fileNameTGA = autoSprintf( "%d.tga", inSpriteIDs[i] );
+        
+
+        File *spriteFile = spritesDir.getChildFile( fileNameTGA );
+            
+        delete [] fileNameTGA;
+            
+
+        char *fullName = spriteFile->getFullFileName();
+        
+        delete spriteFile;
+        
+        Image *image = readTGAFileBase( fullName );
+        
+        delete [] fullName;
+
+        if( image != NULL ) {
+            
+            int w = image->getWidth();
+            int h = image->getHeight();
+
+            int centerX = w/2 + r->centerAnchorXOffset;
+            int centerY = h/2 + r->centerAnchorYOffset;
+            
+
+            double *chan[4];
+            for( int c=0; c<4; c++ ) {
+                chan[c] = image->getChannel( c );
+                }
+            
+            for( int y = 0; y<h; y++ ) {
+                int baseY = ( y - centerY ) - yOffsets[i] + baseCenterY;
+                
+                for( int x = 0; x<w; x++ ) {
+                    int baseX = ( x - centerX ) + xOffsets[i] + baseCenterX;
+                    
+                    int i = y * w + x;
+                    
+                    int baseI = baseY * baseW + baseX;
+                    
+                    for( int c=0; c<3; c++ ) {
+                        // blend dest and source using source alpha
+                        // as weight
+                        baseChan[c][baseI] = 
+                            (1 - chan[3][i] ) * baseChan[c][baseI] +
+                            chan[3][i] * chan[c][i];
+                        }
+                    
+                    // add alphas
+                    baseChan[3][baseI] += chan[3][i];
+                    if( baseChan[3][baseI] > 1.0 ) {
+                        baseChan[3][baseI] = 1.0;
+                        }
+                    }
+                }
+            
+            delete image;
+            }
+        }
+    
+    delete [] xOffsets;
+    delete [] yOffsets;
+    
+    // find max extent of non-transparent area
+
+    int maxX = 0;
+    int minX = baseW - 1;
+    
+    int maxY = 0;
+    int minY = baseH - 1;
+
+    for( int y=0; y<baseH; y++ ) {
+        for( int x=0; x<baseW; x++ ) {
+            int i = y * baseW + x;
+            
+            if( baseChan[3][i] > 0.0 ) {
+                
+                if( x > maxX  ) {
+                    maxX = x;
+                    }
+                if( x < minX ) {
+                    minX = x;
+                    }
+                if( y > maxY  ) {
+                    maxY = y;
+                    }
+                if( y < minY ) {
+                    minY = y;
+                    }
+                
+                }
+            }
+        }
+    
+    int newCenterX = ( maxX + minX ) / 2;
+    int newCenterY = ( maxY + minY ) / 2;
+    
+    int centerAnchorXOffset = baseCenterX - newCenterX - 1;
+    int centerAnchorYOffset = baseCenterY - newCenterY - 1;
+
+    Image *trimmed = baseImage.getSubImage( minX, minY,
+                                            1 + maxX - minX, 1 + maxY - minY );
+    
+    int w = 1;
+    int h = 1;
+                    
+    while( w < trimmed->getWidth() ) {
+        w *= 2;
+        }
+    while( h < trimmed->getHeight() ) {
+        h *= 2;
+        }
+    
+    Image *expanded = trimmed->expandImage( w, h );
+
+    delete trimmed;
+
+
+    SpriteHandle s = fillSprite( expanded, false );
+    
+    int returnID = 
+        addSprite( inTag, s, 
+                   expanded,
+                   false,
+                   centerAnchorXOffset, centerAnchorYOffset );
+    
+    delete expanded;
+    
+    return returnID;
+    }
+
 
 
 
