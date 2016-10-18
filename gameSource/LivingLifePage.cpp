@@ -984,7 +984,26 @@ LivingLifePage::LivingLifePage()
                         
                                 tileImage.filter( &blur, 3 );
 
+                                // trimm off lower right edges
+                                int edgeStart = CELL_D + CELL_D/2;
 
+                                for( int y=0; y<tileD; y++ ) {
+                                    
+                                    for( int x=edgeStart; x<tileD; x++ ) {    
+                                        
+                                        int p = y * tileD + x;
+                                        tileAlpha[p] = 0;
+                                        }
+                                    }
+                                for( int y=edgeStart; y<tileD; y++ ) {
+                                    
+                                    for( int x=0; x<tileD; x++ ) {    
+                                        
+                                        int p = y * tileD + x;
+                                        tileAlpha[p] = 0;
+                                        }
+                                    }
+                                
                                 // cache for next time
                                 
                                 
