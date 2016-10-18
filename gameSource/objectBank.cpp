@@ -2662,11 +2662,32 @@ int getBackArmTopIndex( ObjectRecord *inObject, double inAge ) {
 
 void getAllLegIndices( ObjectRecord *inObject,
                        double inAge, SimpleVector<int> *outList ) {
-    getLimbIndices( inObject, inAge, outList,
-                    getBackFootIndex( inObject, inAge ) );
     
     getLimbIndices( inObject, inAge, outList,
+                    getBackFootIndex( inObject, inAge ) );
+        
+    getLimbIndices( inObject, inAge, outList,
                     getFrontFootIndex( inObject, inAge ) );
+
+    if( outList->size() >= 2 ) {
+        
+        int bodyIndex = getBodyIndex( inObject, inAge );
+        
+        // add shadows to list, which we can find based on
+        // being lower than body and having no parent
+        
+        doublePair bodyPos = inObject->spritePos[ bodyIndex ];
+        
+        for( int i=0; i<inObject->numSprites; i++ ) {
+            if( outList->getElementIndex( i ) == -1 ) {
+                if( bodyPos.y > inObject->spritePos[i].y &&
+                    inObject->spriteParent[i] == -1 ) {
+                    
+                    outList->push_back( i );
+                    }
+                }
+            }
+        }
     }
 
 
