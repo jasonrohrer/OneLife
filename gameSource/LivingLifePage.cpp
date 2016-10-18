@@ -3338,7 +3338,7 @@ void LivingLifePage::step() {
         double d = distance( mNotePaperPosTargetOffset, mNotePaperPosOffset );
         
         
-        if( d < 1 ) {
+        if( d <= 1 ) {
             mNotePaperPosOffset = mNotePaperPosTargetOffset;
             
             if( equal( mNotePaperPosTargetOffset, mNotePaperHideOffset ) ) {
