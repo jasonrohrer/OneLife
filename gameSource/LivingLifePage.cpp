@@ -2366,7 +2366,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int yEndFloor = gridCenterY + 3;
 
     int xStartFloor = gridCenterX - 5;
-    int xEndFloor = gridCenterX + 5;
+    int xEndFloor = gridCenterX + 6;
 
     
     // give us extra border from edge so we can safely check neighbors
@@ -3119,7 +3119,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
     // info panel at bottom
-    setDrawColor( 1, 1, 1, 0.5 );
+    setDrawColor( 1, 1, 1, 1 );
     doublePair panelPos = lastScreenViewCenter;
     panelPos.y -= 242 + 32 + 16 + 6;
     drawSprite( mGuiPanelSprite, panelPos );
