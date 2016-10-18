@@ -187,6 +187,8 @@ typedef struct GroundSpriteSet {
         // indexed as [y][x]
         SpriteHandle **tiles;
 
+        SpriteHandle **squareTiles;
+
         // all tiles together in one image
         SpriteHandle wholeSheet;
     } GroundSpriteSet;

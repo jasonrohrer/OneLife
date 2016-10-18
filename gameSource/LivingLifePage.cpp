@@ -785,6 +785,7 @@ LivingLifePage::LivingLifePage()
                 int tH = mGroundSprites[b]->numTilesHigh;
 
                 mGroundSprites[b]->tiles = new SpriteHandle*[tH];
+                mGroundSprites[b]->squareTiles = new SpriteHandle*[tH];
                 
                 mGroundSprites[b]->wholeSheet = fillSprite( rawImage );
 
@@ -794,6 +795,8 @@ LivingLifePage::LivingLifePage()
                 
                 for( int ty=0; ty<tH; ty++ ) {
                     mGroundSprites[b]->tiles[ty] = new SpriteHandle[tW];
+                    mGroundSprites[b]->squareTiles[ty] = new SpriteHandle[tW];
+                    
                     for( int tx=0; tx<tW; tx++ ) {
                         
                         char *cacheFileName = 
@@ -804,13 +807,27 @@ LivingLifePage::LivingLifePage()
                         mGroundSprites[b]->tiles[ty][tx] = 
                             loadSpriteBase( cacheFileName, false );
                         
+                        char *squareCacheFileName = 
+                            autoSprintf( 
+                                "groundTileCache/biome_%d_x%d_y%d_square.tga",
+                                b, tx, ty );
+
+                        mGroundSprites[b]->squareTiles[ty][tx] = 
+                            loadSpriteBase( squareCacheFileName, false );
+                        
                         
                         if( mGroundSprites[b]->tiles[ty][tx] == NULL ) {
                             // cache miss
                             
                             allCacheFilesExist = false;
                             }
+                        if( mGroundSprites[b]->squareTiles[ty][tx] == NULL ) {
+                            // cache miss
+                            
+                            allCacheFilesExist = false;
+                            }
                         delete [] cacheFileName;
+                        delete [] squareCacheFileName;
                         }
                     }
                 
@@ -824,9 +841,33 @@ LivingLifePage::LivingLifePage()
                     int tileD = CELL_D * 2;
                 
                     for( int ty=0; ty<tH; ty++ ) {
-                    
+                        
                         for( int tx=0; tx<tW; tx++ ) {
                         
+                            if( mGroundSprites[b]->squareTiles[ty][tx] == 
+                                NULL ) {
+                                
+                                // cache miss
+
+                                char *cacheFileName = autoSprintf( 
+                                  "groundTileCache/biome_%d_x%d_y%d_square.tga",
+                                  b, tx, ty );
+
+                                printf( "Cache file %s does not exist, "
+                                        "rebuilding.\n", cacheFileName );
+
+                                Image *tileImage = image->getSubImage( 
+                                    tx * CELL_D, ty * CELL_D, CELL_D, CELL_D );
+                                
+                                writeTGAFile( cacheFileName, tileImage );
+
+                                delete [] cacheFileName;
+                                
+                                mGroundSprites[b]->squareTiles[ty][tx] = 
+                                    fillSprite( tileImage, false );
+                                
+                                delete tileImage;
+                                }
                             if( mGroundSprites[b]->tiles[ty][tx] == NULL ) {
                                 // cache miss
 
@@ -1155,6 +1196,7 @@ LivingLifePage::~LivingLifePage() {
             for( int y=0; y<mGroundSprites[i]->numTilesHigh; y++ ) {
                 for( int x=0; x<mGroundSprites[i]->numTilesWide; x++ ) {
                     freeSprite( mGroundSprites[i]->tiles[y][x] );
+                    freeSprite( mGroundSprites[i]->squareTiles[y][x] );
                     }
                 delete [] mGroundSprites[i]->tiles[y];
                 }
@@ -2280,47 +2322,34 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int xStartFloor = gridCenterX - 5;
     int xEndFloor = gridCenterX + 5;
 
-
-    // make floor area larger, so we can draw full sheets of biome
-    // wherever possible
-    // This will result in much larger areas being drawn, but since
-    // they are offscreen, it won't consume pixel fill capacity (trimming
-    //   to view port).
-    // assuming that all sheets are 4x4 tiles wide
     
-    yStartFloor -= 3;
-    yEndFloor += 3;
-    
-    xStartFloor -= 3;
-    xEndFloor += 3;
-    
-
-    if( xStartFloor < 0 ) {
-        xStartFloor = 0;
+    // give us extra border from edge so we can safely check neighbors
+    if( xStartFloor < 1 ) {
+        xStartFloor = 1;
         }
-    if( xStartFloor >= mMapD ) {
-        xStartFloor = mMapD - 1;
+    if( xStartFloor >= mMapD - 1 ) {
+        xStartFloor = mMapD - 2;
         }
     
-    if( yStartFloor < 0 ) {
-        yStartFloor = 0;
+    if( yStartFloor < 1 ) {
+        yStartFloor = 1;
         }
-    if( yStartFloor >= mMapD ) {
-        yStartFloor = mMapD - 1;
+    if( yStartFloor >= mMapD - 1 ) {
+        yStartFloor = mMapD - 2;
         }
 
-    if( xEndFloor < 0 ) {
-        xEndFloor = 0;
+    if( xEndFloor < 1 ) {
+        xEndFloor = 1;
         }
-    if( xEndFloor >= mMapD ) {
-        xEndFloor = mMapD - 1;
+    if( xEndFloor >= mMapD - 1 ) {
+        xEndFloor = mMapD - 2;
         }
     
-    if( yEndFloor < 0 ) {
-        yEndFloor = 0;
+    if( yEndFloor < 1 ) {
+        yEndFloor = 1;
         }
-    if( yEndFloor >= mMapD ) {
-        yEndFloor = mMapD - 1;
+    if( yEndFloor >= mMapD - 1 ) {
+        yEndFloor = mMapD - 2;
         }
 
 
@@ -2448,9 +2477,17 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 if( ! mMapCellDrawnFlags[mapI] ) {
                     // not drawn as whole sheet
-
-                    drawSprite( s->tiles[setY][setX], pos );
                     
+                    if( mMapBiomes[ mapI - 1 ] == b &&
+                        mMapBiomes[ mapI + mMapD ] == b ) {
+                        
+                        // surrounded by same biome above and to left
+                        // draw square tile here to save pixel fill time
+                        drawSprite( s->squareTiles[setY][setX], pos );
+                        }
+                    else {
+                        drawSprite( s->tiles[setY][setX], pos );
+                        }
                     mMapCellDrawnFlags[mapI] = true;
                     }
                 }
