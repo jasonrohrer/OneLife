@@ -669,6 +669,11 @@ LivingLifePage::LivingLifePage()
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,'?! " ) {
     
+    mHungerSlipSprites[0] = loadSprite( "fullSlip.tga", false );
+    mHungerSlipSprites[1] = loadSprite( "hungrySlip.tga", false );
+    mHungerSlipSprites[2] = loadSprite( "starvingSlip.tga", false );
+    
+
     // not visible, drawn under world at 0, 0, and doesn't move with camera
     // still, we can use it to receive/process/filter typing events
     addComponent( &mSayField );
@@ -1203,6 +1208,9 @@ LivingLifePage::~LivingLifePage() {
 
     delete [] nextActionMessageToSend;
 
+    for( int i=0; i<3; i++ ) {
+        freeSprite( mHungerSlipSprites[i] );
+        }
 
     freeSprite( mGuiPanelSprite );
     freeSprite( mNotePaperSprite );
@@ -3078,6 +3086,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
 
 
+
+    setDrawColor( 1, 1, 1, 1 );
+    
+    doublePair slipPos = lastScreenViewCenter;
+    slipPos.x -= 540;
+    slipPos.y -= 330;
+    
+    drawSprite( mHungerSlipSprites[0], slipPos );
 
     // info panel at bottom
     setDrawColor( 1, 1, 1, 1 );

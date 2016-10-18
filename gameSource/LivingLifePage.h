@@ -322,6 +322,8 @@ class LivingLifePage : public GamePage {
 
         SpriteHandle mNotePaperSprite;
 
+        SpriteHandle mHungerSlipSprites[3];
+
         // offset from current view center
         doublePair mNotePaperHideOffset;
         doublePair mNotePaperPosOffset;

@@ -72,6 +72,9 @@ graphics/guiPanel.tga \
 graphics/tempArrows.tga \
 graphics/tempArrowsErased.tga \
 graphics/notePaper.tga \
+graphics/fullSlip.tga \
+graphics/hungrySlip.tga \
+graphics/starvingSlip.tga \
 ${GROUND_TGA_PATH} \
 
 
