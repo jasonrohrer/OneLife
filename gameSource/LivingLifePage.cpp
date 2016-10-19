@@ -741,7 +741,8 @@ LivingLifePage::LivingLifePage()
     mGroundSpritesArraySize = maxBiome + 1;
     mGroundSprites = new GroundSpriteSet*[ mGroundSpritesArraySize ];
 
-    BoxBlurFilter blur( 12 );
+    int blurRadius = 12;
+    BoxBlurFilter blur( blurRadius );
     
     for( int i=0; i<mGroundSpritesArraySize; i++ ) {
         mGroundSprites[i] = NULL;
@@ -986,21 +987,40 @@ LivingLifePage::LivingLifePage()
                                             }
                                         }
                                     }
-                        
-                                tileImage.filter( &blur, 3 );
+
+                                // make sure square of cell plus blur
+                                // radius is solid, so that corners
+                                // are not undercut by blur
+                                // this will make some weird square points
+                                // sticking out, but they will be blurred
+                                // anyway, so that's okay
+                                
+                                int edgeStartA = CELL_D - 
+                                    ( CELL_D/2 + blurRadius );
+
+                                int edgeStartB = CELL_D + 
+                                    ( CELL_D/2 + blurRadius + 1 );
+                                
+                                for( int y=edgeStartA; y<=edgeStartB; y++ ) {
+                                    for( int x=edgeStartA; 
+                                         x<=edgeStartB; x++ ) {    
+                                        
+                                        int p = y * tileD + x;
+                                        tileAlpha[p] = 1.0;
+                                        }
+                                    }
+                                
 
                                 // trimm off lower right edges
-                                int edgeStart = CELL_D + CELL_D/2;
-
                                 for( int y=0; y<tileD; y++ ) {
                                     
-                                    for( int x=edgeStart; x<tileD; x++ ) {    
+                                    for( int x=edgeStartB; x<tileD; x++ ) {    
                                         
                                         int p = y * tileD + x;
                                         tileAlpha[p] = 0;
                                         }
                                     }
-                                for( int y=edgeStart; y<tileD; y++ ) {
+                                for( int y=edgeStartB; y<tileD; y++ ) {
                                     
                                     for( int x=0; x<tileD; x++ ) {    
                                         
@@ -1008,6 +1028,9 @@ LivingLifePage::LivingLifePage()
                                         tileAlpha[p] = 0;
                                         }
                                     }
+                        
+                                tileImage.filter( &blur, 3 );
+
                                 
                                 // cache for next time
                                 
