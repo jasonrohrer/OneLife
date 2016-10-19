@@ -690,10 +690,20 @@ LivingLifePage::LivingLifePage()
     
         mHungerSlipHideOffsets[i].x = -540;
         mHungerSlipHideOffsets[i].y = -370;
+        
+        mHungerSlipWiggleTime[i] = 0;
+        mHungerSlipWiggleAmp[i] = 0;
+        mHungerSlipWiggleSpeed[i] = 0.05;
         }
     mHungerSlipShowOffsets[2].y += 20;
     mHungerSlipHideOffsets[2].y -= 20;
 
+    mHungerSlipWiggleAmp[1] = 0.5;
+    mHungerSlipWiggleAmp[2] = 0.5;
+
+    mHungerSlipWiggleSpeed[2] = 0.075;
+
+    
 
     for( int i=0; i<3; i++ ) {    
         mHungerSlipPosOffset[i] = mHungerSlipHideOffsets[i];
@@ -3139,6 +3149,19 @@ void LivingLifePage::draw( doublePair inViewCenter,
             doublePair slipPos = lastScreenViewCenter;
             slipPos = add( slipPos, mHungerSlipPosOffset[i] );
             
+            if( mHungerSlipWiggleAmp[i] > 0 ) {
+                
+                double distFromHidden =
+                    mHungerSlipPosOffset[i].y - mHungerSlipHideOffsets[i].y;
+
+                // amplitude grows when we are further from
+                // hidden, and shrinks again as we go back down
+                slipPos.y += 
+                    ( 0.5 * ( 1 - cos( mHungerSlipWiggleTime[i] ) ) ) *
+                    mHungerSlipWiggleAmp[i] * distFromHidden;
+                }
+            
+
             drawSprite( mHungerSlipSprites[i], slipPos );
             }
         }
@@ -3464,6 +3487,11 @@ void LivingLifePage::step() {
         
             if( d <= 1 ) {
                 mHungerSlipPosOffset[i] = mHungerSlipPosTargetOffset[i];
+                if( equal( mHungerSlipPosTargetOffset[i],
+                           mHungerSlipHideOffsets[i] ) ) {
+                        // reset wiggle time
+                    mHungerSlipWiggleTime[i] = 0;
+                    }
                 }
             else {
                 int speed = 4;
@@ -3482,6 +3510,14 @@ void LivingLifePage::step() {
                     add( mHungerSlipPosOffset[i],
                          mult( dir, frameRateFactor * speed ) );
                 }
+            }
+        
+        if( ! equal( mHungerSlipPosOffset[i],
+                     mHungerSlipHideOffsets[i] ) ) {
+            
+            // advance wiggle time
+            mHungerSlipWiggleTime[i] += 
+                frameRateFactor * mHungerSlipWiggleSpeed[i];
             }
         }
 
@@ -5790,6 +5826,7 @@ void LivingLifePage::makeActive( char inFresh ) {
     for( int i=0; i<3; i++ ) {    
         mHungerSlipPosOffset[i] = mHungerSlipHideOffsets[i];
         mHungerSlipPosTargetOffset[i] = mHungerSlipPosOffset[i];
+        mHungerSlipWiggleTime[i] = 0;
         }
     mHungerSlipVisible = -1;
 
