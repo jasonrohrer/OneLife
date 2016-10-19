@@ -2506,9 +2506,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     // not drawn as whole sheet
                     
                     if( mMapBiomes[ mapI - 1 ] == b &&
-                        mMapBiomes[ mapI + mMapD ] == b ) {
+                        mMapBiomes[ mapI + mMapD ] == b &&
+                        mMapBiomes[ mapI + mMapD + 1 ] == b ) {
                         
                         // surrounded by same biome above and to left
+                        // AND diagonally to the above-right
                         // draw square tile here to save pixel fill time
                         drawSprite( s->squareTiles[setY][setX], pos );
                         }
