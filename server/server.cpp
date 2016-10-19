@@ -3488,6 +3488,10 @@ int main() {
                                     if( nextPlayer->foodStore > cap ) {
                                         nextPlayer->foodStore = cap;
                                         }
+                                    nextPlayer->foodDecrementETASeconds =
+                                        Time::getCurrentTime() +
+                                        computeFoodDecrementTimeSeconds( 
+                                            nextPlayer );
                                     
                                     // get eat transtion
                                     TransRecord *r = 

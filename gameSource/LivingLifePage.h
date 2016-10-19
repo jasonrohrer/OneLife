@@ -322,8 +322,6 @@ class LivingLifePage : public GamePage {
 
         SpriteHandle mNotePaperSprite;
 
-        SpriteHandle mHungerSlipSprites[3];
-
         // offset from current view center
         doublePair mNotePaperHideOffset;
         doublePair mNotePaperPosOffset;
@@ -334,6 +332,18 @@ class LivingLifePage : public GamePage {
         SimpleVector<char> mErasedNoteChars;
         SimpleVector<doublePair> mErasedNoteCharOffsets;
 
+
+        SpriteHandle mHungerSlipSprites[3];
+
+        // offset from current view center
+        doublePair mHungerSlipHideOffsets[3];
+        doublePair mHungerSlipShowOffsets[3];
+        doublePair mHungerSlipPosOffset[3];
+        doublePair mHungerSlipPosTargetOffset[3];
+        
+        // index of visble one, or -1
+        int mHungerSlipVisible;
+        
 
         int mCurrentArrowI;
         float mCurrentArrowHeat;

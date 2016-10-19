@@ -684,6 +684,25 @@ LivingLifePage::LivingLifePage()
     mNotePaperHideOffset.x = 0;
     mNotePaperHideOffset.y = -420;
 
+    for( int i=0; i<3; i++ ) {    
+        mHungerSlipShowOffsets[i].x = -540;
+        mHungerSlipShowOffsets[i].y = -330;
+    
+        mHungerSlipHideOffsets[i].x = -540;
+        mHungerSlipHideOffsets[i].y = -370;
+        }
+    mHungerSlipShowOffsets[2].y += 20;
+    mHungerSlipHideOffsets[2].y -= 20;
+
+
+    for( int i=0; i<3; i++ ) {    
+        mHungerSlipPosOffset[i] = mHungerSlipHideOffsets[i];
+        mHungerSlipPosTargetOffset[i] = mHungerSlipPosOffset[i];
+        }
+    
+    mHungerSlipVisible = -1;
+
+    
 
     mMap = new int[ mMapD * mMapD ];
     mMapBiomes = new int[ mMapD * mMapD ];
@@ -2370,7 +2389,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int yEndFloor = gridCenterY + 3;
 
     int xStartFloor = gridCenterX - 5;
-    int xEndFloor = gridCenterX + 5;
+    int xEndFloor = gridCenterX + 6;
 
     
     // give us extra border from edge so we can safely check neighbors
@@ -2974,10 +2993,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     doublePair notePos = add( mNotePaperPosOffset, lastScreenViewCenter );
 
-    
-    setDrawColor( 1, 1, 1, 1 );
-    drawSprite( mNotePaperSprite, notePos );
-
+    if( ! equal( mNotePaperPosOffset, mNotePaperHideOffset ) ) {
+        setDrawColor( 1, 1, 1, 1 );
+        drawSprite( mNotePaperSprite, notePos );
+        }
+        
     int lineSpacing = 20;
 
     
@@ -3114,12 +3134,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     setDrawColor( 1, 1, 1, 1 );
     
-    doublePair slipPos = lastScreenViewCenter;
-    slipPos.x -= 540;
-    slipPos.y -= 330;
+    for( int i=0; i<3; i++ ) { 
+        if( !equal( mHungerSlipPosOffset[i], mHungerSlipHideOffsets[i] ) ) {
+            doublePair slipPos = lastScreenViewCenter;
+            slipPos = add( slipPos, mHungerSlipPosOffset[i] );
+            
+            drawSprite( mHungerSlipSprites[i], slipPos );
+            }
+        }
     
-    drawSprite( mHungerSlipSprites[0], slipPos );
-
     // info panel at bottom
     setDrawColor( 1, 1, 1, 1 );
     doublePair panelPos = lastScreenViewCenter;
@@ -3408,7 +3431,61 @@ void LivingLifePage::step() {
         
         }
     
+    char anySlipsMovingDown = false;
+    for( int i=0; i<3; i++ ) {
+        if( i != mHungerSlipVisible &&
+            ! equal( mHungerSlipPosOffset[i], mHungerSlipHideOffsets[i] ) ) {
+            // visible when it shouldn't be
+            mHungerSlipPosTargetOffset[i] = mHungerSlipHideOffsets[i];
+            anySlipsMovingDown = true;
+            }
+        }
+    
+    if( !anySlipsMovingDown ) {
+        if( mHungerSlipVisible != -1 ) {
+            // send one up
+            mHungerSlipPosTargetOffset[ mHungerSlipVisible ] =
+                mHungerSlipShowOffsets[ mHungerSlipVisible ];
+            }
+        }
 
+
+    // move all toward their targets
+    for( int i=0; i<3; i++ ) {
+        if( ! equal( mHungerSlipPosOffset[i], 
+                     mHungerSlipPosTargetOffset[i] ) ) {
+            
+            doublePair delta = 
+                sub( mHungerSlipPosTargetOffset[i], mHungerSlipPosOffset[i] );
+        
+            double d = distance( mHungerSlipPosTargetOffset[i], 
+                                 mHungerSlipPosOffset[i] );
+        
+        
+            if( d <= 1 ) {
+                mHungerSlipPosOffset[i] = mHungerSlipPosTargetOffset[i];
+                }
+            else {
+                int speed = 4;
+                
+                if( d < 8 ) {
+                    speed = lrint( d / 2 );
+                    }
+                
+                if( speed < 1 ) {
+                    speed = 1;
+                    }
+                
+                doublePair dir = normalize( delta );
+                
+                mHungerSlipPosOffset[i] = 
+                    add( mHungerSlipPosOffset[i],
+                         mult( dir, frameRateFactor * speed ) );
+                }
+            }
+        }
+
+            
 
     char *message = getNextServerMessage();
 
@@ -5089,7 +5166,18 @@ void LivingLifePage::step() {
                     ourLiveObject->maxFoodCapacity = 
                         ourLiveObject->foodCapacity;
                     }
-                
+                if( ourLiveObject->foodStore == ourLiveObject->foodCapacity ) {
+                    mHungerSlipVisible = 0;
+                    }
+                else if( ourLiveObject->foodStore <= 3 ) {
+                    mHungerSlipVisible = 2;
+                    }
+                else if( ourLiveObject->foodStore <= 6 ) {
+                    mHungerSlipVisible = 1;
+                    }
+                else {
+                    mHungerSlipVisible = -1;
+                    }
                 }
             }
         
@@ -5698,6 +5786,12 @@ void LivingLifePage::makeActive( char inFresh ) {
     mLastKnownNoteLines.deallocateStringElements();
     mErasedNoteChars.deleteAll();
     mErasedNoteCharOffsets.deleteAll();
+
+    for( int i=0; i<3; i++ ) {    
+        mHungerSlipPosOffset[i] = mHungerSlipHideOffsets[i];
+        mHungerSlipPosTargetOffset[i] = mHungerSlipPosOffset[i];
+        }
+    mHungerSlipVisible = -1;
 
     mSayField.setText( "" );
     mSayField.unfocus();
