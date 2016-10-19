@@ -95,8 +95,8 @@ EditorObjectPage::EditorObjectPage()
           mReplaceObjectButton( smallFont, 310, -260, "Replace" ),
           mClearObjectButton( smallFont, -260, 200, "Blank" ),
           mClearRotButton( smallFont, -260, 120, "0 Rot" ),
-          mRot90ForwardButton( smallFont, -215, 120, ">" ),
-          mRot90BackwardButton( smallFont, -305, 120, "<" ),
+          mRot45ForwardButton( smallFont, -215, 120, ">" ),
+          mRot45BackwardButton( smallFont, -305, 120, "<" ),
           mFlipHButton( smallFont, -260, 160, "H Flip" ),
           mBakeButton( smallFont, -260, 160, "< Bake" ),
           mImportEditorButton( mainFont, -210, 260, "Sprites" ),
@@ -240,8 +240,8 @@ EditorObjectPage::EditorObjectPage()
 
     addComponent( &mClearObjectButton );
     addComponent( &mClearRotButton );
-    addComponent( &mRot90ForwardButton );
-    addComponent( &mRot90BackwardButton );
+    addComponent( &mRot45ForwardButton );
+    addComponent( &mRot45BackwardButton );
 
     addComponent( &mFlipHButton );
     addComponent( &mBakeButton );
@@ -340,10 +340,10 @@ EditorObjectPage::EditorObjectPage()
     mClearRotButton.addActionListener( this );
     mClearRotButton.setVisible( false );
 
-    mRot90ForwardButton.addActionListener( this );
-    mRot90BackwardButton.addActionListener( this );
-    mRot90ForwardButton.setVisible( false );
-    mRot90BackwardButton.setVisible( false );
+    mRot45ForwardButton.addActionListener( this );
+    mRot45BackwardButton.addActionListener( this );
+    mRot45ForwardButton.setVisible( false );
+    mRot45BackwardButton.setVisible( false );
 
     mFlipHButton.addActionListener( this );
     mFlipHButton.setVisible( false );
@@ -1364,12 +1364,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }
         mClearRotButton.setVisible( false );
         }
-    else if( inTarget == &mRot90ForwardButton ) {
+    else if( inTarget == &mRot45ForwardButton ) {
         if( mPickedObjectLayer != -1 ) {
             double oldRot = mCurrentObject.spriteRot[ mPickedObjectLayer ];
 
             mCurrentObject.spriteRot[mPickedObjectLayer] = 
-                0.25 + floor( oldRot * 4 ) / 4;
+                0.125 + floor( oldRot * 8 ) / 8;
             
             recursiveRotate( &mCurrentObject,
                              mPickedObjectLayer,
@@ -1378,12 +1378,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                              oldRot );
             }
         }
-    else if( inTarget == &mRot90BackwardButton ) {
+    else if( inTarget == &mRot45BackwardButton ) {
         if( mPickedObjectLayer != -1 ) {
             double oldRot = mCurrentObject.spriteRot[ mPickedObjectLayer ];
 
             mCurrentObject.spriteRot[mPickedObjectLayer] = 
-                -0.25 + ceil( oldRot * 4 ) / 4;
+                -0.125 + ceil( oldRot * 8 ) / 8;
             
             recursiveRotate( &mCurrentObject,
                              mPickedObjectLayer,
@@ -3285,8 +3285,8 @@ void EditorObjectPage::pickedLayerChanged() {
             mSetHeldPosButton.setVisible( true );
             }
         
-        mRot90ForwardButton.setVisible( false );
-        mRot90BackwardButton.setVisible( false );
+        mRot45ForwardButton.setVisible( false );
+        mRot45BackwardButton.setVisible( false );
 
         if( mPickedSlot != -1 ) {
             mSlotVertCheckbox.setToggled( 
@@ -3332,8 +3332,8 @@ void EditorObjectPage::pickedLayerChanged() {
             mSetHeldPosButton.setVisible( true );
             }
         
-        mRot90ForwardButton.setVisible( true );
-        mRot90BackwardButton.setVisible( true );
+        mRot45ForwardButton.setVisible( true );
+        mRot45BackwardButton.setVisible( true );
         
         mBakeButton.setVisible( false );
 
