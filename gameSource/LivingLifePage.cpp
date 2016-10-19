@@ -2499,13 +2499,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                     char allSameBiome = true;
                     
-                    // check upper and left borders of would-be sheet too
-                    for( int nY = y+1; nY > y - s->numTilesHigh; nY-- ) {
+                    // check borders of would-be sheet too
+                    for( int nY = y+1; nY >= y - s->numTilesHigh; nY-- ) {
                         
                         if( nY >=0 && nY < mMapD ) {
                             
                             for( int nX = x-1; 
-                                 nX < x + s->numTilesWide; nX++ ) {
+                                 nX <= x + s->numTilesWide; nX++ ) {
                                 
                                 if( nX >=0 && nX < mMapD ) {
                                     int nI = nY * mMapD + nX;
