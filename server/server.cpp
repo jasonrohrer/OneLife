@@ -43,6 +43,9 @@ float targetHeat = 10;
 #define PERSON_OBJ_ID 12
 
 
+int minPickupBabyAge = 10;
+
+
 static double minFoodDecrementSeconds = 5.0;
 
 
@@ -676,12 +679,14 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
 
 
 double computeMoveSpeed( LiveObject *inPlayer ) {
-    double age = computeAge( inPlayer );
+    //double age = computeAge( inPlayer );
     
 
     double speed = 4;
     
 
+    // for now, try no age-based speed decrease
+    /*
     if( age < 20 ) {
         speed *= age / 20;
         }
@@ -690,7 +695,7 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
         speed -= (age - 40 ) * 2.0 / 20.0;
         
         }
-
+    */
     // no longer slow down with hunger
     /*
     int foodCap = computeFoodCapacity( inPlayer );
@@ -3088,7 +3093,13 @@ int main() {
                                         }
                                     }
                                 
-                                if( r != NULL ) {
+                                if( r != NULL &&
+                                    // are we old enough to handle
+                                    // what we'd get out of this transition?
+                                    ( r->newActor == 0 || 
+                                      getObject( r->newActor )->minPickupAge <= 
+                                      computeAge( nextPlayer ) ) ) {
+                                    
                                     int oldContained = 
                                         nextPlayer->numContained;
                                     
@@ -3174,7 +3185,9 @@ int main() {
                                     delete [] changeLine;
                                     }
                                 else if( nextPlayer->holdingID == 0 &&
-                                         ! targetObj->permanent ) {
+                                         ! targetObj->permanent &&
+                                         targetObj->minPickupAge <= 
+                                         computeAge( nextPlayer ) ) {
                                     // no bare-hand transition applies to
                                     // this non-permanent target object
                                     
@@ -3275,7 +3288,15 @@ int main() {
                                     char canPlace = false;
                                     
                                     if( r != NULL &&
-                                        r->newTarget != 0 ) {
+                                        r->newTarget != 0 
+                                        && 
+                                        // make sure we're not too young
+                                        // to hold result of bare ground
+                                        // transition
+                                        ( r->newActor == 0 ||
+                                          getObject( r->newActor )->
+                                             minPickupAge <= 
+                                          computeAge( nextPlayer ) ) ) {
                                         
                                         canPlace = true;
 
@@ -3352,13 +3373,15 @@ int main() {
                         }
                     else if( m.type == BABY ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
-
-                        if( isGridAdjacent( m.x, m.y,
-                                            nextPlayer->xd, 
-                                            nextPlayer->yd ) 
-                            ||
-                            ( m.x == nextPlayer->xd &&
-                              m.y == nextPlayer->yd ) ) {
+                        
+                        if( computeAge( nextPlayer ) >= minPickupBabyAge 
+                            &&
+                            ( isGridAdjacent( m.x, m.y,
+                                              nextPlayer->xd, 
+                                              nextPlayer->yd ) 
+                              ||
+                              ( m.x == nextPlayer->xd &&
+                                m.y == nextPlayer->yd ) ) ) {
                             
                             if( nextPlayer->holdingID == 0 ) {
                                 // target location empty and 
@@ -3925,7 +3948,10 @@ int main() {
                                             mapChangesPos.push_back( p );
                                             }
                                         else if( targetSlots == 0 &&
-                                                 ! targetObj->permanent ) {
+                                                 ! targetObj->permanent 
+                                                 &&
+                                                 targetObj->minPickupAge <=
+                                                 computeAge( nextPlayer ) ) {
                                             // drop onto a spot where
                                             // something exists, and it's
                                             // not a container
