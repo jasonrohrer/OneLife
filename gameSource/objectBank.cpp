@@ -310,9 +310,11 @@ float initObjectBankStep() {
                             
                 next++;
                             
-                int permRead = 0;                            
-                sscanf( lines[next], "permanent=%d", 
-                        &( permRead ) );
+                int permRead = 0;                 
+                r->minPickupAge = 3;
+                sscanf( lines[next], "permanent=%d,minPickupAge=%d", 
+                        &( permRead ),
+                        &( r->minPickupAge ) );
                             
                 r->permanent = permRead;
 
@@ -847,6 +849,7 @@ void resaveAll() {
                        idMap[i]->containable,
                        idMap[i]->containSize,
                        idMap[i]->permanent,
+                       idMap[i]->minPickupAge,
                        idMap[i]->heldInHand,
                        idMap[i]->rideable,
                        idMap[i]->blocksWalking,
@@ -975,6 +978,7 @@ int addObject( const char *inDescription,
                char inContainable,
                int inContainSize,
                char inPermanent,
+               int inMinPickupAge,
                char inHeldInHand,
                char inRideable,
                char inBlocksWalking,
@@ -1065,7 +1069,9 @@ int addObject( const char *inDescription,
 
         lines.push_back( autoSprintf( "containable=%d", (int)inContainable ) );
         lines.push_back( autoSprintf( "containSize=%d", (int)inContainSize ) );
-        lines.push_back( autoSprintf( "permanent=%d", (int)inPermanent ) );
+        lines.push_back( autoSprintf( "permanent=%d,minPickupAge=%d", 
+                                      (int)inPermanent,
+                                      inMinPickupAge ) );
         
         
         int heldInHandNumber = 0;
@@ -1260,6 +1266,7 @@ int addObject( const char *inDescription,
     r->containable = inContainable;
     r->containSize = inContainSize;
     r->permanent = inPermanent;
+    r->minPickupAge = inMinPickupAge;
     r->heldInHand = inHeldInHand;
     r->rideable = inRideable;
     

@@ -30,6 +30,9 @@ typedef struct ObjectRecord {
         // can it not be picked up
         char permanent;
 
+        // age you have to be to to pick something up
+        int minPickupAge;
+        
 
         // true for smaller objects that have heldOffsets relative to
         // front, moving hand
@@ -254,6 +257,7 @@ int addObject( const char *inDescription,
                char inContainable,
                int inContainSize,
                char inPermanent,
+               int inMinPickupAge,
                char inHeldInHand,
                char inRideable,
                char inBlocksWalking,

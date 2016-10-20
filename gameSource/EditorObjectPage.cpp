@@ -74,11 +74,11 @@ EditorObjectPage::EditorObjectPage()
           mContainSizeField( smallFont, 
                              250,  -120, 4,
                              false,
-                             "Contain Size", "0123456789.", NULL ),
+                             "Contain Size", "0123456789", NULL ),
           mSlotSizeField( smallFont, 
                           -280,  -230, 4,
                           false,
-                          "Slot Size", "0123456789.", NULL ),
+                          "Slot Size", "0123456789", NULL ),
           mSlotTimeStretchField( smallFont, 
                                  150,  -120, 6,
                                  false,
@@ -86,7 +86,11 @@ EditorObjectPage::EditorObjectPage()
           mDeadlyDistanceField( smallFont, 
                                 150,  -220, 4,
                                 false,
-                                "Deadly Distance", "0123456789.", NULL ),
+                                "Deadly Distance", "0123456789", NULL ),
+          mMinPickupAgeField( smallFont, 
+                              300,  -220, 4,
+                              false,
+                              "Pickup Age", "0123456789.", NULL ),
           mRaceField( smallFont, 
                       150, -120, 2,
                       true,
@@ -199,6 +203,7 @@ EditorObjectPage::EditorObjectPage()
     mSlotTimeStretchField.setVisible( false );
 
     addComponent( &mDeadlyDistanceField );
+    addComponent( &mMinPickupAgeField );
     
     addComponent( &mRaceField );
 
@@ -228,6 +233,8 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mEndSetHeldPosButton );
 
     mSetHeldPosButton.setVisible( true );
+    mMinPickupAgeField.setVisible( true );
+    
     mEndSetHeldPosButton.setVisible( false );    
     
     addComponent( &mNextHeldDemoButton );
@@ -439,6 +446,8 @@ EditorObjectPage::EditorObjectPage()
     mSlotTimeStretchField.setText( "1.0" );
 
     mDeadlyDistanceField.setInt( 0 );
+
+    mMinPickupAgeField.setInt( 3 );
     
     mRaceField.setText( "A" );
     mRaceField.setMaxLength( 1 );
@@ -779,8 +788,7 @@ void EditorObjectPage::updateAgingPanel() {
 
     mBiomeField.setVisible( !person );
     mDeadlyDistanceField.setVisible( !person );
-
-
+    
     if( mPickedObjectLayer == -1 || ! anyClothingToggled() ) {
         mInvisibleWhenWornCheckbox.setVisible( false );
         mInvisibleWhenUnwornCheckbox.setVisible( false );
@@ -1051,6 +1059,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCheckboxes[0]->getToggled(),
                    mContainSizeField.getInt(),
                    mCheckboxes[1]->getToggled(),
+                   mMinPickupAgeField.getFloat(),
                    mHeldInHandCheckbox.getToggled(),
                    mRideableCheckbox.getToggled(),
                    mBlocksWalkingCheckbox.getToggled(),
@@ -1151,6 +1160,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCheckboxes[0]->getToggled(),
                    mContainSizeField.getInt(),
                    mCheckboxes[1]->getToggled(),
+                   mMinPickupAgeField.getFloat(),
                    mHeldInHandCheckbox.getToggled(),
                    mRideableCheckbox.getToggled(),
                    mBlocksWalkingCheckbox.getToggled(),
@@ -1249,7 +1259,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mSlotTimeStretchField.setVisible( false );
         
         mDeadlyDistanceField.setInt( 0 );
-
+        mMinPickupAgeField.setInt( 3 );
+        
         mCurrentObject.numSlots = 0;
         
         mCurrentObject.heldOffset.x = 0;
@@ -1328,6 +1339,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mDemoSlotsButton.setVisible( false );
         mClearSlotsDemoButton.setVisible( false );
         mSetHeldPosButton.setVisible( false );
+        mMinPickupAgeField.setVisible( false );
+        
         mEndSetHeldPosButton.setVisible( false );
         mNextHeldDemoButton.setVisible( false );
         mPrevHeldDemoButton.setVisible( false );
@@ -1485,6 +1498,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         updateAgingPanel();
         
         mSetHeldPosButton.setVisible( true );
+        mMinPickupAgeField.setVisible( true );
         }
     else if( inTarget == &mLessSlotsButton ) {
         if( mCurrentObject.numSlots > 0 ) {
@@ -1525,6 +1539,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             mSetHeldPos = true;
             mSetHeldPosButton.setVisible( false );
+            mMinPickupAgeField.setVisible( false );
             mEndSetHeldPosButton.setVisible( true );
             
             mNextHeldDemoButton.setVisible( true );
@@ -1542,6 +1557,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mDemoPersonObject = -1;
 
         mSetHeldPosButton.setVisible( true );
+        mMinPickupAgeField.setVisible( true );
         mEndSetHeldPosButton.setVisible( false );
 
         mNextHeldDemoButton.setVisible( false );
@@ -1585,6 +1601,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             mSetHeldPos = false;
             mSetHeldPosButton.setVisible( false );
+            mMinPickupAgeField.setVisible( true );
             mEndSetHeldPosButton.setVisible( false );
 
             mNextHeldDemoButton.setVisible( true );
@@ -1621,6 +1638,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }
 
         mSetHeldPosButton.setVisible( true );
+        mMinPickupAgeField.setVisible( true );
         mEndSetHeldPosButton.setVisible( false );
         
         mNextHeldDemoButton.setVisible( false );
@@ -1657,6 +1675,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         if( !mSetHeldPos ) {
             mSetHeldPosButton.setVisible( true );
+            mMinPickupAgeField.setVisible( true );
             }
 
         if( mBlocksWalkingCheckbox.getToggled() ) {
@@ -1670,6 +1689,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                     actionPerformed( &mEndSetHeldPosButton );
                     }
                 mSetHeldPosButton.setVisible( false );
+                mMinPickupAgeField.setVisible( true );
                 }
             }
         if( ! mLeftBlockingRadiusField.isVisible() ) {
@@ -1686,6 +1706,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         if( !mSetHeldPos ) {
             mSetHeldPosButton.setVisible( true );
+            mMinPickupAgeField.setVisible( true );
             }
         
         if( mBlocksWalkingCheckbox.getToggled() ) {
@@ -1700,11 +1721,19 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                     actionPerformed( &mEndSetHeldPosButton );
                     }
                 mSetHeldPosButton.setVisible( false );
+                mMinPickupAgeField.setVisible( false );
                 }
             }
         if( ! mLeftBlockingRadiusField.isVisible() ) {
             mLeftBlockingRadiusField.setInt( 0 );
             mRightBlockingRadiusField.setInt( 0 );
+            }
+
+        if( mCheckboxes[1]->getToggled() ) {
+            if( mCheckboxes[0]->getToggled() ) {
+                mCheckboxes[0]->setToggled( false );
+                actionPerformed( mCheckboxes[0] );
+                }
             }
         }
     else if( inTarget == &mAgingLayerCheckbox ) {
@@ -1837,6 +1866,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 
                 if( mPickedObjectLayer != -1 ) {    
                     mSetHeldPosButton.setVisible( true );
+                    mMinPickupAgeField.setVisible( true );
                     }
                 
                 if( anyClothingToggled() ) {
@@ -1901,6 +1931,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mSetClothesPos = false;
             mDemoPersonObject = -1;
             mSetHeldPosButton.setVisible( true );
+            mMinPickupAgeField.setVisible( true );
             mEndSetHeldPosButton.setVisible( false );
             
             mNextHeldDemoButton.setVisible( false );
@@ -1994,7 +2025,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                                             -1, true );
             
             mDeadlyDistanceField.setInt( pickedRecord->deadlyDistance );
-
+            
+            mMinPickupAgeField.setInt( pickedRecord->minPickupAge );
 
             mCurrentObject.containable = pickedRecord->containable;
             
@@ -2204,6 +2236,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 mDrawBehindPlayerCheckbox.setToggled( 
                     pickedRecord->drawBehindPlayer );
                 mSetHeldPosButton.setVisible( false );
+                mMinPickupAgeField.setVisible( false );
                 } 
             else {
                 mLeftBlockingRadiusField.setVisible( false );
@@ -2211,6 +2244,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 mDrawBehindPlayerCheckbox.setToggled( false );
                 mDrawBehindPlayerCheckbox.setVisible( false );
                 mSetHeldPosButton.setVisible( true );
+                mMinPickupAgeField.setVisible( true );
                 }
             
 
@@ -2256,7 +2290,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }
         }
     else if( inTarget == mCheckboxes[0] ) {
-        printf( "Toggle\n" );
         if( mCheckboxes[0]->getToggled() ) {
             mContainSizeField.setVisible( true );
             
@@ -2277,9 +2310,15 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             if( ! mSetHeldPos ) {
                 mSetHeldPosButton.setVisible( true );
+                mMinPickupAgeField.setVisible( true );
                 }
             
             mRaceField.setVisible( false );
+            
+            if( mCheckboxes[1]->getToggled() ) {
+                mCheckboxes[1]->setToggled( false );
+                actionPerformed( mCheckboxes[1] );
+                }
             }
         else {
             mContainSizeField.setInt( 1 );
@@ -2294,12 +2333,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mPersonAgeSlider.setVisible( true );
             mRaceField.setVisible( true );
 
-            if( mPickedObjectLayer != -1 ) {
-                mSetHeldPosButton.setVisible( false );
-                }
-            else {
-                mSetHeldPosButton.setVisible( true );
-                }
+            mSetHeldPosButton.setVisible( false );
+            mMinPickupAgeField.setVisible( false );
             
             mContainSizeField.setInt( 1 );
             mContainSizeField.setVisible( false );
@@ -2322,6 +2357,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         else {
             mPersonAgeSlider.setVisible( false );
             mSetHeldPosButton.setVisible( true );
+            mMinPickupAgeField.setVisible( true );
             mRaceField.setVisible( false );
             }
                     
@@ -2401,7 +2437,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                     mPersonAgeSlider.setVisible( false );
                     mCheckboxes[2]->setToggled( false );
                     mSetHeldPosButton.setVisible( true );
-
+                    mMinPickupAgeField.setVisible( true );
                     pickedLayerChanged();
                     }
                 else {
@@ -3280,9 +3316,11 @@ void EditorObjectPage::pickedLayerChanged() {
         
         if( mLeftBlockingRadiusField.isVisible() ) {
             mSetHeldPosButton.setVisible( false );
+            mMinPickupAgeField.setVisible( false );
             }
         else {
             mSetHeldPosButton.setVisible( true );
+            mMinPickupAgeField.setVisible( true );
             }
         
         mRot45ForwardButton.setVisible( false );
@@ -3327,9 +3365,11 @@ void EditorObjectPage::pickedLayerChanged() {
             // because of overlap
             // or if blocking radius visible
             mSetHeldPosButton.setVisible( false );
+            mMinPickupAgeField.setVisible( false );
             }
         else {
             mSetHeldPosButton.setVisible( true );
+            mMinPickupAgeField.setVisible( true );
             }
         
         mRot45ForwardButton.setVisible( true );
