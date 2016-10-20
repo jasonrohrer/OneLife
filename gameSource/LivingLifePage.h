@@ -205,7 +205,9 @@ typedef struct PointerHitRecord {
         char hit;
         char hitSelf;
     
-        int hitSelfClothingIndex;
+        char hitOtherPerson;
+        
+        int hitClothingIndex;
 
         // when we click in a square, only count as hitting something
         // if we actually clicked the object there.  Else, we can walk

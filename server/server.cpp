@@ -390,6 +390,7 @@ typedef enum messageType {
     USE,
     SELF,
     BABY,
+    UBABY,
     REMV,
     SREMV,
     DROP,
@@ -501,6 +502,17 @@ ClientMessage parseMessage( char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "SELF" ) == 0 ) {
         m.type = SELF;
+
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.i ) );
+        
+        if( numRead != 4 ) {
+            m.type = UNKNOWN;
+            }
+        }
+    else if( strcmp( nameBuffer, "UBABY" ) == 0 ) {
+        m.type = UBABY;
 
         numRead = sscanf( inMessage, 
                           "%99s %d %d %d", 
@@ -1620,6 +1632,65 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
     delete [] clothingList;
     
     return updateLine;
+    }
+
+
+
+static LiveObject *getHitPlayer( int inX, int inY, int inMaxAge = -1,
+                                 int *outHitIndex = NULL ) {
+    GridPos targetPos = { inX, inY };
+
+    int numLive = players.size();
+                                    
+    LiveObject *hitPlayer = NULL;
+                                    
+    for( int j=0; j<numLive; j++ ) {
+        LiveObject *otherPlayer = 
+            players.getElement( j );
+                                    
+        if( inMaxAge != -1 &&
+            computeAge( otherPlayer ) > inMaxAge ) {
+            continue;
+            }
+
+        if( otherPlayer->xd == 
+            otherPlayer->xs &&
+            otherPlayer->yd ==
+            otherPlayer->ys ) {
+            // other player standing still
+                                            
+            if( otherPlayer->xd ==
+                inX &&
+                otherPlayer->yd ==
+                inY ) {
+                                                
+                // hit
+                hitPlayer = otherPlayer;
+                if( outHitIndex != NULL ) {
+                    *outHitIndex = j;
+                    }
+                break;
+                }
+            }
+        else {
+            // other player moving
+                
+            GridPos cPos = 
+                computePartialMoveSpot( 
+                    otherPlayer );
+                                        
+            if( equal( cPos, targetPos ) ) {
+                // hit
+                hitPlayer = otherPlayer;
+                if( outHitIndex != NULL ) {
+                    *outHitIndex = j;
+                    }
+                break;
+                }
+            }
+        }
+
+    return hitPlayer;
     }
 
     
@@ -2901,46 +2972,8 @@ int main() {
                                     // target is close enough
 
                                     // is anyone there?
-                                    int numLive = players.size();
-                                    
-                                    LiveObject *hitPlayer = NULL;
-                                    
-                                    for( int j=0; j<numLive; j++ ) {
-                                        LiveObject *otherPlayer = 
-                                            players.getElement( j );
-                                    
-                                        
-
-                                        if( otherPlayer->xd == 
-                                            otherPlayer->xs &&
-                                            otherPlayer->yd ==
-                                            otherPlayer->ys ) {
-                                            // other player standing still
-                                            
-                                            if( otherPlayer->xd ==
-                                                m.x &&
-                                                otherPlayer->yd ==
-                                                m.y ) {
-                                                
-                                                // hit
-                                                hitPlayer = otherPlayer;
-                                                break;
-                                                }
-                                            }
-                                        else {
-                                            // other player moving
-                
-                                            GridPos cPos = 
-                                                computePartialMoveSpot( 
-                                                    otherPlayer );
-                                        
-                                            if( equal( cPos, targetPos ) ) {
-                                                // hit
-                                                hitPlayer = otherPlayer;
-                                                break;
-                                                }
-                                            }
-                                        }
+                                    LiveObject *hitPlayer = 
+                                        getHitPlayer( m.x, m.y );
 
                                     if( hitPlayer != NULL ) {
                                         // break the connection with 
@@ -3165,11 +3198,14 @@ int main() {
                                         // keep old decay in place
                                         setEtaDecay( m.x, m.y, oldEtaDecay );
                                         }
-
-                                    handleMapChangeToPaths( 
-                                        m.x, m.y,
-                                        getObject( r->newTarget ),
-                                        &playerIndicesToSendUpdatesAbout );
+                                    
+                                    if( r->newTarget != 0 ) {
+                                        
+                                        handleMapChangeToPaths( 
+                                            m.x, m.y,
+                                            getObject( r->newTarget ),
+                                            &playerIndicesToSendUpdatesAbout );
+                                        }
                                     
                                     char *changeLine =
                                         getMapChangeLineString(
@@ -3388,53 +3424,10 @@ int main() {
                                 // and our hands are empty
                                 
                                 // check if there's a baby to pick up there
-                                
-                                GridPos targetPos = { m.x, m.y };
-                                
-                                // is anyone there?
-                                int numLive = players.size();
-                                
-                                LiveObject *hitPlayer = NULL;
-                                
-                                for( int j=0; j<numLive; j++ ) {
-                                    LiveObject *otherPlayer = 
-                                        players.getElement( j );
-                                    
-                                    if( otherPlayer == nextPlayer ) {
-                                        // don't consider click on self
-                                        continue;
-                                        }
 
-                                    if( otherPlayer->xd == 
-                                        otherPlayer->xs &&
-                                        otherPlayer->yd ==
-                                        otherPlayer->ys ) {
-                                        // other player standing still
-                                            
-                                        if( otherPlayer->xd ==
-                                            m.x &&
-                                            otherPlayer->yd ==
-                                            m.y ) {
-                                                
-                                            // hit
-                                            hitPlayer = otherPlayer;
-                                            break;
-                                            }
-                                        }
-                                    else {
-                                        // other player moving
-                                        
-                                        GridPos cPos = 
-                                            computePartialMoveSpot( 
-                                                otherPlayer );
-                                        
-                                        if( equal( cPos, targetPos ) ) {
-                                            // hit
-                                            hitPlayer = otherPlayer;
-                                            break;
-                                            }
-                                        }
-                                    }
+                                // is anyone there?
+                                LiveObject *hitPlayer = 
+                                    getHitPlayer( m.x, m.y, 5 );
                                 
                                 if( hitPlayer != NULL &&
                                     computeAge( hitPlayer ) < 5  ) {
@@ -3490,31 +3483,63 @@ int main() {
                                 }
                             }
                         }
-                    else if( m.type == SELF ) {
+                    else if( m.type == SELF || m.type == UBABY ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
-                        if( m.x == nextPlayer->xd &&
-                            m.y == nextPlayer->yd ) {
+                        LiveObject *targetPlayer = NULL;
+                        
+                        if( m.type == SELF ) {
+                            if( m.x == nextPlayer->xd &&
+                                m.y == nextPlayer->yd ) {
+                                
+                                // use on self
+                                targetPlayer = nextPlayer;
+                                }
+                            }
+                        else if( m.type == UBABY ) {
                             
-                            // use on self
+                            if( isGridAdjacent( m.x, m.y,
+                                                nextPlayer->xd, 
+                                                nextPlayer->yd ) ||
+                                ( m.x == nextPlayer->xd &&
+                                  m.y == nextPlayer->yd ) ) {
+                                
+                                int hitIndex;
+                                LiveObject *hitPlayer = 
+                                    getHitPlayer( m.x, m.y, 5, &hitIndex );
+                                
+                                if( hitPlayer != NULL ) {
+                                    targetPlayer = hitPlayer;
+                                    
+                                    playerIndicesToSendUpdatesAbout.push_back( 
+                                        hitIndex );
+                                    }
+                                }
+                            }
+                        
+
+                        if( targetPlayer != NULL ) {
+                            
+                            // use on self/baby
+
                             if( nextPlayer->holdingID > 0 ) {
                                 ObjectRecord *obj = 
                                     getObject( nextPlayer->holdingID );
                                 
                                 if( obj->foodValue > 0 ) {
-                                    nextPlayer->justAte = true;
-                                    nextPlayer->foodStore += obj->foodValue;
+                                    targetPlayer->justAte = true;
+                                    targetPlayer->foodStore += obj->foodValue;
                                     
                                     int cap =
-                                        computeFoodCapacity( nextPlayer );
+                                        computeFoodCapacity( targetPlayer );
                                     
-                                    if( nextPlayer->foodStore > cap ) {
-                                        nextPlayer->foodStore = cap;
+                                    if( targetPlayer->foodStore > cap ) {
+                                        targetPlayer->foodStore = cap;
                                         }
-                                    nextPlayer->foodDecrementETASeconds =
+                                    targetPlayer->foodDecrementETASeconds =
                                         Time::getCurrentTime() +
                                         computeFoodDecrementTimeSeconds( 
-                                            nextPlayer );
+                                            targetPlayer );
                                     
                                     // get eat transtion
                                     TransRecord *r = 
@@ -3544,7 +3569,7 @@ int main() {
                                     nextPlayer->heldOriginX = 0;
                                     nextPlayer->heldOriginY = 0;
                                     
-                                    nextPlayer->foodUpdate = true;
+                                    targetPlayer->foodUpdate = true;
                                     }
                                 else if( obj->clothing != 'n' ) {
                                     // wearable
@@ -3572,42 +3597,42 @@ int main() {
                                     switch( obj->clothing ) {
                                         case 'h':
                                             clothingSlot = 
-                                                &( nextPlayer->clothing.hat );
+                                                &( targetPlayer->clothing.hat );
                                             clothingSlotIndex = 0;
                                             break;
                                         case 't':
                                             clothingSlot = 
-                                                &( nextPlayer->clothing.tunic );
+                                              &( targetPlayer->clothing.tunic );
                                             clothingSlotIndex = 1;
                                             break;
                                         case 'b':
                                             clothingSlot = 
-                                                &( nextPlayer->
+                                                &( targetPlayer->
                                                    clothing.bottom );
                                             clothingSlotIndex = 4;
                                             break;
                                         case 'p':
                                             clothingSlot = 
-                                                &( nextPlayer->
+                                                &( targetPlayer->
                                                    clothing.backpack );
                                             clothingSlotIndex = 5;
                                             break;
                                         case 's':
-                                            if( nextPlayer->clothing.backShoe
+                                            if( targetPlayer->clothing.backShoe
                                                 == NULL ) {
 
                                                 clothingSlot = 
-                                                    &( nextPlayer->
+                                                    &( targetPlayer->
                                                        clothing.backShoe );
                                                 clothingSlotIndex = 3;
 
                                                 }
                                             else if( 
-                                                nextPlayer->clothing.frontShoe
+                                                targetPlayer->clothing.frontShoe
                                                 == NULL ) {
                                                 
                                                 clothingSlot = 
-                                                    &( nextPlayer->
+                                                    &( targetPlayer->
                                                        clothing.frontShoe );
                                                 clothingSlotIndex = 2;
                                                 }
@@ -3615,7 +3640,7 @@ int main() {
                                                 // replace front shoe
 
                                                 clothingSlot = 
-                                                    &( nextPlayer->
+                                                    &( targetPlayer->
                                                        clothing.frontShoe );
                                                 clothingSlotIndex = 2;
                                                 }
@@ -3628,37 +3653,37 @@ int main() {
                                         int ind = clothingSlotIndex;
                                         
                                         oldCEtaDecay = 
-                                            nextPlayer->clothingEtaDecay[ind];
+                                            targetPlayer->clothingEtaDecay[ind];
                                         
                                         oldNumContained = 
-                                            nextPlayer->
+                                            targetPlayer->
                                             clothingContained[ind].size();
                                         
                                         if( oldNumContained > 0 ) {
                                             oldContainedIDs = 
-                                                nextPlayer->
+                                                targetPlayer->
                                                 clothingContained[ind].
                                                 getElementArray();
                                             oldContainedETADecays =
-                                                nextPlayer->
+                                                targetPlayer->
                                                 clothingContainedEtaDecays[ind].
                                                 getElementArray();
                                             }
                                         
                                         *clothingSlot = obj;
-                                        nextPlayer->clothingEtaDecay[ind] =
+                                        targetPlayer->clothingEtaDecay[ind] =
                                             oldEtaDecay;
                                         
-                                        nextPlayer->
+                                        targetPlayer->
                                             clothingContained[ind].
                                             deleteAll();
-                                        nextPlayer->
+                                        targetPlayer->
                                             clothingContainedEtaDecays[ind].
                                             deleteAll();
                                             
                                         if( nextPlayer->numContained > 0 ) {
                                             
-                                            nextPlayer->clothingContained[ind]
+                                            targetPlayer->clothingContained[ind]
                                                 .appendArray( 
                                                     nextPlayer->containedIDs,
                                                     nextPlayer->numContained );
@@ -3668,7 +3693,7 @@ int main() {
                                             nextPlayer->containedIDs = NULL;
                                             
 
-                                            nextPlayer->
+                                            targetPlayer->
                                                 clothingContainedEtaDecays[ind]
                                                 .appendArray( 
                                                     nextPlayer->
@@ -3701,49 +3726,51 @@ int main() {
                                     }
                                 }
                             else {
-                                // empty hand on self, remove clothing
+                                // empty hand on self/baby, remove clothing
 
                                 ObjectRecord **clothingSlot = NULL;
                                 int clothingSlotIndex;
                                 
 
                                 if( m.i == 2 &&
-                                    nextPlayer->clothing.frontShoe != NULL ) {
+                                    targetPlayer->clothing.frontShoe != NULL ) {
                                     clothingSlot = 
-                                        &( nextPlayer->clothing.frontShoe );
+                                        &( targetPlayer->clothing.frontShoe );
                                     clothingSlotIndex = 2;
                                     }
                                 else if( m.i == 3 &&
-                                         nextPlayer->clothing.backShoe 
+                                         targetPlayer->clothing.backShoe 
                                          != NULL ) {
                                     clothingSlot = 
-                                        &( nextPlayer->clothing.backShoe );
+                                        &( targetPlayer->clothing.backShoe );
                                     clothingSlotIndex = 3;
                                     }
                                 else if( m.i == 0 && 
-                                         nextPlayer->clothing.hat != NULL ) {
+                                         targetPlayer->clothing.hat != NULL ) {
                                     clothingSlot = 
-                                        &( nextPlayer->clothing.hat );
+                                        &( targetPlayer->clothing.hat );
                                     clothingSlotIndex = 0;
                                     }
                                 else if( m.i == 1 &&
-                                         nextPlayer->clothing.tunic != NULL ) {
+                                         targetPlayer->clothing.tunic 
+                                         != NULL ) {
                                     clothingSlot = 
-                                        &( nextPlayer->clothing.tunic );
+                                        &( targetPlayer->clothing.tunic );
                                     clothingSlotIndex = 1;
                                     }
                                 else if( m.i == 4 &&
-                                         nextPlayer->clothing.bottom != NULL ) {
+                                         targetPlayer->clothing.bottom 
+                                         != NULL ) {
                                     clothingSlot = 
-                                        &( nextPlayer->clothing.bottom );
+                                        &( targetPlayer->clothing.bottom );
                                     clothingSlotIndex = 4;
                                     }
                                 else if( m.i == 5 &&
-                                         nextPlayer->
+                                         targetPlayer->
                                          clothing.backpack != NULL ) {
                                     
                                     clothingSlot = 
-                                        &( nextPlayer->clothing.backpack );
+                                        &( targetPlayer->clothing.backpack );
                                     clothingSlotIndex = 5;
                                     }
 
@@ -3755,27 +3782,27 @@ int main() {
                                         ( *clothingSlot )->id;
                                     *clothingSlot = NULL;
                                     nextPlayer->holdingEtaDecay =
-                                        nextPlayer->clothingEtaDecay[ind];
-                                    nextPlayer->clothingEtaDecay[ind] = 0;
+                                        targetPlayer->clothingEtaDecay[ind];
+                                    targetPlayer->clothingEtaDecay[ind] = 0;
                                     
                                     nextPlayer->numContained =
-                                        nextPlayer->
+                                        targetPlayer->
                                         clothingContained[ind].size();
                                     
                                     nextPlayer->containedIDs =
-                                        nextPlayer->
+                                        targetPlayer->
                                         clothingContained[ind].
                                         getElementArray();
                                     
-                                    nextPlayer->clothingContained[ind].
+                                    targetPlayer->clothingContained[ind].
                                         deleteAll();
                                     
                                     nextPlayer->containedEtaDecays =
-                                        nextPlayer->
+                                        targetPlayer->
                                         clothingContainedEtaDecays[ind].
                                         getElementArray();
                                     
-                                    nextPlayer->
+                                    targetPlayer->
                                         clothingContainedEtaDecays[ind].
                                         deleteAll();
                                     

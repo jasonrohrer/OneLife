@@ -6013,10 +6013,13 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                         if( o == ourLiveObject ) {
                             p->hitSelf = true;
 
-                            if( cl != -1 ) {
-                                p->hitSelfClothingIndex = cl;
-                                p->hitSlotIndex = sl;
-                                }
+                            }
+                        else {
+                            p->hitOtherPerson = true;
+                            }
+                        if( cl != -1 ) {
+                            p->hitClothingIndex = cl;
+                            p->hitSlotIndex = sl;
                             }
                         }
                     }
@@ -6046,7 +6049,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
     p.hit = false;
     p.hitSelf = false;
     
-    p.hitSelfClothingIndex = -1;
+    p.hitClothingIndex = -1;
     
 
     // when we click in a square, only count as hitting something
@@ -6116,7 +6119,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     p.hit = false;
     p.hitSelf = false;
     
-    p.hitSelfClothingIndex = -1;
+    p.hitClothingIndex = -1;
     
 
     // when we click in a square, only count as hitting something
@@ -6161,7 +6164,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 nextActionMessageToSend = 
                     autoSprintf( "SELF %d %d %d#",
                                  clickDestX, clickDestY, 
-                                 p.hitSelfClothingIndex );
+                                 p.hitClothingIndex );
                 printf( "Use on self\n" );
                 }
             else {
@@ -6169,13 +6172,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     nextActionMessageToSend = 
                         autoSprintf( "DROP %d %d %d#",
                                      clickDestX, clickDestY, 
-                                     p.hitSelfClothingIndex  );
+                                     p.hitClothingIndex  );
                     }
                 else {
                     nextActionMessageToSend = 
                         autoSprintf( "SREMV %d %d %d %d#",
                                      clickDestX, clickDestY, 
-                                     p.hitSelfClothingIndex,
+                                     p.hitClothingIndex,
                                      p.hitSlotIndex );
                     printf( "Remove from own clothing container\n" );
                     }
@@ -6316,6 +6319,78 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     
         }
     
+    
+    // true if we're too far away to use on baby BUT we should execute
+    // UBABY once we get to destination
+
+    // if we're close enough to use on baby, we'll use on baby from where 
+    // we're standing
+    // and return
+    char useOnBabyLater = false;
+    
+    if( !killLater &&
+        p.hitOtherPerson &&
+        ! modClick && 
+        destID == 0 &&
+        ourLiveObject->holdingID > 0 &&
+        getObject( ourLiveObject->holdingID )->deadlyDistance == 0 &&
+        ( getObject( ourLiveObject->holdingID )->clothing != 'n' ||
+          getObject( ourLiveObject->holdingID )->foodValue > 0 ) ) {
+
+
+        doublePair targetPos = { (double)clickDestX, (double)clickDestY };
+
+        for( int i=0; i<gameObjects.size(); i++ ) {
+        
+            LiveObject *o = gameObjects.getElement( i );
+            
+            if( o->id != ourID ) {
+                if( distance( targetPos, o->currentPos ) < 1 ) {
+                    // clicked on someone
+                    
+                    if( ! ourLiveObject->inMotion && 
+                        ( isGridAdjacent( clickDestX, clickDestY,
+                                        ourLiveObject->xd, 
+                                        ourLiveObject->yd ) ||
+                          ( clickDestX == ourLiveObject->xd && 
+                            clickDestY == ourLiveObject->yd ) ) ) {
+
+                        
+                        if( nextActionMessageToSend != NULL ) {
+                            delete [] nextActionMessageToSend;
+                            nextActionMessageToSend = NULL;
+                            }
+            
+                        nextActionMessageToSend = 
+                            autoSprintf( "UBABY %d %d %d#",
+                                         clickDestX, clickDestY, 
+                                         p.hitClothingIndex );
+                        
+                        
+                        playerActionTargetX = clickDestX;
+                        playerActionTargetY = clickDestY;
+                        
+                        playerActionTargetNotAdjacent = true;
+                        
+                        printf( "UBABY with target player %d\n", o->id );
+
+                        return;
+                        }
+                    else {
+                        // too far away, but try to kill later,
+                        // once we walk there, using standard path-to-adjacent
+                        // code below
+                        useOnBabyLater = true;
+                        
+                        break;
+                        }
+                    }
+                }
+            }
+    
+        }
+
+
 
 
     char tryingToPickUpBaby = false;
@@ -6453,6 +6528,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 }
             }
         
+
         if( canExecute ) {
             
             const char *action = "";
@@ -6462,6 +6538,12 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             if( tryingToPickUpBaby ) {
                 action = "BABY";
+                send = true;
+                }
+            else if( useOnBabyLater ) {
+                action = "UBABY";
+                delete [] extra;
+                extra = autoSprintf( " %d", p.hitClothingIndex );
                 send = true;
                 }
             else if( modClick && destID == 0 && 

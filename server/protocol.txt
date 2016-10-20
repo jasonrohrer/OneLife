@@ -257,7 +257,9 @@ a full player update message for ALL players on entire server.
 Clients send moves in the following format:
 
 USE x y#
+BABY x y#
 SELF x y i#
+UBABY x y i#
 REMV x y i#
 SREMV x y c i#
 DROP x y c#
@@ -285,6 +287,9 @@ SELF is special case of USE action taken on self (to eat what we're holding
 	 
 BABY is special case of USE action taken on a baby to pick them up.
      They are dropped with the normal DROP action.
+
+UBABY is a special case of SELF applied to a baby (to feed baby food
+	  or add/remove clothing from baby).
 
 REMV is special case of removing an object from a container.
      i specifies the index of the container item to remove, or -1 to
