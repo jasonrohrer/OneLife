@@ -8,6 +8,7 @@
 
 
 #include "folderCache.h"
+#include "objectBank.h"
 
 
 
@@ -533,3 +534,63 @@ char isObjectUsed( int inObjectID ) {
 
     return false;
     }
+
+
+
+char isGrave( int inObjectID ) {
+    
+    ObjectRecord *r = getObject( inObjectID );
+    
+
+    if( r->deathMarker ) {
+        return true;
+        }
+
+    SimpleVector<int> seenIDs;
+    
+    seenIDs.push_back( inObjectID );
+
+    while( r != NULL && ! r->deathMarker ) {
+        int numResults;
+        int numRemaining;
+        
+        TransRecord **records =
+            searchProduces( r->id, 
+                            0,
+                            // only look at 1 thing that produces this
+                            // grave decay chains are necessarily single-parent
+                            1, 
+                            &numResults, &numRemaining );
+        
+        if( numResults == 0 || numRemaining != 0 ) {
+            r = NULL;
+            }
+        else {
+            int newID = records[0]->target;
+            
+            if( newID > 0 &&
+                seenIDs.getElementIndex( newID ) == -1 ) {
+                r = getObject( newID );
+
+                seenIDs.push_back( newID );
+                }
+            else {
+                r = NULL;
+                }
+            }
+        
+        if( records != NULL ) {
+            delete [] records;
+            }
+        }
+    
+    if( r == NULL  ) {
+        return false;
+        }
+    else {
+        return r->deathMarker;
+        }
+    }
+
+
+

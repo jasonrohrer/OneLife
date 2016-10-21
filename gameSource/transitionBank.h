@@ -96,4 +96,8 @@ void deleteTransFromBank( int inActor, int inTarget );
 char isObjectUsed( int inObjectID );
 
 
+// is this object a death marker OR descended from a death marker
+char isGrave( int inObjectID );
+
+
 #endif

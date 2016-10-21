@@ -4255,6 +4255,52 @@ int main() {
                     }
 
 
+                int oldObject = getMapObject( dropPos.x, dropPos.y );
+                
+                SimpleVector<int> oldContained;
+                SimpleVector<unsigned int> oldContainedETADecay;
+                
+
+                if( oldObject != 0 ) {
+                    
+                    if( isGrave( oldObject ) ) {
+                        int numContained;
+                        
+                        int *contained = getContained( dropPos.x, dropPos.y, 
+                                                       &numContained );
+                        
+                        unsigned int *containedETA =
+                            getContainedEtaDecay( dropPos.x, dropPos.y, 
+                                                  &numContained );
+                        
+                        if( numContained > 0 ) {
+                            oldContained.appendArray( contained, numContained );
+                            
+                            oldContainedETADecay.appendArray(
+                                containedETA, numContained );
+
+                            delete [] contained;
+                            delete [] containedETA;
+                            }
+                        setMapObject( dropPos.x, dropPos.y,  0 );
+                        clearAllContained( dropPos.x, dropPos.y );
+                        }
+                    else {
+                        ObjectRecord *r = getObject( oldObject );
+                        
+                        if( r->numSlots == 0 && ! r->permanent ) {
+                            oldContained.push_back( oldObject );
+                            oldContainedETADecay.push_back(
+                                getEtaDecay( dropPos.x, dropPos.y ) );
+                            
+                            setMapObject( dropPos.x, dropPos.y, 0 );
+                            }
+                        }
+                    
+                    
+                    }
+
+
                 // assume death markes non-blocking, so it's safe
                 // to drop one even if other players standing here
                 if( isMapSpotEmpty( dropPos.x, dropPos.y, false ) ) {
@@ -4388,7 +4434,17 @@ int main() {
                                 roomLeft --;
                                 }
                             }
-                            
+                        
+                        int oc = 0;
+                        
+                        while( oc < oldContained.size() && roomLeft > 0 ) {
+                            addContained( 
+                                dropPos.x, dropPos.y,
+                                oldContained.getElementDirect( oc ),
+                                oldContainedETADecay.getElementDirect( oc ) );
+                            oc++;
+                            roomLeft--;                                
+                            }
                         
                         char *changeLine =
                             getMapChangeLineString( dropPos.x, dropPos.y );
