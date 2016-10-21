@@ -4260,8 +4260,13 @@ int main() {
                 SimpleVector<int> oldContained;
                 SimpleVector<unsigned int> oldContainedETADecay;
                 
-
-                if( oldObject != 0 ) {
+                int nX[4] = { -1, 1,  0, 0 };
+                int nY[4] = {  0, 0, -1, 1 };
+                
+                int n = 0;
+                GridPos centerDropPos = dropPos;
+                
+                while( oldObject != 0 && n <= 4 ) {
                     
                     if( isGrave( oldObject ) ) {
                         int numContained;
@@ -4284,20 +4289,34 @@ int main() {
                             }
                         setMapObject( dropPos.x, dropPos.y,  0 );
                         clearAllContained( dropPos.x, dropPos.y );
+                        oldObject = 0;
                         }
                     else {
                         ObjectRecord *r = getObject( oldObject );
                         
-                        if( r->numSlots == 0 && ! r->permanent ) {
+                        if( r->numSlots == 0 && ! r->permanent 
+                            && ! r->rideable ) {
+                            
                             oldContained.push_back( oldObject );
                             oldContainedETADecay.push_back(
                                 getEtaDecay( dropPos.x, dropPos.y ) );
                             
                             setMapObject( dropPos.x, dropPos.y, 0 );
+                            oldObject = 0;
                             }
                         }
+
+                    oldObject = getMapObject( dropPos.x, dropPos.y );
                     
-                    
+                    if( oldObject != 0 ) {
+                        
+                        // try next neighbor
+                        dropPos.x = centerDropPos.x + nX[n];
+                        dropPos.y = centerDropPos.y + nY[n];
+                        
+                        n++;
+                        oldObject = getMapObject( dropPos.x, dropPos.y );
+                        }
                     }
 
 
