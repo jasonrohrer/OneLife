@@ -64,9 +64,10 @@ reborn "GET REBORN"
 
 
 
-pauseMessage1 "[ENTER] TO RESUME"
+pauseMessage1 "PAUSED"
 
-pauseMessage2 "OR TYPE SOMETHING:"
+pauseMessage2 "PRESS [ENTER] TO RESUME"
+
 
 pauseMessage3 "PRESS [%] TO QUIT"
 pauseMessage3b "YOU CAN'T QUIT NOW"
