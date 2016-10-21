@@ -686,7 +686,7 @@ LivingLifePage::LivingLifePage()
 
     for( int i=0; i<3; i++ ) {    
         mHungerSlipShowOffsets[i].x = -540;
-        mHungerSlipShowOffsets[i].y = -330;
+        mHungerSlipShowOffsets[i].y = -250;
     
         mHungerSlipHideOffsets[i].x = -540;
         mHungerSlipHideOffsets[i].y = -370;
@@ -697,6 +697,11 @@ LivingLifePage::LivingLifePage()
         }
     mHungerSlipShowOffsets[2].y += 20;
     mHungerSlipHideOffsets[2].y -= 20;
+
+    mHungerSlipShowOffsets[2].y -= 50;
+    mHungerSlipShowOffsets[1].y -= 30;
+    mHungerSlipShowOffsets[0].y += 18;
+
 
     mHungerSlipWiggleAmp[1] = 0.5;
     mHungerSlipWiggleAmp[2] = 0.5;
