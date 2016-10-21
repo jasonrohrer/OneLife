@@ -6427,7 +6427,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     
 
-    if( destID == 0 && !modClick && !tryingToPickUpBaby && 
+    if( destID == 0 && !modClick && !tryingToPickUpBaby && !useOnBabyLater && 
         ! ( clickDestX == ourLiveObject->xd && 
             clickDestY == ourLiveObject->yd ) ) {
         // a move to an empty spot where we're not already standing
@@ -6437,6 +6437,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
     else if( ( modClick && ourLiveObject->holdingID != 0 )
              || tryingToPickUpBaby
+             || useOnBabyLater
              || ( ! modClick && destID != 0 )
              || ( modClick && ourLiveObject->holdingID == 0 &&
                   destNumContained > 0 ) ) {
