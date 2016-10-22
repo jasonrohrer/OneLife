@@ -17,6 +17,8 @@
 
 #include "folderCache.h"
 
+#include "FastBoxBlurFilter.h"
+
 
 
 static int mapSize;
@@ -384,8 +386,72 @@ void stepSpriteBank() {
                     }
                             
                 if( spriteImage != NULL ) {
-                
+                    int numPixels = spriteImage->mWidth * spriteImage->mHeight;
+                    
+                    if( false ) {
                         
+                        unsigned char *rP = new unsigned char[ numPixels ];
+                        unsigned char *gP = new unsigned char[ numPixels ];
+                        unsigned char *bP = new unsigned char[ numPixels ];
+                        unsigned char *aP = new unsigned char[ numPixels ];
+                    
+                        int numTouched = ( spriteImage->mWidth - 2 ) *
+                            ( spriteImage->mHeight - 2 );
+                        
+                        int *touchedPixels = new int[ numTouched ];
+                        
+                        for( int i=0; i<numPixels; i++ ) {
+                            int p = i * 4;
+                            
+                            rP[i] = spriteImage->mRGBABytes[p++];
+                            gP[i] = spriteImage->mRGBABytes[p++];
+                            bP[i] = spriteImage->mRGBABytes[p++];
+                            aP[i] = spriteImage->mRGBABytes[p++];
+                            }
+                        
+                        int t = 0;
+                        for( int y=1; y<spriteImage->mHeight - 1; y++ ) {
+                            for( int x=1; x<spriteImage->mWidth - 1; x++ ) {
+                                int i = y * spriteImage->mWidth + x;
+                                
+                                touchedPixels[t] = i;
+                                t++;
+                                }
+                            }
+                        
+                        
+                        FastBoxBlurFilter blur;
+                        
+                        blur.applySubRegion( rP, touchedPixels, numTouched,
+                                             spriteImage->mWidth,
+                                             spriteImage->mHeight );
+                        blur.applySubRegion( gP, touchedPixels, numTouched,
+                                             spriteImage->mWidth,
+                                             spriteImage->mHeight );
+                        blur.applySubRegion( bP, touchedPixels, numTouched,
+                                             spriteImage->mWidth,
+                                             spriteImage->mHeight );
+                        blur.applySubRegion( aP, touchedPixels, numTouched,
+                                             spriteImage->mWidth,
+                                             spriteImage->mHeight );
+                        
+                    
+                        for( int i=0; i<numPixels; i++ ) {
+                            int p = i * 4;
+                            
+                            spriteImage->mRGBABytes[p++] = rP[i];
+                            spriteImage->mRGBABytes[p++] = gP[i];
+                            spriteImage->mRGBABytes[p++] = bP[i];
+                            spriteImage->mRGBABytes[p++] = aP[i];
+                            }
+
+                        delete [] rP;
+                        delete [] gP;
+                        delete [] bP;
+                        delete [] aP;
+                        delete [] touchedPixels;
+                        }
+                    
                     r->sprite =
                         fillSprite( spriteImage->mRGBABytes, 
                                     spriteImage->mWidth,
@@ -406,7 +472,6 @@ void stepSpriteBank() {
                         r->maxD = r->h;
                         }        
                     
-                    int numPixels = r->w * r->h;
                     r->hitMap = new char[ numPixels ];
                     
                     memset( r->hitMap, 1, numPixels );
