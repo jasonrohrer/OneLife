@@ -43,7 +43,6 @@ KeyEquivalentTextButton.cpp \
 ServerActionPage.cpp \
 FinalMessagePage.cpp \
 AutoUpdatePage.cpp \
-FastBoxBlurFilter.cpp \
 
 
 

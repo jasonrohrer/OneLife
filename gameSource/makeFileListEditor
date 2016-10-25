@@ -43,7 +43,6 @@ keyLegend.cpp \
 LoadingPage.cpp \
 folderCache.cpp \
 PickableStatics.cpp \
-FastBoxBlurFilter.cpp \
 
 
 GAME_GRAPHICS = \

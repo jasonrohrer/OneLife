@@ -10,7 +10,6 @@ typedef struct SpriteRecord {
 
         // NULL if image not loaded
         SpriteHandle sprite;
-        SpriteHandle blurSprite;
         
         char *tag;
 
@@ -112,7 +111,5 @@ void deleteSpriteFromBank( int inID );
 
 char getSpriteHit( int inID, int inXCenterOffset, int inYCenterOffset );
 
-
-void toggleBlurSprites( char inUseBlur );
 
 #endif

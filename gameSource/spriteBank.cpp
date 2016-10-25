@@ -17,8 +17,6 @@
 
 #include "folderCache.h"
 
-#include "FastBoxBlurFilter.h"
-
 
 
 static int mapSize;
@@ -354,18 +352,6 @@ void freeSpriteBank() {
     }
 
 
-static unsigned char gamma( unsigned char inV ) {
-    //return lrint(  sqrt( inV / 255.0 ) * 255 );
-    //return inV;
-    return lrint( pow( inV/255.0, 1.0/2.2 ) * 255 );
-    }
-
-static unsigned char deGamma( unsigned char inV ) {
-    //return lrint(  ( ( inV / 255.0 ) * (inV / 255.0 )  ) * 255 );
-    return lrint( pow( inV/255.0, 2.2 ) * 255 );
-    //return inV;
-    }
-
 
 void stepSpriteBank() {
     for( int i=0; i<loadingSprites.size(); i++ ) {
@@ -398,94 +384,8 @@ void stepSpriteBank() {
                     }
                             
                 if( spriteImage != NULL ) {
-                    int numPixels = spriteImage->mWidth * spriteImage->mHeight;
-                    
-                    if( false ) {
-                        int numBytes = 
-                            spriteImage->mWidth * spriteImage->mHeight * 4;
+                
                         
-                        unsigned char *blurBytes = 
-                            new unsigned char[ numBytes ];
-
-                        memcpy( blurBytes, spriteImage->mRGBABytes, numBytes );
-
-                        RawRGBAImage blurImage( blurBytes,
-                                                spriteImage->mWidth,
-                                                spriteImage->mHeight,
-                                                4 );
-
-                        unsigned char *rP = new unsigned char[ numPixels ];
-                        unsigned char *gP = new unsigned char[ numPixels ];
-                        unsigned char *bP = new unsigned char[ numPixels ];
-                        unsigned char *aP = new unsigned char[ numPixels ];
-                    
-                        int numTouched = ( spriteImage->mWidth - 2 ) *
-                            ( spriteImage->mHeight - 2 );
-                        
-                        int *touchedPixels = new int[ numTouched ];
-                        
-                        for( int i=0; i<numPixels; i++ ) {
-                            int p = i * 4;
-                            
-                            rP[i] = deGamma( blurImage.mRGBABytes[p++] );
-                            gP[i] = deGamma( blurImage.mRGBABytes[p++] );
-                            bP[i] = deGamma( blurImage.mRGBABytes[p++] );
-                            aP[i] = deGamma( blurImage.mRGBABytes[p++] );
-                            }
-                        
-                        int t = 0;
-                        for( int y=1; y<blurImage.mHeight - 1; y++ ) {
-                            for( int x=1; x<blurImage.mWidth - 1; x++ ) {
-                                int i = y * blurImage.mWidth + x;
-                                
-                                touchedPixels[t] = i;
-                                t++;
-                                }
-                            }
-                        
-                        
-                        FastBoxBlurFilter blur;
-                        
-                        for( int a=0; a<1; a++ ) {
-                            
-                            blur.applySubRegion( rP, touchedPixels, numTouched,
-                                                 blurImage.mWidth,
-                                                 blurImage.mHeight );
-                            blur.applySubRegion( gP, touchedPixels, numTouched,
-                                                 blurImage.mWidth,
-                                                 blurImage.mHeight );
-                            blur.applySubRegion( bP, touchedPixels, numTouched,
-                                                 blurImage.mWidth,
-                                                 blurImage.mHeight );
-                            blur.applySubRegion( aP, touchedPixels, numTouched,
-                                                 blurImage.mWidth,
-                                                 blurImage.mHeight );
-                            }
-                    
-                        for( int i=0; i<numPixels; i++ ) {
-                            int p = i * 4;
-                            
-                            blurImage.mRGBABytes[p++] = gamma( rP[i] );
-                            blurImage.mRGBABytes[p++] = gamma( gP[i] );
-                            blurImage.mRGBABytes[p++] = gamma( bP[i] );
-                            blurImage.mRGBABytes[p++] = gamma( aP[i] );
-                            }
-
-                        delete [] rP;
-                        delete [] gP;
-                        delete [] bP;
-                        delete [] aP;
-                        delete [] touchedPixels;
-
-                        r->blurSprite =
-                            fillSprite( blurImage.mRGBABytes, 
-                                        blurImage.mWidth,
-                                        blurImage.mHeight );
-                        }
-                    else {
-                        r->blurSprite = NULL;
-                        }
-                    
                     r->sprite =
                         fillSprite( spriteImage->mRGBABytes, 
                                     spriteImage->mWidth,
@@ -499,16 +399,14 @@ void stepSpriteBank() {
                     
                     setSpriteCenterOffset( r->sprite, offset );
 
-                    if( r->blurSprite != NULL ) {
-                        setSpriteCenterOffset( r->blurSprite, offset );
-                        }
-                    
+                                          
 
                     r->maxD = r->w;
                     if( r->h > r->maxD ) {
                         r->maxD = r->h;
                         }        
                     
+                    int numPixels = r->w * r->h;
                     r->hitMap = new char[ numPixels ];
                     
                     memset( r->hitMap, 1, numPixels );
@@ -634,14 +532,6 @@ char getUsesMultiplicativeBlending( int inID ) {
     
 
 
-static char useBlurSprites = false;
-
-void toggleBlurSprites( char inUseBlur ) {
-    useBlurSprites = inUseBlur;
-    }
-
-
-
 SpriteHandle getSprite( int inID ) {
     if( inID < mapSize ) {
         if( idMap[inID] != NULL ) {
@@ -651,11 +541,6 @@ SpriteHandle getSprite( int inID ) {
                 }
             
             idMap[inID]->numStepsUnused = 0;
-            
-            if( useBlurSprites && idMap[inID]->blurSprite != NULL ) {
-                return idMap[inID]->blurSprite;
-                }
-            
             return idMap[inID]->sprite;
             }
         }

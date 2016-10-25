@@ -1327,14 +1327,6 @@ void keyDown( unsigned char inASCII ) {
     if( inASCII == '=' ) {    
         saveScreenShot( "screen" );
         }
-
-    if( inASCII == 'B' ) {
-        toggleBlurSprites( true );
-        }
-    if( inASCII == 'b' ) {
-        toggleBlurSprites( false );
-        }
-    
     
     /*
     if( ! TextField::isAnyFocused() ) {    
