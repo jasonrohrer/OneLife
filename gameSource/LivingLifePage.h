@@ -343,13 +343,10 @@ class LivingLifePage : public GamePage {
         doublePair mHungerSlipPosOffset[3];
         doublePair mHungerSlipPosTargetOffset[3];
         
+        double mHungerSlipWiggleTime[3];
         double mHungerSlipWiggleAmp[3];
         double mHungerSlipWiggleSpeed[3];
         
-        double mHungerSlipWiggleCurrent[3];
-        double mHungerSlipWiggleDir[3];
-        
-
         // index of visble one, or -1
         int mHungerSlipVisible;
         
