@@ -691,9 +691,8 @@ LivingLifePage::LivingLifePage()
         mHungerSlipHideOffsets[i].x = -540;
         mHungerSlipHideOffsets[i].y = -370;
         
-        mHungerSlipWiggleTime[i] = 0;
         mHungerSlipWiggleAmp[i] = 0;
-        mHungerSlipWiggleSpeed[i] = 0.05;
+        mHungerSlipWiggleSpeed[i] = 0.02;
         }
     mHungerSlipShowOffsets[2].y += 20;
     mHungerSlipHideOffsets[2].y -= 20;
@@ -703,10 +702,10 @@ LivingLifePage::LivingLifePage()
     mHungerSlipShowOffsets[0].y += 18;
 
 
-    mHungerSlipWiggleAmp[1] = 0.5;
-    mHungerSlipWiggleAmp[2] = 0.5;
+    mHungerSlipWiggleAmp[1] = 45;
+    mHungerSlipWiggleAmp[2] = 56;
 
-    mHungerSlipWiggleSpeed[2] = 0.075;
+    mHungerSlipWiggleSpeed[2] = 0.03;
 
     
 
@@ -3159,11 +3158,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 double distFromHidden =
                     mHungerSlipPosOffset[i].y - mHungerSlipHideOffsets[i].y;
 
+                double distFraction = distFromHidden /
+                    ( mHungerSlipShowOffsets[i].y - 
+                      mHungerSlipHideOffsets[i].y );
+
+                int wiggle = 
+                    lrint( distFraction * mHungerSlipWiggleCurrent[i] );
+
                 // amplitude grows when we are further from
                 // hidden, and shrinks again as we go back down
-                slipPos.y += 
-                    ( 0.5 * ( 1 - cos( mHungerSlipWiggleTime[i] ) ) ) *
-                    mHungerSlipWiggleAmp[i] * distFromHidden;
+                slipPos.y +=  wiggle;
                 }
             
 
@@ -3494,8 +3498,9 @@ void LivingLifePage::step() {
                 mHungerSlipPosOffset[i] = mHungerSlipPosTargetOffset[i];
                 if( equal( mHungerSlipPosTargetOffset[i],
                            mHungerSlipHideOffsets[i] ) ) {
-                        // reset wiggle time
-                    mHungerSlipWiggleTime[i] = 0;
+                        // reset wiggle
+                    mHungerSlipWiggleCurrent[i] = 0;
+                    mHungerSlipWiggleDir[i] = 1;
                     }
                 }
             else {
@@ -3518,11 +3523,40 @@ void LivingLifePage::step() {
             }
         
         if( ! equal( mHungerSlipPosOffset[i],
-                     mHungerSlipHideOffsets[i] ) ) {
+                     mHungerSlipHideOffsets[i] ) &&
+            mHungerSlipWiggleAmp[i] != 0 ) {
             
-            // advance wiggle time
-            mHungerSlipWiggleTime[i] += 
-                frameRateFactor * mHungerSlipWiggleSpeed[i];
+            // advance wiggle
+           
+            // jump size is largest when we're closer to middle
+            // slows down at ends
+            int wiggleJump = lrint( 
+                    frameRateFactor * mHungerSlipWiggleSpeed[i] * 
+                    ( mHungerSlipWiggleAmp[i] 
+                      - fabs( mHungerSlipWiggleCurrent[i] -
+                              mHungerSlipWiggleAmp[i] / 2 ) ) );
+            
+            if( wiggleJump < 1 ) {
+                wiggleJump = 1;
+                }
+
+            mHungerSlipWiggleCurrent[i] += mHungerSlipWiggleDir[i] *
+                wiggleJump;
+            
+            if( mHungerSlipWiggleDir[i] > 0 &&
+                mHungerSlipWiggleCurrent[i] > mHungerSlipWiggleAmp[i] ) {
+                
+                mHungerSlipWiggleCurrent[i] = mHungerSlipWiggleAmp[i];
+                
+                mHungerSlipWiggleDir[i] = -1;
+                }
+            else if( mHungerSlipWiggleDir[i] < 0 &&
+                     mHungerSlipWiggleCurrent[i] < 0 ) {
+
+                mHungerSlipWiggleCurrent[i] = 0;
+                
+                mHungerSlipWiggleDir[i] = 1;
+                }
             }
         }
 
@@ -5831,7 +5865,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     for( int i=0; i<3; i++ ) {    
         mHungerSlipPosOffset[i] = mHungerSlipHideOffsets[i];
         mHungerSlipPosTargetOffset[i] = mHungerSlipPosOffset[i];
-        mHungerSlipWiggleTime[i] = 0;
+        mHungerSlipWiggleCurrent[i] = 0;
+        mHungerSlipWiggleDir[i] = 1;
         }
     mHungerSlipVisible = -1;
 
