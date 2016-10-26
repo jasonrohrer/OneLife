@@ -1420,11 +1420,13 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         char found;
         char *tag = replaceAll( des, " ", "", &found );
 
-        bakeSprite( tag,
-                    mCurrentObject.numSprites,
-                    mCurrentObject.sprites,
-                    mCurrentObject.spritePos );
+        int newID = bakeSprite( tag,
+                                mCurrentObject.numSprites,
+                                mCurrentObject.sprites,
+                                mCurrentObject.spritePos );
         
+        spritePickable.usePickable( newID );
+
         mSpritePicker.redoSearch();
         
         delete [] des;
