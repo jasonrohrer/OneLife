@@ -1236,7 +1236,8 @@ LivingLifePage::~LivingLifePage() {
     if( mCurrentDes != NULL ) {
         delete [] mCurrentDes;
         }
-    
+
+    mSentChatPhrases.deallocateStringElements();
     
     if( mServerSocket != -1 ) {
         closeSocket( mServerSocket );
@@ -1283,8 +1284,10 @@ LivingLifePage::~LivingLifePage() {
                     freeSprite( mGroundSprites[i]->squareTiles[y][x] );
                     }
                 delete [] mGroundSprites[i]->tiles[y];
+                delete [] mGroundSprites[i]->squareTiles[y];
                 }
             delete [] mGroundSprites[i]->tiles;
+            delete [] mGroundSprites[i]->squareTiles;
             
 
             freeSprite( mGroundSprites[i]->wholeSheet );
@@ -6935,6 +6938,7 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
                         }
                     }
                 }
+            delete [] curText;
             
             int newIndex = mSentChatPhrases.size();
             
