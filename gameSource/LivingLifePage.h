@@ -254,6 +254,7 @@ class LivingLifePage : public GamePage {
         virtual void pointerUp( float inX, float inY );
 
         virtual void keyDown( unsigned char inASCII );
+        virtual void specialKeyDown( int inKeyCode );
         
         virtual void keyUp( unsigned char inASCII );
 
@@ -333,6 +334,12 @@ class LivingLifePage : public GamePage {
         
         SimpleVector<char> mErasedNoteChars;
         SimpleVector<doublePair> mErasedNoteCharOffsets;
+        SimpleVector<float> mErasedNoteCharFades;
+
+        SimpleVector<char> mCurrentNoteChars;
+        SimpleVector<doublePair> mCurrentNoteCharOffsets;
+        
+        SimpleVector<char*> mSentChatPhrases;
 
 
         SpriteHandle mHungerSlipSprites[3];

@@ -3072,6 +3072,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 mErasedNoteCharOffsets.push_back(
                     sub( charPos.getElementDirect( j ),
                          paperPos ) );
+                
+                mErasedNoteCharFades.push_back( 1.0f );
                 }
             
             drawPosTemp.y -= lineSpacing;
@@ -3091,9 +3093,30 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         setDrawColor( 0, 0, 0, 1 );
         
+        mCurrentNoteChars.deleteAll();
+        mCurrentNoteCharOffsets.deleteAll();
+        
         for( int i=0; i<lines->size(); i++ ) {
-            pencilFont->drawString( lines->getElementDirect( i ), drawPos,
+            char *line = lines->getElementDirect( i );
+            
+            pencilFont->drawString( line, drawPos,
                                     alignLeft );
+
+            SimpleVector<doublePair> charPos;        
+                    
+            pencilFont->getCharPos( &charPos, 
+                                    line,
+                                    drawPos,
+                                    alignLeft );
+
+            int lineSize = strlen( line );
+            
+            for( int j=0; j<lineSize; j++ ) {
+                mCurrentNoteChars.push_back( line[j] );
+                mCurrentNoteCharOffsets.push_back( 
+                    sub( charPos.getElementDirect( j ), paperPos ) );
+                }
+
             drawPos.y -= lineSpacing;
             }
         lines->deallocateStringElements();
@@ -3126,6 +3149,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 mErasedNoteCharOffsets.push_back(
                     sub( charPos.getElementDirect( j ),
                          paperPos ) );
+                
+                mErasedNoteCharFades.push_back( 1.0f );
                 }
             
             drawPos.y -= lineSpacing;
@@ -3138,6 +3163,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     setDrawColor( 0, 0, 0, 1 );
     for( int i=0; i<mErasedNoteChars.size(); i++ ) {
+        setDrawFade( mErasedNoteCharFades.getElementDirect( i ) );
+        
         pencilErasedFont->
             drawCharacterSprite( 
                 mErasedNoteChars.getElementDirect( i ), 
@@ -3437,6 +3464,7 @@ void LivingLifePage::step() {
                 mLastKnownNoteLines.deallocateStringElements();
                 mErasedNoteChars.deleteAll();
                 mErasedNoteCharOffsets.deleteAll();
+                mErasedNoteCharFades.deleteAll();
                 }
             }
         else {
@@ -5827,6 +5855,9 @@ void LivingLifePage::makeActive( char inFresh ) {
     mLastKnownNoteLines.deallocateStringElements();
     mErasedNoteChars.deleteAll();
     mErasedNoteCharOffsets.deleteAll();
+    mErasedNoteCharFades.deleteAll();
+    
+    mSentChatPhrases.deallocateStringElements();
 
     for( int i=0; i<3; i++ ) {    
         mHungerSlipPosOffset[i] = mHungerSlipHideOffsets[i];
@@ -6844,6 +6875,17 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                     char *message = 
                         autoSprintf( "SAY 0 0 %s\n#",
                                      typedText );
+                    for( int i=0; i<mSentChatPhrases.size(); i++ ) {
+                        if( strcmp( 
+                                typedText, 
+                                mSentChatPhrases.getElementDirect(i) ) == 0 ) {
+                            delete [] mSentChatPhrases.getElementDirect(i);
+                            mSentChatPhrases.deleteElement(i);
+                            i--;
+                            }
+                        }
+                    mSentChatPhrases.push_back( stringDuplicate( typedText ) );
+                    
                     sendToSocket( mServerSocket, (unsigned char*)message, 
                                   strlen( message ) );
             
@@ -6862,6 +6904,118 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             break;
         }
     }
+
+
+
+void LivingLifePage::specialKeyDown( int inKeyCode ) {
+    if( inKeyCode == MG_KEY_UP ||
+        inKeyCode == MG_KEY_DOWN ) {
+        if( ! mSayField.isFocused() && inKeyCode == MG_KEY_UP ) {
+            if( mSentChatPhrases.size() > 0 ) {
+                mSayField.setText( 
+                    mSentChatPhrases.getElementDirect( 
+                        mSentChatPhrases.size() - 1 ) );
+                }
+            else {
+                mSayField.setText( "" );
+                }
+            mSayField.focus();
+            }
+        else {
+            char *curText = mSayField.getText();
+                
+            int curBufferIndex = -1;
+            
+            if( strcmp( curText, "" ) != 0 ) {
+                for( int i=mSentChatPhrases.size()-1; i>=0; i-- ) {
+                    if( strcmp( curText, mSentChatPhrases.getElementDirect(i) )
+                        == 0 ) {
+                        curBufferIndex = i;
+                        break;
+                        }
+                    }
+                }
+            
+            int newIndex = mSentChatPhrases.size();
+            
+            if( curBufferIndex != -1 ) {
+                newIndex = curBufferIndex;
+                
+                }
+
+            if( inKeyCode == MG_KEY_UP ) {
+                newIndex --;
+                }
+            else {
+                newIndex ++;
+                }
+
+            
+            if( newIndex >= 0 ) {
+                
+                if( mCurrentNoteChars.size() > 0 ) {
+                    // fade older erased chars 
+
+                    for( int i=0; i<mErasedNoteCharFades.size(); i++ ) {
+                        if( mErasedNoteCharFades.getElementDirect( i ) > 0.5 ) {
+                            *( mErasedNoteCharFades.getElement( i ) ) -= 0.2;
+                            }
+                        else {
+                            *( mErasedNoteCharFades.getElement( i ) ) -= 0.1;
+                            }
+                        
+                        if( mErasedNoteCharFades.getElementDirect( i ) <= 0 ) {
+                            mErasedNoteCharFades.deleteElement( i );
+                            mErasedNoteChars.deleteElement( i );
+                            mErasedNoteCharOffsets.deleteElement( i );
+                            i--;
+                            }
+                        }
+                    }
+                
+                // first, remove exact duplicates from erased
+                for( int i=0; i<mCurrentNoteChars.size(); i++ ) {
+                    char c = mCurrentNoteChars.getElementDirect( i );
+                    doublePair pos = 
+                        mCurrentNoteCharOffsets.getElementDirect( i );
+                    
+                    for( int j=0; j<mErasedNoteChars.size(); j++ ) {
+                        if( mErasedNoteChars.getElementDirect(j) == c 
+                            &&
+                            equal( mErasedNoteCharOffsets.getElementDirect(j),
+                                   pos ) ) {
+                            
+                            mErasedNoteChars.deleteElement( j );
+                            mErasedNoteCharOffsets.deleteElement( j );
+                            mErasedNoteCharFades.deleteElement( j );
+                            j--;
+                            }
+                        }
+                    }
+                
+
+                for( int i=0; i<mCurrentNoteChars.size(); i++ ) {
+                    mErasedNoteChars.push_back( 
+                        mCurrentNoteChars.getElementDirect( i ) );
+                    
+                    mErasedNoteCharOffsets.push_back(
+                        mCurrentNoteCharOffsets.getElementDirect( i ) );
+                    
+                    mErasedNoteCharFades.push_back( 1.0f );
+                    }
+                
+                if( newIndex >= mSentChatPhrases.size() ) {
+                    mSayField.setText( "" );
+                    }
+                else {
+                    mSayField.setText( 
+                        mSentChatPhrases.getElementDirect( newIndex ) );
+                    }
+                }
+            }
+        }
+    }
+
 
         
 void LivingLifePage::keyUp( unsigned char inASCII ) {
