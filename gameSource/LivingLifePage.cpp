@@ -663,7 +663,6 @@ LivingLifePage::LivingLifePage()
           mNotePaperSprite( loadSprite( "notePaper.tga", false ) ),
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
-          mLastMouseOverFade( 0.0 ),
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
           mGroundOverlaySprite( loadSprite( "ground.tga" ) ),
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
@@ -1789,21 +1788,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
          inObj->pendingActionAnimationProgress != 0 ) {
                     
         pos = add( pos, actionOffset );
-        }
-                
-                
-    float red, blue;
-                
-    red = 0;
-    blue = 0;
-                
-    if( inObj->heat > 0.75 ) {
-        red = 1;
-        }
-    else if( inObj->heat < 0.25 ) {
-        blue = 1;
-        }
-                
+        }                
 
                 
     AnimType curType = inObj->curAnim;
@@ -3324,11 +3309,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
         if( mCurMouseOverID != 0 || mLastMouseOverID != 0 ) {
             int idToDescribe = mCurMouseOverID;
             
-            double fade = 1.0;
-            
             if( mCurMouseOverID == 0 ) {
                 idToDescribe = mLastMouseOverID;
-                fade = mLastMouseOverFade;
                 }
 
             
@@ -5699,13 +5681,6 @@ void LivingLifePage::step() {
 
 
 
-    if( mLastMouseOverFade != 0 ) {
-        mLastMouseOverFade -= 0.05 * frameRateFactor;
-        if( mLastMouseOverFade < 0 ) {
-            mLastMouseOverFade = 0;
-            mLastMouseOverID = 0;
-            }
-        }
     
 
     if( mFirstServerMessagesReceived == 3 ) {
@@ -6120,7 +6095,6 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         }
     else if( mCurMouseOverID != 0 ) {
         mLastMouseOverID = mCurMouseOverID;
-        mLastMouseOverFade = 1.0;
         mCurMouseOverID = 0;
         }
     
