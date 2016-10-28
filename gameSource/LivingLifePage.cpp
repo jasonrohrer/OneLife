@@ -3567,6 +3567,11 @@ void LivingLifePage::step() {
 
         messageType type = getMessageType( message );
         
+        if( mapPullMode && type != MAP_CHUNK ) {
+            // ignore it---map is a frozen snapshot in time
+            // or as close as we can get to it
+            type = UNKNOWN;
+            }
         
         if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
