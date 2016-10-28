@@ -627,6 +627,7 @@ int mapPullEndY = 10;
 int mapPullCurrentX;
 int mapPullCurrentY;
 char mapPullCurrentSaved = false;
+char mapPullCurrentSent = false;
 char mapPullModeFinalImage = false;
 
 Image *mapPullTotalImage = NULL;
@@ -2282,6 +2283,9 @@ double addAmount = 0.25;
 void LivingLifePage::draw( doublePair inViewCenter, 
                            double inViewSize ) {
     
+    setViewCenterPosition( lastScreenViewCenter.x,
+                           lastScreenViewCenter.y );
+
     char stillWaitingBirth = false;
     
 
@@ -2912,7 +2916,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
     if( mapPullMode ) {
         
-        if( ! mapPullCurrentSaved ) {
+        float progress;
+        
+        if( ! mapPullCurrentSaved && 
+            isLiveObjectSetFullyLoaded( &progress ) ) {
+            
             int screenWidth, screenHeight;
             getScreenDimensions( &screenWidth, &screenHeight );
             
@@ -3846,8 +3854,8 @@ void LivingLifePage::step() {
                 if( x == mapPullCurrentX - size/2 && 
                     y == mapPullCurrentY - size/2 ) {
                     
-                    lastScreenViewCenter.x = mapPullCurrentX * 128;
-                    lastScreenViewCenter.y = mapPullCurrentY * 128;
+                    lastScreenViewCenter.x = mapPullCurrentX * CELL_D;
+                    lastScreenViewCenter.y = mapPullCurrentY * CELL_D;
                     setViewCenterPosition( lastScreenViewCenter.x,
                                            lastScreenViewCenter.y );
                     
@@ -3862,25 +3870,8 @@ void LivingLifePage::step() {
                             }
                         }
                     mapPullCurrentSaved = false;
-                    }
-                
-                
-                if( mapPullMode ) {
-                    char *message = autoSprintf( "MAP %d %d#",
-                                                 mapPullCurrentX,
-                                                 mapPullCurrentY );
-                    
-                    printf( "Sending message to server: %s\n", message );
-                    sendToSocket( mServerSocket, 
-                                  (unsigned char*)message, 
-                                  strlen( message ) );
-                    
-                    numServerBytesSent += strlen( message );
-                    overheadServerBytesSent += 52;
-                    
-                    delete [] message;
-                    }
-                
+                    mapPullCurrentSent = false;
+                    }                
                 }
             }
         else if( type == MAP_CHANGE ) {
@@ -5243,13 +5234,32 @@ void LivingLifePage::step() {
         message = getNextServerMessage();
         }
     
+
+    if( mapPullMode && mapPullCurrentSaved && ! mapPullCurrentSent ) {
+        char *message = autoSprintf( "MAP %d %d#",
+                                     mapPullCurrentX,
+                                     mapPullCurrentY );
+        
+        printf( "Sending message to server: %s\n", message );
+        sendToSocket( mServerSocket, 
+                      (unsigned char*)message, 
+                      strlen( message ) );
+        
+        numServerBytesSent += strlen( message );
+        overheadServerBytesSent += 52;
+        
+        delete [] message;
+        mapPullCurrentSent = true;
+        }
+
         
     // check if we're about to move off the screen
     LiveObject *ourLiveObject = getOurLiveObject();
 
 
     
-    if( mDoneLoadingFirstObjectSet && ourLiveObject != NULL ) {
+    if( !mapPullMode && 
+        mDoneLoadingFirstObjectSet && ourLiveObject != NULL ) {
         
 
         // current age
@@ -5336,7 +5346,7 @@ void LivingLifePage::step() {
             }
         
 
-        if( viewChange && ! mapPullMode ) {
+        if( viewChange ) {
             
             setViewCenterPosition( lastScreenViewCenter.x, 
                                    lastScreenViewCenter.y );
@@ -5712,7 +5722,7 @@ void LivingLifePage::step() {
                 mapPullCurrentY = mapPullStartY;
 
                 if( mapPullMode ) {
-                    mapPullCurrentSaved = false;
+                    mapPullCurrentSaved = true;
                     mapPullModeFinalImage = false;
                     
                     char *message = autoSprintf( "MAP %d %d#",
@@ -5728,6 +5738,8 @@ void LivingLifePage::step() {
                     numServerBytesSent += strlen( message );
                     overheadServerBytesSent += 52;
                     
+                    mapPullCurrentSent = true;
+
                     delete [] message;
 
                     int screenWidth, screenHeight;
