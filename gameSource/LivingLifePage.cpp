@@ -1314,6 +1314,12 @@ LivingLifePage::~LivingLifePage() {
 
 
 
+char LivingLifePage::isMapBeingPulled() {
+    return mapPullMode;
+    }
+
+
+
 void LivingLifePage::adjustAllFrameCounts( double inOldFrameRateFactor,
                                            double inNewFrameRateFactor ) {
     int numMapCells = mMapD * mMapD;
@@ -1514,28 +1520,30 @@ void LivingLifePage::drawMapCell( int inMapI,
             
     if( oID > 0 ) {
         
-        mMapAnimationFrameCount[ inMapI ] ++;
-        mMapAnimationLastFrameCount[ inMapI ] ++;
+        if( !mapPullMode ) {
+            
+            mMapAnimationFrameCount[ inMapI ] ++;
+            mMapAnimationLastFrameCount[ inMapI ] ++;
                 
-        if( mMapLastAnimFade[ inMapI ] > 0 ) {
-            mMapLastAnimFade[ inMapI ] -= 0.05 * frameRateFactor;
-            if( mMapLastAnimFade[ inMapI ] < 0 ) {
-                mMapLastAnimFade[ inMapI ] = 0;
-
-                if( mMapCurAnimType[ inMapI ] != ground ) {
-                    // transition to ground now
-                    mMapLastAnimType[ inMapI ] = mMapCurAnimType[ inMapI ];
-                    mMapCurAnimType[ inMapI ] = ground;
-                    mMapLastAnimFade[ inMapI ] = 1;
+            if( mMapLastAnimFade[ inMapI ] > 0 ) {
+                mMapLastAnimFade[ inMapI ] -= 0.05 * frameRateFactor;
+                if( mMapLastAnimFade[ inMapI ] < 0 ) {
+                    mMapLastAnimFade[ inMapI ] = 0;
                     
-                    mMapAnimationLastFrameCount[ inMapI ] =
-                        mMapAnimationFrameCount[ inMapI ];
-
-                    mMapAnimationFrameCount[ inMapI ] = 0;
+                    if( mMapCurAnimType[ inMapI ] != ground ) {
+                        // transition to ground now
+                        mMapLastAnimType[ inMapI ] = mMapCurAnimType[ inMapI ];
+                        mMapCurAnimType[ inMapI ] = ground;
+                        mMapLastAnimFade[ inMapI ] = 1;
+                        
+                        mMapAnimationLastFrameCount[ inMapI ] =
+                            mMapAnimationFrameCount[ inMapI ];
+                        
+                        mMapAnimationFrameCount[ inMapI ] = 0;
+                        }
                     }
                 }
             }
-                
 
         doublePair pos = { (double)inScreenX, (double)inScreenY };
         double rot = 0;
@@ -3662,9 +3670,17 @@ void LivingLifePage::step() {
                 // starts uknown, not empty
                 newMap[i] = -1;
                 newMapBiomes[i] = -1;
+
+                int newX = i % mMapD;
+                int newY = i / mMapD;
+
+                int worldX = newX + mMapOffsetX - mMapD / 2;
+                int worldY = newY + mMapOffsetY - mMapD / 2;
                 
-                newMapAnimationFrameCount[i] = 
-                    randSource.getRandomBoundedInt( 0, 10000 );
+                // each cell is different, but always the same
+                newMapAnimationFrameCount[i] =
+                    lrint( getXYRandom( worldX, worldY ) * 10000 );
+                
                 newMapCurAnimType[i] = ground;
                 newMapLastAnimFade[i] = ground;
                 newMapLastAnimFade[i] = 0;
@@ -3674,8 +3690,6 @@ void LivingLifePage::step() {
                 newMapTileFlips[i] = false;
                 
 
-                int newX = i % mMapD;
-                int newY = i / mMapD;
                 
                 int oldX = newX - xMove;
                 int oldY = newY - yMove;
@@ -5357,6 +5371,7 @@ void LivingLifePage::step() {
     
     
     // update all positions for moving objects
+    if( !mapPullMode )
     for( int i=0; i<gameObjects.size(); i++ ) {
         
         LiveObject *o = gameObjects.getElement( i );

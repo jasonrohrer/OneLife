@@ -1408,6 +1408,7 @@ void drawFrame( char inUpdate ) {
 
     double recentFPS = getRecentFrameRate();
 
+    if( ! livingLifePage->isMapBeingPulled() )
     if( recentFPS < 0.90 * ( 60.0 / frameRateFactor ) 
         ||
         recentFPS > 1.10 * ( 60.0 / frameRateFactor ) ) {

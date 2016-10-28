@@ -235,6 +235,7 @@ class LivingLifePage : public GamePage {
         LivingLifePage();
         ~LivingLifePage();
         
+        char isMapBeingPulled();
 
         // prevent a jitter when frameRateFactor changes due to fps lag
         void adjustAllFrameCounts( double inOldFrameRateFactor,
