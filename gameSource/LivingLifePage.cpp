@@ -45,6 +45,7 @@ extern Font *pencilErasedFont;
 extern doublePair lastScreenViewCenter;
 
 extern double viewWidth;
+extern double viewHeight;
 
 extern int screenW, screenH;
 
@@ -60,6 +61,9 @@ static JenkinsRandomSource randSource;
 
 static int lastScreenMouseX, lastScreenMouseY;
 static char mouseDown = false;
+
+static int screenCenterPlayerOffsetX, screenCenterPlayerOffsetY;
+
 
 
 #define CELL_D 128
@@ -5318,25 +5322,69 @@ void LivingLifePage::step() {
 
             // push camera out in front
             
-            doublePair farthestPathPos;
+            screenCenterPlayerOffsetX -= 
+                cameraFollowsObject->currentMoveDirection.x;
             
-            farthestPathPos.x = (double)cameraFollowsObject->xd;
-            farthestPathPos.y = (double)cameraFollowsObject->yd;
+            screenCenterPlayerOffsetY -= 
+                cameraFollowsObject->currentMoveDirection.y;
             
-            doublePair moveDir = sub( farthestPathPos, 
-                                      cameraFollowsObject->currentPos );
-                        
-            
-            if( length( moveDir ) > 2 ) {
-                moveDir = mult( normalize( moveDir ), 2 );
+            if( screenCenterPlayerOffsetX < -viewWidth / 4 ) {
+                screenCenterPlayerOffsetX =  -viewWidth / 4;
                 }
-                
-            moveDir = mult( moveDir, CELL_D );
-            
-            
-            screenTargetPos = add( screenTargetPos, moveDir );
+            if( screenCenterPlayerOffsetX >  viewWidth / 4 ) {
+                screenCenterPlayerOffsetX =  viewWidth / 4;
+                }
+            if( screenCenterPlayerOffsetY < -viewHeight / 4 ) {
+                screenCenterPlayerOffsetY =  -viewHeight / 4;
+                }
+            if( screenCenterPlayerOffsetY >  viewHeight / 4 ) {
+                screenCenterPlayerOffsetY =  viewHeight / 4;
+                }
             }
+        else if( false ) { // skip for now
+            // stopped moving
+            
+            if( screenCenterPlayerOffsetX > 0 ) {
+                int speed = screenCenterPlayerOffsetX / 10;
+                
+                if( speed == 0 || speed > 2 ) {
+                    speed = 1;
+                    }
+                screenCenterPlayerOffsetX -= speed;
+                }
+            if( screenCenterPlayerOffsetX < 0 ) {
+                int speed = screenCenterPlayerOffsetX / 10;
+                
+                if( speed == 0 || speed < -2 ) {
+                    speed = -1;
+                    }
+                screenCenterPlayerOffsetX -= speed;
+                }
+            
+            if( screenCenterPlayerOffsetY > 0 ) {
+                int speed = screenCenterPlayerOffsetY / 10;
+                
+                if( speed == 0 || speed > 2 ) {
+                    speed = 1;
+                    }
+                screenCenterPlayerOffsetY -= speed;
+                }
+            if( screenCenterPlayerOffsetY < 0 ) {
+                int speed = screenCenterPlayerOffsetY / 10;
+                
+                if( speed == 0 || speed < -2 ) {
+                    speed = -1;
+                    }
+                screenCenterPlayerOffsetY -= speed;
+                }
+            
+            }
+
+
+        screenTargetPos.x -= screenCenterPlayerOffsetX;
+        screenTargetPos.y -= screenCenterPlayerOffsetY;
         
+
         // whole pixels
         screenTargetPos.x = round( screenTargetPos.x );
         screenTargetPos.y = round( screenTargetPos.y );
@@ -5347,7 +5395,7 @@ void LivingLifePage::step() {
         char viewChange = false;
         
         int maxR = 50;
-        double moveSpeedFactor = .5;
+        double moveSpeedFactor = 4;
         
 
         if( length( dir ) > maxR ) {
@@ -5872,6 +5920,10 @@ void LivingLifePage::makeActive( char inFresh ) {
     // unhold E key
     mEKeyDown = false;
     mouseDown = false;
+    
+    screenCenterPlayerOffsetX = 0;
+    screenCenterPlayerOffsetY = 0;
+    
 
     if( !inFresh ) {
         return;
