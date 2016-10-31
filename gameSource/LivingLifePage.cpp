@@ -57,6 +57,11 @@ extern char *userEmail;
 
 static JenkinsRandomSource randSource;
 
+
+static int lastScreenMouseX, lastScreenMouseY;
+static char mouseDown = false;
+
+
 #define CELL_D 128
 
 
@@ -5584,13 +5589,26 @@ void LivingLifePage::step() {
                     o->currentSpeed = 0;
 
 
-                    if( nextActionMessageToSend == NULL ) {
-                        // simply stop walking
-                        if( o->holdingID != 0 ) {
-                            addNewAnim( o, ground2 );
+                    if( o->id != ourID || 
+                        nextActionMessageToSend == NULL ) {
+                        
+                        if( o->id == ourID && mouseDown ) {
+                            float worldMouseX, worldMouseY;
+                            
+                            screenToWorld( lastScreenMouseX,
+                                           lastScreenMouseY,
+                                           &worldMouseX,
+                                           &worldMouseY );
+                            pointerDown( worldMouseX, worldMouseY );
                             }
                         else {
-                            addNewAnim( o, ground );
+                            // simply stop walking
+                            if( o->holdingID != 0 ) {
+                                addNewAnim( o, ground2 );
+                                }
+                            else {
+                                addNewAnim( o, ground );
+                                }
                             }
                         }
 
@@ -5853,6 +5871,7 @@ void LivingLifePage::step() {
 void LivingLifePage::makeActive( char inFresh ) {
     // unhold E key
     mEKeyDown = false;
+    mouseDown = false;
 
     if( !inFresh ) {
         return;
@@ -6085,7 +6104,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
 
 
 void LivingLifePage::pointerMove( float inX, float inY ) {
-
+    getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
 
     PointerHitRecord p;
     
@@ -6139,6 +6158,8 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
 
 
 void LivingLifePage::pointerDown( float inX, float inY ) {
+    mouseDown = true;
+    getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
     
     if( mFirstServerMessagesReceived != 3 ) {
         return;
@@ -6830,9 +6851,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
 
 void LivingLifePage::pointerDrag( float inX, float inY ) {
+    getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
     }
 
 void LivingLifePage::pointerUp( float inX, float inY ) {
+    mouseDown = false;
     }
 
 void LivingLifePage::keyDown( unsigned char inASCII ) {
