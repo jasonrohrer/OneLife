@@ -5322,23 +5322,47 @@ void LivingLifePage::step() {
 
             // push camera out in front
             
+
+            double moveScale = 40 * cameraFollowsObject->currentSpeed;
+            if( ( screenCenterPlayerOffsetX < 0 &&
+                  cameraFollowsObject->currentMoveDirection.x < 0 )
+                ||
+                ( screenCenterPlayerOffsetX > 0 &&
+                  cameraFollowsObject->currentMoveDirection.x > 0 ) ) {
+                
+                moveScale += abs( screenCenterPlayerOffsetX );
+                }
+            
             screenCenterPlayerOffsetX -= 
-                cameraFollowsObject->currentMoveDirection.x;
+                lrint( moveScale * 
+                       cameraFollowsObject->currentMoveDirection.x );
             
+            moveScale = 40 * cameraFollowsObject->currentSpeed;
+            if( ( screenCenterPlayerOffsetY < 0 &&
+                  cameraFollowsObject->currentMoveDirection.y < 0 )
+                ||
+                ( screenCenterPlayerOffsetY > 0 &&
+                  cameraFollowsObject->currentMoveDirection.y > 0 ) ) {
+                
+                moveScale += abs( screenCenterPlayerOffsetY );
+                }
+            
+
             screenCenterPlayerOffsetY -= 
-                cameraFollowsObject->currentMoveDirection.y;
-            
-            if( screenCenterPlayerOffsetX < -viewWidth / 4 ) {
-                screenCenterPlayerOffsetX =  -viewWidth / 4;
+                lrint( moveScale * 
+                       cameraFollowsObject->currentMoveDirection.y );
+ 
+            if( screenCenterPlayerOffsetX < -viewWidth / 3 ) {
+                screenCenterPlayerOffsetX =  -viewWidth / 3;
                 }
-            if( screenCenterPlayerOffsetX >  viewWidth / 4 ) {
-                screenCenterPlayerOffsetX =  viewWidth / 4;
+            if( screenCenterPlayerOffsetX >  viewWidth / 3 ) {
+                screenCenterPlayerOffsetX =  viewWidth / 3;
                 }
-            if( screenCenterPlayerOffsetY < -viewHeight / 4 ) {
-                screenCenterPlayerOffsetY =  -viewHeight / 4;
+            if( screenCenterPlayerOffsetY < -viewHeight / 5 ) {
+                screenCenterPlayerOffsetY =  -viewHeight / 5;
                 }
-            if( screenCenterPlayerOffsetY >  viewHeight / 4 ) {
-                screenCenterPlayerOffsetY =  viewHeight / 4;
+            if( screenCenterPlayerOffsetY >  viewHeight / 6 ) {
+                screenCenterPlayerOffsetY =  viewHeight / 6;
                 }
             }
         else if( false ) { // skip for now
@@ -5381,8 +5405,13 @@ void LivingLifePage::step() {
             }
 
 
-        screenTargetPos.x -= screenCenterPlayerOffsetX;
-        screenTargetPos.y -= screenCenterPlayerOffsetY;
+        screenTargetPos.x = 
+            CELL_D * cameraFollowsObject->currentPos.x - 
+            screenCenterPlayerOffsetX;
+        
+        screenTargetPos.y = 
+            CELL_D * cameraFollowsObject->currentPos.y - 
+            screenCenterPlayerOffsetY;
         
 
         // whole pixels
@@ -5394,15 +5423,48 @@ void LivingLifePage::step() {
         
         char viewChange = false;
         
-        int maxR = 50;
-        double moveSpeedFactor = cameraFollowsObject->currentSpeed;
+        int maxRX = viewWidth / 15;
+        int maxRY = viewHeight / 15;
+        int maxR = 0;
+        double moveSpeedFactor = 20 * cameraFollowsObject->currentSpeed;
         
         if( moveSpeedFactor < 1 ) {
             moveSpeedFactor = 1;
             }
 
-        if( length( dir ) > maxR ) {
+        if( abs( dir.x ) > maxRX ) {
+            double moveScale = moveSpeedFactor * sqrt( abs(dir.x) - maxRX ) 
+                * frameRateFactor;
+
+            doublePair moveStep = mult( normalize( dir ), moveScale );
             
+            // whole pixels
+
+            moveStep.x = lrint( moveStep.x );
+                        
+            if( abs( moveStep.x ) > 0 ) {
+                lastScreenViewCenter.x += moveStep.x;
+                viewChange = true;
+                }
+            }
+        if( abs( dir.y ) > maxRY ) {
+            double moveScale = moveSpeedFactor * sqrt( abs(dir.y) - maxRY ) 
+                * frameRateFactor;
+
+            doublePair moveStep = mult( normalize( dir ), moveScale );
+            
+            // whole pixels
+
+            moveStep.y = lrint( moveStep.y );
+                        
+            if( abs( moveStep.y ) > 0 ) {
+                lastScreenViewCenter.y += moveStep.y;
+                viewChange = true;
+                }
+            }
+        
+
+        if( false && length( dir ) > maxR ) {
             double moveScale = moveSpeedFactor * sqrt( length( dir ) - maxR ) 
                 * frameRateFactor;
 
