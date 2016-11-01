@@ -5629,37 +5629,28 @@ void LivingLifePage::step() {
                     }
                 }
             else {
+
+                if( o->id == ourID && mouseDown ) {
+                    float worldMouseX, worldMouseY;
+                    
+                    screenToWorld( lastScreenMouseX,
+                                   lastScreenMouseY,
+                                   &worldMouseX,
+                                   &worldMouseY );
+                    pointerDown( worldMouseX, worldMouseY );
+                    }
+
                 if( distance( endPos, o->currentPos )
                     < o->currentSpeed ) {
 
                     // reached destination
-                    
-                    char stopWalking = false;
+                    o->currentPos = endPos;
+                    o->currentSpeed = 0;
 
 
                     if( o->id != ourID || 
                         nextActionMessageToSend == NULL ) {
-                        
-                        if( o->id == ourID && mouseDown ) {
-                            float worldMouseX, worldMouseY;
-                            
-                            screenToWorld( lastScreenMouseX,
-                                           lastScreenMouseY,
-                                           &worldMouseX,
-                                           &worldMouseY );
-                            pointerDown( worldMouseX, worldMouseY );
-                            }
-                        else {
-                            stopWalking = true;
-                            }
-                        }
-                    else {
-                        stopWalking = true;
-                        }
-
-                    if( stopWalking ) {
-                        o->currentPos = endPos;
-                        o->currentSpeed = 0;
+                        // simply stop walking
                         if( o->holdingID != 0 ) {
                             addNewAnim( o, ground2 );
                             }
@@ -5667,23 +5658,12 @@ void LivingLifePage::step() {
                             addNewAnim( o, ground );
                             }
                         }
-                    else {
-                        // keep walking after this
-                        // don't cause hiccup
-                        
-                        addNewAnim( o, moving );
-                        
-                        o->currentPos = add( o->currentPos,
-                                             mult( o->currentMoveDirection,
-                                                   o->currentSpeed ) );
-                        }
-                    
-                    
+
                     printf( "Reached dest %f seconds early\n",
                             o->moveEtaTime - game_getCurrentTime() );
                     }
                 else {
-                    
+
                     addNewAnim( o, moving );
                     
                     o->currentPos = add( o->currentPos,
