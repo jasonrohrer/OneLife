@@ -5633,8 +5633,8 @@ void LivingLifePage::step() {
                     < o->currentSpeed ) {
 
                     // reached destination
-                    o->currentPos = endPos;
-                    o->currentSpeed = 0;
+                    
+                    char stopWalking = false;
 
 
                     if( o->id != ourID || 
@@ -5650,21 +5650,40 @@ void LivingLifePage::step() {
                             pointerDown( worldMouseX, worldMouseY );
                             }
                         else {
-                            // simply stop walking
-                            if( o->holdingID != 0 ) {
-                                addNewAnim( o, ground2 );
-                                }
-                            else {
-                                addNewAnim( o, ground );
-                                }
+                            stopWalking = true;
                             }
                         }
+                    else {
+                        stopWalking = true;
+                        }
 
+                    if( stopWalking ) {
+                        o->currentPos = endPos;
+                        o->currentSpeed = 0;
+                        if( o->holdingID != 0 ) {
+                            addNewAnim( o, ground2 );
+                            }
+                        else {
+                            addNewAnim( o, ground );
+                            }
+                        }
+                    else {
+                        // keep walking after this
+                        // don't cause hiccup
+                        
+                        addNewAnim( o, moving );
+                        
+                        o->currentPos = add( o->currentPos,
+                                             mult( o->currentMoveDirection,
+                                                   o->currentSpeed ) );
+                        }
+                    
+                    
                     printf( "Reached dest %f seconds early\n",
                             o->moveEtaTime - game_getCurrentTime() );
                     }
                 else {
-
+                    
                     addNewAnim( o, moving );
                     
                     o->currentPos = add( o->currentPos,
