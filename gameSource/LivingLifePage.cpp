@@ -5702,7 +5702,19 @@ void LivingLifePage::step() {
                                    lastScreenMouseY,
                                    &worldMouseX,
                                    &worldMouseY );
-                    pointerDown( worldMouseX, worldMouseY );
+
+                    doublePair worldMouse = { worldMouseX, worldMouseY };
+                    
+                    doublePair worldCurrent = mult( o->currentPos,
+                                                    CELL_D );
+                    doublePair delta = sub( worldMouse, worldCurrent );
+
+                    if( abs( delta.x ) > CELL_D * 4 
+                        ||
+                        abs( delta.y ) > CELL_D * 2 ) {
+                        
+                        pointerDown( worldMouseX, worldMouseY );
+                        }
                     }
 
                 if( distance( endPos, o->currentPos )
