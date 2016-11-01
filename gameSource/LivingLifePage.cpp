@@ -5395,8 +5395,11 @@ void LivingLifePage::step() {
         char viewChange = false;
         
         int maxR = 50;
-        double moveSpeedFactor = 4;
+        double moveSpeedFactor = cameraFollowsObject->currentSpeed;
         
+        if( moveSpeedFactor < 1 ) {
+            moveSpeedFactor = 1;
+            }
 
         if( length( dir ) > maxR ) {
             
