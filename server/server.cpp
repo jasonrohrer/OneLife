@@ -18,10 +18,15 @@
 
 #include "minorGems/game/doublePair.h"
 
+#include "minorGems/util/log/AppLog.h"
+#include "minorGems/util/log/FileLog.h"
+
 
 #include "map.h"
 #include "../gameSource/transitionBank.h"
 #include "../gameSource/objectBank.h"
+
+#include "lifeLog.h"
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
 
@@ -1918,7 +1923,13 @@ void processedLogggedInPlayer( Socket *inSock,
 
 int main() {
 
+    AppLog::setLog( new FileLog( "log.txt" ) );
+    AppLog::setLoggingLevel( Log::DETAIL_LEVEL );
+    AppLog::printAllMessages( true );
+
     printf( "\nServer starting up\n\n" );
+
+    initLifeLog();
 
     nextSequenceNumber = 
         SettingsManager::getIntSetting( "sequenceNumber", 1 );
