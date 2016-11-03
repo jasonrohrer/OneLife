@@ -113,7 +113,7 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
 
 // killer email NULL if died of natural causes
 void logDeath( int inPlayerID, char *inPlayerEmail,
-               int inMapX, int inMapY, int inKillerID, 
+               int inMapX, int inMapY, char inDisconnect, int inKillerID, 
                char *inKillerEmail ) {
 
 
@@ -125,7 +125,12 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
             char *causeString;
         
             if( inKillerEmail == NULL ) {
-                causeString = stringDuplicate( "hunger" );
+                if( inDisconnect ) {
+                    causeString = stringDuplicate( "disconnect" );
+                    }
+                else {
+                    causeString = stringDuplicate( "hunger" );
+                    }
                 }
             else {
                 causeString = autoSprintf( "killer_%d_%s",
