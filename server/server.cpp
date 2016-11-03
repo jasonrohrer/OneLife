@@ -1946,7 +1946,9 @@ void processedLogggedInPlayer( Socket *inSock,
 
 int main() {
 
-    AppLog::setLog( new FileLog( "log.txt" ) );
+    // make backup and delete old backup every week
+    AppLog::setLog( new FileLog( "log.txt", 604,800 ) );
+
     AppLog::setLoggingLevel( Log::DETAIL_LEVEL );
     AppLog::printAllMessages( true );
 
