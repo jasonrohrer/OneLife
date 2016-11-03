@@ -991,7 +991,10 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     randSource.getRandomBoundedInt( 
                         newDecayT->autoDecaySeconds * 0.9, 
                         newDecayT->autoDecaySeconds );
-
+                
+                if( tweakedSeconds < 1 ) {
+                    tweakedSeconds = 1;
+                    }
                 mapETA = time(NULL) + tweakedSeconds;
                 }
             else {
@@ -1024,11 +1027,15 @@ int checkDecayObject( int inX, int inY, int inID ) {
         
         // randomize it so that every same object on map
         // doesn't cycle at same time
-        
-        mapETA = time( NULL ) + 
+        int decayTime = 
             randSource.getRandomBoundedInt( t->autoDecaySeconds / 2 , 
                                             t->autoDecaySeconds );
+        if( decayTime < 1 ) {
+            decayTime = 1;
+            }
         
+        mapETA = time( NULL ) + decayTime;
+            
         setEtaDecay( inX, inY, mapETA );
         }
     
@@ -1103,6 +1110,10 @@ void checkDecayContained( int inX, int inY ) {
                                 newDecayT->autoDecaySeconds * 0.9, 
                                 newDecayT->autoDecaySeconds );
 
+                        if( tweakedSeconds < 1 ) {
+                            tweakedSeconds = 1;
+                            }
+                        
                         mapETA = 
                             time(NULL) +
                             lrint( tweakedSeconds / 
