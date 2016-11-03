@@ -7,6 +7,8 @@ typedef struct ChangePosition {
         // of distance (like position of a new player in the world,
         // or the removal of a player).
         char global;
+        
+        int responsiblePlayerID;
     } ChangePosition;
 
 
@@ -28,6 +30,11 @@ int getChunkDimension();
 unsigned char *getChunkMessage( int inCenterX, int inCenterY,
                                 int *outMessageLength );
 
+
+// sets the player responsible for subsequent map changes
+// meant to track who set down an object
+// should be set to -1 (default) except for object set-down
+void setResponsiblePlayer( int inPlayerID );
 
 
 int getMapObject( int inX, int inY );

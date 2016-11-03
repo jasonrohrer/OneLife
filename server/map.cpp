@@ -32,6 +32,14 @@
 static int chunkDimension = 22;
 
 
+static int currentResponsiblePlayer = -1;
+
+
+void setResponsiblePlayer( int inPlayerID ) {
+    currentResponsiblePlayer = inPlayerID;
+    }
+
+
 
 
 // object ids that occur naturally on map at random, per biome
@@ -110,10 +118,8 @@ static HashTable<unsigned int> liveDecayRecordLastLookTimeHashTable( 1024 );
 
 
 
-// track decay-caused map transitions that happened since the last
+// track all map changes that happened since the last
 // call to stepMap
-static SimpleVector<char> mapChangesSinceLastStep;
-
 static SimpleVector<ChangePosition> mapChangePosSinceLastStep;
 
 
@@ -780,6 +786,24 @@ static int dbGet( int inX, int inY, int inSlot ) {
 
 
 static void dbPut( int inX, int inY, int inSlot, int inValue ) {
+    char found = false;
+    for( int i=0; i<mapChangePosSinceLastStep.size(); i++ ) {
+        
+        ChangePosition *p = mapChangePosSinceLastStep.getElement( i );
+        
+        if( p->x == inX && p->y == inY ) {
+            found = true;
+            
+            // update it
+            p->responsiblePlayerID = currentResponsiblePlayer;
+            }
+        }
+    
+    if( ! found ) {
+        ChangePosition p = { inX, inY, false, currentResponsiblePlayer };
+        mapChangePosSinceLastStep.push_back( p );
+        }
+    
     unsigned char key[12];
     unsigned char value[4];
     
@@ -1003,19 +1027,6 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 }
 
             setEtaDecay( inX, inY, mapETA );
-            
-            
-            char *changeString = getMapChangeLineString( inX, inY );
-            
-            mapChangesSinceLastStep.appendElementString( changeString );
-
-            delete [] changeString;
-            
-
-            ChangePosition p = { inX, inY, false };
-            
-            mapChangePosSinceLastStep.push_back( p );
-
             }
 
         }
@@ -1150,19 +1161,6 @@ void checkDecayContained( int inX, int inY ) {
             
             setSlotEtaDecay( inX, inY, i, mapETA );
             }
-        
-        
-        
-        char *changeString = getMapChangeLineString( inX, inY );
-        
-        mapChangesSinceLastStep.appendElementString( changeString );
-        
-        delete [] changeString;
-        
-        
-        ChangePosition p = { inX, inY, false };
-        
-        mapChangePosSinceLastStep.push_back( p );
         }
 
     if( contained != NULL ) {
@@ -1808,24 +1806,24 @@ void stepMap( SimpleVector<char> *inMapChanges,
 
     // all of them, including these new ones and others acculuated since
     // last step are accumulated in these global vectors
-    
-    int numChars = mapChangesSinceLastStep.size();
-    
-    for( int i=0; i<numChars; i++ ) {
-        inMapChanges->push_back( mapChangesSinceLastStep.getElementDirect(i) );
-        }
-    
+
     int numPos = mapChangePosSinceLastStep.size();
 
     for( int i=0; i<numPos; i++ ) {
-        inChangePosList->push_back( 
-            mapChangePosSinceLastStep.getElementDirect(i) );
+        ChangePosition p = mapChangePosSinceLastStep.getElementDirect(i);
+        
+        inChangePosList->push_back( p );
+        
+        char *changeString = getMapChangeLineString( p.x, p.y,
+                                                     p.responsiblePlayerID );
+        inMapChanges->appendElementString( changeString );
+        delete [] changeString;
         }
 
     
-    mapChangesSinceLastStep.deleteAll();
     mapChangePosSinceLastStep.deleteAll();
     }
+
 
 
 

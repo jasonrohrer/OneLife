@@ -1140,8 +1140,6 @@ void handleMapChangeToPaths(
 // doesn't check for adjacency (so works for thrown drops too)
 // if target spot blocked, will search for empty spot to throw object into
 void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
-                 SimpleVector<char> *inMapChanges, 
-                 SimpleVector<ChangePosition> *inChangePosList,
                  SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
     
     ObjectRecord *droppedObject = getObject( inDroppingPlayer->holdingID );
@@ -1356,7 +1354,8 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
         return;
         }
     
-
+    setResponsiblePlayer( inDroppingPlayer->id );
+    
     setMapObject( targetX, targetY, inDroppingPlayer->holdingID );
     setEtaDecay( targetX, targetY, inDroppingPlayer->holdingEtaDecay );
     
@@ -1392,18 +1391,8 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
         inDroppingPlayer->numContained = 0;
         }
                                 
-                                
-    char *changeLine =
-        getMapChangeLineString(
-            targetX, targetY, inDroppingPlayer->id );
-                                
-    inMapChanges->appendElementString( 
-        changeLine );
-                                
-    ChangePosition p = { targetX, targetY, false };
-    inChangePosList->push_back( p );
-                
-    delete [] changeLine;
+
+    setResponsiblePlayer( -1 );
                                 
     inDroppingPlayer->holdingID = 0;
     inDroppingPlayer->holdingEtaDecay = 0;
@@ -1439,8 +1428,6 @@ LiveObject *getAdultHolding( LiveObject *inBabyObject ) {
 
 void handleForcedBabyDrop( 
     LiveObject *inBabyObject,
-    SimpleVector<char> *inMapChanges, 
-    SimpleVector<ChangePosition> *inChangePosList,
     SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
     
     int numLive = players.size();
@@ -1475,8 +1462,6 @@ void handleForcedBabyDrop(
             handleDrop( 
                 dropPos.x, dropPos.y, 
                 adultO,
-                inMapChanges, 
-                inChangePosList,
                 inPlayerIndicesToSendUpdatesAbout );
 
             
@@ -2545,12 +2530,6 @@ int main() {
         
         SimpleVector<char> newSpeech;
         SimpleVector<ChangePosition> newSpeechPos;
-        
-
-        // before we check for player actions
-        // add changes from auto-decays on map
-        stepMap( &mapChanges, &mapChangesPos );
-
 
         
         for( int i=0; i<numLive; i++ ) {
@@ -2618,8 +2597,6 @@ int main() {
                         // baby wiggling out of parent's arms
                         handleForcedBabyDrop( 
                             nextPlayer,
-                            &mapChanges, 
-                            &mapChangesPos,
                             &playerIndicesToSendUpdatesAbout );
                         
                         // drop them and ignore rest of their move
@@ -3107,7 +3084,7 @@ int main() {
                                             }
                                         else if( hitPlayer == NULL &&
                                                  isMapSpotEmpty( m.x, 
-                                                                 m.y ) ) {    
+                                                                 m.y ) ) {
                                             // no player hit, and target ground
                                             // spot is empty
                                             setMapObject( m.x, m.y, 
@@ -3122,20 +3099,6 @@ int main() {
                                                 setEtaDecay( m.x, m.y,
                                                              oldEtaDecay );
                                                 }
-
-                                            char *changeLine =
-                                                getMapChangeLineString(
-                                                    m.x, m.y );
-                                    
-                                            mapChanges.
-                                                appendElementString( 
-                                                    changeLine );
-                                    
-                                            ChangePosition p = 
-                                                { m.x, m.y, false };
-                                            mapChangesPos.push_back( p );
-                                    
-                                            delete [] changeLine;
                                             }
                                         // else new target, post-kill-attempt
                                         // is lost
@@ -3269,19 +3232,6 @@ int main() {
                                             getObject( r->newTarget ),
                                             &playerIndicesToSendUpdatesAbout );
                                         }
-                                    
-                                    char *changeLine =
-                                        getMapChangeLineString(
-                                            m.x, m.y );
-                                    
-                                    mapChanges.
-                                        appendElementString( changeLine );
-                                    
-                                    ChangePosition p = { m.x, m.y, false };
-                                    mapChangesPos.push_back( p );
-                                    
-                                    
-                                    delete [] changeLine;
                                     }
                                 else if( nextPlayer->holdingID == 0 &&
                                          ! targetObj->permanent &&
@@ -3313,18 +3263,6 @@ int main() {
                                     nextPlayer->heldOriginValid = 1;
                                     nextPlayer->heldOriginX = m.x;
                                     nextPlayer->heldOriginY = m.y;
-
-                                    char *changeLine =
-                                        getMapChangeLineString(
-                                            m.x, m.y );
-                                    
-                                    mapChanges.appendElementString( 
-                                        changeLine );
-                                    
-                                    ChangePosition p = { m.x, m.y, false };
-                                    mapChangesPos.push_back( p );
-                                    
-                                    delete [] changeLine;
                                     }
                                 else if( nextPlayer->holdingID != 0 ) {
                                     // no transition for what we're
@@ -3356,8 +3294,6 @@ int main() {
                                         handleDrop( 
                                             m.x, m.y, 
                                             nextPlayer,
-                                            &mapChanges, 
-                                            &mapChangesPos,
                                             &playerIndicesToSendUpdatesAbout );
                                         }
                                     
@@ -3452,19 +3388,6 @@ int main() {
                                             m.x, m.y,
                                             getObject( r->newTarget ),
                                             &playerIndicesToSendUpdatesAbout );
-                                    
-                                        char *changeLine =
-                                            getMapChangeLineString( 
-                                                m.x, m.y,
-                                                nextPlayer->id );
-                                        
-                                        mapChanges.
-                                            appendElementString( changeLine );
-                                    
-                                        ChangePosition p = { m.x, m.y, false };
-                                        mapChangesPos.push_back( p );
-                                    
-                                        delete [] changeLine;
                                         }
                                     }
                                 }
@@ -3509,7 +3432,6 @@ int main() {
                                     if( hitPlayer->holdingID != 0 ) {
                                         handleDrop( 
                                             m.x, m.y, hitPlayer,
-                                            &mapChanges, &mapChangesPos,
                                             &playerIndicesToSendUpdatesAbout );
                                         }
                                     
@@ -3902,7 +3824,6 @@ int main() {
                                             blocksWalking ) {
                                         handleDrop( 
                                             m.x, m.y, nextPlayer,
-                                            &mapChanges, &mapChangesPos,
                                             &playerIndicesToSendUpdatesAbout );
                                         }    
                                     }
@@ -3912,7 +3833,6 @@ int main() {
                                     
                                     handleDrop( 
                                         m.x, m.y, nextPlayer,
-                                        &mapChanges, &mapChangesPos,
                                         &playerIndicesToSendUpdatesAbout );
                                     }
                                 else if( m.c >= 0 && 
@@ -4022,20 +3942,6 @@ int main() {
                                             nextPlayer->heldOriginValid = 0;
                                             nextPlayer->heldOriginX = 0;
                                             nextPlayer->heldOriginY = 0;
-                                            
-                                            char *changeLine =
-                                                getMapChangeLineString(
-                                                    m.x, m.y );
-                                            
-                                            mapChanges.
-                                                appendElementString( 
-                                                    changeLine );
-                                            
-                                            delete [] changeLine;
-                                            
-                                            ChangePosition p = { m.x, m.y, 
-                                                         false };
-                                            mapChangesPos.push_back( p );
                                             }
                                         else if( targetSlots == 0 &&
                                                  ! targetObj->permanent 
@@ -4070,7 +3976,6 @@ int main() {
                                     
                                             handleDrop(
                                              m.x, m.y, nextPlayer,
-                                             &mapChanges, &mapChangesPos,
                                              &playerIndicesToSendUpdatesAbout );
                                     
                                             
@@ -4106,7 +4011,6 @@ int main() {
                                             
                                              handleDrop( 
                                               m.x, m.y, nextPlayer,
-                                              &mapChanges, &mapChangesPos,
                                               &playerIndicesToSendUpdatesAbout 
                                               );
                                             }
@@ -4159,20 +4063,6 @@ int main() {
                                     nextPlayer->heldOriginValid = 0;
                                     nextPlayer->heldOriginX = 0;
                                     nextPlayer->heldOriginY = 0;
-                                        
-                                    char *changeLine =
-                                        getMapChangeLineString(
-                                            m.x, m.y );
-                                    
-                                    mapChanges.
-                                        appendElementString( 
-                                            changeLine );
-                                    
-                                    delete [] changeLine;
-                                    
-                                    ChangePosition p = { m.x, m.y, 
-                                                         false };
-                                    mapChangesPos.push_back( p );
                                     }
                                 }
                             }
@@ -4284,8 +4174,6 @@ int main() {
                 if( nextPlayer->heldByOther ) {
                     
                     handleForcedBabyDrop( nextPlayer,
-                                          &mapChanges, 
-                                          &mapChangesPos,
                                           &playerIndicesToSendUpdatesAbout );
                     }                
 
@@ -4539,16 +4427,6 @@ int main() {
                             oc++;
                             roomLeft--;                                
                             }
-                        
-                        char *changeLine =
-                            getMapChangeLineString( dropPos.x, dropPos.y );
-                        
-                        mapChanges.appendElementString( changeLine );
-                        
-                        ChangePosition p = { dropPos.x, dropPos.y, false };
-                        mapChangesPos.push_back( p );
-                        
-                        delete [] changeLine;
                         }  
                     }
                 if( nextPlayer->holdingID != 0 ) {
@@ -4559,8 +4437,6 @@ int main() {
                     handleDrop( 
                         dropPos.x, dropPos.y, 
                         nextPlayer,
-                        &mapChanges, 
-                        &mapChangesPos,
                         &playerIndicesToSendUpdatesAbout );
                     }
                 }
@@ -5211,7 +5087,12 @@ int main() {
             }
         
 
+        
+                
 
+        // add changes from auto-decays on map, mixed with player-caused changes
+        stepMap( &mapChanges, &mapChangesPos );
+        
 
         
         
