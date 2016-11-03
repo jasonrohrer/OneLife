@@ -718,7 +718,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             
             ObjectRecord *r = getObject( id );
             
-            
+            setDrawColor( 1.0, 1.0, 1.0, 1.0 );
             smallFont->drawString( r->description, pos, alignCenter );
             }
         
