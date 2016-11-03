@@ -75,7 +75,10 @@ static CustomRandomSource randSource( randSeed );
 
 
 // 15 minutes
-static int maxSecondsForActiveDecayTracking = 900;
+static unsigned int maxSecondsForActiveDecayTracking = 900;
+
+// 1 minute
+static unsigned int maxSecondsNoLookDecayTracking = 10;
 
 
 typedef struct LiveDecayRecord {
@@ -100,6 +103,10 @@ static MinPriorityQueue<LiveDecayRecord> liveDecayQueue;
 // before storing a new record in the queue, we can check this hash
 // table to see whether it already exists
 static HashTable<unsigned int> liveDecayRecordPresentHashTable( 1024 );
+
+// times in seconds that a tracked live decay map cell or slot
+// was last looked at
+static HashTable<unsigned int> liveDecayRecordLastLookTimeHashTable( 1024 );
 
 
 
@@ -788,7 +795,7 @@ static void dbPut( int inX, int inY, int inSlot, int inValue ) {
 
 // slot is 0 for main map cell, or higher for container slots
 static void trackETA( int inX, int inY, int inSlot, unsigned int inETA ) {
-    int timeLeft = inETA - time( NULL );
+    unsigned int timeLeft = inETA - time( NULL );
         
     if( timeLeft < maxSecondsForActiveDecayTracking ) {
         // track it live
@@ -807,8 +814,19 @@ static void trackETA( int inX, int inY, int inSlot, unsigned int inETA ) {
         if( !exists || existingETA != inETA ) {
             
             liveDecayQueue.insert( r, inETA );
-                
+            
             liveDecayRecordPresentHashTable.insert( inX, inY, inSlot, inETA );
+
+            char exists;
+            
+            liveDecayRecordLastLookTimeHashTable.lookup( inX, inY, inSlot,
+                                                         &exists );
+            
+            if( !exists ) {
+                // don't overwrite old one
+                liveDecayRecordLastLookTimeHashTable.insert( inX, inY, inSlot, 
+                                                             time( NULL ) );
+                }
             }
         }
     }
@@ -865,6 +883,29 @@ int *getContainedRaw( int inX, int inY, int *outNumContained ) {
 
 
 int *getContained( int inX, int inY, int *outNumContained ) {
+    checkDecayContained( inX, inY );
+    int *result = getContainedRaw( inX, inY, outNumContained );
+    
+    // look at these slots if they are subject to live decay
+    unsigned int currentTime = time( NULL );
+    
+    for( int i=0; i<*outNumContained; i++ ) {
+        char found;
+        unsigned int *oldLookTime =
+            liveDecayRecordLastLookTimeHashTable.lookupPointer( inX, inY,
+                                                                i + 1,
+                                                                &found );
+        if( oldLookTime != NULL ) {
+            // look at it now
+            *oldLookTime = currentTime;
+            }
+        }
+    
+    return result;
+    }
+
+
+int *getContainedNoLook( int inX, int inY, int *outNumContained ) {
     checkDecayContained( inX, inY );
     return getContainedRaw( inX, inY, outNumContained );
     }
@@ -1181,6 +1222,25 @@ int getMapObjectRaw( int inX, int inY ) {
 
 
 int getMapObject( int inX, int inY ) {
+
+    // look at this map cell
+    char found;
+    unsigned int *oldLookTime = 
+        liveDecayRecordLastLookTimeHashTable.lookupPointer( inX, inY, 0,
+                                                            &found );
+    
+    if( oldLookTime != NULL ) {
+        // we're tracking decay for this cell
+        *oldLookTime = time( NULL );
+        }
+
+
+    // apply any decay that should have happened by now
+    return checkDecayObject( inX, inY, getMapObjectRaw( inX, inY ) );
+    }
+
+
+int getMapObjectNoLook( int inX, int inY ) {
 
     // apply any decay that should have happened by now
     return checkDecayObject( inX, inY, getMapObjectRaw( inX, inY ) );
@@ -1603,7 +1663,7 @@ char *getMapChangeLineString( int inX, int inY,
     delete [] header;
     
 
-    char *idString = autoSprintf( "%d", getMapObject( inX, inY ) );
+    char *idString = autoSprintf( "%d", getMapObjectNoLook( inX, inY ) );
     
     buffer.appendElementString( idString );
     
@@ -1611,7 +1671,7 @@ char *getMapChangeLineString( int inX, int inY,
     
     
     int numContained;
-    int *contained = getContained( inX, inY, &numContained );
+    int *contained = getContainedNoLook( inX, inY, &numContained );
 
     for( int i=0; i<numContained; i++ ) {
         
@@ -1681,8 +1741,29 @@ void stepMap( SimpleVector<char> *inMapChanges,
         if( storedFound && storedETA == r.etaTimeSeconds ) {
             
             liveDecayRecordPresentHashTable.remove( r.x, r.y, r.slot );
+
+                    
+            unsigned int lastLookTime =
+                liveDecayRecordLastLookTimeHashTable.lookup( r.x, r.y, r.slot,
+                                                             &storedFound );
+
+            if( storedFound ) {
+
+                if( time(NULL) - lastLookTime > 
+                    maxSecondsNoLookDecayTracking ) {
+                    
+                    // this cell or slot hasn't been looked at in too long
+                    // don't even apply this decay now
+                    liveDecayRecordLastLookTimeHashTable.remove( 
+                        r.x, r.y, r.slot );
+                    continue;
+                    }
+                // else keep lastlook time around in case
+                // this cell will decay further and we're still tracking it
+                // (but maybe delete it if cell is no longer tracked, below)
+                }
             }
-        
+
         if( r.slot == 0 ) {
             
 
@@ -1700,6 +1781,17 @@ void stepMap( SimpleVector<char> *inMapChanges,
             checkDecayContained( r.x, r.y );
             }
         
+        
+        char stillExists;
+        liveDecayRecordPresentHashTable.lookup( r.x, r.y, r.slot,
+                                                &stillExists );
+        
+        if( !stillExists ) {
+            // cell or slot no longer tracked
+            // forget last look time
+            liveDecayRecordLastLookTimeHashTable.remove( 
+                r.x, r.y, r.slot );
+            }
         }
     
 
