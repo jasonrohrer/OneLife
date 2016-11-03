@@ -7,11 +7,18 @@ class HashTable {
     
     public:
         
-        HashTable( int inSize );
+        // note that inDefaultValue MUST be provided
+        // for any Type that cannot have a value of NULL (example: a struct)
+        HashTable( int inSize,
+                   Type inDefaultValue = (Type)NULL );
         
         ~HashTable();
         
         Type lookup( int inKeyA, int inKeyB, int inKeyC, char *outFound );
+
+        // pointer to entry
+        Type *lookupPointer( int inKeyA, int inKeyB, int inKeyC, 
+                             char *outFound );
         
         void insert( int inKeyA, int inKeyB, int inKeyC, Type inItem );
 
@@ -30,6 +37,7 @@ class HashTable {
         
         int mNumElements;
         
+        Type mDefaultValue;
 
         SimpleVector<Type> *mTable;
         
@@ -52,9 +60,10 @@ class HashTable {
 
 
 template <class Type> 
-HashTable<Type>::HashTable( int inSize )
+HashTable<Type>::HashTable( int inSize, Type inDefaultValue )
         : mSize( inSize ),
           mNumElements( 0 ),
+          mDefaultValue( inDefaultValue ),
           mTable( new SimpleVector<Type>[ inSize ] ),
           mKeysA( new SimpleVector<int>[ inSize ] ),
           mKeysB( new SimpleVector<int>[ inSize ] ),
@@ -132,9 +141,27 @@ Type HashTable<Type>::lookup( int inKeyA, int inKeyB, int inKeyC,
         }
 
     // else return an undefined item (okay, since outFound is false);
+    return mDefaultValue;
+    }
 
-    Type undefined;
-    return undefined;
+
+
+template <class Type> 
+Type *HashTable<Type>::lookupPointer( int inKeyA, int inKeyB, int inKeyC, 
+                                      char *outFound ) {
+    
+    int hashKey;
+
+    int bin;
+    
+    *outFound = lookupBin( inKeyA, inKeyB, inKeyC, &hashKey, &bin );
+
+    if( *outFound ) {
+                
+        return mTable[ hashKey ].getElement( bin );
+        }
+    
+    return NULL;
     }
 
 
