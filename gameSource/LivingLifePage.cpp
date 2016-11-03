@@ -4351,7 +4351,11 @@ void LivingLifePage::step() {
                             // for what's held
                             
                             if( o.id == ourID ) {
-                                addNewAnimPlayerOnly( existing, ground2 );
+                                if( oldHeld == 0 || ! existing->inMotion ) {
+                                    // we picked something up, and it might
+                                    // change us
+                                    addNewAnimPlayerOnly( existing, ground2 );
+                                    }
                                 }
                             else {
                                 if( justAte ) {
