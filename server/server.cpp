@@ -160,6 +160,8 @@ typedef struct LiveObject {
         char error;
         char deleteSent;
 
+        char deathLogged;
+
         char newMove;
         
         // heat map that player carries around with them
@@ -278,7 +280,8 @@ void quitCleanup() {
         }
     players.deleteAll();
 
-
+    freeLifeLog();
+    
     freeMap();
 
     freeTransBank();
@@ -1789,7 +1792,8 @@ void processedLogggedInPlayer( Socket *inSock,
     newObject.xd = 0;
     newObject.yd = 0;
                 
-
+    
+    LiveObject *parent = NULL;
                 
     if( parentChoices.size() > 0 ) {
         // born to an existing player
@@ -1797,7 +1801,7 @@ void processedLogggedInPlayer( Socket *inSock,
             randSource.getRandomBoundedInt( 0,
                                             players.size() - 1 );
                     
-        LiveObject *parent = players.getElement( parentIndex );
+        parent = players.getElement( parentIndex );
         
         
         ObjectRecord *parentObject = getObject( parent->displayID );
@@ -1900,6 +1904,7 @@ void processedLogggedInPlayer( Socket *inSock,
     newObject.firstMessageSent = false;
     newObject.error = false;
     newObject.deleteSent = false;
+    newObject.deathLogged = false;
     newObject.newMove = false;
     
     newObject.updateSent = false;
@@ -1912,6 +1917,24 @@ void processedLogggedInPlayer( Socket *inSock,
         }
 
     players.push_back( newObject );            
+    
+    int parentID = -1;
+    char *parentEmail = NULL;
+
+    if( parent != NULL ) {
+        parentID = parent->id;
+        parentEmail = parent->email;
+        }
+    
+
+    logBirth( newObject.id,
+              newObject.email,
+              parentID,
+              parentEmail,
+              ! getFemale( &newObject ),
+              newObject.xd,
+              newObject.yd,
+              players.size() );
             
     printf( "New player connected as player %d\n", newObject.id );
     }
@@ -2990,6 +3013,18 @@ int main() {
                                         // break the connection with 
                                         // them
                                         hitPlayer->error = true;
+                                        
+                                        logDeath( hitPlayer->id,
+                                                  hitPlayer->email,
+                                                  computeAge( hitPlayer ),
+                                                  ! getFemale( hitPlayer ),
+                                                  m.x, m.y,
+                                                  players.size() - 1,
+                                                  false,
+                                                  nextPlayer->id,
+                                                  nextPlayer->email );
+                                        
+                                        hitPlayer->deathLogged = true;
                                         }
                                     
                                     
@@ -4235,8 +4270,8 @@ int main() {
                                           &mapChanges, 
                                           &mapChangesPos,
                                           &playerIndicesToSendUpdatesAbout );
-                    }
-                
+                    }                
+
                 char *updateLine = getUpdateLine( nextPlayer, true );
 
                 newDeleteUpdates.appendElementString( updateLine );
@@ -4263,6 +4298,18 @@ int main() {
                     
                     dropPos = 
                         computePartialMoveSpot( nextPlayer );
+                    }
+
+                if( ! nextPlayer->deathLogged ) {
+                    logDeath( nextPlayer->id,
+                              nextPlayer->email,
+                              computeAge( nextPlayer ),
+                              ! getFemale( nextPlayer ),
+                              dropPos.x, dropPos.y,
+                              players.size() - 1,
+                              true );
+                                        
+                    nextPlayer->deathLogged = true;
                     }
 
 
@@ -4864,6 +4911,36 @@ int main() {
                         
                         // break the connection with them
                         nextPlayer->error = true;
+
+
+                        GridPos deathPos;
+                                        
+                        if( nextPlayer->xd == 
+                            nextPlayer->xs &&
+                            nextPlayer->yd ==
+                            nextPlayer->ys ) {
+                            // deleted player standing still
+                            
+                            deathPos.x = nextPlayer->xd;
+                            deathPos.y = nextPlayer->yd;
+                            }
+                        else {
+                            // player moving
+                            
+                            deathPos = 
+                                computePartialMoveSpot( nextPlayer );
+                            }
+                        
+                        logDeath( nextPlayer->id,
+                                  nextPlayer->email,
+                                  computeAge( nextPlayer ),
+                                  ! getFemale( nextPlayer ),
+                                  deathPos.x, deathPos.y,
+                                  players.size() - 1,
+                                  false );
+                                        
+                        nextPlayer->deathLogged = true;
+                                        
 
                         // no negative
                         nextPlayer->foodStore = 0;

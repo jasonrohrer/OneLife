@@ -94,17 +94,40 @@ static void stepLog() {
 
 
 void logBirth( int inPlayerID, char *inPlayerEmail,
-               int inMapX, int inMapY ) {
+               int inParentID, char *inParentEmail,
+               char inIsMale,
+               int inMapX, int inMapY,
+               int inTotalPopulation ) {
     if( logFile != NULL ) {
         stepLog();
 
         if( logFile != NULL ) {
         
-            fprintf( logFile, "B %f %d %s (%d,%d)\n",
+            char *parentString;
+            
+            if( inParentEmail == NULL ) {
+                parentString = stringDuplicate( "noParent" );
+                }
+            else {
+                parentString = autoSprintf( "parent=%d,%s",
+                                            inParentID, inParentEmail );
+                }
+
+            char genderChar = 'F';
+            if( inIsMale ) {
+                genderChar = 'M';
+                }
+
+            fprintf( logFile, "B %.0f %d %s %c (%d,%d) %s pop=%d\n",
                      // portable way to convert time to a double for printing
                      difftime( time( NULL ), (time_t)0 ),
-                     inPlayerID, inPlayerEmail, inMapX, inMapY );
+                     inPlayerID, inPlayerEmail, genderChar, inMapX, inMapY, 
+                     parentString,
+                     inTotalPopulation );
+            
             fflush( logFile );
+
+            delete [] parentString;
             }
         }
     }
@@ -113,7 +136,11 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
 
 // killer email NULL if died of natural causes
 void logDeath( int inPlayerID, char *inPlayerEmail,
-               int inMapX, int inMapY, char inDisconnect, int inKillerID, 
+               double inAge,
+               char inIsMale,
+               int inMapX, int inMapY, 
+               int inTotalRemainingPopulation,
+               char inDisconnect, int inKillerID, 
                char *inKillerEmail ) {
 
 
@@ -136,12 +163,20 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
                 causeString = autoSprintf( "killer_%d_%s",
                                            inKillerID, inKillerEmail );
                 }
-            
-            fprintf( logFile, "D %f %d %s (%d,%d) %s\n",
+
+            char genderChar = 'F';
+            if( inIsMale ) {
+                genderChar = 'M';
+                }
+
+            fprintf( logFile, "D %.0f %d %s age=%.2f %c (%d,%d) %s pop=%d\n",
                      // portable way to convert time to a double for printing
                      difftime( time( NULL ), (time_t)0 ),
-                     inPlayerID, inPlayerEmail, inMapX, inMapY,
-                     causeString );
+                     inPlayerID, inPlayerEmail, 
+                     inAge, genderChar,
+                     inMapX, inMapY,
+                     causeString,
+                     inTotalRemainingPopulation );
             fflush( logFile );
             
             delete [] causeString;
