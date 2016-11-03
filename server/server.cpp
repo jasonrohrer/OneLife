@@ -1634,6 +1634,9 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
         inPlayer->justAte );
     
     inPlayer->justAte = false;
+    
+    // held origin only valid once
+    inPlayer->heldOriginValid = false;
 
     delete [] holdingString;
     delete [] posString;
@@ -2542,6 +2545,12 @@ int main() {
         
         SimpleVector<char> newSpeech;
         SimpleVector<ChangePosition> newSpeechPos;
+        
+
+        // before we check for player actions
+        // add changes from auto-decays on map
+        stepMap( &mapChanges, &mapChangesPos );
+
 
         
         for( int i=0; i<numLive; i++ ) {
@@ -5203,8 +5212,7 @@ int main() {
         
 
 
-        // add changes from auto-decays on map
-        stepMap( &mapChanges, &mapChangesPos );
+
         
         
         char *mapChangeMessage = NULL;
