@@ -238,7 +238,7 @@ int nextID = 0;
 
 
 void quitCleanup() {
-    printf( "Cleaning up on quit...\n" );
+    AppLog::info( "Cleaning up on quit..." );
     
 
     for( int i=0; i<newConnections.size(); i++ ) {
@@ -307,7 +307,7 @@ void quitCleanup() {
 volatile char quit = false;
 
 void intHandler( int inUnused ) {
-    printf( "Quit received for unix\n" );
+    AppLog::info( "Quit received for unix" );
     
     // since we handled this singal, we will return to normal execution
     quit = true;
@@ -318,7 +318,7 @@ void intHandler( int inUnused ) {
 #include <windows.h>
 BOOL WINAPI ctrlHandler( DWORD dwCtrlType ) {
     if( CTRL_C_EVENT == dwCtrlType ) {
-        printf( "Quit received for windows\n" );
+        AppLog::info( "Quit received for windows" );
         
         // will auto-quit as soon as we return from this handler
         // so cleanup now
@@ -1936,7 +1936,7 @@ void processedLogggedInPlayer( Socket *inSock,
               newObject.yd,
               players.size() );
             
-    printf( "New player connected as player %d\n", newObject.id );
+    AppLog::infoF( "New player connected as player %d", newObject.id );
     }
 
 
@@ -1950,8 +1950,11 @@ int main() {
     AppLog::setLoggingLevel( Log::DETAIL_LEVEL );
     AppLog::printAllMessages( true );
 
-    printf( "\nServer starting up\n\n" );
+    printf( "\n" );
+    AppLog::info( "Server starting up" );
 
+    printf( "\n" );
+    
     initLifeLog();
 
     nextSequenceNumber = 
@@ -2028,7 +2031,7 @@ int main() {
     
     sockPoll.addSocketServer( &server );
     
-    printf( "Listening for connection on port %d\n", port );
+    AppLog::infoF( "Listening for connection on port %d", port );
 
     while( !quit ) {
     
@@ -2179,7 +2182,7 @@ int main() {
 
             if( sock != NULL ) {
                 
-                printf( "Got connection\n" );
+                AppLog::info( "Got connection" );
 
                 FreshConnection newConnection;
                 
@@ -2233,8 +2236,8 @@ int main() {
                     newConnections.push_back( newConnection );
                     }
 
-                printf( "Listening for another connection on port %d\n", 
-                        port );
+                AppLog::infoF( "Listening for another connection on port %d", 
+                               port );
     
                 }
             }
@@ -2254,8 +2257,8 @@ int main() {
                 
 
                 if( result == -1 ) {
-                    printf( "Request to ticket server failed, "
-                            "client rejected.\n" );
+                    AppLog::info( "Request to ticket server failed, "
+                                  "client rejected." );
                     nextConnection->error = true;
                     }
                 else if( result == 1 ) {
@@ -2265,8 +2268,9 @@ int main() {
                         nextConnection->ticketServerRequest->getResult();
                     
                     if( strstr( webResult, "INVALID" ) != NULL ) {
-                        printf( "Client key hmac rejected by ticket server, "
-                                "client rejected.\n" );
+                        AppLog::info( 
+                            "Client key hmac rejected by ticket server, "
+                            "client rejected." );
                         nextConnection->error = true;
                         }
                     else if( strstr( webResult, "VALID" ) != NULL ) {
@@ -2284,15 +2288,15 @@ int main() {
                         
 
                         if( numSent != messageLength ) {
-                            printf( "Failed to write to client socket, "
-                                    "client rejected.\n" );
+                            AppLog::info( "Failed to write to client socket, "
+                                          "client rejected." );
                             nextConnection->error = true;
                             }
                         else {
                             // ready to start normal message exchange
                             // with client
                             
-                            printf( "Got new player logged in\n" );
+                            AppLog::info( "Got new player logged in" );
                             
                             processedLogggedInPlayer( 
                                 nextConnection->sock,
@@ -2320,8 +2324,8 @@ int main() {
                                     nextConnection->sockBuffer );
                 
                 if( ! result ) {
-                    printf( "Failed to read from client socket, "
-                            "client rejected.\n" );
+                    AppLog::info( "Failed to read from client socket, "
+                                  "client rejected." );
                     nextConnection->error = true;
                     }
                 
@@ -2360,13 +2364,14 @@ int main() {
                                 }
 
                             if( emailAlreadyLoggedIn ) {
-                                    printf( 
-                                        "Another client already "
-                                        "connected as %s, "
-                                        "client rejected.\n",
-                                        nextConnection->email );
-                                    nextConnection->error = true;
-                                    }
+                                AppLog::infoF( 
+                                    "Another client already "
+                                    "connected as %s, "
+                                    "client rejected.",
+                                    nextConnection->email );
+                                
+                                nextConnection->error = true;
+                                }
 
                             if( requireClientPassword &&
                                 ! nextConnection->error  ) {
@@ -2383,8 +2388,8 @@ int main() {
                                 
 
                                 if( strcmp( trueHash, pwHash ) != 0 ) {
-                                    printf( "Client password hmac bad, "
-                                            "client rejected.\n" );
+                                    AppLog::info( "Client password hmac bad, "
+                                                  "client rejected." );
                                     nextConnection->error = true;
                                     }
 
@@ -2426,15 +2431,16 @@ int main() {
                         
 
                                 if( numSent != messageLength ) {
-                                    printf( "Failed to send on client socket, "
-                                            "client rejected.\n" );
+                                    AppLog::info( 
+                                        "Failed to send on client socket, "
+                                        "client rejected." );
                                     nextConnection->error = true;
                                     }
                                 else {
                                     // ready to start normal message exchange
                                     // with client
                             
-                                    printf( "Got new player logged in\n" );
+                                    AppLog::info( "Got new player logged in" );
                                     
                                     processedLogggedInPlayer( 
                                         nextConnection->sock,
@@ -2448,8 +2454,8 @@ int main() {
                                 }
                             }
                         else {
-                            printf( "LOGIN message has wrong format, "
-                                    "client rejected.\n" );
+                            AppLog::info( "LOGIN message has wrong format, "
+                                          "client rejected." );
                             nextConnection->error = true;
                             }
 
@@ -2458,16 +2464,16 @@ int main() {
                         delete tokens;
                         }
                     else {
-                        printf( "Client's first message not LOGIN, "
-                                "client rejected.\n" );
+                        AppLog::info( "Client's first message not LOGIN, "
+                                      "client rejected." );
                         nextConnection->error = true;
                         }
                     
                     delete [] message;
                     }
                 else if( timeDelta > 10 ) {
-                    printf( "Client failed to LOGIN after 10 seconds, "
-                            "client rejected.\n" );
+                    AppLog::info( "Client failed to LOGIN after 10 seconds, "
+                                  "client rejected." );
                     nextConnection->error = true;
                     }
                 }
@@ -2551,14 +2557,14 @@ int main() {
             char *message = getNextClientMessage( nextPlayer->sockBuffer );
             
             if( message != NULL ) {
-                printf( "Got client message: %s\n", message );
+                AppLog::infoF( "Got client message: %s", message );
                 
                 ClientMessage m = parseMessage( message );
                 
                 delete [] message;
                 
                 if( m.type == UNKNOWN ) {
-                    printf( "Client error, unknown message type.\n" );
+                    AppLog::info( "Client error, unknown message type." );
                     nextPlayer->error = true;
                     }
 
@@ -2888,9 +2894,9 @@ int main() {
                             
                             if( validPath.size() == 0 ) {
                                 // path not permitted
-                                printf( "Path submitted by player "
-                                        "not valid, "
-                                        "ending move now\n" );
+                                AppLog::info( "Path submitted by player "
+                                              "not valid, "
+                                              "ending move now" );
 
                                 nextPlayer->xd = nextPlayer->xs;
                                 nextPlayer->yd = nextPlayer->ys;
@@ -5680,7 +5686,7 @@ int main() {
             LiveObject *nextPlayer = players.getElement(i);
 
             if( nextPlayer->error && nextPlayer->deleteSent ) {
-                printf( "Closing connection to player %d on error\n",
+                AppLog::infoF( "Closing connection to player %d on error",
                         nextPlayer->id );
                 
                 sockPoll.removeSocket( nextPlayer->sock );
@@ -5715,7 +5721,7 @@ int main() {
     quitCleanup();
     
     
-    printf( "Done.\n" );
+    AppLog::info( "Done." );
 
     return 0;
     }

@@ -9,6 +9,8 @@
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/SettingsManager.h"
 
+#include "minorGems/util/log/AppLog.h"
+
 #include "minorGems/formats/encodingUtils.h"
 
 #include "kissdb.h"
@@ -522,7 +524,7 @@ void initMap() {
                              );
     
     if( error ) {
-        printf( "Error %d opening KissDB\n", error );
+        AppLog::errorF( "Error %d opening KissDB", error );
         return;
         }
     
@@ -593,15 +595,16 @@ void initMap() {
 
 
     for( int j=0; j<numBiomes; j++ ) {    
-        printf( "Biome %d:  Found %d natural objects with total weight %f\n",
-                biomes[j], naturalMapIDs[j].size(), totalChanceWeight[j] );
+        AppLog::infoF( 
+            "Biome %d:  Found %d natural objects with total weight %f",
+            biomes[j], naturalMapIDs[j].size(), totalChanceWeight[j] );
         }
     
     delete [] allObjects;
     
 
 
-    printf( "\nCleaning map of objects that have been removed...\n" );
+    AppLog::info( "\nCleaning map of objects that have been removed..." );
     
 
     KISSDB_Iterator dbi;
@@ -709,11 +712,13 @@ void initMap() {
         }
     
 
-    printf( "...%d map cells were set, and %d needed to be cleared.\n",
-            totalSetCount, numClearedCount );
-    printf( "...%d contained objects present, and %d needed to be cleared.\n\n",
-            totalNumContained, numContainedCleared );
+    AppLog::infoF( "...%d map cells were set, and %d needed to be cleared.",
+                   totalSetCount, numClearedCount );
+    AppLog::infoF( 
+        "...%d contained objects present, and %d needed to be cleared.",
+        totalNumContained, numContainedCleared );
 
+    printf( "\n" );
 
     // for debugging the map
     //outputMapImage();
