@@ -3473,6 +3473,13 @@ void LivingLifePage::step() {
         return;
         }
     
+    if( mLastMouseOverID != 0 ) {
+        mLastMouseOverFade -= 0.01 * frameRateFactor;
+        
+        if( mLastMouseOverFade < 0 ) {
+            mLastMouseOverID = 0;
+            }
+        }
 
     if( ! equal( mNotePaperPosOffset, mNotePaperPosTargetOffset ) ) {
         doublePair delta = 
@@ -6016,6 +6023,9 @@ void LivingLifePage::makeActive( char inFresh ) {
     screenCenterPlayerOffsetY = 0;
     
 
+    mLastMouseOverID = 0;
+    mCurMouseOverID = 0;
+
     if( !inFresh ) {
         return;
         }
@@ -6290,6 +6300,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
     else if( mCurMouseOverID != 0 ) {
         mLastMouseOverID = mCurMouseOverID;
         mCurMouseOverID = 0;
+        mLastMouseOverFade = 1.0f;
         }
     
     }
@@ -6301,6 +6312,8 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
 
 
 void LivingLifePage::pointerDown( float inX, float inY ) {
+    mLastMouseOverID = 0;
+    
     mouseDown = true;
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
     
