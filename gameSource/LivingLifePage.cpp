@@ -2864,7 +2864,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         doublePair speechPos = pos;
 
-        speechPos.y += 48;
+        speechPos.y += 84;
 
         ObjectRecord *displayObj = getObject( o->displayID );
  
