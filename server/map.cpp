@@ -28,6 +28,9 @@
 
 
 
+#define NUM_CIV_RADII 30
+static int maxCivRadius[ NUM_CIV_RADII ];
+
 
 static int chunkDimensionX = 32;
 static int chunkDimensionY = 30;
@@ -518,7 +521,33 @@ int *getContainedRaw( int inX, int inY, int *outNumContained );
 
 
 
+void writeCivRadius() {
+    FILE *radFile = fopen( "maxCivRadius.txt", "w" );
+    if( radFile != NULL ) {
+        for( int i=0; i<NUM_CIV_RADII; i++ ) {
+            fprintf( radFile, "%d ", maxCivRadius[i] );
+            }
+        fclose( radFile );
+        }
+    }
+
+
+
 void initMap() {
+
+    for( int i=0; i<NUM_CIV_RADII; i++ ) {
+        maxCivRadius[i] = 0;
+        }
+    
+
+    FILE *radFile = fopen( "maxCivRadius.txt", "r" );
+    if( radFile != NULL ) {
+        for( int i=0; i<NUM_CIV_RADII; i++ ) {
+            fscanf( radFile, "%d", &( maxCivRadius[i] ) );
+            }
+        fclose( radFile );
+        }
+    
 
 
     int error = KISSDB_open( &db, 
@@ -733,7 +762,19 @@ void initMap() {
         totalNumContained, numContainedCleared );
 
     printf( "\n" );
+    
+    
+    if( totalSetCount == 0 ) {
+        // map has been cleared
 
+        // ignore old value for civ radius
+        for( int i=0; i<NUM_CIV_RADII; i++ ) {
+            maxCivRadius[i] = 0;
+            }
+
+        writeCivRadius();
+        }
+    
     // for debugging the map
     //outputMapImage();
     }
@@ -1419,6 +1460,24 @@ void setMapObject( int inX, int inY, int inID ) {
     // also, when chosing between setting up decay on a set and setting
     // it up on a get, we have to chose get, because there are loads
     // of gets that have no set (for example, getting a map chunk)
+
+    
+    if( inID > 0 ) {
+        int radius = lrint( sqrt( inX * inX + inY * inY ) );
+        
+        doublePair pos = { (double)inX, (double)inY };
+
+        int a = lrint( ( angle( pos ) / ( 2 * M_PI ) ) * 
+                       ( NUM_CIV_RADII - 1 ) );
+        
+
+        if( radius > maxCivRadius[a] ) {
+            maxCivRadius[a] = radius;
+            
+            writeCivRadius();
+            }
+        }
+        
     }
 
 
@@ -1873,6 +1932,71 @@ void restretchMapContainedDecays( int inX, int inY,
         delete [] oldContDecay;
         }
     }
+
+
+
+void getEvePosition( int *outX, int *outY ) {
+    int a = randSource.getRandomBoundedInt( 0, NUM_CIV_RADII - 1 );
+    
+    double angle = 2 * M_PI * a / (double)( NUM_CIV_RADII );
+    
+    doublePair rad = { (double)( maxCivRadius[a] ), 0 };
+    
+    rad = rotate( rad, angle );
+    
+    int x = lrint( rad.x );
+    int y = lrint( rad.y );
+    
+    int xDir = 0;
+    if( x > 0 ) {
+        xDir = -1;
+        }
+    else if( x < 0 ) {
+        xDir = 1;
+        }
+    
+    int yDir = 0;
+    if( y > 0 ) {
+        yDir = -1;
+        }
+    else if( y < 0 ) {
+        yDir = 1;
+        }
+    
+    while( x != 0 && y != 0 ) {
+        
+        int newX = x;
+        int newY = y;
+        
+        if( x != 0 ) {
+            newX += xDir;
+            }
+        if( y != 0 ) {
+            newY += yDir;
+            }
+        if( newX != x && getMapObjectRaw( newX, y ) == 0 ) {
+            x = newX;
+            }
+        else if( newY != y && getMapObjectRaw( x, newY ) == 0 ) {
+            y = newY;
+            }
+        else {
+            // blocked or at 0 in both directions
+            break;
+            }
+        }
+    
+    // back out until not blocked
+    while( getMapObjectRaw( x, y ) != 0 ) {
+        x -= xDir;
+        y -= yDir;
+        }
+    
+
+    *outX = x;
+    *outY = y;
+    }
+
 
 
 

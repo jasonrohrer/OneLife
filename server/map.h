@@ -22,6 +22,11 @@ void initMap();
 void freeMap();
 
 
+// gets new Eve position on outskirts of civilization
+void getEvePosition( int *outX, int *outY );
+
+
+
 int getMaxChunkDimension();
 
 

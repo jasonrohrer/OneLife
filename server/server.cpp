@@ -1907,8 +1907,18 @@ void processedLogggedInPlayer( Socket *inSock,
             newObject.yd = cPos.y;
             }
         }                    
-    // else starts at 0,0 by default (lone Eve)
-
+    else {
+        // else starts at civ outskirts (lone Eve)
+        int startX, startY;
+        getEvePosition( &startX, &startY );
+        
+        newObject.xs = startX;
+        newObject.ys = startY;
+        
+        newObject.xd = startX;
+        newObject.yd = startY;    
+        }
+    
 
     
     newObject.pathLength = 0;
