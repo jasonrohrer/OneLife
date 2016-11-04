@@ -1758,11 +1758,15 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                     
         if( inObj->currentPos.x < playerActionTargetX ) {
             xDir = 1;
-            inObj->holdingFlip = false;
+            if( ! inObj->inMotion ) {
+                inObj->holdingFlip = false;
+                }
             }
         if( inObj->currentPos.x > playerActionTargetX ) {
             xDir = -1;
-            inObj->holdingFlip = true;
+            if( ! inObj->inMotion ) {
+                inObj->holdingFlip = true;
+                }
             }
         if( inObj->currentPos.y < playerActionTargetY ) {
             yDir = 1;
