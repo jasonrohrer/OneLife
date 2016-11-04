@@ -5733,7 +5733,7 @@ void LivingLifePage::step() {
 
                     if( abs( delta.x ) > CELL_D * 4 
                         ||
-                        abs( delta.y ) > CELL_D * 2 ) {
+                        abs( delta.y ) > CELL_D * 1 ) {
                         
                         pointerDown( worldMouseX, worldMouseY );
                         }
