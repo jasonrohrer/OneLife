@@ -92,14 +92,14 @@ Client can expect to receive these at any time, and in any order.
 
 
 MC
-size x y
+sizeX sizeY x y
 binary_raw_size binary_compressed_size 
 #
 COMPRESSED_BINARY_DATA
 
 
 Where:
-Chunk includes a size X size number of ids (a square of the map).
+Chunk includes a sizeX x sizeY number of ids (a square of the map).
 Square is positioned on map grid with upper left corner at x y
 binary_size is the number of binary bytes of map data that will follow the #
 

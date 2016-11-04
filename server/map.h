@@ -22,7 +22,7 @@ void initMap();
 void freeMap();
 
 
-int getChunkDimension();
+int getMaxChunkDimension();
 
 
 // returns properly formatted chunk message for chunk centered

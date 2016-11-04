@@ -5228,9 +5228,9 @@ int main() {
             else {
                 // this player has first message, ready for updates/moves
                 
-                if( abs( nextPlayer->xd - nextPlayer->lastSentMapX ) > 3
+                if( abs( nextPlayer->xd - nextPlayer->lastSentMapX ) > 7
                     ||
-                    abs( nextPlayer->yd - nextPlayer->lastSentMapY ) > 5 ) {
+                    abs( nextPlayer->yd - nextPlayer->lastSentMapY ) > 8 ) {
                 
                     // moving out of bounds of chunk, send update
                     
@@ -5265,7 +5265,7 @@ int main() {
                                                         adultO->yd );
                             
                             
-                                    if( d <= getChunkDimension() / 2 ) {
+                                    if( d <= getMaxChunkDimension() / 2 ) {
                                         // adult holding this baby
                                         // is close enough
                                         // send update about baby
@@ -5304,7 +5304,7 @@ int main() {
                                                 otherPlayer->yd );
                             
                             
-                            if( d <= getChunkDimension() / 2 ) {
+                            if( d <= getMaxChunkDimension() / 2 ) {
                                 
                                 // send next player a player update
                                 // about this player, telling nextPlayer

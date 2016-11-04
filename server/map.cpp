@@ -29,7 +29,8 @@
 
 
 
-static int chunkDimension = 22;
+static int chunkDimensionX = 32;
+static int chunkDimensionY = 30;
 
 
 static int currentResponsiblePlayer = -1;
@@ -135,8 +136,8 @@ static SimpleVector<ChangePosition> mapChangePosSinceLastStep;
 
 
 
-int getChunkDimension() {
-    return chunkDimension;
+int getMaxChunkDimension() {
+    return chunkDimensionX;
     }
 
     
@@ -1262,7 +1263,7 @@ int getMapObjectNoLook( int inX, int inY ) {
 unsigned char *getChunkMessage( int inCenterX, int inCenterY,
                                 int *outMessageLength ) {
     
-    int chunkCells = chunkDimension * chunkDimension;
+    int chunkCells = chunkDimensionX * chunkDimensionY;
     
     int *chunk = new int[chunkCells];
 
@@ -1273,14 +1274,15 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
 
     // 0,0 is center of map
     
-    int halfChunk = chunkDimension /2;
+    int halfChunkX = chunkDimensionX /2;
+    int halfChunkY = chunkDimensionY /2;
     
 
-    int startY = inCenterY - halfChunk;
-    int startX = inCenterX - halfChunk;
+    int startY = inCenterY - halfChunkY;
+    int startX = inCenterX - halfChunkX;
     
-    int endY = startY + chunkDimension;
-    int endX = startX + chunkDimension;
+    int endY = startY + chunkDimensionY;
+    int endX = startX + chunkDimensionX;
 
     
     
@@ -1291,7 +1293,7 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
         for( int x=startX; x<endX; x++ ) {
             int chunkX = x - startX;
             
-            int cI = chunkY * chunkDimension + chunkX;
+            int cI = chunkY * chunkDimensionX + chunkX;
             
             lastCheckedBiome = -1;
             
@@ -1367,7 +1369,8 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
 
 
 
-    char *header = autoSprintf( "MC\n%d %d %d\n%d %d\n#", chunkDimension,
+    char *header = autoSprintf( "MC\n%d %d %d %d\n%d %d\n#", 
+                                chunkDimensionX, chunkDimensionY,
                                 startX, startY, chunkDataBuffer.size(),
                                 compressedSize );
     

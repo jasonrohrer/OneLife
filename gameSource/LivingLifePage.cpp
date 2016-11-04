@@ -221,9 +221,10 @@ char *getNextServerMessage() {
     if( getMessageType( message ) == MAP_CHUNK ) {
         pendingMapChunkMessage = message;
         
-        int size, x, y, binarySize;
-        sscanf( message, "MC\n%d %d %d\n%d %d\n", 
-                &size, &x, &y, &binarySize, &pendingCompressedChunkSize );
+        int sizeX, sizeY, x, y, binarySize;
+        sscanf( message, "MC\n%d %d %d %d\n%d %d\n", 
+                &sizeX, &sizeY,
+                &x, &y, &binarySize, &pendingCompressedChunkSize );
 
 
         return getNextServerMessage();
@@ -2743,6 +2744,19 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 drawMapCell( mapI, screenX, screenY );
                 }
+
+            /*
+              // debugging grid
+            if( mMap[ mapI ] < 0 ) {
+                setDrawColor( 0, 0, 0, 0.5 );
+                }
+            else {
+                setDrawColor( 1, 1, 1, 0.25 );
+                }
+            
+            doublePair cellPos = { (double)screenX, (double)screenY };
+            drawSquare( cellPos, CELL_D / 3 );
+            */
             }
 
         
@@ -3640,22 +3654,23 @@ void LivingLifePage::step() {
             }
         else if( type == MAP_CHUNK ) {
             
-            int size = 0;
+            int sizeX = 0;
+            int sizeY = 0;
             int x = 0;
             int y = 0;
             
             int binarySize = 0;
             int compressedSize = 0;
             
-            sscanf( message, "MC\n%d %d %d\n%d %d\n", 
-                    &size, &x, &y, &binarySize, &compressedSize );
+            sscanf( message, "MC\n%d %d %d %d\n%d %d\n", 
+                    &sizeX, &sizeY, &x, &y, &binarySize, &compressedSize );
             
             printf( "Got map chunk with bin size %d, compressed size %d\n", 
                     binarySize, compressedSize );
             
             // recenter our in-ram sub-map around this new chunk
-            int newMapOffsetX = x + size/2;
-            int newMapOffsetY = y + size/2;
+            int newMapOffsetX = x + sizeX/2;
+            int newMapOffsetY = y + sizeY/2;
             
             // move old cached map cells over to line up with new center
 
@@ -3820,13 +3835,13 @@ void LivingLifePage::step() {
                 delete [] binaryChunk;
 
 
-                int numCells = size * size;
+                int numCells = sizeX * sizeY;
                 
                 if( tokens->size() == numCells ) {
                     
                     for( int i=0; i<tokens->size(); i++ ) {
-                        int cX = i % size;
-                        int cY = i / size;
+                        int cX = i % sizeX;
+                        int cY = i / sizeX;
                         
                         int mapX = cX + x - mMapOffsetX + mMapD / 2;
                         int mapY = cY + y - mMapOffsetY + mMapD / 2;
@@ -3879,8 +3894,8 @@ void LivingLifePage::step() {
 
             if( mapPullMode ) {
                 
-                if( x == mapPullCurrentX - size/2 && 
-                    y == mapPullCurrentY - size/2 ) {
+                if( x == mapPullCurrentX - sizeX/2 && 
+                    y == mapPullCurrentY - sizeY/2 ) {
                     
                     lastScreenViewCenter.x = mapPullCurrentX * CELL_D;
                     lastScreenViewCenter.y = mapPullCurrentY * CELL_D;
@@ -6429,7 +6444,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
 
     printf( "DestID = %d\n", destID );
-        
+    
+    if( destID < 0 ) {
+        return;
+        }
 
     if( nextActionMessageToSend != NULL ) {
         delete [] nextActionMessageToSend;
