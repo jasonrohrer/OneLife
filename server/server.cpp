@@ -52,6 +52,8 @@ int minPickupBabyAge = 10;
 
 int forceDeathAge = 60;
 
+double minSayGapInSeconds = 1.0;
+
 
 static double minFoodDecrementSeconds = 5.0;
 
@@ -104,6 +106,7 @@ typedef struct LiveObject {
         // time that this life started (for computing age)
         double lifeStartTimeSeconds;
         
+        double lastSayTimeSeconds;
 
         // held by other player?
         char heldByOther;
@@ -1743,6 +1746,10 @@ void processedLogggedInPlayer( Socket *inSock,
                             
     newObject.lifeStartTimeSeconds = Time::getCurrentTime();
                             
+
+    newObject.lastSayTimeSeconds = Time::getCurrentTime();
+    
+
     newObject.heldByOther = false;
                             
     int numOfAge = 0;
@@ -2982,7 +2989,14 @@ int main() {
                                 }
                             }
                         }
-                    else if( m.type == SAY && m.saidText != NULL ) {
+                    else if( m.type == SAY && m.saidText != NULL &&
+                             Time::getCurrentTime() - 
+                             nextPlayer->lastSayTimeSeconds > 
+                             minSayGapInSeconds ) {
+                        
+                        nextPlayer->lastSayTimeSeconds = 
+                            Time::getCurrentTime();
+
                         unsigned int sayLimit = 
                             (unsigned int)( 
                                 floor( computeAge( nextPlayer ) ) + 1 );
