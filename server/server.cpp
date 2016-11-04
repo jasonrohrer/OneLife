@@ -690,11 +690,24 @@ char getFemale( LiveObject *inPlayer ) {
 int computeFoodCapacity( LiveObject *inPlayer ) {
     int ageInYears = lrint( computeAge( inPlayer ) );
     
-    if( ageInYears > 20 ) {
-        ageInYears = 20;
+    if( ageInYears < 40 ) {
+        
+        if( ageInYears > 20 ) {
+            ageInYears = 20;
+            }
+        
+        return ageInYears + 2;
         }
-
-    return ageInYears + 2;
+    else {
+        // food capacity decreases as we near 60
+        int cap = 60 - ageInYears + 2;
+        
+        if( cap < 2 ) {
+            cap = 2;
+            }
+        
+        return cap;
+        }
     }
 
 
@@ -1739,7 +1752,7 @@ void processedLogggedInPlayer( Socket *inSock,
 
         // new Eve
         // she starts almost full grown
-        newObject.lifeStartTimeSeconds -= 14 * 60;
+        newObject.lifeStartTimeSeconds -= 14 * ( 1.0 / getAgeRate() );
 
         
         int femaleID = getRandomFemalePersonObject();
@@ -1750,7 +1763,7 @@ void processedLogggedInPlayer( Socket *inSock,
         }
     else {
         // testing
-        //newObject.lifeStartTimeSeconds -= 14 * 60;
+        //newObject.lifeStartTimeSeconds -= 14 * ( 1.0 / getAgeRate() );
         }
     
                 
@@ -5529,14 +5542,20 @@ int main() {
 
                 if( nextPlayer->foodUpdate ) {
                     // send this player a food status change
-
-                     char *foodMessage = autoSprintf( 
-                         "FX\n"
-                         "%d %d %.2f\n"
-                         "#", 
-                         nextPlayer->foodStore,
-                         computeFoodCapacity( nextPlayer ),
-                         computeMoveSpeed( nextPlayer ) );
+                    
+                    int cap = computeFoodCapacity( nextPlayer );
+                    
+                    if( cap < nextPlayer->foodStore ) {
+                        nextPlayer->foodStore = cap;
+                        }
+                    
+                    char *foodMessage = autoSprintf( 
+                        "FX\n"
+                        "%d %d %.2f\n"
+                        "#", 
+                        nextPlayer->foodStore,
+                        cap,
+                        computeMoveSpeed( nextPlayer ) );
                      
                      int numSent = 
                          nextPlayer->sock->send( 
