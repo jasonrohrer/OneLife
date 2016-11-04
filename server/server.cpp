@@ -712,11 +712,25 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
 
 
 double computeMoveSpeed( LiveObject *inPlayer ) {
-    //double age = computeAge( inPlayer );
+    double age = computeAge( inPlayer );
     
 
     double speed = 4;
     
+    
+    double babySpeedFactor = 0.75;
+
+    double fullSpeedAge = 10.0;
+    
+
+    if( age < fullSpeedAge ) {
+        
+        double speedFactor = babySpeedFactor + 
+            ( 1.0 - babySpeedFactor ) * age / fullSpeedAge;
+        
+        speed *= speedFactor;
+        }
+
 
     // for now, try no age-based speed decrease
     /*
