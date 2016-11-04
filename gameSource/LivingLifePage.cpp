@@ -3506,7 +3506,11 @@ void LivingLifePage::step() {
             int speed = 4;
 
             if( d < 8 ) {
-                speed = lrint( d / 2 );
+                speed = lrint( frameRateFactor * d / 2 );
+                }
+
+            if( speed > d ) {
+                speed = floor( d );
                 }
 
             if( speed < 1 ) {
@@ -3517,7 +3521,7 @@ void LivingLifePage::step() {
             
             mNotePaperPosOffset = 
                 add( mNotePaperPosOffset,
-                     mult( dir, frameRateFactor * speed ) );
+                     mult( dir, speed ) );
             }
         
         }
@@ -3565,9 +3569,13 @@ void LivingLifePage::step() {
                 int speed = 4;
                 
                 if( d < 8 ) {
-                    speed = lrint( d / 2 );
+                    speed = lrint( frameRateFactor * d / 2 );
                     }
                 
+                if( speed > d ) {
+                    speed = floor( d );
+                    }
+
                 if( speed < 1 ) {
                     speed = 1;
                     }
@@ -3576,7 +3584,7 @@ void LivingLifePage::step() {
                 
                 mHungerSlipPosOffset[i] = 
                     add( mHungerSlipPosOffset[i],
-                         mult( dir, frameRateFactor * speed ) );
+                         mult( dir, speed ) );
                 }
             }
         
