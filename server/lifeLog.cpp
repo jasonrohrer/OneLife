@@ -15,6 +15,9 @@ static int currentYear;
 static int currentDay;
 
 
+extern double forceDeathAge;
+
+
 static FILE *openCurrentLogFile() {
     time_t t = time( NULL );
     struct tm *timeStruct = localtime( &t );
@@ -156,7 +159,12 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
                     causeString = stringDuplicate( "disconnect" );
                     }
                 else {
-                    causeString = stringDuplicate( "hunger" );
+                    if( inAge >= forceDeathAge ) {
+                        causeString = stringDuplicate( "oldAge" );
+                        }
+                    else {
+                        causeString = stringDuplicate( "hunger" );
+                        }
                     }
                 }
             else {

@@ -50,6 +50,8 @@ float targetHeat = 10;
 
 int minPickupBabyAge = 10;
 
+int forceDeathAge = 60;
+
 
 static double minFoodDecrementSeconds = 5.0;
 
@@ -673,7 +675,12 @@ double computeAge( LiveObject *inPlayer ) {
     double deltaSeconds = 
         Time::getCurrentTime() - inPlayer->lifeStartTimeSeconds;
     
-    return deltaSeconds * getAgeRate();
+    double age = deltaSeconds * getAgeRate();
+    
+    if( age >= forceDeathAge ) {
+        inPlayer->error = true;
+        }
+    return age;
     }
 
 
@@ -4233,13 +4240,21 @@ int main() {
                     }
 
                 if( ! nextPlayer->deathLogged ) {
+                    double age = computeAge( nextPlayer );
+                    
+                    char disconnect = true;
+                    
+                    if( age >= forceDeathAge ) {
+                        disconnect = false;
+                        }
+                    
                     logDeath( nextPlayer->id,
                               nextPlayer->email,
                               computeAge( nextPlayer ),
                               ! getFemale( nextPlayer ),
                               dropPos.x, dropPos.y,
                               players.size() - 1,
-                              true );
+                              disconnect );
                                         
                     nextPlayer->deathLogged = true;
                     }
