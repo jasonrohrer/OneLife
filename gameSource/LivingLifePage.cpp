@@ -1745,9 +1745,16 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
     doublePair actionOffset = { 0, 0 };
                 
     //trail.push_back( pos );
+
+    int targetX = playerActionTargetX;
+    int targetY = playerActionTargetY;
+    
+    if( inObj->id != ourID ) {
+        targetX = inObj->actionTargetX;
+        targetY = inObj->actionTargetY;
+        }
                 
-    if( inObj->id == ourID && 
-        inObj->curAnim != eating &&
+    if( inObj->curAnim != eating &&
         inObj->lastAnim != eating &&
         inObj->pendingActionAnimationProgress != 0 ) {
                     
@@ -1756,22 +1763,22 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
         float xDir = 0;
         float yDir = 0;
                     
-        if( inObj->currentPos.x < playerActionTargetX ) {
+        if( inObj->currentPos.x < targetX ) {
             xDir = 1;
             if( ! inObj->inMotion ) {
                 inObj->holdingFlip = false;
                 }
             }
-        if( inObj->currentPos.x > playerActionTargetX ) {
+        if( inObj->currentPos.x > targetX ) {
             xDir = -1;
             if( ! inObj->inMotion ) {
                 inObj->holdingFlip = true;
                 }
             }
-        if( inObj->currentPos.y < playerActionTargetY ) {
+        if( inObj->currentPos.y < targetY ) {
             yDir = 1;
             }
-        if( inObj->currentPos.y > playerActionTargetY ) {
+        if( inObj->currentPos.y > targetY ) {
             yDir = -1;
             }
 
@@ -1807,8 +1814,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                 
     // bare hands action OR holding something
     // character wiggle
-    if(  inObj->id == ourID && 
-         inObj->pendingActionAnimationProgress != 0 ) {
+    if( inObj->pendingActionAnimationProgress != 0 ) {
                     
         pos = add( pos, actionOffset );
         }                
@@ -4215,12 +4221,24 @@ void LivingLifePage::step() {
                 
                 int justAte = 0;
 
+                int facingOverride = 0;
+                int actionAttempt = 0;
+                int actionTargetX = 0;
+                int actionTargetY = 0;
+                
                 int numRead = sscanf( lines[i], 
+                                      "%d %d "
+                                      "%d "
+                                      "%d "
                                       "%d %d "
                                       "%499s %d %d %d %f %d %d %d %d "
                                       "%lf %lf %lf %499s %d",
                                       &( o.id ),
                                       &( o.displayID ),
+                                      &facingOverride,
+                                      &actionAttempt,
+                                      &actionTargetX,
+                                      &actionTargetY,
                                       holdingIDBuffer,
                                       &heldOriginValid,
                                       &heldOriginX,
@@ -4237,7 +4255,7 @@ void LivingLifePage::step() {
                                       &justAte );
                 
             
-                if( numRead == 16 ) {
+                if( numRead == 20 ) {
                     printf( "PLAYER_UPDATE with orVal=%d, orx=%d, ory=%d, "
                             "pX =%d, pY=%d\n",
                             heldOriginValid, heldOriginX, heldOriginY,
@@ -4348,6 +4366,37 @@ void LivingLifePage::step() {
                                 }
                             }
                         
+                        if( o.id != ourID ) {
+                            
+                            if( actionAttempt && ! justAte ) {
+                                addNewAnimPlayerOnly( existing, doing );
+
+                                existing->actionTargetX = actionTargetX;
+                                existing->actionTargetY = actionTargetY;
+                                existing->pendingActionAnimationProgress = 
+                                    0.025 * frameRateFactor;
+                                }
+
+                            if( heldOriginValid || 
+                                facingOverride != 0 ) {
+                                        
+                                if( ( heldOriginValid && 
+                                      heldOriginX > existing->xd )
+                                    ||
+                                    facingOverride == 1 ) {
+                                    
+                                    existing->holdingFlip = false;
+                                    }
+                                else if( ( heldOriginValid && 
+                                           heldOriginX < existing->xd ) 
+                                         ||
+                                         facingOverride == -1 ) {
+                                    
+                                    existing->holdingFlip = true;
+                                    }
+                                }
+                            }
+
 
                         if( existing->holdingID == 0 ) {
                                                         
@@ -5821,7 +5870,17 @@ void LivingLifePage::step() {
                     }
                 }
             }
-        }
+        else if( o->id != ourID && o->pendingActionAnimationProgress != 0 ) {
+            
+            o->pendingActionAnimationProgress += 0.025 * frameRateFactor;
+            
+            if( o->pendingActionAnimationProgress > 1 ) {
+                    // no longer pending, finish last cycle by snapping
+                    // back to 0
+                    o->pendingActionAnimationProgress = 0;
+                    }
+                }
+            }
     
 
     if( nextActionMessageToSend != NULL

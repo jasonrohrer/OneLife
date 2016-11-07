@@ -110,15 +110,17 @@ a few other tricks to reduce it's size.  Check the code in map.cpp for details.
 
 
 PU
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c e
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c e
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c e
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c e
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c e
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c e
 ...
-p_id po_id o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c e
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c e
 #
 
-List of player ids with their display object ids, held object ids, 
+List of player ids with their display object ids, facing direction, action
+attempt flag, action attempt target position,
+held object ids, 
 whether held origin is valid (1 or 0), origin position on map of that held 
 object (where it was picked up from), player's current heat value, 
 done_moving flag (to signal destination reached), force flag (to signal
@@ -127,6 +129,11 @@ floating point age in "years", floating point aging rate in years/sec, and
 floating point s move speeds (in grid square widths per second) and clothing
 set, and e = 1 or 0 to indicate whether the player just ate what they were 
 holding.
+
+If facing is 0, then the player's facing direction doesn't change.
+If facing is 1, then they should face right, and -1 to face left.
+
+action flag is 1 if player is attempting an action, 0 otherwise;
 
 Heat is the player's warmth between 0 and 1, where 0 is coldest, 1 is hottest,
 and 0.5 is ideal.

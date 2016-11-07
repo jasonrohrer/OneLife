@@ -139,7 +139,10 @@ typedef struct LiveObject {
         double moveTotalSeconds;
         double moveStartTime;
         
-
+        int facingOverride;
+        int actionAttempt;
+        GridPos actionTarget;
+        
         int holdingID;
 
         // absolute time in seconds that what we're holding should decay
@@ -1652,9 +1655,13 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
 
 
     char *updateLine = autoSprintf( 
-        "%d %d %s %d %d %d %.2f %s %.2f %.2f %.2f %s %d\n",
+        "%d %d %d %d %d %d %s %d %d %d %.2f %s %.2f %.2f %.2f %s %d\n",
         inPlayer->id,
         inPlayer->displayID,
+        inPlayer->facingOverride,
+        inPlayer->actionAttempt,
+        inPlayer->actionTarget.x,
+        inPlayer->actionTarget.y,
         holdingString,
         inPlayer->heldOriginValid,
         inPlayer->heldOriginX,
@@ -1670,7 +1677,10 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
     inPlayer->justAte = false;
     
     // held origin only valid once
-    inPlayer->heldOriginValid = false;
+    inPlayer->heldOriginValid = 0;
+    
+    inPlayer->facingOverride = 0;
+    inPlayer->actionAttempt = 0;
 
     delete [] holdingString;
     delete [] posString;
@@ -1992,6 +2002,10 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.lastSentMapX = 0;
     newObject.lastSentMapY = 0;
     newObject.moveTotalSeconds = 0;
+    newObject.facingOverride = 0;
+    newObject.actionAttempt = 0;
+    newObject.actionTarget.x = 0;
+    newObject.actionTarget.y = 0;
     newObject.holdingID = 0;
     newObject.holdingEtaDecay = 0;
     newObject.heldOriginValid = 0;
@@ -3111,6 +3125,17 @@ int main() {
                         if( nextPlayer->holdingID > 0 &&
                             ! (m.x == nextPlayer->xd &&
                                m.y == nextPlayer->yd ) ) {
+                            
+                            nextPlayer->actionAttempt = 1;
+                            nextPlayer->actionTarget.x = m.x;
+                            nextPlayer->actionTarget.y = m.y;
+                            
+                            if( m.x > nextPlayer->xd ) {
+                                nextPlayer->facingOverride = 1;
+                                }
+                            else if( m.x < nextPlayer->xd ) {
+                                nextPlayer->facingOverride = -1;
+                                }
 
                             // holding something
                             ObjectRecord *heldObj = 
@@ -3249,6 +3274,17 @@ int main() {
                             ( m.x == nextPlayer->xd &&
                               m.y == nextPlayer->yd ) ) {
                             
+                            nextPlayer->actionAttempt = 1;
+                            nextPlayer->actionTarget.x = m.x;
+                            nextPlayer->actionTarget.y = m.y;
+                            
+                            if( m.x > nextPlayer->xd ) {
+                                nextPlayer->facingOverride = 1;
+                                }
+                            else if( m.x < nextPlayer->xd ) {
+                                nextPlayer->facingOverride = -1;
+                                }
+
                             // can only use on targets next to us for now,
                             // no diags
                             
@@ -3535,6 +3571,18 @@ int main() {
                               ( m.x == nextPlayer->xd &&
                                 m.y == nextPlayer->yd ) ) ) {
                             
+                            nextPlayer->actionAttempt = 1;
+                            nextPlayer->actionTarget.x = m.x;
+                            nextPlayer->actionTarget.y = m.y;
+                            
+                            if( m.x > nextPlayer->xd ) {
+                                nextPlayer->facingOverride = 1;
+                                }
+                            else if( m.x < nextPlayer->xd ) {
+                                nextPlayer->facingOverride = -1;
+                                }
+
+
                             if( nextPlayer->holdingID == 0 ) {
                                 // target location empty and 
                                 // and our hands are empty
@@ -3619,6 +3667,14 @@ int main() {
                                 ( m.x == nextPlayer->xd &&
                                   m.y == nextPlayer->yd ) ) {
                                 
+
+                                if( m.x > nextPlayer->xd ) {
+                                    nextPlayer->facingOverride = 1;
+                                    }
+                                else if( m.x < nextPlayer->xd ) {
+                                    nextPlayer->facingOverride = -1;
+                                    }
+
                                 int hitIndex;
                                 LiveObject *hitPlayer = 
                                     getHitPlayer( m.x, m.y, 5, &hitIndex );
@@ -3636,7 +3692,10 @@ int main() {
                         if( targetPlayer != NULL ) {
                             
                             // use on self/baby
-
+                            nextPlayer->actionAttempt = 1;
+                            nextPlayer->actionTarget.x = m.x;
+                            nextPlayer->actionTarget.y = m.y;
+                            
                             if( nextPlayer->holdingID > 0 ) {
                                 ObjectRecord *obj = 
                                     getObject( nextPlayer->holdingID );
@@ -3942,6 +4001,17 @@ int main() {
                             ( m.x == nextPlayer->xd &&
                               m.y == nextPlayer->yd ) ) {
                             
+                            nextPlayer->actionAttempt = 1;
+                            nextPlayer->actionTarget.x = m.x;
+                            nextPlayer->actionTarget.y = m.y;
+                            
+                            if( m.x > nextPlayer->xd ) {
+                                nextPlayer->facingOverride = 1;
+                                }
+                            else if( m.x < nextPlayer->xd ) {
+                                nextPlayer->facingOverride = -1;
+                                }
+
                             if( nextPlayer->holdingID != 0 ) {
                                 
                                 if( nextPlayer->holdingID < 0 ) {
@@ -4167,6 +4237,17 @@ int main() {
                             ( m.x == nextPlayer->xd &&
                               m.y == nextPlayer->yd ) ) {
                             
+                            nextPlayer->actionAttempt = 1;
+                            nextPlayer->actionTarget.x = m.x;
+                            nextPlayer->actionTarget.y = m.y;
+                            
+                            if( m.x > nextPlayer->xd ) {
+                                nextPlayer->facingOverride = 1;
+                                }
+                            else if( m.x < nextPlayer->xd ) {
+                                nextPlayer->facingOverride = -1;
+                                }
+
                             // can only use on targets next to us for now,
                             // no diags
                             
@@ -4206,6 +4287,10 @@ int main() {
                         if( m.x == nextPlayer->xd &&
                             m.y == nextPlayer->yd &&
                             nextPlayer->holdingID == 0 ) {
+                            
+                            nextPlayer->actionAttempt = 1;
+                            nextPlayer->actionTarget.x = m.x;
+                            nextPlayer->actionTarget.y = m.y;
                             
                             if( m.c >= 0 && m.c < NUM_CLOTHING_PIECES ) {
 

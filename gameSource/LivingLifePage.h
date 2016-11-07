@@ -164,7 +164,10 @@ typedef struct LiveObject {
         char inMotion;
         
         char displayChar;
-
+        
+        int actionTargetX;
+        int actionTargetY;
+        
         char pendingAction;
         float pendingActionAnimationProgress;
 
