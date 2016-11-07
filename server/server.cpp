@@ -52,6 +52,10 @@ int minPickupBabyAge = 10;
 
 int forceDeathAge = 60;
 
+// if you have 2 living children, youngest has to be at least this old
+// before you can have another
+int minChildSpacingAge = 5;
+
 double minSayGapInSeconds = 1.0;
 
 
@@ -200,6 +204,11 @@ typedef struct LiveObject {
             clothingContainedEtaDecays[NUM_CLOTHING_PIECES];
 
         char updateSent;
+
+        // babies born to this player
+        SimpleVector<unsigned int> *babyBirthTimes;
+        SimpleVector<int> *babyIDs;
+        
     } LiveObject;
 
 
@@ -282,6 +291,9 @@ void quitCleanup() {
         if( nextPlayer->pathToDest != NULL ) {
             delete [] nextPlayer->pathToDest;
             }
+
+        delete nextPlayer->babyBirthTimes;
+        delete nextPlayer->babyIDs;
         }
     players.deleteAll();
 
@@ -1730,9 +1742,9 @@ static LiveObject *getHitPlayer( int inX, int inY, int inMaxAge = -1,
 
 
 
-void processedLogggedInPlayer( Socket *inSock,
-                               SimpleVector<char> *inSockBuffer,
-                               char *inEmail ) {
+void processLoggedInPlayer( Socket *inSock,
+                            SimpleVector<char> *inSockBuffer,
+                            char *inEmail ) {
     numConnections ++;
                 
     LiveObject newObject;
@@ -1759,25 +1771,66 @@ void processedLogggedInPlayer( Socket *inSock,
     SimpleVector<LiveObject*> parentChoices;
                             
     for( int i=0; i<numPlayers; i++ ) {
-                                
-        double age = computeAge( players.getElement( i ) );
+        LiveObject *player = players.getElement( i );
+        
+        double age = computeAge( player );
                     
-        char f = getFemale( players.getElement( i ) );
+        char f = getFemale( player );
                     
-        if( age >= 14 && age <= 45 && f ) {
+        if( age >= 14 && age <= 40 && f ) {
             numOfAge ++;
-            parentChoices.push_back( players.getElement( i ) );
+            
+            // make sure this woman hasn't had too many babies in a row
+            char canHaveBaby = true;
+            
+            int numPastBabies = player->babyBirthTimes->size();
+            unsigned int currentTime = time( NULL );
+            
+            unsigned int minChildSpacingSeconds = 
+                (unsigned int) lrint( minChildSpacingAge / getAgeRate() );
+            
+            if( numPastBabies >= 2 ) {
+                
+                int idA = 
+                    player->babyIDs->getElementDirect( numPastBabies - 1 );
+
+                int idB = 
+                    player->babyIDs->getElementDirect( numPastBabies - 2 );
+                
+                char aAlive = false;
+                char bAlive = false;
+                
+                for( int j=0; j<numPlayers; j++ ) {
+                    int id = players.getElement( j )->id;
+                    
+                    if( id == idA ) {
+                        aAlive = true;
+                        }
+                    else if( id == idB ) {
+                        bAlive = true;
+                        }
+                    }
+                
+                if( aAlive && bAlive ) {
+                    
+                    if( currentTime - player->babyBirthTimes->getElementDirect( 
+                            numPastBabies - 1 ) < minChildSpacingSeconds 
+                        ||
+                        currentTime - player->babyBirthTimes->getElementDirect( 
+                            numPastBabies - 2 ) < minChildSpacingSeconds ) {
+                        
+                        canHaveBaby = false;
+                        }
+                    }
+                }
+            
+            if( canHaveBaby ) {
+                parentChoices.push_back( player );
+                }
             }
         }
-                
 
-    if( numOfAge == 0 ) {
-        // all existing children are good spawn spot for Eve
-                    
-        for( int i=0; i<numPlayers; i++ ) {
-            parentChoices.push_back( players.getElement( i ) );
-            }
-
+    if( parentChoices.size() == 0 || numOfAge == 0 ) {
         // new Eve
         // she starts almost full grown
         newObject.lifeStartTimeSeconds -= 14 * ( 1.0 / getAgeRate() );
@@ -1787,6 +1840,15 @@ void processedLogggedInPlayer( Socket *inSock,
         
         if( femaleID != -1 ) {
             newObject.displayID = femaleID;
+            }
+        }
+    
+
+    if( numOfAge == 0 ) {
+        // all existing children are good spawn spot for Eve
+                    
+        for( int i=0; i<numPlayers; i++ ) {
+            parentChoices.push_back( players.getElement( i ) );
             }
         }
     else {
@@ -1828,10 +1890,12 @@ void processedLogggedInPlayer( Socket *inSock,
         // born to an existing player
         int parentIndex = 
             randSource.getRandomBoundedInt( 0,
-                                            players.size() - 1 );
+                                            parentChoices.size() - 1 );
                     
         parent = players.getElement( parentIndex );
         
+        parent->babyBirthTimes->push_back( time( NULL ) );
+        parent->babyIDs->push_back( newObject.id );
         
         ObjectRecord *parentObject = getObject( parent->displayID );
 
@@ -1885,6 +1949,7 @@ void processedLogggedInPlayer( Socket *inSock,
             }
         
         
+        delete [] races;
                 
         if( parent->xs == parent->xd && 
             parent->ys == parent->yd ) {
@@ -1947,7 +2012,10 @@ void processedLogggedInPlayer( Socket *inSock,
     newObject.newMove = false;
     
     newObject.updateSent = false;
-                
+    
+    newObject.babyBirthTimes = new SimpleVector<unsigned int>();
+    newObject.babyIDs = new SimpleVector<int>();
+    
                 
                 
                 
@@ -1955,7 +2023,6 @@ void processedLogggedInPlayer( Socket *inSock,
         newObject.heatMap[i] = 0;
         }
 
-    players.push_back( newObject );            
     
     int parentID = -1;
     char *parentEmail = NULL;
@@ -1965,6 +2032,11 @@ void processedLogggedInPlayer( Socket *inSock,
         parentEmail = parent->email;
         }
     
+    // parent pointer possibly no longer valid after push_back, which
+    // can resize the vector
+    parent = NULL;
+    players.push_back( newObject );            
+
 
     logBirth( newObject.id,
               newObject.email,
@@ -1974,7 +2046,7 @@ void processedLogggedInPlayer( Socket *inSock,
               newObject.xd,
               newObject.yd,
               players.size() );
-            
+    
     AppLog::infoF( "New player connected as player %d", newObject.id );
     }
 
@@ -2339,7 +2411,7 @@ int main() {
                             
                             AppLog::info( "Got new player logged in" );
                             
-                            processedLogggedInPlayer( 
+                            processLoggedInPlayer( 
                                 nextConnection->sock,
                                 nextConnection->sockBuffer,
                                 nextConnection->email );
@@ -2483,7 +2555,7 @@ int main() {
                             
                                     AppLog::info( "Got new player logged in" );
                                     
-                                    processedLogggedInPlayer( 
+                                    processLoggedInPlayer( 
                                         nextConnection->sock,
                                         nextConnection->sockBuffer,
                                         nextConnection->email );
@@ -5672,6 +5744,9 @@ int main() {
                 if( nextPlayer->email != NULL ) {
                     delete [] nextPlayer->email;
                     }
+                
+                delete nextPlayer->babyBirthTimes;
+                delete nextPlayer->babyIDs;
                 
                 players.deleteElement( i );
                 i--;
