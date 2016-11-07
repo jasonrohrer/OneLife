@@ -1963,6 +1963,11 @@ void getEvePosition( int *outX, int *outY ) {
         yDir = 1;
         }
     
+    if( xDir == 0 && yDir == 0 ) {
+        xDir = 1;
+        }
+
+
     while( x != 0 && y != 0 ) {
         
         int newX = x;
