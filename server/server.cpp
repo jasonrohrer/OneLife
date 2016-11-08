@@ -5875,6 +5875,14 @@ int main() {
                 }
             }
 
+
+        if( players.size() == 0 && newConnections.size() == 0 ) {
+            if( SettingsManager::getIntSetting( "shutdownMode", 0 ) ) {
+                AppLog::info( "No live players or connections in shutdown " 
+                              " mode, auto-quitting." );
+                quit = true;
+                }
+            }
         }
     
 
