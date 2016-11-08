@@ -2335,6 +2335,9 @@ int main() {
                     AppLog::info( "We are in shutdown mode, "
                                   "deflecting new connection" );         
                     
+                    AppLog::infoF( "%d player(s) still alive on server.",
+                                   players.size() );
+
                     message = stringDuplicate( "SHUTDOWN\n#" );
                     newConnection.shutdownMode = true;
                     }
@@ -5839,7 +5842,10 @@ int main() {
             if( nextPlayer->error && nextPlayer->deleteSent ) {
                 AppLog::infoF( "Closing connection to player %d on error",
                         nextPlayer->id );
-                
+
+                AppLog::infoF( "%d remaining player(s) alive on server ",
+                               players.size() - 1 );
+
                 sockPoll.removeSocket( nextPlayer->sock );
                 
                 delete nextPlayer->sock;
