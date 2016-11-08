@@ -87,6 +87,8 @@ typedef struct FreshConnection {
 
         char error;
 
+        char shutdownMode;
+
         // for tracking connections that have failed to LOGIN 
         // in a timely manner
         double connectionStartTimeSeconds;
@@ -2308,8 +2310,7 @@ int main() {
             Socket *sock = server.acceptConnection( 0 );
 
             if( sock != NULL ) {
-                
-                AppLog::info( "Got connection" );
+                AppLog::info( "Got connection" );                
 
                 FreshConnection newConnection;
                 
@@ -2327,14 +2328,29 @@ int main() {
                 SettingsManager::setSetting( "sequenceNumber",
                                              (int)nextSequenceNumber );
                 
+                char *message;
+                
+                if( SettingsManager::getIntSetting( "shutdownMode", 0 ) ) {
+                        
+                    AppLog::info( "We are in shutdown mode, "
+                                  "deflecting new connection" );         
+                    
+                    message = stringDuplicate( "SHUTDOWN\n#" );
+                    newConnection.shutdownMode = true;
+                    }
+                else {
+                    message = autoSprintf( "SN\n%lu\n#", 
+                                           newConnection.sequenceNumber );
+                    newConnection.shutdownMode = false;
+                    }
+
+
                 // wait for email and hashes to come from client
                 // (and maybe ticket server check isn't required by settings)
                 newConnection.ticketServerRequest = NULL;
                 newConnection.error = false;
 
-                char *message = autoSprintf( "SN\n%lu\n#", 
-                                             newConnection.sequenceNumber );
-
+                
                 int messageLength = strlen( message );
                 
                 int numSent = 
@@ -2456,8 +2472,16 @@ int main() {
                     nextConnection->error = true;
                     }
                 
-                char *message = 
-                    getNextClientMessage( nextConnection->sockBuffer );
+                char *message = NULL;
+                int timeLimit = 10;
+                
+                if( ! nextConnection->shutdownMode ) {
+                    message = 
+                        getNextClientMessage( nextConnection->sockBuffer );
+                    }
+                else {
+                    timeLimit = 5;
+                    }
                 
                 if( message != NULL ) {
                     
@@ -2598,9 +2622,16 @@ int main() {
                     
                     delete [] message;
                     }
-                else if( timeDelta > 10 ) {
-                    AppLog::info( "Client failed to LOGIN after 10 seconds, "
-                                  "client rejected." );
+                else if( timeDelta > timeLimit ) {
+                    if( nextConnection->shutdownMode ) {
+                        AppLog::info( "5 second grace period for new "
+                                      "connection in shutdown mode, closing." );
+                        }
+                    else {
+                        AppLog::info( 
+                            "Client failed to LOGIN after 10 seconds, "
+                            "client rejected." );
+                        }
                     nextConnection->error = true;
                     }
                 }

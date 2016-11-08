@@ -111,6 +111,7 @@ static char readServerSocketFull( int inServerSocket ) {
 
 
 typedef enum messageType {
+    SHUTDOWN,
 	SEQUENCE_NUMBER,
     ACCEPTED,
     REJECTED,
@@ -139,7 +140,10 @@ messageType getMessageType( char *inMessage ) {
     
     messageType returnValue = UNKNOWN;
 
-    if( strcmp( copy, "SN" ) == 0 ) {
+    if( strcmp( copy, "SHUTDOWN" ) == 0 ) {
+        returnValue = SHUTDOWN;
+        }
+    else if( strcmp( copy, "SN" ) == 0 ) {
         returnValue = SEQUENCE_NUMBER;
         }
     else if( strcmp( copy, "ACCEPTED" ) == 0 ) {
@@ -3621,7 +3625,15 @@ void LivingLifePage::step() {
             type = UNKNOWN;
             }
         
-        if( type == SEQUENCE_NUMBER ) {
+        if( type == SHUTDOWN ) {
+            closeSocket( mServerSocket );
+            mServerSocket = -1;
+            setSignal( "serverShutdown" );
+            
+            delete [] message;
+            return;
+            }
+        else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
             
             int number = 0;

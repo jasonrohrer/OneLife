@@ -21,6 +21,19 @@ char *HMAC_SHA1( char *inKey, char *inData )
 
 
 
+Shutdown mode:
+
+If the server is in shutdown mode (no new connections allowed), upon 
+receiving a client connection, the server will immediately send the following
+message:
+
+SHUTDOWN
+#
+
+All further messages from the client will be ignored.
+
+
+
 
 Client login proceedure.
 

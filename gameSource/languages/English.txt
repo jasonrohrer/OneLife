@@ -47,6 +47,8 @@ manualRestartMessage "PRESS [ESC] TO QUIT AND##RESTART GAME TO APPLY UPDATE"
 
 loginFailed "LOGIN FAILED"
 
+serverShutdown "SERVER HAS BEEN SHUT DOWN"
+
 
 waitingBirth "WAITING TO BE BORN"
 
