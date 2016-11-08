@@ -4170,6 +4170,11 @@ void LivingLifePage::step() {
                 delete [] lines[0];
                 }
             
+            // for babies that are held, but don't exist yet in 
+            // client because PU creating them hasn't been received yet
+            // assume these always arrive in the same PU message
+            SimpleVector<int> unusedHolderID;
+            SimpleVector<int> unusedHeldID;
             
             for( int i=1; i<numLines; i++ ) {
 
@@ -4524,56 +4529,12 @@ void LivingLifePage::step() {
                                 // picked up a baby
                                 int babyID = - existing->holdingID;
                                 
-                                LiveObject *babyO = getGameObject( babyID );
-                                
-                                if( babyO != NULL ) {
-                                    babyO->heldByAdultID = existing->id;
-
-                                    
-                                    existing->heldFrozenRotFrameCount =
-                                        babyO->frozenRotFrameCount;
-                                    
-                                    existing->heldFrozenRotFrameCountUsed =
-                                        false;
-                                    
-
-                                    if( babyO->lastAnimFade == 0 ) {
-                                        
-                                        existing->lastHeldAnim = 
-                                            babyO->curAnim;
-                                        
-                                        existing->heldAnimationFrameCount =
-                                            babyO->animationFrameCount;
-
-                                        existing->lastHeldAnimationFrameCount =
-                                            babyO->lastAnimationFrameCount;
-
-                                        existing->lastHeldAnimFade = 1;
-                                        existing->curHeldAnim = held;
-                                        }
-                                    else {
-                                        // baby that we're picking up
-                                        // in the middle of an existing fade
-                                        
-                                        existing->lastHeldAnim = 
-                                            babyO->lastAnim;
-                                        existing->lastHeldAnimationFrameCount =
-                                           babyO->lastAnimationFrameCount;
-                                        
-                                        existing->curHeldAnim = 
-                                            babyO->curAnim;
-                                        
-                                        existing->heldAnimationFrameCount =
-                                            babyO->animationFrameCount;
-                                        
-
-                                        existing->lastHeldAnimFade =
-                                            babyO->lastAnimFade;
-                                        
-                                        existing->futureHeldAnimStack->
-                                            push_back( held );
-                                        }
-                                    }
+                                // save ALL of these for later, after
+                                // we've processed all PU lines, 
+                                // because a held baby may not exist
+                                // locally yet.
+                                unusedHolderID.push_back( existing->id );
+                                unusedHeldID.push_back( babyID );
                                 }
                             }
                         
@@ -4707,6 +4668,18 @@ void LivingLifePage::step() {
                         
                         o.lastHoldingID = o.holdingID;
                         
+                        if( o.holdingID < 0 ) {
+                            // picked up a baby
+                            int babyID = - o.holdingID;
+                            
+                            // save ALL of these for later, after
+                            // we've processed all PU lines, 
+                            // because a held baby may not exist
+                            // locally yet.
+                            unusedHolderID.push_back( o.id );
+                            unusedHeldID.push_back( babyID );
+                            }
+
                         o.curAnim = ground;
                         o.lastAnim = ground;
                         o.lastAnimFade = 0;
@@ -4786,6 +4759,64 @@ void LivingLifePage::step() {
                 delete [] lines[i];
                 }
             
+            for( int i=0; i<unusedHolderID.size(); i++ ) {
+                LiveObject *existing = 
+                    getGameObject( unusedHolderID.getElementDirect( i ) );
+                
+                LiveObject *babyO = 
+                    getGameObject( unusedHeldID.getElementDirect( i ) );
+                
+                if( babyO != NULL && existing != NULL ) {
+                    babyO->heldByAdultID = existing->id;
+
+                                    
+                    existing->heldFrozenRotFrameCount =
+                        babyO->frozenRotFrameCount;
+                                    
+                    existing->heldFrozenRotFrameCountUsed =
+                        false;
+                                    
+
+                    if( babyO->lastAnimFade == 0 ) {
+                        
+                        existing->lastHeldAnim = 
+                            babyO->curAnim;
+                        
+                        existing->heldAnimationFrameCount =
+                            babyO->animationFrameCount;
+                        
+                        existing->lastHeldAnimationFrameCount =
+                            babyO->lastAnimationFrameCount;
+
+                        existing->lastHeldAnimFade = 1;
+                        existing->curHeldAnim = held;
+                        }
+                    else {
+                        // baby that we're picking up
+                        // in the middle of an existing fade
+                        
+                        existing->lastHeldAnim = 
+                            babyO->lastAnim;
+                        existing->lastHeldAnimationFrameCount =
+                            babyO->lastAnimationFrameCount;
+                        
+                        existing->curHeldAnim = 
+                            babyO->curAnim;
+                        
+                        existing->heldAnimationFrameCount =
+                            babyO->animationFrameCount;
+                        
+                        
+                        existing->lastHeldAnimFade =
+                            babyO->lastAnimFade;
+                        
+                        existing->futureHeldAnimStack->
+                            push_back( held );
+                        }
+                    }
+                }
+            
+
 
             delete [] lines;
 
