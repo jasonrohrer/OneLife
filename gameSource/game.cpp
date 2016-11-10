@@ -152,6 +152,8 @@ int webRetrySeconds;
 double frameRateFactor = 1;
 int baseFramesPerSecond = 60;
 
+char autoAdjustFramerate = true;
+
 char firstDrawFrameCalled = false;
 int firstServerMessagesReceived = 0;
 
@@ -287,11 +289,11 @@ static void updateDataVersionNumber() {
 
 static const char *customDataFormatWriteString = 
     "version%d_mouseSpeed%f_musicOff%d_musicLoudness%f"
-    "_webRetrySeconds%d";
+    "_autoAdjustFramerate%d_webRetrySeconds%d";
 
 static const char *customDataFormatReadString = 
     "version%d_mouseSpeed%f_musicOff%d_musicLoudness%f"
-    "_webRetrySeconds%d";
+    "_autoAdjustFramerate%d_webRetrySeconds%d";
 
 
 char *getCustomRecordedGameData() {    
@@ -304,6 +306,10 @@ char *getCustomRecordedGameData() {
         SettingsManager::getIntSetting( "musicOff", 0 );
     float musicLoudnessSetting = 
         SettingsManager::getFloatSetting( "musicLoudness", 1.0f );
+    int autoAdjustFramerateSetting = 
+        SettingsManager::getIntSetting( "autoAdjustFramerate", 1 );
+    
+    
     int webRetrySecondsSetting = 
         SettingsManager::getIntSetting( "webRetrySeconds", 10 );
     
@@ -312,6 +318,7 @@ char *getCustomRecordedGameData() {
         customDataFormatWriteString,
         versionNumber, mouseSpeedSetting, musicOffSetting, 
         musicLoudnessSetting,
+        autoAdjustFramerateSetting,
         webRetrySecondsSetting );
     
 
@@ -451,6 +458,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
     int musicOffSetting = 0;
     float musicLoudnessSetting = 1.0f;
+
+    int autoAdjustFramerateSetting = 1;
+    
     int webRetrySecondsSetting = 10;
 
     
@@ -462,6 +472,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                           &mouseSpeedSetting, 
                           &musicOffSetting,
                           &musicLoudnessSetting,
+                          &autoAdjustFramerateSetting,
                           &webRetrySecondsSetting );
     if( numRead != 5 ) {
         // no recorded game?
@@ -490,6 +501,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
     musicOff = musicOffSetting;
     musicLoudness = musicLoudnessSetting;
+    
+    autoAdjustFramerate = autoAdjustFramerateSetting;
+    
     webRetrySeconds = webRetrySecondsSetting;
 
     reflectorURL = SettingsManager::getStringSetting( "reflectorURL" );
@@ -1423,7 +1437,7 @@ void drawFrame( char inUpdate ) {
 
     double recentFPS = getRecentFrameRate();
 
-    if( ! livingLifePage->isMapBeingPulled() )
+    if( ! livingLifePage->isMapBeingPulled() && autoAdjustFramerate )
     if( recentFPS < 0.90 * ( 60.0 / frameRateFactor ) 
         ||
         recentFPS > 1.10 * ( 60.0 / frameRateFactor ) ) {
