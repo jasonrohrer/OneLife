@@ -306,6 +306,10 @@ static LiveObject *getGameObject( int inID ) {
 
 
 
+extern char autoAdjustFramerate;
+extern int baseFramesPerSecond;
+
+
 void updateMoveSpeed( LiveObject *inObject ) {
     double etaSec = inObject->moveEtaTime - game_getCurrentTime();
     
@@ -343,8 +347,19 @@ void updateMoveSpeed( LiveObject *inObject ) {
     etaSec += turnTimeBoost;
     
     double speedPerSec = moveLeft / etaSec;
-                     
-    inObject->currentSpeed = speedPerSec / getRecentFrameRate();
+
+    if( autoAdjustFramerate ) {
+        inObject->currentSpeed = speedPerSec / getRecentFrameRate();
+        printf( "autoAdjustFramerate = %d, speed = %f", 
+                autoAdjustFramerate, inObject->currentSpeed );
+        }
+    else {
+        // hold frame rate constant
+        double fps = baseFramesPerSecond / frameRateFactor;
+        
+        inObject->currentSpeed = speedPerSec / fps;
+        printf( "fixed speed = %f", inObject->currentSpeed );
+        }
     
     inObject->timeOfLastSpeedUpdate = game_getCurrentTime();
     }

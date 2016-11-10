@@ -474,7 +474,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                           &musicLoudnessSetting,
                           &autoAdjustFramerateSetting,
                           &webRetrySecondsSetting );
-    if( numRead != 5 ) {
+    if( numRead != 6 ) {
         // no recorded game?
         }
     else {
