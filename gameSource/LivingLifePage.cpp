@@ -81,6 +81,9 @@ int overheadServerBytesSent = 0;
 int overheadServerBytesRead = 0;
 
 
+static char hideGuiPanel = false;
+
+
 
 SimpleVector<unsigned char> serverSocketBuffer;
 
@@ -698,6 +701,8 @@ LivingLifePage::LivingLifePage()
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,'?! " ) {
     
+    hideGuiPanel = SettingsManager::getIntSetting( "hideGameUI", 0 );
+
     mHungerSlipSprites[0] = loadSprite( "fullSlip.tga", false );
     mHungerSlipSprites[1] = loadSprite( "hungrySlip.tga", false );
     mHungerSlipSprites[2] = loadSprite( "starvingSlip.tga", false );
@@ -3061,6 +3066,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
         return;
         }
     
+    if( hideGuiPanel ) {
+        // skip gui
+        return;
+        }
+
 
     doublePair notePos = add( mNotePaperPosOffset, lastScreenViewCenter );
 
