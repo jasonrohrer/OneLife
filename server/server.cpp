@@ -1988,6 +1988,15 @@ void processLoggedInPlayer( Socket *inSock,
         // else starts at civ outskirts (lone Eve)
         int startX, startY;
         getEvePosition( &startX, &startY );
+
+        if( SettingsManager::getIntSetting( "forceEveLocation", 0 ) ) {
+
+            startX = 
+                SettingsManager::getIntSetting( "forceEveLocationX", 0 );
+            startY = 
+                SettingsManager::getIntSetting( "forceEveLocationY", 0 );
+            }
+        
         
         newObject.xs = startX;
         newObject.ys = startY;
