@@ -56,7 +56,7 @@ extern char *userEmail;
 
 
 
-static JenkinsRandomSource randSource;
+static JenkinsRandomSource randSource( 340403 );
 
 
 static int lastScreenMouseX, lastScreenMouseY;
