@@ -6446,6 +6446,10 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
 void LivingLifePage::pointerMove( float inX, float inY ) {
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
 
+    if( mFirstServerMessagesReceived != 3 || ! mDoneLoadingFirstObjectSet ) {
+        return;
+        }
+
     PointerHitRecord p;
     
     p.hitSlotIndex = -1;
@@ -6504,7 +6508,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     mouseDown = true;
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
     
-    if( mFirstServerMessagesReceived != 3 ) {
+    if( mFirstServerMessagesReceived != 3 || ! mDoneLoadingFirstObjectSet ) {
         return;
         }
 
