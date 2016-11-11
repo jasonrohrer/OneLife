@@ -253,8 +253,8 @@ static int getBaseMap( int inX, int inY ) {
     
     // scale
     density *= .4;
-    //density = 1;
-
+    // good for zoom in to map for teaser
+    //density = .70;
 
     if( getXYRandom( 287 + inX, 383 + inY ) < density ) {
 
