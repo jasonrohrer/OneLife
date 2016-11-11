@@ -2764,14 +2764,18 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         int worldY = y + mMapOffsetY - mMapD / 2;
 
-        int screenY = CELL_D * ( y + mMapOffsetY - mMapD / 2 );
+        int screenY = CELL_D * worldY;
         
 
         // draw marked objects behind everything else, including players
         
         for( int x=xStart; x<=xEnd; x++ ) {
+            
+            int worldX = x + mMapOffsetX - mMapD / 2;
+
+
             int mapI = y * mMapD + x;
-            int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
+            int screenX = CELL_D * worldX;
             
             if( mMap[ mapI ] > 0 && 
                 getObject( mMap[ mapI ] )->drawBehindPlayer ) {
@@ -2785,11 +2789,27 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 setDrawColor( 0, 0, 0, 0.5 );
                 }
             else {
-                setDrawColor( 1, 1, 1, 0.25 );
+                if( lrint( abs(worldY) ) % 2 == 0 ) {
+                    if( lrint( abs(worldX) ) % 2 == 1 ) {
+                        setDrawColor( 1, 1, 1, 0.25 );
+                        }
+                    else {
+                        setDrawColor( 0, 0, 0, 0.25 );
+                        }
+                    }
+                else {
+                    if( lrint( abs(worldX) ) % 2 == 1 ) {
+                        setDrawColor( 0, 0, 0, 0.25 );
+                        }
+                    else {
+                        setDrawColor( 1, 1, 1, 0.25 );
+                        }
+                    }
+                
                 }
             
             doublePair cellPos = { (double)screenX, (double)screenY };
-            drawSquare( cellPos, CELL_D / 3 );
+            drawSquare( cellPos, CELL_D / 2 );
             */
             }
 
