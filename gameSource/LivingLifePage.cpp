@@ -2810,6 +2810,34 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             doublePair cellPos = { (double)screenX, (double)screenY };
             drawSquare( cellPos, CELL_D / 2 );
+            
+            FloatColor c = getDrawColor();
+
+            c.r = 1 - c.r;
+            c.g = 1 - c.g;
+            c.b = 1 - c.b;
+            c.a = .75;
+            
+            setDrawColor( c );
+            
+            char *xString =  autoSprintf( "x:%d", worldX );
+            char *yString =  autoSprintf( "y:%d", worldY );
+            
+            doublePair xDrawPos = cellPos;
+            doublePair yDrawPos = cellPos;
+            
+            xDrawPos.y += CELL_D / 6;
+            yDrawPos.y -= CELL_D / 6;
+            
+            xDrawPos.x -= CELL_D / 3;
+            yDrawPos.x -= CELL_D / 3;
+            
+
+            mainFont->drawString( xString, xDrawPos, alignLeft );
+            mainFont->drawString( yString, yDrawPos, alignLeft );
+            
+            delete [] yString;
+            delete [] xString;
             */
             }
 
