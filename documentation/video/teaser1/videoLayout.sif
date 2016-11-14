@@ -1,0 +1,581 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<canvas version="1.0" width="1280" height="720" xres="2834.645752" yres="2834.645752" view-box="-10.666667 6.000000 10.666667 -6.000000" antialias="1" fps="30.000" begin-time="0f" end-time="50s" bgcolor="0.500000 0.500000 0.500000 1.000000">
+  <name>Synfig Animation 2</name>
+  <meta name="background_first_color" content="0.880000 0.880000 0.880000"/>
+  <meta name="background_second_color" content="0.650000 0.650000 0.650000"/>
+  <meta name="background_size" content="15.000000 15.000000"/>
+  <meta name="grid_color" content="0.623529 0.623529 0.623529"/>
+  <meta name="grid_show" content="0"/>
+  <meta name="grid_size" content="0.250000 0.250000"/>
+  <meta name="grid_snap" content="0"/>
+  <meta name="guide_color" content="0.435294 0.435294 1.000000"/>
+  <meta name="guide_show" content="1"/>
+  <meta name="guide_snap" content="0"/>
+  <meta name="jack_offset" content="0.000000"/>
+  <meta name="onion_skin" content="0"/>
+  <meta name="onion_skin_future" content="0"/>
+  <meta name="onion_skin_past" content="1"/>
+  <keyframe time="0f" active="true"/>
+  <layer type="group" active="true" exclude_from_rendering="false" version="0.2">
+    <param name="z_depth">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="amount">
+      <real value="1.0000000000"/>
+    </param>
+    <param name="blend_method">
+      <integer value="0" static="true"/>
+    </param>
+    <param name="origin">
+      <vector>
+        <x>0.0000000000</x>
+        <y>0.0000000000</y>
+      </vector>
+    </param>
+    <param name="transformation">
+      <composite type="transformation">
+        <offset>
+          <vector>
+            <x>0.0000000000</x>
+            <y>0.0000000000</y>
+          </vector>
+        </offset>
+        <angle>
+          <angle value="0.000000"/>
+        </angle>
+        <skew_angle>
+          <angle value="0.000000"/>
+        </skew_angle>
+        <scale>
+          <scale type="vector">
+            <link>
+              <vector>
+                <x>0.4000000060</x>
+                <y>0.4000000060</y>
+              </vector>
+            </link>
+            <scalar>
+              <power type="real">
+                <base>
+                  <real value="2.0000000000"/>
+                </base>
+                <power>
+                  <animated type="real">
+                    <waypoint time="0s" before="clamped" after="clamped">
+                      <real guid="1E84938B3A2E231C968D97074B9764BB" value="0.0000010000"/>
+                    </waypoint>
+                    <waypoint time="29.83333397s" before="auto" after="auto" tension="1.000000" temporal-tension="-0.800000" continuity="-0.000000" bias="0.000000">
+                      <real guid="27AE81E2D6449FA4F95425E63D8DEB3A" value="4.3219280949"/>
+                    </waypoint>
+                    <waypoint time="30s" before="clamped" after="clamped">
+                      <real guid="CD3FE6E53D4EF7DF57D90B481AF08FFF" value="4.3219280949"/>
+                    </waypoint>
+                  </animated>
+                </power>
+                <epsilon>
+                  <real value="0.0000010000"/>
+                </epsilon>
+                <infinite>
+                  <real value="999999.0000000000"/>
+                </infinite>
+              </power>
+            </scalar>
+          </scale>
+        </scale>
+      </composite>
+    </param>
+    <param name="canvas">
+      <canvas end-time="5s">
+        <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="map1_cropped_small.png">
+          <param name="z_depth">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="amount">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="blend_method">
+            <integer value="0" static="true"/>
+          </param>
+          <param name="origin">
+            <vector>
+              <x>0.0000000000</x>
+              <y>0.0000000000</y>
+            </vector>
+          </param>
+          <param name="transformation">
+            <composite type="transformation">
+              <offset>
+                <vector>
+                  <x>0.0000000000</x>
+                  <y>0.0000000000</y>
+                </vector>
+              </offset>
+              <angle>
+                <angle value="0.000000"/>
+              </angle>
+              <skew_angle>
+                <angle value="0.000000"/>
+              </skew_angle>
+              <scale>
+                <vector>
+                  <x>1.0000000000</x>
+                  <y>1.0000000000</y>
+                </vector>
+              </scale>
+            </composite>
+          </param>
+          <param name="canvas">
+            <canvas>
+              <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="map1_cropped_small.png">
+                <param name="z_depth">
+                  <real value="0.0000000000"/>
+                </param>
+                <param name="amount">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="blend_method">
+                  <integer value="0" static="true"/>
+                </param>
+                <param name="tl">
+                  <vector>
+                    <x>-28.0000000000</x>
+                    <y>15.7500000000</y>
+                  </vector>
+                </param>
+                <param name="br">
+                  <vector>
+                    <x>28.0000000000</x>
+                    <y>-15.7500000000</y>
+                  </vector>
+                </param>
+                <param name="c">
+                  <integer value="1" static="true"/>
+                </param>
+                <param name="gamma_adjust">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="filename">
+                  <string>maps/map1_cropped_small.png</string>
+                </param>
+                <param name="time_offset">
+                  <time value="0s"/>
+                </param>
+              </layer>
+            </canvas>
+          </param>
+          <param name="time_dilation">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="time_offset">
+            <time value="0s"/>
+          </param>
+          <param name="children_lock">
+            <bool value="true" static="true"/>
+          </param>
+          <param name="outline_grow">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="layer_name">
+            <string>map1_cropped_small.png</string>
+          </param>
+        </layer>
+        <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="map2_cropped_small.png">
+          <param name="z_depth">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="amount">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="blend_method">
+            <integer value="0" static="true"/>
+          </param>
+          <param name="origin">
+            <vector>
+              <x>0.0000000000</x>
+              <y>0.0000000000</y>
+            </vector>
+          </param>
+          <param name="transformation">
+            <composite type="transformation">
+              <offset>
+                <vector>
+                  <x>0.0000000000</x>
+                  <y>0.0000000000</y>
+                </vector>
+              </offset>
+              <angle>
+                <angle value="0.000000"/>
+              </angle>
+              <skew_angle>
+                <angle value="0.000000"/>
+              </skew_angle>
+              <scale>
+                <vector>
+                  <x>0.5000000000</x>
+                  <y>0.5000000000</y>
+                </vector>
+              </scale>
+            </composite>
+          </param>
+          <param name="canvas">
+            <canvas>
+              <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="map2_cropped_small.png">
+                <param name="z_depth">
+                  <real value="0.0000000000"/>
+                </param>
+                <param name="amount">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="blend_method">
+                  <integer value="0" static="true"/>
+                </param>
+                <param name="tl">
+                  <vector>
+                    <x>-29.3333339691</x>
+                    <y>16.5000000000</y>
+                  </vector>
+                </param>
+                <param name="br">
+                  <vector>
+                    <x>29.3333339691</x>
+                    <y>-16.5000000000</y>
+                  </vector>
+                </param>
+                <param name="c">
+                  <integer value="1" static="true"/>
+                </param>
+                <param name="gamma_adjust">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="filename">
+                  <string>maps/map2_cropped_small.png</string>
+                </param>
+                <param name="time_offset">
+                  <time value="0s"/>
+                </param>
+              </layer>
+            </canvas>
+          </param>
+          <param name="time_dilation">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="time_offset">
+            <time value="0s"/>
+          </param>
+          <param name="children_lock">
+            <bool value="true" static="true"/>
+          </param>
+          <param name="outline_grow">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="layer_name">
+            <string>map2_cropped_small.png</string>
+          </param>
+        </layer>
+        <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="map3_cropped_small.png">
+          <param name="z_depth">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="amount">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="blend_method">
+            <integer value="0" static="true"/>
+          </param>
+          <param name="origin">
+            <vector>
+              <x>0.0000000000</x>
+              <y>0.0000000000</y>
+            </vector>
+          </param>
+          <param name="transformation">
+            <composite type="transformation">
+              <offset>
+                <vector>
+                  <x>0.0000000000</x>
+                  <y>0.0000000000</y>
+                </vector>
+              </offset>
+              <angle>
+                <angle value="0.000000"/>
+              </angle>
+              <skew_angle>
+                <angle value="0.000000"/>
+              </skew_angle>
+              <scale>
+                <vector>
+                  <x>0.2500000000</x>
+                  <y>0.2500000000</y>
+                </vector>
+              </scale>
+            </composite>
+          </param>
+          <param name="canvas">
+            <canvas>
+              <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="map3_cropped_small.png">
+                <param name="z_depth">
+                  <real value="0.0000000000"/>
+                </param>
+                <param name="amount">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="blend_method">
+                  <integer value="0" static="true"/>
+                </param>
+                <param name="tl">
+                  <vector>
+                    <x>-26.6666660309</x>
+                    <y>15.0000000000</y>
+                  </vector>
+                </param>
+                <param name="br">
+                  <vector>
+                    <x>26.6666660309</x>
+                    <y>-15.0000000000</y>
+                  </vector>
+                </param>
+                <param name="c">
+                  <integer value="1" static="true"/>
+                </param>
+                <param name="gamma_adjust">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="filename">
+                  <string>maps/map3_cropped_small.png</string>
+                </param>
+                <param name="time_offset">
+                  <time value="0s"/>
+                </param>
+              </layer>
+            </canvas>
+          </param>
+          <param name="time_dilation">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="time_offset">
+            <time value="0s"/>
+          </param>
+          <param name="children_lock">
+            <bool value="true" static="true"/>
+          </param>
+          <param name="outline_grow">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="layer_name">
+            <string>map3_cropped_small.png</string>
+          </param>
+        </layer>
+        <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="map3_cropped _closer1.png">
+          <param name="z_depth">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="amount">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="blend_method">
+            <integer value="0" static="true"/>
+          </param>
+          <param name="origin">
+            <vector>
+              <x>0.0000000000</x>
+              <y>0.0000000000</y>
+            </vector>
+          </param>
+          <param name="transformation">
+            <composite type="transformation">
+              <offset>
+                <vector>
+                  <x>0.0000000000</x>
+                  <y>0.0000000000</y>
+                </vector>
+              </offset>
+              <angle>
+                <angle value="0.000000"/>
+              </angle>
+              <skew_angle>
+                <angle value="0.000000"/>
+              </skew_angle>
+              <scale>
+                <vector>
+                  <x>0.1250000000</x>
+                  <y>0.1250000000</y>
+                </vector>
+              </scale>
+            </composite>
+          </param>
+          <param name="canvas">
+            <canvas>
+              <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="map3_cropped _closer1.png">
+                <param name="z_depth">
+                  <real value="0.0000000000"/>
+                </param>
+                <param name="amount">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="blend_method">
+                  <integer value="0" static="true"/>
+                </param>
+                <param name="tl">
+                  <vector>
+                    <x>-26.6666660309</x>
+                    <y>15.0000000000</y>
+                  </vector>
+                </param>
+                <param name="br">
+                  <vector>
+                    <x>26.6666660309</x>
+                    <y>-15.0000000000</y>
+                  </vector>
+                </param>
+                <param name="c">
+                  <integer value="1" static="true"/>
+                </param>
+                <param name="gamma_adjust">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="filename">
+                  <string>maps/map3_cropped _closer1.png</string>
+                </param>
+                <param name="time_offset">
+                  <time value="0s"/>
+                </param>
+              </layer>
+            </canvas>
+          </param>
+          <param name="time_dilation">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="time_offset">
+            <time value="0s"/>
+          </param>
+          <param name="children_lock">
+            <bool value="true" static="true"/>
+          </param>
+          <param name="outline_grow">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="layer_name">
+            <string>map3_cropped _closer1.png</string>
+          </param>
+        </layer>
+      </canvas>
+    </param>
+    <param name="time_dilation">
+      <real value="1.0000000000"/>
+    </param>
+    <param name="time_offset">
+      <time value="0s"/>
+    </param>
+    <param name="children_lock">
+      <bool value="false"/>
+    </param>
+    <param name="outline_grow">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="z_range">
+      <bool value="false" static="true"/>
+    </param>
+    <param name="z_range_position">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="z_range_depth">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="z_range_blur">
+      <real value="0.0000000000"/>
+    </param>
+  </layer>
+  <layer type="switch" active="false" exclude_from_rendering="false" version="0.0" desc="frame00089.png">
+    <param name="z_depth">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="amount">
+      <real value="1.0000000000"/>
+    </param>
+    <param name="blend_method">
+      <integer value="0" static="true"/>
+    </param>
+    <param name="origin">
+      <vector>
+        <x>0.0000000000</x>
+        <y>0.0000000000</y>
+      </vector>
+    </param>
+    <param name="transformation">
+      <composite type="transformation">
+        <offset>
+          <vector>
+            <x>0.0000000000</x>
+            <y>0.0000000000</y>
+          </vector>
+        </offset>
+        <angle>
+          <angle value="0.000000"/>
+        </angle>
+        <skew_angle>
+          <angle value="0.000000"/>
+        </skew_angle>
+        <scale>
+          <vector>
+            <x>1.0000000000</x>
+            <y>1.0000000000</y>
+          </vector>
+        </scale>
+      </composite>
+    </param>
+    <param name="canvas">
+      <canvas end-time="5s">
+        <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="frame00089.png">
+          <param name="z_depth">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="amount">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="blend_method">
+            <integer value="0" static="true"/>
+          </param>
+          <param name="tl">
+            <vector>
+              <x>-10.6666669846</x>
+              <y>6.0000000000</y>
+            </vector>
+          </param>
+          <param name="br">
+            <vector>
+              <x>10.6666669846</x>
+              <y>-6.0000000000</y>
+            </vector>
+          </param>
+          <param name="c">
+            <integer value="1" static="true"/>
+          </param>
+          <param name="gamma_adjust">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="filename">
+            <string>frame00089.png</string>
+          </param>
+          <param name="time_offset">
+            <time value="0s"/>
+          </param>
+        </layer>
+      </canvas>
+    </param>
+    <param name="time_dilation">
+      <real value="1.0000000000"/>
+    </param>
+    <param name="time_offset">
+      <time value="0s"/>
+    </param>
+    <param name="children_lock">
+      <bool value="true" static="true"/>
+    </param>
+    <param name="outline_grow">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="layer_name">
+      <string>frame00089.png</string>
+    </param>
+  </layer>
+</canvas>
