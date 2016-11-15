@@ -186,13 +186,13 @@
           <param name="amount">
             <animated type="real">
               <waypoint time="0s" before="clamped" after="clamped">
-                <real guid="DD2AFDE04DA50F116463ABE96498C147" value="0.0000000000"/>
+                <real value="0.0000000000"/>
               </waypoint>
               <waypoint time="4s" before="clamped" after="clamped">
-                <real guid="FED0A42CEE8B5DD83D6F071224ECDE98" value="0.0000000000"/>
+                <real value="0.0000000000"/>
               </waypoint>
               <waypoint time="6.0333333s" before="halt" after="halt">
-                <real guid="05FC9A540055F9BCE8CA60F249443099" value="1.0000000000"/>
+                <real value="1.0000000000"/>
               </waypoint>
             </animated>
           </param>
@@ -289,13 +289,13 @@
           <param name="amount">
             <animated type="real">
               <waypoint time="0s" before="clamped" after="clamped">
-                <real guid="961F6924B0EED9A0DF339C13FB07E660" value="0.0000000000"/>
+                <real value="0.0000000000"/>
               </waypoint>
               <waypoint time="12s" before="clamped" after="clamped">
-                <real guid="AF675BA0AE1451B288838259E86817F2" value="0.0000000000"/>
+                <real value="0.0000000000"/>
               </waypoint>
               <waypoint time="14s" before="halt" after="halt">
-                <real guid="DFE73B1B3104B82AA77793FA94E43FFE" value="1.0000000000"/>
+                <real value="1.0000000000"/>
               </waypoint>
             </animated>
           </param>
@@ -392,13 +392,13 @@
           <param name="amount">
             <animated type="real">
               <waypoint time="0s" before="clamped" after="clamped">
-                <real guid="EB974227BF6CF0CFBEE5D84FE8ED8C76" value="0.0000000000"/>
+                <real value="0.0000000000"/>
               </waypoint>
               <waypoint time="18s" before="clamped" after="clamped">
-                <real guid="158AE827753FB2AEC960095EB5108FA2" value="0.0000000000"/>
+                <real value="0.0000000000"/>
               </waypoint>
               <waypoint time="20s" before="halt" after="halt">
-                <real guid="709266B5D06D158C5E7641430574D40E" value="1.0000000000"/>
+                <real value="1.0000000000"/>
               </waypoint>
             </animated>
           </param>
@@ -524,8 +524,8 @@
         <waypoint time="0s" before="clamped" after="clamped">
           <real value="0.0000000000"/>
         </waypoint>
-        <waypoint time="30.06666756s" before="constant" after="constant">
-          <real value="1.0000000000"/>
+        <waypoint time="30s" before="constant" after="constant">
+          <real guid="650649B5F5DA49E9DEDB6A728300B221" value="1.0000000000"/>
         </waypoint>
       </animated>
     </param>
@@ -622,7 +622,114 @@
       <string>gameFrames.lst</string>
     </param>
   </layer>
-  <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="frame00089.png">
+  <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="gameFrames2.lst">
+    <param name="z_depth">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="amount">
+      <animated type="real">
+        <waypoint time="0s" before="clamped" after="clamped">
+          <real guid="ADB70ED5352035A89E1063EE154DE531" value="0.0000000000"/>
+        </waypoint>
+        <waypoint time="33s" before="constant" after="constant">
+          <real guid="233A21488EF5CBA4A03779161BFF0AED" value="1.0000000000"/>
+        </waypoint>
+      </animated>
+    </param>
+    <param name="blend_method">
+      <integer value="0" static="true"/>
+    </param>
+    <param name="origin">
+      <vector>
+        <x>0.0000000000</x>
+        <y>0.0000000000</y>
+      </vector>
+    </param>
+    <param name="transformation">
+      <composite type="transformation">
+        <offset>
+          <vector>
+            <x>0.0000000000</x>
+            <y>0.0000000000</y>
+          </vector>
+        </offset>
+        <angle>
+          <angle value="0.000000"/>
+        </angle>
+        <skew_angle>
+          <angle value="0.000000"/>
+        </skew_angle>
+        <scale>
+          <vector>
+            <x>1.0000000000</x>
+            <y>1.0000000000</y>
+          </vector>
+        </scale>
+      </composite>
+    </param>
+    <param name="canvas">
+      <canvas>
+        <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="gameFrames2.lst">
+          <param name="z_depth">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="amount">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="blend_method">
+            <integer value="0" static="true"/>
+          </param>
+          <param name="tl">
+            <vector>
+              <x>-10.6666669846</x>
+              <y>6.0000000000</y>
+            </vector>
+          </param>
+          <param name="br">
+            <vector>
+              <x>10.6666669846</x>
+              <y>-6.0000000000</y>
+            </vector>
+          </param>
+          <param name="c">
+            <integer value="1" static="true"/>
+          </param>
+          <param name="gamma_adjust">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="filename">
+            <string>gameFrames2PNG/gameFrames2.lst</string>
+          </param>
+          <param name="time_offset">
+            <time value="0s"/>
+          </param>
+        </layer>
+      </canvas>
+    </param>
+    <param name="time_dilation">
+      <real value="1.0000000000"/>
+    </param>
+    <param name="time_offset">
+      <animated type="time">
+        <waypoint time="0s" before="clamped" after="clamped">
+          <time guid="3998FADF20AD66859E34481A47D82B45" value="0s"/>
+        </waypoint>
+        <waypoint time="33s" before="clamped" after="clamped">
+          <real guid="F77CC6C6D11C06C95C7927441E4A3DD1" value="-33.0000000000"/>
+        </waypoint>
+      </animated>
+    </param>
+    <param name="children_lock">
+      <bool value="true" static="true"/>
+    </param>
+    <param name="outline_grow">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="layer_name">
+      <string>gameFrames2.lst</string>
+    </param>
+  </layer>
+  <layer type="switch" active="false" exclude_from_rendering="false" version="0.0" desc="frame00089.png">
     <param name="z_depth">
       <real value="0.0000000000"/>
     </param>
@@ -722,7 +829,7 @@
       <string>frame00089.png</string>
     </param>
   </layer>
-  <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="frame00635.png">
+  <layer type="switch" active="false" exclude_from_rendering="false" version="0.0" desc="frame00635.png">
     <param name="z_depth">
       <real value="0.0000000000"/>
     </param>
