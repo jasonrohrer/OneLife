@@ -316,7 +316,6 @@ extern int baseFramesPerSecond;
 void updateMoveSpeed( LiveObject *inObject ) {
     double etaSec = inObject->moveEtaTime - game_getCurrentTime();
     
-
     int moveLeft = inObject->pathLength - inObject->currentPathStep - 1;
     
 
@@ -353,7 +352,7 @@ void updateMoveSpeed( LiveObject *inObject ) {
 
     if( autoAdjustFramerate ) {
         inObject->currentSpeed = speedPerSec / getRecentFrameRate();
-        printf( "autoAdjustFramerate = %d, speed = %f", 
+        printf( "autoAdjustFramerate = %d, speed = %f\n", 
                 autoAdjustFramerate, inObject->currentSpeed );
         }
     else {
@@ -361,9 +360,10 @@ void updateMoveSpeed( LiveObject *inObject ) {
         double fps = baseFramesPerSecond / frameRateFactor;
         
         inObject->currentSpeed = speedPerSec / fps;
-        printf( "fixed speed = %f", inObject->currentSpeed );
+        printf( "fixed speed = %f\n", inObject->currentSpeed );
         }
     
+
     inObject->timeOfLastSpeedUpdate = game_getCurrentTime();
     }
 
@@ -5834,7 +5834,7 @@ void LivingLifePage::step() {
             }
 
 
-        if( o->currentSpeed != 0 ) {
+        if( o->currentSpeed != 0 && o->pathToDest != NULL ) {
 
             GridPos curStepDest = o->pathToDest[ o->currentPathStep ];
             GridPos nextStepDest = o->pathToDest[ o->currentPathStep + 1 ];
@@ -6381,7 +6381,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                 int oX = o->xd;
                 int oY = o->yd;
                 
-                if( o->currentSpeed != 0 ) {
+                if( o->currentSpeed != 0 && o->pathToDest != NULL ) {
                     if( o->onFinalPathStep ) {
                         oX = o->pathToDest[ o->pathLength - 1 ].x;
                         oY = o->pathToDest[ o->pathLength - 1 ].y;
