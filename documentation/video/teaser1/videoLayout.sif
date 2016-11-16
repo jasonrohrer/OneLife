@@ -627,7 +627,14 @@
       <real value="0.0000000000"/>
     </param>
     <param name="amount">
-      <real value="1.0000000000"/>
+      <animated type="real">
+        <waypoint time="0s" before="clamped" after="clamped">
+          <real value="0.0000000000"/>
+        </waypoint>
+        <waypoint time="39.53333282s" before="constant" after="constant">
+          <real value="1.0000000000"/>
+        </waypoint>
+      </animated>
     </param>
     <param name="blend_method">
       <integer value="0" static="true"/>
@@ -708,7 +715,7 @@
           <time value="0s"/>
         </waypoint>
         <waypoint time="39.53333282s" before="clamped" after="clamped">
-          <real guid="4D7CBC5848BF586E18ADEFD3FD2D2800" value="-39.5333333000"/>
+          <real value="-39.5333333000"/>
         </waypoint>
       </animated>
     </param>
@@ -734,8 +741,8 @@
         <waypoint time="33s" before="constant" after="constant">
           <real value="1.0000000000"/>
         </waypoint>
-        <waypoint time="39.16666794s" before="constant" after="constant">
-          <real guid="1373A44180D9A1BA5105BB940F6FB57E" value="0.0000000000"/>
+        <waypoint time="39.5s" before="constant" after="constant">
+          <real value="0.0000000000"/>
         </waypoint>
       </animated>
     </param>
@@ -974,8 +981,8 @@
               <waypoint time="0s" before="clamped" after="clamped">
                 <real value="0.0000000000"/>
               </waypoint>
-              <waypoint time="1m 2s" before="constant" after="constant">
-                <real value="1.0000000000"/>
+              <waypoint time="1m 2.13333344s" before="constant" after="constant">
+                <real guid="C3270D8C66FDE760076C6F6ED4455A45" value="1.0000000000"/>
               </waypoint>
             </animated>
           </param>
@@ -1234,8 +1241,8 @@
               <waypoint time="0s" before="clamped" after="clamped">
                 <real value="0.0000000000"/>
               </waypoint>
-              <waypoint time="1m 4s" before="constant" after="constant">
-                <real value="1.0000000000"/>
+              <waypoint time="1m 4.0333333s" before="constant" after="constant">
+                <real guid="DE21C948B46F10D6A3387E7349455259" value="1.0000000000"/>
               </waypoint>
             </animated>
           </param>
