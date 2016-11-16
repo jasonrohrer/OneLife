@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<canvas version="1.0" width="1280" height="720" xres="2834.645752" yres="2834.645752" view-box="-10.666667 6.000000 10.666667 -6.000000" antialias="1" fps="30.000" begin-time="0f" end-time="1m 11s 29f" bgcolor="0.500000 0.500000 0.500000 1.000000">
+<canvas version="1.0" width="1280" height="720" xres="2834.645752" yres="2834.645752" view-box="-10.666667 6.000000 10.666667 -6.000000" antialias="1" fps="30.000" begin-time="0f" end-time="1m 19s 29f" bgcolor="0.500000 0.500000 0.500000 1.000000">
   <name>Synfig Animation 2</name>
   <meta name="background_first_color" content="0.880000 0.880000 0.880000"/>
   <meta name="background_second_color" content="0.650000 0.650000 0.650000"/>
@@ -525,7 +525,7 @@
           <real value="0.0000000000"/>
         </waypoint>
         <waypoint time="30s" before="constant" after="constant">
-          <real guid="650649B5F5DA49E9DEDB6A728300B221" value="1.0000000000"/>
+          <real value="1.0000000000"/>
         </waypoint>
       </animated>
     </param>
@@ -561,7 +561,7 @@
       </composite>
     </param>
     <param name="canvas">
-      <canvas end-time="50s">
+      <canvas end-time="1m 11s 29f">
         <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="gameFrames.lst">
           <param name="z_depth">
             <real value="0.0000000000"/>
@@ -627,14 +627,7 @@
       <real value="0.0000000000"/>
     </param>
     <param name="amount">
-      <animated type="real">
-        <waypoint time="0s" before="clamped" after="clamped">
-          <real guid="ADB70ED5352035A89E1063EE154DE531" value="0.0000000000"/>
-        </waypoint>
-        <waypoint time="33s" before="constant" after="constant">
-          <real guid="233A21488EF5CBA4A03779161BFF0AED" value="1.0000000000"/>
-        </waypoint>
-      </animated>
+      <real value="1.0000000000"/>
     </param>
     <param name="blend_method">
       <integer value="0" static="true"/>
@@ -668,7 +661,7 @@
       </composite>
     </param>
     <param name="canvas">
-      <canvas>
+      <canvas end-time="1m 11s 29f">
         <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="gameFrames2.lst">
           <param name="z_depth">
             <real value="0.0000000000"/>
@@ -712,10 +705,10 @@
     <param name="time_offset">
       <animated type="time">
         <waypoint time="0s" before="clamped" after="clamped">
-          <time guid="3998FADF20AD66859E34481A47D82B45" value="0s"/>
+          <time value="0s"/>
         </waypoint>
-        <waypoint time="33s" before="clamped" after="clamped">
-          <real guid="F77CC6C6D11C06C95C7927441E4A3DD1" value="-33.0000000000"/>
+        <waypoint time="39.53333282s" before="clamped" after="clamped">
+          <real guid="4D7CBC5848BF586E18ADEFD3FD2D2800" value="-39.5333333000"/>
         </waypoint>
       </animated>
     </param>
@@ -729,7 +722,7 @@
       <string>gameFrames2.lst</string>
     </param>
   </layer>
-  <layer type="switch" active="false" exclude_from_rendering="false" version="0.0" desc="frame00089.png">
+  <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="frame00089.png">
     <param name="z_depth">
       <real value="0.0000000000"/>
     </param>
@@ -738,8 +731,11 @@
         <waypoint time="0s" before="constant" after="constant">
           <real value="0.0000000000"/>
         </waypoint>
-        <waypoint time="30s" before="constant" after="constant">
+        <waypoint time="33s" before="constant" after="constant">
           <real value="1.0000000000"/>
+        </waypoint>
+        <waypoint time="39.16666794s" before="constant" after="constant">
+          <real guid="1373A44180D9A1BA5105BB940F6FB57E" value="0.0000000000"/>
         </waypoint>
       </animated>
     </param>
@@ -969,7 +965,7 @@
     </param>
     <param name="canvas">
       <canvas end-time="59s 29f">
-        <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="arrow1.png">
+        <layer type="group" active="true" exclude_from_rendering="false" version="0.2">
           <param name="z_depth">
             <real value="0.0000000000"/>
           </param>
@@ -978,7 +974,7 @@
               <waypoint time="0s" before="clamped" after="clamped">
                 <real value="0.0000000000"/>
               </waypoint>
-              <waypoint time="52s" before="constant" after="constant">
+              <waypoint time="1m 2s" before="constant" after="constant">
                 <real value="1.0000000000"/>
               </waypoint>
             </animated>
@@ -1016,7 +1012,7 @@
           </param>
           <param name="canvas">
             <canvas>
-              <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="arrow1.png">
+              <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="arrow1.png">
                 <param name="z_depth">
                   <real value="0.0000000000"/>
                 </param>
@@ -1026,29 +1022,180 @@
                 <param name="blend_method">
                   <integer value="0" static="true"/>
                 </param>
-                <param name="tl">
+                <param name="origin">
                   <vector>
-                    <x>-10.6666669846</x>
-                    <y>6.0000000000</y>
+                    <x>0.0000000000</x>
+                    <y>0.0000000000</y>
                   </vector>
                 </param>
-                <param name="br">
-                  <vector>
-                    <x>10.6666669846</x>
-                    <y>-6.0000000000</y>
-                  </vector>
+                <param name="transformation">
+                  <composite type="transformation">
+                    <offset>
+                      <vector>
+                        <x>0.0000000000</x>
+                        <y>0.0000000000</y>
+                      </vector>
+                    </offset>
+                    <angle>
+                      <angle value="0.000000"/>
+                    </angle>
+                    <skew_angle>
+                      <angle value="0.000000"/>
+                    </skew_angle>
+                    <scale>
+                      <vector>
+                        <x>1.0000000000</x>
+                        <y>1.0000000000</y>
+                      </vector>
+                    </scale>
+                  </composite>
                 </param>
-                <param name="c">
-                  <integer value="1" static="true"/>
+                <param name="canvas">
+                  <canvas>
+                    <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="arrow1.png">
+                      <param name="z_depth">
+                        <real value="0.0000000000"/>
+                      </param>
+                      <param name="amount">
+                        <real value="1.0000000000"/>
+                      </param>
+                      <param name="blend_method">
+                        <integer value="0" static="true"/>
+                      </param>
+                      <param name="tl">
+                        <vector>
+                          <x>-10.6666669846</x>
+                          <y>6.0000000000</y>
+                        </vector>
+                      </param>
+                      <param name="br">
+                        <vector>
+                          <x>10.6666669846</x>
+                          <y>-6.0000000000</y>
+                        </vector>
+                      </param>
+                      <param name="c">
+                        <integer value="1" static="true"/>
+                      </param>
+                      <param name="gamma_adjust">
+                        <real value="1.0000000000"/>
+                      </param>
+                      <param name="filename">
+                        <string>arrow1.png</string>
+                      </param>
+                      <param name="time_offset">
+                        <time value="0s"/>
+                      </param>
+                    </layer>
+                  </canvas>
                 </param>
-                <param name="gamma_adjust">
+                <param name="time_dilation">
                   <real value="1.0000000000"/>
                 </param>
-                <param name="filename">
+                <param name="time_offset">
+                  <time value="0s"/>
+                </param>
+                <param name="children_lock">
+                  <bool value="true" static="true"/>
+                </param>
+                <param name="outline_grow">
+                  <real value="0.0000000000"/>
+                </param>
+                <param name="layer_name">
                   <string>arrow1.png</string>
                 </param>
+              </layer>
+              <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="arrowWords1.png">
+                <param name="z_depth">
+                  <real value="0.0000000000"/>
+                </param>
+                <param name="amount">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="blend_method">
+                  <integer value="0" static="true"/>
+                </param>
+                <param name="origin">
+                  <vector>
+                    <x>0.0000000000</x>
+                    <y>0.0000000000</y>
+                  </vector>
+                </param>
+                <param name="transformation">
+                  <composite type="transformation">
+                    <offset>
+                      <vector>
+                        <x>0.0000000000</x>
+                        <y>0.0000000000</y>
+                      </vector>
+                    </offset>
+                    <angle>
+                      <angle value="0.000000"/>
+                    </angle>
+                    <skew_angle>
+                      <angle value="0.000000"/>
+                    </skew_angle>
+                    <scale>
+                      <vector>
+                        <x>1.0000000000</x>
+                        <y>1.0000000000</y>
+                      </vector>
+                    </scale>
+                  </composite>
+                </param>
+                <param name="canvas">
+                  <canvas>
+                    <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="arrowWords1.png">
+                      <param name="z_depth">
+                        <real value="0.0000000000"/>
+                      </param>
+                      <param name="amount">
+                        <real value="1.0000000000"/>
+                      </param>
+                      <param name="blend_method">
+                        <integer value="0" static="true"/>
+                      </param>
+                      <param name="tl">
+                        <vector>
+                          <x>-10.6666669846</x>
+                          <y>6.0000000000</y>
+                        </vector>
+                      </param>
+                      <param name="br">
+                        <vector>
+                          <x>10.6666669846</x>
+                          <y>-6.0000000000</y>
+                        </vector>
+                      </param>
+                      <param name="c">
+                        <integer value="1" static="true"/>
+                      </param>
+                      <param name="gamma_adjust">
+                        <real value="1.0000000000"/>
+                      </param>
+                      <param name="filename">
+                        <string>arrowWords1.png</string>
+                      </param>
+                      <param name="time_offset">
+                        <time value="0s"/>
+                      </param>
+                    </layer>
+                  </canvas>
+                </param>
+                <param name="time_dilation">
+                  <real value="1.0000000000"/>
+                </param>
                 <param name="time_offset">
                   <time value="0s"/>
+                </param>
+                <param name="children_lock">
+                  <bool value="true" static="true"/>
+                </param>
+                <param name="outline_grow">
+                  <real value="0.0000000000"/>
+                </param>
+                <param name="layer_name">
+                  <string>arrowWords1.png</string>
                 </param>
               </layer>
             </canvas>
@@ -1060,16 +1207,25 @@
             <time value="0s"/>
           </param>
           <param name="children_lock">
-            <bool value="true" static="true"/>
+            <bool value="false"/>
           </param>
           <param name="outline_grow">
             <real value="0.0000000000"/>
           </param>
-          <param name="layer_name">
-            <string>arrow1.png</string>
+          <param name="z_range">
+            <bool value="false" static="true"/>
+          </param>
+          <param name="z_range_position">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="z_range_depth">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="z_range_blur">
+            <real value="0.0000000000"/>
           </param>
         </layer>
-        <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="arrowWords1.png">
+        <layer type="group" active="true" exclude_from_rendering="false" version="0.2">
           <param name="z_depth">
             <real value="0.0000000000"/>
           </param>
@@ -1078,7 +1234,7 @@
               <waypoint time="0s" before="clamped" after="clamped">
                 <real value="0.0000000000"/>
               </waypoint>
-              <waypoint time="52.5s" before="constant" after="constant">
+              <waypoint time="1m 4s" before="constant" after="constant">
                 <real value="1.0000000000"/>
               </waypoint>
             </animated>
@@ -1116,7 +1272,7 @@
           </param>
           <param name="canvas">
             <canvas>
-              <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="arrowWords1.png">
+              <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="arrow2.png">
                 <param name="z_depth">
                   <real value="0.0000000000"/>
                 </param>
@@ -1126,197 +1282,90 @@
                 <param name="blend_method">
                   <integer value="0" static="true"/>
                 </param>
-                <param name="tl">
+                <param name="origin">
                   <vector>
-                    <x>-10.6666669846</x>
-                    <y>6.0000000000</y>
+                    <x>0.0000000000</x>
+                    <y>0.0000000000</y>
                   </vector>
                 </param>
-                <param name="br">
-                  <vector>
-                    <x>10.6666669846</x>
-                    <y>-6.0000000000</y>
-                  </vector>
+                <param name="transformation">
+                  <composite type="transformation">
+                    <offset>
+                      <vector>
+                        <x>0.0000000000</x>
+                        <y>0.0000000000</y>
+                      </vector>
+                    </offset>
+                    <angle>
+                      <angle value="0.000000"/>
+                    </angle>
+                    <skew_angle>
+                      <angle value="0.000000"/>
+                    </skew_angle>
+                    <scale>
+                      <vector>
+                        <x>1.0000000000</x>
+                        <y>1.0000000000</y>
+                      </vector>
+                    </scale>
+                  </composite>
                 </param>
-                <param name="c">
-                  <integer value="1" static="true"/>
+                <param name="canvas">
+                  <canvas>
+                    <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="arrow2.png">
+                      <param name="z_depth">
+                        <real value="0.0000000000"/>
+                      </param>
+                      <param name="amount">
+                        <real value="1.0000000000"/>
+                      </param>
+                      <param name="blend_method">
+                        <integer value="0" static="true"/>
+                      </param>
+                      <param name="tl">
+                        <vector>
+                          <x>-10.6666669846</x>
+                          <y>6.0000000000</y>
+                        </vector>
+                      </param>
+                      <param name="br">
+                        <vector>
+                          <x>10.6666669846</x>
+                          <y>-6.0000000000</y>
+                        </vector>
+                      </param>
+                      <param name="c">
+                        <integer value="1" static="true"/>
+                      </param>
+                      <param name="gamma_adjust">
+                        <real value="1.0000000000"/>
+                      </param>
+                      <param name="filename">
+                        <string>arrow2.png</string>
+                      </param>
+                      <param name="time_offset">
+                        <time value="0s"/>
+                      </param>
+                    </layer>
+                  </canvas>
                 </param>
-                <param name="gamma_adjust">
+                <param name="time_dilation">
                   <real value="1.0000000000"/>
-                </param>
-                <param name="filename">
-                  <string>arrowWords1.png</string>
                 </param>
                 <param name="time_offset">
                   <time value="0s"/>
                 </param>
-              </layer>
-            </canvas>
-          </param>
-          <param name="time_dilation">
-            <real value="1.0000000000"/>
-          </param>
-          <param name="time_offset">
-            <time value="0s"/>
-          </param>
-          <param name="children_lock">
-            <bool value="true" static="true"/>
-          </param>
-          <param name="outline_grow">
-            <real value="0.0000000000"/>
-          </param>
-          <param name="layer_name">
-            <string>arrowWords1.png</string>
-          </param>
-        </layer>
-        <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="arrow2.png">
-          <param name="z_depth">
-            <real value="0.0000000000"/>
-          </param>
-          <param name="amount">
-            <animated type="real">
-              <waypoint time="0s" before="constant" after="constant">
-                <real value="0.0000000000"/>
-              </waypoint>
-              <waypoint time="54s" before="constant" after="constant">
-                <real value="1.0000000000"/>
-              </waypoint>
-            </animated>
-          </param>
-          <param name="blend_method">
-            <integer value="0" static="true"/>
-          </param>
-          <param name="origin">
-            <vector>
-              <x>0.0000000000</x>
-              <y>0.0000000000</y>
-            </vector>
-          </param>
-          <param name="transformation">
-            <composite type="transformation">
-              <offset>
-                <vector>
-                  <x>0.0000000000</x>
-                  <y>0.0000000000</y>
-                </vector>
-              </offset>
-              <angle>
-                <angle value="0.000000"/>
-              </angle>
-              <skew_angle>
-                <angle value="0.000000"/>
-              </skew_angle>
-              <scale>
-                <vector>
-                  <x>1.0000000000</x>
-                  <y>1.0000000000</y>
-                </vector>
-              </scale>
-            </composite>
-          </param>
-          <param name="canvas">
-            <canvas>
-              <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="arrow2.png">
-                <param name="z_depth">
+                <param name="children_lock">
+                  <bool value="true" static="true"/>
+                </param>
+                <param name="outline_grow">
                   <real value="0.0000000000"/>
                 </param>
-                <param name="amount">
-                  <real value="1.0000000000"/>
-                </param>
-                <param name="blend_method">
-                  <integer value="0" static="true"/>
-                </param>
-                <param name="tl">
-                  <vector>
-                    <x>-10.6666669846</x>
-                    <y>6.0000000000</y>
-                  </vector>
-                </param>
-                <param name="br">
-                  <vector>
-                    <x>10.6666669846</x>
-                    <y>-6.0000000000</y>
-                  </vector>
-                </param>
-                <param name="c">
-                  <integer value="1" static="true"/>
-                </param>
-                <param name="gamma_adjust">
-                  <real value="1.0000000000"/>
-                </param>
-                <param name="filename">
+                <param name="layer_name">
                   <string>arrow2.png</string>
                 </param>
-                <param name="time_offset">
-                  <time value="0s"/>
-                </param>
               </layer>
-            </canvas>
-          </param>
-          <param name="time_dilation">
-            <real value="1.0000000000"/>
-          </param>
-          <param name="time_offset">
-            <time value="0s"/>
-          </param>
-          <param name="children_lock">
-            <bool value="true" static="true"/>
-          </param>
-          <param name="outline_grow">
-            <real value="0.0000000000"/>
-          </param>
-          <param name="layer_name">
-            <string>arrow2.png</string>
-          </param>
-        </layer>
-        <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="arrowWords2.png">
-          <param name="z_depth">
-            <real value="0.0000000000"/>
-          </param>
-          <param name="amount">
-            <animated type="real">
-              <waypoint time="0s" before="constant" after="constant">
-                <real value="0.0000000000"/>
-              </waypoint>
-              <waypoint time="54.5s" before="constant" after="constant">
-                <real value="1.0000000000"/>
-              </waypoint>
-            </animated>
-          </param>
-          <param name="blend_method">
-            <integer value="0" static="true"/>
-          </param>
-          <param name="origin">
-            <vector>
-              <x>0.0000000000</x>
-              <y>0.0000000000</y>
-            </vector>
-          </param>
-          <param name="transformation">
-            <composite type="transformation">
-              <offset>
-                <vector>
-                  <x>0.0000000000</x>
-                  <y>0.0000000000</y>
-                </vector>
-              </offset>
-              <angle>
-                <angle value="0.000000"/>
-              </angle>
-              <skew_angle>
-                <angle value="0.000000"/>
-              </skew_angle>
-              <scale>
-                <vector>
-                  <x>1.0000000000</x>
-                  <y>1.0000000000</y>
-                </vector>
-              </scale>
-            </composite>
-          </param>
-          <param name="canvas">
-            <canvas>
-              <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="arrowWords2.png">
+              <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="arrowWords2.png">
                 <param name="z_depth">
                   <real value="0.0000000000"/>
                 </param>
@@ -1326,29 +1375,87 @@
                 <param name="blend_method">
                   <integer value="0" static="true"/>
                 </param>
-                <param name="tl">
+                <param name="origin">
                   <vector>
-                    <x>-10.6666669846</x>
-                    <y>6.0000000000</y>
+                    <x>0.0000000000</x>
+                    <y>0.0000000000</y>
                   </vector>
                 </param>
-                <param name="br">
-                  <vector>
-                    <x>10.6666669846</x>
-                    <y>-6.0000000000</y>
-                  </vector>
+                <param name="transformation">
+                  <composite type="transformation">
+                    <offset>
+                      <vector>
+                        <x>0.0000000000</x>
+                        <y>0.0000000000</y>
+                      </vector>
+                    </offset>
+                    <angle>
+                      <angle value="0.000000"/>
+                    </angle>
+                    <skew_angle>
+                      <angle value="0.000000"/>
+                    </skew_angle>
+                    <scale>
+                      <vector>
+                        <x>1.0000000000</x>
+                        <y>1.0000000000</y>
+                      </vector>
+                    </scale>
+                  </composite>
                 </param>
-                <param name="c">
-                  <integer value="1" static="true"/>
+                <param name="canvas">
+                  <canvas>
+                    <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="arrowWords2.png">
+                      <param name="z_depth">
+                        <real value="0.0000000000"/>
+                      </param>
+                      <param name="amount">
+                        <real value="1.0000000000"/>
+                      </param>
+                      <param name="blend_method">
+                        <integer value="0" static="true"/>
+                      </param>
+                      <param name="tl">
+                        <vector>
+                          <x>-10.6666669846</x>
+                          <y>6.0000000000</y>
+                        </vector>
+                      </param>
+                      <param name="br">
+                        <vector>
+                          <x>10.6666669846</x>
+                          <y>-6.0000000000</y>
+                        </vector>
+                      </param>
+                      <param name="c">
+                        <integer value="1" static="true"/>
+                      </param>
+                      <param name="gamma_adjust">
+                        <real value="1.0000000000"/>
+                      </param>
+                      <param name="filename">
+                        <string>arrowWords2.png</string>
+                      </param>
+                      <param name="time_offset">
+                        <time value="0s"/>
+                      </param>
+                    </layer>
+                  </canvas>
                 </param>
-                <param name="gamma_adjust">
+                <param name="time_dilation">
                   <real value="1.0000000000"/>
-                </param>
-                <param name="filename">
-                  <string>arrowWords2.png</string>
                 </param>
                 <param name="time_offset">
                   <time value="0s"/>
+                </param>
+                <param name="children_lock">
+                  <bool value="true" static="true"/>
+                </param>
+                <param name="outline_grow">
+                  <real value="0.0000000000"/>
+                </param>
+                <param name="layer_name">
+                  <string>arrowWords2.png</string>
                 </param>
               </layer>
             </canvas>
@@ -1360,13 +1467,22 @@
             <time value="0s"/>
           </param>
           <param name="children_lock">
-            <bool value="true" static="true"/>
+            <bool value="false"/>
           </param>
           <param name="outline_grow">
             <real value="0.0000000000"/>
           </param>
-          <param name="layer_name">
-            <string>arrowWords2.png</string>
+          <param name="z_range">
+            <bool value="false" static="true"/>
+          </param>
+          <param name="z_range_position">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="z_range_depth">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="z_range_blur">
+            <real value="0.0000000000"/>
           </param>
         </layer>
         <layer type="shade" active="true" exclude_from_rendering="false" version="0.2">
@@ -1442,7 +1558,7 @@
         <waypoint time="0s" before="constant" after="constant">
           <real value="0.0000000000"/>
         </waypoint>
-        <waypoint time="58s" before="constant" after="constant">
+        <waypoint time="1m 6s" before="constant" after="constant">
           <real value="1.0000000000"/>
         </waypoint>
       </animated>
@@ -1542,7 +1658,7 @@
         <waypoint time="0s" before="constant" after="constant">
           <real value="0.0000000000"/>
         </waypoint>
-        <waypoint time="1m 2s" before="constant" after="constant">
+        <waypoint time="1m 10s" before="constant" after="constant">
           <real value="1.0000000000"/>
         </waypoint>
       </animated>
@@ -1642,7 +1758,7 @@
         <waypoint time="0s" before="constant" after="constant">
           <real value="0.0000000000"/>
         </waypoint>
-        <waypoint time="1m 6s" before="constant" after="constant">
+        <waypoint time="1m 14s" before="constant" after="constant">
           <real value="1.0000000000"/>
         </waypoint>
       </animated>
@@ -1731,6 +1847,20 @@
     </param>
     <param name="layer_name">
       <string>byScreen.png</string>
+    </param>
+  </layer>
+  <layer type="sound" active="true" exclude_from_rendering="false" version="0.1" desc="testAudio.wav">
+    <param name="z_depth">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="filename">
+      <string>testAudio.wav</string>
+    </param>
+    <param name="delay">
+      <time value="0s" static="true"/>
+    </param>
+    <param name="volume">
+      <real value="1.0000000000" static="true"/>
     </param>
   </layer>
 </canvas>
