@@ -1,0 +1,1 @@
+rsync --progress --modify-window=1 --update --recursive --times teaser1 /media/thomasbailey/DYFM
