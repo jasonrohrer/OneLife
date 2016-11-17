@@ -932,6 +932,106 @@
       <string>frame00635.png</string>
     </param>
   </layer>
+  <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="happyBabyInPlace.png">
+    <param name="z_depth">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="amount">
+      <animated type="real">
+        <waypoint time="0s" before="clamped" after="clamped">
+          <real guid="3D3AE2453FF9D552654246F0767F7250" value="0.0000000000"/>
+        </waypoint>
+        <waypoint time="1m 0.1s" before="constant" after="constant">
+          <real guid="E8C99F05C8E233912A489482BFC4F8E3" value="1.0000000000"/>
+        </waypoint>
+      </animated>
+    </param>
+    <param name="blend_method">
+      <integer value="0" static="true"/>
+    </param>
+    <param name="origin">
+      <vector>
+        <x>0.0000000000</x>
+        <y>0.0000000000</y>
+      </vector>
+    </param>
+    <param name="transformation">
+      <composite type="transformation">
+        <offset>
+          <vector>
+            <x>0.0000000000</x>
+            <y>0.0000000000</y>
+          </vector>
+        </offset>
+        <angle>
+          <angle value="0.000000"/>
+        </angle>
+        <skew_angle>
+          <angle value="0.000000"/>
+        </skew_angle>
+        <scale>
+          <vector>
+            <x>1.0000000000</x>
+            <y>1.0000000000</y>
+          </vector>
+        </scale>
+      </composite>
+    </param>
+    <param name="canvas">
+      <canvas>
+        <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="happyBabyInPlace.png">
+          <param name="z_depth">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="amount">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="blend_method">
+            <integer value="0" static="true"/>
+          </param>
+          <param name="tl">
+            <vector>
+              <x>-10.6666669846</x>
+              <y>6.0000000000</y>
+            </vector>
+          </param>
+          <param name="br">
+            <vector>
+              <x>10.6666669846</x>
+              <y>-6.0000000000</y>
+            </vector>
+          </param>
+          <param name="c">
+            <integer value="1" static="true"/>
+          </param>
+          <param name="gamma_adjust">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="filename">
+            <string>happyBabyInPlace.png</string>
+          </param>
+          <param name="time_offset">
+            <time value="0s"/>
+          </param>
+        </layer>
+      </canvas>
+    </param>
+    <param name="time_dilation">
+      <real value="1.0000000000"/>
+    </param>
+    <param name="time_offset">
+      <time value="0s"/>
+    </param>
+    <param name="children_lock">
+      <bool value="true" static="true"/>
+    </param>
+    <param name="outline_grow">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="layer_name">
+      <string>happyBabyInPlace.png</string>
+    </param>
+  </layer>
   <layer type="group" active="true" exclude_from_rendering="false" version="0.2">
     <param name="z_depth">
       <real value="0.0000000000"/>
@@ -982,7 +1082,7 @@
                 <real value="0.0000000000"/>
               </waypoint>
               <waypoint time="1m 2.13333344s" before="constant" after="constant">
-                <real guid="C3270D8C66FDE760076C6F6ED4455A45" value="1.0000000000"/>
+                <real value="1.0000000000"/>
               </waypoint>
             </animated>
           </param>
@@ -1242,7 +1342,7 @@
                 <real value="0.0000000000"/>
               </waypoint>
               <waypoint time="1m 4.0333333s" before="constant" after="constant">
-                <real guid="DE21C948B46F10D6A3387E7349455259" value="1.0000000000"/>
+                <real value="1.0000000000"/>
               </waypoint>
             </animated>
           </param>
