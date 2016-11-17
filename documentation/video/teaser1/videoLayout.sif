@@ -941,8 +941,8 @@
         <waypoint time="0s" before="clamped" after="clamped">
           <real value="0.0000000000"/>
         </waypoint>
-        <waypoint time="1m 0.1s" before="constant" after="constant">
-          <real value="1.0000000000"/>
+        <waypoint time="59.90000153s" before="constant" after="constant">
+          <real guid="9F4E019AC544CA0D4677F1709FE19BDA" value="1.0000000000"/>
         </waypoint>
       </animated>
     </param>
@@ -2240,8 +2240,8 @@
         <waypoint time="0s" before="clamped" after="clamped">
           <real value="0.0000000000"/>
         </waypoint>
-        <waypoint time="1m 24.96666718s" before="auto" after="auto">
-          <real value="0.0000000000"/>
+        <waypoint time="1m 24.96666718s" before="linear" after="linear">
+          <real guid="74B33306E5B3F09B3DE214E0AFBD98B9" value="0.0000000000"/>
         </waypoint>
         <waypoint time="1m 25.03333282s" before="auto" after="auto">
           <real value="1.0000000000"/>
@@ -2327,7 +2327,7 @@
           <time value="0s"/>
         </waypoint>
         <waypoint time="1m 25.03333282s" before="clamped" after="clamped">
-          <real guid="D7882D6353F12C342D9AB82B65B58F17" value="-67.4666660000"/>
+          <real value="-67.4666660000"/>
         </waypoint>
       </animated>
     </param>
@@ -2451,7 +2451,7 @@
           <real value="0.0000000000"/>
         </waypoint>
         <waypoint time="1m 27.86666679s" before="constant" after="constant">
-          <real guid="23E222977CA58D683566E3171C29B699" value="1.0000000000"/>
+          <real value="1.0000000000"/>
         </waypoint>
       </animated>
     </param>
@@ -2485,26 +2485,12 @@
       <bool value="false"/>
     </param>
   </layer>
-  <layer type="sound" active="false" exclude_from_rendering="false" version="0.1" desc="testAudio.wav">
+  <layer type="sound" active="true" exclude_from_rendering="false" version="0.1" desc="testAudio3.wav">
     <param name="z_depth">
       <real value="0.0000000000"/>
     </param>
     <param name="filename">
-      <string>testAudio.wav</string>
-    </param>
-    <param name="delay">
-      <time value="0s" static="true"/>
-    </param>
-    <param name="volume">
-      <real value="0.0000000000" static="true"/>
-    </param>
-  </layer>
-  <layer type="sound" active="true" exclude_from_rendering="false" version="0.1" desc="testAudio2.wav">
-    <param name="z_depth">
-      <real value="0.0000000000"/>
-    </param>
-    <param name="filename">
-      <string>testAudio2.wav</string>
+      <string>testAudio3.wav</string>
     </param>
     <param name="delay">
       <time value="0s" static="true"/>
