@@ -11,6 +11,8 @@
   <meta name="guide_color" content="0.435294 0.435294 1.000000"/>
   <meta name="guide_show" content="1"/>
   <meta name="guide_snap" content="0"/>
+  <meta name="guide_x" content="3.345168 -3.345168 -0.021039"/>
+  <meta name="guide_y" content="-0.021053"/>
   <meta name="jack_offset" content="0.000000"/>
   <meta name="onion_skin" content="0"/>
   <meta name="onion_skin_future" content="0"/>
@@ -64,11 +66,11 @@
                     <waypoint time="0s" before="clamped" after="clamped">
                       <real value="0.0000010000"/>
                     </waypoint>
-                    <waypoint time="29.83333397s" before="auto" after="auto" tension="1.000000" temporal-tension="-0.800000">
-                      <real value="4.3219280949"/>
+                    <waypoint time="38.83333206s" before="auto" after="auto" tension="1.000000" temporal-tension="-0.800000">
+                      <real guid="7194F62786EA6CE48A5B3AD01201AF2C" value="4.3219280949"/>
                     </waypoint>
-                    <waypoint time="30s" before="clamped" after="clamped">
-                      <real value="4.3219280949"/>
+                    <waypoint time="39s" before="clamped" after="clamped">
+                      <real guid="D915F25864D4343C09CDB8EDF238791F" value="4.3219280949"/>
                     </waypoint>
                   </animated>
                 </power>
@@ -188,11 +190,11 @@
               <waypoint time="0s" before="clamped" after="clamped">
                 <real value="0.0000000000"/>
               </waypoint>
-              <waypoint time="4s" before="clamped" after="clamped">
-                <real value="0.0000000000"/>
+              <waypoint time="6s" before="clamped" after="clamped">
+                <real guid="F4F286D4AF5A40E613E42C897530267D" value="0.0000000000"/>
               </waypoint>
-              <waypoint time="6.0333333s" before="halt" after="halt">
-                <real value="1.0000000000"/>
+              <waypoint time="8s" before="halt" after="halt">
+                <real guid="EAA0D72C86E9C61F6EEF3E862B2E0157" value="1.0000000000"/>
               </waypoint>
             </animated>
           </param>
@@ -291,11 +293,11 @@
               <waypoint time="0s" before="clamped" after="clamped">
                 <real value="0.0000000000"/>
               </waypoint>
-              <waypoint time="12s" before="clamped" after="clamped">
-                <real value="0.0000000000"/>
+              <waypoint time="16s" before="clamped" after="clamped">
+                <real guid="9E73679C44D808AA7150183382F344BE" value="0.0000000000"/>
               </waypoint>
-              <waypoint time="14s" before="halt" after="halt">
-                <real value="1.0000000000"/>
+              <waypoint time="18s" before="halt" after="halt">
+                <real guid="4A3270E93F4CA275859CB19F8297CDEF" value="1.0000000000"/>
               </waypoint>
             </animated>
           </param>
@@ -394,11 +396,11 @@
               <waypoint time="0s" before="clamped" after="clamped">
                 <real value="0.0000000000"/>
               </waypoint>
-              <waypoint time="18s" before="clamped" after="clamped">
-                <real value="0.0000000000"/>
+              <waypoint time="24s" before="clamped" after="clamped">
+                <real guid="10D0ED37438019DEEC7179AA0EE48464" value="0.0000000000"/>
               </waypoint>
-              <waypoint time="20s" before="halt" after="halt">
-                <real value="1.0000000000"/>
+              <waypoint time="26s" before="halt" after="halt">
+                <real guid="6EE98A7357BDF82A681A3DF9910A27C2" value="1.0000000000"/>
               </waypoint>
             </animated>
           </param>
@@ -631,8 +633,8 @@
         <waypoint time="0s" before="constant" after="constant">
           <real value="0.0000000000"/>
         </waypoint>
-        <waypoint time="33s" before="constant" after="constant">
-          <real value="1.0000000000"/>
+        <waypoint time="39s" before="constant" after="constant">
+          <real guid="6C133E25D20D86CE89B38186E252C0AE" value="1.0000000000"/>
         </waypoint>
         <waypoint time="39.5s" before="constant" after="constant">
           <real value="0.0000000000"/>
@@ -725,7 +727,7 @@
       <string>frame00089.png</string>
     </param>
   </layer>
-  <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="happyBabyInPlace.png">
+  <layer type="switch" active="false" exclude_from_rendering="false" version="0.0" desc="happyBabyInPlace.png">
     <param name="z_depth">
       <real value="0.0000000000"/>
     </param>
@@ -735,7 +737,7 @@
           <real value="0.0000000000"/>
         </waypoint>
         <waypoint time="59.90000153s" before="constant" after="constant">
-          <real guid="9F4E019AC544CA0D4677F1709FE19BDA" value="1.0000000000"/>
+          <real value="1.0000000000"/>
         </waypoint>
       </animated>
     </param>
@@ -825,7 +827,7 @@
       <string>happyBabyInPlace.png</string>
     </param>
   </layer>
-  <layer type="group" active="true" exclude_from_rendering="false" version="0.2">
+  <layer type="group" active="false" exclude_from_rendering="false" version="0.2">
     <param name="z_depth">
       <real value="0.0000000000"/>
     </param>
@@ -1449,7 +1451,7 @@
       <real value="0.0000000000"/>
     </param>
   </layer>
-  <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="goodLuck.png">
+  <layer type="switch" active="false" exclude_from_rendering="false" version="0.0" desc="goodLuck.png">
     <param name="z_depth">
       <real value="0.0000000000"/>
     </param>
@@ -1549,7 +1551,7 @@
       <string>goodLuck.png</string>
     </param>
   </layer>
-  <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="gameTitle.png">
+  <layer type="switch" active="false" exclude_from_rendering="false" version="0.0" desc="gameTitle.png">
     <param name="z_depth">
       <real value="0.0000000000"/>
     </param>
@@ -1649,7 +1651,7 @@
       <string>gameTitle.png</string>
     </param>
   </layer>
-  <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="byScreen.png">
+  <layer type="switch" active="false" exclude_from_rendering="false" version="0.0" desc="byScreen.png">
     <param name="z_depth">
       <real value="0.0000000000"/>
     </param>
@@ -1749,7 +1751,7 @@
       <string>byScreen.png</string>
     </param>
   </layer>
-  <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="happyBabyInPlace.png">
+  <layer type="switch" active="false" exclude_from_rendering="false" version="0.0" desc="happyBabyInPlace.png">
     <param name="z_depth">
       <real value="0.0000000000"/>
     </param>
@@ -1849,7 +1851,7 @@
       <string>happyBabyInPlace.png</string>
     </param>
   </layer>
-  <layer type="group" active="true" exclude_from_rendering="false" version="0.2">
+  <layer type="group" active="false" exclude_from_rendering="false" version="0.2">
     <param name="z_depth">
       <real value="0.0000000000"/>
     </param>
@@ -2024,7 +2026,7 @@
       <real value="0.0000000000"/>
     </param>
   </layer>
-  <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="gameFrames2.lst">
+  <layer type="switch" active="false" exclude_from_rendering="false" version="0.0" desc="gameFrames2.lst">
     <param name="z_depth">
       <real value="0.0000000000"/>
     </param>
@@ -2034,7 +2036,7 @@
           <real value="0.0000000000"/>
         </waypoint>
         <waypoint time="1m 24.96666718s" before="linear" after="linear">
-          <real guid="74B33306E5B3F09B3DE214E0AFBD98B9" value="0.0000000000"/>
+          <real value="0.0000000000"/>
         </waypoint>
         <waypoint time="1m 25.03333282s" before="auto" after="auto">
           <real value="1.0000000000"/>
@@ -2134,7 +2136,7 @@
       <string>gameFrames2.lst</string>
     </param>
   </layer>
-  <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="womanCover.png">
+  <layer type="switch" active="false" exclude_from_rendering="false" version="0.0" desc="womanCover.png">
     <param name="z_depth">
       <real value="0.0000000000"/>
     </param>
@@ -2234,7 +2236,7 @@
       <string>womanCover.png</string>
     </param>
   </layer>
-  <layer type="rectangle" active="true" exclude_from_rendering="false" version="0.2" desc="blackout">
+  <layer type="rectangle" active="false" exclude_from_rendering="false" version="0.2" desc="blackout">
     <param name="z_depth">
       <real value="0.0000000000"/>
     </param>
@@ -2290,6 +2292,475 @@
     </param>
     <param name="volume">
       <real value="1.0000000000" static="true"/>
+    </param>
+  </layer>
+  <layer type="group" active="true" exclude_from_rendering="false" version="0.2">
+    <param name="z_depth">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="amount">
+      <real value="1.0000000000"/>
+    </param>
+    <param name="blend_method">
+      <integer value="0" static="true"/>
+    </param>
+    <param name="origin">
+      <vector>
+        <x>0.0000000000</x>
+        <y>0.0000000000</y>
+      </vector>
+    </param>
+    <param name="transformation">
+      <composite type="transformation">
+        <offset>
+          <vector>
+            <x>0.0000000000</x>
+            <y>0.0000000000</y>
+          </vector>
+        </offset>
+        <angle>
+          <angle value="0.000000"/>
+        </angle>
+        <skew_angle>
+          <angle value="0.000000"/>
+        </skew_angle>
+        <scale>
+          <animated type="vector">
+            <waypoint time="0s" before="clamped" after="clamped">
+              <vector>
+                <x>1.0000000000</x>
+                <y>1.0000000000</y>
+              </vector>
+            </waypoint>
+            <waypoint time="6s" before="clamped" after="clamped">
+              <vector>
+                <x>5.3333334923</x>
+                <y>5.3333334923</y>
+              </vector>
+            </waypoint>
+          </animated>
+        </scale>
+      </composite>
+    </param>
+    <param name="canvas">
+      <canvas>
+        <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="cloudDoorL.png">
+          <param name="z_depth">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="amount">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="blend_method">
+            <integer value="0" static="true"/>
+          </param>
+          <param name="origin">
+            <vector>
+              <x>0.0000000000</x>
+              <y>0.0000000000</y>
+            </vector>
+          </param>
+          <param name="transformation">
+            <composite type="transformation">
+              <offset>
+                <animated type="vector">
+                  <waypoint time="0s" before="clamped" after="clamped">
+                    <vector>
+                      <x>-2.8823144436</x>
+                      <y>-0.9473684430</y>
+                    </vector>
+                  </waypoint>
+                  <waypoint time="2s" before="clamped" after="clamped">
+                    <vector>
+                      <x>-8.3418807983</x>
+                      <y>-0.5578947663</y>
+                    </vector>
+                  </waypoint>
+                </animated>
+              </offset>
+              <angle>
+                <angle value="0.000000"/>
+              </angle>
+              <skew_angle>
+                <angle value="0.000000"/>
+              </skew_angle>
+              <scale>
+                <vector>
+                  <x>0.3166666627</x>
+                  <y>0.3166666627</y>
+                </vector>
+              </scale>
+            </composite>
+          </param>
+          <param name="canvas">
+            <canvas>
+              <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="cloudDoorL.png">
+                <param name="z_depth">
+                  <real value="0.0000000000"/>
+                </param>
+                <param name="amount">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="blend_method">
+                  <integer value="0" static="true"/>
+                </param>
+                <param name="tl">
+                  <vector>
+                    <x>-16.4416675568</x>
+                    <y>17.4666671753</y>
+                  </vector>
+                </param>
+                <param name="br">
+                  <vector>
+                    <x>16.4416675568</x>
+                    <y>-17.4666671753</y>
+                  </vector>
+                </param>
+                <param name="c">
+                  <integer value="1" static="true"/>
+                </param>
+                <param name="gamma_adjust">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="filename">
+                  <string>cloudDoorL.png</string>
+                </param>
+                <param name="time_offset">
+                  <time value="0s"/>
+                </param>
+              </layer>
+            </canvas>
+          </param>
+          <param name="time_dilation">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="time_offset">
+            <time value="0s"/>
+          </param>
+          <param name="children_lock">
+            <bool value="true" static="true"/>
+          </param>
+          <param name="outline_grow">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="layer_name">
+            <string>cloudDoorL.png</string>
+          </param>
+        </layer>
+        <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="cloudDoorR.png">
+          <param name="z_depth">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="amount">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="blend_method">
+            <integer value="0" static="true"/>
+          </param>
+          <param name="origin">
+            <vector>
+              <x>0.0000000000</x>
+              <y>0.0000000000</y>
+            </vector>
+          </param>
+          <param name="transformation">
+            <composite type="transformation">
+              <offset>
+                <animated type="vector">
+                  <waypoint time="0s" before="clamped" after="clamped">
+                    <vector>
+                      <x>1.4095989466</x>
+                      <y>-0.2315789461</y>
+                    </vector>
+                  </waypoint>
+                  <waypoint time="2s" before="clamped" after="clamped">
+                    <vector>
+                      <x>7.9000658989</x>
+                      <y>-0.2000000030</y>
+                    </vector>
+                  </waypoint>
+                </animated>
+              </offset>
+              <angle>
+                <angle value="0.000000"/>
+              </angle>
+              <skew_angle>
+                <angle value="0.000000"/>
+              </skew_angle>
+              <scale>
+                <vector>
+                  <x>0.3166666627</x>
+                  <y>0.3166666627</y>
+                </vector>
+              </scale>
+            </composite>
+          </param>
+          <param name="canvas">
+            <canvas>
+              <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="cloudDoorR.png">
+                <param name="z_depth">
+                  <real value="0.0000000000"/>
+                </param>
+                <param name="amount">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="blend_method">
+                  <integer value="0" static="true"/>
+                </param>
+                <param name="tl">
+                  <vector>
+                    <x>-13.8333330154</x>
+                    <y>13.8000001907</y>
+                  </vector>
+                </param>
+                <param name="br">
+                  <vector>
+                    <x>13.8333330154</x>
+                    <y>-13.8000001907</y>
+                  </vector>
+                </param>
+                <param name="c">
+                  <integer value="1" static="true"/>
+                </param>
+                <param name="gamma_adjust">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="filename">
+                  <string>cloudDoorR.png</string>
+                </param>
+                <param name="time_offset">
+                  <time value="0s"/>
+                </param>
+              </layer>
+            </canvas>
+          </param>
+          <param name="time_dilation">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="time_offset">
+            <time value="0s"/>
+          </param>
+          <param name="children_lock">
+            <bool value="true" static="true"/>
+          </param>
+          <param name="outline_grow">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="layer_name">
+            <string>cloudDoorR.png</string>
+          </param>
+        </layer>
+        <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="cloudsBottom.png">
+          <param name="z_depth">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="amount">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="blend_method">
+            <integer value="0" static="true"/>
+          </param>
+          <param name="origin">
+            <vector>
+              <x>0.0000000000</x>
+              <y>0.0000000000</y>
+            </vector>
+          </param>
+          <param name="transformation">
+            <composite type="transformation">
+              <offset>
+                <vector>
+                  <x>0.6942801476</x>
+                  <y>0.5263158083</y>
+                </vector>
+              </offset>
+              <angle>
+                <angle value="0.000000"/>
+              </angle>
+              <skew_angle>
+                <angle value="0.000000"/>
+              </skew_angle>
+              <scale>
+                <vector>
+                  <x>0.3166666627</x>
+                  <y>0.3166666627</y>
+                </vector>
+              </scale>
+            </composite>
+          </param>
+          <param name="canvas">
+            <canvas>
+              <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="cloudsBottom.png">
+                <param name="z_depth">
+                  <real value="0.0000000000"/>
+                </param>
+                <param name="amount">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="blend_method">
+                  <integer value="0" static="true"/>
+                </param>
+                <param name="tl">
+                  <vector>
+                    <x>-44.6833343506</x>
+                    <y>26.2666664124</y>
+                  </vector>
+                </param>
+                <param name="br">
+                  <vector>
+                    <x>44.6833343506</x>
+                    <y>-26.2666664124</y>
+                  </vector>
+                </param>
+                <param name="c">
+                  <integer value="1" static="true"/>
+                </param>
+                <param name="gamma_adjust">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="filename">
+                  <string>cloudsBottom.png</string>
+                </param>
+                <param name="time_offset">
+                  <time value="0s"/>
+                </param>
+              </layer>
+            </canvas>
+          </param>
+          <param name="time_dilation">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="time_offset">
+            <time value="0s"/>
+          </param>
+          <param name="children_lock">
+            <bool value="true" static="true"/>
+          </param>
+          <param name="outline_grow">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="layer_name">
+            <string>cloudsBottom.png</string>
+          </param>
+        </layer>
+        <layer type="switch" active="true" exclude_from_rendering="false" version="0.0" desc="cloudsTop.png">
+          <param name="z_depth">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="amount">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="blend_method">
+            <integer value="0" static="true"/>
+          </param>
+          <param name="origin">
+            <vector>
+              <x>0.0000000000</x>
+              <y>0.0000000000</y>
+            </vector>
+          </param>
+          <param name="transformation">
+            <composite type="transformation">
+              <offset>
+                <vector>
+                  <x>1.1150557995</x>
+                  <y>-2.3789472580</y>
+                </vector>
+              </offset>
+              <angle>
+                <angle value="0.000000"/>
+              </angle>
+              <skew_angle>
+                <angle value="0.000000"/>
+              </skew_angle>
+              <scale>
+                <vector>
+                  <x>0.3166666627</x>
+                  <y>0.3166666627</y>
+                </vector>
+              </scale>
+            </composite>
+          </param>
+          <param name="canvas">
+            <canvas>
+              <layer type="import" active="true" exclude_from_rendering="false" version="0.1" desc="cloudsTop.png">
+                <param name="z_depth">
+                  <real value="0.0000000000"/>
+                </param>
+                <param name="amount">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="blend_method">
+                  <integer value="0" static="true"/>
+                </param>
+                <param name="tl">
+                  <vector>
+                    <x>-46.1916656494</x>
+                    <y>33.7999992371</y>
+                  </vector>
+                </param>
+                <param name="br">
+                  <vector>
+                    <x>46.1916656494</x>
+                    <y>-33.7999992371</y>
+                  </vector>
+                </param>
+                <param name="c">
+                  <integer value="1" static="true"/>
+                </param>
+                <param name="gamma_adjust">
+                  <real value="1.0000000000"/>
+                </param>
+                <param name="filename">
+                  <string>cloudsTop.png</string>
+                </param>
+                <param name="time_offset">
+                  <time value="0s"/>
+                </param>
+              </layer>
+            </canvas>
+          </param>
+          <param name="time_dilation">
+            <real value="1.0000000000"/>
+          </param>
+          <param name="time_offset">
+            <time value="0s"/>
+          </param>
+          <param name="children_lock">
+            <bool value="true" static="true"/>
+          </param>
+          <param name="outline_grow">
+            <real value="0.0000000000"/>
+          </param>
+          <param name="layer_name">
+            <string>cloudsTop.png</string>
+          </param>
+        </layer>
+      </canvas>
+    </param>
+    <param name="time_dilation">
+      <real value="1.0000000000"/>
+    </param>
+    <param name="time_offset">
+      <time value="0s"/>
+    </param>
+    <param name="children_lock">
+      <bool value="false"/>
+    </param>
+    <param name="outline_grow">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="z_range">
+      <bool value="false" static="true"/>
+    </param>
+    <param name="z_range_position">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="z_range_depth">
+      <real value="0.0000000000"/>
+    </param>
+    <param name="z_range_blur">
+      <real value="0.0000000000"/>
     </param>
   </layer>
 </canvas>
