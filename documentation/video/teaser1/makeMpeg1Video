@@ -1,0 +1,1 @@
+avconv -r 30 -i outFrames/videoLayout.%04d.png -i finalAudio.wav -f mpeg -vcodec mpeg1video -r 30 -b 20000k -acodec mp2 -ab 128k trailer_mpeg1_20000k_1280_720.mpg
