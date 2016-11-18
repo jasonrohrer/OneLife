@@ -1,1 +1,1 @@
-avconv -r 30 -i outFrames/videoLayout.%04d.png -i finalAudio.wav -c:v libx264 -preset ultrafast -crf 18 -acodec mp2 -ab 128k trailer_x64_18_1280_720.mkv
+avconv -r 30 -i outFrames/videoLayout.%04d.png -i finalAudio.wav -c:v libx264 -preset slow -crf 17 -acodec mp2 -ab 256k trailer_x64_17_1280_720.mkv
