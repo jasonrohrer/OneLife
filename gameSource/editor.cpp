@@ -115,7 +115,7 @@ char initDone = false;
 
 float mouseSpeed;
 
-int musicOff = true;
+int musicOff = false;
 float musicLoudness;
 
 int webRetrySeconds;
@@ -459,7 +459,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
 
     setSoundLoudness( musicLoudness );
-    setSoundPlaying( false );
+    setSoundPlaying( true );
 
 
     initOverlayBankStart();

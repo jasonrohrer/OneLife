@@ -39,6 +39,10 @@ EditorAnimationPage::EditorAnimationPage()
           mSaveButton( smallFont, 0, 200, "Save" ),
           mDeleteButton( smallFont, 140, 200, "Delete" ),
           mObjectPicker( &objectPickable, +410, 90 ),
+          mRecordSoundButton( smallFont, -100, -200, "R" ),
+          mStopSoundButton( smallFont, -80, -200, "S" ),
+          mPlaySoundButton( smallFont, -60, -200, "P" ),
+          mCurrentSoundHandle( -1 ),
           mPersonAgeSlider( smallFont, 0, -212, 2,
                             100, 20,
                             0, 100, "Age" ),
@@ -96,6 +100,19 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mDeleteButton );
     
     addComponent( &mObjectPicker );
+
+
+    addComponent( &mRecordSoundButton );
+    addComponent( &mStopSoundButton );
+    addComponent( &mPlaySoundButton );
+    
+    mRecordSoundButton.addActionListener( this );
+    mStopSoundButton.addActionListener( this );
+    mPlaySoundButton.addActionListener( this );
+    
+    mStopSoundButton.setVisible( false );
+    mPlaySoundButton.setVisible( false );
+
 
     addComponent( &mPersonAgeSlider );
     
@@ -782,6 +799,36 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         checkNextPrevVisible();
         populateCurrentAnim();
         }    
+    else if( inTarget == &mRecordSoundButton ) {
+        if( mCurrentSoundHandle != -1 ) {
+            freeSoundSprite( mCurrentSoundHandle );
+            mCurrentSoundHandle = -1;
+            }
+        char started = startRecording16BitMonoSound( 44100 );
+        
+        mStopSoundButton.setVisible( started );
+        mPlaySoundButton.setVisible( false );
+        mRecordSoundButton.setVisible( !started );
+        }
+    else if( inTarget == &mStopSoundButton ) {
+        mStopSoundButton.setVisible( false );
+        
+        int numSamples;
+        int16_t *samples = stopRecording16BitMonoSound( &numSamples );
+        
+        if( samples != NULL ) {
+            
+            mCurrentSoundHandle = setSoundSprite( samples, numSamples );
+            
+            delete [] samples;
+            mPlaySoundButton.setVisible( true );
+            }
+        
+        mRecordSoundButton.setVisible( true );
+        }
+    else if( inTarget == &mPlaySoundButton ) {
+        playSoundSprite( mCurrentSoundHandle );
+        }
     else if( inTarget == &mClearButton ) {
         zeroRecord( getRecordForCurrentSlot() );
         updateSlidersFromAnim();

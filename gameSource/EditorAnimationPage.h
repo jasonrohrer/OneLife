@@ -80,6 +80,13 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextButton mDeleteButton;
         Picker mObjectPicker;
 
+        TextButton mRecordSoundButton;
+        TextButton mStopSoundButton;
+        TextButton mPlaySoundButton;
+        
+        int mCurrentSoundHandle;
+        
+
         ValueSlider mPersonAgeSlider;
 
         ValueSlider mTestSpeedSlider;
