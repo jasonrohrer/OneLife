@@ -42,7 +42,7 @@ EditorAnimationPage::EditorAnimationPage()
           mRecordSoundButton( smallFont, -100, -200, "R" ),
           mStopSoundButton( smallFont, -80, -200, "S" ),
           mPlaySoundButton( smallFont, -60, -200, "P" ),
-          mCurrentSoundHandle( -1 ),
+          mCurrentSoundHandle( NULL ),
           mPersonAgeSlider( smallFont, 0, -212, 2,
                             100, 20,
                             0, 100, "Age" ),
@@ -330,6 +330,12 @@ EditorAnimationPage::~EditorAnimationPage() {
     
     freeSprite( mCenterMarkSprite );
     freeSprite( mGroundSprite );
+
+    if( mCurrentSoundHandle != NULL ) {
+        freeSoundSprite( mCurrentSoundHandle );
+        mCurrentSoundHandle = NULL;
+        }
+    
     }
 
 
@@ -800,9 +806,9 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         populateCurrentAnim();
         }    
     else if( inTarget == &mRecordSoundButton ) {
-        if( mCurrentSoundHandle != -1 ) {
+        if( mCurrentSoundHandle != NULL ) {
             freeSoundSprite( mCurrentSoundHandle );
-            mCurrentSoundHandle = -1;
+            mCurrentSoundHandle = NULL;
             }
         char started = startRecording16BitMonoSound( 44100 );
         

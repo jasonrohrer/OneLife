@@ -460,8 +460,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
     setSoundLoudness( musicLoudness );
     setSoundPlaying( true );
-
-
+    setSoundSpriteRateRange( 0.95, 1.05 );
+    setSoundSpriteVolumeRange( 0.60, 1.0 );
+    
     initOverlayBankStart();
     
 
