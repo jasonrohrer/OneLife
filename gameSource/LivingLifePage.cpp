@@ -3447,6 +3447,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             char *stringUpper = stringToUpperCase( des );
 
+            // pound sign is used for trailing developer comments
+            // that aren't show to end user, cut them off if they exist
+            char *firstPound = strstr( stringUpper, "#" );
+            
+            if( firstPound != NULL ) {
+                firstPound[0] = '\0';
+                }
+
             if( mCurrentDes == NULL ) {
                 mCurrentDes = stringDuplicate( stringUpper );
                 }
