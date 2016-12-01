@@ -39,9 +39,9 @@ EditorAnimationPage::EditorAnimationPage()
           mSaveButton( smallFont, 0, 200, "Save" ),
           mDeleteButton( smallFont, 140, 200, "Delete" ),
           mObjectPicker( &objectPickable, +410, 90 ),
-          mRecordSoundButton( smallFont, -100, -200, "R" ),
-          mStopSoundButton( smallFont, -80, -200, "S" ),
-          mPlaySoundButton( smallFont, -60, -200, "P" ),
+          mRecordSoundButton( smallFont, -140, -200, "R" ),
+          mStopSoundButton( smallFont, -120, -200, "S" ),
+          mPlaySoundButton( smallFont, -100, -200, "P", 'P', 'p' ),
           mCurrentSoundHandle( NULL ),
           mPersonAgeSlider( smallFont, 0, -212, 2,
                             100, 20,
@@ -105,7 +105,7 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mRecordSoundButton );
     addComponent( &mStopSoundButton );
     addComponent( &mPlaySoundButton );
-    
+
     mRecordSoundButton.addActionListener( this );
     mStopSoundButton.addActionListener( this );
     mPlaySoundButton.addActionListener( this );
@@ -833,7 +833,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mRecordSoundButton.setVisible( true );
         }
     else if( inTarget == &mPlaySoundButton ) {
-        playSoundSprite( mCurrentSoundHandle );
+        playSoundSprite( mCurrentSoundHandle, 1.0, 0.5 );
         }
     else if( inTarget == &mClearButton ) {
         zeroRecord( getRecordForCurrentSlot() );
