@@ -96,7 +96,9 @@ void initSoundBank() {
                 }
             
             delete [] fileName;
+            delete childFiles[i];
             }
+        delete [] childFiles;
         }
     
     mapSize = maxID + 1;
@@ -444,6 +446,8 @@ static void writeAiffFile( File *inFile, int16_t *inSamples,
     FileOutputStream stream( inFile );
     
     stream.write( header, headerLength );
+
+    delete [] header;
         
     int numBytes = inNumSamples * 2;
     unsigned char *data = new unsigned char[ numBytes ];
@@ -571,6 +575,8 @@ int stopRecordingSound() {
 
         File *soundFile = soundsDir.getChildFile( fileNameAIFF );
         
+        delete [] fileNameAIFF;
+
         writeAiffFile( soundFile, &( samples[ finalStartPoint ] ),
                        finalNumSamples );
         
