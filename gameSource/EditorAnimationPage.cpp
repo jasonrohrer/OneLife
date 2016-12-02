@@ -41,7 +41,7 @@ EditorAnimationPage::EditorAnimationPage()
           mObjectPicker( &objectPickable, +410, 90 ),
           mRecordSoundButton( smallFont, -140, -200, "R" ),
           mStopSoundButton( smallFont, -120, -200, "S" ),
-          mPlaySoundButton( smallFont, -100, -200, "P", 'P', 'p' ),
+          mPlaySoundButton( smallFont, -100, -200, "P" ),
           mCurrentSoundHandle( NULL ),
           mPersonAgeSlider( smallFont, 0, -212, 2,
                             100, 20,
