@@ -62,6 +62,7 @@ int accountHmacVersionNumber = 0;
 #include "spriteBank.h"
 #include "objectBank.h"
 #include "overlayBank.h"
+#include "soundBank.h"
 
 #include "ageControl.h"
 
@@ -475,6 +476,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     loadingPage->setCurrentPhase( "OVERLAYS" );
     loadingPage->setCurrentProgress( 0 );
     
+    initSoundBank();
 
     currentGamePage = loadingPage;
     currentGamePage->base_makeActive( true );
@@ -530,6 +532,8 @@ void freeFrameDrawer() {
     freeOverlayBank();
 
     freeAnimationBank();
+
+    freeSoundBank();
     }
 
 

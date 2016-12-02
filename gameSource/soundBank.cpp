@@ -429,9 +429,37 @@ void deleteSoundFromBank( int inID ) {
 
 
 
-void startRecordingSound() {
-    startRecording16BitMonoSound( sampleRate );
+char startRecordingSound() {
+    return startRecording16BitMonoSound( sampleRate );
     }
+
+
+
+static void writeAiffFile( File *inFile, int16_t *inSamples, 
+                           int inNumSamples ) {
+    int headerLength;
+    unsigned char *header = 
+        getAIFFHeader( 1, 16, sampleRate, inNumSamples, &headerLength );
+        
+    FileOutputStream stream( inFile );
+    
+    stream.write( header, headerLength );
+        
+    int numBytes = inNumSamples * 2;
+    unsigned char *data = new unsigned char[ numBytes ];
+        
+    int b = 0;
+    for( int s=0; s<inNumSamples; s++ ) {
+        // big endian
+        data[b] = inSamples[s] >> 8;
+        data[b+1] = inSamples[s] & 0xFF;
+        b+=2;
+        }
+        
+    stream.write( data, numBytes );
+    delete [] data;
+    }
+
 
 
 int stopRecordingSound() {
@@ -443,8 +471,34 @@ int stopRecordingSound() {
         return -1;
         }
     
+    // normalize it
+    int16_t maxAmp = 0;
+    
+    for( int i=0; i<numSamples; i++ ) {
+        int16_t amp = samples[i];
+        if( amp < 0 ) {
+            amp = -amp;
+            }
+        if( amp > maxAmp ) {
+            maxAmp = amp;
+            }
+        }
+    
+    double scale = 32767.0 / (double) maxAmp;
+    
+    for( int i=0; i<numSamples; i++ ) {
+        samples[i] = lrint( scale * samples[i] );
+        }
+    
+
+
+    File untrimmedFile( NULL, "untrimmed.aiff" );
+    
+    writeAiffFile( &untrimmedFile, samples, numSamples );
+    
+    
     // trim start/end of sound up to first occurrence of 5% amplitude 
-    int16_t trimUpToMin = 1638;
+    int16_t trimUpToMin = 5 * 327;
 
     int trimStartPoint = 0;
     int trimEndPoint = numSamples - 1;
@@ -463,29 +517,31 @@ int stopRecordingSound() {
             }
         }
     
-    // one ms
-    int fadeLength = sampleRate / 1000;
     
-    if( trimStartPoint < fadeLength ) {
-        trimStartPoint = fadeLength;
+    // 25 ms
+    int fadeLengthStart = 25  * sampleRate / 1000;
+    int fadeLengthEnd = 150  * sampleRate / 1000;
+    
+    if( trimStartPoint < fadeLengthStart ) {
+        trimStartPoint = fadeLengthStart;
         }
-    if( trimEndPoint + fadeLength >= numSamples ) {
-        trimEndPoint = ( numSamples - fadeLength ) - 1;
+    if( trimEndPoint + fadeLengthEnd >= numSamples ) {
+        trimEndPoint = ( numSamples - fadeLengthEnd ) - 1;
         }
     
-    int finalStartPoint = trimStartPoint - fadeLength;
-    int finalEndPoint = trimEndPoint + fadeLength;
+    int finalStartPoint = trimStartPoint - fadeLengthStart;
+    int finalEndPoint = trimEndPoint + fadeLengthEnd;
     
     // apply linear fade
     for( int i=finalStartPoint; i<trimStartPoint; i++ ) {
         
-        double fade = ( i - finalStartPoint ) / (double)fadeLength;
+        double fade = ( i - finalStartPoint ) / (double)fadeLengthStart;
     
         samples[i] = (int16_t)( lrint( fade * samples[i] ) );
         }
     for( int i=trimEndPoint+1; i<=finalEndPoint; i++ ) {
         
-        double fade = ( finalEndPoint - i ) / (double)fadeLength;
+        double fade = ( finalEndPoint - i ) / (double)fadeLengthEnd;
     
         samples[i] = (int16_t)( lrint( fade * samples[i] ) );
         }
@@ -515,29 +571,9 @@ int stopRecordingSound() {
 
         File *soundFile = soundsDir.getChildFile( fileNameAIFF );
         
-
-        int headerLength;
-        unsigned char *header = 
-            getAIFFHeader( 1, 16, sampleRate, finalNumSamples, &headerLength );
+        writeAiffFile( soundFile, &( samples[ finalStartPoint ] ),
+                       finalNumSamples );
         
-        FileOutputStream stream( soundFile );
-        
-        stream.write( header, headerLength );
-        
-        int numBytes = finalNumSamples * 2;
-        unsigned char *data = new unsigned char[ numBytes ];
-        
-        int b = 0;
-        for( int s=finalStartPoint; s<=finalEndPoint; s++ ) {
-            // big endian
-            data[b] = samples[s] >> 8;
-            data[b+1] = samples[s] & 0xFF;
-            b+=2;
-            }
-        
-        stream.write( data, numBytes );
-        delete [] data;
-
         delete soundFile;
         }
     
@@ -569,6 +605,11 @@ int stopRecordingSound() {
         mapSize = newMapSize;
         }
 
+
+    if( newID > maxID ) {
+        maxID = newID;
+        }
+    
     SoundRecord *r = new SoundRecord;
     
     r->id = newID;

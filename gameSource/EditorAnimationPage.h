@@ -84,7 +84,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextButton mStopSoundButton;
         TextButton mPlaySoundButton;
         
-        SoundSpriteHandle mCurrentSoundHandle;
+        int mCurrentSoundID;
         
 
         ValueSlider mPersonAgeSlider;

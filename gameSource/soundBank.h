@@ -39,7 +39,8 @@ void stepSoundBank();
 void playSound( int inID, double inVolumeTweak = 1.0,
                 double inStereoPosition  = 0.5  );
 
-void startRecordingSound();
+// true if started
+char startRecordingSound();
 
 // auto-trims sound and returns ID of new sound in bank
 // returns -1 if recording fails

@@ -12,6 +12,8 @@
 #include "minorGems/io/file/FileInputStream.h"
 
 
+#include "soundBank.h"
+
 
 extern Font *mainFont;
 extern Font *smallFont;
@@ -42,7 +44,7 @@ EditorAnimationPage::EditorAnimationPage()
           mRecordSoundButton( smallFont, -140, -200, "R" ),
           mStopSoundButton( smallFont, -120, -200, "S" ),
           mPlaySoundButton( smallFont, -100, -200, "P" ),
-          mCurrentSoundHandle( NULL ),
+          mCurrentSoundID( -1 ),
           mPersonAgeSlider( smallFont, 0, -212, 2,
                             100, 20,
                             0, 100, "Age" ),
@@ -330,12 +332,6 @@ EditorAnimationPage::~EditorAnimationPage() {
     
     freeSprite( mCenterMarkSprite );
     freeSprite( mGroundSprite );
-
-    if( mCurrentSoundHandle != NULL ) {
-        freeSoundSprite( mCurrentSoundHandle );
-        mCurrentSoundHandle = NULL;
-        }
-    
     }
 
 
@@ -806,11 +802,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         populateCurrentAnim();
         }    
     else if( inTarget == &mRecordSoundButton ) {
-        if( mCurrentSoundHandle != NULL ) {
-            freeSoundSprite( mCurrentSoundHandle );
-            mCurrentSoundHandle = NULL;
-            }
-        char started = startRecording16BitMonoSound( 44100 );
+        char started = startRecordingSound();
         
         mStopSoundButton.setVisible( started );
         mPlaySoundButton.setVisible( false );
@@ -819,21 +811,17 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mStopSoundButton ) {
         mStopSoundButton.setVisible( false );
         
-        int numSamples;
-        int16_t *samples = stopRecording16BitMonoSound( &numSamples );
+        mCurrentSoundID = stopRecordingSound();
         
-        if( samples != NULL ) {
+        if( mCurrentSoundID != -1 ) {
             
-            mCurrentSoundHandle = setSoundSprite( samples, numSamples );
-            
-            delete [] samples;
             mPlaySoundButton.setVisible( true );
             }
         
         mRecordSoundButton.setVisible( true );
         }
     else if( inTarget == &mPlaySoundButton ) {
-        playSoundSprite( mCurrentSoundHandle, 1.0, 0.5 );
+        playSound( mCurrentSoundID, 1.0, 0.5 );
         }
     else if( inTarget == &mClearButton ) {
         zeroRecord( getRecordForCurrentSlot() );
