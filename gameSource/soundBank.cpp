@@ -501,12 +501,20 @@ int stopRecordingSound() {
     writeAiffFile( &untrimmedFile, samples, numSamples );
     
     
-    // trim start/end of sound up to first occurrence of 5% amplitude 
-    int16_t trimUpToMin = 5 * 327;
+    // trim start/end of sound up to first occurrence of 10% amplitude 
+    int16_t trimUpToMin = 10 * 327;
 
-    int trimStartPoint = 0;
+    int trimStartPoint =  0;
     int trimEndPoint = numSamples - 1;
     
+    if( numSamples > sampleRate ) {
+        // have at least a second to work with
+        // ignore first and last quarter second (mouse clicks)
+        trimEndPoint += sampleRate / 4;
+        trimEndPoint -= sampleRate / 4;
+        }
+    
+
     for( int i=0; i<numSamples; i++ ) {
         if( samples[i] >= trimUpToMin || samples[i] <= -trimUpToMin ) {
             trimStartPoint = i;
@@ -522,8 +530,8 @@ int stopRecordingSound() {
         }
     
     
-    // 25 ms
-    int fadeLengthStart = 25  * sampleRate / 1000;
+    // 1 ms
+    int fadeLengthStart = 1  * sampleRate / 1000;
     int fadeLengthEnd = 150  * sampleRate / 1000;
     
     if( trimStartPoint < fadeLengthStart ) {
