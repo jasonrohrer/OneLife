@@ -27,6 +27,9 @@
 #include "keyLegend.h"
 
 
+#include "SoundWidget.h"
+
+
 
 #define NUM_OBJECT_CHECKBOXES 3
 
@@ -175,6 +178,13 @@ class EditorObjectPage : public GamePage, public ActionListener {
         ValueSlider mValueSlider;
         
         CheckboxButton mSlotVertCheckbox;
+
+        SoundWidget mCreationSoundWidget;
+        SoundWidget mUsingSoundWidget;
+        SoundWidget mEatingSoundWidget;
+        
+
+
 
         ObjectRecord mCurrentObject;
         

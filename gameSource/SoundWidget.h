@@ -7,6 +7,7 @@
 #include "minorGems/game/Font.h"
 #include "minorGems/util/SimpleVector.h"
 
+#include "objectBank.h"
 
 
 class SoundWidget : public PageComponent, public ActionListenerList,
@@ -26,6 +27,10 @@ class SoundWidget : public PageComponent, public ActionListenerList,
         
         double getVolume();
         
+        SoundUsage getSoundUsage();
+
+        void setSoundUsage( SoundUsage inUsage );
+
         
     protected:
         int mSoundID;

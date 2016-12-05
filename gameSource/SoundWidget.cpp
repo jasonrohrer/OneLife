@@ -108,9 +108,25 @@ int SoundWidget::getSound() {
     }
 
 
+
 double SoundWidget::getVolume() {
     return mVolumeSlider.getValue();
     }
+
+
+
+SoundUsage SoundWidget::getSoundUsage() {
+    SoundUsage s = { mSoundID, mVolumeSlider.getValue() };
+    return s;
+    }
+
+
+
+void SoundWidget::setSoundUsage( SoundUsage inUsage ) {
+    setSound( inUsage.id );
+    mVolumeSlider.setValue( inUsage.volume );
+    }
+
 
         
         

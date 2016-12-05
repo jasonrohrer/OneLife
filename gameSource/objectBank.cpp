@@ -500,6 +500,29 @@ float initObjectBankStep() {
                 next++;
 
 
+                r->creationSound.id = -1;
+                r->usingSound.id = -1;
+                r->eatingSound.id = -1;
+
+                r->creationSound.volume = 1;
+                r->usingSound.volume = 1;
+                r->eatingSound.volume = 1;
+                
+                
+                if( strstr( lines[next], "sounds=" ) != NULL ) {
+                    // sounds present
+                    sscanf( lines[next], "sounds=%d:%lf,%d:%lf,%d:%lf", 
+                            &( r->creationSound.id ),
+                            &( r->creationSound.volume ), 
+                            &( r->usingSound.id ),
+                            &( r->usingSound.volume ),
+                            &( r->eatingSound.id ),
+                            &( r->eatingSound.volume ) );
+                    
+                    next++;
+                    }
+                
+
                 r->numSlots = 0;
                 r->slotTimeStretch = 1.0f;
                 
@@ -870,6 +893,9 @@ void resaveAll() {
                        idMap[i]->clothing,
                        idMap[i]->clothingOffset,
                        idMap[i]->deadlyDistance,
+                       idMap[i]->creationSound,
+                       idMap[i]->usingSound,
+                       idMap[i]->eatingSound,
                        idMap[i]->numSlots, 
                        idMap[i]->slotSize, 
                        idMap[i]->slotPos,
@@ -998,6 +1024,9 @@ int addObject( const char *inDescription,
                char inClothing,
                doublePair inClothingOffset,
                int inDeadlyDistance,
+               SoundUsage inCreationSound,
+               SoundUsage inUsingSound,
+               SoundUsage inEatingSound,
                int inNumSlots, int inSlotSize, doublePair *inSlotPos,
                char *inSlotVert,
                float inSlotTimeStretch,
@@ -1125,6 +1154,14 @@ int addObject( const char *inDescription,
 
         lines.push_back( autoSprintf( "deadlyDistance=%d", 
                                       inDeadlyDistance ) );
+
+        lines.push_back( autoSprintf( "sounds=%d:%f,%d:%f,%d:%f", 
+                                      inCreationSound.id, 
+                                      inCreationSound.volume, 
+                                      inUsingSound.id,
+                                      inUsingSound.volume,
+                                      inEatingSound.id,
+                                      inEatingSound.volume ) );
         
         
         lines.push_back( autoSprintf( "numSlots=%d#timeStretch=%f", 
@@ -1312,6 +1349,9 @@ int addObject( const char *inDescription,
     r->clothing = inClothing;
     r->clothingOffset = inClothingOffset;
     r->deadlyDistance = inDeadlyDistance;
+    r->creationSound = inCreationSound;
+    r->usingSound = inUsingSound;
+    r->eatingSound = inEatingSound;
 
     r->numSlots = inNumSlots;
     r->slotSize = inSlotSize;
@@ -1903,6 +1943,21 @@ char isSpriteUsed( int inSpriteID ) {
     return false;
     }
 
+
+
+char isSoundUsedByObject( int inSoundID ) {
+
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {            
+            if( idMap[i]->creationSound.id == inSoundID ||
+                idMap[i]->usingSound.id == inSoundID ||
+                idMap[i]->eatingSound.id == inSoundID ) {
+                return true;
+                }
+            }        
+        }
+    return false;
+    }
 
 
 

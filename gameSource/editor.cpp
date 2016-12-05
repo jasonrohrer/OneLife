@@ -999,6 +999,7 @@ void drawFrame( char inUpdate ) {
     
     stepSpriteBank();
     
+    stepSoundBank();
 
     if( currentGamePage != NULL ) {
         currentGamePage->base_step();

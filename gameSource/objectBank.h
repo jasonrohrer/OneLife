@@ -12,6 +12,12 @@ typedef struct FloatRGB {
 
 
 
+typedef struct SoundUsage {
+        int id;
+        double volume;
+    } SoundUsage;
+
+
 
 void setDrawColor( FloatRGB inColor );
 
@@ -120,6 +126,10 @@ typedef struct ObjectRecord {
         // how many cells away this object can kill
         // 0 for non-deadly objects
         int deadlyDistance;
+
+        SoundUsage creationSound;
+        SoundUsage usingSound;
+        SoundUsage  eatingSound;
 
 
         // if it is a container, how many slots?
@@ -277,6 +287,9 @@ int addObject( const char *inDescription,
                char inClothing,
                doublePair inClothingOffset,
                int inDeadlyDistance,
+               SoundUsage inCreationSound,
+               SoundUsage inUsingSound,
+               SoundUsage inEatingSound,
                int inNumSlots, int inSlotSize, doublePair *inSlotPos,
                char *inSlotVert,
                float inSlotTimeStretch,
@@ -341,6 +354,8 @@ void deleteObjectFromBank( int inID );
 
 char isSpriteUsed( int inSpriteID );
 
+
+char isSoundUsedByObject( int inSoundID );
 
 
 int getNumContainerSlots( int inID );

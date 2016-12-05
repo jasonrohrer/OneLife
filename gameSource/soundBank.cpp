@@ -1,5 +1,6 @@
 
 #include "soundBank.h"
+#include "objectBank.h"
 
 #include <stdlib.h>
 #include <math.h>
@@ -665,9 +666,12 @@ void checkIfSoundStillNeeded( int inID ) {
         
         // FIXME:
         // ask animation bank and object bank if sound used
-        
-        deleteSoundFromBank( inID );
+     
+        if( ! isSoundUsedByObject( inID ) ) {
+            deleteSoundFromBank( inID );
+            }
         }
+    
     }
 
 

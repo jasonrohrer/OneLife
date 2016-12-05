@@ -168,6 +168,9 @@ EditorObjectPage::EditorObjectPage()
                         75, 20,
                         0, 1, "V" ),
           mSlotVertCheckbox( -90, -157, 2 ),
+          mCreationSoundWidget( smallFont, -300, -310 ),
+          mUsingSoundWidget( smallFont, 0, -310 ),
+          mEatingSoundWidget( smallFont, +300, -310 ),
           mSlotPlaceholderSprite( loadSprite( "slotPlaceholder.tga" ) ) {
 
 
@@ -197,6 +200,10 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mContainSizeField );
     addComponent( &mSlotSizeField );
     addComponent( &mSlotTimeStretchField );
+
+    addComponent( &mCreationSoundWidget );
+    addComponent( &mUsingSoundWidget );
+    addComponent( &mEatingSoundWidget );
 
     mContainSizeField.setVisible( false );
     mSlotSizeField.setVisible( false );
@@ -1080,6 +1087,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.clothing,
                    mCurrentObject.clothingOffset,
                    mDeadlyDistanceField.getInt(),
+                   mCreationSoundWidget.getSoundUsage(),
+                   mUsingSoundWidget.getSoundUsage(),
+                   mEatingSoundWidget.getSoundUsage(),
                    mCurrentObject.numSlots,
                    mSlotSizeField.getInt(),
                    mCurrentObject.slotPos,
@@ -1181,6 +1191,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.clothing,
                    mCurrentObject.clothingOffset,
                    mDeadlyDistanceField.getInt(),
+                   mCreationSoundWidget.getSoundUsage(),
+                   mUsingSoundWidget.getSoundUsage(),
+                   mEatingSoundWidget.getSoundUsage(),
                    mCurrentObject.numSlots,
                    mSlotSizeField.getInt(), 
                    mCurrentObject.slotPos,
@@ -2210,6 +2223,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mMaleCheckbox.setToggled( pickedRecord->male );
             mDeathMarkerCheckbox.setToggled( pickedRecord->deathMarker );
             
+            mCreationSoundWidget.setSoundUsage( pickedRecord->creationSound );
+            mUsingSoundWidget.setSoundUsage( pickedRecord->usingSound );
+            mEatingSoundWidget.setSoundUsage( pickedRecord->eatingSound );
+
             mRaceField.setText( "A" );
             
             if( pickedRecord->person ) {
@@ -3034,7 +3051,29 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         smallFont->drawString( "Vertical Slot", pos, alignRight );
         }
     
-
+    
+    if( mCreationSoundWidget.isVisible() ) {
+        pos = mCreationSoundWidget.getPosition();
+        pos.x -= 100;
+        pos.y += 25;
+        
+        smallFont->drawString( "Creation:", pos, alignLeft );
+        }
+    if( mUsingSoundWidget.isVisible() ) {
+        pos = mUsingSoundWidget.getPosition();
+        pos.x -= 100;
+        pos.y += 25;
+        
+        smallFont->drawString( "Using:", pos, alignLeft );
+        }
+    if( mEatingSoundWidget.isVisible() ) {
+        pos = mEatingSoundWidget.getPosition();
+        pos.x -= 100;
+        pos.y += 25;
+        
+        smallFont->drawString( "Eating:", pos, alignLeft );
+        }
+    
     if( mPickedObjectLayer != -1 ) {
         char *tag = getSpriteRecord( 
             mCurrentObject.sprites[ mPickedObjectLayer ] )->tag;
