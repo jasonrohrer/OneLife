@@ -268,7 +268,7 @@ void stepSoundBank() {
                             data[24] << 8 |
                             data[25];
 
-                        int sampleStartByte = 53;
+                        int sampleStartByte = 54;
                         
 
                         int numBytes = numSamples * 2;

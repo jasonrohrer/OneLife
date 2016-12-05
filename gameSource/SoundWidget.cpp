@@ -183,3 +183,12 @@ void SoundWidget::updatePasteButton() {
     mPasteButton.setVisible( sClipboardSound != -1  && 
                              mRecordButton.isVisible() );
     }
+
+
+
+void SoundWidget::draw() {    
+    if( mSoundID != -1 ) {
+        markSoundLive( mSoundID );
+        }
+    }
+

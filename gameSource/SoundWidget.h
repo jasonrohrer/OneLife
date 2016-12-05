@@ -56,6 +56,8 @@ class SoundWidget : public PageComponent, public ActionListenerList,
         virtual void actionPerformed( GUIComponent *inTarget );
 
 
+        virtual void draw();
+        
                 
         void updatePasteButton();
 
