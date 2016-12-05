@@ -11,19 +11,25 @@ int SoundWidget::sClipboardSound = -1;
 SimpleVector<SoundWidget*> SoundWidget::sWidgetList;
 
 
+static void styleButton( Button *inButton ) {
+    inButton->setPixelSize( 2 );
+    //inButton->setSize( inButton->getWidth() / 2, inButton->getHeight() / 2 );
+    }
+
+
 
 SoundWidget::SoundWidget( Font *inDisplayFont, 
                           int inX, int inY ) 
         : PageComponent( inX, inY ),
           mSoundID( -1 ),
-          mRecordButton( "recordButton.tga", -64, 0 ),
-          mStopButton( "stopButton.tga", -32, 0 ),
-          mPlayButton( "playButton.tga", 0, 0 ),
-          mClearButton( "clearButton.tga", 32, 0 ),
-          mCopyButton( "copyButton.tga", 64, 0 ),
-          mPasteButton( "pasteButton.tga", 96, 0 ),
-          mVolumeSlider( inDisplayFont, 0, -64, 2,
-                         50, 20,
+          mRecordButton( "recordButton.tga", -85, 0 ),
+          mStopButton( "stopButton.tga", -51, 0 ),
+          mPlayButton( "playButton.tga", -17, 0 ),
+          mClearButton( "clearButton.tga", 17, 0 ),
+          mCopyButton( "copyButton.tga", 51, 0 ),
+          mPasteButton( "pasteButton.tga", 85, 0 ),
+          mVolumeSlider( inDisplayFont, -148, -30, 2,
+                         202, 20,
                          0, 1.0, "V" ) {
 
     addComponent( &mRecordButton );
@@ -33,7 +39,17 @@ SoundWidget::SoundWidget( Font *inDisplayFont,
     addComponent( &mCopyButton );
     addComponent( &mPasteButton );
     addComponent( &mVolumeSlider );
+
+
+    styleButton( &mRecordButton );
+    styleButton( &mStopButton );
+    styleButton( &mPlayButton );
+    styleButton( &mClearButton );
+    styleButton( &mCopyButton );
+    styleButton( &mPasteButton );
     
+    mVolumeSlider.toggleField( false );
+
     mRecordButton.addActionListener( this );
     mStopButton.addActionListener( this );
     mPlayButton.addActionListener( this );
@@ -42,13 +58,14 @@ SoundWidget::SoundWidget( Font *inDisplayFont,
     mPasteButton.addActionListener( this );
 
     mStopButton.setVisible( false );
-    mPlayButton.setVisible( false );
-    mClearButton.setVisible( false );
-    mCopyButton.setVisible( false );
+
+    setSound( -1 );
 
     mVolumeSlider.setValue( 1 );
 
     sWidgetList.push_back( this );
+
+    updatePasteButton();
     }
 
         
@@ -79,6 +96,7 @@ void SoundWidget::setSound( int inSoundID ) {
         }
     
     mPlayButton.setVisible( mSoundID != -1 );
+    mVolumeSlider.setVisible( mSoundID != -1 );
     mCopyButton.setVisible( mSoundID != -1 );
     mClearButton.setVisible( mSoundID != -1 );
     }
@@ -104,12 +122,8 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
         char started = startRecordingSound();
         
         mStopButton.setVisible( started );
-        mPlayButton.setVisible( false );
         mRecordButton.setVisible( !started );
-        mCopyButton.setVisible( false );
-        mPlayButton.setVisible( !started );
-        mClearButton.setVisible( false );
-        mPasteButton.setVisible( false );
+        updatePasteButton();
         }
     else if( inTarget == &mStopButton ) {
         mStopButton.setVisible( false );

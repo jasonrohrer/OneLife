@@ -42,6 +42,19 @@ Button::~Button() {
 
 
 
+void Button::setPixelSize( double inPixelSize ) {
+    mPixWidth = inPixelSize;
+    }
+
+
+
+void Button::setSize( double inWide, double inHigh ) {
+    mWide = inWide;
+    mHigh = inHigh;
+    }
+
+
+
 void Button::setMouseOverTip( const char *inTipMessage ) {
     if( mMouseOverTip != NULL ) {
         delete [] mMouseOverTip;

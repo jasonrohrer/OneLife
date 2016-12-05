@@ -21,6 +21,8 @@ class Button : public PageComponent, public ActionListenerList {
 
         virtual ~Button();
 
+        virtual void setPixelSize( double inPixelSize );
+
         // set the tool tip that will be passed up the parent chain
         // when this button is moused over
         // NULL disables tip display for this button
@@ -34,6 +36,8 @@ class Button : public PageComponent, public ActionListenerList {
         
         virtual double getWidth();
         virtual double getHeight();
+
+        virtual void setSize( double inWide, double inHigh );
 
 
         // defaults to

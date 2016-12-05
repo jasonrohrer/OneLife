@@ -90,6 +90,12 @@ void ValueSlider::setBackFillColor( Color inColor ) {
     }
 
 
+void ValueSlider::toggleField( char inFieldVisible ) {
+    mValueField.setVisible( inFieldVisible );
+    }
+
+
+
 
 
 void ValueSlider::actionPerformed( GUIComponent *inTarget ) {

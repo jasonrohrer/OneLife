@@ -33,6 +33,10 @@ class ValueSlider : public PageComponent, public ActionListenerList,
         void setFillColor( Color inColor );
         void setBackFillColor( Color inColor );
 
+        // toggles whether a text field is visible next to the slider
+        // defaults to true
+        void toggleField( char inFieldVisible );
+        
 
     protected:
         virtual void actionPerformed( GUIComponent *inTarget );
