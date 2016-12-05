@@ -19,6 +19,8 @@
 
 #include "folderCache.h"
 
+#include "soundBank.h"
+
 
 static int mapSize;
 // maps IDs to records
@@ -1432,6 +1434,25 @@ int addObject( const char *inDescription,
     // grab this before freeing, in case inDescription is the same as
     // idMap[newID].description
     char *lower = stringToLowerCase( inDescription );
+
+
+    ObjectRecord *oldRecord = getObject( newID );
+    
+    SimpleVector<int> oldSoundIDs;
+    if( oldRecord != NULL ) {
+        
+        if( oldRecord->creationSound.id != -1 ) {
+            oldSoundIDs.push_back( oldRecord->creationSound.id );
+            }
+        if( oldRecord->usingSound.id != -1 ) {
+            oldSoundIDs.push_back( oldRecord->usingSound.id );
+            }
+        if( oldRecord->eatingSound.id != -1 ) {
+            oldSoundIDs.push_back( oldRecord->eatingSound.id );
+            }
+        }
+    
+    
     
     freeObjectRecord( newID );
     
@@ -1457,6 +1478,14 @@ int addObject( const char *inDescription,
             }
         rebuildRaceList();
         }
+
+
+    // check if sounds still used (prevent orphan sounds)
+
+    for( int i=0; i<oldSoundIDs.size(); i++ ) {
+        checkIfSoundStillNeeded( oldSoundIDs.getElementDirect( i ) );
+        }
+    
     
     return newID;
     }
