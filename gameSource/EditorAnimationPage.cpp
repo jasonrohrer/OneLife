@@ -41,10 +41,7 @@ EditorAnimationPage::EditorAnimationPage()
           mSaveButton( smallFont, 0, 200, "Save" ),
           mDeleteButton( smallFont, 140, 200, "Delete" ),
           mObjectPicker( &objectPickable, +410, 90 ),
-          mRecordSoundButton( smallFont, -140, -200, "R" ),
-          mStopSoundButton( smallFont, -120, -200, "S" ),
-          mPlaySoundButton( smallFont, -100, -200, "P" ),
-          mCurrentSoundID( -1 ),
+          mSoundWidget( smallFont, -100, -300 ),
           mPersonAgeSlider( smallFont, 0, -212, 2,
                             100, 20,
                             0, 100, "Age" ),
@@ -104,17 +101,8 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mObjectPicker );
 
 
-    addComponent( &mRecordSoundButton );
-    addComponent( &mStopSoundButton );
-    addComponent( &mPlaySoundButton );
-
-    mRecordSoundButton.addActionListener( this );
-    mStopSoundButton.addActionListener( this );
-    mPlaySoundButton.addActionListener( this );
+    addComponent( &mSoundWidget );
     
-    mStopSoundButton.setVisible( false );
-    mPlaySoundButton.setVisible( false );
-
 
     addComponent( &mPersonAgeSlider );
     
@@ -801,28 +789,6 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         checkNextPrevVisible();
         populateCurrentAnim();
         }    
-    else if( inTarget == &mRecordSoundButton ) {
-        char started = startRecordingSound();
-        
-        mStopSoundButton.setVisible( started );
-        mPlaySoundButton.setVisible( false );
-        mRecordSoundButton.setVisible( !started );
-        }
-    else if( inTarget == &mStopSoundButton ) {
-        mStopSoundButton.setVisible( false );
-        
-        mCurrentSoundID = stopRecordingSound();
-        
-        if( mCurrentSoundID != -1 ) {
-            
-            mPlaySoundButton.setVisible( true );
-            }
-        
-        mRecordSoundButton.setVisible( true );
-        }
-    else if( inTarget == &mPlaySoundButton ) {
-        playSound( mCurrentSoundID, 1.0, 0.5 );
-        }
     else if( inTarget == &mClearButton ) {
         zeroRecord( getRecordForCurrentSlot() );
         updateSlidersFromAnim();

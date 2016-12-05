@@ -44,7 +44,7 @@ LoadingPage.cpp \
 folderCache.cpp \
 PickableStatics.cpp \
 soundBank.cpp \
-
+SoundWidget.cpp \
 
 
 GAME_GRAPHICS = \
@@ -58,7 +58,12 @@ graphics/checkMark.tga \
 graphics/checkMarkOff.tga \
 graphics/centerMark.tga \
 graphics/testGround.tga \
-
+graphics/recordButton.tga \
+graphics/playButton.tga \
+graphics/stopButton.tga \
+graphics/clearButton.tga \
+graphics/copyButton.tga \
+graphics/pasteButton.tga \
 
 
 NEEDED_MINOR_GEMS_OBJECTS = \

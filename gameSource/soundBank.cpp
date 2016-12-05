@@ -82,6 +82,7 @@ void initSoundBank() {
                 r->sound = NULL;
                 r->loading = false;
                 r->numStepsUnused = 0;
+                r->liveUseageCount = 0;
                 
                 r->id = 0;
         
@@ -396,32 +397,17 @@ void deleteSoundFromBank( int inID ) {
     
     if( soundsDir.exists() && soundsDir.isDirectory() ) {    
 
-        const char *printFormatTGA = "%d.tga";
-        const char *printFormatTXT = "%d.txt";
+        const char *printFormatAIFF = "%d.aiff";
 
-        char *fileNameTGA = autoSprintf( printFormatTGA, inID );
-        char *fileNameTXT = autoSprintf( printFormatTXT, inID );
-            
-        File *soundFileTGA = soundsDir.getChildFile( fileNameTGA );
-        File *soundFileTXT = soundsDir.getChildFile( fileNameTXT );
-
-            
-        File *cacheFile = soundsDir.getChildFile( "cache.fcz" );
-            
-        cacheFile->remove();
+        char *fileNameAIFF = autoSprintf( printFormatAIFF, inID );
+        File *soundFileAIFF = soundsDir.getChildFile( fileNameAIFF );
         
-        delete cacheFile;
-
-
         loadedSounds.deleteElementEqualTo( inID );
         
-        soundFileTGA->remove();
-        soundFileTXT->remove();
+        soundFileAIFF->remove();
             
-        delete [] fileNameTGA;
-        delete [] fileNameTXT;
-        delete soundFileTGA;
-        delete soundFileTXT;
+        delete [] fileNameAIFF;
+        delete soundFileAIFF;
         }
     
     
@@ -626,6 +612,8 @@ int stopRecordingSound() {
     
     SoundRecord *r = new SoundRecord;
     
+    r->liveUseageCount = 0;
+    
     r->id = newID;
     r->sound = setSoundSprite( &( samples[ finalStartPoint ] ),
                                finalNumSamples );
@@ -641,3 +629,45 @@ int stopRecordingSound() {
 
     return newID;
     }
+
+
+
+
+void countLiveUse( int inID ) {
+    SoundRecord *r = getSoundRecord( inID );
+    
+    if( r != NULL ) {
+        r->liveUseageCount ++;
+        }
+    }
+
+
+
+void unCountLiveUse( int inID ) {
+    SoundRecord *r = getSoundRecord( inID );
+    
+    if( r != NULL ) {
+        r->liveUseageCount --;
+
+        if( r->liveUseageCount <= 0 ) {
+            r->liveUseageCount = 0;
+            checkIfSoundStillNeeded( inID );
+            }
+        }
+    }
+
+
+
+void checkIfSoundStillNeeded( int inID ) {
+    SoundRecord *r = getSoundRecord( inID );
+    
+    if( r != NULL && r->liveUseageCount == 0 ) {
+        
+        // FIXME:
+        // ask animation bank and object bank if sound used
+        
+        deleteSoundFromBank( inID );
+        }
+    }
+
+

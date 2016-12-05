@@ -14,7 +14,10 @@ typedef struct SoundRecord {
         char loading;
 
         int numStepsUnused;
+        
 
+        int liveUseageCount;
+        
     } SoundRecord;
 
 
@@ -50,5 +53,16 @@ int stopRecordingSound();
 // returns true if sound is already loaded
 char markSoundLive( int inID );
 
+
+
+// for tracking of sounds used by recording widgets that may or 
+// may not be saved in objects or animations (for auto-delete of
+// sounds that no one is referencing anymore)
+void countLiveUse( int inID );
+
+void unCountLiveUse( int inID );
+
+
+void checkIfSoundStillNeeded( int inID );
 
 #endif

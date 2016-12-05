@@ -20,6 +20,7 @@
 
 
 #include "Picker.h"
+#include "SoundWidget.h"
 
 #include "animationBank.h"
 #include "objectBank.h"
@@ -80,12 +81,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextButton mDeleteButton;
         Picker mObjectPicker;
 
-        TextButton mRecordSoundButton;
-        TextButton mStopSoundButton;
-        TextButton mPlaySoundButton;
-        
-        int mCurrentSoundID;
-        
+        SoundWidget mSoundWidget;
 
         ValueSlider mPersonAgeSlider;
 
