@@ -86,6 +86,7 @@ typedef struct SoundAnimationRecord {
 
 
 void zeroRecord( SpriteAnimationRecord *inRecord );
+void zeroRecord( SoundAnimationRecord *inRecord );
 
 
 typedef struct AnimationRecord {

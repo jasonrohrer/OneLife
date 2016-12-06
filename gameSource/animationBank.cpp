@@ -340,7 +340,9 @@ void addAnimation( AnimationRecord *inRecord ) {
     SimpleVector<int> oldSoundIDs;
     if( oldRecord != NULL ) {
         for( int i=0; i<oldRecord->numSounds; i++ ) {
-            oldSoundIDs.push_back( oldRecord->soundAnim[i].sound.id );
+            if( oldRecord->soundAnim[i].sound.id != -1 ) {
+                oldSoundIDs.push_back( oldRecord->soundAnim[i].sound.id );
+                }
             }
         }
     
@@ -2353,6 +2355,13 @@ void zeroRecord( SpriteAnimationRecord *inRecord ) {
     inRecord->fadePhase = 0;
     }
 
+
+
+void zeroRecord( SoundAnimationRecord *inRecord ) {
+    inRecord->sound = blankSoundUsage;
+    inRecord->repeatPerSec = 0;
+    inRecord->repeatPhase = 0;
+    }
 
 
 

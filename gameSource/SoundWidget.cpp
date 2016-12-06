@@ -50,6 +50,8 @@ SoundWidget::SoundWidget( Font *inDisplayFont,
     
     mVolumeSlider.toggleField( false );
 
+    mVolumeSlider.addActionListener( this );
+
     mRecordButton.addActionListener( this );
     mStopButton.addActionListener( this );
     mPlayButton.addActionListener( this );
@@ -85,21 +87,30 @@ SoundWidget::~SoundWidget() {
 
 
 void SoundWidget::setSound( int inSoundID ) {
+    if( inSoundID != -1 ) {
+        countLiveUse( inSoundID );
+        }
+
     if( mSoundID != -1 ) {
         unCountLiveUse( mSoundID );
         }
 
     mSoundID = inSoundID;
     
-    if( mSoundID != -1 ) {
-        countLiveUse( mSoundID );
-        }
     
     mPlayButton.setVisible( mSoundID != -1 );
     mVolumeSlider.setVisible( mSoundID != -1 );
     mCopyButton.setVisible( mSoundID != -1 );
     mClearButton.setVisible( mSoundID != -1 );
     }
+
+
+
+void SoundWidget::setSoundInternal( int inSoundID ) {
+    setSound( inSoundID );
+    fireActionPerformed( this );
+    }
+
 
 
         
@@ -132,8 +143,11 @@ void SoundWidget::setSoundUsage( SoundUsage inUsage ) {
         
         
 void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
-    if( inTarget == &mRecordButton ) {
-        setSound( -1 );
+    if( inTarget == &mVolumeSlider ) {
+        fireActionPerformed( this );
+        }
+    else if( inTarget == &mRecordButton ) {
+        setSoundInternal( -1 );
 
         char started = startRecordingSound();
         
@@ -146,7 +160,7 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
         
         int id = stopRecordingSound();
         
-        setSound( id );
+        setSoundInternal( id );
         
         mRecordButton.setVisible( true );
         updatePasteButton();
@@ -155,7 +169,7 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
         playSound( mSoundID, mVolumeSlider.getValue(), 0.5 );
         }
     else if( inTarget == &mClearButton ) {
-        setSound( -1 );
+        setSoundInternal( -1 );
         }
     else if( inTarget == &mCopyButton ) {
         if( mSoundID != -1 && mSoundID != sClipboardSound ) {
@@ -172,7 +186,7 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mPasteButton ) {
         if( sClipboardSound != -1 ) {
-            setSound( sClipboardSound );
+            setSoundInternal( sClipboardSound );
             }
         }
     }

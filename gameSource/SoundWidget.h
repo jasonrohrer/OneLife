@@ -10,6 +10,7 @@
 #include "objectBank.h"
 
 
+// action fired when sound or volume changes internally
 class SoundWidget : public PageComponent, public ActionListenerList,
                     public ActionListener {
         
@@ -33,6 +34,10 @@ class SoundWidget : public PageComponent, public ActionListenerList,
 
         
     protected:
+
+        void setSoundInternal( int inSoundID );
+
+
         int mSoundID;
         
         static int sClipboardSound;

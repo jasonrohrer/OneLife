@@ -83,6 +83,9 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
         SoundWidget mSoundWidget;
 
+        ValueSlider mSoundRepeatPerSecSlider;
+        ValueSlider mSoundRepeatPhaseSlider;
+
         ValueSlider mPersonAgeSlider;
 
         ValueSlider mTestSpeedSlider;
@@ -131,6 +134,9 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
         char mFrozenRotFrameCountUsed;
 
+
+        int mCurrentSound;
+        
         int mCurrentSpriteOrSlot;
 
         char mSettingRotCenter;
@@ -171,6 +177,9 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         SimpleVector<SpriteAnimationRecord> mAllCopyBufferSprites;
         SimpleVector<SpriteAnimationRecord> mAllCopyBufferSlots;
         
+        
+        void markAllCopyBufferSoundsNotLive();
+        
 
         char mWalkCopied;
         SpriteAnimationRecord mCopiedHeadAnim;
@@ -196,7 +205,12 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextButton mNextSpriteOrSlotButton;
         TextButton mPrevSpriteOrSlotButton;
         
+        TextButton mNextSoundButton;
+        TextButton mPrevSoundButton;
+
         void checkNextPrevVisible();
+        
+        void soundIndexChanged();
         
 
         void updateAnimFromSliders();
