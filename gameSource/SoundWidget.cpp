@@ -147,12 +147,12 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
         fireActionPerformed( this );
         }
     else if( inTarget == &mRecordButton ) {
-        setSoundInternal( -1 );
-
         char started = startRecordingSound();
         
         mStopButton.setVisible( started );
         mRecordButton.setVisible( !started );
+        
+        setSoundInternal( -1 );
         updatePasteButton();
         }
     else if( inTarget == &mStopButton ) {
@@ -206,3 +206,8 @@ void SoundWidget::draw() {
         }
     }
 
+
+
+char SoundWidget::isRecording() {
+    return ( ! mRecordButton.isVisible() ) && mStopButton.isVisible();
+    }

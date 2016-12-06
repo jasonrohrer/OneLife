@@ -7,7 +7,7 @@
 #include "minorGems/game/Font.h"
 #include "minorGems/util/SimpleVector.h"
 
-#include "objectBank.h"
+#include "SoundUsage.h"
 
 
 // action fired when sound or volume changes internally
@@ -32,6 +32,7 @@ class SoundWidget : public PageComponent, public ActionListenerList,
 
         void setSoundUsage( SoundUsage inUsage );
 
+        char isRecording();
         
     protected:
 

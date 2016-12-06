@@ -125,7 +125,7 @@ void initSoundBank() {
 
 
 static SoundRecord *getSoundRecord( int inID ) {
-    if( inID < mapSize ) {
+    if( inID >= 0 && inID < mapSize ) {
         return idMap[inID];
         }
     else {
@@ -350,6 +350,12 @@ void playSound( int inID, double inVolumeTweak, double inStereoPosition  ) {
                              inStereoPosition );
             }
         }
+    }
+
+
+void playSound( SoundUsage inUsage,
+                double inStereoPosition ) {
+    playSound( inUsage.id, inUsage.volume, inStereoPosition );
     }
 
 

@@ -179,6 +179,8 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         
         
         void markAllCopyBufferSoundsNotLive();
+
+        double computeFrameTime();
         
 
         char mWalkCopied;

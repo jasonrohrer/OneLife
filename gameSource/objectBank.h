@@ -11,13 +11,7 @@ typedef struct FloatRGB {
     } FloatRGB;
 
 
-
-typedef struct SoundUsage {
-        int id;
-        double volume;
-    } SoundUsage;
-
-extern SoundUsage blankSoundUsage;
+#include "SoundUsage.h"
 
 
 void setDrawColor( FloatRGB inColor );

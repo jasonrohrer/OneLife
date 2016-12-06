@@ -131,6 +131,10 @@ EditorAnimationPage::EditorAnimationPage()
     mSoundRepeatPerSecSlider.setVisible( false );
     mSoundRepeatPhaseSlider.setVisible( false );
 
+    
+    mSoundRepeatPerSecSlider.addActionListener( this );
+    mSoundRepeatPhaseSlider.addActionListener( this );
+
 
     addComponent( &mPersonAgeSlider );
     
@@ -829,10 +833,20 @@ void EditorAnimationPage::soundIndexChanged() {
     else {
         mPrevSoundButton.setVisible( false );
         }
+    
+    if( mSoundWidget.isRecording() ) {
+        // don't allow switching sound layers while recording
+        mPrevSoundButton.setVisible( false );
+        mNextSoundButton.setVisible( false );
+        }
+    
 
     if( mCurrentSound < mCurrentAnim[ mCurrentType ]->numSounds ) {
-        mSoundWidget.setSoundUsage( 
-            mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].sound );
+        if( !mSoundWidget.isRecording() ) {    
+            mSoundWidget.setSoundUsage( 
+                mCurrentAnim[ mCurrentType ]->
+                soundAnim[ mCurrentSound ].sound );
+            }
         
         mSoundRepeatPerSecSlider.setValue( 
             mCurrentAnim[ mCurrentType ]->
@@ -841,7 +855,7 @@ void EditorAnimationPage::soundIndexChanged() {
         mSoundRepeatPhaseSlider.setValue( 
             mCurrentAnim[ mCurrentType ]->
             soundAnim[ mCurrentSound ].repeatPhase );
-
+        
         mSoundRepeatPerSecSlider.setVisible( true );
         mSoundRepeatPhaseSlider.setVisible( true );        
         }
@@ -1345,9 +1359,14 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mSoundWidget ) {
         SoundUsage u = mSoundWidget.getSoundUsage();
-
         
-        if( mCurrentAnim[ mCurrentType ]->numSounds > mCurrentSound ) {
+        if( ! mSaveButton.isVisible() && !mSoundWidget.isRecording() ) {
+            // done recording now, restore save visibility
+            mSaveButton.setVisible( true );
+            mCopyAllButton.setVisible( true );
+            }
+        
+        if( mCurrentSound < mCurrentAnim[ mCurrentType ]->numSounds ) {
             if( u.id != -1 ) { // just set it
                 int oldID = mCurrentAnim[ mCurrentType ]->
                     soundAnim[ mCurrentSound ].sound.id;
@@ -1356,7 +1375,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 countLiveUse( u.id );
                 unCountLiveUse( oldID );
                 }
-            else {
+            else if( !mSoundWidget.isRecording() ) {
                 // delete this sound
                 if( mCurrentAnim[ mCurrentType ]->numSounds > 
                     mCurrentSound + 1 ) {
@@ -1374,7 +1393,21 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                     }
                 mCurrentAnim[ mCurrentType ]->numSounds --;
                 mCurrentSound = mCurrentAnim[ mCurrentType ]->numSounds;
-                }    
+                }
+            else {
+                // leave sound anim in place, but just clear soundID 
+                // so it stops repeat-playing while we're recording
+                // its replacement
+                unCountLiveUse( mCurrentAnim[ mCurrentType ]->
+                                soundAnim[ mCurrentSound ].sound.id );
+                
+                mCurrentAnim[ mCurrentType ]->
+                    soundAnim[ mCurrentSound ].sound.id = -1;
+                
+                // don't allow save or copy-all in this weird state
+                mCopyAllButton.setVisible( false );
+                mSaveButton.setVisible( false );
+                }
             }
         else if( u.id != -1 ) {
             // expand it to make room
@@ -1409,6 +1442,16 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mCurrentSound --;
         
         soundIndexChanged();
+        }
+    else if( inTarget == &mSoundRepeatPerSecSlider ) {
+        mCurrentAnim[ mCurrentType ]->
+                soundAnim[ mCurrentSound ].repeatPerSec = 
+            mSoundRepeatPerSecSlider.getValue();
+        }
+    else if( inTarget == &mSoundRepeatPhaseSlider ) {
+        mCurrentAnim[ mCurrentType ]->
+                soundAnim[ mCurrentSound ].repeatPhase = 
+            mSoundRepeatPhaseSlider.getValue();
         }
     else if( inTarget == &mReverseRotationCheckbox ) {
         updateAnimFromSliders();
@@ -1535,6 +1578,46 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
 
 
 
+double EditorAnimationPage::computeFrameTime() {
+
+    double factor = frameRateFactor;
+    
+    if( mCurrentType == moving ) {
+        factor = mCurrentObjectFrameRateFactor;
+        }
+
+    double animFade = 1.0;
+    
+    if( mLastTypeFade != 0 ) {
+        animFade = mLastTypeFade;
+        }
+
+    double frameTime = 
+        ( mFrameCount / 60.0 ) * factor;
+    
+    if( animFade < 1 ) {
+        factor = frameRateFactor;
+
+        if( mLastType == moving ) {
+            factor = mCurrentObjectFrameRateFactor;
+            }
+                
+        frameTime = 
+            ( mLastTypeFrameCount / 60.0 ) * 
+            factor;
+        }
+    
+
+    frameTime *= mTestSpeedSlider.getValue();
+    
+    frameTime += mFrameTimeOffset;
+    return frameTime;
+    }
+
+
+
+
+
 void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter, 
                                                double inViewSize ) {
 
@@ -1599,30 +1682,12 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                 factor = mCurrentObjectFrameRateFactor;
                 }
             
-            double frameTime = 
-                ( mFrameCount / 60.0 ) * factor;
-            
-            double fadeTargetFrameTime = frameTime;
+            double frameTime = computeFrameTime();
             
             double frozenRotFrameTime = 
                 ( mFrozenRotFrameCount / 60.0 ) * factor;
             
-            if( animFade < 1 ) {
-                factor = frameRateFactor;
-
-                if( mLastType == moving ) {
-                    factor = mCurrentObjectFrameRateFactor;
-                    }
-                
-                frameTime = 
-                    ( mLastTypeFrameCount / 60.0 ) * 
-                    factor;
-                }
-            
-
-            frameTime *= mTestSpeedSlider.getValue();
-            
-            frameTime += mFrameTimeOffset;
+            double fadeTargetFrameTime = frameTime;
 
             if( mCurrentType == moving ) {
                 doublePair groundPos = pos;
@@ -1944,9 +2009,61 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
 
 
 void EditorAnimationPage::step() {
+    double oldFrameTime = computeFrameTime();
+
     mFrameCount++;
     mLastTypeFrameCount++;
     
+
+    double newFrameTime = computeFrameTime();
+    
+    // should any sounds play?
+    if( mCurrentObjectID != -1 ) {
+        
+        for( int s=0; s<mCurrentAnim[ mCurrentType ]->numSounds; s++ ) {
+            
+            if( mCurrentAnim[ mCurrentType ]->soundAnim[s].sound.id == -1 ) {
+                continue;
+                }
+            
+            double hz = mCurrentAnim[ mCurrentType ]->soundAnim[s].repeatPerSec;
+            
+            double phase = 
+                mCurrentAnim[ mCurrentType ]->soundAnim[s].repeatPhase;
+
+            // mark them live to keep them loaded whether they play or not
+            markSoundLive( mCurrentAnim[ mCurrentType ]->
+                           soundAnim[s].sound.id );
+            
+            if( hz != 0 ) {
+                double period = 1 / hz;
+                
+                double startOffsetSec = phase * period;
+                
+                int oldPeriods = 
+                    lrint( 
+                        floor( ( oldFrameTime - startOffsetSec ) / period ) );
+                
+                int newPeriods = 
+                    lrint( 
+                        floor( ( newFrameTime - startOffsetSec ) / period ) );
+                
+                if( newPeriods > oldPeriods ) {
+                    playSound( 
+                        mCurrentAnim[ mCurrentType ]->soundAnim[s].sound );
+                    }
+                }
+            else {
+                // play once at very beginning
+                if( mFrameCount == 1 ) {
+                    playSound( 
+                        mCurrentAnim[ mCurrentType ]->soundAnim[s].sound );
+                    }
+                }
+            }
+        }
+    
+
     if( mCurrentType == moving ) {
         mFrozenRotFrameCount++;
         }

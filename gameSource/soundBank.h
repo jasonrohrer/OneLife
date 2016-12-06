@@ -4,6 +4,9 @@
 
 #include "minorGems/game/game.h"
 
+#include "SoundUsage.h"
+
+
 
 typedef struct SoundRecord {
         int id;
@@ -40,7 +43,10 @@ void stepSoundBank();
 
 
 void playSound( int inID, double inVolumeTweak = 1.0,
-                double inStereoPosition  = 0.5  );
+                double inStereoPosition  = 0.5 );
+
+void playSound( SoundUsage inUsage,
+                double inStereoPosition  = 0.5 );
 
 // true if started
 char startRecordingSound();
