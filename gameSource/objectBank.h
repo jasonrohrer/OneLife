@@ -17,6 +17,7 @@ typedef struct SoundUsage {
         double volume;
     } SoundUsage;
 
+extern SoundUsage blankSoundUsage;
 
 
 void setDrawColor( FloatRGB inColor );

@@ -22,6 +22,9 @@
 #include "soundBank.h"
 
 
+SoundUsage blankSoundUsage = { -1, 1.0 };
+
+
 static int mapSize;
 // maps IDs to records
 // sparse, so some entries are NULL

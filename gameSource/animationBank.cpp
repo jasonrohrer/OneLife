@@ -2,6 +2,7 @@
 
 #include "objectBank.h"
 #include "spriteBank.h"
+#include "soundBank.h"
 
 #include "stdlib.h"
 #include "math.h"
@@ -99,6 +100,35 @@ float initAnimationBankStep() {
                 r->type = (AnimType)typeRead;
                 r->randomStartPhase = randomStartPhaseRead;
                 next++;
+                
+                
+                // optional sounds
+                r->numSounds = 0;
+                if( strstr( lines[next], "numSounds=" ) != NULL ) {
+                    r->numSounds = 0;
+                    sscanf( lines[next], "numSounds=%d", 
+                            &( r->numSounds ) );
+                    next++;
+                    }
+                r->soundAnim = new SoundAnimationRecord[ r->numSounds ];
+
+                if( r->numSounds > 0 ) {
+                    
+                    for( int j=0; j< r->numSounds && next < numLines; j++ ) {
+                                        
+                        r->soundAnim[j].sound = blankSoundUsage;
+                        r->soundAnim[j].repeatPerSec = 0;
+                        r->soundAnim[j].repeatPhase = 0;
+                        
+                        sscanf( lines[next], "soundParam=%d %lf %lf %lf",
+                                &( r->soundAnim[j].sound.id ),
+                                &( r->soundAnim[j].sound.volume ),
+                                &( r->soundAnim[j].repeatPerSec ),
+                                &( r->soundAnim[j].repeatPhase ) );
+                        next++;
+                        }
+                    }
+
 
                 r->numSprites = 0;
                 sscanf( lines[next], "numSprites=%d", 
@@ -249,7 +279,8 @@ void freeAnimationBank() {
     for( int i=0; i<mapSize; i++ ) {
         for( int j=0; j<endAnimType; j++ ) {
             if( idMap[i][j] != NULL ) {
-            
+
+                delete [] idMap[i][j]->soundAnim;
 
                 delete [] idMap[i][j]->spriteAnim;
                 delete [] idMap[i][j]->slotAnim;
@@ -302,6 +333,18 @@ AnimationRecord *getAnimation( int inID, AnimType inType ) {
 
 // record destroyed by caller
 void addAnimation( AnimationRecord *inRecord ) {
+    
+    AnimationRecord *oldRecord = getAnimation( inRecord->objectID, 
+                                               inRecord->type );
+    
+    SimpleVector<int> oldSoundIDs;
+    if( oldRecord != NULL ) {
+        for( int i=0; i<oldRecord->numSounds; i++ ) {
+            oldSoundIDs.push_back( oldRecord->soundAnim[i].sound.id );
+            }
+        }
+    
+
     clearAnimation( inRecord->objectID,
                     inRecord->type );
     
@@ -349,6 +392,18 @@ void addAnimation( AnimationRecord *inRecord ) {
         lines.push_back( autoSprintf( "type=%d,randStartPhase=%d", 
                                       inRecord->type, 
                                       inRecord->randomStartPhase ) );
+
+        lines.push_back( 
+            autoSprintf( "numSounds=%d", inRecord->numSounds ) );
+
+        for( int j=0; j<inRecord->numSounds; j++ ) {
+            lines.push_back( autoSprintf( 
+                                 "soundParam=%d %lf %lf %lf",
+                                 inRecord->soundAnim[j].sound.id,
+                                 inRecord->soundAnim[j].sound.volume,
+                                 inRecord->soundAnim[j].repeatPerSec,
+                                 inRecord->soundAnim[j].repeatPhase ) );
+            }
         
         lines.push_back( 
             autoSprintf( "numSprites=%d", inRecord->numSprites ) );
@@ -433,6 +488,12 @@ void addAnimation( AnimationRecord *inRecord ) {
         
         delete animationFile;
         }
+
+    
+    // check if sounds still used (prevent orphan sounds)
+    for( int i=0; i<oldSoundIDs.size(); i++ ) {
+        checkIfSoundStillNeeded( oldSoundIDs.getElementDirect( i ) );
+        }
     }
 
 
@@ -443,6 +504,7 @@ void clearAnimation( int inObjectID, AnimType inType ) {
     
     if( r != NULL ) {
         
+        delete [] r->soundAnim;
         delete [] r->spriteAnim;
         delete [] r->slotAnim;
         
@@ -2239,6 +2301,12 @@ AnimationRecord *copyRecord( AnimationRecord *inRecord ) {
     newRecord->type = inRecord->type;
     newRecord->randomStartPhase = inRecord->randomStartPhase;
     
+    newRecord->numSounds = inRecord->numSounds;
+    newRecord->soundAnim = new SoundAnimationRecord[ newRecord->numSounds ];
+    
+    memcpy( newRecord->soundAnim, inRecord->soundAnim,
+            sizeof( SoundAnimationRecord ) * newRecord->numSounds );
+
     newRecord->numSprites = inRecord->numSprites;
     newRecord->numSlots = inRecord->numSlots;
     
@@ -2366,5 +2434,26 @@ void performLayerSwaps( int inObjectID,
 
     }
 
-        
 
+
+char isSoundUsedByAnim( int inSoundID ) {
+    for( int i=0; i<mapSize; i++ ) {
+        for( int j=0; j<endAnimType; j++ ) {
+            AnimationRecord *r = idMap[i][j];
+            
+            if( r != NULL ) {
+                
+                if( r->numSounds > 0 ) {
+                    
+                    for( int k=0; k < r->numSounds; k++ ) {
+                        if( r->soundAnim[k].sound.id == inSoundID ) {
+                            return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    return false;
+    }

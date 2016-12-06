@@ -341,6 +341,7 @@ void EditorAnimationPage::freeCurrentAnim() {
     
     for( int i=0; i<endAnimType; i++ ) {
         if( mCurrentAnim[i] != NULL ) {
+            delete [] mCurrentAnim[i]->soundAnim;
             delete [] mCurrentAnim[i]->spriteAnim;
             delete [] mCurrentAnim[i]->slotAnim;
             delete mCurrentAnim[i];
@@ -348,6 +349,7 @@ void EditorAnimationPage::freeCurrentAnim() {
             }
         }
     if( mWiggleAnim != NULL ) {
+        delete [] mWiggleAnim->soundAnim;
         delete [] mWiggleAnim->spriteAnim;
         delete [] mWiggleAnim->slotAnim;
         delete mWiggleAnim;
@@ -417,6 +419,9 @@ void EditorAnimationPage::populateCurrentAnim() {
         
             mCurrentAnim[i]->randomStartPhase = false;
         
+            mCurrentAnim[i]->numSounds = 0;
+            mCurrentAnim[i]->soundAnim = new SoundAnimationRecord[ 0 ];
+            
             mCurrentAnim[i]->numSprites = sprites;
             mCurrentAnim[i]->numSlots = slots;
             
@@ -796,6 +801,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mCopyButton ) {
         mCopyBuffer = *( getRecordForCurrentSlot() );
         mChainCopyBuffer.deleteAll();
+        
+        mAllCopyBufferSounds.deleteAll();
         mAllCopyBufferSprites.deleteAll();
         mAllCopyBufferSlots.deleteAll();
         mWalkCopied = false;
@@ -886,6 +893,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             
             mChainCopyBuffer.deleteAll();
 
+            mAllCopyBufferSounds.deleteAll();
             mAllCopyBufferSprites.deleteAll();
             mAllCopyBufferSlots.deleteAll();
             }
@@ -895,11 +903,15 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mWalkCopied = false;
         zeroRecord( &mCopyBuffer );
 
+        mAllCopyBufferSounds.deleteAll();
         mAllCopyBufferSprites.deleteAll();
         mAllCopyBufferSlots.deleteAll();
         
         AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
 
+        for( int i=0; i<anim->numSounds; i++ ) {
+            mAllCopyBufferSounds.push_back( anim->soundAnim[i] );
+            }
         for( int i=0; i<anim->numSprites; i++ ) {
             mAllCopyBufferSprites.push_back( anim->spriteAnim[i] );
             }
@@ -988,11 +1000,24 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                     }
                 }
             }
-        else if( mAllCopyBufferSprites.size() > 0 ||
+        else if( mAllCopyBufferSounds.size() > 0 ||
+                 mAllCopyBufferSprites.size() > 0 ||
                  mAllCopyBufferSlots.size() > 0 ) {
             // paste all
             
             AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
+
+            delete [] anim->soundAnim;
+            
+            anim->soundAnim = 
+                new SoundAnimationRecord[ mAllCopyBufferSounds.size() ];
+            
+            for( int i=0; i < mAllCopyBufferSprites.size(); i++ ) {
+
+                anim->soundAnim[i] = 
+                    mAllCopyBufferSounds.getElementDirect( i );
+                }
+            
 
             for( int i=0; 
                  i<anim->numSprites && i < mAllCopyBufferSprites.size(); 

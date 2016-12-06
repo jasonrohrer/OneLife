@@ -73,7 +73,21 @@ typedef struct SpriteAnimationRecord {
     } SpriteAnimationRecord;
 
 
+
+typedef struct SoundAnimationRecord {
+        SoundUsage sound;
+        double repeatPerSec;
+        // between 0 and 1
+        // fraction of repeat period that sound waits before playing
+        // the first time
+        double repeatPhase;
+    } SoundAnimationRecord;
+    
+
+
 void zeroRecord( SpriteAnimationRecord *inRecord );
+
+
 typedef struct AnimationRecord {
         int objectID;
         
@@ -84,6 +98,9 @@ typedef struct AnimationRecord {
         //  loop from there)
         // false means animation always starts at 0-point on timeline
         char randomStartPhase;
+
+        int numSounds;
+        SoundAnimationRecord *soundAnim;
 
         int numSprites;
         int numSlots;
@@ -325,5 +342,11 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 void performLayerSwaps( int inObjectID, 
                         SimpleVector<LayerSwapRecord> *inSwapList,
                         int inNewNumSprites );
+
+
+
+char isSoundUsedByAnim( int inSoundID );
+
+
 
 #endif

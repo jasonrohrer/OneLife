@@ -167,6 +167,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
         SimpleVector<SpriteAnimationRecord> mChainCopyBuffer;
 
+        SimpleVector<SoundAnimationRecord> mAllCopyBufferSounds;
         SimpleVector<SpriteAnimationRecord> mAllCopyBufferSprites;
         SimpleVector<SpriteAnimationRecord> mAllCopyBufferSlots;
         
