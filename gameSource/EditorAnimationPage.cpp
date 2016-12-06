@@ -343,6 +343,10 @@ EditorAnimationPage::EditorAnimationPage()
 EditorAnimationPage::~EditorAnimationPage() {
     freeCurrentAnim();
     
+    for( int i=0; i<mAllCopyBufferSounds.size(); i++ ) {
+        unCountLiveUse( mAllCopyBufferSounds.getElementDirect(i).sound.id );
+        }
+
     for( int i=0; i<NUM_ANIM_CHECKBOXES; i++ ) {
         delete mCheckboxes[i];
         }
@@ -1377,12 +1381,12 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             else if( !mSoundWidget.isRecording() ) {
                 // delete this sound
+                unCountLiveUse( mCurrentAnim[ mCurrentType ]->
+                                soundAnim[ mCurrentSound ].sound.id );
+                
                 if( mCurrentAnim[ mCurrentType ]->numSounds > 
                     mCurrentSound + 1 ) {
                     
-                    unCountLiveUse( mCurrentAnim[ mCurrentType ]->
-                                    soundAnim[ mCurrentSound ].sound.id );
-
                     memcpy( &( mCurrentAnim[ mCurrentType ]->
                                soundAnim[ mCurrentSound ] ),
                             &( mCurrentAnim[ mCurrentType ]->
