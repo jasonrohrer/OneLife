@@ -543,7 +543,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
     initSoundBank();
 
-
+    setVolumeScaling( 10, 0 );
+    
     char rebuilding;
     
     int numSprites = 

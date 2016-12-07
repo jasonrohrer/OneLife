@@ -41,12 +41,22 @@ void freeSoundBank();
 void stepSoundBank();
 
 
+// music headroom is fraction of full volume reserved for music
+// sound effect volume will be scaled so that inMaxSimultaneousSoundEffects
+// can be played together without clipping (each SoundUsage can have its
+// own volume scaling which can further reduce its volume)
+// This is per channel (left and right)
+void setVolumeScaling( int inMaxSimultaneousSoundEffects,
+                       double inMusicHeadroom );
+
 
 void playSound( int inID, double inVolumeTweak = 1.0,
                 double inStereoPosition  = 0.5 );
 
 void playSound( SoundUsage inUsage,
                 double inStereoPosition  = 0.5 );
+
+
 
 // true if started
 char startRecordingSound();

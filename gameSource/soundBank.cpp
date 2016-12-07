@@ -47,6 +47,21 @@ static int sampleRate = 44100;
 
 
 
+static double playedSoundVolumeScale = 1.0;
+
+
+void setVolumeScaling( int inMaxSimultaneousSoundEffects,
+                       double inMusicHeadroom ) {
+    double totalVolume = 1.0 - inMusicHeadroom;
+    
+    playedSoundVolumeScale = totalVolume / inMaxSimultaneousSoundEffects;
+
+    setMaxTotalSoundSpriteVolume( totalVolume );
+    }
+
+
+
+
 int getMaxSoundID() {
     return maxID;
     }
@@ -346,8 +361,11 @@ void playSound( int inID, double inVolumeTweak, double inStereoPosition  ) {
                 }
             
             idMap[inID]->numStepsUnused = 0;
-            playSoundSprite( idMap[inID]->sound, inVolumeTweak, 
+            playSoundSprite( idMap[inID]->sound, 
+                             inVolumeTweak * playedSoundVolumeScale, 
                              inStereoPosition );
+            
+            markSoundLive( inID );
             }
         }
     }
