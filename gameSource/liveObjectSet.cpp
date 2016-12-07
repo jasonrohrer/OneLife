@@ -2,7 +2,11 @@
 
 #include "objectBank.h"
 
+#include "soundBank.h"
+
 #include "transitionBank.h"
+
+#include "animationBank.h"
 
 #include "liveObjectSet.h"
 
@@ -14,14 +18,18 @@
 
 static SimpleVector<int> liveObjectSet;
 static SimpleVector<int> liveSpriteSet;
+static SimpleVector<int> liveSoundSet;
 
 
 static int objectMapSize = 0;
 static int spriteMapSize = 0;
+static int soundMapSize = 0;
 
 static char *liveObjectIDMap = NULL;
 
 static char *liveSpriteIDMap = NULL;
+
+static char *liveSoundIDMap = NULL;
 
 
 
@@ -29,9 +37,11 @@ static char *liveSpriteIDMap = NULL;
 void initLiveObjectSet() {
     objectMapSize = getMaxObjectID() + 1;
     spriteMapSize = getMaxSpriteID() + 1;
+    soundMapSize = getMaxSoundID() + 1;
 
     liveObjectIDMap = new char[ objectMapSize ];
     liveSpriteIDMap = new char[ spriteMapSize ];
+    liveSoundIDMap = new char[ soundMapSize ];
 
     clearLiveObjectSet();
     }
@@ -47,6 +57,10 @@ void freeLiveObjectSet() {
         delete [] liveSpriteIDMap;
         liveSpriteIDMap = NULL;
         }
+    if( liveSoundIDMap != NULL ) {
+        delete [] liveSoundIDMap;
+        liveSoundIDMap = NULL;
+        }
     }
 
 
@@ -54,9 +68,11 @@ void freeLiveObjectSet() {
 void clearLiveObjectSet() {
     memset( liveObjectIDMap, false, objectMapSize );
     memset( liveSpriteIDMap, false, spriteMapSize );
+    memset( liveSoundIDMap, false, soundMapSize );
     
     liveObjectSet.deleteAll();
     liveSpriteSet.deleteAll();
+    liveSoundSet.deleteAll();
     }
 
 
@@ -81,7 +97,34 @@ void addBaseObjectToLiveObjectSet( int inID ) {
                 liveSpriteSet.push_back( spriteID );
                 }
             }
+        
+        if( o->creationSound.id != -1 ) {
+            liveSoundIDMap[ o->creationSound.id ] = true;
+            liveSoundSet.push_back( o->creationSound.id );
+            }
+        if( o->usingSound.id != -1 ) {
+            liveSoundIDMap[ o->usingSound.id ] = true;
+            liveSoundSet.push_back( o->usingSound.id );
+            }
+        if( o->eatingSound.id != -1 ) {
+            liveSoundIDMap[ o->eatingSound.id ] = true;
+            liveSoundSet.push_back( o->eatingSound.id );
+            }
 
+        for( int t=ground; t<endAnimType; t += 1 ) {
+            AnimationRecord *r = getAnimation( inID, (AnimType)t );
+            
+            if( r != NULL ) {
+                for( int s=0; s<r->numSounds; s++ ) {
+                    
+                    int sID = r->soundAnim[s].sound.id;
+                    
+                    liveSoundIDMap[ sID ] = true;
+                    liveSoundSet.push_back( sID );
+                    }
+                }
+            }
+        
         }
     }
 
@@ -135,6 +178,18 @@ void finalizeLiveObjectSet() {
         
         markSpriteLive( id );
         }
+
+
+    int numSounds = liveSoundSet.size();
+
+    //printf( "Finalizing an object set resulting in %d live sounds\n",
+    //        numSounds );
+    
+    for( int i=0; i<numSounds; i++ ) {
+        int id = liveSoundSet.getElementDirect(i);
+        
+        markSoundLive( id );
+        }
     
     }
 
@@ -143,12 +198,11 @@ void finalizeLiveObjectSet() {
 
 
 char isLiveObjectSetFullyLoaded( float *outProgress ) {
-
     
     int numDone = 0;
 
-    int num = liveSpriteSet.size();
-    for( int i=0; i<num; i++ ) {
+    int numSprites = liveSpriteSet.size();
+    for( int i=0; i<numSprites; i++ ) {
         
         int id = liveSpriteSet.getElementDirect( i );
         
@@ -157,9 +211,21 @@ char isLiveObjectSetFullyLoaded( float *outProgress ) {
             }
         }
 
-    *outProgress = (float)numDone / (float)num;
+    int numSounds = liveSoundSet.size();
+    for( int i=0; i<numSounds; i++ ) {
+        
+        int id = liveSoundSet.getElementDirect( i );
+        
+        if( markSoundLive( id ) ) {
+            numDone ++;
+            }
+        }
 
-    return ( numDone == num );
+    int numTotal = numSprites + numSounds;
+
+    *outProgress = (float)numDone / (float)numTotal;
+
+    return ( numDone == numTotal );
     }
 
 

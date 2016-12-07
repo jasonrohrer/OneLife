@@ -59,6 +59,7 @@ CustomRandomSource randSource( 34957197 );
 #include "spriteBank.h"
 #include "objectBank.h"
 #include "transitionBank.h"
+#include "soundBank.h"
 
 #include "liveObjectSet.h"
 
@@ -540,6 +541,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     rebirthChoicePage = new RebirthChoicePage;
     
 
+    initSoundBank();
+
 
     char rebuilding;
     
@@ -624,6 +627,8 @@ void freeFrameDrawer() {
     freeTransBank();
     
     freeLiveObjectSet();
+
+    freeSoundBank();
 
 
     if( reflectorURL != NULL ) {
@@ -1086,6 +1091,7 @@ void drawFrame( char inUpdate ) {
     // updates here
     stepSpriteBank();
     
+    stepSoundBank();
     
     if( currentGamePage != NULL ) {
         currentGamePage->base_step();

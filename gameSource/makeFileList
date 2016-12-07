@@ -43,6 +43,7 @@ KeyEquivalentTextButton.cpp \
 ServerActionPage.cpp \
 FinalMessagePage.cpp \
 AutoUpdatePage.cpp \
+soundBank.cpp \
 
 
 

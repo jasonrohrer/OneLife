@@ -5922,9 +5922,15 @@ void setDrawColor( float inR, float inG, float inB, float inA ) {
 
 
 
+// dummy implementations of these functions, which are used in editor
+// and client, but not server
 #include "../gameSource/spriteBank.h"
 SpriteRecord *getSpriteRecord( int inSpriteID ) {
     return NULL;
+    }
+
+#include "../gameSource/soundBank.h"
+void checkIfSoundStillNeeded( int inID ) {
     }
 
 
