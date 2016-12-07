@@ -144,7 +144,7 @@ char initDone = false;
 
 float mouseSpeed;
 
-int musicOff;
+int musicOff = 0;
 float musicLoudness;
 
 int webRetrySeconds;
@@ -518,7 +518,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
 
     setSoundLoudness( musicLoudness );
-    setSoundPlaying( false );
+    setSoundPlaying( true );
 
     
 

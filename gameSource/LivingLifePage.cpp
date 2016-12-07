@@ -2,6 +2,7 @@
 
 #include "objectBank.h"
 #include "transitionBank.h"
+#include "soundBank.h"
 #include "whiteSprites.h"
 #include "message.h"
 
@@ -4066,17 +4067,21 @@ void LivingLifePage::step() {
 
                         int old = mMap[mapI];
 
+                        int newID = -1;
+                        
+
                         if( strstr( idBuffer, "," ) != NULL ) {
                             int numInts;
                             char **ints = 
                                 split( idBuffer, ",", &numInts );
                         
                             
-                            
-                            mMap[mapI] = atoi( ints[0] );
+                            newID = atoi( ints[0] );
+
+                            mMap[mapI] = newID;
                             
                             delete [] ints[0];
-                            
+
                             mMapContainedStacks[mapI].deleteAll();
                             
                             int numContained = numInts - 1;
@@ -4090,10 +4095,25 @@ void LivingLifePage::step() {
                             }
                         else {
                             // a single int
-                            mMap[mapI] = atoi( idBuffer );
+                            newID = atoi( idBuffer );
+                            mMap[mapI] = newID;
                             mMapContainedStacks[mapI].deleteAll();
                             }
                         
+                        if( old != newID && 
+                            newID != 0 && 
+                            responsiblePlayerID == -1 ) {
+                            // ID change, and not just a player setting
+                            // an object down
+                            ObjectRecord *obj = getObject( newID );
+                            
+                            if( obj->creationSound.id != -1 ) {
+                                playSound( obj->creationSound );
+                                }
+                            }
+                            
+
+
                         if( mMap[mapI] != 0 ) {
                             ObjectRecord *newObj = getObject( mMap[mapI] );
                             
