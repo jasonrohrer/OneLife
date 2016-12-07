@@ -57,6 +57,13 @@ void playSound( SoundUsage inUsage,
                 double inStereoPosition  = 0.5 );
 
 
+// applies stereo position, distance fade, and distance reverb automatically
+// sounds at 0,0 are dead center and full volume
+// vector is in world tile units
+void playSound( SoundUsage inUsage,
+                doublePair inVectorFromCameraToSoundSource );
+
+
 
 // true if started
 char startRecordingSound();

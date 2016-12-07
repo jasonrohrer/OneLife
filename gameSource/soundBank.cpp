@@ -377,6 +377,60 @@ void playSound( SoundUsage inUsage,
     }
 
 
+
+double maxAudibleDistance = 16;
+double maxAudibleDistanceSquared = maxAudibleDistance * maxAudibleDistance;
+
+void playSound( SoundUsage inUsage,
+                doublePair inVectorFromCameraToSoundSource ) {
+
+
+    // FIXME:  reverb, eventually
+
+    
+    double d = length( inVectorFromCameraToSoundSource );
+    
+
+    // 1/dist^2
+    //double volumeScale = ( 1.0 / ( d * d ) ) - 
+    //    ( 1 / maxAudibleDistanceSquared );
+    
+    // 1/dist (linear)
+    double volumeScale = ( 1.0 / ( d ) ) - 
+        ( 1 / maxAudibleDistance );
+    
+    
+    if( volumeScale < 0 ) {
+        // don't play sound at all
+        return;
+        }
+    
+    // pan is based on X position on screen only
+    double xPan = inVectorFromCameraToSoundSource.x;
+    
+    // stop at edges of screen
+    if( xPan > 5 ) {
+        xPan = 5;
+        }
+    if( xPan < -5 ) {
+        xPan = -5;
+        }
+    
+    // between 0 and 10
+    xPan += 5;
+    
+    // between 3 and 13
+    xPan += 3;
+
+    // if we treat it as going from 0 to 16, we avoid hard left and right stereo
+    // even at the edge of the screen
+    
+    //printf( "Pan = %f\n", xPan / 16.0 );
+    playSound( inUsage.id, volumeScale * inUsage.volume, xPan / 16.0 );
+    }
+
+
+
     
 char markSoundLive( int inID ) {
     SoundRecord *r = getSoundRecord( inID );

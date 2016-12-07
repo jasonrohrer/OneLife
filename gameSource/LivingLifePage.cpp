@@ -181,6 +181,16 @@ messageType getMessageType( char *inMessage ) {
 
 
 
+doublePair getVectorFromCamera( int inMapX, int inMapY ) {
+    doublePair vector = 
+        { inMapX - lastScreenViewCenter.x / CELL_D, 
+          inMapY - lastScreenViewCenter.y / CELL_D };
+    
+    return vector;
+    }
+
+                                 
+
 
 char *pendingMapChunkMessage = NULL;
 int pendingCompressedChunkSize;
@@ -4108,7 +4118,9 @@ void LivingLifePage::step() {
                             ObjectRecord *obj = getObject( newID );
                             
                             if( obj->creationSound.id != -1 ) {
-                                playSound( obj->creationSound );
+                                
+                                playSound( obj->creationSound,
+                                           getVectorFromCamera( x, y ) );
                                 }
                             }
                             
