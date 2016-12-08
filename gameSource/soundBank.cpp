@@ -417,7 +417,7 @@ void playSound( SoundUsage inUsage,
 
 double maxAudibleDistance = 16;
 
-double minFadeStartDistance = 3;
+double minFadeStartDistance = 1.5;
 
 double maxAudibleDistanceSquared = maxAudibleDistance * maxAudibleDistance;
 
