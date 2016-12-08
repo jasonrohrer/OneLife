@@ -381,6 +381,9 @@ void playSound( SoundUsage inUsage,
 
 
 double maxAudibleDistance = 16;
+
+double minFadeStartDistance = 3;
+
 double maxAudibleDistanceSquared = maxAudibleDistance * maxAudibleDistance;
 
 void playSound( SoundUsage inUsage,
@@ -398,13 +401,22 @@ void playSound( SoundUsage inUsage,
     //    ( 1 / maxAudibleDistanceSquared );
     
     // 1/dist (linear)
-    double volumeScale = ( 1.0 / ( d ) ) - 
-        ( 1 / maxAudibleDistance );
+    double volumeScale = 1;
+
     
+    // everything at center screen same volume
+    // doesn't start fading until edge of screen
+    if( d > minFadeStartDistance ) {
+        volumeScale = ( 1.0 / ( d  - minFadeStartDistance ) ) - 
+            ( 1.0 / ( maxAudibleDistance - minFadeStartDistance ) );
+        }
     
     if( volumeScale < 0 ) {
         // don't play sound at all
         return;
+        }
+    if( volumeScale > 1 ) {
+        volumeScale = 1;
         }
     
     // pan is based on X position on screen only
