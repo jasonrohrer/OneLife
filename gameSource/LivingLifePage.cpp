@@ -783,6 +783,7 @@ LivingLifePage::LivingLifePage()
     
     mMapDropOffsets = new doublePair[ mMapD * mMapD ];
     mMapDropRot = new double[ mMapD * mMapD ];
+    mMapDropSounds = new SoundUsage[ mMapD * mMapD ];
     mMapTileFlips = new char[ mMapD * mMapD ];
 
     for( int i=0; i<mMapD *mMapD; i++ ) {
@@ -804,6 +805,7 @@ LivingLifePage::LivingLifePage()
         mMapDropOffsets[i].x = 0;
         mMapDropOffsets[i].y = 0;
         mMapDropRot[i] = 0;
+        mMapDropSounds[i] = blankSoundUsage;
         
         mMapTileFlips[i] = false;
         }
@@ -1301,6 +1303,7 @@ LivingLifePage::~LivingLifePage() {
     
     delete [] mMapDropOffsets;
     delete [] mMapDropRot;
+    delete [] mMapDropSounds;
 
     delete [] mMapTileFlips;
     
@@ -1617,7 +1620,22 @@ void LivingLifePage::drawMapCell( int inMapI,
                     add( mMapDropOffsets[ inMapI ],
                          mult( normalize( delta ), step ) );
                 }
-
+            
+            if( mMapDropOffsets[ inMapI ].x == 0 &&
+                mMapDropOffsets[ inMapI ].y == 0 ) {
+                // done dropping into place
+                if( mMapDropSounds[ inMapI ].id != -1 ) {
+                    
+                    playSound( mMapDropSounds[ inMapI ],
+                               getVectorFromCamera( 
+                                   (double)inScreenX / CELL_D,
+                                   (double)inScreenY / CELL_D ) );
+                    mMapDropSounds[ inMapI ] = blankSoundUsage;
+                    }
+                
+                }
+            
+                
             
             double rotDelta = 0 - mMapDropRot[ inMapI ];
             
@@ -3823,6 +3841,7 @@ void LivingLifePage::step() {
             
             doublePair *newMapDropOffsets = new doublePair[ mMapD * mMapD ];
             double *newMapDropRot = new double[ mMapD * mMapD ];
+            SoundUsage *newMapDropSounds = new SoundUsage[ mMapD * mMapD ];
             char *newMapTileFlips= new char[ mMapD * mMapD ];
 
             
@@ -3875,6 +3894,7 @@ void LivingLifePage::step() {
                     newMapLastAnimFade[i] = mMapLastAnimFade[oI];
                     newMapDropOffsets[i] = mMapDropOffsets[oI];
                     newMapDropRot[i] = mMapDropRot[oI];
+                    newMapDropSounds[i] = mMapDropSounds[oI];
 
                     newMapTileFlips[i] = mMapTileFlips[oI];
                     }
@@ -3903,6 +3923,8 @@ void LivingLifePage::step() {
                     mMapD * mMapD * sizeof( doublePair ) );
             memcpy( mMapDropRot, newMapDropRot,
                     mMapD * mMapD * sizeof( double ) );
+            memcpy( mMapDropSounds, newMapDropSounds,
+                    mMapD * mMapD * sizeof( SoundUsage ) );
             
             memcpy( mMapTileFlips, newMapTileFlips,
                     mMapD * mMapD * sizeof( char ) );
@@ -3917,6 +3939,7 @@ void LivingLifePage::step() {
             delete [] newMapLastAnimFade;
             delete [] newMapDropOffsets;
             delete [] newMapDropRot;
+            delete [] newMapDropSounds;
             delete [] newMapTileFlips;
             
             
@@ -4168,6 +4191,7 @@ void LivingLifePage::step() {
                                 mMapDropOffsets[mapI].x = 0;
                                 mMapDropOffsets[mapI].y = 0;
                                 mMapDropRot[mapI] = 0;
+                                mMapDropSounds[mapI] = blankSoundUsage;
                                 }
                             else {
                                 // copy last frame count from last holder
@@ -4238,6 +4262,10 @@ void LivingLifePage::step() {
                                         mMapDropRot[mapI] = 
                                             nextObject->heldObjectRot;
 
+                                        mMapDropSounds[mapI] =
+                                            getObject( nextObject->displayID )->
+                                            usingSound;
+
                                         mMapTileFlips[mapI] =
                                             nextObject->holdingFlip;
                                         
@@ -4250,6 +4278,8 @@ void LivingLifePage::step() {
                                             mMapDropOffsets[mapI].y = 0;
                                             
                                             mMapDropRot[mapI] = 0;
+                                            mMapDropSounds[mapI] = 
+                                                blankSoundUsage;
 
                                             if( getObject( mMap[ mapI ] )->
                                                 permanent ) {

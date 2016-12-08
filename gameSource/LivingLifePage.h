@@ -302,6 +302,8 @@ class LivingLifePage : public GamePage {
         doublePair *mMapDropOffsets;
         double *mMapDropRot;
 
+        SoundUsage *mMapDropSounds;
+
         // true if left-right flipped (to match last drop)
         // not tracked on server, so resets when object goes off of screen
         char *mMapTileFlips;
