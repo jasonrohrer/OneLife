@@ -308,6 +308,8 @@ void stepSoundBank() {
                                 }
 
                             r->sound = setSoundSprite( samples, numSamples );
+                            
+                            delete [] samples;
                             }
                         }
                     }
