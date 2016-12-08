@@ -1563,6 +1563,58 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
 
 
 
+static void handleAnimSound( int inObjectID, AnimType inType,
+                             int inOldFrameCount, int inNewFrameCount,
+                             double inPosX, double inPosY ) {    
+    
+            
+    double oldTimeVal = frameRateFactor * inOldFrameCount / 60.0;
+            
+    double newTimeVal = frameRateFactor * inNewFrameCount / 60.0;
+                
+
+    AnimationRecord *anim = getAnimation( inObjectID, inType );
+    if( anim != NULL ) {
+                    
+        for( int s=0; s<anim->numSounds; s++ ) {
+            
+            if( anim->soundAnim[s].sound.id == -1 ) {
+                continue;
+                }
+            
+
+            double hz = anim->soundAnim[s].repeatPerSec;
+                        
+            double phase = anim->soundAnim[s].repeatPhase;
+            
+            if( hz != 0 ) {
+                double period = 1 / hz;
+                
+                double startOffsetSec = phase * period;
+                
+                int oldPeriods = 
+                    lrint( 
+                        floor( ( oldTimeVal - startOffsetSec ) / 
+                               period ) );
+                
+                int newPeriods = 
+                    lrint( 
+                        floor( ( newTimeVal - startOffsetSec ) / 
+                               period ) );
+                
+                if( newPeriods > oldPeriods ) {
+                    playSound( anim->soundAnim[s].sound,
+                               getVectorFromCamera( inPosX, inPosY ) );
+                    
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
 void LivingLifePage::drawMapCell( int inMapI, 
                                   int inScreenX, int inScreenY ) {
             
@@ -1572,9 +1624,15 @@ void LivingLifePage::drawMapCell( int inMapI,
         
         if( !mapPullMode ) {
             
+            int oldFrameCount = mMapAnimationFrameCount[ inMapI ];
             mMapAnimationFrameCount[ inMapI ] ++;
             mMapAnimationLastFrameCount[ inMapI ] ++;
                 
+            handleAnimSound( oID, ground, oldFrameCount, 
+                             mMapAnimationFrameCount[ inMapI ],
+                             (double)inScreenX / CELL_D,
+                             (double)inScreenY / CELL_D );
+            
             if( mMapLastAnimFade[ inMapI ] > 0 ) {
                 mMapLastAnimFade[ inMapI ] -= 0.05 * frameRateFactor;
                 if( mMapLastAnimFade[ inMapI ] < 0 ) {
@@ -3562,55 +3620,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
-void handleAnimSound( int inObjectID, AnimType inType,
-                      int inOldFrameCount, int inNewFrameCount,
-                      double inPosX, double inPosY ) {
-    
-    
-            
-    double oldTimeVal = frameRateFactor * inOldFrameCount / 60.0;
-            
-    double newTimeVal = frameRateFactor * inNewFrameCount / 60.0;
-                
-
-    AnimationRecord *anim = getAnimation( inObjectID, inType );
-    if( anim != NULL ) {
-                    
-        for( int s=0; s<anim->numSounds; s++ ) {
-            
-            if( anim->soundAnim[s].sound.id == -1 ) {
-                continue;
-                }
-            
-
-            double hz = anim->soundAnim[s].repeatPerSec;
-                        
-            double phase = anim->soundAnim[s].repeatPhase;
-            
-            if( hz != 0 ) {
-                double period = 1 / hz;
-                
-                double startOffsetSec = phase * period;
-                
-                int oldPeriods = 
-                    lrint( 
-                        floor( ( oldTimeVal - startOffsetSec ) / 
-                               period ) );
-                
-                int newPeriods = 
-                    lrint( 
-                        floor( ( newTimeVal - startOffsetSec ) / 
-                               period ) );
-                
-                if( newPeriods > oldPeriods ) {
-                    playSound( anim->soundAnim[s].sound,
-                               getVectorFromCamera( inPosX, inPosY ) );
-                    
-                    }
-                }
-            }
-        }
-    }
 
 
 
