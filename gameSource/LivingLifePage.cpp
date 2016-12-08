@@ -650,6 +650,8 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
 // queue it here
 static char *nextActionMessageToSend = NULL;
 static char nextActionEating = false;
+static char nextActionDropping = false;
+
 
 // block move until next PLAYER_UPDATE received after action sent
 static char playerActionPending = false;
@@ -4589,6 +4591,18 @@ void LivingLifePage::step() {
                                 existing->heldObjectPos.y = heldOriginY;
                                 existing->heldObjectRot = 0;
                                 
+                                // use player's using sound for pickup
+                                ObjectRecord *existingObj = 
+                                    getObject( existing->displayID );
+                                
+                                if( existingObj->usingSound.id != -1 ) {
+                                    
+                                    playSound( existingObj->usingSound,
+                                               getVectorFromCamera(
+                                                   heldOriginX,
+                                                   heldOriginY ) );
+                                    }
+
                                 int mapX = 
                                     heldOriginX - mMapOffsetX + mMapD / 2;
                                 int mapY = 
@@ -6095,6 +6109,30 @@ void LivingLifePage::step() {
             numServerBytesSent += strlen( nextActionMessageToSend );
             overheadServerBytesSent += 52;
 
+            if( nextActionEating ) {
+                if( ourLiveObject->holdingID != 0 ) {
+                    ObjectRecord *held = getObject( ourLiveObject->holdingID );
+                    
+                    if( held->eatingSound.id != -1 ) {
+                        playSound( held->eatingSound,
+                                   getVectorFromCamera( ourLiveObject->xd, 
+                                                        ourLiveObject->yd ) );
+                        }       
+                    }
+                }
+            else if( !nextActionDropping ) {    
+                if( ourLiveObject->holdingID != 0 ) {
+                    ObjectRecord *held = getObject( ourLiveObject->holdingID );
+                    
+                    if( held->usingSound.id != -1 ) {
+                        playSound( held->usingSound,
+                                   getVectorFromCamera( ourLiveObject->xd, 
+                                                        ourLiveObject->yd ) );
+                        }       
+                    }
+                }
+            
+
             delete [] nextActionMessageToSend;
             nextActionMessageToSend = NULL;
             }
@@ -6588,7 +6626,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     int clickDestY = p.closestCellY;
 
     nextActionEating = false;
-
+    nextActionDropping = false;
+    
     char modClick = false;
     
     if( mEKeyDown || isLastMouseButtonRight() ) {
@@ -6626,6 +6665,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         autoSprintf( "DROP %d %d %d#",
                                      clickDestX, clickDestY, 
                                      p.hitClothingIndex  );
+                    nextActionDropping = true;
                     }
                 else {
                     nextActionMessageToSend = 
@@ -7006,6 +7046,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             else if( modClick && destID == 0 && 
                      ourLiveObject->holdingID != 0 ) {
                 action = "DROP";
+                nextActionDropping = true;
                 send = true;
 
                 // special case:  we're too far away to kill someone
@@ -7055,6 +7096,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                      getNumContainerSlots( destID ) > 0 &&
                      destNumContained < getNumContainerSlots( destID ) ) {
                 action = "DROP";
+                nextActionDropping = true;
                 send = true;
                 }
             else if( ! modClick && destID != 0 ) {
@@ -7064,6 +7106,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             if( strcmp( action, "DROP" ) == 0 ) {
                 delete [] extra;
+                nextActionDropping = true;
                 extra = stringDuplicate( " -1" );
                 }
             
