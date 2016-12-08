@@ -4590,7 +4590,7 @@ void LivingLifePage::step() {
                             }
                         else if( oldHeld != existing->holdingID ) {
                             // holding something new
-
+                            
                             // what we're holding has gone through
                             // transition.  Keep old animation going
                             // for what's held
@@ -4689,6 +4689,24 @@ void LivingLifePage::step() {
                             else {
                                 existing->heldObjectPos = existing->currentPos;
                                 existing->heldObjectRot = 0;
+
+                                if( existing->holdingID > 0 ) {
+                                    // what player is holding changed
+                                    // but they didn't pick anything up
+                                    // play change sound
+                                    
+                                    ObjectRecord *heldObj =
+                                        getObject( existing->holdingID );
+                                    
+                                    if( heldObj->creationSound.id != -1 ) {
+                                        
+                                        playSound( 
+                                            heldObj->creationSound,
+                                            getVectorFromCamera( 
+                                                existing->currentPos.x, 
+                                                existing->currentPos.y ) );
+                                        }
+                                    }
                                 }
                             
                             // otherwise, don't touch frame count
@@ -6205,8 +6223,9 @@ void LivingLifePage::step() {
                     
                     if( held->eatingSound.id != -1 ) {
                         playSound( held->eatingSound,
-                                   getVectorFromCamera( ourLiveObject->xd, 
-                                                        ourLiveObject->yd ) );
+                                   getVectorFromCamera( 
+                                       ourLiveObject->currentPos.x, 
+                                       ourLiveObject->currentPos.y ) );
                         }       
                     }
                 }
@@ -6216,8 +6235,9 @@ void LivingLifePage::step() {
                     
                     if( held->usingSound.id != -1 ) {
                         playSound( held->usingSound,
-                                   getVectorFromCamera( ourLiveObject->xd, 
-                                                        ourLiveObject->yd ) );
+                                   getVectorFromCamera( 
+                                       ourLiveObject->currentPos.x, 
+                                       ourLiveObject->currentPos.y ) );
                         }       
                     }
                 }
