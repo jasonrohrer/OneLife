@@ -3562,6 +3562,58 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
+void handleAnimSound( int inObjectID, AnimType inType,
+                      int inOldFrameCount, int inNewFrameCount,
+                      double inPosX, double inPosY ) {
+    
+    
+            
+    double oldTimeVal = frameRateFactor * inOldFrameCount / 60.0;
+            
+    double newTimeVal = frameRateFactor * inNewFrameCount / 60.0;
+                
+
+    AnimationRecord *anim = getAnimation( inObjectID, inType );
+    if( anim != NULL ) {
+                    
+        for( int s=0; s<anim->numSounds; s++ ) {
+            
+            if( anim->soundAnim[s].sound.id == -1 ) {
+                continue;
+                }
+            
+
+            double hz = anim->soundAnim[s].repeatPerSec;
+                        
+            double phase = anim->soundAnim[s].repeatPhase;
+            
+            if( hz != 0 ) {
+                double period = 1 / hz;
+                
+                double startOffsetSec = phase * period;
+                
+                int oldPeriods = 
+                    lrint( 
+                        floor( ( oldTimeVal - startOffsetSec ) / 
+                               period ) );
+                
+                int newPeriods = 
+                    lrint( 
+                        floor( ( newTimeVal - startOffsetSec ) / 
+                               period ) );
+                
+                if( newPeriods > oldPeriods ) {
+                    playSound( anim->soundAnim[s].sound,
+                               getVectorFromCamera( inPosX, inPosY ) );
+                    
+                    }
+                }
+            }
+        }
+    }
+
+
+
 
         
 void LivingLifePage::step() {
@@ -5845,53 +5897,11 @@ void LivingLifePage::step() {
             
             if( !holdingRideable ) {
                 // don't play player moving sound if riding something
-            
-                double oldTimeVal = frameRateFactor *
-                    oldFrameCount / 60.0;
-            
-                double newTimeVal = frameRateFactor *
-                    o->animationFrameCount / 60.0;
-                
 
-                AnimationRecord *anim = getAnimation( o->displayID,
-                                                      moving );
-                if( anim != NULL ) {
-                    
-                    for( int s=0; s<anim->numSounds; s++ ) {
-            
-                        if( anim->soundAnim[s].sound.id == -1 ) {
-                            continue;
-                            }
-
-
-                        double hz = anim->soundAnim[s].repeatPerSec;
-                        
-                        double phase = anim->soundAnim[s].repeatPhase;
-
-                        if( hz != 0 ) {
-                            double period = 1 / hz;
-                
-                            double startOffsetSec = phase * period;
-                
-                            int oldPeriods = 
-                                lrint( 
-                                    floor( ( oldTimeVal - startOffsetSec ) / 
-                                           period ) );
-                
-                            int newPeriods = 
-                                lrint( 
-                                    floor( ( newTimeVal - startOffsetSec ) / 
-                                           period ) );
-                
-                            if( newPeriods > oldPeriods ) {
-                                playSound( anim->soundAnim[s].sound,
-                                           getVectorFromCamera(
-                                               o->currentPos.x,
-                                               o->currentPos.y ) );
-                                }
-                            }
-                        }
-                    }
+                handleAnimSound( o->displayID, moving,
+                                 oldFrameCount, o->animationFrameCount,
+                                 o->currentPos.x,
+                                 o->currentPos.y );                
                 }
             }
             
@@ -5935,11 +5945,19 @@ void LivingLifePage::step() {
                 }
             }
 
+        oldFrameCount = o->heldAnimationFrameCount;
         o->heldAnimationFrameCount += animSpeed / BASE_SPEED;
         o->lastHeldAnimationFrameCount += animSpeed / BASE_SPEED;
         
         if( o->curHeldAnim == moving ) {
             o->heldFrozenRotFrameCount += animSpeed / BASE_SPEED;
+            }
+        
+        if( o->holdingID > 0 ) {
+            handleAnimSound( o->holdingID, o->curHeldAnim,
+                             oldFrameCount, o->heldAnimationFrameCount,
+                             o->currentPos.x,
+                             o->currentPos.y );
             }
         
 
