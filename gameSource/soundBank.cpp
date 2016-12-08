@@ -60,6 +60,27 @@ void setVolumeScaling( int inMaxSimultaneousSoundEffects,
     }
 
 
+static double soundEffectsLoudness = 1.0;
+static char soundEffectsOff = false;
+
+
+
+void setSoundEffectsLoudness( double inLoudness ) {
+    soundEffectsLoudness = inLoudness;
+    
+    SettingsManager::setSetting( "soundEffectsLoudness", 
+                                 (float)soundEffectsLoudness );
+    }
+
+
+
+void setSoundEffectsOff( char inOff ) {
+    soundEffectsOff = inOff;
+    
+    SettingsManager::setSetting( "soundEffectsOff", soundEffectsOff );
+    }
+
+
 
 
 int getMaxSoundID() {
@@ -69,6 +90,15 @@ int getMaxSoundID() {
 
 
 void initSoundBank() {
+    
+    soundEffectsLoudness = 
+        SettingsManager::getFloatSetting( "soundEffectsLoudness", 1.0 );
+    
+    soundEffectsOff = SettingsManager::getIntSetting( "soundEffectsOff", 0 );
+    
+    
+    SettingsManager::setSetting( "soundEffectsOff", soundEffectsOff );
+
 
     sampleRate = SettingsManager::getIntSetting( "soundSampleRate",
                                                  44100 );
@@ -355,6 +385,10 @@ void stepSoundBank() {
 
 
 void playSound( int inID, double inVolumeTweak, double inStereoPosition  ) {
+    if( soundEffectsOff ) {
+        return;
+        }
+    
     if( inID < mapSize ) {
         if( idMap[inID] != NULL ) {
             if( idMap[inID]->sound == NULL ) {
@@ -363,7 +397,8 @@ void playSound( int inID, double inVolumeTweak, double inStereoPosition  ) {
                 }
             
             idMap[inID]->numStepsUnused = 0;
-            playSoundSprite( idMap[inID]->sound, 
+            playSoundSprite( idMap[inID]->sound,
+                             soundEffectsLoudness * 
                              inVolumeTweak * playedSoundVolumeScale, 
                              inStereoPosition );
             

@@ -50,6 +50,14 @@ void setVolumeScaling( int inMaxSimultaneousSoundEffects,
                        double inMusicHeadroom );
 
 
+// defaults to 1.0
+void setSoundEffectsLoudness( double inLoudness );
+
+// defaults to on
+void setSoundEffectsOff( char inOff );
+
+
+
 void playSound( int inID, double inVolumeTweak = 1.0,
                 double inStereoPosition  = 0.5 );
 
