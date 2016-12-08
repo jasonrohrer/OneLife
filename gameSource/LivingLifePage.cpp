@@ -5810,14 +5810,74 @@ void LivingLifePage::step() {
                 }
             }
 
-
+        double oldFrameCount = o->animationFrameCount;
         o->animationFrameCount += animSpeed / BASE_SPEED;
         o->lastAnimationFrameCount += animSpeed / BASE_SPEED;
         
 
         if( o->curAnim == moving ) {
             o->frozenRotFrameCount += animSpeed / BASE_SPEED;
+            
+            char holdingRideable = false;
+            
+            if( o->holdingID != 0 &&
+                getObject( o->holdingID )->rideable ) {
+                holdingRideable = true;
+                }
+            
+            if( !holdingRideable ) {
+                // don't play player moving sound if riding something
+            
+                double oldTimeVal = frameRateFactor *
+                    oldFrameCount / 60.0;
+            
+                double newTimeVal = frameRateFactor *
+                    o->animationFrameCount / 60.0;
+                
+
+                AnimationRecord *anim = getAnimation( o->displayID,
+                                                      moving );
+                if( anim != NULL ) {
+                    
+                    for( int s=0; s<anim->numSounds; s++ ) {
+            
+                        if( anim->soundAnim[s].sound.id == -1 ) {
+                            continue;
+                            }
+
+
+                        double hz = anim->soundAnim[s].repeatPerSec;
+                        
+                        double phase = anim->soundAnim[s].repeatPhase;
+
+                        if( hz != 0 ) {
+                            double period = 1 / hz;
+                
+                            double startOffsetSec = phase * period;
+                
+                            int oldPeriods = 
+                                lrint( 
+                                    floor( ( oldTimeVal - startOffsetSec ) / 
+                                           period ) );
+                
+                            int newPeriods = 
+                                lrint( 
+                                    floor( ( newTimeVal - startOffsetSec ) / 
+                                           period ) );
+                
+                            if( newPeriods > oldPeriods ) {
+                                playSound( anim->soundAnim[s].sound,
+                                           getVectorFromCamera(
+                                               o->currentPos.x,
+                                               o->currentPos.y ) );
+                                }
+                            }
+                        }
+                    }
+                }
             }
+            
+        
         
         
         
