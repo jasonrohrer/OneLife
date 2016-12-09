@@ -6,6 +6,7 @@
 
 
 int SoundWidget::sClipboardSound = -1;
+double SoundWidget::sClipboardVolume = 1.0;
 
 
 SimpleVector<SoundWidget*> SoundWidget::sWidgetList;
@@ -177,6 +178,8 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
                 unCountLiveUse( sClipboardSound );
                 }
             sClipboardSound = mSoundID;
+            sClipboardVolume = mVolumeSlider.getValue();
+            
             countLiveUse( sClipboardSound );
             
             for( int i=0; i<sWidgetList.size(); i++ ) {
@@ -187,6 +190,7 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mPasteButton ) {
         if( sClipboardSound != -1 ) {
             setSoundInternal( sClipboardSound );
+            mVolumeSlider.setValue( sClipboardVolume );
             }
         }
     }

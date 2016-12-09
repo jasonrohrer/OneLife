@@ -42,7 +42,8 @@ class SoundWidget : public PageComponent, public ActionListenerList,
         int mSoundID;
         
         static int sClipboardSound;
-
+        static double sClipboardVolume;
+        
         // for propagating clipboard changes
         static SimpleVector<SoundWidget*> sWidgetList;
 
