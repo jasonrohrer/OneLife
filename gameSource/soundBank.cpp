@@ -188,11 +188,7 @@ static void generateReverb( SoundRecord *inRecord,
                     wetSampleFloats[ i + j ] +=
                         sampleFloat * reverbFloats[j];
                     }
-                /*if( i < inNumReverbSamples ) {
-                    
-                    wetSampleFloats[ i ] = reverbFloats[i];
-                    }
-                */
+               
                 }
             delete [] reverbFloats;
             
