@@ -86,6 +86,14 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         ValueSlider mSoundRepeatPerSecSlider;
         ValueSlider mSoundRepeatPhaseSlider;
 
+
+        TextField mSoundAgeInField;
+        TextField mSoundAgeOutField;
+        
+        TextButton mSoundAgePunchInButton;
+        TextButton mSoundAgePunchOutButton;
+
+
         ValueSlider mPersonAgeSlider;
 
         ValueSlider mTestSpeedSlider;

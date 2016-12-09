@@ -48,6 +48,16 @@ EditorAnimationPage::EditorAnimationPage()
           mSoundRepeatPhaseSlider( smallFont, -120, -296, 2,
                                     100, 20,
                                     0, 1, "Loop Phase" ),
+          mSoundAgeInField( smallFont, 
+                            -180,  -328, 6,
+                            false,
+                            "In", "0123456789.", NULL ),
+          mSoundAgeOutField( smallFont, 
+                             -60,  -328, 6,
+                             false,
+                             "Out", "0123456789.", NULL ),
+          mSoundAgePunchInButton( smallFont, -130, -328, "S" ),
+          mSoundAgePunchOutButton( smallFont, -10, -328, "S" ),
           mPersonAgeSlider( smallFont, 100, -212, 2,
                             100, 20,
                             0, 100, "Age" ),
@@ -113,6 +123,33 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mSoundWidget );
     
     mSoundWidget.addActionListener( this );
+
+
+    addComponent( &mSoundAgeInField );
+    addComponent( &mSoundAgeOutField );
+    
+    addComponent( &mSoundAgePunchInButton );
+    addComponent( &mSoundAgePunchOutButton );
+    
+    mSoundAgePunchInButton.addActionListener( this );
+    mSoundAgePunchOutButton.addActionListener( this );
+
+    mSoundAgeInField.setVisible( false );
+    mSoundAgeOutField.setVisible( false );
+    mSoundAgePunchInButton.setVisible( false );
+    mSoundAgePunchOutButton.setVisible( false );
+
+
+    mSoundAgeInField.addActionListener( this );
+    mSoundAgeOutField.addActionListener( this );
+
+    mSoundAgeInField.setFireOnLoseFocus( true );
+    mSoundAgeOutField.setFireOnLoseFocus( true );
+
+    
+    mSoundAgePunchOutButton.addActionListener( this );
+    mSoundAgePunchInButton.addActionListener( this );
+    
 
 
     addComponent( &mNextSoundButton );
@@ -861,13 +898,43 @@ void EditorAnimationPage::soundIndexChanged() {
             soundAnim[ mCurrentSound ].repeatPhase );
         
         mSoundRepeatPerSecSlider.setVisible( true );
-        mSoundRepeatPhaseSlider.setVisible( true );        
+        mSoundRepeatPhaseSlider.setVisible( true );
+
+        char person = getObject( mCurrentObjectID )->person;
+        
+        mSoundAgeInField.setVisible( person );
+        mSoundAgeOutField.setVisible( person );
+        mSoundAgePunchInButton.setVisible( person );
+        mSoundAgePunchOutButton.setVisible( person );
+
+        if( person ) {
+
+            double in = mCurrentAnim[ mCurrentType ]->
+                soundAnim[ mCurrentSound ].ageStart;
+            double out = mCurrentAnim[ mCurrentType ]->
+                soundAnim[ mCurrentSound ].ageEnd;
+
+            if( in == -1 ) {
+                in = 0;
+                }
+            if( out == -1 ) {
+                out = 999.0;
+                }
+            mSoundAgeInField.setFloat( in,  2 );
+            
+            mSoundAgeOutField.setFloat( out,  2 );
+            }
         }
     else {
         mSoundWidget.setSoundUsage( blankSoundUsage );
 
         mSoundRepeatPerSecSlider.setVisible( false );
         mSoundRepeatPhaseSlider.setVisible( false );        
+
+        mSoundAgeInField.setVisible( false );
+        mSoundAgeOutField.setVisible( false );
+        mSoundAgePunchInButton.setVisible( false );
+        mSoundAgePunchOutButton.setVisible( false );
         }
 
     mSoundWidget.setVisible( true );
@@ -1432,11 +1499,42 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 soundAnim[ mCurrentSound ].repeatPerSec = 0;
             mCurrentAnim[ mCurrentType ]->
                 soundAnim[ mCurrentSound ].repeatPhase = 0;
+            mCurrentAnim[ mCurrentType ]->
+                soundAnim[ mCurrentSound ].ageStart = -1;
+            mCurrentAnim[ mCurrentType ]->
+                soundAnim[ mCurrentSound ].ageEnd = -1;
 
             countLiveUse( u.id );
             }
         
         soundIndexChanged();
+        }
+    else if( inTarget == &mSoundAgeInField ) {
+        float value = mSoundAgeInField.getFloat();
+        if( value < 0 ) {
+            value = 0;
+            }
+        mCurrentAnim[ mCurrentType ]->
+            soundAnim[ mCurrentSound ].ageStart = value;
+        }
+    else if( inTarget == &mSoundAgeOutField ) {
+        float value = mSoundAgeOutField.getFloat();
+        if( value < 0 ) {
+            value = 0;
+            }
+        mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].ageEnd = value;
+        }
+    else if( inTarget == &mSoundAgePunchInButton ) {
+        double in = mPersonAgeSlider.getValue();
+        mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].ageStart = in;
+        
+        mSoundAgeInField.setFloat( in, 2 );
+        }
+    else if( inTarget == &mSoundAgePunchOutButton ) {
+        double out = mPersonAgeSlider.getValue();
+        mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].ageEnd = out;
+        
+        mSoundAgeOutField.setFloat( out, 2 );
         }
     else if( inTarget == &mNextSoundButton ) {
         mCurrentSound ++;
@@ -2026,18 +2124,34 @@ void EditorAnimationPage::step() {
         
         for( int s=0; s<mCurrentAnim[ mCurrentType ]->numSounds; s++ ) {
             
-            if( mCurrentAnim[ mCurrentType ]->soundAnim[s].sound.id == -1 ) {
+            SoundAnimationRecord soundAnim =
+                mCurrentAnim[ mCurrentType ]->soundAnim[s];
+            
+            
+            if( soundAnim.sound.id == -1 ) {
                 continue;
                 }
             
-            double hz = mCurrentAnim[ mCurrentType ]->soundAnim[s].repeatPerSec;
+            if( getObject( mCurrentObjectID )->person ) {
+                
+                double age = mPersonAgeSlider.getValue();
+                    
+                if( ( soundAnim.ageStart != -1 && 
+                      age < soundAnim.ageStart )
+                    ||
+                    ( soundAnim.ageEnd != -1 && 
+                      age >= soundAnim.ageEnd ) ) {
+                    continue;
+                    }
+                }
             
-            double phase = 
-                mCurrentAnim[ mCurrentType ]->soundAnim[s].repeatPhase;
+
+            double hz = soundAnim.repeatPerSec;
+            
+            double phase = soundAnim.repeatPhase;
 
             // mark them live to keep them loaded whether they play or not
-            markSoundLive( mCurrentAnim[ mCurrentType ]->
-                           soundAnim[s].sound.id );
+            markSoundLive( soundAnim.sound.id );
             
             if( hz != 0 ) {
                 double period = 1 / hz;
@@ -2053,15 +2167,13 @@ void EditorAnimationPage::step() {
                         floor( ( newFrameTime - startOffsetSec ) / period ) );
                 
                 if( newPeriods > oldPeriods ) {
-                    playSound( 
-                        mCurrentAnim[ mCurrentType ]->soundAnim[s].sound );
+                    playSound( soundAnim.sound );
                     }
                 }
             else {
                 // play once at very beginning
                 if( mFrameCount == 1 ) {
-                    playSound( 
-                        mCurrentAnim[ mCurrentType ]->soundAnim[s].sound );
+                    playSound( soundAnim.sound );
                     }
                 }
             }

@@ -1563,7 +1563,7 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
 
 
 
-static void handleAnimSound( int inObjectID, AnimType inType,
+static void handleAnimSound( int inObjectID, double inAge, AnimType inType,
                              int inOldFrameCount, int inNewFrameCount,
                              double inPosX, double inPosY ) {    
     
@@ -1582,7 +1582,17 @@ static void handleAnimSound( int inObjectID, AnimType inType,
                 continue;
                 }
             
-
+            
+            if( ( anim->soundAnim[s].ageStart != -1 &&
+                  inAge < anim->soundAnim[s].ageStart )
+                ||
+                ( anim->soundAnim[s].ageEnd != -1 &&
+                  inAge >= anim->soundAnim[s].ageEnd ) ) {
+                
+                continue;
+                }
+            
+            
             double hz = anim->soundAnim[s].repeatPerSec;
                         
             double phase = anim->soundAnim[s].repeatPhase;
@@ -1628,7 +1638,7 @@ void LivingLifePage::drawMapCell( int inMapI,
             mMapAnimationFrameCount[ inMapI ] ++;
             mMapAnimationLastFrameCount[ inMapI ] ++;
                 
-            handleAnimSound( oID, ground, oldFrameCount, 
+            handleAnimSound( oID, 0, ground, oldFrameCount, 
                              mMapAnimationFrameCount[ inMapI ],
                              (double)inScreenX / CELL_D,
                              (double)inScreenY / CELL_D );
@@ -4960,8 +4970,17 @@ void LivingLifePage::step() {
                             new SimpleVector<AnimType>();
                         o.futureHeldAnimStack = 
                             new SimpleVector<AnimType>();
-
                         
+                        
+                        ObjectRecord *obj = getObject( o.displayID );
+                        
+                        if( obj->creationSound.id != -1 ) {
+                                
+                            playSound( obj->creationSound,
+                                       getVectorFromCamera( 
+                                           o.currentPos.x,
+                                           o.currentPos.y ) );
+                            }
                         gameObjects.push_back( o );
                         }
                     }
@@ -5907,7 +5926,7 @@ void LivingLifePage::step() {
             if( !holdingRideable ) {
                 // don't play player moving sound if riding something
 
-                handleAnimSound( o->displayID, moving,
+                handleAnimSound( o->displayID, o->age, moving,
                                  oldFrameCount, o->animationFrameCount,
                                  o->currentPos.x,
                                  o->currentPos.y );                
@@ -5963,7 +5982,7 @@ void LivingLifePage::step() {
             }
         
         if( o->holdingID > 0 ) {
-            handleAnimSound( o->holdingID, o->curHeldAnim,
+            handleAnimSound( o->holdingID, 0, o->curHeldAnim,
                              oldFrameCount, o->heldAnimationFrameCount,
                              o->currentPos.x,
                              o->currentPos.y );

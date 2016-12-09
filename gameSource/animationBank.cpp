@@ -119,12 +119,17 @@ float initAnimationBankStep() {
                         r->soundAnim[j].sound = blankSoundUsage;
                         r->soundAnim[j].repeatPerSec = 0;
                         r->soundAnim[j].repeatPhase = 0;
+                        r->soundAnim[j].ageStart = -1;
+                        r->soundAnim[j].ageEnd = -1;
                         
-                        sscanf( lines[next], "soundParam=%d %lf %lf %lf",
+                        sscanf( lines[next], 
+                                "soundParam=%d %lf %lf %lf %lf %lf",
                                 &( r->soundAnim[j].sound.id ),
                                 &( r->soundAnim[j].sound.volume ),
                                 &( r->soundAnim[j].repeatPerSec ),
-                                &( r->soundAnim[j].repeatPhase ) );
+                                &( r->soundAnim[j].repeatPhase ),
+                                &( r->soundAnim[j].ageStart ),
+                                &( r->soundAnim[j].ageEnd ) );
                         next++;
                         }
                     }
@@ -400,11 +405,13 @@ void addAnimation( AnimationRecord *inRecord ) {
 
         for( int j=0; j<inRecord->numSounds; j++ ) {
             lines.push_back( autoSprintf( 
-                                 "soundParam=%d %lf %lf %lf",
+                                 "soundParam=%d %lf %lf %lf %lf %lf",
                                  inRecord->soundAnim[j].sound.id,
                                  inRecord->soundAnim[j].sound.volume,
                                  inRecord->soundAnim[j].repeatPerSec,
-                                 inRecord->soundAnim[j].repeatPhase ) );
+                                 inRecord->soundAnim[j].repeatPhase,
+                                 inRecord->soundAnim[j].ageStart,
+                                 inRecord->soundAnim[j].ageEnd ) );
             }
         
         lines.push_back( 
@@ -2361,6 +2368,8 @@ void zeroRecord( SoundAnimationRecord *inRecord ) {
     inRecord->sound = blankSoundUsage;
     inRecord->repeatPerSec = 0;
     inRecord->repeatPhase = 0;
+    inRecord->ageStart = -1;
+    inRecord->ageEnd = -1;
     }
 
 

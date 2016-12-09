@@ -81,6 +81,9 @@ typedef struct SoundAnimationRecord {
         // fraction of repeat period that sound waits before playing
         // the first time
         double repeatPhase;
+
+        double ageStart;
+        double ageEnd;
     } SoundAnimationRecord;
     
 
