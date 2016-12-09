@@ -178,7 +178,8 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
 
         SpriteAnimationRecord mCopyBuffer;
-
+        SoundAnimationRecord mSoundAnimCopyBuffer;
+        
         SimpleVector<SpriteAnimationRecord> mChainCopyBuffer;
 
         SimpleVector<SoundAnimationRecord> mAllCopyBufferSounds;
@@ -217,6 +218,10 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         
         TextButton mNextSoundButton;
         TextButton mPrevSoundButton;
+
+        TextButton mCopySoundAnimButton;
+        TextButton mPasteSoundAnimButton;
+
 
         void checkNextPrevVisible();
         

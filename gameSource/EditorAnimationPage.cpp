@@ -53,7 +53,7 @@ EditorAnimationPage::EditorAnimationPage()
                             false,
                             "In", "0123456789.", NULL ),
           mSoundAgeOutField( smallFont, 
-                             -60,  -328, 6,
+                             -50,  -328, 6,
                              false,
                              "Out", "0123456789.", NULL ),
           mSoundAgePunchInButton( smallFont, -130, -328, "S" ),
@@ -101,8 +101,10 @@ EditorAnimationPage::EditorAnimationPage()
           mClearButton( smallFont, -270, 230, "Clear" ),
           mNextSpriteOrSlotButton( smallFont, 280, -270, "Next Layer" ),
           mPrevSpriteOrSlotButton( smallFont, 100, -270, "Prev Layer" ),
-          mNextSoundButton( smallFont, -80, -160, ">" ),
-          mPrevSoundButton( smallFont, -160, -160, "<" ) {
+          mNextSoundButton( smallFont, -30, -160, ">" ),
+          mPrevSoundButton( smallFont, -210, -160, "<" ),
+          mCopySoundAnimButton( smallFont, -85, -160, "Copy" ),
+          mPasteSoundAnimButton( smallFont, -155, -160, "Paste" ) {
     
     
     for( int i=0; i<endAnimType; i++ ) {
@@ -110,7 +112,8 @@ EditorAnimationPage::EditorAnimationPage()
         }
     
     zeroRecord( &mCopyBuffer );
-
+    zeroRecord( &mSoundAnimCopyBuffer );
+    
     mWalkCopied = false;
 
     addComponent( &mObjectEditorButton );
@@ -159,6 +162,15 @@ EditorAnimationPage::EditorAnimationPage()
     
     mNextSoundButton.setVisible( false );
     mPrevSoundButton.setVisible( false );
+
+    addComponent( &mCopySoundAnimButton );
+    addComponent( &mPasteSoundAnimButton );
+    mCopySoundAnimButton.addActionListener( this );
+    mPasteSoundAnimButton.addActionListener( this );
+
+    mCopySoundAnimButton.setVisible( false );
+    mPasteSoundAnimButton.setVisible( false );
+
 
     addComponent( &mSoundRepeatPerSecSlider );
     addComponent( &mSoundRepeatPhaseSlider );
@@ -384,6 +396,10 @@ EditorAnimationPage::~EditorAnimationPage() {
         unCountLiveUse( mAllCopyBufferSounds.getElementDirect(i).sound.id );
         }
 
+    if( mSoundAnimCopyBuffer.sound.id != -1 ) {
+        unCountLiveUse( mSoundAnimCopyBuffer.sound.id );
+        }
+        
     for( int i=0; i<NUM_ANIM_CHECKBOXES; i++ ) {
         delete mCheckboxes[i];
         }
@@ -899,6 +915,8 @@ void EditorAnimationPage::soundIndexChanged() {
         
         mSoundRepeatPerSecSlider.setVisible( true );
         mSoundRepeatPhaseSlider.setVisible( true );
+        
+        mCopySoundAnimButton.setVisible( true );
 
         char person = getObject( mCurrentObjectID )->person;
         
@@ -935,7 +953,12 @@ void EditorAnimationPage::soundIndexChanged() {
         mSoundAgeOutField.setVisible( false );
         mSoundAgePunchInButton.setVisible( false );
         mSoundAgePunchOutButton.setVisible( false );
+        
+        mCopySoundAnimButton.setVisible( false );
         }
+    
+    mPasteSoundAnimButton.setVisible( mSoundAnimCopyBuffer.sound.id != -1 );
+
 
     mSoundWidget.setVisible( true );
     }
@@ -975,6 +998,55 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mClearButton ) {
         zeroRecord( getRecordForCurrentSlot() );
         updateSlidersFromAnim();
+        }
+    else if( inTarget == &mCopySoundAnimButton ) {
+        if( mSoundAnimCopyBuffer.sound.id != -1 ) {
+            unCountLiveUse( mSoundAnimCopyBuffer.sound.id );
+            }
+        mSoundAnimCopyBuffer = 
+            mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ];
+        
+        if( mSoundAnimCopyBuffer.sound.id != -1 ) {
+            countLiveUse( mSoundAnimCopyBuffer.sound.id );
+            mPasteSoundAnimButton.setVisible( true );
+            }
+        }
+    else if( inTarget == &mPasteSoundAnimButton ) {
+        if( mCurrentSound <  mCurrentAnim[ mCurrentType ]->numSounds ) {
+            // replace
+            
+            unCountLiveUse( mCurrentAnim[ mCurrentType ]->
+                            soundAnim[ mCurrentSound ].sound.id );
+            
+            mSoundWidget.setSoundUsage( mCurrentAnim[ mCurrentType ]->
+                                        soundAnim[ mCurrentSound ].sound );
+            
+            mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ] =
+                mSoundAnimCopyBuffer;
+            }
+        else {
+            // add new
+            mCurrentAnim[ mCurrentType ]->numSounds++;
+            SoundAnimationRecord *old = mCurrentAnim[ mCurrentType ]->soundAnim;
+            
+            mCurrentAnim[ mCurrentType ]->soundAnim = 
+                new SoundAnimationRecord[ 
+                    mCurrentAnim[ mCurrentType ]->numSounds ];
+            
+            memcpy( mCurrentAnim[ mCurrentType ]->soundAnim,
+                    old,
+                    sizeof( SoundAnimationRecord ) *
+                    mCurrentAnim[ mCurrentType ]->numSounds - 1 );
+            
+            mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ] =
+                mSoundAnimCopyBuffer;
+            }
+        
+        if( mSoundAnimCopyBuffer.sound.id != -1 ) {
+            countLiveUse( mSoundAnimCopyBuffer.sound.id );
+            }
+        
+        soundIndexChanged();
         }
     else if( inTarget == &mCopyButton ) {
         mCopyBuffer = *( getRecordForCurrentSlot() );
