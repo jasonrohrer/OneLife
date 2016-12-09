@@ -278,7 +278,7 @@ void stepSoundBank() {
             unsigned char *data = getAsyncFileData( loadingR->asyncLoadHandle, 
                                                     &length );
             SoundRecord *r = getSoundRecord( loadingR->soundID );
-
+            
             
             if( data == NULL ) {
                 printf( "Reading sound data from file failed, sound ID %d\n",
@@ -286,65 +286,18 @@ void stepSoundBank() {
                 }
             else {
                 
-
-
-                // FIXME:  AIFF read here
-
-                if( length < 34 ) {
-                    printf( "AIFF not long enough for header, sound ID %d\n",
-                            loadingR->soundID );
-                    }
-                else {
-                    
-
-                    // byte 20 and 21 are num channels
-
-                    if( data[20] != 0 || data[21] != 1 ) {
-                        printf( "AIFF not mono, sound ID %d\n",
-                                loadingR->soundID );
-                        }
-                    else if( data[26] != 0 || data[27] != 16 ) {
-                        printf( "AIFF not 16-bit, sound ID %d\n",
-                                loadingR->soundID );
-                        }
-                    else {
-                        int numSamples =
-                            data[22] << 24 |
-                            data[23] << 16 |
-                            data[24] << 8 |
-                            data[25];
-
-                        int sampleStartByte = 54;
-                        
-
-                        int numBytes = numSamples * 2;
-                        
-                        if( length < sampleStartByte + numBytes ) {
-                            printf( "AIFF not long enough for data, "
-                                    "sound ID %d\n",
-                                    loadingR->soundID );
-                            }
-                        else {
-                            
-                            int16_t *samples = new int16_t[numSamples];
-                            
-
-                            int b = sampleStartByte;
-                            for( int i=0; i<numSamples; i++ ) {
-                                samples[i] = 
-                                    ( data[b] << 8 ) |
-                                    data[b+1];
-                                b += 2;
-                                }
-
-                            r->sound = setSoundSprite( samples, numSamples );
-                            
-                            delete [] samples;
-                            }
-                        }
-                    }
+                int numSamples;
+                int16_t *samples =
+                    readMono16AIFFData( data, length, &numSamples );
                 
 
+                if( samples != NULL ) {
+                    
+                    r->sound = setSoundSprite( samples, numSamples );
+                            
+                    delete [] samples;
+                    }
+                    
                 delete [] data;
                 }
             
