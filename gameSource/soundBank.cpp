@@ -89,6 +89,155 @@ int getMaxSoundID() {
 
 
 
+static int16_t *readAIFFFile( File *inFile, int *outNumSamples ) {
+    int numBytes;
+    unsigned char *data = 
+        inFile->readFileContents( &numBytes );
+            
+    if( data != NULL ) { 
+        int16_t *samples = readMono16AIFFData( data, numBytes, outNumSamples );
+        
+        delete [] data;
+        
+        return samples;
+        }
+    
+    return NULL;
+    }
+
+
+
+static void writeAiffFile( File *inFile, int16_t *inSamples, 
+                           int inNumSamples ) {
+    int headerLength;
+    unsigned char *header = 
+        getAIFFHeader( 1, 16, sampleRate, inNumSamples, &headerLength );
+        
+    FileOutputStream stream( inFile );
+    
+    stream.write( header, headerLength );
+
+    delete [] header;
+        
+    int numBytes = inNumSamples * 2;
+    unsigned char *data = new unsigned char[ numBytes ];
+        
+    int b = 0;
+    for( int s=0; s<inNumSamples; s++ ) {
+        // big endian
+        data[b] = inSamples[s] >> 8;
+        data[b+1] = inSamples[s] & 0xFF;
+        b+=2;
+        }
+        
+    stream.write( data, numBytes );
+    delete [] data;
+    }
+
+
+
+static void generateReverb( SoundRecord *inRecord,
+                            int16_t *inReverbSamples, 
+                            int inNumReverbSamples,
+                            File *inReverbFolder ) {
+    
+    char *cacheFileName = autoSprintf( "%d.aiff", inRecord->id );
+    
+    File *cacheFile = inReverbFolder->getChildFile( cacheFileName );
+    
+    
+    if( ! cacheFile->exists() ) {
+         
+        printf( "Regenerating reverb cache file %s\n", cacheFileName );
+        
+
+        int numSamples;
+        int16_t *samples = NULL;
+        
+        File soundFolder( NULL, "sounds" );
+        
+        if( soundFolder.exists() && soundFolder.isDirectory() ) {
+            File *soundFile = soundFolder.getChildFile( cacheFileName );
+            
+            if( soundFile->exists() ) {
+                samples = readAIFFFile( soundFile, &numSamples );
+                }
+            delete soundFile;
+            }
+        
+        if( samples != NULL ) {
+            
+            int numWetSamples = numSamples + inNumReverbSamples;
+            
+            double *wetSampleFloats = new double[ numWetSamples ];
+            
+            for( int i=0; i<numWetSamples; i++ ) {
+                wetSampleFloats[i] = 0;
+                }
+            
+            double *reverbFloats = new double[ inNumReverbSamples ];
+            
+            for( int j=0; j<inNumReverbSamples; j++ ) {
+                reverbFloats[j] = (double) inReverbSamples[j] / 32768.0;
+                }
+
+            for( int i=0; i<numSamples; i++ ) {
+                double sampleFloat = (double)( samples[i] / 32768.0);
+                
+                for( int j=0; j<inNumReverbSamples; j++ ) {
+                    wetSampleFloats[ i + j ] +=
+                        sampleFloat * reverbFloats[j];
+                    }
+                /*if( i < inNumReverbSamples ) {
+                    
+                    wetSampleFloats[ i ] = reverbFloats[i];
+                    }
+                */
+                }
+            delete [] reverbFloats;
+            
+            double maxWet = 0;
+            double minWet = 0;
+            
+            for( int i=0; i<numWetSamples; i++ ) {
+                if( wetSampleFloats[ i ] > maxWet ) {
+                    maxWet = wetSampleFloats[ i ];
+                    }
+                else if( wetSampleFloats[ i ] < minWet ) {
+                    minWet = wetSampleFloats[ i ];
+                    }
+                }
+            double scale = maxWet;
+            if( -minWet > scale ) {
+                scale = -minWet;
+                }
+            double normalizeFactor = 1.0 / scale;
+            
+            int16_t *wetSamples = new int16_t[ numWetSamples ];
+            for( int i=0; i<numWetSamples; i++ ) {
+                wetSamples[i] = 
+                    (int16_t)( 
+                        lrint( 32767 * normalizeFactor * wetSampleFloats[i] ) );
+                }
+            delete [] wetSampleFloats;
+            
+
+            writeAiffFile( cacheFile, wetSamples, numWetSamples );
+            
+            delete [] wetSamples;
+            }
+        else {
+            printf( "Failed to read file from sounds folder %s\n", 
+                    cacheFileName );
+            }
+        }
+    delete cacheFile;
+    
+    delete [] cacheFileName;
+    }
+
+
+
 void initSoundBank() {
     
     soundEffectsLoudness = 
@@ -165,6 +314,38 @@ void initSoundBank() {
         }
 
     printf( "Loaded %d sound IDs from sounds folder\n", numRecords );
+
+
+
+    File reverbFile( NULL, "reverbImpulseResponse.aiff" );
+    
+    if( reverbFile.exists() ) {
+    
+        File reverbFolder( NULL, "reverbCache" );
+        
+        if( ! reverbFolder.exists() ) {
+            reverbFolder.makeDirectory();
+            }
+    
+        if( reverbFolder.exists() && reverbFolder.isDirectory() ) {
+            
+            int numReverbSamples;
+            int16_t *reverbSamples = readAIFFFile( &reverbFile,
+                                                   &numReverbSamples );
+            
+            if( reverbSamples != NULL ) {        
+                
+                for( int i=0; i<numRecords; i++ ) {
+                    SoundRecord *r = records.getElementDirect(i);
+                    
+                    generateReverb( r, reverbSamples, numReverbSamples,
+                                    &reverbFolder );
+                    }
+                }
+            
+            }
+        }
+    
     }
 
 
@@ -505,32 +686,7 @@ char startRecordingSound() {
 
 
 
-static void writeAiffFile( File *inFile, int16_t *inSamples, 
-                           int inNumSamples ) {
-    int headerLength;
-    unsigned char *header = 
-        getAIFFHeader( 1, 16, sampleRate, inNumSamples, &headerLength );
-        
-    FileOutputStream stream( inFile );
-    
-    stream.write( header, headerLength );
 
-    delete [] header;
-        
-    int numBytes = inNumSamples * 2;
-    unsigned char *data = new unsigned char[ numBytes ];
-        
-    int b = 0;
-    for( int s=0; s<inNumSamples; s++ ) {
-        // big endian
-        data[b] = inSamples[s] >> 8;
-        data[b+1] = inSamples[s] & 0xFF;
-        b+=2;
-        }
-        
-    stream.write( data, numBytes );
-    delete [] data;
-    }
 
 
 
