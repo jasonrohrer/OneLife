@@ -5916,24 +5916,45 @@ void LivingLifePage::step() {
         if( o->curAnim == moving ) {
             o->frozenRotFrameCount += animSpeed / BASE_SPEED;
             
-            char holdingRideable = false;
-            
-            if( o->holdingID != 0 &&
-                getObject( o->holdingID )->rideable ) {
-                holdingRideable = true;
-                }
-            
-            if( !holdingRideable ) {
-                // don't play player moving sound if riding something
-
-                handleAnimSound( o->displayID, o->age, moving,
-                                 oldFrameCount, o->animationFrameCount,
-                                 o->currentPos.x,
-                                 o->currentPos.y );                
-                }
             }
             
         
+        char holdingRideable = false;
+            
+        if( o->holdingID > 0 &&
+            getObject( o->holdingID )->rideable ) {
+            holdingRideable = true;
+            }
+            
+        
+        if( o->curAnim != moving || !holdingRideable ) {
+            // don't play player moving sound if riding something
+
+            AnimType t = o->curAnim;
+            doublePair pos = o->currentPos;
+            
+            if( o->heldByAdultID != -1 ) {
+                t = held;
+                
+
+                for( int j=0; j<gameObjects.size(); j++ ) {
+                    
+                    LiveObject *parent = gameObjects.getElement( j );
+                    
+                    if( parent->id == o->heldByAdultID ) {
+                        
+                        pos = parent->currentPos;
+                        }
+                    }
+                }
+            
+            
+            handleAnimSound( o->displayID, o->age, t,
+                             oldFrameCount, o->animationFrameCount,
+                             pos.x,
+                             pos.y );                
+            }
+            
         
         
         
