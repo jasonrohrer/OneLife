@@ -599,7 +599,7 @@ void playSound( int inID, double inVolumeTweak, double inStereoPosition,
 
                 SoundSpriteHandle handles[] = { idMap[inID]->sound,
                                                 idMap[inID]->reverbSound };
-                double volumes[] = { volume * ( 1 - inReverbMix ),
+                double volumes[] = { volume,
                                      volume * inReverbMix };
                 
                 double stereo[] = { inStereoPosition, inStereoPosition };
@@ -658,7 +658,7 @@ void playSound( SoundUsage inUsage,
     if( volumeScale > 1 ) {
         volumeScale = 1;
         }
-    
+        
     // pan is based on X position on screen only
     double xPan = inVectorFromCameraToSoundSource.x;
     
@@ -685,8 +685,16 @@ void playSound( SoundUsage inUsage,
     //double reverbMix = d / maxAudibleDistance;
 
     // reverb increases to max by half range
-    double reverbMix = d / ( maxAudibleDistance / 2 );
+    //double reverbMix = d / ( maxAudibleDistance / 2 );
     
+    // reverb matches volume scaling exactly
+    // always a bit of reverb
+    double reverbContstant = 0.1;
+    
+    double reverbMix = 
+        ( 1.0 - reverbContstant ) * ( 1.0 - volumeScale ) + 
+        reverbContstant;
+
     playSound( inUsage.id, volumeScale * inUsage.volume, xPan / 16.0,
                reverbMix );
     }
