@@ -1859,6 +1859,17 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             
             inObj->heldByDropOffset.x = 0;
             inObj->heldByDropOffset.y = 0;
+            
+            ObjectRecord *displayObj = 
+                getObject( inObj->displayID );
+            
+            if( displayObj->usingSound.id != -1 ) {
+                // play baby's using sound as they are put down
+                // we no longer have acces
+                playSound( displayObj->usingSound,
+                           getVectorFromCamera(
+                               inObj->currentPos.x, inObj->currentPos.y ) );
+                }
             }
         else {
             inObj->heldByDropOffset =
