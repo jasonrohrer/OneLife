@@ -114,6 +114,13 @@ static char readServerSocketFull( int inServerSocket ) {
 
 
 
+static double computeCurrentAge( LiveObject *inObj ) {
+    return inObj->age + 
+        inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
+    }
+
+
+
 typedef enum messageType {
     SHUTDOWN,
 	SEQUENCE_NUMBER,
@@ -1971,8 +1978,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
     //mainFont->drawString( string, 
     //                      pos, alignCenter );
                 
-    double age = inObj->age + 
-        inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
+    double age = computeCurrentAge( inObj );
 
 
     ObjectRecord *heldObject = NULL;
@@ -2349,7 +2355,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                 0,
                                 false,
                                 inObj->holdingFlip,
-                                babyO->age,
+                                computeCurrentAge( babyO ),
                                 // don't hide baby's hands when it is held
                                 false,
                                 false,
@@ -3046,21 +3052,22 @@ void LivingLifePage::draw( doublePair inViewCenter,
         ObjectRecord *displayObj = getObject( o->displayID );
  
 
+        double age = computeCurrentAge( o );
         
         doublePair headPos = 
-            displayObj->spritePos[ getHeadIndex( displayObj, o->age ) ];
+            displayObj->spritePos[ getHeadIndex( displayObj, age ) ];
         
         doublePair bodyPos = 
-            displayObj->spritePos[ getBodyIndex( displayObj, o->age ) ];
+            displayObj->spritePos[ getBodyIndex( displayObj, age ) ];
 
         doublePair frontFootPos = 
-            displayObj->spritePos[ getFrontFootIndex( displayObj, o->age ) ];
+            displayObj->spritePos[ getFrontFootIndex( displayObj, age ) ];
         
         headPos = add( headPos, 
-                       getAgeHeadOffset( o->age, headPos, 
+                       getAgeHeadOffset( age, headPos, 
                                          bodyPos, frontFootPos ) );
         headPos = add( headPos,
-                       getAgeBodyOffset( o->age, bodyPos ) );
+                       getAgeBodyOffset( age, bodyPos ) );
         
         speechPos.y += headPos.y;
         
@@ -5672,10 +5679,7 @@ void LivingLifePage::step() {
         
 
         // current age
-        double age = 
-            ourLiveObject->age + 
-            ourLiveObject->ageRate * 
-            ( game_getCurrentTime() - ourLiveObject->lastAgeSetTime );
+        double age = computeCurrentAge( ourLiveObject );
 
         int sayCap = (int)( floor( age ) + 1 );
         
@@ -5949,7 +5953,9 @@ void LivingLifePage::step() {
                 }
             
             
-            handleAnimSound( o->displayID, o->age, t,
+            handleAnimSound( o->displayID,
+                             computeCurrentAge( o ),
+                             t,
                              oldFrameCount, o->animationFrameCount,
                              pos.x,
                              pos.y );                
@@ -6659,7 +6665,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                         &( o->clothing ),
                         NULL,
                         o->clothingContained,
-                        o->age,
+                        computeCurrentAge( o ),
                         -1,
                         o->holdingFlip,
                         clickOffsetX,
@@ -7068,12 +7074,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     char tryingToPickUpBaby = false;
     
+    double ourAge = computeCurrentAge( ourLiveObject );
+
     if( destID == 0 &&
         p.hit &&
         ! p.hitAnObject &&
         ! modClick && ourLiveObject->holdingID == 0 &&
         // only adults can pick up babies
-        ourLiveObject->age > 13 ) {
+        ourAge > 13 ) {
         
 
         doublePair targetPos = { (double)clickDestX, (double)clickDestY };
@@ -7086,7 +7094,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 if( distance( targetPos, o->currentPos ) < 1 ) {
                     // clicked on someone
 
-                    if( o->age < 5 ) {
+                    if( computeCurrentAge( o ) < 5 ) {
 
                         // they're a baby
                         
