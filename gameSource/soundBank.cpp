@@ -338,6 +338,8 @@ void initSoundBank() {
                     generateReverb( r, reverbSamples, numReverbSamples,
                                     &reverbFolder );
                     }
+
+                delete [] reverbSamples;
                 }
             
             }
