@@ -46,6 +46,7 @@ PickableStatics.cpp \
 soundBank.cpp \
 SoundWidget.cpp \
 convolution.cpp \
+fft.cpp \
 
 
 GAME_GRAPHICS = \
