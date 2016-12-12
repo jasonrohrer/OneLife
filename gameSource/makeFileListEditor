@@ -45,6 +45,7 @@ folderCache.cpp \
 PickableStatics.cpp \
 soundBank.cpp \
 SoundWidget.cpp \
+convolution.cpp \
 
 
 GAME_GRAPHICS = \

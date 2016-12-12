@@ -136,6 +136,7 @@ static void writeAiffFile( File *inFile, int16_t *inSamples,
     }
 
 
+#include "convolution.h"
 
 static void generateReverb( SoundRecord *inRecord,
                             int16_t *inReverbSamples, 
@@ -182,17 +183,19 @@ static void generateReverb( SoundRecord *inRecord,
                 reverbFloats[j] = (double) inReverbSamples[j] / 32768.0;
                 }
 
-            for( int i=0; i<numSamples; i++ ) {
-                double sampleFloat = (double)( samples[i] / 32768.0);
-                
-                for( int j=0; j<inNumReverbSamples; j++ ) {
-                    wetSampleFloats[ i + j ] +=
-                        sampleFloat * reverbFloats[j];
-                    }
-               
-                }
-            delete [] reverbFloats;
+            double *sampleFloats = new double[ numSamples ];
             
+            for( int i=0; i<numSamples; i++ ) {
+                sampleFloats[i] = (double) samples[i] / 32768.0;
+                }
+
+            convolve( sampleFloats, numSamples,
+                      reverbFloats, inNumReverbSamples,
+                      wetSampleFloats );
+
+            delete [] reverbFloats;
+            delete [] sampleFloats;
+
             double maxWet = 0;
             double minWet = 0;
             
@@ -614,8 +617,8 @@ void playSound( int inID, double inVolumeTweak, double inStereoPosition,
 
 
 void playSound( SoundUsage inUsage,
-                double inStereoPosition ) {
-    playSound( inUsage.id, inUsage.volume, inStereoPosition );
+                double inStereoPosition, double inReverbMix ) {
+    playSound( inUsage.id, inUsage.volume, inStereoPosition, inReverbMix );
     }
 
 

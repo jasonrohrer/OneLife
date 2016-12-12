@@ -44,7 +44,7 @@ ServerActionPage.cpp \
 FinalMessagePage.cpp \
 AutoUpdatePage.cpp \
 soundBank.cpp \
-
+convolution.cpp \
 
 
 
