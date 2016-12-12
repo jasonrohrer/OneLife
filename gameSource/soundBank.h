@@ -11,8 +11,10 @@
 typedef struct SoundRecord {
         int id;
 
-        // NULL if image not loaded
+        // NULL if sound not loaded
         SoundSpriteHandle sound;
+        SoundSpriteHandle reverbSound;
+        
 
         char loading;
 
@@ -59,10 +61,12 @@ void setSoundEffectsOff( char inOff );
 
 
 void playSound( int inID, double inVolumeTweak = 1.0,
-                double inStereoPosition  = 0.5 );
+                double inStereoPosition  = 0.5, 
+                double inReverbMix = 0.0 );
 
 void playSound( SoundUsage inUsage,
-                double inStereoPosition  = 0.5 );
+                double inStereoPosition  = 0.5, 
+                double inReverbMix = 0.0 );
 
 
 // applies stereo position, distance fade, and distance reverb automatically

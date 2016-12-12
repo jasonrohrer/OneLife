@@ -33,7 +33,8 @@ static int maxID;
 
 typedef struct SoundLoadingRecord {
         int soundID;
-        int asyncLoadHandle;
+        int asyncSoundLoadHandle;
+        int asyncReverbLoadHandle;
         
     } SoundLoadingRecord;
 
@@ -364,6 +365,7 @@ static void loadSound( int inID ) {
         if( r->sound == NULL && ! r->loading ) {
                 
             File soundsDir( NULL, "sounds" );
+            File reverbDir( NULL, "reverbCache" );
             
 
             const char *printFormatAIFF = "%d.aiff";
@@ -372,22 +374,28 @@ static void loadSound( int inID ) {
         
 
             File *soundFile = soundsDir.getChildFile( fileNameAIFF );
+            File *reverbFile = reverbDir.getChildFile( fileNameAIFF );
             
             delete [] fileNameAIFF;
             
 
-            char *fullName = soundFile->getFullFileName();
+            char *fullSoundName = soundFile->getFullFileName();
+            char *fullReverbName = reverbFile->getFullFileName();
         
             delete soundFile;
+            delete reverbFile;
             
 
             SoundLoadingRecord loadingR;
             
             loadingR.soundID = inID;
 
-            loadingR.asyncLoadHandle = startAsyncFileRead( fullName );
+            loadingR.asyncSoundLoadHandle = startAsyncFileRead( fullSoundName );
+            loadingR.asyncReverbLoadHandle = 
+                startAsyncFileRead( fullReverbName );
             
-            delete [] fullName;
+            delete [] fullSoundName;
+            delete [] fullReverbName;
 
             loadingSounds.push_back( loadingR );
             
@@ -403,9 +411,17 @@ static void freeSoundRecord( int inID ) {
     if( inID < mapSize ) {
         if( idMap[inID] != NULL ) {
             
-            if( idMap[inID]->sound != NULL ) {    
-                freeSoundSprite( idMap[inID]->sound );
+            if( idMap[inID]->sound != NULL || 
+                idMap[inID]->reverbSound != NULL) {                
                 
+                if( idMap[inID]->sound != NULL ) {
+                    freeSoundSprite( idMap[inID]->sound );
+                    }
+                if( idMap[inID]->reverbSound != NULL ) {
+                    freeSoundSprite( idMap[inID]->reverbSound );
+                    }
+                
+
                 for( int i=0; i<loadedSounds.size(); i++ ) {
                     int id = loadedSounds.getElementDirect( i );
                     
@@ -435,6 +451,9 @@ void freeSoundBank() {
             if( idMap[i]->sound != NULL ) {    
                 freeSoundSprite( idMap[i]->sound );
                 }
+            if( idMap[i]->reverbSound != NULL ) {    
+                freeSoundSprite( idMap[i]->reverbSound );
+                }
 
             delete idMap[i];
             }
@@ -449,23 +468,33 @@ void stepSoundBank() {
     for( int i=0; i<loadingSounds.size(); i++ ) {
         SoundLoadingRecord *loadingR = loadingSounds.getElement( i );
         
-        if( checkAsyncFileReadDone( loadingR->asyncLoadHandle ) ) {
+        if( checkAsyncFileReadDone( loadingR->asyncSoundLoadHandle ) &&
+            checkAsyncFileReadDone( loadingR->asyncReverbLoadHandle ) ) {
             
-            int length;
-            unsigned char *data = getAsyncFileData( loadingR->asyncLoadHandle, 
-                                                    &length );
+            int lengthSound;
+            unsigned char *dataSound = getAsyncFileData( 
+                loadingR->asyncSoundLoadHandle, &lengthSound );
+
+            int lengthReverb;
+            unsigned char *dataReverb = getAsyncFileData( 
+                loadingR->asyncReverbLoadHandle, &lengthReverb );
+            
             SoundRecord *r = getSoundRecord( loadingR->soundID );
             
             
-            if( data == NULL ) {
+            if( dataSound == NULL ) {
                 printf( "Reading sound data from file failed, sound ID %d\n",
+                        loadingR->soundID );
+                }
+            else if( dataReverb == NULL ) {
+                printf( "Reading reverb data from cache failed, sound ID %d\n",
                         loadingR->soundID );
                 }
             else {
                 
                 int numSamples;
                 int16_t *samples =
-                    readMono16AIFFData( data, length, &numSamples );
+                    readMono16AIFFData( dataSound, lengthSound, &numSamples );
                 
 
                 if( samples != NULL ) {
@@ -474,9 +503,26 @@ void stepSoundBank() {
                             
                     delete [] samples;
                     }
+                
+                samples =
+                    readMono16AIFFData( dataReverb, lengthReverb, &numSamples );
+                
+
+                if( samples != NULL ) {
                     
-                delete [] data;
+                    r->reverbSound = setSoundSprite( samples, numSamples );
+                            
+                    delete [] samples;
+                    }
                 }
+
+            if( dataSound != NULL ) {
+                delete [] dataSound;
+                }
+            if( dataReverb != NULL ) {
+                delete [] dataReverb;
+                }
+            
             
             r->numStepsUnused = 0;
             loadedSounds.push_back( loadingR->soundID );
@@ -492,14 +538,23 @@ void stepSoundBank() {
     
         SoundRecord *r = getSoundRecord( id );
         
-        r->numStepsUnused ++;
+        if( r->sound != NULL || r->reverbSound != NULL ) {
 
-        if( r->numStepsUnused > 600 ) {
-            // 10 seconds not played
+            r->numStepsUnused ++;
+
+            if( r->numStepsUnused > 600 ) {
+                // 10 seconds not played
+
+                if( r->sound != NULL ) {
+                    freeSoundSprite( r->sound );
+                    r->sound = NULL;
+                    }
+                if( r->reverbSound != NULL ) {
+                    freeSoundSprite( r->reverbSound );
+                    r->reverbSound = NULL;
+                    }
+                }
             
-            freeSoundSprite( r->sound );
-            r->sound = NULL;
-
             r->loading = false;
 
             loadedSounds.deleteElement( i );
@@ -514,7 +569,8 @@ void stepSoundBank() {
 
 
 
-void playSound( int inID, double inVolumeTweak, double inStereoPosition  ) {
+void playSound( int inID, double inVolumeTweak, double inStereoPosition,
+                double inReverbMix ) {
     if( soundEffectsOff ) {
         return;
         }
@@ -525,12 +581,29 @@ void playSound( int inID, double inVolumeTweak, double inStereoPosition  ) {
                 loadSound( inID );
                 return;
                 }
-            
+
             idMap[inID]->numStepsUnused = 0;
-            playSoundSprite( idMap[inID]->sound,
-                             soundEffectsLoudness * 
-                             inVolumeTweak * playedSoundVolumeScale, 
-                             inStereoPosition );
+            
+            if( idMap[inID]->reverbSound == NULL ) {
+                // play just sound, ignore mix param    
+                playSoundSprite( idMap[inID]->sound,
+                                 soundEffectsLoudness * 
+                                 inVolumeTweak * playedSoundVolumeScale, 
+                                 inStereoPosition );
+                }
+            else {
+                //  play both simultaneously
+                double volume = inVolumeTweak * playedSoundVolumeScale;
+
+                SoundSpriteHandle handles[] = { idMap[inID]->sound,
+                                                idMap[inID]->reverbSound };
+                double volumes[] = { volume * ( 1 - inReverbMix ),
+                                     volume * inReverbMix };
+                
+                double stereo[] = { inStereoPosition, inStereoPosition };
+                
+                playSoundSprite( 2, handles, volumes, stereo );
+                }
             
             markSoundLive( inID );
             }
@@ -605,7 +678,15 @@ void playSound( SoundUsage inUsage,
     // even at the edge of the screen
     
     //printf( "Pan = %f\n", xPan / 16.0 );
-    playSound( inUsage.id, volumeScale * inUsage.volume, xPan / 16.0 );
+
+    // reverb increases over whole range
+    //double reverbMix = d / maxAudibleDistance;
+
+    // reverb increases to max by half range
+    double reverbMix = d / ( maxAudibleDistance / 2 );
+    
+    playSound( inUsage.id, volumeScale * inUsage.volume, xPan / 16.0,
+               reverbMix );
     }
 
 
