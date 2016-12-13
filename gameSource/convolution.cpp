@@ -186,7 +186,7 @@ void convolve( double *inA, int inLengthA,
     
     //    naiveConvolve( inA, inLengthA, inB, inLengthB, inDest );
     //windowConvolve( 512, inA, inLengthA, inB, inLengthB, inDest );
-    fftConvolve( 4096, inA, inLengthA, inB, inLengthB, inDest );
+    fftConvolve( 65536, inA, inLengthA, inB, inLengthB, inDest );
     
     printf( "Convolution of %dx%d took %.3f seconds\n",
             inLengthA, inLengthB, Time::getCurrentTime() - start );
