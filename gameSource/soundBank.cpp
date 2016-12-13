@@ -17,6 +17,8 @@
 
 #include "minorGems/sound/formats/aiff.h"
 
+#include "minorGems/system/Time.h"
+
 
 
 static int mapSize;
@@ -139,7 +141,6 @@ static void writeAiffFile( File *inFile, int16_t *inSamples,
 #include "convolution.h"
 
 static void generateReverb( SoundRecord *inRecord,
-                            int16_t *inReverbSamples, 
                             int inNumReverbSamples,
                             File *inReverbFolder ) {
     
@@ -177,23 +178,20 @@ static void generateReverb( SoundRecord *inRecord,
                 wetSampleFloats[i] = 0;
                 }
             
-            double *reverbFloats = new double[ inNumReverbSamples ];
             
-            for( int j=0; j<inNumReverbSamples; j++ ) {
-                reverbFloats[j] = (double) inReverbSamples[j] / 32768.0;
-                }
 
             double *sampleFloats = new double[ numSamples ];
             
             for( int i=0; i<numSamples; i++ ) {
                 sampleFloats[i] = (double) samples[i] / 32768.0;
                 }
+            
+            delete [] samples;
+            
+            // b data has been pre-generated with startMultiConvolution
+            multiConvolve( sampleFloats, numSamples,
+                           wetSampleFloats );
 
-            convolve( sampleFloats, numSamples,
-                      reverbFloats, inNumReverbSamples,
-                      wetSampleFloats );
-
-            delete [] reverbFloats;
             delete [] sampleFloats;
 
             double maxWet = 0;
@@ -334,15 +332,31 @@ void initSoundBank() {
                                                    &numReverbSamples );
             
             if( reverbSamples != NULL ) {        
+                double *reverbFloats = new double[ numReverbSamples ];
+            
+                for( int j=0; j<numReverbSamples; j++ ) {
+                    reverbFloats[j] = (double) reverbSamples[j] / 32768.0;
+                    }
+                
+                startMultiConvolution( reverbFloats, numReverbSamples );
+                
+                delete [] reverbFloats;
+                
+                
+                double startTime = Time::getCurrentTime();
                 
                 for( int i=0; i<numRecords; i++ ) {
                     SoundRecord *r = records.getElementDirect(i);
                     
-                    generateReverb( r, reverbSamples, numReverbSamples,
-                                    &reverbFolder );
+                    generateReverb( r, numReverbSamples, &reverbFolder );
                     }
 
+                printf( "Generating %d reverbs took %.3f sec\n",
+                        numRecords, Time::getCurrentTime() - startTime );
+                
                 delete [] reverbSamples;
+
+                endMultiConvolution();
                 }
             
             }
