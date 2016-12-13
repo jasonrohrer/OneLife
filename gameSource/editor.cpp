@@ -1032,6 +1032,8 @@ void drawFrame( char inUpdate ) {
                             }
                         else {
                             // skip sound progress
+                            initSoundBankFinish();
+                            
                             char rebuilding;
                             
                             int numSprites = 

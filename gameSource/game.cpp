@@ -541,7 +541,6 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     rebirthChoicePage = new RebirthChoicePage;
     
 
-    initSoundBank();
 
     setVolumeScaling( 10, 0 );
     
@@ -1113,6 +1112,65 @@ void drawFrame( char inUpdate ) {
                         
                         loadingPhaseStartTime = Time::getCurrentTime();
                         
+                        int numReverbs = initSoundBankStart();
+                            
+                        if( numReverbs > 0 ) {
+                            loadingPage->setCurrentPhase( 
+                                "SOUNDS##(GENERATING REVERBS)" );
+                            loadingPage->setCurrentProgress( 0 );
+                        
+                            
+                            loadingStepBatchSize = numReverbs / 20;
+                            
+                            if( loadingStepBatchSize < 1 ) {
+                                loadingStepBatchSize = 1;
+                                }
+                            
+                            loadingPhase ++;
+                            }
+                        else {
+                            // skip progress for sounds
+                            initSoundBankFinish();
+                            
+                            char rebuilding;
+                        
+                            int numObjects = 
+                                initObjectBankStart( &rebuilding );
+                            
+                            if( rebuilding ) {
+                                loadingPage->setCurrentPhase( 
+                                    translate( "objectsRebuild" ) );
+                                }
+                            else {
+                                loadingPage->setCurrentPhase(
+                                    translate( "objects" ) );
+                                }
+                            loadingPage->setCurrentProgress( 0 );
+                            
+                            
+                            loadingStepBatchSize = numObjects / 20;
+                            
+                            if( loadingStepBatchSize < 1 ) {
+                                loadingStepBatchSize = 1;
+                                }
+                            
+                            loadingPhase += 2;
+                            }
+                        }
+                    break;
+                    }
+                case 1: {
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initSoundBankStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
+                    
+                    if( progress == 1.0 ) {
+                        initSoundBankFinish();
+                        
+                        loadingPhaseStartTime = Time::getCurrentTime();
+                        
                         char rebuilding;
                         
                         int numObjects = 
@@ -1139,7 +1197,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 1: {
+                case 2: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initObjectBankStep();
@@ -1179,7 +1237,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 2: {
+                case 3: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initTransBankStep();
@@ -1216,7 +1274,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 3: {
+                case 4: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initAnimationBankStep();
@@ -1235,7 +1293,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 4: {
+                case 5: {
                     initLiveObjectSet();
 
                     loadingPhaseStartTime = Time::getCurrentTime();
