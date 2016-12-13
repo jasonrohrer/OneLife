@@ -159,8 +159,10 @@ static void fftConvolve( int inWindowSize,
             for( int i=0; i<inWindowSize * 2; i++ ) {
                 paddedDest[ destOffset + i ] += bufferResult[i];
                 }
+            delete [] paddedBWindow;
             }
         
+        delete [] paddedAWindow;
         }
 
     delete [] fftBufferA;
