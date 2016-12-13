@@ -129,7 +129,7 @@ static void fftConvolve( int inWindowSize,
             // with n/2 - 1 complex values in between
 
             // real-only values first
-            fftBufferResult[0] = fftBufferB[0] *= fftBufferA[0];
+            fftBufferResult[0] = fftBufferB[0] * fftBufferA[0];
 
             fftBufferResult[1] = fftBufferB[1] * fftBufferA[1];
 
