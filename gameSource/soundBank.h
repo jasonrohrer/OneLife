@@ -27,8 +27,14 @@ typedef struct SoundRecord {
 
 
 
-// no caching needed, so do it in one step
-void initSoundBank();
+// returns number of reverb cache files that need to be regenerated
+int initSoundBankStart();
+
+
+// returns progress... ready for Finish when progress == 1.0
+float initSoundBankStep();
+void initSoundBankFinish();
+
 
 
 // can only be called after bank init is complete

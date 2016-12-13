@@ -475,8 +475,6 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
     loadingPage->setCurrentPhase( "OVERLAYS" );
     loadingPage->setCurrentProgress( 0 );
-    
-    initSoundBank();
 
     currentGamePage = loadingPage;
     currentGamePage->base_makeActive( true );
@@ -1015,6 +1013,59 @@ void drawFrame( char inUpdate ) {
                         initOverlayBankFinish();
                         
 
+                        int numReverbs = 
+                            initSoundBankStart();
+                        
+                        if( numReverbs > 0 ) {
+                            loadingPage->setCurrentPhase( 
+                                "SOUNDS##(GENERATING REVERBS)" );
+                            loadingPage->setCurrentProgress( 0 );
+                        
+                            
+                            loadingStepBatchSize = numReverbs / 20;
+                        
+                            if( loadingStepBatchSize < 1 ) {
+                                loadingStepBatchSize = 1;
+                                }
+                            
+                            loadingPhase ++;
+                            }
+                        else {
+                            // skip sound progress
+                            char rebuilding;
+                            
+                            int numSprites = 
+                                initSpriteBankStart( &rebuilding );
+                        
+                            if( rebuilding ) {
+                                loadingPage->setCurrentPhase( 
+                                    "SPRITES##(REBUILDING CACHE)" );
+                                }
+                            else {
+                                loadingPage->setCurrentPhase( "SPRITES" );
+                                }
+                            loadingPage->setCurrentProgress( 0 );
+                            
+                            
+                            loadingStepBatchSize = numSprites / 20;
+                            
+                            if( loadingStepBatchSize < 1 ) {
+                                loadingStepBatchSize = 1;
+                                }
+                        
+                            loadingPhase += 2;
+                            }
+                        }
+                    break;
+                    }
+                case 1: {
+                    float progress = initSoundBankStep();
+                    loadingPage->setCurrentProgress( progress );
+                    
+                    if( progress == 1.0 ) {
+                        initSoundBankFinish();
+                        
+
                         char rebuilding;
                         
                         int numSprites = 
@@ -1040,7 +1091,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 1: {
+                case 2: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initSpriteBankStep();
@@ -1077,7 +1128,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 2: {
+                case 3: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initObjectBankStep();
@@ -1116,7 +1167,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 3: {
+                case 4: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initTransBankStep();
@@ -1152,7 +1203,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 4: {
+                case 5: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initAnimationBankStep();

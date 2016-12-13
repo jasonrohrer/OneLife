@@ -138,6 +138,28 @@ static void writeAiffFile( File *inFile, int16_t *inSamples,
     }
 
 
+
+
+
+static char doesReverbCacheExist( int inID, File *inReverbFolder ) {
+    char *cacheFileName = autoSprintf( "%d.aiff", inID );
+    
+    File *cacheFile = inReverbFolder->getChildFile( cacheFileName );
+    
+    
+    char returnVal = false;
+    
+    if( cacheFile->exists() ) {
+        returnVal = true;
+        }
+    delete [] cacheFileName;
+    delete cacheFile;
+    
+    return returnVal;
+    }
+
+
+
 #include "convolution.h"
 
 static void generateReverb( SoundRecord *inRecord,
@@ -235,8 +257,24 @@ static void generateReverb( SoundRecord *inRecord,
     }
 
 
+static SoundRecord *getSoundRecord( int inID ) {
+    if( inID >= 0 && inID < mapSize ) {
+        return idMap[inID];
+        }
+    else {
+        return NULL;
+        }
+    }
 
-void initSoundBank() {
+
+
+static SimpleVector<int> reverbsToRegenerate;
+static int nextReverbToRegenerate;
+static int numReverbSamples;
+static File *reverbFolder;
+
+
+int initSoundBankStart() {
     
     soundEffectsLoudness = 
         SettingsManager::getFloatSetting( "soundEffectsLoudness", 1.0 );
@@ -319,15 +357,14 @@ void initSoundBank() {
     
     if( reverbFile.exists() ) {
     
-        File reverbFolder( NULL, "reverbCache" );
+        reverbFolder = new File( NULL, "reverbCache" );
         
-        if( ! reverbFolder.exists() ) {
-            reverbFolder.makeDirectory();
+        if( ! reverbFolder->exists() ) {
+            reverbFolder->makeDirectory();
             }
     
-        if( reverbFolder.exists() && reverbFolder.isDirectory() ) {
+        if( reverbFolder->exists() && reverbFolder->isDirectory() ) {
             
-            int numReverbSamples;
             int16_t *reverbSamples = readAIFFFile( &reverbFile,
                                                    &numReverbSamples );
             
@@ -342,38 +379,49 @@ void initSoundBank() {
                 
                 delete [] reverbFloats;
                 
-                
-                double startTime = Time::getCurrentTime();
-                
                 for( int i=0; i<numRecords; i++ ) {
                     SoundRecord *r = records.getElementDirect(i);
                     
-                    generateReverb( r, numReverbSamples, &reverbFolder );
-                    }
+                    if( ! doesReverbCacheExist( r->id, reverbFolder ) ) {
+                        reverbsToRegenerate.push_back( r->id );
+                        }                    
 
-                printf( "Generating %d reverbs took %.3f sec\n",
-                        numRecords, Time::getCurrentTime() - startTime );
+                    }
                 
                 delete [] reverbSamples;
-
-                endMultiConvolution();
                 }
             
             }
         }
     
+    return reverbsToRegenerate.size();
     }
 
 
 
-static SoundRecord *getSoundRecord( int inID ) {
-    if( inID >= 0 && inID < mapSize ) {
-        return idMap[inID];
-        }
-    else {
-        return NULL;
-        }
+float initSoundBankStep() {
+    int id = reverbsToRegenerate.getElementDirect( nextReverbToRegenerate );
+    
+    generateReverb( getSoundRecord( id ), numReverbSamples, reverbFolder );
+
+    nextReverbToRegenerate++;
+    
+    return (float)nextReverbToRegenerate / 
+        (float)( reverbsToRegenerate.size() );
     }
+        
+
+
+void initSoundBankFinish() {
+    endMultiConvolution();
+
+    delete reverbFolder;
+    }
+
+
+
+
+
 
 
 static void loadSound( int inID ) {
