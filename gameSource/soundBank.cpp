@@ -664,8 +664,8 @@ void playSound( int inID, double inVolumeTweak, double inStereoPosition,
 
                 SoundSpriteHandle handles[] = { idMap[inID]->sound,
                                                 idMap[inID]->reverbSound };
-                double volumes[] = { volume,
-                                     volume * inReverbMix };
+                double volumes[] = { volume * ( 1-inReverbMix),
+                                     volume };
                 
                 double stereo[] = { inStereoPosition, inStereoPosition };
                 
