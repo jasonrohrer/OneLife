@@ -885,7 +885,7 @@ static int error(vorb *f, enum STBVorbisError e)
 #ifdef dealloca
 #define temp_free(f,p)                  (f->alloc.alloc_buffer ? 0 : dealloca(size))
 #else
-#define temp_free(f,p)                  0
+#define temp_free(f,p)                  (void)0
 #endif
 #define temp_alloc_save(f)              ((f)->temp_offset)
 #define temp_alloc_restore(f,p)         ((f)->temp_offset = (p))
