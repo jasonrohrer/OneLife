@@ -691,13 +691,31 @@ double minFadeStartDistance = 1.5;
 
 double maxAudibleDistanceSquared = maxAudibleDistance * maxAudibleDistance;
 
+
+
+// sigmoid functions
+// h(x) = .5 + .5 *(-(x-3.5) / (1 + abs(x-3.5)))
+
+// stretch it to span between 1 and 0
+// f(x) = ( 1/( h(0) - h(16) ) )*(h(x) - h(16))
+
+static double sigmoidH( double inDstance ) {
+    return 0.5 + 0.5 * ( 
+        -( inDstance - (2 + minFadeStartDistance) ) /
+        ( 1 + fabs( inDstance - (2 + minFadeStartDistance) ) ) );
+    }
+
+static double sigmoidF( double inDstance ) {
+    return ( 1 / ( sigmoidH( 0 ) - sigmoidH( maxAudibleDistance ) ) ) *
+        ( sigmoidH( inDstance ) - sigmoidH( maxAudibleDistance ) );
+    }
+
+
+
+
 void playSound( SoundUsage inUsage,
                 doublePair inVectorFromCameraToSoundSource ) {
-
-
-    // FIXME:  reverb, eventually
-
-    
+        
     double d = length( inVectorFromCameraToSoundSource );
     
 
@@ -711,10 +729,14 @@ void playSound( SoundUsage inUsage,
     
     // everything at center screen same volume
     // doesn't start fading until edge of screen
-    if( d > minFadeStartDistance ) {
-        volumeScale = ( 1.0 / ( d  - minFadeStartDistance ) ) - 
-            ( 1.0 / ( maxAudibleDistance - minFadeStartDistance ) );
-        }
+    //if( d > minFadeStartDistance ) {
+    //    volumeScale = ( 1.0 / ( d  - minFadeStartDistance ) ) - 
+    //        ( 1.0 / ( maxAudibleDistance - minFadeStartDistance ) );
+    //    }
+
+    // the above curve does what we want, but has discontinuities in slope
+    // which are audible
+    volumeScale = sigmoidF( d );
     
     if( volumeScale < 0 ) {
         // don't play sound at all
