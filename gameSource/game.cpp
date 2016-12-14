@@ -77,6 +77,8 @@ CustomRandomSource randSource( 34957197 );
 
 #include "ageControl.h"
 
+#include "musicPlayer.h"
+
 
 // start at reflector URL
 char *reflectorURL = NULL;
@@ -143,6 +145,15 @@ int screenW, screenH;
 char initDone = false;
 
 float mouseSpeed;
+
+
+// fraction of full volume devoted to music
+// the rest is reserved for sound effects
+// Note that musicLoudness and soundEffectLoudness settings still
+// effect absolute loudness of each, and ONLY the musicHeadroom parameter
+// effects the global balance between the two
+double musicHeadroom = 0.05;
+
 
 int musicOff = 0;
 float musicLoudness;
@@ -542,7 +553,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
 
 
-    setVolumeScaling( 10, 0 );
+    setVolumeScaling( 10, musicHeadroom );
     
     char rebuilding;
     
@@ -629,7 +640,8 @@ void freeFrameDrawer() {
     freeLiveObjectSet();
 
     freeSoundBank();
-
+    
+    freeMusicPlayer();
 
     if( reflectorURL != NULL ) {
         delete [] reflectorURL;
@@ -964,7 +976,7 @@ void drawFrame( char inUpdate ) {
                 }
 
             // fade out music during pause
-            //setMusicLoudness( 0 );
+            setMusicLoudness( 0 );
             }
         wasPaused = true;
 
@@ -1080,9 +1092,9 @@ void drawFrame( char inUpdate ) {
             }
 
         // fade music in
-        //if( ! musicOff ) {
-        //    setMusicLoudness( 1.0 );
-        //    }
+        if( ! musicOff ) {
+            setMusicLoudness( 1.0 );
+            }
         wasPaused = false;
         }
 
@@ -1312,6 +1324,9 @@ void drawFrame( char inUpdate ) {
                 default:
                     // NOW game engine can start measuring frame rate
                     loadingComplete();
+                    
+                    initMusicPlayer();
+                    setMusicLoudness( 1.0 );
                     
                     currentGamePage = existingAccountPage;
                     currentGamePage->base_makeActive( true );
@@ -1812,10 +1827,6 @@ void drawString( const char *inString, char inForceCenter ) {
 
 
 
-// called by platform to get more samples
-void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
-    // for now, do nothing (no sound)
-    }
 
 
 
