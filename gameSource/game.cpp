@@ -152,7 +152,7 @@ float mouseSpeed;
 // Note that musicLoudness and soundEffectLoudness settings still
 // effect absolute loudness of each, and ONLY the musicHeadroom parameter
 // effects the global balance between the two
-double musicHeadroom = 0.05;
+double musicHeadroom = 0.01;
 
 
 int musicOff = 0;
