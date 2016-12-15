@@ -21,6 +21,10 @@ OGGHandle musicOGG = NULL;
 
 static double chunkLengthSeconds = 30;
 
+static double crossFadeSeconds = 5;
+
+static int crossFadeSamples;
+
 static int numChunks = 0;
 
 static int numTimesReachedEnd = 0;
@@ -28,6 +32,16 @@ static int numTimesReachedEnd = 0;
 static int musicNumSamples = 0;
 
 static char musicStarted = false;
+
+static int currentSamplePos = 0;
+
+
+
+// one per chunk
+// the crossFadeSamples samples that occur BEFORE the coresponding chunk
+static float **chunkPreFadeSamplesL = NULL;
+static float **chunkPreFadeSamplesR = NULL;
+
 
 
 
@@ -40,14 +54,65 @@ void initMusicPlayer() {
 
     loudnessChangePerSample = 1.0 / sampleRate;
 
+    crossFadeSamples = sampleRate * crossFadeSeconds;
 
     if( musicOGG != NULL ) {
         musicNumSamples = getOGGTotalSamples( musicOGG );    
+
+        double numSeconds = musicNumSamples / (double) sampleRate;
+        
+        numChunks = (int)floor( numSeconds / chunkLengthSeconds );
+
+
+        
+        chunkPreFadeSamplesL = new float*[ numChunks ];
+        chunkPreFadeSamplesR = new float*[ numChunks ];
+        
+        // 0 is last chunk in song
+        for( int i=0; i<numChunks; i++ ) {
+            chunkPreFadeSamplesL[i] = new float[ crossFadeSamples ];
+            chunkPreFadeSamplesR[i] = new float[ crossFadeSamples ];
+            
+            for( int s=0; s<crossFadeSamples; s++ ) {
+                chunkPreFadeSamplesL[i][s] = 0;
+                chunkPreFadeSamplesR[i][s] = 0;
+                }
+
+
+            int chunkStartSample = musicNumSamples - 
+                ( i + 1 ) * chunkLengthSeconds * sampleRate;
+            
+            int preStartSample = chunkStartSample - crossFadeSamples;
+            
+            int preOffset = 0;
+            
+            int numToRead = crossFadeSamples;
+            
+            if( preStartSample < 0 ) {
+                preOffset = -preStartSample;
+                
+                numToRead += preStartSample;
+                
+                preStartSample = 0;
+                }
+            
+            seekOGG( musicOGG, preStartSample );
+            
+
+            readNextSamplesOGG( 
+                musicOGG, numToRead,
+                &( chunkPreFadeSamplesL[i][ preOffset ] ),
+                &( chunkPreFadeSamplesR[i][ preOffset ] ) );
+            }
         }
     }
 
 
 void restartMusic( double inAge ) {
+
+    // for testing
+    //inAge = 0;
+    
 
     double ageSeconds = inAge * 60;
 
@@ -56,9 +121,6 @@ void restartMusic( double inAge ) {
 
     int sampleRate = getSampleRate();
     
-    double numSeconds = musicNumSamples / (double) sampleRate;
-        
-    numChunks = (int)floor( numSeconds / chunkLengthSeconds );
         
     numTimesReachedEnd = 0;
     
@@ -80,12 +142,12 @@ void restartMusic( double inAge ) {
         (int)( numChunksAlreadyPassed * chunkLengthSeconds *sampleRate );
 
     
-    int seekPos = musicNumSamples + 
+    currentSamplePos = musicNumSamples + 
         numExtraSamples - 
         numChunksToPlayThisTime * 
         (int)( chunkLengthSeconds * sampleRate );
     
-    seekOGG( musicOGG, seekPos );
+    seekOGG( musicOGG, currentSamplePos );
     
     
     musicStarted = true;
@@ -105,6 +167,17 @@ void freeMusicPlayer() {
     if( musicOGG != NULL ) {
         closeOGG( musicOGG );
         musicOGG = NULL;
+
+        for( int i=0; i<numChunks; i++ ) {
+            delete [] chunkPreFadeSamplesL[i];
+            delete [] chunkPreFadeSamplesR[i];
+            }
+        
+        delete [] chunkPreFadeSamplesL;
+        delete [] chunkPreFadeSamplesR;
+        
+        chunkPreFadeSamplesL = NULL;
+        chunkPreFadeSamplesR = NULL;
         }
     }
 
@@ -119,6 +192,9 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
         }
 
 
+    int sampleRate = getSampleRate();
+    
+
     // 2 bytes for each channel of stereo sample
     int numSamples = inLengthToFillInBytes / 4;
 
@@ -126,8 +202,63 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
     float *samplesL = new float[ numSamples ];
     float *samplesR = new float[ numSamples ];
 
+    int startSamplePos = currentSamplePos;
+    
     int numRead = readNextSamplesOGG( musicOGG, numSamples,
                                       samplesL, samplesR );
+
+    currentSamplePos += numRead;
+    
+    int endSamplePos = startSamplePos + numRead;
+
+    int crossFadeSamples = crossFadeSeconds * sampleRate;
+
+    if( numTimesReachedEnd < numChunks - 1
+        && 
+        musicNumSamples - endSamplePos < crossFadeSamples ) {
+
+        // at end of song that needs to crossfade
+
+        
+        // find first chunk to play next time
+        int numChunksToPlayNextTime = numTimesReachedEnd + 2;
+        
+        float *samplesLNext = 
+            chunkPreFadeSamplesL[ numChunksToPlayNextTime - 1 ];
+        float *samplesRNext = 
+            chunkPreFadeSamplesR[ numChunksToPlayNextTime - 1 ];
+        
+        for( int i=0; i<numRead; i++ ) {
+                
+            int absIndex = i + startSamplePos;
+                
+            if( musicNumSamples - absIndex <= crossFadeSamples ) {
+                    
+                int crossFadeI = crossFadeSamples -
+                    ( musicNumSamples - absIndex );
+                    
+                // t in [-1, 1]
+                double t = 
+                    ( 2 * crossFadeI / (double)crossFadeSamples ) - 1;
+                
+                
+                double thisWeight = sqrt( 0.5 * ( 1 - t ) );
+                double nextWeight = sqrt( 0.5 * ( 1 + t ) );
+                
+                    
+                samplesL[i] = 
+                    thisWeight * samplesL[i] + 
+                    nextWeight * samplesLNext[crossFadeI];
+                    
+                samplesR[i] = 
+                    thisWeight * samplesR[i] + 
+                    nextWeight * samplesRNext[crossFadeI];
+                
+                }
+            }
+        }
+    
+    
     
     if( numRead < numSamples ) {
         // hit end
@@ -149,10 +280,12 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
             }
         else {
             
-            seekOGG( musicOGG, 
-                     musicNumSamples - 
-                     numChunksToPlayThisTime * 
-                     (int)( chunkLengthSeconds * getSampleRate() ) );
+            currentSamplePos =
+                musicNumSamples - 
+                numChunksToPlayThisTime * 
+                (int)( chunkLengthSeconds * sampleRate );
+            
+            seekOGG( musicOGG, currentSamplePos );
             
             int numLeft = numSamples - numRead;
             
@@ -160,6 +293,8 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
                                                &( samplesL[numRead] ), 
                                                &( samplesR[numRead ] ) );
         
+            currentSamplePos += numReadB;
+            
             if( numReadB != numLeft ) {
                 // error
                 closeOGG( musicOGG );
@@ -219,7 +354,9 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
         
         streamPosition += 4;
         }
-
+    
+    delete [] samplesL;
+    delete [] samplesR;
     }
 
 
