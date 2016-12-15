@@ -554,6 +554,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
 
     setVolumeScaling( 10, musicHeadroom );
+    setSoundSpriteRateRange( 0.95, 1.05 );
+    setSoundSpriteVolumeRange( 0.60, 1.0 );
     
     char rebuilding;
     
