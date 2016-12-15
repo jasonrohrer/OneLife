@@ -138,7 +138,8 @@ whether held origin is valid (1 or 0), origin position on map of that held
 object (where it was picked up from), player's current heat value, 
 done_moving flag (to signal destination reached), force flag (to signal
 a move truncated unexpectedly), x,y grid positions of player,
-floating point age in "years", floating point aging rate in years/sec, and
+floating point age in "years", floating point aging rate in sec/year (how many
+seconds it takes the player to age 1 year), and
 floating point s move speeds (in grid square widths per second) and clothing
 set, and e = 1 or 0 to indicate whether the player just ate what they were 
 holding.

@@ -1671,7 +1671,7 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
         inPlayer->heat,
         posString,
         computeAge( inPlayer ),
-        getAgeRate(),
+        1.0 / getAgeRate(),
         computeMoveSpeed( inPlayer ),
         clothingList,
         inPlayer->justAte );
