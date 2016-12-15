@@ -19,6 +19,15 @@ static double loudnessChangePerSample;
 
 OGGHandle musicOGG = NULL;
 
+static double chunkLengthSeconds = 30;
+
+static int numChunks = 0;
+
+static int numTimesReachedEnd = 0;
+
+static int musicNumSamples = 0;
+
+
 
 void initMusicPlayer() {
     File musicFile( NULL, "music.ogg" );
@@ -28,6 +37,22 @@ void initMusicPlayer() {
     int sampleRate = getSampleRate();
 
     loudnessChangePerSample = 1.0 / sampleRate;
+
+
+    if( musicOGG != NULL ) {
+        musicNumSamples = getOGGTotalSamples( musicOGG );
+        
+        double numSeconds = musicNumSamples / (double) sampleRate;
+        
+        numChunks = (int)floor( numSeconds / chunkLengthSeconds );
+        
+        numTimesReachedEnd = 0;
+        
+        // start on final segment
+
+        seekOGG( musicOGG, 
+                 musicNumSamples - (int)( chunkLengthSeconds * sampleRate ) );
+        }
     }
 
 
@@ -61,8 +86,21 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
     
     if( numRead < numSamples ) {
         // hit end
-        // start over
-        seekOGG( musicOGG, 0 );
+
+        // jump back to next starting point
+        numTimesReachedEnd++;
+        
+        int numSegmentsToPlayThisTime = numTimesReachedEnd + 1;
+        
+        if( numSegmentsToPlayThisTime > numChunks ) {
+            // start over from beginning
+            numSegmentsToPlayThisTime = 1;
+            }
+        
+        seekOGG( musicOGG, 
+                 musicNumSamples - 
+                 numSegmentsToPlayThisTime * 
+                 (int)( chunkLengthSeconds * getSampleRate() ) );
         
         int numLeft = numSamples - numRead;
         

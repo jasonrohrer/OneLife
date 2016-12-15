@@ -19,6 +19,15 @@ OGGHandle openOGG( File *inOggFile ) {
     }
 
 
+
+int getOGGTotalSamples( OGGHandle inOGG ) {
+    stb_vorbis *v = (stb_vorbis*)inOGG;
+
+    return (int)( stb_vorbis_stream_length_in_samples( v ) );
+    }
+
+
+
 int readNextSamplesOGG( OGGHandle inOGG,
                         int inNumSamples, 
                         float *inLeftBuffer,

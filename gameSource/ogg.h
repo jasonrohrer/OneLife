@@ -11,6 +11,10 @@ typedef void* OGGHandle;
 OGGHandle openOGG( File *inOggFile );
 
 
+int getOGGTotalSamples( OGGHandle inOGG );
+
+
+
 // returns the number of samples read
 int readNextSamplesOGG( OGGHandle inOGG,
                         int inNumSamples, 
