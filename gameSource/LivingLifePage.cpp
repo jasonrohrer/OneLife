@@ -10,6 +10,7 @@
 
 #include "liveObjectSet.h"
 #include "ageControl.h"
+#include "musicPlayer.h"
 
 #include "../commonSource/fractalNoise.h"
 
@@ -3681,6 +3682,7 @@ void LivingLifePage::step() {
 
         if( mFirstServerMessagesReceived  ) {
             setSignal( "died" );
+            instantStopMusic();
             }
         else {
             setSignal( "loginFailed" );
@@ -4477,6 +4479,9 @@ void LivingLifePage::step() {
                 int actionTargetX = 0;
                 int actionTargetY = 0;
                 
+                double invAgeRate = 60.0;
+                
+
                 int numRead = sscanf( lines[i], 
                                       "%d %d "
                                       "%d "
@@ -4500,7 +4505,7 @@ void LivingLifePage::step() {
                                       &( o.xd ),
                                       &( o.yd ),
                                       &( o.age ),
-                                      &( o.ageRate ),
+                                      &invAgeRate,
                                       &( o.lastSpeed ),
                                       clothingBuffer,
                                       &justAte );
@@ -4512,6 +4517,8 @@ void LivingLifePage::step() {
                             heldOriginValid, heldOriginX, heldOriginY,
                             o.xd, o.yd );
                     o.lastAgeSetTime = game_getCurrentTime();
+
+                    o.ageRate = 1.0 / invAgeRate;
 
                     int numClothes;
                     char **clothes = split( clothingBuffer, ";", &numClothes );
@@ -6343,6 +6350,8 @@ void LivingLifePage::step() {
                 isLiveObjectSetFullyLoaded( &mFirstObjectSetLoadingProgress );
             
             if( mDoneLoadingFirstObjectSet ) {
+                restartMusic( computeCurrentAge( ourLiveObject ) );
+                
                 // center view on player's starting position
                 lastScreenViewCenter.x = CELL_D * ourLiveObject->xd;
                 lastScreenViewCenter.y = CELL_D * ourLiveObject->yd;

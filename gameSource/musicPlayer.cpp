@@ -27,6 +27,8 @@ static int numTimesReachedEnd = 0;
 
 static int musicNumSamples = 0;
 
+static char musicStarted = false;
+
 
 
 void initMusicPlayer() {
@@ -40,20 +42,63 @@ void initMusicPlayer() {
 
 
     if( musicOGG != NULL ) {
-        musicNumSamples = getOGGTotalSamples( musicOGG );
-        
-        double numSeconds = musicNumSamples / (double) sampleRate;
-        
-        numChunks = (int)floor( numSeconds / chunkLengthSeconds );
-        
-        numTimesReachedEnd = 0;
-        
-        // start on final segment
-
-        seekOGG( musicOGG, 
-                 musicNumSamples - (int)( chunkLengthSeconds * sampleRate ) );
+        musicNumSamples = getOGGTotalSamples( musicOGG );    
         }
     }
+
+
+void restartMusic( double inAge ) {
+
+    double ageSeconds = inAge * 60;
+
+    double numChunksAlreadyPassed = ageSeconds / chunkLengthSeconds;
+    
+
+    int sampleRate = getSampleRate();
+    
+    double numSeconds = musicNumSamples / (double) sampleRate;
+        
+    numChunks = (int)floor( numSeconds / chunkLengthSeconds );
+        
+    numTimesReachedEnd = 0;
+    
+    // walk through part of song that we've already passed
+    while( numChunksAlreadyPassed > numTimesReachedEnd + 1 ) {
+        numChunksAlreadyPassed -= ( numTimesReachedEnd + 1 );
+        
+        numTimesReachedEnd++;
+        }
+    
+    int numChunksToPlayThisTime = numTimesReachedEnd + 1;
+    
+    if( numChunksToPlayThisTime > numChunks ) {
+        // music already done!
+        return;
+        }
+    
+    int numExtraSamples = 
+        (int)( numChunksAlreadyPassed * chunkLengthSeconds *sampleRate );
+
+    
+    int seekPos = musicNumSamples + 
+        numExtraSamples - 
+        numChunksToPlayThisTime * 
+        (int)( chunkLengthSeconds * sampleRate );
+    
+    seekOGG( musicOGG, seekPos );
+    
+    
+    musicStarted = true;
+    
+    // fade in at start of music
+    musicLoudness = 0;
+    }
+
+
+void instantStopMusic() {
+    musicStarted = false;
+    }
+
 
 
 void freeMusicPlayer() {
@@ -69,7 +114,7 @@ void freeMusicPlayer() {
 // called by platform to get more samples
 void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
     
-    if( musicOGG == NULL ) {
+    if( musicOGG == NULL || !musicStarted ) {
         return;
         }
 
@@ -90,28 +135,43 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
         // jump back to next starting point
         numTimesReachedEnd++;
         
-        int numSegmentsToPlayThisTime = numTimesReachedEnd + 1;
+        int numChunksToPlayThisTime = numTimesReachedEnd + 1;
         
-        if( numSegmentsToPlayThisTime > numChunks ) {
-            // start over from beginning
-            numSegmentsToPlayThisTime = 1;
+        if( numChunksToPlayThisTime > numChunks ) {
+            // end of music
+            musicStarted = false;
+            
+            // fill rest with zero
+            for( int i=numRead; i<numSamples; i++ ) {
+                samplesL[i] = 0;
+                samplesR[i] = 0;
+                }
             }
+        else {
+            
+            seekOGG( musicOGG, 
+                     musicNumSamples - 
+                     numChunksToPlayThisTime * 
+                     (int)( chunkLengthSeconds * getSampleRate() ) );
+            
+            int numLeft = numSamples - numRead;
+            
+            int numReadB = readNextSamplesOGG( musicOGG, numLeft,
+                                               &( samplesL[numRead] ), 
+                                               &( samplesR[numRead ] ) );
         
-        seekOGG( musicOGG, 
-                 musicNumSamples - 
-                 numSegmentsToPlayThisTime * 
-                 (int)( chunkLengthSeconds * getSampleRate() ) );
-        
-        int numLeft = numSamples - numRead;
-        
-        int numReadB = readNextSamplesOGG( musicOGG, numLeft,
-                                           &( samplesL[numRead] ), 
-                                           &( samplesR[numRead ] ) );
-        
-        if( numReadB != numLeft ) {
-            // error
-            closeOGG( musicOGG );
-            musicOGG = NULL;
+            if( numReadB != numLeft ) {
+                // error
+                closeOGG( musicOGG );
+                musicOGG = NULL;
+                musicStarted = false;
+                
+                // fill rest with zero
+                for( int i=numRead + numReadB; i<numSamples; i++ ) {
+                    samplesL[i] = 0;
+                    samplesR[i] = 0;
+                    }
+                }
             }
         }
     
