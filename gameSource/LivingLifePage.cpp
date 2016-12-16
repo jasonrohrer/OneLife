@@ -3683,6 +3683,7 @@ void LivingLifePage::step() {
         if( mFirstServerMessagesReceived  ) {
             setSignal( "died" );
             instantStopMusic();
+            setSoundLoudness( 0 );
             }
         else {
             setSignal( "loginFailed" );
@@ -6350,6 +6351,7 @@ void LivingLifePage::step() {
                 isLiveObjectSetFullyLoaded( &mFirstObjectSetLoadingProgress );
             
             if( mDoneLoadingFirstObjectSet ) {
+                setSoundLoudness( 1.0 );
                 restartMusic( computeCurrentAge( ourLiveObject ) );
                 
                 // center view on player's starting position

@@ -528,7 +528,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
 
 
-    setSoundLoudness( musicLoudness );
+    setSoundLoudness( 1.0 );
     setSoundPlaying( true );
 
     
@@ -977,8 +977,6 @@ void drawFrame( char inUpdate ) {
                 currentGamePage->base_makeNotActive();
                 }
 
-            // fade out music during pause
-            setMusicLoudness( 0 );
             }
         wasPaused = true;
 
@@ -1093,10 +1091,6 @@ void drawFrame( char inUpdate ) {
             currentGamePage->base_makeActive( false );
             }
 
-        // fade music in
-        if( ! musicOff ) {
-            setMusicLoudness( 1.0 );
-            }
         wasPaused = false;
         }
 
@@ -1328,7 +1322,7 @@ void drawFrame( char inUpdate ) {
                     loadingComplete();
                     
                     initMusicPlayer();
-                    setMusicLoudness( 1.0 );
+                    setMusicLoudness( musicLoudness );
                     
                     currentGamePage = existingAccountPage;
                     currentGamePage->base_makeActive( true );
