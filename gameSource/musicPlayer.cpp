@@ -162,6 +162,10 @@ void instantStopMusic() {
     }
 
 
+static float *samplesL = NULL;
+static float *samplesR = NULL;
+
+
 
 void freeMusicPlayer() {
     if( musicOGG != NULL ) {
@@ -179,8 +183,42 @@ void freeMusicPlayer() {
         chunkPreFadeSamplesL = NULL;
         chunkPreFadeSamplesR = NULL;
         }
+
+    
+    if( samplesL != NULL ) {
+        delete [] samplesL;
+        samplesL = NULL;
+        }
+    if( samplesR != NULL ) {
+        delete [] samplesR;
+        samplesR = NULL;
+        }
     }
 
+
+
+void hintBufferSize( int inLengthToFillInBytes ) {
+    // 2 bytes for each channel of stereo sample
+    int numSamples = inLengthToFillInBytes / 4;
+
+    if( samplesL != NULL ) {
+        delete [] samplesL;
+        samplesL = NULL;
+        }
+    if( samplesR != NULL ) {
+        delete [] samplesR;
+        samplesR = NULL;
+        }
+    
+
+    samplesL = new float[ numSamples ];
+    samplesR = new float[ numSamples ];
+
+    for( int i=0; i<numSamples; i++ ) {
+        samplesL[i] = 0;
+        samplesR[i] = 0;
+        }    
+    }
 
 
 
@@ -198,9 +236,11 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
     // 2 bytes for each channel of stereo sample
     int numSamples = inLengthToFillInBytes / 4;
 
-    
-    float *samplesL = new float[ numSamples ];
-    float *samplesR = new float[ numSamples ];
+    if( samplesL == NULL ) {
+        // never got hint
+        hintBufferSize( inLengthToFillInBytes );
+        }
+
 
     int startSamplePos = currentSamplePos;
     
@@ -354,9 +394,6 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
         
         streamPosition += 4;
         }
-    
-    delete [] samplesL;
-    delete [] samplesR;
     }
 
 
