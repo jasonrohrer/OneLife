@@ -36,6 +36,8 @@ static double age = -1;
 static double ageRate = -1;
 static double ageSetTime = -1;
 
+static int samplesSeenSinceAgeSet = 0;
+
 static double ageNextMusicDone = -1;
 
 
@@ -93,9 +95,10 @@ static int startNextAgeFileRead( double inAge ) {
             if( match ) {
                 
                 char *fullName = childFiles[i]->getFullFileName();
-                
+
                 handle = startAsyncFileRead( fullName );
                 
+
                 delete [] fullName;
                 break;
                 }
@@ -115,19 +118,28 @@ void restartMusic( double inAge, double inAgeRate ) {
 
     // for testing
     //inAge = 0;
-    
-    age = inAge;
-    ageRate = inAgeRate;
 
     ageSetTime = game_getCurrentTime();
+    
+
+    lockAudio();
+
+    age = inAge;
+    ageRate = inAgeRate;
+    
+    samplesSeenSinceAgeSet = 0;
+
+    unlockAudio();
+
+
 
     asyncLoadHandle = startNextAgeFileRead( inAge );
     
     
     musicStarted = true;
     
-    // fade in at start of music
-    musicLoudness = 0;
+    // no fade in at start of music (music not playing at start
+    musicLoudness = 1.0;
     }
 
 
@@ -138,7 +150,7 @@ void instantStopMusic() {
 
 
 
-void stepMusic() {
+void stepMusicPlayer() {
 
     // no lock needed when checking this flag
     if( musicOGGReady ) {
@@ -166,7 +178,6 @@ void stepMusic() {
         
         if( checkAsyncFileReadDone( asyncLoadHandle ) ) {
             
-
             int oggDataLength;
             oggData = getAsyncFileData( asyncLoadHandle, &oggDataLength );
             
@@ -250,7 +261,20 @@ void hintBufferSize( int inLengthToFillInBytes ) {
 
 // called by platform to get more samples
 void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
+
+    // 2 bytes for each channel of stereo sample
+    int numSamples = inLengthToFillInBytes / 4;
+
     
+    double sampleComputedAge = 
+        ( samplesSeenSinceAgeSet / (double)getSampleRate() ) * ageRate
+        + age;
+    
+
+
+    samplesSeenSinceAgeSet += numSamples;
+
+
     if( !musicOGGReady || !musicStarted ) {
         memset( inBuffer, 0, inLengthToFillInBytes );
         
@@ -264,7 +288,7 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
         
         double startAge = ageNextMusicDone - musicLengthSeconds * ageRate;
         
-        if( startAge < getCurrentAge() ) {
+        if( startAge < sampleComputedAge ) {
             musicOGGPlaying = true;
             }
         }
@@ -279,9 +303,6 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
 
 
 
-
-    // 2 bytes for each channel of stereo sample
-    int numSamples = inLengthToFillInBytes / 4;
 
     if( samplesL == NULL ) {
         // never got hint

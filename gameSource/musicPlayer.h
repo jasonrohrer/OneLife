@@ -13,7 +13,7 @@ void restartMusic( double inAge, double inAgeRate );
 void instantStopMusic();
 
 
-void stepMusic();
+void stepMusicPlayer();
 
 
 void setMusicLoudness( double inLoudness );

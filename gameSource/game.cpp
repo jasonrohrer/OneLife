@@ -1101,6 +1101,8 @@ void drawFrame( char inUpdate ) {
     
     stepSoundBank();
     
+    stepMusicPlayer();
+
     if( currentGamePage != NULL ) {
         currentGamePage->base_step();
 
