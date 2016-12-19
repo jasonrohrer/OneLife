@@ -47,7 +47,7 @@ soundBank.cpp \
 convolution.cpp \
 fft.cpp \
 ogg.cpp \
-musicPlayer.cpp \
+musicPlayer2.cpp \
 
 
 

@@ -6352,7 +6352,8 @@ void LivingLifePage::step() {
             
             if( mDoneLoadingFirstObjectSet ) {
                 setSoundLoudness( 1.0 );
-                restartMusic( computeCurrentAge( ourLiveObject ) );
+                restartMusic( computeCurrentAge( ourLiveObject ),
+                               ourLiveObject->ageRate );
                 
                 // center view on player's starting position
                 lastScreenViewCenter.x = CELL_D * ourLiveObject->xd;

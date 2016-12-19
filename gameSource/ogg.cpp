@@ -20,6 +20,18 @@ OGGHandle openOGG( File *inOggFile ) {
 
 
 
+OGGHandle openOGG( unsigned char *inAllBytes, int inLength ) {
+
+    int error;
+
+    stb_vorbis *v = stb_vorbis_open_memory( inAllBytes, inLength,
+                                            &error, NULL );
+    // can be NULL, but casting it is fine
+    return (void *)v;
+    }
+
+
+
 int getOGGTotalSamples( OGGHandle inOGG ) {
     stb_vorbis *v = (stb_vorbis*)inOGG;
 

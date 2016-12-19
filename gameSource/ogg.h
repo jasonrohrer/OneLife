@@ -8,7 +8,12 @@ typedef void* OGGHandle;
 
 
 // returns NULL on failure
+
+// opens OGG file
 OGGHandle openOGG( File *inOggFile );
+// opens OGG data from a memory buffer
+OGGHandle openOGG( unsigned char *inAllBytes, int inLength );
+
 
 
 int getOGGTotalSamples( OGGHandle inOGG );
