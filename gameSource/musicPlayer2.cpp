@@ -68,11 +68,20 @@ static int startNextAgeFileRead( double inAge ) {
 
     // too close to that age transition,
     // start on next
-    if( nextFiveBlock * 5 < inAge + 1 ) {
+    if( nextFiveBlock * 5 < inAge + 60 * ageRate ) {
         nextFiveBlock += 1;
         }
     
     ageNextMusicDone = nextFiveBlock * 5;
+
+    if( ageNextMusicDone == 60 ) {
+        // special case, end of life
+        // have music end 5 seconds after end of life
+        // so there's an ubrupt cut off of the music with the YOU DIED
+        // screen
+        ageNextMusicDone += 10 * ageRate;
+        }
+    
 
     char *searchString = autoSprintf( "_%d.ogg", nextFiveBlock );
 
