@@ -38,6 +38,8 @@ static double ageSetTime = -1;
 
 static int samplesSeenSinceAgeSet = 0;
 
+static char soundEffectsFaded = false;
+
 static double ageNextMusicDone = -1;
 
 
@@ -173,6 +175,12 @@ void stepMusicPlayer() {
     // we can safely manipulate the shared data now
     
     if( musicOGG != NULL ) {
+        
+        if( soundEffectsFaded ) {
+            soundEffectsFaded = false;
+            resumePlayingSoundSprites();
+            }
+        
         closeOGG( musicOGG );
         musicOGG = NULL;
         
@@ -297,9 +305,18 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
         
         double startAge = ageNextMusicDone - musicLengthSeconds * ageRate;
         
+        double fadeSeconds = 1.0;
+
         if( startAge < sampleComputedAge ) {
             musicOGGPlaying = true;
             }
+        else if( ! soundEffectsFaded && 
+                 startAge - fadeSeconds * ageRate < sampleComputedAge ) {
+            
+            soundEffectsFaded = true;
+            fadeSoundSprites( fadeSeconds );
+            }
+        
         }
     
 
