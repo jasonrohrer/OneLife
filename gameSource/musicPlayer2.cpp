@@ -149,7 +149,7 @@ void restartMusic( double inAge, double inAgeRate ) {
     
     musicStarted = true;
     
-    // no fade in at start of music (music not playing at start
+    // no fade in at start of music (music not playing at start)
     musicLoudness = 1.0;
     }
 
@@ -406,8 +406,11 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
 void setMusicLoudness( double inLoudness ) {
     lockAudio();
     
+    // for now, no fade-up to target loudness
+    // but keep code in place in case we need it later
     musicTargetLoudness = inLoudness;
-    
+    musicLoudness = musicTargetLoudness;
+
     unlockAudio();
     }
 

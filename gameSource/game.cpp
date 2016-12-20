@@ -147,12 +147,20 @@ char initDone = false;
 float mouseSpeed;
 
 
+int maxSimultaneousExpectedSoundEffects = 10;
+
 // fraction of full volume devoted to music
-// the rest is reserved for sound effects
 // Note that musicLoudness and soundEffectLoudness settings still
-// effect absolute loudness of each, and ONLY the musicHeadroom parameter
-// effects the global balance between the two
-double musicHeadroom = 0.01;
+// effect absolute loudness of each, beyond this setting
+// this setting is used to trim music volume relative to sound effects
+// if both are at full volume
+
+// 1/10 makes it as loud as the loudest sound effect
+// on the other hand, it's stereo, compressed, full-frequency etc.
+// so it's subjectively louder
+double musicHeadroom = 0.02;
+
+
 
 
 int musicOff = 0;
@@ -553,7 +561,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
 
 
-    setVolumeScaling( 10, musicHeadroom );
+    // 0 music headroom needed, because we fade sounds before playing music
+    setVolumeScaling( 10, 0 );
     setSoundSpriteRateRange( 0.95, 1.05 );
     setSoundSpriteVolumeRange( 0.60, 1.0 );
     
