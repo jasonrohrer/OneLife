@@ -15,6 +15,7 @@ void usage() {
 
 
 #include "minorGems/sound/formats/aiff.h"
+#include "minorGems/sound/audioNoClip.h"
 #include "minorGems/io/file/File.h"
 #include "minorGems/io/file/FileOutputStream.h"
 
@@ -67,8 +68,6 @@ static int16_t *readAIFFFile( File *inFile, int *outNumSamples ) {
 
 
 
-
-#include "audioNoClip.h"
 
 
 int main( int inNumArgs, char **inArgs ) {
