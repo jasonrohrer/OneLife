@@ -57,9 +57,12 @@ void setVolumeScaling( int inMaxSimultaneousSoundEffects,
                        double inMusicHeadroom ) {
     double totalVolume = 1.0 - inMusicHeadroom;
     
-    playedSoundVolumeScale = totalVolume / inMaxSimultaneousSoundEffects;
+    playedSoundVolumeScale = totalVolume;
 
     setMaxTotalSoundSpriteVolume( totalVolume );
+    
+    // allow a reverb for each
+    setMaxSimultaneousSoundSprites( 2 * inMaxSimultaneousSoundEffects );
     }
 
 

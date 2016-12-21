@@ -155,10 +155,10 @@ int maxSimultaneousExpectedSoundEffects = 10;
 // this setting is used to trim music volume relative to sound effects
 // if both are at full volume
 
-// 1/10 makes it as loud as the loudest sound effect
+// 1.0 makes it as loud as the sound effect mix
 // on the other hand, it's stereo, compressed, full-frequency etc.
 // so it's subjectively louder
-double musicHeadroom = 0.02;
+double musicHeadroom = 0.5;
 
 
 
