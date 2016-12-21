@@ -1594,6 +1594,11 @@ void drawString( const char *inString, char inForceCenter ) {
 
 
 
+
+void hintBufferSize( int inSize ) {
+    }
+
+
 // called by platform to get more samples
 void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
     // for now, do nothing (no sound)
