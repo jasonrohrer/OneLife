@@ -127,9 +127,10 @@ int main( int inNumArgs, char **inArgs ) {
     delete [] numSamples;
     delete [] samples;
     
-    
 
-    resetAudioNoClip( 1.0, 22050, 22050 );
+    double cap = 0.05;
+
+    resetAudioNoClip( cap, 22050, 22050 );
     
     // dummy right channel
     double *bFloats = new double[ numA ];
@@ -139,6 +140,14 @@ int main( int inNumArgs, char **inArgs ) {
     audioNoClip( aFloats, bFloats, numA );
 
     delete [] bFloats;
+
+
+    double normalizeFactor = 1.0 / cap;
+    
+    for( int i=0; i<numA; i++ ) {
+        aFloats[i] *= normalizeFactor;
+        }
+
 
     int16_t *samplesA = new int16_t[ numA ];
     
