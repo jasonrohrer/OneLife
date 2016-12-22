@@ -128,16 +128,16 @@ int main( int inNumArgs, char **inArgs ) {
     delete [] samples;
     
 
-    double cap = 0.05;
+    double cap = 0.5;
 
-    resetAudioNoClip( cap, 22050, 22050 );
+    NoClip c = resetAudioNoClip( cap, 22050, 22050 );
     
     // dummy right channel
     double *bFloats = new double[ numA ];
     
     memcpy( bFloats, aFloats, numA * sizeof( double ) );
     
-    audioNoClip( aFloats, bFloats, numA );
+    audioNoClip( &c, aFloats, bFloats, numA );
 
     delete [] bFloats;
 

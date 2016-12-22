@@ -158,7 +158,7 @@ int maxSimultaneousExpectedSoundEffects = 10;
 // 1.0 makes it as loud as the sound effect mix
 // on the other hand, it's stereo, compressed, full-frequency etc.
 // so it's subjectively louder
-double musicHeadroom = 0.5;
+double musicHeadroom = 1.0;
 
 
 

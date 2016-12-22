@@ -59,7 +59,10 @@ void setVolumeScaling( int inMaxSimultaneousSoundEffects,
     
     playedSoundVolumeScale = totalVolume;
 
-    setMaxTotalSoundSpriteVolume( totalVolume, 0.99 );
+    // compress top 50% of volume range so that those loud sounds have
+    // the same volume if played individually, while giving full dynamic
+    // range to quieter sounds played individually.
+    setMaxTotalSoundSpriteVolume( totalVolume, 0.50 );
     
     // allow a reverb for each
     setMaxSimultaneousSoundSprites( 2 * inMaxSimultaneousSoundEffects );

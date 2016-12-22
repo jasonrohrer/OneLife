@@ -313,8 +313,8 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
         else if( ! soundEffectsFaded && 
                  startAge - fadeSeconds * ageRate < sampleComputedAge ) {
             
-            soundEffectsFaded = true;
-            fadeSoundSprites( fadeSeconds );
+            //soundEffectsFaded = true;
+            //fadeSoundSprites( fadeSeconds );
             }
         
         }
