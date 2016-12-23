@@ -1035,6 +1035,8 @@ int stopRecordingSound() {
     r->id = newID;
     r->sound = setSoundSprite( &( samples[ finalStartPoint ] ),
                                finalNumSamples );
+    r->reverbSound = NULL;
+    
     delete [] samples;
     
     idMap[newID] = r;
