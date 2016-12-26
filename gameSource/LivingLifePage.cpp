@@ -2173,6 +2173,17 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                 else {        
                     holdRot = holdingPos.rot;
                     }
+
+                if( holdRot > 1 ) {
+                    while( holdRot > 1 ) {
+                        holdRot -= 1;
+                        }
+                    }
+                else if( holdRot < -1 ) {
+                    while( holdRot < -1 ) {
+                        holdRot += 1;
+                        }
+                    }
                 }
             
             
