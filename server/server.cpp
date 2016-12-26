@@ -2078,6 +2078,60 @@ void processLoggedInPlayer( Socket *inSock,
 
 
 
+// doesn't check whether dest itself is blocked
+static char directLineBlocked( GridPos inSource, GridPos inDest ) {
+    // line algorithm from here
+    // https://en.wikipedia.org/wiki/Bresenham's_line_algorithm
+    
+    double deltaX = inDest.x - inSource.x;
+    
+    double deltaY = inDest.y - inSource.y;
+    
+
+    int xStep = 1;
+    if( deltaX < 0 ) {
+        xStep = -1;
+        }
+    
+    int yStep = 1;
+    if( deltaY < 0 ) {
+        yStep = -1;
+        }
+    
+
+    if( deltaX == 0 ) {
+        // vertical line
+        
+        // just walk through y
+        for( int y=inSource.y; y != inDest.y; y += yStep ) {
+            if( isMapSpotBlocking( inSource.x, y ) ) {
+                return true;
+                }
+            }
+        }
+    else {
+        double deltaErr = fabs( deltaY / (double)deltaX );
+        
+        double error = deltaErr - 0.5;
+        
+        int y = inSource.y;
+        for( int x=inSource.x; x != inDest.x; x += xStep ) {
+            if( isMapSpotBlocking( x, y ) ) {
+                return true;
+                }
+            error += deltaErr;
+            
+            if( error >= 0.5 ) {
+                y += yStep;
+                error -= 1.0;
+                }
+            }
+        }
+
+    return false;
+    }
+
+
 
 
 int main() {
@@ -3194,9 +3248,12 @@ int main() {
                                 double d = distance( targetPos,
                                                      playerPos );
                                 
-                                if( heldObj->deadlyDistance >= d ) {
+                                if( heldObj->deadlyDistance >= d &&
+                                    ! directLineBlocked( playerPos, 
+                                                         targetPos ) ) {
                                     // target is close enough
-
+                                    // and no blocking objects along the way
+                                    
                                     // is anyone there?
                                     LiveObject *hitPlayer = 
                                         getHitPlayer( m.x, m.y );
