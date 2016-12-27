@@ -6,7 +6,7 @@
 
 
 int SoundWidget::sClipboardSound = -1;
-double SoundWidget::sClipboardVolume = 1.0;
+double SoundWidget::sClipboardVolume = .25;
 
 
 SimpleVector<SoundWidget*> SoundWidget::sWidgetList;
@@ -31,7 +31,8 @@ SoundWidget::SoundWidget( Font *inDisplayFont,
           mPasteButton( "pasteButton.tga", 85, 0 ),
           mVolumeSlider( inDisplayFont, -148, -30, 2,
                          202, 20,
-                         0, 1.0, "V" ) {
+                         0, 1.0, "V" ),
+          mDefaultVolumeButton( inDisplayFont, 118, -30, "D" ) {
 
     addComponent( &mRecordButton );
     addComponent( &mStopButton );
@@ -40,6 +41,7 @@ SoundWidget::SoundWidget( Font *inDisplayFont,
     addComponent( &mCopyButton );
     addComponent( &mPasteButton );
     addComponent( &mVolumeSlider );
+    addComponent( &mDefaultVolumeButton );
 
 
     styleButton( &mRecordButton );
@@ -48,6 +50,8 @@ SoundWidget::SoundWidget( Font *inDisplayFont,
     styleButton( &mClearButton );
     styleButton( &mCopyButton );
     styleButton( &mPasteButton );
+
+    styleButton( &mDefaultVolumeButton );
     
     mVolumeSlider.toggleField( false );
 
@@ -60,11 +64,13 @@ SoundWidget::SoundWidget( Font *inDisplayFont,
     mCopyButton.addActionListener( this );
     mPasteButton.addActionListener( this );
 
+    mDefaultVolumeButton.addActionListener( this );
+
     mStopButton.setVisible( false );
 
     setSound( -1 );
 
-    mVolumeSlider.setValue( 1 );
+    mVolumeSlider.setValue( .25 );
 
     sWidgetList.push_back( this );
 
@@ -103,6 +109,7 @@ void SoundWidget::setSound( int inSoundID ) {
     mVolumeSlider.setVisible( mSoundID != -1 );
     mCopyButton.setVisible( mSoundID != -1 );
     mClearButton.setVisible( mSoundID != -1 );
+    mDefaultVolumeButton.setVisible( mSoundID != -1 );
     }
 
 
@@ -144,7 +151,11 @@ void SoundWidget::setSoundUsage( SoundUsage inUsage ) {
         
         
 void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
-    if( inTarget == &mVolumeSlider ) {
+    if( inTarget == &mDefaultVolumeButton ) {
+        mVolumeSlider.setValue( 0.25 );
+        fireActionPerformed( this );
+        }
+    else if( inTarget == &mVolumeSlider ) {
         fireActionPerformed( this );
         }
     else if( inTarget == &mRecordButton ) {

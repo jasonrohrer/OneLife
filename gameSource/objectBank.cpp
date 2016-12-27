@@ -22,7 +22,7 @@
 #include "soundBank.h"
 
 
-SoundUsage blankSoundUsage = { -1, 1.0 };
+SoundUsage blankSoundUsage = { -1, .25 };
 
 
 static int mapSize;

@@ -3,6 +3,7 @@
 
 
 #include "SpriteButton.h"
+#include "TextButton.h"
 #include "ValueSlider.h"
 #include "minorGems/game/Font.h"
 #include "minorGems/util/SimpleVector.h"
@@ -46,7 +47,7 @@ class SoundWidget : public PageComponent, public ActionListenerList,
         
         // for propagating clipboard changes
         static SimpleVector<SoundWidget*> sWidgetList;
-
+        
         SpriteButton mRecordButton;
         SpriteButton mStopButton;
         SpriteButton mPlayButton;
@@ -59,6 +60,8 @@ class SoundWidget : public PageComponent, public ActionListenerList,
 
         ValueSlider mVolumeSlider;
         
+        TextButton mDefaultVolumeButton;
+
         
         virtual void actionPerformed( GUIComponent *inTarget );
 
