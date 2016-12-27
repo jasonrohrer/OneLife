@@ -7,7 +7,7 @@
 #include <math.h>
 #include <string.h>
 
-
+/*
 static void naiveConvolve( double *inA, int inLengthA,
                            double *inB, int inLengthB,
                            double *inDest ) {
@@ -18,7 +18,7 @@ static void naiveConvolve( double *inA, int inLengthA,
             }
         }
     }
-
+*/
 
 
 static double *zeroPad( double *inSource, 
@@ -34,7 +34,7 @@ static double *zeroPad( double *inSource,
     }
 
 
-
+/*
 static void windowConvolve( int inWindowSize,
                             double *inA, int inLengthA,
                             double *inB, int inLengthB,
@@ -69,7 +69,7 @@ static void windowConvolve( int inWindowSize,
     delete [] paddedB;
     delete [] paddedDest;
     }
-
+*/
 
 
 #include "fft.h"
