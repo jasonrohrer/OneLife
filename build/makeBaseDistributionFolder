@@ -17,11 +17,15 @@ mkdir $baseFolder
 mkdir $baseFolder/graphics
 mkdir $baseFolder/settings
 mkdir $baseFolder/languages
+mkdir $baseFolder/groundTileCache
+mkdir $baseFolder/reverbCache
 
 mkdir $baseFolder/sprites
 mkdir $baseFolder/objects
 mkdir $baseFolder/transitions
 mkdir $baseFolder/animations
+mkdir $baseFolder/music
+mkdir $baseFolder/sounds
 
 
 
@@ -31,14 +35,18 @@ cp ../gameSource/languages/*.txt $baseFolder/languages
 cp ../gameSource/language.txt $baseFolder
 cp ../documentation/Readme.txt $baseFolder
 cp ../no_copyright.txt $baseFolder
+cp ../gameSource/groundTileCache/*.tga $baseFolder/groundTileCache
+cp ../gameSource/reverbCache/*.aiff $baseFolder/reverbCache
 
 
-cp ../../OneLifeData2/sprites/* $baseFolder/sprites
-cp ../../OneLifeData2/objects/* $baseFolder/objects
-cp ../../OneLifeData2/transitions/* $baseFolder/transitions
-cp ../../OneLifeData2/animations/* $baseFolder/animations
+cp ../../OneLifeData6/sprites/* $baseFolder/sprites
+cp ../../OneLifeData6/objects/* $baseFolder/objects
+cp ../../OneLifeData6/transitions/* $baseFolder/transitions
+cp ../../OneLifeData6/animations/* $baseFolder/animations
+cp ../../OneLifeData6/music/* $baseFolder/music
+cp ../../OneLifeData6/sounds/* $baseFolder/sounds
 
-cp ../../OneLifeData2/dataVersionNumber.txt $baseFolder/
+cp ../../OneLifeData6/dataVersionNumber.txt $baseFolder/
 
 
 rm -f $baseFolder/settings/email.ini

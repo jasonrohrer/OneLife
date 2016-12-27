@@ -32,13 +32,18 @@ make || exit 1
 
 cd ../..
 
+
+echo "Making directories"
 mkdir -p graphics
 mkdir -p settings
 mkdir -p languages
+mkdir -p reverbCache
+mkdir -p groundTileCache
 
 
 
 
+echo "Copying items from build into directories"
 cp OneLife/gameSource/OneLife ./OneLifeApp
 cp OneLife/documentation/Readme.txt .
 cp OneLife/no_copyright.txt .
@@ -46,6 +51,8 @@ cp OneLife/gameSource/graphics/* ./graphics
 cp OneLife/gameSource/settings/* ./settings
 cp OneLife/gameSource/languages/* ./languages
 cp OneLife/gameSource/language.txt ./
+cp OneLife/gameSource/reverbCache/* ./reverbCache
+cp OneLife/gameSource/groundTileCache/* ./groundTileCache
 
 
 echo "Run OneLifeApp to play."

@@ -10,3 +10,29 @@ cd ../../../../OneLife
 hg archive $SOURCEDIR/OneLife
 
 cd $SOURCEDIR
+
+cd ../../../../OneLifeData6
+hg archive $SOURCEDIR/OneLifeData6
+
+cd $SOURCEDIR
+
+mv $SOURCEDIR/OneLifeData6/animations $SOURCEDIR/
+mv $SOURCEDIR/OneLifeData6/music $SOURCEDIR/
+mv $SOURCEDIR/OneLifeData6/objects $SOURCEDIR/
+mv $SOURCEDIR/OneLifeData6/sounds $SOURCEDIR/
+mv $SOURCEDIR/OneLifeData6/sprites $SOURCEDIR/
+mv $SOURCEDIR/OneLifeData6/transitions $SOURCEDIR/
+mv $SOURCEDIR/OneLifeData6/dataVersionNumber.txt $SOURCEDIR/
+
+rm -r $SOURCEDIR/OneLifeData6  
+
+
+cp -r ../../../../OneLife/gameSource/reverbCache $SOURCEDIR/OneLife/gameSource
+cp -r ../../../../OneLife/gameSource/groundTileCache $SOURCEDIR/OneLife/gameSource
+
+cp -r ../../../../OneLifeData6/animations/cache.fcz $SOURCEDIR/animations/
+cp -r ../../../../OneLifeData6/objects/cache.fcz $SOURCEDIR/objects/
+cp -r ../../../../OneLifeData6/sprites/cache.fcz $SOURCEDIR/sprites/
+cp -r ../../../../OneLifeData6/transitions/cache.fcz $SOURCEDIR/transitions/
+
+cd $SOURCEDIR

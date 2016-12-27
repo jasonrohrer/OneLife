@@ -27,8 +27,10 @@ rm -rf $buildDir $buildDir_Linux.tar.gz
 
 mkdir $buildDir
 
+
 cd $sourceWorkingDir
-cp -r OneLifeApp graphics languages language.txt no_copyright.txt Readme.txt settings ../$buildDir
+cp -r animations music objects sounds sprites transitions dataVersionNumber.txt ../$buildDir
+cp -r OneLifeApp graphics languages language.txt no_copyright.txt Readme.txt settings reverbCache groundTileCache ../$buildDir
 
 cd ..
 
@@ -40,4 +42,4 @@ echo "$1 built on $d" > $buildDir/binary.txt
 
 tar czf $finalTarball $buildDir
 
-rm -rf $sourceWorkingDir
+#rm -rf $sourceWorkingDir
