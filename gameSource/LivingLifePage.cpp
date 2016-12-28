@@ -7364,6 +7364,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             // adjust move to closest possible
             ourLiveObject->xd = ourLiveObject->closestDestIfPathFailedX;
             ourLiveObject->yd = ourLiveObject->closestDestIfPathFailedY;
+            
+            if( ourLiveObject->xd == oldXD && ourLiveObject->yd == oldYD ) {
+                // completely blocked in, no path at all toward dest
+                
+                // ignore click
+                
+                if( nextActionMessageToSend != NULL ) {
+                    delete [] nextActionMessageToSend;
+                    nextActionMessageToSend = NULL;
+                    }
+                ourLiveObject->inMotion = false;
+                return;
+                }
+            
 
             computePathToDest( ourLiveObject );
             
