@@ -1,5 +1,8 @@
-<br>
-<center>
+
+</td>
+</tr>
+</table>
+</center>
 
 <?php
 
