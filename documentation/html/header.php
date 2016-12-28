@@ -20,6 +20,6 @@ if( isset( $blockRobots ) && $blockRobots == 1 ) {
 <body bgcolor=black text=white link=#91ac66 vlink=#91ac66 alink=#91ac66>
 
 <center>
-<table border=0 width=720>
+<table border=0 width=900>
 <tr>
 <td>
