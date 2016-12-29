@@ -3830,7 +3830,8 @@ void LivingLifePage::step() {
     while( message != NULL ) {
         overheadServerBytesRead += 52;
         
-        printf( "Got length %d message\n%s\n", strlen( message ), message );
+        printf( "Got length %d message\n%s\n", 
+                (int)strlen( message ), message );
 
         messageType type = getMessageType( message );
         
