@@ -1,6 +1,5 @@
 #include <stdarg.h>
 #include <math.h>
-#include <values.h>
 
 #include "fractalNoise.h"
 
