@@ -46,6 +46,30 @@ cp ../../OneLifeData6/animations/* $baseFolder/animations
 cp ../../OneLifeData6/music/* $baseFolder/music
 cp ../../OneLifeData6/sounds/* $baseFolder/sounds
 
+
+# on mingw, symlinks in teh gameSource folder are full copies
+# so cache files aren't created back in the OneLifeData6 directory
+if [ ! -e $baseFolder/sprites/cache.fcz ]
+then
+   cp ../gameSource/sprites/cache.fcz $baseFolder/sprites/
+fi
+
+if [ ! -e $baseFolder/objects/cache.fcz ]
+then
+   cp ../gameSource/objects/cache.fcz $baseFolder/objects/
+fi
+
+if [ ! -e $baseFolder/transitions/cache.fcz ]
+then
+   cp ../gameSource/transitions/cache.fcz $baseFolder/transitions/
+fi
+
+if [ ! -e $baseFolder/animations/cache.fcz ]
+then
+   cp ../gameSource/animations/cache.fcz $baseFolder/animations/
+fi
+
+
 cp ../../OneLifeData6/dataVersionNumber.txt $baseFolder/
 
 
