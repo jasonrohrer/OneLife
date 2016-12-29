@@ -275,7 +275,7 @@ static SoundRecord *getSoundRecord( int inID ) {
 
 
 static SimpleVector<int> reverbsToRegenerate;
-static int nextReverbToRegenerate;
+static int nextReverbToRegenerate = 0;
 static int numReverbSamples;
 static File *reverbFolder;
 
@@ -406,6 +406,11 @@ int initSoundBankStart() {
 
 
 float initSoundBankStep() {
+    
+    if( nextReverbToRegenerate == reverbsToRegenerate.size() ) {
+        return 1.0f;
+        }
+    
     int id = reverbsToRegenerate.getElementDirect( nextReverbToRegenerate );
     
     generateReverb( getSoundRecord( id ), numReverbSamples, reverbFolder );
