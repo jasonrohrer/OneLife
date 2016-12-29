@@ -1076,7 +1076,7 @@ static int compute_codewords(Codebook *c, uint8 *len, int n, uint32 *values)
       add_entry(c, bit_reverse(res), i, m++, len[i], values);
       // propogate availability up the tree
       if (z != len[i]) {
-         assert(len[i] >= 0 && len[i] < 32);
+         assert(len[i] < 32);
          for (y=len[i]; y > z; --y) {
             assert(available[y] == 0);
             available[y] = res + (1 << (32-y));
