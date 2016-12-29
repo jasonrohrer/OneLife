@@ -5,7 +5,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.cordialminuet</string>
+	<string>com.onehouronelife</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
@@ -27,7 +27,7 @@
 	<key>CFBundleLongVersionString</key>
 	<string>0</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Public Domain, 2014</string>
+	<string>Public Domain, 2016</string>
 	<key>LSRequiresCarbon</key>
         <true/>
 	<key>CSResourcesFileMapped</key>
