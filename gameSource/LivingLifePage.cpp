@@ -6322,7 +6322,7 @@ void LivingLifePage::step() {
             overheadServerBytesSent += 52;
 
             if( nextActionEating ) {
-                if( ourLiveObject->holdingID != 0 ) {
+                if( ourLiveObject->holdingID > 0 ) {
                     ObjectRecord *held = getObject( ourLiveObject->holdingID );
                     
                     if( held->eatingSound.id != -1 ) {
@@ -6334,7 +6334,7 @@ void LivingLifePage::step() {
                     }
                 }
             else if( !nextActionDropping ) {    
-                if( ourLiveObject->holdingID != 0 ) {
+                if( ourLiveObject->holdingID > 0 ) {
                     ObjectRecord *held = getObject( ourLiveObject->holdingID );
                     
                     if( held->usingSound.id != -1 ) {
