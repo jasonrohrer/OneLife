@@ -1,1 +1,1 @@
-nohup catchsegv ./OneLifeServer >> serverOut.txt &
+nohup catchsegv unbuffer ./OneLifeServer >> serverOut.txt &
