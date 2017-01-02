@@ -5553,21 +5553,20 @@ int main() {
             else {
                 // this player has first message, ready for updates/moves
                 
-                int playerXD = nextPlayer->xd;
-                int playerYD = nextPlayer->yd;
 
                 if( nextPlayer->heldByOther ) {
                     LiveObject *holdingPlayer = 
                         getLiveObject( nextPlayer->heldByOtherID );
-                
-                    playerXD = holdingPlayer->xd;
-                    playerYD = holdingPlayer->yd;
+                    
+                    // update baby's destination along with holding adult
+                    nextPlayer->xd = holdingPlayer->xd;
+                    nextPlayer->yd = holdingPlayer->yd;
                     }
 
 
-                if( abs( playerXD - nextPlayer->lastSentMapX ) > 7
+                if( abs( nextPlayer->xd - nextPlayer->lastSentMapX ) > 7
                     ||
-                    abs( playerYD - nextPlayer->lastSentMapY ) > 8 ) {
+                    abs( nextPlayer->yd - nextPlayer->lastSentMapY ) > 8 ) {
                 
                     // moving out of bounds of chunk, send update
                     
