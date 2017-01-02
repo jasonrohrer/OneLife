@@ -3729,6 +3729,7 @@ int main() {
                                     getHitPlayer( m.x, m.y, 5 );
                                 
                                 if( hitPlayer != NULL &&
+                                    !hitPlayer->heldByOther &&
                                     computeAge( hitPlayer ) < babyAge  ) {
                                     
                                     // negative holding IDs to indicate
