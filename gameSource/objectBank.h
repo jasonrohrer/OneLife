@@ -422,7 +422,10 @@ double getClosestObjectPart( ObjectRecord *inObject,
                              int *outSprite,
                              // 0, 1, 2, 3 if clothing hit
                              int *outClothing,
-                             int *outSlot );
+                             int *outSlot,
+                             // whether sprites marked as multiplicative
+                             // blend-mode should be considered clickable
+                             char inConsiderTransparent = true );
 
 
 char isSpriteVisibleAtAge( ObjectRecord *inObject,

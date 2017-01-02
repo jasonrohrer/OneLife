@@ -2267,7 +2267,8 @@ double getClosestObjectPart( ObjectRecord *inObject,
                              float inXCenterOffset, float inYCenterOffset,
                              int *outSprite,
                              int *outClothing,
-                             int *outSlot ) {
+                             int *outSlot,
+                             char inConsiderTransparent ) {
     
     doublePair pos = { inXCenterOffset, inYCenterOffset };
     
@@ -2408,7 +2409,8 @@ double getClosestObjectPart( ObjectRecord *inObject,
                                                     -1,
                                                     inFlip,
                                                     cOffset.x, cOffset.y,
-                                                    &sp, &cl, &sl );
+                                                    &sp, &cl, &sl,
+                                                    inConsiderTransparent );
                 if( sp != -1 ) {
                     *outClothing = cObjIndex[c];
                     break;
@@ -2470,6 +2472,11 @@ double getClosestObjectPart( ObjectRecord *inObject,
         
         SpriteRecord *sr = getSpriteRecord( inObject->sprites[i] );
         
+        if( !inConsiderTransparent &&
+            sr->multiplicativeBlend ){
+            // skip this transparent sprite
+            continue;
+            }
         
         if( inFlip ) {
             offset = rotate( offset, -2 * M_PI * inObject->spriteRot[i] );
@@ -2568,7 +2575,8 @@ double getClosestObjectPart( ObjectRecord *inObject,
                                       -1,
                                       inFlip,
                                       slotOffset.x, slotOffset.y,
-                                      &sp, &cl, &sl );
+                                      &sp, &cl, &sl,
+                                      inConsiderTransparent );
                 if( sp != -1 ) {
                     *outSlot = i;
                     smallestDist = 0;

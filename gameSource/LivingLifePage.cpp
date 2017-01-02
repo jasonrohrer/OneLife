@@ -6665,7 +6665,10 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                     mMapTileFlips[ mapI ],
                     clickOffsetX,
                     clickOffsetY,
-                    &sp, &cl, &sl );
+                    &sp, &cl, &sl,
+                    // ignore transparent parts
+                    // allow objects behind smoke to be picked up
+                    false );
                 
                 if( dist < minDistThatHits ) {
                     p->hit = true;
