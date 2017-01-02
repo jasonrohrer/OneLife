@@ -116,7 +116,8 @@ typedef struct LiveObject {
 
         // held by other player?
         char heldByOther;
-        
+        int heldByOtherID;
+
         // start and dest for a move
         // same if reached destination
         int xs;
@@ -3703,6 +3704,7 @@ int main() {
                                     nextPlayer->holdingEtaDecay = 0;
 
                                     hitPlayer->heldByOther = true;
+                                    hitPlayer->heldByOtherID = nextPlayer->id;
                                     
                                     // force baby to drop what they are
                                     // holding
@@ -5551,9 +5553,21 @@ int main() {
             else {
                 // this player has first message, ready for updates/moves
                 
-                if( abs( nextPlayer->xd - nextPlayer->lastSentMapX ) > 7
+                int playerXD = nextPlayer->xd;
+                int playerYD = nextPlayer->yd;
+
+                if( nextPlayer->heldByOther ) {
+                    LiveObject *holdingPlayer = 
+                        getLiveObject( nextPlayer->heldByOtherID );
+                
+                    playerXD = holdingPlayer->xd;
+                    playerYD = holdingPlayer->yd;
+                    }
+
+
+                if( abs( playerXD - nextPlayer->lastSentMapX ) > 7
                     ||
-                    abs( nextPlayer->yd - nextPlayer->lastSentMapY ) > 8 ) {
+                    abs( playerYD - nextPlayer->lastSentMapY ) > 8 ) {
                 
                     // moving out of bounds of chunk, send update
                     
