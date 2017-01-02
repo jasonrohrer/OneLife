@@ -30,6 +30,7 @@ typedef struct LiveObject {
         int id;
 
         int displayID;
+        char onScreen;
         
         double age;
         double ageRate;

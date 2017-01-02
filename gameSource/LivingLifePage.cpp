@@ -1838,6 +1838,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
     SimpleVector<LiveObject *> *inSpeakers,
     SimpleVector<doublePair> *inSpeakersPos ) {    
 
+    inObj->onScreen = true;
+
     // current pos
                     
     doublePair pos = mult( inObj->currentPos, CELL_D );
@@ -2885,7 +2887,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
 
-
+    // reset flags so that only drawn objects get flagged
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        gameObjects.getElement( i )->onScreen = false;
+        }
+    
     
 
     for( int y=yEnd; y>=yStart; y-- ) {
@@ -4279,8 +4285,20 @@ void LivingLifePage::step() {
                             
                             mMapAnimationFrozenRotFrameCount[mapI] = 0;
                             
+                            LiveObject *responsiblePlayerObject = NULL;
                             
-                            if( responsiblePlayerID == -1 ) {
+                            
+                            if( responsiblePlayerID != -1 ) {
+                                responsiblePlayerObject = 
+                                    getGameObject( responsiblePlayerID );
+                                }
+                            
+                            
+                            if( responsiblePlayerObject == NULL ||
+                                !responsiblePlayerObject->onScreen ) {
+                                
+                                // set it down instantly, no drop animation
+                                // (player's held offset isn't valid)
                                 AnimationRecord *animR = 
                                     getAnimation( mMap[mapI], ground );
 
@@ -4301,113 +4319,106 @@ void LivingLifePage::step() {
                                 // copy last frame count from last holder
                                 // of this object (server tracks
                                 // who was holding it and tell us about it)
-                            
-                                for( int i=0; i<gameObjects.size(); i++ ) {
-        
-                                    LiveObject *nextObject =
-                                        gameObjects.getElement( i );
+                                
+                                mMapLastAnimType[mapI] = held;
+                                mMapLastAnimFade[mapI] = 1;
+                                        
+                                mMapAnimationFrozenRotFrameCount
+                                    [mapI] =
+                                    lrint( 
+                                        responsiblePlayerObject->
+                                        heldFrozenRotFrameCount );
+                                        
+                                        
+                                if( responsiblePlayerObject->
+                                    lastHeldAnimFade == 0 ) {
+                                            
+                                    mMapAnimationLastFrameCount[mapI] =
+                                        lrint( 
+                                            responsiblePlayerObject->
+                                            heldAnimationFrameCount );
+                                            
+                                    mMapLastAnimType[mapI] = 
+                                        responsiblePlayerObject->curHeldAnim;
+                                    }
+                                else {
+                                    // dropped object was already
+                                    // in the middle of a fade
+                                    mMapCurAnimType[mapI] =
+                                        responsiblePlayerObject->curHeldAnim;
+                                            
+                                    mMapAnimationFrameCount[mapI] =
+                                        lrint( 
+                                            responsiblePlayerObject->
+                                            heldAnimationFrameCount );
                                     
-                                    if( nextObject->id ==
-                                        responsiblePlayerID ) {
+                                    mMapLastAnimType[mapI] =
+                                        responsiblePlayerObject->lastHeldAnim;
+                                    
+                                    mMapAnimationLastFrameCount[mapI] =
+                                        lrint( 
+                                            responsiblePlayerObject->
+                                            lastHeldAnimationFrameCount );
+                                    
+                                    
+                                    mMapLastAnimFade[mapI] =
+                                        responsiblePlayerObject->
+                                        lastHeldAnimFade;
+                                    }
                                         
-                                        mMapLastAnimType[mapI] = held;
-                                        mMapLastAnimFade[mapI] = 1;
+                                            
+                                
+                                mMapDropOffsets[mapI].x = 
+                                    responsiblePlayerObject->
+                                    heldObjectPos.x - x;
+                                        
+                                mMapDropOffsets[mapI].y = 
+                                    responsiblePlayerObject->
+                                    heldObjectPos.y - y;
+                                        
+                                mMapDropRot[mapI] = 
+                                    responsiblePlayerObject->heldObjectRot;
 
-                                        mMapAnimationFrozenRotFrameCount
-                                            [mapI] =
-                                            lrint( 
-                                                nextObject->
-                                                heldFrozenRotFrameCount );
-                                        
-                                        
-                                        if( nextObject->lastHeldAnimFade == 
-                                            0 ) {
-                                            
-                                            mMapAnimationLastFrameCount[mapI] =
-                                                lrint( 
-                                                    nextObject->
-                                                    heldAnimationFrameCount );
-                                            
-                                            mMapLastAnimType[mapI] = 
-                                                nextObject->curHeldAnim;
-                                            }
-                                        else {
-                                            // dropped object was already
-                                            // in the middle of a fade
-                                            mMapCurAnimType[mapI] =
-                                                nextObject->curHeldAnim;
-                                            
-                                            mMapAnimationFrameCount[mapI] =
-                                                lrint( 
-                                                    nextObject->
-                                                    heldAnimationFrameCount );
+                                mMapDropSounds[mapI] =
+                                    getObject( 
+                                        responsiblePlayerObject->displayID )->
+                                    usingSound;
 
-                                            mMapLastAnimType[mapI] =
-                                                nextObject->lastHeldAnim;
-                                            
-                                            mMapAnimationLastFrameCount[mapI] =
-                                                lrint( 
-                                                 nextObject->
-                                                 lastHeldAnimationFrameCount );
-
-
-                                            mMapLastAnimFade[mapI] =
-                                                nextObject->lastHeldAnimFade;
-                                            }
+                                mMapTileFlips[mapI] =
+                                    responsiblePlayerObject->holdingFlip;
                                         
-                                            
-                                            
-                                        mMapDropOffsets[mapI].x = 
-                                            nextObject->heldObjectPos.x - x;
-                                        
-                                        mMapDropOffsets[mapI].y = 
-                                            nextObject->heldObjectPos.y - y;
-                                        
-                                        mMapDropRot[mapI] = 
-                                            nextObject->heldObjectRot;
-
-                                        mMapDropSounds[mapI] =
-                                            getObject( nextObject->displayID )->
-                                            usingSound;
-
-                                        mMapTileFlips[mapI] =
-                                            nextObject->holdingFlip;
-                                        
-                                        if( nextObject->holdingID > 0 &&
-                                            old == 0 ) {
-                                            // use on bare ground transition
-                                            
-                                            // don't use drop offset
-                                            mMapDropOffsets[mapI].x = 0;
-                                            mMapDropOffsets[mapI].y = 0;
-                                            
-                                            mMapDropRot[mapI] = 0;
-                                            mMapDropSounds[mapI] = 
-                                                blankSoundUsage;
-
-                                            if( getObject( mMap[ mapI ] )->
-                                                permanent ) {
-                                                // resulting in something 
-                                                // permanent
-                                                // on ground.  Never flip it
-                                                mMapTileFlips[mapI] = false;
-                                                }
-                                            }
-                                        
-                                        
-
-                                        if( x > 
-                                            nextObject->xServer ) {
-                                            nextObject->holdingFlip = false;
-                                            }
-                                        else if( x < 
-                                                 nextObject->xServer ) {
-                                            
-                                            nextObject->holdingFlip = true;
-                                            }
-                                            
-                                        break;
-                                        }           
+                                if( responsiblePlayerObject->holdingID > 0 &&
+                                    old == 0 ) {
+                                    // use on bare ground transition
+                                    
+                                    // don't use drop offset
+                                    mMapDropOffsets[mapI].x = 0;
+                                    mMapDropOffsets[mapI].y = 0;
+                                    
+                                    mMapDropRot[mapI] = 0;
+                                    mMapDropSounds[mapI] = 
+                                        blankSoundUsage;
+                                    
+                                    if( getObject( mMap[ mapI ] )->
+                                        permanent ) {
+                                        // resulting in something 
+                                        // permanent
+                                        // on ground.  Never flip it
+                                        mMapTileFlips[mapI] = false;
+                                        }
+                                    }
+                                
+                                
+                                
+                                if( x > 
+                                    responsiblePlayerObject->xServer ) {
+                                    responsiblePlayerObject->holdingFlip = 
+                                        false;
+                                    }
+                                else if( x < 
+                                         responsiblePlayerObject->xServer ) {
+                                    responsiblePlayerObject->holdingFlip = 
+                                        true;
                                     }
                                 }
                             }
@@ -4440,6 +4451,8 @@ void LivingLifePage::step() {
             for( int i=1; i<numLines; i++ ) {
 
                 LiveObject o;
+                
+                o.onScreen = false;
                 
                 o.pathToDest = NULL;
                 o.containedIDs = NULL;
@@ -4720,15 +4733,6 @@ void LivingLifePage::step() {
                                 }
                             
                             if( heldOriginValid ) {
-                                // transition from last ground animation
-                                // of object, keeping that frame count
-                                // for smooth transition
-                                
-                                existing->heldPosOverride = true;
-                                existing->heldPosOverrideAlmostOver = false;
-                                existing->heldObjectPos.x = heldOriginX;
-                                existing->heldObjectPos.y = heldOriginY;
-                                existing->heldObjectRot = 0;
                                 
                                 // use player's using sound for pickup
                                 ObjectRecord *existingObj = 
@@ -4742,57 +4746,87 @@ void LivingLifePage::step() {
                                                    heldOriginY ) );
                                     }
 
-                                int mapX = 
-                                    heldOriginX - mMapOffsetX + mMapD / 2;
-                                int mapY = 
-                                    heldOriginY - mMapOffsetY + mMapD / 2;
-                    
-                                if( mapX >= 0 && mapX < mMapD
-                                    &&
-                                    mapY >= 0 && mapY < mMapD ) {
-                        
-                                    int mapI = mapY * mMapD + mapX;
-                                    
-                                    existing->heldFrozenRotFrameCount =
-                                        mMapAnimationFrozenRotFrameCount
-                                        [ mapI ];
-                                    existing->heldFrozenRotFrameCountUsed =
-                                        false;
-                                    
-                                    if( mMapLastAnimFade[ mapI ] == 0 ) {
-                                        existing->lastHeldAnim = 
-                                            mMapCurAnimType[ mapI ];
-                                        existing->lastHeldAnimFade = 1;
-                                        existing->curHeldAnim = held;
 
-                                        existing->lastHeldAnimationFrameCount =
-                                            mMapAnimationFrameCount[ mapI ];
+                                // transition from last ground animation
+                                // of object, keeping that frame count
+                                // for smooth transition
+                                
+                                if( ! existing->onScreen ) {
+                                    // off-screen, instant pickup,
+                                    // no transition animation
+                                    existing->heldPosOverride = false;
+                                    existing->heldObjectPos = 
+                                        existing->currentPos;
+                                    existing->heldObjectRot = 0;
+                                    
+                                    existing->lastHeldAnimFade = 0;
+                                    existing->curHeldAnim = held;
+                                    }
+                                else {
+                                    // on-screen, slide into position
+                                    // smooth animation transition
+                                    existing->heldPosOverride = true;
+                                    existing->heldPosOverrideAlmostOver = false;
+                                    existing->heldObjectPos.x = heldOriginX;
+                                    existing->heldObjectPos.y = heldOriginY;
+                                    existing->heldObjectRot = 0;
+                                
+                                    
+                                    int mapX = 
+                                        heldOriginX - mMapOffsetX + mMapD / 2;
+                                    int mapY = 
+                                        heldOriginY - mMapOffsetY + mMapD / 2;
+                                    
+                                    if( mapX >= 0 && mapX < mMapD
+                                        &&
+                                        mapY >= 0 && mapY < mMapD ) {
+                                        
+                                        int mapI = mapY * mMapD + mapX;
+                                        
+                                        existing->heldFrozenRotFrameCount =
+                                            mMapAnimationFrozenRotFrameCount
+                                            [ mapI ];
+                                        existing->heldFrozenRotFrameCountUsed =
+                                            false;
+                                        
+                                        if( mMapLastAnimFade[ mapI ] == 0 ) {
+                                            existing->lastHeldAnim = 
+                                                mMapCurAnimType[ mapI ];
+                                            existing->lastHeldAnimFade = 1;
+                                            existing->curHeldAnim = held;
+                                            
+                                            existing->
+                                                lastHeldAnimationFrameCount =
+                                                mMapAnimationFrameCount[ mapI ];
                                         
                                         existing->heldAnimationFrameCount =
                                             mMapAnimationFrameCount[ mapI ];
-                                        }
-                                    else {
-                                        // map spot is in the middle of
-                                        // an animation fade
-                                        existing->lastHeldAnim = 
-                                            mMapLastAnimType[ mapI ];
-                                        existing->lastHeldAnimationFrameCount =
-                                           mMapAnimationLastFrameCount[ mapI ];
+                                            }
+                                        else {
+                                            // map spot is in the middle of
+                                            // an animation fade
+                                            existing->lastHeldAnim = 
+                                                mMapLastAnimType[ mapI ];
+                                            existing->
+                                                lastHeldAnimationFrameCount =
+                                                mMapAnimationLastFrameCount[ 
+                                                    mapI ];
                                         
-                                        existing->curHeldAnim = 
-                                            mMapCurAnimType[ mapI ];
-                                        
-                                        existing->heldAnimationFrameCount =
-                                            mMapAnimationFrameCount[ mapI ];
-                                        
+                                            existing->curHeldAnim = 
+                                                mMapCurAnimType[ mapI ];
+                                            
+                                            existing->heldAnimationFrameCount =
+                                                mMapAnimationFrameCount[ mapI ];
+                                            
 
-                                        existing->lastHeldAnimFade =
-                                            mMapLastAnimFade[ mapI ];
+                                            existing->lastHeldAnimFade =
+                                                mMapLastAnimFade[ mapI ];
+                                            
+                                            existing->futureHeldAnimStack->
+                                                push_back( held );
+                                            }
                                         
-                                        existing->futureHeldAnimStack->
-                                            push_back( held );
                                         }
-                                    
                                     }
                                 }
                             else {
