@@ -1055,7 +1055,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 // especially after a server restart
                 int tweakedSeconds = 
                     randSource.getRandomBoundedInt( 
-                        newDecayT->autoDecaySeconds * 0.9, 
+                        lrint( newDecayT->autoDecaySeconds * 0.9 ), 
                         newDecayT->autoDecaySeconds );
                 
                 if( tweakedSeconds < 1 ) {
@@ -1160,7 +1160,7 @@ void checkDecayContained( int inX, int inY ) {
                         // especially after a server restart
                         int tweakedSeconds = 
                             randSource.getRandomBoundedInt( 
-                                newDecayT->autoDecaySeconds * 0.9, 
+                                lrint( newDecayT->autoDecaySeconds * 0.9 ), 
                                 newDecayT->autoDecaySeconds );
 
                         if( tweakedSeconds < 1 ) {
