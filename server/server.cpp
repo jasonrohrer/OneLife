@@ -5612,8 +5612,8 @@ int main() {
                                 if( adultO->id != nextPlayer->id ) {
                                     // not us
 
-                                    double d = intDist( nextPlayer->xd,
-                                                        nextPlayer->yd,
+                                    double d = intDist( playerXD,
+                                                        playerYD,
                                                         adultO->xd,
                                                         adultO->yd );
                             
@@ -5651,8 +5651,8 @@ int main() {
                             // not us
                             // not a held baby (covered above)
 
-                            double d = intDist( nextPlayer->xd,
-                                                nextPlayer->yd,
+                            double d = intDist( playerXD,
+                                                playerYD,
                                                 otherPlayer->xd,
                                                 otherPlayer->yd );
                             
@@ -5755,8 +5755,8 @@ int main() {
                             }
                         else {
                             double d = intDist( p->x, p->y, 
-                                                nextPlayer->xd, 
-                                                nextPlayer->yd );
+                                                playerXD, 
+                                                playerXD );
                     
                             if( d < minUpdateDist ) {
                                 minUpdateDist = d;
@@ -5787,7 +5787,7 @@ int main() {
                         // move messages are never global
 
                         double d = intDist( p->x, p->y, 
-                                            nextPlayer->xd, nextPlayer->yd );
+                                            playerXD, playerYD );
                     
                         if( d < minUpdateDist ) {
                             minUpdateDist = d;
@@ -5816,7 +5816,7 @@ int main() {
                         // map changes are never global
 
                         double d = intDist( p->x, p->y, 
-                                            nextPlayer->xd, nextPlayer->yd );
+                                            playerXD, playerYD );
                         
                         if( d < minUpdateDist ) {
                             minUpdateDist = d;
@@ -5841,10 +5841,10 @@ int main() {
                     for( int u=0; u<newSpeechPos.size(); u++ ) {
                         ChangePosition *p = newSpeechPos.getElement( u );
                         
-                        // map changes are never global
+                        // speech never global
 
                         double d = intDist( p->x, p->y, 
-                                            nextPlayer->xd, nextPlayer->yd );
+                                            playerXD, playerYD );
                         
                         if( d < minUpdateDist ) {
                             minUpdateDist = d;
