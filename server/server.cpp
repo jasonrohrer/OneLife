@@ -50,6 +50,8 @@ float targetHeat = 10;
 
 int minPickupBabyAge = 10;
 
+int babyAge = 5;
+
 int forceDeathAge = 60;
 
 // if you have 2 living children, youngest has to be at least this old
@@ -1765,6 +1767,20 @@ static LiveObject *getHitPlayer( int inX, int inY, int inMaxAge = -1,
 
     
 
+char isFertileAge( LiveObject *inPlayer ) {
+    double age = computeAge( inPlayer );
+                    
+    char f = getFemale( inPlayer );
+                    
+    if( age >= 14 && age <= 40 && f ) {
+        return true;
+        }
+    else {
+        return false;
+        }
+    }
+
+        
 
 
 void processLoggedInPlayer( Socket *inSock,
@@ -1798,11 +1814,7 @@ void processLoggedInPlayer( Socket *inSock,
     for( int i=0; i<numPlayers; i++ ) {
         LiveObject *player = players.getElement( i );
         
-        double age = computeAge( player );
-                    
-        char f = getFemale( player );
-                    
-        if( age >= 14 && age <= 40 && f ) {
+        if( isFertileAge( player ) ) {
             numOfAge ++;
             
             // make sure this woman hasn't had too many babies in a row
@@ -1870,10 +1882,14 @@ void processLoggedInPlayer( Socket *inSock,
     
 
     if( numOfAge == 0 ) {
-        // all existing children are good spawn spot for Eve
+        // all existing babies are good spawn spot for Eve
                     
         for( int i=0; i<numPlayers; i++ ) {
-            parentChoices.push_back( players.getElement( i ) );
+            LiveObject *player = players.getElement( i );
+            
+            if( computeAge( player ) < babyAge ) {
+                parentChoices.push_back( players.getElement( i ) );
+                }
             }
         }
     else {
@@ -1912,70 +1928,75 @@ void processLoggedInPlayer( Socket *inSock,
     LiveObject *parent = NULL;
                 
     if( parentChoices.size() > 0 ) {
-        // born to an existing player
+        // spawned next to an existing player
         int parentIndex = 
             randSource.getRandomBoundedInt( 0,
                                             parentChoices.size() - 1 );
                     
         parent = players.getElement( parentIndex );
-        
-        parent->babyBirthTimes->push_back( time( NULL ) );
-        parent->babyIDs->push_back( newObject.id );
-        
-        ObjectRecord *parentObject = getObject( parent->displayID );
 
-        // pick race of child
         
-        int numRaces;
-        int *races = getRaces( &numRaces );
+        if( isFertileAge( parent ) ) {
+            // only set race if the spawn-near player is our mother
+            // otherwise, we are a new Eve spawning next to a baby
+            
+            parent->babyBirthTimes->push_back( time( NULL ) );
+            parent->babyIDs->push_back( newObject.id );
         
-        int parentRaceIndex = -1;
+            ObjectRecord *parentObject = getObject( parent->displayID );
+
+            // pick race of child
+            int numRaces;
+            int *races = getRaces( &numRaces );
         
-        for( int i=0; i<numRaces; i++ ) {
-            if( parentObject->race == races[i] ) {
-                parentRaceIndex = i;
-                break;
+            int parentRaceIndex = -1;
+            
+            for( int i=0; i<numRaces; i++ ) {
+                if( parentObject->race == races[i] ) {
+                    parentRaceIndex = i;
+                    break;
+                    }
                 }
+            
+
+            if( parentRaceIndex != -1 ) {
+                
+                int childRace = parentObject->race;
+                
+                if( randSource.getRandomDouble() > childSameRaceLikelihood ) {
+                    // different race than parent
+                    
+                    int offset = 1;
+                    
+                    if( randSource.getRandomBoolean() ) {
+                        offset = -1;
+                        }
+                    int childRaceIndex = parentRaceIndex + offset;
+                    
+                    if( childRaceIndex >= numRaces ) {
+                        childRaceIndex -= numRaces;
+                        }
+                    else if( childRaceIndex < 0 ) {
+                        childRaceIndex += numRaces;
+                        }
+                    
+                    childRace = races[ childRaceIndex ];
+                    }
+                
+                if( childRace == parentObject->race ) {
+                    newObject.displayID = getRandomFamilyMember( 
+                        parentObject->race, parent->displayID, familySpan );
+                    }
+                else {
+                    newObject.displayID = 
+                        getRandomPersonObjectOfRace( childRace );
+                    }
+            
+                }
+        
+            delete [] races;
             }
-
-
-        if( parentRaceIndex != -1 ) {
-            
-            int childRace = parentObject->race;
-            
-            if( randSource.getRandomDouble() > childSameRaceLikelihood ) {
-                // different race than parent
-                
-                int offset = 1;
-                
-                if( randSource.getRandomBoolean() ) {
-                    offset = -1;
-                    }
-                int childRaceIndex = parentRaceIndex + offset;
-                
-                if( childRaceIndex >= numRaces ) {
-                    childRaceIndex -= numRaces;
-                    }
-                else if( childRaceIndex < 0 ) {
-                    childRaceIndex += numRaces;
-                    }
-
-                childRace = races[ childRaceIndex ];
-                }
-
-            if( childRace == parentObject->race ) {
-                newObject.displayID = getRandomFamilyMember( 
-                    parentObject->race, parent->displayID, familySpan );
-                }
-            else {
-                newObject.displayID = getRandomPersonObjectOfRace( childRace );
-                }
-            
-            }
         
-        
-        delete [] races;
-                
         if( parent->xs == parent->xd && 
             parent->ys == parent->yd ) {
                         
@@ -2065,7 +2086,8 @@ void processLoggedInPlayer( Socket *inSock,
     int parentID = -1;
     char *parentEmail = NULL;
 
-    if( parent != NULL ) {
+    if( parent != NULL && isFertileAge( parent ) ) {
+        // do not log babies that new Eve spawns next to as parents
         parentID = parent->id;
         parentEmail = parent->email;
         }
@@ -3707,7 +3729,7 @@ int main() {
                                     getHitPlayer( m.x, m.y, 5 );
                                 
                                 if( hitPlayer != NULL &&
-                                    computeAge( hitPlayer ) < 5  ) {
+                                    computeAge( hitPlayer ) < babyAge  ) {
                                     
                                     // negative holding IDs to indicate
                                     // holding another player
