@@ -5756,7 +5756,7 @@ int main() {
                         else {
                             double d = intDist( p->x, p->y, 
                                                 playerXD, 
-                                                playerXD );
+                                                playerYD );
                     
                             if( d < minUpdateDist ) {
                                 minUpdateDist = d;
