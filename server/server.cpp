@@ -935,11 +935,23 @@ static double distance( GridPos inA, GridPos inB ) {
 
 // sets lastSentMap in inO if chunk goes through
 // returns result of send, auto-marks error in inO
-int sendMapChunkMessage( LiveObject *inO ) {
+int sendMapChunkMessage( LiveObject *inO, 
+                         char inDestOverride = false,
+                         int inDestOverrideX = 0, 
+                         int inDestOverrideY = 0) {
     int messageLength;
+
+    int xd = inO->xd;
+    int yd= inO->yd;
     
-    unsigned char *mapChunkMessage = getChunkMessage( inO->xd,
-                                                      inO->yd, 
+    if( inDestOverride ) {
+        xd = inDestOverrideX;
+        yd = inDestOverrideY;
+        }
+    
+    
+    unsigned char *mapChunkMessage = getChunkMessage( xd,
+                                                      yd, 
                                                       &messageLength );
                 
                 
@@ -955,8 +967,8 @@ int sendMapChunkMessage( LiveObject *inO ) {
 
     if( numSent == messageLength ) {
         // sent correctly
-        inO->lastSentMapX = inO->xd;
-        inO->lastSentMapY = inO->yd;
+        inO->lastSentMapX = xd;
+        inO->lastSentMapY = yd;
         }
     else if( numSent == -1 ) {
         inO->error = true;
@@ -5553,25 +5565,30 @@ int main() {
             else {
                 // this player has first message, ready for updates/moves
                 
-
+                int playerXD = nextPlayer->xd;
+                int playerYD = nextPlayer->yd;
+                
                 if( nextPlayer->heldByOther ) {
                     LiveObject *holdingPlayer = 
                         getLiveObject( nextPlayer->heldByOtherID );
-                    
-                    // update baby's destination along with holding adult
-                    nextPlayer->xd = holdingPlayer->xd;
-                    nextPlayer->yd = holdingPlayer->yd;
+                
+                    playerXD = holdingPlayer->xd;
+                    playerYD = holdingPlayer->yd;
                     }
 
 
-                if( abs( nextPlayer->xd - nextPlayer->lastSentMapX ) > 7
+                if( abs( playerXD - nextPlayer->lastSentMapX ) > 7
                     ||
-                    abs( nextPlayer->yd - nextPlayer->lastSentMapY ) > 8 ) {
+                    abs( playerYD - nextPlayer->lastSentMapY ) > 8 ) {
                 
                     // moving out of bounds of chunk, send update
                     
                     
-                    sendMapChunkMessage( nextPlayer );
+                    sendMapChunkMessage( nextPlayer,
+                                         // override if held
+                                         nextPlayer->heldByOther,
+                                         playerXD,
+                                         playerYD );
 
 
                     // send updates about any non-moving players
