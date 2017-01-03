@@ -40,7 +40,7 @@ static int maxID;
 static File spritesDir( NULL, "sprites" );
 
 
-static SpriteHandle blankSprite;
+static SpriteHandle blankSprite = NULL;
 
 
 
@@ -348,7 +348,9 @@ void freeSpriteBank() {
 
     delete [] idMap;
 
-    freeSprite( blankSprite );
+    if( blankSprite != NULL ) {
+        freeSprite( blankSprite );
+        }
     }
 
 

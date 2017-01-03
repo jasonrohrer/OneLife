@@ -319,3 +319,33 @@ void freeSoundSprite( SoundSpriteHandle inHandle ) {
     }
 
 
+
+void freeSprite( SpriteHandle ) {
+    }
+
+SpriteHandle fillSprite( unsigned char*, unsigned int, unsigned int ) {
+    return NULL;
+    }
+
+void setSpriteCenterOffset( void*, doublePair ) {
+    }
+
+SpriteHandle fillSprite( Image*, char ) {
+    return NULL;
+    }
+
+void drawSprite( SpriteHandle, doublePair, double, double, char ) {
+    }
+
+
+void setDrawColor( float, float, float, float ) {
+    }
+
+void toggleMultiplicativeBlend( char ) {
+    }
+
+void setDrawFade( float ) {
+    }
+
+void toggleAdditiveTextureColoring( char ) {
+    }
