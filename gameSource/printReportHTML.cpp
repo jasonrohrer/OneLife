@@ -241,7 +241,7 @@ int main( int inNumArgs, char **inArgs ) {
                "%d playable characters</td>"
              "<td> </td>"
              "<td width=33%% valign=top align=center>"
-               "%d human-made objects<br>%s</td>"
+               "%d human-makeable objects<br>%s</td>"
              "</tr></table>",
              numNatural, latestNaturalString, 
              numPeople, 
