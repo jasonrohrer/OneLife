@@ -234,11 +234,14 @@ int main( int inNumArgs, char **inArgs ) {
     
     fprintf( outFile, 
              "<table width=100%% border=0><tr>"
-             "<td valign=top align=center>%d natural objects<br>%s</td>"
+             "<td width=33%% valign=top align=center>"
+               "%d natural objects<br>%s</td>"
              "<td> </td>"
-             "<td valign=top align=center>%d playable characters</td>"
+             "<td width=33%% valign=top align=center>"
+               "%d playable characters</td>"
              "<td> </td>"
-             "<td valign=top align=center>%d human-made objects<br>%s</td>"
+             "<td width=33%% valign=top align=center>"
+               "%d human-made objects<br>%s</td>"
              "</tr></table>",
              numNatural, latestNaturalString, 
              numPeople, 
