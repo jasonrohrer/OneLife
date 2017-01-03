@@ -15,4 +15,4 @@ sh makePrintReportHTML
 
 cd ../../OneLifeData6Latest
 
-../../OneLifeWorking/gameSource/printReportHTML ../../public_html/objectReport.php
+../OneLifeWorking/gameSource/printReportHTML ../../public_html/objectReport.php
