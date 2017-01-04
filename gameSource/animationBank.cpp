@@ -1599,7 +1599,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             }
 
 
-        if( i == backFootIndex 
+        if( ! skipSprite && 
+            i == backFootIndex 
             && inClothing.backShoe != NULL ) {
             
             doublePair offset = inClothing.backShoe->clothingOffset;
@@ -1834,7 +1835,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             }
         
 
-        if( i == frontFootIndex 
+        if( ! skipSprite && 
+            i == frontFootIndex 
             && inClothing.frontShoe != NULL ) {
         
             doublePair offset = inClothing.frontShoe->clothingOffset;
