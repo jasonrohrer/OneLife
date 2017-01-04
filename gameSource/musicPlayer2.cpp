@@ -134,7 +134,9 @@ void restartMusic( double inAge, double inAgeRate ) {
     
 
     lockAudio();
-
+    
+    musicStarted = false;
+    
     age = inAge;
     ageRate = inAgeRate;
     
@@ -142,6 +144,22 @@ void restartMusic( double inAge, double inAgeRate ) {
 
     unlockAudio();
 
+    printf( "Starting music at age %f\n", inAge );
+    
+
+    // clear last-loaded OGG
+    if( musicOGG != NULL ) {
+        
+        closeOGG( musicOGG );
+        musicOGG = NULL;
+        
+        delete [] oggData;
+        oggData = NULL;
+        
+        musicOGGReady = false;
+        }
+    
+    musicOGGPlaying = false;
 
 
     asyncLoadHandle = startNextAgeFileRead( inAge );
