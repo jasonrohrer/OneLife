@@ -166,7 +166,11 @@ class EditorObjectPage : public GamePage, public ActionListener {
         TextButton mNextHeldDemoButton;
         TextButton mPrevHeldDemoButton;
         
-
+        
+        TextButton mDemoVertRotButton;
+        TextButton mResetVertRotButton;
+        char mDemoVertRot;
+        
 
         Picker mSpritePicker;
         Picker mObjectPicker;
@@ -222,6 +226,15 @@ class EditorObjectPage : public GamePage, public ActionListener {
                                        int *outSprite,
                                        int *outSlot );
         
+        
+        // ends demo and hides the buttons
+        void hideVertRotButtons();
+        
+        void showVertRotButtons();
+        
+        void endVertRotDemo();
+        
+
 
         void pickedLayerChanged();
         

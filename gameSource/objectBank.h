@@ -27,6 +27,12 @@ typedef struct ObjectRecord {
         char containable;
         // how big of a slot is needed to contain it
         int containSize;
+
+        // by default, when placed in a vertical container slot,
+        // objects rotate 90 deg clockwise
+        // this is an offset from that angle (default 0)
+        double vertContainRotationOffset;
+        
         
         // can it not be picked up
         char permanent;
@@ -261,6 +267,7 @@ ObjectRecord **searchObjects( const char *inSearch,
 int addObject( const char *inDescription,
                char inContainable,
                int inContainSize,
+               double inVertContainRotationOffset,
                char inPermanent,
                int inMinPickupAge,
                char inHeldInHand,

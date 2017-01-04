@@ -310,8 +310,11 @@ float initObjectBankStep() {
                 next++;
                     
                 r->containSize = 1;
-                sscanf( lines[next], "containSize=%d", 
-                        &( r->containSize ) );
+                r->vertContainRotationOffset = 0;
+                
+                sscanf( lines[next], "containSize=%d,vertSlotRot=%lf", 
+                        &( r->containSize ),
+                        &( r->vertContainRotationOffset ) );
                             
                 next++;
                             
@@ -876,6 +879,7 @@ void resaveAll() {
             addObject( idMap[i]->description,
                        idMap[i]->containable,
                        idMap[i]->containSize,
+                       idMap[i]->vertContainRotationOffset,
                        idMap[i]->permanent,
                        idMap[i]->minPickupAge,
                        idMap[i]->heldInHand,
@@ -1008,6 +1012,7 @@ ObjectRecord **searchObjects( const char *inSearch,
 int addObject( const char *inDescription,
                char inContainable,
                int inContainSize,
+               double inVertContainRotationOffset,
                char inPermanent,
                int inMinPickupAge,
                char inHeldInHand,
@@ -1102,7 +1107,9 @@ int addObject( const char *inDescription,
         lines.push_back( stringDuplicate( inDescription ) );
 
         lines.push_back( autoSprintf( "containable=%d", (int)inContainable ) );
-        lines.push_back( autoSprintf( "containSize=%d", (int)inContainSize ) );
+        lines.push_back( autoSprintf( "containSize=%d,vertSlotRot=%f", 
+                                      (int)inContainSize,
+                                      inVertContainRotationOffset ) );
         lines.push_back( autoSprintf( "permanent=%d,minPickupAge=%d", 
                                       (int)inPermanent,
                                       inMinPickupAge ) );
@@ -1307,6 +1314,8 @@ int addObject( const char *inDescription,
 
     r->containable = inContainable;
     r->containSize = inContainSize;
+    r->vertContainRotationOffset = inVertContainRotationOffset;
+    
     r->permanent = inPermanent;
     r->minPickupAge = inMinPickupAge;
     r->heldInHand = inHeldInHand;
@@ -1881,13 +1890,15 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
         double rot = inRot;
         
         if( inObject->slotVert[i] ) {
+            double rotOffset = 0.25 + contained->vertContainRotationOffset;
+
             if( inFlipH ) {
-                centerOffset = rotate( centerOffset, - 0.5 * M_PI );
-                rot -= 0.25;
+                centerOffset = rotate( centerOffset, - rotOffset * 2 * M_PI );
+                rot -= rotOffset;
                 }
             else {
-                centerOffset = rotate( centerOffset, - 0.5 * M_PI );
-                rot += 0.25;
+                centerOffset = rotate( centerOffset, - rotOffset * 2 * M_PI );
+                rot += rotOffset;
                 }
             }
 
@@ -2539,12 +2550,16 @@ double getClosestObjectPart( ObjectRecord *inObject,
                 doublePair centOffset = getObjectCenterOffset( contained );
                 
                 if( inObject->slotVert[i] ) {
+                    double rotOffset = 
+                        0.25 + contained->vertContainRotationOffset;
                     if( inFlip ) {
-                        centOffset = rotate( centOffset, -0.5 * M_PI );
+                        centOffset = rotate( centOffset, 
+                                             - rotOffset * 2 * M_PI );
                         centOffset.x *= -1;
                         }
                     else {
-                        centOffset = rotate( centOffset, -0.5 * M_PI );
+                        centOffset = rotate( centOffset, 
+                                             - rotOffset * 2 * M_PI );
                         }
                     }
                 else if( inFlip ) {
@@ -2557,11 +2572,15 @@ double getClosestObjectPart( ObjectRecord *inObject,
                 
 
                 if( inObject->slotVert[i] ) {
+                    double rotOffset = 
+                        0.25 + contained->vertContainRotationOffset;
                     if( inFlip ) {
-                        slotOffset = rotate( slotOffset, -0.5 * M_PI );
+                        slotOffset = rotate( slotOffset, 
+                                             - rotOffset * 2 * M_PI );
                         }
                     else {
-                        slotOffset = rotate( slotOffset, 0.5 * M_PI );
+                        slotOffset = rotate( slotOffset, 
+                                             rotOffset * 2 * M_PI );
                         }
                     }
                 

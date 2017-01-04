@@ -153,6 +153,9 @@ EditorObjectPage::EditorObjectPage()
           mEndSetHeldPosButton( smallFont, 240, -76, "End Held" ),
           mNextHeldDemoButton( smallFont, 312, -76, ">" ),
           mPrevHeldDemoButton( smallFont, 290, -76, "<" ),
+          mDemoVertRotButton( smallFont, 90, -150, "Vert" ),
+          mResetVertRotButton( smallFont, 130, -150, "D" ),
+          mDemoVertRot( false ),
           mSpritePicker( &spritePickable, -410, 90 ),
           mObjectPicker( &objectPickable, +410, 90 ),
           mPersonAgeSlider( smallFont, -55, -220, 2,
@@ -250,7 +253,17 @@ EditorObjectPage::EditorObjectPage()
     mNextHeldDemoButton.setVisible( false );
     mPrevHeldDemoButton.setVisible( false );
     
-
+    
+    addComponent( &mDemoVertRotButton );
+    addComponent( &mResetVertRotButton );
+    
+    mDemoVertRotButton.addActionListener( this );
+    mResetVertRotButton.addActionListener( this );
+    
+    mDemoVertRotButton.setVisible( false );
+    mResetVertRotButton.setVisible( false );
+    
+    
 
     addComponent( &mClearObjectButton );
     addComponent( &mClearRotButton );
@@ -391,7 +404,8 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.id = -1;
     mCurrentObject.description = mDescriptionField.getText();
     mCurrentObject.containable = 0;
-
+    mCurrentObject.vertContainRotationOffset = 0;
+    
     mCurrentObject.heldOffset.x = 0;
     mCurrentObject.heldOffset.y = 0;
 
@@ -1021,6 +1035,33 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
 
 
 
+void EditorObjectPage::endVertRotDemo() {
+    mDemoVertRot = false;
+    mDemoVertRotButton.setFillColor( 0.25, 0.25, 0.25, 1 );
+    }
+
+
+
+void EditorObjectPage::hideVertRotButtons() {
+    endVertRotDemo();
+    mDemoVertRotButton.setVisible( false );
+    mResetVertRotButton.setVisible( false );
+    }
+
+
+void EditorObjectPage::showVertRotButtons() {
+    mDemoVertRotButton.setVisible( true );
+    mResetVertRotButton.setVisible( 
+                    mCurrentObject.vertContainRotationOffset != 0 );
+    
+    // containable
+    // so we can't have slots
+    
+    // good place to take care of making this invisible
+    mSlotVertCheckbox.setVisible( false );
+    }
+
+
 
 void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
     
@@ -1065,6 +1106,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         addObject( text,
                    mCheckboxes[0]->getToggled(),
                    mContainSizeField.getInt(),
+                   mCurrentObject.vertContainRotationOffset,
                    mCheckboxes[1]->getToggled(),
                    mMinPickupAgeField.getFloat(),
                    mHeldInHandCheckbox.getToggled(),
@@ -1169,6 +1211,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         addObject( text,
                    mCheckboxes[0]->getToggled(),
                    mContainSizeField.getInt(),
+                   mCurrentObject.vertContainRotationOffset,
                    mCheckboxes[1]->getToggled(),
                    mMinPickupAgeField.getFloat(),
                    mHeldInHandCheckbox.getToggled(),
@@ -1456,6 +1499,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mMoreSlotsButton ) {
         mCurrentObject.containable = 0;
+        mCurrentObject.vertContainRotationOffset = 0;
         
         int numSlots = mCurrentObject.numSlots;
         
@@ -1504,7 +1548,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mContainSizeField.setInt( 1 );
         mContainSizeField.setVisible( false );
         mCheckboxes[0]->setToggled( false );
-
+        hideVertRotButtons();
+        
         mPersonAgeSlider.setVisible( false );
 
         mRaceField.setVisible( false );
@@ -1658,6 +1703,17 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         mNextHeldDemoButton.setVisible( false );
         mPrevHeldDemoButton.setVisible( false );
+        }
+    else if( inTarget == &mResetVertRotButton ) {
+        mCurrentObject.vertContainRotationOffset = 0;
+        mResetVertRotButton.setVisible( false );
+        }
+    else if( inTarget == &mDemoVertRotButton ) {
+        mPickedSlot = -1;
+        mPickedObjectLayer = -1;
+        pickedLayerChanged();
+        mDemoVertRot = true;
+        mDemoVertRotButton.setFillColor( 0.5, 0.0, 0.0, 1 );
         }
     else if( inTarget == &mHeldInHandCheckbox ) {
         if( mHeldInHandCheckbox.getToggled() ) {
@@ -2044,6 +2100,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mMinPickupAgeField.setInt( pickedRecord->minPickupAge );
 
             mCurrentObject.containable = pickedRecord->containable;
+            mCurrentObject.vertContainRotationOffset = 
+                pickedRecord->vertContainRotationOffset;
+            endVertRotDemo();
+            mRotAdjustMode = false;
             
             mCurrentObject.heldOffset = pickedRecord->heldOffset;
 
@@ -2220,6 +2280,13 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCheckboxes[1]->setToggled( pickedRecord->permanent );
             mCheckboxes[2]->setToggled( pickedRecord->person );
 
+            if( mCheckboxes[0]->getToggled() ) {
+                showVertRotButtons();
+                }
+            else {
+                hideVertRotButtons();
+                }
+
             mMaleCheckbox.setToggled( pickedRecord->male );
             mDeathMarkerCheckbox.setToggled( pickedRecord->deathMarker );
             
@@ -2310,6 +2377,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == mCheckboxes[0] ) {
         if( mCheckboxes[0]->getToggled() ) {
+            
+            showVertRotButtons();
+                
             mContainSizeField.setVisible( true );
             
             mSlotSizeField.setInt( 1 );
@@ -2342,6 +2412,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         else {
             mContainSizeField.setInt( 1 );
             mContainSizeField.setVisible( false );
+            mCurrentObject.vertContainRotationOffset = 0;
+            hideVertRotButtons();
             }
                     
         updateAgingPanel();
@@ -2358,7 +2430,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mContainSizeField.setInt( 1 );
             mContainSizeField.setVisible( false );
             mCheckboxes[0]->setToggled( false );
-
+            hideVertRotButtons();
+            
+            mCurrentObject.vertContainRotationOffset = 0;
+            
             mSlotSizeField.setInt( 1 );
             mSlotSizeField.setVisible( false );
             mSlotTimeStretchField.setText( "1.0" );
@@ -2514,7 +2589,9 @@ void EditorObjectPage::drawSpriteLayers( doublePair inDrawOffset,
         bodyPos = mCurrentObject.spritePos[ bodyIndex ];
         }
     
-
+    
+    doublePair layerZeroPos = { 0, 0 };
+    
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
         doublePair spritePos = mCurrentObject.spritePos[i];
         
@@ -2599,7 +2676,10 @@ void EditorObjectPage::drawSpriteLayers( doublePair inDrawOffset,
             }
                 
         spritePos = add( spritePos, drawOffset );
-
+        
+        if( i == 0 ) {
+            layerZeroPos = spritePos;
+            }
         
         
         if( multiplicative ) {
@@ -2613,8 +2693,26 @@ void EditorObjectPage::drawSpriteLayers( doublePair inDrawOffset,
             ||
             ( ! inBehindSlots && ! mCurrentObject.spriteBehindSlots[i] ) ) {
             
+            double spriteRot = mCurrentObject.spriteRot[i];
+
+            if( mDemoVertRot ) {
+                double rot = 0.25 + mCurrentObject.vertContainRotationOffset;
+            
+                double rotRadians = rot * 2 * M_PI;
+                
+                // rotate relative to layer 0
+                doublePair posOffset = sub( spritePos, layerZeroPos );
+
+                posOffset = rotate( posOffset, -rotRadians );
+                
+                spritePos = add( layerZeroPos, posOffset );
+
+                spriteRot += rot;
+                }
+            
+
             drawSprite( getSprite( mCurrentObject.sprites[i] ), spritePos,
-                        1.0, mCurrentObject.spriteRot[i],
+                        1.0, spriteRot,
                         mCurrentObject.spriteHFlip[i] );
             }
         
@@ -2874,7 +2972,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 doublePair centerOffset = getObjectCenterOffset( demoObject );
 
                 if( mCurrentObject.slotVert[i] ) {
-                    rot = 0.25;
+                    rot = 0.25 + demoObject->vertContainRotationOffset;
 
                     centerOffset = rotate( centerOffset, -rot * 2 * M_PI );
                     }
@@ -3173,6 +3271,8 @@ void EditorObjectPage::makeActive( char inFresh ) {
     mObjectPicker.redoSearch();
 
     mRotAdjustMode = false;
+    
+    endVertRotDemo();
     }
 
 
@@ -3475,6 +3575,13 @@ void EditorObjectPage::pointerMove( float inX, float inY ) {
                          mCurrentObject.spriteRot[ mPickedObjectLayer ] - 
                          oldRot );
         }
+    else if( mRotAdjustMode && mDemoVertRot ) {
+        mCurrentObject.vertContainRotationOffset =
+            ( inX - mRotStartMouseX ) / 200 + mLayerOldRot;
+        
+        // this will update reset button vis
+        showVertRotButtons();
+        }
     else {    
         mRotStartMouseX = inX;
         getClosestSpriteOrSlot( inX, inY, &mHoverObjectLayer, &mHoverSlot );
@@ -3491,6 +3598,10 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
     if( inX < -192 || inX > 192 || 
         inY < -96 || inY > 192 ) {
         return;
+        }
+    
+    if( mDemoVertRot ) {
+        endVertRotDemo();
         }
     
     if( isLastMouseButtonRight() && mPickedObjectLayer != -1 ) {
@@ -3717,6 +3828,12 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         mRotAdjustMode = true;
         mLayerOldRot = mCurrentObject.spriteRot[ mPickedObjectLayer ];
         }
+    else if( mDemoVertRot && inASCII == 'r' ) {
+        mRotAdjustMode = true;
+        mLayerOldRot = mCurrentObject.vertContainRotationOffset;
+        mRotStartMouseX = lastMouseX;
+        }
+    
     if( mPickedObjectLayer != -1 && inASCII == 'c' ) {
         if( ! getUsesMultiplicativeBlending( 
                 mCurrentObject.sprites[ mPickedObjectLayer ] ) ) {
@@ -4029,7 +4146,7 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
 
 void EditorObjectPage::keyUp( unsigned char inASCII ) {
     
-    if( mPickedObjectLayer != -1 && inASCII == 'r' ) {
+    if( mRotAdjustMode && inASCII == 'r' ) {
         mRotAdjustMode = false;
         }
     

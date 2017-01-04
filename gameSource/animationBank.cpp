@@ -2215,13 +2215,18 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             double rot = inRot;
             
             if( obj->slotVert[i] ) {
+                double rotOffset = 
+                    0.25 + contained->vertContainRotationOffset;
+                
                 if( inFlipH ) {
-                    centerOffset = rotate( centerOffset, - 0.5 * M_PI );
-                    rot -= 0.25;
+                    centerOffset = rotate( centerOffset, 
+                                           - rotOffset * 2 * M_PI );
+                    rot -= rotOffset;
                     }
                 else {
-                    centerOffset = rotate( centerOffset, - 0.5 * M_PI );
-                    rot += 0.25;
+                    centerOffset = rotate( centerOffset, 
+                                           - rotOffset * 2 * M_PI );
+                    rot += rotOffset;
                     }
                 }
 
