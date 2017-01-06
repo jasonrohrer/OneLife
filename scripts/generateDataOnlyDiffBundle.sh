@@ -85,7 +85,7 @@ echo ""
 
 
 
-newVersion=$lastTaggedVersion + 1
+newVersion=$((lastTaggedVersion + 1))
 
 echo "" 
 echo "Using new version number:  $newVersion"
@@ -106,7 +106,7 @@ echo ""
 
 hg archive ~/checkout/diffWorking/dataLatest
 rm ~/checkout/diffWorking/dataLatest/.hg*
-
+echo -n "$newVersion" > ~/checkout/diffWorking/dataLatest/dataVersionNumber.txt
 
 
 echo "" 
@@ -136,7 +136,9 @@ dbzFileName=${newVersion}_inc_all.dbz
 
 mv $dbzFileName ~/www/updateBundles/
 
-echo -n "http://onehouronelife.com/updateBundles/$dbzFileName" ~/diffBundles/${newVersion}_inc_all_urls.txt
+echo -n "http://onehouronelife.com/updateBundles/$dbzFileName" > ~/diffBundles/${newVersion}_inc_all_urls.txt
+
+echo -n "<?php \$version=$newVersion; ?>" > ~/www/reflector/requiredVersion.php
 
 
 rm -r ~/checkout/diffWorking
@@ -157,7 +159,12 @@ else
 	echo "" 
 	echo "Set server shutdownMode, waiting for server to exit"
 	echo ""
-	wait $serverPID
+
+        while kill -CONT $serverPID 1>/dev/null 2>&1; do sleep 1; done
+
+	echo "" 
+	echo "Server has shutdown"
+	echo ""
 fi
 
 
@@ -173,6 +180,14 @@ hg update
 
 
 newTag=OneLife_v$newVersion
+
+echo "" 
+echo "Updating live server data dataVersionNumber.txt to $newVersion"
+echo ""
+
+echo -n "$newVersion" > ~/checkout/OneLifeData6/dataVersionNumber.txt
+
+hg commit -m "Updatated dataVersionNumber to $newVersion"
 
 echo "" 
 echo "Tagging live server data with new hg tag $newTag"
