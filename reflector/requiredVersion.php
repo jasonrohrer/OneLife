@@ -1,0 +1,1 @@
+<?php $version=0; ?>
