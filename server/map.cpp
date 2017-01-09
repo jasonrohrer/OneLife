@@ -45,6 +45,10 @@ void setResponsiblePlayer( int inPlayerID ) {
 
 
 
+static double gapIntScale = 1000000.0;
+
+
+
 
 // object ids that occur naturally on map at random, per biome
 static int numBiomes;
@@ -71,6 +75,10 @@ static int getBiomeIndex( int inBiome ) {
 
 static KISSDB db;
 static char dbOpen = false;
+
+
+static KISSDB biomeDB;
+static char biomeDBOpen = false;
 
 
 static int randSeed = 124567;
@@ -143,6 +151,96 @@ int getMaxChunkDimension() {
     return chunkDimensionX;
     }
 
+
+
+
+// three ints to an 12-byte key
+void intTripleToKey( int inX, int inY, int inSlot, unsigned char *outKey ) {
+    for( int i=0; i<4; i++ ) {
+        int offset = i * 8;
+        outKey[i] = ( inX >> offset ) & 0xFF;
+        outKey[i+4] = ( inY >> offset ) & 0xFF;
+        outKey[i+8] = ( inSlot >> offset ) & 0xFF;
+        }    
+    }
+
+
+// two ints to an 8-byte key
+void intPairToKey( int inX, int inY, unsigned char *outKey ) {
+    for( int i=0; i<4; i++ ) {
+        int offset = i * 8;
+        outKey[i] = ( inX >> offset ) & 0xFF;
+        outKey[i+4] = ( inY >> offset ) & 0xFF;
+        }    
+    }
+
+
+// one int to an 4-byte value
+void intToValue( int inV, unsigned char *outValue ) {
+    for( int i=0; i<4; i++ ) {
+        outValue[i] = ( inV >> (i * 8) ) & 0xFF;
+        }    
+    }
+
+
+int valueToInt( unsigned char *inValue ) {
+    return 
+        inValue[3] << 24 | inValue[2] << 16 | 
+        inValue[1] << 8 | inValue[0];
+    }
+
+
+
+
+
+// returns -1 if not found
+static int biomeDBGet( int inX, int inY, 
+                       int *outSecondPlaceBiome = NULL,
+                       double *outSecondPlaceGap = NULL ) {
+    unsigned char key[8];
+    unsigned char value[12];
+
+    // look for changes to default in database
+    intPairToKey( inX, inY, key );
+    
+    int result = KISSDB_get( &biomeDB, key, value );
+    
+    if( result == 0 ) {
+        // found
+        int biome = valueToInt( &( value[0] ) );
+        
+        if( outSecondPlaceBiome != NULL ) {
+            *outSecondPlaceBiome = valueToInt( &( value[4] ) );
+            }
+        
+        if( outSecondPlaceGap != NULL ) {
+            *outSecondPlaceGap = valueToInt( &( value[8] ) ) / gapIntScale;
+            }
+        
+        return biome;
+        }
+    else {
+        return -1;
+        }
+    }
+
+
+
+static void biomeDBPut( int inX, int inY, int inValue, int inSecondPlace,
+                        double inSecondPlaceGap ) {
+    unsigned char key[8];
+    unsigned char value[12];
+    
+
+    intPairToKey( inX, inY, key );
+    intToValue( inValue, &( value[0] ) );
+    intToValue( inSecondPlace, &( value[4] ) );
+    intToValue( lrint( inSecondPlaceGap * gapIntScale ), 
+                &( value[8] ) );
+            
+    
+    KISSDB_put( &biomeDB, key, value );
+    }
     
 
 
@@ -183,6 +281,20 @@ double sigmoid( double inInput, double inKnee ) {
 static int getMapBiomeIndex( int inX, int inY, 
                              int *outSecondPlaceIndex = NULL,
                              double *outSecondPlaceGap = NULL ) {
+    
+    int secondPlaceBiome;
+    
+    int dbBiome = biomeDBGet( inX, inY,
+                              &secondPlaceBiome,
+                              outSecondPlaceGap );
+    if( dbBiome != -1 ) {
+        if( outSecondPlaceIndex != NULL ) {
+            *outSecondPlaceIndex = getBiomeIndex( secondPlaceBiome );
+            }
+        return getBiomeIndex( dbBiome );
+        }
+    
+
     int pickedBiome = -1;
         
     double maxValue = -DBL_MAX;
@@ -225,6 +337,18 @@ static int getMapBiomeIndex( int inX, int inY,
         }
     if( outSecondPlaceGap != NULL ) {
         *outSecondPlaceGap = secondPlaceGap;
+        }
+    
+
+    if( dbBiome == -1 ) {
+        // not stored, store it
+
+        secondPlaceBiome = 0;
+        if( secondPlace != -1 ) {
+            secondPlaceBiome = biomes[ secondPlace ];
+            }
+        
+        biomeDBPut( inX, inY, dbBiome, secondPlaceBiome, secondPlaceGap );
         }
     
     
@@ -390,29 +514,6 @@ static int getBaseMap( int inX, int inY ) {
 
 
 
-// three ints to an 12-byte key
-void intTripleToKey( int inX, int inY, int inSlot, unsigned char *outKey ) {
-    for( int i=0; i<4; i++ ) {
-        int offset = i * 8;
-        outKey[i] = ( inX >> offset ) & 0xFF;
-        outKey[i+4] = ( inY >> offset ) & 0xFF;
-        outKey[i+8] = ( inSlot >> offset ) & 0xFF;
-        }    
-    }
-
-// one int to an 4-byte value
-void intToValue( int inV, unsigned char *outValue ) {
-    for( int i=0; i<4; i++ ) {
-        outValue[i] = ( inV >> (i * 8) ) & 0xFF;
-        }    
-    }
-
-
-int valueToInt( unsigned char *inValue ) {
-    return 
-        inValue[3] << 24 | inValue[2] << 16 | 
-        inValue[1] << 8 | inValue[0];
-    }
 
 
 
@@ -567,11 +668,30 @@ void initMap() {
                              );
     
     if( error ) {
-        AppLog::errorF( "Error %d opening KissDB", error );
+        AppLog::errorF( "Error %d opening map KissDB", error );
         return;
         }
     
     dbOpen = true;
+
+    error = KISSDB_open( &biomeDB, 
+                         "biome.db", 
+                         KISSDB_OPEN_MODE_RWCREAT,
+                         80000,
+                         8, // two 32-bit ints, xy
+                         12 // three ints,  
+                         // 1: biome number at x,y 
+                         // 2: second place biome number at x,y 
+                         // 3: second place biome gap as int (float gap
+                         //    multiplied by 1,000,000)
+                         );
+    
+    if( error ) {
+        AppLog::errorF( "Error %d opening biome KissDB", error );
+        return;
+        }
+    
+    biomeDBOpen = true;
 
     
 
@@ -796,6 +916,9 @@ void freeMap() {
     if( dbOpen ) {
         KISSDB_close( &db );
         }
+    if( biomeDBOpen ) {
+        KISSDB_close( &biomeDB );
+        }
     
     delete [] biomes;
     
@@ -803,6 +926,9 @@ void freeMap() {
     delete [] naturalMapChances;
     delete [] totalChanceWeight;
     }
+
+
+
 
 
 
@@ -856,6 +982,9 @@ static void dbPut( int inX, int inY, int inSlot, int inValue ) {
     
     KISSDB_put( &db, key, value );
     }
+
+
+
 
 
 
@@ -1345,6 +1474,7 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
                 // getMapObject
 
                 // get it ourselves
+                
                 lastCheckedBiome = biomes[getMapBiomeIndex( x, y )];
                 }
             chunkBiomes[ cI ] = lastCheckedBiome;
