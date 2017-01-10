@@ -63,6 +63,17 @@ hg pull
 hg update
 
 
+echo "" 
+echo "Building headless cache generation tool"
+echo ""
+
+cd gameSource
+sh ./makeRegenerateCaches
+
+cd ~/checkout/OneLifeWorking
+
+
+
 lastTaggedCodeVersion=`hg tags | grep "OneLife" -m 1 | awk '{print $1}' | sed -e 's/OneLife_v//'`
 
 
@@ -122,6 +133,31 @@ rm ~/checkout/diffWorking/dataLast/.hg*
 # restore repository to latest, to avoid confusion later
 hg update
 
+
+echo "" 
+echo "Copying last bundle's reverb cache to save work"
+echo ""
+
+
+cp -r ~/checkout/reverbCacheLastBundle ~/checkout/diffWorking/dataLast/reverbCache
+cp -r ~/checkout/reverbCacheLastBundle ~/checkout/diffWorking/dataLatest/reverbCache
+
+
+
+echo "" 
+echo "Generating caches"
+echo ""
+
+
+cd ~/checkout/diffWorking/dataLast
+cp ~/checkout/OneLifeWorking/gameSource/reverbImpulseResponse.aiff .
+~/checkout/OneLifeWorking/gameSource/regenerateCaches
+rm reverbImpulseResponse.aiff
+
+cd ~/checkout/diffWorking/dataLatest
+cp ~/checkout/OneLifeWorking/gameSource/reverbImpulseResponse.aiff .
+~/checkout/OneLifeWorking/gameSource/regenerateCaches
+rm reverbImpulseResponse.aiff
 
 
 echo "" 

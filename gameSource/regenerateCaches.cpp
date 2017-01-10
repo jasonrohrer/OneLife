@@ -171,7 +171,7 @@ int main() {
     printf( "\n" );
 
 
-    num = initSoundBankStart();
+    num = initSoundBankStart( false );
 
     if( num > 0 ) {
         runRebuild( "sounds", num, &initSoundBankStep );

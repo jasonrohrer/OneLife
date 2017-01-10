@@ -165,6 +165,9 @@ static char doesReverbCacheExist( int inID, File *inReverbFolder ) {
     }
 
 
+static char printSteps = false;
+
+
 
 #include "convolution.h"
 
@@ -178,9 +181,10 @@ static void generateReverb( SoundRecord *inRecord,
     
     
     if( ! cacheFile->exists() ) {
-         
-        printf( "Regenerating reverb cache file %s\n", cacheFileName );
         
+        if( printSteps ) {
+            printf( "Regenerating reverb cache file %s\n", cacheFileName );
+            }
 
         int numSamples;
         int16_t *samples = NULL;
@@ -280,7 +284,10 @@ static int numReverbSamples;
 static File *reverbFolder;
 
 
-int initSoundBankStart() {
+int initSoundBankStart( char inPrintSteps ) {
+    
+    printSteps = inPrintSteps;
+    
     
     soundEffectsLoudness = 
         SettingsManager::getFloatSetting( "soundEffectsLoudness", 1.0 );
