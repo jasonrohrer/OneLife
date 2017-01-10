@@ -63,6 +63,8 @@ CustomRandomSource randSource( 34957197 );
 
 #include "liveObjectSet.h"
 
+#include "groundSprites.h"
+
 
 #include "FinalMessagePage.h"
 #include "LoadingPage.h"
@@ -642,6 +644,8 @@ void freeFrameDrawer() {
     //    }
 
     
+    freeGroundSprites();
+
     freeAnimationBank();
     freeObjectBank();
     freeSpriteBank();
@@ -1302,31 +1306,40 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initAnimationBankFinish();
+                        
                         loadingPage->setCurrentPhase( 
                             translate( "groundTextures" ) );
-                     
-                        // no progress bar, not interactive
-                        loadingPage->showProgress( false );
+
+                        loadingPage->setCurrentProgress( 0 );
                         
+                        initGroundSpritesStart();
+
+                        loadingStepBatchSize = 1;
+                        
+
                         loadingPhase ++;
                         }
                     break;
                     }
                 case 5: {
-                    initLiveObjectSet();
-
-                    loadingPhaseStartTime = Time::getCurrentTime();
-
-                    // this constructor loads ground textures
-                    // and can take a while
-                    // (not interactive, no progress bar)
-                    livingLifePage = new LivingLifePage();
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initGroundSpritesStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
                     
-                    printf( "Loaded ground textures in %f sec\n",
-                            Time::getCurrentTime() - 
-                            loadingPhaseStartTime );
+                    if( progress == 1.0 ) {
+                        initGroundSpritesFinish();
+                        
+                        initLiveObjectSet();
 
-                    loadingPhase ++;
+                        loadingPhaseStartTime = Time::getCurrentTime();
+
+                        livingLifePage = new LivingLifePage();
+                    
+                        loadingPhase ++;
+                        }
+                    break;
                     }
                 default:
                     // NOW game engine can start measuring frame rate

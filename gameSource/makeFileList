@@ -48,6 +48,7 @@ convolution.cpp \
 fft.cpp \
 ogg.cpp \
 musicPlayer2.cpp \
+groundSprites.cpp \
 
 
 

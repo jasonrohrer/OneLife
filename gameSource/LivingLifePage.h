@@ -184,18 +184,6 @@ typedef struct LiveObject {
 
 
 
-typedef struct GroundSpriteSet {
-        int numTilesHigh;
-        int numTilesWide;
-        
-        // indexed as [y][x]
-        SpriteHandle **tiles;
-
-        SpriteHandle **squareTiles;
-
-        // all tiles together in one image
-        SpriteHandle wholeSheet;
-    } GroundSpriteSet;
 
 
 
@@ -376,10 +364,6 @@ class LivingLifePage : public GamePage {
         
 
 
-        // array sized for largest biome ID for direct indexing
-        // sparse, with NULL entries
-        int mGroundSpritesArraySize;
-        GroundSpriteSet **mGroundSprites;
         
 
         int mLastMouseOverID;
