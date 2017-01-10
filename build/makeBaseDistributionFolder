@@ -51,6 +51,8 @@ cp ../../OneLifeData6/ground/* $baseFolder/ground
 
 # on mingw, symlinks in the gameSource folder are full copies
 # so cache files aren't created back in the OneLifeData6 directory
+# note that these are likely stale anyway
+# so the windows script regenerates them
 if [ ! -e $baseFolder/sprites/cache.fcz ]
 then
    cp ../gameSource/sprites/cache.fcz $baseFolder/sprites/

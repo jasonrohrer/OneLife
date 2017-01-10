@@ -24,6 +24,17 @@ rm -rf windows/OneLife_$1
 mv base/* windows
 
 
+cd ../gameSource
+sh makeRegenerateCachesWindows
+
+cd ../build/windows/OneLife_$1
+
+rm */cache.fcz
+rm groundTileCache/*
+../../../gameSource/regenerateCaches
+
+cd ../..
+
 
 cp ../gameSource/OneLife.exe windows/OneLife_$1/
 
