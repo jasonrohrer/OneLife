@@ -25,6 +25,7 @@ static int nextStep;
 static int blurRadius = 12;
 static BoxBlurFilter blur( blurRadius );
 
+static File groundDir( NULL, "ground" );
 static File groundTileCacheDir( NULL, "groundTileCache" );
 
 static SimpleVector<int> allBiomes;
@@ -71,8 +72,20 @@ float initGroundSpritesStep() {
     
         char *fileName = autoSprintf( "ground_%d.tga", b );
 
-        RawRGBAImage *rawImage = readTGAFileRaw( fileName );
+        File *groundFile = groundDir.getChildFile( fileName );
         
+
+        char *fullFileName = groundFile->getFullFileName();
+        
+        RawRGBAImage *rawImage = NULL;
+        
+        if( groundFile->exists() ) {
+            
+            rawImage = readTGAFileRawBase( fullFileName );
+
+            }
+        
+        delete groundFile;
 
         if( rawImage != NULL ) {
             
@@ -153,7 +166,7 @@ float initGroundSpritesStep() {
                     // need to regenerate some
                     
                     // spend time to load the double-converted image
-                    Image *image = readTGAFile( fileName );
+                    Image *image = readTGAFileBase( fullFileName );
 
                     int tileD = CELL_D * 2;
                 
@@ -365,6 +378,8 @@ float initGroundSpritesStep() {
             delete rawImage;
             }
         
+        delete [] fullFileName;
+            
         delete [] fileName;
         
         nextStep++;
