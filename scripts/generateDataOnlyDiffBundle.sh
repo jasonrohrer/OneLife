@@ -179,6 +179,7 @@ dbzFileName=${newVersion}_inc_all.dbz
 
 ~/checkout/minorGems/game/diffBundle/diffBundle dataLast dataLatest $dbzFileName
 
+cp $dbzFileName ~/diffBundles/
 mv $dbzFileName ~/www/updateBundles/
 
 echo -n "http://onehouronelife.com/updateBundles/$dbzFileName" > ~/diffBundles/${newVersion}_inc_all_urls.txt
