@@ -161,6 +161,15 @@ rm reverbImpulseResponse.aiff
 
 
 echo "" 
+echo "Saving latest reverb cache for next time"
+echo ""
+
+
+rm -r ~/checkout/reverbCacheLastBundle
+cp -r ~/checkout/diffWorking/dataLatest/reverbCache ~/checkout/reverbCacheLastBundle
+
+
+echo "" 
 echo "Generating diff bundle"
 echo ""
 
