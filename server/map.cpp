@@ -663,6 +663,8 @@ void initMap() {
                                  // s=3 first contained object
                                  // s=4 second contained object
                                  // s=... remaining contained objects
+                                 // Then decay ETA for each slot, in order,
+                                 //   after that.
                              4 // one int, object ID at x,y in slot s
                                // OR contained count if s=1
                              );
@@ -1761,6 +1763,33 @@ void setContainedEtaDecay( int inX, int inY, int inNumContained,
         if( inContainedEtaDecay[i] != 0 ) {
             trackETA( inX, inY, i + 1, inContainedEtaDecay[i] );
             }
+        }
+    }
+
+
+
+
+
+int getContained( int inX, int inY, int inSlot ) {
+    int num = getNumContained( inX, inY );
+    
+    if( num == 0 ) {
+        return 0;
+        }
+
+    if( inSlot == -1 || inSlot > num - 1 ) {
+        inSlot = num - 1;
+        }
+    
+    
+    int result = dbGet( inX, inY, FIRST_CONT_SLOT + inSlot );
+    
+    if( result != -1 ) {    
+        return result;
+        }
+    else {
+        // nothing in that slot
+        return 0;
         }
     }
 

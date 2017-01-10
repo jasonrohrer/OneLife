@@ -4395,9 +4395,18 @@ int main() {
                                 int numIn = 
                                     getNumContained( m.x, m.y );
                                 
+                                int toRemoveID = -1;
+                                
+                                if( numIn > 0 ) {
+                                    toRemoveID = getContained( m.x, m.y, m.i );
+                                    }
+                                
 
                                 if( nextPlayer->holdingID == 0 && 
-                                    numIn > 0 ) {
+                                    numIn > 0 &&
+                                    // old enough to handle it
+                                    getObject( toRemoveID )->minPickupAge <= 
+                                    computeAge( nextPlayer ) ) {
                                     // get from container
                                     
                                     nextPlayer->holdingID =
@@ -4443,16 +4452,30 @@ int main() {
 
                                 int oldNumContained = 
                                     nextPlayer->clothingContained[m.c].size();
-                                
+
                                 int slotToRemove = m.i;
                                 
                                 if( slotToRemove < 0 ) {
                                     slotToRemove = oldNumContained - 1;
                                     }
-
+                                
+                                int toRemoveID = -1;
+                                
                                 if( oldNumContained > 0 &&
                                     oldNumContained > slotToRemove &&
                                     slotToRemove >= 0 ) {
+                                    
+                                    toRemoveID = 
+                                        nextPlayer->clothingContained[m.c].
+                                        getElementDirect( slotToRemove );
+                                    }
+
+                                if( oldNumContained > 0 &&
+                                    oldNumContained > slotToRemove &&
+                                    slotToRemove >= 0 &&
+                                    // old enough to handle it
+                                    getObject( toRemoveID )->minPickupAge <= 
+                                    computeAge( nextPlayer ) ) {
                                     
 
                                     nextPlayer->holdingID = 

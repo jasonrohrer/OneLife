@@ -70,6 +70,11 @@ int getNumContained( int inX, int inY );
 int *getContained( int inX, int inY, int *outNumContained );
 unsigned int *getContainedEtaDecay( int inX, int inY, int *outNumContained );
 
+// gets contained item from specified slot, or from top of stack
+// if inSlot is -1
+int getContained( int inX, int inY, int inSlot );
+
+
 void setContained( int inX, int inY, int inNumContained, int *inContained );
 void setContainedEtaDecay( int inX, int inY, int inNumContained, 
                            unsigned int *inContainedEtaDecay );
