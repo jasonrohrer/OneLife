@@ -250,6 +250,19 @@ hg push
 
 
 echo "" 
+echo "Re-compiling server"
+echo ""
+
+cd ~/checkout/OneLife/server
+hg pull
+hg update
+
+./configure 1
+make
+
+
+
+echo "" 
 echo "Re-launching server"
 echo ""
 
