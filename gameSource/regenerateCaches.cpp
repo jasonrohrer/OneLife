@@ -6,10 +6,13 @@
 
 #include "soundBank.h"
 
+#include "groundSprites.h"
+
 
 #include "minorGems/io/file/File.h"
 #include "minorGems/system/Thread.h"
 #include "minorGems/game/game.h"
+#include "minorGems/graphics/converters/TGAImageConverter.h"
 
 
 
@@ -53,7 +56,10 @@ void runRebuild( const char *inBankName,
         printf( "-" );
         }
     printf( "]" );
+    
+    fflush( stdout );
 
+    
     while( progress < 1 ) {
         for( int i=0; i<batchSize && progress < 1; i++ ) {
             progress = (*inStepFunction)();
@@ -94,6 +100,23 @@ int main() {
     deleteCache( "objects" );
     deleteCache( "animations" );
     deleteCache( "transitions" );
+    
+    File groundTileCacheFolder( NULL, "groundTileCache" );
+    
+    if( groundTileCacheFolder.exists() && 
+        groundTileCacheFolder.isDirectory() ) {
+        
+        int numChildFiles;
+        File **childFiles = 
+            groundTileCacheFolder.getChildFiles( &numChildFiles );
+        
+        for( int i=0; i<numChildFiles; i++ ) {
+            childFiles[i]->remove();
+            delete childFiles[i];
+            }
+        delete [] childFiles;
+        }
+
 
     
     char rebuilding;
@@ -120,9 +143,6 @@ int main() {
         }
     
     initObjectBankFinish();
-
-    freeObjectBank();
-    printf( "\n" );
 
 
 
@@ -164,6 +184,25 @@ int main() {
     freeSoundBank();
     printf( "\n" );
 
+
+    num = initGroundSpritesStart( false );
+
+    if( num > 0 ) {
+        runRebuild( "groundTiles", num, &initGroundSpritesStep );
+        }
+    else {
+        printf( "No ground tiles need to be generated\n" );
+        }
+    initGroundSpritesFinish();
+
+    freeGroundSprites();
+    printf( "\n" );
+
+
+    // ground tiles need this, so free last
+    freeObjectBank();
+    printf( "\n" );
+
     }
 
 
@@ -184,9 +223,6 @@ unsigned char *getAsyncFileData( int inHandle, int *outDataLength ) {
     return NULL;
     }
 
-Image *readTGAFileBase( const char *inTGAFileName ) {
-    return NULL;
-    }
 
 RawRGBAImage *readTGAFileRawFromBuffer( unsigned char *inBuffer, 
                                         int inLength ) {
@@ -241,6 +277,16 @@ SpriteHandle fillSprite( Image*, char ) {
     return NULL;
     }
 
+
+SpriteHandle fillSprite( RawRGBAImage *inRawImage ) {
+    return NULL;
+    }
+
+SpriteHandle loadSpriteBase( const char *inTGAFileName, 
+                             char inTransparentLowerLeftCorner ) {
+    return NULL;
+    }
+
 void drawSprite( SpriteHandle, doublePair, double, double, char ) {
     }
 
@@ -255,6 +301,140 @@ void setDrawFade( float ) {
     }
 
 void toggleAdditiveTextureColoring( char ) {
+    }
+
+
+
+// these implementations copied from gameSDL.cpp
+
+
+
+static Image *readTGAFile( File *inFile ) {
+    
+    if( !inFile->exists() ) {
+        char *fileName = inFile->getFullFileName();
+        
+        printf( 
+            "CRITICAL ERROR:  TGA file %s does not exist",
+            fileName );
+        delete [] fileName;
+        
+        return NULL;
+        }    
+
+
+    FileInputStream tgaStream( inFile );
+    
+    TGAImageConverter converter;
+    
+    Image *result = converter.deformatImage( &tgaStream );
+
+    if( result == NULL ) {        
+        char *fileName = inFile->getFullFileName();
+        
+        printf( 
+            "CRITICAL ERROR:  could not read TGA file %s, wrong format?",
+            fileName );
+        delete [] fileName;
+        }
+    
+    return result;
+    }
+
+
+
+Image *readTGAFile( const char *inTGAFileName ) {
+
+    File tgaFile( new Path( "graphics" ), inTGAFileName );
+    
+    return readTGAFile( &tgaFile );
+    }
+
+
+
+Image *readTGAFileBase( const char *inTGAFileName ) {
+
+    File tgaFile( NULL, inTGAFileName );
+    
+    return readTGAFile( &tgaFile );
+    }
+
+
+
+
+static RawRGBAImage *readTGAFileRaw( InputStream *inStream ) {
+    TGAImageConverter converter;
+    
+    RawRGBAImage *result = converter.deformatImageRaw( inStream );
+
+    
+    return result;
+    }
+
+
+
+
+static RawRGBAImage *readTGAFileRaw( File *inFile ) {
+    
+    if( !inFile->exists() ) {
+        char *fileName = inFile->getFullFileName();
+        
+        printf( 
+            "CRITICAL ERROR:  TGA file %s does not exist",
+            fileName );
+        delete [] fileName;
+       
+        return NULL;
+        }    
+
+
+    FileInputStream tgaStream( inFile );
+    
+
+    RawRGBAImage *result = readTGAFileRaw( &tgaStream );
+
+    if( result == NULL ) {        
+        char *fileName = inFile->getFullFileName();
+        
+        printf( 
+            "CRITICAL ERROR:  could not read TGA file %s, wrong format?",
+            fileName );
+        delete [] fileName;
+        
+        }
+    
+    return result;
+    }
+
+
+
+RawRGBAImage *readTGAFileRaw( const char *inTGAFileName ) {
+
+    File tgaFile( new Path( "graphics" ), inTGAFileName );
+    
+    return readTGAFileRaw( &tgaFile );
+    }
+
+
+
+RawRGBAImage *readTGAFileRawBase( const char *inTGAFileName ) {
+
+    File tgaFile( NULL, inTGAFileName );
+    
+    return readTGAFileRaw( &tgaFile );
+    }
+
+
+
+
+
+void writeTGAFile( const char *inTGAFileName, Image *inImage ) {
+    File tgaFile( NULL, inTGAFileName );
+    FileOutputStream tgaStream( &tgaFile );
+    
+    TGAImageConverter converter;
+    
+    return converter.formatImage( inImage, &tgaStream );
     }
 
 

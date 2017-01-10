@@ -7,7 +7,6 @@
 #include "minorGems/graphics/filters/BoxBlurFilter.h"
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/io/file/File.h"
-#include "minorGems/util/log/AppLog.h"
 
 
 
@@ -30,11 +29,14 @@ static File groundTileCacheDir( NULL, "groundTileCache" );
 
 static SimpleVector<int> allBiomes;
     
+static char printSteps = false;
 
 
-int initGroundSpritesStart() {
+int initGroundSpritesStart( char inPrintSteps ) {
     nextStep = 0;
     
+    printSteps = inPrintSteps;
+
     getAllBiomes( &allBiomes );
     
     int maxBiome = -1;
@@ -93,17 +95,15 @@ float initGroundSpritesStep() {
             int h = rawImage->mHeight;
             
             if( w % CELL_D != 0 || h % CELL_D != 0 ) {
-                AppLog::printOutNextMessage();
-                AppLog::errorF( 
-                    "Ground texture %s with w=%d and h=%h does not "
+                printf( 
+                    "Ground texture %s with w=%d and h=%d does not "
                     "have dimensions that are even multiples of the cell "
                     "width %d",
                     fileName, w, h, CELL_D );
                 }
             else if( rawImage->mNumChannels != 4 ) {
-                AppLog::printOutNextMessage();
-                AppLog::errorF( 
-                    "Ground texture %s has % channels instead of 4",
+                printf( 
+                    "Ground texture %s has %d channels instead of 4",
                     fileName, rawImage->mNumChannels );
                 }
             else {    
@@ -183,9 +183,12 @@ float initGroundSpritesStep() {
                                   "groundTileCache/biome_%d_x%d_y%d_square.tga",
                                   b, tx, ty );
 
-                                printf( "Cache file %s does not exist, "
-                                        "rebuilding.\n", cacheFileName );
-
+                                if( printSteps ) {    
+                                    printf( "Cache file %s does not exist, "
+                                            "rebuilding.\n", cacheFileName );
+                                    }
+                                
+                                        
                                 Image *tileImage = image->getSubImage( 
                                     tx * CELL_D, ty * CELL_D, CELL_D, CELL_D );
                                 
@@ -206,9 +209,11 @@ float initGroundSpritesStep() {
                                         "groundTileCache/biome_%d_x%d_y%d.tga",
                                         b, tx, ty );
 
-                                printf( "Cache file %s does not exist, "
-                                    "rebuilding.\n", cacheFileName );
-
+                                if( printSteps ) {    
+                                    printf( "Cache file %s does not exist, "
+                                            "rebuilding.\n", cacheFileName );
+                                    }
+                                
                                 // generate from scratch
 
                                 Image tileImage( tileD, tileD, 4, false );

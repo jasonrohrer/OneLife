@@ -31,9 +31,10 @@ extern GroundSpriteSet **groundSprites;
 // object bank must be inited first
 
 
+
 // loads from objects folder
 // returns number of ground tiles that need to be loaded
-int initGroundSpritesStart();
+int initGroundSpritesStart( char inPrintSteps=true );
 
 // returns progress... ready for Finish when progress == 1.0
 float initGroundSpritesStep();
