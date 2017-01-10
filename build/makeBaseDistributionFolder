@@ -26,6 +26,7 @@ mkdir $baseFolder/transitions
 mkdir $baseFolder/animations
 mkdir $baseFolder/music
 mkdir $baseFolder/sounds
+mkdir $baseFolder/ground
 
 
 
@@ -45,9 +46,10 @@ cp ../../OneLifeData6/transitions/* $baseFolder/transitions
 cp ../../OneLifeData6/animations/* $baseFolder/animations
 cp ../../OneLifeData6/music/* $baseFolder/music
 cp ../../OneLifeData6/sounds/* $baseFolder/sounds
+cp ../../OneLifeData6/ground/* $baseFolder/ground
 
 
-# on mingw, symlinks in teh gameSource folder are full copies
+# on mingw, symlinks in the gameSource folder are full copies
 # so cache files aren't created back in the OneLifeData6 directory
 if [ ! -e $baseFolder/sprites/cache.fcz ]
 then

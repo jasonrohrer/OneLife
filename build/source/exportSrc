@@ -21,6 +21,7 @@ mv $SOURCEDIR/OneLifeData6/music $SOURCEDIR/
 mv $SOURCEDIR/OneLifeData6/objects $SOURCEDIR/
 mv $SOURCEDIR/OneLifeData6/sounds $SOURCEDIR/
 mv $SOURCEDIR/OneLifeData6/sprites $SOURCEDIR/
+mv $SOURCEDIR/OneLifeData6/ground $SOURCEDIR/ground
 mv $SOURCEDIR/OneLifeData6/transitions $SOURCEDIR/
 mv $SOURCEDIR/OneLifeData6/dataVersionNumber.txt $SOURCEDIR/
 
