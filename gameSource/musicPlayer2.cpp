@@ -120,6 +120,8 @@ static int startNextAgeFileRead( double inAge ) {
         delete [] childFiles;
         }
     
+    delete [] searchString;
+
     return handle;
     }
 
