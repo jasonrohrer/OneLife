@@ -300,6 +300,11 @@ class LivingLifePage : public GamePage {
 
         SimpleVector<int> *mMapContainedStacks;
 
+        // true if this map spot was something that our
+        // player was responsible for placing
+        char *mMapOurPlayerPlacedFlags;
+        
+
         int mMapOffsetX;
         int mMapOffsetY;
 

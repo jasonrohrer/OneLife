@@ -793,6 +793,9 @@ LivingLifePage::LivingLifePage()
     mMapDropRot = new double[ mMapD * mMapD ];
     mMapDropSounds = new SoundUsage[ mMapD * mMapD ];
     mMapTileFlips = new char[ mMapD * mMapD ];
+    
+    mMapOurPlayerPlacedFlags = new char[ mMapD * mMapD ];
+    
 
     for( int i=0; i<mMapD *mMapD; i++ ) {
         // -1 represents unknown
@@ -816,6 +819,8 @@ LivingLifePage::LivingLifePage()
         mMapDropSounds[i] = blankSoundUsage;
         
         mMapTileFlips[i] = false;
+        
+        mMapOurPlayerPlacedFlags[i] = false;
         }
     
 
@@ -991,6 +996,8 @@ LivingLifePage::~LivingLifePage() {
     delete [] mMapBiomes;
 
     delete [] mMapCellDrawnFlags;
+
+    delete [] mMapOurPlayerPlacedFlags;
 
     delete [] nextActionMessageToSend;
 
@@ -3603,6 +3610,8 @@ void LivingLifePage::step() {
             SoundUsage *newMapDropSounds = new SoundUsage[ mMapD * mMapD ];
             char *newMapTileFlips= new char[ mMapD * mMapD ];
 
+            char *newMapOurPlayerPlacedFlags = new char[ mMapD * mMapD ];
+
             
             for( int i=0; i<mMapD *mMapD; i++ ) {
                 // starts uknown, not empty
@@ -3626,6 +3635,7 @@ void LivingLifePage::step() {
                 newMapDropOffsets[i].y = 0;
 
                 newMapTileFlips[i] = false;
+                newMapOurPlayerPlacedFlags[i] = false;
                 
 
                 
@@ -3656,6 +3666,8 @@ void LivingLifePage::step() {
                     newMapDropSounds[i] = mMapDropSounds[oI];
 
                     newMapTileFlips[i] = mMapTileFlips[oI];
+                    newMapOurPlayerPlacedFlags[i] = 
+                        mMapOurPlayerPlacedFlags[oI];
                     }
                 }
             
@@ -3687,6 +3699,9 @@ void LivingLifePage::step() {
             
             memcpy( mMapTileFlips, newMapTileFlips,
                     mMapD * mMapD * sizeof( char ) );
+
+            memcpy( mMapOurPlayerPlacedFlags, newMapOurPlayerPlacedFlags,
+                    mMapD * mMapD * sizeof( char ) );
             
             delete [] newMap;
             delete [] newMapBiomes;
@@ -3700,6 +3715,8 @@ void LivingLifePage::step() {
             delete [] newMapDropRot;
             delete [] newMapDropSounds;
             delete [] newMapTileFlips;
+            
+            delete [] newMapOurPlayerPlacedFlags;
             
             
 
@@ -3765,11 +3782,17 @@ void LivingLifePage::step() {
                             
                             
                             int mapI = mapY * mMapD + mapX;
+                            int oldMapID = mMap[mapI];
                             
                             sscanf( tokens->getElementDirect(i),
                                     "%d:%d", 
                                     &( mMapBiomes[mapI] ),
                                     &( mMap[mapI] ) );
+                            
+                            if( mMap[mapI] != oldMapID ) {
+                                // our placement status cleared
+                                mMapOurPlayerPlacedFlags[mapI] = false;
+                                }
 
                             mMapContainedStacks[mapI].deleteAll();
                             
@@ -3894,6 +3917,14 @@ void LivingLifePage::step() {
                             mMapContainedStacks[mapI].deleteAll();
                             }
                         
+                        if( responsiblePlayerID == -1 ) {
+                            // no one dropped this
+                            
+                            // our placement status cleared
+                            mMapOurPlayerPlacedFlags[mapI] = false;
+                            }
+                        
+
                         if( old != newID && 
                             newID != 0 && 
                             responsiblePlayerID == -1 ) {
@@ -3940,6 +3971,9 @@ void LivingLifePage::step() {
                             if( responsiblePlayerID != -1 ) {
                                 responsiblePlayerObject = 
                                     getGameObject( responsiblePlayerID );
+
+                                mMapOurPlayerPlacedFlags[mapI] = 
+                                    ( responsiblePlayerID == ourID );
                                 }
                             
                             
@@ -6278,7 +6312,52 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
     
     p->closestCellX = clickDestX;
     p->closestCellY = clickDestY;
+
     
+    int clickDestMapX = clickDestX - mMapOffsetX + mMapD / 2;
+    int clickDestMapY = clickDestY - mMapOffsetY + mMapD / 2;
+    
+    int clickDestMapI = clickDestMapY * mMapD + clickDestMapX;
+    
+    if( mMapOurPlayerPlacedFlags[ clickDestMapI ] ) {
+        // check this cell first
+        printf( "Our placement\n" );
+        
+        int oID = mMap[ clickDestMapI ];
+        
+        if( oID > 0 ) {
+            ObjectRecord *obj = getObject( oID );
+                
+            int sp, cl, sl;
+                
+            double dist = getClosestObjectPart( 
+                obj,
+                NULL,
+                &( mMapContainedStacks[clickDestMapI] ),
+                NULL,
+                -1,
+                -1,
+                mMapTileFlips[ clickDestMapI ],
+                clickExtraX,
+                clickExtraY,
+                &sp, &cl, &sl,
+                // ignore transparent parts
+                // allow objects behind smoke to be picked up
+                false );
+            
+            if( dist < minDistThatHits ) {
+                p->hit = true;
+                p->closestCellX = clickDestX;
+                p->closestCellY = clickDestY;
+                
+                p->hitSlotIndex = sl;
+                
+                p->hitAnObject = true;
+                }
+            }
+        }
+    
+
 
     // start in front row
     // right to left
@@ -6460,7 +6539,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         
     int mapX = clickDestX - mMapOffsetX + mMapD / 2;
     int mapY = clickDestY - mMapOffsetY + mMapD / 2;
-    if( mapY >= 0 && mapY < mMapD &&
+    if( p.hitAnObject && mapY >= 0 && mapY < mMapD &&
         mapX >= 0 && mapX < mMapD ) {
         
         destID = mMap[ mapY * mMapD + mapX ];
