@@ -212,6 +212,12 @@ int main( int inNumArgs, char **inArgs ) {
                     humanMade = false;
                     break;
                     }
+                if( trans[t]->actor == -2 ) {
+                    // default transition
+                    // doesn't count as making something
+                    humanMade = false;
+                    break;
+                    }
                 }
             delete [] trans;
 
