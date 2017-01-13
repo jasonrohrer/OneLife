@@ -6365,7 +6365,8 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
     for( int y=clickDestY-2; y<=clickDestY+1 && ! p->hit; y++ ) {
         float clickOffsetY = ( clickDestY  - y ) * CELL_D + clickExtraY;
 
-        // first all map objects in this row (in front of people)
+        // first all non drawn-behind map objects in this row
+        // (in front of people)
         for( int x=clickDestX+1; x>=clickDestX-1  && ! p->hit; x-- ) {
             float clickOffsetX = ( clickDestX  - x ) * CELL_D + clickExtraX;
 
@@ -6378,7 +6379,8 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
             
             
 
-            if( oID > 0 ) {
+            if( oID > 0 &&
+                ! getObject( oID )->drawBehindPlayer ) {
                 ObjectRecord *obj = getObject( oID );
                 
                 int sp, cl, sl;
@@ -6491,6 +6493,53 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                     }
                 }
             
+            }
+        
+        // now drawn-behind objects in this row
+
+        for( int x=clickDestX+1; x>=clickDestX-1  && ! p->hit; x-- ) {
+            float clickOffsetX = ( clickDestX  - x ) * CELL_D + clickExtraX;
+
+            int mapX = x - mMapOffsetX + mMapD / 2;
+            int mapY = y - mMapOffsetY + mMapD / 2;
+
+            int mapI = mapY * mMapD + mapX;
+
+            int oID = mMap[ mapI ];
+            
+            
+
+            if( oID > 0 &&
+                getObject( oID )->drawBehindPlayer ) {
+                ObjectRecord *obj = getObject( oID );
+                
+                int sp, cl, sl;
+                
+                double dist = getClosestObjectPart( 
+                    obj,
+                    NULL,
+                    &( mMapContainedStacks[mapI] ),
+                    NULL,
+                    -1,
+                    -1,
+                    mMapTileFlips[ mapI ],
+                    clickOffsetX,
+                    clickOffsetY,
+                    &sp, &cl, &sl,
+                    // ignore transparent parts
+                    // allow objects behind smoke to be picked up
+                    false );
+                
+                if( dist < minDistThatHits ) {
+                    p->hit = true;
+                    p->closestCellX = x;
+                    p->closestCellY = y;
+                    
+                    p->hitSlotIndex = sl;
+
+                    p->hitAnObject = true;
+                    }
+                }
             }
         }
     }
