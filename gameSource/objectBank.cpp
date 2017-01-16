@@ -982,6 +982,50 @@ ObjectRecord **searchObjects( const char *inSearch,
                               int inNumToGet, 
                               int *outNumResults, int *outNumRemaining ) {
     
+    if( strcmp( inSearch, "" ) == 0 ) {
+        // special case, show objects in reverse-id order, newest first
+        SimpleVector< ObjectRecord *> results;
+        
+        int numSkipped = 0;
+        int id = mapSize - 1;
+        
+        while( id > 0 && numSkipped < inNumToSkip ) {
+            if( idMap[id] != NULL ) {
+                numSkipped++;
+                }
+            id--;
+            }
+        
+        int numGotten = 0;
+        while( id > 0 && numGotten < inNumToGet ) {
+            if( idMap[id] != NULL ) {
+                results.push_back( idMap[id] );
+                numGotten++;
+                }
+            id--;
+            }
+        
+        // rough estimate
+        *outNumRemaining = id;
+        
+        if( *outNumRemaining < 100 ) {
+            // close enough to end, actually compute it
+            *outNumRemaining = 0;
+            
+            while( id > 0 ) {
+                if( idMap[id] != NULL ) {
+                    *outNumRemaining = *outNumRemaining + 1;
+                    }
+                id--;
+                }
+            }
+        
+
+        *outNumResults = results.size();
+        return results.getElementArray();
+        }
+    
+
     char *lowerSearch = stringToLowerCase( inSearch );
 
     int numTotalMatches = tree.countMatches( lowerSearch );
