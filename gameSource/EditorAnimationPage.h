@@ -193,6 +193,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         
 
         char mWalkCopied;
+        char mUpCopied;
         SpriteAnimationRecord mCopiedHeadAnim;
         SpriteAnimationRecord mCopiedBodyAnim;
         
@@ -207,7 +208,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextButton mCopyChainButton;
         TextButton mCopyWalkButton;
         TextButton mCopyAllButton;
-
+        TextButton mCopyUpButton;
 
         TextButton mPasteButton;
         TextButton mClearButton;
