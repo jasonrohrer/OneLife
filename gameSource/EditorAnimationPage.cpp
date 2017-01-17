@@ -105,6 +105,7 @@ EditorAnimationPage::EditorAnimationPage()
           mNextSoundButton( smallFont, -30, -160, ">" ),
           mPrevSoundButton( smallFont, -210, -160, "<" ),
           mCopySoundAnimButton( smallFont, -85, -160, "Copy" ),
+          mCopyAllSoundAnimButton( smallFont, -85, -160, "Copy All" ),
           mPasteSoundAnimButton( smallFont, -155, -160, "Paste" ) {
     
     
@@ -166,11 +167,14 @@ EditorAnimationPage::EditorAnimationPage()
     mPrevSoundButton.setVisible( false );
 
     addComponent( &mCopySoundAnimButton );
+    addComponent( &mCopyAllSoundAnimButton );
     addComponent( &mPasteSoundAnimButton );
     mCopySoundAnimButton.addActionListener( this );
+    mCopyAllSoundAnimButton.addActionListener( this );
     mPasteSoundAnimButton.addActionListener( this );
 
     mCopySoundAnimButton.setVisible( false );
+    mCopyAllSoundAnimButton.setVisible( false );
     mPasteSoundAnimButton.setVisible( false );
 
 
@@ -924,6 +928,7 @@ void EditorAnimationPage::soundIndexChanged() {
         mSoundRepeatPhaseSlider.setVisible( true );
         
         mCopySoundAnimButton.setVisible( true );
+        mCopyAllSoundAnimButton.setVisible( false );
 
         char person = getObject( mCurrentObjectID )->person;
         
@@ -962,9 +967,17 @@ void EditorAnimationPage::soundIndexChanged() {
         mSoundAgePunchOutButton.setVisible( false );
         
         mCopySoundAnimButton.setVisible( false );
+
+        if( mCurrentAnim[ mCurrentType ]->numSounds > 0 ) {    
+            mCopyAllSoundAnimButton.setVisible( true );
+            }
+        else {
+            mCopyAllSoundAnimButton.setVisible( false );
+            }
         }
     
-    mPasteSoundAnimButton.setVisible( mSoundAnimCopyBuffer.sound.id != -1 );
+    mPasteSoundAnimButton.setVisible( mSoundAnimCopyBuffer.sound.id != -1 ||
+                                      mAllCopyBufferSounds.size() > 0 );
 
 
     mSoundWidget.setVisible( true );
@@ -1018,39 +1031,92 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             mPasteSoundAnimButton.setVisible( true );
             }
         }
+    else if( inTarget == &mCopyAllSoundAnimButton ) {
+        
+        markAllCopyBufferSoundsNotLive();
+
+        mAllCopyBufferSounds.deleteAll();
+        
+        AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
+
+        for( int i=0; i<anim->numSounds; i++ ) {
+            mAllCopyBufferSounds.push_back( anim->soundAnim[i] );
+            countLiveUse( anim->soundAnim[i].sound.id );
+            }
+        mPasteSoundAnimButton.setVisible( mAllCopyBufferSounds.size() > 0 );
+        }
     else if( inTarget == &mPasteSoundAnimButton ) {
-        if( mCurrentSound <  mCurrentAnim[ mCurrentType ]->numSounds ) {
-            // replace
+        if( mAllCopyBufferSounds.size() > 0 ) {
+            // paste beyond end
+
+            if( mCurrentAnim[ mCurrentType ]->numSounds > 0 ) {
+                mCurrentSound++;
+                }
             
-            unCountLiveUse( mCurrentAnim[ mCurrentType ]->
-                            soundAnim[ mCurrentSound ].sound.id );
-            
-            mSoundWidget.setSoundUsage( mCurrentAnim[ mCurrentType ]->
-                                        soundAnim[ mCurrentSound ].sound );
-            
-            mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ] =
-                mSoundAnimCopyBuffer;
+            for( int i=0; i<mAllCopyBufferSounds.size(); i++ ) {
+                
+                mCurrentAnim[ mCurrentType ]->numSounds++;
+                SoundAnimationRecord *old = mCurrentAnim[ mCurrentType ]->
+                    soundAnim;
+                
+                mCurrentAnim[ mCurrentType ]->soundAnim = 
+                    new SoundAnimationRecord[ 
+                        mCurrentAnim[ mCurrentType ]->numSounds ];
+                
+                memcpy( mCurrentAnim[ mCurrentType ]->soundAnim,
+                        old,
+                        sizeof( SoundAnimationRecord ) *
+                        mCurrentAnim[ mCurrentType ]->numSounds - 1 );
+                
+                delete [] old;
+                
+                mCurrentAnim[ mCurrentType ]->soundAnim[ 
+                    mCurrentAnim[ mCurrentType ]->numSounds - 1 ] =
+                    
+                    mAllCopyBufferSounds.getElementDirect( i );
+                
+                countLiveUse( mCurrentAnim[ mCurrentType ]->
+                              soundAnim[ mCurrentSound ].sound.id );
+                }
             }
         else {
-            // add new
-            mCurrentAnim[ mCurrentType ]->numSounds++;
-            SoundAnimationRecord *old = mCurrentAnim[ mCurrentType ]->soundAnim;
             
-            mCurrentAnim[ mCurrentType ]->soundAnim = 
-                new SoundAnimationRecord[ 
-                    mCurrentAnim[ mCurrentType ]->numSounds ];
+            if( mCurrentSound <  mCurrentAnim[ mCurrentType ]->numSounds ) {
+                // replace
             
-            memcpy( mCurrentAnim[ mCurrentType ]->soundAnim,
-                    old,
-                    sizeof( SoundAnimationRecord ) *
-                    mCurrentAnim[ mCurrentType ]->numSounds - 1 );
+                unCountLiveUse( mCurrentAnim[ mCurrentType ]->
+                                soundAnim[ mCurrentSound ].sound.id );
+                
+                mSoundWidget.setSoundUsage( mCurrentAnim[ mCurrentType ]->
+                                            soundAnim[ mCurrentSound ].sound );
+                
+                mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ] =
+                    mSoundAnimCopyBuffer;
+                }
+            else {
+                // add new
+                mCurrentAnim[ mCurrentType ]->numSounds++;
+                SoundAnimationRecord *old = mCurrentAnim[ mCurrentType ]->
+                    soundAnim;
+                
+                mCurrentAnim[ mCurrentType ]->soundAnim = 
+                    new SoundAnimationRecord[ 
+                        mCurrentAnim[ mCurrentType ]->numSounds ];
+                
+                memcpy( mCurrentAnim[ mCurrentType ]->soundAnim,
+                        old,
+                        sizeof( SoundAnimationRecord ) *
+                        mCurrentAnim[ mCurrentType ]->numSounds - 1 );
+                
+                delete [] old;
+
+                mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ] =
+                    mSoundAnimCopyBuffer;
+                }
             
-            mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ] =
-                mSoundAnimCopyBuffer;
-            }
-        
-        if( mSoundAnimCopyBuffer.sound.id != -1 ) {
-            countLiveUse( mSoundAnimCopyBuffer.sound.id );
+            if( mSoundAnimCopyBuffer.sound.id != -1 ) {
+                countLiveUse( mSoundAnimCopyBuffer.sound.id );
+                }
             }
         
         soundIndexChanged();
@@ -1608,6 +1674,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                     sizeof( SoundAnimationRecord ) *
                     mCurrentAnim[ mCurrentType ]->numSounds - 1 );
             
+            delete [] old;
+
             mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].sound = u;
             mCurrentAnim[ mCurrentType ]->
                 soundAnim[ mCurrentSound ].repeatPerSec = 0;

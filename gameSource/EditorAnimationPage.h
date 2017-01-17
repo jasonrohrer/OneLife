@@ -221,6 +221,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextButton mPrevSoundButton;
 
         TextButton mCopySoundAnimButton;
+        TextButton mCopyAllSoundAnimButton;
         TextButton mPasteSoundAnimButton;
 
 
