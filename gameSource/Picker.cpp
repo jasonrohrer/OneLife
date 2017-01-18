@@ -35,7 +35,7 @@ Picker::Picker( Pickable *inPickable, double inX, double inY )
           mSearchField( mainFont, 
                         0,  100, 4,
                         false,
-                        "", NULL, " " ),
+                        "", NULL, "" ),
           mSelectionIndex( -1 ),
           mSelectionRightClicked( false ) {
 
