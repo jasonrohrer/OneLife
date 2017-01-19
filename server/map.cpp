@@ -348,7 +348,8 @@ static int getMapBiomeIndex( int inX, int inY,
             secondPlaceBiome = biomes[ secondPlace ];
             }
         
-        biomeDBPut( inX, inY, dbBiome, secondPlaceBiome, secondPlaceGap );
+        biomeDBPut( inX, inY, biomes[pickedBiome], 
+                    secondPlaceBiome, secondPlaceGap );
         }
     
     
