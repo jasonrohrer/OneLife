@@ -1933,7 +1933,7 @@ void processLoggedInPlayer( Socket *inSock,
             randSource.getRandomBoundedInt( 0,
                                             parentChoices.size() - 1 );
                     
-        parent = players.getElement( parentIndex );
+        parent = parentChoices.getElementDirect( parentIndex );
 
         
         if( isFertileAge( parent ) ) {
