@@ -288,10 +288,33 @@ static int getMapBiomeIndex( int inX, int inY,
                               &secondPlaceBiome,
                               outSecondPlaceGap );
     if( dbBiome != -1 ) {
-        if( outSecondPlaceIndex != NULL ) {
-            *outSecondPlaceIndex = getBiomeIndex( secondPlaceBiome );
+
+        int index = getBiomeIndex( dbBiome );
+        
+        if( index != -1 ) {
+            // biome still exists!
+
+            char secondPlaceFailed = false;
+            
+            if( outSecondPlaceIndex != NULL ) {
+                int secondIndex = getBiomeIndex( secondPlaceBiome );
+
+                if( secondIndex != -1 ) {
+                    
+                    *outSecondPlaceIndex = secondIndex;
+                    }
+                else {
+                    secondPlaceFailed = true;
+                    }
+                }
+
+            if( ! secondPlaceFailed ) {
+                return index;
+                }
             }
-        return getBiomeIndex( dbBiome );
+        
+        // else a biome or second place in biome.db that isn't in game anymore
+        // ignore it
         }
     
 
