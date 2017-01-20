@@ -681,9 +681,9 @@ double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
         value = foodDecrementTimeSeconds - extra;
         }
     
-    if( value < minFoodDecrementSeconds ) {
-        value = minFoodDecrementSeconds;
-        }
+    // all player temp effects push us up above min
+    value += minFoodDecrementSeconds;
+
     return value;
     }
 
