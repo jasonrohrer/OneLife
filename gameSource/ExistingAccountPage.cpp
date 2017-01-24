@@ -37,10 +37,12 @@ ExistingAccountPage::ExistingAccountPage()
           mAtSignButton( mainFont, 252, 128, "@" ),
           mPasteButton( mainFont, 0, -80, translate( "paste" ), 'v', 'V' ),
           mLoginButton( mainFont, 150, -200, translate( "loginButton" ) ),
-          mLoginNoSaveButton( mainFont, 150, -280, 
+          mLoginNoSaveButton( mainFont, 400, -280, 
                               translate( "loginNoSaveButton" ) ),
           mCancelButton( mainFont, -150, -200, 
-                         translate( "quit" ) ) {
+                         translate( "quit" ) ),
+          mSettingsButton( mainFont, -400, -280, 
+                           translate( "settingsButton" ) ) {
     
     
     // center this in free space
@@ -61,6 +63,7 @@ ExistingAccountPage::ExistingAccountPage()
     setButtonStyle( &mLoginButton );
     setButtonStyle( &mLoginNoSaveButton );
     setButtonStyle( &mCancelButton );
+    setButtonStyle( &mSettingsButton );
     setButtonStyle( &mAtSignButton );
     setButtonStyle( &mPasteButton );
 
@@ -71,6 +74,7 @@ ExistingAccountPage::ExistingAccountPage()
     addComponent( &mLoginButton );
     addComponent( &mLoginNoSaveButton );
     addComponent( &mCancelButton );
+    addComponent( &mSettingsButton );
     addComponent( &mAtSignButton );
     addComponent( &mPasteButton );
     addComponent( &mEmailField );
@@ -80,7 +84,8 @@ ExistingAccountPage::ExistingAccountPage()
     mLoginNoSaveButton.addActionListener( this );
     
     mCancelButton.addActionListener( this );
-
+    mSettingsButton.addActionListener( this );
+    
     mAtSignButton.addActionListener( this );
     mPasteButton.addActionListener( this );
     
@@ -140,6 +145,9 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mCancelButton ) {
         setSignal( "quit" );
+        }
+    else if( inTarget == &mSettingsButton ) {
+        setSignal( "settings" );
         }
     else if( inTarget == &mAtSignButton ) {
         mEmailField.insertCharacter( '@' );

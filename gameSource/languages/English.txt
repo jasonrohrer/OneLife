@@ -24,6 +24,7 @@ atSignTip "INSERT '@' SIGN (INTL KEYBOARDS)"
 
 loginButton "LOGIN"
 loginNoSaveButton "TEMP LOGIN"
+settingsButton "SETTINGS"
 
 
 saveTip "LOGIN AND STORE DETAILS LOCALLY"
@@ -32,6 +33,13 @@ noSaveTip "DO NOT STORE DETAILS LOCALLY"
 
 accountKey "KEY"
 paste "PASTE"
+
+
+backButton "BACK"
+restartButton "RESTART"
+fullscreen "FULLSCREEN"
+musicLoudness "MUSIC LOUDNESS"
+soundLoudness "SOUND LOUDNESS"
 
 
 

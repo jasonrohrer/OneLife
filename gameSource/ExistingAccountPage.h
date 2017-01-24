@@ -48,6 +48,8 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         TextButton mLoginNoSaveButton;
         TextButton mCancelButton;
 
+        TextButton mSettingsButton;
+
 
         void switchFields();
         

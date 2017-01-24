@@ -73,6 +73,7 @@ CustomRandomSource randSource( 34957197 );
 #include "ExistingAccountPage.h"
 #include "ExtendedMessagePage.h"
 #include "RebirthChoicePage.h"
+#include "SettingsPage.h"
 //#include "TestPage.h"
 
 #include "ServerActionPage.h"
@@ -107,6 +108,7 @@ LivingLifePage *livingLifePage;
 ExistingAccountPage *existingAccountPage;
 ExtendedMessagePage *extendedMessagePage;
 RebirthChoicePage *rebirthChoicePage;
+SettingsPage *settingsPage;
 //TestPage *testPage = NULL;
 
 
@@ -560,6 +562,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     existingAccountPage = new ExistingAccountPage;
     extendedMessagePage = new ExtendedMessagePage;
     rebirthChoicePage = new RebirthChoicePage;
+    settingsPage = new SettingsPage;
     
 
 
@@ -637,6 +640,7 @@ void freeFrameDrawer() {
     delete existingAccountPage;
     delete extendedMessagePage;
     delete rebirthChoicePage;
+    delete settingsPage;
 
     //if( testPage != NULL ) {
     //    delete testPage;
@@ -1352,9 +1356,19 @@ void drawFrame( char inUpdate ) {
                     currentGamePage->base_makeActive( true );
                 }
             }
+        else if( currentGamePage == settingsPage ) {
+            if( settingsPage->checkSignal( "back" ) ) {
+                currentGamePage = existingAccountPage;
+                currentGamePage->base_makeActive( true );
+                }
+            }
         else if( currentGamePage == existingAccountPage ) {    
             if( existingAccountPage->checkSignal( "quit" ) ) {
                 quitGame();
+                }
+            else if( existingAccountPage->checkSignal( "settings" ) ) {
+                currentGamePage = settingsPage;
+                currentGamePage->base_makeActive( true );
                 }
             else if( existingAccountPage->checkSignal( "done" ) ) {
                 

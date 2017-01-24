@@ -49,8 +49,11 @@ fft.cpp \
 ogg.cpp \
 musicPlayer2.cpp \
 groundSprites.cpp \
-
-
+SettingsPage.cpp \
+CheckboxButton.cpp \
+ValueSlider.cpp \
+SpriteButton.cpp \
+SpriteToggleButton.cpp \
 
 
 
