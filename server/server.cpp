@@ -2836,6 +2836,29 @@ int main() {
                     int allow = 
                         SettingsManager::getIntSetting( "allowMapRequests", 0 );
                     
+
+                    if( allow ) {
+                        
+                        SimpleVector<char *> *list = 
+                            SettingsManager::getSetting( 
+                                "mapRequestAllowAccounts" );
+                        
+                        allow = false;
+                        
+                        for( int i=0; i<list->size(); i++ ) {
+                            if( strcmp( nextPlayer->email,
+                                        list->getElementDirect( i ) ) == 0 ) {
+                                
+                                allow = true;
+                                break;
+                                }
+                            }
+                        
+                        list->deallocateStringElements();
+                        delete list;
+                        }
+                    
+
                     if( allow ) {
                         int length;
                         unsigned char *mapChunkMessage = 
@@ -2851,6 +2874,10 @@ int main() {
                         if( numSent == -1 ) {
                             nextPlayer->error = true;
                             }
+                        }
+                    else {
+                        AppLog::infoF( "Map pull request rejected for %s", 
+                                       nextPlayer->email );
                         }
                     }
                 // if player is still moving, ignore all actions
