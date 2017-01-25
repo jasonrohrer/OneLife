@@ -61,6 +61,8 @@ void setVolumeScaling( int inMaxSimultaneousSoundEffects,
 // defaults to 1.0
 void setSoundEffectsLoudness( double inLoudness );
 
+double getSoundEffectsLoudness();
+
 // defaults to on
 void setSoundEffectsOff( char inOff );
 

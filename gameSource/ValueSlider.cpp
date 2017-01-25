@@ -24,7 +24,8 @@ ValueSlider::ValueSlider( Font *inDisplayFont,
           mLowValue( inLowValue ),
           mHighValue( inHighValue ),
           mValue( inLowValue ),
-          mBarBorder( inBorder ) {
+          mBarBorder( inBorder ),
+          mPointerDown( false ) {
 
     addComponent( &mValueField );
     mValueField.addActionListener( this );
@@ -60,6 +61,12 @@ void ValueSlider::setValue( double inValue ) {
         mValue = mHighValue;
         }
     setFieldFromValue();
+    }
+
+
+
+char ValueSlider::isPointerDown() {
+    return mPointerDown;
     }
 
 
@@ -161,6 +168,7 @@ char ValueSlider::isInBar( float inX, float inY ) {
 
 
 void ValueSlider::pointerDown( float inX, float inY ) {
+    mPointerDown = true;
     pointerDrag( inX, inY );
     }
 
@@ -192,7 +200,13 @@ void ValueSlider::pointerDrag( float inX, float inY ) {
 
 
 void ValueSlider::pointerUp( float inX, float inY ) {
+    mPointerDown = false;
     pointerDrag( inX, inY );
+
+    if( ! isInBar( inX, inY ) ) {
+        // always fire action on release, even if release is off bar
+        fireActionPerformed( this );
+        }
     }
 
 

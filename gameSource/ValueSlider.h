@@ -30,6 +30,10 @@ class ValueSlider : public PageComponent, public ActionListenerList,
         double getValue();
         void setValue( double inValue );
         
+
+        char isPointerDown();
+        
+
         void setFillColor( Color inColor );
         void setBackFillColor( Color inColor );
 
@@ -66,6 +70,8 @@ class ValueSlider : public PageComponent, public ActionListenerList,
 
         double mBarBorder;
         double mBarStartX, mBarEndX, mBarStartY, mBarEndY;
+
+        char mPointerDown;
     };
 
 

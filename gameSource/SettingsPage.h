@@ -3,6 +3,7 @@
 #include "TextButton.h"
 #include "CheckboxButton.h"
 #include "ValueSlider.h"
+#include "SoundUsage.h"
 
 
 #include "minorGems/ui/event/ActionListener.h"
@@ -20,6 +21,8 @@ class SettingsPage : public GamePage, public ActionListener {
         virtual void draw( doublePair inViewCenter, 
                            double inViewSize );
 
+        virtual void step();
+
         virtual void actionPerformed( GUIComponent *inTarget );
 
         
@@ -30,6 +33,8 @@ class SettingsPage : public GamePage, public ActionListener {
         
         int mOldFullscreenSetting;
         
+        SoundUsage mTestSound;
+
 
         TextButton mBackButton;
         TextButton mRestartButton;

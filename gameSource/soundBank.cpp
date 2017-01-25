@@ -83,6 +83,12 @@ void setSoundEffectsLoudness( double inLoudness ) {
 
 
 
+double getSoundEffectsLoudness() {
+    return soundEffectsLoudness;
+    }
+
+
+
 void setSoundEffectsOff( char inOff ) {
     soundEffectsOff = inOff;
     
@@ -678,7 +684,9 @@ void playSound( int inID, double inVolumeTweak, double inStereoPosition,
                 }
             else {
                 //  play both simultaneously
-                double volume = inVolumeTweak * playedSoundVolumeScale;
+                double volume = 
+                    soundEffectsLoudness * 
+                    inVolumeTweak * playedSoundVolumeScale;
 
                 SoundSpriteHandle handles[] = { idMap[inID]->sound,
                                                 idMap[inID]->reverbSound };

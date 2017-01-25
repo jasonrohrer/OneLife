@@ -7,18 +7,22 @@
 
 #include "minorGems/game/game.h"
 
+#include "musicPlayer.h"
+#include "soundBank.h"
+#include "objectBank.h"
+
 
 extern Font *mainFont;
 
 
 SettingsPage::SettingsPage()
         : mBackButton( mainFont, 0, -250, translate( "backButton" ) ),
-          mRestartButton( mainFont, 128, 0, translate( "restartButton" ) ),
-          mFullscreenBox( 0, 0, 4 ),
-          mMusicLoudnessSlider( mainFont, 0, -64, 2, 200, 20,
+          mRestartButton( mainFont, 128, 128, translate( "restartButton" ) ),
+          mFullscreenBox( 0, 128, 4 ),
+          mMusicLoudnessSlider( mainFont, 0, 0, 4, 200, 30,
                                 0.0, 1.0, 
                                 translate( "musicLoudness" ) ),
-          mSoundEffectsLoudnessSlider( mainFont, 0, -128, 2, 200, 20,
+          mSoundEffectsLoudnessSlider( mainFont, 0, -128, 4, 200, 30,
                                        0.0, 1.0, 
                                        translate( "soundLoudness" ) ) {
     
@@ -32,12 +36,14 @@ SettingsPage::SettingsPage()
     mRestartButton.addActionListener( this );
     
     mRestartButton.setVisible( false );
-
-
-    mOldFullscreenSetting = SettingsManager::getIntSetting( "fullscreen", 1 );
     
+    mOldFullscreenSetting = 
+        SettingsManager::getIntSetting( "fullscreen", 1 );
+    
+    mTestSound.id = -1;
+
     mFullscreenBox.setToggled( mOldFullscreenSetting );
-    
+
     
 
     addComponent( &mMusicLoudnessSlider );
@@ -45,11 +51,7 @@ SettingsPage::SettingsPage()
     
     mMusicLoudnessSlider.addActionListener( this );
     mSoundEffectsLoudnessSlider.addActionListener( this );
-    
-    mMusicLoudnessSlider.toggleField( false );
-    mSoundEffectsLoudnessSlider.toggleField( false );
 
-    
     }
 
 
@@ -77,7 +79,19 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
             setSignal( "relaunchFailed" );
             }
         }
-    
+    else if( inTarget == &mSoundEffectsLoudnessSlider ) {
+        if( ! mSoundEffectsLoudnessSlider.isPointerDown() ) {
+            
+            setSoundEffectsLoudness( 
+                mSoundEffectsLoudnessSlider.getValue() );
+        
+            if( mTestSound.id != -1 ) {
+                doublePair pos = { 0, 0 };
+                
+                playSound( mTestSound, pos );
+                }
+            }
+        }    
     }
 
 
@@ -96,10 +110,38 @@ void SettingsPage::draw( doublePair inViewCenter,
 
 
 
+void SettingsPage::step() {
+    if( mTestSound.id != -1 ) {
+        markSoundLive( mTestSound.id );
+        }
+    }
+
+
+
 
 
 void SettingsPage::makeActive( char inFresh ) {
+    if( inFresh ) {        
+        mMusicLoudnessSlider.setValue( getMusicLoudness() );
+        mSoundEffectsLoudnessSlider.setValue( getSoundEffectsLoudness() );
+
+
+        int tryCount = 0;
+        
+        while( mTestSound.id == -1 && tryCount < 10 ) {
+
+            int oID = getRandomPersonObject();
+
+            if( oID > 0 ) {
+                ObjectRecord *r = getObject( oID );
+                mTestSound = r->usingSound;
+                }
+            }
+        
+
+        }
     }
+
 
 
 void SettingsPage::makeNotActive() {
