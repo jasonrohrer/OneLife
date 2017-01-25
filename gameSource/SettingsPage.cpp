@@ -59,6 +59,7 @@ SettingsPage::SettingsPage()
 void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mBackButton ) {
         setSignal( "back" );
+        instantStopMusic();
         }
     else if( inTarget == &mFullscreenBox ) {
         int newSetting = mFullscreenBox.getToggled();
@@ -92,6 +93,13 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             }
         }    
+    else if( inTarget == &mMusicLoudnessSlider ) {
+        if( ! mMusicLoudnessSlider.isPointerDown() ) {
+            
+            setMusicLoudness( mMusicLoudnessSlider.getValue() );
+            restartMusic( 4.9, 1.0/60.0 );
+            }
+        }
     }
 
 
@@ -114,6 +122,7 @@ void SettingsPage::step() {
     if( mTestSound.id != -1 ) {
         markSoundLive( mTestSound.id );
         }
+    stepMusicPlayer();
     }
 
 
