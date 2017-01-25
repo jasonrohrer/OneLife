@@ -28,6 +28,11 @@ SettingsPage::SettingsPage()
     addComponent( &mFullscreenBox );
     mFullscreenBox.addActionListener( this );
 
+    addComponent( &mRestartButton );
+    mRestartButton.addActionListener( this );
+    
+    mRestartButton.setVisible( false );
+
 
     mOldFullscreenSetting = SettingsManager::getIntSetting( "fullscreen", 1 );
     
@@ -60,7 +65,18 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
         
         mRestartButton.setVisible( mOldFullscreenSetting != newSetting );
         }
-    
+    else if( inTarget == &mRestartButton ) {
+        char relaunched = relaunchGame();
+        
+        if( !relaunched ) {
+            printf( "Relaunch failed\n" );
+            setSignal( "relaunchFailed" );
+            }
+        else {
+            printf( "Relaunched... but did not exit?\n" );
+            setSignal( "relaunchFailed" );
+            }
+        }
     
     }
 

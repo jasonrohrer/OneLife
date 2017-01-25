@@ -1361,6 +1361,14 @@ void drawFrame( char inUpdate ) {
                 currentGamePage = existingAccountPage;
                 currentGamePage->base_makeActive( true );
                 }
+            else if( settingsPage->checkSignal( "relaunchFailed" ) ) {
+                currentGamePage = finalMessagePage;
+                        
+                finalMessagePage->setMessageKey( "manualRestartMessage" );
+                                
+                currentGamePage->base_makeActive( true );
+                }
+
             }
         else if( currentGamePage == existingAccountPage ) {    
             if( existingAccountPage->checkSignal( "quit" ) ) {
