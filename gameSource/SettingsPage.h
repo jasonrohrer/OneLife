@@ -35,6 +35,8 @@ class SettingsPage : public GamePage, public ActionListener {
         
         SoundUsage mTestSound;
 
+        double mMusicStartTime;
+
 
         TextButton mBackButton;
         TextButton mRestartButton;

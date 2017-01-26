@@ -6,6 +6,7 @@
 #include "minorGems/util/SettingsManager.h"
 
 #include "minorGems/game/game.h"
+#include "minorGems/system/Time.h"
 
 #include "musicPlayer.h"
 #include "soundBank.h"
@@ -41,6 +42,8 @@ SettingsPage::SettingsPage()
         SettingsManager::getIntSetting( "fullscreen", 1 );
     
     mTestSound.id = -1;
+
+    mMusicStartTime = 0;
 
     mFullscreenBox.setToggled( mOldFullscreenSetting );
 
@@ -81,6 +84,9 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
             }
         }
     else if( inTarget == &mSoundEffectsLoudnessSlider ) {
+        instantStopMusic();
+        mMusicStartTime = 0;
+        
         if( ! mSoundEffectsLoudnessSlider.isPointerDown() ) {
             
             setSoundEffectsLoudness( 
@@ -94,10 +100,13 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
             }
         }    
     else if( inTarget == &mMusicLoudnessSlider ) {
-        if( ! mMusicLoudnessSlider.isPointerDown() ) {
             
-            setMusicLoudness( mMusicLoudnessSlider.getValue() );
-            restartMusic( 4.9, 1.0/60.0 );
+        setMusicLoudness( mMusicLoudnessSlider.getValue() );
+        
+        if( Time::getCurrentTime() - mMusicStartTime > 25 ) {
+            restartMusic( 4.0, 1.0/60.0, true );
+            
+            mMusicStartTime = Time::getCurrentTime();
             }
         }
     }
@@ -144,6 +153,7 @@ void SettingsPage::makeActive( char inFresh ) {
             if( oID > 0 ) {
                 ObjectRecord *r = getObject( oID );
                 mTestSound = r->usingSound;
+                mTestSound.volume = 1.0;
                 }
             }
         

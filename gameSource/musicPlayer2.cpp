@@ -30,6 +30,7 @@ static int asyncLoadHandle = -1;
 
 
 static char musicStarted = false;
+static char forceStartNow = false;
 
 
 static double age = -1;
@@ -127,7 +128,7 @@ static int startNextAgeFileRead( double inAge ) {
 
 
 
-void restartMusic( double inAge, double inAgeRate ) {
+void restartMusic( double inAge, double inAgeRate, char inForceNow ) {
 
     // for testing
     //inAge = 0;
@@ -138,6 +139,7 @@ void restartMusic( double inAge, double inAgeRate ) {
     lockAudio();
     
     musicStarted = false;
+    forceStartNow = inForceNow;
     
     age = inAge;
     ageRate = inAgeRate;
@@ -327,8 +329,9 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
         
         double fadeSeconds = 1.0;
 
-        if( startAge < sampleComputedAge ) {
+        if( startAge < sampleComputedAge || forceStartNow ) {
             musicOGGPlaying = true;
+            forceStartNow = false;
             }
         else if( ! soundEffectsFaded && 
                  startAge - fadeSeconds * ageRate < sampleComputedAge ) {
