@@ -58,6 +58,8 @@ extern int serverPort;
 extern char *userEmail;
 
 
+extern float musicLoudness;
+
 
 static JenkinsRandomSource randSource( 340403 );
 
@@ -6080,10 +6082,11 @@ void LivingLifePage::step() {
                 isLiveObjectSetFullyLoaded( &mFirstObjectSetLoadingProgress );
             
             if( mDoneLoadingFirstObjectSet ) {
-                setSoundLoudness( 1.0 );
                 restartMusic( computeCurrentAge( ourLiveObject ),
-                               ourLiveObject->ageRate );
-                
+                              ourLiveObject->ageRate );
+                setSoundLoudness( 1.0 );
+                setMusicLoudness( musicLoudness );
+
                 // center view on player's starting position
                 lastScreenViewCenter.x = CELL_D * ourLiveObject->xd;
                 lastScreenViewCenter.y = CELL_D * ourLiveObject->yd;

@@ -17,7 +17,7 @@ void instantStopMusic();
 void stepMusicPlayer();
 
 
-void setMusicLoudness( double inLoudness );
+void setMusicLoudness( double inLoudness, char inForce=false );
 
 
 double getMusicLoudness();

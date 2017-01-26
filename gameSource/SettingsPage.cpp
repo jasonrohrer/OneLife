@@ -15,6 +15,8 @@
 
 extern Font *mainFont;
 
+extern float musicLoudness;
+
 
 SettingsPage::SettingsPage()
         : mBackButton( mainFont, 0, -250, translate( "backButton" ) ),
@@ -62,7 +64,7 @@ SettingsPage::SettingsPage()
 void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mBackButton ) {
         setSignal( "back" );
-        instantStopMusic();
+        setMusicLoudness( 0 );
         }
     else if( inTarget == &mFullscreenBox ) {
         int newSetting = mFullscreenBox.getToggled();
@@ -84,7 +86,7 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
             }
         }
     else if( inTarget == &mSoundEffectsLoudnessSlider ) {
-        instantStopMusic();
+        setMusicLoudness( 0 );
         mMusicStartTime = 0;
         
         if( ! mSoundEffectsLoudnessSlider.isPointerDown() ) {
@@ -101,12 +103,27 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
         }    
     else if( inTarget == &mMusicLoudnessSlider ) {
             
-        setMusicLoudness( mMusicLoudnessSlider.getValue() );
+
+        if( ! mSoundEffectsLoudnessSlider.isPointerDown() ) {
+            musicLoudness = mMusicLoudnessSlider.getValue();
+            SettingsManager::setSetting( "musicLoudness", musicLoudness );
+            }
+            
         
         if( Time::getCurrentTime() - mMusicStartTime > 25 ) {
+
+            instantStopMusic();
+            
+
             restartMusic( 4.0, 1.0/60.0, true );
             
+            setMusicLoudness( mMusicLoudnessSlider.getValue(), true );
+
+
             mMusicStartTime = Time::getCurrentTime();
+            }
+        else {
+            setMusicLoudness( mMusicLoudnessSlider.getValue(), true );
             }
         }
     }
@@ -140,10 +157,11 @@ void SettingsPage::step() {
 
 void SettingsPage::makeActive( char inFresh ) {
     if( inFresh ) {        
-        mMusicLoudnessSlider.setValue( getMusicLoudness() );
+        mMusicLoudnessSlider.setValue( musicLoudness );
         mSoundEffectsLoudnessSlider.setValue( getSoundEffectsLoudness() );
-
-
+        setMusicLoudness( 0 );
+        mMusicStartTime = 0;
+        
         int tryCount = 0;
         
         while( mTestSound.id == -1 && tryCount < 10 ) {

@@ -2,8 +2,12 @@
 #include <math.h>
 
 
-// overal loudness of music
-static double musicLoudness = 0;
+// the music loudess setting
+static float musicLoudness;
+
+
+// loudness of music that we're currently playing at
+static double musicLoudnessLive = 0;
 static double musicTargetLoudness = 0;
 
 extern double musicHeadroom;
@@ -60,6 +64,9 @@ static double getCurrentAge() {
 
 
 void initMusicPlayer() {
+    int sampleRate = getSampleRate();
+
+    loudnessChangePerSample = 1.0 / sampleRate;
     }
 
 
@@ -172,7 +179,7 @@ void restartMusic( double inAge, double inAgeRate, char inForceNow ) {
     musicStarted = true;
     
     // no fade in at start of music (music not playing at start)
-    musicLoudness = 1.0;
+    musicLoudnessLive = musicLoudnessLive;
     }
 
 
@@ -373,28 +380,28 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
     // now copy samples into Uint8 buffer
     // while also adjusting loudness of whole mix
     char loudnessChanging = false;
-    if( musicLoudness != musicTargetLoudness ) {
+    if( musicLoudnessLive != musicTargetLoudness ) {
         loudnessChanging = true;
         }
     
     int streamPosition = 0;
     for( int i=0; i != numRead; i++ ) {
-        samplesL[i] *= musicLoudness * musicHeadroom;
-        samplesR[i] *= musicLoudness * musicHeadroom;
+        samplesL[i] *= musicLoudnessLive * musicHeadroom;
+        samplesR[i] *= musicLoudnessLive * musicHeadroom;
     
         if( loudnessChanging ) {
             
-            if( musicLoudness < musicTargetLoudness ) {
-                musicLoudness += loudnessChangePerSample;
-                if( musicLoudness > musicTargetLoudness ) {
-                    musicLoudness = musicTargetLoudness;
+            if( musicLoudnessLive < musicTargetLoudness ) {
+                musicLoudnessLive += loudnessChangePerSample;
+                if( musicLoudnessLive > musicTargetLoudness ) {
+                    musicLoudnessLive = musicTargetLoudness;
                     loudnessChanging = false;
                     }
                 }
-            else if( musicLoudness > musicTargetLoudness ) {
-                musicLoudness -= loudnessChangePerSample;
-                if( musicLoudness < musicTargetLoudness ) {
-                    musicLoudness = musicTargetLoudness;
+            else if( musicLoudnessLive > musicTargetLoudness ) {
+                musicLoudnessLive -= loudnessChangePerSample;
+                if( musicLoudnessLive < musicTargetLoudness ) {
+                    musicLoudnessLive = musicTargetLoudness;
                     loudnessChanging = false;
                     }
                 }
@@ -426,19 +433,21 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
 
 // need to synch these with audio thread
 
-void setMusicLoudness( double inLoudness ) {
+void setMusicLoudness( double inLoudness, char inForce ) {
     lockAudio();
     
-    // for now, no fade-up to target loudness
-    // but keep code in place in case we need it later
     musicTargetLoudness = inLoudness;
-    musicLoudness = musicTargetLoudness;
 
+    if( inForce ) {
+        // no fade-up to target loudness
+        musicLoudnessLive = musicTargetLoudness;
+        }
+    
     unlockAudio();
     }
 
 
 
 double getMusicLoudness() {
-    return musicLoudness;
+    return musicLoudnessLive;
     }
