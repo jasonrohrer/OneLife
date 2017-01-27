@@ -400,6 +400,8 @@ EditorObjectPage::EditorObjectPage()
     mSaveObjectButton.setVisible( false );
     mReplaceObjectButton.setVisible( false );
     mClearObjectButton.setVisible( false );
+    
+    mPrintRequested = false;
 
     mCurrentObject.id = -1;
     mCurrentObject.description = mDescriptionField.getText();
@@ -2788,6 +2790,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
     drawRect( barPos, 192, 16 );
 
+
+    if( mPrintRequested ) {
+        doublePair pos = { 0, 0 };
+                           
+        drawSquare( pos, 600 );
+        }
     
 
     doublePair drawOffset = mObjectCenterOnScreen;
@@ -2992,6 +3000,19 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     if( !skipDrawing ) {
         drawSpriteLayers( drawOffset, false );
         }
+
+    
+    
+    if( mPrintRequested ) {
+        
+        Image *im =getScreenRegion( -250, -200,
+                                    500, 560 );
+        printImage( im );
+        delete im;
+        
+        mPrintRequested = false;
+        }
+            
     
 
 
@@ -4139,8 +4160,17 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         mHoverSlot = mPickedSlot;
         mHoverStrength = 1;
         }
-    
+    else if( inASCII == 0x10 ||
+             ( inASCII == 'p' && isCommandKeyDown() ) ) {
+        printf( "Print requested\n" );
         
+        if( isPrintingSupported() ) {
+            mPrintRequested = true;
+            }
+        else {
+            printf( "Printing not supported\n" );
+            }
+        }
     }
 
 

@@ -187,7 +187,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         SoundWidget mUsingSoundWidget;
         SoundWidget mEatingSoundWidget;
         
-
+        
+        char mPrintRequested;
 
 
         ObjectRecord mCurrentObject;
