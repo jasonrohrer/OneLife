@@ -2963,45 +2963,42 @@ void getAllBiomes( SimpleVector<int> *inVectorToFill ) {
 doublePair getObjectCenterOffset( ObjectRecord *inObject ) {
 
 
-    // compute average of all sprite centers
-    
-    double minX = DBL_MAX;
-    double maxX = -DBL_MAX;
+    // find center of widest sprite
 
-    double minY = DBL_MAX;
-    double maxY = -DBL_MAX;
+    SpriteRecord *widestRecord = NULL;
     
-    
+    int widestIndex = -1;
+
     for( int i=0; i<inObject->numSprites; i++ ) {
         SpriteRecord *sprite = getSpriteRecord( inObject->sprites[i] );
-        
-        doublePair centerOffset = { (double)sprite->centerXOffset,
-                                    (double)sprite->centerYOffset };
-        
-        centerOffset = rotate( centerOffset, 
-                               2 * M_PI * inObject->spriteRot[i] );
-
-        doublePair spriteCenter = add( inObject->spritePos[i], centerOffset );
-        
-        if( spriteCenter.x < minX ) {
-            minX = spriteCenter.x;
-            }
-        if( spriteCenter.x > maxX ) {
-            maxX = spriteCenter.x;
-            }
-
-        if( spriteCenter.y < minY ) {
-            minY = spriteCenter.y;
-            }
-        if( spriteCenter.y > maxY ) {
-            maxY = spriteCenter.y;
+    
+        if( widestRecord == NULL ||
+            sprite->w > widestRecord->w ) {
+            
+            widestRecord = sprite;
+            widestIndex = i;
             }
         }
-
-    doublePair result = { round( ( maxX + minX ) / 2 ), 
-                          round( ( maxY + minY ) / 2 ) };
     
-    return result;
+
+    if( widestRecord == NULL ) {
+        doublePair result = { 0, 0 };
+        return result;
+        }
+    
+    
+        
+    doublePair centerOffset = { (double)widestRecord->centerXOffset,
+                                (double)widestRecord->centerYOffset };
+        
+    centerOffset = rotate( centerOffset, 
+                           2 * M_PI * inObject->spriteRot[widestIndex] );
+
+    doublePair spriteCenter = add( inObject->spritePos[widestIndex], 
+                                   centerOffset );
+
+    return spriteCenter;
+    
     }
 
 
