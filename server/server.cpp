@@ -2072,6 +2072,8 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.deathLogged = false;
     newObject.newMove = false;
     
+    newObject.posForced = false;
+
     newObject.updateSent = false;
     
     newObject.babyBirthTimes = new SimpleVector<unsigned int>();
