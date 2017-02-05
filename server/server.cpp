@@ -1211,7 +1211,7 @@ void handleMapChangeToPaths(
 void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                  SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
     
-    
+    int oldHoldingID = inDroppingPlayer->holdingID;
     
     int targetX = inX;
     int targetY = inY;
@@ -1472,7 +1472,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     // watch out for truncations of in-progress
     // moves of other players
             
-    ObjectRecord *droppedObject = getObject( inDroppingPlayer->holdingID );
+    ObjectRecord *droppedObject = getObject( oldHoldingID );
    
     handleMapChangeToPaths( targetX, targetY, droppedObject,
                             inPlayerIndicesToSendUpdatesAbout );
