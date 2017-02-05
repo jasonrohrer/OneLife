@@ -1211,7 +1211,6 @@ void handleMapChangeToPaths(
 void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                  SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
     
-    ObjectRecord *droppedObject = getObject( inDroppingPlayer->holdingID );
     
     
     int targetX = inX;
@@ -1473,6 +1472,8 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     // watch out for truncations of in-progress
     // moves of other players
             
+    ObjectRecord *droppedObject = getObject( inDroppingPlayer->holdingID );
+   
     handleMapChangeToPaths( targetX, targetY, droppedObject,
                             inPlayerIndicesToSendUpdatesAbout );
     
@@ -1634,6 +1635,7 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
                                  inPlayer->posForced,
                                  inPlayer->xs, 
                                  inPlayer->ys );
+	printf( "Pos string = %s\n", posString );
         }
     
     SimpleVector<char> clothingListBuffer;
@@ -3628,7 +3630,7 @@ int main() {
                                     // action doesn't happen, just the drop
                                     }
                                 }
-                            else if( nextPlayer->holdingID != 0 ) {
+                            else if( nextPlayer->holdingID > 0 ) {
                                 // target location emtpy
                                 // target not where we're standing
                                 // we're holding something
