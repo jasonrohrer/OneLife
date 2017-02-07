@@ -3,7 +3,7 @@
 updatePostDir=~/www/updatePosts
 
 
-latestPostVersion=0
+latestPostVersion=-1
 
 
 while read x; 
@@ -42,7 +42,7 @@ reportCount=0
 while read x; 
 do 
 
-if [[ $x -gt $latestPostVersion ]]; then
+if [[ $x -gt $latestPostVersion ]] || [[ $x -eq "Start" ]]; then
 
 	if [[ $newerVersion -ne "D" ]]; then
 		hg update OneLife_v$newerVersion
@@ -81,7 +81,7 @@ if [[ $x -gt $latestPostVersion ]]; then
 	newerVersion=$x
 fi
 
-done < <( hg tags | grep "OneLife" | sed 's/\s\s.*//' | sed 's/OneLife_v\([0-9]\+\)/\1/')
+done < <( hg tags | grep "OneLife" | sed 's/\s\s.*//' | sed 's/OneLife_v\([0-9a-zA-Z]\+\)/\1/')
 
 
 echo ""
