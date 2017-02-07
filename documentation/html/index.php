@@ -2,6 +2,13 @@
 
 <center>
 
+<table border=0 width=100%><tr>
+
+<td align=center>[<a href=updateLog.php>Update Log</a>]</td>
+
+
+</tr></table>
+
 <?php include( "objectsReport.php" ); ?>
 
 
