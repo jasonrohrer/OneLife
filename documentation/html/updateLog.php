@@ -48,7 +48,7 @@ echo "<br><br><br>";
 
 
 
-echo "<center><table border=0 width=300><tr><td>";
+echo "<center><table border=0 width=400><tr><td>";
 
 
 // forward/back links at top?
