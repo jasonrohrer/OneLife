@@ -4,7 +4,8 @@
 
 <table border=0 width=100%><tr>
 
-<td align=center>[<a href=updateLog.php>Update Log</a>]</td>
+<td align=center width=50%>[<a href=updateLog.php>Update Log</a>]</td>
+<td align=center width=50%>[<a href="http://onehouronelife.gamepedia.com">Wiki</a>]</td>
 
 
 </tr></table>
