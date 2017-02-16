@@ -1,7 +1,7 @@
 <?php
 
 include( "forums/config.php" );
-include( "forums/include/functions.php" );
+
 
 // number id of the news forum to pull from
 $forumID = 4;
@@ -71,16 +71,18 @@ for( $i=0; $i<$numToShow; $i++ ) {
         echo "<tr><td width=100%>";
         
         echo "<h3>$subject</h3>";
-
-        $date = format_time( mysql_result( $resultB, 0, "posted" ) );
+	
+	$posted = mysql_result( $resultB, 0, "posted" );
+        
+	$date = date("F j, Y", $posted );
         $message = mysql_result( $resultB, 0, "message" );
 
         
-        echo "$date<br>";
+        echo "$date<br><br>";
 
-        $messageHTML = sb_rcb_blog2html( $messageHTML );
+        $messageHTML = sb_rcb_blog2html( $message );
         
-        echo "$messageHTML<br><br>";
+        echo "$messageHTML<br><br><br><br><br>";
 
         
         
@@ -97,7 +99,7 @@ if( $pageNumber > 1 ) {
     // more left
     $prevPage = $pageNumber - 1;
     
-    echo "<a href=news.php?numPerPage=$numNewsPerPage&page=$prevPage>Prev</a>";
+    echo "<a href=newsPage.php?numPerPage=$numNewsPerPage&page=$prevPage>Prev</a>";
     }
 
 
@@ -105,7 +107,7 @@ if( $numRows > $numNewsPerPage ) {
     // more left
     $nextPage = $pageNumber + 1;
     
-    echo "<a href=news.php?numPerPage=$numNewsPerPage&page=$nextPage>Next</a>";
+    echo "<a href=newsPage.php?numPerPage=$numNewsPerPage&page=$nextPage>Next</a>";
     }
 
 
@@ -290,8 +292,8 @@ function sb_rcb_blog2html( $inData ){
         // [hr], \n
         '<hr />',
         '<br />');
-    return preg_replace($patterns, $replace, sb_rcb_striphtml( $inData ) );
-	}
+    return preg_replace($patterns, $replace, $inData );
+    }
 
 
 
