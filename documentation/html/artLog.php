@@ -51,7 +51,7 @@ if( !$artSummaryOnly && $numToSkip > 0 ) {
     if( $numToSkip > 0 ) {
         $prevPage = $page - 1;
         
-        echo "[<a href=\"artLog.php?page=$prevPage\">Newer</a>]";
+        echo "[<a href=\"artLogPage.php?page=$prevPage\">Newer</a>]";
         }
     echo "</td><td align=right>";
     
@@ -59,7 +59,7 @@ if( !$artSummaryOnly && $numToSkip > 0 ) {
     if( $numToSkip + $numArtPerPage < $numFiles ) {
         $nextPage = $page + 1;
         
-        echo "[<a href=\"artLog.php?page=$nextPage\">Older</a>]";
+        echo "[<a href=\"artLogPage.php?page=$nextPage\">Older</a>]";
         }
     echo "</td></tr></table>";
     }
@@ -119,7 +119,7 @@ if( ! $artSummaryOnly ) {
     if( $numToSkip > 0 ) {
         $prevPage = $page - 1;
         
-        echo "[<a href=\"artLog.php?page=$prevPage\">Newer</a>]";
+        echo "[<a href=\"artLogPage.php?page=$prevPage\">Newer</a>]";
         }
     echo "</td><td align=right>";
     
@@ -127,7 +127,7 @@ if( ! $artSummaryOnly ) {
     if( $numToSkip + $numArtPerPage < $numFiles ) {
         $nextPage = $page + 1;
         
-        echo "[<a href=\"artLog.php?page=$nextPage\">Older</a>]";
+        echo "[<a href=\"artLogPage.php?page=$nextPage\">Older</a>]";
         }
     echo "</td></tr></table>";
     }
