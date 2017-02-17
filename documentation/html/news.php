@@ -70,7 +70,7 @@ for( $i=0; $i<$numToShow; $i++ ) {
     if( $numRowsB == 1 ) {
         echo "<tr><td width=100%>";
         
-        echo "<h3>$subject</h3>";
+        echo "<font size=6>$subject</font><br>";
 	
 	$posted = mysql_result( $resultB, 0, "posted" );
         
@@ -82,7 +82,7 @@ for( $i=0; $i<$numToShow; $i++ ) {
 
         $messageHTML = sb_rcb_blog2html( $message );
         
-        echo "$messageHTML<br><br><br><br><br>";
+        echo "$messageHTML<br><br><br><br><br><br><br>";
 
         
         
@@ -92,24 +92,31 @@ for( $i=0; $i<$numToShow; $i++ ) {
     }
 
 
+echo "</table>";
 
+
+echo "<table boder=0 width=100%><tr>";
+
+echo "<td align=left>";
 
 
 if( $pageNumber > 1 ) {
     // more left
     $prevPage = $pageNumber - 1;
     
-    echo "<a href=newsPage.php?numPerPage=$numNewsPerPage&page=$prevPage>Prev</a>";
+    echo "[<a href=newsPage.php?numPerPage=$numNewsPerPage&page=$prevPage>Prev</a>]";
     }
 
+echo "</td><td align=right>";
 
 if( $numRows > $numNewsPerPage ) {
     // more left
     $nextPage = $pageNumber + 1;
     
-    echo "<a href=newsPage.php?numPerPage=$numNewsPerPage&page=$nextPage>Next</a>";
+    echo "[<a href=newsPage.php?numPerPage=$numNewsPerPage&page=$nextPage>Next</a>]";
     }
 
+echo "</td></tr></table>";
 
 
 
