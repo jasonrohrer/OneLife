@@ -63,7 +63,7 @@ echo "<center>[<a href=artLogPage.php>More Artwork...</a>]</center>";
 
 $numNewsPerPage = 1;
 $newsSummaryOnly = 1;
-//include( "news.php" );
+include( "news.php" );
 
 ?>
 
