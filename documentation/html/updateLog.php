@@ -60,7 +60,7 @@ if( $numToSkip > 0 ) {
     if( $numToSkip > 0 ) {
         $prevPage = $page - 1;
         
-        echo "[[<a href=\"updateLog.php?page=$prevPage\">Newer</a>]]";
+        echo "[<a href=\"updateLog.php?page=$prevPage\">Newer</a>]";
         }
     echo "</td><td align=right>";
     
@@ -68,7 +68,7 @@ if( $numToSkip > 0 ) {
     if( $numToSkip + $numPerPage < $numFiles ) {
         $nextPage = $page + 1;
         
-        echo "[[<a href=\"updateLog.php?page=$nextPage\">Older</a>]]";
+        echo "[<a href=\"updateLog.php?page=$nextPage\">Older</a>]";
         }
     echo "</td></tr></table>";
     }
@@ -97,7 +97,7 @@ echo "<table border=0 width=100%><tr><td align=left>";
 if( $numToSkip > 0 ) {
     $prevPage = $page - 1;
     
-    echo "[[<a href=\"updateLog.php?page=$prevPage\">Newer</a>]]";
+    echo "[<a href=\"updateLog.php?page=$prevPage\">Newer</a>]";
     }
 echo "</td><td align=right>";
 
@@ -105,7 +105,7 @@ echo "</td><td align=right>";
 if( $numToSkip + $numPerPage < $numFiles ) {
     $nextPage = $page + 1;
     
-    echo "[[<a href=\"updateLog.php?page=$nextPage\">Older</a>]]";
+    echo "[<a href=\"updateLog.php?page=$nextPage\">Older</a>]";
     }
 echo "</td></tr></table>";
 
