@@ -42,7 +42,7 @@ $numToSkip = ( $pageNumber - 1 ) * $numNewsPerPage;
 $numToGet = $numNewsPerPage + 1;
 
 
-$query = "select first_post_id, subject from topics ".
+$query = "select id, num_replies, first_post_id, subject from topics ".
     "where forum_id=$forumID order by first_post_id desc ".
     "limit $numToSkip, $numToGet;";
 
@@ -60,10 +60,13 @@ if( $numToShow > $numRows ) {
 
 
 for( $i=0; $i<$numToShow; $i++ ) {
+    $topic_id = mysql_result( $result, $i, "id" );
     $subject = mysql_result( $result, $i, "subject" );
     $post_id = mysql_result( $result, $i, "first_post_id" );
+    $num_replies = mysql_result( $result, $i, "num_replies" );
 
-    $query = "select posted, message from posts where id=$post_id;";
+    $query =
+        "select posted, message from posts where id=$post_id;";
 
     $resultB = mysql_query( $query );
     $numRowsB = mysql_numrows( $resultB );
@@ -77,7 +80,22 @@ for( $i=0; $i<$numToShow; $i++ ) {
         
         $date = date("F j, Y", $posted );
         $message = mysql_result( $resultB, 0, "message" );
-        
+
+        $firstReplyID = -1;
+
+        if( $num_replies > 0 ) {
+            $query =
+                "select id from posts ".
+                "where topic_id=$topic_id ".
+                "order by id asc limit 1, 1;";
+            
+            $resultC = mysql_query( $query );
+            $numRowsC = mysql_numrows( $resultC );
+
+            if( $numRowsC > 0 ) {
+                $firstReplyID = mysql_result( $resultC, 0, "id" );
+                }
+            }
         
         echo "$date<br><br>";
         
@@ -97,7 +115,26 @@ for( $i=0; $i<$numToShow; $i++ ) {
             echo "[<a href=newsPage.php>Read More...</a>]<br>";
             }
         else {
-            echo "$messageHTML<br><br><br><br><br><br><br>";
+            echo "$messageHTML<br>";
+
+            $commentLinkText = "Comment";
+            $commentLink = "forums/viewtopic.php?id=$topic_id";
+            
+            if( $num_replies > 0 && $firstReplyID > -1 ) {
+                $commentLinkText = "$num_replies Comment";
+                if( $num_replies > 1 ) {
+                    $commentLinkText = $commentLinkText . "s";
+                    }
+                
+                $commentLink =
+                    "forums/viewtopic.php?id=$topic_id#p$firstReplyID";
+                }
+
+            echo "<table border=0 width=100%><tr><td align=right>".
+                "[<a href=$commentLink>$commentLinkText</a>]".
+                "</td></tr></table>";
+            
+            echo "<br><br><br><br><br><br>";
             }
         
         echo "</td></tr>";
