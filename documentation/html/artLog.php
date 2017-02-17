@@ -86,6 +86,14 @@ for( $i=$numToSkip; $shown<$numPerPage && $i<$numFiles; $i++ ) {
     $bigFilePath = "artPostsBig/$file";
 
     $link = false;
+
+
+    if( ! file_exists( $bigFilePath ) ) {
+        $name = pathinfo( $file, PATHINFO_FILENAME );
+
+        // try png for bigfile
+        $bigFilePath = "artPostsBig/$name.png";
+        }
     
     if( file_exists( $bigFilePath ) ) {
         $link = true;
