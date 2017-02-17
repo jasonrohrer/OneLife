@@ -173,7 +173,7 @@ else {
 
     $postFile = "artPosts/$newFileNumber.jpg";
 
-    shell_exec( "convert -resize '600>' $bigFile $postFile" );
+    shell_exec( "convert -resize '600>' -quality 92 $bigFile $postFile" );
 
     echo "Converting to small display version at $postFile<br>";
     
