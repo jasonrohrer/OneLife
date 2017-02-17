@@ -25,6 +25,7 @@ or news_operationError( "Could not select $databaseName database: " .
 $pageNumber = news_requestFilter( "page", "/[0-9]+/", 1 );
 
 global $numNewsPerPage;
+global $newsSummaryOnly;
 
 if( $numNewsPerPage < 1 ) {
     
@@ -72,53 +73,68 @@ for( $i=0; $i<$numToShow; $i++ ) {
         
         echo "<font size=6>$subject</font><br>";
 	
-	$posted = mysql_result( $resultB, 0, "posted" );
+        $posted = mysql_result( $resultB, 0, "posted" );
         
-	$date = date("F j, Y", $posted );
+        $date = date("F j, Y", $posted );
         $message = mysql_result( $resultB, 0, "message" );
-
+        
         
         echo "$date<br><br>";
-
+        
         $messageHTML = sb_rcb_blog2html( $message );
-        
-        echo "$messageHTML<br><br><br><br><br><br><br>";
 
+        //echo "<pre>$messageHTML</pre>";
         
+        if( $newsSummaryOnly ) {
+            $breakPos = strpos( $messageHTML, "<br />", 500 );
+
+            if( $breakPos > 500 ) {    
+                $messageHTML = substr( $messageHTML, 0, $breakPos );
+                }
+            
+            echo "$messageHTML<br>";
+
+            echo "[<a href=newsPage.php>Read More...</a>]<br>";
+            }
+        else {
+            echo "$messageHTML<br><br><br><br><br><br><br>";
+            }
         
         echo "</td></tr>";
         }
-    
     }
 
-
-echo "</table>";
-
-
-echo "<table boder=0 width=100%><tr>";
-
-echo "<td align=left>";
-
-
-if( $pageNumber > 1 ) {
-    // more left
-    $prevPage = $pageNumber - 1;
     
-    echo "[<a href=newsPage.php?numPerPage=$numNewsPerPage&page=$prevPage>Prev</a>]";
-    }
-
-echo "</td><td align=right>";
-
-if( $numRows > $numNewsPerPage ) {
-    // more left
-    $nextPage = $pageNumber + 1;
     
-    echo "[<a href=newsPage.php?numPerPage=$numNewsPerPage&page=$nextPage>Next</a>]";
+if( ! $newsSummaryOnly ) {
+        
+    echo "</table>";
+    
+    
+    echo "<table boder=0 width=100%><tr>";
+        
+    echo "<td align=left>";
+    
+    
+    if( $pageNumber > 1 ) {
+        // more left
+        $prevPage = $pageNumber - 1;
+        
+        echo "[<a href=newsPage.php?numPerPage=$numNewsPerPage&page=$prevPage>Prev</a>]";
+        }
+    
+    echo "</td><td align=right>";
+    
+    if( $numRows > $numNewsPerPage ) {
+        // more left
+        $nextPage = $pageNumber + 1;
+            
+        echo "[<a href=newsPage.php?numPerPage=$numNewsPerPage&page=$nextPage>Next</a>]";
+        }
+    
+    echo "</td></tr></table>";
     }
-
-echo "</td></tr></table>";
-
-
+    
 
 
 mysql_close( $news_mysqlLink );

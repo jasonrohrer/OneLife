@@ -40,4 +40,14 @@ Sign up for release announcement emails: <input type="text" name="email" value="
 <br>
 <br>
 
+
+<?php
+
+$numNewsPerPage = 1;
+$newsSummaryOnly = 1;
+include( "news.php" );
+
+?>
+
+
 <?php include( "footer.php" ); ?>
