@@ -1,12 +1,9 @@
-<?php include( "header.php" ); ?>
 
 <?php
 
 
 
-
-$numPerPage = 2;
-
+global $numArtPerPage, $artSummaryOnly;
 
 
 $page = "0";
@@ -15,7 +12,7 @@ if( isset( $_REQUEST[ "page" ] ) ) {
     }
 
 
-$numToSkip = $page * $numPerPage;
+$numToSkip = $page * $numArtPerPage;
 
 
 $files = array();
@@ -42,17 +39,11 @@ $files = array_reverse( $files );
 $numFiles = sizeof( $files );
 
 
-echo
-"<table width=100% border=0><tr><td align=right>[<a href=.>Home</a>]</td></tr></table>";
-echo "<br><br><br>";
-
-
-
 echo "<center><table border=0 width=400><tr><td>";
 
 
 // forward/back links at top?
-if( $numToSkip > 0 ) {
+if( !$artSummaryOnly && $numToSkip > 0 ) {
     
     echo "<table border=0 width=100%><tr><td align=left>";
 
@@ -65,7 +56,7 @@ if( $numToSkip > 0 ) {
     echo "</td><td align=right>";
     
     
-    if( $numToSkip + $numPerPage < $numFiles ) {
+    if( $numToSkip + $numArtPerPage < $numFiles ) {
         $nextPage = $page + 1;
         
         echo "[<a href=\"artLog.php?page=$nextPage\">Older</a>]";
@@ -78,7 +69,7 @@ if( $numToSkip > 0 ) {
 
 $shown=0;
 
-for( $i=$numToSkip; $shown<$numPerPage && $i<$numFiles; $i++ ) {
+for( $i=$numToSkip; $shown<$numArtPerPage && $i<$numFiles; $i++ ) {
     
     $file = $files[$i];
 
@@ -99,8 +90,12 @@ for( $i=$numToSkip; $shown<$numPerPage && $i<$numFiles; $i++ ) {
         $link = true;
         }
 
-    if( $link ) {
+    if( $link && !$artSummaryOnly ) {
         echo "<a href=$bigFilePath>";
+        }
+    else if( $artSummaryOnly ) {
+        $link = true;
+        echo "<a href=artLogPage.php>";
         }
     
     echo "<img border=0 src=$filePath>";
@@ -108,29 +103,34 @@ for( $i=$numToSkip; $shown<$numPerPage && $i<$numFiles; $i++ ) {
     if( $link ) {
         echo "</a>";
         }
-    echo "<br><br><br><br>";
+    if( ! $artSummaryOnly ) {
+        echo "<br><br><br><br>";
+        }
     $shown++;
     }
 
 
 
-echo "<table border=0 width=100%><tr><td align=left>";
-
-
-if( $numToSkip > 0 ) {
-    $prevPage = $page - 1;
+if( ! $artSummaryOnly ) {
     
-    echo "[<a href=\"artLog.php?page=$prevPage\">Newer</a>]";
-    }
-echo "</td><td align=right>";
+    echo "<table border=0 width=100%><tr><td align=left>";
 
-
-if( $numToSkip + $numPerPage < $numFiles ) {
-    $nextPage = $page + 1;
     
-    echo "[<a href=\"artLog.php?page=$nextPage\">Older</a>]";
+    if( $numToSkip > 0 ) {
+        $prevPage = $page - 1;
+        
+        echo "[<a href=\"artLog.php?page=$prevPage\">Newer</a>]";
+        }
+    echo "</td><td align=right>";
+    
+    
+    if( $numToSkip + $numArtPerPage < $numFiles ) {
+        $nextPage = $page + 1;
+        
+        echo "[<a href=\"artLog.php?page=$nextPage\">Older</a>]";
+        }
+    echo "</td></tr></table>";
     }
-echo "</td></tr></table>";
 
 
 echo "</td></tr></table></center>";
@@ -139,5 +139,3 @@ echo "</td></tr></table></center>";
 
 
 ?>
-
-<?php include( "footer.php" ); ?>
