@@ -39,7 +39,7 @@ $files = array_reverse( $files );
 $numFiles = sizeof( $files );
 
 
-echo "<center><table border=0 width=400><tr><td>";
+echo "<center><table border=0 width=400><tr><td align=center>";
 
 
 // forward/back links at top?

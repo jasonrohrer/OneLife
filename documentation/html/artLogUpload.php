@@ -117,7 +117,6 @@ hmac_sha1 of password with pepper as key:<br>
     }
 else {
     // trying to upload
-    echo "uploading";
 
     global $accessPasswords, $passwordHashingPepper;
 
@@ -173,14 +172,15 @@ else {
     rename( $tmpFileName, $bigFile );
 
     $postFile = "artPosts/$newFileNumber.jpg";
-    
-    
-        shell_exec( "convert -resize '600' $bigFile $postFile" );
 
+    shell_exec( "convert -resize '600>' $bigFile $postFile" );
+
+    echo "Converting to small display version at $postFile<br>";
+    
     echo "Upload complete.<br><br>";
     
     
-    echo "<a href=artLog.php>Go to art log</a>";
+    echo "<a href=artLogPage.php>Go to art log</a>";
     
     }
 
