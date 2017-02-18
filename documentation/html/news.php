@@ -142,10 +142,10 @@ for( $i=0; $i<$numToShow; $i++ ) {
     }
 
     
+echo "</table>";
     
 if( ! $newsSummaryOnly ) {
         
-    echo "</table>";
     
     
     echo "<table boder=0 width=100%><tr>";

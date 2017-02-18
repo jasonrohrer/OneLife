@@ -66,6 +66,11 @@ $newsSummaryOnly = 1;
 include( "news.php" );
 
 ?>
+<br>
 
+<center>
+<font size=5>The thinking behind One Hour One Life</font><br>
+<iframe width="640" height="360" src="https://www.youtube.com/embed/videoseries?list=PLGRmlIh53cOLvQTajDxlPVcKEMloipoOE" frameborder="0" allowfullscreen></iframe>
+</center>
 
 <?php include( "footer.php" ); ?>
