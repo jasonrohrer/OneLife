@@ -1,4 +1,5 @@
 <?php
+
 include( "header.php" );
 
 
@@ -13,8 +14,8 @@ include( "artLogSettings.php" );
 
 
 
-
 $files = array();
+$thumbs = array();
 $dir = opendir('artPosts');
 
 if( $dir === false ) {
@@ -27,15 +28,23 @@ if( $dir === false ) {
 
 while( false !== ( $file = readdir($dir) ) ) {
     if( ($file != ".") and ($file != "..") ) {
-        $files[] = $file;
+        if( ! preg_match( "/[0-9]+_t.jpg/", $file ) ) {
+            $files[] = $file;
+            }
+        else {
+            $thumbs[] = $file;
+            }
         }   
     }
 
 natsort( $files );
+natsort( $thumbs );
 
 $files = array_reverse( $files );
+$thumbs = array_reverse( $thumbs );
 
 $numFiles = sizeof( $files );
+$numThumbs = sizeof( $thumbs );
 
 
 $upload = 0;
@@ -85,8 +94,36 @@ global $passwordHashingPepper;
 
 
 <FORM enctype="multipart/form-data" ACTION="artLogUpload.php" METHOD="post">
-    
-      
+
+
+  Top image:<br>
+  <table border=1 cellpadding=5 cellspacing=0>
+	<tr>
+<?php
+
+      for( $i=0; $i<$numThumbs; $i++ ) {
+          $t = $thumbs[$i];
+
+          preg_match( "/([0-9]+)_t.jpg/", $t, $matches );
+
+          $num = $matches[1];
+          
+          echo "<td align=center valign=bottom><img src='artPosts/$t'><br>\n";
+          $checked = "";
+          if( $i == 0 ) {
+              $checked = "checked";
+              }
+          echo "<input type=radio name=newTop value=$num $checked>\n";
+          echo "</td>\n";
+
+          if( $i > 0 && $i % 6 == 0 ) {
+              echo "</tr><tr>";
+              }
+          }
+?>
+
+</tr></table>
+
     <INPUT TYPE="hidden" NAME="upload" VALUE="1">
 
 <br>
@@ -119,7 +156,7 @@ else {
     // trying to upload
 
     global $accessPasswords, $passwordHashingPepper;
-
+    
     $loginPermitted = false;
     
     if( isset( $_REQUEST[ "passwordHMAC" ] ) ) {
@@ -140,6 +177,38 @@ else {
         die();
         }
 
+
+    $lastFileNumber = 0;
+    
+    if( $numFiles > 0 ) {
+        $lastFileNumber = pathinfo( $files[0], PATHINFO_FILENAME );
+        }
+    
+    $newTop = $_REQUEST[ "newTop" ];
+    
+    preg_match( "/[0-9]+/", $newTop, $matches );
+    $newTop = $matches[0];
+    
+    if( $newTop > 0 && $newTop < $lastFileNumber ) {
+        
+        $newTopNumber = $lastFileNumber + 1;
+        
+        rename( "artPosts/$newTop.jpg", "artPosts/$newTopNumber.jpg" );
+        rename( "artPosts/$newTop"."_t.jpg",
+                "artPosts/$newTopNumber"."_t.jpg" );
+        
+        
+        rename( "artPostsBig/$newTop.jpg", "artPostsBig/$newTopNumber.jpg" );
+        rename( "artPostsBig/$newTop.png", "artPostsBig/$newTopNumber.png" );
+        
+        $lastFileNumber = $newTopNumber;
+        
+        echo "New top image selected: ".
+            "<img src='artPosts/$newTopNumber_t.jpg'><br><br>\n";
+        }
+    
+
+
     
     
     $tmpFileName = $_FILES['userfile']['tmp_name'];
@@ -150,14 +219,17 @@ else {
 
     if( $ext != "jpg" && $ext != "png" ) {
         echo "Only JPG and PNG files supported.";
+
+        
+        echo "<br><br><a href=artLogUpload.php>Upload more</a><br><br>";
+        
+        echo "<a href=artLogPage.php>Go to art log</a>";
+
         die();
         }
     
-    $lastFileNumber = 0;
     
-    if( $numFiles > 0 ) {
-        $lastFileNumber = pathinfo( $files[0], PATHINFO_FILENAME );
-        }
+    
     
     $newFileNumber = $lastFileNumber + 1;
 
@@ -170,15 +242,22 @@ else {
     echo "Renaming $tmpFileName to $bigFile <br>";
     
     rename( $tmpFileName, $bigFile );
+    chmod( $bigFile, 0666 );
 
     $postFile = "artPosts/$newFileNumber.jpg";
+    $postFileThumb = "artPosts/$newFileNumber"."_t.jpg";
 
     shell_exec( "convert -resize '600>' -quality 92 $bigFile $postFile" );
+    shell_exec( "convert -resize '80>' -quality 92 $bigFile $postFileThumb" );
 
-    echo "Converting to small display version at $postFile<br>";
-    
+    echo "Converting to small display versions at $postFile, $postFileThumb<br>";
+
+    chmod( $postFile, 0666 );
+    chmod( $postFileThumb, 0666 );
+
     echo "Upload complete.<br><br>";
     
+    echo "<br><br><a href=artLogUpload.php>Upload more</a><br><br>";
     
     echo "<a href=artLogPage.php>Go to art log</a>";
     

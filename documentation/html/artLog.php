@@ -27,7 +27,9 @@ if( $dir === false ) {
 
 
 while( false !== ( $file = readdir($dir) ) ) {
-    if( ($file != ".") and ($file != "..") ) {
+    if( ($file != ".") and ($file != "..") and
+        preg_match( "/[0-9]+.jpg/", $file ) and
+        ! preg_match( "/[0-9]+_t.jpg/", $file ) ) {
         $files[] = $file;
         }   
     }
