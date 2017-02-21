@@ -198,13 +198,20 @@ else {
                 "artPosts/$newTopNumber"."_t.jpg" );
         
         
-        rename( "artPostsBig/$newTop.jpg", "artPostsBig/$newTopNumber.jpg" );
-        rename( "artPostsBig/$newTop.png", "artPostsBig/$newTopNumber.png" );
+        if( file_exists( "artPostsBig/$newTop.jpg" ) ) {
+            rename( "artPostsBig/$newTop.jpg",
+                    "artPostsBig/$newTopNumber.jpg" );
+            }
+        
+        if( file_exists( "artPostsBig/$newTop.png" ) ) {
+            rename( "artPostsBig/$newTop.png",
+                    "artPostsBig/$newTopNumber.png" );
+            }
         
         $lastFileNumber = $newTopNumber;
         
         echo "New top image selected: ".
-            "<img src='artPosts/$newTopNumber_t.jpg'><br><br>\n";
+            "<img src='artPosts/$newTopNumber"."_t.jpg'><br><br>\n";
         }
     
 
