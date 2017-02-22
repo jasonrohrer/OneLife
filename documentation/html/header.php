@@ -25,7 +25,7 @@ if( isset( $blockRobots ) && $blockRobots == 1 ) {
 
 <td align=center width=20%>[<a href=newsPage.php>News</a>]</td>
 <td align=center width=20%>[<a href=updateLog.php>Update Log</a>]</td>
-<td align=center width=20%>[<a href=forums>Forums</a>]</td>
+<td align=center width=20%>[<a href=https://onehouronelife.com/forums>Forums</a>]</td>
 <td align=center width=20%>[<a href=artLogPage.php>Artwork</a>]</td>
 <td align=center width=20%>[<a href="http://onehouronelife.gamepedia.com">Wiki</a>]</td>
 
