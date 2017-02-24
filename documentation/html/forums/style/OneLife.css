@@ -1,0 +1,1147 @@
+/*****************************************************************
+1. INITIAL SETTINGS
+*****************************************************************/
+
+/* Limited Reset
+----------------------------------------------------------------*/
+
+.pun table, .pun div, .pun form, .pun p, .pun h1, .pun h2, .pun h3,
+.pun h4, .pun h5, .pun pre, .pun blockquote, .pun ul, .pun ol, .pun li, .pun dl,
+.pun dt, .pun dd, .pun th, .pun td, .pun fieldset, .pun img, .pun abbr, .pun cite {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	}
+
+.pun ul, .pun ol {
+	list-style: none
+	}
+
+
+/* Structural Settings
+----------------------------------------------------------------*/
+
+.pun .clearer, .pun .nosize {
+	height: 0;
+	width: 0;
+	line-height: 0;
+	font-size: 0;
+	overflow: hidden
+	}
+
+.pun .clearer, .pun .clearb {
+	clear: both
+	}
+
+.pun .nosize {
+	position: absolute;
+	left: -9999em;
+	text-indent: -9999em;
+	width: 0;
+	}
+
+* html .inbox, * html .inform, * html .pun, * html .tclcon, * html .codebox {
+	height: 1px
+	}
+
+.pun, .pun .inbox, .pun .inform, .pun .tclcon, .pun .codebox {
+	min-height: 1px
+	}
+
+.clearl {
+	clear: left;
+	}
+
+/* Hidden Elements
+----------------------------------------------------------------*/
+
+#brdfooter h2, #brdstats h2, #brdstats .conl dt, #brdstats .conr dt,
+#modcontrols dt, #searchlinks dt, div.postright h3, span.closedtext,
+.pun .required strong span {
+	position: absolute;
+	display: block;
+	overflow: hidden;
+	width: 0;
+	left: -9999em;
+	text-indent: -9999em;
+	}
+
+/*****************************************************************
+2. TEXT & CONTENT
+*****************************************************************/
+
+/* Text Defaults
+----------------------------------------------------------------*/
+
+.pun {
+	font: 85.75%/1.4545em Verdana, Helvetica, Arial, sans-serif;
+	line-height: normal;
+	}
+
+.pun table, .pun td, .pun th, .pun input, .pun select, .pun optgroup, .pun textarea, .pun samp, .pun legend {
+	font-size: 1em;
+	font-family: verdana, helvetica, arial, sans-serif;
+	}
+
+.pun pre, .pun code {
+	font-size: 1.182em;
+	font-family: consolas, monaco, "bitstream vera sans mono", "courier new", courier, monospace
+	}
+
+.pun pre code {
+	font-size: 1em;
+	}
+
+.pun strong {
+	font-weight: bold;
+	}
+
+.pun em {
+	font-style: italic;
+	}
+
+
+/* Content Defaults
+----------------------------------------------------------------*/
+
+.pun p, .pun ul, .pun ol, .pun dl {
+	font-size: 1em;
+	padding: 3px 0;
+	}
+
+.pun h2 {
+	font-size: 1em;
+	font-weight: normal;
+	padding: 4px 6px;
+	}
+
+.pun h3 {
+	font-size: 1.091em;
+	padding: 3px 0;
+	}
+
+.pun table p, .pun table h3 {
+	padding: 0;
+	}
+
+.pun span.warntext, .pun p.warntext {
+	font-weight: bold
+	}
+
+/* User Content (Announcements, Rules, Posts)
+----------------------------------------------------------------*/
+
+.pun .usercontent p, .pun .postmsg p {
+	padding: 0.75em 0
+	}
+
+.pun .usercontent ul, .pun .postmsg ul {
+	padding: 0.75em 1em 0.75em 2.5em;
+	list-style: disc
+	}
+
+.pun .usercontent ol, .pun .postmsg ol {
+	padding: 0.75em 1em 0.75em 2.5em;
+	list-style: decimal
+	}
+
+.pun .usercontent ol.alpha, .pun .postmsg ol.alpha {
+	list-style: lower-alpha
+	}
+
+.pun .usercontent li ol, .pun .usercontent li ul, .pun .postmsg li ol, .pun .postmsg li ul {
+	padding: 0.25em 1em 0.75em 2.5em
+	}
+
+.pun .usercontent li p, .pun .postmsg li p {
+	padding: 0
+	}
+
+.pun .usercontent h1 {
+	font-size: 1.4em;
+	font-weight: bold;
+	padding: 0.75em 0 0 0
+	}
+
+.pun .usercontent h2 {
+	font-size: 1.2em;
+	font-weight: bold;
+	padding: 0.75em 0 0 0
+	}
+
+.pun .usercontent h3 {
+	font-size: 1.1em;
+	font-weight: bold;
+	padding: 0.75em 0 0 0
+	}
+
+.pun .usercontent h4, .pun .usercontent h5, .pun .usercontent h6 {
+	font-size: 1em;
+	font-weight: bold;
+	padding: 0.75em 0 0 0
+	}
+
+.pun .quotebox cite {
+	font-weight: bold;
+	font-style: normal;
+	padding: 0.75em 0.75em 0 0.75em
+	}
+
+.pun span.bbu {
+	text-decoration: underline
+	}
+
+.pun span.bbs, .pun del {
+	text-decoration: line-through;
+	}
+
+.pun .postmsg ins, #punhelp samp ins {
+	text-decoration: none;
+	}
+
+.pun div.postmsg h5, #punhelp h5 {
+	font-size: 1.1em;
+	font-weight: bold;
+	padding: 0.75em 0 0 0;
+	}
+
+
+/*****************************************************************
+3. COMMON STYLES
+*****************************************************************/
+
+/* Page Layout
+----------------------------------------------------------------*/
+
+html, body {
+	margin: 0;
+	padding: 0
+	}
+
+.pun {
+	margin: 12px 20px
+	}
+
+#punredirect, #punmaint, #puninstall, #pundb_update {
+	margin: 50px 20% 12px 20%
+	}
+
+
+/* Vertical Element Spacing
+----------------------------------------------------------------*/
+
+#brdheader {
+	margin: 0 0 12px 0;
+	}
+
+#brdtitle p {
+	padding-top: 0px
+	}
+
+#announce, #brdstats {
+	margin: 12px 0 12px 0;
+	}
+
+.pun .blocktable, .pun .block, .pun .blockform, .pun .block2col, #postreview {
+	margin-bottom: 12px
+	}
+
+#punindex .blocktable, .pun .blockpost {
+	margin-bottom: 6px
+	}
+
+#postreview .blockpost {
+	margin-bottom: -1px;
+	}
+
+.pun .block2col .blockform, .pun .block2col .block {
+	margin-bottom: 0px
+	}
+
+.pun .linkst, .pun .linksb {
+	margin-top: -12px
+	}
+
+.pun .postlinksb {
+	margin-top: -6px
+	}
+
+
+/* External Borders
+----------------------------------------------------------------*/
+
+.pun .box {
+	border-style: solid;
+	border-width: 1px;
+	}
+
+#brdheader .box {
+	border-top-width: 4px;
+	}
+
+/* Default Internal Spacing
+----------------------------------------------------------------*/
+
+.pun .block .inbox, .pun .blockmenu .inbox {
+	padding: 3px 6px
+	}
+
+/*****************************************************************
+4. COMMON BOARD ELEMENTS
+*****************************************************************/
+
+/* Board Header
+----------------------------------------------------------------*/
+
+#brdtitle h1 {
+	font-size: 1.4em;
+	font-weight: bold;
+	padding: 3px 0 0 0;
+	}
+
+#brdmenu li {
+	display: inline;
+	margin-right: 12px;
+	}
+
+#brdmenu a:link, #brdmenu a:visited {
+	text-decoration: none
+	}
+
+#brdmenu a:hover, #brdmenu a:active {
+	text-decoration: underline
+	}
+
+#brdwelcome .conl {
+	float: left;
+	}
+
+#brdwelcome .conr {
+	float: right;
+	text-align: right;
+	}
+
+/* Breadcrumbs and Post Links
+----------------------------------------------------------------*/
+
+.pun .linkst {
+	padding: 8px 6px 3px 6px
+	}
+
+.pun .linksb, .pun .postlinksb {
+	padding: 3px 6px 8px 6px
+	}
+
+.pun .crumbs {
+	clear: both;
+	width: 100%;
+	overflow: hidden;
+	}
+
+.pun .crumbs li {
+	display: inline;
+	white-space: nowrap;
+	font-weight: bold;
+	}
+
+.pun .pagelink {
+	float: left;
+	white-space: nowrap;
+	}
+
+.pun .postlink {
+	font-weight: bold;
+	white-space: nowrap;
+	}
+
+.pun .postlink, .pun .modbuttons {
+	float: right;
+	text-align: right;
+	}
+
+.pun .modbuttons {
+	padding: 1px 0;
+	white-space: nowrap;
+	}
+
+.pun .modbuttons input {
+	margin-left: 6px;
+	}
+
+.pun .postlink a:link, .pun .postlink a:visited {
+	text-decoration: none
+	}
+
+.pun .postlink a:hover, .pun .postlink a:active {
+	text-decoration: underline;
+	}
+
+#punindex .subscribelink {
+	margin-top: 6px;
+	}
+
+/* Board Footer
+----------------------------------------------------------------*/
+
+#brdfooter .conl {
+	float: left;
+	}
+
+#brdfooter .conr {
+	float: right;
+	text-align: right;
+	}
+
+#brdfooter #modcontrols {
+	border-bottom-style: solid;
+	border-bottom-width: 1px;
+	text-align: center;
+	}
+
+#brdfooter #modcontrols dd {
+	display: inline;
+	margin:0 6px;
+	}
+
+
+/* Board Stats
+----------------------------------------------------------------*/
+
+#brdstats .conl {
+	float: left;
+	}
+
+#brdstats .conr {
+	float: right;
+	text-align: right;
+	}
+
+#onlinelist dd, #onlinelist dt {
+	display: inline;
+	}
+
+
+/*****************************************************************
+5. MAIN TABLES
+*****************************************************************/
+
+.pun table {
+	width: 100%;
+	border-collapse: collapse;
+	border-spacing: 0;
+	empty-cells: show;
+	}
+
+.pun .blocktable table {
+	table-layout: fixed;
+	}
+
+.pun td, .pun th {
+	padding: 4px 6px;
+	text-align: left;
+	font-weight: normal;
+	}
+
+.pun td, .pun th {
+	border-style: solid none none solid;
+	border-width: 1px;
+	}
+
+.pun .tcl {
+	border-left: 0;
+	width: auto;
+	}
+
+.pun .tc2, .pun .tc3, .pun .tcmod {
+	width: 10%;
+	text-align: center;
+	padding: 4px 0;
+	}
+
+.pun .tcr {
+	width: 30%;
+	}
+
+.pun .tcl h3 {
+	font-size: 1.091em;
+	font-weight: bold;
+	}
+
+.pun .tcl h3 span.newtext {
+	font-size: 0.917em;
+	}
+
+.pun .tcl span.newtext, .pun .tcl span.pagestext {
+	white-space: nowrap;
+	font-weight: normal;
+	}
+
+.pun td span.byuser {
+	white-space: nowrap;
+	}
+
+.pun .tcl p {
+	padding: 5px 0 0 0
+	}
+
+#punsearch #vf .tc2 {
+	width: 18%;
+	text-align: left;
+	padding: 4px 6px;
+	}
+
+#users1 .tcr {
+	width: 25%
+	}
+
+#users1 .tc2 {
+	width: 25%;
+	text-align: left;
+	padding: 4px 6px;
+	}
+
+#debug .tcl {
+	width: 10%
+	}
+
+#debug .tcr {
+	width: 90%;
+	white-space: normal
+	}
+
+#punindex .tcr .byuser {
+	display: block
+	}
+
+.pun .blocktable .tclcon {
+	padding: 0 11px 0 12px;
+	overflow: hidden;
+	min-height: 1px;
+	position: relative;
+	}
+
+.pun .blocktable .tclcon div {
+	width: 100%;
+	overflow: hidden;
+	}
+
+.pun .icon {
+	margin: 0.1em 0 0 0.2em;
+	border-width: 0.6em;
+	border-style: solid;
+	height: 0;
+	width: 0;
+	overflow: hidden;
+	float: left;
+	}
+
+.pun .icon div {
+	position: absolute;
+	left: -9999em;
+	text-indent: -9999em;
+	height: 0;
+	}
+
+.pun .iposted .ipost {
+	position: absolute;
+	left: 0;
+	font-weight: bold;
+	width: 8px;
+	padding-left: 4px;
+	text-align: center;
+	top: 0;
+	}
+
+/*****************************************************************
+6. MAIN FORMS
+*****************************************************************/
+
+.pun .blockform form, .pun .fakeform {
+	PADDING: 20px 20px 15px 20px
+	}
+
+.pun .forminfo {
+	margin-bottom: 12px;
+	padding: 9px 10px;
+	border-style: solid;
+	border-width: 1px;
+	}
+
+.pun .forminfo h3 {
+	font-weight: bold;
+	}
+
+.pun .inform {
+	padding-bottom: 12px
+	}
+
+.pun fieldset {
+	padding: 0px 12px 0px 12px;
+	border-style: solid;
+	border-width: 1px
+	}
+
+.pun legend {
+	padding: 0px 6px
+	}
+
+.pun .infldset {
+	padding: 9px 0px 12px 0
+	}
+
+.pun label {
+	display: block;
+	padding: 3px 0
+	}
+
+.pun label.conl {
+	float: left;
+	overflow: visible;
+	margin-right: 10px
+	}
+
+.pun fieldset .rbox br {
+	display: none;
+	}
+
+.pun fieldset .rbox label {
+	padding: 3px 0 3px 25px;
+	position: relative;
+	vertical-align: middle;
+	}
+
+.pun fieldset .rbox input {
+	margin: 0 9px 0 -25px;
+	padding: 0;
+	width: 16px;
+	position: relative;
+	vertical-align: middle;
+	}
+
+.pun .txtarea {
+	width: 75%
+	}
+
+.pun .txtarea textarea, .pun input.longinput {
+	width: 100%
+	}
+
+.pun .bblinks {
+	padding-bottom: 10px;
+	padding-left: 4px
+	}
+
+.pun .bblinks li {
+	display: inline;
+	padding-right: 20px
+	}
+
+.pun .blockform .buttons {
+	padding-left: 12px;
+	}
+
+.pun .blockform .buttons input {
+	margin-right: 8px;
+	}
+
+#posterror ul {
+	list-style: square;
+	padding: 3px 0 3px 24px;
+	}
+
+.pun .deletemsg {
+	border-style: solid;
+	border-width: 1px;
+	padding: 6px 15px;
+	}
+
+.pun p.actions span {
+	margin-right: 12px;
+	}
+
+.pun .multiselect {
+	float: left;
+	padding-bottom: 7px;
+	}
+
+.pun .checklist {
+	border-width: 1px;
+	border-style: solid;
+	max-height: 9em;
+	width: 20em;
+	overflow: auto;
+	padding: 0.3em 0.5em;
+	margin: 0.25em 16px 0 0.15em;
+	}
+
+.pun .checklist fieldset {
+	border: 0;
+	padding: 0;
+	}
+
+.pun .checklist legend {
+	padding: 0;
+	}
+
+.pun .checklist legend span {
+	width: auto;
+	max-width: 25em;
+	}
+
+/*****************************************************************
+7. PROFILES AND ADMIN
+*****************************************************************/
+
+.pun .block2col {
+	padding-bottom: 1px
+	}
+
+.pun .block2col .blockform, .pun .block2col .block {
+	margin-left: 14em
+	}
+
+.pun .blockmenu {
+	float:left;
+	width: 13em
+	}
+
+.pun .blockmenu li {
+	padding: 3px 0;
+	font-weight: bold;
+	}
+
+.pun .blockmenu a:link, .pun .blockmenu a:visited {
+	text-decoration: none
+	}
+
+.pun .blockmenu a:hover, .pun .blockmenu a:active {
+	text-decoration: underline
+	}
+
+#viewprofile dl {
+	float: left;
+	width: 100%;
+	overflow: hidden
+	}
+
+#viewprofile dd {
+	margin-left: 14em;
+	padding: 3px;
+	}
+
+#viewprofile dt {
+	float: left;
+	width: 13em;
+	margin: 3px 0;
+	}
+
+#profileavatar img {
+	float: right;
+	margin-left: 1em
+	}
+
+#adintro ul {
+	list-style-type: disc;
+	margin-left: 8px;
+	padding-left: 16px;
+	}
+
+/*****************************************************************
+8. MAIN POSTS
+*****************************************************************/
+
+.pun .blockpost h2 a:link, .pun .blockpost h2 a:visited {
+	text-decoration: none;
+	}
+
+.pun .blockpost h2 a:hover, .pun .blockpost h2 a:active {
+	text-decoration: underline;
+	}
+
+.pun .blockpost h2 .conr {
+	float: right;
+	text-align: right;
+	}
+
+#punsearch .blockpost h2 span {
+	white-space: nowrap;
+	}
+
+.pun .blockpost .box {
+	overflow: hidden;
+	}
+
+.pun .postleft, .pun .postfootleft {
+	float:left;
+	width: 18em;
+	position: relative;
+	overflow: hidden;
+	}
+
+.pun .postleft dl {
+	padding: 6px;
+	}
+
+.pun .postleft .usercontacts, .pun .postleft .icon {
+	margin-top: 6px
+	}
+
+.pun .postleft .postavatar, .pun .postleft .usertitle {
+	margin-bottom: 6px;
+	display: block;
+	}
+
+.pun .blockpost dt {
+	font-size: 1.091em;
+	font-weight: bold;
+	}
+
+.pun .blockpost dt a:link, .pun .blockpost dt a:visited {
+	text-decoration: none;
+	}
+
+.pun .blockpost dt a:hover, .pun .blockpost dt a:active {
+	text-decoration: underline;
+	}
+
+.pun .postright, .pun .postfootright {
+	border-left-width: 18em;
+	border-left-style: solid
+	}
+
+#postpreview .postright {
+	border-left: 0
+	}
+
+.pun .postright {
+	padding: 0 6px;
+	}
+
+.pun .postfootright, .pun .multidelete {
+	text-align: right
+	}
+
+.pun .postmsg {
+	width:98%;
+	overflow: hidden;
+	padding-bottom: 6px;
+	word-wrap: break-word;
+	}
+
+.pun .postfootright ul, .pun .postfootright div, .pun .postfootright p,
+.pun .postfootleft p {
+	padding: 10px 6px 5px 6px;
+	}
+
+.pun .postfootright li {
+	display: inline;
+	}
+
+.pun .postfootright li:before {
+	content: " | ";
+	}
+
+.pun .postfootright li:first-child:before {
+	content: "";
+	}
+
+.pun .postfootright a:link, .pun .postfootright a:visited {
+	text-decoration: none
+	}
+
+.pun .postfootright a:hover, .pun .postfootright a:active {
+	text-decoration: underline
+	}
+
+.pun .codebox {
+	border-style: solid;
+	border-width: 1px;
+	margin: 0.75em 1em;
+	padding: 0;
+	}
+
+.pun .quotebox {
+	border-style: solid;
+	border-width: 1px;
+	margin: 0.75em 1em;
+	padding: 0 0.75em;
+	}
+
+.pun .quotebox cite {
+	display: block;
+	padding: 0.75em 0 0 0;
+	}
+
+.pun .quotebox blockquote {
+	width: 100%;
+	overflow: hidden
+	}
+
+.pun .codebox pre {
+	overflow: auto;
+	width: 100%;
+	overflow-y:hidden
+	}
+
+* html .pun .codebox pre {
+	padding-bottom: 10px;
+	}
+
+*+html .pun .codebox pre {
+	padding-bottom: 10px
+	}
+
+.pun .codebox pre code {
+	display: block;
+	padding: 0.75em;
+	}
+
+.pun .codebox pre.vscroll {
+	height: 32em;
+	overflow: auto;
+	overflow-y: auto
+	}
+
+.pun .postmsg img {
+	vertical-align: bottom;
+	}
+
+.pun .postsignature hr {
+	margin-left: 0px;
+	width: 200px;
+	text-align: left;
+	height: 1px;
+	border:none
+	}
+
+.pun .postmsg .postimg img {
+	max-width: 98%;
+	vertical-align: middle;
+	margin: 7px 0.5em 7px 0;
+}
+
+.pun .postmsg .postimg a:link img, .pun .postmsg .postimg a:visited img {
+	border-style: solid;
+	border-width: 2px;
+}
+
+.pun .blockpost label {
+	padding: 3px 6px;
+	border-style: solid;
+	border-width: 1px;
+	vertical-align: middle;
+	display: inline-block;
+	}
+
+.pun .blockpost label * {
+	vertical-align: middle;
+	margin: 0;
+	padding: 0;
+	}
+
+/****************************************************************/
+/* 9. HELP FILES AND MISC. */
+/****************************************************************/
+
+#punhelp h2 {
+	margin-top: 12px
+	}
+
+#punhelp div.box {
+	padding: 10px
+	}
+
+#debugtime {
+	margin-top: -12px;
+	text-align: center;
+	}
+
+#brdwelcome, #brdfooter dl a, div.blockmenu li, div.rbox input {
+	line-height: 1.4em
+	}
+
+#announce div.inbox div {
+	padding: 3px 0
+	}
+
+/*****************************************************************
+COLOUR SCHEME
+*****************************************************************/
+
+/* Background / Text
+----------------------------------------------------------------*/
+
+body {
+	background: #000000;
+	color: #000000
+	}
+
+.pun {
+	color: #d4d4d4
+	}
+
+.pun .box, #adminconsole fieldset th {
+	background-color: #1a1a1a
+	}
+
+.pun td.tc2, .pun td.tc3, .pun td.tcmod, #postpreview, #viewprofile dd, .pun .forminfo,
+#brdfooter #modcontrols, #adminconsole fieldset td, .pun .blockmenu .box, #adstats dd {
+	background-color: #121212
+	}
+
+.pun h2, #brdmenu {
+	background-color: #363636;
+	color: #d4d4d4
+	}
+
+.pun th {
+	background-color: #181818
+	}
+
+.pun legend {
+	color: #60a0dc
+	}
+
+.pun .blockmenu li.isactive a, #posterror li strong {
+	color: #d4d4d4
+	}
+
+.pun .usercontent * {
+	background: transparent;
+	color: #242424
+	}
+
+.pun textarea, .pun input, .pun select {
+	background-color: #2a2a2a;
+	color: #d4d4d4
+	}
+
+.pun .multiselect, .pun .checklist {
+	color: #D4D4D4;
+	}
+
+.pun .checklist {
+	border-color: #666;
+	}
+
+/* Posts
+----------------------------------------------------------------*/
+
+.pun .blockpost .box, .pun .postright, .pun .postfootright, .pun .deletemsg {
+	background-color: #181818
+	}
+
+.pun .postright, .pun .postfootright {
+	border-left-color: #222222
+	}
+
+.pun .postleft, .pun .postfootleft, .pun .blockpost label, .pun .codebox, .pun .quotebox {
+	background-color: #020202
+	}
+
+.pun .blockpost h2 {
+	background-color: #262626
+	}
+
+.pun .blockpost h2 span.conr {
+	color: #a19e96
+	}
+
+.pun .postmsg ins, #punhelp samp ins {
+	background-color: #ff0;
+	}
+
+.pun hr {
+	background-color: #606060;
+	color: #606060
+	}
+
+/* Borders
+----------------------------------------------------------------*/
+
+.pun .box {
+	border-color:#565656
+	}
+
+.pun td, #brdfooter #modcontrols {
+	border-color: #565656
+	}
+
+.pun th {
+	border-color: #484848
+	}
+
+.pun fieldset {
+	border-color: #606060
+	}
+
+#adminconsole td, #adminconsole th {
+	border-color: #383838
+	}
+
+.pun .quotebox, .pun .codebox, .pun .forminfo,
+.pun .blockpost label, .pun .deletemsg {
+	border-color: #606060
+	}
+
+/* Links
+----------------------------------------------------------------*/
+
+.pun a:link, .pun a:visited {
+	color: #91ac66
+	}
+
+.pun a:hover, .pun a:active, .pun a:focus {
+	color: #BBBB66
+	}
+
+.pun .postmsg .postimg a:link img, .pun .postmsg .postimg a:visited img {
+	border-color: #60a0dc;
+}
+
+.pun .postmsg .postimg a:hover img, .pun .postmsg .postimg a:active img, .pun .postmsg .postimg a:focus img {
+	border-color: #80d6ff;
+}
+
+.pun h2 a:link, .pun h2 a:visited,
+#brdmenu a:link, #brdmenu a:visited {
+	color: #d4d4d4
+	}
+
+.pun h2 a:hover, .pun h2 a:active,
+#brdmenu a:hover, #brdmenu a:active {
+	color: #d4d4d4
+	}
+
+.pun .postreport a:link, .pun .postreport a:visited,
+.pun .iclosed td.tcl a:link, .pun .iclosed td.tcl a:visited {
+	color: #888
+	}
+
+.pun .postreport a:hover, .pun .postreport a:active,
+.pun .iclosed td.tcl a:hover, .pun .iclosed td.tcl a:active {
+	color: #aaa
+	}
+
+.pun .maintenancelink a:link, .pun .maintenancelink a:visited {
+	color: #ff4000
+	}
+
+.pun .maintenancelink a:hover, .pun .maintenancelink a:active {
+	color: #ff5010
+	}
+
+/* Status Indicators
+----------------------------------------------------------------*/
+
+.pun .icon {
+	border-color: #484848 #404040 #3c3c3c #444444
+	}
+
+.pun .iredirect .icon {
+	border-color: #383838 #383838 #383838 #383838
+	}
+
+.pun .inew .icon {
+	border-color: #5496d8 #4b85c0 #4377ac #4f8dcb
+	}
