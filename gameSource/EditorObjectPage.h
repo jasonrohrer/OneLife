@@ -165,6 +165,9 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         TextButton mNextHeldDemoButton;
         TextButton mPrevHeldDemoButton;
+
+        TextButton mCopyHeldPosButton;
+        TextButton mPasteHeldPosButton;
         
         
         TextButton mDemoVertRotButton;
@@ -257,7 +260,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
 
         FloatRGB mColorClipboard;
-        
+        doublePair mHeldOffsetClipboard;
 
         int mHoverObjectLayer;
         int mHoverSlot;

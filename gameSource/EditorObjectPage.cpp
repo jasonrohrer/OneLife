@@ -153,6 +153,8 @@ EditorObjectPage::EditorObjectPage()
           mEndSetHeldPosButton( smallFont, 240, -76, "End Held" ),
           mNextHeldDemoButton( smallFont, 312, -76, ">" ),
           mPrevHeldDemoButton( smallFont, 290, -76, "<" ),
+          mCopyHeldPosButton( smallFont, 290, -106, "c" ),
+          mPasteHeldPosButton( smallFont, 312, -106, "p" ),
           mDemoVertRotButton( smallFont, 90, -150, "Vert" ),
           mResetVertRotButton( smallFont, 130, -150, "D" ),
           mDemoVertRot( false ),
@@ -252,6 +254,12 @@ EditorObjectPage::EditorObjectPage()
     
     mNextHeldDemoButton.setVisible( false );
     mPrevHeldDemoButton.setVisible( false );
+
+    addComponent( &mCopyHeldPosButton );
+    addComponent( &mPasteHeldPosButton );
+    
+    mCopyHeldPosButton.setVisible( false );
+    mPasteHeldPosButton.setVisible( false );
     
     
     addComponent( &mDemoVertRotButton );
@@ -389,6 +397,9 @@ EditorObjectPage::EditorObjectPage()
 
     mNextHeldDemoButton.addActionListener( this );
     mPrevHeldDemoButton.addActionListener( this );
+
+    mCopyHeldPosButton.addActionListener( this );
+    mPasteHeldPosButton.addActionListener( this );
 
     mDemoClothesButton.addActionListener( this );
     mEndClothesDemoButton.addActionListener( this );
@@ -1403,6 +1414,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mNextHeldDemoButton.setVisible( false );
         mPrevHeldDemoButton.setVisible( false );
         
+        mCopyHeldPosButton.setVisible( false );
+        mPasteHeldPosButton.setVisible( false );
+        
         mDemoSlots = false;
         mSlotsDemoObject = -1;
         
@@ -1607,6 +1621,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mNextHeldDemoButton.setVisible( true );
             mPrevHeldDemoButton.setVisible( true );
 
+            mCopyHeldPosButton.setVisible( true );
+            mPasteHeldPosButton.setVisible( true );
+
             mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
             
@@ -1624,6 +1641,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         mNextHeldDemoButton.setVisible( false );
         mPrevHeldDemoButton.setVisible( false );
+
+        mCopyHeldPosButton.setVisible( false );
+        mPasteHeldPosButton.setVisible( false );
 
         if( mCheckboxes[2]->getToggled() ) {
             mPersonAgeSlider.setValue( defaultAge );
@@ -1652,6 +1672,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mPrevHeldDemoButton ) {
         mDemoPersonObject = getPrevPersonObject( mDemoPersonObject );
         }
+    else if( inTarget == &mCopyHeldPosButton ) {
+        mHeldOffsetClipboard = mCurrentObject.heldOffset;
+        }
+    else if( inTarget == &mPasteHeldPosButton ) {
+        mCurrentObject.heldOffset = mHeldOffsetClipboard;
+        }
     else if( inTarget == &mDemoClothesButton ) {
         mDemoPersonObject = getRandomPersonObject();
         
@@ -1668,7 +1694,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mNextHeldDemoButton.setVisible( true );
             mPrevHeldDemoButton.setVisible( true );
-            
+
+            mCopyHeldPosButton.setVisible( true );
+            mPasteHeldPosButton.setVisible( true );
+
             mPersonAgeSlider.setValue( defaultAge );
             mPersonAgeSlider.setVisible( true );
 
@@ -1705,6 +1734,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         mNextHeldDemoButton.setVisible( false );
         mPrevHeldDemoButton.setVisible( false );
+        
+        mCopyHeldPosButton.setVisible( false );
+        mPasteHeldPosButton.setVisible( false );
         }
     else if( inTarget == &mResetVertRotButton ) {
         mCurrentObject.vertContainRotationOffset = 0;
@@ -1952,6 +1984,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mNextHeldDemoButton.setVisible( false );
             mPrevHeldDemoButton.setVisible( false );
 
+            mCopyHeldPosButton.setVisible( false );
+            mPasteHeldPosButton.setVisible( false );
+
             mSetClothesPos = false;
             mDemoPersonObject = -1;
             
@@ -2009,6 +2044,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             mNextHeldDemoButton.setVisible( false );
             mPrevHeldDemoButton.setVisible( false );
+            
+            mCopyHeldPosButton.setVisible( false );
+            mPasteHeldPosButton.setVisible( false );
             }
         
 
