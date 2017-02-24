@@ -2489,6 +2489,102 @@ void LivingLifePage::draw( doublePair inViewCenter,
     SimpleVector<doublePair> speakersPos;
 
 
+    // draw long path for our character
+    LiveObject *ourLiveObject = getOurLiveObject();
+    
+    if( ourLiveObject != NULL ) {
+        
+        if( ourLiveObject->currentPos.x != ourLiveObject->xd 
+            || ourLiveObject->currentPos.y != ourLiveObject->yd ) {
+            
+            if( ourLiveObject->pathToDest != NULL ) {
+                // highlight path
+
+                JenkinsRandomSource pathRand( 340930281 );
+                
+                GridPos pathSpot = ourLiveObject->pathToDest[ 0 ];
+                    
+
+                doublePair curPos;
+                
+                curPos.x = pathSpot.x * CELL_D;
+                curPos.y = pathSpot.y * CELL_D;
+
+
+                GridPos pathSpotB = ourLiveObject->pathToDest[ 1 ];
+                    
+
+                doublePair nextPosB;
+                
+                nextPosB.x = pathSpotB.x * CELL_D;
+                nextPosB.y = pathSpotB.y * CELL_D;
+                
+                
+                doublePair curDir = normalize( sub( nextPosB, curPos ) );
+                
+
+                double turnFactor = 1;
+                
+                char curLetter = 'A';
+                
+
+                for( int p=1; p< ourLiveObject->pathLength; p++ ) {
+                
+                    
+                    GridPos pathSpotB = ourLiveObject->pathToDest[ p ];
+                    
+
+                    doublePair nextPos;
+                
+                    nextPos.x = pathSpotB.x * CELL_D;
+                    nextPos.y = pathSpotB.y * CELL_D;
+                    
+                    
+                    while( distance( curPos, nextPos ) > 60  ) {
+                        
+                        doublePair dir = normalize( sub( nextPos, curPos ) );
+
+
+                        curDir = 
+                            normalize( 
+                                add( curDir, 
+                                     mult( dir, turnFactor ) ) );
+                        
+                        curPos = add( curPos,
+                                      mult( curDir, 30 ) );
+                        
+                        
+                        //setDrawColor( 0, 0, 0, 
+                        //              pathRand.getRandomBoundedDouble( 
+                        //                  0.25, 0.5 ) );
+                        
+                        setDrawColor( 0, 0, 0, 1 );
+                        
+                        double rot = pathRand.getRandomDouble();
+
+                        doublePair drawPos = curPos;
+                        
+                        //drawPos.x += pathRand.getRandomBoundedDouble( -10, 10 );
+                        //drawPos.y += pathRand.getRandomBoundedDouble( -10, 10
+                        //);
+                        char *s = autoSprintf( "%c", curLetter );
+                        
+                        handwritingFont->drawString( s, 
+                                                     drawPos, alignCenter );
+
+                        curLetter += 1;
+                        if( curLetter > 'Z' ) {
+                            curLetter = 'A';
+                            }
+                        //drawSprite( mChalkBlotSprite, drawPos, 1.0, rot );
+                        
+                        }
+                    }
+                }
+            }
+        }
+    
+
     // FIXME:  skip these that are off screen
     // of course, we may not end up drawing paths on screen anyway
     // (probably only our own destination), so don't fix this for now
@@ -2879,8 +2975,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 // pull over
                 // send request for our character's center
 
-                LiveObject *ourLiveObject = getOurLiveObject();
-                
                 lastScreenViewCenter.x = CELL_D * ourLiveObject->xd;
                 lastScreenViewCenter.y = CELL_D * ourLiveObject->yd;
                 
@@ -3111,8 +3205,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
     panelPos.y -= 242 + 32 + 16 + 6;
     drawSprite( mGuiPanelSprite, panelPos );
 
-
-    LiveObject *ourLiveObject = getOurLiveObject();
 
     if( ourLiveObject != NULL ) {
         setDrawColor( 1, 1, 1, 1 );
