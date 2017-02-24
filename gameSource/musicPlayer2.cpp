@@ -2,8 +2,6 @@
 #include <math.h>
 
 
-// the music loudess setting
-static float musicLoudness;
 
 
 // loudness of music that we're currently playing at
