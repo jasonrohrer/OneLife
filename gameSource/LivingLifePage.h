@@ -178,6 +178,10 @@ typedef struct LiveObject {
         double speechFade;
         // wall clock time when speech should start fading
         double speechFadeETATime;
+
+
+        char shouldDrawPathMarks;
+        double pathMarkFade;
         
     } LiveObject;
 

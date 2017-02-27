@@ -68,6 +68,7 @@ graphics/hungerBoxFills.tga \
 graphics/hungerBoxesErased.tga \
 graphics/hungerBoxFillsErased.tga \
 graphics/chalkBlot.tga \
+graphics/pathMark.tga \
 graphics/ground.tga \
 graphics/guiPanel.tga \
 graphics/tempArrows.tga \
