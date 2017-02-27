@@ -720,6 +720,7 @@ LivingLifePage::LivingLifePage()
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
+          mPathMarkSprite( loadWhiteSprite( "pathMark.tga" ) ),
           mGroundOverlaySprite( loadSprite( "ground.tga" ) ),
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! " ) {
@@ -1010,6 +1011,7 @@ LivingLifePage::~LivingLifePage() {
     freeSprite( mGuiPanelSprite );
     freeSprite( mNotePaperSprite );
     freeSprite( mChalkBlotSprite );
+    freeSprite( mPathMarkSprite );
     freeSprite( mGroundOverlaySprite );
     
     
@@ -2523,9 +2525,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 doublePair curDir = normalize( sub( nextPosB, curPos ) );
                 
 
-                double turnFactor = 1;
+                double turnFactor = .25;
                 
                 char curLetter = 'A';
+                
+                int numStepsSinceDrawn = 0;
+                int drawOnStep = 6;
                 
 
                 for( int p=1; p< ourLiveObject->pathLength; p++ ) {
@@ -2540,8 +2545,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     nextPos.y = pathSpotB.y * CELL_D;
                     
                     
+                    
                     while( distance( curPos, nextPos ) > 60  ) {
-                        
+    
                         doublePair dir = normalize( sub( nextPos, curPos ) );
 
 
@@ -2551,7 +2557,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                      mult( dir, turnFactor ) ) );
                         
                         curPos = add( curPos,
-                                      mult( curDir, 30 ) );
+                                      mult( curDir, 6 ) );
                         
                         
                         //setDrawColor( 0, 0, 0, 
@@ -2567,6 +2573,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         //drawPos.x += pathRand.getRandomBoundedDouble( -10, 10 );
                         //drawPos.y += pathRand.getRandomBoundedDouble( -10, 10
                         //);
+                        /*
                         char *s = autoSprintf( "%c", curLetter );
                         
                         handwritingFont->drawString( s, 
@@ -2576,8 +2583,19 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         if( curLetter > 'Z' ) {
                             curLetter = 'A';
                             }
+                        */
                         //drawSprite( mChalkBlotSprite, drawPos, 1.0, rot );
                         
+                        if( numStepsSinceDrawn == 0 ) {
+                            
+                            drawSprite( mPathMarkSprite, drawPos, 1.0, 
+                                    -angle( curDir ) / ( 2 * M_PI ) + .25  );
+                            }
+                        
+                        numStepsSinceDrawn ++;
+                        if( numStepsSinceDrawn == drawOnStep ) {
+                            numStepsSinceDrawn = 0;
+                            }
                         }
                     }
                 }
