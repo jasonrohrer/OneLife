@@ -722,7 +722,7 @@ LivingLifePage::LivingLifePage()
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
           mGroundOverlaySprite( loadSprite( "ground.tga" ) ),
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
-                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,'?! " ) {
+                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! " ) {
     
     hideGuiPanel = SettingsManager::getIntSetting( "hideGameUI", 0 );
 
