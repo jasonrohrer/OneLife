@@ -495,6 +495,35 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
             inObject->pathToDest[i].y -= pathOffsetY;
             }
 
+        inObject->shouldDrawPathMarks = false;
+        
+        // up, down, left, right
+        int dirsInPath[4] = { 0, 0, 0, 0 };
+        
+        for( int i=1; i<inObject->pathLength; i++ ) {
+            if( inObject->pathToDest[i].x > inObject->pathToDest[i-1].x ) {
+                dirsInPath[3]++;
+                }
+            else if( inObject->pathToDest[i].x < inObject->pathToDest[i-1].x ) {
+                dirsInPath[2]++;
+                }
+            else if( inObject->pathToDest[i].y > inObject->pathToDest[i-1].y ) {
+                dirsInPath[1]++;
+                }
+            else if( inObject->pathToDest[i].y < inObject->pathToDest[i-1].y ) {
+                dirsInPath[0]++;
+                }
+            }
+        
+        if( ( dirsInPath[0] > 1 && dirsInPath[1] > 1 )
+            ||
+            ( dirsInPath[2] > 1 && dirsInPath[3] > 1 ) ) {
+
+            // path contains switchbacks, making in confusing without
+            // path marks
+            inObject->shouldDrawPathMarks = true;
+            }
+        
         GridPos aGridPos = inObject->pathToDest[0];
         GridPos bGridPos = inObject->pathToDest[1];
         
@@ -2499,13 +2528,35 @@ void LivingLifePage::draw( doublePair inViewCenter,
         if( ourLiveObject->currentPos.x != ourLiveObject->xd 
             || ourLiveObject->currentPos.y != ourLiveObject->yd ) {
             
-            if( ourLiveObject->pathToDest != NULL ) {
+            if( ourLiveObject->pathToDest != NULL &&
+                ourLiveObject->shouldDrawPathMarks ) {
                 // highlight path
 
                 JenkinsRandomSource pathRand( 340930281 );
                 
                 GridPos pathSpot = ourLiveObject->pathToDest[ 0 ];
-                    
+                
+
+                GridPos endGrid = 
+                    ourLiveObject->pathToDest[ ourLiveObject->pathLength - 1 ];
+                
+                doublePair endPos;
+                endPos.x = endGrid.x * CELL_D;
+                endPos.y = endGrid.y * CELL_D;
+                
+
+                doublePair playerPos = mult( ourLiveObject->currentPos,
+                                             CELL_D );
+                
+                double distFromEnd = distance( playerPos, endPos );
+                
+                float endFade = 1.0f;
+                
+
+                if( distFromEnd < 2 * CELL_D ) {
+                    endFade = distFromEnd / ( 2 * CELL_D );
+                    }
+
 
                 doublePair curPos;
                 
@@ -2527,8 +2578,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                 double turnFactor = .25;
                 
-                char curLetter = 'A';
-                
                 int numStepsSinceDrawn = 0;
                 int drawOnStep = 6;
                 
@@ -2544,9 +2593,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     nextPos.x = pathSpotB.x * CELL_D;
                     nextPos.y = pathSpotB.y * CELL_D;
                     
+                    int closeDist = 60;
+                    
+                    if( p == ourLiveObject->pathLength - 1 ) {
+                        closeDist = 20;
+                        }
                     
                     
-                    while( distance( curPos, nextPos ) > 60  ) {
+                    while( distance( curPos, nextPos ) > closeDist  ) {
     
                         doublePair dir = normalize( sub( nextPos, curPos ) );
 
@@ -2559,32 +2613,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         curPos = add( curPos,
                                       mult( curDir, 6 ) );
                         
+                        setDrawColor( 0, 0, 0, 
+                                      ourLiveObject->pathMarkFade * endFade );
                         
-                        //setDrawColor( 0, 0, 0, 
-                        //              pathRand.getRandomBoundedDouble( 
-                        //                  0.25, 0.5 ) );
-                        
-                        setDrawColor( 0, 0, 0, 1 );
-                        
-                        double rot = pathRand.getRandomDouble();
 
                         doublePair drawPos = curPos;
-                        
-                        //drawPos.x += pathRand.getRandomBoundedDouble( -10, 10 );
-                        //drawPos.y += pathRand.getRandomBoundedDouble( -10, 10
-                        //);
-                        /*
-                        char *s = autoSprintf( "%c", curLetter );
-                        
-                        handwritingFont->drawString( s, 
-                                                     drawPos, alignCenter );
-
-                        curLetter += 1;
-                        if( curLetter > 'Z' ) {
-                            curLetter = 'A';
-                            }
-                        */
-                        //drawSprite( mChalkBlotSprite, drawPos, 1.0, rot );
                         
                         if( numStepsSinceDrawn == 0 ) {
                             
@@ -2598,7 +2631,18 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             }
                         }
                     }
+                
+                if( ourLiveObject->pathMarkFade < 1 ) {
+                    ourLiveObject->pathMarkFade += 0.1 * frameRateFactor;
+                    
+                    if( ourLiveObject->pathMarkFade > 1 ) {
+                        ourLiveObject->pathMarkFade = 1;
+                        }
+                    }
                 }
+            }
+        else {
+            ourLiveObject->pathMarkFade = 0;
             }
         }
     
