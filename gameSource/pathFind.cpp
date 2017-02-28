@@ -278,7 +278,7 @@ char pathFind( int inMapH, int inMapW,
             }
         else {
             // add neighbors
-            GridPos neighbors[4];
+            GridPos neighbors[8];
                     
             GridPos bestPos = bestRecord.pos;
 
@@ -296,7 +296,7 @@ char pathFind( int inMapH, int inMapW,
                 neighbors[2].y = bestPos.y;
                 
                 neighbors[3].x = bestPos.x + 1;
-                neighbors[3].y = bestPos.y;
+                neighbors[3].y = bestPos.y;                
                 }
             else {
                 neighbors[2].x = bestPos.x;
@@ -312,11 +312,25 @@ char pathFind( int inMapH, int inMapW,
                 neighbors[1].y = bestPos.y;
                 }
             
+            // always prefer straight to diagonal
+            neighbors[4].x = bestPos.x - 1;
+            neighbors[4].y = bestPos.y - 1;
+            
+            neighbors[5].x = bestPos.x - 1;
+            neighbors[5].y = bestPos.y + 1;
+            
+            neighbors[6].x = bestPos.x + 1;
+            neighbors[6].y = bestPos.y + 1;
+            
+            neighbors[7].x = bestPos.x + 1;
+            neighbors[7].y = bestPos.y - 1;
+
+
             
             // one step to neighbors from best record
             int cost = bestRecord.cost + 1;
 
-            for( int n=0; n<4; n++ ) {
+            for( int n=0; n<8; n++ ) {
                 int y = neighbors[n].y;
                 int x = neighbors[n].x;
                 

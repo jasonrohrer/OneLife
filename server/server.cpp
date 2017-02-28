@@ -912,8 +912,26 @@ static char isGridAdjacent( int inXA, int inYA, int inXB, int inYB ) {
     }
 
 
-static char isGridAdjacent( GridPos inA, GridPos inB ) {
-    return isGridAdjacent( inA.x, inA.y, inB.x, inB.y );
+//static char isGridAdjacent( GridPos inA, GridPos inB ) {
+//    return isGridAdjacent( inA.x, inA.y, inB.x, inB.y );
+//    }
+
+
+static char isGridAdjacentDiag( int inXA, int inYA, int inXB, int inYB ) {
+    if( isGridAdjacent( inXA, inYA, inXB, inYB ) ) {
+        return true;
+        }
+    
+    if( abs( inXA - inXB ) == 1 && abs( inYA - inYB ) ) {
+        return true;
+        }
+    
+    return false;
+    }
+
+
+static char isGridAdjacentDiag( GridPos inA, GridPos inB ) {
+    return isGridAdjacentDiag( inA.x, inA.y, inB.x, inB.y );
     }
 
 
@@ -3118,7 +3136,7 @@ int main() {
                             printf( "Start index = %d\n", startIndex );
                             
                             if( ! startFound &&
-                                ! isGridAdjacent( 
+                                ! isGridAdjacentDiag( 
                                     unfilteredPath.
                                       getElementDirect(startIndex).x,
                                     unfilteredPath.
@@ -3166,7 +3184,7 @@ int main() {
                                     // than one step beyond
                                     // last step
 
-                                    if( ! isGridAdjacent( 
+                                    if( ! isGridAdjacentDiag( 
                                             pos, lastValidPathStep ) ) {
                                         // a path with a break in it
                                         // terminate it here
