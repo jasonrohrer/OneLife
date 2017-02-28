@@ -3888,7 +3888,13 @@ int main() {
                                 
                                 if( obj->foodValue > 0 ) {
                                     targetPlayer->justAte = true;
-                                    targetPlayer->foodStore += obj->foodValue;
+                                    
+                                    if( targetPlayer->foodStore < 
+                                        obj->foodValue ) {
+                                        
+                                        targetPlayer->foodStore =
+                                            obj->foodValue;
+                                        }
                                     
                                     int cap =
                                         computeFoodCapacity( targetPlayer );
