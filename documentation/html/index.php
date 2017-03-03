@@ -7,10 +7,14 @@
 <br>
 <br>
 
-<img border=0 width=448 height=360 src="logo448x360.png">
+<font size=7>
+ONE HOUR<br>
+----<br>
+ONE LIFE<br>
+</font>
 <br><br>
 <br>
-a multiplayer survival game of parenting and civilization building by <a href=http://hcsoftware.sf.net/jason-rohrer>Jason Rohrer</a> and <a href=https://soundcloud.com/delcroy>Tom Bailey</a>
+a multiplayer survival game of parenting and civilization building by <a href=http://hcsoftware.sf.net/jason-rohrer>Jason Rohrer</a>
 
 <br>
 <br>
@@ -28,7 +32,6 @@ a multiplayer survival game of parenting and civilization building by <a href=ht
 <br>
      
 
-<iframe title="YouTube video player" width="640" height="390" src="http://www.youtube.com/embed/uYjm3XMrqNo?rel=0" frameborder="0" allowfullscreen></iframe>
 <br>
 <br>
 
@@ -52,8 +55,8 @@ Sign up for release announcement emails: <input type="text" name="email" value="
 $artSummaryOnly = 1;
 $numArtPerPage = 1;
 
-include( "artLog.php" );
-echo "<center>[<a href=artLogPage.php>More Artwork...</a>]</center>";
+//include( "artLog.php" );
+//echo "<center>[<a href=artLogPage.php>More Artwork...</a>]</center>";
 ?>
 
 <br><br><br>
