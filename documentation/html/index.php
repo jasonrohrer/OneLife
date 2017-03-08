@@ -7,11 +7,8 @@
 <br>
 <br>
 
-<font size=7>
-ONE HOUR<br>
-----<br>
-ONE LIFE<br>
-</font>
+
+<img src=logo558x305_border.png border=0>
 <br><br>
 <br>
 a multiplayer survival game of parenting and civilization building by <a href=http://hcsoftware.sf.net/jason-rohrer>Jason Rohrer</a>
