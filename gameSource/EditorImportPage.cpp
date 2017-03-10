@@ -329,7 +329,8 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
                     // expand to powers of 2
                     Image *expanded  = expandToPowersOfTwo( image );
                     
-                    if( inTarget == &mImportButton ) {
+                    if( inTarget == &mImportButton || 
+                        inTarget == &mImportOverlayButton ) {
                         
                         if( mImportedSheet != NULL ) {
                             delete mImportedSheet;
