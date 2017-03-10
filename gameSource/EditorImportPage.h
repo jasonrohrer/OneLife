@@ -97,6 +97,9 @@ class EditorImportPage : public GamePage, public ActionListener {
         ValueSlider mBlackLineThresholdSlider;
         TextButton mBlackLineThresholdDefaultButton;
 
+        ValueSlider mSaturationSlider;
+        TextButton mSaturationDefaultButton;
+
 
         TextField mSpriteTagField;
         

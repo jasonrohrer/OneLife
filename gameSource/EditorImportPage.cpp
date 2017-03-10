@@ -47,6 +47,10 @@ EditorImportPage::EditorImportPage()
                                  100, 20,
                                  0, 1, "Black Threshold" ),
           mBlackLineThresholdDefaultButton( smallFont, 215, 170, "D" ),
+          mSaturationSlider( smallFont, 0, 140, 2,
+                             100, 20,
+                             -1, 2, "Saturation" ),
+          mSaturationDefaultButton( smallFont, 215, 140, "D" ),
           mSpriteTagField( mainFont, 
                            0,  -260, 6,
                            false,
@@ -77,6 +81,14 @@ EditorImportPage::EditorImportPage()
 
     addComponent( &mBlackLineThresholdDefaultButton );
     mBlackLineThresholdDefaultButton.addActionListener( this );
+
+
+    addComponent( &mSaturationSlider );
+    mSaturationSlider.setValue( 0.5 );
+    mSaturationSlider.addActionListener( this );
+
+    addComponent( &mSaturationDefaultButton );
+    mSaturationDefaultButton.addActionListener( this );
 
 
     addComponent( &mSolidCheckbox );
@@ -433,6 +445,13 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mBlackLineThresholdDefaultButton ) {
         mBlackLineThresholdSlider.setValue( 0.2 );
+        processSelection();
+        }
+    else if( inTarget == &mSaturationSlider ) {
+        processSelection();
+        }
+    else if( inTarget == &mSaturationDefaultButton ) {
+        mSaturationSlider.setValue( 0.5 );
         processSelection();
         }
     else if( inTarget == &mXTopLinesButton ) {
@@ -830,7 +849,7 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
 
     // middle of screen?
     if( ( inX > -310 && inX < 310 && 
-          inY > -210 && inY < 160 ) 
+          inY > -210 && inY < 120 ) 
         || 
         // or top-left middle of screen (no gui compoents up there
         ( inX > -310 && inX < -64  && inY > 0 ) ) {
@@ -1439,6 +1458,12 @@ void EditorImportPage::processSelection() {
    
     delete [] whiteMap;
 
+
+    double satAdjust = mSaturationSlider.getValue();
+    
+    if( satAdjust != 0 ) {
+        cutImage->adjustSaturation( satAdjust );
+        }
 
 
     for( int i=0; i<mCurrentOverlay.size(); i++ ) {
