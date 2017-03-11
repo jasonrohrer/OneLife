@@ -39,18 +39,18 @@ EditorImportPage::EditorImportPage()
           mProcessedShadow( NULL ),
           mProcessedShadowSprite( NULL ),
           mSelectionMultiplicative( false ),
-          mShadowSlider( smallFont, 0, 200, 2,
+          mShadowSlider( smallFont, 90, 200, 2,
                          100, 20,
                          0, 1, "Shadow" ),
-          mSolidCheckbox( 215, 200, 2 ),
-          mBlackLineThresholdSlider( smallFont, 0, 170, 2,
+          mSolidCheckbox( 305, 200, 2 ),
+          mBlackLineThresholdSlider( smallFont, 90, 170, 2,
                                  100, 20,
                                  0, 1, "Black Threshold" ),
-          mBlackLineThresholdDefaultButton( smallFont, 215, 170, "D" ),
-          mSaturationSlider( smallFont, 0, 140, 2,
+          mBlackLineThresholdDefaultButton( smallFont, 305, 170, "D" ),
+          mSaturationSlider( smallFont, 90, 140, 2,
                              100, 20,
                              -1, 2, "Saturation" ),
-          mSaturationDefaultButton( smallFont, 215, 140, "D" ),
+          mSaturationDefaultButton( smallFont, 305, 140, "D" ),
           mSpriteTagField( mainFont, 
                            0,  -260, 6,
                            false,
@@ -852,7 +852,7 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
           inY > -210 && inY < 120 ) 
         || 
         // or top-left middle of screen (no gui compoents up there
-        ( inX > -310 && inX < -64  && inY > 0 ) ) {
+        ( inX > -310 && inX < 46  && inY > 0 ) ) {
         TextField::unfocusAll();
         }
     else {
