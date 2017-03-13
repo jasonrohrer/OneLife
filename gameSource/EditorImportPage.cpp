@@ -338,6 +338,82 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
                 
                 if( image != NULL ) {
                     
+                    if( inTarget == &mImportButton ||
+                        inTarget == &mImportLinesButton ) {
+                        
+                        // cache it
+                        
+                        const char *cacheName = "spriteImportCache";
+                    
+                        if( inTarget == &mImportLinesButton ) {
+                            cacheName = "lineImportCache";
+                            }
+                        
+                        File cacheDir( NULL, cacheName );
+                        if( !cacheDir.exists() ) {
+                            cacheDir.makeDirectory();
+                            }
+                    
+                        if( cacheDir.exists() && 
+                            cacheDir.isDirectory() ) {
+                            
+                            File *nextFile = 
+                                cacheDir.getChildFile( "next.txt" );
+                            
+                            int nextIndex = 0;
+                            
+                            if( nextFile->exists() ) {
+                                nextIndex = nextFile->readFileIntContents( 0 );
+                                }
+
+                            char *cacheName = autoSprintf( "%d.png",
+                                                           nextIndex );
+                            
+                            File *cacheFile = 
+                                cacheDir.getChildFile( cacheName );
+                            
+                            delete [] cacheName;
+                            
+                            char alreadyThere = false;
+                            
+                            
+                            if( nextIndex != 0 ) {
+                                char *lastCacheName = 
+                                    autoSprintf( "%d.png",
+                                                 nextIndex - 1 );
+                            
+                                File *lastCacheFile = 
+                                    cacheDir.getChildFile( lastCacheName );
+                                
+                                delete [] lastCacheName;
+                                
+                                if( importFile->contentsMatches( 
+                                        lastCacheFile ) ) {
+                                    
+                                    alreadyThere = true;
+                                    }
+
+                                delete lastCacheFile;
+                                }
+                            
+                            
+                            if( ! alreadyThere ) {
+                                importFile->copy( cacheFile );
+
+                            
+                                nextIndex ++;
+                            
+                                nextFile->writeToFile( nextIndex );
+                                }
+                            
+                            delete cacheFile;
+
+                            delete nextFile;
+                            }
+                        }
+                    
+                    
+
                     // expand to powers of 2
                     Image *expanded  = expandToPowersOfTwo( image );
                     
