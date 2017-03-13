@@ -1088,6 +1088,7 @@ void EditorImportPage::specialKeyDown( int inKeyCode ) {
 
 void EditorImportPage::processSelection() {
 
+    // surrounding paper area becomes totally transparent above this brightness 
     double paperThreshold = 0.88;
 
     
@@ -1362,6 +1363,10 @@ void EditorImportPage::processSelection() {
     
     // first, clean up isolated noise points in paper
     
+    double *rCopy = cutImage->copyChannel( 0 );
+    double *gCopy = cutImage->copyChannel( 1 );
+    double *bCopy = cutImage->copyChannel( 2 );    
+
     for( int i=0; i<numPixels; i++ ) {
         if( whiteMap[i] == 1 ) {
             
@@ -1393,9 +1398,9 @@ void EditorImportPage::processSelection() {
                         int nI = nY * w + nX;
                         
                         if( whiteMap[nI] != 1 ||
-                            ( r[nI] <= paperThreshold &&
-                              g[nI] <= paperThreshold &&
-                              b[nI] <= paperThreshold ) ) {
+                            ( rCopy[nI] <= paperThreshold &&
+                              gCopy[nI] <= paperThreshold &&
+                              bCopy[nI] <= paperThreshold ) ) {
                             
                             foundNonPaperNeighbor = true;
                             break;
@@ -1417,9 +1422,12 @@ void EditorImportPage::processSelection() {
             }
         }
     
+    delete [] rCopy;
+    delete [] gCopy;
+    delete [] bCopy;
     
-    // beyond this brightness, paper pixels become fully transparent
-    double blackEdgeThreshold = 0.9;
+
+    
     
     if( !mSelectionMultiplicative )
     for( int i=0; i<numPixels; i++ ) {
@@ -1442,7 +1450,7 @@ void EditorImportPage::processSelection() {
             
             // however, make sure paper areas that aren't black at all
             // are totally transparent
-            if( maxColor > blackEdgeThreshold ) {
+            if( maxColor > paperThreshold ) {
                 a[i] = 0;
                 }            
             
@@ -1823,9 +1831,12 @@ void EditorImportPage::processSelection() {
         
         double *linesR = expandedLines->getChannel( 0 );
         
-        int numPixels = mProcessedSelection->getWidth() *
-            mProcessedSelection->getHeight();
+        int pW = mProcessedSelection->getWidth();
+        int pH = mProcessedSelection->getHeight();
         
+        int numPixels = pW * pH;
+
+
         for( int i=0; i<numPixels; i++ ) {
             if( linesR[i] < 1.0 ) {
 
@@ -1836,16 +1847,55 @@ void EditorImportPage::processSelection() {
                 r[i] *= linesR[i];
                 g[i] *= linesR[i];
                 b[i] *= linesR[i];
-                
+
                 if( linesR[i] <= paperThreshold ) {
                     // change alpha outside paper cut-out
                     // but only if lines image is darker than
                     // paper
                     // this prevents dark halos
-                    a[i] += 1.0 - linesR[i];
+
+
+                    // also, ignore isolated noise points
+
+                    int x = i % pW;
+                    int y = i / pH;
+
+                    // check if all neighbors over threshold
+                    // if so, this is an isolated noise pixel
+                    int nDX[4] = { 0, 1, 0, -1 };
+                    int nDY[4] = { 1, 0, -1, 0 };
+            
+
+                    char foundNonPaperNeighbor = false;
                 
-                    if( a[i] > 1.0 ) {
-                        a[i] = 1.0;
+                    for( int n=0; n<4; n++ ) {
+                    
+                        int nX = x + nDX[n];
+                        int nY = y + nDY[n];
+                        
+                        
+                        if( nX >= 0 && nX < pW
+                            &&
+                            nY >= 0 && nY < pH ) {
+                            
+                            int nI = nY * pW + nX;
+                        
+                            if( linesR[nI] <= paperThreshold ) {
+                                foundNonPaperNeighbor = true;
+                                break;
+                                }
+                            }
+                        }
+
+                    if( foundNonPaperNeighbor ) {
+                        
+                        // not an isolated noise point
+                        
+                        a[i] += 1.0 - linesR[i];
+                
+                        if( a[i] > 1.0 ) {
+                            a[i] = 1.0;
+                            }
                         }
                     }
                 }
