@@ -29,8 +29,15 @@ static OverlayPickable overlayPickable;
 EditorImportPage::EditorImportPage()
         : mImportButton( smallFont, +170, 280, "Sprite Import" ),
           mImportLinesButton( smallFont, +170, 240, "Lines Import" ),
-          mXTopLinesButton( smallFont, +100, 240, "X" ),
-          mImportOverlayButton( smallFont, +310, 260, "Overlay Import" ),
+          mNextSpriteImportButton( smallFont, +240, 280, ">" ),
+          mPrevSpriteImportButton( smallFont, +100, 280, "<" ),
+          mNextLinesImportButton( smallFont, +240, 240, ">" ),
+          mPrevLinesImportButton( smallFont, +100, 240, "<" ),
+          mCurrentSpriteImportCacheIndex( 0 ),
+          mCurrentLinesImportCacheIndex( 0 ),
+          mImportPathOverride( NULL ),
+          mXTopLinesButton( smallFont, +280, 240, "X" ),
+          mImportOverlayButton( smallFont, +370, 260, "Overlay Import" ),
           mSelect( false ),
           mImportedSheet( NULL ),
           mImportedSheetSprite( NULL ),
@@ -97,6 +104,13 @@ EditorImportPage::EditorImportPage()
     
     addComponent( &mImportButton );
     addComponent( &mImportLinesButton );
+    
+    addComponent( &mNextSpriteImportButton );
+    addComponent( &mPrevSpriteImportButton );
+    addComponent( &mNextLinesImportButton );
+    addComponent( &mPrevLinesImportButton );
+    
+
     addComponent( &mXTopLinesButton );
     addComponent( &mImportOverlayButton );
     addComponent( &mSpriteTagField );
@@ -114,6 +128,16 @@ EditorImportPage::EditorImportPage()
 
     mImportButton.addActionListener( this );
     mImportLinesButton.addActionListener( this );
+    
+    mNextSpriteImportButton.addActionListener( this );
+    mPrevSpriteImportButton.addActionListener( this );
+    mNextLinesImportButton.addActionListener( this );
+    mPrevLinesImportButton.addActionListener( this );
+   
+    mNextSpriteImportButton.setVisible( false );
+    mNextLinesImportButton.setVisible( false );
+    
+
     mXTopLinesButton.addActionListener( this );
     mXTopLinesButton.setVisible( false );
     
@@ -273,11 +297,31 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         mSaveOverlayButton.setVisible( false );
 
         File *importFile = NULL;
+        char loadedFromCache = false;
         
         if( inTarget == &mImportButton || inTarget == &mImportLinesButton ) {
             
-            char *importPath = 
-                SettingsManager::getStringSetting( "editorImportPath" );
+            char *importPath;
+            
+            if( mImportPathOverride != NULL ) {
+                importPath = mImportPathOverride;
+                mImportPathOverride = NULL;
+                
+                loadedFromCache = true;
+                }
+            else {
+                importPath = 
+                    SettingsManager::getStringSetting( "editorImportPath" );
+                
+                if( inTarget == &mImportButton ) {
+                    mNextSpriteImportButton.setVisible( false );
+                    mCurrentSpriteImportCacheIndex = 0;
+                    }
+                else {
+                    mNextLinesImportButton.setVisible( false );
+                    mCurrentLinesImportCacheIndex = 0;
+                    }
+                }
             
             if( importPath != NULL ) {
                 
@@ -341,77 +385,106 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
                     if( inTarget == &mImportButton ||
                         inTarget == &mImportLinesButton ) {
                         
-                        // cache it
-                        
-                        const char *cacheName = "spriteImportCache";
-                    
-                        if( inTarget == &mImportLinesButton ) {
-                            cacheName = "lineImportCache";
-                            }
-                        
-                        File cacheDir( NULL, cacheName );
-                        if( !cacheDir.exists() ) {
-                            cacheDir.makeDirectory();
-                            }
-                    
-                        if( cacheDir.exists() && 
-                            cacheDir.isDirectory() ) {
+                        if( ! loadedFromCache ) {
                             
-                            File *nextFile = 
-                                cacheDir.getChildFile( "next.txt" );
-                            
-                            int nextIndex = 0;
-                            
-                            if( nextFile->exists() ) {
-                                nextIndex = nextFile->readFileIntContents( 0 );
+                            if( inTarget == &mImportButton ) {
+                                mPrevSpriteImportButton.setVisible( true );
+                                }
+                            else {
+                                mPrevLinesImportButton.setVisible( true );
                                 }
 
-                            char *cacheName = autoSprintf( "%d.png",
-                                                           nextIndex );
+                            // cache it
+                        
+                            const char *cacheName = "spriteImportCache";
+                    
+                            if( inTarget == &mImportLinesButton ) {
+                                cacheName = "lineImportCache";
+                                }
+                        
+                            File cacheDir( NULL, cacheName );
+                            if( !cacheDir.exists() ) {
+                                cacheDir.makeDirectory();
+                                }
+                    
+                            if( cacheDir.exists() && 
+                                cacheDir.isDirectory() ) {
                             
-                            File *cacheFile = 
-                                cacheDir.getChildFile( cacheName );
+                                File *nextFile = 
+                                    cacheDir.getChildFile( "next.txt" );
                             
-                            delete [] cacheName;
+                                int nextIndex = 0;
                             
-                            char alreadyThere = false;
-                            
-                            
-                            if( nextIndex != 0 ) {
-                                char *lastCacheName = 
-                                    autoSprintf( "%d.png",
-                                                 nextIndex - 1 );
-                            
-                                File *lastCacheFile = 
-                                    cacheDir.getChildFile( lastCacheName );
-                                
-                                delete [] lastCacheName;
-                                
-                                if( importFile->contentsMatches( 
-                                        lastCacheFile ) ) {
-                                    
-                                    alreadyThere = true;
+                                if( nextFile->exists() ) {
+                                    nextIndex = 
+                                        nextFile->readFileIntContents( 0 );
                                     }
 
-                                delete lastCacheFile;
-                                }
+                                char *cacheName = autoSprintf( "%d.png",
+                                                               nextIndex );
+                                
+                                File *cacheFile = 
+                                    cacheDir.getChildFile( cacheName );
+                            
+                                delete [] cacheName;
+                            
+                                char alreadyThere = false;
                             
                             
-                            if( ! alreadyThere ) {
-                                importFile->copy( cacheFile );
+                                if( nextIndex != 0 ) {
+                                    char *lastCacheName = 
+                                        autoSprintf( "%d.png",
+                                                     nextIndex - 1 );
+                            
+                                    File *lastCacheFile = 
+                                        cacheDir.getChildFile( lastCacheName );
+                                
+                                    delete [] lastCacheName;
+                                
+                                    if( importFile->contentsMatches( 
+                                            lastCacheFile ) ) {
+                                    
+                                        alreadyThere = true;
+                                        }
 
+                                    delete lastCacheFile;
+                                    }
                             
-                                nextIndex ++;
                             
-                                nextFile->writeToFile( nextIndex );
-                                }
-                            
-                            delete cacheFile;
+                                if( ! alreadyThere ) {
+                                    importFile->copy( cacheFile );
 
-                            delete nextFile;
+                                    if( inTarget == &mImportButton ) {
+                                        mCurrentSpriteImportCacheIndex = 
+                                            nextIndex;
+                                        }
+                                    else {
+                                        mCurrentLinesImportCacheIndex = 
+                                            nextIndex;
+                                        }
+                            
+                                    nextIndex ++;
+                            
+                                    nextFile->writeToFile( nextIndex );
+                                    }
+                                else {
+                                    if( inTarget == &mImportButton ) {
+                                        mCurrentSpriteImportCacheIndex = 
+                                            nextIndex - 1;
+                                        }
+                                    else {
+                                        mCurrentLinesImportCacheIndex = 
+                                            nextIndex - 1;
+                                        }
+                                    }
+                                
+                            
+                                delete cacheFile;
+
+                                delete nextFile;
+                                }
                             }
                         }
-                    
                     
 
                     // expand to powers of 2
@@ -515,6 +588,118 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             }
         
         
+        }
+    else if( inTarget == &mPrevSpriteImportButton ||
+             inTarget == &mNextSpriteImportButton ||
+             inTarget == &mPrevLinesImportButton ||
+             inTarget == &mNextLinesImportButton ) {
+        
+        int increment = -1;
+        
+        
+        if( inTarget == &mNextSpriteImportButton ||
+            inTarget == &mNextLinesImportButton ) {
+            increment = +1;
+            }
+        
+        const char *cacheName = "spriteImportCache";
+        int *currentIndex = &mCurrentSpriteImportCacheIndex;
+
+        if( inTarget == &mPrevLinesImportButton ||
+            inTarget == &mNextLinesImportButton ) {
+            cacheName = "lineImportCache";
+            
+            currentIndex = &mCurrentLinesImportCacheIndex;
+            }
+
+                        
+        File cacheDir( NULL, cacheName );
+
+        if( cacheDir.exists() || cacheDir.isDirectory() ) {
+            
+            *currentIndex += increment;
+            
+            if( mImportPathOverride != NULL ) {
+                delete [] mImportPathOverride;
+                
+                mImportPathOverride = NULL;
+                }
+            
+            char triedZero = false;
+
+            while( true ) {
+
+                if( *currentIndex < 0 ) {
+                    
+                    File *nextFile = cacheDir.getChildFile( "next.txt" );
+                    
+                    *currentIndex = nextFile->readFileIntContents( 1 );
+                    
+                    *currentIndex = *currentIndex - 1;
+                    
+                    delete nextFile;
+                    }
+
+                char *fileName = autoSprintf( "%d.png", *currentIndex );
+                
+                if( *currentIndex == 0 ) {
+                    triedZero = true;
+                    }
+                
+
+                File *pngFile = cacheDir.getChildFile( fileName );
+                
+                delete [] fileName;
+
+
+                if( pngFile->exists() ) {
+
+                    mImportPathOverride = pngFile->getFullFileName();
+                    
+                    delete pngFile;
+                    break;
+                    }
+                else {
+                    delete pngFile;
+                    *currentIndex = 0;
+
+                    if( triedZero ) {
+                        break;
+                        }
+                    }
+                }
+
+            
+            if( mImportPathOverride != NULL ) {
+                
+                if( inTarget == &mNextSpriteImportButton ||
+                    inTarget == &mPrevSpriteImportButton ) {
+                    
+                    mNextSpriteImportButton.setVisible( true );
+                    mPrevSpriteImportButton.setVisible( true );
+
+                    actionPerformed( &mImportButton );
+                    }
+                else {
+                    mNextLinesImportButton.setVisible( true );
+                    mPrevLinesImportButton.setVisible( true );
+
+                    actionPerformed( &mImportLinesButton );
+                    }
+                }
+            else {
+                if( inTarget == &mNextSpriteImportButton ||
+                    inTarget == &mPrevSpriteImportButton ) {
+                    
+                    mNextSpriteImportButton.setVisible( false );
+                    mPrevSpriteImportButton.setVisible( false );
+                    }
+                else {
+                    mNextLinesImportButton.setVisible( false );
+                    mPrevLinesImportButton.setVisible( false );
+                    }
+                }
+            }
         }
     else if( inTarget == &mBlackLineThresholdSlider ) {
         processSelection();

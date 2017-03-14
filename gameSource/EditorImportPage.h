@@ -67,8 +67,24 @@ class EditorImportPage : public GamePage, public ActionListener {
 
         TextButton mImportButton;
         TextButton mImportLinesButton;
+        
+        TextButton mNextSpriteImportButton;
+        TextButton mPrevSpriteImportButton;
+
+        TextButton mNextLinesImportButton;
+        TextButton mPrevLinesImportButton;
+        
+        int mCurrentSpriteImportCacheIndex;
+        int mCurrentLinesImportCacheIndex;
+        
+        char *mImportPathOverride;
+
+        
         TextButton mXTopLinesButton;
         TextButton mImportOverlayButton;
+
+
+
 
         int mSheetW, mSheetH;
 
