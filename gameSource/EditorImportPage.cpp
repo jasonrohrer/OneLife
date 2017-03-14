@@ -66,6 +66,7 @@ EditorImportPage::EditorImportPage()
           mSaveOverlayButton( smallFont, 310, -260, "Save Overlay" ),
           mSpritePicker( &spritePickable, -410, 90 ),
           mOverlayPicker( &overlayPickable, 410, 90 ),
+          mSpriteTrimEditorButton( mainFont, -460, 260, "Trim" ),
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
           mCenterSet( true ),
@@ -118,6 +119,8 @@ EditorImportPage::EditorImportPage()
     addComponent( &mSaveOverlayButton );
     addComponent( &mSpritePicker );
     addComponent( &mOverlayPicker );
+
+    addComponent( &mSpriteTrimEditorButton );
     addComponent( &mObjectEditorButton );
 
     addComponent( &mClearRotButton );
@@ -145,6 +148,8 @@ EditorImportPage::EditorImportPage()
     
     mSaveSpriteButton.addActionListener( this );
     mSaveOverlayButton.addActionListener( this );
+    
+    mSpriteTrimEditorButton.addActionListener( this );
     mObjectEditorButton.addActionListener( this );
     
     mOverlayPicker.addActionListener( this );
@@ -860,6 +865,9 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             mOverlayScale.push_back( 1.0 );
             mOverlayRotation.push_back( 0 );
             }
+        }
+    else if( inTarget == &mSpriteTrimEditorButton ) {
+        setSignal( "spriteTrimEditor" );
         }
     else if( inTarget == &mObjectEditorButton ) {
         setSignal( "objectEditor" );

@@ -53,6 +53,7 @@ int accountHmacVersionNumber = 0;
 
 
 #include "EditorImportPage.h"
+#include "EditorSpriteTrimPage.h"
 #include "EditorObjectPage.h"
 #include "EditorTransitionPage.h"
 #include "EditorAnimationPage.h"
@@ -77,6 +78,7 @@ double loadingStartTime;
 
 
 EditorImportPage *importPage;
+EditorSpriteTrimPage *spriteTrimPage;
 EditorObjectPage *objectPage;
 EditorTransitionPage *transPage;
 EditorAnimationPage *animPage;
@@ -468,6 +470,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
 
     importPage = new EditorImportPage;
+    spriteTrimPage = new EditorSpriteTrimPage;
     objectPage = new EditorObjectPage;
     transPage = new EditorTransitionPage;
     animPage = new EditorAnimationPage;
@@ -516,6 +519,7 @@ void freeFrameDrawer() {
 
 
     delete importPage;
+    delete spriteTrimPage;
     delete objectPage;
     delete transPage;
     delete animPage;
@@ -1227,6 +1231,16 @@ void drawFrame( char inUpdate ) {
         if( currentGamePage == importPage ) {
             if( importPage->checkSignal( "objectEditor" ) ) {
                 currentGamePage = objectPage;
+                currentGamePage->base_makeActive( true );
+                }
+            else if( importPage->checkSignal( "spriteTrimEditor" ) ) {
+                currentGamePage = spriteTrimPage;
+                currentGamePage->base_makeActive( true );
+                }
+            }
+        else if( currentGamePage == spriteTrimPage ) {
+            if( spriteTrimPage->checkSignal( "importEditor" ) ) {
+                currentGamePage = importPage;
                 currentGamePage->base_makeActive( true );
                 }
             }

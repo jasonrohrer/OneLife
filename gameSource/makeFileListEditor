@@ -36,6 +36,7 @@ SpriteToggleButton.cpp \
 CheckboxButton.cpp \
 animationBank.cpp \
 EditorAnimationPage.cpp \
+EditorSpriteTrimPage.cpp \
 ValueSlider.cpp \
 ageControl.cpp \
 overlayBank.cpp \

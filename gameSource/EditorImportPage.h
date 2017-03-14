@@ -126,6 +126,7 @@ class EditorImportPage : public GamePage, public ActionListener {
         Picker mOverlayPicker;
         
 
+        TextButton mSpriteTrimEditorButton;
         TextButton mObjectEditorButton;
 
         SpriteHandle mCenterMarkSprite;
