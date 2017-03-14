@@ -1491,8 +1491,12 @@ void EditorImportPage::processSelection() {
                             int imP = imY * imW + imX;
                             int linesP = y * linesRawW + x;
                             
-                            cutLinesR[imP] *= linesR[linesP];
-                            
+                            if( linesR[linesP] <= paperThreshold ) {    
+                                cutLinesR[imP] *= linesR[linesP];
+                                }
+                            // else, treat this part of lines as totally
+                            // transparent
+
                             imX ++;
                             }
                         imY ++;
