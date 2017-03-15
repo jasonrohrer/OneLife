@@ -45,6 +45,11 @@ class EditorSpriteTrimPage : public GamePage, public ActionListener {
         
         char isPointInSprite( int inX, int inY );
         
+        // trims rect so that it doesn't intersect with mRects
+        // returns true if inRect is totally eliminated by this process
+        char trimRectByExisting( PickedRect *inRect );
+
+
         SimpleVector<PickedRect> mRects;
 
         TextButton mImportEditorButton;

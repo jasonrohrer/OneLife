@@ -6,6 +6,8 @@
 
 #include "minorGems/util/stringUtils.h"
 
+#include "minorGems/io/file/File.h"
+
 
 
 extern Font *mainFont;
@@ -44,7 +46,7 @@ EditorSpriteTrimPage::EditorSpriteTrimPage()
     mClearRectButton.addActionListener( this );
 
     mSaveButton.setVisible( false );
-    mClearRectButton.setVisible( true );
+    mClearRectButton.setVisible( false );
     }
 
 
@@ -52,6 +54,22 @@ EditorSpriteTrimPage::EditorSpriteTrimPage()
 EditorSpriteTrimPage::~EditorSpriteTrimPage() {
     }
 
+
+
+static Image *expandToPowersOfTwo( Image *inImage ) {
+    
+    int w = 1;
+    int h = 1;
+                    
+    while( w < inImage->getWidth() ) {
+        w *= 2;
+        }
+    while( h < inImage->getHeight() ) {
+        h *= 2;
+        }
+    
+    return inImage->expandImage( w, h );
+    }
 
 
 void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
@@ -82,9 +100,197 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             }
         }
     else if( inTarget == &mSaveButton ) {
-    
+        
+        File spritesDir( NULL, "sprites" );
+
+        char *fileName = autoSprintf( "%d.tga", mPickedSprite );
+        
+        File *spriteFile = spritesDir.getChildFile( fileName );
+            
+        delete [] fileName;
+            
+
+        char *fullName = spriteFile->getFullFileName();
+        
+        delete spriteFile;
+
+        Image *im = readTGAFileBase( fullName );
+
+        delete [] fullName;
+
+        if( im != NULL ) {
+            
+            SpriteRecord *oldSprite = getSpriteRecord( mPickedSprite );
+
+            for( int i=0; i<mRects.size(); i++ ) {
+                
+                PickedRect r = mRects.getElementDirect( i );
+
+                Image *subIm =im->getSubImage( oldSprite->w/2 + r.xStart, 
+                                               oldSprite->h/2 - r.yStart, 
+                                               r.xEnd - r.xStart,
+                                               r.yStart - r.yEnd );
+                
+                Image *subExpanded = expandToPowersOfTwo( subIm );
+                
+                delete subIm;
+
+                char *newTag = autoSprintf( "%s_%d", oldSprite->tag, i+1 );
+                
+
+                addSprite( newTag, 
+                           fillSprite( subExpanded, false ), 
+                           subExpanded,
+                           oldSprite->multiplicativeBlend );
+                
+                delete subExpanded;
+                delete [] newTag;
+                }
+            
+            delete im;
+
+            mSpritePicker.redoSearch();            
+            }
         }
     }
+
+
+char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
+
+    PickedRect r = *inRect;
+    
+    
+    char skip = false;
+        
+    for( int i=0; i<mRects.size(); i++ ) {
+        PickedRect otherR = mRects.getElementDirect( i );
+            
+        if( otherR.xStart >= r.xStart &&
+            otherR.xEnd <= r.xEnd &&
+            otherR.yStart <= r.yStart &&
+            otherR.yEnd >= r.yEnd ) {
+            
+            skip = true;
+            break;
+            }
+        
+        else {
+                
+            if( r.xStart > otherR.xStart &&
+                r.xStart < otherR.xEnd &&
+                r.xEnd > otherR.xStart &&
+                r.xEnd < otherR.xEnd &&
+                r.yStart < otherR.yStart &&
+                r.yStart > otherR.yEnd ) {
+                
+                // top edge intersects
+                r.yStart = otherR.yEnd;
+                }
+
+
+            if( otherR.xStart > r.xStart &&
+                otherR.xStart < r.xEnd &&
+                otherR.xEnd > r.xStart &&
+                otherR.xEnd < r.xEnd &&
+                r.yStart < otherR.yStart &&
+                r.yStart > otherR.yEnd ) {
+                    
+                // top edge intersects (new rect swallows)
+                r.yStart = otherR.yEnd;
+                }
+
+
+            if( r.xStart > otherR.xStart &&
+                r.xStart < otherR.xEnd &&
+                r.xEnd > otherR.xStart &&
+                r.xEnd < otherR.xEnd &&
+                r.yEnd < otherR.yStart &&
+                r.yEnd > otherR.yEnd ) {
+                    
+                // bottom edge intersects
+                r.yEnd = otherR.yStart;
+                }
+
+            if( otherR.xStart > r.xStart &&
+                otherR.xStart < r.xEnd &&
+                otherR.xEnd > r.xStart &&
+                otherR.xEnd < r.xEnd &&
+                r.yEnd < otherR.yStart &&
+                r.yEnd > otherR.yEnd ) {
+                    
+                // bottom edge intersects (new rect swallows)
+                r.yEnd = otherR.yStart;
+                }
+
+                
+            if( otherR.yStart < r.yStart &&
+                otherR.yStart > r.yEnd &&
+                otherR.yEnd < r.yStart &&
+                otherR.yEnd > r.yEnd &&
+                r.xStart > otherR.xStart &&
+                r.xStart < otherR.xEnd ) {
+                    
+                // left edge intersects (new rect swallows)
+                r.xStart = otherR.xEnd;
+                }
+
+            if( otherR.yStart < r.yStart &&
+                otherR.yStart > r.yEnd &&
+                otherR.yEnd < r.yStart &&
+                otherR.yEnd > r.yEnd &&
+                r.xEnd > otherR.xStart &&
+                r.xEnd < otherR.xEnd ) {
+                    
+                // right edge intersects (new rect swallows)
+                r.xEnd = otherR.xStart;
+                }
+
+
+                
+            if( r.xStart > otherR.xStart &&
+                r.xStart < otherR.xEnd &&
+                r.yStart < otherR.yStart &&
+                r.yStart > otherR.yEnd ) {
+                    
+                // top left corner intersects
+                r.xStart = otherR.xEnd;
+                }
+                
+            if( r.xEnd > otherR.xStart &&
+                r.xEnd < otherR.xEnd &&
+                r.yStart < otherR.yStart &&
+                r.yStart > otherR.yEnd ) {
+                    
+                // top right corner intersects
+                r.xEnd = otherR.xStart;
+                }
+
+            if( r.xStart > otherR.xStart &&
+                r.xStart < otherR.xEnd &&
+                r.yEnd < otherR.yStart &&
+                r.yEnd > otherR.yEnd ) {
+                    
+                // bottom left corner intersects
+                r.xStart = otherR.xEnd;
+                }
+                
+            if( r.xEnd > otherR.xStart &&
+                r.xEnd < otherR.xEnd &&
+                r.yEnd < otherR.yStart &&
+                r.yEnd > otherR.yEnd ) {
+                    
+                // bottom right corner intersects
+                r.xEnd = otherR.xStart;
+                }
+            }
+        }
+
+    *inRect = r;
+    
+    return skip;
+    }
+
+        
 
 
 
@@ -129,8 +335,13 @@ void EditorSpriteTrimPage::drawUnderComponents( doublePair inViewCenter,
                 
                 setDrawColor( 0, 0, 1, 0.5 );
                 
-                drawRect( mPickStartX, mPickStartY,
-                          mPickEndX, mPickEndY );
+                PickedRect rect = { mPickStartX, mPickStartY,
+                                    mPickEndX, mPickEndY };
+                
+                trimRectByExisting( &rect );
+
+                drawRect( rect.xStart, rect.yStart,
+                          rect.xEnd, rect.yEnd );
                 }
             else {
                 setDrawColor( 0, 0, 1, 0.50 );
@@ -246,13 +457,15 @@ void EditorSpriteTrimPage::pointerUp( float inX, float inY ) {
 
 
         PickedRect r = { mPickStartX, mPickStartY, mPickEndX, mPickEndY };
+
+
         
         printf( "Rect start = (%d,%d), end = (%d,%d)\n",
                 mPickStartX, mPickStartY, mPickEndX, mPickEndY );
         
 
-        char skip = false;
-        
+        char skip = trimRectByExisting( &r );
+        /*        
         for( int i=0; i<mRects.size(); i++ ) {
             PickedRect otherR = mRects.getElementDirect( i );
             
@@ -264,118 +477,119 @@ void EditorSpriteTrimPage::pointerUp( float inX, float inY ) {
                 skip = true;
                 break;
                 }
-            else {
 
-                if( r.xStart >= otherR.xStart &&
-                    r.xStart <= otherR.xEnd &&
-                    r.xEnd >= otherR.xStart &&
-                    r.xEnd <= otherR.xEnd &&
-                    r.yStart <= otherR.yStart &&
-                    r.yStart >= otherR.yEnd ) {
+            else {
+                
+                if( r.xStart > otherR.xStart &&
+                    r.xStart < otherR.xEnd &&
+                    r.xEnd > otherR.xStart &&
+                    r.xEnd < otherR.xEnd &&
+                    r.yStart < otherR.yStart &&
+                    r.yStart > otherR.yEnd ) {
                     
                     // top edge intersects
-                    r.yStart = otherR.yEnd - 1;
+                    r.yStart = otherR.yEnd;
                     }
 
 
-                if( otherR.xStart >= r.xStart &&
-                    otherR.xStart <= r.xEnd &&
-                    otherR.xEnd >= r.xStart &&
-                    otherR.xEnd <= r.xEnd &&
-                    r.yStart <= otherR.yStart &&
-                    r.yStart >= otherR.yEnd ) {
+                if( otherR.xStart > r.xStart &&
+                    otherR.xStart < r.xEnd &&
+                    otherR.xEnd > r.xStart &&
+                    otherR.xEnd < r.xEnd &&
+                    r.yStart < otherR.yStart &&
+                    r.yStart > otherR.yEnd ) {
                     
                     // top edge intersects (new rect swallows)
-                    r.yStart = otherR.yEnd - 1;
+                    r.yStart = otherR.yEnd;
                     }
 
 
-                if( r.xStart >= otherR.xStart &&
-                    r.xStart <= otherR.xEnd &&
-                    r.xEnd >= otherR.xStart &&
-                    r.xEnd <= otherR.xEnd &&
-                    r.yEnd <= otherR.yStart &&
-                    r.yEnd >= otherR.yEnd ) {
+                if( r.xStart > otherR.xStart &&
+                    r.xStart < otherR.xEnd &&
+                    r.xEnd > otherR.xStart &&
+                    r.xEnd < otherR.xEnd &&
+                    r.yEnd < otherR.yStart &&
+                    r.yEnd > otherR.yEnd ) {
                     
                     // bottom edge intersects
-                    r.yEnd = otherR.yStart + 1;
+                    r.yEnd = otherR.yStart;
                     }
 
-                if( otherR.xStart >= r.xStart &&
-                    otherR.xStart <= r.xEnd &&
-                    otherR.xEnd >= r.xStart &&
-                    otherR.xEnd <= r.xEnd &&
-                    r.yEnd <= otherR.yStart &&
-                    r.yEnd >= otherR.yEnd ) {
+                if( otherR.xStart > r.xStart &&
+                    otherR.xStart < r.xEnd &&
+                    otherR.xEnd > r.xStart &&
+                    otherR.xEnd < r.xEnd &&
+                    r.yEnd < otherR.yStart &&
+                    r.yEnd > otherR.yEnd ) {
                     
                     // bottom edge intersects (new rect swallows)
-                    r.yEnd = otherR.yStart + 1;
+                    r.yEnd = otherR.yStart;
                     }
 
                 
-                if( otherR.yStart <= r.yStart &&
-                    otherR.yStart >= r.yEnd &&
-                    otherR.yEnd <= r.yStart &&
-                    otherR.yEnd >= r.yEnd &&
-                    r.xStart >= otherR.xStart &&
-                    r.xStart <= otherR.xEnd ) {
+                if( otherR.yStart < r.yStart &&
+                    otherR.yStart > r.yEnd &&
+                    otherR.yEnd < r.yStart &&
+                    otherR.yEnd > r.yEnd &&
+                    r.xStart > otherR.xStart &&
+                    r.xStart < otherR.xEnd ) {
                     
                     // left edge intersects (new rect swallows)
-                    r.xStart = otherR.xEnd + 1;
+                    r.xStart = otherR.xEnd;
                     }
 
-                if( otherR.yStart <= r.yStart &&
-                    otherR.yStart >= r.yEnd &&
-                    otherR.yEnd <= r.yStart &&
-                    otherR.yEnd >= r.yEnd &&
-                    r.xEnd >= otherR.xStart &&
-                    r.xEnd <= otherR.xEnd ) {
+                if( otherR.yStart < r.yStart &&
+                    otherR.yStart > r.yEnd &&
+                    otherR.yEnd < r.yStart &&
+                    otherR.yEnd > r.yEnd &&
+                    r.xEnd > otherR.xStart &&
+                    r.xEnd < otherR.xEnd ) {
                     
                     // right edge intersects (new rect swallows)
-                    r.xEnd = otherR.xStart - 1;
+                    r.xEnd = otherR.xStart;
                     }
 
 
                 
-                if( r.xStart >= otherR.xStart &&
-                    r.xStart <= otherR.xEnd &&
-                    r.yStart <= otherR.yStart &&
-                    r.yStart >= otherR.yEnd ) {
+                if( r.xStart > otherR.xStart &&
+                    r.xStart < otherR.xEnd &&
+                    r.yStart < otherR.yStart &&
+                    r.yStart > otherR.yEnd ) {
                     
                     // top left corner intersects
-                    r.xStart = otherR.xEnd + 1;
+                    r.xStart = otherR.xEnd;
                     }
                 
-                if( r.xEnd >= otherR.xStart &&
-                    r.xEnd <= otherR.xEnd &&
-                    r.yStart <= otherR.yStart &&
-                    r.yStart >= otherR.yEnd ) {
+                if( r.xEnd > otherR.xStart &&
+                    r.xEnd < otherR.xEnd &&
+                    r.yStart < otherR.yStart &&
+                    r.yStart > otherR.yEnd ) {
                     
                     // top right corner intersects
-                    r.xEnd = otherR.xStart - 1;
+                    r.xEnd = otherR.xStart;
                     }
 
-                if( r.xStart >= otherR.xStart &&
-                    r.xStart <= otherR.xEnd &&
-                    r.yEnd <= otherR.yStart &&
-                    r.yEnd >= otherR.yEnd ) {
+                if( r.xStart > otherR.xStart &&
+                    r.xStart < otherR.xEnd &&
+                    r.yEnd < otherR.yStart &&
+                    r.yEnd > otherR.yEnd ) {
                     
                     // bottom left corner intersects
-                    r.xStart = otherR.xEnd + 1;
+                    r.xStart = otherR.xEnd;
                     }
                 
-                if( r.xEnd >= otherR.xStart &&
-                    r.xEnd <= otherR.xEnd &&
-                    r.yEnd <= otherR.yStart &&
-                    r.yEnd >= otherR.yEnd ) {
+                if( r.xEnd > otherR.xStart &&
+                    r.xEnd < otherR.xEnd &&
+                    r.yEnd < otherR.yStart &&
+                    r.yEnd > otherR.yEnd ) {
                     
                     // bottom right corner intersects
-                    r.xEnd = otherR.xStart - 1;
+                    r.xEnd = otherR.xStart;
                     }
                 }
                 
             }
-        
+        */
         if( !skip ) {
             mRects.push_back( r );
 
