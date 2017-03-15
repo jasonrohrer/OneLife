@@ -16,10 +16,16 @@ extern Font *smallFont;
 
 static SpritePickable spritePickable;
 
+static double lastMouseX = 0;
+static double lastMouseY = 0;
+
+
+
 
 EditorSpriteTrimPage::EditorSpriteTrimPage()
         : mImportEditorButton( mainFont, -210, 260, "Sprites" ),
-          mSaveButton( mainFont, 0, -260, "Save" ),
+          mSaveButton( mainFont, 400, 64, "Save" ),
+          mClearRectButton( mainFont, 400, -65, "X Rect" ),
           mSpritePicker( &spritePickable, -410, 90 ),
           mPickedSprite( -1 ),
           mPickingRect( false ) {
@@ -29,7 +35,19 @@ EditorSpriteTrimPage::EditorSpriteTrimPage()
 
     addComponent( &mSpritePicker );
     mSpritePicker.addActionListener( this );
+
+
+    addComponent( &mSaveButton );
+    mSaveButton.addActionListener( this );
+    
+    addComponent( &mClearRectButton );
+    mClearRectButton.addActionListener( this );
+
+    mSaveButton.setVisible( false );
+    mClearRectButton.setVisible( true );
     }
+
+
 
 EditorSpriteTrimPage::~EditorSpriteTrimPage() {
     }
@@ -50,7 +68,21 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             
             mPickingRect = false;
             mRects.deleteAll();
+
+            mSaveButton.setVisible( false );
+            mClearRectButton.setVisible( false );
             }
+        }
+    else if( inTarget == &mClearRectButton ) {
+        mRects.deleteElement( mRects.size() - 1 );
+        
+        if( mRects.size() == 0 ) {
+            mSaveButton.setVisible( false );
+            mClearRectButton.setVisible( false );
+            }
+        }
+    else if( inTarget == &mSaveButton ) {
+    
         }
     }
 
@@ -100,7 +132,14 @@ void EditorSpriteTrimPage::drawUnderComponents( doublePair inViewCenter,
                 drawRect( mPickStartX, mPickStartY,
                           mPickEndX, mPickEndY );
                 }
-
+            else {
+                setDrawColor( 0, 0, 1, 0.50 );
+            
+                doublePair mouseCenter = { lastMouseX + 1, lastMouseY - 1 };
+            
+                drawRect( mouseCenter, 1000, 0.5 );
+                drawRect( mouseCenter, 0.5, 1000 );
+                }
             }
         
         }
@@ -115,6 +154,9 @@ void EditorSpriteTrimPage::makeActive( char inFresh ) {
         }
 
     mSpritePicker.redoSearch();
+    
+    lastMouseX = 0;
+    lastMouseY = 0;
     }
 
 
@@ -148,8 +190,17 @@ char EditorSpriteTrimPage::isPointInSprite( int inX, int inY ) {
 
 
 
+void EditorSpriteTrimPage::pointerMove( float inX, float inY ) {
+    lastMouseX = inX;
+    lastMouseY = inY;
+    }
+
+
 
 void EditorSpriteTrimPage::pointerDown( float inX, float inY ) {
+    lastMouseX = inX;
+    lastMouseY = inY;
+    
     int x = lrint( inX );
     int y = lrint( inY );
     
@@ -166,6 +217,9 @@ void EditorSpriteTrimPage::pointerDown( float inX, float inY ) {
 
 
 void EditorSpriteTrimPage::pointerDrag( float inX, float inY ) {
+    lastMouseX = inX;
+    lastMouseY = inY;
+    
     int x = lrint( inX );
     int y = lrint( inY );
     
@@ -177,6 +231,9 @@ void EditorSpriteTrimPage::pointerDrag( float inX, float inY ) {
 
 
 void EditorSpriteTrimPage::pointerUp( float inX, float inY ) {
+    lastMouseX = inX;
+    lastMouseY = inY;
+    
     if( mPickingRect ) {
     
         int x = lrint( inX );
@@ -321,6 +378,9 @@ void EditorSpriteTrimPage::pointerUp( float inX, float inY ) {
         
         if( !skip ) {
             mRects.push_back( r );
+
+            mSaveButton.setVisible( true );
+            mClearRectButton.setVisible( true );
             }
         
         }

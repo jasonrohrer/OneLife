@@ -35,6 +35,7 @@ class EditorSpriteTrimPage : public GamePage, public ActionListener {
         virtual void makeActive( char inFresh );
         
         
+        virtual void pointerMove( float inX, float inY );
         virtual void pointerDown( float inX, float inY );
         virtual void pointerDrag( float inX, float inY );
         virtual void pointerUp( float inX, float inY );
@@ -43,13 +44,14 @@ class EditorSpriteTrimPage : public GamePage, public ActionListener {
     protected:
         
         char isPointInSprite( int inX, int inY );
-
         
         SimpleVector<PickedRect> mRects;
 
         TextButton mImportEditorButton;
         
         TextButton mSaveButton;
+
+        TextButton mClearRectButton;
 
         Picker mSpritePicker;
         
