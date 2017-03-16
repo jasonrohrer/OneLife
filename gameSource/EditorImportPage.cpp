@@ -2131,7 +2131,7 @@ void EditorImportPage::processSelection() {
                     // also, ignore isolated noise points
 
                     int x = i % pW;
-                    int y = i / pH;
+                    int y = i / pW;
 
                     // check if all neighbors over threshold
                     // if so, this is an isolated noise pixel
