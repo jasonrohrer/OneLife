@@ -386,10 +386,10 @@ char EditorSpriteTrimPage::isPointInSprite( int inX, int inY ) {
             boxPos.x += r->centerAnchorXOffset;
             boxPos.y -= r->centerAnchorYOffset;
 
-            if( inX >= - r->w && 
-                inX <= r->w &&
-                inY >= - r->h &&
-                inY <= r->h ) {
+            if( inX >= - r->w / 2 && 
+                inX <= r->w / 2 &&
+                inY >= - r->h / 2 &&
+                inY <= r->h / 2 ) {
                 
                 return true;
                 }
