@@ -121,8 +121,31 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
         if( im != NULL ) {
             
             SpriteRecord *oldSprite = getSpriteRecord( mPickedSprite );
+            
+            
+            int numSprites = mRects.size();
 
-            for( int i=0; i<mRects.size(); i++ ) {
+            int *spriteIDs = new int[ numSprites ];
+            doublePair *spritePos = new doublePair[ numSprites ];
+            
+            double *spriteRot = new double[ numSprites ];
+            char *spriteHFlip = new char[ numSprites ];
+            FloatRGB *spriteColor = new FloatRGB[ numSprites ];
+            double *spriteAgeStart = new double[ numSprites ];
+            double *spriteAgeEnd = new double[ numSprites ];
+            int *spriteParent = new int[ numSprites ];
+            char *spriteInvisibleWhenHolding = new char[ numSprites ];
+            int *spriteInvisibleWhenWorn = new int[ numSprites ];
+            char *spriteBehindSlots = new char[ numSprites ];
+            char *spriteIsHead = new char[ numSprites ];
+            char *spriteIsBody = new char[ numSprites ];
+            char *spriteIsBackFoot = new char[ numSprites ];
+            char *spriteIsFrontFoot = new char[ numSprites ];
+            
+            FloatRGB whiteColor = { 1, 1, 1 };
+            
+
+            for( int i=0; i<numSprites; i++ ) {
                 
                 PickedRect r = mRects.getElementDirect( i );
 
@@ -138,11 +161,35 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                 char *newTag = autoSprintf( "%s_%d", oldSprite->tag, i+1 );
                 
 
-                addSprite( newTag, 
-                           fillSprite( subExpanded, false ), 
-                           subExpanded,
-                           oldSprite->multiplicativeBlend );
+                spriteIDs[i] = addSprite( newTag, 
+                                          fillSprite( subExpanded, false ), 
+                                          subExpanded,
+                                          oldSprite->multiplicativeBlend );
+
+                // rectangles enforced to be even sizes, so this works
+                spritePos[i].x = ( r.xEnd + r.xStart ) / 2.0;
+                spritePos[i].y = ( r.yStart + r.yEnd ) / 2.0;
                 
+
+                spriteParent[i] = -1;
+
+                if( i > 0 ) {
+                    spriteParent[i] = i-1;
+                    }
+
+                spriteRot[i] = 0;
+                spriteHFlip[i] = false;
+                spriteColor[i] = whiteColor;
+                spriteAgeStart[i] = -1;
+                spriteAgeEnd[i] = -1;
+                spriteInvisibleWhenHolding[i] = false;
+                spriteInvisibleWhenWorn[i] = false;
+                spriteBehindSlots[i] = false;
+                spriteIsHead[i] = false;
+                spriteIsBody[i] = false;
+                spriteIsBackFoot[i] = false;
+                spriteIsFrontFoot[i] = false;
+
                 delete subExpanded;
                 delete [] newTag;
                 }
@@ -150,6 +197,82 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             delete im;
 
             mSpritePicker.redoSearch();            
+            
+            char *objName = autoSprintf( "%s_all", oldSprite->tag );
+            
+            doublePair zeroOffset = { 0, 0 };
+            
+            doublePair *slotPos = new doublePair[ 0 ];
+            char *slotVert = new char[ 0 ];
+
+            addObject( objName,
+                       false,
+                       1,
+                       0,
+                       false,
+                       3,
+                       false,
+                       false,
+                       false,
+                       0, 0,
+                       false,
+                       (char*)"0",
+                       0,
+                       0,
+                       0,
+                       false,
+                       false,
+                       0,
+                       false,
+                       0,
+                       1,
+                       zeroOffset,
+                       false,
+                       zeroOffset,
+                       0,
+                       blankSoundUsage,
+                       blankSoundUsage,
+                       blankSoundUsage,
+                       0, 0, slotPos,
+                       slotVert,
+                       1,
+                       numSprites, spriteIDs, 
+                       spritePos,
+                       spriteRot,
+                       spriteHFlip,
+                       spriteColor,
+                       spriteAgeStart,
+                       spriteAgeEnd,
+                       spriteParent,
+                       spriteInvisibleWhenHolding,
+                       spriteInvisibleWhenWorn,
+                       spriteBehindSlots,
+                       spriteIsHead,
+                       spriteIsBody,
+                       spriteIsBackFoot,
+                       spriteIsFrontFoot );
+            
+
+            delete [] spriteIDs;
+            delete [] spritePos;
+            delete [] spriteRot;
+            delete [] spriteHFlip;
+            delete [] spriteColor;
+            delete [] spriteAgeStart;
+            delete [] spriteAgeEnd;
+            delete [] spriteParent;
+            delete [] spriteInvisibleWhenHolding;
+            delete [] spriteInvisibleWhenWorn;
+            delete [] spriteBehindSlots;
+            delete [] spriteIsHead;
+            delete [] spriteIsBody;
+            delete [] spriteIsBackFoot;
+            delete [] spriteIsFrontFoot;
+
+
+            delete [] objName;
+            delete [] slotPos;
+            delete [] slotVert;
             }
         }
     }
@@ -284,6 +407,39 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 }
             }
         }
+
+
+
+    if( ( r.xStart + r.xEnd ) % 2 != 0 ) {
+        // not even (can't be centered at an integer position)
+        // expand it if we can
+        
+        if( r.xEnd == inRect->xEnd ) {
+            // end not touched, expand here
+            r.xEnd += 1;
+            }
+        else if( r.xStart == inRect->xStart ) {
+            // start not touched, expand here
+            r.xStart -= 1;
+            }
+        }
+
+    
+
+    if( ( r.yStart + r.yEnd ) % 2 != 0 ) {
+        // not even (can't be centered at an integer position)
+        // expand it if we can
+        
+        if( r.yEnd == inRect->yEnd ) {
+            // end not touched, expand here
+            r.yEnd -= 1;
+            }
+        else if( r.yStart == inRect->yStart ) {
+            // start not touched, expand here
+            r.yStart += 1;
+            }
+        }
+        
 
     *inRect = r;
     
