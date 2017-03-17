@@ -1743,11 +1743,16 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mResetVertRotButton.setVisible( false );
         }
     else if( inTarget == &mDemoVertRotButton ) {
-        mPickedSlot = -1;
-        mPickedObjectLayer = -1;
-        pickedLayerChanged();
-        mDemoVertRot = true;
-        mDemoVertRotButton.setFillColor( 0.5, 0.0, 0.0, 1 );
+        if( mDemoVertRot ) {
+            endVertRotDemo();
+            }
+        else {
+            mPickedSlot = -1;
+            mPickedObjectLayer = -1;
+            pickedLayerChanged();
+            mDemoVertRot = true;
+            mDemoVertRotButton.setFillColor( 0.5, 0.0, 0.0, 1 );
+            }
         }
     else if( inTarget == &mHeldInHandCheckbox ) {
         if( mHeldInHandCheckbox.getToggled() ) {
