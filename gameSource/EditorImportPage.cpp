@@ -81,7 +81,7 @@ EditorImportPage::EditorImportPage()
     mCenterPoint.y = 0;
 
     addComponent( &mShadowSlider );
-    mShadowSlider.setValue( 1.0 );
+    mShadowSlider.setValue( 0.5 );
     
     addComponent( &mBlackLineThresholdSlider );
     mBlackLineThresholdSlider.setValue( 0.2 );
