@@ -1520,6 +1520,13 @@ void LivingLifePage::drawMapCell( int inMapI,
     }
 
 
+SimpleVector<doublePair> trail;
+SimpleVector<FloatColor> trailColors;
+double pathStepDistFactor = 0.2;
+
+FloatColor trailColor = { 0, 0.5, 0, 0.25 };
+
+
 
 
 ObjectAnimPack LivingLifePage::drawLiveObject( 
@@ -1576,8 +1583,18 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
     
 
     doublePair actionOffset = { 0, 0 };
-                
-    //trail.push_back( pos );
+    
+    if( false )
+    if( inObj->curAnim == moving ) {
+        trail.push_back( pos );
+        trailColors.push_back( trailColor );
+
+        while( trail.size() > 1000 ) {
+            trail.deleteElement( 0 );
+            trailColors.deleteElement( 0 );
+            }
+        }
+    
 
     int targetX = playerActionTargetX;
     int targetY = playerActionTargetY;
@@ -2141,7 +2158,6 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 
 
 
-SimpleVector<doublePair> trail;
 
 
 char drawAdd = true;
@@ -2951,14 +2967,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
     
-    setDrawColor( 0, 0.5, 0, 0.25 );
-    if( false )for( int i=0; i<trail.size(); i++ ) {
+    if( false )
+    for( int i=0; i<trail.size(); i++ ) {
         doublePair *p = trail.getElement( i );
-        
+
+        setDrawColor( trailColors.getElementDirect( i ) );
+
         mainFont->drawString( ".", 
                               *p, alignCenter );
         }
-    
+        
 
     setDrawColor( 0, 0, 0, 0.125 );
     
@@ -6022,7 +6040,7 @@ void LivingLifePage::step() {
                 addNewAnim( o, moving );
                 
                 
-                if( 1.5 * distance( o->currentPos,
+                if( pathStepDistFactor * distance( o->currentPos,
                                     startPos )
                     >
                     distance( o->currentPos,
@@ -6062,6 +6080,10 @@ void LivingLifePage::step() {
                     o->currentPos = endPos;
                     o->currentSpeed = 0;
 
+                    //trailColor.r = randSource.getRandomBoundedDouble( 0, .5 );
+                    //trailColor.g = randSource.getRandomBoundedDouble( 0, .5 );
+                    //trailColor.b = randSource.getRandomBoundedDouble( 0, .5 );
+                    
 
                     if( o->id != ourID || 
                         nextActionMessageToSend == NULL ) {
@@ -7521,6 +7543,28 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         case 'd':
             addAmount -= 0.05;
             printf( "Add amount = %f\n", addAmount );
+            break;
+        */
+        /*
+        case 'd':
+            pathStepDistFactor += .1;
+            printf( "Path step dist factor = %f\n", pathStepDistFactor );
+            break;
+        case 'D':
+            pathStepDistFactor += .5;
+            printf( "Path step dist factor = %f\n", pathStepDistFactor );
+            break;
+        case 's':
+            pathStepDistFactor -= .1;
+            printf( "Path step dist factor = %f\n", pathStepDistFactor );
+            break;
+        case 'S':
+            pathStepDistFactor -= .5;
+            printf( "Path step dist factor = %f\n", pathStepDistFactor );
+            break;
+        case 'f':
+            trail.deleteAll();
+            trailColors.deleteAll();
             break;
         */
         case 'e':
