@@ -6021,8 +6021,6 @@ void LivingLifePage::step() {
 
             // don't change flip unless moving substantially in x
             if( fabs( o->currentMoveDirection.x ) > 0.5 ) {
-                char oldFlip = o->holdingFlip;
-                
                 if( o->currentMoveDirection.x > 0 ) {
                     o->holdingFlip = false;
                     }
