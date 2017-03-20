@@ -1653,7 +1653,6 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
                                  inPlayer->posForced,
                                  inPlayer->xs, 
                                  inPlayer->ys );
-	printf( "Pos string = %s\n", posString );
         }
     
     SimpleVector<char> clothingListBuffer;
