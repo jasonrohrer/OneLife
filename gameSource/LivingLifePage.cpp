@@ -6019,8 +6019,9 @@ void LivingLifePage::step() {
                 normalize( add( o->currentMoveDirection, 
                                 mult( dir, turnFactor * frameRateFactor ) ) );
 
-            // don't change flip unless moving in x
-            if( o->currentMoveDirection.x != 0 ) {
+            // don't change flip unless moving substantially in x
+            if( fabs( o->currentMoveDirection.x ) > 0.5 ) {
+                char oldFlip = o->holdingFlip;
                 
                 if( o->currentMoveDirection.x > 0 ) {
                     o->holdingFlip = false;
