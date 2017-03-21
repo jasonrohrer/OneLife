@@ -3291,8 +3291,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
         toggleMultiplicativeBlend( true );
 
         for( int i=0; i<ourLiveObject->foodCapacity; i++ ) {
-            doublePair pos = { lastScreenViewCenter.x - 588, 
-                               lastScreenViewCenter.y - 341 };
+            doublePair pos = { lastScreenViewCenter.x - 590, 
+                               lastScreenViewCenter.y - 334 };
         
             pos.x += i * 30;
             drawSprite( 
@@ -3312,8 +3312,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         for( int i=ourLiveObject->foodCapacity; 
              i < ourLiveObject->maxFoodCapacity; i++ ) {
-            doublePair pos = { lastScreenViewCenter.x - 588, 
-                               lastScreenViewCenter.y - 341 };
+            doublePair pos = { lastScreenViewCenter.x - 590, 
+                               lastScreenViewCenter.y - 334 };
             
             pos.x += i * 30;
             drawSprite( 
