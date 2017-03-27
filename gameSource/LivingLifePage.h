@@ -39,7 +39,7 @@ typedef struct LiveObject {
         
         int foodStore;
         int foodCapacity;
-
+        
         int maxFoodStore;
         int maxFoodCapacity;
 
@@ -371,6 +371,12 @@ class LivingLifePage : public GamePage {
         SimpleVector<char*> mOldDesStrings;
         SimpleVector<float> mOldDesFades;
         
+
+        char *mCurrentLastAteString;
+        int mCurrentLastAteFillMax;
+        SimpleVector<char*> mOldLastAteStrings;
+        SimpleVector<int> mOldLastAteFillMax;
+        SimpleVector<float> mOldLastAteFades;
 
 
         

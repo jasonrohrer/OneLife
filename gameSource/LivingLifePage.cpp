@@ -954,6 +954,7 @@ LivingLifePage::LivingLifePage()
     mCurrentArrowI = 0;
     mCurrentArrowHeat = -1;
     mCurrentDes = NULL;
+    mCurrentLastAteString = NULL;
     }
 
 
@@ -999,6 +1000,11 @@ LivingLifePage::~LivingLifePage() {
     mOldDesStrings.deallocateStringElements();
     if( mCurrentDes != NULL ) {
         delete [] mCurrentDes;
+        }
+
+    mOldLastAteStrings.deallocateStringElements();
+    if( mCurrentLastAteString != NULL ) {
+        delete [] mCurrentLastAteString;
         }
 
     mSentChatPhrases.deallocateStringElements();
@@ -3396,6 +3402,28 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 mOldDesStrings.getElementDirect( i ), pos, alignCenter );
             }
 
+
+        doublePair atePos = { lastScreenViewCenter.x, 
+                              lastScreenViewCenter.y - 347 };
+            
+        for( int i=0; i<mOldLastAteStrings.size(); i++ ) {
+            float fade =
+                mOldLastAteFades.getElementDirect( i );
+            
+            setDrawColor( 0, 0, 0, fade );
+            
+            pencilErasedFont->drawString( 
+                mOldLastAteStrings.getElementDirect( i ), atePos, alignLeft );
+            }
+
+
+        if( mCurrentLastAteString != NULL ) {
+            setDrawColor( 0, 0, 0, 1 );
+        
+            pencilFont->drawString( 
+                mCurrentLastAteString, atePos, alignLeft );
+            }
+
         
         if( mCurMouseOverID != 0 || mLastMouseOverID != 0 ) {
             int idToDescribe = mCurMouseOverID;
@@ -4317,8 +4345,8 @@ void LivingLifePage::step() {
 
                 // don't track these for other players
                 o.foodStore = 0;
-                o.foodCapacity = 0;
-                
+                o.foodCapacity = 0;                
+
                 o.maxFoodStore = 0;
                 o.maxFoodCapacity = 0;
 
@@ -5530,11 +5558,72 @@ void LivingLifePage::step() {
             if( ourLiveObject != NULL ) {
                 
                 
-
-                sscanf( message, "FX\n%d %d %lf", 
+                int lastAteID, lastAteFillMax;
+                
+                sscanf( message, "FX\n%d %d %d %d %lf", 
                         &( ourLiveObject->foodStore ),
                         &( ourLiveObject->foodCapacity ),
+                        &( lastAteID ),
+                        &( lastAteFillMax ),
                         &( ourLiveObject->lastSpeed ) );
+
+                if( mCurrentLastAteString != NULL ) {                    
+                    
+
+                    // one to add to erased list
+                    // fade older ones first
+
+                    for( int i=0; i<mOldLastAteStrings.size(); i++ ) {
+                        float fade =
+                            mOldLastAteFades.getElementDirect( i );
+                        
+                        if( fade > 0.5 ) {
+                            fade -= 0.20;
+                            }
+                        else {
+                            fade -= 0.1;
+                            }
+                        
+                        *( mOldLastAteFades.getElement( i ) ) = fade;
+                        if( fade <= 0 ) {
+                            mOldLastAteStrings.deallocateStringElement( i );
+                            mOldLastAteFillMax.deleteElement( i );
+                            mOldLastAteFades.deleteElement( i );
+                            i--;
+                            }
+
+                        else if( strcmp( 
+                                     mCurrentLastAteString, 
+                                     mOldLastAteStrings.getElementDirect(i) )
+                                 == 0 ) {
+                            // already in stack, move to top
+                            mOldLastAteStrings.deallocateStringElement( i );
+                            mOldLastAteFillMax.deleteElement( i );
+                            mOldLastAteFades.deleteElement( i );
+                            i--;
+                            }
+                        }
+                    
+                    mOldLastAteStrings.push_back( mCurrentLastAteString );
+                    mOldLastAteFillMax.push_back( mCurrentLastAteFillMax );
+                    mOldLastAteFades.push_back( 1.0f );
+
+                    mCurrentLastAteString = NULL;
+                    mCurrentLastAteFillMax = 0;
+                    }
+                
+                if( lastAteID != 0 ) {
+                    char *strUpper = stringToUpperCase(
+                        getObject( lastAteID )->description );
+
+                    mCurrentLastAteString = autoSprintf( "%s %s",
+                                                         translate( "lastAte" ),
+                                                         strUpper );
+                    delete [] strUpper;
+                    
+                    mCurrentLastAteFillMax = lastAteFillMax;
+                    }
+
 
                 printf( "Our food = %d/%d\n", 
                         ourLiveObject->foodStore,
@@ -6433,12 +6522,21 @@ void LivingLifePage::makeActive( char inFresh ) {
     mOldDesStrings.deallocateStringElements();
     mOldDesFades.deleteAll();
 
+    mOldLastAteStrings.deallocateStringElements();
+    mOldLastAteFillMax.deleteAll();
+    mOldLastAteFades.deleteAll();
+
     mCurrentArrowI = 0;
     mCurrentArrowHeat = -1;
     if( mCurrentDes != NULL ) {
         delete [] mCurrentDes;
         }
     mCurrentDes = NULL;
+
+    if( mCurrentLastAteString != NULL ) {
+        delete [] mCurrentLastAteString;
+        }
+    mCurrentLastAteString = NULL;
 
 
     lastScreenViewCenter.x = 0;

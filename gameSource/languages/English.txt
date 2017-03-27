@@ -63,6 +63,8 @@ waitingBirth "WAITING TO BE BORN"
 loadingMap "LOADING MAP"
 
 
+lastAte = "ATE"
+
 
 youDied "YOU DIED"
 

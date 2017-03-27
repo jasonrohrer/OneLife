@@ -200,6 +200,10 @@ typedef struct LiveObject {
         // should we send player a food status message
         char foodUpdate;
         
+        // info about the last thing we ate
+        int lastAteID;
+        int lastAteFillMax;
+        
         char justAte;
 
         ClothingSet clothing;
@@ -1930,6 +1934,8 @@ void processLoggedInPlayer( Socket *inSock,
         computeFoodDecrementTimeSeconds( &newObject );
                 
     newObject.foodUpdate = true;
+    newObject.lastAteID = 0;
+    newObject.lastAteFillMax = 0;
     newObject.justAte = false;
     
     newObject.clothing = getEmptyClothingSet();
@@ -3887,6 +3893,11 @@ int main() {
                                 
                                 if( obj->foodValue > 0 ) {
                                     targetPlayer->justAte = true;
+                                    
+                                    targetPlayer->lastAteID = 
+                                        nextPlayer->holdingID;
+                                    targetPlayer->lastAteFillMax =
+                                        obj->foodValue;
                                     
                                     if( targetPlayer->foodStore < 
                                         obj->foodValue ) {
@@ -5991,10 +6002,12 @@ int main() {
                     
                     char *foodMessage = autoSprintf( 
                         "FX\n"
-                        "%d %d %.2f\n"
+                        "%d %d %d %d %.2f\n"
                         "#", 
                         nextPlayer->foodStore,
                         cap,
+                        nextPlayer->lastAteID,
+                        nextPlayer->lastAteFillMax,
                         computeMoveSpeed( nextPlayer ) );
                      
                      int numSent = 
@@ -6010,6 +6023,8 @@ int main() {
                      delete [] foodMessage;
                      
                      nextPlayer->foodUpdate = false;
+                     nextPlayer->lastAteID = 0;
+                     nextPlayer->lastAteFillMax = 0;
                     }
                 }
             }
