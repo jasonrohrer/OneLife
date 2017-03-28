@@ -68,7 +68,9 @@ graphics/hungerBoxFills.tga \
 graphics/hungerBoxesErased.tga \
 graphics/hungerBoxFillsErased.tga \
 graphics/hungerDashes.tga \
+graphics/hungerDashesErased.tga \
 graphics/hungerBars.tga \
+graphics/hungerBarsErased.tga \
 graphics/chalkBlot.tga \
 graphics/pathMark.tga \
 graphics/ground.tga \
