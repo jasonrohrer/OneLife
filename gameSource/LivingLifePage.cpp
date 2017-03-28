@@ -736,6 +736,38 @@ static Image *expandToPowersOfTwoWhite( Image *inImage ) {
 
 
 
+static void splitAndExpandSprites( const char *inTgaFileName, int inNumSprites,
+                                   SpriteHandle *inDestArray ) {
+    
+    Image *full = readTGAFile( inTgaFileName );
+    if( full != NULL ) {
+        
+        int spriteW = full->getWidth() / inNumSprites;
+        
+        int spriteH = full->getHeight();
+        
+        for( int i=0; i<inNumSprites; i++ ) {
+            
+            Image *part = full->getSubImage( i * spriteW, 0, 
+                                          spriteW, spriteH );
+            Image *partExpanded = expandToPowersOfTwoWhite( part );
+            
+            
+            delete part;
+
+            inDestArray[i] = fillSprite( partExpanded, false );
+            
+            delete partExpanded;
+            }
+
+        delete full;
+        }
+
+    }
+
+
+
+
 
 LivingLifePage::LivingLifePage() 
         : mServerSocket( -1 ), 
@@ -856,100 +888,22 @@ LivingLifePage::LivingLifePage()
         }
     
 
+
+    splitAndExpandSprites( "hungerBoxes.tga", NUM_HUNGER_BOX_SPRITES, 
+                           mHungerBoxSprites );
+    splitAndExpandSprites( "hungerBoxFills.tga", NUM_HUNGER_BOX_SPRITES, 
+                           mHungerBoxFillSprites );
+
+    splitAndExpandSprites( "hungerBoxesErased.tga", NUM_HUNGER_BOX_SPRITES, 
+                           mHungerBoxErasedSprites );
+    splitAndExpandSprites( "hungerBoxFillsErased.tga", NUM_HUNGER_BOX_SPRITES, 
+                           mHungerBoxFillErasedSprites );
+
+    splitAndExpandSprites( "tempArrows.tga", NUM_TEMP_ARROWS, 
+                           mTempArrowSprites );
+    splitAndExpandSprites( "tempArrowsErased.tga", NUM_TEMP_ARROWS, 
+                           mTempArrowErasedSprites );
     
-    Image *boxes = readTGAFile( "hungerBoxes.tga" );
-    Image *fills = readTGAFile( "hungerBoxFills.tga" );
-
-    Image *boxesErased = readTGAFile( "hungerBoxesErased.tga" );
-    Image *fillsErased = readTGAFile( "hungerBoxFillsErased.tga" );
-
-    if( boxes != NULL && fills != NULL && 
-        boxesErased != NULL && fillsErased != NULL ) {
-        
-        int boxW = boxes->getWidth() / NUM_HUNGER_BOX_SPRITES;
-        int fillW = fills->getWidth() / NUM_HUNGER_BOX_SPRITES;
-        
-        int boxH = boxes->getHeight();
-        int fillH = fills->getHeight();
-
-        for( int i=0; i<NUM_HUNGER_BOX_SPRITES; i++ ) {
-            
-            Image *box = boxes->getSubImage( i * boxW, 0, 
-                                             boxW, boxH );
-            Image *fill = fills->getSubImage( i * fillW, 0, 
-                                              fillW, fillH );
-            Image *boxExpanded = expandToPowersOfTwoWhite( box );
-            Image *fillExpanded = expandToPowersOfTwoWhite( fill );
-            
-            Image *boxErased = boxesErased->getSubImage( i * boxW, 0, 
-                                                         boxW, boxH );
-            Image *fillErased = fillsErased->getSubImage( i * fillW, 0, 
-                                                          fillW, fillH );
-            Image *boxErasedExpanded = expandToPowersOfTwoWhite( boxErased );
-            Image *fillErasedExpanded = expandToPowersOfTwoWhite( fillErased );
-            
-            delete box;
-            delete fill;
-            delete boxErased;
-            delete fillErased;
-            
-            mHungerBoxSprites[i] = fillSprite( boxExpanded, false );
-            mHungerBoxFillSprites[i] = fillSprite( fillExpanded, false );
-
-            mHungerBoxErasedSprites[i] = fillSprite( boxErasedExpanded, false );
-            mHungerBoxFillErasedSprites[i] = 
-                fillSprite( fillErasedExpanded, false );
-            
-            delete boxExpanded;
-            delete fillExpanded;
-            delete boxErasedExpanded;
-            delete fillErasedExpanded;
-            }
-
-        delete boxes;
-        delete fills;
-        delete boxesErased;
-        delete fillsErased;
-        }
-
-
-
-    Image *arrows = readTGAFile( "tempArrows.tga" );
-    Image *arrowsErased = readTGAFile( "tempArrowsErased.tga" );
-    
-    if( arrows != NULL && 
-        arrowsErased != NULL ) {
-        
-        int arrowW = arrows->getWidth() / NUM_TEMP_ARROWS;
-        
-        int arrowH = arrows->getHeight();
-        
-        for( int i=0; i<NUM_TEMP_ARROWS; i++ ) {
-            
-            Image *arrow = arrows->getSubImage( i * arrowW, 0, 
-                                                arrowW, arrowH );
-            Image *arrowExpanded = expandToPowersOfTwoWhite( arrow );
-            
-            Image *arrowErased = arrowsErased->getSubImage( i * arrowW, 0, 
-                                                         arrowW, arrowH );
-            
-            Image *arrowErasedExpanded = 
-                expandToPowersOfTwoWhite( arrowErased );
-            
-            delete arrow;
-            delete arrowErased;
-            
-            mTempArrowSprites[i] = fillSprite( arrowExpanded, false );
-            mTempArrowErasedSprites[i] = 
-                fillSprite( arrowErasedExpanded, false );
-            
-            delete arrowExpanded;
-            delete arrowErasedExpanded;
-            }
-
-        delete arrows;
-        delete arrowsErased;
-        }
     
     mCurrentArrowI = 0;
     mCurrentArrowHeat = -1;
