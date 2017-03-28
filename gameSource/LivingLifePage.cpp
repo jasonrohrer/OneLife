@@ -2137,7 +2137,9 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 void LivingLifePage::drawHungerMaxFillLine( doublePair inAteWordsPos,
                                             int inMaxFill,
                                             SpriteHandle *inBarSprites,
-                                            SpriteHandle *inDashSprites ) {
+                                            SpriteHandle *inDashSprites,
+                                            char inSkipBar,
+                                            char inSkipDashes ) {
     
     
     
@@ -2149,9 +2151,16 @@ void LivingLifePage::drawHungerMaxFillLine( doublePair inAteWordsPos,
     
     barPos.x += 30 * inMaxFill;
 
-    drawSprite( inBarSprites[ inMaxFill %
-                              NUM_HUNGER_DASHES ], 
-                barPos );
+    if( ! inSkipBar ) {    
+        drawSprite( inBarSprites[ inMaxFill %
+                                  NUM_HUNGER_DASHES ], 
+                    barPos );
+        }
+    
+
+    if( inSkipDashes ) {
+        return;
+        }
 
     doublePair dashPos = inAteWordsPos;
             
@@ -3433,7 +3442,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         doublePair atePos = { lastScreenViewCenter.x, 
                               lastScreenViewCenter.y - 347 };
-            
+        
+        int shortestFill = 100;
+        
+        
         for( int i=0; i<mOldLastAteStrings.size(); i++ ) {
             float fade =
                 mOldLastAteFades.getElementDirect( i );
@@ -3448,17 +3460,41 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             float v = 1.0f - mOldLastAteBarFades.getElementDirect( i );
             setDrawColor( v, v, v, 1 );
+            
+            int fillMax = mOldLastAteFillMax.getElementDirect( i );
+
+            if( fillMax < shortestFill ) {
+                shortestFill = fillMax;
+                }
 
             drawHungerMaxFillLine( atePos, 
-                                   mOldLastAteFillMax.getElementDirect( i ),
+                                   fillMax,
                                    mHungerBarErasedSprites,
-                                   mHungerDashErasedSprites );
+                                   mHungerDashErasedSprites, 
+                                   false,
+                                   // only draw dashes once, for longest
+                                   // one
+                                   true );
 
 
             toggleAdditiveTextureColoring( false );
             toggleMultiplicativeBlend( false );
             }
 
+        if( shortestFill < 100 ) {
+            toggleMultiplicativeBlend( true );
+            setDrawColor( 1, 1, 1, 1 );
+            
+            drawHungerMaxFillLine( atePos, 
+                                   shortestFill,
+                                   mHungerBarErasedSprites,
+                                   mHungerDashErasedSprites, 
+                                   true,
+                                   // draw longest erased dash line once
+                                   false );
+            toggleMultiplicativeBlend( false );
+            }
+        
 
         if( mCurrentLastAteString != NULL ) {
             setDrawColor( 0, 0, 0, 1 );
@@ -3473,7 +3509,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             drawHungerMaxFillLine( atePos, 
                                    mCurrentLastAteFillMax,
                                    mHungerBarSprites,
-                                   mHungerDashSprites );
+                                   mHungerDashSprites,
+                                   false, false );
             
             toggleMultiplicativeBlend( false );
             }

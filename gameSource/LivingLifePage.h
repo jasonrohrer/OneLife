@@ -389,7 +389,9 @@ class LivingLifePage : public GamePage {
         void drawHungerMaxFillLine( doublePair inAteWordsPos,
                                     int inMaxFill,
                                     SpriteHandle *inBarSprites,
-                                    SpriteHandle *inDashSprites );
+                                    SpriteHandle *inDashSprites,
+                                    char inSkipBar,
+                                    char inSkipDashes );
         
 
         int mLastMouseOverID;
