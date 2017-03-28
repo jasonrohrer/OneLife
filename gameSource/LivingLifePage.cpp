@@ -903,7 +903,17 @@ LivingLifePage::LivingLifePage()
                            mTempArrowSprites );
     splitAndExpandSprites( "tempArrowsErased.tga", NUM_TEMP_ARROWS, 
                            mTempArrowErasedSprites );
-    
+
+    splitAndExpandSprites( "hungerDashes.tga", NUM_HUNGER_DASHES, 
+                           mHungerDashSprites );
+    splitAndExpandSprites( "hungerDashesErased.tga", NUM_HUNGER_DASHES, 
+                           mHungerDashErasedSprites );
+
+    splitAndExpandSprites( "hungerBars.tga", NUM_HUNGER_DASHES, 
+                           mHungerBarSprites );
+    splitAndExpandSprites( "hungerBarsErased.tga", NUM_HUNGER_DASHES, 
+                           mHungerBarErasedSprites );
+
     
     mCurrentArrowI = 0;
     mCurrentArrowHeat = -1;
@@ -1016,6 +1026,13 @@ LivingLifePage::~LivingLifePage() {
     for( int i=0; i<NUM_TEMP_ARROWS; i++ ) {
         freeSprite( mTempArrowSprites[i] );
         freeSprite( mTempArrowErasedSprites[i] );
+        }
+
+    for( int i=0; i<NUM_HUNGER_DASHES; i++ ) {
+        freeSprite( mHungerDashSprites[i] );
+        freeSprite( mHungerDashErasedSprites[i] );
+        freeSprite( mHungerBarSprites[i] );
+        freeSprite( mHungerBarErasedSprites[i] );
         }
     }
 
@@ -2113,6 +2130,63 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
         }
 
     return returnPack;
+    }
+
+
+
+void LivingLifePage::drawHungerMaxFillLine( doublePair inAteWordsPos,
+                                            int inMaxFill,
+                                            SpriteHandle *inBarSprites,
+                                            SpriteHandle *inDashSprites ) {
+    
+    
+    
+    doublePair barPos = { lastScreenViewCenter.x - 590, 
+                          lastScreenViewCenter.y - 334 };
+    barPos.x -= 12;
+    barPos.y -= 10;
+    
+    
+    barPos.x += 30 * inMaxFill;
+
+    drawSprite( inBarSprites[ inMaxFill %
+                              NUM_HUNGER_DASHES ], 
+                barPos );
+
+    doublePair dashPos = inAteWordsPos;
+            
+    dashPos.y -= 6;
+    dashPos.x -= 5;
+
+    int numDashes = 0;
+            
+    JenkinsRandomSource dashRandSource( 0 );
+
+    while( dashPos.x > barPos.x + 9 ) {
+        
+        doublePair drawPos = dashPos;
+        
+        //drawPos.x += dashRandSource.getRandomBoundedInt( -2, 2 );
+        //drawPos.y += dashRandSource.getRandomBoundedInt( -1, 1 );
+        
+        drawSprite( inDashSprites[ numDashes %
+                                   NUM_HUNGER_DASHES ], 
+                    drawPos );
+        dashPos.x -= 15;
+        //numDashes += dashRandSource.getRandomBoundedInt( 1, 10 );
+        numDashes += 1;
+        
+        // correct shortness of last one
+        if( numDashes % NUM_HUNGER_DASHES == 0 ) {
+            dashPos.x += 3;
+            }
+        }
+            
+    // draw one more to connect to bar
+    dashPos.x = barPos.x + 6;
+    drawSprite( inDashSprites[ numDashes %
+                               NUM_HUNGER_DASHES ], 
+                dashPos );
     }
 
 
@@ -3368,6 +3442,21 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             pencilErasedFont->drawString( 
                 mOldLastAteStrings.getElementDirect( i ), atePos, alignLeft );
+
+            toggleMultiplicativeBlend( true );
+            toggleAdditiveTextureColoring( true );
+            
+            float v = 1.0f - mOldLastAteBarFades.getElementDirect( i );
+            setDrawColor( v, v, v, 1 );
+
+            drawHungerMaxFillLine( atePos, 
+                                   mOldLastAteFillMax.getElementDirect( i ),
+                                   mHungerBarErasedSprites,
+                                   mHungerDashErasedSprites );
+
+
+            toggleAdditiveTextureColoring( false );
+            toggleMultiplicativeBlend( false );
             }
 
 
@@ -3376,6 +3465,17 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
             pencilFont->drawString( 
                 mCurrentLastAteString, atePos, alignLeft );
+            
+            
+            toggleMultiplicativeBlend( true );
+            setDrawColor( 1, 1, 1, 1 );
+            
+            drawHungerMaxFillLine( atePos, 
+                                   mCurrentLastAteFillMax,
+                                   mHungerBarSprites,
+                                   mHungerDashSprites );
+            
+            toggleMultiplicativeBlend( false );
             }
 
         
@@ -5539,10 +5639,22 @@ void LivingLifePage::step() {
                             }
                         
                         *( mOldLastAteFades.getElement( i ) ) = fade;
+                        
+
+                        // bar must fade slower (different blending mode)
+                        float barFade =
+                            mOldLastAteBarFades.getElementDirect( i );
+                        
+                        barFade -= 0.01;
+                        
+                        *( mOldLastAteBarFades.getElement( i ) ) = barFade;
+                        
+
                         if( fade <= 0 ) {
                             mOldLastAteStrings.deallocateStringElement( i );
                             mOldLastAteFillMax.deleteElement( i );
                             mOldLastAteFades.deleteElement( i );
+                            mOldLastAteBarFades.deleteElement( i );
                             i--;
                             }
 
@@ -5554,6 +5666,7 @@ void LivingLifePage::step() {
                             mOldLastAteStrings.deallocateStringElement( i );
                             mOldLastAteFillMax.deleteElement( i );
                             mOldLastAteFades.deleteElement( i );
+                            mOldLastAteBarFades.deleteElement( i );
                             i--;
                             }
                         }
@@ -5561,6 +5674,7 @@ void LivingLifePage::step() {
                     mOldLastAteStrings.push_back( mCurrentLastAteString );
                     mOldLastAteFillMax.push_back( mCurrentLastAteFillMax );
                     mOldLastAteFades.push_back( 1.0f );
+                    mOldLastAteBarFades.push_back( 1.0f );
 
                     mCurrentLastAteString = NULL;
                     mCurrentLastAteFillMax = 0;
@@ -6479,7 +6593,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     mOldLastAteStrings.deallocateStringElements();
     mOldLastAteFillMax.deleteAll();
     mOldLastAteFades.deleteAll();
-
+    mOldLastAteBarFades.deleteAll();
+    
     mCurrentArrowI = 0;
     mCurrentArrowHeat = -1;
     if( mCurrentDes != NULL ) {

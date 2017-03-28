@@ -23,6 +23,7 @@
 #define NUM_HUNGER_BOX_SPRITES 20
 
 #define NUM_TEMP_ARROWS 6
+#define NUM_HUNGER_DASHES 6
 
 
 
@@ -327,6 +328,11 @@ class LivingLifePage : public GamePage {
         SpriteHandle mTempArrowSprites[ NUM_TEMP_ARROWS ];
         SpriteHandle mTempArrowErasedSprites[ NUM_TEMP_ARROWS ];
 
+        SpriteHandle mHungerDashSprites[ NUM_HUNGER_DASHES ];
+        SpriteHandle mHungerDashErasedSprites[ NUM_HUNGER_DASHES ];
+        SpriteHandle mHungerBarSprites[ NUM_HUNGER_DASHES ];
+        SpriteHandle mHungerBarErasedSprites[ NUM_HUNGER_DASHES ];
+
         SpriteHandle mNotePaperSprite;
 
         // offset from current view center
@@ -377,8 +383,13 @@ class LivingLifePage : public GamePage {
         SimpleVector<char*> mOldLastAteStrings;
         SimpleVector<int> mOldLastAteFillMax;
         SimpleVector<float> mOldLastAteFades;
+        SimpleVector<float> mOldLastAteBarFades;
 
-
+        
+        void drawHungerMaxFillLine( doublePair inAteWordsPos,
+                                    int inMaxFill,
+                                    SpriteHandle *inBarSprites,
+                                    SpriteHandle *inDashSprites );
         
 
         int mLastMouseOverID;
