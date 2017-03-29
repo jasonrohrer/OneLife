@@ -724,10 +724,10 @@ char getFemale( LiveObject *inPlayer ) {
 int computeFoodCapacity( LiveObject *inPlayer ) {
     int ageInYears = lrint( computeAge( inPlayer ) );
     
-    if( ageInYears < 40 ) {
+    if( ageInYears < 42 ) {
         
-        if( ageInYears > 20 ) {
-            ageInYears = 20;
+        if( ageInYears > 18 ) {
+            ageInYears = 18;
             }
         
         return ageInYears + 2;
