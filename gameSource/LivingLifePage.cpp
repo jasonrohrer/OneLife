@@ -45,6 +45,10 @@ extern Font *pencilFont;
 extern Font *pencilErasedFont;
 
 
+// to make all erased pencil fonts lighter
+static float pencilErasedFontExtraFade = 0.75;
+
+
 extern doublePair lastScreenViewCenter;
 
 extern double viewWidth;
@@ -3287,7 +3291,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     setDrawColor( 0, 0, 0, 1 );
     for( int i=0; i<mErasedNoteChars.size(); i++ ) {
-        setDrawFade( mErasedNoteCharFades.getElementDirect( i ) );
+        setDrawFade( mErasedNoteCharFades.getElementDirect( i ) *
+                     pencilErasedFontExtraFade );
         
         pencilErasedFont->
             drawCharacterSprite( 
@@ -3434,7 +3439,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             float fade =
                 mOldDesFades.getElementDirect( i );
             
-            setDrawColor( 0, 0, 0, fade );
+            setDrawColor( 0, 0, 0, fade * pencilErasedFontExtraFade );
             pencilErasedFont->drawString( 
                 mOldDesStrings.getElementDirect( i ), pos, alignCenter );
             }
@@ -3450,7 +3455,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             float fade =
                 mOldLastAteFades.getElementDirect( i );
             
-            setDrawColor( 0, 0, 0, fade );
+            setDrawColor( 0, 0, 0, fade * pencilErasedFontExtraFade );
             
             pencilErasedFont->drawString( 
                 mOldLastAteStrings.getElementDirect( i ), atePos, alignLeft );
