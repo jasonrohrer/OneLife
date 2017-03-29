@@ -3430,7 +3430,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         for( int i=0; i<mOldDesStrings.size(); i++ ) {
             doublePair pos = { lastScreenViewCenter.x, 
-                               lastScreenViewCenter.y - 317 };
+                               lastScreenViewCenter.y - 313 };
             float fade =
                 mOldDesFades.getElementDirect( i );
             
@@ -3526,7 +3526,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             
             doublePair pos = { lastScreenViewCenter.x, 
-                               lastScreenViewCenter.y - 317 };
+                               lastScreenViewCenter.y - 313 };
             char *des = getObject( idToDescribe )->description;
 
             char *stringUpper = stringToUpperCase( des );

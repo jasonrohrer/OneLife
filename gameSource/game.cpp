@@ -466,12 +466,12 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     handwritingFont->setMinimumPositionPrecision( 1 );
 
     pencilFont = 
-        new Font( "font_pencil_32_32.tga", 2, 6, false, 16 );
+        new Font( "font_pencil_32_32.tga", 3, 6, false, 16 );
 
     pencilFont->setMinimumPositionPrecision( 1 );
 
     pencilErasedFont = 
-        new Font( "font_pencil_erased_32_32.tga", 2, 6, false, 16 );
+        new Font( "font_pencil_erased_32_32.tga", 3, 6, false, 16 );
 
     pencilErasedFont->setMinimumPositionPrecision( 1 );
 
