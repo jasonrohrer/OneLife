@@ -44,6 +44,10 @@ class EditorObjectPage : public GamePage, public ActionListener {
         ~EditorObjectPage();
 
 
+        void setClipboardColor( FloatRGB inColor ) {
+            mColorClipboard = inColor;
+            }
+
         void clearUseOfSprite( int inSpriteID );
         
         

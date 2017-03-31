@@ -25,6 +25,10 @@ static SpritePickable spritePickable;
 static OverlayPickable overlayPickable;
 
 
+#include "EditorObjectPage.h"
+
+extern EditorObjectPage *objectPage;
+
 
 EditorImportPage::EditorImportPage()
         : mImportButton( smallFont, +170, 280, "Sprite Import" ),
@@ -186,6 +190,7 @@ EditorImportPage::EditorImportPage()
 
     addKeyClassDescription( &mSheetKeyLegend, "r-mouse", "Mv sheet" );
     addKeyDescription( &mSheetKeyLegend, 'c', "Mv sprite center" );
+    addKeyDescription( &mSheetKeyLegend, 'x', "Copy pixel color" );
 
     addKeyClassDescription( &mLinesKeyLegend, "arrows", "Mv lines" );
     addKeyClassDescription( &mLinesKeyLegend, "Ctr/Shft", "Bigger jumps" );
@@ -1296,6 +1301,24 @@ void EditorImportPage::keyDown( unsigned char inASCII ) {
         }
     else if( inASCII == 'c' ) {
         mSettingSpriteCenter = true;
+        }
+    else if( inASCII == 'x' ) {
+        if( mImportedSheet != NULL ) {
+            
+            int startImX = (int)( lastMouseX + mSheetW/2 - mSheetOffset.x );
+            int startImY = (int)( mSheetH/2 - lastMouseY + mSheetOffset.y );
+            
+            if( startImX >= 0 && startImX < mSheetW &&
+                startImY >= 0 && startImY < mSheetH ) {
+                
+                Color c = mImportedSheet->getColor( 
+                    startImY * mSheetW + startImX );
+
+                FloatRGB fC = { c.r, c.g, c.b };
+                
+                objectPage->setClipboardColor( fC );
+                }            
+            }
         }
     }
 
