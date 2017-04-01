@@ -2,6 +2,8 @@
 
 #include "ageControl.h"
 
+#include "zoomView.h"
+
 
 #include "minorGems/game/game.h"
 #include "minorGems/game/Font.h"
@@ -3283,6 +3285,15 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     
     drawRect( mouseCenter, 1000, 0.5 );
     drawRect( mouseCenter, 0.5, 1000 );
+    
+
+
+    doublePair zoomPos = { lastMouseX, lastMouseY };
+
+    pos.x = -500;
+    pos.y = -290;
+    
+    drawZoomView( zoomPos, 16, 4, pos );
     }
 
 

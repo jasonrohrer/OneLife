@@ -30,6 +30,9 @@ static OverlayPickable overlayPickable;
 extern EditorObjectPage *objectPage;
 
 
+#include "zoomView.h"
+
+
 EditorImportPage::EditorImportPage()
         : mImportButton( smallFont, +170, 280, "Sprite Import" ),
           mImportLinesButton( smallFont, +170, 240, "Lines Import" ),
@@ -1050,7 +1053,16 @@ void EditorImportPage::draw( doublePair inViewCenter,
     doublePair pos = mSolidCheckbox.getPosition();
     pos.x -= 20;
     smallFont->drawString( "Solid", pos, alignRight );
+
+
+
     
+    doublePair zoomPos = { lastMouseX, lastMouseY };
+
+    pos.x = -500;
+    pos.y = -290;
+    
+    drawZoomView( zoomPos, 16, 4, pos );
     }
 
 

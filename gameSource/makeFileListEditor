@@ -48,6 +48,7 @@ soundBank.cpp \
 SoundWidget.cpp \
 convolution.cpp \
 fft.cpp \
+zoomView.cpp \
 
 
 GAME_GRAPHICS = \
