@@ -1068,7 +1068,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
         }
 
     
-    int frontHandIndex = getFrontHandIndex( obj, inAge );
+    int backHandIndex = getBackHandIndex( obj, inAge );
     
     doublePair headPos = obj->spritePos[ headIndex ];
 
@@ -1903,7 +1903,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
             // this is front-most drawn hand
             // in unanimated, unflipped object
-            if( i == frontHandIndex && inHideClosestArm == 0 
+            if( i == backHandIndex && inHideClosestArm == 0 
                 && !inHideAllLimbs ) {
                 returnHoldingPos.valid = true;
                 // return screen pos for hand, which may be flipped, etc.

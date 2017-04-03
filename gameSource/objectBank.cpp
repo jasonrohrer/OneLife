@@ -1588,7 +1588,7 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
         }
     
 
-    int frontHandIndex = getFrontHandIndex( inObject, inAge );
+    int backHandIndex = getBackHandIndex( inObject, inAge );
     
     doublePair headPos = inObject->spritePos[ headIndex ];
 
@@ -1851,7 +1851,7 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             
             // this is the front-most drawn hand
             // in unanimated, unflipped object
-            if( i == frontHandIndex && ( inHideClosestArm == 0 ) 
+            if( i == backHandIndex && ( inHideClosestArm == 0 ) 
                 && !inHideAllLimbs ) {
                 
                 returnHoldingPos.valid = true;
