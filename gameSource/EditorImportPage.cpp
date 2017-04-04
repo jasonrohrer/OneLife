@@ -194,9 +194,10 @@ EditorImportPage::EditorImportPage()
     addKeyClassDescription( &mSheetKeyLegend, "r-mouse", "Mv sheet" );
     addKeyDescription( &mSheetKeyLegend, 'c', "Mv sprite center" );
     addKeyDescription( &mSheetKeyLegend, 'x', "Copy pixel color" );
+    addKeyClassDescription( &mSheetKeyLegend, "ijkl", "Mv sheet" );
+    addKeyClassDescription( &mSheetKeyLegend, "Ctr/Shft", "Bigger jumps" );
 
     addKeyClassDescription( &mLinesKeyLegend, "arrows", "Mv lines" );
-    addKeyClassDescription( &mLinesKeyLegend, "Ctr/Shft", "Bigger jumps" );
     
 
     addKeyDescription( &mOverlayKeyLegend, 't', "Mv overlay" );
@@ -1033,7 +1034,7 @@ void EditorImportPage::draw( doublePair inViewCenter,
         drawKeyLegend( &mSheetKeyLegend, pos );
 
         if( mLinesOffset.size() > 0 ) {
-            pos.y -= 32;
+            pos.y -= 80;
             drawKeyLegend( &mLinesKeyLegend, pos );
             }
         }
@@ -1287,7 +1288,34 @@ void EditorImportPage::keyDown( unsigned char inASCII ) {
         return;
         }
 
-    if( inASCII == 't' ) {
+
+    int offset = 1;
+        
+    if( isCommandKeyDown() ) {
+        offset = 5;
+        }
+    if( isShiftKeyDown() ) {
+        offset = 10;
+        }
+    if( isCommandKeyDown() && isShiftKeyDown() ) {
+        offset = 20;
+        }
+
+    
+    // check ASCII codes for ctrl-i, -j, -k, etc
+    if( inASCII == 'i' || inASCII == 'I' || inASCII == 9 ) {
+        mSheetOffset.y += offset;
+        }
+    else if( inASCII == 'j' || inASCII == 'J' || inASCII == 10 ) {
+        mSheetOffset.x -= offset;
+        }
+    else if( inASCII == 'k' || inASCII == 'K' || inASCII == 11 ) {
+        mSheetOffset.y -= offset;
+        }
+    else if( inASCII == 'l' || inASCII == 'L' || inASCII == 12 ) {
+        mSheetOffset.x += offset;
+        }
+    else if( inASCII == 't' ) {
         mMovingOverlay = true;
         mMovingOverlayPointerStart.x = lastMouseX - 
             mOverlayOffset.getLastElementDirect().x;
