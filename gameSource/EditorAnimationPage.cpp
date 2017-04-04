@@ -61,6 +61,8 @@ EditorAnimationPage::EditorAnimationPage()
           mPersonAgeSlider( smallFont, 100, -212, 2,
                             100, 20,
                             0, 100, "Age" ),
+          mPlayAgeButton( smallFont, 264, -212, "P" ),
+          mPlayingAge( false ),
           mTestSpeedSlider( smallFont, 100, -170, 2,
                             100, 20,
                             0, 1, "Test Speed" ),
@@ -194,6 +196,10 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mPersonAgeSlider );
     
     mPersonAgeSlider.setVisible( false );
+
+    addComponent( &mPlayAgeButton );
+    mPlayAgeButton.addActionListener( this );
+    mPlayAgeButton.setVisible( false );
 
 
     addComponent( &mTestSpeedSlider );
@@ -1031,6 +1037,14 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             mPasteSoundAnimButton.setVisible( true );
             }
         }
+    else if( inTarget == &mPlayAgeButton ) {
+        if( !mPlayingAge ) {
+            mPlayingAge = true;
+            }
+        else {
+            mPlayingAge = false;
+            }
+        }
     else if( inTarget == &mCopyAllSoundAnimButton ) {
         
         markAllCopyBufferSoundsNotLive();
@@ -1520,11 +1534,15 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 if( getObject( mCurrentObjectID )->person ) {
                     mPersonAgeSlider.setValue( defaultAge );
                     mPersonAgeSlider.setVisible( true );
+                    mPlayAgeButton.setVisible( true );
                     mCheckboxes[3]->setVisible( true );
                     mCheckboxes[4]->setVisible( true );
                     }
                 else {
                     mPersonAgeSlider.setVisible( false );
+                    mPlayAgeButton.setVisible( false );
+                    mPlayingAge = false;
+                    
                     if( mCheckboxes[3]->getToggled() || 
                         mCheckboxes[4]->getToggled() ) {
                         
@@ -2418,6 +2436,18 @@ void EditorAnimationPage::step() {
         for( int i=0; i<obj->numSprites; i++ ) {
             markSpriteLive( obj->sprites[i] );
             }
+        }
+
+    if( mPlayingAge ) {
+        double old = mPersonAgeSlider.getValue();
+        
+        double newAge = old + 0.05;
+        
+        if( newAge > 60 ) {
+            newAge = 60;
+            mPlayingAge = false;
+            }
+        mPersonAgeSlider.setValue( newAge );
         }
     
     }

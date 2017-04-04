@@ -95,6 +95,9 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
 
         ValueSlider mPersonAgeSlider;
+        TextButton mPlayAgeButton;
+        
+        char mPlayingAge;
 
         ValueSlider mTestSpeedSlider;
         double mLastTestSpeed;
