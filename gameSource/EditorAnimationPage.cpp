@@ -2251,6 +2251,8 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
         int num;
         
         AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
+
+        int spriteID = -1;
         
         if( mCurrentSpriteOrSlot > anim->numSprites - 1 ) {
             tag = "Slot";
@@ -2259,6 +2261,13 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
         else {
             tag = "Sprite";
             num = mCurrentSpriteOrSlot;
+            
+            if( mCurrentSpriteOrSlot < 
+                getObject( mCurrentObjectID )->numSprites ) {
+                
+                spriteID = getObject( mCurrentObjectID )->
+                    sprites[ mCurrentSpriteOrSlot ];
+                }
             }
 
         char *string = autoSprintf( "%s %d", tag, num );
@@ -2269,6 +2278,14 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
         smallFont->drawString( getObject( mCurrentObjectID )->description,
                                pos, alignLeft );
         
+        pos.y -= 56;
+        
+        if( spriteID != -1 ) {
+            smallFont->drawString( getSpriteRecord( spriteID )->tag,
+                                   pos, alignLeft );
+            }
+        
+
         if( mCurrentSpriteOrSlot < anim->numSprites ) {
             doublePair legendPos = mObjectEditorButton.getPosition();
             
