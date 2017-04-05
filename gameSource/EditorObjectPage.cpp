@@ -287,7 +287,8 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mObjectPicker );
 
     addComponent( &mPersonAgeSlider );
-
+    mPersonAgeSlider.setValue( defaultAge );
+    
     addComponent( &mHueSlider );
     addComponent( &mSaturationSlider );
     addComponent( &mValueSlider );
@@ -2391,7 +2392,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
 
             if( mCheckboxes[2]->getToggled() ) {
-                mPersonAgeSlider.setValue( defaultAge );
                 mPersonAgeSlider.setVisible( true );
                 mRaceField.setVisible( true );
                 }

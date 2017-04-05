@@ -196,7 +196,8 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mPersonAgeSlider );
     
     mPersonAgeSlider.setVisible( false );
-
+    mPersonAgeSlider.setValue( defaultAge );
+    
     addComponent( &mPlayAgeButton );
     mPlayAgeButton.addActionListener( this );
     mPlayAgeButton.setVisible( false );
@@ -1532,7 +1533,6 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                     }
 
                 if( getObject( mCurrentObjectID )->person ) {
-                    mPersonAgeSlider.setValue( defaultAge );
                     mPersonAgeSlider.setVisible( true );
                     mPlayAgeButton.setVisible( true );
                     mCheckboxes[3]->setVisible( true );
