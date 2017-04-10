@@ -1418,48 +1418,63 @@ void drawFrame( char inUpdate ) {
                 if( serverIP != NULL ) {
                     delete [] serverIP;
                     }
-                
+
                 serverIP = getServerAddressPage->getResponse( "serverIP" );
                 
                 serverPort = 
                     getServerAddressPage->getResponseInt( "serverPort" );
                 
-
-                printf( "Got server address: %s:%d\n", serverIP, serverPort );
-
-                int requiredVersion =
-                    getServerAddressPage->getResponseInt( 
-                        "requiredVersionNumber" );
                 
-                if( versionNumber < requiredVersion ) {
+                if( strstr( serverIP, "NONE_FOUND" ) != NULL ) {
                     
-                    char *autoUpdateURL = 
-                        getServerAddressPage->getResponse( "autoUpdateURL" );
-
-                    
-                    char updateStarted = 
-                        startUpdate( autoUpdateURL, versionNumber );
-                    
-                    delete [] autoUpdateURL;
-
-                    if( ! updateStarted ) {
-                        currentGamePage = finalMessagePage;
+                    currentGamePage = finalMessagePage;
                         
-                        finalMessagePage->setMessageKey( "upgradeMessage" );
-                        
-                                                
-                        currentGamePage->base_makeActive( true );
-                        }
-                    else {
-                        currentGamePage = autoUpdatePage;
-                        currentGamePage->base_makeActive( true );
-                        }
-
+                    finalMessagePage->setMessageKey( "serverShutdownMessage" );
+                    
+                    
+                    currentGamePage->base_makeActive( true );
                     }
                 else {
-                    // up to date, okay to connect
-                    currentGamePage = livingLifePage;
-                    currentGamePage->base_makeActive( true );
+                    
+
+                    printf( "Got server address: %s:%d\n", 
+                            serverIP, serverPort );
+                
+                    int requiredVersion =
+                        getServerAddressPage->getResponseInt( 
+                            "requiredVersionNumber" );
+                    
+                    if( versionNumber < requiredVersion ) {
+                        
+                        char *autoUpdateURL = 
+                            getServerAddressPage->getResponse( 
+                                "autoUpdateURL" );
+
+                    
+                        char updateStarted = 
+                            startUpdate( autoUpdateURL, versionNumber );
+                        
+                        delete [] autoUpdateURL;
+                        
+                        if( ! updateStarted ) {
+                            currentGamePage = finalMessagePage;
+                            
+                            finalMessagePage->setMessageKey( "upgradeMessage" );
+                            
+                            
+                            currentGamePage->base_makeActive( true );
+                            }
+                        else {
+                            currentGamePage = autoUpdatePage;
+                            currentGamePage->base_makeActive( true );
+                            }
+                        
+                        }
+                    else {
+                        // up to date, okay to connect
+                        currentGamePage = livingLifePage;
+                        currentGamePage->base_makeActive( true );
+                        }
                     }
                 }
             }

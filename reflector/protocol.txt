@@ -18,6 +18,14 @@ autoUpdateURL
 OK
 
 
+OR Returns:
+NON_FOUND
+0
+0
+0
+OK
+
+
 Where:
 email     = email address of connecting user (used for sorting users)
 
