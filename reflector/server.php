@@ -160,7 +160,10 @@ function tryServer( $inAddress, $inPort ) {
                 // we've dropped back down below the spreading fraction
                 // stop sending people to servers further down
                 // the list from this one
-                unlink( $spreadingFile );
+                if( file_exists( $spreadingFile )  ) {
+                    unlink( $spreadingFile );
+                    }
+                
                 $spreading = false;
                 }
 
