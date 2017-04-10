@@ -184,15 +184,45 @@ mv $dbzFileName ~/www/updateBundles/
 
 echo -n "http://onehouronelife.com/updateBundles/$dbzFileName" > ~/diffBundles/${newVersion}_inc_all_urls.txt
 
-echo -n "<?php \$version=$newVersion; ?>" > ~/www/reflector/requiredVersion.php
+
+# don't post new version requirement to reflector just yet
+# need to shutdown all servers first
 
 
 rm -r ~/checkout/diffWorking
 
 
 echo "" 
-echo "Shutting down server"
+echo "Shutting down local server, set server shutdownMode flag."
 echo ""
+
+
+echo -n "1" > ~/checkout/OneLife/server/settings/shutdownMode.ini
+
+
+echo "" 
+echo "Shutting down remote servers, setting server shutdownMode flags."
+echo ""
+
+
+
+# feed file through grep to add newlines at the end of each line
+# otherwise, read skips the last line if it doesn't end with newline
+while read user server port
+do
+  echo "  Shutting down $server"
+  ssh $user@$server '~/checkout/OneLife/scripts/remoteServerShutdown.sh'
+done <  <( grep "" ~/www/reflector/remoteServerList.ini )
+
+
+
+
+# now that servers are no longer accepting new connections, tell reflector
+# that an upgrade is available
+echo -n "<?php \$version=$newVersion; ?>" > ~/www/reflector/requiredVersion.php
+
+
+
 
 serverPID=`pgrep OneLifeServer`
 
@@ -200,10 +230,9 @@ if [ -z $serverPID ]
 then
 	echo "Server not running!"
 else
-	echo -n "1" > ~/checkout/OneLife/server/settings/shutdownMode.ini
 
 	echo "" 
-	echo "Set server shutdownMode, waiting for server to exit"
+	echo "Waiting for server to exit"
 	echo ""
 
         while kill -CONT $serverPID 1>/dev/null 2>&1; do sleep 1; done
@@ -212,6 +241,9 @@ else
 	echo "Server has shutdown"
 	echo ""
 fi
+
+
+
 
 
 echo "" 
@@ -275,3 +307,18 @@ echo -n "0" > ~/checkout/OneLife/server/settings/shutdownMode.ini
 cd ~/checkout/OneLife/server/
 
 sh ./runHeadlessServerLinux.sh
+
+
+
+
+echo "" 
+echo "Triggering remote server updates and restarts."
+echo ""
+
+
+# contiue with remote server restarts
+while read user server port
+do
+  echo "  Starting update on $server"
+  ssh $user@$server '~/checkout/OneLife/scripts/remoteServerUpdate.sh'
+done <  <( grep "" ~/www/reflector/remoteServerList.ini )
