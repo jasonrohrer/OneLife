@@ -28,10 +28,24 @@ receiving a client connection, the server will immediately send the following
 message:
 
 SHUTDOWN
+current_players/max_players
 #
 
 All further messages from the client will be ignored.
 
+
+
+Server full
+
+If the server is full, (no new connections allowed), upon 
+receiving a client connection, the server will immediately send the following
+message:
+
+SERVER_FULL
+current_players/max_players
+#
+
+All further messages from the client will be ignored.
 
 
 
@@ -41,6 +55,7 @@ Client login proceedure.
     a sequence number to the client in the following format:
     
 SN
+current_players/max_players
 sequence_number
 #
 

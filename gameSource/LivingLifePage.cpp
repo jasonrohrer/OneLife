@@ -131,6 +131,7 @@ static double computeCurrentAge( LiveObject *inObj ) {
 
 typedef enum messageType {
     SHUTDOWN,
+    SERVER_FULL,
 	SEQUENCE_NUMBER,
     ACCEPTED,
     REJECTED,
@@ -161,6 +162,9 @@ messageType getMessageType( char *inMessage ) {
 
     if( strcmp( copy, "SHUTDOWN" ) == 0 ) {
         returnValue = SHUTDOWN;
+        }
+    else if( strcmp( copy, "SERVER_FULL" ) == 0 ) {
+        returnValue = SERVER_FULL;
         }
     else if( strcmp( copy, "SN" ) == 0 ) {
         returnValue = SEQUENCE_NUMBER;
@@ -3809,11 +3813,27 @@ void LivingLifePage::step() {
             delete [] message;
             return;
             }
+        else if( type == SERVER_FULL ) {
+            closeSocket( mServerSocket );
+            mServerSocket = -1;
+            setSignal( "serverFull" );
+            
+            delete [] message;
+            return;
+            }
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
             
             int number = 0;
-            sscanf( message, "SN\n%d\n", &number );
+
+            // we don't use these for anything in client
+            int currentPlayers = 0;
+            int maxPlayers = 0;
+
+            sscanf( message, 
+                    "SN\n"
+                    "%d/%d\n"
+                    "%d\n", &currentPlayers, &maxPlayers, &number );
             
             char *pureKey = getPureAccountKey();
             

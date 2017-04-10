@@ -2455,6 +2455,12 @@ int main() {
                 
                 char *message;
                 
+                int maxPlayers = 
+                    SettingsManager::getIntSetting( "maxPlayers", 200 );
+                
+                int currentPlayers = players.size() + newConnections.size();
+                    
+
                 if( SettingsManager::getIntSetting( "shutdownMode", 0 ) ) {
                         
                     AppLog::info( "We are in shutdown mode, "
@@ -2463,11 +2469,29 @@ int main() {
                     AppLog::infoF( "%d player(s) still alive on server.",
                                    players.size() );
 
-                    message = stringDuplicate( "SHUTDOWN\n#" );
+                    message = autoSprintf( "SHUTDOWN\n"
+                                           "%d/%d\n"
+                                           "#",
+                                           currentPlayers, maxPlayers );
                     newConnection.shutdownMode = true;
                     }
+                else if( currentPlayers >= maxPlayers ) {
+                    AppLog::infoF( "%d of %d permitted players connected, "
+                                   "deflecting new connection",
+                                   currentPlayers, maxPlayers );
+                    
+                    message = autoSprintf( "SERVER_FULL\n"
+                                           "%d/%d\n"
+                                           "#",
+                                           currentPlayers, maxPlayers );
+                    
+                    newConnection.shutdownMode = true;
+                    }         
                 else {
-                    message = autoSprintf( "SN\n%lu\n#", 
+                    message = autoSprintf( "SN\n"
+                                           "%d/%d\n"
+                                           "%lu\n#",
+                                           currentPlayers, maxPlayers,
                                            newConnection.sequenceNumber );
                     newConnection.shutdownMode = false;
                     }
