@@ -43,6 +43,7 @@ rndc reload onehouronelife.com in external
 
 
 
+
 su jcr15<<EOSU
 
 echo "Running remote setup script on new server"
