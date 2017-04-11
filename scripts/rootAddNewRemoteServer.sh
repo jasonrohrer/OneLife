@@ -42,7 +42,10 @@ rndc reload onehouronelife.com in internal
 rndc reload onehouronelife.com in external
 
 
+
 su jcr15<<EOSU
+
+echo "Running remote setup script on new server"
 
 cd ~/checkout/OneLifeWorking
 hg pull
@@ -53,6 +56,9 @@ scp linodeRootSetup.sh root@$address:
 
 ssh root@address './linodeRootSetup.sh'
 
+
+echo "Setting up local ssh private key for new server"
+
 cd ~/.ssh
 
 echo "" >> config
@@ -61,8 +67,15 @@ echo "HostName       $subdomain.onehouronelife.com" >> config
 echo "IdentityFile   ~/.ssh/remoteServers_id_rsa" >> config
 echo "User           jcr13" >> config
 
+
+echo "Telling local reflector about new server"
+
+
 cd ~/www/reflector
 
 echo "jcr13 $subdomain.onehouronelife.com 8005" >> remoteServerList.ini
 
 EOSU
+
+
+echo "Done with new server setup"
