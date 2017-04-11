@@ -17,8 +17,9 @@ mkhomedir_helper jcr13
 passwd jcr13
 
 
-su jcr13
-cd ~
+su jcr13<<EOSU
+
+cd /home/jcr13
 
 mkdir checkout
 cd checkout
@@ -42,3 +43,8 @@ make
 
 
 exit
+EOSU
+
+echo ""
+echo "Done with setup."
+echo ""
