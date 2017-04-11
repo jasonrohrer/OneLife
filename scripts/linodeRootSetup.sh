@@ -16,6 +16,9 @@ useradd -m -s /bin/bash jcr13
 passwd jcr13
 
 
+dataName="OneLifeData6"
+
+
 su jcr13<<EOSU
 
 cd /home/jcr13
@@ -24,7 +27,8 @@ mkdir checkout
 cd checkout
 
 
-dataName="OneLIfeData6"
+
+echo "Using data repository $dataName"
 
 hg clone http://hg.code.sf.net/p/hcsoftware/OneLife
 hg clone http://hg.code.sf.net/p/hcsoftware/$dataName
@@ -33,14 +37,14 @@ hg clone http://hg.code.sf.net/p/minorgems/minorGems
 
 cd $dataName
 
-lastTaggedDataVersion=`hg tags | grep "OneLife" -m 1 | awk '{print $1}' | sed -e 's/OneLife_v//'`
+lastTaggedDataVersion=\`hg tags | grep "OneLife" -m 1 | awk '{print \$1}' | sed -e 's/OneLife_v//'\`
 
 
 echo "" 
-echo "Most recent Data hg version is:  $lastTaggedDataVersion"
+echo "Most recent Data hg version is:  \$lastTaggedDataVersion"
 echo ""
 
-hg update OneLife_v$lastTaggedDataVersion
+hg update OneLife_v\$lastTaggedDataVersion
 
 
 
