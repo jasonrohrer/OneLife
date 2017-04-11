@@ -23,16 +23,33 @@ cd /home/jcr13
 mkdir checkout
 cd checkout
 
+
+dataName="OneLIfeData6"
+
 hg clone http://hg.code.sf.net/p/hcsoftware/OneLife
-hg clone http://hg.code.sf.net/p/hcsoftware/OneLifeData7
+hg clone http://hg.code.sf.net/p/hcsoftware/$dataName
 hg clone http://hg.code.sf.net/p/minorgems/minorGems
 
-cd OneLife/server
+
+cd $dataName
+
+lastTaggedDataVersion=`hg tags | grep "OneLife" -m 1 | awk '{print $1}' | sed -e 's/OneLife_v//'`
+
+
+echo "" 
+echo "Most recent Data hg version is:  $lastTaggedDataVersion"
+echo ""
+
+hg update OneLife_v$lastTaggedDataVersion
+
+
+
+cd ../OneLife/server
 
 echo "http://onehouronelife.com/ticketServer/server.php" > settings/ticketServerURL.ini
 
-ln -s ../../OneLifeData7/objects .
-ln -s ../../OneLifeData7/transitions .
+ln -s ../../$dataName/objects .
+ln -s ../../$dataName/transitions .
 
 ./configure 1
 
