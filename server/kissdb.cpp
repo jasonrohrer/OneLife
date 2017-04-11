@@ -72,7 +72,7 @@ int KISSDB_open(
 		fclose(db->f);
 		return KISSDB_ERROR_IO;
 	}
-	if (ftello(db->f) < KISSDB_HEADER_SIZE) {
+	if (ftello(db->f) < (int)( KISSDB_HEADER_SIZE ) ) {
 		/* write header if not already present */
 		if ((hash_table_size)&&(key_size)&&(value_size)) {
 			if (fseeko(db->f,0,SEEK_SET)) { fclose(db->f); return KISSDB_ERROR_IO; }
