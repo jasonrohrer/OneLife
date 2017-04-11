@@ -78,5 +78,10 @@ exit
 EOSU
 
 echo ""
-echo "Done with setup."
+echo "Done with remote setup."
+echo ""
+
+
+echo -n "If this was run interactively in the middle of another "
+echo "automated process, you can type exit now"
 echo ""

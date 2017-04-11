@@ -23,7 +23,7 @@ echo ""
 
 echo "Configuring DNS for $subdomain.onehouronelife.com to point to $address"
 
-echo "Hit [ENTER] when ready: "
+echo -n "Hit [ENTER] when ready: "
 read
 
 timestamp="$(date +"%s")"
@@ -53,10 +53,22 @@ hg pull
 hg update
 cd scripts
 
-scp linodeRootSetup.sh root@$address:
+scp -o StrictHostKeychecking=no linodeRootSetup.sh root@$address:
 
-ssh root@address './linodeRootSetup.sh'
 
+EOSU
+
+
+echo ""
+echo "You now must login as root on the new server and run ./linodeRootSetup.sh"
+echo "This has to be done interactively.  exit when you're done"
+echo ""
+
+ssh -o StrictHostKeychecking=no root@$address
+
+
+
+su jcr15<<EOSU2
 
 echo "Setting up local ssh private key for new server"
 
@@ -76,7 +88,7 @@ cd ~/www/reflector
 
 echo "jcr13 $subdomain.onehouronelife.com 8005" >> remoteServerList.ini
 
-EOSU
+EOSU2
 
 
 echo "Done with new server setup"
