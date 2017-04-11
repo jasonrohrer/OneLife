@@ -12,8 +12,7 @@ echo "Setting up new user account jcr13..."
 echo ""
 echo ""
 
-useradd jcr13
-mkhomedir_helper jcr13
+useradd -m -s /bin/bash jcr13
 passwd jcr13
 
 
@@ -40,6 +39,18 @@ ln -s ../../OneLifeData7/transitions .
 make
 
 ./runHeadlessServerLinux.sh
+
+
+cd /home/jcr13
+mkdir .ssh
+
+chmod 744 .ssh
+
+cd .ssh
+
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAsiD85AwaNxcUzNzHPapVaGVIQCTUfdKT2tyd26MWqEds2UHLZund+S930BWz7guu3/mzuTomJnPxZPSyb+62ZiuAR0YaGZwYwMrFkrbPsXf6//MZDBvdMMcqPyqLj3Iny2ZZ9LTnSIs0hqQ3SksvP/qqHthS1YQWMwZlRxs6MmZdEuy4qZZgpnexf6uaWTEcxEO2Nij8LdEN8+jJZLHVkXSSD9c/ssTmdXss3/sVSZHYR+28HeqUahRsO0Rz6mR3FwB+ZslZlWiMFTzjkH5IA/XOiNK5Ezf1+EsQOn2OVfaCMlfJQ6YGp1kgFI01j2ZWHnqHaacvVc+C+9fAmIscZw==" > authorized_keys
+
+chmod 644 authorized_keys
 
 
 exit
