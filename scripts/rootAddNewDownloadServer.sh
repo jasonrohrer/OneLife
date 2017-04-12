@@ -1,6 +1,6 @@
 
 
-echo "New remote GAME server DNS setup and configuration"
+echo "New remote DOWNLOAD server DNS setup and configuration"
 
 echo ""
 
@@ -53,14 +53,15 @@ hg pull
 hg update
 cd scripts
 
-scp -o StrictHostKeychecking=no linodeRootSetup.sh root@$address:
+scp -o StrictHostKeychecking=no linodeDownloadServerRootSetup.sh root@$address:
 
 
 EOSU
 
 
 echo ""
-echo "You now must login as root on the new server and run ./linodeRootSetup.sh"
+echo "You now must login as root on the new server and run "
+echo "  ./linodeDownloadServerRootSetup.sh"
 echo "This has to be done interactively.  exit when you're done"
 echo ""
 
@@ -81,12 +82,21 @@ echo "IdentityFile   ~/.ssh/remoteServers_id_rsa" >> config
 echo "User           jcr13" >> config
 
 
-echo "Telling local reflector about new server"
+echo "Telling local diff bundle folder about new server"
 
 
-cd ~/www/reflector
+cd ~/diffBundles
 
-echo "jcr13 $subdomain.onehouronelife.com 8005" >> remoteServerList.ini
+echo "jcr13 $subdomain.onehouronelife.com" >> remoteServerList.ini
+
+
+echo "Copying diff bundles to new server's download directory"
+
+scp *.dbz jcr13@$address:downloads/
+
+cd ~/oneLifeDownloads
+
+scp * jcr13@$address:downloads/
 
 EOSU2
 
