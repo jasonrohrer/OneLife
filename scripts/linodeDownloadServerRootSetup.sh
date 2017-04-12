@@ -11,7 +11,7 @@ apt-get -y install emacs-nox nginx
 
 echo ""
 echo ""
-echo "Setting up new user account jcr13..."
+echo "Setting up new user account jcr13 without a password..."
 echo ""
 echo ""
 
@@ -48,6 +48,3 @@ echo "Done with remote setup."
 echo ""
 
 
-#echo -n "If this was run interactively in the middle of another "
-#echo "automated process, you can type exit now"
-#echo ""

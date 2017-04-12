@@ -10,12 +10,11 @@ apt-get -y install emacs-nox mercurial g++ expect gdb make
 
 echo ""
 echo ""
-echo "Setting up new user account jcr13..."
+echo "Setting up new user account jcr13 without a password..."
 echo ""
 echo ""
 
 useradd -m -s /bin/bash jcr13
-passwd jcr13
 
 
 dataName="OneLifeData6"
@@ -83,7 +82,3 @@ echo ""
 echo "Done with remote setup."
 echo ""
 
-
-echo -n "If this was run interactively in the middle of another "
-echo "automated process, you can type exit now"
-echo ""

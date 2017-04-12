@@ -61,11 +61,6 @@ scp -o StrictHostKeychecking=no linodeDownloadServerRootSetup.sh root@$address:
 EOSU
 
 
-#echo ""
-#echo "You now must login as root on the new server and run "
-#echo "  ./linodeDownloadServerRootSetup.sh"
-#echo "This has to be done interactively.  exit when you're done"
-#echo ""
 
 echo ""
 echo "Connecting to remote host to run setup script there"

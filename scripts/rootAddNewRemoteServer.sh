@@ -46,7 +46,9 @@ rndc reload onehouronelife.com in external
 
 su jcr15<<EOSU
 
-echo "Running remote setup script on new server"
+echo ""
+echo "Copying remote setup script onto new server"
+echo ""
 
 cd ~/checkout/OneLifeWorking
 hg pull
@@ -59,12 +61,17 @@ scp -o StrictHostKeychecking=no linodeRootSetup.sh root@$address:
 EOSU
 
 
+
 echo ""
-echo "You now must login as root on the new server and run ./linodeRootSetup.sh"
-echo "This has to be done interactively.  exit when you're done"
+echo "Connecting to remote host to run setup script there"
 echo ""
 
-ssh -o StrictHostKeychecking=no root@$address
+ssh -o StrictHostKeychecking=no root@$address "./linodeRootSetup.sh"
+
+
+echo ""
+echo "Disconnected from remote host"
+echo ""
 
 
 
