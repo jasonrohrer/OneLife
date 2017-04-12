@@ -126,6 +126,14 @@ cd ~/oneLifeDownloads
 
 scp * jcr13@$subdomain.onehouronelife.com:downloads/
 
+
+echo ""
+echo "Telling ticket server about new mirror for main downloads"
+echo ""
+
+echo "http://$subdomain.onehouronelife.com/downloads/" >> remoteServerList.ini
+
+
 EOSU3
 
 
