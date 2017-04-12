@@ -90,15 +90,37 @@ cd ~/diffBundles
 echo "jcr13 $subdomain.onehouronelife.com" >> remoteServerList.ini
 
 
+
+
 echo "Copying diff bundles to new server's download directory"
 
-scp *.dbz jcr13@$address:downloads/
+scp *.dbz jcr13@$subdomain:downloads/
+
+
+EOSU2
+
+
+# cleaner to do this without escaping
+echo "Adding to update server's URL mirror lists"
+
+cd /home/jcr13/diffBundles
+
+for file in *.dbz; do
+    urlFile=$(echo $file | sed -e 's/.dbz/_urls.txt/g')
+    echo "http://$subdomain.onehouronelife.com/downloads/$file" >> $urlFile 
+done
+
+
+
+su jcr15<<EOSU3
+echo "Copying primary download files to new server's download directory"
+
 
 cd ~/oneLifeDownloads
 
-scp * jcr13@$address:downloads/
+scp * jcr13@$subdomain:downloads/
 
-EOSU2
+EOSU3
 
 
 echo "Done with new server setup"
