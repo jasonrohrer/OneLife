@@ -82,7 +82,7 @@ echo "Setting up local ssh private key for new server"
 cd ~/.ssh
 
 echo "" >> config
-echo "Host           $subdomain" >> config
+echo "Host           $subdomain.onehouronelife.com" >> config
 echo "HostName       $subdomain.onehouronelife.com" >> config
 echo "IdentityFile   ~/.ssh/remoteServers_id_rsa" >> config
 echo "User           jcr13" >> config
@@ -100,7 +100,7 @@ echo "jcr13 $subdomain.onehouronelife.com" >> remoteServerList.ini
 
 echo "Copying diff bundles to new server's download directory"
 
-scp *.dbz jcr13@$subdomain:downloads/
+scp *.dbz jcr13@$subdomain.onehouronelife.com:downloads/
 
 
 EOSU2
@@ -124,7 +124,7 @@ echo "Copying primary download files to new server's download directory"
 
 cd ~/oneLifeDownloads
 
-scp * jcr13@$subdomain:downloads/
+scp * jcr13@$subdomain.onehouronelife.com:downloads/
 
 EOSU3
 

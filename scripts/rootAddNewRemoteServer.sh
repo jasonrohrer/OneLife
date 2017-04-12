@@ -82,7 +82,7 @@ echo "Setting up local ssh private key for new server"
 cd ~/.ssh
 
 echo "" >> config
-echo "Host           $subdomain" >> config
+echo "Host           $subdomain.onehouronelife.com" >> config
 echo "HostName       $subdomain.onehouronelife.com" >> config
 echo "IdentityFile   ~/.ssh/remoteServers_id_rsa" >> config
 echo "User           jcr13" >> config
