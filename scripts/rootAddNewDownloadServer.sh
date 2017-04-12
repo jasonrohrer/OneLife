@@ -114,7 +114,7 @@ EOSU2
 # cleaner to do this without escaping
 echo "Adding to update server's URL mirror lists"
 
-cd /home/jcr13/diffBundles
+cd /home/jcr15/diffBundles
 
 for file in *.dbz; do
     urlFile=$(echo $file | sed -e 's/.dbz/_urls.txt/g')
