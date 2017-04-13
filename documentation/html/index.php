@@ -35,7 +35,7 @@ a multiplayer survival game of parenting and civilization building by <a href=ht
 <form action="http://northcountrynotes.org/releaseList/server.php" 
       method="post">
 <input type="hidden" name="action" value="subscribe">
-<input type="hidden" name="timeStamp" value="<?php echo time();?>">
+<input type="hidden" name="timeStamp" value="<?php echo file_get_contents( 'http://northcountrynotes.org/releaseList/server.php?action=timestamp' ); ?>">
 Sign up for release announcement emails: <input type="text" name="email" value="">
 <input type="submit" value="Subscribe"><br>
 (A few brief emails a year, at most.)
