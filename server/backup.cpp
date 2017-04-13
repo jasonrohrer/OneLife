@@ -121,6 +121,50 @@ void checkBackup() {
 
                     AppLog::info( "...Done saving backups" );
                     backupsSaved = true;
+
+                    
+                    int keepDays = 
+                        SettingsManager::getIntSetting( "keepBackupsDays",
+                                                        14 );
+
+
+                    AppLog::infoF( "Checking for stale backup files "
+                                   "(older than %d days)", keepDays );
+                    
+                    int keepSeconds = keepDays * 24 * 3600;
+
+                    int numChildren;
+                    File **childFiles = 
+                        backupFolder.getChildFiles( &numChildren );
+                    
+                    int numRemoved = 0;
+                    
+                    for( int i=0; i<numChildren; i++ ) {
+                        if( curTime - 
+                            childFiles[i]->getModificationTime()
+                            > keepSeconds ) {
+                            
+                            char removed = childFiles[i]->remove();
+
+                            char *fileName = childFiles[i]->getFileName();
+                            
+                            if( removed ) {
+                                AppLog::infoF( "Removed %s", fileName );
+                                numRemoved++;
+                                }
+                            else {
+                                AppLog::errorF( "Failed to remove %s",
+                                                fileName );
+                                }
+                            delete [] fileName;
+                            }
+                        delete childFiles[i];
+                        }
+                    
+                    delete [] childFiles;
+                    
+                    AppLog::infoF( "Done checking, removed %d stale backups", 
+                                   numRemoved );
                     }
                 
                 if( !backupsSaved ) {
