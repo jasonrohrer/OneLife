@@ -27,6 +27,7 @@
 #include "../gameSource/objectBank.h"
 
 #include "lifeLog.h"
+#include "backup.h"
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
 
@@ -2210,6 +2211,8 @@ int main() {
     printf( "\n" );
     
     initLifeLog();
+    initBackup();
+
 
     nextSequenceNumber = 
         SettingsManager::getIntSetting( "sequenceNumber", 1 );
@@ -2250,11 +2253,11 @@ int main() {
 
 
 #ifdef WIN_32
-    printf( "Press CTRL-C to shut down server gracefully\n\n" );
+    printf( "\n\nPress CTRL-C to shut down server gracefully\n\n" );
 
     SetConsoleCtrlHandler( ctrlHandler, TRUE );
 #else
-    printf( "Press CTRL-Z to shut down server gracefully\n\n" );
+    printf( "\n\nPress CTRL-Z to shut down server gracefully\n\n" );
 
     signal( SIGTSTP, intHandler );
 #endif
@@ -2288,7 +2291,9 @@ int main() {
     AppLog::infoF( "Listening for connection on port %d", port );
 
     while( !quit ) {
-    
+        
+        checkBackup();
+        
         int numLive = players.size();
         
 

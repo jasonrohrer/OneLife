@@ -27,7 +27,7 @@ map.cpp \
 ../commonSource/fractalNoise.cpp \
 kissdb.cpp \
 lifeLog.cpp \
-
+backup.cpp
 
 GAME_GRAPHICS = \
 
