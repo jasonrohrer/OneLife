@@ -182,7 +182,32 @@ dbzFileName=${newVersion}_inc_all.dbz
 cp $dbzFileName ~/diffBundles/
 mv $dbzFileName ~/www/updateBundles/
 
-echo -n "http://onehouronelife.com/updateBundles/$dbzFileName" > ~/diffBundles/${newVersion}_inc_all_urls.txt
+
+# start with an empty URL list
+echo -n "" > ~/diffBundles/${newVersion}_inc_all_urls.txt
+
+
+# feed file through grep to add newlines at the end of each line
+# otherwise, read skips the last line if it doesn't end with newline
+
+# send this new .dbz to all the download servers
+while read user server
+do
+  echo ""
+  echo "Sending $dbzFileName to $server"
+  scp ~/diffBundles/$dbzFileName $user@$server:downloads/
+
+  echo "Adding url for $server to mirror list for this .dbz"
+
+  echo "http://$server/downloads/$dbzFileName" > ~/diffBundles/${newVersion}_inc_all_urls.txt
+
+done <  <( grep "" ~/diffBundles/remoteServerList.ini )
+
+
+# DO NOT add the main server to the mirror list
+# farm this out to conserve bandwidth on the main server
+
+# echo -n "http://onehouronelife.com/updateBundles/$dbzFileName" > ~/diffBundles/${newVersion}_inc_all_urls.txt
 
 
 # don't post new version requirement to reflector just yet
