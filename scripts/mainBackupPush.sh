@@ -23,6 +23,7 @@ find ~/backups -mtime +14 -delete
 
 
 
+
 rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress ~/backups/* $user@$server:checkout/OneLife/server/backups/main/ 
 
 rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress ~/checkout/OneLife/server/backups/* $user@$server:checkout/OneLife/server/backups/main/ 
