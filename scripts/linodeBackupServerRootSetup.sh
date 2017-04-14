@@ -36,6 +36,8 @@ cd /home/jcr13
 
 mkdir backups
 
+mkdir backups/main
+
 mkdir checkout
 cd checkout
 hg clone http://hg.code.sf.net/p/hcsoftware/OneLife
