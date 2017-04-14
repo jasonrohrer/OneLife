@@ -238,20 +238,35 @@ int main( int inNumArgs, char **inArgs ) {
     char *latestNaturalString = getLatestString( highestNaturalID );
     char *latestHumanMadeString = getLatestString( highestHumanMadeID );
     
+    const char *optionalS1 = "s";
+    const char *optionalS2 = "s";
+    const char *optionalS3 = "s";
+
+    if( numNatural == 1 ) {
+        optionalS1 = "";
+        }
+    if( numPeople == 1 ) {
+        optionalS2 = "";
+        }
+    if( numHumanMade == 1 ) {
+        optionalS3 = "";
+        }
+    
+    
     fprintf( outFile, 
              "<table width=100%% border=0><tr>"
              "<td width=33%% valign=top align=center>"
-               "%d natural objects<br>%s</td>"
+               "%d natural object%s<br>%s</td>"
              "<td> </td>"
              "<td width=33%% valign=top align=center>"
-               "%d playable characters</td>"
+               "%d playable character%s</td>"
              "<td> </td>"
              "<td width=33%% valign=top align=center>"
-               "%d human-makeable objects<br>%s</td>"
+               "%d human-makeable object%s<br>%s</td>"
              "</tr></table>",
-             numNatural, latestNaturalString, 
-             numPeople, 
-             numHumanMade, latestHumanMadeString );
+             numNatural, optionalS1, latestNaturalString, 
+             numPeople, optionalS2,
+             numHumanMade, optionalS3, latestHumanMadeString );
     
     delete [] latestHumanMadeString;
     delete [] latestNaturalString;
