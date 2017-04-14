@@ -55,7 +55,7 @@ hg pull
 hg update
 cd scripts
 
-scp -o StrictHostKeychecking=no linodeRootSetup.sh root@$address:
+scp -o StrictHostKeychecking=no linodeGameServerRootSetup.sh root@$address:
 
 
 EOSU
@@ -66,7 +66,7 @@ echo ""
 echo "Connecting to remote host to run setup script there"
 echo ""
 
-ssh -o StrictHostKeychecking=no root@$address "./linodeRootSetup.sh"
+ssh -o StrictHostKeychecking=no root@$address "./linodeGameServerRootSetup.sh"
 
 
 echo ""
