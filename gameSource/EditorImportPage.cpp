@@ -1382,6 +1382,11 @@ void EditorImportPage::keyUp( unsigned char inASCII ) {
 
 
 void EditorImportPage::specialKeyDown( int inKeyCode ) {
+
+    if( TextField::isAnyFocused() ) {
+        return;
+        }
+
     
     if( mLinesOffset.size() > 0 ) {
         int i = mLinesOffset.size() - 1;
