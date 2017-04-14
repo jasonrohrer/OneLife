@@ -96,6 +96,12 @@ scp ~/.ssh/config jcr13@$subdomain.onehouronelife.com:.ssh/config
 scp ~/.ssh/remoteServers_id_rsa jcr13@$subdomain.onehouronelife.com:.ssh/
 
 
+echo ""
+echo "Updating backup server's remote server list"
+scp ~/www/reflector/remoteServerList.ini jcr13@$subdomain.onehouronelife.com:
+
+
+
 EOSU2
 
 
