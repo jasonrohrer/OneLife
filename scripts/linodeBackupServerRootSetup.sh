@@ -5,7 +5,7 @@
 # Runs interactively (asks for a password)
 
 apt-get -o Acquire::ForceIPv4=true update
-apt-get -y install emacs-nox
+apt-get -y install emacs-nox mercurial
 
 
 echo ""
@@ -36,6 +36,23 @@ cd /home/jcr13
 
 mkdir backups
 
+mkdir checkout
+cd checkout
+hg clone http://hg.code.sf.net/p/hcsoftware/OneLife
+
+
+echo ""
+echo "Setting up remote cron job to run backup at hour 10 UTC."
+echo ""
+
+cd /home/jcr13
+
+echo "0 10 * * * /home/jcr13/checkout/OneLife/scripts/backupCron.sh" > crontabSource
+
+crontab crontabSource
+
+
+
 exit
 EOSU
 
@@ -43,5 +60,6 @@ EOSU
 echo ""
 echo "Done with remote setup."
 echo ""
+
 
 
