@@ -13,7 +13,7 @@ do
     mkdir ~/backups/$server
   fi
 
-  rsync -avz -e ssh --progress $user@$server:checkout/OneLife/server/backups/* ~/backups/$server
+  rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress $user@$server:checkout/OneLife/server/backups/* ~/backups/$server
 
   
   echo ""
