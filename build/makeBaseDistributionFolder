@@ -40,17 +40,17 @@ cp ../gameSource/groundTileCache/*.tga $baseFolder/groundTileCache
 cp ../gameSource/reverbCache/*.aiff $baseFolder/reverbCache
 
 
-cp ../../OneLifeData6/sprites/* $baseFolder/sprites
-cp ../../OneLifeData6/objects/* $baseFolder/objects
-cp ../../OneLifeData6/transitions/* $baseFolder/transitions
-cp ../../OneLifeData6/animations/* $baseFolder/animations
-cp ../../OneLifeData6/music/* $baseFolder/music
-cp ../../OneLifeData6/sounds/* $baseFolder/sounds
-cp ../../OneLifeData6/ground/* $baseFolder/ground
+cp ../../OneLifeData7/sprites/* $baseFolder/sprites
+cp ../../OneLifeData7/objects/* $baseFolder/objects
+cp ../../OneLifeData7/transitions/* $baseFolder/transitions
+cp ../../OneLifeData7/animations/* $baseFolder/animations
+cp ../../OneLifeData7/music/* $baseFolder/music
+cp ../../OneLifeData7/sounds/* $baseFolder/sounds
+cp ../../OneLifeData7/ground/* $baseFolder/ground
 
 
 # on mingw, symlinks in the gameSource folder are full copies
-# so cache files aren't created back in the OneLifeData6 directory
+# so cache files aren't created back in the OneLifeData7 directory
 # note that these are likely stale anyway
 # so the windows script regenerates them
 if [ ! -e $baseFolder/sprites/cache.fcz ]
@@ -74,7 +74,7 @@ then
 fi
 
 
-cp ../../OneLifeData6/dataVersionNumber.txt $baseFolder/
+cp ../../OneLifeData7/dataVersionNumber.txt $baseFolder/
 
 
 rm -f $baseFolder/settings/email.ini

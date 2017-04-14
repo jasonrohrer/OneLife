@@ -19,10 +19,10 @@ cd game/diffBundle
 
 
 echo "" 
-echo "Updating OneLifeData6Latest"
+echo "Updating OneLifeData7Latest"
 echo ""
 
-cd ~/checkout/OneLifeData6Latest
+cd ~/checkout/OneLifeData7Latest
 hg pull
 hg update
 
@@ -104,7 +104,7 @@ echo ""
 
 
 
-cd ~/checkout/OneLifeData6Latest
+cd ~/checkout/OneLifeData7Latest
 
 
 mkdir ~/checkout/diffWorking
@@ -276,7 +276,7 @@ echo "Updating live server data"
 echo ""
 
 
-cd ~/checkout/OneLifeData6
+cd ~/checkout/OneLifeData7
 hg pull
 hg update
 
@@ -288,7 +288,7 @@ echo ""
 echo "Updating live server data dataVersionNumber.txt to $newVersion"
 echo ""
 
-echo -n "$newVersion" > ~/checkout/OneLifeData6/dataVersionNumber.txt
+echo -n "$newVersion" > ~/checkout/OneLifeData7/dataVersionNumber.txt
 
 hg commit -m "Updatated dataVersionNumber to $newVersion"
 

@@ -17,7 +17,7 @@ echo ""
 useradd -m -s /bin/bash jcr13
 
 
-dataName="OneLifeData6"
+dataName="OneLifeData7"
 
 
 su jcr13<<EOSU

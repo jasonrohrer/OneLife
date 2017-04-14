@@ -25,10 +25,10 @@ echo "Latest Version Reported: $latestPostVersion"
 
 
 echo "" 
-echo "Updating OneLifeData6Latest"
+echo "Updating OneLifeData7Latest"
 echo ""
 
-cd ~/checkout/OneLifeData6Latest
+cd ~/checkout/OneLifeData7Latest
 hg pull
 hg update
 

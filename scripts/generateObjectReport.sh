@@ -1,6 +1,6 @@
 cd /home/jcr15
 
-cd checkout/OneLifeData6Latest
+cd checkout/OneLifeData7Latest
 
 hg pull
 hg update
@@ -13,6 +13,6 @@ hg update
 
 sh makePrintReportHTML
 
-cd ../../OneLifeData6Latest
+cd ../../OneLifeData7Latest
 
 ../OneLifeWorking/gameSource/printReportHTML ../../public_html/objectsReport.php
