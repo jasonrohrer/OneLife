@@ -2,17 +2,17 @@
 # and push all backups to backup server
 
 # Mysql user passwords MUST be set here for this to work
-passowrdTicket="secret"
-passowrdForums="secret2"
+passwordTicket="secret"
+passwordForums="secret2"
 
 date=`date +"%Y_%b_%d_%a"`
 
 
-mysqldump -u jcr15_olTickU --password=$passwordTicket jcr15_olTicket > ~/backups/cd_ticket_$date.mysql
+mysqldump -u jcr15_olTickUser --password=$passwordTicket jcr15_olTicket > ~/backups/cd_ticket_$date.mysql
 gzip -f ~/backups/ol_ticket_$date.mysql
 
 
-mysqldump -u jcr15_olForumsU --password=$passowrdForums jcr15_olForums > ~/backups/ol_forums_$date.mysql
+mysqldump -u jcr15_olForumU --password=$passowrdForums jcr15_olForums > ~/backups/ol_forums_$date.mysql
 gzip -f ~/backups/ol_forums_$date.mysql
 
 
