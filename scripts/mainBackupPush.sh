@@ -8,13 +8,11 @@ passowrdForums="secret2"
 date=`date +"%Y_%b_%d_%a"`
 
 
-mysqldump -u jcr15_olTickU --password=$passwordTicket jcr15_olTicket > /home
-/jcr15/backups/cd_ticket_$date.mysql
+mysqldump -u jcr15_olTickU --password=$passwordTicket jcr15_olTicket > ~/backups/cd_ticket_$date.mysql
 gzip -f ~/backups/ol_ticket_$date.mysql
 
 
-mysqldump -u jcr15_olForumsU --password=$passowrdForums jcr15_olForums > /home/j
-cr15/backups/ol_forums_$date.mysql
+mysqldump -u jcr15_olForumsU --password=$passowrdForums jcr15_olForums > ~/backups/ol_forums_$date.mysql
 gzip -f ~/backups/ol_forums_$date.mysql
 
 
