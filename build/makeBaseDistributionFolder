@@ -39,6 +39,8 @@ cp ../no_copyright.txt $baseFolder
 cp ../gameSource/groundTileCache/*.tga $baseFolder/groundTileCache
 cp ../gameSource/reverbCache/*.aiff $baseFolder/reverbCache
 
+cp ../gameSource/reverbImpulseResponse.aiff $baseFolder/
+
 
 cp ../../OneLifeData7/sprites/* $baseFolder/sprites
 cp ../../OneLifeData7/objects/* $baseFolder/objects
