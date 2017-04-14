@@ -87,8 +87,10 @@ function tryServer( $inAddress, $inPort ) {
     
     $serverGood = false;
 
-    
-    $fp = fsockopen( $inAddress, $inPort, $errno, $errstr, 3 );
+
+    // suppress printed warnings from fsockopen
+    // sometimes servers will be down, and we'll skip them.
+    $fp = @fsockopen( $inAddress, $inPort, $errno, $errstr, 3 );
     if( !$fp ) {
         // error
         return false;
