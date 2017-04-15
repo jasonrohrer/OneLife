@@ -3,4 +3,4 @@
 # and waits for it to exit before updating it and restarting it
 
 
-nohup unbuffer ./remoteServerUpdateHeadless.sh >> remoteUpdateOut.txt &
+nohup unbuffer ~/checkout/OneLife/scripts/remoteServerUpdateHeadless.sh >> remoteUpdateOut.txt &
