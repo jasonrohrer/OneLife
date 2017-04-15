@@ -279,6 +279,7 @@ echo ""
 cd ~/checkout/OneLifeData7
 hg pull
 hg update
+rm */cache.fcz
 
 
 
