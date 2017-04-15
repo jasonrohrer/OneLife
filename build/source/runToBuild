@@ -51,8 +51,7 @@ cp OneLife/gameSource/graphics/* ./graphics
 cp OneLife/gameSource/settings/* ./settings
 cp OneLife/gameSource/languages/* ./languages
 cp OneLife/gameSource/language.txt ./
-cp OneLife/gameSource/reverbCache/* ./reverbCache
-cp OneLife/gameSource/groundTileCache/* ./groundTileCache
+cp OneLife/gameSource/reverbImpulseResponse.aiff ./
 
 
 echo "Run OneLifeApp to play."

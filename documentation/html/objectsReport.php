@@ -1,1 +1,1 @@
- 
+<table width=100% border=0><tr><td width=33% valign=top align=center>49 natural objects<br>(latest: Flat Rock)</td><td> </td><td width=33% valign=top align=center>2 playable characters</td><td> </td><td width=33% valign=top align=center>250 human-makeable objects<br>(latest: Large Slow Fire)</td></tr></table>

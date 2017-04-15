@@ -35,14 +35,14 @@ mkdir $buildDir
 
 cd $sourceWorkingDir
 cp -r animations music objects sounds sprites transitions ground dataVersionNumber.txt ../$buildDir
-cp -r OneLifeApp graphics languages language.txt no_copyright.txt Readme.txt settings reverbCache groundTileCache ../$buildDir
+cp -r OneLifeApp graphics languages language.txt no_copyright.txt Readme.txt settings reverbImpulseResponse.aiff reverbCache groundTileCache ../$buildDir
 
 cd ../$buildDir
 
 ../$sourceWorkingDir/OneLife/gameSource/regenerateCaches
 
 
-cd ../..
+cd ..
 
 
 
