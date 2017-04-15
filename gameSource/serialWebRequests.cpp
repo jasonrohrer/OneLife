@@ -219,6 +219,8 @@ static char *trimMapFromRequest( char *inRequest ) {
 
 
 
+/*
+// used for debugging
 
 // extracts the action variable from a web request
 static char *getActionFromRequest( char *inRequest ) {
@@ -255,7 +257,7 @@ static char *getActionFromRequest( char *inRequest ) {
     
     return actionValue;
     }
-
+*/
 
 
 
