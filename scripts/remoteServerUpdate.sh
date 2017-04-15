@@ -1,6 +1,65 @@
-# this script can be called via SSH on a remote server
-# it launches a headless process that puts the server in shutdown mode
-# and waits for it to exit before updating it and restarting it
+echo "" 
+echo "Shutting down server"
+echo ""
+
+serverPID=`pgrep OneLifeServer`
+
+if [ -z $serverPID ]
+then
+	echo "Server not running!"
+else
+	echo -n "1" > ~/checkout/OneLife/server/settings/shutdownMode.ini
+
+	echo "" 
+	echo "Set server shutdownMode, waiting for server to exit"
+	echo ""
+
+        while kill -CONT $serverPID 1>/dev/null 2>&1; do sleep 1; done
+
+	echo "" 
+	echo "Server has shutdown"
+	echo ""
+fi
 
 
-nohup unbuffer ~/checkout/OneLife/scripts/remoteServerUpdateHeadless.sh >> remoteUpdateOut.txt &
+echo "" 
+echo "Updating live server data"
+echo ""
+
+
+cd ~/checkout/OneLifeData7
+hg pull
+hg update
+rm */cache.fcz
+
+
+echo "" 
+echo "Re-compiling server"
+echo ""
+
+cd ~/checkout/minorGems
+hg pull
+hg update
+
+
+cd ~/checkout/OneLife/server
+hg pull
+hg update
+
+./configure 1
+make
+
+
+
+echo "" 
+echo "Re-launching server"
+echo ""
+
+
+echo -n "0" > ~/checkout/OneLife/server/settings/shutdownMode.ini
+
+
+
+cd ~/checkout/OneLife/server/
+
+sh ./runHeadlessServerLinux.sh
