@@ -6728,7 +6728,6 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
     
     if( mMapOurPlayerPlacedFlags[ clickDestMapI ] ) {
         // check this cell first
-        printf( "Our placement\n" );
         
         int oID = mMap[ clickDestMapI ];
         
