@@ -8,7 +8,7 @@ $startSpreadingFraction = .50;
 $stopSpreadingFraction = .10;
 
 
-$updateServerURL = "http://192.168.1.124/jcr13/updateServer/server.php";
+$updateServerURL = "http://onehouronelife.com/updateServer/server.php";
 
 
 include( "requiredVersion.php" );
