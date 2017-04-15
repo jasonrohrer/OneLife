@@ -18,7 +18,12 @@ cp -r $sourceBundleDir $sourceWorkingDir
 cd $sourceWorkingDir
 ./runToBuild 1
 
-cd ..
+cd OneLife/gameSource
+sh makeRegenerateCaches
+
+
+cd ../../..
+
 
 buildDir="OneLife_$1"
 finalTarball="OneLife_$1_Linux.tar.gz"
@@ -32,7 +37,14 @@ cd $sourceWorkingDir
 cp -r animations music objects sounds sprites transitions ground dataVersionNumber.txt ../$buildDir
 cp -r OneLifeApp graphics languages language.txt no_copyright.txt Readme.txt settings reverbCache groundTileCache ../$buildDir
 
-cd ..
+cd ../$buildDir
+
+../$sourceWorkingDir/OneLife/gameSource/regenerateCaches
+
+
+cd ../..
+
+
 
 
 d=`date`

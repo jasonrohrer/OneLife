@@ -29,8 +29,6 @@ sh makeRegenerateCachesWindows
 
 cd ../build/windows/OneLife_$1
 
-rm */cache.fcz
-rm groundTileCache/*
 ../../../gameSource/regenerateCaches
 
 cd ../..

@@ -23,6 +23,16 @@ rm -rf mac/OneLife_$1
 mv base/* mac
 
 
+cd ../gameSource
+sh makeRegenerateCaches
+
+cd ../build/mac/OneLife_$1
+
+../../../gameSource/regenerateCaches
+
+cd ../..
+
+
 cp -r macOSX/OneLife.app mac/OneLife_$1/OneLife.app
 cp ../gameSource/OneLife mac/OneLife_$1/OneLife.app/Contents/MacOS
 

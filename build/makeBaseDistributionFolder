@@ -36,8 +36,6 @@ cp ../gameSource/languages/*.txt $baseFolder/languages
 cp ../gameSource/language.txt $baseFolder
 cp ../documentation/Readme.txt $baseFolder
 cp ../no_copyright.txt $baseFolder
-cp ../gameSource/groundTileCache/*.tga $baseFolder/groundTileCache
-cp ../gameSource/reverbCache/*.aiff $baseFolder/reverbCache
 
 cp ../gameSource/reverbImpulseResponse.aiff $baseFolder/
 
@@ -50,30 +48,6 @@ cp ../../OneLifeData7/music/* $baseFolder/music
 cp ../../OneLifeData7/sounds/* $baseFolder/sounds
 cp ../../OneLifeData7/ground/* $baseFolder/ground
 
-
-# on mingw, symlinks in the gameSource folder are full copies
-# so cache files aren't created back in the OneLifeData7 directory
-# note that these are likely stale anyway
-# so the windows script regenerates them
-if [ ! -e $baseFolder/sprites/cache.fcz ]
-then
-   cp ../gameSource/sprites/cache.fcz $baseFolder/sprites/
-fi
-
-if [ ! -e $baseFolder/objects/cache.fcz ]
-then
-   cp ../gameSource/objects/cache.fcz $baseFolder/objects/
-fi
-
-if [ ! -e $baseFolder/transitions/cache.fcz ]
-then
-   cp ../gameSource/transitions/cache.fcz $baseFolder/transitions/
-fi
-
-if [ ! -e $baseFolder/animations/cache.fcz ]
-then
-   cp ../gameSource/animations/cache.fcz $baseFolder/animations/
-fi
 
 
 cp ../../OneLifeData7/dataVersionNumber.txt $baseFolder/
