@@ -13,4 +13,6 @@ then
 fi
 
 
-sed -i '/${1}.onehouronelife.com/d' ~/diffBundles/*_urls.txt
+subdomain=$1
+
+sed -i '/${subdomain}.onehouronelife.com/d' ~/diffBundles/*_urls.txt
