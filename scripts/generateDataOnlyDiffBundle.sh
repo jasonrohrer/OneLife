@@ -348,3 +348,20 @@ do
   echo "  Starting update on $server"
   ssh $user@$server '~/checkout/OneLife/scripts/remoteServerUpdate.sh'
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
+
+
+
+
+echo "" 
+echo "Posting to website Update log."
+echo ""
+
+generateUpdatePosts.sh
+
+
+
+echo "" 
+echo "Generating object report for website."
+echo ""
+
+generateObjectReport.sh
