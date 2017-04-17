@@ -356,7 +356,7 @@ echo ""
 echo "Posting to website Update log."
 echo ""
 
-generateUpdatePosts.sh
+~/checkout/OneLifeWorking/scripts/generateUpdatePosts.sh
 
 
 
@@ -364,4 +364,4 @@ echo ""
 echo "Generating object report for website."
 echo ""
 
-generateObjectReport.sh
+~/checkout/OneLifeWorking/scripts/generateObjectReport.sh

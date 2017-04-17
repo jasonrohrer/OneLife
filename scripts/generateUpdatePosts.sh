@@ -49,7 +49,7 @@ if [[ $x -gt $latestPostVersion ]] || [ $x == "Start" ]; then
 		hg update OneLife_v$newerVersion
 		
 		echo ""
-		echo "Generating report for v$newerVersion"
+		echo "Generating report for v$newerVersion as compared to v$x"
 
 		reportFile=$updatePostDir/$newerVersion.html
 
