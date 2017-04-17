@@ -1,0 +1,109 @@
+This file describes various processes for updating game data and maintaining
+the various servers.
+
+
+++++
+Generating a data-only update for all platforms.
+++++
+
+1. Commit and push data in OneLifeData7
+   Do NOT generate an hg tag for the data
+
+2. Log in as jcr15@onehouronelife.com
+
+3. Run ~/checkout/OneLifeWorking/scripts/generateDataOnlyDiffBundle.sh
+
+
+
+
+
+++++
+Generating platform-specific (binary code) update for a platform.
+++++
+
+1. Build on each platform
+
+2. Run minorGems/game/diffBundle/diffBundle to generate an incremental binary
+   bundle for each platform.
+
+3. scp the .dbz files to jcr15@onehouronelife.com:diffBundles/
+
+(Do Steps 1-3 for all plaforms before doing step 4.)
+
+4. Log in as jcr15@onehouronelife.com
+
+5. Run ~/checkout/OneLifeWorking/scripts/postPlatformDiffBundle.sh
+
+
+
+
+
+++++
+Adding new Linode remote server (game server, download server).
+++++
+
+1. Create a Linode in control panel, install Ubuntu LTS on it, boot it.
+
+2. Note the IP address and root password, and give it a name 
+   (server3, download2).
+
+3. Log in to root@server.thecastledoctrine.net
+
+4. run ~/checkout/OneLife/scripts/rootAddNewDownloadServer.sh
+       OR
+       ~/checkout/OneLife/scripts/rootAddNewRemoteServer.sh
+
+
+
+++++
+Removing a Linode game server.
+++++
+
+1. Log in as jcr15@onehouronelife.com
+
+2. Remove from ~/www/reflector/remoteServerList.ini
+
+3. Remove from ~/.ssh/config
+
+4. Run
+   ~/checkout/OneLifeWorking/scripts/tellBackupServerAboutGameServerChanges.sh
+
+5. Log in to root@server.thecastledoctrine.net
+
+6. Remove line from the end of /var/named/onehouronelife.com.db
+
+8. Run:
+   rndc reload onehouronelife.com in internal
+
+   rndc reload onehouronelife.com in external
+
+9. Remove from Linode dashboard.
+
+
+
+
+
+++++
+Removing a Linode download server.
+++++
+
+1. Log in as jcr15@onehouronelife.com
+
+2. Remove from ~/oneLifeDownloads/remoteServerList.ini
+
+3. Remove from ~/diffBundles/remoteServerList.ini
+
+4. Remove from ~/.ssh/config
+
+5. run ~/checkout/OneLifeWorking/scripts/removeDownloadServerFromURLLists.sh
+
+6. Log in to root@server.thecastledoctrine.net
+
+7. Remove line from the end of /var/named/onehouronelife.com.db
+
+8. Run:
+   rndc reload onehouronelife.com in internal
+
+   rndc reload onehouronelife.com in external
+
+9. Remove from Linode dashboard.

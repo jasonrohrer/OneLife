@@ -96,14 +96,9 @@ cd ~/www/reflector
 echo "jcr13 $subdomain.onehouronelife.com 8005" >> remoteServerList.ini
 
 
-echo ""
-echo "Updating backup server's ssh config"
-scp ~/.ssh/config jcr13@backup.onehouronelife.com:.ssh/config
 
 
-echo ""
-echo "Updating backup server's remote server list"
-scp ~/www/reflector/remoteServerList.ini jcr13@backup.onehouronelife.com:
+~/checkout/OneLifeWorking/scripts/tellBackupServerAboutGameServerChanges.sh
 
 
 EOSU2
