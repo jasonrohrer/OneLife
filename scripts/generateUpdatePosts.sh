@@ -42,9 +42,11 @@ reportCount=0
 while read x; 
 do 
 
-if [[ $x -gt $latestPostVersion ]] || [ $x == "Start" ]; then
+if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 
-	if [ "$newerVersion" != "D" ]; then
+	if [ "$newerVersion" != "D" ] && 
+	   [[ $newerVersion -gt $latestPostVersion ]];
+		then
 
 		hg update OneLife_v$newerVersion
 		
