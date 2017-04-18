@@ -24,6 +24,10 @@ su jcr13<<EOSU
 
 cd /home/jcr13
 
+echo "ulimit -c unlimited >/dev/null 2>&1" >> ~/.bash_profile
+
+ulimit -c unlimited
+
 mkdir checkout
 cd checkout
 
