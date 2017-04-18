@@ -3668,10 +3668,16 @@ int main() {
                                                       nextPlayer->yd + 1 );
                                     
                                     if( nA != 0 && nB != 0 && 
-                                        nC != 0 && nD != 0 ) {
+                                        nC != 0 && nD != 0 
+                                        &&
+                                        getObject( nA )->blocksWalking &&
+                                        getObject( nB )->blocksWalking &&
+                                        getObject( nC )->blocksWalking &&
+                                        getObject( nD )->blocksWalking ) {
                                         
 
-                                        // surrounded while holding
+                                        // surrounded with blocking
+                                        // objects while holding
                                     
                                         // throw held into nearest empty spot
                                         
