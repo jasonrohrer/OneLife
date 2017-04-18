@@ -173,6 +173,7 @@ void SettingsPage::makeActive( char inFresh ) {
                 mTestSound = r->usingSound;
                 mTestSound.volume = 1.0;
                 }
+            tryCount ++;
             }
         
 

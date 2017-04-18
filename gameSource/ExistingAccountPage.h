@@ -33,6 +33,10 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         // for arrow keys (switch fields)
         virtual void specialKeyDown( int inKeyCode );
         
+        virtual void draw( doublePair inViewCenter, 
+                           double inViewSize );
+
+
     protected:
         
         TextField mEmailField;
@@ -49,7 +53,8 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         TextButton mCancelButton;
 
         TextButton mSettingsButton;
-
+        
+        SpriteHandle mInstructionsSprite;
 
         void switchFields();
         

@@ -2,6 +2,7 @@
 
 #include "message.h"
 #include "buttonStyle.h"
+#include "whiteSprites.h"
 
 
 #include "minorGems/game/Font.h"
@@ -36,13 +37,14 @@ ExistingAccountPage::ExistingAccountPage()
                      "23456789ABCDEFGHJKLMNPQRSTUVWXYZ-" ),
           mAtSignButton( mainFont, 252, 128, "@" ),
           mPasteButton( mainFont, 0, -80, translate( "paste" ), 'v', 'V' ),
-          mLoginButton( mainFont, 150, -200, translate( "loginButton" ) ),
+          mLoginButton( mainFont, 400, 0, translate( "loginButton" ) ),
           mLoginNoSaveButton( mainFont, 400, -280, 
                               translate( "loginNoSaveButton" ) ),
-          mCancelButton( mainFont, -150, -200, 
+          mCancelButton( mainFont, -400, -280, 
                          translate( "quit" ) ),
-          mSettingsButton( mainFont, -400, -280, 
-                           translate( "settingsButton" ) ) {
+          mSettingsButton( mainFont, -400, -200, 
+                           translate( "settingsButton" ) ),
+          mInstructionsSprite( loadWhiteSprite( "instructions.tga" ) ) {
     
     
     // center this in free space
@@ -101,6 +103,7 @@ ExistingAccountPage::ExistingAccountPage()
           
         
 ExistingAccountPage::~ExistingAccountPage() {
+    freeSprite( mInstructionsSprite );
     }
 
 
@@ -236,3 +239,17 @@ void ExistingAccountPage::processLogin( char inStore ) {
                 
     setSignal( "done" );
     }
+
+
+
+void ExistingAccountPage::draw( doublePair inViewCenter, 
+                                double inViewSize ) {
+
+    setDrawColor( 1, 1, 1, 1 );
+    
+
+    doublePair pos = { -9, -225 };
+    
+    drawSprite( mInstructionsSprite, pos );
+    }
+
