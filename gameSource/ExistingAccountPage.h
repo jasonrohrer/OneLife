@@ -54,8 +54,6 @@ class ExistingAccountPage : public GamePage, public ActionListener {
 
         TextButton mSettingsButton;
         
-        SpriteHandle mInstructionsSprite;
-
         void switchFields();
         
         void processLogin( char inStore );

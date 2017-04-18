@@ -2,7 +2,6 @@
 
 #include "message.h"
 #include "buttonStyle.h"
-#include "whiteSprites.h"
 
 
 #include "minorGems/game/Font.h"
@@ -24,6 +23,8 @@ extern char *userEmail;
 extern char *accountKey;
 
 
+extern SpriteHandle instructionsSprite;
+
 
 ExistingAccountPage::ExistingAccountPage()
         : mEmailField( mainFont, 0, 128, 10, false, 
@@ -43,8 +44,7 @@ ExistingAccountPage::ExistingAccountPage()
           mCancelButton( mainFont, -400, -280, 
                          translate( "quit" ) ),
           mSettingsButton( mainFont, -400, -200, 
-                           translate( "settingsButton" ) ),
-          mInstructionsSprite( loadWhiteSprite( "instructions.tga" ) ) {
+                           translate( "settingsButton" ) ) {
     
     
     // center this in free space
@@ -103,7 +103,6 @@ ExistingAccountPage::ExistingAccountPage()
           
         
 ExistingAccountPage::~ExistingAccountPage() {
-    freeSprite( mInstructionsSprite );
     }
 
 
@@ -250,6 +249,6 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
 
     doublePair pos = { -9, -225 };
     
-    drawSprite( mInstructionsSprite, pos );
+    drawSprite( instructionsSprite, pos );
     }
 

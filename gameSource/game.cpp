@@ -82,6 +82,9 @@ CustomRandomSource randSource( 34957197 );
 
 #include "musicPlayer.h"
 
+#include "whiteSprites.h"
+
+
 
 // start at reflector URL
 char *reflectorURL = NULL;
@@ -119,6 +122,9 @@ int loadingPhase = 0;
 int loadingStepBatchSize = 1;
 double loadingPhaseStartTime;
 
+
+
+SpriteHandle instructionsSprite;
 
 
 
@@ -403,6 +409,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                       const char *inCustomRecordedGameData,
                       char inPlayingBack ) {
     
+    instructionsSprite = loadWhiteSprite( "instructions.tga" );
+    
+
     initAgeControl();
     
     updateDataVersionNumber();
@@ -606,6 +615,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
 void freeFrameDrawer() {
 
+    freeSprite( instructionsSprite );
     
     delete mainFontFixed;
     delete numbersFontFixed;
@@ -722,6 +732,15 @@ static void drawPauseScreen() {
     messagePos.y -= 1.25 * (viewHeight / 15);
     mainFont->drawString( translate( "pauseMessage2" ), 
                            messagePos, alignCenter );
+
+
+    if( currentGamePage == livingLifePage ) {
+        
+        doublePair drawPos = { -9, 0 };
+        
+        drawSprite( instructionsSprite, drawPos );
+        }
+    
 
     if( currentUserTypedMessage != NULL ) {
             
@@ -1737,6 +1756,9 @@ void keyDown( unsigned char inASCII ) {
                 break;
             }
         
+        // don't let user type on pause screen anymore
+        return;
+
         
         if( inASCII == 127 || inASCII == 8 ) {
             // subtract from it
