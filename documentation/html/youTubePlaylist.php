@@ -39,12 +39,29 @@ function showVid( videoID ) {
 
 <?php
 
+
+// regular file_get_contents changed https support in PHP 5.6
+// easier to use curl
+function file_get_contents_curl( $url ) {
+    $ch = curl_init();
+    curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
+    curl_setopt( $ch, CURLOPT_AUTOREFERER, TRUE );
+    curl_setopt( $ch, CURLOPT_HEADER, 0 );
+    curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
+    curl_setopt( $ch, CURLOPT_URL, $url );
+    curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, TRUE );
+    $data = curl_exec( $ch );
+    curl_close( $ch );
+
+    return $data;
+    }
+
 $apiURL = "https://www.googleapis.com/youtube/v3/playlistItems".
     "?playlistId=PLGRmlIh53cOLvQTajDxlPVcKEMloipoOE".
     "&part=contentDetails,snippet&maxResults=50".
-    "&key=%20AIzaSyDB_BV1KJCtpI3JCkdxjER3NRYtOlc9jqc";
+    "&key=AIzaSyDB_BV1KJCtpI3JCkdxjER3NRYtOlc9jqc";
     
-$list = file_get_contents( $apiURL );
+$list = file_get_contents_curl( $apiURL );
 
 
 $videoIDs = array();
