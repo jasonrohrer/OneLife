@@ -21,25 +21,11 @@ read subdomain
 
 echo ""
 
-echo "Configuring DNS for $subdomain.onehouronelife.com to point to $address"
+echo "Manually configure Linode DNS A record for $subdomain.onehouronelife.com to pointing to $address"
 
 echo -n "Hit [ENTER] when ready: "
 read
 
-timestamp="$(date +"%s")"
-
-
-cp /var/named/onehouronelife.com.db /var/named/onehouronelife.com.db_backup_$timestamp
-
-echo "$subdomain	14400	IN	A	$address" >> /var/named/onehouronelife.com.db
-
-
-echo "Triggering DNS reload"
-
-
-rndc reload onehouronelife.com in internal
-
-rndc reload onehouronelife.com in external
 
 
 

@@ -47,9 +47,12 @@ Adding new Linode remote server (game server, download server).
 2. Note the IP address and root password, and give it a name 
    (server3, download2).
 
-3. Log in to root@server.thecastledoctrine.net
+3. Add DNS A record here:
+   https://manager.linode.com/dns/domain/onehouronelife%2Ecom
 
-4. run ~/checkout/OneLife/scripts/rootAddNewDownloadServer.sh
+4. Log in to root@onehouronelife.com
+
+5. run ~/checkout/OneLife/scripts/rootAddNewDownloadServer.sh
        OR
        ~/checkout/OneLife/scripts/rootAddNewRemoteServer.sh
 
@@ -68,16 +71,10 @@ Removing a Linode game server.
 4. Run
    ~/checkout/OneLifeWorking/scripts/tellBackupServerAboutGameServerChanges.sh
 
-5. Log in to root@server.thecastledoctrine.net
+5. Remove DNS A record here:
+   https://manager.linode.com/dns/domain/onehouronelife%2Ecom
 
-6. Remove line from the end of /var/named/onehouronelife.com.db
-
-8. Run:
-   rndc reload onehouronelife.com in internal
-
-   rndc reload onehouronelife.com in external
-
-9. Remove from Linode dashboard.
+6. Remove from Linode dashboard.
 
 
 
@@ -97,13 +94,7 @@ Removing a Linode download server.
 
 5. run ~/checkout/OneLifeWorking/scripts/removeDownloadServerFromURLLists.sh
 
-6. Log in to root@server.thecastledoctrine.net
+6. Remove DNS A record here:
+   https://manager.linode.com/dns/domain/onehouronelife%2Ecom
 
-7. Remove line from the end of /var/named/onehouronelife.com.db
-
-8. Run:
-   rndc reload onehouronelife.com in internal
-
-   rndc reload onehouronelife.com in external
-
-9. Remove from Linode dashboard.
+7. Remove from Linode dashboard.
