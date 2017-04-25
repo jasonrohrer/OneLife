@@ -2179,16 +2179,25 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                     holdPos.x += heldOffset.x;
                     holdPos.y += heldOffset.y;
                     
+                    double heldAge = -1;
+                    AnimType heldAnimType = t;
+                    AnimType heldFadeTargetType = mCurrentType;
+                    
+                    if( heldObject->person ) {
+                        heldAge = 0;
+                        heldAnimType = held;
+                        heldFadeTargetType = held;
+                        }
                     
                     drawObjectAnim( mHeldID, 2,  
-                                    t, frameTime,
+                                    heldAnimType, frameTime,
                                     animFade, 
-                                    mCurrentType, fadeTargetFrameTime, 
+                                    heldFadeTargetType, fadeTargetFrameTime, 
                                     frozenRotFrameTime,
                                     &mFrozenRotFrameCountUsed,
                                     moving,
                                     moving,
-                                    holdPos, heldRot, false, mFlipDraw, -1,
+                                    holdPos, heldRot, false, mFlipDraw, heldAge,
                                     false,
                                     false,
                                     false,
