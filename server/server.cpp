@@ -244,6 +244,38 @@ static LiveObject *getLiveObject( int inID ) {
 
 
 
+// diagonal steps are longer
+static double measurePathLength( int inXS, int inYS, 
+                                 GridPos *inPathPos, int inPathLength ) {
+    
+    // diags are square root of 2 in length
+    double diagLength = 1.4142356237;
+    
+
+    double totalLength = 0;
+    
+    GridPos lastPos = { inXS, inYS };
+    
+    for( int i=0; i<inPathLength; i++ ) {
+        
+        GridPos thisPos = inPathPos[i];
+        
+        if( thisPos.x != lastPos.x &&
+            thisPos.y != lastPos.y ) {
+            totalLength += diagLength;
+            }
+        else {
+            // not diag
+            totalLength += 1;
+            }
+        lastPos = thisPos;
+        }
+    
+    return totalLength;
+    }
+
+
+
 static int getLiveObjectIndex( int inID ) {
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *o = players.getElement( i );
@@ -1172,10 +1204,16 @@ void handleMapChangeToPaths(
 
                         // update timing
                         double dist = 
-                            otherPlayer->pathLength;
-                            
+                            measurePathLength( otherPlayer->xs,
+                                               otherPlayer->ys,
+                                               otherPlayer->pathToDest,
+                                               otherPlayer->pathLength );    
                                                 
-                        double distAlreadyDone = c;
+                        double distAlreadyDone =
+                            measurePathLength( otherPlayer->xs,
+                                               otherPlayer->ys,
+                                               otherPlayer->pathToDest,
+                                               c );
                             
                         double moveSpeed = computeMoveSpeed( otherPlayer );
 
@@ -3273,17 +3311,24 @@ int main() {
 
                                 // distance is number of orthogonal steps
                             
-                                double dist = validPath.size();
-                            
-
-                                double distAlreadyDone = startIndex;
-                            
+                                double dist = 
+                                    measurePathLength( nextPlayer->xs,
+                                                       nextPlayer->ys,
+                                                       nextPlayer->pathToDest,
+                                                       nextPlayer->pathLength );
+ 
+                                double distAlreadyDone =
+                                    measurePathLength( nextPlayer->xs,
+                                                       nextPlayer->ys,
+                                                       nextPlayer->pathToDest,
+                                                       startIndex );
+                             
                                 double moveSpeed = computeMoveSpeed( 
                                     nextPlayer );
                                 
                                 nextPlayer->moveTotalSeconds = dist / 
                                     moveSpeed;
-                            
+                           
                                 double secondsAlreadyDone = distAlreadyDone / 
                                     moveSpeed;
                                 
