@@ -314,6 +314,40 @@ static GridPos sub( GridPos inA, GridPos inB ) {
 
 
 
+// measure a possibly truncated path, compensating for diagonals
+static double measurePathLength( LiveObject *inObject,
+                                 int inPathLength ) {
+    // diags are square root of 2 in length
+    double diagLength = 1.4142356237;
+    
+
+    double totalLength = 0;
+    
+    if( inPathLength < 2 ) {
+        return totalLength;
+        }
+    
+
+    GridPos lastPos = inObject->pathToDest[0];
+    
+    for( int i=1; i<inPathLength; i++ ) {
+        
+        GridPos thisPos = inObject->pathToDest[i];
+        
+        if( thisPos.x != lastPos.x &&
+            thisPos.y != lastPos.y ) {
+            totalLength += diagLength;
+            }
+        else {
+            // not diag
+            totalLength += 1;
+            }
+        lastPos = thisPos;
+        }
+    
+    return totalLength;
+    }
+
 
 
 
@@ -346,7 +380,8 @@ extern int baseFramesPerSecond;
 void updateMoveSpeed( LiveObject *inObject ) {
     double etaSec = inObject->moveEtaTime - game_getCurrentTime();
     
-    int moveLeft = inObject->pathLength - inObject->currentPathStep - 1;
+    double moveLeft = measurePathLength( inObject, inObject->pathLength ) -
+        measurePathLength( inObject, inObject->currentPathStep );
     
 
     // count number of turns, which we execute faster than we should
@@ -5510,8 +5545,13 @@ void LivingLifePage::step() {
                                     // compensate for the difference
 
                                     double oldFractionPassed =
-                                        (double)existing->currentPathStep
-                                        / (double)existing->pathLength;
+                                        measurePathLength( 
+                                            existing,
+                                            existing->currentPathStep )
+                                        /
+                                        measurePathLength( 
+                                            existing, 
+                                            existing->pathLength );
                                     
                                     
                                     // if this is positive, we are
@@ -7731,7 +7771,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
 
         ourLiveObject->moveTotalTime = 
-            ourLiveObject->pathLength / 
+            measurePathLength( ourLiveObject, ourLiveObject->pathLength ) / 
             ourLiveObject->lastSpeed;
 
         ourLiveObject->moveEtaTime = game_getCurrentTime() +
