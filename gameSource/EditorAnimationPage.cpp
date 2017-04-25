@@ -2078,7 +2078,12 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                 if( heldObject != NULL ) {
                     
                     if( heldObject->person ) {
-                        hideClosestArm = true;
+                        // try hiding no arms, but freezing them instead
+                        // -2 means body position still returned as held pos
+                        // instead of hand pos
+                        hideClosestArm = -2;
+                        hideAllLimbs = false;
+                        frozenArmAnim = mCurrentAnim[ moving ];
                         }
                     else if( heldObject->heldInHand ) {
                         hideClosestArm = 0;
@@ -2089,13 +2094,12 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                         frozenArmAnim = mCurrentAnim[ moving ];
                         }
                     else {
-                        // find closest arm
-                        if( heldObject->heldOffset.x > 0 ) {
-                            hideClosestArm = 1;
-                            }
-                        else {
-                            hideClosestArm = -1;
-                            }
+                        // try hiding no arms, but freezing them instead
+                        // -2 means body position still returned as held pos
+                        // instead of hand pos
+                        hideClosestArm = -2;
+                        hideAllLimbs = false;
+                        frozenArmAnim = mCurrentAnim[ moving ];
                         }
                     }
 

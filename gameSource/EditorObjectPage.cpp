@@ -2869,13 +2869,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             hideClosestArm = 0;
             }
         else {
-            // find closest arm
-            if( mCurrentObject.heldOffset.x > 0 ) {
-                hideClosestArm = 1;
-                }
-            else {
-                hideClosestArm = -1;
-                }
+            // no longer hiding arm for non-handheld objects
             }
         
         

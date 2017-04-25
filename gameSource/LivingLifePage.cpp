@@ -1719,18 +1719,24 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             hideAllLimbs = true;
             }
         else {
-            // find closest arm
-            if( heldObject->heldOffset.x > 0 ) {
-                hideClosestArm = 1;
-                }
-            else {
-                hideClosestArm = -1;
-                }
+            // try hiding no arms, but freezing them instead
+            // -2 means body position still returned as held pos
+            // instead of hand pos
+            // -2 also causes frozen arm animation to be set below
+            hideClosestArm = -2;
+            hideAllLimbs = false;
             }
         }
     else if( inObj->holdingID < 0 ) {
         // carrying baby
-        hideClosestArm = true;
+        //hideClosestArm = true;
+        
+        // try hiding no arms, but freezing them instead
+        // -2 means body position still returned as held pos
+        // instead of hand pos
+        // -2 also causes frozen arm animation to be set below
+        hideClosestArm = -2;
+        hideAllLimbs = false;
         }
     
 
@@ -1740,7 +1746,9 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
     AnimType frozenArmType = endAnimType;
     AnimType frozenArmFadeTargetType = endAnimType;
     
-    if( ( inObj->holdingID > 0 && getObject( inObj->holdingID )->rideable )
+    if( hideClosestArm == -2 
+        ||
+        ( inObj->holdingID > 0 && getObject( inObj->holdingID )->rideable )
         ||
         ( inObj->lastHoldingID > 0 && 
           getObject( inObj->lastHoldingID )->rideable ) ) {
