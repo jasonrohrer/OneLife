@@ -13,6 +13,7 @@
 
 
 #include "soundBank.h"
+#include "zoomView.h"
 
 
 extern Font *mainFont;
@@ -32,6 +33,10 @@ static JenkinsRandomSource randSource;
 static ObjectPickable objectPickable;
 
 extern double defaultAge;
+
+
+static float lastMouseX, lastMouseY;
+
 
 
 EditorAnimationPage::EditorAnimationPage()
@@ -2334,7 +2339,12 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
     
 
     
+    doublePair zoomPos = { lastMouseX, lastMouseY };
+
+    pos.x = +500;
+    pos.y = -290;
     
+    drawZoomView( zoomPos, 16, 4, pos );
     }
 
 
@@ -2541,7 +2551,9 @@ int EditorAnimationPage::getClosestSpriteOrSlot( float inX, float inY ) {
 
 
 void EditorAnimationPage::pointerMove( float inX, float inY ) {    
-        
+    lastMouseX = inX;
+    lastMouseY = inY;
+
     int closestSpriteOrSlot = getClosestSpriteOrSlot( inX, inY );
     
     if( closestSpriteOrSlot != -1 ) {
@@ -2576,7 +2588,9 @@ void EditorAnimationPage::pointerMove( float inX, float inY ) {
 
 
 void EditorAnimationPage::pointerDown( float inX, float inY ) {
-    
+    lastMouseX = inX;
+    lastMouseY = inY;
+
     if( isLastMouseButtonRight() ) {
         mSettingRotCenter = true;
         return;
@@ -2609,6 +2623,8 @@ void EditorAnimationPage::pointerDown( float inX, float inY ) {
 
 
 void EditorAnimationPage::pointerDrag( float inX, float inY ) {
+    lastMouseX = inX;
+    lastMouseY = inY;
 
     if( mSettingRotCenter ) {
         doublePair pos = { 0, -64 };
@@ -2637,6 +2653,9 @@ void EditorAnimationPage::pointerDrag( float inX, float inY ) {
 
 
 void EditorAnimationPage::pointerUp( float inX, float inY ) {
+    lastMouseX = inX;
+    lastMouseY = inY;
+
     mSettingRotCenter = false;
     }
 
