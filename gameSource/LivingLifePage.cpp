@@ -664,8 +664,18 @@ static void addNewHeldAnimDirect( LiveObject *inObject, AnimType inNewAnim ) {
 
 
 static void addNewAnimPlayerOnly( LiveObject *inObject, AnimType inNewAnim ) {
-    if( inObject->curAnim != inNewAnim ) {
-        if( inObject->lastAnimFade != 0 ) {
+    
+    if( inObject->curAnim != inNewAnim || 
+        inObject->futureAnimStack->size() > 0 ) {
+        
+
+        // if we're still in the middle of fading, finish the fade,
+        // by pushing this animation on the stack...
+        // ...but NOT if we're fading TO ground.
+        // Cut that off, and start our next animation right away.
+        if( inObject->lastAnimFade != 0 && 
+            inObject->curAnim != ground &&
+            inObject->curAnim != ground2 ) {
                         
             // don't double stack
             if( inObject->futureAnimStack->size() == 0 ||
@@ -4697,8 +4707,6 @@ void LivingLifePage::step() {
                         if( o.id != ourID ) {
                             
                             if( actionAttempt && ! justAte ) {
-                                addNewAnimPlayerOnly( existing, doing );
-
                                 existing->actionTargetX = actionTargetX;
                                 existing->actionTargetY = actionTargetY;
                                 existing->pendingActionAnimationProgress = 
@@ -4969,13 +4977,15 @@ void LivingLifePage::step() {
 
                             existing->heldByAdultID = -1;
                             }
-                        else if( done_moving && 
-                                 ( existing->id != ourID || forced ) ) {
+                        else if( done_moving && forced ) {
                             
                             // don't ever force-update these for
                             // our locally-controlled object
                             // give illusion of it being totally responsive
                             // to move commands
+
+                            // nor do we force-update remote players
+                            // don't want glitches at the end of their moves
 
                             // UNLESS server tells us to force update
                             existing->currentPos.x = o.xd;
