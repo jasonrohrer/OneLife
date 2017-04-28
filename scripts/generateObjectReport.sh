@@ -5,6 +5,10 @@ cd checkout/OneLifeData7Latest
 hg pull
 hg update
 
+# clear object cache
+rm objects/cache.fcz
+
+
 cd ../OneLifeWorking/gameSource
 
 hg pull
