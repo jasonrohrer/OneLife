@@ -12,6 +12,8 @@
 #include "minorGems/io/file/FileInputStream.h"
 
 
+#include "whiteSprites.h"
+
 
 extern Font *mainFont;
 extern Font *smallFont;
@@ -48,6 +50,8 @@ EditorImportPage::EditorImportPage()
           mSelect( false ),
           mImportedSheet( NULL ),
           mImportedSheetSprite( NULL ),
+          mWhiteOutSheet( NULL ),
+          mWhiteOutSheetSprite( NULL ),
           mProcessedSelection( NULL ),
           mProcessedSelectionSprite( NULL ),
           mProcessedShadow( NULL ),
@@ -184,7 +188,9 @@ EditorImportPage::EditorImportPage()
 
 
     mSettingSpriteCenter = false;
-        
+    mWhitingOut = false;
+    mAnyWhiteOutSet = false;
+    
     mMovingOverlay = false;
     mScalingOverlay = false;
     mRotatingOverlay = false;
@@ -194,6 +200,8 @@ EditorImportPage::EditorImportPage()
     addKeyClassDescription( &mSheetKeyLegend, "r-mouse", "Mv sheet" );
     addKeyDescription( &mSheetKeyLegend, 'c', "Mv sprite center" );
     addKeyDescription( &mSheetKeyLegend, 'x', "Copy pixel color" );
+    addKeyClassDescription( &mSheetKeyLegend, "w-click", "white out" );
+    addKeyDescription( &mSheetKeyLegend, 'W', "clear white out" );
     addKeyClassDescription( &mSheetKeyLegend, "ijkl", "Mv sheet" );
     addKeyClassDescription( &mSheetKeyLegend, "Ctr/Shft", "Bigger jumps" );
 
@@ -213,6 +221,13 @@ EditorImportPage::~EditorImportPage() {
     if( mImportedSheet != NULL ) {
         delete mImportedSheet;
         }
+    
+    if( mWhiteOutSheet != NULL ) {
+        delete mWhiteOutSheet;
+        freeSprite( mWhiteOutSheetSprite );
+        mWhiteOutSheetSprite = NULL;
+        }
+    
 
     if( mImportedSheetSprite != NULL ) {
         freeSprite( mImportedSheetSprite );
@@ -527,6 +542,19 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
                             }
                         mImportedSheetSprite = 
                             fillSprite( mImportedSheet, false );
+
+
+                        if( mWhiteOutSheet != NULL ) {
+                            delete mWhiteOutSheet;
+                            freeSprite( mWhiteOutSheetSprite );
+                            }
+                        
+                        mWhiteOutSheet = new Image( mSheetW, mSheetH,
+                                                    1, true );
+                        mWhiteOutSheetSprite = 
+                            fillWhiteSprite( mWhiteOutSheet );
+                        
+                        mAnyWhiteOutSet = false;
                         }
                     else {
                         // convert to grayscale
@@ -918,6 +946,10 @@ void EditorImportPage::drawUnderComponents( doublePair inViewCenter,
             drawSprite( mLinesSprites.getElementDirect( i ), pos );
             }
         toggleMultiplicativeBlend( false );
+        
+        setDrawColor( 1, 1, 1, 1 );
+        drawSprite( mWhiteOutSheetSprite, mSheetOffset );
+
 
         if( mSelect ) {
             setDrawColor( 0, 0, 1, 0.25 );
@@ -1028,13 +1060,13 @@ void EditorImportPage::draw( doublePair inViewCenter,
     if( mImportedSheetSprite != NULL ) {
         doublePair pos = mObjectEditorButton.getPosition();
         
-        pos.y += 20;
+        pos.y += 80;
         pos.x -= 240;
         
         drawKeyLegend( &mSheetKeyLegend, pos );
 
         if( mLinesOffset.size() > 0 ) {
-            pos.y -= 80;
+            pos.y -= 112;
             drawKeyLegend( &mLinesKeyLegend, pos );
             }
         }
@@ -1125,12 +1157,45 @@ void EditorImportPage::pointerMove( float inX, float inY ) {
                 ( pos.x - mMovingOverlayPointerStart.x ) / 400;
             }
         }
-
+    
     }
 
 
 void EditorImportPage::pointerDown( float inX, float inY ) {
     if( mImportedSheetSprite == NULL ) {
+        return;
+        }
+
+    if( mWhitingOut && mWhiteOutSheet != NULL ) {
+        
+        int imX = inX - mSheetOffset.x + mSheetW / 2;
+        int imY = -inY + mSheetOffset.y + mSheetH / 2;
+        
+        double *red = mWhiteOutSheet->getChannel( 0 );
+        
+        int r = 8;
+        
+        if( imY > r && imY < mSheetH - r &&
+            imX > r && imX < mSheetW - r ) {
+            
+            
+            for( int dy=-r; dy<=r; dy++ ) {
+                for( int dx=-r; dx<=r; dx++ ) {
+                    
+                    int pY = imY + dy;
+                    int pX = imX + dx;
+                    
+                    int pI = pY * mSheetW + pX;
+    
+                    red[ pI ] = 1.0;
+                    }
+                }
+            
+            freeSprite( mWhiteOutSheetSprite );
+            mWhiteOutSheetSprite = fillWhiteSprite( mWhiteOutSheet );
+            mAnyWhiteOutSet = true;
+            }
+        
         return;
         }
 
@@ -1342,6 +1407,21 @@ void EditorImportPage::keyDown( unsigned char inASCII ) {
     else if( inASCII == 'c' ) {
         mSettingSpriteCenter = true;
         }
+    else if( inASCII == 'w' ) {
+        mWhitingOut = true;
+        }
+    else if( inASCII == 'W' ) {
+        mWhitingOut = false;
+        
+        if( mWhiteOutSheet != NULL ) {
+            delete mWhiteOutSheet;
+            freeSprite( mWhiteOutSheetSprite );
+                        
+            mWhiteOutSheet = new Image( mSheetW, mSheetH, 1, true );
+            mWhiteOutSheetSprite = fillWhiteSprite( mWhiteOutSheet );
+            }
+        mAnyWhiteOutSet = false;
+        }
     else if( inASCII == 'x' ) {
         if( mImportedSheet != NULL ) {
             
@@ -1376,6 +1456,9 @@ void EditorImportPage::keyUp( unsigned char inASCII ) {
         }
     else if( inASCII == 'c' ) {
         mSettingSpriteCenter = false;
+        }
+    else if( inASCII == 'w' ) {
+        mWhitingOut = false;
         }
     }
 
@@ -1496,6 +1579,33 @@ void EditorImportPage::processSelection() {
     Image *cutImage = 
         mImportedSheet->getSubImage( startImX, startImY, imW, imH );
 
+    
+    Image *cutWhiteout = NULL;
+
+    if( mAnyWhiteOutSet ) {
+        
+        // apply white-out to sheet
+        
+        cutWhiteout =
+            mWhiteOutSheet->getSubImage( startImX, startImY, imW, imH );
+        
+        int numPixCut = imW * imH;
+
+        double *whiteOutChan = cutWhiteout->getChannel( 0 );
+        double *cutImR = cutImage->getChannel( 0 );
+        double *cutImG = cutImage->getChannel( 1 );
+        double *cutImB = cutImage->getChannel( 2 );
+        
+        for( int i=0; i<numPixCut; i++ ) {
+            if( whiteOutChan[i] > 0 ) {
+                cutImR[i] =  1;
+                cutImG[i] =  1;
+                cutImB[i] =  1;
+                }
+            }
+        }
+    
+    
 
     // since this is grayscale, only deal with red channel
     Image *cutLinesImage = NULL;
@@ -1582,9 +1692,29 @@ void EditorImportPage::processSelection() {
                 }
             // else skip
             }
+
+        
+        if( mAnyWhiteOutSet ) {
+            // apply white-out to merged lines
+            
+            int numPixCut = imW * imH;
+
+            double *whiteOutChan = cutWhiteout->getChannel( 0 );
+            
+            for( int i=0; i<numPixCut; i++ ) {
+                if( whiteOutChan[i] > 0 ) {
+                    cutLinesR[i] =  1;
+                    }
+                }    
+            }
+
         }
     
-
+    
+    if( cutWhiteout != NULL ) {
+        delete cutWhiteout;
+        }
+    
         
     
     int w = cutImage->getWidth();

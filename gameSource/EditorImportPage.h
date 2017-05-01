@@ -95,6 +95,11 @@ class EditorImportPage : public GamePage, public ActionListener {
         Image *mImportedSheet;
         SpriteHandle mImportedSheetSprite;
         
+        // starts transparent
+        // we add white to it with mouse
+        Image *mWhiteOutSheet;
+        SpriteHandle mWhiteOutSheetSprite;
+
 
         Image *mProcessedSelection;
         SpriteHandle mProcessedSelectionSprite;
@@ -151,6 +156,11 @@ class EditorImportPage : public GamePage, public ActionListener {
 
         char mSettingSpriteCenter;
         
+        char mWhitingOut;
+        
+        char mAnyWhiteOutSet;
+        
+
         char mMovingOverlay;
         char mScalingOverlay;
         char mRotatingOverlay;
