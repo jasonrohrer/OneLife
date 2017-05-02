@@ -6,7 +6,7 @@
 # Runs interactively (asks for a password)
 
 apt-get -o Acquire::ForceIPv4=true update
-apt-get -y install emacs-nox nginx
+apt-get -y install emacs-nox nginx fail2ban
 
 
 echo ""

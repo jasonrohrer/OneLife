@@ -5,7 +5,7 @@
 # Runs interactively (asks for a password)
 
 apt-get -o Acquire::ForceIPv4=true update
-apt-get -y install emacs-nox mercurial
+apt-get -y install emacs-nox mercurial fail2ban
 
 
 echo ""

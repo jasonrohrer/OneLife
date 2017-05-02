@@ -5,7 +5,7 @@
 # Runs interactively (asks for a password)
 
 apt-get -o Acquire::ForceIPv4=true update
-apt-get -y install emacs-nox mercurial g++ expect gdb make
+apt-get -y install emacs-nox mercurial g++ expect gdb make fail2ban
 
 
 echo ""
