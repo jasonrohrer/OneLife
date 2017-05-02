@@ -2012,24 +2012,48 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                 
 
                 groundFrameTime = groundFrameTime - floor( groundFrameTime );
-
-                groundPos.x -= groundFrameTime * 4 * 128;
                 
+                int moveSign = -1;
                 
-                groundPos.x -= 256;
-
-                while( groundPos.x < -256 ) {
-                    groundPos.x += 128;
+                if( mFlipDraw ) {
+                    moveSign = 1;
                     }
                 
-                while( groundPos.x <= 256 ) {
+                groundPos.x += moveSign * groundFrameTime * 4 * 128;
+                
+                
+                groundPos.x += moveSign * 512;
+
+                if( mFlipDraw ) {
+                    while( groundPos.x > 512 ) {
+                        groundPos.x -= 128;
+                        }
+
+                    while( groundPos.x >= -512 ) {
+                        
+                        //setDrawColor( 1, 1, 1, 
+                        //              1.0 - ( fabs( groundPos.x ) / 128.0 ) );
+
+                        drawSprite( mGroundSprite, groundPos );
+                        groundPos.x -= 128;
+                        }
+                    }
+                else {
+                    while( groundPos.x < -512 ) {
+                        groundPos.x += 128;
+                        }
                     
-                    //setDrawColor( 1, 1, 1, 
-                    //              1.0 - ( fabs( groundPos.x ) / 128.0 ) );
-
-                    drawSprite( mGroundSprite, groundPos );
-                    groundPos.x += 128;
+                    while( groundPos.x <= 512 ) {
+                        
+                        //setDrawColor( 1, 1, 1, 
+                        //              1.0 - ( fabs( groundPos.x ) / 128.0 ) );
+                        
+                        drawSprite( mGroundSprite, groundPos );
+                        groundPos.x += 128;
+                        }
                     }
+                
+                
                 }
                     
             setDrawColor( 1, 1, 1, 1 );
