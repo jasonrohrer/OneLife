@@ -2870,6 +2870,11 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             }
         else {
             // no longer hiding arm for non-handheld objects
+            
+            // but pass -2 so that body position is returned
+            // instead of hand position
+            hideClosestArm = -2;
+            hideAllLimbs = false;
             }
         
         
