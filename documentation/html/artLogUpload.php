@@ -121,27 +121,55 @@ if( $upload ) {
     
     preg_match( "/[0-9]+/", $newTop, $matches );
     $newTop = $matches[0];
+
+    $deleteMarked = $_REQUEST[ "deleteMarked" ];
     
-    if( $newTop > 0 && $newTop < $lastFileNumber ) {
+    preg_match( "/[01]/", $deleteMarked, $matches );
+    $deleteMarked = $matches[0];
+    
+    if( $newTop > 0 ) {
+
+        if( $deleteMarked == 1 ) {
+            unlink( "artPosts/$newTop.jpg" );
+            unlink( "artPosts/$newTop"."_t.jpg" );
         
-        $newTopNumber = $lastFileNumber + 1;
         
-        rename( "artPosts/$newTop.jpg", "artPosts/$newTopNumber.jpg" );
-        rename( "artPosts/$newTop"."_t.jpg",
-                "artPosts/$newTopNumber"."_t.jpg" );
+            if( file_exists( "artPostsBig/$newTop.jpg" ) ) {
+                unlink( "artPostsBig/$newTop.jpg" );
+                }
         
-        
-        if( file_exists( "artPostsBig/$newTop.jpg" ) ) {
-            rename( "artPostsBig/$newTop.jpg",
-                    "artPostsBig/$newTopNumber.jpg" );
+            if( file_exists( "artPostsBig/$newTop.png" ) ) {
+                unlink( "artPostsBig/$newTop.png" );
+                }
+            if( $newTop == $lastFileNumber ) {
+                if( $numFiles > 1 ) {
+                    $lastFileNumber = pathinfo( $files[0], PATHINFO_FILENAME );
+                    }
+                else {
+                     $lastFileNumber = 0;
+                    }
+                }
             }
+        else if( $newTop < $lastFileNumber ) {
+            $newTopNumber = $lastFileNumber + 1;
         
-        if( file_exists( "artPostsBig/$newTop.png" ) ) {
-            rename( "artPostsBig/$newTop.png",
-                    "artPostsBig/$newTopNumber.png" );
+            rename( "artPosts/$newTop.jpg", "artPosts/$newTopNumber.jpg" );
+            rename( "artPosts/$newTop"."_t.jpg",
+                    "artPosts/$newTopNumber"."_t.jpg" );
+        
+        
+            if( file_exists( "artPostsBig/$newTop.jpg" ) ) {
+                rename( "artPostsBig/$newTop.jpg",
+                        "artPostsBig/$newTopNumber.jpg" );
+                }
+        
+            if( file_exists( "artPostsBig/$newTop.png" ) ) {
+                rename( "artPostsBig/$newTop.png",
+                        "artPostsBig/$newTopNumber.png" );
+                }
+        
+            $lastFileNumber = $newTopNumber;
             }
-        
-        $lastFileNumber = $newTopNumber;
         }
     
 
@@ -252,9 +280,9 @@ if( isset( $_REQUEST[ "passwordHMAC" ] ) ) {
 <FORM enctype="multipart/form-data" ACTION="artLogUpload.php" METHOD="post">
 
 
-  Top image:<br>
+  Pick Top Image:<br>
   <table border=1 cellpadding=5 cellspacing=0>
-	<tr>
+    <tr>
 <?php
 
       for( $i=0; $i<$numThumbs; $i++ ) {
@@ -277,6 +305,9 @@ if( isset( $_REQUEST[ "passwordHMAC" ] ) ) {
               }
           }
 
+    if( $numThumbs > 0 ) {
+        echo "</tr><tr><td colspan=6><input type=checkbox name=deleteMarked value=1> Delete Marked</td>";
+        }
 
 ?>
 
