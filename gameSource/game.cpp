@@ -738,6 +738,8 @@ static void drawPauseScreen() {
         
         doublePair drawPos = { -9, 0 };
         
+        drawPos = add( drawPos, lastScreenViewCenter );
+
         drawSprite( instructionsSprite, drawPos );
         }
     
