@@ -53,8 +53,8 @@ Sign up for release announcement emails: <input type="text" name="email" value="
 $artSummaryOnly = 1;
 $numArtPerPage = 1;
 
-//include( "artLog.php" );
-//echo "<center>[<a href=artLogPage.php>More Artwork...</a>]</center>";
+include( "artLog.php" );
+echo "<center>[<a href=artLogPage.php>More Artwork...</a>]</center>";
 ?>
 
 <br><br><br>
