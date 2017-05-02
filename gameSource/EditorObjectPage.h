@@ -196,7 +196,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
         
         char mPrintRequested;
-
+        char mSavePrintOnly;
+        
 
         ObjectRecord mCurrentObject;
         

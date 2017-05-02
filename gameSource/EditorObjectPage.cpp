@@ -416,7 +416,8 @@ EditorObjectPage::EditorObjectPage()
     mClearObjectButton.setVisible( false );
     
     mPrintRequested = false;
-
+    mSavePrintOnly = false;
+    
     mCurrentObject.id = -1;
     mCurrentObject.description = mDescriptionField.getText();
     mCurrentObject.containable = 0;
@@ -3049,9 +3050,15 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     
     if( mPrintRequested ) {
         
-        Image *im =getScreenRegion( -250, -200,
+        Image *im = getScreenRegion( -250, -200,
                                     500, 560 );
-        printImage( im );
+        if( ! mSavePrintOnly ) {
+            printImage( im );
+            }
+        else {
+            writeTGAFile( "savedObjectImage.tga", im );
+            }
+        
         delete im;
         
         mPrintRequested = false;
@@ -4218,10 +4225,17 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         
         if( isPrintingSupported() ) {
             mPrintRequested = true;
+            mSavePrintOnly = false;
             }
         else {
             printf( "Printing not supported\n" );
             }
+        }
+    else if( inASCII == 0x13 ||
+             ( inASCII == 's' && isCommandKeyDown() ) ) {
+        printf( "Save image requested\n" );
+        mPrintRequested = true;
+        mSavePrintOnly = true;
         }
     }
 
