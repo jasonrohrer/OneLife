@@ -25,3 +25,8 @@ find ~/backups -mtime +14 -delete
 rsync -avz -e ssh --progress ~/backups/* jcr13@backup.onehouronelife.com:backups/main/ 
 
 rsync -avz -e ssh --progress ~/checkout/OneLife/server/backups/* jcr13@backup.onehouronelife.com:backups/main/ 
+
+
+rsync -avz -e ssh --progress ~/www/artPosts/ jcr13@backup.onehouronelife.com:backups/main/artPosts/ --delete
+
+rsync -avz -e ssh --progress ~/www/artPostsBig/ jcr13@backup.onehouronelife.com:backups/main/artPostsBig/ --delete
