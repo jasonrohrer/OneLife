@@ -3,7 +3,38 @@
 
 # Run as root to perform initial setup and user account creation
 
-# Runs interactively (asks for a password)
+
+
+echo ""
+echo ""
+echo "Future root ssh logins will be key-based only, with password forbidden"
+echo ""
+echo ""
+
+
+mkdir .ssh
+
+chmod 744 .ssh
+
+cd .ssh
+
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAsiD85AwaNxcUzNzHPapVaGVIQCTUfdKT2tyd26MWqEds2UHLZund+S930BWz7guu3/mzuTomJnPxZPSyb+62ZiuAR0YaGZwYwMrFkrbPsXf6//MZDBvdMMcqPyqLj3Iny2ZZ9LTnSIs0hqQ3SksvP/qqHthS1YQWMwZlRxs6MmZdEuy4qZZgpnexf6uaWTEcxEO2Nij8LdEN8+jJZLHVkXSSD9c/ssTmdXss3/sVSZHYR+28HeqUahRsO0Rz6mR3FwB+ZslZlWiMFTzjkH5IA/XOiNK5Ezf1+EsQOn2OVfaCMlfJQ6YGp1kgFI01j2ZWHnqHaacvVc+C+9fAmIscZw==" > authorized_keys
+
+chmod 644 authorized_keys
+
+sed -i 's/PermitRootLogin yes/PermitRootLogin without-password/' /etc/ssh/sshd_config
+
+service ssh restart
+
+
+echo ""
+echo ""
+echo "Installing packages..."
+echo ""
+echo ""
+
+
+
 
 apt-get -o Acquire::ForceIPv4=true update
 apt-get -y install emacs-nox nginx fail2ban
