@@ -35,7 +35,20 @@ echo ""
 
 
 apt-get -o Acquire::ForceIPv4=true update
-apt-get -y install emacs-nox mercurial g++ expect gdb make fail2ban
+apt-get -y install emacs-nox mercurial g++ expect gdb make fail2ban ufw
+
+
+echo ""
+echo ""
+echo "Whitelisting only main server and backup server IP address for ssh"
+echo "Opening port 8005 for game server"
+echo ""
+echo ""
+
+ufw allow from 72.14.184.149 to any port 22
+ufw allow from 173.230.147.48 to any port 22
+ufw allow 8005
+ufw --force enable
 
 
 echo ""

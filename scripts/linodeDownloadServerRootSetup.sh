@@ -37,7 +37,21 @@ echo ""
 
 
 apt-get -o Acquire::ForceIPv4=true update
-apt-get -y install emacs-nox nginx fail2ban
+apt-get -y install emacs-nox nginx fail2ban ufw
+
+
+
+echo ""
+echo ""
+echo "Whitelisting only main server IP address for ssh"
+echo "Opening port 80 for web"
+echo ""
+echo ""
+
+ufw allow from 72.14.184.149 to any port 22
+ufw allow 80
+ufw --force enable
+
 
 
 echo ""

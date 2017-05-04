@@ -33,7 +33,19 @@ echo ""
 
 
 apt-get -o Acquire::ForceIPv4=true update
-apt-get -y install emacs-nox mercurial fail2ban
+apt-get -y install emacs-nox mercurial fail2ban ufw
+
+
+
+echo ""
+echo ""
+echo "Whitelisting only main server IP address for ssh"
+echo ""
+echo ""
+
+ufw allow from 72.14.184.149 to any port 22
+ufw --force enable
+
 
 
 echo ""
