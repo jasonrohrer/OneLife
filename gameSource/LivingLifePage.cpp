@@ -4328,8 +4328,16 @@ void LivingLifePage::step() {
                             printf( "New placement, responsible=%d\n",
                                     responsiblePlayerID );
 
-                            mMapAnimationFrameCount[mapI] = 0;
-                            mMapAnimationLastFrameCount[mapI] = 0;
+                            if( old == 0 ) {
+                                // set down into an empty spot
+                                // reset frame count
+                                mMapAnimationFrameCount[mapI] = 0;
+                                mMapAnimationLastFrameCount[mapI] = 0;
+                                }
+                            // else, leave existing frame count alone,
+                            // since object has simply gone through a
+                            // transition
+                            
                             mMapCurAnimType[mapI] = ground;
                             mMapLastAnimType[mapI] = ground;
                             mMapLastAnimFade[mapI] = 0;
