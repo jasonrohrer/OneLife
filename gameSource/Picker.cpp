@@ -81,12 +81,114 @@ void Picker::redoSearch() {
         }
 
     int numRemain;
-    
-    mResults = mPickable->search( search, 
-                                  mSkip, 
-                                  PER_PAGE, 
-                                  &mNumResults, &numRemain );
 
+
+    char multiTermDone = false;
+    
+    if( strstr( search, " " ) != NULL && 
+        strstr( search, "." ) == NULL ) {
+        
+        // special case, multi-term search
+        
+        char *searchLower = stringToLowerCase( search );
+
+        int numTerms;
+        char **terms = split( searchLower, " ", &numTerms );
+        
+        delete [] searchLower;
+
+        SimpleVector<char*> validTerms;
+        
+        for( int i=0; i<numTerms; i++ ) {
+            if( strlen( terms[i] ) > 0 ) {
+                
+                validTerms.push_back( terms[i] );
+                }
+            }
+        
+        if( validTerms.size() > 0 ) {
+            multiTermDone = true;
+            
+            // do full search for first term
+            
+            int numMainResults, numMainRemain;
+            void **mainResults = 
+                mPickable->search( validTerms.getElementDirect( 0 ),
+                                   0,
+                                   // limit of 1 million
+                                   1000000,
+                                   &numMainResults, &numMainRemain );
+            if( numMainResults == 0 ) {
+                mResults = mainResults;
+                mNumResults = numMainResults;
+                numRemain = numMainRemain;
+                }
+            else {
+                // at least one main result
+                
+                SimpleVector<void*> passingResults;
+                
+                for( int i=0; i<numMainResults; i++ ) {
+                    const char *mainResultName = 
+                        mPickable->getText( mainResults[i] );
+                
+                    char *mainNameLower = stringToLowerCase( mainResultName );
+                    
+                    
+                    char matchFailed = false;
+                    
+                    for( int j=1; j<validTerms.size(); j++ ) {
+                        char *term = validTerms.getElementDirect( j );
+                        
+                        if( strstr( mainNameLower, term ) == NULL ) {
+                            matchFailed = true;
+                            }
+                        }
+                    if( !matchFailed ) {
+                        passingResults.push_back( mainResults[i] );
+                        }
+
+                    delete [] mainNameLower;
+                    }
+                
+                
+                int totalNumResults = passingResults.size();
+
+                mNumResults = totalNumResults -= mSkip;
+                numRemain = 0;
+                
+                if( mNumResults > PER_PAGE ) {
+                    numRemain = mNumResults - PER_PAGE;
+                    mNumResults = PER_PAGE;
+                    }
+                
+                mResults = new void*[ mNumResults ];
+                
+                int resultI = 0;
+                for( int j=mSkip; j<mSkip + mNumResults; j++ ) {
+                    mResults[resultI] = passingResults.getElementDirect(j);
+                    resultI++;
+                    }
+                
+                delete [] mainResults;
+                }
+            
+            }
+        
+        for( int i=0; i<numTerms; i++ ) {
+            delete [] terms[i];
+            }
+        delete [] terms;
+        }
+
+    if( !multiTermDone ) {
+        
+        mResults = mPickable->search( search, 
+                                      mSkip, 
+                                      PER_PAGE, 
+                                      &mNumResults, &numRemain );
+        }
+    
     
     mPrevButton.setVisible( mSkip > 0 );
     mNextButton.setVisible( numRemain > 0 );
