@@ -3561,7 +3561,11 @@ int main() {
                                 TransRecord *r = NULL;
                                 char defaultTrans = false;
                                 
-                                if( nextPlayer->holdingID >= 0 ) {
+                                if( nextPlayer->holdingID >= 0 &&
+                                    // if what we're holding contains
+                                    // stuff, block it from being
+                                    // used as a tool
+                                    nextPlayer->numContained == 0 ) {
                                     // negative holding is ID of baby
                                     // which can't be used
                                     // (and no bare hand action available)
