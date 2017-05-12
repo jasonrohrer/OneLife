@@ -37,7 +37,8 @@ Picker::Picker( Pickable *inPickable, double inX, double inY )
                         false,
                         "", NULL, "" ),
           mSelectionIndex( -1 ),
-          mSelectionRightClicked( false ) {
+          mSelectionRightClicked( false ),
+          mPastSearchCurrentIndex( -1 ) {
 
     addComponent( &mNextButton );
     addComponent( &mPrevButton );
@@ -68,6 +69,7 @@ Picker::~Picker() {
     if( mResults != NULL ) {
         delete [] mResults;
         }
+    mPastSearches.deallocateStringElements();
     }
 
 
@@ -209,11 +211,32 @@ void Picker::redoSearch() {
 
 
 
+void Picker::addSearchToStack() {
+    char *search = mSearchField.getText();
+
+    for( int i=0; i<mPastSearches.size(); i++ ) {
+        if( strcmp( search, mPastSearches.getElementDirect( i ) ) == 0 ) {
+            
+            // found, remove old one
+            mPastSearches.deallocateStringElement( i );
+            
+            break;
+            }
+        }
+    
+    
+    mPastSearches.push_back( search );
+    
+    mPastSearchCurrentIndex = mPastSearches.size() - 1;
+    }
+
+
         
 void Picker::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mNextButton ) {
         mSkip += PER_PAGE;
         redoSearch();
+        addSearchToStack();
         }
     else if( inTarget == &mPrevButton ) {
         mSkip -= PER_PAGE;
@@ -221,10 +244,13 @@ void Picker::actionPerformed( GUIComponent *inTarget ) {
             mSkip = 0;
             }
         redoSearch();
+        addSearchToStack();
         }
     else if( inTarget == &mSearchField ) {
         mSkip = 0;
+        mPastSearchCurrentIndex = mPastSearches.size() - 1;
         redoSearch();
+        // don't add to stack... not sure that they're done typing yet
         }
     else if( inTarget == &mDelButton ) {
         mDelButton.setVisible( false );
@@ -241,6 +267,35 @@ void Picker::actionPerformed( GUIComponent *inTarget ) {
         }
     
         
+    }
+
+
+void Picker::specialKeyDown( int inKeyCode ) {
+    
+    if( ! mSearchField.isFocused() ) {
+        return;
+        }
+
+     switch( inKeyCode ) {
+         case MG_KEY_UP:
+             if( mPastSearchCurrentIndex > 0 ) {
+                 mPastSearchCurrentIndex --;
+                 mSearchField.setText( mPastSearches.getElementDirect( 
+                                           mPastSearchCurrentIndex ) );
+                 mSkip = 0;
+                 redoSearch();
+                 }
+             break;
+         case MG_KEY_DOWN:
+             if( mPastSearchCurrentIndex < mPastSearches.size() - 1 ) {
+                 mPastSearchCurrentIndex ++;
+                 mSearchField.setText( mPastSearches.getElementDirect( 
+                                           mPastSearchCurrentIndex ) );
+                 mSkip = 0;
+                 redoSearch();
+                 }
+             break;
+         }
     }
 
 
@@ -355,6 +410,7 @@ void Picker::pointerUp( float inX, float inY ) {
             mSelectionIndex != -1 ) {
             
             fireActionPerformed( this );
+            addSearchToStack();
             }
 
         mDelButton.setVisible( false );

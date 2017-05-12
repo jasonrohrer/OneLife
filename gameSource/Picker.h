@@ -37,7 +37,9 @@ class Picker : public PageComponent, ActionListener,
 
 
         virtual void actionPerformed( GUIComponent *inTarget );
-        
+
+        virtual void specialKeyDown( int inKeyCode );
+
         
     protected:
         virtual void draw();
@@ -64,6 +66,13 @@ class Picker : public PageComponent, ActionListener,
         int mSelectionIndex;
         
         char mSelectionRightClicked;
+
+
+        SimpleVector<char*> mPastSearches;
+        int mPastSearchCurrentIndex;
+
+        void addSearchToStack();
+
     };
 
 
