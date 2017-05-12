@@ -68,6 +68,7 @@ graphics/stopButton.tga \
 graphics/clearButton.tga \
 graphics/copyButton.tga \
 graphics/pasteButton.tga \
+graphics/swapButton.tga \
 
 
 NEEDED_MINOR_GEMS_OBJECTS = \

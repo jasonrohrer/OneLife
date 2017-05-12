@@ -79,8 +79,12 @@ EditorTransitionPage::EditorTransitionPage()
           mProducesNext( smallFont, 180, -260, "Next" ),
           mProducesPrev( smallFont, -180, -260, "Prev" ),
           mDelButton( smallFont, +150, 0, "Delete" ),
-          mDelConfirmButton( smallFont, +150, 40, "Delete?" ) {
+          mDelConfirmButton( smallFont, +150, 40, "Delete?" ),
+          mSwapActorButton( "swapButton.tga", -200, 0 ),
+          mSwapTargetButton( "swapButton.tga", 0, 0 ) {
 
+    mSwapActorButton.setPixelSize( 2 );
+    mSwapTargetButton.setPixelSize( 2 );
 
     addComponent( &mAutoDecayTimeField );
     mAutoDecayTimeField.setVisible( false );
@@ -95,6 +99,9 @@ EditorTransitionPage::EditorTransitionPage()
     addComponent( &mProducedByPrev );
     addComponent( &mProducesNext );
     addComponent( &mProducesPrev );
+
+    addComponent( &mSwapActorButton );
+    addComponent( &mSwapTargetButton );
     
 
     mSaveTransitionButton.addActionListener( this );
@@ -106,6 +113,9 @@ EditorTransitionPage::EditorTransitionPage()
     
     mDelButton.addActionListener( this );
     mDelConfirmButton.addActionListener( this );
+
+    mSwapActorButton.addActionListener( this );
+    mSwapTargetButton.addActionListener( this );
 
     mDelButton.setVisible( false );
     mDelConfirmButton.setVisible( false );
@@ -558,6 +568,38 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             }
         
+        }
+    else if( inTarget == &mSwapActorButton ) {
+        
+        int temp = mCurrentTransition.actor;
+        
+        mCurrentTransition.actor = mCurrentTransition.newActor;
+        mCurrentTransition.newActor = temp;
+
+        if( mCurrentlyReplacing == 0 ) {
+            mCurrentlyReplacing = 2;
+            }
+        else if( mCurrentlyReplacing == 2 ) {
+            mCurrentlyReplacing = 0;
+            }
+        
+        checkIfSaveVisible();
+        }
+    else if( inTarget == &mSwapTargetButton ) {
+        
+        int temp = mCurrentTransition.target;
+        
+        mCurrentTransition.target = mCurrentTransition.newTarget;
+        mCurrentTransition.newTarget = temp;
+        
+        if( mCurrentlyReplacing == 1 ) {
+            mCurrentlyReplacing = 3;
+            }
+        else if( mCurrentlyReplacing == 3 ) {
+            mCurrentlyReplacing = 1;
+            }
+
+        checkIfSaveVisible();
         }
     else if( inTarget == &mObjectEditorButton ) {
         setSignal( "objectEditor" );

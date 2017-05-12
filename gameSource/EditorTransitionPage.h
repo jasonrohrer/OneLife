@@ -13,6 +13,7 @@
 #include "GamePage.h"
 #include "TextButton.h"
 #include "TextField.h"
+#include "SpriteButton.h"
 
 #include "Picker.h"
 
@@ -92,6 +93,9 @@ class EditorTransitionPage : public GamePage, public ActionListener {
         TextButton mDelButton;
         TextButton mDelConfirmButton;
         
+
+        SpriteButton mSwapActorButton;
+        SpriteButton mSwapTargetButton;
 
         void checkIfSaveVisible();
 
