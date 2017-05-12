@@ -1302,6 +1302,23 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
         int yDir = inY - inDroppingPlayer->yd;
                                     
         
+        // cap to magnitude
+        // death drops can be non-adjacent
+        if( xDir > 1 ) {
+            xDir = 1;
+            }
+        if( xDir < -1 ) {
+            xDir = -1;
+            }
+
+        if( yDir > 1 ) {
+            yDir = 1;
+            }
+        if( yDir < -1 ) {
+            yDir = -1;
+            }
+        
+
         // check in y dir first at each
         // expanded radius?
         char yFirst = false;
