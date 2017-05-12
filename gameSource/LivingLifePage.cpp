@@ -4326,9 +4326,9 @@ void LivingLifePage::step() {
                                 // make sure this is really a fresh creation
                                 // of newID, and not a cycling back around
                                 // for a reusable object
-                                if( ! isAncestor( old, newID, 3 ) 
+                                if( ! obj->creationSoundInitialOnly
                                     ||
-                                    ! obj->creationSoundInitialOnly ) {
+                                    ! isAncestor( old, newID, 3 ) ) {
                                     
                                     playSound( obj->creationSound,
                                                getVectorFromCamera( x, y ) );
@@ -4938,12 +4938,12 @@ void LivingLifePage::step() {
                                         // initial state.
                                         if( oldHeld == 0 
                                             ||
+                                            ! heldObj->
+                                              creationSoundInitialOnly
+                                            ||
                                             ! isAncestor( oldHeld, 
                                                           existing->holdingID, 
-                                                          3 ) 
-                                            ||
-                                            ! heldObj->
-                                              creationSoundInitialOnly ){
+                                                          3 ) ){
 
                                             playSound( 
                                                 heldObj->creationSound,
