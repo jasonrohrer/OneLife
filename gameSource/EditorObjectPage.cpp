@@ -178,6 +178,7 @@ EditorObjectPage::EditorObjectPage()
           mCreationSoundWidget( smallFont, -300, -310 ),
           mUsingSoundWidget( smallFont, 0, -310 ),
           mEatingSoundWidget( smallFont, +300, -310 ),
+          mCreationSoundPlayerActionOnlyCheckbox( -185, -285, 2 ),
           mSlotPlaceholderSprite( loadSprite( "slotPlaceholder.tga" ) ) {
 
 
@@ -211,6 +212,11 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mCreationSoundWidget );
     addComponent( &mUsingSoundWidget );
     addComponent( &mEatingSoundWidget );
+
+    addComponent( &mCreationSoundPlayerActionOnlyCheckbox );
+    mCreationSoundPlayerActionOnlyCheckbox.setVisible( false );
+    mCreationSoundPlayerActionOnlyCheckbox.addActionListener( this );
+
 
     mContainSizeField.setVisible( false );
     mSlotSizeField.setVisible( false );
@@ -1118,6 +1124,13 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             delete [] raceText;
             }
+        
+        char creationSoundPlayerActionOnly = false;
+        
+        if( mCreationSoundWidget.getSoundUsage().id != -1 ) {
+            creationSoundPlayerActionOnly = 
+                mCreationSoundPlayerActionOnlyCheckbox.getToggled();
+            }
 
         int newID =
         addObject( text,
@@ -1149,6 +1162,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCreationSoundWidget.getSoundUsage(),
                    mUsingSoundWidget.getSoundUsage(),
                    mEatingSoundWidget.getSoundUsage(),
+                   creationSoundPlayerActionOnly,
                    mCurrentObject.numSlots,
                    mSlotSizeField.getInt(),
                    mCurrentObject.slotPos,
@@ -1223,6 +1237,13 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             delete [] raceText;
             }
+        
+        char creationSoundPlayerActionOnly = false;
+        
+        if( mCreationSoundWidget.getSoundUsage().id != -1 ) {
+            creationSoundPlayerActionOnly = 
+                mCreationSoundPlayerActionOnlyCheckbox.getToggled();
+            }
 
 
         addObject( text,
@@ -1254,6 +1275,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCreationSoundWidget.getSoundUsage(),
                    mUsingSoundWidget.getSoundUsage(),
                    mEatingSoundWidget.getSoundUsage(),
+                   creationSoundPlayerActionOnly,
                    mCurrentObject.numSlots,
                    mSlotSizeField.getInt(), 
                    mCurrentObject.slotPos,
@@ -2343,6 +2365,13 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mUsingSoundWidget.setSoundUsage( pickedRecord->usingSound );
             mEatingSoundWidget.setSoundUsage( pickedRecord->eatingSound );
 
+            mCreationSoundPlayerActionOnlyCheckbox.setToggled( 
+                pickedRecord->creationSoundPlayerActionOnly );
+
+            mCreationSoundPlayerActionOnlyCheckbox.setVisible( 
+                mCreationSoundWidget.getSoundUsage().id != -1 );
+            
+
             mRaceField.setText( "A" );
             
             if( pickedRecord->person ) {
@@ -3243,6 +3272,14 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         smallFont->drawString( "Eating:", pos, alignLeft );
         }
+
+
+    if( mCreationSoundPlayerActionOnlyCheckbox.isVisible() ) {
+        pos = mCreationSoundPlayerActionOnlyCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Player Act Only", pos, alignRight );
+        }
+
     
     if( mPickedObjectLayer != -1 ) {
         char *tag = getSpriteRecord( 
@@ -3305,6 +3342,17 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
 void EditorObjectPage::step() {
     
+    int creationSoundID = mCreationSoundWidget.getSoundUsage().id;
+    
+    mCreationSoundPlayerActionOnlyCheckbox.setVisible( 
+        creationSoundID != -1 );
+
+    if( creationSoundID == -1 ) {
+        // un-toggle whenever sound cleared
+        mCreationSoundPlayerActionOnlyCheckbox.setToggled( false );
+        }
+    
+
     mHoverStrength -= 0.01 * frameRateFactor;
     
     if( mHoverStrength < 0 ) {

@@ -530,6 +530,22 @@ float initObjectBankStep() {
                     next++;
                     }
                 
+                if( strstr( lines[next], 
+                            "creationSoundPlayerActionOnly=" ) != NULL ) {
+                    // flag present
+                    
+                    int flagRead = 0;                            
+                    sscanf( lines[next], "creationSoundPlayerActionOnly=%d", 
+                            &( flagRead ) );
+                    
+                    r->creationSoundPlayerActionOnly = flagRead;
+                            
+                    next++;
+                    }
+                else {
+                    r->creationSoundPlayerActionOnly = 0;
+                    }
+                
 
                 r->numSlots = 0;
                 r->slotTimeStretch = 1.0f;
@@ -905,6 +921,7 @@ void resaveAll() {
                        idMap[i]->creationSound,
                        idMap[i]->usingSound,
                        idMap[i]->eatingSound,
+                       idMap[i]->creationSoundPlayerActionOnly,
                        idMap[i]->numSlots, 
                        idMap[i]->slotSize, 
                        idMap[i]->slotPos,
@@ -1081,6 +1098,7 @@ int addObject( const char *inDescription,
                SoundUsage inCreationSound,
                SoundUsage inUsingSound,
                SoundUsage inEatingSound,
+               char inCreationSoundPlayerActionOnly,
                int inNumSlots, int inSlotSize, doublePair *inSlotPos,
                char *inSlotVert,
                float inSlotTimeStretch,
@@ -1218,7 +1236,9 @@ int addObject( const char *inDescription,
                                       inUsingSound.volume,
                                       inEatingSound.id,
                                       inEatingSound.volume ) );
-        
+
+        lines.push_back( autoSprintf( "creationSoundPlayerActionOnly=%d", 
+                                      (int)inCreationSoundPlayerActionOnly ) );
         
         lines.push_back( autoSprintf( "numSlots=%d#timeStretch=%f", 
                                       inNumSlots, inSlotTimeStretch ) );
@@ -1410,6 +1430,7 @@ int addObject( const char *inDescription,
     r->creationSound = inCreationSound;
     r->usingSound = inUsingSound;
     r->eatingSound = inEatingSound;
+    r->creationSoundPlayerActionOnly = inCreationSoundPlayerActionOnly;
 
     r->numSlots = inNumSlots;
     r->slotSize = inSlotSize;

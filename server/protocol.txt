@@ -258,7 +258,9 @@ x y new_id p_id
 
 Grid position of changes, and new object id that position must change to.
 p_id is the player that was responsible for the change (in the case of an 
-object drop only), or -1 if none.
+object drop only), or -1 if change was not player triggered.  p_id < -1 means
+that the change was triggered by player -(p_id), but that the object
+wasn't dropped (transform triggered by a player action).
 
 Note that if cell contains other stuff (for a container object), new_id
 is a comma-delimited list of contained objects, with the container first

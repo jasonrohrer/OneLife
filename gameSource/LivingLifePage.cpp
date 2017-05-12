@@ -4298,15 +4298,23 @@ void LivingLifePage::step() {
 
                         if( old != newID && 
                             newID != 0 && 
-                            responsiblePlayerID == -1 ) {
+                            responsiblePlayerID <= -1 ) {
                             // ID change, and not just a player setting
                             // an object down
                             ObjectRecord *obj = getObject( newID );
                             
                             if( obj->creationSound.id != -1 ) {
                                 
-                                playSound( obj->creationSound,
-                                           getVectorFromCamera( x, y ) );
+                                // do we always play the creation sound?
+                                // or only play it when it's player-triggered?
+                                if( ! obj->creationSoundPlayerActionOnly 
+                                    ||
+                                    ( obj->creationSoundPlayerActionOnly &&
+                                      responsiblePlayerID < -1 ) ) {
+                                    
+                                    playSound( obj->creationSound,
+                                               getVectorFromCamera( x, y ) );
+                                    }
                                 }
                             }
                             
@@ -4903,11 +4911,20 @@ void LivingLifePage::step() {
                                     
                                     if( heldObj->creationSound.id != -1 ) {
                                         
-                                        playSound( 
-                                            heldObj->creationSound,
-                                            getVectorFromCamera( 
-                                                existing->currentPos.x, 
-                                                existing->currentPos.y ) );
+                                        // from player only flag
+                                        // also means that we shouldn't
+                                        // re-play creation sound when
+                                        // object created in hand
+                                        // (only out in environment)
+                                        if( ! heldObj->
+                                            creationSoundPlayerActionOnly ) {
+
+                                            playSound( 
+                                                heldObj->creationSound,
+                                                getVectorFromCamera( 
+                                                    existing->currentPos.x, 
+                                                    existing->currentPos.y ) );
+                                            }
                                         }
                                     }
                                 }

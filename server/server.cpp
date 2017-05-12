@@ -292,7 +292,7 @@ static int getLiveObjectIndex( int inID ) {
 
 
 
-int nextID = 0;
+int nextID = 2;
 
 
 
@@ -3650,8 +3650,10 @@ int main() {
                                     unsigned int oldEtaDecay = 
                                         getEtaDecay( m.x, m.y );
                                     
+                                    setResponsiblePlayer( - nextPlayer->id );
                                     setMapObject( m.x, m.y, r->newTarget );
-                                    
+                                    setResponsiblePlayer( -1 );
+
                                     if( target == r->newTarget ) {
                                         // target not changed
                                         // keep old decay in place
@@ -3819,9 +3821,12 @@ int main() {
                                             nextPlayer->numContained
                                                 = newHeldSlots;
                                             }
-                                                                        
-
+                                        
+                                        
+                                        setResponsiblePlayer( 
+                                            - nextPlayer->id );
                                         setMapObject( m.x, m.y, r->newTarget );
+                                        setResponsiblePlayer( -1 );
                                         
                                         handleMapChangeToPaths( 
                                             m.x, m.y,
@@ -4822,9 +4827,10 @@ int main() {
                     
                     if( deathID > 0 ) {
                         
+                        setResponsiblePlayer( - nextPlayer->id );
                         setMapObject( dropPos.x, dropPos.y, 
                                       deathID );
-                        
+                        setResponsiblePlayer( -1 );
                         
                         ObjectRecord *deathObject = getObject( deathID );
                         
