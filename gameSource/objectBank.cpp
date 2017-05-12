@@ -511,39 +511,43 @@ float initObjectBankStep() {
                 r->creationSound.id = -1;
                 r->usingSound.id = -1;
                 r->eatingSound.id = -1;
-
+                r->decaySound.id = -1;
+                
                 r->creationSound.volume = 1;
                 r->usingSound.volume = 1;
                 r->eatingSound.volume = 1;
+                r->decaySound.volume = 1;
                 
                 
                 if( strstr( lines[next], "sounds=" ) != NULL ) {
                     // sounds present
-                    sscanf( lines[next], "sounds=%d:%lf,%d:%lf,%d:%lf", 
+                    sscanf( lines[next], "sounds=%d:%lf,%d:%lf,%d:%lf,%d:%lf", 
                             &( r->creationSound.id ),
                             &( r->creationSound.volume ), 
                             &( r->usingSound.id ),
                             &( r->usingSound.volume ),
                             &( r->eatingSound.id ),
-                            &( r->eatingSound.volume ) );
+                            &( r->eatingSound.volume ),
+                            &( r->decaySound.id ),
+                            &( r->decaySound.volume ) );
                     
                     next++;
                     }
                 
                 if( strstr( lines[next], 
-                            "creationSoundPlayerActionOnly=" ) != NULL ) {
+                            "creationSoundInitialOnly=" ) != NULL ) {
                     // flag present
                     
                     int flagRead = 0;                            
-                    sscanf( lines[next], "creationSoundPlayerActionOnly=%d", 
+                    sscanf( lines[next], "creationSoundInitialOnly=%d", 
                             &( flagRead ) );
                     
-                    r->creationSoundPlayerActionOnly = flagRead;
+                    r->creationSoundInitialOnly = flagRead;
                             
                     next++;
                     }
                 else {
-                    r->creationSoundPlayerActionOnly = 0;
+                    r->creationSoundInitialOnly = 0;
                     }
                 
 
@@ -921,7 +925,8 @@ void resaveAll() {
                        idMap[i]->creationSound,
                        idMap[i]->usingSound,
                        idMap[i]->eatingSound,
-                       idMap[i]->creationSoundPlayerActionOnly,
+                       idMap[i]->decaySound,
+                       idMap[i]->creationSoundInitialOnly,
                        idMap[i]->numSlots, 
                        idMap[i]->slotSize, 
                        idMap[i]->slotPos,
@@ -1098,7 +1103,8 @@ int addObject( const char *inDescription,
                SoundUsage inCreationSound,
                SoundUsage inUsingSound,
                SoundUsage inEatingSound,
-               char inCreationSoundPlayerActionOnly,
+               SoundUsage inDecaySound,
+               char inCreationSoundInitialOnly,
                int inNumSlots, int inSlotSize, doublePair *inSlotPos,
                char *inSlotVert,
                float inSlotTimeStretch,
@@ -1229,16 +1235,18 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "deadlyDistance=%d", 
                                       inDeadlyDistance ) );
 
-        lines.push_back( autoSprintf( "sounds=%d:%f,%d:%f,%d:%f", 
+        lines.push_back( autoSprintf( "sounds=%d:%f,%d:%f,%d:%f,%d:%f", 
                                       inCreationSound.id, 
                                       inCreationSound.volume, 
                                       inUsingSound.id,
                                       inUsingSound.volume,
                                       inEatingSound.id,
-                                      inEatingSound.volume ) );
+                                      inEatingSound.volume,
+                                      inDecaySound.id,
+                                      inDecaySound.volume ) );
 
-        lines.push_back( autoSprintf( "creationSoundPlayerActionOnly=%d", 
-                                      (int)inCreationSoundPlayerActionOnly ) );
+        lines.push_back( autoSprintf( "creationSoundInitialOnly=%d", 
+                                      (int)inCreationSoundInitialOnly ) );
         
         lines.push_back( autoSprintf( "numSlots=%d#timeStretch=%f", 
                                       inNumSlots, inSlotTimeStretch ) );
@@ -1430,7 +1438,8 @@ int addObject( const char *inDescription,
     r->creationSound = inCreationSound;
     r->usingSound = inUsingSound;
     r->eatingSound = inEatingSound;
-    r->creationSoundPlayerActionOnly = inCreationSoundPlayerActionOnly;
+    r->decaySound = inDecaySound;
+    r->creationSoundInitialOnly = inCreationSoundInitialOnly;
 
     r->numSlots = inNumSlots;
     r->slotSize = inSlotSize;
@@ -1526,6 +1535,9 @@ int addObject( const char *inDescription,
             }
         if( oldRecord->eatingSound.id != -1 ) {
             oldSoundIDs.push_back( oldRecord->eatingSound.id );
+            }
+        if( oldRecord->decaySound.id != -1 ) {
+            oldSoundIDs.push_back( oldRecord->decaySound.id );
             }
         }
     
@@ -2059,7 +2071,8 @@ char isSoundUsedByObject( int inSoundID ) {
         if( idMap[i] != NULL ) {            
             if( idMap[i]->creationSound.id == inSoundID ||
                 idMap[i]->usingSound.id == inSoundID ||
-                idMap[i]->eatingSound.id == inSoundID ) {
+                idMap[i]->eatingSound.id == inSoundID ||
+                idMap[i]->decaySound.id == inSoundID ) {
                 return true;
                 }
             }        

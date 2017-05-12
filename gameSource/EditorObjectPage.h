@@ -193,8 +193,9 @@ class EditorObjectPage : public GamePage, public ActionListener {
         SoundWidget mCreationSoundWidget;
         SoundWidget mUsingSoundWidget;
         SoundWidget mEatingSoundWidget;
+        SoundWidget mDecaySoundWidget;
         
-        CheckboxButton  mCreationSoundPlayerActionOnlyCheckbox;
+        CheckboxButton  mCreationSoundInitialOnlyCheckbox;
         
         char mPrintRequested;
         char mSavePrintOnly;

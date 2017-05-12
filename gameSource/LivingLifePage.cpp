@@ -4301,16 +4301,34 @@ void LivingLifePage::step() {
                             responsiblePlayerID <= -1 ) {
                             // ID change, and not just a player setting
                             // an object down
+
+                            if( old > 0 &&
+                                responsiblePlayerID == -1 ) {
+                                // object auto-decayed from some other
+                                // object
+                                
+                                // play decay sound
+                                ObjectRecord *obj = getObject( old );
+                                if( obj->decaySound.id != -1 ) {    
+                                    
+                                    playSound( obj->decaySound,
+                                               getVectorFromCamera( x, y ) );
+                                    }
+                                
+                                
+                                }
+                            
+
                             ObjectRecord *obj = getObject( newID );
                             
                             if( obj->creationSound.id != -1 ) {
                                 
-                                // do we always play the creation sound?
-                                // or only play it when it's player-triggered?
-                                if( ! obj->creationSoundPlayerActionOnly 
+                                // make sure this is really a fresh creation
+                                // of newID, and not a cycling back around
+                                // for a reusable object
+                                if( ! isAncestor( old, newID, 3 ) 
                                     ||
-                                    ( obj->creationSoundPlayerActionOnly &&
-                                      responsiblePlayerID < -1 ) ) {
+                                    ! obj->creationSoundInitialOnly ) {
                                     
                                     playSound( obj->creationSound,
                                                getVectorFromCamera( x, y ) );
@@ -4911,13 +4929,21 @@ void LivingLifePage::step() {
                                     
                                     if( heldObj->creationSound.id != -1 ) {
                                         
-                                        // from player only flag
-                                        // also means that we shouldn't
-                                        // re-play creation sound when
-                                        // object created in hand
-                                        // (only out in environment)
-                                        if( ! heldObj->
-                                            creationSoundPlayerActionOnly ) {
+                                        // only play creation sound
+                                        // if this object is truly new
+                                        // (if object is flag for initial
+                                        //  creation sounds only)
+                                        // Check ancestor chains for
+                                        // objects that loop back to their
+                                        // initial state.
+                                        if( oldHeld == 0 
+                                            ||
+                                            ! isAncestor( oldHeld, 
+                                                          existing->holdingID, 
+                                                          3 ) 
+                                            ||
+                                            ! heldObj->
+                                              creationSoundInitialOnly ){
 
                                             playSound( 
                                                 heldObj->creationSound,

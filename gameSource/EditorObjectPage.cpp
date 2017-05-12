@@ -176,9 +176,10 @@ EditorObjectPage::EditorObjectPage()
                         0, 1, "V" ),
           mSlotVertCheckbox( -90, -157, 2 ),
           mCreationSoundWidget( smallFont, -300, -310 ),
-          mUsingSoundWidget( smallFont, 0, -310 ),
-          mEatingSoundWidget( smallFont, +300, -310 ),
-          mCreationSoundPlayerActionOnlyCheckbox( -185, -285, 2 ),
+          mUsingSoundWidget( smallFont, -50, -310 ),
+          mEatingSoundWidget( smallFont, +200, -310 ),
+          mDecaySoundWidget( smallFont, +450, -310 ),
+          mCreationSoundInitialOnlyCheckbox( -185, -285, 2 ),
           mSlotPlaceholderSprite( loadSprite( "slotPlaceholder.tga" ) ) {
 
 
@@ -212,10 +213,11 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mCreationSoundWidget );
     addComponent( &mUsingSoundWidget );
     addComponent( &mEatingSoundWidget );
+    addComponent( &mDecaySoundWidget );
 
-    addComponent( &mCreationSoundPlayerActionOnlyCheckbox );
-    mCreationSoundPlayerActionOnlyCheckbox.setVisible( false );
-    mCreationSoundPlayerActionOnlyCheckbox.addActionListener( this );
+    addComponent( &mCreationSoundInitialOnlyCheckbox );
+    mCreationSoundInitialOnlyCheckbox.setVisible( false );
+    mCreationSoundInitialOnlyCheckbox.addActionListener( this );
 
 
     mContainSizeField.setVisible( false );
@@ -1125,11 +1127,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] raceText;
             }
         
-        char creationSoundPlayerActionOnly = false;
+        char creationSoundInitialOnly = false;
         
         if( mCreationSoundWidget.getSoundUsage().id != -1 ) {
-            creationSoundPlayerActionOnly = 
-                mCreationSoundPlayerActionOnlyCheckbox.getToggled();
+            creationSoundInitialOnly = 
+                mCreationSoundInitialOnlyCheckbox.getToggled();
             }
 
         int newID =
@@ -1162,7 +1164,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCreationSoundWidget.getSoundUsage(),
                    mUsingSoundWidget.getSoundUsage(),
                    mEatingSoundWidget.getSoundUsage(),
-                   creationSoundPlayerActionOnly,
+                   mDecaySoundWidget.getSoundUsage(),
+                   creationSoundInitialOnly,
                    mCurrentObject.numSlots,
                    mSlotSizeField.getInt(),
                    mCurrentObject.slotPos,
@@ -1238,11 +1241,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] raceText;
             }
         
-        char creationSoundPlayerActionOnly = false;
+        char creationSoundInitialOnly = false;
         
         if( mCreationSoundWidget.getSoundUsage().id != -1 ) {
-            creationSoundPlayerActionOnly = 
-                mCreationSoundPlayerActionOnlyCheckbox.getToggled();
+            creationSoundInitialOnly = 
+                mCreationSoundInitialOnlyCheckbox.getToggled();
             }
 
 
@@ -1275,7 +1278,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCreationSoundWidget.getSoundUsage(),
                    mUsingSoundWidget.getSoundUsage(),
                    mEatingSoundWidget.getSoundUsage(),
-                   creationSoundPlayerActionOnly,
+                   mDecaySoundWidget.getSoundUsage(),
+                   creationSoundInitialOnly,
                    mCurrentObject.numSlots,
                    mSlotSizeField.getInt(), 
                    mCurrentObject.slotPos,
@@ -2364,11 +2368,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCreationSoundWidget.setSoundUsage( pickedRecord->creationSound );
             mUsingSoundWidget.setSoundUsage( pickedRecord->usingSound );
             mEatingSoundWidget.setSoundUsage( pickedRecord->eatingSound );
+            mDecaySoundWidget.setSoundUsage( pickedRecord->decaySound );
 
-            mCreationSoundPlayerActionOnlyCheckbox.setToggled( 
-                pickedRecord->creationSoundPlayerActionOnly );
+            mCreationSoundInitialOnlyCheckbox.setToggled( 
+                pickedRecord->creationSoundInitialOnly );
 
-            mCreationSoundPlayerActionOnlyCheckbox.setVisible( 
+            mCreationSoundInitialOnlyCheckbox.setVisible( 
                 mCreationSoundWidget.getSoundUsage().id != -1 );
             
 
@@ -3272,12 +3277,19 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         smallFont->drawString( "Eating:", pos, alignLeft );
         }
+    if( mDecaySoundWidget.isVisible() ) {
+        pos = mDecaySoundWidget.getPosition();
+        pos.x -= 100;
+        pos.y += 25;
+        
+        smallFont->drawString( "Decay:", pos, alignLeft );
+        }
 
 
-    if( mCreationSoundPlayerActionOnlyCheckbox.isVisible() ) {
-        pos = mCreationSoundPlayerActionOnlyCheckbox.getPosition();
+    if( mCreationSoundInitialOnlyCheckbox.isVisible() ) {
+        pos = mCreationSoundInitialOnlyCheckbox.getPosition();
         pos.x -= 20;
-        smallFont->drawString( "Player Act Only", pos, alignRight );
+        smallFont->drawString( "Initial Only", pos, alignRight );
         }
 
     
@@ -3344,12 +3356,12 @@ void EditorObjectPage::step() {
     
     int creationSoundID = mCreationSoundWidget.getSoundUsage().id;
     
-    mCreationSoundPlayerActionOnlyCheckbox.setVisible( 
+    mCreationSoundInitialOnlyCheckbox.setVisible( 
         creationSoundID != -1 );
 
     if( creationSoundID == -1 ) {
         // un-toggle whenever sound cleared
-        mCreationSoundPlayerActionOnlyCheckbox.setToggled( false );
+        mCreationSoundInitialOnlyCheckbox.setToggled( false );
         }
     
 

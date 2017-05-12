@@ -130,12 +130,13 @@ typedef struct ObjectRecord {
 
         SoundUsage creationSound;
         SoundUsage usingSound;
-        SoundUsage  eatingSound;
+        SoundUsage eatingSound;
+        SoundUsage decaySound;
 
         // true if creation sound should only be triggered
         // on player-caused creation of this object (not automatic,
         // decay-caused creation).
-        char creationSoundPlayerActionOnly;
+        char creationSoundInitialOnly;
         
 
         // if it is a container, how many slots?
@@ -297,7 +298,8 @@ int addObject( const char *inDescription,
                SoundUsage inCreationSound,
                SoundUsage inUsingSound,
                SoundUsage inEatingSound,
-               char inCreationSoundPlayerActionOnly,
+               SoundUsage inDecaySound,
+               char inCreationSoundInitialOnly,
                int inNumSlots, int inSlotSize, doublePair *inSlotPos,
                char *inSlotVert,
                float inSlotTimeStretch,

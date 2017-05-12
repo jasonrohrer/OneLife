@@ -285,6 +285,40 @@ SimpleVector<TransRecord*> *getAllUses( int inUsesID ) {
 
 
 
+char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit ) {
+    
+    if( inStepLimit == 0 || inTargetID >= mapSize ) {
+        return false;
+        }
+    
+    for( int i=0; i< producesMap[inTargetID].size(); i++ ) {
+        
+        TransRecord *r = producesMap[inTargetID].getElementDirect( i );
+        
+        if( r->actor == inPossibleAncestorID ||
+            r->target == inPossibleAncestorID ) {
+            return true;
+            }
+
+        if( r->actor > 0 &&
+            isAncestor( r->actor, inPossibleAncestorID, inStepLimit - 1 ) ) {
+            return true;
+            }
+        
+        if( r->target > 0 && 
+            isAncestor( r->target, inPossibleAncestorID, inStepLimit - 1 ) ) {
+            return true;
+            }
+        }
+    
+    return false;
+    }
+
+
+
+
+
+
 void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget,
                int inAutoDecaySeconds ) {

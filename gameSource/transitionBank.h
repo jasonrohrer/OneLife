@@ -62,6 +62,13 @@ SimpleVector<TransRecord*> *getAllUses( int inUsesID );
 
 
 
+// returns true if inPossibleAncestorID is an ancestor of inTargetID
+// (used to make an ancestor of inTargetID no more than inStepLimit steps
+//  up the transition tree).
+char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit );
+
+
+
 // inTarget can never be 0, except in the case of generic on-person transitions
 // (to define what happens to an actor object when it is used on any person)
 
