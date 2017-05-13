@@ -7588,7 +7588,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     else if( ( modClick && ourLiveObject->holdingID != 0 )
              || tryingToPickUpBaby
              || useOnBabyLater
-             || ( ! modClick && destID != 0 )
+             || destID != 0
              || ( modClick && ourLiveObject->holdingID == 0 &&
                   destNumContained > 0 ) ) {
         // use/drop modifier
@@ -7753,7 +7753,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 nextActionDropping = true;
                 send = true;
                 }
-            else if( ! modClick && destID != 0 ) {
+            else if( destID != 0 ) {
+                // allow right click and default to USE if nothing
+                // else applies
                 action = "USE";
                 send = true;
                 }

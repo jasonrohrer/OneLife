@@ -2260,6 +2260,62 @@ static char directLineBlocked( GridPos inSource, GridPos inDest ) {
 
 
 
+// returns true if added
+static char addHeldToContainer( LiveObject *inPlayer, 
+                                int inContX, int inContY ) {
+    
+    int target = getMapObject( inContX, inContY );
+
+        
+    int targetSlots = 
+        getNumContainerSlots( target );
+                                        
+    ObjectRecord *targetObj =
+        getObject( target );
+    
+    int slotSize =
+        targetObj->slotSize;
+    
+    int containSize =
+        getObject( 
+            inPlayer->holdingID )->
+        containSize;
+
+    int numIn = 
+        getNumContained( inContX, inContY );
+    
+    if( numIn < targetSlots &&
+        isContainable( 
+            inPlayer->holdingID ) &&
+        containSize <= slotSize ) {
+        
+        // add to container
+        
+        setResponsiblePlayer( 
+            inPlayer->id );
+        
+        addContained( 
+            inContX, inContY,
+            inPlayer->holdingID,
+            inPlayer->holdingEtaDecay );
+        
+        setResponsiblePlayer( -1 );
+        
+        inPlayer->holdingID = 0;
+        inPlayer->holdingEtaDecay = 0;
+        inPlayer->heldOriginValid = 0;
+        inPlayer->heldOriginX = 0;
+        inPlayer->heldOriginY = 0;
+        inPlayer->heldTransitionSourceID = -1;
+        
+        return true;
+        }
+
+    return false;
+    }
+
+
+
 
 int main() {
 
@@ -3584,6 +3640,7 @@ int main() {
                                 ObjectRecord *targetObj = getObject( target );
                                 
                                 // try using object on this target 
+                                char transApplied = false;
                                 
                                 TransRecord *r = NULL;
                                 char defaultTrans = false;
@@ -3598,7 +3655,9 @@ int main() {
                                     // (and no bare hand action available)
                                     r = getTrans( nextPlayer->holdingID,
                                                   target );
-                                
+                                    
+                                    transApplied = true;
+                                    
                                     if( r == NULL && 
                                         ( nextPlayer->holdingID > 0 || 
                                           targetObj->permanent ) ) {
@@ -3712,6 +3771,7 @@ int main() {
                                     // this non-permanent target object
                                     
                                     // treat it like pick up
+                                    transApplied = true;
                                     
                                     nextPlayer->holdingEtaDecay = 
                                         getEtaDecay( m.x, m.y );
@@ -3736,7 +3796,16 @@ int main() {
                                     nextPlayer->heldOriginY = m.y;
                                     nextPlayer->heldTransitionSourceID = -1;
                                     }
-                                else if( nextPlayer->holdingID != 0 ) {
+                                else if( nextPlayer->holdingID > 0 ) {
+                                    // try adding what we're holding to
+                                    // target container
+                                    
+                                    transApplied = addHeldToContainer(
+                                        nextPlayer, m.x, m.y );
+                                    }
+                                
+                                if( ! transApplied &&
+                                    nextPlayer->holdingID != 0 ) {
                                     // no transition for what we're
                                     // holding on target
 
@@ -4442,47 +4511,17 @@ int main() {
                                     int target = getMapObject( m.x, m.y );
                             
                                     if( target != 0 ) {
-                                        int targetSlots = 
-                                            getNumContainerSlots( target );
                                         
                                         ObjectRecord *targetObj =
                                             getObject( target );
-
-                                        int slotSize =
-                                            targetObj->slotSize;
                                         
-                                        int containSize =
-                                            getObject( 
-                                                nextPlayer->holdingID )->
-                                            containSize;
-
-                                        int numIn = 
-                                            getNumContained( m.x, m.y );
+                                        int targetSlots =
+                                            getNumContainerSlots( target );
                                         
-                                        if( numIn < targetSlots &&
-                                            isContainable( 
-                                                nextPlayer->holdingID ) &&
-                                            containSize <= slotSize ) {
-                                            
-                                            // add to container
-                                            
-                                            setResponsiblePlayer( 
-                                                nextPlayer->id );
-                                            
-                                            addContained( 
-                                                m.x, m.y,
-                                                nextPlayer->holdingID,
-                                                nextPlayer->holdingEtaDecay );
-                                        
-                                            setResponsiblePlayer( -1 );
-                                            
-                                            nextPlayer->holdingID = 0;
-                                            nextPlayer->holdingEtaDecay = 0;
-                                            nextPlayer->heldOriginValid = 0;
-                                            nextPlayer->heldOriginX = 0;
-                                            nextPlayer->heldOriginY = 0;
-                                            nextPlayer->heldTransitionSourceID =
-                                                -1;
+                                        if( addHeldToContainer( 
+                                                nextPlayer,
+                                                m.x, m.y ) ) {
+                                            // handled
                                             }
                                         else if( targetSlots == 0 &&
                                                  ! targetObj->permanent 
