@@ -4987,20 +4987,34 @@ void LivingLifePage::step() {
                                             creationSoundPlayed = true;
                                             }
                                         }
-                                    if( oldHeld == 0 && !creationSoundPlayed ) {
-                                        // we're holding something new
-                                        // play generic pickup sound
-
-                                        ObjectRecord *existingObj = 
-                                            getObject( existing->displayID );
-                                
-                                        if( existingObj->usingSound.id != -1 ) {
                                     
-                                            playSound( 
-                                                existingObj->usingSound,
-                                                getVectorFromCamera(
-                                                    existing->currentPos.x, 
-                                                    existing->currentPos.y ) );
+                                    if( oldHeld == 0 ) {
+                                        // we're holding something new
+
+                                        existing->lastHeldAnim = held;
+                                        existing->
+                                            lastHeldAnimationFrameCount = 0;
+                                        existing->curHeldAnim = held;
+                                        existing->heldAnimationFrameCount = 0;
+                                        existing->lastHeldAnimFade = 0;
+                                            
+                                        
+                                        if( !creationSoundPlayed ) {
+                                            // play generic pickup sound
+
+                                            ObjectRecord *existingObj = 
+                                                getObject( 
+                                                    existing->displayID );
+                                
+                                            if( existingObj->usingSound.id != 
+                                                -1 ) {
+                                    
+                                                playSound( 
+                                                    existingObj->usingSound,
+                                                    getVectorFromCamera(
+                                                     existing->currentPos.x, 
+                                                     existing->currentPos.y ) );
+                                                }
                                             }
                                         }
                                     
