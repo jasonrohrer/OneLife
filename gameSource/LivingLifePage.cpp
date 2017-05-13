@@ -4582,7 +4582,8 @@ void LivingLifePage::step() {
                 
                 char *holdingIDBuffer = new char[500];
 
-                int heldOriginValid, heldOriginX, heldOriginY;
+                int heldOriginValid, heldOriginX, heldOriginY,
+                    heldTransitionSourceID;
                 
                 char *clothingBuffer = new char[500];
                 
@@ -4601,7 +4602,7 @@ void LivingLifePage::step() {
                                       "%d "
                                       "%d "
                                       "%d %d "
-                                      "%499s %d %d %d %f %d %d %d %d "
+                                      "%499s %d %d %d %d %f %d %d %d %d "
                                       "%lf %lf %lf %499s %d",
                                       &( o.id ),
                                       &( o.displayID ),
@@ -4613,6 +4614,7 @@ void LivingLifePage::step() {
                                       &heldOriginValid,
                                       &heldOriginX,
                                       &heldOriginY,
+                                      &heldTransitionSourceID,
                                       &( o.heat ),
                                       &done_moving,
                                       &forced,
@@ -4625,7 +4627,7 @@ void LivingLifePage::step() {
                                       &justAte );
                 
             
-                if( numRead == 20 ) {
+                if( numRead == 21 ) {
                     printf( "PLAYER_UPDATE with orVal=%d, orx=%d, ory=%d, "
                             "pX =%d, pY=%d\n",
                             heldOriginValid, heldOriginX, heldOriginY,
@@ -4927,8 +4929,40 @@ void LivingLifePage::step() {
                                     ObjectRecord *heldObj =
                                         getObject( existing->holdingID );
                                     
+
+                                    if( oldHeld > 0 && 
+                                        heldTransitionSourceID == -1 ) {
+                                        // held object auto-decayed from 
+                                        // some other object
+                                
+                                        // play decay sound
+                                        ObjectRecord *obj = 
+                                            getObject( oldHeld );
+                                        if( obj->decaySound.id != -1 ) {    
+                                            
+                                            playSound( 
+                                                obj->decaySound,
+                                                getVectorFromCamera(
+                                                    existing->currentPos.x, 
+                                                    existing->currentPos.y ) );
+                                            }
+                                        }
+                                    
+                                    
+                                    char creationSoundPlayed = false;
+                                    
                                     if( heldObj->creationSound.id != -1 ) {
                                         
+                                        int testAncestor = oldHeld;
+                                        
+                                        if( oldHeld == 0 &&
+                                            heldTransitionSourceID > 0 ) {
+                                            
+                                            testAncestor = 
+                                                heldTransitionSourceID;
+                                            }
+                                        
+
                                         // only play creation sound
                                         // if this object is truly new
                                         // (if object is flag for initial
@@ -4936,12 +4970,12 @@ void LivingLifePage::step() {
                                         // Check ancestor chains for
                                         // objects that loop back to their
                                         // initial state.
-                                        if( oldHeld == 0 
-                                            ||
-                                            ! heldObj->
+                                        if( ! heldObj->
                                               creationSoundInitialOnly
                                             ||
-                                            ! isAncestor( oldHeld, 
+                                            testAncestor == 0
+                                            ||
+                                            ! isAncestor( testAncestor, 
                                                           existing->holdingID, 
                                                           3 ) ){
 
@@ -4950,8 +4984,26 @@ void LivingLifePage::step() {
                                                 getVectorFromCamera( 
                                                     existing->currentPos.x, 
                                                     existing->currentPos.y ) );
+                                            creationSoundPlayed = true;
                                             }
                                         }
+                                    if( oldHeld == 0 && !creationSoundPlayed ) {
+                                        // we're holding something new
+                                        // play generic pickup sound
+
+                                        ObjectRecord *existingObj = 
+                                            getObject( existing->displayID );
+                                
+                                        if( existingObj->usingSound.id != -1 ) {
+                                    
+                                            playSound( 
+                                                existingObj->usingSound,
+                                                getVectorFromCamera(
+                                                    existing->currentPos.x, 
+                                                    existing->currentPos.y ) );
+                                            }
+                                        }
+                                    
                                     }
                                 }
                             

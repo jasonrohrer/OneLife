@@ -138,19 +138,21 @@ a few other tricks to reduce it's size.  Check the code in map.cpp for details.
 
 
 PU
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c e
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c e
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c e
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e
 ...
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y heat done_moving force x y age age_r s c e
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e
 #
 
 List of player ids with their display object ids, facing direction, action
 attempt flag, action attempt target position,
 held object ids, 
 whether held origin is valid (1 or 0), origin position on map of that held 
-object (where it was picked up from), player's current heat value, 
+object (where it was picked up from), 
+transition source object id (or -1) if held object is result of a transition,
+player's current heat value, 
 done_moving flag (to signal destination reached), force flag (to signal
 a move truncated unexpectedly), x,y grid positions of player,
 floating point age in "years", floating point aging rate in sec/year (how many

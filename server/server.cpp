@@ -161,6 +161,11 @@ typedef struct LiveObject {
         int heldOriginX;
         int heldOriginY;
 
+        // if held object was created by a transition on a target, what is the
+        // object ID of the target from the transition?
+        int heldTransitionSourceID;
+        
+
         int numContained;
         int *containedIDs;
         unsigned int *containedEtaDecays;
@@ -1450,7 +1455,8 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             inDroppingPlayer->heldOriginValid = 0;
             inDroppingPlayer->heldOriginX = 0;
             inDroppingPlayer->heldOriginY = 0;
-
+            inDroppingPlayer->heldTransitionSourceID = -1;
+            
             if( inDroppingPlayer->numContained != 0 ) {
                 delete [] inDroppingPlayer->containedIDs;
                 delete [] inDroppingPlayer->containedEtaDecays;
@@ -1496,6 +1502,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
         inDroppingPlayer->heldOriginValid = 0;
         inDroppingPlayer->heldOriginX = 0;
         inDroppingPlayer->heldOriginY = 0;
+        inDroppingPlayer->heldTransitionSourceID = -1;
         
         return;
         }
@@ -1545,7 +1552,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     inDroppingPlayer->heldOriginValid = 0;
     inDroppingPlayer->heldOriginX = 0;
     inDroppingPlayer->heldOriginY = 0;
-    
+    inDroppingPlayer->heldTransitionSourceID = -1;
                                 
     // watch out for truncations of in-progress
     // moves of other players
@@ -1751,7 +1758,7 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
 
 
     char *updateLine = autoSprintf( 
-        "%d %d %d %d %d %d %s %d %d %d %.2f %s %.2f %.2f %.2f %s %d\n",
+        "%d %d %d %d %d %d %s %d %d %d %d %.2f %s %.2f %.2f %.2f %s %d\n",
         inPlayer->id,
         inPlayer->displayID,
         inPlayer->facingOverride,
@@ -1762,6 +1769,7 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
         inPlayer->heldOriginValid,
         inPlayer->heldOriginX,
         inPlayer->heldOriginY,
+        inPlayer->heldTransitionSourceID,
         inPlayer->heat,
         posString,
         computeAge( inPlayer ),
@@ -2137,6 +2145,7 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.heldOriginValid = 0;
     newObject.heldOriginX = 0;
     newObject.heldOriginY = 0;
+    newObject.heldTransitionSourceID = -1;
     newObject.numContained = 0;
     newObject.containedIDs = NULL;
     newObject.containedEtaDecays = NULL;
@@ -3474,6 +3483,7 @@ int main() {
                                     if( r != NULL ) {
                                         
                                         nextPlayer->holdingID = r->newActor;
+                                        nextPlayer->heldTransitionSourceID = -1;
                                         
                                         if( oldHolding != 
                                             nextPlayer->holdingID ) {
@@ -3616,6 +3626,15 @@ int main() {
                                     
                                     if( ! defaultTrans ) {    
                                         nextPlayer->holdingID = r->newActor;
+                                        
+                                        if( r->target > 0 ) {    
+                                            nextPlayer->heldTransitionSourceID =
+                                                r->target;
+                                            }
+                                        else {
+                                            nextPlayer->heldTransitionSourceID =
+                                                -1;
+                                            }
                                         }
                                     
                                     if( oldHolding != nextPlayer->holdingID ) {
@@ -3715,6 +3734,7 @@ int main() {
                                     nextPlayer->heldOriginValid = 1;
                                     nextPlayer->heldOriginX = m.x;
                                     nextPlayer->heldOriginY = m.y;
+                                    nextPlayer->heldTransitionSourceID = -1;
                                     }
                                 else if( nextPlayer->holdingID != 0 ) {
                                     // no transition for what we're
@@ -3824,7 +3844,8 @@ int main() {
                                         nextPlayer->heldOriginValid = 0;
                                         nextPlayer->heldOriginX = 0;
                                         nextPlayer->heldOriginY = 0;
-
+                                        nextPlayer->heldTransitionSourceID = -1;
+                                        
                                         // can newly changed container hold
                                         // less than what it could contain
                                         // before?
@@ -3938,6 +3959,7 @@ int main() {
                                     nextPlayer->heldOriginValid = 1;
                                     nextPlayer->heldOriginX = m.x;
                                     nextPlayer->heldOriginY = m.y;
+                                    nextPlayer->heldTransitionSourceID = -1;
                                     }
                                 
                                 }
@@ -4050,6 +4072,7 @@ int main() {
                                     nextPlayer->heldOriginValid = 0;
                                     nextPlayer->heldOriginX = 0;
                                     nextPlayer->heldOriginY = 0;
+                                    nextPlayer->heldTransitionSourceID = -1;
                                     
                                     targetPlayer->foodUpdate = true;
                                     }
@@ -4065,6 +4088,7 @@ int main() {
                                     nextPlayer->heldOriginValid = 0;
                                     nextPlayer->heldOriginX = 0;
                                     nextPlayer->heldOriginY = 0;
+                                    nextPlayer->heldTransitionSourceID = -1;
                                     
                                     ObjectRecord *oldC = NULL;
                                     unsigned int oldCEtaDecay = 0;
@@ -4407,6 +4431,8 @@ int main() {
                                             nextPlayer->heldOriginValid = 0;
                                             nextPlayer->heldOriginX = 0;
                                             nextPlayer->heldOriginY = 0;
+                                            nextPlayer->heldTransitionSourceID =
+                                                -1;
                                             }
                                         }
                                     }
@@ -4450,6 +4476,8 @@ int main() {
                                             nextPlayer->heldOriginValid = 0;
                                             nextPlayer->heldOriginX = 0;
                                             nextPlayer->heldOriginY = 0;
+                                            nextPlayer->heldTransitionSourceID =
+                                                -1;
                                             }
                                         else if( targetSlots == 0 &&
                                                  ! targetObj->permanent 
@@ -4501,6 +4529,8 @@ int main() {
                                             nextPlayer->heldOriginValid = 1;
                                             nextPlayer->heldOriginX = m.x;
                                             nextPlayer->heldOriginY = m.y;
+                                            nextPlayer->heldTransitionSourceID =
+                                                -1;
                                             }
                                         }
                                     else {
@@ -4677,6 +4707,7 @@ int main() {
                                     nextPlayer->heldOriginValid = 0;
                                     nextPlayer->heldOriginX = 0;
                                     nextPlayer->heldOriginY = 0;
+                                    nextPlayer->heldTransitionSourceID = -1;
                                     }
                                 }
                             }
@@ -5011,7 +5042,7 @@ int main() {
                         int newID = t->newTarget;
 
                         nextPlayer->holdingID = newID;
-                    
+                        nextPlayer->heldTransitionSourceID = -1;
                     
                         int oldSlots = 
                             getNumContainerSlots( oldID );
