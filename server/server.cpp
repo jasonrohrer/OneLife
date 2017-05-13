@@ -4465,12 +4465,17 @@ int main() {
                                             containSize <= slotSize ) {
                                             
                                             // add to container
-                                        
+                                            
+                                            setResponsiblePlayer( 
+                                                nextPlayer->id );
+                                            
                                             addContained( 
                                                 m.x, m.y,
                                                 nextPlayer->holdingID,
                                                 nextPlayer->holdingEtaDecay );
                                         
+                                            setResponsiblePlayer( -1 );
+                                            
                                             nextPlayer->holdingID = 0;
                                             nextPlayer->holdingEtaDecay = 0;
                                             nextPlayer->heldOriginValid = 0;

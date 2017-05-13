@@ -4257,6 +4257,9 @@ void LivingLifePage::step() {
 
                         int newID = -1;
                         
+                        int oldContainedCount = 
+                            mMapContainedStacks[mapI].size();
+                        
 
                         if( strstr( idBuffer, "," ) != NULL ) {
                             int numInts;
@@ -4288,6 +4291,46 @@ void LivingLifePage::step() {
                             mMapContainedStacks[mapI].deleteAll();
                             }
                         
+                        if( old != 0 &&
+                            old == newID &&
+                            mMapContainedStacks[mapI].size() > 
+                            oldContainedCount &&
+                            responsiblePlayerID > 0 ) {
+                            
+
+                            // first, try and play the "using"
+                            // sound for the container
+                            char soundPlayed = false;
+                            
+                            SoundUsage contSound = 
+                                getObject( mMap[mapI] )->usingSound;
+                            
+                            if( contSound.id != -1 ) {
+                                playSound( contSound, 
+                                           getVectorFromCamera( x, y ) );
+                                soundPlayed = true;
+                                }
+
+                            if( ! soundPlayed ) {
+                                // no container using sound defined
+                                
+                                LiveObject *responsiblePlayerObject = 
+                                    getGameObject( responsiblePlayerID );
+                            
+                                // play player's using sound
+                            
+                                SoundUsage s = getObject( 
+                                    responsiblePlayerObject->displayID )->
+                                    usingSound;
+
+                                if( s.id != -1 ) {
+                                    playSound( s, getVectorFromCamera( x, y ) );
+                                    }
+                                }
+                            }
+                        
+
+
                         if( responsiblePlayerID == -1 ) {
                             // no one dropped this
                             
@@ -4963,28 +5006,36 @@ void LivingLifePage::step() {
                                             }
                                         
 
-                                        // only play creation sound
-                                        // if this object is truly new
-                                        // (if object is flag for initial
-                                        //  creation sounds only)
-                                        // Check ancestor chains for
-                                        // objects that loop back to their
-                                        // initial state.
-                                        if( ! heldObj->
-                                              creationSoundInitialOnly
-                                            ||
-                                            testAncestor == 0
-                                            ||
-                                            ! isAncestor( testAncestor, 
-                                                          existing->holdingID, 
-                                                          3 ) ){
+                                        if( testAncestor != 0 ) {
+                                            // new held object is result
+                                            // of a transtion
+                                            // (otherwise, it has been
+                                            //  removed from a container
 
-                                            playSound( 
+                                            // only play creation sound
+                                            // if this object is truly new
+                                            // (if object is flag for initial
+                                            //  creation sounds only)
+                                            // Check ancestor chains for
+                                            // objects that loop back to their
+                                            // initial state.
+
+
+                                            if( ! heldObj->
+                                                creationSoundInitialOnly
+                                                ||
+                                                ! isAncestor( 
+                                                    testAncestor, 
+                                                    existing->holdingID, 
+                                                    3 ) ){
+
+                                                playSound( 
                                                 heldObj->creationSound,
                                                 getVectorFromCamera( 
                                                     existing->currentPos.x, 
                                                     existing->currentPos.y ) );
-                                            creationSoundPlayed = true;
+                                                creationSoundPlayed = true;
+                                                }
                                             }
                                         }
                                     
@@ -6615,18 +6666,6 @@ void LivingLifePage::step() {
                     
                     if( held->eatingSound.id != -1 ) {
                         playSound( held->eatingSound,
-                                   getVectorFromCamera( 
-                                       ourLiveObject->currentPos.x, 
-                                       ourLiveObject->currentPos.y ) );
-                        }       
-                    }
-                }
-            else if( !nextActionDropping ) {    
-                if( ourLiveObject->holdingID > 0 ) {
-                    ObjectRecord *held = getObject( ourLiveObject->holdingID );
-                    
-                    if( held->usingSound.id != -1 ) {
-                        playSound( held->usingSound,
                                    getVectorFromCamera( 
                                        ourLiveObject->currentPos.x, 
                                        ourLiveObject->currentPos.y ) );
