@@ -3397,6 +3397,14 @@ void EditorObjectPage::step() {
         mClearRotButton.setVisible( false );
         mFlipHButton.setVisible( false );
         }
+
+    if( mPersonAgeSlider.isVisible() || mSlotSizeField.isVisible() ) {
+        mUsingSoundWidget.setVisible( true );
+        }
+    else {
+        mUsingSoundWidget.setSoundUsage( blankSoundUsage );
+        mUsingSoundWidget.setVisible( false );
+        }
     }
 
 
