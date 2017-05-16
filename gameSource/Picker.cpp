@@ -70,6 +70,7 @@ Picker::~Picker() {
         delete [] mResults;
         }
     mPastSearches.deallocateStringElements();
+    mPastSearchSkips.deleteAll();
     }
 
 
@@ -213,19 +214,20 @@ void Picker::redoSearch() {
 
 void Picker::addSearchToStack() {
     char *search = mSearchField.getText();
-
+    
     for( int i=0; i<mPastSearches.size(); i++ ) {
         if( strcmp( search, mPastSearches.getElementDirect( i ) ) == 0 ) {
             
             // found, remove old one
-            mPastSearches.deallocateStringElement( i );
-            
+            mPastSearches.deallocateStringElement( i );        
+            mPastSearchSkips.deleteElement( i );
             break;
             }
         }
     
     
     mPastSearches.push_back( search );
+    mPastSearchSkips.push_back( mSkip );
     
     mPastSearchCurrentIndex = mPastSearches.size() - 1;
     }
@@ -288,7 +290,9 @@ void Picker::specialKeyDown( int inKeyCode ) {
                  mPastSearchCurrentIndex --;
                  mSearchField.setText( mPastSearches.getElementDirect( 
                                            mPastSearchCurrentIndex ) );
-                 mSkip = 0;
+                 mSkip = mPastSearchSkips.getElementDirect( 
+                     mPastSearchCurrentIndex );
+                 
                  redoSearch();
                  }
              break;
@@ -297,7 +301,9 @@ void Picker::specialKeyDown( int inKeyCode ) {
                  mPastSearchCurrentIndex ++;
                  mSearchField.setText( mPastSearches.getElementDirect( 
                                            mPastSearchCurrentIndex ) );
-                 mSkip = 0;
+                 mSkip = mPastSearchSkips.getElementDirect( 
+                     mPastSearchCurrentIndex );
+                 
                  redoSearch();
                  }
              break;

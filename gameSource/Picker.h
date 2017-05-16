@@ -69,6 +69,7 @@ class Picker : public PageComponent, ActionListener,
 
 
         SimpleVector<char*> mPastSearches;
+        SimpleVector<int> mPastSearchSkips;
         int mPastSearchCurrentIndex;
 
         void addSearchToStack();
