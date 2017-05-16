@@ -233,13 +233,19 @@ void Picker::addSearchToStack() {
 
         
 void Picker::actionPerformed( GUIComponent *inTarget ) {
+    int skipAmount = PER_PAGE;
+    
+    if( isCommandKeyDown() ) {
+        skipAmount *= 5;
+        }
+    
     if( inTarget == &mNextButton ) {
-        mSkip += PER_PAGE;
+        mSkip += skipAmount;
         redoSearch();
         addSearchToStack();
         }
     else if( inTarget == &mPrevButton ) {
-        mSkip -= PER_PAGE;
+        mSkip -= skipAmount;
         if( mSkip < 0 ) {
             mSkip = 0;
             }
