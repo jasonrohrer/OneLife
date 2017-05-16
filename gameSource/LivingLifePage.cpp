@@ -4366,6 +4366,25 @@ void LivingLifePage::step() {
                             
                             if( obj->creationSound.id != -1 ) {
                                 
+                                if( old == 0 && responsiblePlayerID < -1 ) {
+                                    // new placement, but not set-down
+                                    // we don't have information
+                                    // from on-ground objects to 
+                                    // check for ancestor relationships
+
+                                    // check what the player is left
+                                    // holding instead
+                                    
+                                    LiveObject *responsiblePlayerObject = 
+                                        getGameObject( -responsiblePlayerID );
+                                    
+                                    old = responsiblePlayerObject->holdingID;
+                                    if( old < 0 ) {
+                                        old = 0;
+                                        }
+                                    }
+                                
+
                                 // make sure this is really a fresh creation
                                 // of newID, and not a cycling back around
                                 // for a reusable object
@@ -4416,7 +4435,7 @@ void LivingLifePage::step() {
                             LiveObject *responsiblePlayerObject = NULL;
                             
                             
-                            if( responsiblePlayerID != -1 ) {
+                            if( responsiblePlayerID > 0 ) {
                                 responsiblePlayerObject = 
                                     getGameObject( responsiblePlayerID );
 
