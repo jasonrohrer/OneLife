@@ -91,7 +91,7 @@ static int startNextAgeFileRead( double inAge ) {
         }
     
 
-    char *searchString = autoSprintf( "_%d.ogg", nextFiveBlock );
+    char *searchString = autoSprintf( "_%02d.ogg", nextFiveBlock );
 
     File musicDir( NULL, "music" );
     
