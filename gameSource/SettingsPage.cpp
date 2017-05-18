@@ -115,7 +115,7 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
             instantStopMusic();
             
 
-            restartMusic( 4.0, 1.0/60.0, true );
+            restartMusic( 9.0, 1.0/60.0, true );
             
             setMusicLoudness( mMusicLoudnessSlider.getValue(), true );
 
