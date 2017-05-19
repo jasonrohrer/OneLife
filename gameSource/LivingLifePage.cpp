@@ -4819,6 +4819,20 @@ void LivingLifePage::step() {
                                 
                                 clothingSoundPlayed = true;
                                 }
+                            else {
+                                // play generic pickup sound
+                                ObjectRecord *existingObj = 
+                                    getObject( existing->displayID );
+                                
+                                if( existingObj->usingSound.id != -1 ) {
+                                    
+                                    playSound( existingObj->usingSound,
+                                               getVectorFromCamera(
+                                                   o.xd,
+                                                   o.yd ) );
+                                    clothingSoundPlayed = true;
+                                    }
+                                }
                             }
 
                         existing->clothing = o.clothing;
