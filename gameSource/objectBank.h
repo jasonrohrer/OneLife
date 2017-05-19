@@ -237,6 +237,10 @@ ObjectRecord *clothingByIndex( ClothingSet inSet, int inIndex );
 void setClothingByIndex( ClothingSet *inSet, int inIndex, 
                          ObjectRecord *inClothing );
 
+// gets the piece of clothing that was added to make inNewSet from inOldSet
+// returns NULL if nothing added
+ObjectRecord *getClothingAdded( ClothingSet *inOldSet, ClothingSet *inNewSet );
+
 
 
 // loads from objects folder

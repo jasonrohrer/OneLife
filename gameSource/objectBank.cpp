@@ -2300,6 +2300,27 @@ void setClothingByIndex( ClothingSet *inSet, int inIndex,
 
 
 
+ObjectRecord *getClothingAdded( ClothingSet *inOldSet, 
+                                ClothingSet *inNewSet ) {
+    
+    for( int i=0; i<=5; i++ ) {
+        ObjectRecord *oldC = 
+            clothingByIndex( *inOldSet, i );
+        
+        ObjectRecord *newC = 
+            clothingByIndex( *inNewSet, i );
+        
+        if( newC != NULL &&
+            newC != oldC ) {
+            return newC;
+            }
+        }
+    
+    return NULL;
+    }
+
+
+
 
 char checkSpriteAncestor( ObjectRecord *inObject, int inChildIndex,
                           int inPossibleAncestorIndex ) {

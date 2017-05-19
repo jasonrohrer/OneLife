@@ -4789,6 +4789,37 @@ void LivingLifePage::step() {
                         existing->holdingID = o.holdingID;
                         
 
+                        ObjectRecord *newClothing = 
+                            getClothingAdded( &( existing->clothing ), 
+                                              &( o.clothing ) );
+                        
+
+                        if( newClothing == NULL ) {
+                            // has something been removed instead?
+                            newClothing = 
+                                getClothingAdded( &( o.clothing ),
+                                                  &( existing->clothing ) );
+                            }
+                        
+                        char clothingSoundPlayed = false;
+
+                        if( newClothing != NULL ) {
+                            SoundUsage clothingSound = 
+                                newClothing->usingSound;
+                            
+                            if( clothingSound.id != -1 ) {
+                                playSound( clothingSound, 
+                                           getVectorFromCamera( 
+                                               o.xd,
+                                               o.yd ) );
+                                
+                                clothingSoundPlayed = true;
+                                }
+                            }
+
+                        existing->clothing = o.clothing;
+
+
                         // what we're holding hasn't changed
                         // maybe action failed
                         if( o.id == ourID && existing->holdingID == oldHeld ) {
@@ -5069,7 +5100,8 @@ void LivingLifePage::step() {
                                         existing->lastHeldAnimFade = 0;
                                             
                                         
-                                        if( !creationSoundPlayed ) {
+                                        if( !creationSoundPlayed &&
+                                            !clothingSoundPlayed ) {
                                             // play generic pickup sound
 
                                             ObjectRecord *existingObj = 
@@ -5124,7 +5156,7 @@ void LivingLifePage::step() {
                         
                         existing->lastSpeed = o.lastSpeed;
                         
-                        existing->clothing = o.clothing;
+                        
                         
 
                         if( existing->heldByAdultID != -1 ) {

@@ -3398,7 +3398,10 @@ void EditorObjectPage::step() {
         mFlipHButton.setVisible( false );
         }
 
-    if( mPersonAgeSlider.isVisible() || mSlotSizeField.isVisible() ) {
+    if( mPersonAgeSlider.isVisible() || 
+        mSlotSizeField.isVisible() ||
+        anyClothingToggled() ) {
+        
         mUsingSoundWidget.setVisible( true );
         }
     else {
