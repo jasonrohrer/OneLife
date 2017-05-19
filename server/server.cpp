@@ -504,6 +504,8 @@ ClientMessage parseMessage( char *inMessage ) {
     
     ClientMessage m;
     
+    m.i = -1;
+    m.c = -1;
     m.numExtraPos = 0;
     m.extraPos = NULL;
     m.saidText = NULL;
@@ -2316,6 +2318,151 @@ static char addHeldToContainer( LiveObject *inPlayer,
 
 
 
+// returns true if succeeded
+static char removeFromContainerToHold( LiveObject *inPlayer, 
+                                       int inContX, int inContY,
+                                       int inSlotNumber ) {
+    inPlayer->heldOriginValid = 0;
+    inPlayer->heldOriginX = 0;
+    inPlayer->heldOriginY = 0;                        
+
+
+    if( isGridAdjacent( inContX, inContY,
+                        inPlayer->xd, 
+                        inPlayer->yd ) 
+        ||
+        ( inContX == inPlayer->xd &&
+          inContY == inPlayer->yd ) ) {
+                            
+        inPlayer->actionAttempt = 1;
+        inPlayer->actionTarget.x = inContX;
+        inPlayer->actionTarget.y = inContY;
+                            
+        if( inContX > inPlayer->xd ) {
+            inPlayer->facingOverride = 1;
+            }
+        else if( inContX < inPlayer->xd ) {
+            inPlayer->facingOverride = -1;
+            }
+
+        // can only use on targets next to us for now,
+        // no diags
+                            
+        int target = getMapObject( inContX, inContY );
+                            
+        if( target != 0 ) {
+                            
+            int numIn = 
+                getNumContained( inContX, inContY );
+                                
+            int toRemoveID = -1;
+                                
+            if( numIn > 0 ) {
+                toRemoveID = getContained( inContX, inContY, inSlotNumber );
+                }
+                                
+
+            if( inPlayer->holdingID == 0 && 
+                numIn > 0 &&
+                // old enough to handle it
+                getObject( toRemoveID )->minPickupAge <= 
+                computeAge( inPlayer ) ) {
+                // get from container
+                                    
+                inPlayer->holdingID =
+                    removeContained( 
+                        inContX, inContY, inSlotNumber,
+                        &( inPlayer->holdingEtaDecay ) );
+                                    
+                // contained objects aren't animating
+                // in a way that needs to be smooth
+                // transitioned on client
+                inPlayer->heldOriginValid = 0;
+                inPlayer->heldOriginX = 0;
+                inPlayer->heldOriginY = 0;
+
+                return true;
+                }
+            }
+        }        
+    
+    return false;
+    }
+
+
+
+static char addHeldToClothingContainer( LiveObject *inPlayer, 
+                                        int inC ) {    
+    // drop into own clothing
+    ObjectRecord *cObj = 
+        clothingByIndex( 
+            inPlayer->clothing,
+            inC );
+                                    
+    if( cObj != NULL &&
+        isContainable( 
+            inPlayer->holdingID ) ) {
+                                        
+        int oldNum =
+            inPlayer->
+            clothingContained[inC].size();
+                                        
+        int slotSize =
+            cObj->slotSize;
+                                        
+        int containSize =
+            getObject( inPlayer->holdingID )->
+            containSize;
+    
+        if( oldNum < cObj->numSlots &&
+            containSize <= slotSize ) {
+            // room
+            inPlayer->clothingContained[inC].
+                push_back( 
+                    inPlayer->holdingID );
+
+            if( inPlayer->
+                holdingEtaDecay != 0 ) {
+                                                
+                unsigned int curTime = 
+                    time(NULL);
+                                            
+                int offset = 
+                    inPlayer->
+                    holdingEtaDecay - 
+                    curTime;
+                                            
+                offset = 
+                    lrint( offset / 
+                           cObj->
+                           slotTimeStretch );
+                                                
+                inPlayer->holdingEtaDecay =
+                    curTime + offset;
+                }
+                                            
+            inPlayer->
+                clothingContainedEtaDecays[inC].
+                push_back( inPlayer->
+                           holdingEtaDecay );
+                                        
+            inPlayer->holdingID = 0;
+            inPlayer->holdingEtaDecay = 0;
+            inPlayer->heldOriginValid = 0;
+            inPlayer->heldOriginX = 0;
+            inPlayer->heldOriginY = 0;
+            inPlayer->heldTransitionSourceID =
+                -1;
+
+            return true;
+            }
+        }
+
+    return false;
+    }
+
+
+
 
 int main() {
 
@@ -3796,6 +3943,15 @@ int main() {
                                     nextPlayer->heldOriginY = m.y;
                                     nextPlayer->heldTransitionSourceID = -1;
                                     }
+                                else if( nextPlayer->holdingID == 0 &&
+                                         targetObj->permanent ) {
+                                    
+                                    // try removing from permanent
+                                    // container
+                                    removeFromContainerToHold( nextPlayer,
+                                                               m.x, m.y,
+                                                               m.i );
+                                    }         
                                 else if( nextPlayer->holdingID > 0 ) {
                                     // try adding what we're holding to
                                     // target container
@@ -4299,7 +4455,16 @@ int main() {
                                             }
                                         }
                                     }
-                                }
+                                else if( targetPlayer == nextPlayer &&
+                                         m.i >= 0 && 
+                                         m.i < NUM_CLOTHING_PIECES ) {
+                                    // not wearable or food
+                                    // try dropping what we're holding
+                                    // into clothing
+                                    addHeldToClothingContainer( nextPlayer,
+                                                                m.i );
+                                    }
+                                }         
                             else {
                                 // empty hand on self/baby, remove clothing
 
@@ -4442,68 +4607,8 @@ int main() {
                                          m.y == nextPlayer->yd  &&
                                          nextPlayer->holdingID > 0 ) {
                                     
-                                    // drop into own clothing
-                                    ObjectRecord *cObj = 
-                                        clothingByIndex( 
-                                            nextPlayer->clothing,
-                                            m.c );
-                                    
-                                    if( cObj != NULL &&
-                                        isContainable( 
-                                            nextPlayer->holdingID ) ) {
-                                        
-                                        int oldNum =
-                                            nextPlayer->
-                                            clothingContained[m.c].size();
-                                        
-                                        int slotSize =
-                                            cObj->slotSize;
-                                        
-                                        int containSize =
-                                            getObject( nextPlayer->holdingID )->
-                                            containSize;
-    
-                                        if( oldNum < cObj->numSlots &&
-                                            containSize <= slotSize ) {
-                                            // room
-                                            nextPlayer->clothingContained[m.c].
-                                                push_back( 
-                                                    nextPlayer->holdingID );
-
-                                            if( nextPlayer->
-                                                holdingEtaDecay != 0 ) {
-                                                
-                                                unsigned int curTime = 
-                                                    time(NULL);
-                                            
-                                                int offset = 
-                                                    nextPlayer->
-                                                    holdingEtaDecay - 
-                                                    curTime;
-                                            
-                                                offset = 
-                                                    lrint( offset / 
-                                                           cObj->
-                                                           slotTimeStretch );
-                                                
-                                                nextPlayer->holdingEtaDecay =
-                                                    curTime + offset;
-                                                }
-                                            
-                                            nextPlayer->
-                                                clothingContainedEtaDecays[m.c].
-                                                push_back( nextPlayer->
-                                                           holdingEtaDecay );
-                                        
-                                            nextPlayer->holdingID = 0;
-                                            nextPlayer->holdingEtaDecay = 0;
-                                            nextPlayer->heldOriginValid = 0;
-                                            nextPlayer->heldOriginX = 0;
-                                            nextPlayer->heldOriginY = 0;
-                                            nextPlayer->heldTransitionSourceID =
-                                                -1;
-                                            }
-                                        }
+                                    addHeldToClothingContainer( nextPlayer,
+                                                                m.c );
                                     }
                                 else if( nextPlayer->holdingID > 0 ) {
                                     // non-baby drop
@@ -4606,70 +4711,9 @@ int main() {
                         // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
-                        nextPlayer->heldOriginValid = 0;
-                        nextPlayer->heldOriginX = 0;
-                        nextPlayer->heldOriginY = 0;
-                        
-
-
-                        if( isGridAdjacent( m.x, m.y,
-                                            nextPlayer->xd, 
-                                            nextPlayer->yd ) 
-                            ||
-                            ( m.x == nextPlayer->xd &&
-                              m.y == nextPlayer->yd ) ) {
-                            
-                            nextPlayer->actionAttempt = 1;
-                            nextPlayer->actionTarget.x = m.x;
-                            nextPlayer->actionTarget.y = m.y;
-                            
-                            if( m.x > nextPlayer->xd ) {
-                                nextPlayer->facingOverride = 1;
-                                }
-                            else if( m.x < nextPlayer->xd ) {
-                                nextPlayer->facingOverride = -1;
-                                }
-
-                            // can only use on targets next to us for now,
-                            // no diags
-                            
-                            int target = getMapObject( m.x, m.y );
-                            
-                            if( target != 0 ) {
-                            
-                                int numIn = 
-                                    getNumContained( m.x, m.y );
-                                
-                                int toRemoveID = -1;
-                                
-                                if( numIn > 0 ) {
-                                    toRemoveID = getContained( m.x, m.y, m.i );
-                                    }
-                                
-
-                                if( nextPlayer->holdingID == 0 && 
-                                    numIn > 0 &&
-                                    // old enough to handle it
-                                    getObject( toRemoveID )->minPickupAge <= 
-                                    computeAge( nextPlayer ) ) {
-                                    // get from container
-                                    
-                                    nextPlayer->holdingID =
-                                        removeContained( 
-                                            m.x, m.y, m.i,
-                                            &( nextPlayer->holdingEtaDecay ) );
-                                    
-                                    // contained objects aren't animating
-                                    // in a way that needs to be smooth
-                                    // transitioned on client
-                                    nextPlayer->heldOriginValid = 0;
-                                    nextPlayer->heldOriginX = 0;
-                                    nextPlayer->heldOriginY = 0;
-                                    }
-                                }
-                            }
-                        
-                        }
+                        removeFromContainerToHold( nextPlayer,
+                                                   m.x, m.y, m.i );
+                        }                        
                     else if( m.type == SREMV ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
