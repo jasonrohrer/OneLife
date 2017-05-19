@@ -5271,6 +5271,9 @@ void LivingLifePage::step() {
 
                         for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
                             
+                            int oldNumCont = 
+                                existing->clothingContained[c].size();
+
                             existing->clothingContained[c].deleteAll();
 
                             int newNumClothingCont = 
@@ -5281,6 +5284,41 @@ void LivingLifePage::step() {
                             existing->clothingContained[c].appendArray(
                                 newClothingCont, newNumClothingCont );
                             delete [] newClothingCont;
+                            
+                            if( newNumClothingCont > oldNumCont ) {
+                                // insertion
+                                
+                                char soundPlayed = false;
+                                
+                                SoundUsage contSound = 
+                                    clothingByIndex( 
+                                        existing->clothing, c )->usingSound;
+                            
+                                if( contSound.id != -1 ) {
+                                    playSound( contSound, 
+                                               getVectorFromCamera( 
+                                                   existing->xd,
+                                                   existing->yd ) );
+                                    soundPlayed = true;
+                                    }
+
+                                if( ! soundPlayed ) {
+                                    // no container using sound defined
+                                    // play player's using sound
+                            
+                                    SoundUsage s = getObject( 
+                                        existing->displayID )->
+                                        usingSound;
+
+                                    if( s.id != -1 ) {
+                                        playSound( 
+                                            s, 
+                                            getVectorFromCamera(
+                                                existing->xd,
+                                                existing->yd ) );
+                                        }
+                                    }
+                                }
                             }
                         }
                     else {    
