@@ -4803,7 +4803,11 @@ void LivingLifePage::step() {
                         
                         char clothingSoundPlayed = false;
 
+                        char clothingChanged = false;
+                        
                         if( newClothing != NULL ) {
+                            clothingChanged = true;
+                            
                             SoundUsage clothingSound = 
                                 newClothing->usingSound;
                             
@@ -5044,7 +5048,8 @@ void LivingLifePage::step() {
                                     
                                     char creationSoundPlayed = false;
                                     
-                                    if( heldObj->creationSound.id != -1 ) {
+                                    if( ! clothingChanged &&
+                                        heldObj->creationSound.id != -1 ) {
                                         
                                         int testAncestor = oldHeld;
                                         
