@@ -23,11 +23,12 @@ if( isset( $blockRobots ) && $blockRobots == 1 ) {
     
     <table border=0 cellspacing=5 cellpadding=0 width=100%><tr>
 
-<td align=center width=20%>[<a href=newsPage.php>News</a>]</td>
-<td align=center width=20%>[<a href=updateLog.php>Update Log</a>]</td>
-<td align=center width=20%>[<a href=https://onehouronelife.com/forums>Forums</a>]</td>
-<td align=center width=20%>[<a href=artLogPage.php>Artwork</a>]</td>
-<td align=center width=20%>[<a href="http://onehouronelife.gamepedia.com">Wiki</a>]</td>
+<td align=center width=16%>[<a href=newsPage.php>News</a>]</td>
+<td align=center width=16%>[<a href=updateLog.php>Update Log</a>]</td>
+<td align=center width=16%>[<a href=https://onehouronelife.com/forums>Forums</a>]</td>
+<td align=center width=16%>[<a href=artLogPage.php>Artwork</a>]</td>
+<td align=center width=16%>[<a href="http://onehouronelife.gamepedia.com">Wiki</a>]</td>
+<td align=center width=16%>[<a href=credits.php>Credits</a>]</td>
 
 
 </tr></table>
