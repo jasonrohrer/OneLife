@@ -3237,16 +3237,43 @@ int main() {
                         // path PLUS path that player is suggesting
                         SimpleVector<GridPos> unfilteredPath;
 
-                        if( nextPlayer->xs != nextPlayer->xd ||
-                            nextPlayer->ys != nextPlayer->yd ) {
+                        if( nextPlayer->xs != m.x ||
+                            nextPlayer->ys != m.y ) {
                             
+                            // start pos of their submitted path
+                            // donesn't match where we think they are
+
+                            // it could be an interrupt to past move
+                            // OR, if our server sees move as done but client 
+                            // doesn't yet, they may be sending a move
+                            // from the middle of their last path.
+
+                            // treat this like an interrupt to last move
+                            // in both cases.
+
                             // a new move interrupting a non-stationary object
                             interrupt = true;
 
-                            GridPos cPos = 
-                                computePartialMoveSpot( nextPlayer );
-                                                 
-                            printf( "   we think player in motion at %d,%d\n",
+                            // where we think they are along last move path
+                            GridPos cPos;
+                            
+                            if( nextPlayer->xs != nextPlayer->xd 
+                                ||
+                                nextPlayer->ys != nextPlayer->yd ) {
+                                
+                                // a real interrupt to a move that is
+                                // still in-progress on server
+                                cPos = computePartialMoveSpot( nextPlayer );
+                                }
+                            else {
+                                // we think their last path is done
+                                cPos.x = nextPlayer->xs;
+                                cPos.y = nextPlayer->ys;
+                                }
+                            
+                            
+                            printf( "   we think player in motion or "
+                                    "done moving at %d,%d\n",
                                     cPos.x,
                                     cPos.y );
        
