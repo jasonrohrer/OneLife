@@ -2934,8 +2934,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             drawOffset = add( mCurrentObject.heldOffset, drawOffset );
             }
         
-        drawOffset = sub( drawOffset, 
-                          getObjectCenterOffset( &mCurrentObject ) );
+        if( ! mCheckboxes[2]->getToggled() ) {
+            // don't use center offset of a person when calculating
+            // baby held pos
+            drawOffset = sub( drawOffset, 
+                              getObjectCenterOffset( &mCurrentObject ) );
+            }
         }
 
     char skipDrawing = false;

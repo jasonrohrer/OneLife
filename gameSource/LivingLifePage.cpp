@@ -1895,9 +1895,11 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             
             doublePair heldOffset = heldObject->heldOffset;
 
-            heldOffset = sub( heldOffset, 
-                              getObjectCenterOffset( heldObject ) );
-
+            if( ! heldObject->person ) {    
+                heldOffset = sub( heldOffset, 
+                                  getObjectCenterOffset( heldObject ) );
+                }
+            
             if( inObj->holdingFlip ) {
                 heldOffset.x *= -1;
                 }

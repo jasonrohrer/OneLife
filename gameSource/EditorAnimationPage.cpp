@@ -2167,8 +2167,10 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                     doublePair heldOffset = heldObject->heldOffset;
             
                     
-                    heldOffset = sub( heldOffset, 
-                                      getObjectCenterOffset( heldObject ) );
+                    if( !heldObject->person ) {    
+                        heldOffset = sub( heldOffset, 
+                                          getObjectCenterOffset( heldObject ) );
+                        }
                     
                     if( mFlipDraw ) {
                         heldOffset.x *= -1;
