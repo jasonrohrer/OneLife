@@ -341,7 +341,7 @@ function sb_rcb_blog2html( $inData ){
 
         
         // [img][/img], [img=][/img], [clear]
-        '<img border=0 src="$1" alt="$1" />',
+        '<img border=0 align="center" src="$1" alt="$1" />',
         '<img border=0 align="left" src="$1" alt="$1" />',
         '<img border=0 align="right" src="$1" alt="$1" />',
         '<img border=0 src="$1" alt="$2" title="$2" />',
