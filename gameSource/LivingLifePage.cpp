@@ -454,18 +454,6 @@ void updateMoveSpeed( LiveObject *inObject ) {
     double moveLeft = measurePathLength( inObject, inObject->pathLength ) -
         measurePathLength( inObject, inObject->currentPathStep );
     
-    if( inObject->pathLength > inObject->currentPathStep ) {
-        // add extra distance if we're not standing directly on 
-        // starting path spot
-
-        doublePair pathStartPos = 
-            gridToDouble( inObject->pathToDest[ 
-                              inObject->currentPathStep ] );
-        
-        int extraDist = distance( inObject->currentPos, pathStartPos );
-
-        moveLeft += extraDist;
-        }
 
     // count number of turns, which we execute faster than we should
     // because of path smoothing,
