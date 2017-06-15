@@ -5940,19 +5940,66 @@ void LivingLifePage::step() {
                                             printPath( existing->pathToDest,
                                                        existing->pathLength );
 
-                                            if( existing->pathLength >= 2 ) {
+                                            if( existing->pathLength == 1 ) {
                                                 
+                                                // trimmed path too short
+                                                // needs to have at least
+                                                // a start and end pos
+                                                
+                                                // give it an artificial
+                                                // start pos
+                                                
+
                                                 doublePair nextWorld =
                                                     gridToDouble( 
-                                                     existing->pathToDest[1] );
+                                                     existing->pathToDest[0] );
 
-                                                // point toward next path pos
-                                                existing->currentMoveDirection =
-                                                    normalize( 
-                                                        sub( nextWorld, 
-                                                             existing->
-                                                             currentPos ) );
+                                                
+                                                doublePair vectorAway;
+
+                                                if( ! equal( 
+                                                        existing->currentPos,
+                                                        nextWorld ) ) {
+                                                        
+                                                    vectorAway = normalize(
+                                                        sub( 
+                                                            existing->
+                                                            currentPos,
+                                                            nextWorld ) );
+                                                    }
+                                                else {
+                                                    vectorAway.x = 1;
+                                                    vectorAway.y = 0;
+                                                    }
+                                                
+                                                GridPos oldPos =
+                                                    existing->pathToDest[0];
+                                                
+                                                delete [] existing->pathToDest;
+                                                existing->pathLength = 2;
+                                                
+                                                existing->pathToDest =
+                                                    new GridPos[2];
+                                                existing->pathToDest[0].x =
+                                                    oldPos.x + vectorAway.x;
+                                                existing->pathToDest[0].y =
+                                                    oldPos.y + vectorAway.y;
+                                                
+                                                existing->pathToDest[1] =
+                                                    oldPos;
                                                 }
+                                            
+                                            
+                                            doublePair nextWorld =
+                                                gridToDouble( 
+                                                    existing->pathToDest[1] );
+                                            
+                                            // point toward next path pos
+                                            existing->currentMoveDirection =
+                                                normalize( 
+                                                    sub( nextWorld, 
+                                                         existing->
+                                                         currentPos ) );
                                             }    
                                         }
                                     
