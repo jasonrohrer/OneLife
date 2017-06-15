@@ -3229,6 +3229,13 @@ int main() {
                                 "we think player at old start pos %d,%d\n",
                                 nextPlayer->xs,
                                 nextPlayer->ys );
+                        printf( "  Player's last path = " );
+                        for( int p=0; p<nextPlayer->pathLength; p++ ) {
+                            printf( "(%d, %d) ",
+                                    nextPlayer->pathToDest[p].x, 
+                                    nextPlayer->pathToDest[p].y );
+                            }
+                        printf( "\n" );
 
                         char interrupt = false;
                         char pathPrefixAdded = false;
