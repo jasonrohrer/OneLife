@@ -4735,6 +4735,10 @@ void LivingLifePage::step() {
                             "pX =%d, pY=%d\n",
                             heldOriginValid, heldOriginX, heldOriginY,
                             o.xd, o.yd );
+                    if( forced ) {
+                        printf( "  FORCED\n" );
+                        }
+
                     o.lastAgeSetTime = game_getCurrentTime();
 
                     o.ageRate = 1.0 / invAgeRate;

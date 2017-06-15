@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <math.h>
+#include <assert.h>
 
 
 #include "minorGems/util/stringUtils.h"
@@ -3327,56 +3328,74 @@ int main() {
                                         break;
                                         }
                                     }
-                            
+                                
+                                char theirIndexNotFound = false;
+                                
+                                if( theirPathIndex == -1 ) {
+                                    // if not found, assume they think they
+                                    // are at start of their old path
+                                    
+                                    theirIndexNotFound = true;
+                                    theirPathIndex = 0;
+                                    }
+                                
+
                                 printf( "They are on our path at index %d\n",
                                         theirPathIndex );
-                            
-                                if( theirPathIndex != -1 ) {
-                                    // okay, they think they are on last path
-                                    // that we had for them
-
-                                    // step through path from where WE
-                                    // think they should be to where they
-                                    // think they are and add this as a prefix
-                                    // to the path they submitted
-                                    // (we may walk backward along the old
-                                    //  path to do this)
                                 
-                                    int c = computePartialMovePathStep( 
-                                        nextPlayer );
-                                    
-                                    // -1 means starting, pre-path 
-                                    // pos is closest
-                                    // but okay to leave c at -1, because
-                                    // we will add pathStep=1 to it
+                                // okay, they think they are on last path
+                                // that we had for them
 
-                                    int pathStep = 0;
+                                // step through path from where WE
+                                // think they should be to where they
+                                // think they are and add this as a prefix
+                                // to the path they submitted
+                                // (we may walk backward along the old
+                                //  path to do this)
+                                
+                                int c = computePartialMovePathStep( 
+                                    nextPlayer );
                                     
-                                    if( theirPathIndex < c ) {
-                                        pathStep = -1;
-                                        }
-                                    else if( theirPathIndex > c ) {
-                                        pathStep = 1;
-                                        }
-                                    
-                                    if( pathStep != 0 ) {
-                                        for( int p = c + pathStep; 
-                                             p != theirPathIndex + pathStep; 
-                                             p += pathStep ) {
-                                            GridPos pos = 
-                                                nextPlayer->pathToDest[p];
-                                            
-                                            unfilteredPath.push_back( pos );
-                                            }
-                                        }
-                                    // otherwise, they are where we think
-                                    // they are, and we don't need to prefix
-                                    // their path
+                                // -1 means starting, pre-path 
+                                // pos is closest
+                                // but okay to leave c at -1, because
+                                // we will add pathStep=1 to it
 
-                                    printf( "Prefixing their path "
-                                            "with %d steps\n",
-                                            unfilteredPath.size() );
+                                int pathStep = 0;
+                                    
+                                if( theirPathIndex < c ) {
+                                    pathStep = -1;
                                     }
+                                else if( theirPathIndex > c ) {
+                                    pathStep = 1;
+                                    }
+                                    
+                                if( pathStep != 0 ) {
+                                    for( int p = c + pathStep; 
+                                         p != theirPathIndex + pathStep; 
+                                         p += pathStep ) {
+                                        GridPos pos = 
+                                            nextPlayer->pathToDest[p];
+                                            
+                                        unfilteredPath.push_back( pos );
+                                        }
+                                    }
+
+                                if( theirIndexNotFound ) {
+                                    // add their path's starting pos
+                                    // at the end of the prefix
+                                    GridPos pos = { m.x, m.y };
+                                    
+                                    unfilteredPath.push_back( pos );
+                                    }
+                                
+                                // otherwise, they are where we think
+                                // they are, and we don't need to prefix
+                                // their path
+
+                                printf( "Prefixing their path "
+                                        "with %d steps\n",
+                                        unfilteredPath.size() );
                                 }
                             }
                         
@@ -3536,7 +3555,7 @@ int main() {
                                 AppLog::info( "Path submitted by player "
                                               "not valid, "
                                               "ending move now" );
-
+                                //assert( false );
                                 nextPlayer->xd = nextPlayer->xs;
                                 nextPlayer->yd = nextPlayer->ys;
                                 
