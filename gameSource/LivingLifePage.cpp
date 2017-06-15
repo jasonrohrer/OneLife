@@ -121,6 +121,83 @@ static char readServerSocketFull( int inServerSocket ) {
     }
 
 
+static char equal( GridPos inA, GridPos inB ) {
+    if( inA.x == inB.x && inA.y == inB.y ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
+static void printPath( GridPos *inPath, int inLength ) {
+    for( int i=0; i<inLength; i++ ) {
+        printf( "(%d,%d) ", inPath[i].x, inPath[i].y );
+        }
+    printf( "\n" );
+    }
+
+
+static void removeDoubleBacksFromPath( GridPos **inPath, int *inLength ) {
+    
+    SimpleVector<GridPos> filteredPath;
+    
+    int dbA = -1;
+    int dbB = -1;
+    
+    int longestDB = 0;
+
+    GridPos *path = *inPath;
+    int length = *inLength;
+
+    for( int e=0; e<length; e++ ) {
+                                    
+        for( int f=e; f<length; f++ ) {
+            
+            if( equal( path[e],
+                       path[f] ) ) {
+                                            
+                int dist = f - e;
+                                            
+                if( dist > longestDB ) {
+                                                
+                    dbA = e;
+                    dbB = f;
+                    longestDB = dist;
+                    }
+                }
+            }
+        }
+                                
+    if( longestDB > 0 ) {
+                                    
+        printf( "Removing loop with %d elements\n",
+                longestDB );
+
+        for( int e=0; e<=dbA; e++ ) {
+            filteredPath.push_back( 
+                path[e] );
+            }
+                                    
+        // skip loop between
+
+        for( int e=dbB + 1; e<length; e++ ) {
+            filteredPath.push_back( 
+                path[e] );
+            }
+                                    
+        *inLength = filteredPath.size();
+                                    
+        delete [] path;
+                                    
+        *inPath = 
+            filteredPath.getElementArray();
+        }
+    }
+
+
+
+
 
 static double computeCurrentAge( LiveObject *inObj ) {
     return inObj->age + 
@@ -282,12 +359,6 @@ doublePair gridToDouble( GridPos inGridPos ) {
 
 
 
-char equal( GridPos inA, GridPos inB ) {
-    if( inA.x == inB.x && inA.y == inB.y ) {
-        return true;
-        }
-    return false;
-    }
 
 
 static char isGridAdjacent( int inXA, int inYA, int inXB, int inYB ) {
@@ -383,6 +454,15 @@ void updateMoveSpeed( LiveObject *inObject ) {
     double moveLeft = measurePathLength( inObject, inObject->pathLength ) -
         measurePathLength( inObject, inObject->currentPathStep );
     
+    if( inObject->pathLength > 0 ) {
+        // add extra distance if we're not standing directly on 
+        // starting path spot
+
+        doublePair pathStartPos = 
+            gridToDouble( inObject->pathToDest[ inObject->pathLength - 1 ] );
+
+        moveLeft += distance( inObject->currentPos, pathStartPos );
+        }
 
     // count number of turns, which we execute faster than we should
     // because of path smoothing,
@@ -430,7 +510,7 @@ void updateMoveSpeed( LiveObject *inObject ) {
     
     // slow move speed for testing
     //inObject->currentSpeed *= 0.5;
-    
+
     inObject->timeOfLastSpeedUpdate = game_getCurrentTime();
     }
 
@@ -4736,7 +4816,7 @@ void LivingLifePage::step() {
                             heldOriginValid, heldOriginX, heldOriginY,
                             o.xd, o.yd );
                     if( forced ) {
-                        printf( "  FORCED\n" );
+                        printf( "  POSITION FORCED\n" );
                         }
 
                     o.lastAgeSetTime = game_getCurrentTime();
@@ -5648,6 +5728,8 @@ void LivingLifePage::step() {
                             
                             int oldPathLength = 0;
                             GridPos oldCurrentPathPos;
+                            int oldCurrentPathIndex = -1;
+                            SimpleVector<GridPos> oldPath;
                             
                             if( existing->currentSpeed != 0
                                 &&
@@ -5658,6 +5740,10 @@ void LivingLifePage::step() {
                                 oldCurrentPathPos = 
                                     existing->pathToDest[
                                         existing->currentPathStep ];
+                                
+                                oldPath.appendArray( existing->pathToDest,
+                                                     existing->pathLength );
+                                oldCurrentPathIndex = existing->currentPathStep;
                                 }
                             
 
@@ -5665,59 +5751,9 @@ void LivingLifePage::step() {
                                 // remove any double-backs from path
                                 // because they confuse smooth path following
                                 
-                                SimpleVector<GridPos> filteredPath;
+                                removeDoubleBacksFromPath( &( o.pathToDest ),
+                                                           &( o.pathLength ) );
                                 
-                                int dbA = -1;
-                                int dbB = -1;
-                                
-                                int longestDB = 0;
-                                
-                                
-                                for( int e=0; e<o.pathLength; e++ ) {
-                                    
-                                    for( int f=e; f<o.pathLength; f++ ) {
-                                        
-                                        if( equal( o.pathToDest[e],
-                                                   o.pathToDest[f] ) ) {
-                                            
-                                            int dist = f - e;
-                                            
-                                            if( dist > longestDB ) {
-                                                
-                                                dbA = e;
-                                                dbB = f;
-                                                longestDB = dist;
-                                                }
-                                            }
-                                        }
-                                    }
-                                
-                                if( longestDB > 0 ) {
-                                    
-                                    printf( "Removing loop with %d elements\n",
-                                            longestDB );
-
-                                    for( int e=0; e<=dbA; e++ ) {
-                                        filteredPath.push_back( 
-                                            o.pathToDest[e] );
-                                        }
-                                    
-                                    // skip loop between
-
-                                    for( int e=dbB + 1; e<o.pathLength; e++ ) {
-                                        filteredPath.push_back( 
-                                            o.pathToDest[e] );
-                                        }
-                                    
-                                    o.pathLength = filteredPath.size();
-                                    
-                                    delete [] o.pathToDest;
-                                    
-                                    o.pathToDest = 
-                                        filteredPath.getElementArray();
-                                    }
-                                
-                                    
                                 }
                             
 
@@ -5758,7 +5794,8 @@ void LivingLifePage::step() {
                                 // illusion of full move interactivity
                             
                                 char usingOldPathStep = false;
-
+                                char appendingLeadPath = false;
+                                
                                 if( oldPathLength != 0 ) {
                                     // this move interrupts or truncates
                                     // the move we were already on
@@ -5816,12 +5853,107 @@ void LivingLifePage::step() {
                                                 sub( nextWorld, 
                                                      existing->currentPos ) );
                                         }
+                                    else {
+                                        // other case
+                                        // check if new start on old path
+
+                                        // maybe this new path branches
+                                        // off old path before or after 
+                                        // where we are
+                                        
+                                        int foundStartIndex = -1;
+                                        
+                                        for( int i=0; i<oldPathLength; i++ ) {
+                                            GridPos p = 
+                                                oldPath.getElementDirect( i );
+                                            
+                                            if( p.x == startX && 
+                                                p.y == startY ) {
+                                                
+                                                foundStartIndex = i;
+                                                break;
+                                                }
+                                            }
+                                        
+                                        if( foundStartIndex != -1 ) {
+                                            
+                                            int step = 1;
+                                            
+                                            if( foundStartIndex > 
+                                                oldCurrentPathIndex ) {
+                                                step = 1;
+                                                }
+                                            else if( foundStartIndex < 
+                                                oldCurrentPathIndex ) {
+                                                step = -1;
+                                                }
+                                            appendingLeadPath = true;
+                                            
+                                            SimpleVector<GridPos> newPath;
+                                            
+                                            for( int i=oldCurrentPathIndex;
+                                                 i != foundStartIndex;
+                                                 i += step ) {
+                                                
+                                                newPath.push_back(
+                                                    oldPath.
+                                                    getElementDirect( i ) );
+                                                }
+                                            
+                                            for( int i=0; 
+                                                 i<existing->pathLength;
+                                                 i++ ) {
+                                                // now add rest of new path
+                                                newPath.push_back(
+                                                    existing->pathToDest[i] );
+                                                }
+                                            
+                                            printf( "    OLD PATH:  " );
+                                            printPath( existing->pathToDest,
+                                                       existing->pathLength );
+
+
+                                            // now replace path
+                                            // with new, lead-appended path
+                                            existing->pathLength = 
+                                                newPath.size();
+                                            
+                                            delete [] existing->pathToDest;
+                                            
+                                            existing->pathToDest =
+                                                newPath.getElementArray();
+                                            existing->currentPathStep = 0;
+
+                                            printf( "    NEW PATH:  " );
+                                            printPath( existing->pathToDest,
+                                                       existing->pathLength );
+
+                                            removeDoubleBacksFromPath( 
+                                                &( existing->pathToDest ),
+                                                &( existing->pathLength ) );
+                                
+                                            printf( 
+                                                "    NEW PATH (DB free):  " );
+                                            printPath( existing->pathToDest,
+                                                       existing->pathLength );
+                                            }    
+                                        }
+                                    
                                     }
                                 
                                 
-                                if( ! usingOldPathStep ) {
-                                    // forced to jump to exactly where
-                                    // server says we are
+                                if( ! usingOldPathStep && 
+                                    ! appendingLeadPath ) {
+
+                                    // we don't have enough info
+                                    // to patch path
+                                    
+                                    // change to walking toward next
+                                    // path step from wherever we are
+                                    // but DON'T jump existing obj's
+                                    // possition suddenly
+                                    
+                                    printf( "Manually forced\n" );
                                     
                                     // current step
                                     int b = 
@@ -5842,26 +5974,17 @@ void LivingLifePage::step() {
                                         }
                                     
                                     existing->currentPathStep = b;
-                                
-                                    double nWeight =
-                                        fractionPassed * existing->pathLength 
-                                        - b;
-                                
-                                    doublePair bWorld =
-                                        gridToDouble(
-                                            existing->pathToDest[ b ] );
                                     
                                     doublePair nWorld =
                                         gridToDouble(
                                             existing->pathToDest[ n ] );
                                     
-                                
-                                    existing->currentPos =
-                                        add( mult( bWorld, 1 - nWeight ), 
-                                             mult( nWorld, nWeight ) );
-                                    
+                                    // point existing object toward
+                                    // next path pos
                                     existing->currentMoveDirection =
-                                        normalize( sub( nWorld, bWorld ) );
+                                        normalize( 
+                                            sub( nWorld, 
+                                                 existing->currentPos ) );
                                     }
                                 
                                 
@@ -6404,7 +6527,6 @@ void LivingLifePage::step() {
         
         LiveObject *o = gameObjects.getElement( i );
         
-
         if( o->currentSpeech != NULL ) {
             if( game_getCurrentTime() > o->speechFadeETATime ) {
                 
