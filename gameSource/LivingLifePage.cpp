@@ -454,14 +454,17 @@ void updateMoveSpeed( LiveObject *inObject ) {
     double moveLeft = measurePathLength( inObject, inObject->pathLength ) -
         measurePathLength( inObject, inObject->currentPathStep );
     
-    if( inObject->pathLength > 0 ) {
+    if( inObject->pathLength > inObject->currentPathStep ) {
         // add extra distance if we're not standing directly on 
         // starting path spot
 
         doublePair pathStartPos = 
-            gridToDouble( inObject->pathToDest[ inObject->pathLength - 1 ] );
+            gridToDouble( inObject->pathToDest[ 
+                              inObject->currentPathStep ] );
+        
+        int extraDist = distance( inObject->currentPos, pathStartPos );
 
-        moveLeft += distance( inObject->currentPos, pathStartPos );
+        moveLeft += extraDist;
         }
 
     // count number of turns, which we execute faster than we should
@@ -509,7 +512,7 @@ void updateMoveSpeed( LiveObject *inObject ) {
         }
     
     // slow move speed for testing
-    //inObject->currentSpeed *= 0.5;
+    //inObject->currentSpeed *= 0.25;
 
     inObject->timeOfLastSpeedUpdate = game_getCurrentTime();
     }
@@ -5936,6 +5939,20 @@ void LivingLifePage::step() {
                                                 "    NEW PATH (DB free):  " );
                                             printPath( existing->pathToDest,
                                                        existing->pathLength );
+
+                                            if( existing->pathLength >= 2 ) {
+                                                
+                                                doublePair nextWorld =
+                                                    gridToDouble( 
+                                                     existing->pathToDest[1] );
+
+                                                // point toward next path pos
+                                                existing->currentMoveDirection =
+                                                    normalize( 
+                                                        sub( nextWorld, 
+                                                             existing->
+                                                             currentPos ) );
+                                                }
                                             }    
                                         }
                                     
@@ -5955,7 +5972,7 @@ void LivingLifePage::step() {
                                     
                                     printf( "Manually forced\n" );
                                     
-                                    // current step
+                                    // prev step
                                     int b = 
                                         (int)floor( fractionPassed * 
                                                     existing->pathLength );
@@ -5976,15 +5993,15 @@ void LivingLifePage::step() {
                                     existing->currentPathStep = b;
                                     
                                     doublePair nWorld =
-                                        gridToDouble(
-                                            existing->pathToDest[ n ] );
+                                        gridToDouble( 
+                                            existing->pathToDest[n] );
                                     
-                                    // point existing object toward
-                                    // next path pos
+                                    // point toward next path pos
                                     existing->currentMoveDirection =
                                         normalize( 
-                                            sub( nWorld, 
+                                            sub( nWorld,
                                                  existing->currentPos ) );
+                                    
                                     }
                                 
                                 
