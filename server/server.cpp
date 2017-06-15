@@ -3340,11 +3340,8 @@ int main() {
                                     
                                     // -1 means starting, pre-path 
                                     // pos is closest
-                                    // push it up to first path step
-                                    if( c < 0 ) {
-                                        c = 0;
-                                        }
-
+                                    // but okay to leave c at -1, because
+                                    // we will add pathStep=1 to it
 
                                     int pathStep = 0;
                                     
@@ -3461,7 +3458,8 @@ int main() {
                                     }
                                 }
                             
-                            printf( "Start index = %d\n", startIndex );
+                            printf( "Start index = %d (startFound = %d)\n", 
+                                    startIndex, startFound );
                             
                             if( ! startFound &&
                                 ! isGridAdjacentDiag( 
