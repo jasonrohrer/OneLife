@@ -428,7 +428,9 @@ void updateMoveSpeed( LiveObject *inObject ) {
         printf( "fixed speed = %f\n", inObject->currentSpeed );
         }
     
-
+    // slow move speed for testing
+    //inObject->currentSpeed *= 0.5;
+    
     inObject->timeOfLastSpeedUpdate = game_getCurrentTime();
     }
 
@@ -439,14 +441,51 @@ static int pathFindingD = 32;
 
 void LivingLifePage::computePathToDest( LiveObject *inObject ) {
     
+    GridPos start;
+    start.x = lrint( inObject->currentPos.x );
+    start.y = lrint( inObject->currentPos.y );
+
+    // make sure start is on our last path, if we have one
+    if( inObject->pathToDest != NULL ) {
+        char startOnPath = false;
+
+        for( int i=0; i<inObject->pathLength; i++ ) {
+            if( inObject->pathToDest[i].x == start.x &&
+                inObject->pathToDest[i].y == start.y ) {
+                startOnPath = true;
+                break;
+                }
+            }
+        
+        if( ! startOnPath ) {
+            // find closest spot on old path
+            int closestI = -1;
+            int closestD2 = 9999999;
+            
+            for( int i=0; i<inObject->pathLength; i++ ) {
+                int dx = inObject->pathToDest[i].x - start.x;
+                int dy = inObject->pathToDest[i].y - start.y;
+                
+                int d2 = dx * dx + dy * dy;
+                
+                if( d2 < closestD2 ) {
+                    closestD2 = d2;
+                    closestI = i;
+                    }
+                }
+
+            start = inObject->pathToDest[ closestI ];
+            }
+        }
+    
+                
+            
+
     if( inObject->pathToDest != NULL ) {
         delete [] inObject->pathToDest;
         inObject->pathToDest = NULL;
         }
 
-    GridPos start;
-    start.x = lrint( inObject->currentPos.x );
-    start.y = lrint( inObject->currentPos.y );
 
     GridPos end = { inObject->xd, inObject->yd };
         
