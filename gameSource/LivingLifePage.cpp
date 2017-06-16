@@ -6508,8 +6508,7 @@ void LivingLifePage::step() {
             }
 
         if( abs( dir.x ) > maxRX ) {
-            double moveScale = moveSpeedFactor * sqrt( abs(dir.x) - maxRX ) 
-                * frameRateFactor;
+            double moveScale = moveSpeedFactor * sqrt( abs(dir.x) - maxRX );
 
             doublePair moveStep = mult( normalize( dir ), moveScale );
             
@@ -6523,8 +6522,7 @@ void LivingLifePage::step() {
                 }
             }
         if( abs( dir.y ) > maxRY ) {
-            double moveScale = moveSpeedFactor * sqrt( abs(dir.y) - maxRY ) 
-                * frameRateFactor;
+            double moveScale = moveSpeedFactor * sqrt( abs(dir.y) - maxRY );
 
             doublePair moveStep = mult( normalize( dir ), moveScale );
             
@@ -6540,8 +6538,7 @@ void LivingLifePage::step() {
         
 
         if( false && length( dir ) > maxR ) {
-            double moveScale = moveSpeedFactor * sqrt( length( dir ) - maxR ) 
-                * frameRateFactor;
+            double moveScale = moveSpeedFactor * sqrt( length( dir ) - maxR );
 
             doublePair moveStep = mult( normalize( dir ), moveScale );
             
