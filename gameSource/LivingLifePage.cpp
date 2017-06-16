@@ -486,18 +486,13 @@ void updateMoveSpeed( LiveObject *inObject ) {
     
     double speedPerSec = moveLeft / etaSec;
 
-    if( autoAdjustFramerate ) {
-        inObject->currentSpeed = speedPerSec / getRecentFrameRate();
-        printf( "autoAdjustFramerate = %d, speed = %f\n", 
-                autoAdjustFramerate, inObject->currentSpeed );
-        }
-    else {
-        // hold frame rate constant
-        double fps = baseFramesPerSecond / frameRateFactor;
-        
-        inObject->currentSpeed = speedPerSec / fps;
-        printf( "fixed speed = %f\n", inObject->currentSpeed );
-        }
+
+    // pretend that frame rate is constant
+    double fps = baseFramesPerSecond / frameRateFactor;
+    
+    inObject->currentSpeed = speedPerSec / fps;
+    printf( "fixed speed = %f\n", inObject->currentSpeed );
+    
     
     // slow move speed for testing
     //inObject->currentSpeed *= 0.25;
