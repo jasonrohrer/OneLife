@@ -122,6 +122,8 @@ int loadingPhase = 0;
 int loadingStepBatchSize = 1;
 double loadingPhaseStartTime;
 
+int numLoadingSteps = 20;
+
 
 
 SpriteHandle instructionsSprite;
@@ -429,6 +431,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     if( inTargetFrameRate != baseFramesPerSecond ) {
         frameRateFactor = 
             (double)baseFramesPerSecond / (double)inTargetFrameRate;
+        
+        numLoadingSteps /= frameRateFactor;
         }
     
     
@@ -594,7 +598,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     loadingPage->setCurrentProgress( 0 );
                         
 
-    loadingStepBatchSize = numSprites / 20;
+    loadingStepBatchSize = numSprites / numLoadingSteps;
     
     if( loadingStepBatchSize < 1 ) {
         loadingStepBatchSize = 1;
@@ -1168,7 +1172,7 @@ void drawFrame( char inUpdate ) {
                             loadingPage->setCurrentProgress( 0 );
                         
                             
-                            loadingStepBatchSize = numReverbs / 20;
+                            loadingStepBatchSize = numReverbs / numLoadingSteps;
                             
                             if( loadingStepBatchSize < 1 ) {
                                 loadingStepBatchSize = 1;
@@ -1196,7 +1200,7 @@ void drawFrame( char inUpdate ) {
                             loadingPage->setCurrentProgress( 0 );
                             
                             
-                            loadingStepBatchSize = numObjects / 20;
+                            loadingStepBatchSize = numObjects / numLoadingSteps;
                             
                             if( loadingStepBatchSize < 1 ) {
                                 loadingStepBatchSize = 1;
@@ -1235,7 +1239,7 @@ void drawFrame( char inUpdate ) {
                         loadingPage->setCurrentProgress( 0 );
                         
 
-                        loadingStepBatchSize = numObjects / 20;
+                        loadingStepBatchSize = numObjects / numLoadingSteps;
                         
                         if( loadingStepBatchSize < 1 ) {
                             loadingStepBatchSize = 1;
@@ -1275,7 +1279,7 @@ void drawFrame( char inUpdate ) {
                         loadingPage->setCurrentProgress( 0 );
                         
 
-                        loadingStepBatchSize = numTrans / 20;
+                        loadingStepBatchSize = numTrans / numLoadingSteps;
                         
                         if( loadingStepBatchSize < 1 ) {
                             loadingStepBatchSize = 1;
@@ -1312,7 +1316,7 @@ void drawFrame( char inUpdate ) {
                         loadingPage->setCurrentProgress( 0 );
                         
 
-                        loadingStepBatchSize = numAnims / 20;
+                        loadingStepBatchSize = numAnims / numLoadingSteps;
                         
                         if( loadingStepBatchSize < 1 ) {
                             loadingStepBatchSize = 1;
