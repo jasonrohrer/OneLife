@@ -33,6 +33,33 @@ Generating a data-only update NOW for all platforms.
 
 
 
+++++
+Scheduling a server code update (local and remote) for tonight at 9:30 UTC.
+++++
+
+1. Commit and push code in OneLife and minorGems
+
+2. Log in as jcr15@onehouronelife.com
+
+3. Run ~/checkout/OneLifeWorking/scripts/scheduleServerCodeUpdate.sh
+
+
+
+
+
+++++
+Run a server code update (local and remote) NOW.
+++++
+
+1. Commit and push code in OneLife and minorGems
+
+2. Log in as jcr15@onehouronelife.com
+
+3. Run ~/checkout/OneLifeWorking/scripts/updateServerCode.sh
+
+
+
+
 
 ++++
 Generating platform-specific (binary code) update for a platform.
