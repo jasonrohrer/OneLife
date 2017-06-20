@@ -81,7 +81,7 @@ echo ""
 echo "Using rsync to push non-diff binary bundles too."
 
 
-./pushDownloadsAndDiffsToMirrors.sh
+~/checkout/OneLife/scripts/pushDownloadsAndDiffsToMirrors.sh
 
 
 
