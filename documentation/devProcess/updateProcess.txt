@@ -65,18 +65,22 @@ Run a server code update (local and remote) NOW.
 Generating platform-specific (binary code) update for a platform.
 ++++
 
-1. Build on each platform
+1. Update game.cpp version number.
 
-2. Run minorGems/game/diffBundle/diffBundle to generate an incremental binary
+2. Build on each platform
+
+3. Run minorGems/game/diffBundle/diffBundle to generate an incremental binary
    bundle for each platform.
 
-3. scp the .dbz files to jcr15@onehouronelife.com:diffBundles/
+4. scp the .dbz files to jcr15@onehouronelife.com:diffBundles/
 
 (Do Steps 1-3 for all plaforms before doing step 4.)
 
-4. Log in as jcr15@onehouronelife.com
+5. Log in as jcr15@onehouronelife.com
 
-5. Run ~/checkout/OneLifeWorking/scripts/postPlatformDiffBundle.sh
+6. Run ~/checkout/OneLifeWorking/scripts/postPlatformDiffBundle.sh
+
+7. Run hg tag in Onelife and minorGems to tag version.
 
 
 
