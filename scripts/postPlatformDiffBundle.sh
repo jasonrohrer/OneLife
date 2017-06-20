@@ -75,6 +75,16 @@ for platform in linux mac win; do
 done
 
 
+
+
+echo ""
+echo "Using rsync to push non-diff binary bundles too."
+
+
+./pushDownloadsAndDiffsToMirrors.sh
+
+
+
 echo ""
 echo "Telling reflector about latest version."
 

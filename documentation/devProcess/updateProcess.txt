@@ -74,13 +74,18 @@ Generating platform-specific (binary code) update for a platform.
 
 4. scp the .dbz files to jcr15@onehouronelife.com:diffBundles/
 
-(Do Steps 1-3 for all plaforms before doing step 4.)
+(Do Steps 1-4 for all plaforms before doing step 5.)
 
-5. Log in as jcr15@onehouronelife.com
+5. Build UnixSource bundle and scp it to 
+   jcr15@onehouronelife.com:oneLifeDownloads/
 
-6. Run ~/checkout/OneLifeWorking/scripts/postPlatformDiffBundle.sh
+6. Log in as jcr15@onehouronelife.com
 
-7. Run hg tag in Onelife and minorGems to tag version.
+7. Run ~/checkout/OneLifeWorking/scripts/postPlatformDiffBundle.sh
+
+8. Editting www/ticketServer/settings.php to list latest UnixSource build.
+
+9. Run hg tag in Onelife and minorGems to tag version and push.
 
 
 
