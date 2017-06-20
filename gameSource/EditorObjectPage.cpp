@@ -1956,8 +1956,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         updateAgingPanel();
         }
     else if( inTarget == &mAgeInField ) {
-        if( mPickedObjectLayer != -1 ) {
-            
+        
+        // sometimes we lose field focus when a new layer is clicked
+        // make sure this is still an aging layer.
+        if( mPickedObjectLayer != -1 && mAgingLayerCheckbox.getToggled() ) {    
+
             float value = mAgeInField.getFloat();
             if( value < 0 ) {
                 value = 0;
@@ -1974,7 +1977,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }
         }
     else if( inTarget == &mAgeOutField ) {
-        if( mPickedObjectLayer != -1 ) {
+
+        // sometimes we lose field focus when a new layer is clicked
+        // make sure this is still an aging layer.
+        if( mPickedObjectLayer != -1  && mAgingLayerCheckbox.getToggled() ) {
             float value = mAgeOutField.getFloat();
             if( value < 0 ) {
                 value = 0;
