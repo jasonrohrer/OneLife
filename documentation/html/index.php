@@ -69,6 +69,12 @@ include( "news.php" );
 ?>
 <br>
 
+<br>
+
+<br>
+
+<br>
+
 <center>
 <font size=5>The thinking behind One Hour One Life</font><br>
 
