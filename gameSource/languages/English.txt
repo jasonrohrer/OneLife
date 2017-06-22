@@ -1,6 +1,8 @@
 writeFailed "ERROR:##GAME FOLDER IS##READ-ONLY"
 
 
+measuringFPS "MEASURING MAXIMUM FRAMERATE"
+
 loading "LOADING"
 
 sprites "SPRITES"
