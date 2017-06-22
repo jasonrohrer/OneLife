@@ -3,6 +3,10 @@ writeFailed "ERROR:##GAME FOLDER IS##READ-ONLY"
 
 measuringFPS "MEASURING MAXIMUM FRAMERATE"
 
+vsyncWarning "WARNING: VERTICAL SYNC DISABLED"
+vsyncWarning2 "(VISUAL TEARING LIKELY)"
+
+
 loading "LOADING"
 
 sprites "SPRITES"
