@@ -135,9 +135,12 @@ class EditorImportPage : public GamePage, public ActionListener {
         TextButton mObjectEditorButton;
 
         SpriteHandle mCenterMarkSprite;
+        SpriteHandle mInternalPaperMarkSprite;
         
         char mCenterSet;
         doublePair mCenterPoint;
+        
+        SimpleVector<doublePair> mInternalPaperPoints;
         
 
         SimpleVector<doublePair> mOverlayOffset;
@@ -159,6 +162,8 @@ class EditorImportPage : public GamePage, public ActionListener {
         char mWhitingOut;
         
         char mAnyWhiteOutSet;
+        
+        char mPlacingInternalPaper;
         
 
         char mMovingOverlay;
@@ -183,6 +188,7 @@ class EditorImportPage : public GamePage, public ActionListener {
         TextButton mClearOverlayButton;
         
         KeyLegend mSheetKeyLegend;
+        KeyLegend mSheetKeyLegendB;
         KeyLegend mLinesKeyLegend;
         KeyLegend mOverlayKeyLegend;
         

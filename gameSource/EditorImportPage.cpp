@@ -80,6 +80,7 @@ EditorImportPage::EditorImportPage()
           mSpriteTrimEditorButton( mainFont, -460, 260, "Trim" ),
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
+          mInternalPaperMarkSprite( loadSprite( "internalPaperMark.tga" ) ),
           mCenterSet( true ),
           mClearRotButton( smallFont, -400, -280, "0 Rot" ),
           mClearScaleButton( smallFont, -400, -240, "1 Scale" ),
@@ -191,6 +192,8 @@ EditorImportPage::EditorImportPage()
     mWhitingOut = false;
     mAnyWhiteOutSet = false;
     
+    mPlacingInternalPaper = false;
+
     mMovingOverlay = false;
     mScalingOverlay = false;
     mRotatingOverlay = false;
@@ -204,6 +207,10 @@ EditorImportPage::EditorImportPage()
     addKeyDescription( &mSheetKeyLegend, 'W', "clear white out" );
     addKeyClassDescription( &mSheetKeyLegend, "ijkl", "Mv sheet" );
     addKeyClassDescription( &mSheetKeyLegend, "Ctr/Shft", "Bigger jumps" );
+
+    addKeyClassDescription( &mSheetKeyLegendB, "p-click", "internal paper" );
+    addKeyDescription( &mSheetKeyLegendB, 'P', "clear internal paper" );
+    
 
     addKeyClassDescription( &mLinesKeyLegend, "arrows", "Mv lines" );
     
@@ -249,6 +256,7 @@ EditorImportPage::~EditorImportPage() {
         }
 
     freeSprite( mCenterMarkSprite );
+    freeSprite( mInternalPaperMarkSprite );
 
     clearLines();
     }
@@ -971,6 +979,13 @@ void EditorImportPage::drawUnderComponents( doublePair inViewCenter,
             setDrawColor( 1, 1, 1, 0.75 );
             drawSprite( mCenterMarkSprite, mCenterPoint );
             }
+        
+        setDrawColor( 1, 1, 1, 0.75 );
+        for( int i=0; i<mInternalPaperPoints.size(); i++ ) {
+            drawSprite( mInternalPaperMarkSprite, 
+                        add( mSheetOffset, 
+                             mInternalPaperPoints.getElementDirect( i ) ) );
+            }
         }
 
     setDrawColor( 1, 1, 1, 1 );
@@ -1069,6 +1084,11 @@ void EditorImportPage::draw( doublePair inViewCenter,
             pos.y -= 112;
             drawKeyLegend( &mLinesKeyLegend, pos );
             }
+
+        pos = mObjectEditorButton.getPosition();
+        pos.y += 80;
+
+        drawKeyLegend( &mSheetKeyLegendB, pos );
         }
     
     if( mShowTagMessage ) {
@@ -1165,6 +1185,15 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
     if( mImportedSheetSprite == NULL ) {
         return;
         }
+
+    
+    if( mPlacingInternalPaper ) {
+        
+        doublePair pos = { inX - mSheetOffset.x,
+                           inY - mSheetOffset.y };
+        mInternalPaperPoints.push_back( pos );
+        }
+        
 
     if( mWhitingOut && mWhiteOutSheet != NULL ) {
         
@@ -1422,6 +1451,14 @@ void EditorImportPage::keyDown( unsigned char inASCII ) {
             }
         mAnyWhiteOutSet = false;
         }
+    else if( inASCII == 'p' ) {
+        mPlacingInternalPaper = true;
+        }
+    else if( inASCII == 'P' ) {
+        mPlacingInternalPaper = false;
+        
+        mInternalPaperPoints.deleteAll();
+        }
     else if( inASCII == 'x' ) {
         if( mImportedSheet != NULL ) {
             
@@ -1459,6 +1496,9 @@ void EditorImportPage::keyUp( unsigned char inASCII ) {
         }
     else if( inASCII == 'w' ) {
         mWhitingOut = false;
+        }
+    else if( inASCII == 'p' ) {
+        mPlacingInternalPaper = false;
         }
     }
 
@@ -1539,6 +1579,10 @@ void EditorImportPage::processSelection() {
         usingCenter = false;
         }
     
+   
+        
+        
+
 
     int startImX = (int)( mSelectStart.x + mSheetW/2 - mSheetOffset.x );
     int startImY = (int)( mSheetH/2 - mSelectStart.y + mSheetOffset.y );
@@ -1574,6 +1618,37 @@ void EditorImportPage::processSelection() {
     if( imH <= 0 || imW <= 0 ) {
         return;
         }
+
+    
+    SimpleVector<doublePair> trimmedPaperPoints;
+    
+    for( int i=0; i<mInternalPaperPoints.size(); i++ ) {
+        doublePair point = mInternalPaperPoints.getElementDirect(i);
+        point.y *= -1;
+        
+        // point is relative to center of imported sheet
+        int halfW = mImportedSheet->getWidth() / 2;
+        int halfH = mImportedSheet->getHeight() / 2;
+        
+        int extraX = halfW - startImX;
+        int extraY = halfH - startImY;
+        
+        // now point is relative to start of selection
+        point.x += extraX;
+        point.y += extraY;
+        
+        if( point.x >= 0 &&
+            point.x < imW &&
+            point.y >= 0 &&
+            point.y < imH ) {
+    
+            // keep it
+            trimmedPaperPoints.push_back( point );
+            }
+        }
+    
+        
+
 
 
     Image *cutImage = 
@@ -1759,6 +1834,15 @@ void EditorImportPage::processSelection() {
     
     whitePixelsWithUnexploredNeighbors.push_back( 0 );
     
+    for( int i=0; i<trimmedPaperPoints.size(); i++ ) {
+        doublePair p = trimmedPaperPoints.getElementDirect( i );
+        
+        whitePixelsWithUnexploredNeighbors.push_back(
+            lrint( p.y ) * imW + lrint( p.x ) );
+        }
+    
+
+
     while( !done ) {
         
         int foundI = -1;

@@ -59,6 +59,7 @@ graphics/loading3.tga \
 graphics/responseWarning.tga \
 graphics/slotPlaceholder.tga \
 graphics/checkMark.tga \
+graphics/internalPaperMark.tga \
 graphics/checkMarkOff.tga \
 graphics/centerMark.tga \
 graphics/testGround.tga \
