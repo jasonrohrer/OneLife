@@ -2490,7 +2490,13 @@ void EditorAnimationPage::step() {
     if( mPlayingAge ) {
         double old = mPersonAgeSlider.getValue();
         
-        double newAge = old + 0.05;
+        double rate = 0.05;
+        
+        if( old > 20 && old < 40 ) {
+            rate *= 2;
+            }
+
+        double newAge = old + rate * frameRateFactor;
         
         if( newAge > 60 ) {
             newAge = 60;
