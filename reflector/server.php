@@ -37,13 +37,32 @@ if( $handle ) {
     } 
 
 
+
+$action = or_requestFilter( "action", "/[A-Z_]+/i" );
+
+
+$reportOnly = false;
+
+if( $action == "report" ) {
+    $reportOnly = true;
+    }
+
+
+
 $serverFound = false;
+
+
 
 if( $mainServerAddress != "" && $mainServerPort != -1 ) {
 
+    if( $reportOnly ) {
+        echo "Main server:<br>";
+        }
+    
     // connect to main server first and see if it has room
-
-    $serverFound = tryServer( $mainServerAddress, $mainServerPort );
+    
+    $serverFound = tryServer( $mainServerAddress, $mainServerPort,
+                              $reportOnly );
     }
 
 
@@ -51,6 +70,11 @@ if( !$serverFound ) {
 
     $handle = fopen( "remoteServerList.ini", "r" );
     if( $handle ) {
+
+        if( $reportOnly ) {
+            echo "<br><br>Remote servers:<br>";
+            }
+        
         while( ( !$serverFound && $line = fgets( $handle ) ) !== false ) {
             // process the line read.
             $parts = preg_split( "/\s+/", $line );
@@ -60,7 +84,7 @@ if( !$serverFound ) {
                 $address = $parts[1];
                 $port = $parts[2];
 
-                $serverFound = tryServer( $address, $port );
+                $serverFound = tryServer( $address, $port, $reportOnly );
                 }
             }
         
@@ -69,7 +93,7 @@ if( !$serverFound ) {
     }
 
 
-if( !$serverFound ) {
+if( !$serverFound && !$reportOnly ) {
 
     echo "NONE_FOUND\n";
     echo "0\n";
@@ -81,7 +105,11 @@ if( !$serverFound ) {
 
 // tries a server, and if it has room, tells client about it, and returns true
 // returns false if server full
-function tryServer( $inAddress, $inPort ) {
+//
+// $inReportOnly set to true means we print a report line for this server
+//             and return false
+function tryServer( $inAddress, $inPort, $inReportOnly ) {
+
     global $version, $startSpreadingFraction, $tooFullFraction,
         $stopSpreadingFraction, $updateServerURL;
     
@@ -93,6 +121,11 @@ function tryServer( $inAddress, $inPort ) {
     $fp = @fsockopen( $inAddress, $inPort, $errno, $errstr, 3 );
     if( !$fp ) {
         // error
+
+        if( $inReportOnly ) {
+            echo "|--> $inAddress : $inPort ::: OFFLINE<br>";
+            }
+        
         return false;
         }
     else {
@@ -117,6 +150,11 @@ function tryServer( $inAddress, $inPort ) {
                 $max = -1;
 
                 sscanf( $line, "%d/%d", $current, $max );
+
+                if( $inReportOnly ) {
+                    echo "|--> $inAddress : $inPort ::: ".
+                        "$current / $max<br><br>";
+                    }
                 
                 if( $current / $max > $tooFullFraction ) {
                     $tooFull = $true;
@@ -134,6 +172,10 @@ function tryServer( $inAddress, $inPort ) {
         
         fclose( $fp );
 
+        if( $inReportOnly ) {
+            return false;
+            }
+        
 
         if( $accepting && ! $tooFull ) {
 
@@ -196,5 +238,27 @@ function tryServer( $inAddress, $inPort ) {
     }
 
     
+
+/**
+ * Filters a $_REQUEST variable using a regex match.
+ *
+ * Returns "" (or specified default value) if there is no match.
+ */
+function or_requestFilter( $inRequestVariable, $inRegex, $inDefault = "" ) {
+    if( ! isset( $_REQUEST[ $inRequestVariable ] ) ) {
+        return $inDefault;
+        }
+    
+    $numMatches = preg_match( $inRegex,
+                              $_REQUEST[ $inRequestVariable ], $matches );
+
+    if( $numMatches != 1 ) {
+        return $inDefault;
+        }
+        
+    return $matches[0];
+    }
+
+
 
 ?>
