@@ -3140,7 +3140,8 @@ int main() {
             char *message = getNextClientMessage( nextPlayer->sockBuffer );
             
             if( message != NULL ) {
-                AppLog::infoF( "Got client message: %s", message );
+                AppLog::infoF( "Got client message from %d: %s",
+                               nextPlayer->id, message );
                 
                 ClientMessage m = parseMessage( message );
                 
@@ -3306,7 +3307,9 @@ int main() {
                             
 
 
-                            if( !cOnTheirNewPath ) {
+                            if( !cOnTheirNewPath &&
+                                nextPlayer->pathLength > 0 ) {
+
                                 // add prefix to their path from
                                 // c to the start of their path
                                 
