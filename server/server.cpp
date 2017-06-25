@@ -54,7 +54,7 @@ int minPickupBabyAge = 10;
 
 int babyAge = 5;
 
-int forceDeathAge = 60;
+double forceDeathAge = 60;
 
 // if you have 2 living children, youngest has to be at least this old
 // before you can have another
