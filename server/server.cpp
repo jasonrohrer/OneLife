@@ -90,7 +90,8 @@ typedef struct FreshConnection {
         WebRequest *ticketServerRequest;
 
         char error;
-
+        const char *errorCauseString;
+        
         char shutdownMode;
 
         // for tracking connections that have failed to LOGIN 
@@ -182,6 +183,8 @@ typedef struct LiveObject {
         char isNew;
         char firstMessageSent;
         char error;
+        const char *errorCauseString;
+
         char deleteSent;
 
         char deathLogged;
@@ -2159,6 +2162,8 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.isNew = true;
     newObject.firstMessageSent = false;
     newObject.error = false;
+    newObject.errorCauseString = "";
+    
     newObject.deleteSent = false;
     newObject.deathLogged = false;
     newObject.newMove = false;
@@ -2774,7 +2779,7 @@ int main() {
                 // (and maybe ticket server check isn't required by settings)
                 newConnection.ticketServerRequest = NULL;
                 newConnection.error = false;
-
+                newConnection.errorCauseString = "";
                 
                 int messageLength = strlen( message );
                 
@@ -2828,6 +2833,8 @@ int main() {
                     AppLog::info( "Request to ticket server failed, "
                                   "client rejected." );
                     nextConnection->error = true;
+                    nextConnection->errorCauseString =
+                        "Ticket server failed";
                     }
                 else if( result == 1 ) {
                     // done, have result
@@ -2840,6 +2847,8 @@ int main() {
                             "Client key hmac rejected by ticket server, "
                             "client rejected." );
                         nextConnection->error = true;
+                        nextConnection->errorCauseString =
+                            "Client key check failed";
                         }
                     else if( strstr( webResult, "VALID" ) != NULL ) {
                         // correct!
@@ -2859,6 +2868,9 @@ int main() {
                             AppLog::info( "Failed to write to client socket, "
                                           "client rejected." );
                             nextConnection->error = true;
+                            nextConnection->errorCauseString =
+                                "Socket write failed";
+
                             }
                         else {
                             // ready to start normal message exchange
@@ -2895,6 +2907,8 @@ int main() {
                     AppLog::info( "Failed to read from client socket, "
                                   "client rejected." );
                     nextConnection->error = true;
+                    nextConnection->errorCauseString =
+                        "Socket read failed";
                     }
                 
                 char *message = NULL;
@@ -2947,6 +2961,8 @@ int main() {
                                     nextConnection->email );
                                 
                                 nextConnection->error = true;
+                                nextConnection->errorCauseString =
+                                    "Duplicate email";
                                 }
 
                             if( requireClientPassword &&
@@ -2967,6 +2983,8 @@ int main() {
                                     AppLog::info( "Client password hmac bad, "
                                                   "client rejected." );
                                     nextConnection->error = true;
+                                    nextConnection->errorCauseString =
+                                        "Password check failed";
                                     }
 
                                 delete [] trueHash;
@@ -3011,6 +3029,8 @@ int main() {
                                         "Failed to send on client socket, "
                                         "client rejected." );
                                     nextConnection->error = true;
+                                    nextConnection->errorCauseString =
+                                        "Socket write failed";
                                     }
                                 else {
                                     // ready to start normal message exchange
@@ -3033,6 +3053,8 @@ int main() {
                             AppLog::info( "LOGIN message has wrong format, "
                                           "client rejected." );
                             nextConnection->error = true;
+                            nextConnection->errorCauseString =
+                                "Bad login message";
                             }
 
 
@@ -3043,6 +3065,8 @@ int main() {
                         AppLog::info( "Client's first message not LOGIN, "
                                       "client rejected." );
                         nextConnection->error = true;
+                        nextConnection->errorCauseString =
+                            "Unexpected first message";
                         }
                     
                     delete [] message;
@@ -3058,6 +3082,8 @@ int main() {
                             "client rejected." );
                         }
                     nextConnection->error = true;
+                    nextConnection->errorCauseString =
+                        "Login timeout";
                     }
                 }
             }
@@ -3078,7 +3104,11 @@ int main() {
                 const char *message = "REJECTED\n#";
                 nextConnection->sock->send( (unsigned char*)message,
                                             strlen( message ), false, false );
-                
+
+                AppLog::infoF( "Closing new connection on error "
+                               "(cause: %s)",
+                               nextConnection->errorCauseString );
+
                 delete nextConnection->sock;
                 delete nextConnection->sockBuffer;
                 
@@ -3135,6 +3165,8 @@ int main() {
             
             if( ! result ) {
                 nextPlayer->error = true;
+                nextPlayer->errorCauseString =
+                    "Socket read failed";
                 }
 
             char *message = getNextClientMessage( nextPlayer->sockBuffer );
@@ -3150,6 +3182,8 @@ int main() {
                 if( m.type == UNKNOWN ) {
                     AppLog::info( "Client error, unknown message type." );
                     nextPlayer->error = true;
+                    nextPlayer->errorCauseString =
+                        "Unknown message type";
                     }
 
                 //Thread::staticSleep( 
@@ -3198,6 +3232,8 @@ int main() {
 
                         if( numSent == -1 ) {
                             nextPlayer->error = true;
+                            nextPlayer->errorCauseString =
+                                "Socket write failed";
                             }
                         }
                     else {
@@ -3708,6 +3744,8 @@ int main() {
                                         // break the connection with 
                                         // them
                                         hitPlayer->error = true;
+                                        hitPlayer->errorCauseString =
+                                            "Player killed by other player";
                                         
                                         logDeath( hitPlayer->id,
                                                   hitPlayer->email,
@@ -5532,6 +5570,8 @@ int main() {
                         
                         // break the connection with them
                         nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Player starved";
 
 
                         GridPos deathPos;
@@ -5919,6 +5959,8 @@ int main() {
 
                 if( numSent == -1 ) {
                     nextPlayer->error = true;
+                    nextPlayer->errorCauseString =
+                        "Socket write failed";
                     }
                 else if( numSent != messageLength ) {
                     // still not sent, try again later
@@ -5944,6 +5986,8 @@ int main() {
 
                     if( numSent == -1 ) {
                         nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Socket write failed";
                         }
                     else if( numSent != messageLength ) {
                         // still not sent, try again later
@@ -6101,6 +6145,8 @@ int main() {
 
                         if( numSent == -1 ) {
                             nextPlayer->error = true;
+                            nextPlayer->errorCauseString =
+                                "Socket write failed";
                             }
                         
                         delete [] message;
@@ -6118,6 +6164,8 @@ int main() {
                         
                         if( numSent == -1 ) {
                             nextPlayer->error = true;
+                            nextPlayer->errorCauseString =
+                                "Socket write failed";
                             }
 
                         delete [] temp;
@@ -6164,6 +6212,8 @@ int main() {
 
                         if( numSent == -1 ) {
                             nextPlayer->error = true;
+                            nextPlayer->errorCauseString =
+                                "Socket write failed";
                             }
                         }
                     
@@ -6195,6 +6245,8 @@ int main() {
 
                         if( numSent == -1 ) {
                             nextPlayer->error = true;
+                            nextPlayer->errorCauseString =
+                                "Socket write failed";
                             }
                         }
                     }
@@ -6223,6 +6275,8 @@ int main() {
                         
                         if( numSent == -1 ) {
                             nextPlayer->error = true;
+                            nextPlayer->errorCauseString =
+                                "Socket write failed";
                             }
                         }
                     }
@@ -6251,6 +6305,8 @@ int main() {
                         
                         if( numSent == -1 ) {
                             nextPlayer->error = true;
+                            nextPlayer->errorCauseString =
+                                "Socket write failed";
                             }
                         }
                     }
@@ -6266,6 +6322,8 @@ int main() {
                     
                     if( numSent == -1 ) {
                         nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Socket write failed";
                         }
                     }
                 
@@ -6298,6 +6356,8 @@ int main() {
 
                      if( numSent == -1 ) {
                          nextPlayer->error = true;
+                         nextPlayer->errorCauseString =
+                             "Socket write failed";
                          }
                      
                      delete [] foodMessage;
@@ -6331,8 +6391,9 @@ int main() {
             LiveObject *nextPlayer = players.getElement(i);
 
             if( nextPlayer->error && nextPlayer->deleteSent ) {
-                AppLog::infoF( "Closing connection to player %d on error",
-                        nextPlayer->id );
+                AppLog::infoF( "Closing connection to player %d on error "
+                               "(cause: %s)",
+                               nextPlayer->id, nextPlayer->errorCauseString );
 
                 AppLog::infoF( "%d remaining player(s) alive on server ",
                                players.size() - 1 );
