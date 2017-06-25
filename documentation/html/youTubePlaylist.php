@@ -95,7 +95,7 @@ if( count( $videoIDs ) > 0 ) {
   <div id=playerArea style=float:left>
 	<iframe id=playerInner title="YouTube video player" 
 			width="640" height="390" 
-			src="http://www.youtube.com/embed/<?php echo $firstVid;?>?rel=0" 
+			src="https://www.youtube.com/embed/<?php echo $firstVid;?>?rel=0" 
 			frameborder="0" allowfullscreen></iframe>
   </div>
 
