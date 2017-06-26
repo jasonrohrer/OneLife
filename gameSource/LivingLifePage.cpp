@@ -946,6 +946,15 @@ LivingLifePage::LivingLifePage()
     
     hideGuiPanel = SettingsManager::getIntSetting( "hideGameUI", 0 );
 
+    mHungerSound = loadSoundSprite( "otherSounds", "hunger.aiff" );
+    mPulseHungerSound = false;
+    
+
+    if( mHungerSound != NULL ) {
+        toggleVariance( mHungerSound, true );
+        }
+    
+
     mHungerSlipSprites[0] = loadSprite( "fullSlip.tga", false );
     mHungerSlipSprites[1] = loadSprite( "hungrySlip.tga", false );
     mHungerSlipSprites[2] = loadSprite( "starvingSlip.tga", false );
@@ -985,6 +994,8 @@ LivingLifePage::LivingLifePage()
 
     mHungerSlipWiggleSpeed[2] = 0.075;
 
+    mStarvingSlipLastPos[0] = 0;
+    mStarvingSlipLastPos[1] = 0;
     
 
     for( int i=0; i<3; i++ ) {    
@@ -1161,6 +1172,10 @@ LivingLifePage::~LivingLifePage() {
 
     delete [] nextActionMessageToSend;
 
+    if( mHungerSound != NULL ) {    
+        freeSoundSprite( mHungerSound );
+        }
+    
     for( int i=0; i<3; i++ ) {
         freeSprite( mHungerSlipSprites[i] );
         }
@@ -3484,6 +3499,34 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 slipPos.y += 
                     ( 0.5 * ( 1 - cos( mHungerSlipWiggleTime[i] ) ) ) *
                     mHungerSlipWiggleAmp[i] * distFromHidden;
+
+
+                if( i == 2 ) {
+                    
+                    if( mStarvingSlipLastPos[0] != 0 &&
+                        mStarvingSlipLastPos[1] != 0 ) {
+                        double lastDir = mStarvingSlipLastPos[1] - 
+                            mStarvingSlipLastPos[0];
+                        
+                        
+                        if( lastDir > 0 ) {
+                            
+                            double newDir = slipPos.y - mStarvingSlipLastPos[1];
+                            
+                            if( newDir < 0 ) {
+                                // peak
+                                if( mPulseHungerSound && 
+                                    mHungerSound != NULL ) {
+                                    playSoundSprite( mHungerSound );
+                                    }
+                                }
+                            }
+                        
+                        }
+                    mStarvingSlipLastPos[0] = mStarvingSlipLastPos[1];
+                    
+                    mStarvingSlipLastPos[1] = slipPos.y;
+                    }
                 }
             
 
@@ -6308,6 +6351,7 @@ void LivingLifePage::step() {
                         ourLiveObject->foodStore,
                         ourLiveObject->foodCapacity );
                 
+
                 if( ourLiveObject->foodStore > ourLiveObject->maxFoodStore ) {
                     ourLiveObject->maxFoodStore = ourLiveObject->foodStore;
                     }
@@ -6318,13 +6362,29 @@ void LivingLifePage::step() {
                         ourLiveObject->foodCapacity;
                     }
                 if( ourLiveObject->foodStore == ourLiveObject->foodCapacity ) {
+                    mPulseHungerSound = false;
+
                     mHungerSlipVisible = 0;
                     }
                 else if( ourLiveObject->foodStore <= 3 ) {
                     mHungerSlipVisible = 2;
+                    
+                    if( ourLiveObject->foodStore > 0 ) {
+                        
+                        if( ourLiveObject->foodStore > 1 ) {
+                            if( mHungerSound != NULL ) {
+                                playSoundSprite( mHungerSound );
+                                }
+                            mPulseHungerSound = false;
+                            }
+                        else {
+                            mPulseHungerSound = true;
+                            }
+                        }
                     }
                 else if( ourLiveObject->foodStore <= 6 ) {
                     mHungerSlipVisible = 1;
+                    mPulseHungerSound = false;
                     }
                 else {
                     mHungerSlipVisible = -1;

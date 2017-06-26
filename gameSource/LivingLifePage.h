@@ -351,7 +351,10 @@ class LivingLifePage : public GamePage {
         
         SimpleVector<char*> mSentChatPhrases;
 
-
+        
+        SoundSpriteHandle mHungerSound;
+        char mPulseHungerSound;
+        
         SpriteHandle mHungerSlipSprites[3];
 
         // offset from current view center
@@ -364,6 +367,11 @@ class LivingLifePage : public GamePage {
         double mHungerSlipWiggleAmp[3];
         double mHungerSlipWiggleSpeed[3];
         
+        // for catching dir change at peak of starving slip
+        // to time sound
+        double mStarvingSlipLastPos[2];
+                                    
+
         // index of visble one, or -1
         int mHungerSlipVisible;
         
