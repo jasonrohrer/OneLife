@@ -30,7 +30,7 @@ function showVid( videoID ) {
     document.getElementById( videoID ).myPressed = 1;
     
     document.getElementById("playerInner").src =
-		"http://www.youtube.com/embed/" + videoID + "?rel=0&autoplay=1";
+		"https://www.youtube.com/embed/" + videoID + "?rel=0&autoplay=1";
 }
 </script>
 
