@@ -404,7 +404,10 @@ class LivingLifePage : public GamePage {
 
         int mLastMouseOverID;
         int mCurMouseOverID;
+
+        GridPos mCurMouseOverSpot;
         
+
         float mLastMouseOverFade;
 
         SpriteHandle mChalkBlotSprite;

@@ -1619,7 +1619,29 @@ void LivingLifePage::drawMapCell( int inMapI,
             // permanent, blocking objects (e.g., walls) are never drawn flipped
             flip = false;
             }
+        
+        char highlight = false;
+        if( mCurMouseOverID != 0 &&
+            mCurMouseOverSpot.y * mMapD + mCurMouseOverSpot.x == inMapI ) {
+            
+            highlight = true;
+            }
+        
 
+        int numPasses = 1;
+        
+        if( highlight ) {
+            
+            numPasses = 2;
+            }
+        
+        
+        for( int i=0; i<numPasses; i++ ) {
+        
+            if( i == 1 ) {
+                startAddingToStencil( false, true );
+                }
+    
         if( mMapContainedStacks[ inMapI ].size() > 0 ) {
             int *stackArray = 
                 mMapContainedStacks[ inMapI ].getElementArray();
@@ -1658,6 +1680,18 @@ void LivingLifePage::drawMapCell( int inMapI,
                             false, false, false,
                             getEmptyClothingSet(), NULL );
             }
+            }
+        
+        if( highlight ) {
+            startDrawingThroughStencil();
+            
+            setDrawColor( 1, 0, 0, 0.5 );
+            
+            drawSquare( pos, 256 );
+            
+            stopStencil();
+            }
+        
         }
     else if( oID == -1 ) {
         // unknown
@@ -7595,7 +7629,8 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
 
     if( destID > 0 ) {
         mCurMouseOverID = destID;
-        
+        mCurMouseOverSpot.x = mapX;
+        mCurMouseOverSpot.y = mapY;
         }
     else if( mCurMouseOverID != 0 ) {
         mLastMouseOverID = mCurMouseOverID;
