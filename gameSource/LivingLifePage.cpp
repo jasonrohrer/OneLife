@@ -572,16 +572,19 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
         for( int x=0; x<pathFindingD; x++ ) {
             int mapX = ( x - pathOffsetX ) + mMapD / 2 - mMapOffsetX;
             
+            if( mapY >= 0 && mapY < mMapD &&
+                mapX >= 0 && mapX < mMapD ) { 
 
-            int mapI = mapY * mMapD + mapX;
+                int mapI = mapY * mMapD + mapX;
             
-            // note that unknowns (-1) count as blocked too
-            if( mMap[ mapI ] == 0
-                ||
-                ( mMap[ mapI ] != -1 && 
-                  ! getObject( mMap[ mapI ] )->blocksWalking ) ) {
-                      
-                blockedMap[ y * pathFindingD + x ] = false;
+                // note that unknowns (-1) count as blocked too
+                if( mMap[ mapI ] == 0
+                    ||
+                    ( mMap[ mapI ] != -1 && 
+                      ! getObject( mMap[ mapI ] )->blocksWalking ) ) {
+                    
+                    blockedMap[ y * pathFindingD + x ] = false;
+                    }
                 }
             }
         }
@@ -593,20 +596,24 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
         for( int x=0; x<pathFindingD; x++ ) {
             int mapX = ( x - pathOffsetX ) + mMapD / 2 - mMapOffsetX;
             
-            int mapI = mapY * mMapD + mapX;
+            if( mapY >= 0 && mapY < mMapD &&
+                mapX >= 0 && mapX < mMapD ) { 
 
-            if( mMap[ mapI ] > 0 ) {
-                ObjectRecord *o = getObject( mMap[ mapI ] );
+                int mapI = mapY * mMapD + mapX;
                 
-                if( o->wide ) {
+                if( mMap[ mapI ] > 0 ) {
+                    ObjectRecord *o = getObject( mMap[ mapI ] );
                     
-                    for( int dx = - o->leftBlockingRadius;
-                         dx <= o->rightBlockingRadius; dx++ ) {
+                    if( o->wide ) {
                         
-                        int newX = x + dx;
-                        
-                        if( newX >=0 && newX < pathFindingD ) {
-                            blockedMap[ y * pathFindingD + newX ] = true;
+                        for( int dx = - o->leftBlockingRadius;
+                             dx <= o->rightBlockingRadius; dx++ ) {
+                            
+                            int newX = x + dx;
+                            
+                            if( newX >=0 && newX < pathFindingD ) {
+                                blockedMap[ y * pathFindingD + newX ] = true;
+                                }
                             }
                         }
                     }
