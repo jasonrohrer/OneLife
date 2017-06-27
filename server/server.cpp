@@ -114,6 +114,8 @@ typedef struct LiveObject {
         // object ID used to visually represent this player
         int displayID;
         
+        char isEve;
+
         // time that this life started (for computing age)
         double lifeStartTimeSeconds;
         
@@ -1889,7 +1891,9 @@ void processLoggedInPlayer( Socket *inSock,
     nextID++;
                 
     newObject.displayID = getRandomPersonObject();
-                            
+    
+    newObject.isEve = false;
+
     newObject.lifeStartTimeSeconds = Time::getCurrentTime();
                             
 
@@ -1963,6 +1967,9 @@ void processLoggedInPlayer( Socket *inSock,
     if( parentChoices.size() == 0 || numOfAge == 0 ) {
         // new Eve
         // she starts almost full grown
+
+        newObject.isEve = true;
+        
         newObject.lifeStartTimeSeconds -= 14 * ( 1.0 / getAgeRate() );
 
         
@@ -3749,6 +3756,7 @@ int main() {
                                         
                                         logDeath( hitPlayer->id,
                                                   hitPlayer->email,
+                                                  hitPlayer->isEve,
                                                   computeAge( hitPlayer ),
                                                   ! getFemale( hitPlayer ),
                                                   m.x, m.y,
@@ -4973,6 +4981,7 @@ int main() {
                     
                     logDeath( nextPlayer->id,
                               nextPlayer->email,
+                              nextPlayer->isEve,
                               computeAge( nextPlayer ),
                               ! getFemale( nextPlayer ),
                               dropPos.x, dropPos.y,
@@ -5594,6 +5603,7 @@ int main() {
                         
                         logDeath( nextPlayer->id,
                                   nextPlayer->email,
+                                  nextPlayer->isEve,
                                   computeAge( nextPlayer ),
                                   ! getFemale( nextPlayer ),
                                   deathPos.x, deathPos.y,

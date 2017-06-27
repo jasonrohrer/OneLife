@@ -25,11 +25,24 @@
 
 #include "../gameSource/transitionBank.h"
 #include "../gameSource/objectBank.h"
+#include "../gameSource/GridPos.h"
 
 
 
-#define NUM_CIV_RADII 30
-static int maxCivRadius[ NUM_CIV_RADII ];
+// track recent placements to determine camp where
+// we'll stick next Eve
+#define NUM_RECENT_PLACEMENTS 100
+static GridPos recentPlacements[ NUM_RECENT_PLACEMENTS ];
+
+// ring buffer
+static int nextPlacementIndex = 0;
+
+static int eveRadiusStart = 20;
+static int eveRadius = eveRadiusStart;
+
+// what human-placed stuff, together, counts as a camp
+static int campRadius = 20;
+
 
 
 static int chunkDimensionX = 32;
@@ -646,33 +659,73 @@ int *getContainedRaw( int inX, int inY, int *outNumContained );
 
 
 
-void writeCivRadius() {
-    FILE *radFile = fopen( "maxCivRadius.txt", "w" );
-    if( radFile != NULL ) {
-        for( int i=0; i<NUM_CIV_RADII; i++ ) {
-            fprintf( radFile, "%d ", maxCivRadius[i] );
+void writeRecentPlacements() {
+    FILE *placeFile = fopen( "recentPlacements.txt", "w" );
+    if( placeFile != NULL ) {
+        for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
+            fprintf( placeFile, "%d,%d\n", recentPlacements[i].x,
+                     recentPlacements[i].y );
             }
-        fclose( radFile );
+        fclose( placeFile );
         }
+    }
+
+
+
+static void writeEveRadius() {
+    FILE *eveRadFile = fopen( "eveRadius.txt", "w" );
+    if( eveRadFile != NULL ) {
+        
+        fprintf( eveRadFile, "%d", eveRadius );
+
+        fclose( eveRadFile );
+        }
+    }
+
+
+
+void doubleEveRadius() {
+    eveRadius *= 2;
+    writeEveRadius();
+    }
+
+
+
+void resetEveRadius() {
+    eveRadius = eveRadiusStart;
+    writeEveRadius();
     }
 
 
 
 void initMap() {
 
-    for( int i=0; i<NUM_CIV_RADII; i++ ) {
-        maxCivRadius[i] = 0;
+    for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
+        recentPlacements[i].x = 0;
+        recentPlacements[i].y = 0;
         }
     
 
-    FILE *radFile = fopen( "maxCivRadius.txt", "r" );
-    if( radFile != NULL ) {
-        for( int i=0; i<NUM_CIV_RADII; i++ ) {
-            fscanf( radFile, "%d", &( maxCivRadius[i] ) );
+    FILE *placeFile = fopen( "recentPlacements.txt", "r" );
+    if( placeFile != NULL ) {
+        for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
+            fscanf( placeFile, "%d,%d", 
+                    &( recentPlacements[i].x ),
+                    &( recentPlacements[i].y ) );
             }
-        fclose( radFile );
+        fclose( placeFile );
         }
     
+
+    FILE *eveRadFile = fopen( "eveRadius.txt", "r" );
+    if( eveRadFile != NULL ) {
+        
+        fscanf( eveRadFile, "%d", &eveRadius );
+
+        fclose( eveRadFile );
+        }
+    
+            
 
 
     int error = KISSDB_open( &db, 
@@ -913,12 +966,13 @@ void initMap() {
     if( totalSetCount == 0 ) {
         // map has been cleared
 
-        // ignore old value for civ radius
-        for( int i=0; i<NUM_CIV_RADII; i++ ) {
-            maxCivRadius[i] = 0;
+        // ignore old value for placements
+        for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
+            recentPlacements[i].x = 0;
+            recentPlacements[i].y = 0;
             }
 
-        writeCivRadius();
+        writeRecentPlacements();
         }
     
     // for debugging the map
@@ -946,6 +1000,9 @@ void freeMap() {
         KISSDB_close( &biomeDB );
         }
     
+    writeEveRadius();
+    writeRecentPlacements();
+
     delete [] biomes;
     
     delete [] naturalMapIDs;
@@ -1619,19 +1676,34 @@ void setMapObject( int inX, int inY, int inID ) {
 
     
     if( inID > 0 ) {
-        int radius = lrint( sqrt( inX * inX + inY * inY ) );
-        
-        doublePair pos = { (double)inX, (double)inY };
 
-        int a = lrint( ( angle( pos ) / ( 2 * M_PI ) ) * 
-                       ( NUM_CIV_RADII - 1 ) );
+        char found = false;
         
-
-        if( radius > maxCivRadius[a] ) {
-            maxCivRadius[a] = radius;
+        for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
             
-            writeCivRadius();
+            if( inX == recentPlacements[i].x 
+                &&
+                inY == recentPlacements[i].y ) {
+                
+                found = true;
+                break;
+                }    
             }
+        
+
+        if( !found ) {    
+            recentPlacements[nextPlacementIndex].x = inX;
+            recentPlacements[nextPlacementIndex].y = inY;
+            
+            nextPlacementIndex++;
+            if( nextPlacementIndex >= NUM_RECENT_PLACEMENTS ) {
+                nextPlacementIndex = 0;
+                
+                // write again every time we have a fresh 100
+                writeRecentPlacements();
+                }
+            }
+        
         }
         
     }
@@ -2119,70 +2191,104 @@ void restretchMapContainedDecays( int inX, int inY,
 
 
 void getEvePosition( int *outX, int *outY ) {
-    int a = randSource.getRandomBoundedInt( 0, NUM_CIV_RADII - 1 );
     
-    double angle = 2 * M_PI * a / (double)( NUM_CIV_RADII );
+    SimpleVector<doublePair> pos;
     
-    doublePair rad = { (double)( maxCivRadius[a] ), 0 };
+    doublePair sum = {0,0};
     
-    rad = rotate( rad, angle );
-    
-    int x = lrint( rad.x );
-    int y = lrint( rad.y );
-    
-    int xDir = 0;
-    if( x > 0 ) {
-        xDir = -1;
-        }
-    else if( x < 0 ) {
-        xDir = 1;
-        }
-    
-    int yDir = 0;
-    if( y > 0 ) {
-        yDir = -1;
-        }
-    else if( y < 0 ) {
-        yDir = 1;
-        }
-    
-    if( xDir == 0 && yDir == 0 ) {
-        xDir = 1;
+    for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
+        if( recentPlacements[i].x != 0 ||
+            recentPlacements[i].y != 0 ) {
+            
+            doublePair p = { (double)( recentPlacements[i].x ), 
+                             (double)( recentPlacements[i].y ) };
+            
+            pos.push_back( p );
+            
+            sum = add( sum, p );
+            }
         }
 
-
-    while( x != 0 && y != 0 ) {
+    if( pos.size() == 0 ) {
+        doublePair zeroPos = { 0, 0 };    
+        pos.push_back( zeroPos );
+        }
+    
+    
+    doublePair ave = mult( sum, 1.0 / pos.size() );
+    
+    double maxDist = 2.0 * campRadius;
+    
+    while( maxDist > campRadius ) {
         
-        int newX = x;
-        int newY = y;
+        maxDist = 0;
+        int maxI = -1;
         
-        if( x != 0 ) {
-            newX += xDir;
+        for( int i=0; i<pos.size(); i++ ) {
+            
+            double d = distance( pos.getElementDirect( i ), ave );
+            
+            if( d > maxDist ) {
+                maxDist = d;
+                maxI = i;
+                }
             }
-        if( y != 0 ) {
-            newY += yDir;
-            }
-        if( newX != x && getMapObjectRaw( newX, y ) == 0 ) {
-            x = newX;
-            }
-        else if( newY != y && getMapObjectRaw( x, newY ) == 0 ) {
-            y = newY;
-            }
-        else {
-            // blocked or at 0 in both directions
-            break;
+        
+        if( maxDist > campRadius ) {
+            
+            sum = sub( sum, pos.getElementDirect( maxI ) );
+            
+            pos.deleteElement( maxI );
+            
+            ave = mult( sum, 1.0 / pos.size() );
             }
         }
     
-    // back out until not blocked
-    while( getMapObjectRaw( x, y ) != 0 ) {
-        x -= xDir;
-        y -= yDir;
-        }
-    
+    printf( "Placing new Eve:  "
+            "found an existing camp with %d placements and %f max radius\n",
+            pos.size(), maxDist );
 
-    *outX = x;
-    *outY = y;
+    // ave is now center of camp
+
+    // pick point in box according to eve radius
+
+    int currentEveRadius = eveRadius;
+    
+    char found = 0;
+    
+    while( !found ) {
+        printf( "Placing new Eve:  "
+                "trying radius of %d from camp\n", currentEveRadius );
+
+        int tryCount = 0;
+        
+        while( !found && tryCount < 100 ) {
+            
+            doublePair p = { 
+                randSource.getRandomBoundedDouble(-currentEveRadius,
+                                                  +currentEveRadius ),
+                randSource.getRandomBoundedDouble(-currentEveRadius,
+                                                  +currentEveRadius ) };
+            
+            p = add( p, ave );
+            
+            GridPos pInt = { lrint( p.x ), lrint( p.y ) };
+            
+            if( getMapObjectRaw( pInt.x, pInt.y ) == 0 ) {
+                
+                *outX = pInt.x;
+                *outY = pInt.y;
+                found = true;
+                }
+
+            tryCount++;
+            }
+
+        // tried too many times, expand radius
+        currentEveRadius *= 2;
+        
+        }
+
     }
 
 

@@ -1,10 +1,7 @@
 #include <stdlib.h>
 
 
-typedef struct GridPos {
-        int x;
-        int y;
-    } GridPos;
+#include "GridPos.h"
 
 
 

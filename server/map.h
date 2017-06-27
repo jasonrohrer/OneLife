@@ -22,6 +22,13 @@ void initMap();
 void freeMap();
 
 
+// make Eve placement radius bigger
+void doubleEveRadius();
+
+// return Eve placement radius to starting value
+void resetEveRadius();
+
+
 // gets new Eve position on outskirts of civilization
 void getEvePosition( int *outX, int *outY );
 

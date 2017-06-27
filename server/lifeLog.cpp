@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "map.h"
+
+
 
 #include "minorGems/util/stringUtils.h"
 #include "minorGems/io/file/File.h"
@@ -13,6 +16,9 @@ static FILE *logFile;
 
 static int currentYear;
 static int currentDay;
+
+
+static int deadYoungEveCount = 0;
 
 
 extern double forceDeathAge;
@@ -139,12 +145,29 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
 
 // killer email NULL if died of natural causes
 void logDeath( int inPlayerID, char *inPlayerEmail,
+               char inEve,
                double inAge,
                char inIsMale,
                int inMapX, int inMapY, 
                int inTotalRemainingPopulation,
                char inDisconnect, int inKillerID, 
                char *inKillerEmail ) {
+    
+    if( inEve ) {
+        
+        if( inAge > 30 ) {
+            resetEveRadius();
+            deadYoungEveCount = 0;
+            }
+        else {
+            deadYoungEveCount ++;
+            
+            if( deadYoungEveCount > 5 ) {
+                deadYoungEveCount = 0;
+                doubleEveRadius();
+                }
+            }
+        }
 
 
     if( logFile != NULL ) {
