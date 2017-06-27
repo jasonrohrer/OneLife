@@ -4792,12 +4792,14 @@ void LivingLifePage::step() {
             for( int i=1; i<numLines; i++ ) {
 
                 LiveObject o;
-                
+
                 o.onScreen = false;
+                
+                o.holdingID = 0;
                 
                 o.pathToDest = NULL;
                 o.containedIDs = NULL;
-
+                o.onFinalPathStep = false;
 
                 // don't track these for other players
                 o.foodStore = 0;
@@ -7633,6 +7635,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
     // there if unblocked.
     p.hitAnObject = false;
 
+    p.hitOtherPerson = false;
 
     checkForPointerHit( &p, inX, inY );
     
@@ -7707,6 +7710,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     // if we actually clicked the object there.  Else, we can walk
     // there if unblocked.
     p.hitAnObject = false;
+    
+    p.hitOtherPerson = false;
+    
 
 
     checkForPointerHit( &p, inX, inY );

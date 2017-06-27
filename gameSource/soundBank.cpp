@@ -331,6 +331,8 @@ int initSoundBankStart( char inPrintSteps ) {
 
 
                 r->sound = NULL;
+                r->reverbSound = NULL;
+                
                 r->loading = false;
                 r->numStepsUnused = 0;
                 r->liveUseageCount = 0;
