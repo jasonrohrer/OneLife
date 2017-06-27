@@ -7360,7 +7360,11 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
     
     int clickDestMapI = clickDestMapY * mMapD + clickDestMapX;
     
-    if( mMapOurPlayerPlacedFlags[ clickDestMapI ] ) {
+    if( clickDestMapY >= 0 && clickDestMapY < mMapD &&
+        clickDestMapX >= 0 && clickDestMapX < mMapD
+        &&
+        mMapOurPlayerPlacedFlags[ clickDestMapI ] ) {
+        
         // check this cell first
         
         int oID = mMap[ clickDestMapI ];
@@ -7412,6 +7416,13 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
 
             int mapX = x - mMapOffsetX + mMapD / 2;
             int mapY = y - mMapOffsetY + mMapD / 2;
+            
+            if( mapY < 0 || mapY >= mMapD || 
+                mapX < 0 || mapX >= mMapD ) { 
+                // skip any that are out of map bounds
+                continue;
+                }
+            
 
             int mapI = mapY * mMapD + mapX;
 
@@ -7542,6 +7553,12 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
 
             int mapX = x - mMapOffsetX + mMapD / 2;
             int mapY = y - mMapOffsetY + mMapD / 2;
+
+            if( mapY < 0 || mapY >= mMapD || 
+                mapX < 0 || mapX >= mMapD ) { 
+                // skip any that are out of map bounds
+                continue;
+                }
 
             int mapI = mapY * mMapD + mapX;
 
