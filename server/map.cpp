@@ -2272,7 +2272,7 @@ void getEvePosition( int *outX, int *outY ) {
             
             p = add( p, ave );
             
-            GridPos pInt = { lrint( p.x ), lrint( p.y ) };
+            GridPos pInt = { (int)lrint( p.x ), (int)lrint( p.y ) };
             
             if( getMapObjectRaw( pInt.x, pInt.y ) == 0 ) {
                 
