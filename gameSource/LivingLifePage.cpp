@@ -1639,16 +1639,34 @@ void LivingLifePage::drawMapCell( int inMapI,
         
         if( highlight ) {
             
-            numPasses = 2;
+            numPasses = 5;
             }
         
         
         for( int i=0; i<numPasses; i++ ) {
-        
-            if( i == 1 ) {
-                startAddingToStencil( false, true );
+            
+            doublePair passPos = pos;
+            
+            if( highlight ) {
+                
+                switch( i ) {
+                    case 0:
+                        passPos.x += 1;
+                        break;
+                    case 1:
+                        passPos.x -= 1;
+                        break;
+                    case 2:
+                        passPos.y += 1;
+                        break;
+                    case 3:
+                        passPos.y -= 1;
+                        break;
+                    default:
+                        break;
+                    }
                 }
-    
+
         if( mMapContainedStacks[ inMapI ].size() > 0 ) {
             int *stackArray = 
                 mMapContainedStacks[ inMapI ].getElementArray();
@@ -1662,7 +1680,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             &used,
                             endAnimType,
                             endAnimType,
-                            pos, rot, false, flip,
+                            passPos, rot, false, flip,
                             -1,
                             false, false, false,
                             getEmptyClothingSet(),
@@ -1681,7 +1699,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             &used,
                             endAnimType,
                             endAnimType,
-                            pos, rot,
+                            passPos, rot,
                             false,
                             flip, -1,
                             false, false, false,
@@ -1689,15 +1707,6 @@ void LivingLifePage::drawMapCell( int inMapI,
             }
             }
         
-        if( highlight ) {
-            startDrawingThroughStencil();
-            
-            setDrawColor( 1, 0, 0, 0.5 );
-            
-            drawSquare( pos, 256 );
-            
-            stopStencil();
-            }
         
         }
     else if( oID == -1 ) {
