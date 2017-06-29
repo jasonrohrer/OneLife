@@ -105,7 +105,7 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 		do
 			objName=$(cat $y | sed -n 2p )
 			
-			echo "<font color=#ffff00>x</font>" >> $reportFile;
+			echo "<font color=#ff0000>x</font>" >> $reportFile;
 			echo "$objName<br>" >> $reportFile
 			
 			removedObjCount=$((removedObjCount+1))
@@ -115,102 +115,145 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 
 		echo "$removedObjCount removed objects in report for v$newerVersion"
 
-		echo "<br><br>";
+		total=$(($newObjCount + $changedObjCount + $removedObjCount))
+
+		if [[ $total -gt "1" ]];
+		then
+			echo "($total object updates)<br>" >> $reportFile
+		else if [[ $total -gt "0" ]];
+			 then
+				 echo "($total object update)<br>" >> $reportFile
+			 fi
+		fi
+		
+		echo "<br>" >> $reportFile
+
+		echo "<table border=0>" >> $reportFile
+
+		cellColor="#111111"
+		otherCellColor='#222222'
+		
 		
 		newTransCount=0
 		while read y;
 		do
 			
-			objNumA=$(cat $y | sed 's/transitions/\([0-9\-]*\)_\([0-9\-]*\).txt/\1/' )
-			objNumB=$(cat $y | sed 's/transitions/\([0-9\-]*\)_\([0-9\-]*\).txt/\2/' )
+			objNumA=$(echo -n "$y" | sed 's/transitions\/\([0-9\-]*\)_\([0-9\-]*\)\.txt/\1/' )
+			objNumB=$(echo -n "$y" | sed 's/transitions\/\([0-9\-]*\)_\([0-9\-]*\)\.txt/\2/' )
 
-			objNameA="";
-			objNameB="";
+			objNameA="-";
+			objNameB="-";
 
-			if [[ $objNumA -gt 0 ]];
+			if [[ $objNumA -gt "0" ]];
 			then
 				objNameA=$(cat objects/$objNumA.txt | sed -n 2p )
 			fi
 
-			if [[ $objNumB -gt 0 ]];
+			if [[ $objNumB -gt "0" ]];
 			then
 				objNameB=$(cat objects/$objNumB.txt | sed -n 2p )
 			fi
 
-			echo "<font color=#00ff00>+</font>" >> $reportFile;
+			echo -n "<tr><td valign=top bgcolor=$cellColor><font color=#00ff00>+</font></td>" >> $reportFile;
 
-			echo "[[$objNameA]] + [[$objNameB]]<br>" >> $reportFile
-			
+			echo "<td valign=top bgcolor=$cellColor>[ $objNameA ] +<br>[ $objNameB ]</td></tr>" >> $reportFile
+
+			temp=$cellColor
+			cellColor=$otherCellColor
+			otherCellColor=$temp
+
 			newTransCount=$((newTransCount+1))
 
 		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion transitions/ | grep "A " | sed 's/A //')
+		
+		echo "$newTransCount new transitions in report for v$newerVersion"
 
+		
 
 		changedTransCount=0
 		while read y;
 		do
-			
-			objNumA=$(cat $y | sed 's/transitions/\([0-9\-]*\)_\([0-9\-]*\).txt/\1/' )
-			objNumB=$(cat $y | sed 's/transitions/\([0-9\-]*\)_\([0-9\-]*\).txt/\2/' )
+			objNumA=$(echo -n "$y" | sed 's/transitions\/\([0-9\-]*\)_\([0-9\-]*\).txt/\1/' )
+			objNumB=$(echo -n "$y" | sed 's/transitions\/\([0-9\-]*\)_\([0-9\-]*\)\.txt/\2/' )
 
-			objNameA="";
-			objNameB="";
+			objNameA="-";
+			objNameB="-";
 
-			if [[ $objNumA -gt 0 ]];
+			if [[ $objNumA -gt "0" ]];
 			then
 				objNameA=$(cat objects/$objNumA.txt | sed -n 2p )
 			fi
 
-			if [[ $objNumB -gt 0 ]];
+			if [[ $objNumB -gt "0" ]];
 			then
 				objNameB=$(cat objects/$objNumB.txt | sed -n 2p )
 			fi
 
-			echo "<font color=#ffff00>~</font>" >> $reportFile;
+			echo -n "<tr><td valign=top bgcolor=$cellColor><font color=#ffff00>~</font></td>" >> $reportFile;
 
-			echo "[[$objNameA]] + [[$objNameB]]<br>" >> $reportFile
+			echo "<td valign=top bgcolor=$cellColor>[ $objNameA ] +<br>[ $objNameB ]</td></tr>" >> $reportFile
+
 			
 			changedTransCount=$((changedTransCount+1))
 
 		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion transitions/ | grep "M " | sed 's/M //')
 
 
+		echo "$changedTransCount changed transitions in report for v$newerVersion"
 
 		removedTransCount=0
 		while read y;
 		do
 			
-			objNumA=$(cat $y | sed 's/transitions/\([0-9\-]*\)_\([0-9\-]*\).txt/\1/' )
-			objNumB=$(cat $y | sed 's/transitions/\([0-9\-]*\)_\([0-9\-]*\).txt/\2/' )
+			objNumA=$(echo -n "$y" | sed 's/transitions\/\([0-9\-]*\)_\([0-9\-]*\)\.txt/\1/' )
+			objNumB=$(echo -n "$y" | sed 's/transitions\/\([0-9\-]*\)_\([0-9\-]*\)\.txt/\2/' )
 
-			objNameA="";
-			objNameB="";
+			objNameA="-";
+			objNameB="-";
 
-			if [[ $objNumA -gt 0 ]];
+			if [[ $objNumA -gt "0" ]];
 			then
 				objNameA=$(cat objects/$objNumA.txt | sed -n 2p )
 			fi
 
-			if [[ $objNumB -gt 0 ]];
+			if [[ $objNumB -gt "0" ]];
 			then
 				objNameB=$(cat objects/$objNumB.txt | sed -n 2p )
 			fi
 
-			echo "<font color=#ffff00>~</font>" >> $reportFile;
+			echo -n "<tr><td valign=top bgcolor=$cellColor><font color=#ff0000>x</font></td>" >> $reportFile;
 
-			echo "[[$objNameA]] + [[$objNameB]]<br>" >> $reportFile
+			echo "<td valign=top bgcolor=$cellColor>[ $objNameA ] +<br>[ $objNameB ]</td></tr>" >> $reportFile
 			
 			removedTransCount=$((removedTransCount+1))
 
 		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion transitions/ | grep "R " | sed 's/R //')
 
 
+		echo "$removedTransCount removed transitions in report for v$newerVersion"
+
+		
+		echo "</table>"  >> $reportFile
+
+		total=$(($newTransCount + $changedTransCount + $removedTransCount))
+
+		if [[ $total -gt "1" ]];
+		then
+			echo "($total transition updates)<br>" >> $reportFile
+		else if [[ $total -gt "0" ]];
+			 then
+				 echo "($total transition update)<br>" >> $reportFile
+			 fi
+		fi
 
 
 		if [[ $newObjCount -eq 0 && $changedObjCount -eq 0 && $removedObjCount -eq 0 && $newTransCount -eq 0 && $changedTransCount -eq 0 && $removedTransCount -eq 0 ]];
 		then
 			rm $reportFile
 		fi
+
+		echo ""
+		echo ""
 	fi
 
 	newerVersion=$x
