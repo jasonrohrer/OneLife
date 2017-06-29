@@ -1871,6 +1871,13 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             
             if( multiplicative ) {
                 toggleMultiplicativeBlend( true );
+                
+                if( getTotalGlobalFade() < 1 ) {
+                    
+                    toggleAdditiveTextureColoring( true );
+                    
+                    setDrawColor( 0.0f, 0.0f, 0.0f, 1.0f );
+                    }
                 }
             
             drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
@@ -1879,6 +1886,7 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             
             if( multiplicative ) {
                 toggleMultiplicativeBlend( false );
+                toggleAdditiveTextureColoring( false );
                 }
             
             

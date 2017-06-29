@@ -407,6 +407,9 @@ class LivingLifePage : public GamePage {
 
         GridPos mCurMouseOverSpot;
         
+        SimpleVector<GridPos> mPrevMouseOverSpots;
+        SimpleVector<float> mPrevMouseOverSpotFades;
+        
 
         float mLastMouseOverFade;
 

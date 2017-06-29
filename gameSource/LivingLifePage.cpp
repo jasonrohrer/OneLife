@@ -1628,21 +1628,39 @@ void LivingLifePage::drawMapCell( int inMapI,
             }
         
         char highlight = false;
+        float highlightFade = 1.0f;
+        
         if( mCurMouseOverID != 0 &&
             mCurMouseOverSpot.y * mMapD + mCurMouseOverSpot.x == inMapI ) {
             
             highlight = true;
             }
+        else {
+            for( int i=0; i<mPrevMouseOverSpots.size(); i++ ) {
+                GridPos prev = mPrevMouseOverSpots.getElementDirect( i );
+                
+                if( prev.y * mMapD + prev.x == inMapI ) {
+                    highlight = true;
+                    highlightFade = 
+                        mPrevMouseOverSpotFades.getElementDirect(i);
+                    }    
+                }
+            }
         
 
         int numPasses = 1;
+        int fadeHandle = -1;
         
         if( highlight ) {
             
             numPasses = 5;
+            
+            if( highlightFade != 1.0f ) {
+                fadeHandle = addGlobalFade( highlightFade );
+                }
             }
-        
-        
+
+
         for( int i=0; i<numPasses; i++ ) {
             
             doublePair passPos = pos;
@@ -1665,6 +1683,13 @@ void LivingLifePage::drawMapCell( int inMapI,
                     default:
                         break;
                     }
+
+                if( i == 4 ) {
+                    if( highlightFade != 1.0f ) {
+                        removeGlobalFade( fadeHandle );
+                        }
+                    }
+
                 }
 
         if( mMapContainedStacks[ inMapI ].size() > 0 ) {
@@ -3926,6 +3951,24 @@ void LivingLifePage::step() {
             mLastMouseOverID = 0;
             }
         }
+    
+
+    for( int i=0; i<mPrevMouseOverSpotFades.size(); i++ ) {
+        float f = mPrevMouseOverSpotFades.getElementDirect( i );
+        
+        f -= 0.1 * frameRateFactor;
+        
+        
+        if( f <= 0 ) {
+            mPrevMouseOverSpotFades.deleteElement( i );
+            mPrevMouseOverSpots.deleteElement( i );
+            i--;
+            }
+        else {
+            *( mPrevMouseOverSpotFades.getElement( i ) ) = f;
+            }
+        }
+    
 
     if( ! equal( mNotePaperPosOffset, mNotePaperPosTargetOffset ) ) {
         doublePair delta = 
@@ -7662,6 +7705,32 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         
         destID = mMap[ mapY * mMapD + mapX ];
         }
+
+
+
+    if( mCurMouseOverID != 0 
+        &&
+        ( mCurMouseOverID != destID
+          ||
+          mCurMouseOverSpot.x != mapX ||
+          mCurMouseOverSpot.y != mapY ) ) {
+        
+        GridPos prev = { mCurMouseOverSpot.x, mCurMouseOverSpot.y };
+        
+        for( int i=0; i<mPrevMouseOverSpots.size(); i++ ) {
+            GridPos old = mPrevMouseOverSpots.getElementDirect( i );
+            
+            if( equal( old, prev ) ) {
+                mPrevMouseOverSpots.deleteElement( i );
+                mPrevMouseOverSpotFades.deleteElement( i );
+                break;
+                }
+            }
+        
+        mPrevMouseOverSpots.push_back( prev );
+        mPrevMouseOverSpotFades.push_back( 1.0f );
+        }
+    
 
     if( destID > 0 ) {
         mCurMouseOverID = destID;

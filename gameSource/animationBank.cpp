@@ -1881,7 +1881,9 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             if( multiplicative ) {
                 toggleMultiplicativeBlend( true );
                 
-                if( workingSpriteFade[i] < 1 ) {
+                if( workingSpriteFade[i] < 1 ||
+                    getTotalGlobalFade() < 1 ) {
+                    
                     toggleAdditiveTextureColoring( true );
                     
                     float invFade = 1.0f - workingSpriteFade[i];
