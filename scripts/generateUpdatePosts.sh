@@ -61,18 +61,23 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 		echo "<h3>Version $newerVersion ($versionDate)</h3>" > $reportFile
 		
 		reportCount=$((reportCount+1))
+
 		
 		newObjCount=0
 		while read y;
 		do
 			objName=$(cat $y | sed -n 2p )
-			
+
+			echo "<font color=#00ff00>+</font>" >> $reportFile;
+
 			echo "$objName<br>" >> $reportFile
 			
 			newObjCount=$((newObjCount+1))
 
 		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion objects/ -X objects/nextObjectNumber.txt | grep "A " | sed 's/A //')
+		
 
+		
 		echo "$newObjCount new objects in report for v$newerVersion"
 
 
@@ -80,13 +85,17 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 		while read y;
 		do
 			objName=$(cat $y | sed -n 2p )
-			
-			echo "(changed) $objName<br>" >> $reportFile
+
+			echo "<font color=#ffff00>~</font>" >> $reportFile;
+
+			echo "$objName<br>" >> $reportFile
 			
 			changedObjCount=$((changedObjCount+1))
 
-		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion objects/-X objects/nextObjectNumber.txt | grep "M " | sed 's/M //')
+		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion objects/ -X objects/nextObjectNumber.txt | grep "M " | sed 's/M //')
 
+
+		
 		echo "$changedObjCount changed objects in report for v$newerVersion"
 
 
@@ -96,17 +105,19 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 		do
 			objName=$(cat $y | sed -n 2p )
 			
-			echo "(removed) $objName<br>" >> $reportFile
+			echo "<font color=#ffff00>x</font>" >> $reportFile;
+			echo "$objName<br>" >> $reportFile
 			
 			removedObjCount=$((removedObjCount+1))
 
 		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion objects/-X objects/nextObjectNumber.txt | grep "R " | sed 's/R //')
 
+
 		echo "$removedObjCount removed objects in report for v$newerVersion"
 
 
 
-		if [[ $newObjCount -eq 0 && $changedObjCount -eq 0 && $removedObjCount =eq 0 ]];
+		if [[ $newObjCount -eq 0 && $changedObjCount -eq 0 && $removedObjCount -eq 0 ]];
 		then
 			rm $reportFile
 		fi
