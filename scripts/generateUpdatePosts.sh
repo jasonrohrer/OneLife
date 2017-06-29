@@ -115,9 +115,99 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 
 		echo "$removedObjCount removed objects in report for v$newerVersion"
 
+		echo "<br><br>";
+		
+		newTransCount=0
+		while read y;
+		do
+			
+			objNumA=$(cat $y | sed 's/transitions/\([0-9\-]*\)_\([0-9\-]*\).txt/\1/' )
+			objNumB=$(cat $y | sed 's/transitions/\([0-9\-]*\)_\([0-9\-]*\).txt/\2/' )
+
+			objNameA="";
+			objNameB="";
+
+			if [[ $objNumA -gt 0 ]];
+			then
+				objNameA=$(cat objects/$objNumA.txt | sed -n 2p )
+			fi
+
+			if [[ $objNumB -gt 0 ]];
+			then
+				objNameB=$(cat objects/$objNumB.txt | sed -n 2p )
+			fi
+
+			echo "<font color=#00ff00>+</font>" >> $reportFile;
+
+			echo "[[$objNameA]] + [[$objNameB]]<br>" >> $reportFile
+			
+			newTransCount=$((newTransCount+1))
+
+		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion transitions/ | grep "A " | sed 's/A //')
 
 
-		if [[ $newObjCount -eq 0 && $changedObjCount -eq 0 && $removedObjCount -eq 0 ]];
+		changedTransCount=0
+		while read y;
+		do
+			
+			objNumA=$(cat $y | sed 's/transitions/\([0-9\-]*\)_\([0-9\-]*\).txt/\1/' )
+			objNumB=$(cat $y | sed 's/transitions/\([0-9\-]*\)_\([0-9\-]*\).txt/\2/' )
+
+			objNameA="";
+			objNameB="";
+
+			if [[ $objNumA -gt 0 ]];
+			then
+				objNameA=$(cat objects/$objNumA.txt | sed -n 2p )
+			fi
+
+			if [[ $objNumB -gt 0 ]];
+			then
+				objNameB=$(cat objects/$objNumB.txt | sed -n 2p )
+			fi
+
+			echo "<font color=#ffff00>~</font>" >> $reportFile;
+
+			echo "[[$objNameA]] + [[$objNameB]]<br>" >> $reportFile
+			
+			changedTransCount=$((changedTransCount+1))
+
+		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion transitions/ | grep "M " | sed 's/M //')
+
+
+
+		removedTransCount=0
+		while read y;
+		do
+			
+			objNumA=$(cat $y | sed 's/transitions/\([0-9\-]*\)_\([0-9\-]*\).txt/\1/' )
+			objNumB=$(cat $y | sed 's/transitions/\([0-9\-]*\)_\([0-9\-]*\).txt/\2/' )
+
+			objNameA="";
+			objNameB="";
+
+			if [[ $objNumA -gt 0 ]];
+			then
+				objNameA=$(cat objects/$objNumA.txt | sed -n 2p )
+			fi
+
+			if [[ $objNumB -gt 0 ]];
+			then
+				objNameB=$(cat objects/$objNumB.txt | sed -n 2p )
+			fi
+
+			echo "<font color=#ffff00>~</font>" >> $reportFile;
+
+			echo "[[$objNameA]] + [[$objNameB]]<br>" >> $reportFile
+			
+			removedTransCount=$((removedTransCount+1))
+
+		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion transitions/ | grep "R " | sed 's/R //')
+
+
+
+
+		if [[ $newObjCount -eq 0 && $changedObjCount -eq 0 && $removedObjCount -eq 0 && $newTransCount -eq 0 && $changedTransCount -eq 0 && $removedTransCount -eq 0 ]];
 		then
 			rm $reportFile
 		fi
