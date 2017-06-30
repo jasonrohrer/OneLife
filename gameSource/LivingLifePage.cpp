@@ -129,6 +129,14 @@ static char equal( GridPos inA, GridPos inB ) {
     }
 
 
+static double distance2( GridPos inA, GridPos inB ) {
+    int dX = inA.x - inB.x;
+    int dY = inA.y - inB.y;
+    
+    return dX * dX + dY * dY;
+    }
+
+
 
 static void printPath( GridPos *inPath, int inLength ) {
     for( int i=0; i<inLength; i++ ) {
@@ -7898,6 +7906,76 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             // count as an attempt to walk to the spot where the object is
             destID = 0;
+            }
+        else {
+            // clicked on grid cell around blocking object
+            destID = 0;
+            
+            // search for closest non-blocking and walk there
+            
+            GridPos closestP = { -1, -1 };
+            
+            double startDist = 99999;
+            
+            double closestDist = startDist;
+            GridPos clickP = { clickDestX, clickDestY };
+            GridPos ourP = { ourLiveObject->xd, ourLiveObject->yd };
+            
+            for( int y=-5; y<5; y++ ) {
+                for( int x=-5; x<5; x++ ) {
+                    
+                    GridPos p = { clickDestX + x, clickDestY + y };
+                    
+                    int mapPX = p.x - mMapOffsetX + mMapD / 2;
+                    int mapPY = p.y - mMapOffsetY + mMapD / 2;
+
+                    if( mapPY >= 0 && mapPY < mMapD &&
+                        mapPX >= 0 && mapPX < mMapD ) {
+                        
+                        int oID = mMap[ mapPY * mMapD + mapPX ];
+
+                        if( oID == 0 
+                            ||
+                            ( oID > 0 && ! getObject( oID )->blocksWalking ) ) {
+
+
+                            double d2 = distance2( p, clickP );
+                            
+                            if( d2 < closestDist ) {
+                                closestDist = d2;
+                                closestP = p;
+                                }
+                            else if( d2 == closestDist ) {
+                                // break tie by whats closest to player
+                                
+                                double dPlayerOld = distance2( closestP,
+                                                               ourP );
+                                double dPlayerNew = distance2( p, ourP );
+                                
+                                if( dPlayerNew < dPlayerOld ) {
+                                    closestDist = d2;
+                                    closestP = p;
+                                    }
+                                }
+                            
+                            }
+                        }
+                    
+                    }
+                }
+            
+            if( closestDist < startDist ) {
+                // found one
+                // walk there instead
+                moveDestX = closestP.x;
+                moveDestY = closestP.y;
+                
+                clickDestX = moveDestX;
+                clickDestY = moveDestY;
+                
+                mapX = clickDestX - mMapOffsetX + mMapD / 2;
+                mapY = clickDestY - mMapOffsetY + mMapD / 2;
+                }
             }
         }
 
