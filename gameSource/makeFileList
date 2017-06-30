@@ -82,6 +82,7 @@ graphics/fullSlip.tga \
 graphics/hungrySlip.tga \
 graphics/starvingSlip.tga \
 graphics/instructions.tga \
+graphics/scribbleOverlay.tga \
 
 
 NEEDED_MINOR_GEMS_OBJECTS = \
