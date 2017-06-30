@@ -3579,10 +3579,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                 // amplitude grows when we are further from
                 // hidden, and shrinks again as we go back down
-                slipPos.y += 
+
+                double slipHarmonic = 
                     ( 0.5 * ( 1 - cos( mHungerSlipWiggleTime[i] ) ) ) *
                     mHungerSlipWiggleAmp[i] * distFromHidden;
-
+                
+                slipPos.y += slipHarmonic;
+                
 
                 if( i == 2 ) {
                     
@@ -3594,7 +3597,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         
                         if( lastDir > 0 ) {
                             
-                            double newDir = slipPos.y - mStarvingSlipLastPos[1];
+                            double newDir = 
+                                slipHarmonic - mStarvingSlipLastPos[1];
                             
                             if( newDir < 0 ) {
                                 // peak
@@ -3608,7 +3612,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         }
                     mStarvingSlipLastPos[0] = mStarvingSlipLastPos[1];
                     
-                    mStarvingSlipLastPos[1] = slipPos.y;
+                    mStarvingSlipLastPos[1] = slipHarmonic;
                     }
                 }
             
@@ -3944,6 +3948,8 @@ void LivingLifePage::step() {
         if( mFirstServerMessagesReceived  ) {
             setSignal( "died" );
             instantStopMusic();
+            // so sound tails are not still playing when we we get reborn
+            fadeSoundSprites( 0.1 );
             setSoundLoudness( 0 );
             }
         else {
@@ -7175,6 +7181,7 @@ void LivingLifePage::step() {
                 restartMusic( computeCurrentAge( ourLiveObject ),
                               ourLiveObject->ageRate );
                 setSoundLoudness( 1.0 );
+                resumePlayingSoundSprites();
                 setMusicLoudness( musicLoudness );
 
                 // center view on player's starting position
