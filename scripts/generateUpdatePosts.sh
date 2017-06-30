@@ -53,9 +53,13 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 		echo ""
 		echo "Generating report for v$newerVersion as compared to v$x"
 
-		reportFile=$updatePostDir/$newerVersion.html
+		reportFile=$updatePostDir/${newerVersion}.html
+		
+		objDiffFile=$updatePostDir/${newerVersion}_objDiff.php
 
+		objDiffURL=updatePosts/${newerVersion}_objDiff.php
 
+		
 		versionDate=$(hg log -r OneLife_v$newerVersion | grep "date" | sed 's/date:\s\s*//' | sed 's/ [0-9]\+:[0-9]\+:[0-9]\+/,/' | sed 's/\(20[0-9][0-9]\)\s[-+]*[0-9][0-9][0-9][0-9]/\1/' | sed 's/ 0\([0-9]\),/ \1,/' )
 
 		echo "<h3>Version $newerVersion ($versionDate)</h3>" > $reportFile
@@ -80,7 +84,12 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 		
 		echo "$newObjCount new objects in report for v$newerVersion"
 
+		echo "<?php include_once( '../header.php' );?>" >> $objDiffFile
 
+		echo "<table width=100% border=0><tr><td></td><td align=center><font size=5>One Hour One Life - v$newerVersion Raw Object Change Log</font></td><td align=right>[<a href=..>Home</a>]</td></tr></table>" >> $objDiffFile
+		echo "<br><br><br>" >> $objDiffFile
+
+		
 		changedObjCount=0
 		while read y;
 		do
@@ -89,11 +98,27 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 			echo "<font color=#ffff00>~</font>" >> $reportFile;
 
 			echo "$objName<br>" >> $reportFile
+
+			echo "<b>$objName</b></br>" >> $objDiffFile
+			echo "<pre>" >> $objDiffFile
+			
+			hg diff --rev OneLife_v$x:OneLife_v$newerVersion $y | \
+				sed 's/^\(\+[^\+].*\)/<font color=#00DD00>\1<\/font>/' | \
+				sed 's/^\(\-[^\-].*\)/<font color=#FF0000>\1<\/font>/' \
+				>> $objDiffFile
+
+			echo "</pre><br><br><hr><br><br>" >> $objDiffFile
 			
 			changedObjCount=$((changedObjCount+1))
 
 		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion objects/ -X objects/nextObjectNumber.txt | grep "M " | sed 's/M //')
 
+		echo "<?php include_once( '../footer.php' );?>" >> $objDiffFile
+
+		if [[ $changedObjCount -eq 0 ]];
+		then
+			rm $objDiffFile
+		fi
 
 		
 		echo "$changedObjCount changed objects in report for v$newerVersion"
@@ -116,13 +141,21 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 		echo "$removedObjCount removed objects in report for v$newerVersion"
 
 		total=$(($newObjCount + $changedObjCount + $removedObjCount))
+		
+		fullDiffText=""
 
+		if [[ $changedObjCount -gt "0" ]];
+		then
+			fullDiffText="(<a href=$objDiffURL>raw changes</a>)"
+		fi
+		
+		
 		if [[ $total -gt "1" ]];
 		then
-			echo "($total object updates)<br>" >> $reportFile
+			echo "($total object updates) $fullDiffText<br>" >> $reportFile
 		else if [[ $total -gt "0" ]];
 			 then
-				 echo "($total object update)<br>" >> $reportFile
+				 echo "($total object update) $fullDiffText<br>" >> $reportFile
 			 fi
 		fi
 		

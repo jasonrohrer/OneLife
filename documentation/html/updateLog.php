@@ -30,7 +30,8 @@ if( $dir === false ) {
 
 
 while( false !== ( $file = readdir($dir) ) ) {
-    if( ($file != ".") and ($file != "..") ) {
+    if( ($file != ".") and ($file != "..")
+        and ( strstr( $file, "_objDiff" ) === FALSE ) ) {
         $files[] = $file;
         }   
     }
