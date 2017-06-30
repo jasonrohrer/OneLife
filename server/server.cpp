@@ -6472,6 +6472,12 @@ void drawSprite( void*, doublePair, double, double, char ) {
 void setDrawColor( float inR, float inG, float inB, float inA ) {
     }
 
+float getTotalGlobalFade() {
+    return 1.0f;
+    }
+
+void toggleAdditiveTextureColoring( char inAdditive ) {
+    }
 
 
 
