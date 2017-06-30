@@ -75,12 +75,22 @@ include( "news.php" );
 
 <br>
 
+
 <center>
 <font size=5>The thinking behind One Hour One Life</font><br>
 
 <?php include( "youTubePlaylist.php" ); ?>
 
 
+    <br>
+    <br>
+    <br>
+    <br>
+
+    <iframe src="https://discordapp.com/widget?id=328215300279500800&theme=dark" width="480" height="320" allowtransparency="true" frameborder="0"></iframe>
+
 </center>
 
+
+    
 <?php include( "footer.php" ); ?>

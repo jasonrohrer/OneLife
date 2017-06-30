@@ -11,9 +11,15 @@
      overflow-y: scroll;
     overflow-x:hidden;
     }
+div.clear {
+  clear: both;
+  overflow: hidden;
+  height: 0;
+    }
+
+
 </style>
 
-<html>
 
 
 <script type="text/javascript">
@@ -88,6 +94,17 @@ if( count( $videoIDs ) > 0 ) {
     $firstVid = $videoIDs[0];
     }
 
+echo "<script type=\"text/javascript\">function clearAllMarks(inForce) {\n";
+
+for( $i=0; $i < count( $videoIDs ); $i++ ) {
+    $v = $videoIDs[$i];
+    echo "if( inForce || ! document.getElementById( '$v' ).myPressed ) {\n";
+    echo "    document.getElementById( '$v' ).style.backgroundColor = ".
+        "'rgb(16,16,16)';\n    }\n";
+    echo "if( inForce ) document.getElementById( '$v' ).myPressed = 0;\n";
+    }
+echo "}</script>\n\n";
+
 ?>
 
   <div id=playerAndMenu style=width:840px>
@@ -102,7 +119,7 @@ if( count( $videoIDs ) > 0 ) {
 
 <?php
        
-echo "<div id=playerMenu style=float:right class=\"pic-container\">";
+echo "<div id=playerMenu style=float:right class=\"pic-container\">\n";
 
 for( $i=0; $i < count( $videoIDs ); $i++ ) {
     $t = $titles[$i];
@@ -111,26 +128,19 @@ for( $i=0; $i < count( $videoIDs ); $i++ ) {
         "onclick='clearAllMarks(1); showVid( \"$v\" )' ".
         "onmouseout='clearAllMarks(0)' ".
         "onmouseover='clearAllMarks(0); mouseVid( \"$v\" )'>".
-        "$t<br><img src=https://i.ytimg.com/vi/$v/default.jpg></div>";
+        "$t<br><img src=https://i.ytimg.com/vi/$v/default.jpg></div>\n";
     }
 
 
+echo "</div>\n";
 
 
-echo "<script>function clearAllMarks(inForce) { ";
 
-for( $i=0; $i < count( $videoIDs ); $i++ ) {
-    $v = $videoIDs[$i];
-    echo "if( inForce || ! document.getElementById( '$v' ).myPressed ) {";
-    echo "document.getElementById( '$v' ).style.backgroundColor = ".
-        "'rgb(16,16,16)';}";
-    echo "if( inForce ) document.getElementById( '$v' ).myPressed = 0;";
-    }
-echo "}</script>";
 
 ?>
     
 
-</div>
 
 </div>
+
+<div class="clear"></div>
