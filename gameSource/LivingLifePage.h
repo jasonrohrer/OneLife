@@ -319,8 +319,6 @@ class LivingLifePage : public GamePage {
 
         SpriteHandle mGuiPanelSprite;
         
-        SpriteHandle mGraphPaperOverlaySprite;
-        SpriteHandle mScribbleOverlaySprite;
 
         SpriteHandle mHungerBoxSprites[ NUM_HUNGER_BOX_SPRITES ];
         SpriteHandle mHungerBoxFillSprites[ NUM_HUNGER_BOX_SPRITES ];

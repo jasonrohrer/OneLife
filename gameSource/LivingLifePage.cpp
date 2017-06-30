@@ -950,10 +950,6 @@ LivingLifePage::LivingLifePage()
           mMapOffsetY( 0 ),
           mEKeyDown( false ),
           mGuiPanelSprite( loadSprite( "guiPanel.tga", false ) ),
-          //mGraphPaperOverlaySprite( 
-          //    loadSprite( "graphPaperOverlay.tga", false ) ),
-          //mScribbleOverlaySprite( 
-          //    loadWhiteSprite( "scribbleOverlay.tga" ) ),
           mNotePaperSprite( loadSprite( "notePaper.tga", false ) ),
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
@@ -1200,9 +1196,7 @@ LivingLifePage::~LivingLifePage() {
         }
 
     freeSprite( mGuiPanelSprite );
-    //freeSprite( mGraphPaperOverlaySprite );
-    //freeSprite( mScribbleOverlaySprite );
-
+    
     freeSprite( mNotePaperSprite );
     freeSprite( mChalkBlotSprite );
     freeSprite( mPathMarkSprite );
@@ -1662,7 +1656,6 @@ void LivingLifePage::drawMapCell( int inMapI,
                 }
             }
         
-        highlight = false;
         
         int numPasses = 1;
         
@@ -1682,32 +1675,7 @@ void LivingLifePage::drawMapCell( int inMapI,
             doublePair passPos = pos;
             
             if( highlight ) {
-                printf( "First part of highlight\n" );
-                /*
-                switch( i ) {
-                    case 0:
-                        passPos.x += 1;
-                        break;
-                    case 1:
-                        passPos.x -= 1;
-                        break;
-                    case 2:
-                        passPos.y += 1;
-                        break;
-                    case 3:
-                        passPos.y -= 1;
-                        break;
-                    default:
-                        break;
-                    }
-
-                if( i == 4 ) {
-                    if( highlightFade != 1.0f ) {
-                        removeGlobalFade( fadeHandle );
-                        }
-                    }
-                */
-
+                
                 switch( i ) {
                     case 0:
                         // normal color draw
@@ -1726,7 +1694,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                         break;
                     case 4:
                         // second fringe
-                        startAddingToStencil( false, true, .25f );
+                        startAddingToStencil( false, true, 0.0f );
                         break;
                     case 5:
                         // subtract first fringe from fringe to get 
@@ -1780,12 +1748,15 @@ void LivingLifePage::drawMapCell( int inMapI,
         
 
         if( highlight ) {
-            printf( "Second part of highlight\n" );
             
-            //toggleAdditiveBlend( true );
             
-            float mainFade = 1.0f;
+            float mainFade = .35f;
         
+            toggleAdditiveBlend( true );
+            
+            doublePair squarePos = passPos;
+            squarePos.y += 192;
+            
             switch( i ) {
                 case 0:
                     // normal color draw
@@ -1793,12 +1764,10 @@ void LivingLifePage::drawMapCell( int inMapI,
                 case 1:
                     // opaque portion
                     startDrawingThroughStencil( false );
-                    
-                    
+
                     setDrawColor( 1, 1, 1, highlightFade * mainFade );
                     
-                    //drawSquare( passPos, 256 );
-                    drawSprite( mScribbleOverlaySprite, passPos );
+                    drawSquare( squarePos, 256 );
                     
                     stopStencil();
                     break;
@@ -1809,13 +1778,12 @@ void LivingLifePage::drawMapCell( int inMapI,
                 case 3:
                     // now first fringe is isolated in stencil
                     startDrawingThroughStencil( false );
-                    
+
                     setDrawColor( 1, 1, 1, highlightFade * mainFade * .5 );
-                    
-                    drawSprite( mScribbleOverlaySprite, passPos );
-                    //drawSquare( passPos, 256 );
-                    stopStencil();
-                    
+
+                    drawSquare( squarePos, 256 );
+
+                    stopStencil();                    
                     break;
                 case 4:
                     // second fringe
@@ -1826,15 +1794,15 @@ void LivingLifePage::drawMapCell( int inMapI,
                     startDrawingThroughStencil( false );
                     
                     setDrawColor( 1, 1, 1, highlightFade * mainFade *.25 );
-                    drawSprite( mScribbleOverlaySprite, passPos );
-                    //drawSquare( passPos, 256 );
-                    stopStencil();
                     
+                    drawSquare( squarePos, 256 );
+                    
+                    stopStencil();
                     break;
                 default:
                     break;
                 }
-            //toggleAdditiveBlend( false );
+            toggleAdditiveBlend( false );
             }
 
         
