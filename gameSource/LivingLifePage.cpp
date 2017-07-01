@@ -1695,7 +1695,9 @@ void LivingLifePage::drawMapCell( int inMapI,
                         break;
                     case 4:
                         // second fringe
-                        startAddingToStencil( false, true, 0.0f );
+                        // ignore totally transparent stuff
+                        // like invisible animation layers
+                        startAddingToStencil( false, true, 0.01f );
                         break;
                     case 5:
                         // subtract first fringe from fringe to get 

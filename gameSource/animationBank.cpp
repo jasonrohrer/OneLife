@@ -1887,7 +1887,13 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     toggleAdditiveTextureColoring( true );
                     
                     float invFade = 1.0f - workingSpriteFade[i];
-                    setDrawColor( invFade, invFade, invFade, 1.0f );
+                    // alpha ignored for multiplicative blend
+                    // but leave 0 there so that they won't add to stencil
+                    setDrawColor( invFade, invFade, invFade, 0.0f );
+                    }
+                else {
+                    // set 0 so translucent layers never add to stencil
+                    setDrawFade( 0.0f );
                     }
                 }
             else if( workingSpriteFade[i] < 1 ) {
