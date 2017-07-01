@@ -371,5 +371,9 @@ void toggleMultiplicativeBlend( char ) {
 void setDrawFade( float ) {
     }
 
+float getTotalGlobalFade() {
+    }
+
+
 void toggleAdditiveTextureColoring( char ) {
     }
