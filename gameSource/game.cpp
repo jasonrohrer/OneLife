@@ -279,7 +279,6 @@ char *shutdownMessage = NULL;
 
 
 
-static char wasPaused = false;
 static float pauseScreenFade = 0;
 
 static char *currentUserTypedMessage = NULL;
@@ -1025,29 +1024,24 @@ void drawFrame( char inUpdate ) {
 
 
     if( !inUpdate ) {
-
-        if( isQuittingBlocked() ) {
-            // unsafe NOT to keep updating here, because pending network
-            // requests can stall
-
-            // keep stepping current page, but don't do any other processing
-            // (and still block user events from reaching current page)
-            if( currentGamePage != NULL ) {
-                currentGamePage->base_step();
-                }
+        
+        // because this is a networked game, we can't actually pause
+        stepSpriteBank();
+        
+        stepSoundBank();
+        
+        stepMusicPlayer();
+    
+        if( currentGamePage != NULL ) {
+            currentGamePage->base_step();
             }
+        wakeUpPauseFrameRate();
 
-        drawFrameNoUpdate( false );
+
+        drawFrameNoUpdate( true );
             
         drawPauseScreen();
         
-        if( !wasPaused ) {
-            if( currentGamePage != NULL ) {
-                currentGamePage->base_makeNotActive();
-                }
-
-            }
-        wasPaused = true;
 
         // handle delete key repeat
         if( holdDeleteKeySteps > -1 ) {
@@ -1155,13 +1149,6 @@ void drawFrame( char inUpdate ) {
         firstDrawFrameCalled = true;
         }
 
-    if( wasPaused ) {
-        if( currentGamePage != NULL ) {
-            currentGamePage->base_makeActive( false );
-            }
-
-        wasPaused = false;
-        }
 
 
 

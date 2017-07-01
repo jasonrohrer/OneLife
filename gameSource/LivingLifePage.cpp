@@ -3674,6 +3674,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 // peak
                                 if( mPulseHungerSound && 
                                     mHungerSound != NULL ) {
+                                    // make sure it can be heard, even
+                                    // if paused
+                                    setSoundLoudness( 1.0 );
                                     playSoundSprite( mHungerSound );
                                     }
                                 }
@@ -6570,6 +6573,9 @@ void LivingLifePage::step() {
                         
                         if( ourLiveObject->foodStore > 1 ) {
                             if( mHungerSound != NULL ) {
+                                // make sure it can be heard
+                                // even if paused
+                                setSoundLoudness( 1.0 );
                                 playSoundSprite( mHungerSound );
                                 }
                             mPulseHungerSound = false;
