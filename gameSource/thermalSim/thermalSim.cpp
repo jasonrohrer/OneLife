@@ -843,15 +843,25 @@ void drawFrame( char inUpdate ) {
     
         memcpy( tempHeatGrid, heatGrid, gridD * gridD * sizeof( double ) );
         
-        /*
+        
         int numNeighbors = 8;
         int ndx[8] = { -1, 0, 1, 1,  1,  0, -1, -1 };
         int ndy[8] = {  1, 1, 1, 0, -1, -1, -1,  0 };
-        */
-
+        
+        // diag weights found here:
+        // http://demonstrations.wolfram.com/
+        //        ACellularAutomatonBasedHeatEquation/
+        double nWeights[8] = { 1, 4, 1, 4, 1, 4, 1, 4 };
+        double totalNWeight = 20;
+        
+        /*
         int numNeighbors = 4;
-        int ndx[8] = { 0, 1,  0, -1 };
-        int ndy[8] = { 1, 0, -1,  0 };
+        int ndx[4] = { 0, 1,  0, -1 };
+        int ndy[4] = { 1, 0, -1,  0 };
+
+        double nWeights[4] = { 1, 1, 1, 1 };
+        double totalNWeight = 4;
+        */
 
         for( int y=1; y<gridD-1; y++ ) {
             for( int x=1; x<gridD-1; x++ ) {
@@ -859,7 +869,7 @@ void drawFrame( char inUpdate ) {
             
                 double heatDelta = 0;
                 
-                double centerWeight = 1 - rGrid[i];
+                double centerLeak = 1 - rGrid[i];
 
                 double centerOldHeat = tempHeatGrid[i];
 
@@ -870,13 +880,13 @@ void drawFrame( char inUpdate ) {
                 
                     int ni = ny * gridD + nx;
                 
-                    double nWeight = 1 - rGrid[ ni ];
+                    double nLeak = 1 - rGrid[ ni ];
                     
-                    heatDelta += centerWeight * nWeight *
+                    heatDelta += nWeights[n] * centerLeak * nLeak *
                         ( tempHeatGrid[ ni ] - centerOldHeat );
                     }
                 
-                heatGrid[i] = tempHeatGrid[i] + heatDelta / numNeighbors;
+                heatGrid[i] = tempHeatGrid[i] + heatDelta / totalNWeight;
                 
                 heatGrid[i] += heatOutputGrid[ i ];
                 }
@@ -1270,6 +1280,18 @@ void drawString( const char *inString, char inForceCenter ) {
 
 
 
+char shouldNativeScreenResolutionBeUsed() {
+    return true;
+    }
+
+
+char isNonIntegerScalingAllowed() {
+    return true;
+    }
+
+
+void hintBufferSize( int inSize ) {
+    }
 
 
 // called by platform to get more samples
