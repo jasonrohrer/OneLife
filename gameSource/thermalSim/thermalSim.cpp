@@ -916,7 +916,7 @@ void drawFrameNoUpdate( char inUpdate ) {
         for( int x=0; x<gridD; x++ ) {
             int i = y * gridD + x;
             
-            doublePair pos = { 32 * ( x - gridD/2 ), 32 * ( y - gridD/2 ) };
+            doublePair pos = { 32.0 * ( x - gridD/2 ), 32.0 * ( y - gridD/2 ) };
             
             pos.x += lastScreenViewCenter.x;
             pos.y += lastScreenViewCenter.y;
