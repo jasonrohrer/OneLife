@@ -5670,40 +5670,56 @@ int main() {
                     ObjectRecord *o = getObject( getMapObject( mapX, mapY ) );
                     
                     int j = y * HEAT_MAP_D + x;
+                    
+                    heatOutputGrid[j] = 0;
+                    rGrid[j] = 0;
 
                     if( o != NULL ) {
                         heatOutputGrid[j] = o->heatValue;
-                        rGrid[j] = o->rValue;
-                        }
-                    else {
-                        heatOutputGrid[j] = 0;
-                        rGrid[j] = 0;
+                        if( o->permanent ) {
+                            // loose objects sitting on ground don't
+                            // contribute to r-value (like dropped clothing)
+                            rGrid[j] = o->rValue;
+                            }
                         }
                     }
                 }
 
             // clothing is additive to R value at center spot
 
+            float headWeight = 0.25;
+            float chestWeight = 0.35;
+            float buttWeight = 0.2;
+            float eachFootWeigth = 0.1;
+            
+            float backWeight = 0.1;
+
+
             float clothingR = 0;
             
             if( nextPlayer->clothing.hat != NULL ) {
-                clothingR += nextPlayer->clothing.hat->rValue;
+                clothingR += headWeight *  nextPlayer->clothing.hat->rValue;
                 }
             if( nextPlayer->clothing.tunic != NULL ) {
-                clothingR += nextPlayer->clothing.tunic->rValue;
+                clothingR += chestWeight * nextPlayer->clothing.tunic->rValue;
                 }
             if( nextPlayer->clothing.frontShoe != NULL ) {
-                clothingR += nextPlayer->clothing.frontShoe->rValue;
+                clothingR += 
+                    eachFootWeigth * nextPlayer->clothing.frontShoe->rValue;
                 }
             if( nextPlayer->clothing.backShoe != NULL ) {
-                clothingR += nextPlayer->clothing.backShoe->rValue;
+                clothingR += eachFootWeigth * 
+                    nextPlayer->clothing.backShoe->rValue;
                 }
             if( nextPlayer->clothing.bottom != NULL ) {
-                clothingR += nextPlayer->clothing.bottom->rValue;
+                clothingR += buttWeight * nextPlayer->clothing.bottom->rValue;
                 }
             if( nextPlayer->clothing.backpack != NULL ) {
-                clothingR += nextPlayer->clothing.backpack->rValue;
+                clothingR += backWeight * nextPlayer->clothing.backpack->rValue;
                 }
+
+            //printf( "Clothing r = %f\n", clothingR );
+            
             
             int playerMapIndex = 
                 ( HEAT_MAP_D / 2 ) * HEAT_MAP_D +
@@ -5726,11 +5742,22 @@ int main() {
             
             //double startTime = Time::getCurrentTime();
             
-            int numCycles = 20;
+            int numCycles = 4;
             
-            int numNeighbors = 4;
-            int ndx[4] = { 0, 1,  0, -1 };
-            int ndy[4] = { 1, 0, -1,  0 };
+            int numNeighbors = 8;
+            int ndx[8] = { 0, 1,  0, -1,  1,  1, -1, -1 };
+            int ndy[8] = { 1, 0, -1,  0,  1, -1,  1, -1 };
+            
+            // found equation here:
+            // http://demonstrations.wolfram.com/
+            //        ACellularAutomatonBasedHeatEquation/
+            // diags have way less contact area
+            double nWeights[8] = { 4, 4, 4, 4, 1, 1, 1, 1 };
+            
+            double totalNWeight = 20;
+            
+            
+
 
             for( int c=0; c<numCycles; c++ ) {
                 
@@ -5744,7 +5771,7 @@ int main() {
             
                         float heatDelta = 0;
                 
-                        float centerWeight = 1 - rGrid[j];
+                        float centerLeak = 1 - rGrid[j];
 
                         float centerOldHeat = tempHeatGrid[j];
 
@@ -5755,14 +5782,14 @@ int main() {
                         
                             int nj = ny * HEAT_MAP_D + nx;
                         
-                            float nWeight = 1 - rGrid[ nj ];
+                            float nLeak = 1 - rGrid[ nj ];
                     
-                            heatDelta += centerWeight * nWeight *
+                            heatDelta += nWeights[n] * centerLeak * nLeak *
                                 ( tempHeatGrid[ nj ] - centerOldHeat );
                             }
                 
                         nextPlayer->heatMap[j] = 
-                            tempHeatGrid[j] + heatDelta / numNeighbors;
+                            tempHeatGrid[j] + heatDelta / totalNWeight;
                 
                         nextPlayer->heatMap[j] += heatOutputGrid[j];
                         }
@@ -5777,26 +5804,54 @@ int main() {
             
             for( int y=0; y<HEAT_MAP_D; y++ ) {
                 
-                for( int x=0; x<HEAT_MAP_D; x++ ) {
+                for( int x=0; x<HEAT_MAP_D; x++ ) {                    
+                    int j = y * HEAT_MAP_D + x;
                     
-                    if( y == HEAT_MAP_D / 2 &&
-                        x == HEAT_MAP_D / 2 ) {
-                        printf( "p" );
-                        }
-                    if( heatOutputGrid[ y * HEAT_MAP_D + x ] > 0 ) {
-                        printf( "H" );
-                        }
-
-                    printf( "%.1f ", 
-                            nextPlayer->heatMap[ y * HEAT_MAP_D + x ] );
+                    printf( "%04.1f ", 
+                            nextPlayer->heatMap[ j ] );
                             //tempHeatGrid[ y * HEAT_MAP_D + x ] );
                     }
                 printf( "\n" );
+
+                char anyTags = false;
+                for( int x=0; x<HEAT_MAP_D; x++ ) {
+                    int j = y * HEAT_MAP_D + x;
+                    
+                    if( j == playerMapIndex ) {
+                        anyTags = true;
+                        break;
+                        }
+                    if( heatOutputGrid[ j ] > 0 ) {
+                        anyTags = true;
+                        break;
+                        }
+                    }
+                
+                if( anyTags ) {
+                    for( int x=0; x<HEAT_MAP_D; x++ ) {                    
+                        int j = y * HEAT_MAP_D + x;
+                        if( j == playerMapIndex ) {
+                            printf( "p" );
+                            }
+                        else printf( " " );
+                        
+                        if( heatOutputGrid[j] > 0 ) {
+                            printf( "H%d   ", 
+                                    heatOutputGrid[j] );
+                            }
+                        else {
+                            printf( "    " );
+                            }
+                        }
+                    printf( "\n" );
+                    }
                 }
             */
 
             float playerHeat = 
                 nextPlayer->heatMap[ playerMapIndex ];
+            
+            // printf( "Player heat = %f\n", playerHeat );
             
             // convert into 0..1 range, where 0.5 represents targetHeat
             nextPlayer->heat = ( playerHeat / targetHeat ) / 2;
