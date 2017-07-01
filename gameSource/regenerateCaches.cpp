@@ -303,6 +303,10 @@ void setDrawFade( float ) {
 void toggleAdditiveTextureColoring( char ) {
     }
 
+float getTotalGlobalFade() {
+    }
+
+
 
 
 // these implementations copied from gameSDL.cpp
