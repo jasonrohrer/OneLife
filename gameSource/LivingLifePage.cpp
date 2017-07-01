@@ -8478,6 +8478,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 nextActionDropping = true;
                 send = true;
                 }
+            else if( modClick && ourLiveObject->holdingID != 0 &&
+                     destID != 0 &&
+                     getNumContainerSlots( destID ) == 0 &&
+                     ! getObject( destID )->permanent ) {
+                action = "DROP";
+                nextActionDropping = true;
+                send = true;
+                }
             else if( destID != 0 ) {
                 // allow right click and default to USE if nothing
                 // else applies
