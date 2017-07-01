@@ -5239,6 +5239,17 @@ void LivingLifePage::step() {
                                     if( justAte ) {
                                         addNewAnimPlayerOnly( 
                                             existing, eating );
+
+                                        ObjectRecord *oldHeldObj =
+                                            getObject( oldHeld );
+                                        
+                                        if( oldHeldObj->eatingSound.id != -1 ) {
+                                            playSound( 
+                                                oldHeldObj->eatingSound,
+                                                getVectorFromCamera( 
+                                                    existing->currentPos.x, 
+                                                    existing->currentPos.y ) );
+                                            }
                                         }
                                     else {
                                         addNewAnimPlayerOnly( 
