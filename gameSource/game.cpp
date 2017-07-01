@@ -984,6 +984,42 @@ void deleteCharFromUserTypedMessage() {
 
 
 
+static void startConnecting() {
+    if( SettingsManager::getIntSetting( "useCustomServer", 0 ) ) {
+                    
+        if( serverIP != NULL ) {
+            delete [] serverIP;
+            serverIP = NULL;
+            }
+        serverIP = SettingsManager::getStringSetting( 
+            "customServerAddress" );
+        if( serverIP == NULL ) {
+            serverIP = stringDuplicate( "127.0.0.1" );
+            }
+        serverPort = SettingsManager::getIntSetting( 
+            "customServerPort", 8005 );
+
+        printf( "Using custom server address: %s:%d\n", 
+                serverIP, serverPort );
+                    
+        currentGamePage = livingLifePage;
+        currentGamePage->base_makeActive( true );
+        }
+    else {
+        printf( "Starting fetching server URL from reflector %s\n",
+                reflectorURL );
+                
+        getServerAddressPage->setActionParameter( "email", 
+                                                  userEmail );
+                    
+        currentGamePage = getServerAddressPage;
+        currentGamePage->base_makeActive( true );
+        }
+
+    }
+
+
+
 
 void drawFrame( char inUpdate ) {    
 
@@ -1395,37 +1431,7 @@ void drawFrame( char inUpdate ) {
                 currentGamePage->base_makeActive( true );
                 }
             else if( existingAccountPage->checkSignal( "done" ) ) {
-                
-                if( SettingsManager::getIntSetting( "useCustomServer", 0 ) ) {
-                    
-                    if( serverIP != NULL ) {
-                        delete [] serverIP;
-                        serverIP = NULL;
-                        }
-                    serverIP = SettingsManager::getStringSetting( 
-                        "customServerAddress" );
-                    if( serverIP == NULL ) {
-                        serverIP = stringDuplicate( "127.0.0.1" );
-                        }
-                    serverPort = SettingsManager::getIntSetting( 
-                        "customServerPort", 8005 );
-
-                    printf( "Using custom server address: %s:%d\n", 
-                            serverIP, serverPort );
-                    
-                    currentGamePage = livingLifePage;
-                    currentGamePage->base_makeActive( true );
-                    }
-                else {
-                    printf( "Starting fetching server URL from reflector %s\n",
-                            reflectorURL );
-                
-                    getServerAddressPage->setActionParameter( "email", 
-                                                              userEmail );
-                    
-                    currentGamePage = getServerAddressPage;
-                    currentGamePage->base_makeActive( true );
-                    }
+                startConnecting();
                 }
             }
         else if( currentGamePage == getServerAddressPage ) {
@@ -1581,9 +1587,9 @@ void drawFrame( char inUpdate ) {
             }
         else if( currentGamePage == rebirthChoicePage ) {
             if( rebirthChoicePage->checkSignal( "reborn" ) ) {
-                currentGamePage = livingLifePage;
-                
-                currentGamePage->base_makeActive( true );
+                // get server address again from scratch, in case
+                // the server we were on just crashed
+                startConnecting();
                 }
             else if( rebirthChoicePage->checkSignal( "quit" ) ) {
                 quitGame();
