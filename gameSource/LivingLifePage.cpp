@@ -1686,7 +1686,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                         break;
                     case 2:
                         // first fringe
-                        startAddingToStencil( false, true, .50f );
+                        startAddingToStencil( false, true, .07f );
                         break;
                     case 3:
                         // subtract opaque from fringe to get just first fringe
@@ -1699,7 +1699,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                     case 5:
                         // subtract first fringe from fringe to get 
                         // just secon fringe
-                        startAddingToStencil( false, false, .50f );
+                        startAddingToStencil( false, false, .07f );
                         break;
                     default:
                         break;
