@@ -886,7 +886,8 @@ void drawFrame( char inUpdate ) {
                         ( tempHeatGrid[ ni ] - centerOldHeat );
                     }
                 
-                heatGrid[i] = tempHeatGrid[i] + heatDelta / totalNWeight;
+                //heatGrid[i] = tempHeatGrid[i] + heatDelta / totalNWeight;
+                heatGrid[i] = heatDelta / totalNWeight;
                 
                 heatGrid[i] += heatOutputGrid[ i ];
                 }
