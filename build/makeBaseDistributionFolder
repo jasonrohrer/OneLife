@@ -15,6 +15,7 @@ baseFolder=base/OneLife_$1
 
 mkdir $baseFolder
 mkdir $baseFolder/graphics
+mkdir $baseFolder/otherSounds
 mkdir $baseFolder/settings
 mkdir $baseFolder/languages
 mkdir $baseFolder/groundTileCache
@@ -31,6 +32,7 @@ mkdir $baseFolder/ground
 
 
 cp ../gameSource/graphics/*.tga $baseFolder/graphics
+cp ../gameSource/otherSounds/*.aiff $baseFolder/otherSounds
 cp ../gameSource/settings/*.ini $baseFolder/settings
 cp ../gameSource/languages/*.txt $baseFolder/languages
 cp ../gameSource/language.txt $baseFolder
