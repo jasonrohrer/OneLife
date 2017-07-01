@@ -28,6 +28,12 @@ sh makeRegenerateCaches
 
 cd ../build/mac/OneLife_$1
 
+
+# mac version now defaults to windowed mode
+# too many problems and crashes will fullscreen
+echo "0" > settings/fullscreen.ini
+
+
 ../../../gameSource/regenerateCaches
 
 cd ../..
