@@ -7537,7 +7537,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                 false );
             
             if( dist < minDistThatHits ) {
-                p->hit = true;
+                p->hitOurPlacement = true;
                 p->closestCellX = clickDestX;
                 p->closestCellY = clickDestY;
                 
@@ -7558,7 +7558,8 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
 
         // first all non drawn-behind map objects in this row
         // (in front of people)
-        for( int x=clickDestX+1; x>=clickDestX-1  && ! p->hit; x-- ) {
+        for( int x=clickDestX+1; x>=clickDestX-1  && 
+                 ! p->hit && ! p->hitOurPlacement; x-- ) {
             float clickOffsetX = ( clickDestX  - x ) * CELL_D + clickExtraX;
 
             int mapX = x - mMapOffsetX + mMapD / 2;
@@ -7609,7 +7610,8 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                     }
                 }
             }
-        
+
+        // don't worry about p->hitOurPlacement when checking them
         // next, people in this row
         // recently dropped babies are in front and tested first
         for( int d=0; d<2 && ! p->hit; d++ )
@@ -7695,7 +7697,8 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
         
         // now drawn-behind objects in this row
 
-        for( int x=clickDestX+1; x>=clickDestX-1  && ! p->hit; x-- ) {
+        for( int x=clickDestX+1; x>=clickDestX-1  
+                 && ! p->hit && ! p->hitOurPlacement; x-- ) {
             float clickOffsetX = ( clickDestX  - x ) * CELL_D + clickExtraX;
 
             int mapX = x - mMapOffsetX + mMapD / 2;
@@ -7746,6 +7749,16 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                 }
             }
         }
+
+    if( p->hitOurPlacement &&
+        ( p->hitOtherPerson || p->hitSelf ) ) {
+        p->hitAnObject = false;
+        }
+    else {
+        // count it now, if we didn't hit a person that blocks it
+        p->hit = true;
+        }
+    
     }
 
     
@@ -7771,6 +7784,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
 
     p.hit = false;
     p.hitSelf = false;
+    p.hitOurPlacement = false;
     
     p.hitClothingIndex = -1;
     
@@ -7898,6 +7912,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     
     p.hit = false;
     p.hitSelf = false;
+    p.hitOurPlacement = false;
     
     p.hitClothingIndex = -1;
     

@@ -211,6 +211,11 @@ typedef struct PointerHitRecord {
         // there if unblocked.
         char hitAnObject;
 
+        // for case where we hit an object that we remembered placing
+        // which may be behind
+        // should NEVER click through a person
+        char hitOurPlacement;
+
     } PointerHitRecord;
 
 
