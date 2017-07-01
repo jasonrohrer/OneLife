@@ -1,0 +1,59 @@
+This file only list changes to game code.  Changes to content can be found here:
+
+http://onehouronelife.com/updateLog.php
+
+
+
+Version 26     2017-July-1
+
+--Fixed server crash when baby jumps out of arms.
+
+--Fixed bug in logging age at time of death.
+
+--Better logging of failed client connections.
+
+--Piano note sound to indicate start of starvation, repeats on last hunger bar.
+
+--Highlighting object under mouse.
+
+--Fixed crash when pathfinding or clicking off edge of known map (in case of 
+  server lag).
+
+--Fixed a few uninitialized values found with Valgrind.
+
+--New Eve placement method (random within radius around largest old camp).
+
+--Clicking on empty ground cell containing a blocking object no longer counts
+  as a click on that object.  Reduces surprise tree clicks.
+
+--Dropped items that you're standing in front of are no longer clickable 
+  through your body.
+
+--Right clicking a holdable object while holding another object causes them
+  to swap.  Can easily swap what you're holding with something else.
+
+--Other player's eating sounds now play.
+
+--After dying, upon getting reborn, whole connection process started from 
+  scratch.  This insures that you will find out about a backup server if
+  the main server has crashed (which may have caused your death).
+
+--Time no longer halts during pause (server messages used to pile up during
+  pause and play back all at once with wild results).
+
+--Improved the way clothing R-values are summed, adding a weight for each body 
+  part.  A hat is now more important than a shoe, and a really insulating shoe
+  cannot make you overheat.
+
+--Changed heat propagation to use eight weighted neighbor cells.
+
+--Reduced number of heat propagation simulation cycles to slow heat changes.
+
+--Mac build now defaults to windowed mode.
+
+--Added code to tell Windows that we are handling our own scaling.
+
+--Fixed game recording on Windows.
+
+--Switched to GL_GENERATE_MIPMAP instead of gluBuild2DMipmaps on platforms
+  that support it (gluBuild2DMipmaps was crashing on one particular mac).
