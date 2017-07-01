@@ -405,7 +405,8 @@ class LivingLifePage : public GamePage {
 
         int mLastMouseOverID;
         int mCurMouseOverID;
-
+        float mCurMouseOverFade;
+        
         GridPos mCurMouseOverSpot;
         
         SimpleVector<GridPos> mPrevMouseOverSpots;

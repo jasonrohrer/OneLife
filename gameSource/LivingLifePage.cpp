@@ -1643,6 +1643,7 @@ void LivingLifePage::drawMapCell( int inMapI,
             mCurMouseOverSpot.y * mMapD + mCurMouseOverSpot.x == inMapI ) {
             
             highlight = true;
+            highlightFade = mCurMouseOverFade;
             }
         else {
             for( int i=0; i<mPrevMouseOverSpots.size(); i++ ) {
@@ -4036,6 +4037,13 @@ void LivingLifePage::step() {
         }
     
 
+    if( mCurMouseOverID != 0 ) {
+        mCurMouseOverFade += 0.2 * frameRateFactor;
+        if( mCurMouseOverFade >= 1 ) {
+            mCurMouseOverFade = 1.0;
+            }
+        }
+    
     for( int i=0; i<mPrevMouseOverSpotFades.size(); i++ ) {
         float f = mPrevMouseOverSpotFades.getElementDirect( i );
         
@@ -7394,7 +7402,8 @@ void LivingLifePage::makeActive( char inFresh ) {
 
     mLastMouseOverID = 0;
     mCurMouseOverID = 0;
-
+    mCurMouseOverFade = 0;
+    
     if( !inFresh ) {
         return;
         }
@@ -7812,14 +7821,39 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             }
         
         mPrevMouseOverSpots.push_back( prev );
-        mPrevMouseOverSpotFades.push_back( 1.0f );
+        mPrevMouseOverSpotFades.push_back( mCurMouseOverFade );
         }
     
 
     if( destID > 0 ) {
+        
+        if( ( destID != mCurMouseOverID ||
+              mCurMouseOverSpot.x != mapX ||
+              mCurMouseOverSpot.y != mapY  ) ) {
+            
+            // start new fade-in
+            mCurMouseOverFade = 0;
+            }
+
         mCurMouseOverID = destID;
         mCurMouseOverSpot.x = mapX;
         mCurMouseOverSpot.y = mapY;
+
+
+        // check if we already have a partial-fade-out for this cell
+        // from previous mouse-overs
+        for( int i=0; i<mPrevMouseOverSpots.size(); i++ ) {
+            GridPos old = mPrevMouseOverSpots.getElementDirect( i );
+            
+            if( equal( old, mCurMouseOverSpot ) ) {
+                mCurMouseOverFade = 
+                    mPrevMouseOverSpotFades.getElementDirect( i );
+                
+                mPrevMouseOverSpots.deleteElement( i );
+                mPrevMouseOverSpotFades.deleteElement( i );
+                break;
+                }
+            }
         }
     else if( mCurMouseOverID != 0 ) {
         mLastMouseOverID = mCurMouseOverID;
