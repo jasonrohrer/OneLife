@@ -4,6 +4,15 @@ http://onehouronelife.com/updateLog.php
 
 
 
+
+Server fixes:
+
+--Fixed hiccup in parent animation when we're being carried long distances due
+  to unneeded player updates mid-move when we reach a new map chunk.
+
+
+
+
 Version 26     2017-July-1
 
 --Fixed server crash when baby jumps out of arms.

@@ -5539,7 +5539,8 @@ int main() {
                         nextPlayer->newMove = false;
                         
 
-                        printf( "Player %d's move is done at %d,%d\n", i,
+                        printf( "Player %d's move is done at %d,%d\n",
+                                nextPlayer->id,
                                 nextPlayer->xs,
                                 nextPlayer->ys );
 
@@ -6109,8 +6110,10 @@ int main() {
                             if( adultO != NULL ) {
                                 
 
-                                if( adultO->id != nextPlayer->id ) {
-                                    // not us
+                                if( adultO->id != nextPlayer->id &&
+                                    otherPlayer->id != nextPlayer->id ) {
+                                    // parent not us
+                                    // baby not us
 
                                     double d = intDist( playerXD,
                                                         playerYD,
@@ -6136,6 +6139,12 @@ int main() {
                         }
                     
                     
+                    int ourHolderID = -1;
+                    
+                    if( nextPlayer->heldByOther ) {
+                        ourHolderID = getAdultHolding( nextPlayer )->id;
+                        }
+                    
                     // now send updates about all non-held babies,
                     // including any adults holding on-chunk babies
                     // here, AFTER we update about the babies
@@ -6147,9 +6156,11 @@ int main() {
                             players.getElement( j );
                         
                         if( !otherPlayer->heldByOther &&
-                            otherPlayer->id != nextPlayer->id ) {
+                            otherPlayer->id != nextPlayer->id &&
+                            otherPlayer->id != ourHolderID ) {
                             // not us
                             // not a held baby (covered above)
+                            // no the adult holding us
 
                             double d = intDist( playerXD,
                                                 playerYD,
