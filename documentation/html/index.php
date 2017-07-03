@@ -3,7 +3,7 @@
 <center>
 
 
-
+<?php include( "lifeStats.php" ); ?>
 <br>
 <br>
 

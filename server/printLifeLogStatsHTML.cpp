@@ -31,7 +31,7 @@ double totalAge = 0;
 int totalLives = 0;
 int longestFamilyChain = 0;
 
-int over50Count = 0;
+int over55Count = 0;
 
 
 
@@ -40,7 +40,6 @@ void processLogFile( File *inFile ) {
     
     char *path = inFile->getFullFileName();
 
-    printf( "Processing %s\n", path );
     
     FILE *f = fopen( path, "r" );
     
@@ -61,14 +60,12 @@ void processLogFile( File *inFile ) {
         
             email[0] = '\0';
             parent[0] = '\0';
-            deathReason[0] = '\0';
-        
+            deathReason[0] = '\0';        
 
             int pop;
         
             fscanf( f, "%c ", &event );
         
-            printf( "Scanning %c\n", event );
         
             if( event == 'B' ) {
                 fscanf( f, "%lf %d %999s %c (%d,%d) %999s pop=%d\n",
@@ -79,7 +76,7 @@ void processLogFile( File *inFile ) {
                 l.id = id;
             
                 l.birthAge = 0;
-                l.parentChainLength = 0;
+                l.parentChainLength = 1;
 
                 if( strcmp( parent, "noParent" ) == 0 ) {
                     l.birthAge = 14;
@@ -108,9 +105,7 @@ void processLogFile( File *inFile ) {
             else if( event == 'D' ) {
                 fscanf( f, "%lf %d %999s age=%lf %c (%d,%d) %999s pop=%d\n",
                         &time, &id, email, &age, &gender, &locX, &locY, 
-                        deathReason, &pop );
-            
-                printf( "Scanning death, age %f\n", age );
+                        deathReason, &pop );            
             
                 double yearsLived = age;
 
@@ -127,8 +122,8 @@ void processLogFile( File *inFile ) {
             
                 totalAge += yearsLived;
             
-                if( age >= 50 ) {
-                    over50Count++;
+                if( age >= 55 ) {
+                    over55Count++;
                     }
                 }
             else {
@@ -182,9 +177,9 @@ int main( int inNumArgs, char **inArgs ) {
             
             fprintf( outFile, 
                      "%d lives lived for a total of %0.2f hours<br>\n"
-                     "%d people lived past age 50<br>\n"
+                     "%d people lived past age fifty-five ---- "
                      "%d generations in longest family line",
-                     totalLives, totalAge, over50Count, longestFamilyChain );
+                     totalLives, totalAge / 60, over55Count, longestFamilyChain );
             
             fclose( outFile );
             }
