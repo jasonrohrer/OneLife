@@ -39,6 +39,18 @@ static SimpleVector<AnimationRecord*> records;
 static int maxID;
 
 
+
+static const char *animTypeNames[7] = { "ground", "held", "moving", "ground2",
+                                        "eating", "doing", "endAnimType" };
+
+
+const char *typeToName( AnimType inAnimType ) {
+    return animTypeNames[ inAnimType ];
+    }
+
+
+
+
 int initAnimationBankStart( char *outRebuildingCache ) {
 
     maxID = 0;

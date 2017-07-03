@@ -29,6 +29,11 @@ typedef enum AnimType {
     } AnimType;
 
 
+
+const char *typeToName( AnimType inAnimType );
+
+
+
 typedef struct SpriteAnimationRecord {
         double xOscPerSec;
         // in pixels
