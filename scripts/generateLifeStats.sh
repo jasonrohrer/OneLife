@@ -9,4 +9,4 @@ hg update
 sh makePrintLifeLogStatsHTML
 
 
-../OneLifeWorking/gameSource/printLifeLogStatsHTML ./lifeLog ../../public_html/lifeStats.php
+/home/jcr15/checkout/OneLifeWorking/gameSource/printLifeLogStatsHTML /home/jcr15/chekcout/OneLife/server/lifeLog /home/jcr15/public_html/lifeStats.php
