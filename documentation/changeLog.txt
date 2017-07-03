@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 27     ???
+
+--Other player action animations no longer interrupt their walking if the 
+  action message arrives before we see them finish their walk locally.
+
+
+
 
 Server fixes:
 
@@ -17,7 +24,7 @@ Version 26     2017-July-1
 
 --Fixed server crash when baby jumps out of arms.
 
---Fixed bug in logging age at time of death.
+--Fixed bug in logging age at time of death.L
 
 --Better logging of failed client connections.
 

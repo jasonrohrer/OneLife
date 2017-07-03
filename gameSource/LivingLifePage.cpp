@@ -1917,24 +1917,26 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                     
         float xDir = 0;
         float yDir = 0;
-                    
+                
+        doublePair dir = { targetX - inObj->currentPos.x,
+                           targetY - inObj->currentPos.y };
+        
+        if( dir.x != 0 || dir.y != 0 ) {    
+            dir = normalize( dir );
+            }
+        
+        xDir = dir.x;
+        yDir = dir.y;
+    
         if( inObj->currentPos.x < targetX ) {
-            xDir = 1;
-            if( ! inObj->inMotion ) {
+            if( inObj->currentSpeed == 0 ) {
                 inObj->holdingFlip = false;
                 }
             }
         if( inObj->currentPos.x > targetX ) {
-            xDir = -1;
-            if( ! inObj->inMotion ) {
+            if( inObj->currentSpeed == 0 ) {
                 inObj->holdingFlip = true;
                 }
-            }
-        if( inObj->currentPos.y < targetY ) {
-            yDir = 1;
-            }
-        if( inObj->currentPos.y > targetY ) {
-            yDir = -1;
             }
 
         double wiggleMax = CELL_D *.5 *.90;
@@ -3990,6 +3992,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
+char nearEndOfMovement( LiveObject *inPlayer ) {
+    if( inPlayer->currentSpeed == 0  ) {
+        return true;
+        }
+    else if( inPlayer->currentPathStep >= inPlayer->pathLength - 2 ) {
+        return true;
+        }
+    return false;
+    }
 
 
 
@@ -5198,7 +5209,8 @@ void LivingLifePage::step() {
                         
                         if( o.id != ourID ) {
                             
-                            if( actionAttempt && ! justAte ) {
+                            if( actionAttempt && ! justAte &&
+                                nearEndOfMovement( existing ) ) {
                                 existing->actionTargetX = actionTargetX;
                                 existing->actionTargetY = actionTargetY;
                                 existing->pendingActionAnimationProgress = 
@@ -5242,8 +5254,12 @@ void LivingLifePage::step() {
                                     }
                                 else {
                                     if( justAte ) {
-                                        addNewAnimPlayerOnly( 
-                                            existing, eating );
+                                        // don't interrupt walking
+                                        // but still play sound
+                                        if( nearEndOfMovement( existing ) ) {
+                                            addNewAnimPlayerOnly( 
+                                                existing, eating );
+                                            }
 
                                         ObjectRecord *oldHeldObj =
                                             getObject( oldHeld );
@@ -5257,11 +5273,18 @@ void LivingLifePage::step() {
                                             }
                                         }
                                     else {
-                                        addNewAnimPlayerOnly( 
-                                            existing, doing );
+                                        // don't interrupt walking
+                                        if( nearEndOfMovement( existing ) ) {
+                                            addNewAnimPlayerOnly( 
+                                                existing, doing );
+                                            }
                                         }
                                     
-                                    addNewAnimPlayerOnly( existing, ground );
+                                    // don't interrupt walking
+                                    if( nearEndOfMovement( existing ) ) {
+                                        addNewAnimPlayerOnly( existing, 
+                                                              ground );
+                                        }
                                     }
                                 }
                             }
@@ -5277,14 +5300,35 @@ void LivingLifePage::step() {
                                 }
                             else {
                                 if( justAte ) {
-                                    addNewAnimPlayerOnly( 
-                                        existing, eating );
+                                    // don't interrupt walking
+                                    // but still play sound
+                                    if( nearEndOfMovement( existing ) ) {    
+                                        addNewAnimPlayerOnly( 
+                                            existing, eating );
+                                        }
+                                    
+                                    ObjectRecord *oldHeldObj =
+                                        getObject( oldHeld );
+                                        
+                                    if( oldHeldObj->eatingSound.id != -1 ) {
+                                        playSound( 
+                                            oldHeldObj->eatingSound,
+                                            getVectorFromCamera( 
+                                                existing->currentPos.x, 
+                                                existing->currentPos.y ) );
+                                        }
                                     }
                                 else {
-                                    addNewAnimPlayerOnly( 
-                                        existing, doing );
+                                    // don't interrupt walking
+                                    if( nearEndOfMovement( existing ) ) {
+                                        addNewAnimPlayerOnly( 
+                                            existing, doing );
+                                        }
                                     }
-                                addNewAnimPlayerOnly( existing, ground );
+                                // don't interrupt walking
+                                if( nearEndOfMovement( existing ) ) {
+                                    addNewAnimPlayerOnly( existing, ground );
+                                    }
                                 }
                             
                             if( heldOriginValid ) {
