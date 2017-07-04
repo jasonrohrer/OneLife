@@ -308,6 +308,7 @@ char *getNextServerMessage() {
     if( readyPendingReceivedMessages.size() > 0 ) {
         char *message = readyPendingReceivedMessages.getElementDirect( 0 );
         readyPendingReceivedMessages.deleteElement( 0 );
+        printf( "Playing a held pending message\n" );
         return message;
         }
 
@@ -5203,6 +5204,22 @@ void LivingLifePage::step() {
                             autoSprintf( "PU\n%s\n#",
                                          lines[i] ) );
                         }
+                    else if( existing != NULL &&
+                             existing->heldByAdultID != -1 &&
+                             getLiveObject( existing->heldByAdultID ) != NULL &&
+                             getLiveObject( existing->heldByAdultID )->
+                                 pendingReceivedMessages.size() > 0 ) {
+                        // we're held by an adult who has pending
+                        // messages to play at the end of their movement
+                        // (server sees that their movement has already ended)
+                        // Thus, an update about us should be played later also
+                        // whenever the adult's messages are played back
+                        
+                        getLiveObject( existing->heldByAdultID )->
+                            pendingReceivedMessages.push_back(
+                                autoSprintf( "PU\n%s\n#",
+                                             lines[i] ) );
+                        }
                     else if( existing != NULL ) {
                         int oldHeld = existing->holdingID;
                         
@@ -5644,7 +5661,7 @@ void LivingLifePage::step() {
                         
 
                         if( existing->heldByAdultID != -1 ) {
-                            // got a move for a player that's being held
+                            // got an update for a player that's being held
                             // this means they've been dropped
                             
                             existing->currentPos.x = o.xd;
@@ -6774,6 +6791,11 @@ void LivingLifePage::step() {
         if( ourLiveObject->heldByAdultID != -1 ) {
             cameraFollowsObject = 
                 getGameObject( ourLiveObject->heldByAdultID );
+            
+            if( cameraFollowsObject == NULL ) {
+                ourLiveObject->heldByAdultID = -1;
+                cameraFollowsObject = ourLiveObject;
+                }
             }
         
 
