@@ -16,6 +16,12 @@ typedef struct PickedRect {
         int yStart;
         int xEnd; 
         int yEnd;
+
+        
+        // true if there's an intersection on this side
+        // order:  up, right, down, left
+        char intersectSides[4];
+        
     } PickedRect;
 
     

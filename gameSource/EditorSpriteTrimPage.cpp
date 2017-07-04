@@ -149,10 +149,30 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                 
                 PickedRect r = mRects.getElementDirect( i );
 
-                Image *subIm =im->getSubImage( oldSprite->w/2 + r.xStart, 
-                                               oldSprite->h/2 - r.yStart, 
-                                               r.xEnd - r.xStart,
-                                               r.yStart - r.yEnd );
+                // add 16 overlap to edge where we touch another tile
+                // thus, we can mip-map safely down to a scale of 1/16
+                // without seams showing
+                int over = 8;
+
+                PickedRect rE = r;
+                
+                if( r.intersectSides[0] ) {
+                    rE.yStart += over;
+                    }
+                if( r.intersectSides[1] ) {
+                    rE.xEnd += over;
+                    }
+                if( r.intersectSides[2] ) {
+                    rE.yEnd -= over;
+                    }
+                if( r.intersectSides[3] ) {
+                    rE.xStart -= over;
+                    }
+                
+                Image *subIm =im->getSubImage( oldSprite->w/2 + rE.xStart, 
+                                               oldSprite->h/2 - rE.yStart, 
+                                               rE.xEnd - rE.xStart,
+                                               rE.yStart - rE.yEnd );
                 
                 Image *subExpanded = expandToPowersOfTwo( subIm );
                 
@@ -167,8 +187,8 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                                           oldSprite->multiplicativeBlend );
 
                 // rectangles enforced to be even sizes, so this works
-                spritePos[i].x = ( r.xEnd + r.xStart ) / 2.0;
-                spritePos[i].y = ( r.yStart + r.yEnd ) / 2.0;
+                spritePos[i].x = ( rE.xEnd + rE.xStart ) / 2.0;
+                spritePos[i].y = ( rE.yStart + rE.yEnd ) / 2.0;
                 
 
                 spriteParent[i] = -1;
@@ -310,6 +330,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 
                 // top edge intersects
                 r.yStart = otherR.yEnd;
+                r.intersectSides[0] = true;
                 }
 
 
@@ -322,6 +343,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                     
                 // top edge intersects (new rect swallows)
                 r.yStart = otherR.yEnd;
+                r.intersectSides[0] = true;
                 }
 
 
@@ -334,6 +356,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                     
                 // bottom edge intersects
                 r.yEnd = otherR.yStart;
+                r.intersectSides[2] = true;
                 }
 
             if( otherR.xStart > r.xStart &&
@@ -345,6 +368,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                     
                 // bottom edge intersects (new rect swallows)
                 r.yEnd = otherR.yStart;
+                r.intersectSides[2] = true;
                 }
 
                 
@@ -357,6 +381,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                     
                 // left edge intersects (new rect swallows)
                 r.xStart = otherR.xEnd;
+                r.intersectSides[3] = true;
                 }
 
             if( otherR.yStart < r.yStart &&
@@ -368,6 +393,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                     
                 // right edge intersects (new rect swallows)
                 r.xEnd = otherR.xStart;
+                r.intersectSides[1] = true;
                 }
 
 
@@ -379,6 +405,8 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                     
                 // top left corner intersects
                 r.xStart = otherR.xEnd;
+                r.intersectSides[0] = true;
+                r.intersectSides[3] = true;
                 }
                 
             if( r.xEnd > otherR.xStart &&
@@ -388,6 +416,8 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                     
                 // top right corner intersects
                 r.xEnd = otherR.xStart;
+                r.intersectSides[0] = true;
+                r.intersectSides[1] = true;
                 }
 
             if( r.xStart > otherR.xStart &&
@@ -397,6 +427,8 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                     
                 // bottom left corner intersects
                 r.xStart = otherR.xEnd;
+                r.intersectSides[2] = true;
+                r.intersectSides[3] = true;
                 }
                 
             if( r.xEnd > otherR.xStart &&
@@ -406,6 +438,8 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                     
                 // bottom right corner intersects
                 r.xEnd = otherR.xStart;
+                r.intersectSides[2] = true;
+                r.intersectSides[1] = true;
                 }
             }
         }
@@ -494,7 +528,8 @@ void EditorSpriteTrimPage::drawUnderComponents( doublePair inViewCenter,
                 setDrawColor( 0, 0, 1, 0.5 );
                 
                 PickedRect rect = { mPickStartX, mPickStartY,
-                                    mPickEndX, mPickEndY };
+                                    mPickEndX, mPickEndY,
+                                    { false, false, false, false }  };
                 
                 trimRectByExisting( &rect );
 
@@ -614,9 +649,8 @@ void EditorSpriteTrimPage::pointerUp( float inX, float inY ) {
             }
 
 
-        PickedRect r = { mPickStartX, mPickStartY, mPickEndX, mPickEndY };
-
-
+        PickedRect r = { mPickStartX, mPickStartY, mPickEndX, mPickEndY,
+                         { false, false, false, false } };
         
         printf( "Rect start = (%d,%d), end = (%d,%d)\n",
                 mPickStartX, mPickStartY, mPickEndX, mPickEndY );
