@@ -9,6 +9,9 @@ Version 27     ???
 --Other player action animations no longer interrupt their walking if the 
   action message arrives before we see them finish their walk locally.
 
+--Improved sprite trimming algorithm (used to tile large sprites to reduce
+  pixel fill) to elinate visible seams along tile boundaries by cross-fading
+  tiles.
 
 
 
