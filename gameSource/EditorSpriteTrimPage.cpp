@@ -154,6 +154,14 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                 // without seams showing
                 int over = 16;
 
+                double overFades[16];
+                
+                // cross-fading alphas in overlap area
+                for( int f=0; f<16; f++ ) {
+                    overFades[f] = ( 16.0 - f ) / 16.0;
+                    }
+                
+
                 PickedRect rE = r;
                 
                 if( r.intersectSides[0] ) {
@@ -175,51 +183,63 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                                                rE.yStart - rE.yEnd );
                 
                 double *subA = subIm->getChannel( 3 );
-                double subW = subIm->getWidth();
-                double subH = subIm->getHeight();
+                int subW = subIm->getWidth();
+                int subH = subIm->getHeight();
                 
                 // reduce alpha of semi-transparent areas
-                // we're going to reduce other alpha with a 0.5 multiplier
+                // we're going to reduce other alpha with an f multiplier
                 
-                // so this alpha becomes A / ( 2 - A )
+                // so this alpha becomes (A - F * A ) / ( 1 - F * A )
                 if( r.intersectSides[0] ) {
                     for( int y=0; y<over; y++ ) {
+                        double F = overFades[y];
                         for( int x=0; x<subW; x++ ) {
                             int p = y * subW + x;
                             
                             if( subA[p] < 1 ) {
-                                subA[p] = subA[p] / ( 2 - subA[p] );
+                                subA[p] = 
+                                    ( subA[p] - F * subA[p] ) / 
+                                    ( 1 - F *subA[p] );
                                 }
                             }
                         }
                     }
                 if( r.intersectSides[2] ) {
                     for( int y=subH-1; y>=subH-over; y-- ) {
+                        double F = overFades[y - (subH - over)];
                         for( int x=0; x<subW; x++ ) {
                             int p = y * subW + x;
                             
                             if( subA[p] < 1 ) {
-                                subA[p] = subA[p] / ( 2 - subA[p] );
+                                subA[p] = 
+                                    ( subA[p] - F * subA[p] ) / 
+                                    ( 1 - F *subA[p] );
                                 }
                             }
                         }
                     }
                 if( r.intersectSides[3] ) {
                     for( int x=0; x<over; x++ ) {
+                        double F = overFades[x];
                         for( int y=0; y<subH; y++ ) {
                             int p = y * subW + x;
                             if( subA[p] < 1 ) {
-                                subA[p] = subA[p] / ( 2 - subA[p] );
+                                subA[p] = 
+                                    ( subA[p] - F * subA[p] ) / 
+                                    ( 1 - F *subA[p] );
                                 }
                             }
                         }
                     }
                 if( r.intersectSides[1] ) {
                     for( int x=subW-1; x>=subW-over; x-- ) {
+                        double F = overFades[x - (subW - over)];
                         for( int y=0; y<subH; y++ ) {
                             int p = y * subW + x;
                             if( subA[p] < 1 ) {
-                                subA[p] = subA[p] / ( 2 - subA[p] );
+                                subA[p] = 
+                                    ( subA[p] - F * subA[p] ) / 
+                                    ( 1 - F *subA[p] );
                                 }
                             }
                         }
@@ -231,42 +251,46 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                 // our alpha becomes 0.5 * A
                 if( r.coveredSides[0] ) {
                     for( int y=0; y<over; y++ ) {
+                        double F = overFades[ y - over - 1 ];
                         for( int x=0; x<subW; x++ ) {
                             int p = y * subW + x;
                             
                             if( subA[p] < 1 ) {
-                                subA[p] = 0.5 * subA[p];
+                                subA[p] = F * subA[p];
                                 }
                             }
                         }
                     }
                 if( r.coveredSides[2] ) {
                     for( int y=subH-1; y>=subH-over; y-- ) {
+                        double F = overFades[ y - (subH - over)];
                         for( int x=0; x<subW; x++ ) {
                             int p = y * subW + x;
                             
                             if( subA[p] < 1 ) {
-                                subA[p] = 0.5 * subA[p];
+                                subA[p] = F * subA[p];
                                 }
                             }
                         }
                     }
                 if( r.coveredSides[3] ) {
                     for( int x=0; x<over; x++ ) {
+                        double F = overFades[ x - over - 1 ];
                         for( int y=0; y<subH; y++ ) {
                             int p = y * subW + x;
                             if( subA[p] < 1 ) {
-                                subA[p] = 0.5 * subA[p];
+                                subA[p] = F * subA[p];
                                 }
                             }
                         }
                     }
                 if( r.coveredSides[1] ) {
                     for( int x=subW-1; x>=subW-over; x-- ) {
+                        double F = overFades[ x - (subW - over)];
                         for( int y=0; y<subH; y++ ) {
                             int p = y * subW + x;
                             if( subA[p] < 1 ) {
-                                subA[p] = 0.5 * subA[p];
+                                subA[p] = F * subA[p];
                                 }
                             }
                         }
