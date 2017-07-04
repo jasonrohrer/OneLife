@@ -4034,7 +4034,10 @@ int main() {
                                                               &numCont );
                                     
                                     clearAllContained( m.x, m.y );
+                                    
+                                    setResponsiblePlayer( - nextPlayer->id );
                                     setMapObject( m.x, m.y, 0 );
+                                    setResponsiblePlayer( -1 );
                                     
                                     nextPlayer->holdingID = target;
                                     
