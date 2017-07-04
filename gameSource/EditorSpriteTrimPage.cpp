@@ -149,7 +149,9 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                 
                 PickedRect r = mRects.getElementDirect( i );
 
-                // add 16 overlap to edge where we touch another tile
+                // add 8 overlap to edge where we touch another tile
+                // with both tiles being extended
+                // giving us a total overlap of 16
                 // thus, we can mip-map safely down to a scale of 1/16
                 // without seams showing
                 int over = 8;
@@ -174,6 +176,55 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                                                rE.xEnd - rE.xStart,
                                                rE.yStart - rE.yEnd );
                 
+                double *subA = subIm->getChannel( 3 );
+                double subW = subIm->getWidth();
+                double subH = subIm->getHeight();
+                
+                // remove transparent areas from any overlaps
+                if( r.intersectSides[0] ) {
+                    for( int y=0; y<over; y++ ) {
+                        for( int x=0; x<subW; x++ ) {
+                            int p = y * subW + x;
+                            
+                            if( subA[p] < 1 ) {
+                                subA[p] = 0;
+                                }
+                            }
+                        }
+                    }
+                if( r.intersectSides[2] ) {
+                    for( int y=subH-1; y>=subH-over; y-- ) {
+                        for( int x=0; x<subW; x++ ) {
+                            int p = y * subW + x;
+                            
+                            if( subA[p] < 1 ) {
+                                subA[p] = 0;
+                                }
+                            }
+                        }
+                    }
+                if( r.intersectSides[3] ) {
+                    for( int x=0; x<over; x++ ) {
+                        for( int y=0; y<subH; y++ ) {
+                            int p = y * subW + x;
+                            if( subA[p] < 1 ) {
+                                subA[p] = 0;
+                                }
+                            }
+                        }
+                    }
+                if( r.intersectSides[1] ) {
+                    for( int x=subW-1; x>=subW-over; x-- ) {
+                        for( int y=0; y<subH; y++ ) {
+                            int p = y * subW + x;
+                            if( subA[p] < 1 ) {
+                                subA[p] = 0;
+                                }
+                            }
+                        }
+                    }
+                
+
                 Image *subExpanded = expandToPowersOfTwo( subIm );
                 
                 delete subIm;
@@ -331,6 +382,8 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 // top edge intersects
                 r.yStart = otherR.yEnd;
                 r.intersectSides[0] = true;
+                
+                otherR.intersectSides[2] = true;
                 }
 
 
@@ -344,6 +397,8 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 // top edge intersects (new rect swallows)
                 r.yStart = otherR.yEnd;
                 r.intersectSides[0] = true;
+                
+                otherR.intersectSides[2] = true;
                 }
 
 
@@ -357,6 +412,8 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 // bottom edge intersects
                 r.yEnd = otherR.yStart;
                 r.intersectSides[2] = true;
+
+                otherR.intersectSides[0] = true;
                 }
 
             if( otherR.xStart > r.xStart &&
@@ -369,6 +426,8 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 // bottom edge intersects (new rect swallows)
                 r.yEnd = otherR.yStart;
                 r.intersectSides[2] = true;
+
+                otherR.intersectSides[0] = true;
                 }
 
                 
@@ -382,6 +441,8 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 // left edge intersects (new rect swallows)
                 r.xStart = otherR.xEnd;
                 r.intersectSides[3] = true;
+
+                otherR.intersectSides[1] = true;
                 }
 
             if( otherR.yStart < r.yStart &&
@@ -394,6 +455,8 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 // right edge intersects (new rect swallows)
                 r.xEnd = otherR.xStart;
                 r.intersectSides[1] = true;
+
+                otherR.intersectSides[3] = true;
                 }
 
 
@@ -407,6 +470,8 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 r.xStart = otherR.xEnd;
                 r.intersectSides[0] = true;
                 r.intersectSides[3] = true;
+
+                otherR.intersectSides[1] = true;
                 }
                 
             if( r.xEnd > otherR.xStart &&
@@ -418,6 +483,8 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 r.xEnd = otherR.xStart;
                 r.intersectSides[0] = true;
                 r.intersectSides[1] = true;
+                
+                otherR.intersectSides[3] = true;
                 }
 
             if( r.xStart > otherR.xStart &&
@@ -429,6 +496,8 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 r.xStart = otherR.xEnd;
                 r.intersectSides[2] = true;
                 r.intersectSides[3] = true;
+
+                otherR.intersectSides[1] = true;
                 }
                 
             if( r.xEnd > otherR.xStart &&
@@ -440,7 +509,12 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 r.xEnd = otherR.xStart;
                 r.intersectSides[2] = true;
                 r.intersectSides[1] = true;
+
+                otherR.intersectSides[3] = true;
                 }
+
+            // save back into vector
+            *( mRects.getElement( i ) ) = otherR;
             }
         }
 
