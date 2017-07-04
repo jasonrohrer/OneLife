@@ -1037,23 +1037,29 @@ static int dbGet( int inX, int inY, int inSlot ) {
 
 
 static void dbPut( int inX, int inY, int inSlot, int inValue ) {
-    char found = false;
-    for( int i=0; i<mapChangePosSinceLastStep.size(); i++ ) {
+    
+    if( inSlot != 1 ) {
+        // ETA decay changes don't get reported as map changes
         
-        ChangePosition *p = mapChangePosSinceLastStep.getElement( i );
-        
-        if( p->x == inX && p->y == inY ) {
-            found = true;
+        char found = false;
+        for( int i=0; i<mapChangePosSinceLastStep.size(); i++ ) {
             
-            // update it
-            p->responsiblePlayerID = currentResponsiblePlayer;
+            ChangePosition *p = mapChangePosSinceLastStep.getElement( i );
+            
+            if( p->x == inX && p->y == inY ) {
+                found = true;
+                
+                // update it
+                p->responsiblePlayerID = currentResponsiblePlayer;
+                }
+            }
+        
+        if( ! found ) {
+            ChangePosition p = { inX, inY, false, currentResponsiblePlayer };
+            mapChangePosSinceLastStep.push_back( p );
             }
         }
     
-    if( ! found ) {
-        ChangePosition p = { inX, inY, false, currentResponsiblePlayer };
-        mapChangePosSinceLastStep.push_back( p );
-        }
     
     unsigned char key[12];
     unsigned char value[4];
