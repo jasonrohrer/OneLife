@@ -184,6 +184,12 @@ typedef struct LiveObject {
         char shouldDrawPathMarks;
         double pathMarkFade;
         
+
+        // messages that arrive while we're still showing our current
+        // movement animation
+        SimpleVector<char*> pendingReceivedMessages;
+        
+
     } LiveObject;
 
 
@@ -435,6 +441,7 @@ class LivingLifePage : public GamePage {
 
 
         LiveObject *getOurLiveObject();
+        LiveObject *getLiveObject( int inID );
         
 
         void clearLiveObjects();

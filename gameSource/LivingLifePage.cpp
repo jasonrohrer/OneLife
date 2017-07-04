@@ -299,9 +299,18 @@ doublePair getVectorFromCamera( int inMapX, int inMapY ) {
 char *pendingMapChunkMessage = NULL;
 int pendingCompressedChunkSize;
 
+SimpleVector<char*> readyPendingReceivedMessages;
+
 
 // NULL if there's no full message available
 char *getNextServerMessage() {
+    
+    if( readyPendingReceivedMessages.size() > 0 ) {
+        char *message = readyPendingReceivedMessages.getElementDirect( 0 );
+        readyPendingReceivedMessages.deleteElement( 0 );
+        return message;
+        }
+
     if( pendingMapChunkMessage != NULL ) {
         // wait for full binary data chunk to arrive completely
         // after message before we report that the message is ready
@@ -1114,6 +1123,8 @@ void LivingLifePage::clearLiveObjects() {
         LiveObject *nextObject =
             gameObjects.getElement( i );
         
+        nextObject->pendingReceivedMessages.deallocateStringElements();
+
         if( nextObject->containedIDs != NULL ) {
             delete [] nextObject->containedIDs;
             }
@@ -1141,7 +1152,9 @@ LivingLifePage::~LivingLifePage() {
             "total sent = %d bytes (+%d in headers)\n",
             numServerBytesRead, overheadServerBytesRead,
             numServerBytesSent, overheadServerBytesSent );
+    
 
+    readyPendingReceivedMessages.deallocateStringElements();
     
     clearLiveObjects();
 
@@ -1279,18 +1292,26 @@ void LivingLifePage::adjustAllFrameCounts( double inOldFrameRateFactor,
 
 LiveObject *LivingLifePage::getOurLiveObject() {
     
-    LiveObject *ourLiveObject = NULL;
+    return getLiveObject( ourID );
+    }
+
+
+
+
+LiveObject *LivingLifePage::getLiveObject( int inID ) {
+    
+    LiveObject *obj = NULL;
 
     for( int i=0; i<gameObjects.size(); i++ ) {
         
         LiveObject *o = gameObjects.getElement( i );
         
-        if( o->id == ourID ) {
-            ourLiveObject = o;
+        if( o->id == inID ) {
+            obj = o;
             break;
             }
         }
-    return ourLiveObject;
+    return obj;
     }
 
 
@@ -4004,6 +4025,16 @@ char nearEndOfMovement( LiveObject *inPlayer ) {
 
 
 
+void playPendingReceivedMessages( LiveObject *inPlayer ) {
+    for( int i=0; i<inPlayer->pendingReceivedMessages.size(); i++ ) {
+        readyPendingReceivedMessages.push_back( 
+            inPlayer->pendingReceivedMessages.getElementDirect( i ) );
+        }
+    inPlayer->pendingReceivedMessages.deleteAll();
+    }
+
+
+
         
 void LivingLifePage::step() {
     
@@ -4610,6 +4641,25 @@ void LivingLifePage::step() {
                         int oldContainedCount = 
                             mMapContainedStacks[mapI].size();
                         
+                        if( responsiblePlayerID != -1 ) {
+                            int rID = responsiblePlayerID;
+                            if( rID < -1 ) {
+                                rID = -rID;
+                                }
+                            LiveObject *rObj = getLiveObject( rID );
+                            
+                            if( rObj->pendingReceivedMessages.size() 
+                                > 0 ) {
+                                
+                                rObj->pendingReceivedMessages.push_back(
+                                    autoSprintf( "MX\n%s\n#",
+                                                 lines[i] ) );
+                                
+                                delete [] lines[i];
+                                continue;
+                                }
+                            }
+                        
 
                         if( strstr( idBuffer, "," ) != NULL ) {
                             int numInts;
@@ -5138,7 +5188,22 @@ void LivingLifePage::step() {
                             }
                         }
                     
-                    if( existing != NULL ) {
+                    if( existing != NULL &&
+                        existing->id != ourID &&
+                        existing->currentSpeed != 0 &&
+                        ! forced &&
+                        strstr( lines[i], "X X" ) == NULL ) {
+                        // non-forced update about other player 
+                        // while we're still playing their last movement
+                        
+                        // not a death update
+
+                        // defer it until they're done moving
+                        existing->pendingReceivedMessages.push_back(
+                            autoSprintf( "PU\n%s\n#",
+                                         lines[i] ) );
+                        }
+                    else if( existing != NULL ) {
                         int oldHeld = existing->holdingID;
                         
                         existing->lastHoldingID = oldHeld;
@@ -5586,6 +5651,7 @@ void LivingLifePage::step() {
                             existing->currentPos.y = o.yd;
                             
                             existing->currentSpeed = 0;
+                            playPendingReceivedMessages( existing );
                             
                             existing->xd = o.xd;
                             existing->yd = o.yd;
@@ -5630,7 +5696,8 @@ void LivingLifePage::step() {
                             existing->currentPos.y = o.yd;
                         
                             existing->currentSpeed = 0;
-                            
+                            playPendingReceivedMessages( existing );
+
                             existing->xd = o.xd;
                             existing->yd = o.yd;
 
@@ -5765,7 +5832,7 @@ void LivingLifePage::step() {
                         o.heldObjectRot = 0;
 
                         o.currentSpeed = 0;
-                                                
+                        
                         o.moveTotalTime = 0;
                         
                         o.futureAnimStack = 
@@ -5989,6 +6056,21 @@ void LivingLifePage::step() {
                             
                             LiveObject *existing = gameObjects.getElement(j);
                             
+                            if( existing->
+                                pendingReceivedMessages.size() > 0 ) {
+                                
+                                // we've got older messages pending
+                                // make this pending too
+
+                                existing->pendingReceivedMessages.push_back(
+                                    autoSprintf( "PM\n%s\n#",
+                                                 lines[i] ) );
+                                break;
+                                }
+                            
+
+                                
+
                             double timePassed = 
                                 o.moveTotalTime - etaSec;
                             
@@ -6427,7 +6509,8 @@ void LivingLifePage::step() {
                                     
                                     // hard jump back
                                     existing->currentSpeed = 0;
-                                    
+                                    playPendingReceivedMessages( existing );
+
                                     existing->currentPos.x =
                                         existing->xd;
                                     existing->currentPos.y =
@@ -7151,7 +7234,8 @@ void LivingLifePage::step() {
                     // reached destination
                     o->currentPos = endPos;
                     o->currentSpeed = 0;
-
+                    playPendingReceivedMessages( o );
+                    
                     //trailColor.r = randSource.getRandomBoundedDouble( 0, .5 );
                     //trailColor.g = randSource.getRandomBoundedDouble( 0, .5 );
                     //trailColor.b = randSource.getRandomBoundedDouble( 0, .5 );
