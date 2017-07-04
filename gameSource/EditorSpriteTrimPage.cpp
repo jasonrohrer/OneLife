@@ -161,7 +161,17 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                     overFades[f] = ( 16.0 - f ) / 16.0;
                     }
                 
-
+                // non-trans areas of overlap stay solid for first 8 pixels
+                // then crossfade
+                double solidFades[16];
+                
+                for( int f=0; f<8; f++ ) {
+                    solidFades[f] = 1.0;
+                    }
+                for( int f=8; f<16; f++ ) {
+                    solidFades[f] = ( 8.0 - (f - 8.0) ) / 8.0;
+                    }
+                
                 PickedRect rE = r;
                 
                 if( r.intersectSides[0] ) {
@@ -190,6 +200,9 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                 // we're going to reduce other alpha with an f multiplier
                 
                 // so this alpha becomes (A - F * A ) / ( 1 - F * A )
+                
+                // for opaque areas, do straight cross-fade as well
+
                 if( r.intersectSides[0] ) {
                     for( int y=0; y<over; y++ ) {
                         double F = overFades[y];
@@ -200,6 +213,10 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                                 subA[p] = 
                                     ( subA[p] - F * subA[p] ) / 
                                     ( 1 - F *subA[p] );
+                                }
+                            else {
+                                // opaque
+                                subA[p] = solidFades[ over- y - 1 ];
                                 }
                             }
                         }
@@ -215,6 +232,10 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                                     ( subA[p] - F * subA[p] ) / 
                                     ( 1 - F *subA[p] );
                                 }
+                            else {
+                                // opaque
+                                subA[p] = solidFades[ y - (subH - over) ];
+                                }
                             }
                         }
                     }
@@ -228,6 +249,10 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                                     ( subA[p] - F * subA[p] ) / 
                                     ( 1 - F *subA[p] );
                                 }
+                            else {
+                                // opaque
+                                subA[p] = solidFades[ over- x - 1 ];
+                                }
                             }
                         }
                     }
@@ -240,6 +265,10 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                                 subA[p] = 
                                     ( subA[p] - F * subA[p] ) / 
                                     ( 1 - F *subA[p] );
+                                }
+                            else {
+                                // opaque
+                                subA[p] = solidFades[ x - (subW - over) ];
                                 }
                             }
                         }
