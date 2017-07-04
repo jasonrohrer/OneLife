@@ -22,6 +22,10 @@ typedef struct PickedRect {
         // order:  up, right, down, left
         char intersectSides[4];
         
+        // true if this side is covered by another tile
+        // we need to reduce the alpha values of semi-transparent areas
+        char coveredSides[4];
+
     } PickedRect;
 
     

@@ -149,12 +149,10 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                 
                 PickedRect r = mRects.getElementDirect( i );
 
-                // add 8 overlap to edge where we touch another tile
-                // with both tiles being extended
-                // giving us a total overlap of 16
+                // add 16 overlap to edge where we touch another tile
                 // thus, we can mip-map safely down to a scale of 1/16
                 // without seams showing
-                int over = 8;
+                int over = 16;
 
                 PickedRect rE = r;
                 
@@ -180,14 +178,17 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                 double subW = subIm->getWidth();
                 double subH = subIm->getHeight();
                 
-                // remove transparent areas from any overlaps
+                // reduce alpha of semi-transparent areas
+                // we're going to reduce other alpha with a 0.5 multiplier
+                
+                // so this alpha becomes A / ( 2 - A )
                 if( r.intersectSides[0] ) {
                     for( int y=0; y<over; y++ ) {
                         for( int x=0; x<subW; x++ ) {
                             int p = y * subW + x;
                             
                             if( subA[p] < 1 ) {
-                                subA[p] = 0;
+                                subA[p] = subA[p] / ( 2 - subA[p] );
                                 }
                             }
                         }
@@ -198,7 +199,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                             int p = y * subW + x;
                             
                             if( subA[p] < 1 ) {
-                                subA[p] = 0;
+                                subA[p] = subA[p] / ( 2 - subA[p] );
                                 }
                             }
                         }
@@ -208,7 +209,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                         for( int y=0; y<subH; y++ ) {
                             int p = y * subW + x;
                             if( subA[p] < 1 ) {
-                                subA[p] = 0;
+                                subA[p] = subA[p] / ( 2 - subA[p] );
                                 }
                             }
                         }
@@ -218,7 +219,54 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                         for( int y=0; y<subH; y++ ) {
                             int p = y * subW + x;
                             if( subA[p] < 1 ) {
-                                subA[p] = 0;
+                                subA[p] = subA[p] / ( 2 - subA[p] );
+                                }
+                            }
+                        }
+
+                    }
+                
+                // now handle case where we're being overlapped
+
+                // our alpha becomes 0.5 * A
+                if( r.coveredSides[0] ) {
+                    for( int y=0; y<over; y++ ) {
+                        for( int x=0; x<subW; x++ ) {
+                            int p = y * subW + x;
+                            
+                            if( subA[p] < 1 ) {
+                                subA[p] = 0.5 * subA[p];
+                                }
+                            }
+                        }
+                    }
+                if( r.coveredSides[2] ) {
+                    for( int y=subH-1; y>=subH-over; y-- ) {
+                        for( int x=0; x<subW; x++ ) {
+                            int p = y * subW + x;
+                            
+                            if( subA[p] < 1 ) {
+                                subA[p] = 0.5 * subA[p];
+                                }
+                            }
+                        }
+                    }
+                if( r.coveredSides[3] ) {
+                    for( int x=0; x<over; x++ ) {
+                        for( int y=0; y<subH; y++ ) {
+                            int p = y * subW + x;
+                            if( subA[p] < 1 ) {
+                                subA[p] = 0.5 * subA[p];
+                                }
+                            }
+                        }
+                    }
+                if( r.coveredSides[1] ) {
+                    for( int x=subW-1; x>=subW-over; x-- ) {
+                        for( int y=0; y<subH; y++ ) {
+                            int p = y * subW + x;
+                            if( subA[p] < 1 ) {
+                                subA[p] = 0.5 * subA[p];
                                 }
                             }
                         }
@@ -383,7 +431,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 r.yStart = otherR.yEnd;
                 r.intersectSides[0] = true;
                 
-                otherR.intersectSides[2] = true;
+                otherR.coveredSides[2] = true;
                 }
 
 
@@ -398,7 +446,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 r.yStart = otherR.yEnd;
                 r.intersectSides[0] = true;
                 
-                otherR.intersectSides[2] = true;
+                otherR.coveredSides[2] = true;
                 }
 
 
@@ -413,7 +461,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 r.yEnd = otherR.yStart;
                 r.intersectSides[2] = true;
 
-                otherR.intersectSides[0] = true;
+                otherR.coveredSides[0] = true;
                 }
 
             if( otherR.xStart > r.xStart &&
@@ -427,7 +475,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 r.yEnd = otherR.yStart;
                 r.intersectSides[2] = true;
 
-                otherR.intersectSides[0] = true;
+                otherR.coveredSides[0] = true;
                 }
 
                 
@@ -442,7 +490,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 r.xStart = otherR.xEnd;
                 r.intersectSides[3] = true;
 
-                otherR.intersectSides[1] = true;
+                otherR.coveredSides[1] = true;
                 }
 
             if( otherR.yStart < r.yStart &&
@@ -456,7 +504,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 r.xEnd = otherR.xStart;
                 r.intersectSides[1] = true;
 
-                otherR.intersectSides[3] = true;
+                otherR.coveredSides[3] = true;
                 }
 
 
@@ -471,7 +519,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 r.intersectSides[0] = true;
                 r.intersectSides[3] = true;
 
-                otherR.intersectSides[1] = true;
+                otherR.coveredSides[1] = true;
                 }
                 
             if( r.xEnd > otherR.xStart &&
@@ -484,7 +532,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 r.intersectSides[0] = true;
                 r.intersectSides[1] = true;
                 
-                otherR.intersectSides[3] = true;
+                otherR.coveredSides[3] = true;
                 }
 
             if( r.xStart > otherR.xStart &&
@@ -497,7 +545,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 r.intersectSides[2] = true;
                 r.intersectSides[3] = true;
 
-                otherR.intersectSides[1] = true;
+                otherR.coveredSides[1] = true;
                 }
                 
             if( r.xEnd > otherR.xStart &&
@@ -510,7 +558,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 r.intersectSides[2] = true;
                 r.intersectSides[1] = true;
 
-                otherR.intersectSides[3] = true;
+                otherR.coveredSides[3] = true;
                 }
 
             // save back into vector
@@ -603,7 +651,8 @@ void EditorSpriteTrimPage::drawUnderComponents( doublePair inViewCenter,
                 
                 PickedRect rect = { mPickStartX, mPickStartY,
                                     mPickEndX, mPickEndY,
-                                    { false, false, false, false }  };
+                                    { false, false, false, false },
+                                    { false, false, false, false } };
                 
                 trimRectByExisting( &rect );
 
@@ -724,6 +773,7 @@ void EditorSpriteTrimPage::pointerUp( float inX, float inY ) {
 
 
         PickedRect r = { mPickStartX, mPickStartY, mPickEndX, mPickEndY,
+                         { false, false, false, false },
                          { false, false, false, false } };
         
         printf( "Rect start = (%d,%d), end = (%d,%d)\n",
