@@ -57,7 +57,10 @@ class EditorSpriteTrimPage : public GamePage, public ActionListener {
         
         // trims rect so that it doesn't intersect with mRects
         // returns true if inRect is totally eliminated by this process
-        char trimRectByExisting( PickedRect *inRect );
+        // 
+        // inUpdateCovered true to update covered flags of existing
+        char trimRectByExisting( PickedRect *inRect,
+                                 char inUpdateCovered );
 
 
         SimpleVector<PickedRect> mRects;

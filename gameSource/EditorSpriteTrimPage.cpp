@@ -206,7 +206,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                     }
                 if( r.intersectSides[2] ) {
                     for( int y=subH-1; y>=subH-over; y-- ) {
-                        double F = overFades[y - (subH - over)];
+                        double F = overFades[(subH-1) - y];
                         for( int x=0; x<subW; x++ ) {
                             int p = y * subW + x;
                             
@@ -233,7 +233,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                     }
                 if( r.intersectSides[1] ) {
                     for( int x=subW-1; x>=subW-over; x-- ) {
-                        double F = overFades[x - (subW - over)];
+                        double F = overFades[(subW - 1) - x];
                         for( int y=0; y<subH; y++ ) {
                             int p = y * subW + x;
                             if( subA[p] < 1 ) {
@@ -251,7 +251,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                 // our alpha becomes 0.5 * A
                 if( r.coveredSides[0] ) {
                     for( int y=0; y<over; y++ ) {
-                        double F = overFades[ y - over - 1 ];
+                        double F = overFades[ over - y - 1 ];
                         for( int x=0; x<subW; x++ ) {
                             int p = y * subW + x;
                             
@@ -275,7 +275,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                     }
                 if( r.coveredSides[3] ) {
                     for( int x=0; x<over; x++ ) {
-                        double F = overFades[ x - over - 1 ];
+                        double F = overFades[ over - x - 1 ];
                         for( int y=0; y<subH; y++ ) {
                             int p = y * subW + x;
                             if( subA[p] < 1 ) {
@@ -423,7 +423,8 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
     }
 
 
-char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
+char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect,
+                                               char inUpdateCovered ) {
 
     PickedRect r = *inRect;
     
@@ -454,7 +455,7 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
                 // top edge intersects
                 r.yStart = otherR.yEnd;
                 r.intersectSides[0] = true;
-                
+
                 otherR.coveredSides[2] = true;
                 }
 
@@ -584,9 +585,11 @@ char EditorSpriteTrimPage::trimRectByExisting( PickedRect *inRect ) {
 
                 otherR.coveredSides[3] = true;
                 }
-
-            // save back into vector
-            *( mRects.getElement( i ) ) = otherR;
+            
+            if( inUpdateCovered ) {
+                // save back into vector
+                *( mRects.getElement( i ) ) = otherR;
+                }
             }
         }
 
@@ -678,7 +681,8 @@ void EditorSpriteTrimPage::drawUnderComponents( doublePair inViewCenter,
                                     { false, false, false, false },
                                     { false, false, false, false } };
                 
-                trimRectByExisting( &rect );
+                // don't update covered flags until mouse released
+                trimRectByExisting( &rect, false );
 
                 drawRect( rect.xStart, rect.yStart,
                           rect.xEnd, rect.yEnd );
@@ -804,7 +808,8 @@ void EditorSpriteTrimPage::pointerUp( float inX, float inY ) {
                 mPickStartX, mPickStartY, mPickEndX, mPickEndY );
         
 
-        char skip = trimRectByExisting( &r );
+        // update covered flags now that we're releasing mouse
+        char skip = trimRectByExisting( &r, true );
 
         if( !skip ) {
             mRects.push_back( r );
