@@ -49,6 +49,9 @@ Server fixes:
 --Fixed hiccup in parent animation when we're being carried long distances due
   to unneeded player updates mid-move when we reach a new map chunk.
 
+--Fixed disappearing baby when you click on your clothes when holding a baby.
+  (You now cannot remove your clothes while holding a baby.)  Thanks Josh C.
+
 
 
 

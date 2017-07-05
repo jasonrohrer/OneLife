@@ -4309,7 +4309,12 @@ int main() {
                         
                         LiveObject *targetPlayer = NULL;
                         
-                        if( m.type == SELF ) {
+                        if( nextPlayer->holdingID < 0 ) {
+                            // holding a baby
+                            // don't allow this action through
+                            // keep targetPlayer NULL
+                            }
+                        else if( m.type == SELF ) {
                             if( m.x == nextPlayer->xd &&
                                 m.y == nextPlayer->yd ) {
                                 
