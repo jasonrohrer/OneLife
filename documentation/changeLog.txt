@@ -10,8 +10,32 @@ Version 27     ???
   action message arrives before we see them finish their walk locally.
 
 --Improved sprite trimming algorithm (used to tile large sprites to reduce
-  pixel fill) to elinate visible seams along tile boundaries by cross-fading
+  pixel fill) to eliminate visible seams along tile boundaries by cross-fading
   tiles.
+
+--Changed the way that actions of other players are handled, greatly increasing
+  the smoothness of other player's motions and actions.  We now play other
+  player's walking paths at our own rate and defer actions that should
+  happen at the end of their walk (like picking something up) until after
+  our local version of their walk has completed.  This means that the 
+  truth as it exists on the server can play back with a time delay locally,
+  but it will mesh up better with the walking actions we've received
+  from the server (why show them pick something up if we haven't even
+  shown them get there yet?  It looks weird, even if it's closer to the truth.
+  This means that slightly more often, we'll go to grab an object that
+  another player has already grabbed, and our client will know that it has
+  been grabbed but won't show it yet because the other player isn't finished
+  walking yet.  We'll be surprised when we fail to pick up the object and
+  the other player gets it instead.  But this was possible before too,
+  due to network latency.  Now we have an additional opportunity for it
+  caused by local animation consistency latency.
+
+--Fixed "forever flying" object pick-ups when we walk away after pick-up by
+  gradually speeding the object up the longer it has been in the air, so
+  it quickly catches up to us as we walk away.
+
+--Fixed potential crash when the player holding you dies.
+
 
 
 
