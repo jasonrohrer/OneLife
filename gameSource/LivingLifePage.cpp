@@ -677,13 +677,13 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
             if( inObject->pathToDest[i].x > inObject->pathToDest[i-1].x ) {
                 dirsInPath[3]++;
                 }
-            else if( inObject->pathToDest[i].x < inObject->pathToDest[i-1].x ) {
+            if( inObject->pathToDest[i].x < inObject->pathToDest[i-1].x ) {
                 dirsInPath[2]++;
                 }
-            else if( inObject->pathToDest[i].y > inObject->pathToDest[i-1].y ) {
+            if( inObject->pathToDest[i].y > inObject->pathToDest[i-1].y ) {
                 dirsInPath[1]++;
                 }
-            else if( inObject->pathToDest[i].y < inObject->pathToDest[i-1].y ) {
+            if( inObject->pathToDest[i].y < inObject->pathToDest[i-1].y ) {
                 dirsInPath[0]++;
                 }
             }
