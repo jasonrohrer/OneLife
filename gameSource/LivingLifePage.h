@@ -73,7 +73,8 @@ typedef struct LiveObject {
         char heldPosOverrideAlmostOver;
         doublePair heldObjectPos;
         double heldObjectRot;
-
+        int heldPosSlideStepCount;
+        
         AnimType curAnim;
         AnimType lastAnim;
         double lastAnimFade;

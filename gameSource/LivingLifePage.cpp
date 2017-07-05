@@ -2265,7 +2265,17 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                 rotDelta = 1 + rotDelta;
                 }
 
-            double step = frameRateFactor * 0.0625;
+            // as slide gets longer, we speed up
+            double longSlideModifier = 1;
+            
+            double slideTime = inObj->heldPosSlideStepCount * frameRateFactor;
+            
+            if( slideTime > 30 ) {
+                // more than a half second
+                longSlideModifier = pow( slideTime / 30, 2 );
+                }
+
+            double step = frameRateFactor * 0.0625 * longSlideModifier;
             double rotStep = frameRateFactor * 0.03125;
             
             if( length( delta ) < step ) {
@@ -2297,7 +2307,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                 holdRot = inObj->heldObjectRot;
                 }
 
-            
+            inObj->heldPosSlideStepCount ++;
             }
         else {
             inObj->heldPosOverride = false;
@@ -4652,6 +4662,7 @@ void LivingLifePage::step() {
                             if( rObj->pendingReceivedMessages.size() 
                                 > 0 ) {
                                 
+                                printf( "Holding MX message until later\n" );
                                 rObj->pendingReceivedMessages.push_back(
                                     autoSprintf( "MX\n%s\n#",
                                                  lines[i] ) );
@@ -5203,6 +5214,7 @@ void LivingLifePage::step() {
                         // not a death update
 
                         // defer it until they're done moving
+                        printf( "Holding PU message until later\n" );
                         existing->pendingReceivedMessages.push_back(
                             autoSprintf( "PU\n%s\n#",
                                          lines[i] ) );
@@ -5218,6 +5230,7 @@ void LivingLifePage::step() {
                         // Thus, an update about us should be played later also
                         // whenever the adult's messages are played back
                         
+                        printf( "Holding PU message until later\n" );
                         getLiveObject( existing->heldByAdultID )->
                             pendingReceivedMessages.push_back(
                                 autoSprintf( "PU\n%s\n#",
@@ -5233,6 +5246,8 @@ void LivingLifePage::step() {
                         // is still in the middle of a local walk
                         // with pending messages that will play
                         // after the walk.  Defer this message too
+
+                        printf( "Holding PU message until later\n" );
                         getLiveObject( responsiblePlayerID )->
                             pendingReceivedMessages.push_back(
                                 autoSprintf( "PU\n%s\n#",
@@ -5464,6 +5479,7 @@ void LivingLifePage::step() {
                                 else {
                                     // on-screen, slide into position
                                     // smooth animation transition
+                                    existing->heldPosSlideStepCount = 0;
                                     existing->heldPosOverride = true;
                                     existing->heldPosOverrideAlmostOver = false;
                                     existing->heldObjectPos.x = heldOriginX;
@@ -6096,7 +6112,8 @@ void LivingLifePage::step() {
                                 
                                 // we've got older messages pending
                                 // make this pending too
-
+                                
+                                printf( "Holding PM message until later\n" );
                                 existing->pendingReceivedMessages.push_back(
                                     autoSprintf( "PM\n%s\n#",
                                                  lines[i] ) );
@@ -6104,7 +6121,6 @@ void LivingLifePage::step() {
                                 }
                             
 
-                                
 
                             double timePassed = 
                                 o.moveTotalTime - etaSec;
@@ -6656,6 +6672,7 @@ void LivingLifePage::step() {
                     
                     // defer this food update too
                     
+                    printf( "Holding FX message until later\n" );
                     getLiveObject( responsiblePlayerID )->
                         pendingReceivedMessages.push_back(
                             stringDuplicate( message ) );
