@@ -138,12 +138,12 @@ a few other tricks to reduce it's size.  Check the code in map.cpp for details.
 
 
 PU
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e responsible_id
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e responsible_id
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c responsible_id
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e responsible_id
 ...
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e responsible_id
 #
 
 List of player ids with their display object ids, facing direction, action
@@ -158,8 +158,9 @@ a move truncated unexpectedly), x,y grid positions of player,
 floating point age in "years", floating point aging rate in sec/year (how many
 seconds it takes the player to age 1 year), and
 floating point s move speeds (in grid square widths per second) and clothing
-set, and e = 1 or 0 to indicate whether the player just ate what they were 
-holding.
+set, e = 1 or 0 to indicate whether the player just ate what they were 
+holding, and the player responsible for this update.
+
 
 If facing is 0, then the player's facing direction doesn't change.
 If facing is 1, then they should face right, and -1 to face left.
@@ -198,6 +199,13 @@ If clothing ID is 0, player is not wearing anything in that spot.
 
 If o_id (held object ID) is negative, it represents the p_id of the other
 player (baby) that this player is holding.
+
+
+responsible_id is used to indicate updates that were caused by another
+player (so that client can defer these until responsible player finishes
+local wal).  Current examples involve feeding and clothing a baby.
+-1 if irrelevant.
+
 
 NOTE:
 If a baby wriggles out of an adult's arms, there is no PU sent about
@@ -273,7 +281,7 @@ in the list.
 
 
 FX
-food_store food_capacity last_ate_id last_ate_fill_max move_speed
+food_store food_capacity last_ate_id last_ate_fill_max move_speed responsible_id
 #
 
 store is integer amount of food left in body, capacity is the integer 
@@ -287,6 +295,7 @@ was eaten recently
 
 move_speed is floating point speed in grid square widths per second.
 
+responsible_id is id of player that fed you if you're a baby, or -1
 
 
 

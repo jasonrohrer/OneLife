@@ -125,6 +125,10 @@ typedef struct LiveObject {
         char heldByOther;
         int heldByOtherID;
 
+        // player that's responsible for updates that happen to this
+        // player during current step
+        int responsiblePlayerID;
+
         // start and dest for a move
         // same if reached destination
         int xs;
@@ -1766,7 +1770,7 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
 
 
     char *updateLine = autoSprintf( 
-        "%d %d %d %d %d %d %s %d %d %d %d %.2f %s %.2f %.2f %.2f %s %d\n",
+        "%d %d %d %d %d %d %s %d %d %d %d %.2f %s %.2f %.2f %.2f %s %d %d\n",
         inPlayer->id,
         inPlayer->displayID,
         inPlayer->facingOverride,
@@ -1784,7 +1788,8 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
         1.0 / getAgeRate(),
         computeMoveSpeed( inPlayer ),
         clothingList,
-        inPlayer->justAte );
+        inPlayer->justAte,
+        inPlayer->responsiblePlayerID );
     
     inPlayer->justAte = false;
     
@@ -2586,6 +2591,10 @@ int main() {
         for( int i=0; i<numLive; i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
             
+            // clear at the start of each step
+            nextPlayer->responsiblePlayerID = -1;
+
+
             if( nextPlayer->xd != nextPlayer->xs ||
                 nextPlayer->yd != nextPlayer->ys ) {
                 
@@ -4282,6 +4291,8 @@ int main() {
                                             computeFoodCapacity( hitPlayer );
                 
                                         hitPlayer->foodUpdate = true;
+                                        hitPlayer->responsiblePlayerID =
+                                            nextPlayer->id;
                                         }
                                     
                                     nextPlayer->heldOriginValid = 1;
@@ -4326,11 +4337,16 @@ int main() {
                                 LiveObject *hitPlayer = 
                                     getHitPlayer( m.x, m.y, 5, &hitIndex );
                                 
-                                if( hitPlayer != NULL ) {
+                                if( hitPlayer != NULL &&
+                                    hitPlayer != nextPlayer ) {
+                                    
                                     targetPlayer = hitPlayer;
                                     
                                     playerIndicesToSendUpdatesAbout.push_back( 
                                         hitIndex );
+                                    
+                                    targetPlayer->responsiblePlayerID =
+                                            nextPlayer->id;
                                     }
                                 }
                             }
@@ -6419,13 +6435,14 @@ int main() {
                     
                     char *foodMessage = autoSprintf( 
                         "FX\n"
-                        "%d %d %d %d %.2f\n"
-                        "#", 
+                        "%d %d %d %d %.2f %d\n"
+                        "#",
                         nextPlayer->foodStore,
                         cap,
                         nextPlayer->lastAteID,
                         nextPlayer->lastAteFillMax,
-                        computeMoveSpeed( nextPlayer ) );
+                        computeMoveSpeed( nextPlayer ),
+                        nextPlayer->responsiblePlayerID );
                      
                      int numSent = 
                          nextPlayer->sock->send( 

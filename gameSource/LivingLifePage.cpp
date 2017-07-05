@@ -5061,6 +5061,8 @@ void LivingLifePage::step() {
                 
                 double invAgeRate = 60.0;
                 
+                int responsiblePlayerID = -1;
+                
 
                 int numRead = sscanf( lines[i], 
                                       "%d %d "
@@ -5068,7 +5070,7 @@ void LivingLifePage::step() {
                                       "%d "
                                       "%d %d "
                                       "%499s %d %d %d %d %f %d %d %d %d "
-                                      "%lf %lf %lf %499s %d",
+                                      "%lf %lf %lf %499s %d %d",
                                       &( o.id ),
                                       &( o.displayID ),
                                       &facingOverride,
@@ -5089,10 +5091,11 @@ void LivingLifePage::step() {
                                       &invAgeRate,
                                       &( o.lastSpeed ),
                                       clothingBuffer,
-                                      &justAte );
+                                      &justAte,
+                                      &responsiblePlayerID );
                 
-            
-                if( numRead == 21 ) {
+                
+                if( numRead == 22 ) {
                     printf( "PLAYER_UPDATE with orVal=%d, orx=%d, ory=%d, "
                             "pX =%d, pY=%d\n",
                             heldOriginValid, heldOriginX, heldOriginY,
@@ -5220,6 +5223,21 @@ void LivingLifePage::step() {
                                 autoSprintf( "PU\n%s\n#",
                                              lines[i] ) );
                         }
+                    else if( existing != NULL &&
+                             responsiblePlayerID != -1 &&
+                             getLiveObject( responsiblePlayerID ) != NULL &&
+                             getLiveObject( responsiblePlayerID )->
+                                 pendingReceivedMessages.size() > 0 ) {
+                        // someone else is responsible for this change
+                        // to us (we're likely a baby) and that person
+                        // is still in the middle of a local walk
+                        // with pending messages that will play
+                        // after the walk.  Defer this message too
+                        getLiveObject( responsiblePlayerID )->
+                            pendingReceivedMessages.push_back(
+                                autoSprintf( "PU\n%s\n#",
+                                             lines[i] ) );
+                        }         
                     else if( existing != NULL ) {
                         int oldHeld = existing->holdingID;
                         
@@ -6614,129 +6632,163 @@ void LivingLifePage::step() {
                 
                 int lastAteID, lastAteFillMax;
                 
-                sscanf( message, "FX\n%d %d %d %d %lf", 
-                        &( ourLiveObject->foodStore ),
-                        &( ourLiveObject->foodCapacity ),
+                int responsiblePlayerID = -1;
+                
+                int foodStore;
+                int foodCapacity;
+                double lastSpeed;
+
+                sscanf( message, "FX\n%d %d %d %d %lf %d", 
+                        &( foodStore ),
+                        &( foodCapacity ),
                         &( lastAteID ),
                         &( lastAteFillMax ),
-                        &( ourLiveObject->lastSpeed ) );
-
-                if( mCurrentLastAteString != NULL ) {                    
-                    
-
-                    // one to add to erased list
-                    // fade older ones first
-
-                    for( int i=0; i<mOldLastAteStrings.size(); i++ ) {
-                        float fade =
-                            mOldLastAteFades.getElementDirect( i );
-                        
-                        if( fade > 0.5 ) {
-                            fade -= 0.20;
-                            }
-                        else {
-                            fade -= 0.1;
-                            }
-                        
-                        *( mOldLastAteFades.getElement( i ) ) = fade;
-                        
-
-                        // bar must fade slower (different blending mode)
-                        float barFade =
-                            mOldLastAteBarFades.getElementDirect( i );
-                        
-                        barFade -= 0.01;
-                        
-                        *( mOldLastAteBarFades.getElement( i ) ) = barFade;
-                        
-
-                        if( fade <= 0 ) {
-                            mOldLastAteStrings.deallocateStringElement( i );
-                            mOldLastAteFillMax.deleteElement( i );
-                            mOldLastAteFades.deleteElement( i );
-                            mOldLastAteBarFades.deleteElement( i );
-                            i--;
-                            }
-
-                        else if( strcmp( 
-                                     mCurrentLastAteString, 
-                                     mOldLastAteStrings.getElementDirect(i) )
-                                 == 0 ) {
-                            // already in stack, move to top
-                            mOldLastAteStrings.deallocateStringElement( i );
-                            mOldLastAteFillMax.deleteElement( i );
-                            mOldLastAteFades.deleteElement( i );
-                            mOldLastAteBarFades.deleteElement( i );
-                            i--;
-                            }
-                        }
-                    
-                    mOldLastAteStrings.push_back( mCurrentLastAteString );
-                    mOldLastAteFillMax.push_back( mCurrentLastAteFillMax );
-                    mOldLastAteFades.push_back( 1.0f );
-                    mOldLastAteBarFades.push_back( 1.0f );
-
-                    mCurrentLastAteString = NULL;
-                    mCurrentLastAteFillMax = 0;
-                    }
+                        &( lastSpeed ),
+                        &responsiblePlayerID );
                 
-                if( lastAteID != 0 ) {
-                    char *strUpper = stringToUpperCase(
-                        getObject( lastAteID )->description );
-
-                    mCurrentLastAteString = autoSprintf( "%s %s",
-                                                         translate( "lastAte" ),
-                                                         strUpper );
-                    delete [] strUpper;
+                if( responsiblePlayerID != -1 &&
+                    getLiveObject( responsiblePlayerID ) != NULL &&
+                    getLiveObject( responsiblePlayerID )->
+                        pendingReceivedMessages.size() > 0 ) {
+                    // someone else fed us, and they're still in the
+                    // middle of a local walk with updates pending after
+                    // they finish
                     
-                    mCurrentLastAteFillMax = lastAteFillMax;
-                    }
-
-
-                printf( "Our food = %d/%d\n", 
-                        ourLiveObject->foodStore,
-                        ourLiveObject->foodCapacity );
-                
-
-                if( ourLiveObject->foodStore > ourLiveObject->maxFoodStore ) {
-                    ourLiveObject->maxFoodStore = ourLiveObject->foodStore;
-                    }
-                if( ourLiveObject->foodCapacity > 
-                    ourLiveObject->maxFoodCapacity ) {
+                    // defer this food update too
                     
-                    ourLiveObject->maxFoodCapacity = 
-                        ourLiveObject->foodCapacity;
-                    }
-                if( ourLiveObject->foodStore == ourLiveObject->foodCapacity ) {
-                    mPulseHungerSound = false;
-
-                    mHungerSlipVisible = 0;
-                    }
-                else if( ourLiveObject->foodStore <= 3 ) {
-                    mHungerSlipVisible = 2;
-                    
-                    if( ourLiveObject->foodStore > 0 ) {
-                        
-                        if( ourLiveObject->foodStore > 1 ) {
-                            if( mHungerSound != NULL ) {
-                                // make sure it can be heard
-                                // even if paused
-                                setSoundLoudness( 1.0 );
-                                playSoundSprite( mHungerSound );
-                                }
-                            mPulseHungerSound = false;
-                            }
-                        else {
-                            mPulseHungerSound = true;
-                            }
-                        }
-                    }
-                else if( ourLiveObject->foodStore <= 6 ) {
-                    mHungerSlipVisible = 1;
-                    mPulseHungerSound = false;
+                    getLiveObject( responsiblePlayerID )->
+                        pendingReceivedMessages.push_back(
+                            stringDuplicate( message ) );
                     }
                 else {
-                    mHungerSlipVisible = -1;
+                    ourLiveObject->foodStore = foodStore;
+                    ourLiveObject->foodCapacity = foodCapacity;
+                    ourLiveObject->lastSpeed = lastSpeed;
+                    
+
+                    if( mCurrentLastAteString != NULL ) {                    
+                    
+
+                        // one to add to erased list
+                        // fade older ones first
+
+                        for( int i=0; i<mOldLastAteStrings.size(); i++ ) {
+                            float fade =
+                                mOldLastAteFades.getElementDirect( i );
+                        
+                            if( fade > 0.5 ) {
+                                fade -= 0.20;
+                                }
+                            else {
+                                fade -= 0.1;
+                                }
+                        
+                            *( mOldLastAteFades.getElement( i ) ) = fade;
+                        
+
+                            // bar must fade slower (different blending mode)
+                            float barFade =
+                                mOldLastAteBarFades.getElementDirect( i );
+                        
+                            barFade -= 0.01;
+                        
+                            *( mOldLastAteBarFades.getElement( i ) ) = barFade;
+                        
+
+                            if( fade <= 0 ) {
+                                mOldLastAteStrings.deallocateStringElement( i );
+                                mOldLastAteFillMax.deleteElement( i );
+                                mOldLastAteFades.deleteElement( i );
+                                mOldLastAteBarFades.deleteElement( i );
+                                i--;
+                                }
+
+                            else if( 
+                                strcmp( 
+                                    mCurrentLastAteString, 
+                                    mOldLastAteStrings.getElementDirect(i) )
+                                == 0 ) {
+                                // already in stack, move to top
+                                mOldLastAteStrings.deallocateStringElement( i );
+                                mOldLastAteFillMax.deleteElement( i );
+                                mOldLastAteFades.deleteElement( i );
+                                mOldLastAteBarFades.deleteElement( i );
+                                i--;
+                                }
+                            }
+                    
+                        mOldLastAteStrings.push_back( mCurrentLastAteString );
+                        mOldLastAteFillMax.push_back( mCurrentLastAteFillMax );
+                        mOldLastAteFades.push_back( 1.0f );
+                        mOldLastAteBarFades.push_back( 1.0f );
+
+                        mCurrentLastAteString = NULL;
+                        mCurrentLastAteFillMax = 0;
+                        }
+                
+                    if( lastAteID != 0 ) {
+                        char *strUpper = stringToUpperCase(
+                            getObject( lastAteID )->description );
+
+                        mCurrentLastAteString = 
+                            autoSprintf( "%s %s",
+                                         translate( "lastAte" ),
+                                         strUpper );
+                        delete [] strUpper;
+                    
+                        mCurrentLastAteFillMax = lastAteFillMax;
+                        }
+
+
+                    printf( "Our food = %d/%d\n", 
+                            ourLiveObject->foodStore,
+                            ourLiveObject->foodCapacity );
+                
+
+                    if( ourLiveObject->foodStore > 
+                        ourLiveObject->maxFoodStore ) {
+                        
+                        ourLiveObject->maxFoodStore = ourLiveObject->foodStore;
+                        }
+                    if( ourLiveObject->foodCapacity > 
+                        ourLiveObject->maxFoodCapacity ) {
+                    
+                        ourLiveObject->maxFoodCapacity = 
+                            ourLiveObject->foodCapacity;
+                        }
+                    if( ourLiveObject->foodStore == 
+                        ourLiveObject->foodCapacity ) {
+                        
+                        mPulseHungerSound = false;
+
+                        mHungerSlipVisible = 0;
+                        }
+                    else if( ourLiveObject->foodStore <= 3 ) {
+                        mHungerSlipVisible = 2;
+                    
+                        if( ourLiveObject->foodStore > 0 ) {
+                        
+                            if( ourLiveObject->foodStore > 1 ) {
+                                if( mHungerSound != NULL ) {
+                                    // make sure it can be heard
+                                    // even if paused
+                                    setSoundLoudness( 1.0 );
+                                    playSoundSprite( mHungerSound );
+                                    }
+                                mPulseHungerSound = false;
+                                }
+                            else {
+                                mPulseHungerSound = true;
+                                }
+                            }
+                        }
+                    else if( ourLiveObject->foodStore <= 6 ) {
+                        mHungerSlipVisible = 1;
+                        mPulseHungerSound = false;
+                        }
+                    else {
+                        mHungerSlipVisible = -1;
+                        }
                     }
                 }
             }
