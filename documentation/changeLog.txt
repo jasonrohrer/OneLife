@@ -36,6 +36,8 @@ Version 27     ???
 
 --Fixed potential crash when the player holding you dies.
 
+--Fixed circling forever at end of short paths by going directly toward final
+  spot if we detect that too many steps have occurred.
 
 
 

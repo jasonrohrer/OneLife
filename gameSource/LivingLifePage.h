@@ -154,6 +154,8 @@ typedef struct LiveObject {
         int currentPathStep;
         doublePair currentMoveDirection;
         
+        int numFramesOnCurrentStep;
+
         char onFinalPathStep;
 
 

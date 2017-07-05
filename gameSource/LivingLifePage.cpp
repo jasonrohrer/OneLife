@@ -728,6 +728,7 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
         }
     
     inObject->currentPathStep = 0;
+    inObject->numFramesOnCurrentStep = 0;
     inObject->onFinalPathStep = false;
     
     delete [] blockedMap;
@@ -6331,6 +6332,9 @@ void LivingLifePage::step() {
                                             existing->pathToDest =
                                                 newPath.getElementArray();
                                             existing->currentPathStep = 0;
+                                            existing->numFramesOnCurrentStep 
+                                                = 0;
+                                            
 
                                             printf( "    NEW PATH:  " );
                                             printPath( existing->pathToDest,
@@ -7265,6 +7269,16 @@ void LivingLifePage::step() {
             o->currentMoveDirection = 
                 normalize( add( o->currentMoveDirection, 
                                 mult( dir, turnFactor * frameRateFactor ) ) );
+            
+            if( o->numFramesOnCurrentStep * o->currentSpeed  * frameRateFactor
+                > 2 ) {
+                // spent twice as much time reaching this tile as we should
+                // may be circling
+                // go directly there instead
+                o->currentMoveDirection = dir;
+                }
+            
+            
 
             // don't change flip unless moving substantially in x
             if( fabs( o->currentMoveDirection.x ) > 0.5 ) {
@@ -7292,7 +7306,8 @@ void LivingLifePage::step() {
                     distance( o->currentPos,
                               endPos ) ) {
                     
-                    o->currentPathStep ++; 
+                    o->currentPathStep ++;
+                    o->numFramesOnCurrentStep = 0;
                     }
                 }
             else {
@@ -7375,7 +7390,11 @@ void LivingLifePage::step() {
                 //updateMoveSpeed( o );
                 }
             
+            o->numFramesOnCurrentStep++;
             }
+        
+        
+        
 
         if( o->id == ourID &&
             ( o->pendingAction || o->pendingActionAnimationProgress != 0 ) ) {
@@ -8833,6 +8852,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 
                 ourLiveObject->pathLength = 2;
                 ourLiveObject->currentPathStep = 0;
+                ourLiveObject->numFramesOnCurrentStep = 0;
                 ourLiveObject->onFinalPathStep = false;
                 
                 ourLiveObject->currentMoveDirection =
