@@ -41,6 +41,13 @@ if( $handle ) {
 $action = or_requestFilter( "action", "/[A-Z_]+/i" );
 
 
+$ip = $_SERVER[ 'REMOTE_ADDR' ];
+
+// seed the random number generator with their IP address
+// repeat calls under the same conditions send them to the same server
+mt_srand( crc32( $ip ) );
+
+
 $reportOnly = false;
 
 if( $action == "report" ) {

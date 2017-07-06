@@ -52,6 +52,9 @@ Server fixes:
 --Fixed disappearing baby when you click on your clothes when holding a baby.
   (You now cannot remove your clothes while holding a baby.)  Thanks Josh C.
 
+--Reflector now seeds random number generator with your IP address.  Repeat
+  suicide and reconnection won't send you to different servers.
+
 
 
 
