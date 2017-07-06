@@ -284,6 +284,24 @@ class LivingLifePage : public GamePage {
         
         
 
+        // an offset that we apply to all server-recieved coordinates
+        // before storing them locally, and reverse-apply to all local
+        // coordinates before sending them to the server.
+
+        // This keeps our local coordinates in a low range and prevents
+        // rounding errors caused by rendering huge integers as 32-bit floats
+        // on most graphics cards.
+        //
+        // We base this on the center of the first map chunk received
+        char mMapGlobalOffsetSet;
+        GridPos mMapGlobalOffset;
+
+        // conversion function for received coordinates into local coords
+        void applyReceiveOffset( int *inX, int *inY );
+        // converts local coors for sending back to server
+        int sendX( int inX );
+        int sendY( int inY );
+
 
         int mMapD;
 

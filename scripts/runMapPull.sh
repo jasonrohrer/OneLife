@@ -31,7 +31,7 @@ echo -n $screenW > settings/screenWidth.ini
 echo -n $screenH > settings/screenHeight.ini
 
 
-./OneLifeApp
+./OneLife
 
 echo -n "0" > settings/mapPullMode.ini
 echo -n 1280 > settings/screenWidth.ini

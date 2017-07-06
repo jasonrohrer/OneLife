@@ -956,6 +956,7 @@ static void splitAndExpandSprites( const char *inTgaFileName, int inNumSprites,
 LivingLifePage::LivingLifePage() 
         : mServerSocket( -1 ), 
           mFirstServerMessagesReceived( 0 ),
+          mMapGlobalOffsetSet( false ),
           mMapD( 64 ),
           mMapOffsetX( 0 ),
           mMapOffsetY( 0 ),
@@ -969,7 +970,10 @@ LivingLifePage::LivingLifePage()
           mGroundOverlaySprite( loadSprite( "ground.tga" ) ),
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! " ) {
-    
+
+    mMapGlobalOffset.x = 0;
+    mMapGlobalOffset.y = 0;
+          
     hideGuiPanel = SettingsManager::getIntSetting( "hideGameUI", 0 );
 
     mHungerSound = loadSoundSprite( "otherSounds", "hunger.aiff" );
@@ -3472,27 +3476,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
 
                 // pull over
-                // send request for our character's center
 
-                lastScreenViewCenter.x = CELL_D * ourLiveObject->xd;
-                lastScreenViewCenter.y = CELL_D * ourLiveObject->yd;
-                
-                setViewCenterPosition( lastScreenViewCenter.x, 
-                                       lastScreenViewCenter.y );
-                
-                char *message = autoSprintf( "MAP %d %d#",
-                                             ourLiveObject->xd,
-                                             ourLiveObject->yd );
-                
-                printf( "Sending message to server: %s\n", message );
-                sendToSocket( mServerSocket, 
-                              (unsigned char*)message, 
-                              strlen( message ) );
-                
-                numServerBytesSent += strlen( message );
-                overheadServerBytesSent += 52;
-                
-                delete [] message;
+                // auto-quit
+                printf( "Map pull done, auto-quitting game\n" );
+                quitGame();
                 }
             }
         
@@ -4050,6 +4037,35 @@ void playPendingReceivedMessages( LiveObject *inPlayer ) {
 
 
 
+void LivingLifePage::applyReceiveOffset( int *inX, int *inY ) {
+    if( mMapGlobalOffsetSet ) {
+        *inX -= mMapGlobalOffset.x;
+        *inY -= mMapGlobalOffset.y;
+        }
+    }
+
+
+
+int LivingLifePage::sendX( int inX ) {
+    if( mMapGlobalOffsetSet ) {
+        return inX + mMapGlobalOffset.x;
+        }
+    return inX;
+    }
+
+
+
+int LivingLifePage::sendY( int inY ) {
+    if( mMapGlobalOffsetSet ) {
+        return inY + mMapGlobalOffset.y;
+        }
+    return inY;
+    }
+
+
+    
+
+
         
 void LivingLifePage::step() {
     
@@ -4350,6 +4366,17 @@ void LivingLifePage::step() {
             printf( "Got map chunk with bin size %d, compressed size %d\n", 
                     binarySize, compressedSize );
             
+            if( ! mMapGlobalOffsetSet ) {
+                printf( "Using this first chunk center as our global offset:  "
+                        "%d, %d\n", x, y );
+                
+                mMapGlobalOffset.x = x;
+                mMapGlobalOffset.y = y;
+                mMapGlobalOffsetSet = true;
+                }
+            
+            applyReceiveOffset( &x, &y );
+            
             // recenter our in-ram sub-map around this new chunk
             int newMapOffsetX = x + sizeX/2;
             int newMapOffsetY = y + sizeY/2;
@@ -4640,6 +4667,9 @@ void LivingLifePage::step() {
                 int numRead = sscanf( lines[i], "%d %d %499s %d",
                                       &x, &y, idBuffer, &responsiblePlayerID );
                 if( numRead == 4 ) {
+
+                    applyReceiveOffset( &x, &y );
+
                     int mapX = x - mMapOffsetX + mMapD / 2;
                     int mapY = y - mMapOffsetY + mMapD / 2;
                     
@@ -5111,6 +5141,11 @@ void LivingLifePage::step() {
                 
                 
                 if( numRead == 22 ) {
+
+                    applyReceiveOffset( &actionTargetX, &actionTargetY );
+                    applyReceiveOffset( &heldOriginX, &heldOriginY );
+                    applyReceiveOffset( &( o.xd ), &( o.yd ) );
+                    
                     printf( "PLAYER_UPDATE with orVal=%d, orx=%d, ory=%d, "
                             "pX =%d, pY=%d\n",
                             heldOriginValid, heldOriginX, heldOriginY,
@@ -6055,7 +6090,10 @@ void LivingLifePage::step() {
 
                 SimpleVector<char *> *tokens =
                     tokenizeString( lines[i] );
-        
+                
+
+                applyReceiveOffset( &startX, &startY );
+                
 
                 o.pathLength = 0;
                 o.pathToDest = NULL;
@@ -6828,8 +6866,8 @@ void LivingLifePage::step() {
 
     if( mapPullMode && mapPullCurrentSaved && ! mapPullCurrentSent ) {
         char *message = autoSprintf( "MAP %d %d#",
-                                     mapPullCurrentX,
-                                     mapPullCurrentY );
+                                     sendX( mapPullCurrentX ),
+                                     sendY( mapPullCurrentY ) );
         
         printf( "Sending message to server: %s\n", message );
         sendToSocket( mServerSocket, 
@@ -7542,13 +7580,21 @@ void LivingLifePage::step() {
                 mapPullCurrentX = mapPullStartX;
                 mapPullCurrentY = mapPullStartY;
 
+                mMapGlobalOffset.x = mapPullCurrentX;
+                mMapGlobalOffset.y = mapPullCurrentY;
+                mMapGlobalOffsetSet = true;
+                
+                applyReceiveOffset( &mapPullCurrentX, &mapPullCurrentY );
+                applyReceiveOffset( &mapPullStartX, &mapPullStartY );
+                applyReceiveOffset( &mapPullEndX, &mapPullEndY );
+                
                 if( mapPullMode ) {
                     mapPullCurrentSaved = true;
                     mapPullModeFinalImage = false;
                     
                     char *message = autoSprintf( "MAP %d %d#",
-                                                 mapPullCurrentX,
-                                                 mapPullCurrentY );
+                                                 sendX( mapPullCurrentX ),
+                                                 sendY( mapPullCurrentY ) );
 
                     printf( "Sending message to server: %s\n", message );
 
@@ -7667,6 +7713,11 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    mMapGlobalOffsetSet = false;
+    mMapGlobalOffset.x = 0;
+    mMapGlobalOffset.y = 0;
+    
     
     mNotePaperPosOffset = mNotePaperHideOffset;
 
@@ -8222,7 +8273,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     
                 nextActionMessageToSend = 
                     autoSprintf( "SELF %d %d %d#",
-                                 clickDestX, clickDestY, 
+                                 sendX( clickDestX ), sendY( clickDestY ), 
                                  p.hitClothingIndex );
                 printf( "Use on self\n" );
                 }
@@ -8230,14 +8281,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 if( ourLiveObject->holdingID > 0 ) {
                     nextActionMessageToSend = 
                         autoSprintf( "DROP %d %d %d#",
-                                     clickDestX, clickDestY, 
+                                     sendX( clickDestX ), sendY( clickDestY ), 
                                      p.hitClothingIndex  );
                     nextActionDropping = true;
                     }
                 else {
                     nextActionMessageToSend = 
                         autoSprintf( "SREMV %d %d %d %d#",
-                                     clickDestX, clickDestY, 
+                                     sendX( clickDestX ), sendY( clickDestY ), 
                                      p.hitClothingIndex,
                                      p.hitSlotIndex );
                     printf( "Remove from own clothing container\n" );
@@ -8426,7 +8477,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
                         nextActionMessageToSend = 
                             autoSprintf( "KILL %d %d#",
-                                         clickDestX, clickDestY );
+                                         sendX( clickDestX ), 
+                                         sendY( clickDestY ) );
                         
                         
                         playerActionTargetX = clickDestX;
@@ -8496,7 +8548,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
                         nextActionMessageToSend = 
                             autoSprintf( "UBABY %d %d %d#",
-                                         clickDestX, clickDestY, 
+                                         sendX( clickDestX ), 
+                                         sendY( clickDestY ), 
                                          p.hitClothingIndex );
                         
                         
@@ -8764,7 +8817,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 // queue this until after we are done moving, if we are
                 nextActionMessageToSend = 
                     autoSprintf( "%s %d %d%s#", action,
-                                 clickDestX, clickDestY, extra );
+                                 sendX( clickDestX ), 
+                                 sendY( clickDestY ), extra );
                 
                 playerActionTargetX = clickDestX;
                 playerActionTargetY = clickDestY;
@@ -8893,9 +8947,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         moveMessageBuffer.appendElementString( "MOVE" );
         // start is absolute
-        char *startString = autoSprintf( " %d %d", 
-                                         ourLiveObject->pathToDest[0].x,
-                                         ourLiveObject->pathToDest[0].y );
+        char *startString = 
+            autoSprintf( " %d %d", 
+                         sendX( ourLiveObject->pathToDest[0].x ),
+                         sendY( ourLiveObject->pathToDest[0].y ) );
         moveMessageBuffer.appendElementString( startString );
         delete [] startString;
         

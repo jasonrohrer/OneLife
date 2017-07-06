@@ -44,6 +44,13 @@ Version 27     ???
 --Support for making objects that are permanent and drawn behind player without
   blocking walking (e.g., roads).
 
+--Fixed visual round-off errors at high coordinate values by offsetting all
+  coordinates from our starting location before using them as to-draw positions
+  (32 bit floats cannot represent large coordinates with enough precision).
+
+--Added sane behavior at actual edges of world instead of letting player walk
+  off edge and cause a crash.
+
 
 
 Server fixes:

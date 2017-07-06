@@ -49,6 +49,11 @@ static int chunkDimensionX = 32;
 static int chunkDimensionY = 30;
 
 
+// what object is placed on edge of map
+static int edgeObjectID = 0;
+
+
+
 static int currentResponsiblePlayer = -1;
 
 
@@ -404,7 +409,20 @@ static int getMapBiomeIndex( int inX, int inY,
 
 static int lastCheckedBiome = -1;
 
+// 1671 shy of int max
+static int xLimit = 2147481977;
+static int yLimit = 2147481977;
+
+
 static int getBaseMap( int inX, int inY ) {
+    
+    if( inX > xLimit || inX < -xLimit ||
+        inY > yLimit || inY < -yLimit ) {
+    
+        return edgeObjectID;
+        }
+    
+    
     // first step:  save rest of work if density tells us that
     // nothing is here anyway
     double density = getXYFractal( inX, inY, 0.1, 1 );
@@ -699,6 +717,9 @@ void resetEveRadius() {
 
 
 void initMap() {
+
+    edgeObjectID = SettingsManager::getIntSetting( "edgeObject", 0 );
+    
 
     for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
         recentPlacements[i].x = 0;
