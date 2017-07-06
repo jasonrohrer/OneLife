@@ -1809,14 +1809,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mBlocksWalkingCheckbox ) {
         mLeftBlockingRadiusField.setVisible( false );
         mRightBlockingRadiusField.setVisible( false );
-        
-        mDrawBehindPlayerCheckbox.setToggled( false );
-        mDrawBehindPlayerCheckbox.setVisible( false );
-        
-        if( !mSetHeldPos ) {
-            mSetHeldPosButton.setVisible( true );
-            mMinPickupAgeField.setVisible( true );
-            }
 
         if( mBlocksWalkingCheckbox.getToggled() ) {
             mDeathMarkerCheckbox.setToggled( false );
@@ -1824,12 +1816,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             if( mCheckboxes[1]->getToggled() ) {
                 mLeftBlockingRadiusField.setVisible( true );
                 mRightBlockingRadiusField.setVisible( true );
-                mDrawBehindPlayerCheckbox.setVisible( true );
-                if( mSetHeldPos ) {
-                    actionPerformed( &mEndSetHeldPosButton );
-                    }
-                mSetHeldPosButton.setVisible( false );
-                mMinPickupAgeField.setVisible( true );
                 }
             }
         if( ! mLeftBlockingRadiusField.isVisible() ) {
@@ -1844,10 +1830,27 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mDrawBehindPlayerCheckbox.setToggled( false );
         mDrawBehindPlayerCheckbox.setVisible( false );
 
-        if( !mSetHeldPos ) {
-            mSetHeldPosButton.setVisible( true );
-            mMinPickupAgeField.setVisible( true );
+        if( ! mCheckboxes[1]->getToggled() ) {
+            if( !mSetHeldPos ) {
+                mSetHeldPosButton.setVisible( true );
+                mMinPickupAgeField.setVisible( true );
+                }
+         
+            mLeftBlockingRadiusField.setVisible( false );
+            mRightBlockingRadiusField.setVisible( false );
+            
+            mLeftBlockingRadiusField.setInt( 0 );
+            mRightBlockingRadiusField.setInt( 0 );
             }
+        else {
+            if( mSetHeldPos ) {
+                actionPerformed( &mEndSetHeldPosButton );
+                }
+            mSetHeldPosButton.setVisible( false );
+            mMinPickupAgeField.setVisible( false );
+            mDrawBehindPlayerCheckbox.setVisible( true );
+            }
+        
         
         if( mBlocksWalkingCheckbox.getToggled() ) {
 

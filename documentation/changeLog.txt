@@ -41,6 +41,8 @@ Version 27     ???
 
 --Pathmarking code now accounts for diagonal path steps.
 
+--Support for making objects that are permanent and drawn behind player without
+  blocking walking (e.g., roads).
 
 
 
