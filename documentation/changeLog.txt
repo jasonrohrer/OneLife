@@ -48,8 +48,8 @@ Version 27     ???
   coordinates from our starting location before using them as to-draw positions
   (32 bit floats cannot represent large coordinates with enough precision).
 
---Added sane behavior at actual edges of world instead of letting player walk
-  off edge and cause a crash.
+--Map pull mode now auto-logs-in.
+
 
 
 
@@ -63,6 +63,9 @@ Server fixes:
 
 --Reflector now seeds random number generator with your IP address.  Repeat
   suicide and reconnection won't send you to different servers.
+
+--Added sane behavior at actual edges of world instead of letting player walk
+  off edge and cause a crash.
 
 
 

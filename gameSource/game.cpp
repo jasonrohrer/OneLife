@@ -85,6 +85,9 @@ CustomRandomSource randSource( 34957197 );
 #include "whiteSprites.h"
 
 
+// should we pull the map
+static char mapPullMode = 0;
+
 
 // start at reflector URL
 char *reflectorURL = NULL;
@@ -1391,6 +1394,9 @@ void drawFrame( char inUpdate ) {
                     initMusicPlayer();
                     setMusicLoudness( musicLoudness );
                     
+                    mapPullMode = 
+                        SettingsManager::getIntSetting( "mapPullMode", 0 );
+
                     currentGamePage = existingAccountPage;
                     currentGamePage->base_makeActive( true );
                 }
@@ -1417,7 +1423,12 @@ void drawFrame( char inUpdate ) {
                 currentGamePage = settingsPage;
                 currentGamePage->base_makeActive( true );
                 }
-            else if( existingAccountPage->checkSignal( "done" ) ) {
+            else if( existingAccountPage->checkSignal( "done" ) || 
+                     mapPullMode ) {
+                
+                // auto-log-in one time for map pull
+                mapPullMode = false;
+
                 startConnecting();
                 }
             }
