@@ -65,23 +65,30 @@ extern Font *smallFont;
 static ObjectPickable objectPickable;
 
 
+#include "CategoryPickable.h"
+
+static CategoryPickable categoryPickable;
+
+
 
 EditorTransitionPage::EditorTransitionPage()
         : mAutoDecayTimeField( smallFont, 
                                0,  -170, 6,
                                false,
                                "AutoDecay Seconds", "0123456789", NULL ),
-          mSaveTransitionButton( mainFont, -320, 0, "Save" ),
+          mSaveTransitionButton( mainFont, -220, 0, "Save" ),
           mObjectPicker( &objectPickable, +410, 90 ),
-          mObjectEditorButton( mainFont, -300, 260, "Objects" ),
+          mCategoryPicker( &categoryPickable, -410, 90 ),
+          mObjectEditorButton( mainFont, 410, 260, "Objects" ),
+          mCategoryEditorButton( mainFont, -410, 260, "Categories" ),
           mProducedByNext( smallFont, 180, 260, "Next" ),
           mProducedByPrev( smallFont, -180, 260, "Prev" ),
           mProducesNext( smallFont, 180, -260, "Next" ),
           mProducesPrev( smallFont, -180, -260, "Prev" ),
-          mDelButton( smallFont, +150, 0, "Delete" ),
-          mDelConfirmButton( smallFont, +150, 40, "Delete?" ),
-          mSwapActorButton( "swapButton.tga", -200, 0 ),
-          mSwapTargetButton( "swapButton.tga", 0, 0 ) {
+          mDelButton( smallFont, +250, 0, "Delete" ),
+          mDelConfirmButton( smallFont, +250, 40, "Delete?" ),
+          mSwapActorButton( "swapButton.tga", -100, 0 ),
+          mSwapTargetButton( "swapButton.tga", 100, 0 ) {
 
     mSwapActorButton.setPixelSize( 2 );
     mSwapTargetButton.setPixelSize( 2 );
@@ -91,7 +98,9 @@ EditorTransitionPage::EditorTransitionPage()
     
     addComponent( &mSaveTransitionButton );
     addComponent( &mObjectPicker );
+    addComponent( &mCategoryPicker );
     addComponent( &mObjectEditorButton );
+    addComponent( &mCategoryEditorButton );
     addComponent( &mDelButton );
     addComponent( &mDelConfirmButton );
 
@@ -106,9 +115,11 @@ EditorTransitionPage::EditorTransitionPage()
 
     mSaveTransitionButton.addActionListener( this );
     mObjectEditorButton.addActionListener( this );
+    mCategoryEditorButton.addActionListener( this );
     
     mObjectPicker.addActionListener( this );
-
+    mCategoryPicker.addActionListener( this );
+    
     mSaveTransitionButton.setVisible( false );
     
     mDelButton.addActionListener( this );
@@ -147,7 +158,7 @@ EditorTransitionPage::EditorTransitionPage()
     int i = 0;
     
     for( int y = 0; y<2; y++ ) {
-        int xP = - 200;
+        int xP = - 100;
         for( int x = 0; x<2; x++ ) {
         
             // buttons hiding under displays to register clicks
@@ -232,6 +243,21 @@ void EditorTransitionPage::clearUseOfObject( int inObjectID ) {
             setObjectByIndex( &mCurrentTransition, i, 0 );
             }
         }
+    checkIfSaveVisible();
+    }
+
+
+
+void EditorTransitionPage::clearUseOfCategory( int inCategoryID ) {
+    // fixme
+    /*
+    for( int i=0; i<4; i++ ) {    
+        if( getObjectByIndex( &mCurrentTransition, i ) == inObjectID ) {
+            
+            setObjectByIndex( &mCurrentTransition, i, 0 );
+            }
+        }
+    */
     checkIfSaveVisible();
     }
 
@@ -604,6 +630,9 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mObjectEditorButton ) {
         setSignal( "objectEditor" );
         }
+    else if( inTarget == &mCategoryEditorButton ) {
+        setSignal( "categoryEditor" );
+        }
     else if( inTarget == &mProducedByNext ) {
         mProducedBySkip += NUM_TREE_TRANS_TO_SHOW;
         
@@ -912,7 +941,7 @@ void EditorTransitionPage::makeActive( char inFresh ) {
         }
     
     mObjectPicker.redoSearch();
-
+    mCategoryPicker.redoSearch();
     }
 
 

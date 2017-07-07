@@ -571,6 +571,42 @@ char isObjectUsed( int inObjectID ) {
 
 
 
+
+char isCategoryUsed( int inCategoryID ) {
+    // fixme
+
+    return false;
+    /*
+    
+    int numResults, numRemaining;
+    
+    TransRecord **results = searchUses( inObjectID, 
+                                        0, 1,
+                                        &numResults, &numRemaining );
+    
+    if( results != NULL ) {
+        delete [] results;
+        
+        return true;
+        }
+    
+    
+    results = searchProduces( inObjectID, 
+                              0, 1,
+                              &numResults, &numRemaining );
+    
+    if( results != NULL ) {
+        delete [] results;
+        
+        return true;
+        }
+
+    return false;
+    */
+    }
+
+
+
 char isGrave( int inObjectID ) {
     
     ObjectRecord *r = getObject( inObjectID );
