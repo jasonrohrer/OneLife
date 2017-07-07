@@ -50,6 +50,8 @@ convolution.cpp \
 fft.cpp \
 zoomView.cpp \
 categoryBank.cpp \
+EditorCategoryPage.cpp \
+
 
 
 

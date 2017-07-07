@@ -57,6 +57,7 @@ int accountHmacVersionNumber = 0;
 #include "EditorObjectPage.h"
 #include "EditorTransitionPage.h"
 #include "EditorAnimationPage.h"
+#include "EditorCategoryPage.h"
 
 #include "LoadingPage.h"
 
@@ -82,6 +83,7 @@ EditorSpriteTrimPage *spriteTrimPage;
 EditorObjectPage *objectPage;
 EditorTransitionPage *transPage;
 EditorAnimationPage *animPage;
+EditorCategoryPage *categoryPage;
 
 LoadingPage *loadingPage;
 
@@ -474,6 +476,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     objectPage = new EditorObjectPage;
     transPage = new EditorTransitionPage;
     animPage = new EditorAnimationPage;
+    categoryPage = new EditorCategoryPage;
     loadingPage = new LoadingPage;
     
     loadingPage->setCurrentPhase( "OVERLAYS" );
@@ -523,6 +526,7 @@ void freeFrameDrawer() {
     delete objectPage;
     delete transPage;
     delete animPage;
+    delete categoryPage;
     delete loadingPage;
 
     freeTransBank();
@@ -1264,10 +1268,21 @@ void drawFrame( char inUpdate ) {
                 currentGamePage = objectPage;
                 currentGamePage->base_makeActive( true );
                 }
+            else if( transPage->checkSignal( "categoryEditor" ) ) {
+                currentGamePage = categoryPage;
+                currentGamePage->base_makeActive( true );
+                }
             }
         else if( currentGamePage == animPage ) {
             if( animPage->checkSignal( "objectEditor" ) ) {
                 currentGamePage = objectPage;
+                currentGamePage->base_makeActive( true );
+                }
+            }
+        
+        else if( currentGamePage == categoryPage ) {
+            if( categoryPage->checkSignal( "transEditor" ) ) {
+                currentGamePage = transPage;
                 currentGamePage->base_makeActive( true );
                 }
             }
