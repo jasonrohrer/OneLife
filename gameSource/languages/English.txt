@@ -13,6 +13,8 @@ sprites "SPRITES"
 objects "OBJECTS"
 transitions "TRANSITIONS"
 animations "ANIMATIONS"
+categories "CATEGORIES"
+
 groundTextures "GROUND TEXTURES"
 
 
@@ -20,6 +22,7 @@ spritesRebuild "SPRITES##(REBUILDING CACHE)"
 objectsRebuild "OBJECTS##(REBUILDING CACHE)"
 transitionsRebuild "TRANSITIONS##(REBUILDING CACHE)"
 animationsRebuild "ANIMATIONS##(REBUILDING CACHE)"
+categoriesRebuild "CATEGORIES##(REBUILDING CACHE)"
 
 
 

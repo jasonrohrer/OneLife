@@ -12,6 +12,7 @@
 
 #include "GamePage.h"
 #include "TextButton.h"
+#include "TextField.h"
 
 #include "Picker.h"
 
@@ -55,6 +56,9 @@ class EditorCategoryPage : public GamePage, public ActionListener {
         Picker mCategoryPicker;
 
         TextButton mTransEditorButton;
+
+        TextButton mNewCategoryButton;
+        TextField mNewCategoryField;
 
         int mCurrentObject;
 

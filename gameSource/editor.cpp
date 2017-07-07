@@ -1222,6 +1222,40 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initAnimationBankFinish();
+                        
+                        char rebuilding;
+                                                
+                        int numCats = initCategoryBankStart( &rebuilding );
+ 
+                        if( rebuilding ) {
+                            loadingPage->setCurrentPhase( 
+                                "CATEGORIES##(REBUILDING CACHE)" );
+                            }
+                        else {
+                            loadingPage->setCurrentPhase( "CATEGORIES" );
+                            }
+                        loadingPage->setCurrentProgress( 0 );
+                        
+
+                        loadingStepBatchSize = numCats / 20;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 6: {
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initCategoryBankStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
+                    
+                    if( progress == 1.0 ) {
+                        initCategoryBankFinish();
                         loadingPhase ++;
                         }
                     break;

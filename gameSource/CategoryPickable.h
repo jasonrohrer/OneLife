@@ -99,9 +99,6 @@ class CategoryPickable : public Pickable {
             
             transPage->clearUseOfCategory( inID );
             deleteCategoryFromBank( inID );
-            for( int i=0; i<endAnimType; i++ ) {
-                clearAnimation( inID, (AnimType)i );
-                }
             }
 
 

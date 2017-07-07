@@ -48,6 +48,8 @@ CategoryRecord **searchCategories( const char *inSearch,
                                    int *outNumResults, int *outNumRemaining );
 
 
+// returns ID of existing category if one exists
+// otherwise, adds it
 int addCategory( const char *inDescription );
 
 void addCategoryToObject( int inObjectID, int inCategoryID );

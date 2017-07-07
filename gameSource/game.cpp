@@ -59,6 +59,7 @@ CustomRandomSource randSource( 34957197 );
 #include "spriteBank.h"
 #include "objectBank.h"
 #include "transitionBank.h"
+#include "categoryBank.h"
 #include "soundBank.h"
 
 #include "liveObjectSet.h"
@@ -1352,7 +1353,42 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initAnimationBankFinish();
+                        loadingPage->setCurrentProgress( 0 );
+
+                        char rebuilding;
+                                                
+                        int numCats = initCategoryBankStart( &rebuilding );
+ 
+                        if( rebuilding ) {
+                            loadingPage->setCurrentPhase(
+                                translate( "categoriesRebuild" ) );
+                            }
+                        else {
+                            loadingPage->setCurrentPhase( 
+                                translate( "categories" ) );
+                            }
+                        loadingPage->setCurrentProgress( 0 );
                         
+
+                        loadingStepBatchSize = numCats / numLoadingSteps;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 5: {
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initCategoryBankStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
+                    
+                    if( progress == 1.0 ) {
+                        initCategoryBankFinish();
                         loadingPage->setCurrentPhase( 
                             translate( "groundTextures" ) );
 
@@ -1367,7 +1403,8 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 5: {
+
+                case 6: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initGroundSpritesStep();

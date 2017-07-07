@@ -119,7 +119,9 @@ float initCategoryBankStep() {
                             }
                         r->objectIDSet.push_back( objID );
                         }
-                    }    
+                    }
+                
+                records.push_back( r );
                 }
                             
             for( int i=0; i<numLines; i++ ) {
@@ -422,6 +424,48 @@ void saveCategoryToDisk( int inCategoryID ) {
 
 int addCategory( const char *inDescription ) {
     
+    char *loweDes = stringToLowerCase( inDescription );
+
+    int numMatches = tree.countMatches( loweDes );
+
+    char exists = false;
+    int existingID = 0;
+    
+    if( numMatches > 0 ) {
+        
+        int numResults, numRemaining;
+        
+        CategoryRecord **results = 
+            searchCategories( loweDes, 
+                              0, numMatches, &numResults, &numRemaining );
+        
+        for( int i=0; i<numResults; i++ ) {
+            char *otherLower = stringToLowerCase( results[i]->description );
+            
+            if( strcmp( loweDes, otherLower ) == 0 ) {
+                exists = true;
+                existingID = results[i]->id;
+                }
+            
+            delete [] otherLower;
+            
+            if( exists ) {
+                break;
+                }
+            }
+        delete [] results;
+        
+        }
+    delete [] loweDes;
+    
+
+    if( exists ) {
+        return existingID;
+        }
+    
+    
+    
+
     int newID = -1;
 
 
@@ -453,7 +497,10 @@ int addCategory( const char *inDescription ) {
         
         if( newID == -1 ) {
             newID = nextCategoryNumber;
+            
+            nextCategoryNumber ++;
             }
+        
         
         char *nextNumberString = autoSprintf( "%d", nextCategoryNumber );
         
