@@ -50,6 +50,8 @@ Version 27     ???
 
 --Map pull mode now auto-logs-in.
 
+--Death screen now shows age and cause of death.
+
 
 
 
