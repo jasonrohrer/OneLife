@@ -12,9 +12,13 @@ class ExtendedMessagePage : public GamePage, public ActionListener {
         
     public:
         ExtendedMessagePage();
+        ~ExtendedMessagePage();
         
 
         void setMessageKey( const char *inMessageKey );
+        
+        // destroyed by caller
+        void setSubMessage( char *inMessage );
         
 
         virtual void actionPerformed( GUIComponent *inTarget );
@@ -27,6 +31,7 @@ class ExtendedMessagePage : public GamePage, public ActionListener {
         TextButton mOKButton;
 
         const char *mMessageKey;
+        char *mSubMessage;
 
 
     };

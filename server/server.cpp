@@ -191,7 +191,12 @@ typedef struct LiveObject {
         char error;
         const char *errorCauseString;
 
+        char *deathReason;
+
         char deleteSent;
+        // wall clock time when we consider the delete good and sent
+        // and can close their connection
+        double deleteSentDoneETA;
 
         char deathLogged;
 
@@ -747,6 +752,26 @@ double getAgeRate() {
     }
 
 
+static void setDeathReason( LiveObject *inPlayer, const char *inTag,
+                            int inOptionalID = 0 ) {
+    
+    if( inPlayer->deathReason != NULL ) {
+        delete [] inPlayer->deathReason;
+        }
+    
+    // leave space in front so it works at end of PU line
+    if( strcmp( inTag, "killed" ) == 0 ) {
+        
+        inPlayer->deathReason = autoSprintf( " reason_%s_%d", 
+                                             inTag, inOptionalID );
+        }
+    else {
+        // ignore ID
+        inPlayer->deathReason = autoSprintf( " reason_%s", inTag );
+        }
+    }
+
+
 
 double computeAge( LiveObject *inPlayer ) {
     double deltaSeconds = 
@@ -755,6 +780,8 @@ double computeAge( LiveObject *inPlayer ) {
     double age = deltaSeconds * getAgeRate();
     
     if( age >= forceDeathAge ) {
+        setDeathReason( inPlayer, "age" );
+        
         inPlayer->error = true;
         }
     return age;
@@ -1045,6 +1072,8 @@ int sendMapChunkMessage( LiveObject *inO,
         inO->lastSentMapY = yd;
         }
     else if( numSent == -1 ) {
+        setDeathReason( inO, "disconnected" );
+        
         inO->error = true;
         }
     return numSent;
@@ -1769,8 +1798,15 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
     char *clothingList = clothingListBuffer.getElementString();
 
 
+    const char *deathReason = "";
+    
+    if( inDelete && inPlayer->deathReason != NULL ) {
+        deathReason = inPlayer->deathReason;
+        }
+    
+
     char *updateLine = autoSprintf( 
-        "%d %d %d %d %d %d %s %d %d %d %d %.2f %s %.2f %.2f %.2f %s %d %d\n",
+        "%d %d %d %d %d %d %s %d %d %d %d %.2f %s %.2f %.2f %.2f %s %d %d%s\n",
         inPlayer->id,
         inPlayer->displayID,
         inPlayer->facingOverride,
@@ -1789,7 +1825,8 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
         computeMoveSpeed( inPlayer ),
         clothingList,
         inPlayer->justAte,
-        inPlayer->responsiblePlayerID );
+        inPlayer->responsiblePlayerID,
+        deathReason );
     
     inPlayer->justAte = false;
     
@@ -1975,7 +2012,7 @@ void processLoggedInPlayer( Socket *inSock,
 
         newObject.isEve = true;
         
-        newObject.lifeStartTimeSeconds -= 14 * ( 1.0 / getAgeRate() );
+        newObject.lifeStartTimeSeconds -= 0 * ( 1.0 / getAgeRate() );
 
         
         int femaleID = getRandomFemalePersonObject();
@@ -2175,6 +2212,9 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.firstMessageSent = false;
     newObject.error = false;
     newObject.errorCauseString = "";
+    
+
+    newObject.deathReason = NULL;
     
     newObject.deleteSent = false;
     newObject.deathLogged = false;
@@ -3180,6 +3220,8 @@ int main() {
                 readSocketFull( nextPlayer->sock, nextPlayer->sockBuffer );
             
             if( ! result ) {
+                setDeathReason( nextPlayer, "disconnected" );
+                
                 nextPlayer->error = true;
                 nextPlayer->errorCauseString =
                     "Socket read failed";
@@ -3197,6 +3239,9 @@ int main() {
                 
                 if( m.type == UNKNOWN ) {
                     AppLog::info( "Client error, unknown message type." );
+                    
+                    setDeathReason( nextPlayer, "disconnected" );
+
                     nextPlayer->error = true;
                     nextPlayer->errorCauseString =
                         "Unknown message type";
@@ -3247,6 +3292,8 @@ int main() {
                         delete [] mapChunkMessage;
 
                         if( numSent == -1 ) {
+                            setDeathReason( nextPlayer, "disconnected" );
+
                             nextPlayer->error = true;
                             nextPlayer->errorCauseString =
                                 "Socket write failed";
@@ -3759,6 +3806,10 @@ int main() {
                                     if( hitPlayer != NULL ) {
                                         // break the connection with 
                                         // them
+                                        setDeathReason( hitPlayer, 
+                                                        "killed",
+                                                        nextPlayer->holdingID );
+
                                         hitPlayer->error = true;
                                         hitPlayer->errorCauseString =
                                             "Player killed by other player";
@@ -4975,7 +5026,10 @@ int main() {
                 nextPlayer->isNew = false;
                 
                 nextPlayer->deleteSent = true;
-
+                // wait 5 seconds before closing their connection
+                // so they can get the message
+                nextPlayer->deleteSentDoneETA = Time::getCurrentTime() + 5;
+                
                 GridPos dropPos;
                 
                 if( nextPlayer->xd == 
@@ -5603,6 +5657,9 @@ int main() {
                         // player has died
                         
                         // break the connection with them
+
+                        setDeathReason( nextPlayer, "hunger" );
+
                         nextPlayer->error = true;
                         nextPlayer->errorCauseString =
                             "Player starved";
@@ -6048,6 +6105,8 @@ int main() {
                 
 
                 if( numSent == -1 ) {
+                    setDeathReason( nextPlayer, "disconnected" );
+
                     nextPlayer->error = true;
                     nextPlayer->errorCauseString =
                         "Socket write failed";
@@ -6075,6 +6134,8 @@ int main() {
                     
 
                     if( numSent == -1 ) {
+                        setDeathReason( nextPlayer, "disconnected" );
+
                         nextPlayer->error = true;
                         nextPlayer->errorCauseString =
                             "Socket write failed";
@@ -6244,6 +6305,8 @@ int main() {
                                 false, false );
 
                         if( numSent == -1 ) {
+                            setDeathReason( nextPlayer, "disconnected" );
+
                             nextPlayer->error = true;
                             nextPlayer->errorCauseString =
                                 "Socket write failed";
@@ -6263,6 +6326,8 @@ int main() {
                                 false, false );
                         
                         if( numSent == -1 ) {
+                            setDeathReason( nextPlayer, "disconnected" );
+
                             nextPlayer->error = true;
                             nextPlayer->errorCauseString =
                                 "Socket write failed";
@@ -6311,6 +6376,8 @@ int main() {
                                 false, false );
 
                         if( numSent == -1 ) {
+                            setDeathReason( nextPlayer, "disconnected" );
+
                             nextPlayer->error = true;
                             nextPlayer->errorCauseString =
                                 "Socket write failed";
@@ -6344,6 +6411,8 @@ int main() {
                                 false, false );
 
                         if( numSent == -1 ) {
+                            setDeathReason( nextPlayer, "disconnected" );
+
                             nextPlayer->error = true;
                             nextPlayer->errorCauseString =
                                 "Socket write failed";
@@ -6374,6 +6443,8 @@ int main() {
                                 false, false );
                         
                         if( numSent == -1 ) {
+                            setDeathReason( nextPlayer, "disconnected" );
+
                             nextPlayer->error = true;
                             nextPlayer->errorCauseString =
                                 "Socket write failed";
@@ -6404,6 +6475,8 @@ int main() {
                                 false, false );
                         
                         if( numSent == -1 ) {
+                            setDeathReason( nextPlayer, "disconnected" );
+
                             nextPlayer->error = true;
                             nextPlayer->errorCauseString =
                                 "Socket write failed";
@@ -6421,6 +6494,8 @@ int main() {
                             false, false );
                     
                     if( numSent == -1 ) {
+                        setDeathReason( nextPlayer, "disconnected" );
+
                         nextPlayer->error = true;
                         nextPlayer->errorCauseString =
                             "Socket write failed";
@@ -6456,6 +6531,8 @@ int main() {
                              false, false );
 
                      if( numSent == -1 ) {
+                         setDeathReason( nextPlayer, "disconnected" );
+
                          nextPlayer->error = true;
                          nextPlayer->errorCauseString =
                              "Socket write failed";
@@ -6491,7 +6568,8 @@ int main() {
         for( int i=0; i<players.size(); i++ ) {
             LiveObject *nextPlayer = players.getElement(i);
 
-            if( nextPlayer->error && nextPlayer->deleteSent ) {
+            if( nextPlayer->error && nextPlayer->deleteSent &&
+                nextPlayer->deleteSentDoneETA < Time::getCurrentTime() ) {
                 AppLog::infoF( "Closing connection to player %d on error "
                                "(cause: %s)",
                                nextPlayer->id, nextPlayer->errorCauseString );
@@ -6518,6 +6596,10 @@ int main() {
 
                 if( nextPlayer->email != NULL ) {
                     delete [] nextPlayer->email;
+                    }
+
+                if( nextPlayer->deathReason != NULL ) {
+                    delete [] nextPlayer->deathReason;
                     }
                 
                 delete nextPlayer->babyBirthTimes;

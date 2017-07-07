@@ -22,7 +22,8 @@ extern char *accountKey;
 ExtendedMessagePage::ExtendedMessagePage()
         : mOKButton( mainFont, 0, -128, 
                      translate( "okay" ) ),
-          mMessageKey( "" )  {
+          mMessageKey( "" ),
+          mSubMessage( NULL ) {
 
     addComponent( &mOKButton );
     
@@ -32,9 +33,24 @@ ExtendedMessagePage::ExtendedMessagePage()
     }
 
 
+ExtendedMessagePage::~ExtendedMessagePage() {
+    if( mSubMessage != NULL ) {
+        delete [] mSubMessage;
+        }
+    }
+
+
+
 
 void ExtendedMessagePage::setMessageKey( const char *inMessageKey ) {
     mMessageKey = inMessageKey;
+    }
+
+void ExtendedMessagePage::setSubMessage( char *inMessage ) {
+    if( mSubMessage != NULL ) {
+        delete [] mSubMessage;
+        }
+    mSubMessage = stringDuplicate( inMessage );
     }
 
 
@@ -54,5 +70,11 @@ void ExtendedMessagePage::draw( doublePair inViewCenter,
     doublePair pos = { 0, 200 };
     
     drawMessage( mMessageKey, pos );
+    
+    if( mSubMessage != NULL ) {
+        pos.y = 50;
+        drawMessage( mSubMessage, pos );
+        }
+    
     }
 

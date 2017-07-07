@@ -76,6 +76,22 @@ lastAte = "ATE"
 
 youDied "YOU DIED"
 
+deathAgeOne "AGE:  1 YEAR"
+deathAge "AGE:  %d YEARS"
+
+reasonDisconnected "CAUSE:  CONNECTION LOST"
+
+reasonHunger "CAUSE:  STARVATION"
+
+reasonKilled "CAUSE:  KILLED BY "
+
+reasonKilledUnknown "CAUSE:  KILLED BY UNKNOWN WEAPON"
+
+reasonOldAge "CAUSE:  OLD AGE"
+
+reasonUnknown "CAUSE:  UNKNOWN"
+
+
 okay "OK"
 quit "QUIT"
 

@@ -248,6 +248,10 @@ class LivingLifePage : public GamePage {
         
         char isMapBeingPulled();
 
+        // destroyed by caller
+        // can be NULL
+        char *getDeathReason();
+
         // prevent a jitter when frameRateFactor changes due to fps lag
         void adjustAllFrameCounts( double inOldFrameRateFactor,
                                    double inNewFrameRateFactor );
@@ -487,7 +491,14 @@ class LivingLifePage : public GamePage {
         
         void checkForPointerHit( PointerHitRecord *inRecord,
                                  float inX, float inY );
+        
 
+
+        void handleOurDeath();
+        
+
+        char *mDeathReason;
+        
     };
 
 

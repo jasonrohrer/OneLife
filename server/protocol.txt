@@ -181,7 +181,14 @@ before continuing to move.
 
 Deleted players reported in update with
 X X 
-for x y.
+for x y
+and a reason string a the tail end of the line.  Reason can be
+
+reason_disconnected
+reason_killed_id   (where id is the object that killed the player)
+reason_hunger
+reason_age
+
 
 Clothing sets are in the format of 
 hat;tunic;front_shoe;back_shoe;bottom;backpack

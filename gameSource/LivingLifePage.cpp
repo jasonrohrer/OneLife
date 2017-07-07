@@ -969,7 +969,8 @@ LivingLifePage::LivingLifePage()
           mPathMarkSprite( loadWhiteSprite( "pathMark.tga" ) ),
           mGroundOverlaySprite( loadSprite( "ground.tga" ) ),
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
-                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! " ) {
+                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! " ),
+          mDeathReason( NULL ) {
 
     mMapGlobalOffset.x = 0;
     mMapGlobalOffset.y = 0;
@@ -1241,6 +1242,10 @@ LivingLifePage::~LivingLifePage() {
         freeSprite( mHungerDashErasedSprites[i] );
         freeSprite( mHungerBarSprites[i] );
         freeSprite( mHungerBarErasedSprites[i] );
+        }
+
+    if( mDeathReason != NULL ) {
+        delete [] mDeathReason;
         }
     }
 
@@ -4063,7 +4068,51 @@ int LivingLifePage::sendY( int inY ) {
     }
 
 
+
+char *LivingLifePage::getDeathReason() {
+    if( mDeathReason != NULL ) {
+        return stringDuplicate( mDeathReason );
+        }
+    else {
+        return NULL;
+        }
+    }
+
+
+
+void LivingLifePage::handleOurDeath() {
     
+    if( mDeathReason == NULL ) {
+        mDeathReason = stringDuplicate( "" );
+        }
+    
+    int years = (int)floor( computeCurrentAge( getOurLiveObject() ) );
+
+    char *ageString;
+    
+    if( years == 1 ) {
+        ageString = stringDuplicate( translate( "deathAgeOne" ) );
+        }
+    else {
+        ageString = autoSprintf( translate( "deathAge" ), years );
+        }
+    
+    char *partialReason = stringDuplicate( mDeathReason );
+    delete [] mDeathReason;
+    
+    mDeathReason = autoSprintf( "%s####%s", ageString, partialReason );
+    
+    delete [] ageString;
+    delete [] partialReason;
+    
+
+    setSignal( "died" );
+    instantStopMusic();
+    // so sound tails are not still playing when we we get reborn
+    fadeSoundSprites( 0.1 );
+    setSoundLoudness( 0 );
+    }
+
 
 
         
@@ -4094,11 +4143,13 @@ void LivingLifePage::step() {
         mServerSocket = -1;
 
         if( mFirstServerMessagesReceived  ) {
-            setSignal( "died" );
-            instantStopMusic();
-            // so sound tails are not still playing when we we get reborn
-            fadeSoundSprites( 0.1 );
-            setSoundLoudness( 0 );
+            
+            if( mDeathReason != NULL ) {
+                delete [] mDeathReason;
+                }
+            mDeathReason = stringDuplicate( translate( "reasonDisconnected" ) );
+            
+            handleOurDeath();
             }
         else {
             setSignal( "loginFailed" );
@@ -5943,6 +5994,68 @@ void LivingLifePage::step() {
                         gameObjects.push_back( o );
                         }
                     }
+                else if( o.id == ourID && 
+                         strstr( lines[i], "X X" ) != NULL  ) {
+                    // we died
+
+                    if( mDeathReason != NULL ) {
+                        delete [] mDeathReason;
+                        }
+                    char *reasonPos = strstr( lines[i], "reason" );
+                    
+                    if( reasonPos == NULL ) {
+                        mDeathReason = stringDuplicate( 
+                            translate( "reasonUnknown" ) );
+                        }
+                    else {
+                        char reasonString[100];
+                        reasonString[0] = '\0';
+                        
+                        sscanf( reasonPos, "reason_%99s", reasonString );
+                        
+                        if( strcmp( reasonString, "hunger" ) == 0 ) {
+                            mDeathReason = stringDuplicate( 
+                                translate( "reasonHunger" ) );
+                            }
+                        else if( strcmp( reasonString, "age" ) == 0 ) {
+                            mDeathReason = stringDuplicate( 
+                                translate( "reasonOldAge" ) );
+                            }
+                        else if( strcmp( reasonString, "disconnected" ) == 0 ) {
+                            mDeathReason = stringDuplicate( 
+                                translate( "reasonDisconnected" ) );
+                            }
+                        else if( strstr( reasonString, "killed" ) != NULL ) {
+                            
+                            int weaponID = 0;
+                            
+                            sscanf( reasonString, "killed_%d", &weaponID );
+                            
+                            ObjectRecord *weaponO = NULL;
+                            
+                            if( weaponID > 0 ) {
+                                weaponO = getObject( weaponID );
+                                }
+                            
+
+                            if( weaponO == NULL ) {
+                                mDeathReason = stringDuplicate( 
+                                    translate( "reasonKilledUnknown" ) );
+                                }
+                            else {
+                                mDeathReason = autoSprintf( 
+                                    "%s%s",
+                                    translate( "reasonKilled" ),
+                                    weaponO->description );
+                                }
+                            }
+                        }
+                    
+
+                    closeSocket( mServerSocket );
+                    mServerSocket = -1;
+                    handleOurDeath();
+                    }
                 else if( strstr( lines[i], "X X" ) != NULL  ) {
                     // object deleted
                         
@@ -7580,15 +7693,16 @@ void LivingLifePage::step() {
                 mapPullCurrentX = mapPullStartX;
                 mapPullCurrentY = mapPullStartY;
 
-                mMapGlobalOffset.x = mapPullCurrentX;
-                mMapGlobalOffset.y = mapPullCurrentY;
-                mMapGlobalOffsetSet = true;
-                
-                applyReceiveOffset( &mapPullCurrentX, &mapPullCurrentY );
-                applyReceiveOffset( &mapPullStartX, &mapPullStartY );
-                applyReceiveOffset( &mapPullEndX, &mapPullEndY );
-                
                 if( mapPullMode ) {
+                    mMapGlobalOffset.x = mapPullCurrentX;
+                    mMapGlobalOffset.y = mapPullCurrentY;
+                    mMapGlobalOffsetSet = true;
+                    
+                    applyReceiveOffset( &mapPullCurrentX, &mapPullCurrentY );
+                    applyReceiveOffset( &mapPullStartX, &mapPullStartY );
+                    applyReceiveOffset( &mapPullEndX, &mapPullEndY );
+                
+
                     mapPullCurrentSaved = true;
                     mapPullModeFinalImage = false;
                     

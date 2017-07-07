@@ -1572,12 +1572,27 @@ void drawFrame( char inUpdate ) {
                         
                 extendedMessagePage->setMessageKey( "youDied" );
                 
+                char *reason = livingLifePage->getDeathReason();
+                
+                if( reason == NULL ) {
+                    extendedMessagePage->setSubMessage( "" );
+                    }
+                else {
+                    extendedMessagePage->setSubMessage( reason );
+                    
+                    delete [] reason;
+                    }
+                
+
                 currentGamePage->base_makeActive( true );
                 }
             
             }
         else if( currentGamePage == extendedMessagePage ) {
             if( extendedMessagePage->checkSignal( "done" ) ) {
+                
+                extendedMessagePage->setSubMessage( "" );
+                
                 currentGamePage = rebirthChoicePage;
                 
                 currentGamePage->base_makeActive( true );
