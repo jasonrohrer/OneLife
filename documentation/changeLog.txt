@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 27     ???
+Version 28     ???
 
 --Other player action animations no longer interrupt their walking if the 
   action message arrives before we see them finish their walk locally.
@@ -69,6 +69,12 @@ Server fixes:
 --Added sane behavior at actual edges of world instead of letting player walk
   off edge and cause a crash.
 
+
+
+
+Version 27     2017-July-1
+
+--Content update.
 
 
 
