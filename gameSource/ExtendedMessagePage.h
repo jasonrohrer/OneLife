@@ -18,7 +18,7 @@ class ExtendedMessagePage : public GamePage, public ActionListener {
         void setMessageKey( const char *inMessageKey );
         
         // destroyed by caller
-        void setSubMessage( char *inMessage );
+        void setSubMessage( const char *inMessage );
         
 
         virtual void actionPerformed( GUIComponent *inTarget );

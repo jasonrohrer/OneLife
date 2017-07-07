@@ -46,7 +46,7 @@ void ExtendedMessagePage::setMessageKey( const char *inMessageKey ) {
     mMessageKey = inMessageKey;
     }
 
-void ExtendedMessagePage::setSubMessage( char *inMessage ) {
+void ExtendedMessagePage::setSubMessage( const char *inMessage ) {
     if( mSubMessage != NULL ) {
         delete [] mSubMessage;
         }
