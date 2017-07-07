@@ -2012,7 +2012,7 @@ void processLoggedInPlayer( Socket *inSock,
 
         newObject.isEve = true;
         
-        newObject.lifeStartTimeSeconds -= 0 * ( 1.0 / getAgeRate() );
+        newObject.lifeStartTimeSeconds -= 14 * ( 1.0 / getAgeRate() );
 
         
         int femaleID = getRandomFemalePersonObject();
@@ -5068,6 +5068,15 @@ int main() {
                                         
                     nextPlayer->deathLogged = true;
                     }
+                
+                // now that death has been logged, and delete sent,
+                // we can clear their email address so that the 
+                // can log in again during the deleteSentDoneETA window
+                
+                if( nextPlayer->email != NULL ) {
+                    delete [] nextPlayer->email;
+                    }
+                nextPlayer->email = stringDuplicate( "email_cleared" );
 
 
                 int oldObject = getMapObject( dropPos.x, dropPos.y );
