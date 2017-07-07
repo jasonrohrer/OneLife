@@ -49,6 +49,8 @@ SoundWidget.cpp \
 convolution.cpp \
 fft.cpp \
 zoomView.cpp \
+categoryBank.cpp \
+
 
 
 GAME_GRAPHICS = \
