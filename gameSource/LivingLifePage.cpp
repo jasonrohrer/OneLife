@@ -6043,10 +6043,16 @@ void LivingLifePage::step() {
                                     translate( "reasonKilledUnknown" ) );
                                 }
                             else {
+
+                                char *stringUpper = stringToUpperCase(
+                                    weaponO->description );
+                                
                                 mDeathReason = autoSprintf( 
                                     "%s%s",
                                     translate( "reasonKilled" ),
-                                    weaponO->description );
+                                    stringUpper );
+                                
+                                delete [] stringUpper;
                                 }
                             }
                         }
