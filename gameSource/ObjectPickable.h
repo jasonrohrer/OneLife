@@ -19,6 +19,12 @@ extern EditorTransitionPage *transPage;
 extern EditorAnimationPage *animPage;
 
 
+#include "EditorCategoryPage.h"
+
+extern EditorCategoryPage *categoryPage;
+
+
+
 
 class ObjectPickable : public Pickable {
         
@@ -89,7 +95,11 @@ class ObjectPickable : public Pickable {
             
             transPage->clearUseOfObject( inID );
             animPage->clearUseOfObject( inID );
+            categoryPage->clearUseOfObject( inID );
+
+            removeObjectFromAllCategories( inID );
             deleteObjectFromBank( inID );
+
             for( int i=0; i<endAnimType; i++ ) {
                 clearAnimation( inID, (AnimType)i );
                 }

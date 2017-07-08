@@ -115,7 +115,7 @@ float initCategoryBankStep() {
                     
                     if( objID > 0 ) {
                         if( objID > maxObjectID ) {
-                            maxObjectID++;
+                            maxObjectID = objID;
                             }
                         r->objectIDSet.push_back( objID );
                         }

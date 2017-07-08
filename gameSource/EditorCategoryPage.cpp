@@ -62,6 +62,14 @@ EditorCategoryPage::EditorCategoryPage()
     mNewCategoryField.addActionListener( this );
 
     mCurrentObject = -1;
+
+    mSelectionIndex = 0;
+
+
+    addKeyClassDescription( &mKeyLegend, "Up/Down", "Change selection" );
+    addKeyClassDescription( &mKeyLegend, "Pg Up/Down", "Change order" );
+    addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger jumps" );
+    addKeyClassDescription( &mKeyLegend, "Bkspce", "Remv category" );
     }
 
 
@@ -71,11 +79,31 @@ EditorCategoryPage::~EditorCategoryPage() {
 
 
 
+void EditorCategoryPage::clearUseOfObject( int inObjectID ) {
+    if( mCurrentObject == inObjectID ) {
+        mCurrentObject = -1;
+        }
+    }
+
+
+
 
 void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
     
     if( inTarget == &mObjectPicker ) {
         mCurrentObject = mObjectPicker.getSelectedObject();
+        }
+    else if( inTarget == &mCategoryPicker ) {
+        int cID = mCategoryPicker.getSelectedObject();
+
+        if( mCurrentObject != -1 && cID != -1 ) {
+            
+            addCategoryToObject( mCurrentObject, cID );
+            
+            // just-added becomes selected
+            int count = getNumCategoriesForObject( mCurrentObject );
+            mSelectionIndex = count - 1;
+            }
         }
     else if( inTarget == &mTransEditorButton ) {
         setSignal( "transEditor" );
@@ -109,6 +137,8 @@ void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
         
         mNewCategoryButton.setVisible( false );
         
+        mNewCategoryField.unfocus();
+
         mCategoryPicker.redoSearch();
         }
     
@@ -124,7 +154,16 @@ void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
 void EditorCategoryPage::draw( doublePair inViewCenter, 
                                double inViewSize ) {
     
-    doublePair pos = { 0, 150 };
+    doublePair legendPos = mTransEditorButton.getPosition();
+    
+    legendPos.x = -350;
+    legendPos.y += 50;
+    
+    drawKeyLegend( &mKeyLegend, legendPos );
+
+
+
+    doublePair pos = { 200, 150 };
                        
     setDrawColor( 1, 1, 1, 1 );
     drawSquare( pos, 50 );
@@ -148,10 +187,57 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
 
         setDrawColor( 1, 1, 1, 1 );
 
-        pos.x = 0;
+        pos.x = 200;
         pos.y = 150;
         pos.y -= 60;
         smallFont->drawString( r->description, pos, alignCenter );
+
+        int numCats = getNumCategoriesForObject( mCurrentObject );
+        
+        FloatColor boxColor = { 0.25f, 0.25f, 0.25f, 1.0f };
+        
+        FloatColor altBoxColor = { 0.35f, 0.35f, 0.35f, 1.0f };
+
+        FloatColor selBoxColor = { 0.35f, 0.35f, 0.0f, 1.0f };
+
+        
+        pos.x = -100;
+        pos.y = 185;
+        
+        for( int i=0; i<numCats; i++ ) {
+            
+            int cID = getCategoryForObject( mCurrentObject, i );
+
+            if( mSelectionIndex == i ) {
+                setDrawColor( selBoxColor );
+                }
+            else {
+                setDrawColor( boxColor );
+                }
+
+            drawRect( pos, 150, 15 );
+            
+            FloatColor tempColor = boxColor;
+            boxColor = altBoxColor;
+            
+            altBoxColor = tempColor;
+            
+
+            if( mSelectionIndex == i ) {
+                setDrawColor( 1, 1, 0, 1 );
+                }
+            else {
+                setDrawColor( 1, 1, 1, 1 );
+                }
+            
+            doublePair textPos = pos;
+            textPos.x -= 140;
+            
+            smallFont->drawString( getCategory( cID )->description, 
+                                   textPos, alignLeft );
+
+            pos.y -= 30;
+            }
         }
     }
 
@@ -197,14 +283,115 @@ void EditorCategoryPage::pointerUp( float inX, float inY ) {
 
 
 void EditorCategoryPage::keyDown( unsigned char inASCII ) {
-        
+    if( mNewCategoryField.isAnyFocused() ) {
+        return;
+        }
     
-        
+    if( inASCII == 8 ) {
+        // backspace
+        if( mCurrentObject != -1 ) {
+            int catID = getCategoryForObject( mCurrentObject, mSelectionIndex );
+            
+            if( catID != -1 ) {
+                removeCategoryFromObject( mCurrentObject, catID );
+
+                int newMax = 
+                    getNumCategoriesForObject( mCurrentObject ) - 1;
+                
+                if( mSelectionIndex > newMax ) {
+                    mSelectionIndex = newMax;
+                    }
+                if( mSelectionIndex < 0 ) {
+                    mSelectionIndex = 0;
+                    }
+                }
+            }
+        }
+    
     }
 
 
 
 void EditorCategoryPage::specialKeyDown( int inKeyCode ) {
+
+
+    int offset = 1;
+    
+    if( isCommandKeyDown() ) {
+        offset = 5;
+        }
+    if( isShiftKeyDown() ) {
+        offset = 10;
+        }
+    if( isCommandKeyDown() && isShiftKeyDown() ) {
+        offset = 20;
+        }
+    
+
+    switch( inKeyCode ) {
+        case MG_KEY_DOWN: {
+            
+            mSelectionIndex += offset;
+
+            int max = 0;
+            if( mCurrentObject != -1 ) {
+                max = getNumCategoriesForObject( mCurrentObject ) - 1;
+                }
+            
+            if( mSelectionIndex > max ) {
+                mSelectionIndex = max;
+                
+                if( mSelectionIndex > max  || mSelectionIndex < 0 ) {
+                    mSelectionIndex = 0;
+                    }
+                }
+
+            break;
+            }
+        case MG_KEY_UP: {
+            mSelectionIndex -= offset;
+            if( mSelectionIndex < 0 ) {
+                mSelectionIndex = 0;
+                }
+            break;
+            }
+        case MG_KEY_PAGE_UP:
+            if( mCurrentObject != -1 ) {
+                
+                int curCat = getCategoryForObject( mCurrentObject, 
+                                                   mSelectionIndex );
+                if( curCat != -1 ) {
+                    for( int i=0; i<offset; i++ ) {
+                        mSelectionIndex --;
+                        moveCategoryUp( mCurrentObject, curCat );
+                        }
+                    if( mSelectionIndex < 0 ) {
+                        mSelectionIndex = 0;
+                        }
+                    }
+                }    
+            break;
+        case MG_KEY_PAGE_DOWN:
+            if( mCurrentObject != -1 ) {
+                
+                int curCat = getCategoryForObject( mCurrentObject, 
+                                                   mSelectionIndex );
+                if( curCat != -1 ) {
+                    for( int i=0; i<offset; i++ ) {
+                        mSelectionIndex ++;
+                        moveCategoryDown( mCurrentObject, curCat );
+                        }
+                    if( mSelectionIndex > 
+                        getNumCategoriesForObject( mCurrentObject ) - 1 ) {
+                        
+                        mSelectionIndex = 
+                            getNumCategoriesForObject( mCurrentObject ) - 1;
+                        }
+                    }
+                }
+            break;
+        }
+
     
             
     }

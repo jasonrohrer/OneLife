@@ -19,6 +19,7 @@
 #include "categoryBank.h"
 #include "objectBank.h"
 
+#include "keyLegend.h"
 
 
 #define NUM_TREE_TRANS_TO_SHOW 1
@@ -30,6 +31,8 @@ class EditorCategoryPage : public GamePage, public ActionListener {
     public:
         EditorCategoryPage();
         ~EditorCategoryPage();
+
+        void clearUseOfObject( int inObjectID );
 
 
         virtual void actionPerformed( GUIComponent *inTarget );
@@ -61,8 +64,10 @@ class EditorCategoryPage : public GamePage, public ActionListener {
         TextField mNewCategoryField;
 
         int mCurrentObject;
-
         
+        int mSelectionIndex;
+        
+        KeyLegend mKeyLegend;
     };
 
 
