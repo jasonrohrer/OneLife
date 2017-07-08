@@ -202,8 +202,15 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
 
         
         pos.x = -100;
-        pos.y = 185;
+        pos.y = 150;
         
+        double spacing = 30;
+
+        if( mSelectionIndex > 7 && numCats > 12 ) {    
+            pos.y += ( mSelectionIndex - 7 )  * spacing;
+            }
+        
+
         for( int i=0; i<numCats; i++ ) {
             
             int cID = getCategoryForObject( mCurrentObject, i );
@@ -215,7 +222,27 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
                 setDrawColor( boxColor );
                 }
 
-            drawRect( pos, 150, 15 );
+            float fade = 1;
+            
+            if( numCats > 12 && pos.y < -130 ) {
+                fade = 1 - ( -130 - pos.y ) / 95;
+                
+                if( fade < 0 ) {
+                    fade = 0;
+                    }
+                }
+
+            if( pos.y > 130 ) {
+                fade = 1 - ( pos.y - 130 ) / 95;
+                
+                if( fade < 0 ) {
+                    fade = 0;
+                    }
+                }
+            
+            
+            setDrawFade( fade );
+            drawRect( pos, 150, spacing / 2  );
             
             FloatColor tempColor = boxColor;
             boxColor = altBoxColor;
@@ -233,10 +260,12 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
             doublePair textPos = pos;
             textPos.x -= 140;
             
+            setDrawFade( fade );
+
             smallFont->drawString( getCategory( cID )->description, 
                                    textPos, alignLeft );
 
-            pos.y -= 30;
+            pos.y -= spacing;
             }
         }
     }
