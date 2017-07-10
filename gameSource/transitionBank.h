@@ -24,9 +24,18 @@ typedef struct TransRecord {
 
 
 
-
+// if inAutoGenerateCategoryTransitions is true, we auto-generate concrete
+// transitions based on categories and do not actually insert abstract category 
+// transitions explicitly.
+// 
+// if false, we do nothing special with category transitions, and they end
+// up in the bank in their abstract form.
+//
+// Category bank MUST be inited before transition bank.
+//
 // returns number of transitions that need to be loaded
-int initTransBankStart( char *outRebuildingCache );
+int initTransBankStart( char inAutoGenerateCategoryTransitions,
+                        char *outRebuildingCache );
 
 float initTransBankStep();
 void initTransBankFinish();
@@ -101,7 +110,6 @@ void deleteTransFromBank( int inActor, int inTarget );
 
 
 char isObjectUsed( int inObjectID );
-char isCategoryUsed( int inCategoryID );
 
 
 // is this object a death marker OR descended from a death marker

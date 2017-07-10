@@ -5,10 +5,11 @@
 
 
 typedef struct CategoryRecord {
-        int id;
+        // object ID of parent object
+        int parentID;
         
-        char *description;
-        
+        // child objects that are in this category
+        // none of these should themselves be parent objects
         SimpleVector<int> objectIDSet;
                 
     } CategoryRecord;
@@ -17,8 +18,10 @@ typedef struct CategoryRecord {
 
 // backwards mapping
 typedef struct ReverseCategoryRecord {
-        int objectID;
+        // child object ID
+        int childID;
         
+        // parent objects whose category this child object is in
         SimpleVector<int> categoryIDSet;
                 
     } ReverseCategoryRecord;
@@ -37,29 +40,18 @@ void initCategoryBankFinish();
 void freeCategoryBank();
 
 
-CategoryRecord *getCategory( int inID );
-ReverseCategoryRecord *getReverseCategory( int inObjecID );
+CategoryRecord *getCategory( int inParentID );
+ReverseCategoryRecord *getReverseCategory( int inChildID );
 
 
-// return array destroyed by caller, NULL if none found
-CategoryRecord **searchCategories( const char *inSearch, 
-                                   int inNumToSkip, 
-                                   int inNumToGet, 
-                                   int *outNumResults, int *outNumRemaining );
+void addCategoryToObject( int inObjectID, int inParentID );
 
-
-// returns ID of existing category if one exists
-// otherwise, adds it
-int addCategory( const char *inDescription );
-
-void addCategoryToObject( int inObjectID, int inCategoryID );
-
-void removeCategoryFromObject( int inObjectID, int inCategoryID );
+void removeCategoryFromObject( int inObjectID, int inParentID );
 
 void removeObjectFromAllCategories( int inObjectID );
 
-void moveCategoryUp( int inObjectID, int inCategoryID );
-void moveCategoryDown( int inObjectID, int inCategoryID );
+void moveCategoryUp( int inObjectID, int inParentID );
+void moveCategoryDown( int inObjectID, int inParentID );
 
 int getNumCategoriesForObject( int inObjectID );
 
@@ -70,6 +62,9 @@ int getCategoryForObject( int inObjectID, int inCategoryIndex );
 
 void deleteCategoryFromBank( int inID );
 
+
+// used as either parent or child
+char isObjectUsedInCategories( int inObjectID );
 
 
 #endif

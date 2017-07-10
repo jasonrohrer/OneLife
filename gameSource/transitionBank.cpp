@@ -37,7 +37,8 @@ static int currentFile;
 
 static int maxID;
 
-int initTransBankStart( char *outRebuildingCache ) {
+int initTransBankStart( char inAutoGenerateCategoryTransitions,
+                        char *outRebuildingCache ) {
     
     maxID = 0;
 
@@ -567,42 +568,6 @@ char isObjectUsed( int inObjectID ) {
         }
 
     return false;
-    }
-
-
-
-
-char isCategoryUsed( int inCategoryID ) {
-    // fixme
-
-    return false;
-    /*
-    
-    int numResults, numRemaining;
-    
-    TransRecord **results = searchUses( inObjectID, 
-                                        0, 1,
-                                        &numResults, &numRemaining );
-    
-    if( results != NULL ) {
-        delete [] results;
-        
-        return true;
-        }
-    
-    
-    results = searchProduces( inObjectID, 
-                              0, 1,
-                              &numResults, &numRemaining );
-    
-    if( results != NULL ) {
-        delete [] results;
-        
-        return true;
-        }
-
-    return false;
-    */
     }
 
 

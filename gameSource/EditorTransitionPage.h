@@ -33,7 +33,6 @@ class EditorTransitionPage : public GamePage, public ActionListener {
         ~EditorTransitionPage();
 
         void clearUseOfObject( int inObjectID );
-        void clearUseOfCategory( int inCategoryID );
         
 
         virtual void actionPerformed( GUIComponent *inTarget );
@@ -61,7 +60,6 @@ class EditorTransitionPage : public GamePage, public ActionListener {
         
         TextButton mSaveTransitionButton;
         Picker mObjectPicker;
-        Picker mCategoryPicker;
 
         TextButton mObjectEditorButton;
         TextButton mCategoryEditorButton;

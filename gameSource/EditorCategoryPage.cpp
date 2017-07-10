@@ -23,43 +23,28 @@ extern Font *smallFont;
 
 #include "ObjectPickable.h"
 
-static ObjectPickable objectPickable;
+static ObjectPickable objectPickableParent;
 
+static ObjectPickable objectPickableChild;
 
-#include "CategoryPickable.h"
-
-static CategoryPickable categoryPickable;
 
 
 
 EditorCategoryPage::EditorCategoryPage()
-        : mObjectPicker( &objectPickable, +410, 90 ),
-          mCategoryPicker( &categoryPickable, -410, 90 ),
-          mTransEditorButton( mainFont, 0, 260, "Transitions" ),
-          mNewCategoryButton( mainFont, 200, -250, "Add" ),
-          mNewCategoryField( mainFont, 
-                             -100,  -250, 10,
-                             false,
-                             "New Category", NULL, NULL ) {
+        : mObjectParentPicker( &objectPickableParent, -410, 90 ),
+          mObjectChildPicker( &objectPickableChild, +410, 90 ),
+          mTransEditorButton( mainFont, 0, 260, "Transitions" ) {
 
-    addComponent( &mObjectPicker );
-    addComponent( &mCategoryPicker );
+    addComponent( &mObjectChildPicker );
+    addComponent( &mObjectParentPicker );
     addComponent( &mTransEditorButton );
 
 
-    addComponent( &mNewCategoryButton );
-    addComponent( &mNewCategoryField );
-    
-    
-    mObjectPicker.addActionListener( this );
-    mCategoryPicker.addActionListener( this );
+    mObjectChildPicker.addActionListener( this );
+    mObjectParentPicker.addActionListener( this );
     
     mTransEditorButton.addActionListener( this );
     
-    mNewCategoryButton.addActionListener( this );
-
-    mNewCategoryField.setFireOnAnyTextChange( true );
-    mNewCategoryField.addActionListener( this );
 
     mCurrentObject = -1;
 
@@ -90,15 +75,15 @@ void EditorCategoryPage::clearUseOfObject( int inObjectID ) {
 
 void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
     
-    if( inTarget == &mObjectPicker ) {
-        mCurrentObject = mObjectPicker.getSelectedObject();
+    if( inTarget == &mObjectChildPicker ) {
+        mCurrentObject = mObjectChildPicker.getSelectedObject();
         }
-    else if( inTarget == &mCategoryPicker ) {
-        int cID = mCategoryPicker.getSelectedObject();
+    else if( inTarget == &mObjectParentPicker ) {
+        int parentID = mObjectParentPicker.getSelectedObject();
 
-        if( mCurrentObject != -1 && cID != -1 ) {
+        if( mCurrentObject != -1 && parentID != -1 ) {
             
-            addCategoryToObject( mCurrentObject, cID );
+            addCategoryToObject( mCurrentObject, parentID );
             
             // just-added becomes selected
             int count = getNumCategoriesForObject( mCurrentObject );
@@ -107,41 +92,7 @@ void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mTransEditorButton ) {
         setSignal( "transEditor" );
-        }
-    else if( inTarget == &mNewCategoryField ) {
-        char *text = mNewCategoryField.getText();
-        
-        char *trim = trimWhitespace( text );
-
-        delete [] text;
-
-        if( strcmp( trim, "" ) != 0 ) {
-            mNewCategoryButton.setVisible( true );
-            }
-        else {
-            mNewCategoryButton.setVisible( false );
-            }
-        
-        delete [] trim;
-        }
-    else if( inTarget == &mNewCategoryButton ) {
-        char *text = mNewCategoryField.getText();
-        
-        char *trim = trimWhitespace( text );
-
-        delete [] text;
-        
-        addCategory( trim );
-        
-        delete [] trim;
-        
-        mNewCategoryButton.setVisible( false );
-        
-        mNewCategoryField.unfocus();
-
-        mCategoryPicker.redoSearch();
-        }
-    
+        }    
     }
 
 
@@ -213,7 +164,7 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
 
         for( int i=0; i<numCats; i++ ) {
             
-            int cID = getCategoryForObject( mCurrentObject, i );
+            int parentID = getCategoryForObject( mCurrentObject, i );
 
             if( mSelectionIndex == i ) {
                 setDrawColor( selBoxColor );
@@ -262,7 +213,7 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
             
             setDrawFade( fade );
 
-            smallFont->drawString( getCategory( cID )->description, 
+            smallFont->drawString( getObject( parentID )->description, 
                                    textPos, alignLeft );
 
             pos.y -= spacing;
@@ -283,8 +234,8 @@ void EditorCategoryPage::makeActive( char inFresh ) {
         return;
         }
     
-    mObjectPicker.redoSearch();
-    mCategoryPicker.redoSearch();
+    mObjectChildPicker.redoSearch();
+    mObjectParentPicker.redoSearch();
     }
 
 
@@ -312,7 +263,7 @@ void EditorCategoryPage::pointerUp( float inX, float inY ) {
 
 
 void EditorCategoryPage::keyDown( unsigned char inASCII ) {
-    if( mNewCategoryField.isAnyFocused() ) {
+    if( TextField::isAnyFocused() ) {
         return;
         }
     

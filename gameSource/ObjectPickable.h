@@ -8,6 +8,7 @@
 #include "objectBank.h"
 #include "spriteBank.h"
 #include "transitionBank.h"
+#include "categoryBank.h"
 
 
 #include "EditorTransitionPage.h"
@@ -85,7 +86,9 @@ class ObjectPickable : public Pickable {
 
 
         virtual char canDelete( int inID ) {
-            return ! isObjectUsed( inID );
+            return 
+                ! isObjectUsed( inID ) && 
+                ! isObjectUsedInCategories( inID );
             }
         
 

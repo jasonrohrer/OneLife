@@ -58,8 +58,8 @@ CustomRandomSource randSource( 34957197 );
 
 #include "spriteBank.h"
 #include "objectBank.h"
-#include "transitionBank.h"
 #include "categoryBank.h"
+#include "transitionBank.h"
 #include "soundBank.h"
 
 #include "liveObjectSet.h"
@@ -1283,8 +1283,50 @@ void drawFrame( char inUpdate ) {
 
                         char rebuilding;
                         
+                        int numCats = 
+                            initCategoryBankStart( &rebuilding );
+                        
+                        if( rebuilding ) {
+                            loadingPage->setCurrentPhase(
+                                translate( "categoriesRebuild" ) );
+                            }
+                        else {
+                            loadingPage->setCurrentPhase( 
+                                translate( "categories" ) );
+                            }
+                        loadingPage->setCurrentProgress( 0 );
+                        
+
+                        loadingStepBatchSize = numCats / numLoadingSteps;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 3: {
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initCategoryBankStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
+                    
+                    if( progress == 1.0 ) {
+                        initCategoryBankFinish();
+                        printf( "Finished loading category bank in %f sec\n",
+                                Time::getCurrentTime() - 
+                                loadingPhaseStartTime );
+
+
+                        char rebuilding;
+                        
+                        // true to auto-generate concrete transitions
+                        // for all abstract category transitions
                         int numTrans = 
-                            initTransBankStart( &rebuilding );
+                            initTransBankStart( true, &rebuilding );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase(
@@ -1307,7 +1349,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 3: {
+                case 4: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initTransBankStep();
@@ -1344,7 +1386,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 4: {
+                case 5: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initAnimationBankStep();
@@ -1353,42 +1395,7 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initAnimationBankFinish();
-                        loadingPage->setCurrentProgress( 0 );
-
-                        char rebuilding;
-                                                
-                        int numCats = initCategoryBankStart( &rebuilding );
- 
-                        if( rebuilding ) {
-                            loadingPage->setCurrentPhase(
-                                translate( "categoriesRebuild" ) );
-                            }
-                        else {
-                            loadingPage->setCurrentPhase( 
-                                translate( "categories" ) );
-                            }
-                        loadingPage->setCurrentProgress( 0 );
                         
-
-                        loadingStepBatchSize = numCats / numLoadingSteps;
-                        
-                        if( loadingStepBatchSize < 1 ) {
-                            loadingStepBatchSize = 1;
-                            }
-
-                        loadingPhase ++;
-                        }
-                    break;
-                    }
-                case 5: {
-                    float progress;
-                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
-                        progress = initCategoryBankStep();
-                        loadingPage->setCurrentProgress( progress );
-                        }
-                    
-                    if( progress == 1.0 ) {
-                        initCategoryBankFinish();
                         loadingPage->setCurrentPhase( 
                             translate( "groundTextures" ) );
 
@@ -1403,7 +1410,6 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-
                 case 6: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    

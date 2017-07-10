@@ -55,13 +55,10 @@ class EditorCategoryPage : public GamePage, public ActionListener {
         
     protected:
         
-        Picker mObjectPicker;
-        Picker mCategoryPicker;
+        Picker mObjectParentPicker;
+        Picker mObjectChildPicker;
 
         TextButton mTransEditorButton;
-
-        TextButton mNewCategoryButton;
-        TextField mNewCategoryField;
 
         int mCurrentObject;
         

@@ -1154,8 +1154,47 @@ void drawFrame( char inUpdate ) {
 
                         char rebuilding;
                         
+                        int numCats = 
+                            initCategoryBankStart( &rebuilding );
+                        
+                        if( rebuilding ) {
+                            loadingPage->setCurrentPhase( 
+                                "CATEGORIES##(REBUILDING CACHE)" );
+                            }
+                        else {
+                            loadingPage->setCurrentPhase( "CATEGORIES" );
+                            }
+                        loadingPage->setCurrentProgress( 0 );
+                        
+
+                        loadingStepBatchSize = numCats / 20;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 4: {
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initCategoryBankStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
+                    
+                    if( progress == 1.0 ) {
+                        initCategoryBankFinish();
+                        printf( "Finished loading category bank in %f sec\n",
+                                Time::getCurrentTime() - 
+                                loadingPhaseStartTime );
+
+
+                        char rebuilding;
+                        
                         int numTrans = 
-                            initTransBankStart( &rebuilding );
+                            initTransBankStart( false, &rebuilding );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase( 
@@ -1177,7 +1216,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 4: {
+                case 5: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initTransBankStep();
@@ -1213,7 +1252,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 5: {
+                case 6: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initAnimationBankStep();
@@ -1222,40 +1261,6 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initAnimationBankFinish();
-                        
-                        char rebuilding;
-                                                
-                        int numCats = initCategoryBankStart( &rebuilding );
- 
-                        if( rebuilding ) {
-                            loadingPage->setCurrentPhase( 
-                                "CATEGORIES##(REBUILDING CACHE)" );
-                            }
-                        else {
-                            loadingPage->setCurrentPhase( "CATEGORIES" );
-                            }
-                        loadingPage->setCurrentProgress( 0 );
-                        
-
-                        loadingStepBatchSize = numCats / 20;
-                        
-                        if( loadingStepBatchSize < 1 ) {
-                            loadingStepBatchSize = 1;
-                            }
-
-                        loadingPhase ++;
-                        }
-                    break;
-                    }
-                case 6: {
-                    float progress;
-                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
-                        progress = initCategoryBankStep();
-                        loadingPage->setCurrentProgress( progress );
-                        }
-                    
-                    if( progress == 1.0 ) {
-                        initCategoryBankFinish();
                         loadingPhase ++;
                         }
                     break;

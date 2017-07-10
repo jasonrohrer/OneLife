@@ -66,10 +66,9 @@ float initCategoryBankStep() {
                 
     char *txtFileName = getFileName( cache, i );
             
-    if( strstr( txtFileName, ".txt" ) != NULL &&
-        strcmp( txtFileName, "nextCategoryNumber.txt" ) != 0 ) {
+    if( strstr( txtFileName, ".txt" ) != NULL ) {
                             
-        // an category txt file!
+        // a category txt file!
                     
         char *categoryText = getFileContents( cache, i );
         
@@ -80,23 +79,19 @@ float initCategoryBankStep() {
                         
             delete [] categoryText;
 
-            if( numLines >= 3 ) {
+            if( numLines >= 2 ) {
                 CategoryRecord *r = new CategoryRecord;
                             
                 int next = 0;
                 
-                r->id = 0;
-                sscanf( lines[next], "id=%d", 
-                        &( r->id ) );
+                r->parentID = 0;
+                sscanf( lines[next], "parentID=%d", 
+                        &( r->parentID ) );
                 
-                if( r->id > maxID ) {
-                    maxID = r->id;
+                if( r->parentID > maxID ) {
+                    maxID = r->parentID;
                     }
                 
-                next++;
-                            
-                r->description = stringDuplicate( lines[next] );
-                            
                 next++;
                             
                 int numObjects = 0;
@@ -166,13 +161,7 @@ void initCategoryBankFinish() {
     for( int i=0; i<numRecords; i++ ) {
         CategoryRecord *r = records.getElementDirect(i);
         
-        idMap[ r->id ] = r;
-        
-        char *lowercase = stringToLowerCase( r->description );
-        
-        tree.insert( lowercase, r );
-
-        delete [] lowercase;
+        idMap[ r->parentID ] = r;
 
         for( int j=0; j<r->objectIDSet.size(); j++ ) {
             int objID = r->objectIDSet.getElementDirect( j );
@@ -181,12 +170,12 @@ void initCategoryBankFinish() {
             
             if( rr == NULL ) {
                 rr = new ReverseCategoryRecord;
-                rr->objectID = objID;
+                rr->childID = objID;
                 
                 reverseMap[ objID ] = rr;
                 }
             
-            rr->categoryIDSet.push_back( r->id );
+            rr->categoryIDSet.push_back( r->parentID );
             }
         
         }
@@ -199,29 +188,21 @@ void initCategoryBankFinish() {
 
 
 
-static void freeCategoryRecord( int inID ) {
-    if( inID < mapSize ) {
-        if( idMap[inID] != NULL ) {
+static void freeCategoryRecord( int inParentID ) {
+    if( inParentID < mapSize ) {
+        if( idMap[inParentID] != NULL ) {
             
-            char *lower = stringToLowerCase( idMap[inID]->description );
-            
-            tree.remove( lower, idMap[inID] );
-            
-            delete [] lower;
-
-            delete [] idMap[inID]->description;
-            
-            CategoryRecord *r = idMap[inID];
+            CategoryRecord *r = idMap[inParentID];
 
             for( int i=0; i< r->objectIDSet.size(); i++ ) {
                 
                 reverseMap[ r->objectIDSet.getElementDirect( i ) ]->
-                    categoryIDSet.deleteElementEqualTo( inID );
+                    categoryIDSet.deleteElementEqualTo( inParentID );
                 }
             
 
-            delete idMap[inID];
-            idMap[inID] = NULL;
+            delete idMap[inParentID];
+            idMap[inParentID] = NULL;
             }
         }    
     }
@@ -233,8 +214,6 @@ void freeCategoryBank() {
     
     for( int i=0; i<mapSize; i++ ) {
         if( idMap[i] != NULL ) {
-            
-            delete [] idMap[i]->description;
             delete idMap[i];
             }
         }
@@ -258,104 +237,26 @@ void freeCategoryBank() {
 
 
 
-CategoryRecord *getCategory( int inID ) {
-    if( inID < mapSize ) {
-        return idMap[inID];
+CategoryRecord *getCategory( int inParentID ) {
+    if( inParentID < mapSize ) {
+        return idMap[inParentID];
         }
     return NULL;
     }    
 
 
 
-ReverseCategoryRecord *getReverseCategory( int inObjecID ) {
-    if( inObjecID < reverseMapSize ) {
-        return reverseMap[ inObjecID ];
+ReverseCategoryRecord *getReverseCategory( int inChildID ) {
+    if( inChildID < reverseMapSize ) {
+        return reverseMap[ inChildID ];
         }
     return NULL;
     }
 
 
 
-
-// return array destroyed by caller, NULL if none found
-CategoryRecord **searchCategories( const char *inSearch, 
-                              int inNumToSkip, 
-                              int inNumToGet, 
-                              int *outNumResults, int *outNumRemaining ) {
-    
-    if( strcmp( inSearch, "" ) == 0 ) {
-        // special case, show categories in reverse-id order, newest first
-        SimpleVector< CategoryRecord *> results;
-        
-        int numSkipped = 0;
-        int id = mapSize - 1;
-        
-        while( id > 0 && numSkipped < inNumToSkip ) {
-            if( idMap[id] != NULL ) {
-                numSkipped++;
-                }
-            id--;
-            }
-        
-        int numGotten = 0;
-        while( id > 0 && numGotten < inNumToGet ) {
-            if( idMap[id] != NULL ) {
-                results.push_back( idMap[id] );
-                numGotten++;
-                }
-            id--;
-            }
-        
-        // rough estimate
-        *outNumRemaining = id;
-        
-        if( *outNumRemaining < 100 ) {
-            // close enough to end, actually compute it
-            *outNumRemaining = 0;
-            
-            while( id > 0 ) {
-                if( idMap[id] != NULL ) {
-                    *outNumRemaining = *outNumRemaining + 1;
-                    }
-                id--;
-                }
-            }
-        
-
-        *outNumResults = results.size();
-        return results.getElementArray();
-        }
-    
-
-    char *lowerSearch = stringToLowerCase( inSearch );
-
-    int numTotalMatches = tree.countMatches( lowerSearch );
-        
-    
-    int numAfterSkip = numTotalMatches - inNumToSkip;
-    
-    int numToGet = inNumToGet;
-    if( numToGet > numAfterSkip ) {
-        numToGet = numAfterSkip;
-        }
-    
-    *outNumRemaining = numAfterSkip - numToGet;
-        
-    CategoryRecord **results = new CategoryRecord*[ numToGet ];
-    
-    
-    *outNumResults = 
-        tree.getMatches( lowerSearch, inNumToSkip, numToGet, (void**)results );
-    
-    delete [] lowerSearch;
-
-    return results;
-    }
-
-
-
-void saveCategoryToDisk( int inCategoryID ) {
-    CategoryRecord *r = getCategory( inCategoryID );
+void saveCategoryToDisk( int inParentID ) {
+    CategoryRecord *r = getCategory( inParentID );
     
 
     if( r == NULL ) {
@@ -369,48 +270,61 @@ void saveCategoryToDisk( int inCategoryID ) {
         }
     
     if( ! categoriesDir.exists() || ! categoriesDir.isDirectory() ) {
+
+        printf( "Failed to make categories directory\n" );
+        
         return;
         }
-    
-        
-    char *fileName = autoSprintf( "%d.txt", inCategoryID );
 
 
-    File *categoryFile = categoriesDir.getChildFile( fileName );
-        
     
-    SimpleVector<char*> lines;
-    
-    lines.push_back( autoSprintf( "id=%d", inCategoryID ) );
-    lines.push_back( stringDuplicate( r->description ) );
-
-    // start with 0 objects in a new category
-    lines.push_back( autoSprintf( "numObjects=%d", r->objectIDSet.size() ) );
-
-    for( int i=0; i<r->objectIDSet.size(); i++ ) {
-        lines.push_back( 
-            autoSprintf( "%d", r->objectIDSet.getElementDirect(i) ) );
-        }
-        
-    char **linesArray = lines.getElementArray();
-        
-        
-    char *contents = join( linesArray, lines.size(), "\n" );
-    
-    delete [] linesArray;
-    lines.deallocateStringElements();
-    
-
     File *cacheFile = categoriesDir.getChildFile( "cache.fcz" );
 
     cacheFile->remove();
     
     delete cacheFile;
+
+
+        
+    char *fileName = autoSprintf( "%d.txt", inParentID );
+
+
+    File *categoryFile = categoriesDir.getChildFile( fileName );
+
+    if( r->objectIDSet.size() == 0 ) {
+        // empty category, simply remove it
+        
+        categoryFile->remove();
+        }
+    else {
+        // resave
     
+        SimpleVector<char*> lines;
+        
+        lines.push_back( autoSprintf( "parenID=%d", inParentID ) );
+        
+        // start with 0 objects in a new category
+        lines.push_back( autoSprintf( "numObjects=%d", 
+                                      r->objectIDSet.size() ) );
+        
+        for( int i=0; i<r->objectIDSet.size(); i++ ) {
+            lines.push_back( 
+                autoSprintf( "%d", r->objectIDSet.getElementDirect(i) ) );
+            }
+        
+        char **linesArray = lines.getElementArray();
+        
+        
+        char *contents = join( linesArray, lines.size(), "\n" );
+        
+        categoryFile->writeToFile( contents );
+        
+        delete [] contents;
+
+        delete [] linesArray;
+        lines.deallocateStringElements();
+        }    
     
-    categoryFile->writeToFile( contents );
-    
-    delete [] contents;
         
             
     delete [] fileName;
@@ -422,52 +336,13 @@ void saveCategoryToDisk( int inCategoryID ) {
 
 
 
-int addCategory( const char *inDescription ) {
+static void addCategory( int inParentID ) {
     
-    char *loweDes = stringToLowerCase( inDescription );
-
-    int numMatches = tree.countMatches( loweDes );
-
-    char exists = false;
-    int existingID = 0;
-    
-    if( numMatches > 0 ) {
-        
-        int numResults, numRemaining;
-        
-        CategoryRecord **results = 
-            searchCategories( loweDes, 
-                              0, numMatches, &numResults, &numRemaining );
-        
-        for( int i=0; i<numResults; i++ ) {
-            char *otherLower = stringToLowerCase( results[i]->description );
-            
-            if( strcmp( loweDes, otherLower ) == 0 ) {
-                exists = true;
-                existingID = results[i]->id;
-                }
-            
-            delete [] otherLower;
-            
-            if( exists ) {
-                break;
-                }
-            }
-        delete [] results;
-        
-        }
-    delete [] loweDes;
-    
-
-    if( exists ) {
-        return existingID;
+    if( getCategory( inParentID ) != NULL ) {
+        // already exists
+        return;
         }
     
-    
-    
-
-    int newID = -1;
-
 
     // add it to file structure
     File categoriesDir( NULL, "categories" );
@@ -476,53 +351,19 @@ int addCategory( const char *inDescription ) {
         categoriesDir.makeDirectory();
         }
     
-    if( categoriesDir.exists() && categoriesDir.isDirectory() ) {
-                
-        int nextCategoryNumber = 1;
-                
-        File *nextNumberFile = 
-            categoriesDir.getChildFile( "nextCategoryNumber.txt" );
-                
-        if( nextNumberFile->exists() ) {
-                    
-            char *nextNumberString = 
-                nextNumberFile->readFileContents();
+    if( ! categoriesDir.exists() || ! categoriesDir.isDirectory() ) {        
 
-            if( nextNumberString != NULL ) {
-                sscanf( nextNumberString, "%d", &nextCategoryNumber );
-                
-                delete [] nextNumberString;
-                }
-            }
+        printf( "Failed to make categories directory\n" );
         
-        if( newID == -1 ) {
-            newID = nextCategoryNumber;
-            
-            nextCategoryNumber ++;
-            }
-        
-        
-        char *nextNumberString = autoSprintf( "%d", nextCategoryNumber );
-        
-        nextNumberFile->writeToFile( nextNumberString );
-        
-        delete [] nextNumberString;
-                
-        
-        delete nextNumberFile;
+        return;
         }
     
-    if( newID == -1 ) {
-        // failed to find spot to save it to disk
-        return -1;
-        }
-
     
     // now add it to live, in memory database
-    if( newID >= mapSize ) {
+    if( inParentID >= mapSize ) {
         // expand map
 
-        int newMapSize = newID + 1;
+        int newMapSize = inParentID + 1;
         
         CategoryRecord **newMap = new CategoryRecord*[newMapSize];
         
@@ -539,23 +380,11 @@ int addCategory( const char *inDescription ) {
 
     CategoryRecord *r = new CategoryRecord;
     
-    r->id = newID;
-    r->description = stringDuplicate( inDescription );
-
-
-
-
-    char *lower = stringToLowerCase( inDescription );    
-
-    idMap[newID] = r;
+    r->parentID = inParentID;
     
-    tree.insert( lower, idMap[newID] );
-
-    delete [] lower;
+    idMap[ inParentID ] = r;
     
-    saveCategoryToDisk( newID );
-    
-    return newID;
+    // don't save to disk now, because it's empty
     }
 
 
@@ -564,7 +393,7 @@ int addCategory( const char *inDescription ) {
 
 
 
-void deleteCategoryFromBank( int inID ) {
+void deleteCategoryFromBank( int inParentID ) {
     
     File categoriesDir( NULL, "categories" );
     
@@ -578,7 +407,7 @@ void deleteCategoryFromBank( int inID ) {
         delete cacheFile;
 
 
-        char *fileName = autoSprintf( "%d.txt", inID );
+        char *fileName = autoSprintf( "%d.txt", inParentID );
         
         File *categoryFile = categoriesDir.getChildFile( fileName );
             
@@ -588,13 +417,18 @@ void deleteCategoryFromBank( int inID ) {
         delete categoryFile;
         }
 
-    freeCategoryRecord( inID );
+    freeCategoryRecord( inParentID );
     }
 
 
 
 
-void addCategoryToObject( int inObjectID, int inCategoryID ) {
+void addCategoryToObject( int inObjectID, int inParentID ) {
+
+    if( getCategory( inParentID ) == NULL ) {
+        addCategory( inParentID );
+        }
+
     if( inObjectID >= reverseMapSize ) {
         // expand map
 
@@ -615,7 +449,7 @@ void addCategoryToObject( int inObjectID, int inCategoryID ) {
         }
     
     
-    CategoryRecord *r = getCategory( inCategoryID );
+    CategoryRecord *r = getCategory( inParentID );
     
     if( r != NULL ) {
 
@@ -634,22 +468,22 @@ void addCategoryToObject( int inObjectID, int inCategoryID ) {
         if( rr == NULL ) {
             rr = new ReverseCategoryRecord;
 
-            rr->objectID = inObjectID;
+            rr->childID = inObjectID;
             
             reverseMap[ inObjectID ] = rr;        
             }
         
-        rr->categoryIDSet.push_back( inCategoryID );
+        rr->categoryIDSet.push_back( inParentID );
 
-        saveCategoryToDisk( inCategoryID );
+        saveCategoryToDisk( inParentID );
         }
     
     }
 
 
 
-void removeCategoryFromObject( int inObjectID, int inCategoryID ) {
-    CategoryRecord *r = getCategory( inCategoryID );
+void removeCategoryFromObject( int inObjectID, int inParentID ) {
+    CategoryRecord *r = getCategory( inParentID );
     
     if( r != NULL ) {
 
@@ -658,10 +492,10 @@ void removeCategoryFromObject( int inObjectID, int inCategoryID ) {
         ReverseCategoryRecord *rr = getReverseCategory( inObjectID );
         
         if( rr != NULL ) {    
-            rr->categoryIDSet.deleteElementEqualTo( inCategoryID );
+            rr->categoryIDSet.deleteElementEqualTo( inParentID );
             }
             
-        saveCategoryToDisk( inCategoryID );
+        saveCategoryToDisk( inParentID );
         }
 
     }
@@ -695,11 +529,11 @@ void removeObjectFromAllCategories( int inObjectID ) {
 
 
 
-void moveCategoryUp( int inObjectID, int inCategoryID ) {
+void moveCategoryUp( int inObjectID, int inParentID ) {
     ReverseCategoryRecord *rr = getReverseCategory( inObjectID );
         
     if( rr != NULL ) {    
-        int index = rr->categoryIDSet.getElementIndex( inCategoryID );
+        int index = rr->categoryIDSet.getElementIndex( inParentID );
     
         if( index > 0 ) {
             
@@ -719,11 +553,11 @@ void moveCategoryUp( int inObjectID, int inCategoryID ) {
 
 
 
-void moveCategoryDown( int inObjectID, int inCategoryID ) {
+void moveCategoryDown( int inObjectID, int inParentID ) {
     ReverseCategoryRecord *rr = getReverseCategory( inObjectID );
         
     if( rr != NULL ) {    
-        int index = rr->categoryIDSet.getElementIndex( inCategoryID );
+        int index = rr->categoryIDSet.getElementIndex( inParentID );
     
         if( index != -1 && 
             index < rr->categoryIDSet.size() - 1 ) {
@@ -768,6 +602,22 @@ int getCategoryForObject( int inObjectID, int inCategoryIndex ) {
 
     return -1;
     }
+
+
+
+char isObjectUsedInCategories( int inObjectID ) {
+    CategoryRecord *r = getCategory( inObjectID );
+    
+    if( r != NULL && r->objectIDSet.size() > 0 ) {
+        return true;
+        }
+    
+    int num = getNumCategoriesForObject( inObjectID );
+    
+
+    return ( num > 0 );
+    }
+
 
 
 
