@@ -13,7 +13,10 @@
 #include "minorGems/ui/event/ActionListener.h"
 #include "minorGems/ui/event/ActionListenerList.h"
 
-
+typedef struct FilterFunction {
+        char(*unclickableFunc)(int);
+    } FilterFunction;
+        
 
 // fires action performed when selected object changes
 class Picker : public PageComponent, ActionListener, 
@@ -34,7 +37,10 @@ class Picker : public PageComponent, ActionListener,
         
         
         void redoSearch();
-
+        
+        // add a function that filters each result and returns true
+        // for results that should be unclickable
+        void addFilter( char(*inUnclickableFunc)( int inID ) );
 
         virtual void actionPerformed( GUIComponent *inTarget );
 
@@ -53,6 +59,8 @@ class Picker : public PageComponent, ActionListener,
         
         void **mResults;
         int mNumResults;
+        char *mResultsUnclickable;
+
 
         TextButton mNextButton;
         TextButton mPrevButton;
@@ -73,7 +81,11 @@ class Picker : public PageComponent, ActionListener,
         int mPastSearchCurrentIndex;
 
         void addSearchToStack();
-
+        
+        
+        // list of filter functions
+        SimpleVector<FilterFunction> mFilterFuncions;
+        
     };
 
 

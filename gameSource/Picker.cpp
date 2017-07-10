@@ -28,6 +28,7 @@ Picker::Picker( Pickable *inPickable, double inX, double inY )
           mSkip( 0 ),
           mResults( NULL ),
           mNumResults( 0 ),
+          mResultsUnclickable( NULL ),
           mNextButton( smallFont, +60, -290, "Next" ), 
           mPrevButton( smallFont, -60, -290, "Prev" ), 
           mDelButton( smallFont, 15, -290, "x" ), 
@@ -68,6 +69,7 @@ Picker::Picker( Pickable *inPickable, double inX, double inY )
 Picker::~Picker() {
     if( mResults != NULL ) {
         delete [] mResults;
+        delete [] mResultsUnclickable;
         }
     mPastSearches.deallocateStringElements();
     mPastSearchSkips.deleteAll();
@@ -80,7 +82,9 @@ void Picker::redoSearch() {
     
     if( mResults != NULL ) {
         delete [] mResults;
+        delete [] mResultsUnclickable;
         mResults = NULL;
+        mResultsUnclickable = NULL;
         }
 
     int numRemain;
@@ -166,10 +170,13 @@ void Picker::redoSearch() {
                     }
                 
                 mResults = new void*[ mNumResults ];
-                
+
                 int resultI = 0;
                 for( int j=mSkip; j<mSkip + mNumResults; j++ ) {
                     mResults[resultI] = passingResults.getElementDirect(j);
+                    
+                    mResultsUnclickable[ resultI ] = false;
+                    
                     resultI++;
                     }
                 
@@ -192,6 +199,26 @@ void Picker::redoSearch() {
                                       &mNumResults, &numRemain );
         }
     
+    
+    mResultsUnclickable = new char[ mNumResults ];
+
+    for( int i=0; i<mNumResults; i++ ) {
+        mResultsUnclickable[i] = false;
+        
+        for( int u=0; u<mFilterFuncions.size(); u++ ) {
+            char unclickable =
+                mFilterFuncions.
+                getElementDirect( u ).unclickableFunc( 
+                    mPickable->getID( mResults[ i ] ) );
+                        
+            if( unclickable ) {
+                mResultsUnclickable[ i ] = true;
+                break;
+                }
+            }
+        }
+
+
     
     mPrevButton.setVisible( mSkip > 0 );
     mNextButton.setVisible( numRemain > 0 );
@@ -361,9 +388,9 @@ void Picker::draw() {
             
             textPos.y += ( parts.size() - 1 ) * 12 / 2;
             
-            for( int i=0; i<parts.size(); i++ ) {
+            for( int j=0; j<parts.size(); j++ ) {
                 
-                char *text = parts.getElementDirect( i );
+                char *text = parts.getElementDirect( j );
                 char *trimmed = trimWhitespace( text );
                 
                 smallFont->drawString( trimmed, 
@@ -374,6 +401,12 @@ void Picker::draw() {
                 delete [] text;
                 }
             
+            if( mResultsUnclickable[ i ] ) {
+                setDrawColor( 0, 0, 0, 0.65 );
+                doublePair selPos = pos;
+                selPos.x = 0;
+                drawRect( selPos, 80, 32 );
+                }
 
             pos.y -= 64;
             }
@@ -406,6 +439,15 @@ void Picker::pointerUp( float inX, float inY ) {
         
         mSelectionIndex = (int)( inY / 64 );
         
+        if( mSelectionIndex < mNumResults && mSelectionIndex >= 0 &&
+            mResultsUnclickable[ mSelectionIndex ] ) {
+            // unclickable, skip it
+            
+            mSelectionIndex = oldSelection;
+            return;
+            }
+        
+
         if( mSelectionIndex >= mNumResults ) {
             mSelectionIndex = -1;
             mSelectionRightClicked = false;
@@ -475,3 +517,13 @@ void Picker::unselectObject() {
     mDelButton.setVisible( false );
     mDelConfirmButton.setVisible( false );
     }
+
+
+
+
+void Picker::addFilter( char(*inUnclickableFunc)( int inID ) ) {
+    FilterFunction f = { inUnclickableFunc };
+                         
+    mFilterFuncions.push_back( f );
+    }
+

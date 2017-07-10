@@ -30,10 +30,35 @@ static ObjectPickable objectPickableChild;
 
 
 
+char parentUnpickable( int inID ) {
+    if( getNumCategoriesForObject( inID ) > 0 ) {
+        // already a child, can't be a parent
+        return true;
+        }
+    return false;
+    }
+
+
+char childUnpickable( int inID ) {
+    CategoryRecord *catR = getCategory( inID );
+    
+    if( catR != NULL && catR->objectIDSet.size() > 0 ) {
+        // already a parent, can't be a child
+        return true;
+        }
+    return false;
+    }
+
+
+
 EditorCategoryPage::EditorCategoryPage()
         : mObjectParentPicker( &objectPickableParent, -410, 90 ),
           mObjectChildPicker( &objectPickableChild, +410, 90 ),
           mTransEditorButton( mainFont, 0, 260, "Transitions" ) {
+    
+    mObjectChildPicker.addFilter( &childUnpickable );
+    mObjectParentPicker.addFilter( &parentUnpickable );
+    
 
     addComponent( &mObjectChildPicker );
     addComponent( &mObjectParentPicker );
