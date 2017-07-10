@@ -9,6 +9,7 @@
 
 #include "folderCache.h"
 #include "objectBank.h"
+#include "categoryBank.h"
 
 
 
@@ -37,8 +38,13 @@ static int currentFile;
 
 static int maxID;
 
+static char autoGenerateCategoryTransitions = false;
+
+
 int initTransBankStart( char inAutoGenerateCategoryTransitions,
                         char *outRebuildingCache ) {
+    
+    autoGenerateCategoryTransitions = inAutoGenerateCategoryTransitions;
     
     maxID = 0;
 
@@ -155,6 +161,98 @@ void initTransBankFinish() {
             }
         }
     
+    
+    if( autoGenerateCategoryTransitions ) {
+        int numObjects;
+        
+        ObjectRecord **objects = getAllObjects( &numObjects );
+        
+        for( int i=0; i<numObjects; i++ ) {
+            ObjectRecord *o = objects[i];
+            
+            int oID = o->id;
+            
+            int numCats = getNumCategoriesForObject( oID );
+            
+            for( int c=0; c<numCats; c++ ) {
+                
+                int parentID = getCategoryForObject( oID, c );
+                
+                SimpleVector<TransRecord*> *parentTrans = 
+                    getAllUses( parentID );
+
+                if( parentTrans == NULL ) {
+                    continue;
+                    }
+                
+                int numParentTrans = parentTrans->size(); 
+                for( int t=0; t<numParentTrans; t++ ) {
+                    
+                    TransRecord *tr = parentTrans->getElementDirect( t );
+                    
+                    // override transitions might exist for object
+                    // concretely
+
+                    // OR they may have already been generated
+                    // (we go through listed parents for this object in order
+                    //  with previous earlier overriding later parents)
+
+                    if( tr->actor == parentID ) {
+                        // check if an override trans exists for the object
+                        // as actor
+                        
+                        TransRecord *oTR = getTrans( oID, tr->target );
+                        
+                        if( oTR != NULL ) {
+                            // skip this abstract terans
+                            continue;
+                            }
+                        }
+                    if( tr->target == parentID ) {
+                        // check if an override trans exists for the object
+                        // as target
+                        
+                        TransRecord *oTR = getTrans( tr->actor, oID );
+                        
+                        if( oTR != NULL ) {
+                            // skip this abstract terans
+                            continue;
+                            }
+                        }
+                    
+                    // got here:  no override transition exists for this
+                    // object
+                    
+                    int actor = tr->actor;
+                    int target = tr->target;
+                    int newActor = tr->newActor;
+                    int newTarget = tr->newTarget;
+                    int autoDecaySeconds = tr->autoDecaySeconds;
+
+                    
+                    // plug object in to replace parent
+                    if( actor == parentID ) {
+                        actor = oID;
+                        }
+                    if( target == parentID ) {
+                        target = oID;
+                        }
+                    if( newActor == parentID ) {
+                        newActor = oID;
+                        }
+                    if( newTarget == parentID ) {
+                        newTarget = oID;
+                        }
+                    
+                    // don't write to disk
+                    addTrans( actor, target, newActor, newTarget,
+                              autoDecaySeconds, true );
+                    }
+                }
+            }
+        
+        delete [] objects;
+        }
     }
 
 
@@ -322,7 +420,8 @@ char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit ) {
 
 void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget,
-               int inAutoDecaySeconds ) {
+               int inAutoDecaySeconds,
+               char inNoWriteToFile ) {
 
     // exapand id-indexed maps if a bigger ID is being added    
     if( inActor >= mapSize || inTarget >= mapSize 
@@ -447,7 +546,7 @@ void addTrans( int inActor, int inTarget,
         }
     
     
-    if( writeToFile ) {
+    if( writeToFile && ! inNoWriteToFile ) {
         
         File transDir( NULL, "transitions" );
             

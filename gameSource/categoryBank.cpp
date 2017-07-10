@@ -301,7 +301,7 @@ void saveCategoryToDisk( int inParentID ) {
     
         SimpleVector<char*> lines;
         
-        lines.push_back( autoSprintf( "parenID=%d", inParentID ) );
+        lines.push_back( autoSprintf( "parentID=%d", inParentID ) );
         
         // start with 0 objects in a new category
         lines.push_back( autoSprintf( "numObjects=%d", 

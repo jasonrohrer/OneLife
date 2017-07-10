@@ -101,7 +101,8 @@ char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit );
 // 0 for inNewActor or inNewTarget means actor or target consumed
 void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget,
-               int inAutoDecaySeconds = 0 );
+               int inAutoDecaySeconds = 0,
+               char inNoWriteToFile = false );
 
 
 
