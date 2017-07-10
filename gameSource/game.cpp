@@ -664,6 +664,8 @@ void freeFrameDrawer() {
 
     freeTransBank();
     
+    freeCategoryBank();
+
     freeLiveObjectSet();
 
     freeSoundBank();

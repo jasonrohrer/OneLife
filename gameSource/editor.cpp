@@ -531,6 +531,8 @@ void freeFrameDrawer() {
 
     freeTransBank();
     
+    freeCategoryBank();
+
     freeObjectBank();
 
     freeSpriteBank();
