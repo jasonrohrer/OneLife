@@ -1,0 +1,93 @@
+#!/bin/bash
+
+if [ ! -f minorGems ]
+then
+	hg clone http://hg.code.sf.net/p/minorgems/minorGems	
+fi
+
+if [ ! -f OneLife ]
+then
+	hg clone http://hg.code.sf.net/p/hcsoftware/OneLife	
+fi
+
+if [ ! -f OneLifeData7 ]
+then
+	hg clone http://hg.code.sf.net/p/hcsoftware/OneLife	
+fi
+
+
+cd minorGems
+hg pull
+latestTaggedVersion=`hg tags | grep "OneLife" -m 1 | awk '{print $1}' | sed -e 's/OneLife_v//'`
+hg update OneLife_v$latestTaggedVersion
+
+
+cd ../OneLife
+hg pull
+latestTaggedVersion=`hg tags | grep "OneLife" -m 1 | awk '{print $1}' | sed -e 's/OneLife_v//'`
+hg update OneLife_v$latestTaggedVersion
+
+
+cd ../OneLifeData7
+hg pull
+latestTaggedVersion=`hg tags | grep "OneLife" -m 1 | awk '{print $1}' | sed -e 's/OneLife_v//'`
+hg update OneLife_v$latestTaggedVersion
+
+
+cd ..
+
+
+if [ ! -f animations ]
+then
+	ln -s OneLifeData7/animations .	
+fi
+
+
+if [ ! -f categories ]
+then
+	ln -s OneLifeData7/categories .	
+fi
+
+
+if [ ! -f ground ]
+then
+	ln -s OneLifeData7/ground .	
+fi
+
+
+if [ ! -f music ]
+then
+	ln -s OneLifeData7/music .	
+fi
+
+
+if [ ! -f objects ]
+then
+	ln -s OneLifeData7/objects .	
+fi
+
+
+if [ ! -f sounds ]
+then
+	ln -s OneLifeData7/sounds .	
+fi
+
+
+if [ ! -f sprites ]
+then
+	ln -s OneLifeData7/sprites .	
+fi
+
+
+if [ ! -f dataVersionNumber.txt ]
+then
+	ln -s OneLifeData7/dataVersionNumber.txt .	
+fi
+
+
+
+
+cp OneLife/build/source/runToBuild .
+
+
+./runToBuild
