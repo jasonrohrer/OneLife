@@ -1,18 +1,18 @@
-#!/bin/bash
+#!/bin/sh
 
-if [ ! -f minorGems ]
+if [ ! -e minorGems ]
 then
 	hg clone http://hg.code.sf.net/p/minorgems/minorGems	
 fi
 
-if [ ! -f OneLife ]
+if [ ! -e OneLife ]
 then
 	hg clone http://hg.code.sf.net/p/hcsoftware/OneLife	
 fi
 
-if [ ! -f OneLifeData7 ]
+if [ ! -e OneLifeData7 ]
 then
-	hg clone http://hg.code.sf.net/p/hcsoftware/OneLife	
+	hg clone http://hg.code.sf.net/p/hcsoftware/OneLifeData7	
 fi
 
 
@@ -24,62 +24,72 @@ hg update OneLife_v$latestTaggedVersion
 
 cd ../OneLife
 hg pull
-latestTaggedVersion=`hg tags | grep "OneLife" -m 1 | awk '{print $1}' | sed -e 's/OneLife_v//'`
-hg update OneLife_v$latestTaggedVersion
+latestTaggedVersionA=`hg tags | grep "OneLife" -m 1 | awk '{print $1}' | sed -e 's/OneLife_v//'`
+hg update OneLife_v$latestTaggedVersionA
 
 
 cd ../OneLifeData7
 hg pull
-latestTaggedVersion=`hg tags | grep "OneLife" -m 1 | awk '{print $1}' | sed -e 's/OneLife_v//'`
-hg update OneLife_v$latestTaggedVersion
+latestTaggedVersionB=`hg tags | grep "OneLife" -m 1 | awk '{print $1}' | sed -e 's/OneLife_v//'`
+hg update OneLife_v$latestTaggedVersionB
+
+
+latestVersion=$latestTaggedVersionB
+
+
+if [ $latestTaggedVersionA -gt $latestTaggedVersionB ]
+then
+	latestVersion=$latestTaggedVersionA
+fi
+
 
 
 cd ..
 
 
-if [ ! -f animations ]
+if [ ! -h animations ]
 then
 	ln -s OneLifeData7/animations .	
 fi
 
 
-if [ ! -f categories ]
+if [ ! -h categories ]
 then
 	ln -s OneLifeData7/categories .	
 fi
 
 
-if [ ! -f ground ]
+if [ ! -h ground ]
 then
 	ln -s OneLifeData7/ground .	
 fi
 
 
-if [ ! -f music ]
+if [ ! -h music ]
 then
 	ln -s OneLifeData7/music .	
 fi
 
 
-if [ ! -f objects ]
+if [ ! -h objects ]
 then
 	ln -s OneLifeData7/objects .	
 fi
 
 
-if [ ! -f sounds ]
+if [ ! -h sounds ]
 then
 	ln -s OneLifeData7/sounds .	
 fi
 
 
-if [ ! -f sprites ]
+if [ ! -h sprites ]
 then
 	ln -s OneLifeData7/sprites .	
 fi
 
 
-if [ ! -f dataVersionNumber.txt ]
+if [ ! -h dataVersionNumber.txt ]
 then
 	ln -s OneLifeData7/dataVersionNumber.txt .	
 fi
@@ -91,3 +101,9 @@ cp OneLife/build/source/runToBuild .
 
 
 ./runToBuild
+
+
+
+echo
+echo
+echo "Done building v$latestVersion"
