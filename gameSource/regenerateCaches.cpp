@@ -159,7 +159,7 @@ int main() {
 
 
 
-    num = initTransBankStart( &rebuilding );
+    num = initTransBankStart( false, &rebuilding );
 
     if( rebuilding ) {
         runRebuild( "transitions", num, &initTransBankStep );
