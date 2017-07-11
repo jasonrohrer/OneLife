@@ -4,7 +4,8 @@
 <table border=0 width="100%" cellpadding=5><tr><td bgcolor="#222222">
 Make sure you have the following package installed:
 <ul>
-<li>imagemagick
+  <li>mercurial (source control management, also called "hg")
+  <li>imagemagick (image conversion tools)
 </ul>
 Make sure you have the <b>dev</b> package of the following library installed:
 <ul>
