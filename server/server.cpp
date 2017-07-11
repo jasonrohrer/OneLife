@@ -26,6 +26,7 @@
 #include "map.h"
 #include "../gameSource/transitionBank.h"
 #include "../gameSource/objectBank.h"
+#include "../gameSource/categoryBank.h"
 
 #include "lifeLog.h"
 #include "backup.h"
@@ -367,6 +368,7 @@ void quitCleanup() {
     freeMap();
 
     freeTransBank();
+    freeCategoryBank();
     freeObjectBank();
 
     if( clientPassword != NULL ) {
@@ -2589,11 +2591,18 @@ int main() {
 
     char rebuilding;
     initObjectBankStart( &rebuilding );
-    
+
     while( initObjectBankStep() < 1.0 );
     initObjectBankFinish();
-        
-    initTransBankStart( &rebuilding );
+
+    
+    initCategoryBankStart( &rebuilding );
+    while( initCategoryBankStep() < 1.0 );
+    initCategoryBankFinish();
+
+
+    // auto-generate category-based transitions
+    initTransBankStart( true, &rebuilding );
     while( initTransBankStep() < 1.0 );
     initTransBankFinish();
     

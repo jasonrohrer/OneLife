@@ -161,7 +161,8 @@ void initTransBankFinish() {
             }
         }
     
-    
+    printf( "Loaded %d transitions from transitions folder\n", numRecords );
+
     if( autoGenerateCategoryTransitions ) {
         int numObjects;
         
@@ -252,6 +253,10 @@ void initTransBankFinish() {
             }
         
         delete [] objects;
+
+        printf( "Auto-generated %d transitions based on categories\n", 
+                records.size() - numRecords );
+
         }
     }
 

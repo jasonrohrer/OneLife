@@ -21,6 +21,7 @@ LAYER_SOURCE = \
 server.cpp \
 map.cpp \
 ../gameSource/transitionBank.cpp \
+../gameSource/categoryBank.cpp \
 ../gameSource/objectBank.cpp \
 ../gameSource/ageControl.cpp \
 ../gameSource/folderCache.cpp \
