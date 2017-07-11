@@ -3,6 +3,7 @@
 #include "objectBank.h"
 #include "animationBank.h"
 #include "transitionBank.h"
+#include "categoryBank.h"
 
 #include "soundBank.h"
 
@@ -131,6 +132,15 @@ int main( int inNumArgs, char **inArgs ) {
     runSteps( "objects", num, &initObjectBankStep );
     
     initObjectBankFinish();
+
+    printf( "\n" );
+
+
+    num = initCategoryBankStart( &rebuilding );
+    
+    runSteps( "categories", num, &initCategoryBankStep );
+    
+    initCategoryBankFinish();
 
     printf( "\n" );
 
@@ -282,7 +292,8 @@ int main( int inNumArgs, char **inArgs ) {
     freeAnimationBank();
     freeTransBank();
     freeSoundBank();
-
+    freeCategoryBank();
+    
     }
 
 

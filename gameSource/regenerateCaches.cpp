@@ -3,6 +3,7 @@
 #include "objectBank.h"
 #include "animationBank.h"
 #include "transitionBank.h"
+#include "categoryBank.h"
 
 #include "soundBank.h"
 
@@ -98,6 +99,7 @@ int main() {
     // first, delete old ones
     deleteCache( "sprites" );
     deleteCache( "objects" );
+    deleteCache( "categories" );
     deleteCache( "animations" );
     deleteCache( "transitions" );
     
@@ -143,7 +145,17 @@ int main() {
         }
     
     initObjectBankFinish();
+    printf( "\n" );
+    
 
+    num = initCategoryBankStart( &rebuilding );
+    
+    if( rebuilding ) {
+        runRebuild( "categories", num, &initCategoryBankStep );
+        }
+    
+    initCategoryBankFinish();
+    printf( "\n" );
 
 
     num = initAnimationBankStart( &rebuilding );
@@ -201,7 +213,9 @@ int main() {
 
     // ground tiles need this, so free last
     freeObjectBank();
-    printf( "\n" );
+
+    // trans bank needs these, so free last
+    freeCategoryBank();
 
     }
 
