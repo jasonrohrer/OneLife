@@ -19,6 +19,7 @@ cd $SOURCEDIR
 mv $SOURCEDIR/OneLifeData7/animations $SOURCEDIR/
 mv $SOURCEDIR/OneLifeData7/music $SOURCEDIR/
 mv $SOURCEDIR/OneLifeData7/objects $SOURCEDIR/
+mv $SOURCEDIR/OneLifeData7/categories $SOURCEDIR/
 mv $SOURCEDIR/OneLifeData7/sounds $SOURCEDIR/
 mv $SOURCEDIR/OneLifeData7/sprites $SOURCEDIR/
 mv $SOURCEDIR/OneLifeData7/ground $SOURCEDIR/ground

@@ -23,6 +23,7 @@ mkdir $baseFolder/reverbCache
 
 mkdir $baseFolder/sprites
 mkdir $baseFolder/objects
+mkdir $baseFolder/categories
 mkdir $baseFolder/transitions
 mkdir $baseFolder/animations
 mkdir $baseFolder/music
@@ -44,6 +45,7 @@ cp ../gameSource/reverbImpulseResponse.aiff $baseFolder/
 
 cp ../../OneLifeData7/sprites/* $baseFolder/sprites
 cp ../../OneLifeData7/objects/* $baseFolder/objects
+cp ../../OneLifeData7/categories/* $baseFolder/categories
 cp ../../OneLifeData7/transitions/* $baseFolder/transitions
 cp ../../OneLifeData7/animations/* $baseFolder/animations
 cp ../../OneLifeData7/music/* $baseFolder/music
