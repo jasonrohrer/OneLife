@@ -117,6 +117,7 @@ echo ""
 
 hg archive ~/checkout/diffWorking/dataLatest
 rm ~/checkout/diffWorking/dataLatest/.hg*
+rm -r ~/checkout/diffWorking/dataLatest/*.sh ~/checkout/diffWorking/dataLatest/working ~/checkout/diffWorking/dataLatest/overlays
 echo -n "$newVersion" > ~/checkout/diffWorking/dataLatest/dataVersionNumber.txt
 
 
@@ -128,6 +129,7 @@ hg update -r OneLife_v$lastTaggedDataVersion
 
 hg archive ~/checkout/diffWorking/dataLast
 rm ~/checkout/diffWorking/dataLast/.hg*
+rm -r ~/checkout/diffWorking/dataLast/*.sh ~/checkout/diffWorking/dataLast/working ~/checkout/diffWorking/dataLast/overlays
 
 
 # restore repository to latest, to avoid confusion later
