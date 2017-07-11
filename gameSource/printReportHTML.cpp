@@ -147,7 +147,9 @@ int main( int inNumArgs, char **inArgs ) {
 
 
 
-    num = initTransBankStart( &rebuilding );
+    // auto-gen category-based transitions so that we can detect
+    // human-made objects properly.
+    num = initTransBankStart( true, &rebuilding );
 
     runSteps( "transitions", num, &initTransBankStep );
     
