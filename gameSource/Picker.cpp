@@ -174,9 +174,6 @@ void Picker::redoSearch() {
                 int resultI = 0;
                 for( int j=mSkip; j<mSkip + mNumResults; j++ ) {
                     mResults[resultI] = passingResults.getElementDirect(j);
-                    
-                    mResultsUnclickable[ resultI ] = false;
-                    
                     resultI++;
                     }
                 
