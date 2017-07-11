@@ -100,7 +100,7 @@ fi
 cp OneLife/build/source/runToBuild .
 
 
-./runToBuild
+./runToBuild 1
 
 
 
