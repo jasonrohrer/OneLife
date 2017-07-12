@@ -6148,10 +6148,6 @@ int main() {
         for( int i=0; i<numLive; i++ ) {
             
             LiveObject *nextPlayer = players.getElement(i);
-            
-            if( nextPlayer->error ) {
-                continue;
-                }
 
             
             if( ! nextPlayer->firstMessageSent ) {
