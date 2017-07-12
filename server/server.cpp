@@ -903,8 +903,11 @@ char *getMovesMessage( char inNewMovesOnly,
 
     for( int i=0; i<numPlayers; i++ ) {
                 
-        LiveObject *o = players.getElement( i );
-                
+        LiveObject *o = players.getElement( i );                
+        
+        if( o->error ) {
+            continue;
+            }
 
         if( ( o->xd != o->xs || o->yd != o->ys )
             &&
@@ -1196,7 +1199,11 @@ void handleMapChangeToPaths(
         for( int j=0; j<numLive; j++ ) {
             LiveObject *otherPlayer = 
                 players.getElement( j );
-                                    
+            
+            if( otherPlayer->error ) {
+                continue;
+                }
+
             if( otherPlayer->xd != otherPlayer->xs ||
                 otherPlayer->yd != otherPlayer->ys ) {
                 
@@ -1858,7 +1865,11 @@ static LiveObject *getHitPlayer( int inX, int inY, int inMaxAge = -1,
     for( int j=0; j<numLive; j++ ) {
         LiveObject *otherPlayer = 
             players.getElement( j );
-                                    
+        
+        if( otherPlayer->error ) {
+            continue;
+            }
+
         if( inMaxAge != -1 &&
             computeAge( otherPlayer ) > inMaxAge ) {
             continue;
@@ -1955,6 +1966,10 @@ void processLoggedInPlayer( Socket *inSock,
     for( int i=0; i<numPlayers; i++ ) {
         LiveObject *player = players.getElement( i );
         
+        if( player->error ) {
+            continue;
+            }
+
         if( isFertileAge( player ) ) {
             numOfAge ++;
             
@@ -1979,7 +1994,13 @@ void processLoggedInPlayer( Socket *inSock,
                 char bAlive = false;
                 
                 for( int j=0; j<numPlayers; j++ ) {
-                    int id = players.getElement( j )->id;
+                    LiveObject *otherObj = players.getElement( j );
+                    
+                    if( otherObj->error ) {
+                        continue;
+                        }
+
+                    int id = otherObj->id;
                     
                     if( id == idA ) {
                         aAlive = true;
@@ -2031,8 +2052,12 @@ void processLoggedInPlayer( Socket *inSock,
         for( int i=0; i<numPlayers; i++ ) {
             LiveObject *player = players.getElement( i );
             
+            if( player->error ) {
+                continue;
+                }
+
             if( computeAge( player ) < babyAge ) {
-                parentChoices.push_back( players.getElement( i ) );
+                parentChoices.push_back( player );
                 }
             }
         }
@@ -2643,6 +2668,9 @@ int main() {
             // clear at the start of each step
             nextPlayer->responsiblePlayerID = -1;
 
+            if( nextPlayer->error ) {
+                continue;
+                }
 
             if( nextPlayer->xd != nextPlayer->xs ||
                 nextPlayer->yd != nextPlayer->ys ) {
@@ -3224,6 +3252,10 @@ int main() {
             LiveObject *nextPlayer = players.getElement( i );
             
             nextPlayer->updateSent = false;
+
+            if( nextPlayer->error ) {
+                continue;
+                }
 
             char result = 
                 readSocketFull( nextPlayer->sock, nextPlayer->sockBuffer );
@@ -6117,6 +6149,10 @@ int main() {
             
             LiveObject *nextPlayer = players.getElement(i);
             
+            if( nextPlayer->error ) {
+                continue;
+                }
+
             
             if( ! nextPlayer->firstMessageSent ) {
                 
@@ -6146,9 +6182,15 @@ int main() {
                 
                     LiveObject *o = players.getElement( i );
                 
+                    if( o->error ) {
+                        continue;
+                        }
+
 
                     char *messageLine = getUpdateLine( o, false );
                     
+                    // skip sending info about errored players in
+                    // first message
                     if( o->id != nextPlayer->id ) {
                         messageBuffer.appendElementString( messageLine );
                         delete [] messageLine;
@@ -6259,6 +6301,11 @@ int main() {
                     for( int j=0; j<numLive; j++ ) {
                         LiveObject *otherPlayer = players.getElement( j );
                         
+                        if( otherPlayer->error ) {
+                            continue;
+                            }
+
+
                         if( otherPlayer->heldByOther ) {
                             LiveObject *adultO = 
                                 getAdultHolding( otherPlayer );
@@ -6311,6 +6358,11 @@ int main() {
                         LiveObject *otherPlayer = 
                             players.getElement( j );
                         
+                        if( otherPlayer->error ) {
+                            continue;
+                            }
+
+
                         if( !otherPlayer->heldByOther &&
                             otherPlayer->id != nextPlayer->id &&
                             otherPlayer->id != ourHolderID ) {
