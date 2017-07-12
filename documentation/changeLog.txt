@@ -52,6 +52,18 @@ Version 28     ???
 
 --Death screen now shows age and cause of death.
 
+--Category system in editor to make abstract transitions that apply to a class
+  of objects.
+
+--Unix Source bundle now ships as a script that pulls from live source 
+  repositories.
+
+--Permanent, non-holdable objects can be food, allowing you to eat from them
+  without setting down the tool in your hand.
+
+--Eating food now stacks instead of filling you to a pre-defined per-food 
+  maximum.  Eating one berry might fill you up to 4, but eating two in a row
+  would fill you up to 8.
 
 
 
