@@ -999,7 +999,23 @@ int stopRecordingSound() {
     if( soundsDir.exists() && soundsDir.isDirectory() ) {
                 
                 
-        int nextSoundNumber = maxID + 1;
+        int nextSoundNumber = 1;
+   
+        File *nextNumberFile = 
+            soundsDir.getChildFile( "nextSoundNumber.txt" );
+                
+        if( nextNumberFile->exists() ) {
+                    
+            char *nextNumberString = 
+                nextNumberFile->readFileContents();
+
+            if( nextNumberString != NULL ) {
+                sscanf( nextNumberString, "%d", &nextSoundNumber );
+                
+                delete [] nextNumberString;
+                }
+            }
+
                 
         const char *printFormatAIFF = "%d.aiff";
         
@@ -1015,6 +1031,18 @@ int stopRecordingSound() {
                        finalNumSamples );
         
         delete soundFile;
+
+
+        
+        nextSoundNumber++;
+                
+        char *nextNumberString = autoSprintf( "%d", nextSoundNumber );
+        
+        nextNumberFile->writeToFile( nextNumberString );
+        
+        delete [] nextNumberString;
+        
+        delete nextNumberFile;
         }
     
     if( newID == -1 ) {
