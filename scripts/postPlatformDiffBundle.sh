@@ -23,14 +23,14 @@ for platform in linux mac win; do
 
 	dbzFilePath=~/diffBundles/$dbzFileName
 
-	if [ ! -f $dbzFilePath ]
+	if [ ! -e $dbzFilePath ]
 	then
 		echo "File doesn't exist at $dbzFilePath"
 		exit 1
 	fi
 	urlFilePath=~/diffBundles/${newVersion}_inc_${platform}_urls.txt
 
-	if [ -f $urlFilePath ]
+	if [ -e $urlFilePath ]
 	then
 		echo "URL file already exists $urlFilePath"
 		exit 1
