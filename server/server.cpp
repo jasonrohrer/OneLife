@@ -3952,6 +3952,8 @@ int main() {
                             
                             int target = getMapObject( m.x, m.y );
                             
+                            int oldHolding = nextPlayer->holdingID;
+                            
                             if( target != 0 ) {                                
                                 ObjectRecord *targetObj = getObject( target );
                                 
@@ -4132,6 +4134,62 @@ int main() {
                                         nextPlayer, m.x, m.y );
                                     }
                                 
+
+                                if( targetObj->permanent &&
+                                    targetObj->foodValue > 0 ) {
+                                    
+                                    // just touching this object
+                                    // causes us to eat from it
+
+                                    nextPlayer->lastAteID = 
+                                        targetObj->id;
+                                    nextPlayer->lastAteFillMax =
+                                        nextPlayer->foodStore;
+                                    
+                                    nextPlayer->foodStore += 
+                                        targetObj->foodValue;
+                                    
+                                    int cap =
+                                        computeFoodCapacity( nextPlayer );
+                                    
+                                    if( nextPlayer->foodStore > cap ) {
+                                        nextPlayer->foodStore = cap;
+                                        }
+
+                                    
+                                    // we eat everything BUT what
+                                    // we picked from it, if anything
+                                    if( oldHolding == 0 && 
+                                        nextPlayer->holdingID != 0 ) {
+                                        
+                                        ObjectRecord *newHeld =
+                                            getObject( nextPlayer->holdingID );
+                                        
+                                        if( newHeld->foodValue > 0 ) {
+                                            nextPlayer->foodStore -=
+                                                newHeld->foodValue;
+
+                                            if( nextPlayer->lastAteFillMax >
+                                                nextPlayer->foodStore ) {
+                                                
+                                                nextPlayer->foodStore =
+                                                    nextPlayer->lastAteFillMax;
+                                                }
+                                            }
+                                        
+                                        }
+                                    
+
+
+                                    nextPlayer->foodDecrementETASeconds =
+                                        Time::getCurrentTime() +
+                                        computeFoodDecrementTimeSeconds( 
+                                            nextPlayer );
+                                    
+                                    nextPlayer->foodUpdate = true;
+                                    }
+                                
+
                                 if( ! transApplied &&
                                     nextPlayer->holdingID != 0 ) {
                                     // no transition for what we're
@@ -4434,14 +4492,9 @@ int main() {
                                     targetPlayer->lastAteID = 
                                         nextPlayer->holdingID;
                                     targetPlayer->lastAteFillMax =
-                                        obj->foodValue;
+                                        nextPlayer->foodStore;
                                     
-                                    if( targetPlayer->foodStore < 
-                                        obj->foodValue ) {
-                                        
-                                        targetPlayer->foodStore =
-                                            obj->foodValue;
-                                        }
+                                    targetPlayer->foodStore += obj->foodValue;
                                     
                                     int cap =
                                         computeFoodCapacity( targetPlayer );

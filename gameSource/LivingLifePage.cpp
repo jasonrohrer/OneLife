@@ -6908,12 +6908,20 @@ void LivingLifePage::step() {
                         }
                 
                     if( lastAteID != 0 ) {
+                        ObjectRecord *lastAteObj = getObject( lastAteID );
+                        
                         char *strUpper = stringToUpperCase(
-                            getObject( lastAteID )->description );
+                            lastAteObj->description );
 
+                        const char *key = "lastAte";
+                        
+                        if( lastAteObj->permanent ) {
+                            key = "lastAtePermanent";
+                            }
+                        
                         mCurrentLastAteString = 
                             autoSprintf( "%s %s",
-                                         translate( "lastAte" ),
+                                         translate( key ),
                                          strUpper );
                         delete [] strUpper;
                     

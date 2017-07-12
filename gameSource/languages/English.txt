@@ -75,6 +75,7 @@ loadingMap "LOADING MAP"
 
 
 lastAte = "ATE"
+lastAtePermanent = "ATE FROM"
 
 
 youDied "YOU DIED"

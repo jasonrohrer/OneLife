@@ -291,14 +291,15 @@ FX
 food_store food_capacity last_ate_id last_ate_fill_max move_speed responsible_id
 #
 
-store is integer amount of food left in body, capacity is the integer 
+food_store is integer amount of food left in body, capacity is the integer 
 maximum amount of food.
 
 last_ate_id is the object id of the last piece of food eaten, or 0 if nothing
 was eaten recently
 
-last_ate_fill_max is an integer number of maximum food slots filled by what
-was eaten recently
+last_ate_fill_max is an integer number indicating how many slots were full
+before what was just eaten.  Amount that what was eaten filled us up is
+(food_store - last_ate_fill_max).
 
 move_speed is floating point speed in grid square widths per second.
 
