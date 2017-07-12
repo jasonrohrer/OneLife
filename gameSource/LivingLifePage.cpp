@@ -967,10 +967,16 @@ LivingLifePage::LivingLifePage()
           mCurMouseOverID( 0 ),
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
           mPathMarkSprite( loadWhiteSprite( "pathMark.tga" ) ),
-          mGroundOverlaySprite( loadSprite( "ground.tga" ) ),
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! " ),
           mDeathReason( NULL ) {
+
+    for( int i=0; i<4; i++ ) {
+        char *name = autoSprintf( "ground_t%d.tga", i );    
+        mGroundOverlaySprite[i] = loadSprite( name, false );
+        delete [] name;
+        }
+    
 
     mMapGlobalOffset.x = 0;
     mMapGlobalOffset.y = 0;
@@ -1220,8 +1226,11 @@ LivingLifePage::~LivingLifePage() {
     freeSprite( mNotePaperSprite );
     freeSprite( mChalkBlotSprite );
     freeSprite( mPathMarkSprite );
-    freeSprite( mGroundOverlaySprite );
+
     
+    for( int i=0; i<4; i++ ) {
+        freeSprite( mGroundOverlaySprite[i] );
+        }
     
 
     for( int i=0; i<NUM_HUNGER_BOX_SPRITES; i++ ) {
@@ -2892,9 +2901,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
     // draw overlay evenly over all biomes
     doublePair groundCenterPos;
 
-    int groundW = getSpriteWidth( mGroundOverlaySprite );
-    int groundH = getSpriteHeight( mGroundOverlaySprite );
+    int groundWTile = getSpriteWidth( mGroundOverlaySprite[0] );
+    int groundHTile = getSpriteHeight( mGroundOverlaySprite[0] );
     
+    int groundW = groundWTile * 2;
+    int groundH = groundHTile * 2;
+
     groundCenterPos.x = lrint( lastScreenViewCenter.x / groundW ) * groundW;
     groundCenterPos.y = lrint( lastScreenViewCenter.y / groundH ) * groundH;
 
@@ -2914,7 +2926,27 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             pos.x = groundCenterPos.x + x * groundW;
             
-            if( drawMult ) drawSprite( mGroundOverlaySprite, pos );
+            if( drawMult ) {
+                for( int t=0; t<4; t++ ) {
+                    
+                    doublePair posTile = pos;
+                    if( t % 2 == 0 ) {
+                        posTile.x -= groundWTile / 2;
+                        }
+                    else {
+                        posTile.x += groundWTile / 2;
+                        }
+                    
+                    if( t < 2 ) {
+                        posTile.y += groundHTile / 2;
+                        }
+                    else {
+                        posTile.y -= groundHTile / 2;
+                        }
+                    
+                    drawSprite( mGroundOverlaySprite[t], posTile );
+                    }
+                }            
             }
         }
     toggleAdditiveTextureColoring( false );
@@ -2940,7 +2972,27 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             pos.x = groundCenterPos.x + x * groundW;
 
-            if( drawAdd ) drawSprite( mGroundOverlaySprite, pos );
+            if( drawAdd )  {
+                for( int t=0; t<4; t++ ) {
+                    
+                    doublePair posTile = pos;
+                    if( t % 2 == 0 ) {
+                        posTile.x -= groundWTile / 2;
+                        }
+                    else {
+                        posTile.x += groundWTile / 2;
+                        }
+                    
+                    if( t < 2 ) {
+                        posTile.y += groundHTile / 2;
+                        }
+                    else {
+                        posTile.y -= groundHTile / 2;
+                        }
+                    
+                    drawSprite( mGroundOverlaySprite[t], posTile );
+                    }
+                }
             }
         }
     //toggleAdditiveTextureColoring( false );

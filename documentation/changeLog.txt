@@ -65,6 +65,9 @@ Version 28     ???
   maximum.  Eating one berry might fill you up to 4, but eating two in a row
   would fill you up to 8.
 
+--Split ground overlay into 4 1024x1024 tiles to deal with bug in larger mipmap
+  generation on some graphics cards.
+
 
 
 Server fixes:

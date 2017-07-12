@@ -73,7 +73,10 @@ graphics/hungerBars.tga \
 graphics/hungerBarsErased.tga \
 graphics/chalkBlot.tga \
 graphics/pathMark.tga \
-graphics/ground.tga \
+graphics/ground_t0.tga \
+graphics/ground_t1.tga \
+graphics/ground_t2.tga \
+graphics/ground_t3.tga \
 graphics/guiPanel.tga \
 graphics/tempArrows.tga \
 graphics/tempArrowsErased.tga \

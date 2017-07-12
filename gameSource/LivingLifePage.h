@@ -453,7 +453,7 @@ class LivingLifePage : public GamePage {
 
         SpriteHandle mChalkBlotSprite;
         SpriteHandle mPathMarkSprite;
-        SpriteHandle mGroundOverlaySprite;
+        SpriteHandle mGroundOverlaySprite[4];
         
         
         // not visible, but used for its text filtering
