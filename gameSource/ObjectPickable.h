@@ -95,13 +95,13 @@ class ObjectPickable : public Pickable {
         
         virtual void deleteID( int inID ) {
             Pickable::deleteID( inID );
-            
-            transPage->clearUseOfObject( inID );
-            animPage->clearUseOfObject( inID );
-            categoryPage->clearUseOfObject( inID );
 
             removeObjectFromAllCategories( inID );
             deleteObjectFromBank( inID );
+
+            transPage->clearUseOfObject( inID );
+            animPage->clearUseOfObject( inID );
+            categoryPage->clearUseOfObject( inID );
 
             for( int i=0; i<endAnimType; i++ ) {
                 clearAnimation( inID, (AnimType)i );

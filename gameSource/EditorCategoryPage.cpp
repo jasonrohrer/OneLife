@@ -93,6 +93,9 @@ void EditorCategoryPage::clearUseOfObject( int inObjectID ) {
     if( mCurrentObject == inObjectID ) {
         mCurrentObject = -1;
         }
+        
+    mObjectParentPicker.redoSearch();
+    mObjectChildPicker.redoSearch();
     }
 
 
