@@ -909,6 +909,9 @@ void freeObjectBank() {
             delete [] idMap[i]->spriteIsBackFoot;
             delete [] idMap[i]->spriteIsFrontFoot;
 
+            delete [] idMap[i]->spriteUseVanish;
+            delete [] idMap[i]->spriteUseAppear;
+
             delete idMap[i];
             }
         }
