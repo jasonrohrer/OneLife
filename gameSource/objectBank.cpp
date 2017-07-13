@@ -623,6 +623,13 @@ float initObjectBankStep() {
                 memset( r->spriteIsFrontFoot, false, r->numSprites );
                 
                 
+                r->numUses = 0;
+                r->spriteUseVanish = new char[ r->numSprites ];
+                r->spriteUseAppear = new char[ r->numSprites ];
+                r->useDummyIDs = NULL;
+
+                memset( r->spriteUseVanish, false, r->numSprites );
+                memset( r->spriteUseAppear, false, r->numSprites );
 
 
                 for( int i=0; i< r->numSprites; i++ ) {
@@ -712,7 +719,30 @@ float initObjectBankStep() {
                                             r->numSprites );
                 next++;
 
+                if( next < numLines ) {
+                    // info about num uses and vanish/appear sprites
+                    
+                    sscanf( lines[next], "numUses=%d", 
+                            &( r->numUses ) );
+                            
+                    next++;
+                    
+                    if( next < numLines )
+                        sparseCommaLineToBoolArray( "useVanishIndex", 
+                                                    lines[next],
+                                                    r->spriteUseVanish, 
+                                                    r->numSprites );
+                    next++;
 
+                    if( next < numLines )
+                        sparseCommaLineToBoolArray( "useAppearIndex", 
+                                                    lines[next],
+                                                    r->spriteUseAppear, 
+                                                    r->numSprites );
+                    next++;
+                    }
+                
+                
                 records.push_back( r );
 
                             
@@ -820,7 +850,14 @@ static void freeObjectRecord( int inID ) {
             delete [] idMap[inID]->spriteIsBody;
             delete [] idMap[inID]->spriteIsBackFoot;
             delete [] idMap[inID]->spriteIsFrontFoot;
+
+            delete [] idMap[inID]->spriteUseVanish;
+            delete [] idMap[inID]->spriteUseAppear;
             
+            if( idMap[inID]->useDummyIDs != NULL ) {
+                delete [] idMap[inID]->useDummyIDs;
+                }
+
             delete idMap[inID];
             idMap[inID] = NULL;
 
@@ -948,6 +985,10 @@ void resaveAll() {
                        idMap[i]->spriteIsBody,
                        idMap[i]->spriteIsBackFoot,
                        idMap[i]->spriteIsFrontFoot,
+                       idMap[i]->numUses,
+                       idMap[i]->spriteUseVanish,
+                       idMap[i]->spriteUseAppear,
+                       false,
                        idMap[i]->id );
 
             delete [] biomeString;
@@ -1123,6 +1164,10 @@ int addObject( const char *inDescription,
                char *inSpriteIsBody,
                char *inSpriteIsBackFoot,
                char *inSpriteIsFrontFoot,
+               int inNumUses,
+               char *inSpriteUseVanish,
+               char *inSpriteUseAppear,
+               char inNoWriteToFile,
                int inReplaceID ) {
     
     if( inSlotTimeStretch < 0.0001 ) {
@@ -1139,7 +1184,8 @@ int addObject( const char *inDescription,
         objectsDir.makeDirectory();
         }
     
-    if( objectsDir.exists() && objectsDir.isDirectory() ) {
+    if( ! inNoWriteToFile && 
+        objectsDir.exists() && objectsDir.isDirectory() ) {
                 
                 
         int nextObjectNumber = 1;
@@ -1312,6 +1358,19 @@ int addObject( const char *inDescription,
                                           inSpriteIsFrontFoot, 
                                           inNumSprites ) );
         
+        
+        lines.push_back( autoSprintf( "numUses=%d",
+                                      inNumUses ) );
+        
+        lines.push_back(
+            boolArrayToSparseCommaString( "useVanishIndex",
+                                          inSpriteUseVanish, 
+                                          inNumSprites ) );
+        lines.push_back(
+            boolArrayToSparseCommaString( "useAppearIndex",
+                                          inSpriteUseAppear, 
+                                          inNumSprites ) );
+        
 
         char **linesArray = lines.getElementArray();
         
@@ -1352,9 +1411,14 @@ int addObject( const char *inDescription,
         delete nextNumberFile;
         }
     
-    if( newID == -1 ) {
+    if( newID == -1 && ! inNoWriteToFile ) {
         // failed to save it to disk
         return -1;
+        }
+    
+    
+    if( newID == -1 ) {
+        newID = maxID + 1;
         }
 
     
@@ -1378,6 +1442,12 @@ int addObject( const char *inDescription,
         idMap = newMap;
         mapSize = newMapSize;
         }
+    
+
+    if( newID > maxID ) {
+        maxID = newID;
+        }
+
 
     ObjectRecord *r = new ObjectRecord;
     
@@ -1474,6 +1544,12 @@ int addObject( const char *inDescription,
     r->spriteIsBackFoot = new char[ inNumSprites ];
     r->spriteIsFrontFoot = new char[ inNumSprites ];
 
+    r->numUses = inNumUses;
+    r->spriteUseVanish = new char[ inNumSprites ];
+    r->spriteUseAppear = new char[ inNumSprites ];
+
+    r->useDummyIDs = NULL;
+
 
     memcpy( r->sprites, inSprites, inNumSprites * sizeof( int ) );
     memcpy( r->spritePos, inSpritePos, inNumSprites * sizeof( doublePair ) );
@@ -1510,6 +1586,12 @@ int addObject( const char *inDescription,
             inNumSprites * sizeof( char ) );
 
     memcpy( r->spriteIsFrontFoot, inSpriteIsFrontFoot, 
+            inNumSprites * sizeof( char ) );
+
+
+    memcpy( r->spriteUseVanish, inSpriteUseVanish, 
+            inNumSprites * sizeof( char ) );
+    memcpy( r->spriteUseAppear, inSpriteUseAppear, 
             inNumSprites * sizeof( char ) );
 
 

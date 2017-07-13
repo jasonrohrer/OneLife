@@ -157,6 +157,12 @@ class EditorObjectPage : public GamePage, public ActionListener {
         CheckboxButton *mClothingCheckboxes[NUM_CLOTHING_CHECKBOXES];
         const char *mClothingCheckboxNames[NUM_CLOTHING_CHECKBOXES];
 
+        
+        TextField mNumUsesField;
+        CheckboxButton mUseVanishCheckbox;
+        CheckboxButton mUseAppearCheckbox;
+
+
         TextButton mDemoClothesButton;
         TextButton mEndClothesDemoButton;
         

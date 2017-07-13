@@ -590,39 +590,43 @@ void addTrans( int inActor, int inTarget,
 
 
 
-void deleteTransFromBank( int inActor, int inTarget ) {
+void deleteTransFromBank( int inActor, int inTarget,
+                          char inNoWriteToFile ) {
     
     // one exists?
     TransRecord *t = getTrans( inActor, inTarget );
     
     if( t != NULL ) {
         
-        File transDir( NULL, "transitions" );
-                    
-        if( transDir.exists() && transDir.isDirectory() ) {
-        
-            char *fileName = autoSprintf( "%d_%d.txt", inActor, inTarget );
+        if( ! inNoWriteToFile ) {    
+            File transDir( NULL, "transitions" );
             
-
-            File *transFile = transDir.getChildFile( fileName );
+            if( transDir.exists() && transDir.isDirectory() ) {
+                
+                char *fileName = autoSprintf( "%d_%d.txt", inActor, inTarget );
             
-
-            File *cacheFile = transDir.getChildFile( "cache.fcz" );
-            
-            cacheFile->remove();
-            
-            delete cacheFile;
-
-        
-            transFile->remove();
-            delete transFile;
-            delete [] fileName;
+                
+                File *transFile = transDir.getChildFile( fileName );
+                
+                
+                File *cacheFile = transDir.getChildFile( "cache.fcz" );
+                
+                cacheFile->remove();
+                
+                delete cacheFile;
+                
+                
+                transFile->remove();
+                delete transFile;
+                delete [] fileName;
+                }
             }
+        
         
 
         if( t->newActor != 0 ) {
             producesMap[t->newActor].deleteElementEqualTo( t );
-                }
+            }
         if( t->newTarget != 0 ) {                
             producesMap[t->newTarget].deleteElementEqualTo( t );
             }

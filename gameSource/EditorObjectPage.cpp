@@ -147,6 +147,12 @@ EditorObjectPage::EditorObjectPage()
                                      290,  -60, 2,
                                      false,
                                      "R Radius", "0123456789", NULL ),
+          mNumUsesField( smallFont, 
+                         300,  110, 2,
+                         false,
+                         "Num Uses", "0123456789", NULL ),
+          mUseVanishCheckbox( 300, 86, 2 ),
+          mUseAppearCheckbox( 300, 66, 2 ),
           mDemoClothesButton( smallFont, 300, 200, "Pos" ),
           mEndClothesDemoButton( smallFont, 300, 160, "XPos" ),
           mDemoSlotsButton( smallFont, 250, 110, "Demo Slots" ),
@@ -462,6 +468,8 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.spriteIsBackFoot = new char[ 0 ];
     mCurrentObject.spriteIsFrontFoot = new char[ 0 ];
         
+    mCurrentObject.spriteUseVanish = new char[ 0 ];
+    mCurrentObject.spriteUseAppear = new char[ 0 ];
 
     mPickedObjectLayer = -1;
     mPickedSlot = -1;
@@ -548,6 +556,20 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mRightBlockingRadiusField );
     mRightBlockingRadiusField.setVisible( false );
     
+    addComponent( &mNumUsesField );
+    mNumUsesField.setVisible( false );
+    
+    mNumUsesField.addActionListener( this );
+    mNumUsesField.setFireOnAnyTextChange( true );
+    
+    addComponent( &mUseVanishCheckbox );
+    addComponent( &mUseAppearCheckbox );
+    
+    mUseVanishCheckbox.addActionListener( this );
+    mUseAppearCheckbox.addActionListener( this );
+
+    mUseVanishCheckbox.setVisible( false );
+    mUseAppearCheckbox.setVisible( false );
 
 
     boxY = 217;
@@ -618,7 +640,10 @@ EditorObjectPage::~EditorObjectPage() {
     delete [] mCurrentObject.spriteIsBody;
     delete [] mCurrentObject.spriteIsBackFoot;
     delete [] mCurrentObject.spriteIsFrontFoot;
-
+    
+    delete [] mCurrentObject.spriteUseVanish;
+    delete [] mCurrentObject.spriteUseAppear;
+    
 
     freeSprite( mSlotPlaceholderSprite );
     
@@ -747,6 +772,13 @@ void EditorObjectPage::updateAgingPanel() {
             mCurrentObject.spriteIsFrontFoot[i] = false;
             }
         
+        if( mPickedObjectLayer != -1 ) {
+            mUseVanishCheckbox.setToggled( 
+                mCurrentObject.spriteUseVanish[ mPickedObjectLayer ] );
+            
+            mUseVanishCheckbox.setToggled( 
+                mCurrentObject.spriteUseAppear[ mPickedObjectLayer ] );
+            }
 
         mMaleCheckbox.setToggled( false );
         mMaleCheckbox.setVisible( false );
@@ -755,12 +787,38 @@ void EditorObjectPage::updateAgingPanel() {
         mHeldInHandCheckbox.setVisible( true );
         mRideableCheckbox.setVisible( true );
         mBlocksWalkingCheckbox.setVisible( true );
+
+        mNumUsesField.setVisible( true );
+        if( mNumUsesField.getInt() > 0 && mPickedObjectLayer != -1 ) {
+            mUseVanishCheckbox.setVisible( true );
+            mUseAppearCheckbox.setVisible( true );
+            
+            mUseVanishCheckbox.setToggled( 
+                mCurrentObject.spriteUseVanish[ mPickedObjectLayer ] );
+            mUseAppearCheckbox.setToggled( 
+                mCurrentObject.spriteUseAppear[ mPickedObjectLayer ] );
+            }
+        else {
+            mUseVanishCheckbox.setVisible( false );
+            mUseAppearCheckbox.setVisible( false );
+            }
         }
     else {
         mMaleCheckbox.setVisible( true );
 
         mDeathMarkerCheckbox.setToggled( false );
         mDeathMarkerCheckbox.setVisible( false );
+
+        mNumUsesField.setInt( 0 );
+        mNumUsesField.setVisible( false );
+        mUseVanishCheckbox.setVisible( false );
+        mUseAppearCheckbox.setVisible( false );
+
+        for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+            mCurrentObject.spriteUseVanish[i] = false;
+            mCurrentObject.spriteUseAppear[i] = false;
+            }
+
 
         mHeldInHandCheckbox.setVisible( false );
         mRideableCheckbox.setVisible( false );
@@ -981,6 +1039,17 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
             mCurrentObject.spriteIsFrontFoot, 
             mCurrentObject.numSprites * sizeof( char ) );
 
+    
+    char *newSpriteUseVanish = new char[ newNumSprites ];
+    memcpy( newSpriteUseVanish, 
+            mCurrentObject.spriteUseVanish, 
+            mCurrentObject.numSprites * sizeof( char ) );
+
+    char *newSpriteUseAppear = new char[ newNumSprites ];
+    memcpy( newSpriteUseAppear, 
+            mCurrentObject.spriteUseAppear, 
+            mCurrentObject.numSprites * sizeof( char ) );
+
 
     newSprites[ mCurrentObject.numSprites ] = inSpriteID;
             
@@ -1010,6 +1079,10 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
     newSpriteIsBackFoot[ mCurrentObject.numSprites ] = false;
     newSpriteIsFrontFoot[ mCurrentObject.numSprites ] = false;
 
+    newSpriteUseVanish[ mCurrentObject.numSprites ] = false;
+    newSpriteUseAppear[ mCurrentObject.numSprites ] = false;
+    
+
     delete [] mCurrentObject.sprites;
     delete [] mCurrentObject.spritePos;
     delete [] mCurrentObject.spriteRot;
@@ -1028,7 +1101,10 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
     delete [] mCurrentObject.spriteIsBody;
     delete [] mCurrentObject.spriteIsBackFoot;
     delete [] mCurrentObject.spriteIsFrontFoot;
-                        
+    
+    delete [] mCurrentObject.spriteUseVanish;
+    delete [] mCurrentObject.spriteUseAppear;
+    
 
     mCurrentObject.sprites = newSprites;
     mCurrentObject.spritePos = newSpritePos;
@@ -1053,6 +1129,10 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
     mCurrentObject.spriteIsBackFoot = newSpriteIsBackFoot;
     mCurrentObject.spriteIsFrontFoot = newSpriteIsFrontFoot;
 
+
+    mCurrentObject.spriteUseVanish = newSpriteUseVanish;
+    mCurrentObject.spriteUseAppear = newSpriteUseAppear;
+    
 
     mCurrentObject.numSprites = newNumSprites;
             
@@ -1185,7 +1265,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteIsHead,
                    mCurrentObject.spriteIsBody,
                    mCurrentObject.spriteIsBackFoot,
-                   mCurrentObject.spriteIsFrontFoot );
+                   mCurrentObject.spriteIsFrontFoot,
+                   mNumUsesField.getInt(),
+                   mCurrentObject.spriteUseVanish,
+                   mCurrentObject.spriteUseAppear );
         
         objectPickable.usePickable( newID );
         
@@ -1300,6 +1383,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteIsBody,
                    mCurrentObject.spriteIsBackFoot,
                    mCurrentObject.spriteIsFrontFoot,
+                   mNumUsesField.getInt(),
+                   mCurrentObject.spriteUseVanish,
+                   mCurrentObject.spriteUseAppear,
+                   false,
                    mCurrentObject.id );
         
         objectPickable.usePickable( mCurrentObject.id );
@@ -1428,7 +1515,15 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         delete [] mCurrentObject.spriteIsFrontFoot;
         mCurrentObject.spriteIsFrontFoot = new char[ 0 ];
 
+        delete [] mCurrentObject.spriteUseVanish;
+        mCurrentObject.spriteUseVanish = new char[ 0 ];
         
+        delete [] mCurrentObject.spriteUseAppear;
+        mCurrentObject.spriteUseAppear = new char[ 0 ];
+        
+        mNumUsesField.setInt( 0 );
+        mNumUsesField.setVisible( true );
+
 
         mSaveObjectButton.setVisible( false );
         mReplaceObjectButton.setVisible( false );
@@ -1932,6 +2027,43 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mCurrentObject.spriteIsFrontFoot[ mPickedObjectLayer ] =
             mFrontFootLayerCheckbox.getToggled();
         }
+    else if( inTarget == &mUseVanishCheckbox ) {
+        char on = mUseVanishCheckbox.getToggled();
+ 
+        mCurrentObject.spriteUseVanish[ mPickedObjectLayer ] = on;
+        
+        if( on ) {
+            mUseAppearCheckbox.setToggled( false );
+            mCurrentObject.spriteUseAppear[ mPickedObjectLayer ] = false;
+            }
+
+        }
+    else if( inTarget == &mUseAppearCheckbox ) {
+        char on = mUseAppearCheckbox.getToggled();
+        
+        mCurrentObject.spriteUseAppear[ mPickedObjectLayer ] = on;
+
+        if( on ) {
+            mUseVanishCheckbox.setToggled( false );
+            mCurrentObject.spriteUseVanish[ mPickedObjectLayer ] = false;
+            }
+        }
+    else if( inTarget == &mNumUsesField ) {
+        int val = mNumUsesField.getInt();
+        
+        if( val > 0 && mPickedObjectLayer != -1 ) {
+            mUseVanishCheckbox.setVisible( true );
+            mUseAppearCheckbox.setVisible( true );
+            mUseVanishCheckbox.setToggled( 
+                mCurrentObject.spriteUseVanish[ mPickedObjectLayer ] );
+            mUseAppearCheckbox.setToggled( 
+                mCurrentObject.spriteUseAppear[ mPickedObjectLayer ] );
+            }
+        else {
+            mUseVanishCheckbox.setVisible( false );
+            mUseAppearCheckbox.setVisible( false );
+            }
+        }
     else if( inTarget == &mAgePunchInButton ) {
         mCurrentObject.spriteAgeStart[ mPickedObjectLayer ] =
             mPersonAgeSlider.getValue();
@@ -2151,6 +2283,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] mCurrentObject.spriteIsBackFoot;
             delete [] mCurrentObject.spriteIsFrontFoot;
 
+            delete [] mCurrentObject.spriteUseVanish;
+            delete [] mCurrentObject.spriteUseAppear;
+            
             
             mObjectLayerSwaps.deleteAll();
 
@@ -2248,8 +2383,16 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mCurrentObject.spriteIsFrontFoot = 
                 new char[ pickedRecord->numSprites ];
-
-
+            
+            mCurrentObject.spriteUseVanish =
+                new char[ pickedRecord->numSprites ];
+            
+            mCurrentObject.spriteUseAppear =
+                new char[ pickedRecord->numSprites ];
+            
+            
+            mNumUsesField.setInt( pickedRecord->numUses );
+            
 
             memcpy( mCurrentObject.sprites, pickedRecord->sprites,
                     sizeof( int ) * pickedRecord->numSprites );
@@ -2301,6 +2444,14 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                     pickedRecord->spriteIsFrontFoot,
                     sizeof( char ) * pickedRecord->numSprites );
             
+            
+            memcpy( mCurrentObject.spriteUseVanish, 
+                    pickedRecord->spriteUseVanish,
+                    sizeof( char ) * pickedRecord->numSprites );
+
+            memcpy( mCurrentObject.spriteUseAppear, 
+                    pickedRecord->spriteUseAppear,
+                    sizeof( char ) * pickedRecord->numSprites );
 
             
             
@@ -3242,6 +3393,18 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         }
     
 
+    if( mUseVanishCheckbox.isVisible() ) {
+        pos = mUseVanishCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Use Vanish", pos, alignRight );
+        }
+    if( mUseAppearCheckbox.isVisible() ) {
+        pos = mUseAppearCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Use Appear", pos, alignRight );
+        }
+
+
 
     if( mHeadLayerCheckbox.isVisible() ) {
         pos = mHeadLayerCheckbox.getPosition();
@@ -3492,6 +3655,9 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     char *newSpriteIsBackFoot = new char[ newNumSprites ];
     char *newSpriteIsFrontFoot = new char[ newNumSprites ];
 
+    char *newSpriteUseVanish = new char[ newNumSprites ];
+    char *newSpriteUseAppear = new char[ newNumSprites ];
+
     int j = 0;
     for( int i=0; i<mCurrentObject.numSprites; i++ ) {
         
@@ -3515,6 +3681,8 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
             newSpriteIsBody[j] = mCurrentObject.spriteIsBody[i];
             newSpriteIsBackFoot[j] = mCurrentObject.spriteIsBackFoot[i];
             newSpriteIsFrontFoot[j] = mCurrentObject.spriteIsFrontFoot[i];
+            newSpriteUseVanish[j] = mCurrentObject.spriteUseVanish[i];
+            newSpriteUseAppear[j] = mCurrentObject.spriteUseAppear[i];
             j++;
             }
         }
@@ -3536,7 +3704,10 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     delete [] mCurrentObject.spriteIsBody;
     delete [] mCurrentObject.spriteIsBackFoot;
     delete [] mCurrentObject.spriteIsFrontFoot;
-            
+    
+    delete [] mCurrentObject.spriteUseVanish;
+    delete [] mCurrentObject.spriteUseAppear;
+
     mCurrentObject.sprites = newSprites;
     mCurrentObject.spritePos = newSpritePos;
     mCurrentObject.spriteRot = newSpriteRot;
@@ -3553,6 +3724,10 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     mCurrentObject.spriteIsBody = newSpriteIsBody;
     mCurrentObject.spriteIsBackFoot = newSpriteIsBackFoot;
     mCurrentObject.spriteIsFrontFoot = newSpriteIsFrontFoot;
+
+    mCurrentObject.spriteUseVanish = newSpriteUseVanish;
+    mCurrentObject.spriteUseAppear = newSpriteUseAppear;
+    
     
     mCurrentObject.numSprites = newNumSprites;
     }
@@ -3637,7 +3812,9 @@ void EditorObjectPage::pickedLayerChanged() {
             mSetHeldPosButton.setVisible( false );
             }
         
-
+        mUseVanishCheckbox.setVisible( false );
+        mUseAppearCheckbox.setVisible( false );
+        
         mRot45ForwardButton.setVisible( false );
         mRot45BackwardButton.setVisible( false );
 
@@ -3687,6 +3864,10 @@ void EditorObjectPage::pickedLayerChanged() {
             mMinPickupAgeField.setVisible( true );
             }
         
+        if( mCheckboxes[1]->getToggled() ) {
+            mSetHeldPosButton.setVisible( false );
+            }
+
         mRot45ForwardButton.setVisible( true );
         mRot45BackwardButton.setVisible( true );
         
@@ -4191,6 +4372,17 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
                                  mPickedObjectLayer );
 
 
+        char *newSpriteUseVanish = 
+            deleteFromCharArray( mCurrentObject.spriteUseVanish, 
+                                 mCurrentObject.numSprites,
+                                 mPickedObjectLayer );
+
+        char *newSpriteUseAppear = 
+            deleteFromCharArray( mCurrentObject.spriteUseAppear, 
+                                 mCurrentObject.numSprites,
+                                 mPickedObjectLayer );
+
+
         delete [] mCurrentObject.sprites;
         delete [] mCurrentObject.spritePos;
         delete [] mCurrentObject.spriteRot;
@@ -4206,6 +4398,9 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         delete [] mCurrentObject.spriteIsBody;
         delete [] mCurrentObject.spriteIsBackFoot;
         delete [] mCurrentObject.spriteIsFrontFoot;
+
+        delete [] mCurrentObject.spriteUseVanish;
+        delete [] mCurrentObject.spriteUseAppear;
             
         mCurrentObject.sprites = newSprites;
         mCurrentObject.spritePos = newSpritePos;
@@ -4226,6 +4421,10 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         mCurrentObject.spriteIsBody = newSpriteIsBody;
         mCurrentObject.spriteIsBackFoot = newSpriteIsBackFoot;
         mCurrentObject.spriteIsFrontFoot = newSpriteIsFrontFoot;
+
+        mCurrentObject.spriteUseVanish = newSpriteUseVanish;
+        mCurrentObject.spriteUseAppear = newSpriteUseAppear;
+
 
         mCurrentObject.numSprites = newNumSprites;
         
@@ -4564,6 +4763,16 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 mPickedObjectLayer + 
                                 layerOffset];
 
+                        char tempUseVanish = 
+                            mCurrentObject.spriteUseVanish[
+                                mPickedObjectLayer + 
+                                layerOffset];
+                        char tempUseAppear = 
+                            mCurrentObject.spriteUseAppear[
+                                mPickedObjectLayer + 
+                                layerOffset];
+
+
                         mCurrentObject.sprites[mPickedObjectLayer + 
                                                layerOffset]
                             = mCurrentObject.sprites[mPickedObjectLayer];
@@ -4671,6 +4880,20 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                         mCurrentObject.spriteIsFrontFoot[mPickedObjectLayer] = 
                             tempIsFrontFoot;
                 
+
+
+                        mCurrentObject.spriteUseVanish[ mPickedObjectLayer 
+                                                        + layerOffset ] =
+                            mCurrentObject.spriteUseVanish[mPickedObjectLayer];
+                        mCurrentObject.spriteUseVanish[mPickedObjectLayer] = 
+                            tempUseVanish;
+
+                        mCurrentObject.spriteUseAppear[ mPickedObjectLayer 
+                                                        + layerOffset ] =
+                            mCurrentObject.spriteUseAppear[mPickedObjectLayer];
+                        mCurrentObject.spriteUseAppear[mPickedObjectLayer] = 
+                            tempUseAppear;
+
                     
                         mPickedObjectLayer += layerOffset;
                     
@@ -4769,6 +4992,15 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 layerOffset];
                         char tempIsFrontFoot = 
                             mCurrentObject.spriteIsFrontFoot[
+                                mPickedObjectLayer - 
+                                layerOffset];
+
+                        char tempUseVanish = 
+                            mCurrentObject.spriteUseVanish[
+                                mPickedObjectLayer - 
+                                layerOffset];
+                        char tempUseAppear = 
+                            mCurrentObject.spriteUseAppear[
                                 mPickedObjectLayer - 
                                 layerOffset];
 
@@ -4883,6 +5115,17 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                             tempIsFrontFoot;
 
 
+                        mCurrentObject.spriteUseVanish[ mPickedObjectLayer 
+                                                     - layerOffset ] =
+                            mCurrentObject.spriteUseVanish[mPickedObjectLayer];
+                        mCurrentObject.spriteUseVanish[mPickedObjectLayer] = 
+                            tempUseVanish;
+
+                        mCurrentObject.spriteUseAppear[ mPickedObjectLayer 
+                                                     - layerOffset ] =
+                            mCurrentObject.spriteUseAppear[mPickedObjectLayer];
+                        mCurrentObject.spriteUseAppear[mPickedObjectLayer] = 
+                            tempUseAppear;
 
 
                         mPickedObjectLayer -= layerOffset;

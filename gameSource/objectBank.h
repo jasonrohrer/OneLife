@@ -197,7 +197,24 @@ typedef struct ObjectRecord {
         char *spriteIsBody;
         char *spriteIsBackFoot;
         char *spriteIsFrontFoot;
-                
+        
+        
+        // number of times this object can be used before
+        // something different happens
+        int numUses;
+
+        // flags for sprites that vanish or appear with additional
+        // use of this object
+        // (example:  berries getting picked, wear marks accumulating)
+        char *spriteUseVanish;
+        char *spriteUseAppear;
+        
+        // NULL unless we are auto-populating use dummy objects
+        // then contains ( numUses - 1 ) ids for auto-generated dummy objects
+        // with dummy_1 at index 0, dummy_2 at index 1, etc.
+        int *useDummyIDs;
+        
+        
     } ObjectRecord;
 
 
@@ -322,6 +339,10 @@ int addObject( const char *inDescription,
                char *inSpriteIsBody,
                char *inSpriteIsBackFoot,
                char *inSpriteIsFrontFoot,
+               int inNumUses,
+               char *inSpriteUseVanish,
+               char *inSpriteUseAppear,
+               char inNoWriteToFile = false,
                int inReplaceID = -1 );
 
 
