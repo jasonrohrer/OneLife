@@ -2425,7 +2425,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 mMinPickupAgeField.setVisible( true );
                 }
             
-
+            if( mCheckboxes[1]->getToggled() ) {
+                mSetHeldPosButton.setVisible( false );
+                mDrawBehindPlayerCheckbox.setVisible( true );
+                mDrawBehindPlayerCheckbox.setToggled( 
+                    pickedRecord->drawBehindPlayer );
+                }
 
             if( mRideableCheckbox.getToggled() ) {
                 mHeldInHandCheckbox.setToggled( false );
@@ -3628,6 +3633,11 @@ void EditorObjectPage::pickedLayerChanged() {
             mMinPickupAgeField.setVisible( true );
             }
         
+        if( mCheckboxes[1]->getToggled() ) {
+            mSetHeldPosButton.setVisible( false );
+            }
+        
+
         mRot45ForwardButton.setVisible( false );
         mRot45BackwardButton.setVisible( false );
 
