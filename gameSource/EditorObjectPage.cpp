@@ -780,7 +780,7 @@ void EditorObjectPage::updateAgingPanel() {
         mBlocksWalkingCheckbox.setVisible( true );
 
         mNumUsesField.setVisible( true );
-        if( mNumUsesField.getInt() > 0 && mPickedObjectLayer != -1 ) {
+        if( mNumUsesField.getInt() > 1 && mPickedObjectLayer != -1 ) {
             mUseVanishCheckbox.setVisible( true );
             
             mUseVanishCheckbox.setToggled( 
@@ -2007,7 +2007,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mNumUsesField ) {
         int val = mNumUsesField.getInt();
         
-        if( val > 0 && mPickedObjectLayer != -1 ) {
+        if( val > 1 && mPickedObjectLayer != -1 ) {
             mUseVanishCheckbox.setVisible( true );
             mUseVanishCheckbox.setToggled( 
                 mCurrentObject.spriteUseVanish[ mPickedObjectLayer ] );

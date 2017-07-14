@@ -261,7 +261,11 @@ ObjectRecord *getClothingAdded( ClothingSet *inOldSet, ClothingSet *inNewSet );
 
 // loads from objects folder
 // returns number of objects that need to be loaded
-int initObjectBankStart( char *outRebuildingCache );
+//
+// if inAutoGenerateUsedObjects is true, (n-1) dummy objects are generated
+// for each object that has n uses.  These are not saved to disk
+int initObjectBankStart( char *outRebuildingCache, 
+                         char inAutoGenerateUsedObjects = false );
 
 // returns progress... ready for Finish when progress == 1.0
 float initObjectBankStep();
