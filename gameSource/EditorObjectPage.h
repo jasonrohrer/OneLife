@@ -160,8 +160,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
         TextField mNumUsesField;
         CheckboxButton mUseVanishCheckbox;
-        CheckboxButton mUseAppearCheckbox;
-
+        
 
         TextButton mDemoClothesButton;
         TextButton mEndClothesDemoButton;

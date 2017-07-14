@@ -143,7 +143,6 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             char *spriteIsFrontFoot = new char[ numSprites ];
             
             char *spriteUseVanish = new char[ numSprites ];
-            char *spriteUseAppear = new char[ numSprites ];
             
 
             FloatRGB whiteColor = { 1, 1, 1 };
@@ -367,8 +366,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                 spriteIsFrontFoot[i] = false;
                 
                 spriteUseVanish[i] = false;
-                spriteUseAppear[i] = false;
-
+                
                 delete subExpanded;
                 delete [] newTag;
                 }
@@ -433,8 +431,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        spriteIsBackFoot,
                        spriteIsFrontFoot,
                        0,
-                       spriteUseVanish,
-                       spriteUseAppear );
+                       spriteUseVanish );
             
 
             delete [] spriteIDs;
@@ -454,8 +451,6 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] spriteIsFrontFoot;
             
             delete [] spriteUseVanish;
-            delete [] spriteUseAppear;
-
 
             delete [] objName;
             delete [] slotPos;
