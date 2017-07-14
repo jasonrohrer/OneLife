@@ -1118,7 +1118,7 @@ void drawFrame( char inUpdate ) {
                         char rebuilding;
                         
                         int numObjects = 
-                            initObjectBankStart( &rebuilding );
+                            initObjectBankStart( &rebuilding, false );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase( 

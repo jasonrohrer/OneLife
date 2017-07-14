@@ -286,6 +286,12 @@ void freeObjectBank();
 void resaveAll();
 
 
+// returns ID of object
+int reAddObject( ObjectRecord *inObject, 
+                 char *inNewDescription = NULL,
+                 char inNoWriteToFile = false, int inReplaceID = -1 );
+
+
 
 ObjectRecord *getObject( int inID );
 
