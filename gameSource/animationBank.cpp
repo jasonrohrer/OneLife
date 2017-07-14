@@ -1485,6 +1485,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
     // for each one before drawing
     for( int i=0; i<obj->numSprites; i++ ) {
         
+        if( obj->spriteSkipDrawing[i] ) {
+            continue;
+            }
+        
         if( obj->person &&
             ! isSpriteVisibleAtAge( obj, i, inAge ) ) {    
             // skip drawing this aging layer entirely

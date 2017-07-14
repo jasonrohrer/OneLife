@@ -632,6 +632,9 @@ float initObjectBankStep() {
                 r->useDummyIDs = NULL;
 
                 memset( r->spriteUseVanish, false, r->numSprites );
+
+                r->spriteSkipDrawing = new char[ r->numSprites ];
+                memset( r->spriteSkipDrawing, false, r->numSprites );
                 
 
                 for( int i=0; i< r->numSprites; i++ ) {
@@ -914,6 +917,8 @@ static void freeObjectRecord( int inID ) {
                 delete [] idMap[inID]->useDummyIDs;
                 }
 
+            delete [] idMap[inID]->spriteSkipDrawing;
+
             delete idMap[inID];
             idMap[inID] = NULL;
 
@@ -967,6 +972,13 @@ void freeObjectBank() {
 
             delete [] idMap[i]->spriteUseVanish;
             
+            if( idMap[i]->useDummyIDs != NULL ) {
+                delete [] idMap[i]->useDummyIDs;
+                }
+
+            delete [] idMap[i]->spriteSkipDrawing;
+
+
             delete idMap[i];
             }
         }
@@ -1602,6 +1614,11 @@ int addObject( const char *inDescription,
     r->useDummyIDs = NULL;
 
 
+    r->spriteSkipDrawing = new char[ inNumSprites ];
+    
+    memset( r->spriteSkipDrawing, false, inNumSprites );
+    
+
     memcpy( r->sprites, inSprites, inNumSprites * sizeof( int ) );
     memcpy( r->spritePos, inSpritePos, inNumSprites * sizeof( doublePair ) );
     memcpy( r->spriteRot, inSpriteRot, inNumSprites * sizeof( double ) );
@@ -1780,7 +1797,9 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
     
     
     for( int i=0; i<inObject->numSprites; i++ ) {
-        
+        if( inObject->spriteSkipDrawing[i] ) {
+            continue;
+            }
         if( inObject->person &&
             ! isSpriteVisibleAtAge( inObject, i, inAge ) ) {    
             // skip drawing this aging layer entirely

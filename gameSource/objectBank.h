@@ -213,6 +213,9 @@ typedef struct ObjectRecord {
         // with dummy_1 at index 0, dummy_2 at index 1, etc.
         int *useDummyIDs;
         
+        // flags to manipulate which sprites of an object should be drawn
+        // not saved to disk.  Defaults to all false for an object.
+        char *spriteSkipDrawing;
         
     } ObjectRecord;
 
