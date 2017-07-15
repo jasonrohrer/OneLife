@@ -1015,6 +1015,110 @@ void freeAndNullString( char **inStringPointer ) {
 
 void freeMap() {
     if( dbOpen ) {
+        
+        AppLog::infoF( "Cleaning up map database on server shutdown." );
+        
+        // iterate through DB and look for useDummy objects
+        KISSDB_Iterator dbi;
+    
+    
+        KISSDB_Iterator_init( &db, &dbi );
+    
+        unsigned char key[12];
+    
+        unsigned char value[4];
+
+
+        // keep list of x,y coordinates in map that need replacing
+        SimpleVector<int> xToPlace;
+        SimpleVector<int> yToPlace;
+
+        SimpleVector<int> idToPlace;
+        
+
+        // container slots that need replacing
+        SimpleVector<int> xContToCheck;
+        SimpleVector<int> yContToCheck;
+        
+        
+        while( KISSDB_Iterator_next( &dbi, key, value ) > 0 ) {
+        
+            int s = valueToInt( &( key[8] ) );
+       
+            if( s == 0 ) {
+                int id = valueToInt( value );
+            
+                if( id > 0 ) {
+                    
+                    ObjectRecord *mapO = getObject( id );
+                    
+                    
+                    if( mapO != NULL && mapO->isUseDummy ) {
+                        int x = valueToInt( key );
+                        int y = valueToInt( &( key[4] ) );
+                    
+                        xToPlace.push_back( x );
+                        yToPlace.push_back( y );
+                        idToPlace.push_back( mapO->useDummyParent );
+                        }
+                    }
+                }
+            else if( s == 2 ) {
+                int numSlots = valueToInt( value );
+                if( numSlots > 0 ) {
+                    int x = valueToInt( key );
+                    int y = valueToInt( &( key[4] ) );
+                    xContToCheck.push_back( x );
+                    yContToCheck.push_back( y );
+                    }
+                }
+            }
+        
+
+        for( int i=0; i<xToPlace.size(); i++ ) {
+            int x = xToPlace.getElementDirect( i );
+            int y = yToPlace.getElementDirect( i );
+            
+            setMapObject( x, y, idToPlace.getElementDirect( i ) );
+            }
+
+        
+        int numContChanged = 0;
+        
+        for( int i=0; i<xContToCheck.size(); i++ ) {
+            int x = xContToCheck.getElementDirect( i );
+            int y = yContToCheck.getElementDirect( i );
+        
+            if( getMapObjectRaw( x, y ) != 0 ) {
+
+                int numCont;
+                int *cont = getContainedRaw( x, y, &numCont );
+
+                for( int c=0; c<numCont; c++ ) {
+                    ObjectRecord *contObj = getObject( cont[c] );
+                    
+                    if( contObj != NULL && contObj->isUseDummy ) {
+                        cont[c] = contObj->useDummyParent;
+                        numContChanged ++;
+                        }
+                    }
+                
+                setContained( x, y, numCont, cont );
+                delete [] cont;
+                }
+            }
+
+
+        AppLog::infoF( "...%d useDummy objects present that were changed "
+                       "back into their unused parent.",
+                       xToPlace.size() );
+        AppLog::infoF( 
+            "...%d contained useDummy objects present and changed "
+            "back to usused parent.",
+            numContChanged );
+
+        printf( "\n" );
+        
         KISSDB_close( &db );
         }
     if( biomeDBOpen ) {

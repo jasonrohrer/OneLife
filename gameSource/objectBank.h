@@ -216,7 +216,13 @@ typedef struct ObjectRecord {
         // flags to manipulate which sprites of an object should be drawn
         // not saved to disk.  Defaults to all false for an object.
         char *spriteSkipDrawing;
+
+        // dummy objects should not be left permanently in map database
+        // because they can become invalid after a data update
+        char isUseDummy;
         
+        int useDummyParent;
+
     } ObjectRecord;
 
 

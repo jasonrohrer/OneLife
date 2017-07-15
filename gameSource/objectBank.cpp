@@ -633,7 +633,9 @@ float initObjectBankStep() {
                 r->numUses = 1;
                 r->spriteUseVanish = new char[ r->numSprites ];
                 r->useDummyIDs = NULL;
-
+                r->isUseDummy = false;
+                r->useDummyParent = 0;
+                
                 memset( r->spriteUseVanish, false, r->numSprites );
 
                 r->spriteSkipDrawing = new char[ r->numSprites ];
@@ -877,6 +879,8 @@ void initObjectBankFinish() {
                         // used objects never occur naturally
                         dummyO->mapChance = 0;
                         
+                        dummyO->isUseDummy = true;
+                        dummyO->useDummyParent = mainID;
                         
                         // copy anims too
                         for( int t=0; t<endAnimType; t++ ) {
@@ -1690,7 +1694,8 @@ int addObject( const char *inDescription,
     r->spriteUseVanish = new char[ inNumSprites ];
     
     r->useDummyIDs = NULL;
-
+    r->isUseDummy = false;
+    r->useDummyParent = 0;
 
     r->spriteSkipDrawing = new char[ inNumSprites ];
     
