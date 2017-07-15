@@ -71,6 +71,7 @@ EditorTransitionPage::EditorTransitionPage()
                                0,  -170, 6,
                                false,
                                "AutoDecay Seconds", "0123456789", NULL ),
+          mLastUseCheckbox( -400, 0, 2 ),
           mSaveTransitionButton( mainFont, -320, 0, "Save" ),
           mObjectPicker( &objectPickable, +410, 90 ),
           mObjectEditorButton( mainFont, 410, 260, "Objects" ),
@@ -89,6 +90,9 @@ EditorTransitionPage::EditorTransitionPage()
 
     addComponent( &mAutoDecayTimeField );
     mAutoDecayTimeField.setVisible( false );
+    
+    addComponent( &mLastUseCheckbox );
+    mLastUseCheckbox.addActionListener( this );
     
     addComponent( &mSaveTransitionButton );
     addComponent( &mObjectPicker );
@@ -140,7 +144,8 @@ EditorTransitionPage::EditorTransitionPage()
     mCurrentTransition.newActor = 0;
     mCurrentTransition.newTarget = 0;
     mCurrentTransition.autoDecaySeconds = 0;
-
+    mCurrentTransition.lastUse = false;
+    
     mCurrentlyReplacing = 0;
     
 
@@ -270,6 +275,8 @@ void EditorTransitionPage::checkIfSaveVisible() {
 
     mDelButton.setVisible( delVis );
     mDelConfirmButton.setVisible( false );
+
+    mLastUseCheckbox.setToggled( mCurrentTransition.lastUse );
 
     if( saveVis && 
         getObjectByIndex( &mCurrentTransition, 0 ) <= 0 &&
@@ -490,6 +497,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                   target,
                   mCurrentTransition.newActor,
                   mCurrentTransition.newTarget,
+                  mCurrentTransition.lastUse,
                   decayTime );
             
         redoTransSearches( mLastSearchID, true );
@@ -545,7 +553,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             actor = -2;
             }
 
-        deleteTransFromBank( actor, target );
+        deleteTransFromBank( actor, target, false );
                              
         for( int i=0; i<4; i++ ) {
             setObjectByIndex( &mCurrentTransition, i, 0 );
@@ -571,6 +579,9 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             }
         
+        }
+    else if( inTarget == &mLastUseCheckbox ) {
+        mCurrentTransition.lastUse = mLastUseCheckbox.getToggled();
         }
     else if( inTarget == &mSwapActorButton ) {
         
@@ -902,6 +913,12 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         
         }
     
+    if( mLastUseCheckbox.isVisible() ) {
+        doublePair pos = mLastUseCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Last Use", pos, alignRight );
+        }
+
     }
 
 

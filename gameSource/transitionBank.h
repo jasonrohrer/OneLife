@@ -14,11 +14,14 @@ typedef struct TransRecord {
         // if either are blank, they are consumed by transition
         int newActor;
         int newTarget;
-    
+        
 
         // if actor is -1 and autoDecaySeconds is non-zero
         // then target decays to newTarget automatically in autoDecaySeconds
         int autoDecaySeconds;
+
+        // specially flagged last-use transitions
+        char lastUse;
     } TransRecord;
 
 
@@ -32,10 +35,12 @@ typedef struct TransRecord {
 // up in the bank in their abstract form.
 //
 // Category bank MUST be inited before transition bank.
+// Object bank MUST be inited before transition bank.
 //
 // returns number of transitions that need to be loaded
 int initTransBankStart( char *outRebuildingCache,
-                        char inAutoGenerateCategoryTransitions = false );
+                        char inAutoGenerateCategoryTransitions = false,
+                        char inAutoGenerateUsedObjectTransitions = false );
 
 float initTransBankStep();
 void initTransBankFinish();
@@ -46,7 +51,7 @@ void freeTransBank();
 
 
 // returns NULL if no trans defined
-TransRecord *getTrans( int inActor, int inTarget );
+TransRecord *getTrans( int inActor, int inTarget, char inLastUse = false );
 
 
 // return array destroyed by caller, NULL if none found
@@ -101,12 +106,14 @@ char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit );
 // 0 for inNewActor or inNewTarget means actor or target consumed
 void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget,
+               char inLastUse,
                int inAutoDecaySeconds = 0,
                char inNoWriteToFile = false );
 
 
 
 void deleteTransFromBank( int inActor, int inTarget,
+                          char inLastUse,
                           char inNoWriteToFile = false );
 
 

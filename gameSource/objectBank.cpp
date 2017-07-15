@@ -873,7 +873,11 @@ void initObjectBankFinish() {
                         // dummies set to 0 so we don't recursively make
                         // more dummies out of them
                         dummyO->numUses = 0;
-
+                        
+                        // used objects never occur naturally
+                        dummyO->mapChance = 0;
+                        
+                        
                         // copy anims too
                         for( int t=0; t<endAnimType; t++ ) {
                             AnimationRecord *a = getAnimation( mainID,

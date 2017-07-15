@@ -39,12 +39,15 @@ static int currentFile;
 static int maxID;
 
 static char autoGenerateCategoryTransitions = false;
+static char autoGenerateUsedObjectTransitions = false;
 
 
 int initTransBankStart( char *outRebuildingCache,
-                        char inAutoGenerateCategoryTransitions ) {
+                        char inAutoGenerateCategoryTransitions,
+                        char inAutoGenerateUsedObjectTransitions ) {
     
     autoGenerateCategoryTransitions = inAutoGenerateCategoryTransitions;
+    autoGenerateUsedObjectTransitions = inAutoGenerateUsedObjectTransitions;
     
     maxID = 0;
 
@@ -73,9 +76,17 @@ float initTransBankStep() {
                     
         int actor = 0;
         int target = -2;
-                    
-        sscanf( txtFileName, "%d_%d.txt", &actor, &target );
-                    
+        char lastUse = false;
+        
+        if( strstr( txtFileName, "_L" ) != NULL ) {
+            lastUse = true;
+            
+            sscanf( txtFileName, "%d_%d_L.txt", &actor, &target );
+            }
+        else {
+            sscanf( txtFileName, "%d_%d.txt", &actor, &target );
+            }
+        
         if(  target != -2 ) {
 
             char *contents = getFileContents( cache, i );
@@ -96,7 +107,8 @@ float initTransBankStep() {
                 r->newActor = newActor;
                 r->newTarget = newTarget;
                 r->autoDecaySeconds = autoDecaySeconds;
-                            
+                r->lastUse = lastUse;
+                
                 records.push_back( r );
                             
                 if( actor > maxID ) {
@@ -247,7 +259,7 @@ void initTransBankFinish() {
                     
                     // don't write to disk
                     addTrans( actor, target, newActor, newTarget,
-                              autoDecaySeconds, true );
+                              false, autoDecaySeconds, true );
                     }
                 }
             }
@@ -256,8 +268,168 @@ void initTransBankFinish() {
 
         printf( "Auto-generated %d transitions based on categories\n", 
                 records.size() - numRecords );
-
+        
+        numRecords = records.size();
         }
+
+
+
+    
+    if( autoGenerateUsedObjectTransitions ) {
+                
+        int numGenerated = 0;
+        int numRemoved = 0;
+
+
+        int numObjects;
+        
+        ObjectRecord **objects = getAllObjects( &numObjects );
+        
+        for( int i=0; i<numObjects; i++ ) {
+            ObjectRecord *o = objects[i];
+            
+            int oID = o->id;
+            
+            if( o->numUses > 1 ) {
+                
+                SimpleVector<TransRecord*> *objTransOrig = 
+                    getAllUses( oID );
+                
+                int numTrans = objTransOrig->size();
+                
+                SimpleVector<TransRecord*> transToDelete;
+                
+                // can't rely on indexing in Orig, because it
+                // will change as we add trans
+                // copy them all first
+                SimpleVector<TransRecord> obTransCopy;
+                
+
+                for( int t=0; t<numTrans; t++ ) {
+                    TransRecord *tr = objTransOrig->getElementDirect( t );
+                    obTransCopy.push_back( *tr );
+                    }
+                
+                
+                for( int t=0; t<numTrans; t++ ) {
+                    TransRecord *tr = obTransCopy.getElement( t );
+                    
+                    TransRecord newTrans = *tr;
+                    
+                    if( tr->lastUse ) {
+                        if( tr->actor == oID ) {
+                            newTrans.actor = 
+                                o->useDummyIDs[0]; 
+                            
+                            addTrans( newTrans.actor,
+                                      newTrans.target,
+                                      newTrans.newActor,
+                                      newTrans.newTarget,
+                                      false,
+                                      newTrans.autoDecaySeconds,
+                                      true );
+                            
+                            numGenerated++;
+                            
+                            transToDelete.push_back( tr );
+                            }
+                        else if( tr->target == oID ) {
+                            newTrans.target = 
+                                o->useDummyIDs[0];
+                            
+                            addTrans( newTrans.actor,
+                                      newTrans.target,
+                                      newTrans.newActor,
+                                      newTrans.newTarget,
+                                      false,
+                                      newTrans.autoDecaySeconds,
+                                      true );
+                            
+                            numGenerated++;
+                            
+                            transToDelete.push_back( tr );
+                            }
+                        }
+                    else if( tr->actor == oID &&
+                             tr->newActor == oID ) {
+                            
+                        for( int u=0; u<o->numUses-2; u++ ) {    
+                            newTrans.actor = o->useDummyIDs[ u + 1 ];
+                            newTrans.newActor = o->useDummyIDs[ u ];
+                            
+                            addTrans( newTrans.actor,
+                                      newTrans.target,
+                                      newTrans.newActor,
+                                      newTrans.newTarget,
+                                      false,
+                                      newTrans.autoDecaySeconds,
+                                      true );
+                            numGenerated++;
+                            }
+                        newTrans.actor = oID;
+                        newTrans.newActor = o->useDummyIDs[ o->numUses - 2 ];
+                        
+                        addTrans( newTrans.actor,
+                                  newTrans.target,
+                                  newTrans.newActor,
+                                  newTrans.newTarget,
+                                  false,
+                                  newTrans.autoDecaySeconds,
+                                  true );
+                        numGenerated++;
+                        }
+                    else if( tr->target == oID &&
+                             tr->newTarget == oID ) {
+                        
+                        for( int u=0; u<o->numUses-2; u++ ) {    
+                            newTrans.target = o->useDummyIDs[ u + 1 ];
+                            newTrans.newTarget = o->useDummyIDs[ u ];
+                            
+                            addTrans( newTrans.actor,
+                                      newTrans.target,
+                                      newTrans.newActor,
+                                      newTrans.newTarget,
+                                      false,
+                                      newTrans.autoDecaySeconds,
+                                      true );
+                            numGenerated++;
+                            }
+                        newTrans.target = oID;
+                        newTrans.newTarget = o->useDummyIDs[ o->numUses - 2 ];
+                        
+                        addTrans( newTrans.actor,
+                                  newTrans.target,
+                                  newTrans.newActor,
+                                  newTrans.newTarget,
+                                  false,
+                                  newTrans.autoDecaySeconds,
+                                  true );
+                        numGenerated++;
+                        }   
+                    }
+                
+                for( int t=0; t<transToDelete.size(); t++ ) {
+                    TransRecord *tr = transToDelete.getElementDirect( t );
+                    
+                    deleteTransFromBank( tr->actor, tr->target,
+                                         tr->lastUse,
+                                         true );
+                    numRemoved++;
+                    }
+                
+                }
+            }
+        
+        delete [] objects;
+
+        printf( "Auto-generated %d transitions based used objects, "
+                "removing %d transitions in the process\n", 
+                numGenerated, numRemoved );
+        
+        numRecords = records.size();
+        }
+    
+
     }
 
 
@@ -276,7 +448,7 @@ void freeTransBank() {
 
 
 
-TransRecord *getTrans( int inActor, int inTarget ) {
+TransRecord *getTrans( int inActor, int inTarget, char inLastUse ) {
     int mapIndex = inTarget;
     
     if( mapIndex < 0 ) {
@@ -297,7 +469,8 @@ TransRecord *getTrans( int inActor, int inTarget ) {
         
         TransRecord *r = usesMap[mapIndex].getElementDirect(i);
         
-        if( r->actor == inActor && r->target == inTarget ) {
+        if( r->actor == inActor && r->target == inTarget &&
+            r->lastUse == inLastUse ) {
             return r;
             }
         }
@@ -422,12 +595,24 @@ char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit ) {
 
 
 
+static char *getFileName( int inActor, int inTarget, char inLastUse ) {
+    const char *lastUseString = "";
+    
+    if( inLastUse ) {
+        lastUseString = "_L";
+        }
+    
+    return autoSprintf( "%d_%d%s.txt", inActor, inTarget, lastUseString );
+    }
+
+
 
 void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget,
+               char inLastUse,
                int inAutoDecaySeconds,
                char inNoWriteToFile ) {
-
+    
     // exapand id-indexed maps if a bigger ID is being added    
     if( inActor >= mapSize || inTarget >= mapSize 
         ||
@@ -471,7 +656,7 @@ void addTrans( int inActor, int inTarget,
     
 
     // one exists?
-    TransRecord *t = getTrans( inActor, inTarget );
+    TransRecord *t = getTrans( inActor, inTarget, inLastUse );
     
     char writeToFile = false;
     
@@ -484,6 +669,7 @@ void addTrans( int inActor, int inTarget,
         t->newActor = inNewActor;
         t->newTarget = inNewTarget;
         t->autoDecaySeconds = inAutoDecaySeconds;
+        t->lastUse = inLastUse;
         
         records.push_back( t );
 
@@ -560,8 +746,8 @@ void addTrans( int inActor, int inTarget,
             }
         
         if( transDir.exists() && transDir.isDirectory() ) {
-        
-            char *fileName = autoSprintf( "%d_%d.txt", inActor, inTarget );
+
+            char *fileName = getFileName( inActor, inTarget, inLastUse );
             
 
             File *transFile = transDir.getChildFile( fileName );
@@ -591,10 +777,11 @@ void addTrans( int inActor, int inTarget,
 
 
 void deleteTransFromBank( int inActor, int inTarget,
+                          char inLastUse,
                           char inNoWriteToFile ) {
     
     // one exists?
-    TransRecord *t = getTrans( inActor, inTarget );
+    TransRecord *t = getTrans( inActor, inTarget, inLastUse );
     
     if( t != NULL ) {
         
@@ -603,8 +790,7 @@ void deleteTransFromBank( int inActor, int inTarget,
             
             if( transDir.exists() && transDir.isDirectory() ) {
                 
-                char *fileName = autoSprintf( "%d_%d.txt", inActor, inTarget );
-            
+                char *fileName = getFileName( inActor, inTarget, inLastUse );
                 
                 File *transFile = transDir.getChildFile( fileName );
                 

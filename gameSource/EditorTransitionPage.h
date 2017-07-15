@@ -15,6 +15,8 @@
 #include "TextField.h"
 #include "SpriteButton.h"
 
+#include "CheckboxButton.h"
+
 #include "Picker.h"
 
 #include "transitionBank.h"
@@ -57,7 +59,8 @@ class EditorTransitionPage : public GamePage, public ActionListener {
         
         TextField mAutoDecayTimeField;
 
-        
+        CheckboxButton mLastUseCheckbox;
+
         TextButton mSaveTransitionButton;
         Picker mObjectPicker;
 

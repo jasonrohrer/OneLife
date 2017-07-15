@@ -1287,7 +1287,7 @@ void drawFrame( char inUpdate ) {
                         char rebuilding;
                         
                         int numObjects = 
-                            initObjectBankStart( &rebuilding );
+                            initObjectBankStart( &rebuilding, true );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase(
@@ -1369,7 +1369,7 @@ void drawFrame( char inUpdate ) {
                         // true to auto-generate concrete transitions
                         // for all abstract category transitions
                         int numTrans = 
-                            initTransBankStart( &rebuilding, true );
+                            initTransBankStart( &rebuilding, true, true );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase(
