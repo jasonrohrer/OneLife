@@ -68,6 +68,12 @@ Version 28     ???
 --Split ground overlay into 4 1024x1024 tiles to deal with bug in larger mipmap
   generation on some graphics cards.
 
+--NumUses system for objects that auto-generates intermediary objects and 
+  transitions.  Example:  a berry bush can have a berry picked from it 10 
+  times before becoming empty, and berry sprites can disappear from it along 
+  the way.  The intermediary objects are replaced with unused versions of the 
+  main object at server shutdown.
+
 
 
 Server fixes:
