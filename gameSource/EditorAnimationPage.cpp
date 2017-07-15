@@ -2505,7 +2505,7 @@ void EditorAnimationPage::makeActive( char inFresh ) {
         return;
         }
     
-    mObjectPicker.redoSearch();
+    mObjectPicker.redoSearch( true );
 
     mSettingRotCenter = false;
     }

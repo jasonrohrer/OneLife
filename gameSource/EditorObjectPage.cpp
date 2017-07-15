@@ -1254,7 +1254,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         mSpritePicker.unselectObject();
 
-        mObjectPicker.redoSearch();
+        mObjectPicker.redoSearch( false );
         actionPerformed( &mClearObjectButton );
         }
     else if( inTarget == &mReplaceObjectButton ) {
@@ -1371,7 +1371,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         mSpritePicker.unselectObject();
         
-        mObjectPicker.redoSearch();
+        mObjectPicker.redoSearch( false );
         
         
         if( mCurrentObject.numSprites != oldNumSprites ||
@@ -1596,7 +1596,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         spritePickable.usePickable( newID );
 
-        mSpritePicker.redoSearch();
+        mSpritePicker.redoSearch( false );
         
         delete [] des;
         delete [] tag;
@@ -3536,8 +3536,8 @@ void EditorObjectPage::makeActive( char inFresh ) {
         return;
         }
     
-    mSpritePicker.redoSearch();
-    mObjectPicker.redoSearch();
+    mSpritePicker.redoSearch( true );
+    mObjectPicker.redoSearch( true );
 
     mRotAdjustMode = false;
     

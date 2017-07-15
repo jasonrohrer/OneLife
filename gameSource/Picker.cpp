@@ -61,7 +61,7 @@ Picker::Picker( Pickable *inPickable, double inX, double inY )
 
     mSearchField.setFireOnAnyTextChange( true );
 
-    redoSearch();
+    redoSearch( false );
     }
 
 
@@ -77,7 +77,12 @@ Picker::~Picker() {
 
 
 
-void Picker::redoSearch() {
+void Picker::redoSearch( char inClearPageSkip ) {
+    if( inClearPageSkip ) {
+        mSkip = 0;
+        }
+    
+    
     char *search = mSearchField.getText();
     
     if( mResults != NULL ) {
@@ -267,7 +272,7 @@ void Picker::actionPerformed( GUIComponent *inTarget ) {
     
     if( inTarget == &mNextButton ) {
         mSkip += skipAmount;
-        redoSearch();
+        redoSearch( false );
         addSearchToStack();
         }
     else if( inTarget == &mPrevButton ) {
@@ -275,13 +280,13 @@ void Picker::actionPerformed( GUIComponent *inTarget ) {
         if( mSkip < 0 ) {
             mSkip = 0;
             }
-        redoSearch();
+        redoSearch( false );
         addSearchToStack();
         }
     else if( inTarget == &mSearchField ) {
         mSkip = 0;
         mPastSearchCurrentIndex = mPastSearches.size() - 1;
-        redoSearch();
+        redoSearch( false );
         // don't add to stack... not sure that they're done typing yet
         }
     else if( inTarget == &mDelButton ) {
@@ -295,7 +300,7 @@ void Picker::actionPerformed( GUIComponent *inTarget ) {
         mDelButton.setVisible( false );
         mDelConfirmButton.setVisible( false );
 
-        redoSearch();
+        redoSearch( false );
         }
     
         
@@ -317,7 +322,7 @@ void Picker::specialKeyDown( int inKeyCode ) {
                  mSkip = mPastSearchSkips.getElementDirect( 
                      mPastSearchCurrentIndex );
                  
-                 redoSearch();
+                 redoSearch( false );
                  }
              break;
          case MG_KEY_DOWN:
@@ -328,7 +333,7 @@ void Picker::specialKeyDown( int inKeyCode ) {
                  mSkip = mPastSearchSkips.getElementDirect( 
                      mPastSearchCurrentIndex );
                  
-                 redoSearch();
+                 redoSearch( false );
                  }
              break;
          }
@@ -478,7 +483,7 @@ void Picker::pointerUp( float inX, float inY ) {
             
             if( strcmp( text, "." ) == 0 ) {
                 mSkip = 0;
-                redoSearch();
+                redoSearch( false );
                 mSelectionIndex = 0;
                 }
             delete [] text;

@@ -934,7 +934,7 @@ void EditorTransitionPage::makeActive( char inFresh ) {
         return;
         }
     
-    mObjectPicker.redoSearch();
+    mObjectPicker.redoSearch( true );
 
     }
 

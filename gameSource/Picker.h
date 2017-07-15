@@ -36,7 +36,7 @@ class Picker : public PageComponent, ActionListener,
         void unselectObject();
         
         
-        void redoSearch();
+        void redoSearch( char inClearPageSkip );
         
         // add a function that filters each result and returns true
         // for results that should be unclickable

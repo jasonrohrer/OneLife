@@ -94,8 +94,8 @@ void EditorCategoryPage::clearUseOfObject( int inObjectID ) {
         mCurrentObject = -1;
         }
         
-    mObjectParentPicker.redoSearch();
-    mObjectChildPicker.redoSearch();
+    mObjectParentPicker.redoSearch( false );
+    mObjectChildPicker.redoSearch( false );
     }
 
 
@@ -262,8 +262,8 @@ void EditorCategoryPage::makeActive( char inFresh ) {
         return;
         }
     
-    mObjectChildPicker.redoSearch();
-    mObjectParentPicker.redoSearch();
+    mObjectChildPicker.redoSearch( true );
+    mObjectParentPicker.redoSearch( true );
     }
 
 

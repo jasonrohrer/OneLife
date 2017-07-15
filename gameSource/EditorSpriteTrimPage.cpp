@@ -373,7 +373,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             
             delete im;
 
-            mSpritePicker.redoSearch();            
+            mSpritePicker.redoSearch( false );            
             
             char *objName = autoSprintf( "%s_all", oldSprite->tag );
             
@@ -745,7 +745,7 @@ void EditorSpriteTrimPage::makeActive( char inFresh ) {
         return;
         }
 
-    mSpritePicker.redoSearch();
+    mSpritePicker.redoSearch( true );
     
     lastMouseX = 0;
     lastMouseY = 0;

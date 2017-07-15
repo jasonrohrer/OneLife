@@ -810,7 +810,7 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             
             spritePickable.usePickable( newID );
             
-            mSpritePicker.redoSearch();
+            mSpritePicker.redoSearch( false );
             
             // don't let it get freed now
             mProcessedSelectionSprite = NULL;
@@ -841,7 +841,7 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             // don't let it get freed now
             mImportedSheet = NULL;
             
-            mOverlayPicker.redoSearch();
+            mOverlayPicker.redoSearch( false );
             
             mSaveOverlayButton.setVisible( false );
 
@@ -1144,8 +1144,8 @@ void EditorImportPage::makeActive( char inFresh ) {
 
     mShowTagMessage = false;
 
-    mSpritePicker.redoSearch();
-    mOverlayPicker.redoSearch();
+    mSpritePicker.redoSearch( true );
+    mOverlayPicker.redoSearch( true );
     }
 
 
