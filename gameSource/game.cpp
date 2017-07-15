@@ -1206,21 +1206,22 @@ void drawFrame( char inUpdate ) {
                             
                             char rebuilding;
                         
-                            int numObjects = 
-                                initObjectBankStart( &rebuilding );
+                            int numAnimations = 
+                                initAnimationBankStart( &rebuilding );
                             
                             if( rebuilding ) {
                                 loadingPage->setCurrentPhase( 
-                                    translate( "objectsRebuild" ) );
+                                    translate( "animationsRebuild" ) );
                                 }
                             else {
                                 loadingPage->setCurrentPhase(
-                                    translate( "objects" ) );
+                                    translate( "animations" ) );
                                 }
                             loadingPage->setCurrentProgress( 0 );
                             
                             
-                            loadingStepBatchSize = numObjects / numLoadingSteps;
+                            loadingStepBatchSize = 
+                                numAnimations / numLoadingSteps;
                             
                             if( loadingStepBatchSize < 1 ) {
                                 loadingStepBatchSize = 1;
@@ -1245,21 +1246,21 @@ void drawFrame( char inUpdate ) {
                         
                         char rebuilding;
                         
-                        int numObjects = 
-                            initObjectBankStart( &rebuilding );
+                        int numAnimations = 
+                            initAnimationBankStart( &rebuilding );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase( 
-                                translate( "objectsRebuild" ) );
+                                translate( "animationsRebuild" ) );
                             }
                         else {
                             loadingPage->setCurrentPhase(
-                                translate( "objects" ) );
+                                translate( "animations" ) );
                             }
                         loadingPage->setCurrentProgress( 0 );
                         
 
-                        loadingStepBatchSize = numObjects / numLoadingSteps;
+                        loadingStepBatchSize = numAnimations / numLoadingSteps;
                         
                         if( loadingStepBatchSize < 1 ) {
                             loadingStepBatchSize = 1;
@@ -1270,6 +1271,46 @@ void drawFrame( char inUpdate ) {
                     break;
                     }
                 case 2: {
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initAnimationBankStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
+                    
+                    if( progress == 1.0 ) {
+                        initAnimationBankFinish();
+                        printf( "Finished loading animation bank in %f sec\n",
+                                Time::getCurrentTime() - 
+                                loadingPhaseStartTime );
+
+
+                        char rebuilding;
+                        
+                        int numObjects = 
+                            initObjectBankStart( &rebuilding );
+                        
+                        if( rebuilding ) {
+                            loadingPage->setCurrentPhase(
+                                translate( "objectsRebuild" ) );
+                            }
+                        else {
+                            loadingPage->setCurrentPhase( 
+                                translate( "objects" ) );
+                            }
+                        loadingPage->setCurrentProgress( 0 );
+                        
+
+                        loadingStepBatchSize = numObjects / numLoadingSteps;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 3: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initObjectBankStep();
@@ -1309,7 +1350,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 3: {
+                case 4: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initCategoryBankStep();
@@ -1328,7 +1369,7 @@ void drawFrame( char inUpdate ) {
                         // true to auto-generate concrete transitions
                         // for all abstract category transitions
                         int numTrans = 
-                            initTransBankStart( true, &rebuilding );
+                            initTransBankStart( &rebuilding, true );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase(
@@ -1351,7 +1392,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 4: {
+                case 5: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initTransBankStep();
@@ -1360,43 +1401,6 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initTransBankFinish();
-                        loadingPage->setCurrentProgress( 0 );
-                        
-
-                        char rebuilding;
-                        
-                        int numAnims = initAnimationBankStart( &rebuilding );
- 
-                        if( rebuilding ) {
-                            loadingPage->setCurrentPhase(
-                                translate( "animationsRebuild" ) );
-                            }
-                        else {
-                            loadingPage->setCurrentPhase( 
-                                translate( "animations" ) );
-                            }
-                        loadingPage->setCurrentProgress( 0 );
-                        
-
-                        loadingStepBatchSize = numAnims / numLoadingSteps;
-                        
-                        if( loadingStepBatchSize < 1 ) {
-                            loadingStepBatchSize = 1;
-                            }
-
-                        loadingPhase ++;
-                        }
-                    break;
-                    }
-                case 5: {
-                    float progress;
-                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
-                        progress = initAnimationBankStep();
-                        loadingPage->setCurrentProgress( progress );
-                        }
-                    
-                    if( progress == 1.0 ) {
-                        initAnimationBankFinish();
                         
                         loadingPage->setCurrentPhase( 
                             translate( "groundTextures" ) );

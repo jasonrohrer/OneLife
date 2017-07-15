@@ -262,6 +262,12 @@ ObjectRecord *getClothingAdded( ClothingSet *inOldSet, ClothingSet *inNewSet );
 
 
 
+// enable index for string-based object searching
+// call before init to index objects on load
+// defaults to off
+void enableObjectSearch( char inEnable );
+
+
 // loads from objects folder
 // returns number of objects that need to be loaded
 //

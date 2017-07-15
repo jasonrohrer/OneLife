@@ -26,6 +26,7 @@
 #include "map.h"
 #include "../gameSource/transitionBank.h"
 #include "../gameSource/objectBank.h"
+#include "../gameSource/animationBank.h"
 #include "../gameSource/categoryBank.h"
 
 #include "lifeLog.h"
@@ -370,7 +371,8 @@ void quitCleanup() {
     freeTransBank();
     freeCategoryBank();
     freeObjectBank();
-
+    freeAnimationBank();
+    
     if( clientPassword != NULL ) {
         delete [] clientPassword;
         clientPassword = NULL;
@@ -2615,8 +2617,13 @@ int main() {
 #endif
 
     char rebuilding;
-    initObjectBankStart( &rebuilding );
 
+    initAnimationBankStart( &rebuilding );
+    while( initAnimationBankStep() < 1.0 );
+    initAnimationBankFinish();
+
+
+    initObjectBankStart( &rebuilding, true );
     while( initObjectBankStep() < 1.0 );
     initObjectBankFinish();
 
@@ -2627,7 +2634,7 @@ int main() {
 
 
     // auto-generate category-based transitions
-    initTransBankStart( true, &rebuilding );
+    initTransBankStart( &rebuilding, true );
     while( initTransBankStep() < 1.0 );
     initTransBankFinish();
     
@@ -6802,3 +6809,6 @@ char getUsesMultiplicativeBlending( int inID ) {
 void toggleMultiplicativeBlend( char inMultiplicative ) {
     }
 
+
+void unCountLiveUse( int inID ) {
+    }

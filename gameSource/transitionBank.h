@@ -34,8 +34,8 @@ typedef struct TransRecord {
 // Category bank MUST be inited before transition bank.
 //
 // returns number of transitions that need to be loaded
-int initTransBankStart( char inAutoGenerateCategoryTransitions,
-                        char *outRebuildingCache );
+int initTransBankStart( char *outRebuildingCache,
+                        char inAutoGenerateCategoryTransitions = false );
 
 float initTransBankStep();
 void initTransBankFinish();

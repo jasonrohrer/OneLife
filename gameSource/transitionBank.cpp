@@ -41,8 +41,8 @@ static int maxID;
 static char autoGenerateCategoryTransitions = false;
 
 
-int initTransBankStart( char inAutoGenerateCategoryTransitions,
-                        char *outRebuildingCache ) {
+int initTransBankStart( char *outRebuildingCache,
+                        char inAutoGenerateCategoryTransitions ) {
     
     autoGenerateCategoryTransitions = inAutoGenerateCategoryTransitions;
     

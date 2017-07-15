@@ -62,6 +62,15 @@ int getMaxSpriteID() {
     }
 
 
+static char makeNewSpritesSearchable =  false;
+
+
+void enableSpriteSearch( char inEnable ) {
+    makeNewSpritesSearchable = inEnable;
+    }
+
+
+
 
 int initSpriteBankStart( char *outRebuildingCache ) {
     maxID = 0;
@@ -228,11 +237,13 @@ void initSpriteBankFinish() {
         
         idMap[ r->id ] = r;
         
-        char *lower = stringToLowerCase( r->tag );
-        
-        tree.insert( lower, r );
-        
-        delete [] lower;
+        if( makeNewSpritesSearchable ) {    
+            char *lower = stringToLowerCase( r->tag );
+            
+            tree.insert( lower, r );
+            
+            delete [] lower;
+            }
         }
 
     printf( "Loaded %d tagged sprites from sprites folder\n", numRecords );
@@ -864,13 +875,16 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     freeSpriteRecord( newID );
     
     idMap[newID] = r;
-    
-    char *lower = stringToLowerCase( inTag );
-    
-    tree.insert( lower, idMap[newID] );
 
-    delete [] lower;
-
+    if( makeNewSpritesSearchable ) {
+        
+        char *lower = stringToLowerCase( inTag );
+        
+        tree.insert( lower, idMap[newID] );
+        
+        delete [] lower;
+        }
+    
     loadedSprites.push_back( r->id );
 
     r->loading = false;

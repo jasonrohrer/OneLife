@@ -248,7 +248,6 @@ float initAnimationBankStep() {
 
 
 void initAnimationBankFinish() {
-    
     freeFolderCache( cache );
     
     mapSize = maxID + 1;
@@ -349,7 +348,7 @@ AnimationRecord *getAnimation( int inID, AnimType inType ) {
 
 
 // record destroyed by caller
-void addAnimation( AnimationRecord *inRecord ) {
+void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
     
     AnimationRecord *oldRecord = getAnimation( inRecord->objectID, 
                                                inRecord->type );
@@ -393,123 +392,124 @@ void addAnimation( AnimationRecord *inRecord ) {
         }
 
     
-    // copy to add it to memory bank
-    
+    // copy to add it to memory bank    
     
 
     idMap[newID][inRecord->type] = copyRecord( inRecord );
     
     
-
-    // store on disk
-    File *animationFile = getFile( newID, inRecord->type );
+    if( ! inNoWriteToFile ) {
+        
+        // store on disk
+        File *animationFile = getFile( newID, inRecord->type );
     
-    if( animationFile != NULL ) {
-        SimpleVector<char*> lines;
+        if( animationFile != NULL ) {
+            SimpleVector<char*> lines;
         
-        lines.push_back( autoSprintf( "id=%d", newID ) );
-        lines.push_back( autoSprintf( "type=%d,randStartPhase=%d", 
-                                      inRecord->type, 
-                                      inRecord->randomStartPhase ) );
+            lines.push_back( autoSprintf( "id=%d", newID ) );
+            lines.push_back( autoSprintf( "type=%d,randStartPhase=%d", 
+                                          inRecord->type, 
+                                          inRecord->randomStartPhase ) );
 
-        lines.push_back( 
-            autoSprintf( "numSounds=%d", inRecord->numSounds ) );
-
-        for( int j=0; j<inRecord->numSounds; j++ ) {
-            lines.push_back( autoSprintf( 
-                                 "soundParam=%d %lf %lf %lf %lf %lf",
-                                 inRecord->soundAnim[j].sound.id,
-                                 inRecord->soundAnim[j].sound.volume,
-                                 inRecord->soundAnim[j].repeatPerSec,
-                                 inRecord->soundAnim[j].repeatPhase,
-                                 inRecord->soundAnim[j].ageStart,
-                                 inRecord->soundAnim[j].ageEnd ) );
-            }
-        
-        lines.push_back( 
-            autoSprintf( "numSprites=%d", inRecord->numSprites ) );
-        
-        lines.push_back( 
-            autoSprintf( "numSlots=%d", inRecord->numSlots ) );
-        
-        for( int j=0; j<inRecord->numSprites; j++ ) {
             lines.push_back( 
-                autoSprintf( 
-                    "animParam="
-                    "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
-                    "%lf %lf %lf %lf %lf "
-                    "%lf %lf %lf %lf %lf",
-                    inRecord->spriteAnim[j].xOscPerSec,
-                    inRecord->spriteAnim[j].xAmp,
-                    inRecord->spriteAnim[j].xPhase,
-                    
-                    inRecord->spriteAnim[j].yOscPerSec,
-                    inRecord->spriteAnim[j].yAmp,
-                    inRecord->spriteAnim[j].yPhase,
-                    
-                    inRecord->spriteAnim[j].rotationCenterOffset.x,
-                    inRecord->spriteAnim[j].rotationCenterOffset.y,
+                autoSprintf( "numSounds=%d", inRecord->numSounds ) );
 
-                    inRecord->spriteAnim[j].rotPerSec,
-                    inRecord->spriteAnim[j].rotPhase,
-                    
-                    inRecord->spriteAnim[j].rockOscPerSec,
-                    inRecord->spriteAnim[j].rockAmp,
-                    inRecord->spriteAnim[j].rockPhase,
-                    
-                    inRecord->spriteAnim[j].durationSec,
-                    inRecord->spriteAnim[j].pauseSec,
-
-                    inRecord->spriteAnim[j].fadeOscPerSec,
-                    inRecord->spriteAnim[j].fadeHardness,
-                    inRecord->spriteAnim[j].fadeMin,
-                    inRecord->spriteAnim[j].fadeMax,
-                    inRecord->spriteAnim[j].fadePhase ) );
-            }
-        for( int j=0; j<inRecord->numSlots; j++ ) {
+            for( int j=0; j<inRecord->numSounds; j++ ) {
+                lines.push_back( autoSprintf( 
+                                     "soundParam=%d %lf %lf %lf %lf %lf",
+                                     inRecord->soundAnim[j].sound.id,
+                                     inRecord->soundAnim[j].sound.volume,
+                                     inRecord->soundAnim[j].repeatPerSec,
+                                     inRecord->soundAnim[j].repeatPhase,
+                                     inRecord->soundAnim[j].ageStart,
+                                     inRecord->soundAnim[j].ageEnd ) );
+                }
+        
             lines.push_back( 
-                autoSprintf( 
-                    "animParam="
-                    "%lf %lf %lf %lf %lf %lf %lf %lf",
-                    inRecord->slotAnim[j].xOscPerSec,
-                    inRecord->slotAnim[j].xAmp,
-                    inRecord->slotAnim[j].xPhase,
+                autoSprintf( "numSprites=%d", inRecord->numSprites ) );
+        
+            lines.push_back( 
+                autoSprintf( "numSlots=%d", inRecord->numSlots ) );
+        
+            for( int j=0; j<inRecord->numSprites; j++ ) {
+                lines.push_back( 
+                    autoSprintf( 
+                        "animParam="
+                        "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
+                        "%lf %lf %lf %lf %lf "
+                        "%lf %lf %lf %lf %lf",
+                        inRecord->spriteAnim[j].xOscPerSec,
+                        inRecord->spriteAnim[j].xAmp,
+                        inRecord->spriteAnim[j].xPhase,
                     
-                    inRecord->slotAnim[j].yOscPerSec,
-                    inRecord->slotAnim[j].yAmp,
-                    inRecord->slotAnim[j].yPhase,
+                        inRecord->spriteAnim[j].yOscPerSec,
+                        inRecord->spriteAnim[j].yAmp,
+                        inRecord->spriteAnim[j].yPhase,
                     
-                    inRecord->slotAnim[j].durationSec,
-                    inRecord->slotAnim[j].pauseSec ) );
+                        inRecord->spriteAnim[j].rotationCenterOffset.x,
+                        inRecord->spriteAnim[j].rotationCenterOffset.y,
+
+                        inRecord->spriteAnim[j].rotPerSec,
+                        inRecord->spriteAnim[j].rotPhase,
+                    
+                        inRecord->spriteAnim[j].rockOscPerSec,
+                        inRecord->spriteAnim[j].rockAmp,
+                        inRecord->spriteAnim[j].rockPhase,
+                    
+                        inRecord->spriteAnim[j].durationSec,
+                        inRecord->spriteAnim[j].pauseSec,
+
+                        inRecord->spriteAnim[j].fadeOscPerSec,
+                        inRecord->spriteAnim[j].fadeHardness,
+                        inRecord->spriteAnim[j].fadeMin,
+                        inRecord->spriteAnim[j].fadeMax,
+                        inRecord->spriteAnim[j].fadePhase ) );
+                }
+            for( int j=0; j<inRecord->numSlots; j++ ) {
+                lines.push_back( 
+                    autoSprintf( 
+                        "animParam="
+                        "%lf %lf %lf %lf %lf %lf %lf %lf",
+                        inRecord->slotAnim[j].xOscPerSec,
+                        inRecord->slotAnim[j].xAmp,
+                        inRecord->slotAnim[j].xPhase,
+                    
+                        inRecord->slotAnim[j].yOscPerSec,
+                        inRecord->slotAnim[j].yAmp,
+                        inRecord->slotAnim[j].yPhase,
+                    
+                        inRecord->slotAnim[j].durationSec,
+                        inRecord->slotAnim[j].pauseSec ) );
+                }
+
+
+
+            char **linesArray = lines.getElementArray();
+        
+        
+            char *contents = join( linesArray, lines.size(), "\n" );
+
+            delete [] linesArray;
+            lines.deallocateStringElements();
+        
+        
+            File animationsDir( NULL, "animations" );
+        
+            File *cacheFile = animationsDir.getChildFile( "cache.fcz" );
+            
+            cacheFile->remove();
+        
+            delete cacheFile;
+
+
+            animationFile->writeToFile( contents );
+        
+            delete [] contents;
+        
+            delete animationFile;
             }
-
-
-
-        char **linesArray = lines.getElementArray();
-        
-        
-        char *contents = join( linesArray, lines.size(), "\n" );
-
-        delete [] linesArray;
-        lines.deallocateStringElements();
-        
-        
-        File animationsDir( NULL, "animations" );
-        
-        File *cacheFile = animationsDir.getChildFile( "cache.fcz" );
-
-        cacheFile->remove();
-        
-        delete cacheFile;
-
-
-        animationFile->writeToFile( contents );
-        
-        delete [] contents;
-        
-        delete animationFile;
         }
-
+    
     
     // check if sounds still used (prevent orphan sounds)
     for( int i=0; i<oldSoundIDs.size(); i++ ) {
@@ -532,23 +532,22 @@ void clearAnimation( int inObjectID, AnimType inType ) {
         delete r;
         
         idMap[inObjectID][inType] = NULL;
+
+        File animationsDir( NULL, "animations" );
+            
+
+        File *cacheFile = animationsDir.getChildFile( "cache.fcz" );
+        
+        cacheFile->remove();
+        
+        delete cacheFile;
+        
+
+        File *animationFile = getFile( inObjectID, inType );
+        animationFile->remove();
+        
+        delete animationFile;
         }
-
-    
-    File animationsDir( NULL, "animations" );
-
-
-    File *cacheFile = animationsDir.getChildFile( "cache.fcz" );
-
-    cacheFile->remove();
-    
-    delete cacheFile;
-
-
-    File *animationFile = getFile( inObjectID, inType );
-    animationFile->remove();
-    
-    delete animationFile;
     }
 
 
@@ -2361,6 +2360,20 @@ AnimationRecord *copyRecord( AnimationRecord *inRecord ) {
     
     return newRecord;
     }
+
+
+
+void freeRecord( AnimationRecord *inRecord ) {
+    for( int s=0; s<inRecord->numSounds; s++ ) {
+        unCountLiveUse( inRecord->soundAnim[s].sound.id );
+        }
+    
+    delete [] inRecord->soundAnim;
+    delete [] inRecord->spriteAnim;
+    delete [] inRecord->slotAnim;
+    delete inRecord;
+    }
+
 
 
 

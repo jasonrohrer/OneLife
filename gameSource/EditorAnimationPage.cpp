@@ -450,24 +450,14 @@ void EditorAnimationPage::freeCurrentAnim() {
     
     for( int i=0; i<endAnimType; i++ ) {
         if( mCurrentAnim[i] != NULL ) {
-
-            for( int s=0; s<mCurrentAnim[i]->numSounds; s++ ) {
-                unCountLiveUse( mCurrentAnim[i]->soundAnim[s].sound.id );
-                }
             
-            delete [] mCurrentAnim[i]->soundAnim;
-            delete [] mCurrentAnim[i]->spriteAnim;
-            delete [] mCurrentAnim[i]->slotAnim;
-            delete mCurrentAnim[i];
-            mCurrentAnim[i] = NULL;    
+            freeRecord( mCurrentAnim[i] );
+            mCurrentAnim[i] = NULL;
             }
         }
     if( mWiggleAnim != NULL ) {
-        delete [] mWiggleAnim->soundAnim;
-        delete [] mWiggleAnim->spriteAnim;
-        delete [] mWiggleAnim->slotAnim;
-        delete mWiggleAnim;
-        mWiggleAnim = NULL;        
+        freeRecord( mWiggleAnim );
+        mWiggleAnim = NULL;
         }
     }
 

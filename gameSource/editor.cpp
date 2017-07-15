@@ -484,7 +484,10 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
     currentGamePage = loadingPage;
     currentGamePage->base_makeActive( true );
+    
 
+    enableSpriteSearch( true );
+    enableObjectSearch( true );
 
     initDone = true;
 
@@ -1044,6 +1047,8 @@ void drawFrame( char inUpdate ) {
                             // skip sound progress
                             initSoundBankFinish();
                             
+                            loadingPhaseStartTime = Time::getCurrentTime();
+
                             char rebuilding;
                             
                             int numSprites = 
@@ -1077,6 +1082,7 @@ void drawFrame( char inUpdate ) {
                     if( progress == 1.0 ) {
                         initSoundBankFinish();
                         
+                        loadingPhaseStartTime = Time::getCurrentTime();
 
                         char rebuilding;
                         
@@ -1112,13 +1118,58 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initSpriteBankFinish();
+                        printf( "Finished loading Sprite bank in %f sec\n",
+                                Time::getCurrentTime() - 
+                                loadingPhaseStartTime );
                         
+                        loadingPhaseStartTime = Time::getCurrentTime();
+
+
+                        char rebuilding;
+                        
+                        int numCats = 
+                            initAnimationBankStart( &rebuilding );
+                        
+                        if( rebuilding ) {
+                            loadingPage->setCurrentPhase( 
+                                "ANIMATION##(REBUILDING CACHE)" );
+                            }
+                        else {
+                            loadingPage->setCurrentPhase( "ANIMATION" );
+                            }
+                        loadingPage->setCurrentProgress( 0 );
+                        
+
+                        loadingStepBatchSize = numCats / 20;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 3: {
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initAnimationBankStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
+                    
+                    if( progress == 1.0 ) {
+                        initAnimationBankFinish();
+                        
+                        printf( "Finished loading animation bank in %f sec\n",
+                                Time::getCurrentTime() - 
+                                loadingPhaseStartTime );
+
                         loadingPhaseStartTime = Time::getCurrentTime();
                         
                         char rebuilding;
                         
                         int numObjects = 
-                            initObjectBankStart( &rebuilding, false );
+                            initObjectBankStart( &rebuilding, true );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase( 
@@ -1140,7 +1191,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 3: {
+                case 4: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initObjectBankStep();
@@ -1152,7 +1203,8 @@ void drawFrame( char inUpdate ) {
                         printf( "Finished loading object bank in %f sec\n",
                                 Time::getCurrentTime() - 
                                 loadingPhaseStartTime );
-
+                        
+                        loadingPhaseStartTime = Time::getCurrentTime();
 
                         char rebuilding;
                         
@@ -1179,7 +1231,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 4: {
+                case 5: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initCategoryBankStep();
@@ -1191,12 +1243,13 @@ void drawFrame( char inUpdate ) {
                         printf( "Finished loading category bank in %f sec\n",
                                 Time::getCurrentTime() - 
                                 loadingPhaseStartTime );
-
+                        
+                        loadingPhaseStartTime = Time::getCurrentTime();
 
                         char rebuilding;
                         
                         int numTrans = 
-                            initTransBankStart( false, &rebuilding );
+                            initTransBankStart( &rebuilding, false );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase( 
@@ -1218,7 +1271,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 5: {
+                case 6: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initTransBankStep();
@@ -1227,42 +1280,6 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initTransBankFinish();
-                        loadingPage->setCurrentProgress( 0 );
-                        
-
-                        char rebuilding;
-                        
-                        int numAnims = initAnimationBankStart( &rebuilding );
- 
-                        if( rebuilding ) {
-                            loadingPage->setCurrentPhase( 
-                                "ANIMATIONS##(REBUILDING CACHE)" );
-                            }
-                        else {
-                            loadingPage->setCurrentPhase( "ANIMATIONS" );
-                            }
-                        loadingPage->setCurrentProgress( 0 );
-                        
-
-                        loadingStepBatchSize = numAnims / 20;
-                        
-                        if( loadingStepBatchSize < 1 ) {
-                            loadingStepBatchSize = 1;
-                            }
-
-                        loadingPhase ++;
-                        }
-                    break;
-                    }
-                case 6: {
-                    float progress;
-                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
-                        progress = initAnimationBankStep();
-                        loadingPage->setCurrentProgress( progress );
-                        }
-                    
-                    if( progress == 1.0 ) {
-                        initAnimationBankFinish();
                         loadingPhase ++;
                         }
                     break;

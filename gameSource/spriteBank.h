@@ -42,6 +42,13 @@ typedef struct SpriteRecord {
 
 
 
+
+// enable index for string-based sprite searching
+// call before init to index sprites on load
+// defaults to off
+void enableSpriteSearch( char inEnable );
+
+
 // returns number of sprite metadata files that need to be loaded
 int initSpriteBankStart( char *outRebuildingCache );
 

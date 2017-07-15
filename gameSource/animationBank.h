@@ -131,6 +131,10 @@ typedef struct LayerSwapRecord {
 
 AnimationRecord *copyRecord( AnimationRecord *inRecord );
 
+// should only be called on results of copyRecord and NOT
+// on results of getAnimation
+void freeRecord( AnimationRecord *inRecord );
+
 
 // returns number of animations that need to be loaded
 int initAnimationBankStart( char *outRebuildingCache );
@@ -151,7 +155,7 @@ AnimationRecord *getAnimation( int inID, AnimType inType );
 
 
 // record destroyed by caller
-void addAnimation( AnimationRecord *inRecord );
+void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile = false );
 
 
 void clearAnimation( int inObjectID, AnimType inType );
