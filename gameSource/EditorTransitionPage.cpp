@@ -570,7 +570,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             actor = -2;
             }
 
-        deleteTransFromBank( actor, target, false );
+        deleteTransFromBank( actor, target, mLastUseCheckbox.getToggled() );
                              
         for( int i=0; i<4; i++ ) {
             setObjectByIndex( &mCurrentTransition, i, 0 );
