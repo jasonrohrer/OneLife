@@ -48,6 +48,16 @@ ValueSlider::~ValueSlider() {
 
 
 
+void ValueSlider::setHighValue( double inHighValue ) {
+    mHighValue = inHighValue;
+    if( mValue > mHighValue ) {
+        mValue = mHighValue;
+        }
+    setFieldFromValue();
+    }
+
+
+
 double ValueSlider::getValue() {
     return mValue;
     }

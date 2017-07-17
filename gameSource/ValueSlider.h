@@ -29,6 +29,8 @@ class ValueSlider : public PageComponent, public ActionListenerList,
         
         double getValue();
         void setValue( double inValue );
+
+        void setHighValue( double inHighValue );
         
 
         char isPointerDown();

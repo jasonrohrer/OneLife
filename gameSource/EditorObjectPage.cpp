@@ -152,6 +152,8 @@ EditorObjectPage::EditorObjectPage()
                          false,
                          "Num Uses", "0123456789", NULL ),
           mUseVanishCheckbox( 300, 86, 2 ),
+          mSimUseCheckbox( 248, 64, 2 ),
+          mSimUseSlider( smallFont, 220, 64, 2, 50, 20, 0, 10, "" ),
           mDemoClothesButton( smallFont, 300, 200, "Pos" ),
           mEndClothesDemoButton( smallFont, 300, 160, "XPos" ),
           mDemoSlotsButton( smallFont, 250, 110, "Demo Slots" ),
@@ -567,6 +569,15 @@ EditorObjectPage::EditorObjectPage()
     mUseVanishCheckbox.setVisible( false );
     
 
+    addComponent( &mSimUseCheckbox );
+    mSimUseCheckbox.addActionListener( this );
+    mSimUseCheckbox.setVisible( false );
+    
+    addComponent( &mSimUseSlider );
+    
+    mSimUseSlider.setVisible( false );
+    mSimUseSlider.toggleField( false );
+
     boxY = 217;
 
     for( int i=0; i<NUM_CLOTHING_CHECKBOXES; i++ ) {
@@ -953,6 +964,9 @@ static void recursiveRotate( ObjectRecord *inObject,
 
 
 void EditorObjectPage::addNewSprite( int inSpriteID ) {
+    mSimUseSlider.setVisible( false );
+    mSimUseCheckbox.setToggled( false );
+    
     int newNumSprites = mCurrentObject.numSprites + 1;
             
     int *newSprites = new int[ newNumSprites ];
@@ -2004,16 +2018,30 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
  
         mCurrentObject.spriteUseVanish[ mPickedObjectLayer ] = on;
         }
+    else if( inTarget == &mSimUseCheckbox ) {
+        char on = mSimUseCheckbox.getToggled();
+ 
+        mSimUseSlider.setVisible( on );
+        mSimUseSlider.setHighValue( mCurrentObject.numSprites );
+        mSimUseSlider.setValue( mCurrentObject.numSprites );
+        }
     else if( inTarget == &mNumUsesField ) {
         int val = mNumUsesField.getInt();
         
-        if( val > 1 && mPickedObjectLayer != -1 ) {
-            mUseVanishCheckbox.setVisible( true );
-            mUseVanishCheckbox.setToggled( 
-                mCurrentObject.spriteUseVanish[ mPickedObjectLayer ] );
+        if( val > 1 ) {
+            if( mPickedObjectLayer != -1 ) {
+                mUseVanishCheckbox.setVisible( true );
+                mUseVanishCheckbox.setToggled( 
+                    mCurrentObject.spriteUseVanish[ mPickedObjectLayer ] );
+                }
+            
+            mSimUseCheckbox.setVisible( true );
             }
         else {
             mUseVanishCheckbox.setVisible( false );
+            mSimUseCheckbox.setToggled( false );
+            mSimUseCheckbox.setVisible( false );
+            mSimUseSlider.setVisible( false );
             }
         }
     else if( inTarget == &mAgePunchInButton ) {
@@ -2155,6 +2183,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         }
     
     else if( inTarget == &mObjectPicker ) {
+        
+        mSimUseSlider.setVisible( false );
+        mSimUseCheckbox.setToggled( false );
+        mSimUseCheckbox.setVisible( false );
+        
+        
         char rightClick;
         
         int objectID = mObjectPicker.getSelectedObject( &rightClick );
@@ -2340,6 +2374,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             
             mNumUsesField.setInt( pickedRecord->numUses );
+            
+            mSimUseCheckbox.setVisible( pickedRecord->numUses > 1 );
             
 
             memcpy( mCurrentObject.sprites, pickedRecord->sprites,
@@ -2900,10 +2936,16 @@ void EditorObjectPage::drawSpriteLayers( doublePair inDrawOffset,
                 spriteRot += rot;
                 }
             
-
-            drawSprite( getSprite( mCurrentObject.sprites[i] ), spritePos,
-                        1.0, spriteRot,
-                        mCurrentObject.spriteHFlip[i] );
+            if( mSimUseSlider.isVisible() &&
+                mSimUseSlider.getValue() < i &&
+                mCurrentObject.spriteUseVanish[i]  ) {
+                // skip this sprite, simulating vanish order
+                }
+            else {
+                drawSprite( getSprite( mCurrentObject.sprites[i] ), spritePos,
+                            1.0, spriteRot,
+                            mCurrentObject.spriteHFlip[i] );
+                }
             }
         
         if( multiplicative ) {
@@ -3340,6 +3382,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         pos = mUseVanishCheckbox.getPosition();
         pos.x -= 20;
         smallFont->drawString( "Use Vanish", pos, alignRight );
+        }
+
+    if( mSimUseCheckbox.isVisible() ) {
+        pos = mSimUseCheckbox.getPosition();
+        pos.x -= 20;
+        smallFont->drawString( "Sim", pos, alignRight );
         }
 
 
