@@ -572,8 +572,28 @@ char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit ) {
         
         TransRecord *r = producesMap[inTargetID].getElementDirect( i );
         
-        if( r->actor == inPossibleAncestorID ||
-            r->target == inPossibleAncestorID ) {
+        // make sure inTargetID came from something else as part of this
+        // transition (it wasn't a tool itself)
+
+        if( r->newTarget == inTargetID &&
+            r->target == inTargetID ) {
+            // inTargetID unchanged
+            continue;
+            }
+        if( r->newActor == inTargetID &&
+            r->actor == inTargetID ) {
+            // unchanged as actor
+            continue;
+            }
+        
+        if( r->autoDecaySeconds > 0 ) {
+            // don't count auto decays
+            continue;
+            }
+        
+
+        if( r->actor == inPossibleAncestorID || 
+              r->target == inPossibleAncestorID ) {
             return true;
             }
 

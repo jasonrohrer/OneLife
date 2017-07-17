@@ -74,6 +74,10 @@ Version 28     ???
   the way.  The intermediary objects are replaced with unused versions of the 
   main object at server shutdown.
 
+--Fixed way object ancestor cycle is detected so that kindling creation sound
+  plays when long shaft is chopped into kinding.
+
+
 
 
 Server fixes:
