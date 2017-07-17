@@ -62,6 +62,10 @@ class EditorCategoryPage : public GamePage, public ActionListener {
 
         int mCurrentObject;
         
+        // if no object selected, we can pick a category and view its members
+        int mCurrentCategory;
+        
+
         int mSelectionIndex;
         
         KeyLegend mKeyLegend;

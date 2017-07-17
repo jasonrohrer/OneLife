@@ -72,7 +72,8 @@ EditorCategoryPage::EditorCategoryPage()
     
 
     mCurrentObject = -1;
-
+    mCurrentCategory = -1;
+    
     mSelectionIndex = 0;
 
 
@@ -93,6 +94,9 @@ void EditorCategoryPage::clearUseOfObject( int inObjectID ) {
     if( mCurrentObject == inObjectID ) {
         mCurrentObject = -1;
         }
+    else if( mCurrentCategory == inObjectID ) {
+        mCurrentCategory = -1;
+        }
         
     mObjectParentPicker.redoSearch( false );
     mObjectChildPicker.redoSearch( false );
@@ -104,7 +108,16 @@ void EditorCategoryPage::clearUseOfObject( int inObjectID ) {
 void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
     
     if( inTarget == &mObjectChildPicker ) {
-        mCurrentObject = mObjectChildPicker.getSelectedObject();
+        if( mCurrentCategory == -1 ) {
+            mCurrentObject = mObjectChildPicker.getSelectedObject();
+            }
+        else {
+            int obj = mObjectChildPicker.getSelectedObject();
+            
+            if( obj != -1 ) {
+                addCategoryToObject( obj, mCurrentCategory );
+                }
+            }
         }
     else if( inTarget == &mObjectParentPicker ) {
         int parentID = mObjectParentPicker.getSelectedObject();
@@ -116,6 +129,12 @@ void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
             // just-added becomes selected
             int count = getNumCategoriesForObject( mCurrentObject );
             mSelectionIndex = count - 1;
+            
+            mCurrentCategory = -1;
+            }
+        else {
+            mCurrentCategory = parentID;
+            mSelectionIndex = 0;
             }
         }
     else if( inTarget == &mTransEditorButton ) {
@@ -125,6 +144,87 @@ void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
 
 
 
+static void drawObjectList( SimpleVector<int> *inList,
+                            int inSelectionIndex = -1 ) {
+
+    int num = inList->size();
+        
+    FloatColor boxColor = { 0.25f, 0.25f, 0.25f, 1.0f };
+    
+    FloatColor altBoxColor = { 0.35f, 0.35f, 0.35f, 1.0f };
+    
+    FloatColor selBoxColor = { 0.35f, 0.35f, 0.0f, 1.0f };
+
+    doublePair pos;
+    
+    pos.x = -100;
+    pos.y = 150;
+        
+    double spacing = 30;
+
+    if( inSelectionIndex > 7 && num > 12 ) {    
+        pos.y += ( inSelectionIndex - 7 )  * spacing;
+        }
+        
+
+    for( int i=0; i<num; i++ ) {
+            
+        int objID = inList->getElementDirect( i );
+
+        if( inSelectionIndex == i ) {
+            setDrawColor( selBoxColor );
+            }
+        else {
+
+            setDrawColor( boxColor );
+            }
+
+        float fade = 1;
+            
+        if( num > 12 && pos.y < -130 ) {
+            fade = 1 - ( -130 - pos.y ) / 95;
+                
+            if( fade < 0 ) {
+                fade = 0;
+                }
+            }
+
+        if( pos.y > 130 ) {
+            fade = 1 - ( pos.y - 130 ) / 95;
+                
+            if( fade < 0 ) {
+                fade = 0;
+                }
+            }
+            
+            
+        setDrawFade( fade );
+        drawRect( pos, 150, spacing / 2  );
+            
+        FloatColor tempColor = boxColor;
+        boxColor = altBoxColor;
+            
+        altBoxColor = tempColor;
+            
+
+        if( inSelectionIndex == i ) {
+            setDrawColor( 1, 1, 0, 1 );
+            }
+        else {
+            setDrawColor( 1, 1, 1, 1 );
+            }
+            
+        doublePair textPos = pos;
+        textPos.x -= 140;
+            
+        setDrawFade( fade );
+
+        smallFont->drawString( getObject( objID )->description, 
+                               textPos, alignLeft );
+
+        pos.y -= spacing;
+        }
+    }
 
 
    
@@ -171,82 +271,23 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
         pos.y -= 60;
         smallFont->drawString( r->description, pos, alignCenter );
 
+        
         int numCats = getNumCategoriesForObject( mCurrentObject );
         
-        FloatColor boxColor = { 0.25f, 0.25f, 0.25f, 1.0f };
+        SimpleVector<int> cats;
         
-        FloatColor altBoxColor = { 0.35f, 0.35f, 0.35f, 1.0f };
-
-        FloatColor selBoxColor = { 0.35f, 0.35f, 0.0f, 1.0f };
-
-        
-        pos.x = -100;
-        pos.y = 150;
-        
-        double spacing = 30;
-
-        if( mSelectionIndex > 7 && numCats > 12 ) {    
-            pos.y += ( mSelectionIndex - 7 )  * spacing;
-            }
-        
-
         for( int i=0; i<numCats; i++ ) {
-            
-            int parentID = getCategoryForObject( mCurrentObject, i );
-
-            if( mSelectionIndex == i ) {
-                setDrawColor( selBoxColor );
-                }
-            else {
-                setDrawColor( boxColor );
-                }
-
-            float fade = 1;
-            
-            if( numCats > 12 && pos.y < -130 ) {
-                fade = 1 - ( -130 - pos.y ) / 95;
-                
-                if( fade < 0 ) {
-                    fade = 0;
-                    }
-                }
-
-            if( pos.y > 130 ) {
-                fade = 1 - ( pos.y - 130 ) / 95;
-                
-                if( fade < 0 ) {
-                    fade = 0;
-                    }
-                }
-            
-            
-            setDrawFade( fade );
-            drawRect( pos, 150, spacing / 2  );
-            
-            FloatColor tempColor = boxColor;
-            boxColor = altBoxColor;
-            
-            altBoxColor = tempColor;
-            
-
-            if( mSelectionIndex == i ) {
-                setDrawColor( 1, 1, 0, 1 );
-                }
-            else {
-                setDrawColor( 1, 1, 1, 1 );
-                }
-            
-            doublePair textPos = pos;
-            textPos.x -= 140;
-            
-            setDrawFade( fade );
-
-            smallFont->drawString( getObject( parentID )->description, 
-                                   textPos, alignLeft );
-
-            pos.y -= spacing;
+            cats.push_back( getCategoryForObject( mCurrentObject, i ) );
             }
+    
+        drawObjectList( &cats, mSelectionIndex );
         }
+    else if( mCurrentCategory != -1 ) {
+        CategoryRecord *cat = getCategory( mCurrentCategory );
+        
+        drawObjectList( &( cat->objectIDSet ), mSelectionIndex );
+        }
+    
     }
 
 
@@ -314,6 +355,23 @@ void EditorCategoryPage::keyDown( unsigned char inASCII ) {
                     }
                 }
             }
+        else if( mCurrentCategory != -1 ) {
+            int objID = getCategory( mCurrentCategory )->
+                objectIDSet.getElementDirect( mSelectionIndex );
+            
+            removeCategoryFromObject( objID, mCurrentCategory );
+            
+            int newMax =
+                getCategory( mCurrentCategory )->objectIDSet.size() - 1;
+                
+            if( mSelectionIndex > newMax ) {
+                mSelectionIndex = newMax;
+                }
+            if( mSelectionIndex < 0 ) {
+                mSelectionIndex = 0;
+                }
+            }
+        
         }
     
     }
@@ -344,6 +402,9 @@ void EditorCategoryPage::specialKeyDown( int inKeyCode ) {
             int max = 0;
             if( mCurrentObject != -1 ) {
                 max = getNumCategoriesForObject( mCurrentObject ) - 1;
+                }
+            else if( mCurrentCategory != -1 ) {
+                max = getCategory( mCurrentCategory )->objectIDSet.size() - 1;
                 }
             
             if( mSelectionIndex > max ) {
