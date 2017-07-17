@@ -1249,7 +1249,8 @@ void drawFrame( char inUpdate ) {
                         char rebuilding;
                         
                         int numTrans = 
-                            initTransBankStart( &rebuilding, false, false );
+                            initTransBankStart( &rebuilding, 
+                                                false, false, false );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase( 

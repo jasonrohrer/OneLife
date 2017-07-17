@@ -1369,7 +1369,7 @@ void drawFrame( char inUpdate ) {
                         // true to auto-generate concrete transitions
                         // for all abstract category transitions
                         int numTrans = 
-                            initTransBankStart( &rebuilding, true, true );
+                            initTransBankStart( &rebuilding, true, true, true );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase(

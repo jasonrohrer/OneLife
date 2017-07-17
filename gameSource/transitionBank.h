@@ -40,7 +40,8 @@ typedef struct TransRecord {
 // returns number of transitions that need to be loaded
 int initTransBankStart( char *outRebuildingCache,
                         char inAutoGenerateCategoryTransitions = false,
-                        char inAutoGenerateUsedObjectTransitions = false );
+                        char inAutoGenerateUsedObjectTransitions = false,
+                        char inAutoGenerateGenericUseTransitions = false );
 
 float initTransBankStep();
 void initTransBankFinish();
@@ -87,7 +88,8 @@ char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit );
 // (to define what happens to an actor object when it is used on any person)
 
 // inTarget can be -1 if inActor is > 0 and inNewTarget is 0
-// (to define what's left in hand if inActor is eaten)
+// (to define what's left in hand if inActor is eaten, if it's a food, or
+//  to define a generic useage result for a one-time-use object)
 // OR 
 // if inActor > 0 and inNewTarget > 0
 // (to define use-on-bare-ground transition)
@@ -123,6 +125,10 @@ char isObjectUsed( int inObjectID );
 
 // is this object a death marker OR descended from a death marker
 char isGrave( int inObjectID );
+
+
+
+void printTrans( TransRecord *inTrans );
 
 
 #endif

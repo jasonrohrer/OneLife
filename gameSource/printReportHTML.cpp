@@ -159,6 +159,8 @@ int main( int inNumArgs, char **inArgs ) {
 
     // auto-gen category-based transitions so that we can detect
     // human-made objects properly.
+    //
+    // Generic use transitions will work without being filled in, I think
     num = initTransBankStart( &rebuilding, true );
 
     runSteps( "transitions", num, &initTransBankStep );

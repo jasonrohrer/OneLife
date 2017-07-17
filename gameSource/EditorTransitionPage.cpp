@@ -258,6 +258,15 @@ void EditorTransitionPage::checkIfSaveVisible() {
                        &&
                        mCurrentTransition.newTarget == 0 )
                      ||
+                     // generic use transition
+                     ( mCurrentTransition.actor > 0
+                       &&
+                       getObject( mCurrentTransition.actor )->foodValue == 0
+                       &&
+                       mCurrentTransition.newActor != 0 
+                       &&
+                       mCurrentTransition.newTarget == 0 )
+                     ||
                      // Use on bare ground transition
                      ( mCurrentTransition.actor > 0
                        &&
@@ -475,7 +484,15 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                  mCurrentTransition.newActor != 0 &&
                  mCurrentTransition.newTarget == 0 &&
                  getObject( mCurrentTransition.actor )->foodValue > 0 ) {
-            
+            // food eaten transition
+            target = -1;
+            }
+        else if( target == 0 &&
+                 mCurrentTransition.actor > 0 &&
+                 mCurrentTransition.newActor != 0 &&
+                 mCurrentTransition.newTarget == 0 &&
+                 getObject( mCurrentTransition.actor )->foodValue == 0 ) {
+            // generic use transition
             target = -1;
             }
         else if( target == 0 &&
@@ -770,11 +787,18 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         if( id > 0 ) {
             if( i > 1 ) {
                 pos.y -= 70;
+                
+                if( i == 2 ) {
+                    pos.y -= 25;
+                    }
                 }
             else {
                 pos.y += 70;
+                if( i == 0 ) {
+                    pos.y += 25;
+                    }
                 }
-            
+
             ObjectRecord *r = getObject( id );
             
             setDrawColor( 1.0, 1.0, 1.0, 1.0 );
@@ -889,7 +913,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         
         doublePair pos = mPickButtons[0]->getCenter();
 
-        pos.y += 95;
+        pos.y += 120;
         
         setDrawColor( 1, 1, 1, 1 );
         
@@ -900,11 +924,27 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
     else if( mCurrentTransition.target == 0 &&
              mCurrentTransition.actor > 0 &&
              getObject( mCurrentTransition.actor )->foodValue == 0 &&
+             mCurrentTransition.newActor != 0 &&
+             mCurrentTransition.newTarget == 0 ) {
+        
+        doublePair pos = mPickButtons[0]->getCenter();
+
+        pos.y += 120;
+        
+        setDrawColor( 1, 1, 1, 1 );
+        
+        smallFont->drawString( "Generic Use Transition", 
+                               pos, alignCenter );
+        
+        }
+    else if( mCurrentTransition.target == 0 &&
+             mCurrentTransition.actor > 0 &&
+             getObject( mCurrentTransition.actor )->foodValue == 0 &&
              mCurrentTransition.newTarget != 0 ) {
         
         doublePair pos = mPickButtons[0]->getCenter();
 
-        pos.y += 95;
+        pos.y += 120;
         
         setDrawColor( 1, 1, 1, 1 );
         

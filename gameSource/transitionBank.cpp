@@ -40,14 +40,17 @@ static int maxID;
 
 static char autoGenerateCategoryTransitions = false;
 static char autoGenerateUsedObjectTransitions = false;
+static char autoGenerateGenericUseTransitions = false;
 
 
 int initTransBankStart( char *outRebuildingCache,
                         char inAutoGenerateCategoryTransitions,
-                        char inAutoGenerateUsedObjectTransitions ) {
+                        char inAutoGenerateUsedObjectTransitions,
+                        char inAutoGenerateGenericUseTransitions ) {
     
     autoGenerateCategoryTransitions = inAutoGenerateCategoryTransitions;
     autoGenerateUsedObjectTransitions = inAutoGenerateUsedObjectTransitions;
+    autoGenerateGenericUseTransitions = inAutoGenerateGenericUseTransitions;
     
     maxID = 0;
 
@@ -271,7 +274,102 @@ void initTransBankFinish() {
         
         numRecords = records.size();
         }
+    
 
+
+
+
+    if( autoGenerateGenericUseTransitions ) {
+        
+        int numGenerics = 0;
+        
+        int numChanged = 0;
+        
+        int numAdded = 0;
+        
+                
+        int numObjects;
+        
+        SimpleVector<TransRecord> transToAdd;
+        
+
+        ObjectRecord **objects = getAllObjects( &numObjects );
+        
+        for( int i=0; i<numObjects; i++ ) {
+            ObjectRecord *o = objects[i];
+            
+            if( o->foodValue == 0 ) {            
+                
+                int oID = o->id;
+
+                TransRecord *genericTrans = getTrans( oID, -1, false );
+                
+                if( genericTrans == NULL ) {
+                    // try last use instead
+                    genericTrans = getTrans( oID, -1, true );
+                    }
+                
+                
+                if( genericTrans != NULL && genericTrans->newTarget == 0 ) {
+                    
+                    char lastUse = genericTrans->lastUse;
+
+                    numGenerics ++;
+                    
+
+                    SimpleVector<TransRecord*> *objTrans = getAllUses( oID );
+
+                    int numTrans = objTrans->size();
+                    
+                    for( int t=0; t<numTrans; t++ ) {
+                        TransRecord *tr = objTrans->getElementDirect( t );
+                    
+                        if( tr->actor == oID && tr->newActor == oID ) {
+                            
+                            // self-to-self tool use
+
+                            if( lastUse ) {
+                                // add a new one
+
+                                TransRecord newTrans = *tr;
+                                
+                                newTrans.lastUse = true;
+
+                                newTrans.newActor = genericTrans->newActor;
+                                
+                                transToAdd.push_back( newTrans );
+
+                                numAdded++;
+                                }
+                            else {
+                                // replace in-place with generic use result
+                                tr->newActor = genericTrans->newActor;
+                                
+                                numChanged ++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        
+        for( int t=0; t<transToAdd.size(); t++ ) {
+            TransRecord tr = transToAdd.getElementDirect( t );
+            
+            addTrans( tr.actor, tr.target,
+                      tr.newActor, tr.newTarget,
+                      tr.lastUse,
+                      tr.autoDecaySeconds,
+                      true );
+            }
+        
+
+        printf( "Auto-modified %d transitions based generic use transitions "
+                "and auto-added %d last use generic transitions "
+                "(%d objects had generic use transitions defined).\n", 
+                numChanged, numAdded, numGenerics );
+        }
+    
 
 
     
@@ -290,7 +388,7 @@ void initTransBankFinish() {
             
             int oID = o->id;
             
-            if( o->numUses > 1 ) {
+            if( o->numUses > 1 && o->useDummyIDs != NULL ) {
                 
                 SimpleVector<TransRecord*> *objTransOrig = 
                     getAllUses( oID );
@@ -429,6 +527,8 @@ void initTransBankFinish() {
         numRecords = records.size();
         }
     
+
+
 
     }
 
@@ -942,4 +1042,49 @@ char isGrave( int inObjectID ) {
     }
 
 
+
+
+
+const char *getObjName( int inObjectID ) {
+    if( inObjectID > 0 ) {
+        
+        ObjectRecord *o = getObject( inObjectID );
+        
+        if( o != NULL ) {
+            return o->description;
+            }
+        else {
+            return "Unknown Obj ID";
+            }
+        }
+    else if( inObjectID == 0 ) {
+        return "0";
+        }
+    else if( inObjectID == -1 ) {
+        return "-1";
+        }
+    else if( inObjectID == -2 ) {
+        return "-2";
+        }
+    else {
+        return "Unknown Code";
+        }
+    }
+
+
+
+void printTrans( TransRecord *inTrans ) {
+    printf( "[%s] + [%s] => [%s] + [%s]",
+            getObjName( inTrans->actor ), 
+            getObjName( inTrans->target ),
+            getObjName( inTrans->newActor ), 
+            getObjName( inTrans->newTarget ) );
+    
+    if( inTrans->lastUse ) {
+        printf( " (lastUse)\n" );
+        }
+    else {
+        printf( "\n" );
+        }
+    }
 

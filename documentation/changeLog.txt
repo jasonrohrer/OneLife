@@ -77,6 +77,9 @@ Version 28     ???
 --Fixed way object ancestor cycle is detected so that kindling creation sound
   plays when long shaft is chopped into kinding.
 
+--Support for generic use transitions.  Full water bottle can become an empty
+  water bottle whenever it is successfully used (no longer have to define
+  that it becomes empty in each and every situation).
 
 
 

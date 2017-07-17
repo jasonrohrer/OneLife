@@ -2634,7 +2634,7 @@ int main() {
 
 
     // auto-generate category-based transitions
-    initTransBankStart( &rebuilding, true, true );
+    initTransBankStart( &rebuilding, true, true, true );
     while( initTransBankStep() < 1.0 );
     initTransBankFinish();
     
