@@ -39,7 +39,8 @@ TextField::TextField( Font *inDisplayFont,
           mCursorPosition( 0 ),
           mDrawnText( NULL ),
           mCursorDrawPosition( 0 ),
-          mHoldDeleteSteps( -1 ), mFirstDeleteRepeatDone( false ) {
+          mHoldDeleteSteps( -1 ), mFirstDeleteRepeatDone( false ),
+          mLabelOnRight( false ) {
     
     if( inLabelText != NULL ) {
         mLabelText = stringDuplicate( inLabelText );
@@ -275,9 +276,17 @@ void TextField::draw() {
 
     
     if( mLabelText != NULL ) {
-        doublePair labelPos = { - mWide/2 - mBorderWide, 0 };
+        TextAlignment a = alignRight;
+        double xPos = -mWide/2 - mBorderWide;
         
-        mFont->drawString( mLabelText, labelPos, alignRight );
+        if( mLabelOnRight ) {
+            a = alignLeft;
+            xPos = -xPos;
+            }
+        
+        doublePair labelPos = { xPos, 0 };
+        
+        mFont->drawString( mLabelText, labelPos, a );
         }
     
 
@@ -922,6 +931,13 @@ void TextField::setFloat( float inF, int inDigitsAfterDecimal,
 
     setText( text );
     delete [] text;
+    }
+
+
+
+
+void TextField::setLabelSide( char inLabelOnRight ) {
+    mLabelOnRight = inLabelOnRight;
     }
 
 

@@ -74,6 +74,10 @@ class TextField : public PageComponent, public ActionListenerList {
                        char inTrimZeros = false );
         
 
+        // defaults to label on left
+        void setLabelSide( char inLabelOnRight );
+        
+
         
         virtual void setActive( char inActive );
         virtual char isActive();
@@ -162,6 +166,9 @@ class TextField : public PageComponent, public ActionListenerList {
 
         int mHoldArrowSteps[2];
         char mFirstArrowRepeatDone[2];
+        
+
+        char mLabelOnRight;
         
 
         void deleteHit();

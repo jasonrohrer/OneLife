@@ -908,8 +908,17 @@ void initObjectBankFinish() {
                         // hide some sprites
 
                         int numSpritesLeft = 
-                            ( d * (numVanishingSprites + 1) ) / numUses;
+                            ( d * (numVanishingSprites) ) / numUses;
                         
+                        int numInLastDummy = numVanishingSprites / numUses;
+                        
+                        if( numInLastDummy == 0 ) {
+                            // add 1 to everything to pad up, so last
+                            // dummy has 1 sprite in it
+                            numSpritesLeft += 1;
+                            }
+                        
+
                         if( numSpritesLeft > numVanishingSprites ) {
                             numSpritesLeft = numVanishingSprites;
                             }

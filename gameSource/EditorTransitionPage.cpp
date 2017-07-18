@@ -72,6 +72,14 @@ EditorTransitionPage::EditorTransitionPage()
                                false,
                                "AutoDecay Seconds", "0123456789", NULL ),
           mLastUseCheckbox( -400, 0, 2 ),
+          mActorMinUseFractionField( smallFont, 
+                                     -290,  115, 4,
+                                     false,
+                                     "Min Use Fraction", "0123456789.", NULL ),
+          mTargetMinUseFractionField( smallFont, 
+                                      90,  115, 4,
+                                      false,
+                                      "Min Use Fraction", "0123456789.", NULL ),
           mSaveTransitionButton( mainFont, -320, 0, "Save" ),
           mObjectPicker( &objectPickable, +410, 90 ),
           mObjectEditorButton( mainFont, 410, 260, "Objects" ),
@@ -94,6 +102,14 @@ EditorTransitionPage::EditorTransitionPage()
     addComponent( &mLastUseCheckbox );
     mLastUseCheckbox.addActionListener( this );
     
+    mActorMinUseFractionField.setFloat( 0, -1, true );
+    mTargetMinUseFractionField.setFloat( 0, -1, true );
+    
+    mTargetMinUseFractionField.setLabelSide( true );
+
+    addComponent( &mActorMinUseFractionField );
+    addComponent( &mTargetMinUseFractionField );
+
     addComponent( &mSaveTransitionButton );
     addComponent( &mObjectPicker );
     addComponent( &mObjectEditorButton );
@@ -145,6 +161,8 @@ EditorTransitionPage::EditorTransitionPage()
     mCurrentTransition.newTarget = 0;
     mCurrentTransition.autoDecaySeconds = 0;
     mCurrentTransition.lastUse = false;
+    mCurrentTransition.actorMinUseFraction = 0;
+    mCurrentTransition.targetMinUseFraction = 0;
     
     mCurrentlyReplacing = 0;
     
@@ -286,6 +304,13 @@ void EditorTransitionPage::checkIfSaveVisible() {
     mDelConfirmButton.setVisible( false );
 
     mLastUseCheckbox.setToggled( mCurrentTransition.lastUse );
+
+    mActorMinUseFractionField.setFloat( 
+        mCurrentTransition.actorMinUseFraction, -1, true );
+    
+    mTargetMinUseFractionField.setFloat( 
+        mCurrentTransition.targetMinUseFraction, -1, true );
+    
 
     if( saveVis && 
         getObjectByIndex( &mCurrentTransition, 0 ) <= 0 &&
@@ -515,7 +540,9 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                   mCurrentTransition.newActor,
                   mCurrentTransition.newTarget,
                   mCurrentTransition.lastUse,
-                  decayTime );
+                  decayTime,
+                  mActorMinUseFractionField.getFloat(),
+                  mTargetMinUseFractionField.getFloat() );
             
         redoTransSearches( mLastSearchID, true );
         }

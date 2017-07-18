@@ -60,6 +60,8 @@ class EditorTransitionPage : public GamePage, public ActionListener {
         TextField mAutoDecayTimeField;
 
         CheckboxButton mLastUseCheckbox;
+        
+        TextField mActorMinUseFractionField, mTargetMinUseFractionField;
 
         TextButton mSaveTransitionButton;
         Picker mObjectPicker;
