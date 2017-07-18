@@ -2937,7 +2937,7 @@ void EditorObjectPage::drawSpriteLayers( doublePair inDrawOffset,
                 }
             
             if( mSimUseSlider.isVisible() &&
-                mSimUseSlider.getValue() < i &&
+                mSimUseSlider.getValue() <= i &&
                 mCurrentObject.spriteUseVanish[i]  ) {
                 // skip this sprite, simulating vanish order
                 }
