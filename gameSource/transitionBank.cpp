@@ -99,9 +99,12 @@ float initTransBankStep() {
                 int newActor = 0;
                 int newTarget = 0;
                 int autoDecaySeconds = 0;
-                            
-                sscanf( contents, "%d %d %d", 
-                        &newActor, &newTarget, &autoDecaySeconds );
+                float actorMinUseFraction = 0.0f;
+                float targetMinUseFraction = 0.0f;
+                
+                sscanf( contents, "%d %d %d %f %f", 
+                        &newActor, &newTarget, &autoDecaySeconds,
+                        &actorMinUseFraction, &targetMinUseFraction );
                             
                 TransRecord *r = new TransRecord;
                             
@@ -111,6 +114,10 @@ float initTransBankStep() {
                 r->newTarget = newTarget;
                 r->autoDecaySeconds = autoDecaySeconds;
                 r->lastUse = lastUse;
+
+                r->actorMinUseFraction = actorMinUseFraction;
+                r->targetMinUseFraction = targetMinUseFraction;
+                
                 
                 records.push_back( r );
                             
@@ -262,7 +269,11 @@ void initTransBankFinish() {
                     
                     // don't write to disk
                     addTrans( actor, target, newActor, newTarget,
-                              false, autoDecaySeconds, true );
+                              false, 
+                              autoDecaySeconds, 
+                              tr->actorMinUseFraction,
+                              tr->targetMinUseFraction, 
+                              true );
                     }
                 }
             }
@@ -360,6 +371,8 @@ void initTransBankFinish() {
                       tr.newActor, tr.newTarget,
                       tr.lastUse,
                       tr.autoDecaySeconds,
+                      tr.actorMinUseFraction,
+                      tr.targetMinUseFraction,
                       true );
             }
         
@@ -425,6 +438,8 @@ void initTransBankFinish() {
                                       newTrans.newTarget,
                                       false,
                                       newTrans.autoDecaySeconds,
+                                      0.0f,
+                                      0.0f,
                                       true );
                             
                             numGenerated++;
@@ -441,6 +456,8 @@ void initTransBankFinish() {
                                       newTrans.newTarget,
                                       false,
                                       newTrans.autoDecaySeconds,
+                                      0.0f,
+                                      0.0f,
                                       true );
                             
                             numGenerated++;
@@ -451,59 +468,185 @@ void initTransBankFinish() {
                     else if( tr->actor == oID &&
                              tr->newActor == oID ) {
                             
-                        for( int u=0; u<o->numUses-2; u++ ) {    
-                            newTrans.actor = o->useDummyIDs[ u + 1 ];
-                            newTrans.newActor = o->useDummyIDs[ u ];
+                        for( int u=0; u<o->numUses-2; u++ ) {
+                            float useFraction = 
+                                (float)( u+1 ) / (float)( o->numUses );
                             
+                            if( useFraction >= tr->actorMinUseFraction ) {
+                                
+                                newTrans.actor = o->useDummyIDs[ u + 1 ];
+                                newTrans.newActor = o->useDummyIDs[ u ];
+                                
+                                addTrans( newTrans.actor,
+                                          newTrans.target,
+                                          newTrans.newActor,
+                                          newTrans.newTarget,
+                                          false,
+                                          newTrans.autoDecaySeconds,
+                                          0.0f,
+                                          0.0f,
+                                          true );
+                                numGenerated++;
+                                }
+                            }
+                        float useFraction = 
+                            (float)( o->numUses - 2 ) / (float)( o->numUses );
+                        
+                        if( useFraction >= tr->actorMinUseFraction ) {
+                            newTrans.actor = oID;
+                            newTrans.newActor = 
+                                o->useDummyIDs[ o->numUses - 2 ];
+                        
                             addTrans( newTrans.actor,
                                       newTrans.target,
                                       newTrans.newActor,
                                       newTrans.newTarget,
                                       false,
                                       newTrans.autoDecaySeconds,
+                                      0.0f,
+                                      0.0f,
                                       true );
                             numGenerated++;
                             }
-                        newTrans.actor = oID;
-                        newTrans.newActor = o->useDummyIDs[ o->numUses - 2 ];
-                        
-                        addTrans( newTrans.actor,
-                                  newTrans.target,
-                                  newTrans.newActor,
-                                  newTrans.newTarget,
-                                  false,
-                                  newTrans.autoDecaySeconds,
-                                  true );
-                        numGenerated++;
                         }
                     else if( tr->target == oID &&
                              tr->newTarget == oID ) {
                         
                         for( int u=0; u<o->numUses-2; u++ ) {    
-                            newTrans.target = o->useDummyIDs[ u + 1 ];
-                            newTrans.newTarget = o->useDummyIDs[ u ];
+                            float useFraction = 
+                                (float)( u+1 ) / (float)( o->numUses );
+
+                            if( useFraction >= tr->targetMinUseFraction ) {
+                                
+                                newTrans.target = o->useDummyIDs[ u + 1 ];
+                                newTrans.newTarget = o->useDummyIDs[ u ];
                             
+                                addTrans( newTrans.actor,
+                                          newTrans.target,
+                                          newTrans.newActor,
+                                          newTrans.newTarget,
+                                          false,
+                                          newTrans.autoDecaySeconds,
+                                          0.0f,
+                                          0.0f,
+                                          true );
+                                numGenerated++;
+                                }
+                            }
+
+                        
+                        float useFraction = 
+                            (float)( o->numUses - 2 ) / (float)( o->numUses );
+                        
+                        if( useFraction >= tr->targetMinUseFraction ) {
+                            
+                            newTrans.target = oID;
+                            newTrans.newTarget = 
+                                o->useDummyIDs[ o->numUses - 2 ];
+                        
                             addTrans( newTrans.actor,
                                       newTrans.target,
                                       newTrans.newActor,
                                       newTrans.newTarget,
                                       false,
                                       newTrans.autoDecaySeconds,
+                                      0.0f,
+                                      0.0f,
                                       true );
                             numGenerated++;
                             }
-                        newTrans.target = oID;
-                        newTrans.newTarget = o->useDummyIDs[ o->numUses - 2 ];
+                        }
+                    else if( tr->actor == oID && 
+                             tr->actorMinUseFraction < 1.0f ) {
                         
-                        addTrans( newTrans.actor,
-                                  newTrans.target,
-                                  newTrans.newActor,
-                                  newTrans.newTarget,
-                                  false,
-                                  newTrans.autoDecaySeconds,
-                                  true );
-                        numGenerated++;
-                        }   
+                        ObjectRecord *newActorObj = NULL;
+                        
+                        if( tr->newActor > 0 ) {
+                            newActorObj = getObject( tr->newActor );
+                            }
+
+                        // this transition can apply to use dummies also
+                        for( int u=0; u<o->numUses-1; u++ ) {
+                            float useFraction = 
+                                (float)( u ) / (float)( o->numUses );
+                            if( useFraction >= tr->actorMinUseFraction ) {
+                                
+                                newTrans.actor = o->useDummyIDs[ u ];
+                                
+                                if( newActorObj != NULL &&
+                                    newActorObj->numUses > 1 ) {
+                                    
+                                    // propage used status to new actor
+                                    
+                                    int usesLeft = 
+                                        (int)( useFraction * 
+                                               newActorObj->numUses );
+                                    
+                                    newTrans.newActor =
+                                        newActorObj->useDummyIDs[ usesLeft ];
+                                    }
+                                
+
+                                addTrans( newTrans.actor,
+                                          newTrans.target,
+                                          newTrans.newActor,
+                                          newTrans.newTarget,
+                                          false,
+                                          newTrans.autoDecaySeconds,
+                                          0.0f,
+                                          0.0f,
+                                          true );
+                                numGenerated++;
+                                }
+                            }
+                        }
+                    else if( tr->target == oID && 
+                             tr->targetMinUseFraction < 1.0f ) {
+                        
+                        ObjectRecord *newTargetObj = NULL;
+                        
+                        if( tr->newTarget > 0 ) {
+                            newTargetObj = getObject( tr->newTarget );
+                            }
+
+
+                        // this transition can apply to use dummies also
+                        for( int u=0; u<o->numUses-1; u++ ) {
+                            float useFraction = 
+                                (float)( u ) / (float)( o->numUses );
+                            if( useFraction >= tr->targetMinUseFraction ) {
+                                
+                                newTrans.target = o->useDummyIDs[ u ];
+                                
+                                if( newTargetObj != NULL &&
+                                    newTargetObj->numUses > 1 ) {
+                                    
+                                    // propage used status to new target
+                                    
+                                    int usesLeft = 
+                                        (int)( useFraction * 
+                                               newTargetObj->numUses );
+                                    
+                                    newTrans.newTarget =
+                                        newTargetObj->useDummyIDs[ usesLeft ];
+                                    }
+                                
+
+                                addTrans( newTrans.actor,
+                                          newTrans.target,
+                                          newTrans.newActor,
+                                          newTrans.newTarget,
+                                          false,
+                                          newTrans.autoDecaySeconds,
+                                          0.0f,
+                                          0.0f,
+                                          true );
+                                numGenerated++;
+                                }
+                            }
+                        
+                        }
+                    
                     }
                 
                 for( int t=0; t<transToDelete.size(); t++ ) {
@@ -731,6 +874,8 @@ void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget,
                char inLastUse,
                int inAutoDecaySeconds,
+               float inActorMinUseFraction,
+               float inTargetMinUseFraction,
                char inNoWriteToFile ) {
     
     // exapand id-indexed maps if a bigger ID is being added    
@@ -790,7 +935,9 @@ void addTrans( int inActor, int inTarget,
         t->newTarget = inNewTarget;
         t->autoDecaySeconds = inAutoDecaySeconds;
         t->lastUse = inLastUse;
-        
+        t->actorMinUseFraction = inActorMinUseFraction;
+        t->targetMinUseFraction = inTargetMinUseFraction;
+
         records.push_back( t );
 
         if( inActor > 0 ) {
@@ -821,7 +968,9 @@ void addTrans( int inActor, int inTarget,
 
         if( t->newTarget == inNewTarget &&
             t->newActor == inNewActor &&
-            t->autoDecaySeconds == inAutoDecaySeconds ) {
+            t->autoDecaySeconds == inAutoDecaySeconds &&
+            t->actorMinUseFraction == inActorMinUseFraction &&
+            t->targetMinUseFraction == inTargetMinUseFraction ) {
             
             // no change to produces map either... 
 
@@ -842,7 +991,9 @@ void addTrans( int inActor, int inTarget,
             t->newActor = inNewActor;
             t->newTarget = inNewTarget;
             t->autoDecaySeconds = inAutoDecaySeconds;
-
+            t->actorMinUseFraction = inActorMinUseFraction;
+            t->targetMinUseFraction = inTargetMinUseFraction;
+            
             if( inNewActor != 0 ) {
                 producesMap[inNewActor].push_back( t );
                 }
@@ -872,9 +1023,11 @@ void addTrans( int inActor, int inTarget,
 
             File *transFile = transDir.getChildFile( fileName );
             
-            char *fileContents = autoSprintf( "%d %d %d", 
+            char *fileContents = autoSprintf( "%d %d %d %f %f", 
                                               inNewActor, inNewTarget,
-                                              inAutoDecaySeconds );
+                                              inAutoDecaySeconds,
+                                              inActorMinUseFraction,
+                                              inTargetMinUseFraction );
 
         
             File *cacheFile = transDir.getChildFile( "cache.fcz" );
@@ -1074,9 +1227,11 @@ const char *getObjName( int inObjectID ) {
 
 
 void printTrans( TransRecord *inTrans ) {
-    printf( "[%s] + [%s] => [%s] + [%s]",
-            getObjName( inTrans->actor ), 
+    printf( "[%s](%.2f) + [%s](%.2f) => [%s] + [%s]",
+            getObjName( inTrans->actor ),
+            inTrans->actorMinUseFraction,
             getObjName( inTrans->target ),
+            inTrans->targetMinUseFraction,
             getObjName( inTrans->newActor ), 
             getObjName( inTrans->newTarget ) );
     

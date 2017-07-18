@@ -22,6 +22,16 @@ typedef struct TransRecord {
 
         // specially flagged last-use transitions
         char lastUse;
+
+        // defaults to 0, which means that any transition on thje main
+        // object with numUses can apply to generated useDummy objects
+        // Higher values specify a cut-off point when the object becomes
+        // "too used" to participate in the transition.
+        // A value of 1.0f means that only the main object can participate
+        // not the use dummy objects.
+        float actorMinUseFraction;
+        float targetMinUseFraction;
+        
     } TransRecord;
 
 
@@ -109,7 +119,9 @@ char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit );
 void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget,
                char inLastUse,
-               int inAutoDecaySeconds = 0,
+               int inAutoDecaySeconds,
+               float inActorMinUseFraction,
+               float inTargetMinUseFraction,
                char inNoWriteToFile = false );
 
 
