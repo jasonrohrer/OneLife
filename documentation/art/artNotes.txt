@@ -1,0 +1,26 @@
+
+
+Paper masking process:
+
+1.  Scan paper piece with desired edges (torn, etc) on black background
+
+2.  Levels with black @48 and white @232
+
+3.  Duplicate twice (call White and Black)
+
+4.  Use Curves to isolate almost white and almost black pixels on layers from 3.
+
+5.  New transparent layer, called Cleanup.
+
+6.  Paint over almost-white/black pixels with solid white/black paint in
+    layer from 5.
+
+7.  Merge Cleanup layer with leveled layer from 2.  This makes a mask.
+
+8.  Scan a solid piece of paper for texture (graph paper, not paper, etc).
+
+9.  Mask paper texture with mask from 7 to get a cut-out version of it.
+
+10.  Make solid black layer and mask it with same mask.
+
+11.  Blur black with radius 13, set layer opacity to 86% for shadow.
