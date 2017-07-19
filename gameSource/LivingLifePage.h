@@ -434,6 +434,7 @@ class LivingLifePage : public GamePage {
         int mCurrentHintObjectID;
         int mCurrentHintIndex;
         
+        int mNextHintObjectID;
         
 
         int mCurrentArrowI;

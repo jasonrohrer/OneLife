@@ -1081,6 +1081,7 @@ LivingLifePage::LivingLifePage()
     mCurrentHintObjectID = 0;
     mCurrentHintIndex = 0;
     
+    mNextHintObjectID = 0;
     
 
     mMap = new int[ mMapD * mMapD ];
@@ -4541,10 +4542,10 @@ void LivingLifePage::step() {
     
     LiveObject *ourObject = getOurLiveObject();
     
-    if( ourObject != NULL && ourObject->holdingID != 0 &&
-        getNumHints( ourObject->holdingID ) > 0 ) {
+    if( ourObject != NULL && mNextHintObjectID != 0 &&
+        getNumHints( mNextHintObjectID ) > 0 ) {
         
-        if( mCurrentHintObjectID != ourObject->holdingID ) {
+        if( mCurrentHintObjectID != mNextHintObjectID ) {
             
             int newLiveSheetIndex = 0;
 
@@ -4563,7 +4564,7 @@ void LivingLifePage::step() {
             
             mHintMessageIndex[ newLiveSheetIndex ] = 0;
             
-            mCurrentHintObjectID = ourObject->holdingID;
+            mCurrentHintObjectID = mNextHintObjectID;
             
             mNumTotalHints = getNumHints( mCurrentHintObjectID );
 
@@ -5758,6 +5759,16 @@ void LivingLifePage::step() {
                         existing->lastHoldingID = oldHeld;
                         existing->holdingID = o.holdingID;
                         
+                        if( o.id == ourID &&
+                            existing->holdingID != 0 &&
+                            existing->holdingID != oldHeld ) {
+                            // holding something new
+                            // hint about it
+                            
+                            mNextHintObjectID = existing->holdingID;
+                            }
+                        
+
 
                         ObjectRecord *newClothing = 
                             getClothingAdded( &( existing->clothing ), 
@@ -8869,6 +8880,22 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
 
 
+    if( destID > 0 && p.hitAnObject ) {
+        
+        if( ourLiveObject->holdingID > 0 ) {
+            mNextHintObjectID = destID;
+            }
+        else {
+            // bare hand
+            // only give hint about hit if no bare-hand action applies
+
+            if( getTrans( 0, destID ) == NULL ) {
+                mNextHintObjectID = destID;
+                }
+            }
+        }
+
+    
     if( destID > 0 && ! p.hitAnObject ) {
         
         // clicked on empty space near an object
