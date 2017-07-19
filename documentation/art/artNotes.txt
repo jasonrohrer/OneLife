@@ -24,3 +24,19 @@ Paper masking process:
 10.  Make solid black layer and mask it with same mask.
 
 11.  Blur black with radius 13, set layer opacity to 86% for shadow.
+
+
+
+Font process:
+
+1.  Scan black font on white paper.
+
+2.  Levels with white point @ 239
+
+3.  Duplicate and apply Curves with _| shape to isolate almost-white points.
+
+4.  New trans layer, and paint white paint over almost-white points.
+
+5.  Merge 4 onto result of 2.
+
+6.  Invert.
