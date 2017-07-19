@@ -2,6 +2,7 @@
 
 #include "objectBank.h"
 #include "transitionBank.h"
+#include "categoryBank.h"
 #include "soundBank.h"
 #include "whiteSprites.h"
 #include "message.h"
@@ -210,6 +211,19 @@ static void removeDoubleBacksFromPath( GridPos **inPath, int *inLength ) {
 static double computeCurrentAge( LiveObject *inObj ) {
     return inObj->age + 
         inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
+    }
+
+
+
+
+static void stripDescriptionComment( char *inString ) {
+    // pound sign is used for trailing developer comments
+    // that aren't show to end user, cut them off if they exist
+    char *firstPound = strstr( inString, "#" );
+            
+    if( firstPound != NULL ) {
+        firstPound[0] = '\0';
+        }
     }
 
 
@@ -1004,7 +1018,7 @@ LivingLifePage::LivingLifePage()
     mSayField.unfocus();
     
     
-    mNotePaperHideOffset.x = 0;
+    mNotePaperHideOffset.x = -242;
     mNotePaperHideOffset.y = -420;
 
     for( int i=0; i<3; i++ ) {    
@@ -1054,7 +1068,15 @@ LivingLifePage::LivingLifePage()
         
         mHintTargetOffset[i] = mHintHideOffset[i];
         mHintPosOffset[i] = mHintHideOffset[i];
+        
+        mHintMessage[i] = NULL;
+        mHintMessageIndex[i] = 0;
         }
+    mNumTotalHints = 0;
+    mLiveHintSheetIndex = -1;
+
+    mCurrentHintObjectID = 0;
+    mCurrentHintIndex = 0;
     
     
 
@@ -3731,6 +3753,46 @@ void LivingLifePage::draw( doublePair inViewCenter,
         if( true || ! equal( mHintPosOffset[i], mHintHideOffset[i] ) ) {
             setDrawColor( 1, 1, 1, 1 );
             drawSprite( mHintSheetSprites[i], hintPos );
+            
+
+            if( mHintMessage[i] != NULL ) {
+                setDrawColor( 0, 0, 0, 1.0f );
+                double lineSpacing = handwritingFont->getFontHeight() / 2 + 5;
+
+                int numLines;
+                
+                char **lines = split( mHintMessage[i], "#", &numLines );
+                
+                doublePair lineStart = hintPos;
+                lineStart.x -= 280;
+                lineStart.y += 30;
+                for( int l=0; l<numLines; l++ ) {
+                    
+                    if( l == 1 ) {
+                        doublePair drawPos = lineStart;
+                        drawPos.x -= 5;
+                        
+                        handwritingFont->drawString( "+",
+                                                     drawPos, alignRight );
+                        }
+                    
+                    if( l == 2 ) {
+                        doublePair drawPos = lineStart;
+                        drawPos.x -= 5;
+                        
+                        handwritingFont->drawString( "=",
+                                                     drawPos, alignRight );
+                        }
+                    
+                    handwritingFont->drawString( lines[l], 
+                                                 lineStart, alignLeft );
+                    
+                    delete [] lines[l];
+                    
+                    lineStart.y -= lineSpacing;
+                    }
+                delete [] lines;
+                }
             }
         }
 
@@ -4019,13 +4081,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             char *stringUpper = stringToUpperCase( des );
 
-            // pound sign is used for trailing developer comments
-            // that aren't show to end user, cut them off if they exist
-            char *firstPound = strstr( stringUpper, "#" );
+            stripDescriptionComment( stringUpper );
             
-            if( firstPound != NULL ) {
-                firstPound[0] = '\0';
-                }
 
             if( mCurrentDes == NULL ) {
                 mCurrentDes = stringDuplicate( stringUpper );
@@ -4199,6 +4256,166 @@ void LivingLifePage::handleOurDeath() {
 
 
 
+static char isCategory( int inID ) {
+    if( inID <= 0 ) {
+        return false;
+        }
+    
+    CategoryRecord *c = getCategory( inID );
+    
+    if( c == NULL ) {
+        return false;
+        }
+    if( c->objectIDSet.size() > 0 ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
+static char getTransHintable( TransRecord *inTrans ) {
+
+    if( inTrans->actor >= 0 && inTrans->target > 0 &&
+        ( inTrans->newActor > 0 || inTrans->newTarget > 0 ) ) {
+
+
+        if( isCategory( inTrans->actor ) ) {
+            return false;
+            }
+        if( isCategory( inTrans->target ) ) {
+            return false;
+            }
+        
+        return true;
+        }
+    else {
+        return false;
+        }
+    }
+
+
+
+static int getNumHints( int inObjectID ) {
+    
+    SimpleVector<TransRecord*> *trans = getAllUses( inObjectID );
+    
+    int numTrans = trans->size();
+
+    int num = 0;
+    
+    for( int i=0; i<numTrans; i++ ) {
+        if( getTransHintable( trans->getElementDirect( i ) ) ) {
+            num++;
+            }
+        }
+    
+
+    return num;
+    }
+
+
+static int findMainObjectID( int inObjectID ) {
+    if( inObjectID <= 0 ) {
+        return inObjectID;
+        }
+    
+    ObjectRecord *o = getObject( inObjectID );
+    
+    if( o == NULL ) {
+        return inObjectID;
+        }
+    
+    if( o->isUseDummy ) {
+        return o->useDummyParent;
+        }
+    else {
+        return inObjectID;
+        }
+    }
+
+
+
+static char *getHintMessage( int inObjectID, int inIndex ) {
+    
+    SimpleVector<TransRecord*> *trans = getAllUses( inObjectID );
+    int numTrans = trans->size();
+
+    TransRecord *found = NULL;
+
+    int index = 0;
+    
+    for( int i=0; i<numTrans; i++ ) {
+        if( getTransHintable( trans->getElementDirect( i ) ) ) {
+            
+            if( index == inIndex ) {
+                found = trans->getElementDirect( i );
+                break;
+                }
+            index ++;
+            }
+        }
+    
+    if( found != NULL ) {
+        int actor = findMainObjectID( found->actor );
+        int target = findMainObjectID( found->target );
+        int newActor = findMainObjectID( found->newActor );
+        int newTarget = findMainObjectID( found->newTarget );
+
+        int result;
+        
+        if( target != newTarget && 
+            newTarget > 0 ) {
+            
+            result = newTarget;
+            }
+        else if( actor != newActor && 
+            newActor > 0 ) {
+            
+            result = newActor;
+            }
+        
+        char *actorString;
+        
+        if( actor > 0 ) {
+            actorString = stringToUpperCase( getObject( actor )->description );
+            stripDescriptionComment( actorString );
+            }
+        else if( actor == 0 ) {
+            actorString = stringDuplicate( translate( "bareHand" ) );
+            }
+        else {
+            actorString = stringDuplicate( "" );
+            }
+        
+        char *targetString = 
+            stringToUpperCase( getObject( target )->description );
+        stripDescriptionComment( targetString );
+        
+
+        char *resultString = 
+            stringToUpperCase( getObject( result )->description );
+        
+        stripDescriptionComment( resultString );
+        
+
+        char *fullString =
+            autoSprintf( "%s#%s#%s", actorString, targetString, resultString );
+        
+        delete [] actorString;
+        delete [] targetString;
+        delete [] resultString;
+        
+        return fullString;
+        }
+    else {
+        return stringDuplicate( translate( "noHint" ) );
+        }
+
+    }
+
+
+
         
 void LivingLifePage::step() {
     
@@ -4314,7 +4531,47 @@ void LivingLifePage::step() {
             }
         
         }
+    
+    
+    
+    LiveObject *ourObject = getOurLiveObject();
+    
+    if( ourObject != NULL && ourObject->holdingID != 0 &&
+        getNumHints( ourObject->holdingID ) > 0 ) {
+        
+        if( mCurrentHintObjectID != ourObject->holdingID ) {
+            
+            int newLiveSheetIndex = 0;
 
+            if( mLiveHintSheetIndex != -1 ) {
+                mHintTargetOffset[mLiveHintSheetIndex] = mHintHideOffset[0];
+                
+                newLiveSheetIndex = 
+                    (mLiveHintSheetIndex + 1 ) % NUM_HINT_SHEETS;
+                
+                }
+            
+            mLiveHintSheetIndex = newLiveSheetIndex;
+            
+            mHintTargetOffset[newLiveSheetIndex] = mHintHideOffset[0];
+            mHintTargetOffset[newLiveSheetIndex].y += 100;
+            
+            mHintMessageIndex[ newLiveSheetIndex ] = 0;
+            
+            mCurrentHintObjectID = ourObject->holdingID;
+            
+            mNumTotalHints = getNumHints( mCurrentHintObjectID );
+
+            if( mHintMessage[ newLiveSheetIndex ] != NULL ) {
+                delete [] mHintMessage[ newLiveSheetIndex ];
+                }
+            
+            mHintMessage[ newLiveSheetIndex ] = 
+                getHintMessage( mCurrentHintObjectID, 0 );
+
+            }
+        }
+    
 
 
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {

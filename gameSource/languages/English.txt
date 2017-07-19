@@ -74,8 +74,12 @@ waitingBirth "WAITING TO BE BORN"
 loadingMap "LOADING MAP"
 
 
-lastAte = "ATE"
-lastAtePermanent = "ATE FROM"
+lastAte "ATE"
+lastAtePermanent "ATE FROM"
+
+
+bareHand "BARE HAND"
+noHint "NO INFORMATION" 
 
 
 youDied "YOU DIED"
