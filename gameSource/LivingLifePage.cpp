@@ -1063,12 +1063,15 @@ LivingLifePage::LivingLifePage()
         mHintSheetSprites[i] = loadSprite( name, false );
         delete [] name;
         
-        mHintHideOffset[i].x = 300;
+        mHintHideOffset[i].x = 900;
         mHintHideOffset[i].y = -370;
         
         mHintTargetOffset[i] = mHintHideOffset[i];
         mHintPosOffset[i] = mHintHideOffset[i];
         
+        mHintExtraOffset[i].x = 0;
+        mHintExtraOffset[i].y = 0;
+
         mHintMessage[i] = NULL;
         mHintMessageIndex[i] = 0;
         }
@@ -3750,6 +3753,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         doublePair hintPos  = add( mHintPosOffset[i], lastScreenViewCenter );
 
+        hintPos = add( hintPos, mHintExtraOffset[i] );
+
         if( true || ! equal( mHintPosOffset[i], mHintHideOffset[i] ) ) {
             setDrawColor( 1, 1, 1, 1 );
             drawSprite( mHintSheetSprites[i], hintPos );
@@ -4568,7 +4573,24 @@ void LivingLifePage::step() {
             
             mHintMessage[ newLiveSheetIndex ] = 
                 getHintMessage( mCurrentHintObjectID, 0 );
+            
+            double longestLine = 0;
+            
+            int numLines;
+            char **lines = split( mHintMessage[ newLiveSheetIndex], 
+                                  "#", &numLines );
+                
+            for( int l=0; l<numLines; l++ ) {
+                double len = handwritingFont->measureString( lines[l] );
+                
+                if( len > longestLine ) {
+                    longestLine = len;
+                    }
+                delete [] lines[l];
+                }
+            delete [] lines;
 
+            mHintExtraOffset[ newLiveSheetIndex ].x = - longestLine;
             }
         }
     

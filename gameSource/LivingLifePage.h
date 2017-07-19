@@ -421,6 +421,8 @@ class LivingLifePage : public GamePage {
         doublePair mHintPosOffset[NUM_HINT_SHEETS];
         doublePair mHintTargetOffset[NUM_HINT_SHEETS];
         
+        doublePair mHintExtraOffset[NUM_HINT_SHEETS];
+
         // # separates lines
         char *mHintMessage[NUM_HINT_SHEETS];
         char *mHintMessageIndex[NUM_HINT_SHEETS];
