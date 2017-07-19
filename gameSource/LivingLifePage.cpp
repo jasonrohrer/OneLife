@@ -1043,6 +1043,20 @@ LivingLifePage::LivingLifePage()
     mHungerSlipVisible = -1;
 
     
+    
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        char *name = autoSprintf( "hintSheet%d.tga", i + 1 );    
+        mHintSheetSprites[i] = loadSprite( name, false );
+        delete [] name;
+        
+        mHintHideOffset[i].x = 300;
+        mHintHideOffset[i].y = -370;
+        
+        mHintTargetOffset[i] = mHintHideOffset[i];
+        mHintPosOffset[i] = mHintHideOffset[i];
+        }
+    
+    
 
     mMap = new int[ mMapD * mMapD ];
     mMapBiomes = new int[ mMapD * mMapD ];
@@ -1252,6 +1266,12 @@ LivingLifePage::~LivingLifePage() {
         freeSprite( mHungerBarSprites[i] );
         freeSprite( mHungerBarErasedSprites[i] );
         }
+
+
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        freeSprite( mHintSheetSprites[i] );
+        }
+    
 
     if( mDeathReason != NULL ) {
         delete [] mDeathReason;
@@ -3702,9 +3722,21 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         mLastKnownNoteLines.deallocateStringElements();
         }
+    
+
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        
+        doublePair hintPos  = add( mHintPosOffset[i], lastScreenViewCenter );
+
+        if( true || ! equal( mHintPosOffset[i], mHintHideOffset[i] ) ) {
+            setDrawColor( 1, 1, 1, 1 );
+            drawSprite( mHintSheetSprites[i], hintPos );
+            }
+        }
 
 
 
+    
     setDrawColor( 0, 0, 0, 1 );
     for( int i=0; i<mErasedNoteChars.size(); i++ ) {
         setDrawFade( mErasedNoteCharFades.getElementDirect( i ) *
@@ -4282,6 +4314,52 @@ void LivingLifePage::step() {
             }
         
         }
+
+
+
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        
+        if( ! equal( mHintPosOffset[i], mHintTargetOffset[i] ) ) {
+            doublePair delta = 
+                sub( mHintTargetOffset[i], mHintPosOffset[i] );
+            
+            double d = distance( mHintTargetOffset[i], mHintPosOffset[i] );
+            
+            
+            if( d <= 1 ) {
+                mHintPosOffset[i] = mHintTargetOffset[i];
+                
+                if( equal( mHintTargetOffset[i], mHintHideOffset[i] ) ) {
+                    }
+                }
+            else {
+                int speed = 4;
+                
+                if( d < 8 ) {
+                    speed = lrint( frameRateFactor * d / 2 );
+                    }
+                
+                if( speed > d ) {
+                    speed = floor( d );
+                    }
+                
+                if( speed < 1 ) {
+                    speed = 1;
+                    }
+                
+                doublePair dir = normalize( delta );
+                
+                mHintPosOffset[i] = 
+                    add( mHintPosOffset[i],
+                         mult( dir, speed ) );
+                }
+            
+            }
+        }
+    
+
+
+
     
     char anySlipsMovingDown = false;
     for( int i=0; i<3; i++ ) {

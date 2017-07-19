@@ -25,6 +25,7 @@
 #define NUM_TEMP_ARROWS 6
 #define NUM_HUNGER_DASHES 6
 
+#define NUM_HINT_SHEETS 2
 
 
 typedef struct LiveObject {
@@ -411,6 +412,20 @@ class LivingLifePage : public GamePage {
 
         // index of visble one, or -1
         int mHungerSlipVisible;
+        
+        
+        SpriteHandle mHintSheetSprites[NUM_HINT_SHEETS];
+        
+        // offset from current view center
+        doublePair mHintHideOffset[NUM_HINT_SHEETS];
+        doublePair mHintPosOffset[NUM_HINT_SHEETS];
+        doublePair mHintTargetOffset[NUM_HINT_SHEETS];
+        
+        // # separates lines
+        char *mHintMessage[NUM_HINT_SHEETS];
+        
+        int mNumOtherHints;
+
         
 
         int mCurrentArrowI;
