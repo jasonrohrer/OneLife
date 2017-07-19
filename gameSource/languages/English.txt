@@ -81,6 +81,9 @@ lastAtePermanent "ATE FROM"
 bareHand "BARE HAND"
 noHint "NO INFORMATION" 
 
+ofHint "OF"
+tabHint "[TAB]"
+
 
 youDied "YOU DIED"
 

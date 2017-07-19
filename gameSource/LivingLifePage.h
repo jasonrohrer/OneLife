@@ -426,8 +426,7 @@ class LivingLifePage : public GamePage {
         // # separates lines
         char *mHintMessage[NUM_HINT_SHEETS];
         char *mHintMessageIndex[NUM_HINT_SHEETS];
-        
-        int mNumTotalHints;
+        int mNumTotalHints[ NUM_HINT_SHEETS ];
 
         int mLiveHintSheetIndex;
 

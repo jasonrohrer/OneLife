@@ -1074,8 +1074,10 @@ LivingLifePage::LivingLifePage()
 
         mHintMessage[i] = NULL;
         mHintMessageIndex[i] = 0;
+        
+        mNumTotalHints[i] = 0;
         }
-    mNumTotalHints = 0;
+    
     mLiveHintSheetIndex = -1;
 
     mCurrentHintObjectID = 0;
@@ -3751,53 +3753,106 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
-        
-        doublePair hintPos  = add( mHintPosOffset[i], lastScreenViewCenter );
+        if( ! equal( mHintPosOffset[i], mHintHideOffset[i] ) 
+            &&
+            mHintMessage[i] != NULL ) {
+            
+            doublePair hintPos  = 
+                add( mHintPosOffset[i], lastScreenViewCenter );
+            
+            hintPos = add( hintPos, mHintExtraOffset[i] );
 
-        hintPos = add( hintPos, mHintExtraOffset[i] );
 
-        if( true || ! equal( mHintPosOffset[i], mHintHideOffset[i] ) ) {
+            char *pageNum = NULL;
+            double pageNumExtra = 0;
+            
+            if( mNumTotalHints[i] > 1 ) {
+                
+                pageNum = 
+                    autoSprintf( "%d %s %d",
+                                 mHintMessageIndex[i] + 1, 
+                                 translate( "ofHint" ),
+                                 mNumTotalHints[i] );
+            
+                double extraA = handwritingFont->measureString( pageNum );
+            
+                double extraB = 
+                    handwritingFont->measureString( translate( "tabHint" ) );
+                
+                if( extraB > extraA ) {
+                    extraA = extraB;
+                    }
+                
+                pageNumExtra = extraA;
+                
+                hintPos.x -= extraA;
+                hintPos.x -= 20;
+                }
+            
+
             setDrawColor( 1, 1, 1, 1 );
             drawSprite( mHintSheetSprites[i], hintPos );
             
 
-            if( mHintMessage[i] != NULL ) {
-                setDrawColor( 0, 0, 0, 1.0f );
-                double lineSpacing = handwritingFont->getFontHeight() / 2 + 5;
-
-                int numLines;
+            setDrawColor( 0, 0, 0, 1.0f );
+            double lineSpacing = handwritingFont->getFontHeight() / 2 + 5;
+            
+            int numLines;
+            
+            char **lines = split( mHintMessage[i], "#", &numLines );
+            
+            doublePair lineStart = hintPos;
+            lineStart.x -= 280;
+            lineStart.y += 30;
+            for( int l=0; l<numLines; l++ ) {
                 
-                char **lines = split( mHintMessage[i], "#", &numLines );
-                
-                doublePair lineStart = hintPos;
-                lineStart.x -= 280;
-                lineStart.y += 30;
-                for( int l=0; l<numLines; l++ ) {
+                if( l == 1 ) {
+                    doublePair drawPos = lineStart;
+                    drawPos.x -= 5;
                     
-                    if( l == 1 ) {
-                        doublePair drawPos = lineStart;
-                        drawPos.x -= 5;
-                        
-                        handwritingFont->drawString( "+",
-                                                     drawPos, alignRight );
-                        }
-                    
-                    if( l == 2 ) {
-                        doublePair drawPos = lineStart;
-                        drawPos.x -= 5;
-                        
-                        handwritingFont->drawString( "=",
-                                                     drawPos, alignRight );
-                        }
-                    
-                    handwritingFont->drawString( lines[l], 
-                                                 lineStart, alignLeft );
-                    
-                    delete [] lines[l];
-                    
-                    lineStart.y -= lineSpacing;
+                    handwritingFont->drawString( "+",
+                                                 drawPos, alignRight );
                     }
-                delete [] lines;
+                
+                if( l == 2 ) {
+                    doublePair drawPos = lineStart;
+                    drawPos.x -= 5;
+                    
+                    handwritingFont->drawString( "=",
+                                                 drawPos, alignRight );
+                    }
+                
+                handwritingFont->drawString( lines[l], 
+                                             lineStart, alignLeft );
+                    
+                delete [] lines[l];
+                
+                lineStart.y -= lineSpacing;
+                }
+            delete [] lines;
+            
+
+            if( pageNum != NULL ) {
+                
+                // now draw tab message
+                
+                lineStart = hintPos;
+                lineStart.x -= 280;
+                
+                lineStart.x -= mHintExtraOffset[i].x;
+                lineStart.x += 20;
+                
+                lineStart.y += 32;
+                
+                handwritingFont->drawString( pageNum, lineStart, alignLeft );
+                
+                delete [] pageNum;
+                
+                lineStart.y -= 2 * lineSpacing;
+                
+                lineStart.x += pageNumExtra;
+                handwritingFont->drawString( translate( "tabHint" ), 
+                                             lineStart, alignRight );
                 }
             }
         }
@@ -4559,26 +4614,32 @@ void LivingLifePage::step() {
             
             mLiveHintSheetIndex = newLiveSheetIndex;
             
-            mHintTargetOffset[newLiveSheetIndex] = mHintHideOffset[0];
-            mHintTargetOffset[newLiveSheetIndex].y += 100;
+            int i = mLiveHintSheetIndex;
+
+            mHintTargetOffset[i] = mHintHideOffset[0];
+            mHintTargetOffset[i].y += 100;
             
-            mHintMessageIndex[ newLiveSheetIndex ] = 0;
+            mHintMessageIndex[ i ] = 0;
             
             mCurrentHintObjectID = mNextHintObjectID;
             
-            mNumTotalHints = getNumHints( mCurrentHintObjectID );
+            mNumTotalHints[ i ] = 
+                getNumHints( mCurrentHintObjectID );
 
-            if( mHintMessage[ newLiveSheetIndex ] != NULL ) {
-                delete [] mHintMessage[ newLiveSheetIndex ];
+            if( mHintMessage[ i ] != NULL ) {
+                delete [] mHintMessage[ i ];
                 }
             
-            mHintMessage[ newLiveSheetIndex ] = 
+            mHintMessage[ i ] = 
                 getHintMessage( mCurrentHintObjectID, 0 );
             
+            mHintMessageIndex[i] = 0;
+            
+
             double longestLine = 0;
             
             int numLines;
-            char **lines = split( mHintMessage[ newLiveSheetIndex], 
+            char **lines = split( mHintMessage[i], 
                                   "#", &numLines );
                 
             for( int l=0; l<numLines; l++ ) {
@@ -4591,7 +4652,7 @@ void LivingLifePage::step() {
                 }
             delete [] lines;
 
-            mHintExtraOffset[ newLiveSheetIndex ].x = - longestLine;
+            mHintExtraOffset[ i ].x = - longestLine;
             }
         }
     
