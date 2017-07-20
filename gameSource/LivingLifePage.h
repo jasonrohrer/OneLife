@@ -10,6 +10,8 @@
 #include "minorGems/game/game.h"
 
 
+#include "transitionBank.h"
+
 #include "GamePage.h"
 
 
@@ -435,6 +437,14 @@ class LivingLifePage : public GamePage {
         
         int mNextHintObjectID;
         int mNextHintIndex;
+
+        SimpleVector<TransRecord *> mLastHintSortedList;
+        int mLastHintSortedSourceID;
+        
+        int getNumHints( int inObjectID );
+        char *getHintMessage( int inObjectID, int inIndex );
+
+
         
 
         int mCurrentArrowI;

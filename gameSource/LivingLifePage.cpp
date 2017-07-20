@@ -17,6 +17,7 @@
 #include "../commonSource/fractalNoise.h"
 
 #include "minorGems/util/SimpleVector.h"
+#include "minorGems/util/MinPriorityQueue.h"
 
 
 #include "minorGems/game/Font.h"
@@ -1085,6 +1086,8 @@ LivingLifePage::LivingLifePage()
     
     mNextHintObjectID = 0;
     mNextHintIndex = 0;
+    
+    mLastHintSortedSourceID = 0;
     
 
     mMap = new int[ mMapD * mMapD ];
@@ -4359,23 +4362,54 @@ static char getTransHintable( TransRecord *inTrans ) {
 
 
 
-static int getNumHints( int inObjectID ) {
+int LivingLifePage::getNumHints( int inObjectID ) {
+    
+
+    if( mLastHintSortedSourceID == inObjectID ) {
+        return mLastHintSortedList.size();
+        }
+    
+
+    // else need to regenerated sorted list
+
+    mLastHintSortedSourceID = inObjectID;
+    mLastHintSortedList.deleteAll();
+
+    // heap sort
+    MinPriorityQueue<TransRecord*> queue;
     
     SimpleVector<TransRecord*> *trans = getAllUses( inObjectID );
     
     int numTrans = trans->size();
 
-    int num = 0;
-    
     for( int i=0; i<numTrans; i++ ) {
-        if( getTransHintable( trans->getElementDirect( i ) ) ) {
-            num++;
+        TransRecord *tr = trans->getElementDirect( i );
+        
+        if( getTransHintable( tr ) ) {
+            
+            int depth = 0;
+            
+            if( tr->actor > 0 && tr->actor != inObjectID ) {
+                depth = getObjectDepth( tr->actor );
+                }
+            else if( tr->target > 0 && tr->target != inObjectID ) {
+                depth = getObjectDepth( tr->target );
+                }
+            
+            queue.insert( tr, depth );
             }
         }
-    
 
-    return num;
+    int numInQueue = queue.size();
+    
+    for( int i=0; i<numInQueue; i++ ) {
+        mLastHintSortedList.push_back( queue.removeMin() );
+        }
+    
+    
+    return mLastHintSortedList.size();
     }
+
 
 
 static int findMainObjectID( int inObjectID ) {
@@ -4399,25 +4433,19 @@ static int findMainObjectID( int inObjectID ) {
 
 
 
-static char *getHintMessage( int inObjectID, int inIndex ) {
-    
-    SimpleVector<TransRecord*> *trans = getAllUses( inObjectID );
-    int numTrans = trans->size();
+char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
+
+    if( inObjectID != mLastHintSortedSourceID ) {
+        getNumHints( inObjectID );
+        }
 
     TransRecord *found = NULL;
 
-    int index = 0;
-    
-    for( int i=0; i<numTrans; i++ ) {
-        if( getTransHintable( trans->getElementDirect( i ) ) ) {
-            
-            if( index == inIndex ) {
-                found = trans->getElementDirect( i );
-                break;
-                }
-            index ++;
-            }
+    if( inIndex < mLastHintSortedList.size() ) {    
+        found = mLastHintSortedList.getElementDirect( inIndex );
         }
+    
+
     
     if( found != NULL ) {
         int actor = findMainObjectID( found->actor );
@@ -4425,7 +4453,7 @@ static char *getHintMessage( int inObjectID, int inIndex ) {
         int newActor = findMainObjectID( found->newActor );
         int newTarget = findMainObjectID( found->newTarget );
 
-        int result;
+        int result = 0;
         
         if( target != newTarget && 
             newTarget > 0 ) {
@@ -4474,14 +4502,31 @@ static char *getHintMessage( int inObjectID, int inIndex ) {
             }
         
 
-        char *resultString = 
-            stringToUpperCase( getObject( result )->description );
+        char *resultString;
+        
+        if( result > 0 ) {
+            resultString = 
+                stringToUpperCase( getObject( result )->description );
+            }
+        else {
+            resultString = stringDuplicate( translate( "nothingHint" ) );
+            }
         
         stripDescriptionComment( resultString );
         
-
+        int actorDepth = 0;
+        int targetDepth = 0;
+        
+        if( actor > 0 ) {
+            actorDepth = getObjectDepth( actor );
+            }
+        if( target > 0 ) {
+            targetDepth = getObjectDepth( target );
+            }
+        
         char *fullString =
-            autoSprintf( "%s#%s#%s", actorString, targetString, resultString );
+            autoSprintf( "%s(%d)#%s(%d)#%s", actorString, actorDepth,
+                         targetString, targetDepth, resultString );
         
         delete [] actorString;
         delete [] targetString;
