@@ -87,6 +87,8 @@ graphics/starvingSlip.tga \
 graphics/instructions.tga \
 graphics/hintSheet1.tga \
 graphics/hintSheet2.tga \
+graphics/hintSheet3.tga \
+graphics/hintSheet4.tga \
 
 
 NEEDED_MINOR_GEMS_OBJECTS = \

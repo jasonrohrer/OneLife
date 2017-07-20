@@ -25,7 +25,7 @@
 #define NUM_TEMP_ARROWS 6
 #define NUM_HUNGER_DASHES 6
 
-#define NUM_HINT_SHEETS 2
+#define NUM_HINT_SHEETS 4
 
 
 typedef struct LiveObject {
