@@ -8946,8 +8946,18 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     if( destID > 0 && p.hitAnObject ) {
         
         if( ourLiveObject->holdingID > 0 ) {
-            mNextHintObjectID = destID;
-            mNextHintIndex = 0;
+            TransRecord *tr = getTrans( ourLiveObject->holdingID, destID );
+            
+            if( tr == NULL || tr->newTarget == destID ) {
+                // give hint about dest object which will be unchanged 
+                mNextHintObjectID = destID;
+                mNextHintIndex = 0;
+                }
+            else if( tr->newTarget > 0 ) {
+                // give hint about what we will make when we act on it
+                mNextHintObjectID = tr->newTarget;
+                mNextHintIndex = 0;
+                }
             }
         else {
             // bare hand
