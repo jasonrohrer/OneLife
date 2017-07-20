@@ -3770,7 +3770,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             if( mNumTotalHints[i] > 1 ) {
                 
                 pageNum = 
-                    autoSprintf( "%d %s %d",
+                    autoSprintf( "(%d %s %d)",
                                  mHintMessageIndex[i] + 1, 
                                  translate( "ofHint" ),
                                  mNumTotalHints[i] );
@@ -3787,7 +3787,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 pageNumExtra = extraA;
                 
                 hintPos.x -= extraA;
-                hintPos.x -= 20;
+                hintPos.x -= 10;
                 }
             
 
@@ -3843,7 +3843,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 lineStart.x -= mHintExtraOffset[i].x;
                 lineStart.x += 20;
                 
-                lineStart.y += 32;
+                lineStart.y += 30;
                 
                 handwritingFont->drawString( pageNum, lineStart, alignLeft );
                 
@@ -4338,7 +4338,8 @@ static char isCategory( int inID ) {
 
 static char getTransHintable( TransRecord *inTrans ) {
 
-    if( inTrans->actor >= 0 && inTrans->target > 0 &&
+    if( inTrans->actor >= 0 && 
+        ( inTrans->target > 0 || inTrans->target == -1 ) &&
         ( inTrans->newActor > 0 || inTrans->newTarget > 0 ) ) {
 
 
@@ -4444,15 +4445,33 @@ static char *getHintMessage( int inObjectID, int inIndex ) {
             stripDescriptionComment( actorString );
             }
         else if( actor == 0 ) {
-            actorString = stringDuplicate( translate( "bareHand" ) );
+            actorString = stringDuplicate( translate( "bareHandHint" ) );
             }
         else {
             actorString = stringDuplicate( "" );
             }
         
-        char *targetString = 
-            stringToUpperCase( getObject( target )->description );
-        stripDescriptionComment( targetString );
+        
+        char *targetString;
+        
+        if( target > 0 ) {
+            targetString = 
+                stringToUpperCase( getObject( target )->description );
+            stripDescriptionComment( targetString );
+            }
+        else if( target == -1 && actor > 0 ) {
+            ObjectRecord *actorObj = getObject( actor );
+            
+            if( actorObj->foodValue ) {
+                targetString = stringDuplicate( translate( "eatHint" ) );
+                }
+            else {
+                targetString = stringDuplicate( translate( "bareGroundHint" ) );
+                }
+            }
+        else {
+            targetString = stringDuplicate( "" );
+            }
         
 
         char *resultString = 

@@ -78,7 +78,9 @@ lastAte "ATE"
 lastAtePermanent "ATE FROM"
 
 
-bareHand "BARE HAND"
+eatHint "MOUTH"
+bareHandHint "BARE HAND"
+bareGroundHint "BARE GROUND"
 noHint "NO INFORMATION" 
 
 ofHint "OF"
