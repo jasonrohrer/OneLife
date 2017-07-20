@@ -1084,6 +1084,7 @@ LivingLifePage::LivingLifePage()
     mCurrentHintIndex = 0;
     
     mNextHintObjectID = 0;
+    mNextHintIndex = 0;
     
 
     mMap = new int[ mMapD * mMapD ];
@@ -4600,7 +4601,8 @@ void LivingLifePage::step() {
     if( ourObject != NULL && mNextHintObjectID != 0 &&
         getNumHints( mNextHintObjectID ) > 0 ) {
         
-        if( mCurrentHintObjectID != mNextHintObjectID ) {
+        if( mCurrentHintObjectID != mNextHintObjectID ||
+            mCurrentHintIndex != mNextHintIndex ) {
             
             int newLiveSheetIndex = 0;
 
@@ -4619,9 +4621,10 @@ void LivingLifePage::step() {
             mHintTargetOffset[i] = mHintHideOffset[0];
             mHintTargetOffset[i].y += 100;
             
-            mHintMessageIndex[ i ] = 0;
+            mHintMessageIndex[ i ] = mNextHintIndex;
             
             mCurrentHintObjectID = mNextHintObjectID;
+            mCurrentHintIndex = mNextHintIndex;
             
             mNumTotalHints[ i ] = 
                 getNumHints( mCurrentHintObjectID );
@@ -4630,10 +4633,8 @@ void LivingLifePage::step() {
                 delete [] mHintMessage[ i ];
                 }
             
-            mHintMessage[ i ] = 
-                getHintMessage( mCurrentHintObjectID, 0 );
-            
-            mHintMessageIndex[i] = 0;
+            mHintMessage[ i ] = getHintMessage( mCurrentHintObjectID, 
+                                                mHintMessageIndex[i] );
             
 
             double longestLine = 0;
@@ -5827,6 +5828,7 @@ void LivingLifePage::step() {
                             // hint about it
                             
                             mNextHintObjectID = existing->holdingID;
+                            mNextHintIndex = 0;
                             }
                         
 
@@ -8945,6 +8947,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         if( ourLiveObject->holdingID > 0 ) {
             mNextHintObjectID = destID;
+            mNextHintIndex = 0;
             }
         else {
             // bare hand
@@ -8952,6 +8955,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
             if( getTrans( 0, destID ) == NULL ) {
                 mNextHintObjectID = destID;
+                mNextHintIndex = 0;
                 }
             }
         }
@@ -9687,6 +9691,33 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         case 'e':
         case 'E':
             mEKeyDown = true;
+            break;
+        case 9: // tab
+            if( mCurrentHintObjectID != 0 ) {
+                
+                int num = getNumHints( mCurrentHintObjectID );
+                
+                int skip = 1;
+                
+                if( isShiftKeyDown() ) {
+                    skip = -1;
+                    }
+                if( isCommandKeyDown() ) {
+                    if( num > 5 ) {
+                        skip *= 5;
+                        }
+                    }
+
+                if( num > 0 ) {
+                    mNextHintIndex += skip;
+                    if( mNextHintIndex >= num ) {
+                        mNextHintIndex -= num;
+                        }
+                    if( mNextHintIndex < 0 ) {
+                        mNextHintIndex += num;
+                        }
+                    }
+                }
             break;
         case 13:  // enter
             // speak
