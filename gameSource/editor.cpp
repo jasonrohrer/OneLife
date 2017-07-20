@@ -532,6 +532,10 @@ void freeFrameDrawer() {
     delete categoryPage;
     delete loadingPage;
 
+
+    checkRegenerateDepthMap();
+    
+
     freeTransBank();
     
     freeCategoryBank();

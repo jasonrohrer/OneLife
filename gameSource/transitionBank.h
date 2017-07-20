@@ -60,6 +60,11 @@ void initTransBankFinish();
 void freeTransBank();
 
 
+// if depth map has been cleared due to transition changes, regenerates
+// it.  Should be called before freeing any banks.
+void checkRegenerateDepthMap();
+
+
 
 // returns NULL if no trans defined
 TransRecord *getTrans( int inActor, int inTarget, char inLastUse = false );
@@ -141,6 +146,9 @@ char isGrave( int inObjectID );
 
 
 void printTrans( TransRecord *inTrans );
+
+
+int getObjectDepth( int inObjectID );
 
 
 #endif

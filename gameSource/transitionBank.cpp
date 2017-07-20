@@ -11,7 +11,7 @@
 #include "objectBank.h"
 #include "categoryBank.h"
 
-
+#define UNREACHABLE 999999999
 
 // track pointers to all records
 static SimpleVector<TransRecord *> records;
@@ -29,6 +29,9 @@ static SimpleVector<TransRecord *> *usesMap;
 // same, but for each ID, find records that produce it
 static SimpleVector<TransRecord *> *producesMap;
 
+
+static int depthMapSize = 0;
+static int *depthMap = NULL;
 
 
 
@@ -63,6 +66,7 @@ int initTransBankStart( char *outRebuildingCache,
     }
 
 
+static int depthMapIndex = -1;
 
 
 float initTransBankStep() {
@@ -75,7 +79,10 @@ float initTransBankStep() {
 
     char *txtFileName = getFileName( cache, i );
                         
-    if( strstr( txtFileName, ".txt" ) != NULL ) {
+    if( strcmp( txtFileName, "depthMap.txt" ) == 0  ) {
+        depthMapIndex = i;
+        }
+    else if( strstr( txtFileName, ".txt" ) != NULL ) {
                     
         int actor = 0;
         int target = -2;
@@ -147,8 +154,6 @@ float initTransBankStep() {
 
 
 void initTransBankFinish() {
-    
-    freeFolderCache( cache );
     
     mapSize = maxID + 1;
     
@@ -671,8 +676,56 @@ void initTransBankFinish() {
         }
     
 
+    
+    if( depthMapIndex != -1 ) {
+        // in cache
+        char *depthContents = getFileContents( cache, depthMapIndex );
+        
+        if( depthContents != NULL ) {
+            depthMapSize = getMaxObjectID() + 1;
+            
+            depthMap = new int[ depthMapSize ];
+            
+            // all start unreachable
+            for( int i=0; i<depthMapSize; i++ ) {
+                depthMap[i] = UNREACHABLE;
+                }
+            
+            int readLine = true;
+            
+            char *stringLoc = depthContents;
+            
+            while( readLine ) {
+                readLine = false;
+                
+                int id = -1;
+                int depth = UNREACHABLE;
+                
+                int numRead = sscanf( stringLoc, "%d %d", &id, &depth );
+                
+                if( numRead == 2 ) {
+                    
+                    if( id > 0 && id < depthMapSize ) {
+                        depthMap[id] = depth;
+                        }
+                    
+                    stringLoc = strchr( stringLoc, '\n' );
+                    
+                    if( stringLoc != NULL ) {
+                        stringLoc = &( stringLoc[1] );
+                        readLine = true;
+                        }
+                    }
+                }
+            
+            delete [] depthContents;
+            }
+        }
+    
+    
 
 
+    freeFolderCache( cache );
     }
 
 
@@ -686,6 +739,118 @@ void freeTransBank() {
     
     delete [] usesMap;
     delete [] producesMap;
+    
+    if( depthMap != NULL ) {
+        delete [] depthMap;
+        }
+    }
+
+
+
+void checkRegenerateDepthMap() {
+    if( depthMap == NULL ) {
+
+        depthMapSize = getMaxObjectID() + 1;
+        
+        depthMap = new int[ depthMapSize ];
+        
+        // all start unreachable
+        for( int i=0; i<depthMapSize; i++ ) {
+            depthMap[i] = UNREACHABLE;
+            }
+        
+
+        int numObjects;
+        
+        ObjectRecord **objects = getAllObjects( &numObjects );
+        
+        SimpleVector<int> treeHorizon;
+
+        for( int i=0; i<numObjects; i++ ) {
+            ObjectRecord *o = objects[i];
+            
+            if( o->id >= depthMapSize ) {
+                continue;
+                }
+            
+            if( o->mapChance > 0 ) {
+                // a natural object... a starting point
+                depthMap[ o->id ] = 0;
+                
+                treeHorizon.push_back( o->id );
+                }    
+            }
+        delete [] objects;
+        
+        int index = 0;
+        
+        while( index < treeHorizon.size() ) {
+            int nextID = treeHorizon.getElementDirect( index );
+            
+            int nextDepth = depthMap[ nextID ] + 1;
+            
+            SimpleVector<TransRecord*> *uses = getAllUses( nextID );
+
+            for( int i=0; i<uses->size(); i++ ) {
+                
+                TransRecord *tr = uses->getElementDirect( i );
+                
+                if( tr->newActor > 0 ) {
+                    if( depthMap[ tr->newActor ] == UNREACHABLE ) {
+                        depthMap[ tr->newActor ] = nextDepth;
+                        treeHorizon.push_back( tr->newActor );
+                        }
+                    }
+                if( tr->newTarget > 0 ) {
+                    if( depthMap[ tr->newTarget ] == UNREACHABLE ) {
+                        depthMap[ tr->newTarget ] = nextDepth;
+                        treeHorizon.push_back( tr->newTarget );
+                        }
+                    }
+                }
+
+            index ++;
+            }
+            
+            
+        // write to file
+
+        File transDir( NULL, "transitions" );
+            
+        if( transDir.exists() && transDir.isDirectory() ) {
+
+            const char *fileName = "depthMap.txt";
+
+            File *depthFile = transDir.getChildFile( fileName );
+
+            char *pathName = depthFile->getFullFileName();
+            
+            FILE *f = fopen( pathName, "w" );
+            
+            if( f != NULL ) {
+                
+                for( int i=0; i<depthMapSize; i++ ) {
+                    if( depthMap[i] != UNREACHABLE ) {
+                        fprintf( f, "%d %d\n", i, depthMap[i] );
+                        }
+                    }
+
+                fclose( f );
+                }
+
+            delete [] pathName;
+
+            delete depthFile;
+            
+            
+            File *cacheFile = transDir.getChildFile( "cache.fcz" );
+            
+            cacheFile->remove();
+            
+            delete cacheFile;
+            }
+        }
+    // else do nothing, it still exists
     }
 
 
@@ -1036,7 +1201,11 @@ void addTrans( int inActor, int inTarget,
             
             delete cacheFile;
             
-
+            if( depthMap != NULL ) {
+                delete [] depthMap;
+                depthMap = NULL;
+                }
+            
             transFile->writeToFile( fileContents );
             
             delete [] fileContents;
@@ -1074,6 +1243,11 @@ void deleteTransFromBank( int inActor, int inTarget,
                 
                 delete cacheFile;
                 
+                if( depthMap != NULL ) {
+                    delete [] depthMap;
+                    depthMap = NULL;
+                    }
+            
                 
                 transFile->remove();
                 delete transFile;
@@ -1240,6 +1414,17 @@ void printTrans( TransRecord *inTrans ) {
         }
     else {
         printf( "\n" );
+        }
+    }
+
+
+
+int getObjectDepth( int inObjectID ) {
+    if( depthMap == NULL || inObjectID >= depthMapSize ) {
+        return UNREACHABLE;
+        }
+    else {
+        return depthMap[ inObjectID ];
         }
     }
 
