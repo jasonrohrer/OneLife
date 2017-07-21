@@ -4489,7 +4489,25 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
 
         int result = 0;
         
-        if( target != newTarget && 
+
+        if( target != newTarget &&
+            newTarget > 0 &&
+            actor != newActor &&
+            newActor > 0 ) {
+            // both actor and target change
+            // we need to decide which is the most important result
+            // to hint
+
+            // the deeper object is more important
+            if( getObjectDepth( newActor ) > getObjectDepth( newTarget ) ) {
+                
+                result = newActor;
+                }
+            else {
+                result = newTarget;
+                }
+            }
+        else if( target != newTarget && 
             newTarget > 0 ) {
             
             result = newTarget;
