@@ -7547,6 +7547,8 @@ void LivingLifePage::step() {
                         mHungerSlipVisible = 0;
                         }
                     else if( ourLiveObject->foodStore <= 3 ) {
+                        // quiet music so hunger sound can be heard
+                        setMusicLoudness( 0 );
                         mHungerSlipVisible = 2;
                     
                         if( ourLiveObject->foodStore > 0 ) {
@@ -7572,6 +7574,12 @@ void LivingLifePage::step() {
                     else {
                         mHungerSlipVisible = -1;
                         }
+
+                    if( ourLiveObject->foodStore > 3 ) {
+                        // restore music
+                        setMusicLoudness( musicLoudness );
+                        }
+                    
                     }
                 }
             }
