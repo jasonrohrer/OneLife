@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 28     ???
+Version 28     2017-July-21     
 
 --Other player action animations no longer interrupt their walking if the 
   action message arrives before we see them finish their walk locally.
@@ -92,6 +92,8 @@ Version 28     ???
 
 
 
+
+
 Server fixes:
 
 --Fixed hiccup in parent animation when we're being carried long distances due
@@ -105,6 +107,7 @@ Server fixes:
 
 --Added sane behavior at actual edges of world instead of letting player walk
   off edge and cause a crash.
+
 
 
 
