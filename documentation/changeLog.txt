@@ -81,6 +81,10 @@ Version 28     ???
   water bottle whenever it is successfully used (no longer have to define
   that it becomes empty in each and every situation).
 
+--Fixed bug in min priority heap implementation that was resulting in
+  badly ordered priorities.
+
+
 
 
 Server fixes:
