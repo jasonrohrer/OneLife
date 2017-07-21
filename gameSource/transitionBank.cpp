@@ -6,7 +6,6 @@
 
 #include "minorGems/io/file/File.h"
 
-#include "minorGems/game/game.h"
 
 
 #include "folderCache.h"
@@ -708,7 +707,6 @@ void freeTransBank() {
 
 
 void regenerateDepthMap() {
-    double startTime = game_getCurrentTime();
     
     if( depthMap != NULL ) {    
         delete [] depthMap;
@@ -806,9 +804,6 @@ void regenerateDepthMap() {
         index ++;
         }
     
-    printf( "regenerating depth map took %f ms\n",
-            1000 * ( game_getCurrentTime() - startTime ) );
-
     }
 
 
