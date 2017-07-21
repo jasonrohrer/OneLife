@@ -4516,6 +4516,7 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
         
         int actorDepth = 0;
         int targetDepth = 0;
+        int resultDepth = 0;
         
         if( actor > 0 ) {
             actorDepth = getObjectDepth( actor );
@@ -4523,10 +4524,14 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
         if( target > 0 ) {
             targetDepth = getObjectDepth( target );
             }
+        if( result > 0 ) {
+            resultDepth = getObjectDepth( result );
+            }
         
         char *fullString =
-            autoSprintf( "%s(%d)#%s(%d)#%s", actorString, actorDepth,
-                         targetString, targetDepth, resultString );
+            autoSprintf( "%s(%d)#%s(%d)#%s(%d)", actorString, actorDepth,
+                         targetString, targetDepth, 
+                         resultString, resultDepth );
         
         delete [] actorString;
         delete [] targetString;

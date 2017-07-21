@@ -60,9 +60,6 @@ void initTransBankFinish();
 void freeTransBank();
 
 
-// if depth map has been cleared due to transition changes, regenerates
-// it.  Should be called before freeing any banks.
-void checkRegenerateDepthMap();
 
 
 

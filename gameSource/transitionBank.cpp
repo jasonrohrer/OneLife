@@ -6,12 +6,19 @@
 
 #include "minorGems/io/file/File.h"
 
+#include "minorGems/game/game.h"
+
 
 #include "folderCache.h"
 #include "objectBank.h"
 #include "categoryBank.h"
 
 #define UNREACHABLE 999999999
+
+
+void regenerateDepthMap();
+
+
 
 // track pointers to all records
 static SimpleVector<TransRecord *> records;
@@ -66,7 +73,6 @@ int initTransBankStart( char *outRebuildingCache,
     }
 
 
-static int depthMapIndex = -1;
 
 
 float initTransBankStep() {
@@ -79,10 +85,7 @@ float initTransBankStep() {
 
     char *txtFileName = getFileName( cache, i );
                         
-    if( strcmp( txtFileName, "depthMap.txt" ) == 0  ) {
-        depthMapIndex = i;
-        }
-    else if( strstr( txtFileName, ".txt" ) != NULL ) {
+    if( strstr( txtFileName, ".txt" ) != NULL ) {
                     
         int actor = 0;
         int target = -2;
@@ -155,6 +158,9 @@ float initTransBankStep() {
 
 void initTransBankFinish() {
     
+    freeFolderCache( cache );
+
+
     mapSize = maxID + 1;
     
 
@@ -676,56 +682,7 @@ void initTransBankFinish() {
         }
     
 
-    
-    if( depthMapIndex != -1 ) {
-        // in cache
-        char *depthContents = getFileContents( cache, depthMapIndex );
-        
-        if( depthContents != NULL ) {
-            depthMapSize = getMaxObjectID() + 1;
-            
-            depthMap = new int[ depthMapSize ];
-            
-            // all start unreachable
-            for( int i=0; i<depthMapSize; i++ ) {
-                depthMap[i] = UNREACHABLE;
-                }
-            
-            int readLine = true;
-            
-            char *stringLoc = depthContents;
-            
-            while( readLine ) {
-                readLine = false;
-                
-                int id = -1;
-                int depth = UNREACHABLE;
-                
-                int numRead = sscanf( stringLoc, "%d %d", &id, &depth );
-                
-                if( numRead == 2 ) {
-                    
-                    if( id > 0 && id < depthMapSize ) {
-                        depthMap[id] = depth;
-                        }
-                    
-                    stringLoc = strchr( stringLoc, '\n' );
-                    
-                    if( stringLoc != NULL ) {
-                        stringLoc = &( stringLoc[1] );
-                        readLine = true;
-                        }
-                    }
-                }
-            
-            delete [] depthContents;
-            }
-        }
-    
-    
-
-
-    freeFolderCache( cache );
+    regenerateDepthMap();
     }
 
 
@@ -742,144 +699,116 @@ void freeTransBank() {
     
     if( depthMap != NULL ) {
         delete [] depthMap;
+        depthMap = NULL;
         }
+    depthMapSize = 0;
+    
     }
 
 
 
-void checkRegenerateDepthMap() {
-    if( depthMap == NULL ) {
-
-        depthMapSize = getMaxObjectID() + 1;
-        
-        depthMap = new int[ depthMapSize ];
-        
-        // all start unreachable
-        for( int i=0; i<depthMapSize; i++ ) {
-            depthMap[i] = UNREACHABLE;
-            }
-        
-
-        int numObjects;
-        
-        ObjectRecord **objects = getAllObjects( &numObjects );
-        
-        SimpleVector<int> treeHorizon;
-
-        for( int i=0; i<numObjects; i++ ) {
-            ObjectRecord *o = objects[i];
-            
-            if( o->id >= depthMapSize ) {
-                continue;
-                }
-            
-            if( o->mapChance > 0 ) {
-                // a natural object... a starting point
-                depthMap[ o->id ] = 0;
-                
-                treeHorizon.push_back( o->id );
-                }    
-            }
-        delete [] objects;
-        
-        int index = 0;
-        
-        while( index < treeHorizon.size() ) {
-            int nextID = treeHorizon.getElementDirect( index );
-            
-            SimpleVector<TransRecord*> *uses = getAllUses( nextID );
-
-            for( int i=0; i<uses->size(); i++ ) {
-                
-                TransRecord *tr = uses->getElementDirect( i );
-                
-                // we need to know the depth of all ingredients
-                // depth of offspring object is max of ingredient depth
-                int nextDepth = UNREACHABLE;
-                
-                if( tr->actor == nextID && tr->target <= 0 ) {
-                    // this actor used by itself
-                    nextDepth = depthMap[ nextID ] + 1;
-                    }
-                else if( tr->target == nextID && tr->actor <=0 ) {
-                    // this target used by itself
-                    nextDepth = depthMap[ nextID ] + 1;
-                    }
-                else if( tr->actor == nextID && tr->actor == tr->target ) {
-                    // object used on itself
-                    nextDepth = depthMap[ nextID ] + 1;
-                    }
-                else if( tr->actor > 0 && tr->target > 0 ) {
-                    
-                    nextDepth = depthMap[ tr->actor ];
-
-                    if( nextDepth < depthMap[ tr->target ] ) {
-                        nextDepth = depthMap[ tr->target ];
-                        }
-                    nextDepth += 1;
-                    }
-                
-                if( nextDepth < UNREACHABLE ) {
-                    
-                    if( tr->newActor > 0 ) {
-                        if( depthMap[ tr->newActor ] == UNREACHABLE ) {
-                            depthMap[ tr->newActor ] = nextDepth;
-                            treeHorizon.push_back( tr->newActor );
-                            }
-                        }
-                    if( tr->newTarget > 0 ) {
-                        if( depthMap[ tr->newTarget ] == UNREACHABLE ) {
-                            depthMap[ tr->newTarget ] = nextDepth;
-                            treeHorizon.push_back( tr->newTarget );
-                            }
-                        }
-                    }
-                // else one of ingredients has unknown depth
-                // we'll reach it later
-                }
-
-            index ++;
-            }
-            
-            
-        // write to file
-
-        File transDir( NULL, "transitions" );
-            
-        if( transDir.exists() && transDir.isDirectory() ) {
-
-            const char *fileName = "depthMap.txt";
-
-            File *depthFile = transDir.getChildFile( fileName );
-
-            char *pathName = depthFile->getFullFileName();
-            
-            FILE *f = fopen( pathName, "w" );
-            
-            if( f != NULL ) {
-                
-                for( int i=0; i<depthMapSize; i++ ) {
-                    if( depthMap[i] != UNREACHABLE ) {
-                        fprintf( f, "%d %d\n", i, depthMap[i] );
-                        }
-                    }
-
-                fclose( f );
-                }
-
-            delete [] pathName;
-
-            delete depthFile;
-            
-            
-            File *cacheFile = transDir.getChildFile( "cache.fcz" );
-            
-            cacheFile->remove();
-            
-            delete cacheFile;
-            }
+void regenerateDepthMap() {
+    double startTime = game_getCurrentTime();
+    
+    if( depthMap != NULL ) {    
+        delete [] depthMap;
+        depthMap = NULL;
         }
-    // else do nothing, it still exists
+    
+    depthMapSize = getMaxObjectID() + 1;
+        
+    depthMap = new int[ depthMapSize ];
+        
+    // all start unreachable
+    for( int i=0; i<depthMapSize; i++ ) {
+        depthMap[i] = UNREACHABLE;
+        }
+        
+
+    int numObjects;
+        
+    ObjectRecord **objects = getAllObjects( &numObjects );
+        
+    SimpleVector<int> treeHorizon;
+
+    for( int i=0; i<numObjects; i++ ) {
+        ObjectRecord *o = objects[i];
+            
+        if( o->id >= depthMapSize ) {
+            continue;
+            }
+            
+        if( o->mapChance > 0 ) {
+            // a natural object... a starting point
+            depthMap[ o->id ] = 0;
+                
+            treeHorizon.push_back( o->id );
+            }    
+        }
+    delete [] objects;
+        
+    int index = 0;
+        
+    while( index < treeHorizon.size() ) {
+        int nextID = treeHorizon.getElementDirect( index );
+            
+        SimpleVector<TransRecord*> *uses = getAllUses( nextID );
+
+        for( int i=0; i<uses->size(); i++ ) {
+                
+            TransRecord *tr = uses->getElementDirect( i );
+                
+            // we need to know the depth of all ingredients
+            // depth of offspring object is max of ingredient depth
+            int nextDepth = UNREACHABLE;
+                
+            if( tr->actor == nextID && tr->target <= 0 ) {
+                // this actor used by itself
+                nextDepth = depthMap[ nextID ] + 1;
+                }
+            else if( tr->target == nextID && tr->actor <=0 ) {
+                // this target used by itself
+                nextDepth = depthMap[ nextID ] + 1;
+                }
+            else if( tr->actor == nextID && tr->actor == tr->target ) {
+                // object used on itself
+                nextDepth = depthMap[ nextID ] + 1;
+                }
+            else if( tr->actor > 0 && tr->target > 0 ) {
+                    
+                nextDepth = depthMap[ tr->actor ];
+
+                if( nextDepth < depthMap[ tr->target ] ) {
+                    nextDepth = depthMap[ tr->target ];
+                    }
+                nextDepth += 1;
+                }
+                
+            if( nextDepth < UNREACHABLE ) {
+                    
+                if( tr->newActor > 0 ) {
+                    if( depthMap[ tr->newActor ] == UNREACHABLE ) {
+                        depthMap[ tr->newActor ] = nextDepth;
+                        treeHorizon.push_back( tr->newActor );
+                        }
+                    }
+                if( tr->newTarget > 0 ) {
+                    if( depthMap[ tr->newTarget ] == UNREACHABLE ) {
+                        depthMap[ tr->newTarget ] = nextDepth;
+                        treeHorizon.push_back( tr->newTarget );
+                        }
+                    }
+                }
+            // else one of ingredients has unknown depth
+            // we'll reach it later
+            }
+
+        index ++;
+        }
+    
+    printf( "regenerating depth map took %f ms\n",
+            1000 * ( game_getCurrentTime() - startTime ) );
+
     }
 
 
@@ -1230,10 +1159,6 @@ void addTrans( int inActor, int inTarget,
             
             delete cacheFile;
             
-            if( depthMap != NULL ) {
-                delete [] depthMap;
-                depthMap = NULL;
-                }
             
             transFile->writeToFile( fileContents );
             
@@ -1272,10 +1197,6 @@ void deleteTransFromBank( int inActor, int inTarget,
                 
                 delete cacheFile;
                 
-                if( depthMap != NULL ) {
-                    delete [] depthMap;
-                    depthMap = NULL;
-                    }
             
                 
                 transFile->remove();
@@ -1449,7 +1370,7 @@ void printTrans( TransRecord *inTrans ) {
 
 
 int getObjectDepth( int inObjectID ) {
-    if( depthMap == NULL || inObjectID >= depthMapSize ) {
+    if( inObjectID >= depthMapSize ) {
         return UNREACHABLE;
         }
     else {

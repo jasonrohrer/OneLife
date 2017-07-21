@@ -533,8 +533,6 @@ void freeFrameDrawer() {
     delete loadingPage;
 
 
-    checkRegenerateDepthMap();
-    
 
     freeTransBank();
     
