@@ -4338,6 +4338,23 @@ static char isCategory( int inID ) {
     }
 
 
+static char isUseDummy( int inID ) {
+    if( inID <= 0 ) {
+        return false;
+        }
+    
+    ObjectRecord *o = getObject( inID );
+    
+    if( o == NULL ) {
+        return false;
+        }
+    if( o->isUseDummy ) {
+        return true;
+        }
+    return false;
+    }
+
+
 
 static char getTransHintable( TransRecord *inTrans ) {
 
@@ -4350,6 +4367,12 @@ static char getTransHintable( TransRecord *inTrans ) {
             return false;
             }
         if( isCategory( inTrans->target ) ) {
+            return false;
+            }
+        if( isUseDummy( inTrans->actor ) ) {
+            return false;
+            }
+        if( isUseDummy( inTrans->target ) ) {
             return false;
             }
         
