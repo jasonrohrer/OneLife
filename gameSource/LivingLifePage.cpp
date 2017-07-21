@@ -4562,14 +4562,20 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
             // both actor and target change
             // we need to decide which is the most important result
             // to hint
-
-            // the deeper object is more important
-            if( getObjectDepth( newActor ) > getObjectDepth( newTarget ) ) {
-                
+            
+            if( actor == 0 && newActor > 0 ) {
+                // something new ends in your hand, that's more important
                 result = newActor;
                 }
             else {
-                result = newTarget;
+                // the deeper object is more important
+                if( getObjectDepth( newActor ) > getObjectDepth( newTarget ) ) {
+                
+                    result = newActor;
+                    }
+                else {
+                    result = newTarget;
+                    }
                 }
             }
         else if( target != newTarget && 
@@ -9182,6 +9188,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         if( ourLiveObject->holdingID > 0 ) {
             TransRecord *tr = getTrans( ourLiveObject->holdingID, destID );
+            
+            if( tr == NULL ) {
+                // try defaul transition
+                tr = getTrans( -2, destID );
+                }
             
             if( tr == NULL || tr->newTarget == destID ) {
                 // give hint about dest object which will be unchanged 
