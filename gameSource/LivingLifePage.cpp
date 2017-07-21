@@ -4416,6 +4416,12 @@ int LivingLifePage::getNumHints( int inObjectID ) {
     
     int numTrans = trans->size();
 
+    // skip any that repeat exactly the same string
+    // (example:  goose pond in different states)
+    SimpleVector<char *> otherActorStrings;
+    SimpleVector<char *> otherTargetStrings;
+    
+
     for( int i=0; i<numTrans; i++ ) {
         TransRecord *tr = trans->getElementDirect( i );
         
@@ -4430,9 +4436,68 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                 depth = getObjectDepth( tr->target );
                 }
             
-            queue.insert( tr, depth );
+            
+            char stringAlreadyPresent = false;
+            
+            if( tr->actor > 0 && tr->actor != inObjectID ) {
+                ObjectRecord *otherObj = getObject( tr->actor );
+                
+                char *trimmedDesc = stringDuplicate( otherObj->description );
+                stripDescriptionComment( trimmedDesc );
+
+                for( int s=0; s<otherActorStrings.size(); s++ ) {
+                    
+                    if( strcmp( trimmedDesc, 
+                                otherActorStrings.getElementDirect( s ) )
+                        == 0 ) {
+                        
+                        stringAlreadyPresent = true;
+                        break;
+                        }    
+                    }
+
+                if( !stringAlreadyPresent ) {
+                    otherActorStrings.push_back( trimmedDesc );
+                    }
+                else {
+                    delete [] trimmedDesc;
+                    }
+                }
+            
+            if( tr->target > 0 && tr->target != inObjectID ) {
+                ObjectRecord *otherObj = getObject( tr->target );
+                
+                char *trimmedDesc = stringDuplicate( otherObj->description );
+                stripDescriptionComment( trimmedDesc );
+
+                for( int s=0; s<otherTargetStrings.size(); s++ ) {
+                    
+                    if( strcmp( trimmedDesc, 
+                                otherTargetStrings.getElementDirect( s ) )
+                        == 0 ) {
+                        
+                        stringAlreadyPresent = true;
+                        break;
+                        }    
+                    }
+
+                if( !stringAlreadyPresent ) {
+                    otherTargetStrings.push_back( trimmedDesc );
+                    }
+                else {
+                    delete [] trimmedDesc;
+                    }
+                }
+
+            
+            if( !stringAlreadyPresent ) {
+                queue.insert( tr, depth );
+                }
             }
         }
+    
+    otherActorStrings.deallocateStringElements();
+    otherTargetStrings.deallocateStringElements();
 
     int numInQueue = queue.size();
     
