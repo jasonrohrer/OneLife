@@ -6036,7 +6036,10 @@ void LivingLifePage::step() {
                                 }
                             }
 
-
+                        
+                        char creationSoundPlayed = false;
+                        char otherSoundPlayed = false;
+                        
                         if( existing->holdingID == 0 ) {
                                                         
                             // don't reset these when dropping something
@@ -6069,6 +6072,7 @@ void LivingLifePage::step() {
                                                 getVectorFromCamera( 
                                                     existing->currentPos.x, 
                                                     existing->currentPos.y ) );
+                                            otherSoundPlayed = true;
                                             }
                                         }
                                     else {
@@ -6115,6 +6119,7 @@ void LivingLifePage::step() {
                                             getVectorFromCamera( 
                                                 existing->currentPos.x, 
                                                 existing->currentPos.y ) );
+                                        otherSoundPlayed = true;
                                         }
                                     }
                                 else {
@@ -6142,6 +6147,7 @@ void LivingLifePage::step() {
                                                getVectorFromCamera(
                                                    heldOriginX,
                                                    heldOriginY ) );
+                                    otherSoundPlayed = true;
                                     }
 
 
@@ -6256,11 +6262,10 @@ void LivingLifePage::step() {
                                                 getVectorFromCamera(
                                                     existing->currentPos.x, 
                                                     existing->currentPos.y ) );
+                                            otherSoundPlayed = true;
                                             }
                                         }
                                     
-                                    
-                                    char creationSoundPlayed = false;
                                     
                                     if( ! clothingChanged &&
                                         heldObj->creationSound.id != -1 ) {
@@ -6335,10 +6340,10 @@ void LivingLifePage::step() {
                                                     getVectorFromCamera(
                                                      existing->currentPos.x, 
                                                      existing->currentPos.y ) );
+                                                otherSoundPlayed = true;
                                                 }
                                             }
                                         }
-                                    
                                     }
                                 }
                             
@@ -6357,6 +6362,52 @@ void LivingLifePage::step() {
                                 unusedHeldID.push_back( babyID );
                                 }
                             }
+                        
+
+                        
+                        if( existing->holdingID >= 0 &&
+                            oldHeld != existing->holdingID &&
+                            ! heldOriginValid &&
+                            heldTransitionSourceID > 0 &&
+                            ! creationSoundPlayed &&
+                            ! clothingSoundPlayed &&
+                            ! otherSoundPlayed ) {
+                            
+                            
+                            // what we're holding changed
+                            // but no sound has been played for it yet
+
+                            // check for special case where target
+                            // of transition didn't change
+
+                            TransRecord *tr = 
+                                getTrans( oldHeld, 
+                                          heldTransitionSourceID );
+                            
+                            if( tr != NULL &&
+                                tr->newActor == existing->holdingID &&
+                                tr->target == heldTransitionSourceID &&
+                                tr->newTarget == tr->target ) {
+                                
+                                // what about "using" sound
+                                // of the target of our transition?
+                                            
+                                ObjectRecord *targetObject = 
+                                    getObject( heldTransitionSourceID );
+                                
+                                if( targetObject->usingSound.id != -1 ) {
+                                    
+                                    playSound( 
+                                        targetObject->usingSound,
+                                        getVectorFromCamera(
+                                            existing->currentPos.x, 
+                                            existing->currentPos.y ) );
+                                    }
+                                }
+                            }
+                        
+                        
+
                         
                         existing->displayID = o.displayID;
                         existing->age = o.age;

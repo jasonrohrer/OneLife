@@ -86,7 +86,9 @@ Version 28     ???
 
 --Music fades so that hungry sound can be heard.
 
-
+--Using sound for target, unchanged object played in case where our held
+  object changes (example:  putting clay back into deposit, dumping water back
+   in pond).
 
 
 
