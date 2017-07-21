@@ -787,26 +787,55 @@ void checkRegenerateDepthMap() {
         while( index < treeHorizon.size() ) {
             int nextID = treeHorizon.getElementDirect( index );
             
-            int nextDepth = depthMap[ nextID ] + 1;
-            
             SimpleVector<TransRecord*> *uses = getAllUses( nextID );
 
             for( int i=0; i<uses->size(); i++ ) {
                 
                 TransRecord *tr = uses->getElementDirect( i );
                 
-                if( tr->newActor > 0 ) {
-                    if( depthMap[ tr->newActor ] == UNREACHABLE ) {
-                        depthMap[ tr->newActor ] = nextDepth;
-                        treeHorizon.push_back( tr->newActor );
+                // we need to know the depth of all ingredients
+                // depth of offspring object is max of ingredient depth
+                int nextDepth = UNREACHABLE;
+                
+                if( tr->actor == nextID && tr->target <= 0 ) {
+                    // this actor used by itself
+                    nextDepth = depthMap[ nextID ] + 1;
+                    }
+                else if( tr->target == nextID && tr->actor <=0 ) {
+                    // this target used by itself
+                    nextDepth = depthMap[ nextID ] + 1;
+                    }
+                else if( tr->actor == nextID && tr->actor == tr->target ) {
+                    // object used on itself
+                    nextDepth = depthMap[ nextID ] + 1;
+                    }
+                else if( tr->actor > 0 && tr->target > 0 ) {
+                    
+                    nextDepth = depthMap[ tr->actor ];
+
+                    if( nextDepth < depthMap[ tr->target ] ) {
+                        nextDepth = depthMap[ tr->target ];
+                        }
+                    nextDepth += 1;
+                    }
+                
+                if( nextDepth < UNREACHABLE ) {
+                    
+                    if( tr->newActor > 0 ) {
+                        if( depthMap[ tr->newActor ] == UNREACHABLE ) {
+                            depthMap[ tr->newActor ] = nextDepth;
+                            treeHorizon.push_back( tr->newActor );
+                            }
+                        }
+                    if( tr->newTarget > 0 ) {
+                        if( depthMap[ tr->newTarget ] == UNREACHABLE ) {
+                            depthMap[ tr->newTarget ] = nextDepth;
+                            treeHorizon.push_back( tr->newTarget );
+                            }
                         }
                     }
-                if( tr->newTarget > 0 ) {
-                    if( depthMap[ tr->newTarget ] == UNREACHABLE ) {
-                        depthMap[ tr->newTarget ] = nextDepth;
-                        treeHorizon.push_back( tr->newTarget );
-                        }
-                    }
+                // else one of ingredients has unknown depth
+                // we'll reach it later
                 }
 
             index ++;
