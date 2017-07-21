@@ -9199,8 +9199,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 mNextHintObjectID = destID;
                 mNextHintIndex = mHintBookmarks[ destID ];
                 }
+            else if( tr->newActor > 0 && 
+                     ourLiveObject->holdingID != tr->newActor ) {
+                // give hint about how what we're holding will change
+                mNextHintObjectID = tr->newActor;
+                mNextHintIndex = mHintBookmarks[ tr->newTarget ];
+                }
             else if( tr->newTarget > 0 ) {
-                // give hint about what we will make when we act on it
+                // give hint about changed target after we act on it
                 mNextHintObjectID = tr->newTarget;
                 mNextHintIndex = mHintBookmarks[ tr->newTarget ];
                 }
