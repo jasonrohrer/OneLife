@@ -441,6 +441,10 @@ class LivingLifePage : public GamePage {
         SimpleVector<TransRecord *> mLastHintSortedList;
         int mLastHintSortedSourceID;
         
+        // table sized to number of possible objects
+        int *mHintBookmarks;
+        
+
         int getNumHints( int inObjectID );
         char *getHintMessage( int inObjectID, int inIndex );
 

@@ -1089,6 +1089,15 @@ LivingLifePage::LivingLifePage()
     
     mLastHintSortedSourceID = 0;
     
+    int maxObjectID = getMaxObjectID();
+    
+    mHintBookmarks = new int[ maxObjectID + 1 ];
+
+    for( int i=0; i<=maxObjectID; i++ ) {
+        mHintBookmarks[i] = 0;
+        }
+    
+
 
     mMap = new int[ mMapD * mMapD ];
     mMapBiomes = new int[ mMapD * mMapD ];
@@ -1304,6 +1313,8 @@ LivingLifePage::~LivingLifePage() {
         freeSprite( mHintSheetSprites[i] );
         }
     
+    delete [] mHintBookmarks;
+
 
     if( mDeathReason != NULL ) {
         delete [] mDeathReason;
@@ -4705,6 +4716,8 @@ void LivingLifePage::step() {
             mCurrentHintObjectID = mNextHintObjectID;
             mCurrentHintIndex = mNextHintIndex;
             
+            mHintBookmarks[ mCurrentHintObjectID ] = mCurrentHintIndex;
+
             mNumTotalHints[ i ] = 
                 getNumHints( mCurrentHintObjectID );
 
@@ -5907,7 +5920,8 @@ void LivingLifePage::step() {
                             // hint about it
                             
                             mNextHintObjectID = existing->holdingID;
-                            mNextHintIndex = 0;
+                            mNextHintIndex = 
+                                mHintBookmarks[ mNextHintObjectID ];
                             }
                         
 
@@ -9030,12 +9044,12 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( tr == NULL || tr->newTarget == destID ) {
                 // give hint about dest object which will be unchanged 
                 mNextHintObjectID = destID;
-                mNextHintIndex = 0;
+                mNextHintIndex = mHintBookmarks[ destID ];
                 }
             else if( tr->newTarget > 0 ) {
                 // give hint about what we will make when we act on it
                 mNextHintObjectID = tr->newTarget;
-                mNextHintIndex = 0;
+                mNextHintIndex = mHintBookmarks[ tr->newTarget ];
                 }
             }
         else {
@@ -9044,7 +9058,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
             if( getTrans( 0, destID ) == NULL ) {
                 mNextHintObjectID = destID;
-                mNextHintIndex = 0;
+                mNextHintIndex = mHintBookmarks[ destID ];
                 }
             }
         }
