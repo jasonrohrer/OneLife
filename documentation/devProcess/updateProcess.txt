@@ -81,13 +81,17 @@ No longer needed with latest hg pull Unix Source distribution:
 | 5. Build UnixSource bundle and scp it to 
 |    jcr15@onehouronelife.com:oneLifeDownloads/
 
-6. Log in as jcr15@onehouronelife.com
+6. Run hg tag in Onelife and minorGems to tag version and push.
+   (Do this here so that UnixSource folks get latest tagged versions.)
 
-7. Run ~/checkout/OneLifeWorking/scripts/postPlatformDiffBundle.sh
+7. Log in as jcr15@onehouronelife.com
 
-8. Editting www/ticketServer/settings.php to list latest UnixSource build.
+8. Run ~/checkout/OneLifeWorking/scripts/postPlatformDiffBundle.sh
 
-9. Run hg tag in Onelife and minorGems to tag version and push.
+No longer needed with latest hg pull Unix Source distribution:
+|
+| 8. Editting www/ticketServer/settings.php to list latest UnixSource build.
+|
 
 
 
