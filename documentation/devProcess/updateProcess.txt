@@ -76,8 +76,10 @@ Generating platform-specific (binary code) update for a platform.
 
 (Do Steps 1-4 for all plaforms before doing step 5.)
 
-5. Build UnixSource bundle and scp it to 
-   jcr15@onehouronelife.com:oneLifeDownloads/
+No longer needed with latest hg pull Unix Source distribution:
+|
+| 5. Build UnixSource bundle and scp it to 
+|    jcr15@onehouronelife.com:oneLifeDownloads/
 
 6. Log in as jcr15@onehouronelife.com
 
