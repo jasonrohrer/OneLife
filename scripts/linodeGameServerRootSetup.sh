@@ -102,6 +102,7 @@ echo "http://onehouronelife.com/ticketServer/server.php" > settings/ticketServer
 
 ln -s ../../$dataName/objects .
 ln -s ../../$dataName/transitions .
+ln -s ../../$dataName/categories .
 
 ./configure 1
 
