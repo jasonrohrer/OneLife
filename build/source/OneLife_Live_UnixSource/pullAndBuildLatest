@@ -89,6 +89,12 @@ then
 fi
 
 
+if [ ! -h transitions ]
+then
+	ln -s OneLifeData7/transitions .	
+fi
+
+
 if [ ! -h dataVersionNumber.txt ]
 then
 	ln -s OneLifeData7/dataVersionNumber.txt .	
