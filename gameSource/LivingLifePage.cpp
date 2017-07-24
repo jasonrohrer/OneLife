@@ -116,11 +116,50 @@ static char readServerSocketFull( int inServerSocket ) {
         }    
 
     if( numRead == -1 ) {
+        printf( "Failed to read from server socket\n" );
         return false;
         }
     
     return true;
     }
+
+
+
+void LivingLifePage::sendToServerSocket( char *inMessage ) {
+    
+    printf( "Sending message to server: %s\n", inMessage );
+    
+    int len = strlen( inMessage );
+    
+    int numSent = sendToSocket( mServerSocket, (unsigned char*)inMessage, len );
+    
+    if( numSent == len ) {
+        numServerBytesSent += len;
+        overheadServerBytesSent += 52;
+        }
+    else {
+        printf( "Failed to send message to server socket "
+                "(tried to send %d, but numSent=%d)\n", len, numSent );
+        closeSocket( mServerSocket );
+        mServerSocket = -1;
+
+        if( mFirstServerMessagesReceived  ) {
+            
+            if( mDeathReason != NULL ) {
+                delete [] mDeathReason;
+                }
+            mDeathReason = stringDuplicate( translate( "reasonDisconnected" ) );
+            
+            handleOurDeath();
+            }
+        else {
+            setSignal( "loginFailed" );
+            }
+        }
+    
+    }
+
+
 
 
 static char equal( GridPos inA, GridPos inB ) {
@@ -5031,9 +5070,7 @@ void LivingLifePage::step() {
             delete [] pwHash;
             delete [] keyHash;
 
-            sendToSocket( mServerSocket, 
-                          (unsigned char*)outMessage, 
-                          strlen( outMessage ) );
+            sendToServerSocket( outMessage );
             
             delete [] outMessage;
             
@@ -7720,13 +7757,8 @@ void LivingLifePage::step() {
                                      sendX( mapPullCurrentX ),
                                      sendY( mapPullCurrentY ) );
         
-        printf( "Sending message to server: %s\n", message );
-        sendToSocket( mServerSocket, 
-                      (unsigned char*)message, 
-                      strlen( message ) );
+        sendToServerSocket( message );
         
-        numServerBytesSent += strlen( message );
-        overheadServerBytesSent += 52;
         
         delete [] message;
         mapPullCurrentSent = true;
@@ -8361,18 +8393,12 @@ void LivingLifePage::step() {
             ourLiveObject->xd == ourLiveObject->xServer &&
             ourLiveObject->yd == ourLiveObject->yServer ) {
             
-            printf( "Sending pending action message to server: %s\n",
-                    nextActionMessageToSend );
-            
+ 
             // move end acked by server AND action animation in progress
 
             // queued action waiting for our move to end
-            sendToSocket( mServerSocket, 
-                          (unsigned char*)nextActionMessageToSend, 
-                          strlen( nextActionMessageToSend) );
+            sendToServerSocket( nextActionMessageToSend );
             
-            numServerBytesSent += strlen( nextActionMessageToSend );
-            overheadServerBytesSent += 52;
 
             if( nextActionEating ) {
                 if( ourLiveObject->holdingID > 0 ) {
@@ -8448,15 +8474,8 @@ void LivingLifePage::step() {
                                                  sendX( mapPullCurrentX ),
                                                  sendY( mapPullCurrentY ) );
 
-                    printf( "Sending message to server: %s\n", message );
-
-                    sendToSocket( mServerSocket, 
-                                  (unsigned char*)message, 
-                                  strlen( message ) );
-            
-                    numServerBytesSent += strlen( message );
-                    overheadServerBytesSent += 52;
-                    
+                    sendToServerSocket( message );
+               
                     mapPullCurrentSent = true;
 
                     delete [] message;
@@ -9861,13 +9880,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
         char *message = moveMessageBuffer.getElementString();
 
-        printf( "Sending message to server:  %s\n", message );
-        
-        sendToSocket( mServerSocket, (unsigned char*)message, 
-                      strlen( message ) );
-            
-        numServerBytesSent += strlen( message );
-        overheadServerBytesSent += 52;
+        sendToServerSocket( message );
+
 
         delete [] message;
 
@@ -9902,7 +9916,7 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
     }
 
 void LivingLifePage::keyDown( unsigned char inASCII ) {
-
+    
     switch( inASCII ) {
         /*
         case 'a':
@@ -10010,11 +10024,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                         }
                     mSentChatPhrases.push_back( stringDuplicate( typedText ) );
                     
-                    sendToSocket( mServerSocket, (unsigned char*)message, 
-                                  strlen( message ) );
+                    sendToServerSocket( message );
             
-                    numServerBytesSent += strlen( message );
-                    overheadServerBytesSent += 52;
 
                     
                     mSayField.setText( "" );

@@ -8,6 +8,8 @@ Version 29     ???
 
 --Fixed UnixSource build process to not overwrite user's custom settings.
 
+--Fixed socket handling to detect send errors.
+
 
 
 

@@ -537,6 +537,11 @@ class LivingLifePage : public GamePage {
 
         char *mDeathReason;
         
+
+
+        // handles error detection, total byte counting, etc.
+        void sendToServerSocket( char *inMessage );
+        
     };
 
 
