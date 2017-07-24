@@ -5063,9 +5063,26 @@ void LivingLifePage::step() {
             delete [] password;
             delete [] numberString;
             
-
-            char *outMessage = autoSprintf( "LOGIN %s %s %s#",
-                                         userEmail, pwHash, keyHash );
+            
+            // we record the number of characters sent for playback
+            // if playback is using a different email.ini setting, this
+            // will fail.
+            // So pad the email with up to 80 space characters
+            // Thus, the login message is always this same length
+            
+            char *outMessage;
+            if( strlen( userEmail ) <= 80 ) {    
+                outMessage = autoSprintf( "LOGIN %-80s %s %s#",
+                                          userEmail, pwHash, keyHash );
+                }
+            else {
+                // their email is too long for this trick
+                // don't cut it off.
+                // but note that the playback will fail if email.ini
+                // doesn't match on the playback machine
+                outMessage = autoSprintf( "LOGIN %s %s %s#",
+                                          userEmail, pwHash, keyHash );
+                }
             
             delete [] pwHash;
             delete [] keyHash;

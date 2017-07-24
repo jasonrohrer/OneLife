@@ -10,6 +10,10 @@ Version 29     ???
 
 --Fixed socket handling to detect send errors.
 
+--Recording window minimized status (to handle alt-tabbing in recordings).
+
+--LOGIN message is now a fixed length regardless of email address so that
+  playback of recordings works on machines with a different email.ini setting.
 
 
 
