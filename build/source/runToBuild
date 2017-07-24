@@ -50,7 +50,7 @@ cp OneLife/documentation/Readme.txt .
 cp OneLife/no_copyright.txt .
 cp OneLife/gameSource/graphics/* ./graphics
 cp OneLife/gameSource/otherSounds/* ./otherSounds
-cp OneLife/gameSource/settings/* ./settings
+cp -u OneLife/gameSource/settings/* ./settings
 cp OneLife/gameSource/languages/* ./languages
 cp OneLife/gameSource/language.txt ./
 cp OneLife/gameSource/reverbImpulseResponse.aiff ./

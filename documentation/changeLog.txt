@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 29     ???
+
+--Fixed UnixSource build process to not overwrite user's custom settings.
+
+
+
+
 Version 28     2017-July-21     
 
 --Other player action animations no longer interrupt their walking if the 
