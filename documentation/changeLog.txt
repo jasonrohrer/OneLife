@@ -15,6 +15,11 @@ Version 29     ???
 --LOGIN message is now a fixed length regardless of email address so that
   playback of recordings works on machines with a different email.ini setting.
 
+--Fixed hint-related crash when picking up a baby.
+
+--Added info about what you just ate when you drank breast milk.
+
+
 
 
 Version 28     2017-July-21     

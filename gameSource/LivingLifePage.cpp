@@ -6057,7 +6057,7 @@ void LivingLifePage::step() {
                         existing->holdingID = o.holdingID;
                         
                         if( o.id == ourID &&
-                            existing->holdingID != 0 &&
+                            existing->holdingID > 0 &&
                             existing->holdingID != oldHeld ) {
                             // holding something new
                             // hint about it
@@ -7612,6 +7612,14 @@ void LivingLifePage::step() {
                             stringDuplicate( message ) );
                     }
                 else {
+                    char foodIncreased = false;
+                    int oldFoodStore = ourLiveObject->foodStore;
+                    
+                    if( foodCapacity == ourLiveObject->foodCapacity &&
+                        foodStore > ourLiveObject->foodStore ) {
+                        foodIncreased = true;
+                        }
+                    
                     ourLiveObject->foodStore = foodStore;
                     ourLiveObject->foodCapacity = foodCapacity;
                     ourLiveObject->lastSpeed = lastSpeed;
@@ -7697,7 +7705,15 @@ void LivingLifePage::step() {
                     
                         mCurrentLastAteFillMax = lastAteFillMax;
                         }
-
+                    else if( foodIncreased ) {
+                        // we were fed, but we didn't eat anything
+                        // must have been breast milk
+                        mCurrentLastAteString =
+                            stringDuplicate( translate( "breastMilk" ) );
+                    
+                        mCurrentLastAteFillMax = oldFoodStore;
+                        }
+                    
 
                     printf( "Our food = %d/%d\n", 
                             ourLiveObject->foodStore,
