@@ -22,6 +22,15 @@ Version 29     ???
 
 
 
+Server fixes:
+
+--Fixed glitch in reported baby food capacity when baby is fed.
+ 
+
+
+
+
+
 Version 28     2017-July-21     
 
 --Other player action animations no longer interrupt their walking if the 

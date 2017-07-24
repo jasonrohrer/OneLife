@@ -4531,7 +4531,7 @@ int main() {
                                     targetPlayer->lastAteID = 
                                         nextPlayer->holdingID;
                                     targetPlayer->lastAteFillMax =
-                                        nextPlayer->foodStore;
+                                        targetPlayer->foodStore;
                                     
                                     targetPlayer->foodStore += obj->foodValue;
                                     
