@@ -19,6 +19,8 @@ Version 29     ???
 
 --Added info about what you just ate when you drank breast milk.
 
+--Fixed editor crash when editing an empty category.
+
 
 
 

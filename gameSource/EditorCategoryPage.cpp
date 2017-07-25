@@ -285,7 +285,9 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
     else if( mCurrentCategory != -1 ) {
         CategoryRecord *cat = getCategory( mCurrentCategory );
         
-        drawObjectList( &( cat->objectIDSet ), mSelectionIndex );
+        if( cat != NULL ) {
+            drawObjectList( &( cat->objectIDSet ), mSelectionIndex );
+            }
         }
     
     }
