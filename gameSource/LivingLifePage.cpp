@@ -116,7 +116,8 @@ static char readServerSocketFull( int inServerSocket ) {
         }    
 
     if( numRead == -1 ) {
-        printf( "Failed to read from server socket\n" );
+        printf( "Failed to read from server socket at time %f\n",
+                game_getCurrentTime() );
         return false;
         }
     
@@ -139,7 +140,9 @@ void LivingLifePage::sendToServerSocket( char *inMessage ) {
         }
     else {
         printf( "Failed to send message to server socket "
-                "(tried to send %d, but numSent=%d)\n", len, numSent );
+                "at time %f "
+                "(tried to send %d, but numSent=%d)\n", 
+                game_getCurrentTime(), len, numSent );
         closeSocket( mServerSocket );
         mServerSocket = -1;
 
