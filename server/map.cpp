@@ -32,7 +32,15 @@
 // track recent placements to determine camp where
 // we'll stick next Eve
 #define NUM_RECENT_PLACEMENTS 100
-static GridPos recentPlacements[ NUM_RECENT_PLACEMENTS ];
+
+typedef struct RecentPlacement {
+        GridPos pos;
+        // depth of object in tech tree
+        int depth;
+    } RecentPlacement;
+
+
+static RecentPlacement recentPlacements[ NUM_RECENT_PLACEMENTS ];
 
 // ring buffer
 static int nextPlacementIndex = 0;
@@ -681,8 +689,9 @@ void writeRecentPlacements() {
     FILE *placeFile = fopen( "recentPlacements.txt", "w" );
     if( placeFile != NULL ) {
         for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
-            fprintf( placeFile, "%d,%d\n", recentPlacements[i].x,
-                     recentPlacements[i].y );
+            fprintf( placeFile, "%d,%d %d\n", recentPlacements[i].pos.x,
+                     recentPlacements[i].pos.y,
+                     recentPlacements[i].depth );
             }
         fclose( placeFile );
         }
@@ -722,17 +731,19 @@ void initMap() {
     
 
     for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
-        recentPlacements[i].x = 0;
-        recentPlacements[i].y = 0;
+        recentPlacements[i].pos.x = 0;
+        recentPlacements[i].pos.y = 0;
+        recentPlacements[i].depth = 0;
         }
     
 
     FILE *placeFile = fopen( "recentPlacements.txt", "r" );
     if( placeFile != NULL ) {
         for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
-            fscanf( placeFile, "%d,%d", 
-                    &( recentPlacements[i].x ),
-                    &( recentPlacements[i].y ) );
+            fscanf( placeFile, "%d,%d %d", 
+                    &( recentPlacements[i].pos.x ),
+                    &( recentPlacements[i].pos.y ),
+                    &( recentPlacements[i].depth ) );
             }
         fclose( placeFile );
         }
@@ -989,8 +1000,9 @@ void initMap() {
 
         // ignore old value for placements
         for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
-            recentPlacements[i].x = 0;
-            recentPlacements[i].y = 0;
+            recentPlacements[i].pos.x = 0;
+            recentPlacements[i].pos.y = 0;
+            recentPlacements[i].depth = 0;
             }
 
         writeRecentPlacements();
@@ -1810,28 +1822,48 @@ void setMapObject( int inX, int inY, int inID ) {
 
         char found = false;
         
+        int shallowestDepth = UNREACHABLE;
+        int shallowestIndex = -1;
+        
         for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
             
-            if( inX == recentPlacements[i].x 
+            if( inX == recentPlacements[i].pos.x 
                 &&
-                inY == recentPlacements[i].y ) {
+                inY == recentPlacements[i].pos.y ) {
                 
                 found = true;
-                break;
-                }    
+                // update depth
+                int newDepth = getObjectDepth( inID );
+                
+                if( newDepth != UNREACHABLE ) {
+                    recentPlacements[i].depth = getObjectDepth( inID );
+                    }    
+                }
+            
+            if( recentPlacements[i].depth < shallowestDepth ) {
+                shallowestDepth = recentPlacements[i].depth;
+                shallowestIndex = i;
+                }
             }
         
 
-        if( !found ) {    
-            recentPlacements[nextPlacementIndex].x = inX;
-            recentPlacements[nextPlacementIndex].y = inY;
+        if( !found ) {
             
-            nextPlacementIndex++;
-            if( nextPlacementIndex >= NUM_RECENT_PLACEMENTS ) {
-                nextPlacementIndex = 0;
+            int newDepth = getObjectDepth( inID );
+            if( newDepth != UNREACHABLE &&
+                newDepth >= shallowestDepth ) {
+
+                recentPlacements[shallowestIndex].pos.x = inX;
+                recentPlacements[shallowestIndex].pos.y = inY;
+                recentPlacements[shallowestIndex].depth = newDepth;
                 
-                // write again every time we have a fresh 100
-                writeRecentPlacements();
+                nextPlacementIndex++;
+                if( nextPlacementIndex >= NUM_RECENT_PLACEMENTS ) {
+                    nextPlacementIndex = 0;
+                
+                    // write again every time we have a fresh 100
+                    writeRecentPlacements();
+                    }
                 }
             }
         
@@ -2328,11 +2360,11 @@ void getEvePosition( int *outX, int *outY ) {
     doublePair sum = {0,0};
     
     for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
-        if( recentPlacements[i].x != 0 ||
-            recentPlacements[i].y != 0 ) {
+        if( recentPlacements[i].pos.x != 0 ||
+            recentPlacements[i].pos.y != 0 ) {
             
-            doublePair p = { (double)( recentPlacements[i].x ), 
-                             (double)( recentPlacements[i].y ) };
+            doublePair p = { (double)( recentPlacements[i].pos.x ), 
+                             (double)( recentPlacements[i].pos.y ) };
             
             pos.push_back( p );
             

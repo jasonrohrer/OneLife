@@ -145,6 +145,8 @@ char isGrave( int inObjectID );
 void printTrans( TransRecord *inTrans );
 
 
+#define UNREACHABLE 999999999
+
 int getObjectDepth( int inObjectID );
 
 

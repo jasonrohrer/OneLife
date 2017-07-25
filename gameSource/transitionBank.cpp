@@ -12,7 +12,6 @@
 #include "objectBank.h"
 #include "categoryBank.h"
 
-#define UNREACHABLE 999999999
 
 
 void regenerateDepthMap();
