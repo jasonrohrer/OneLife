@@ -3487,7 +3487,36 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
 
         } // end loop over rows on screen
+    
 
+    // finally, draw any highlighted our-placements
+    if( mCurMouseOverID != 0 &&
+        mMapOurPlayerPlacedFlags[ mCurMouseOverSpot.y * mMapD + 
+                                  mCurMouseOverSpot.x ] ) {
+        int worldY = mCurMouseOverSpot.y + mMapOffsetY - mMapD / 2;
+        
+        int screenY = CELL_D * worldY;
+        
+        int mapI = mCurMouseOverSpot.y * mMapD + mCurMouseOverSpot.x;
+        int screenX = 
+            CELL_D * ( mCurMouseOverSpot.x + mMapOffsetX - mMapD / 2 );
+        
+        drawMapCell( mapI, screenX, screenY );
+        }
+    /*
+        else {
+            for( int i=0; i<mPrevMouseOverSpots.size(); i++ ) {
+                GridPos prev = mPrevMouseOverSpots.getElementDirect( i );
+                
+                if( prev.y * mMapD + prev.x == inMapI ) {
+                    highlight = true;
+                    highlightFade = 
+                        mPrevMouseOverSpotFades.getElementDirect(i);
+                    }    
+                }
+            }
+    */
+    
     
     for( int i=0; i<speakers.size(); i++ ) {
         LiveObject *o = speakers.getElementDirect( i );
