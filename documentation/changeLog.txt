@@ -21,6 +21,12 @@ Version 29     ???
 
 --Fixed editor crash when editing an empty category.
 
+--Fixed so that measured, set frame rate is included in recording header
+  (recording doesn't start until after frame rate is measured).  This ensures 
+  proper playback of games recorded at non-60fps frame rates.
+
+--Fixed two memory leaks.
+
 
 
 

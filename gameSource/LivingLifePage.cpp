@@ -1353,6 +1353,10 @@ LivingLifePage::~LivingLifePage() {
 
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
         freeSprite( mHintSheetSprites[i] );
+        
+        if( mHintMessage[i] != NULL ) {
+            delete [] mHintMessage[i];
+            }
         }
     
     delete [] mHintBookmarks;

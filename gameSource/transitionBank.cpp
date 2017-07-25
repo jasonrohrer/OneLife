@@ -374,6 +374,8 @@ void initTransBankFinish() {
                 }
             }
         
+        delete [] objects;
+        
         for( int t=0; t<transToAdd.size(); t++ ) {
             TransRecord tr = transToAdd.getElementDirect( t );
             
