@@ -45,7 +45,7 @@ static RecentPlacement recentPlacements[ NUM_RECENT_PLACEMENTS ];
 // ring buffer
 static int nextPlacementIndex = 0;
 
-static int eveRadiusStart = 20;
+static int eveRadiusStart = 2;
 static int eveRadius = eveRadiusStart;
 
 // what human-placed stuff, together, counts as a camp
@@ -693,6 +693,8 @@ void writeRecentPlacements() {
                      recentPlacements[i].pos.y,
                      recentPlacements[i].depth );
             }
+        fprintf( placeFile, "nextPlacementIndex=%d\n", nextPlacementIndex );
+        
         fclose( placeFile );
         }
     }
@@ -737,6 +739,8 @@ void initMap() {
         }
     
 
+    nextPlacementIndex = 0;
+    
     FILE *placeFile = fopen( "recentPlacements.txt", "r" );
     if( placeFile != NULL ) {
         for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
@@ -744,7 +748,13 @@ void initMap() {
                     &( recentPlacements[i].pos.x ),
                     &( recentPlacements[i].pos.y ),
                     &( recentPlacements[i].depth ) );
+            
+            if( recentPlacements[i].pos.x != 0 ||
+                recentPlacements[i].pos.y != 0 ) {
+                }
             }
+        fscanf( placeFile, "\nnextPlacementIndex=%d", &nextPlacementIndex );
+        
         fclose( placeFile );
         }
     
@@ -1820,10 +1830,7 @@ void setMapObject( int inX, int inY, int inID ) {
     
     if( inID > 0 ) {
 
-        char found = false;
-        
-        int shallowestDepth = UNREACHABLE;
-        int shallowestIndex = -1;
+        char found = false;        
         
         for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
             
@@ -1837,12 +1844,8 @@ void setMapObject( int inX, int inY, int inID ) {
                 
                 if( newDepth != UNREACHABLE ) {
                     recentPlacements[i].depth = getObjectDepth( inID );
-                    }    
-                }
-            
-            if( recentPlacements[i].depth < shallowestDepth ) {
-                shallowestDepth = recentPlacements[i].depth;
-                shallowestIndex = i;
+                    }
+                break;
                 }
             }
         
@@ -1850,14 +1853,14 @@ void setMapObject( int inX, int inY, int inID ) {
         if( !found ) {
             
             int newDepth = getObjectDepth( inID );
-            if( newDepth != UNREACHABLE &&
-                newDepth >= shallowestDepth ) {
+            if( newDepth != UNREACHABLE ) {
 
-                recentPlacements[shallowestIndex].pos.x = inX;
-                recentPlacements[shallowestIndex].pos.y = inY;
-                recentPlacements[shallowestIndex].depth = newDepth;
+                recentPlacements[nextPlacementIndex].pos.x = inX;
+                recentPlacements[nextPlacementIndex].pos.y = inY;
+                recentPlacements[nextPlacementIndex].depth = newDepth;
                 
                 nextPlacementIndex++;
+
                 if( nextPlacementIndex >= NUM_RECENT_PLACEMENTS ) {
                     nextPlacementIndex = 0;
                 
@@ -2356,9 +2359,16 @@ void restretchMapContainedDecays( int inX, int inY,
 void getEvePosition( int *outX, int *outY ) {
     
     SimpleVector<doublePair> pos;
+    SimpleVector<double> weight;
     
     doublePair sum = {0,0};
     
+    double weightSum = 0;
+
+    // the exponent that we raise depth to in order to squash
+    // down higher values
+    double depthFactor = 0.5;
+
     for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
         if( recentPlacements[i].pos.x != 0 ||
             recentPlacements[i].pos.y != 0 ) {
@@ -2367,18 +2377,29 @@ void getEvePosition( int *outX, int *outY ) {
                              (double)( recentPlacements[i].pos.y ) };
             
             pos.push_back( p );
+
+            int d = recentPlacements[i].depth;
+
+            double w = pow( d, depthFactor );
             
-            sum = add( sum, p );
+            weight.push_back( w );
+            
+            // weighted sum, with deeper objects weighing more
+            sum = add( sum, mult( p, w ) );
+            
+            weightSum += w;
             }
         }
 
     if( pos.size() == 0 ) {
         doublePair zeroPos = { 0, 0 };    
         pos.push_back( zeroPos );
+        weight.push_back( 1 );
+        weightSum += 1;
         }
     
     
-    doublePair ave = mult( sum, 1.0 / pos.size() );
+    doublePair ave = mult( sum, 1.0 / weightSum );
     
     double maxDist = 2.0 * campRadius;
     
@@ -2399,11 +2420,16 @@ void getEvePosition( int *outX, int *outY ) {
         
         if( maxDist > campRadius ) {
             
-            sum = sub( sum, pos.getElementDirect( maxI ) );
+            double w = weight.getElementDirect( maxI );
+            
+            sum = sub( sum, mult( pos.getElementDirect( maxI ), w ) );
             
             pos.deleteElement( maxI );
+            weight.deleteElement( maxI );
             
-            ave = mult( sum, 1.0 / pos.size() );
+            weightSum -= w;
+            
+            ave = mult( sum, 1.0 / weightSum );
             }
         }
     

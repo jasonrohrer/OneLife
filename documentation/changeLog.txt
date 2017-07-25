@@ -37,9 +37,12 @@ Server fixes:
 --Changed so that Eve radius only expanded if 10 Eves die under age 16 with no
   Eve living past 20 in the process. 
 
---Recent-placement camp-finding algorithm (for new Eve placement) changed to
-  only overwrite an old placement if the new object is deeper in the tech tree
-  than the old object.
+--Eve placement based on previous object placements now weights objects based
+  on their depth in the tech tree.  So more advanced objects count more when
+  finding a camp to put Eve into.
+
+--Shrunk default Eve placement radius from 20 down to 2 so finding the camp is
+  easier.
 
 
 
