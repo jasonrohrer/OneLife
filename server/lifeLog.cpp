@@ -155,14 +155,14 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
     
     if( inEve ) {
         
-        if( inAge > 30 ) {
+        if( inAge > 20 ) {
             resetEveRadius();
             deadYoungEveCount = 0;
             }
-        else {
+        else if( inAge < 16 ){
             deadYoungEveCount ++;
             
-            if( deadYoungEveCount > 5 ) {
+            if( deadYoungEveCount > 10 ) {
                 deadYoungEveCount = 0;
                 doubleEveRadius();
                 }

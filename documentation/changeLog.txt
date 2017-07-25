@@ -33,7 +33,9 @@ Version 29     ???
 Server fixes:
 
 --Fixed glitch in reported baby food capacity when baby is fed.
- 
+
+--Changed so that Eve radius only expanded if 10 Eves die under age 16 with no
+  Eve living past 20 in the process. 
 
 
 
