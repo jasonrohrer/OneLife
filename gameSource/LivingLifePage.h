@@ -228,6 +228,10 @@ typedef struct PointerHitRecord {
         // should NEVER click through a person
         char hitOurPlacement;
 
+        // true if hitOurPlacement happened THROUGH another non-person object
+        char hitOurPlacementBehind;
+        
+
     } PointerHitRecord;
 
 
@@ -482,8 +486,11 @@ class LivingLifePage : public GamePage {
         float mCurMouseOverFade;
         
         GridPos mCurMouseOverSpot;
+        char mCurMouseOverBehind;
         
+
         SimpleVector<GridPos> mPrevMouseOverSpots;
+        SimpleVector<char> mPrevMouseOverSpotsBehind;
         SimpleVector<float> mPrevMouseOverSpotFades;
         
 
@@ -525,7 +532,8 @@ class LivingLifePage : public GamePage {
         
 
         void drawMapCell( int inMapI, 
-                          int inScreenX, int inScreenY );
+                          int inScreenX, int inScreenY,
+                          char inHighlightOnly = false );
         
         void checkForPointerHit( PointerHitRecord *inRecord,
                                  float inX, float inY );

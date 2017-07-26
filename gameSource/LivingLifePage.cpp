@@ -1639,7 +1639,8 @@ static void handleAnimSound( int inObjectID, double inAge, AnimType inType,
 
 
 void LivingLifePage::drawMapCell( int inMapI, 
-                                  int inScreenX, int inScreenY ) {
+                                  int inScreenX, int inScreenY,
+                                  char inHighlightOnly ) {
             
     int oID = mMap[ inMapI ];
             
@@ -1795,7 +1796,13 @@ void LivingLifePage::drawMapCell( int inMapI,
         if( mCurMouseOverID != 0 &&
             mCurMouseOverSpot.y * mMapD + mCurMouseOverSpot.x == inMapI ) {
             
-            highlight = true;
+            if( mCurMouseOverBehind ) {
+                highlight = inHighlightOnly;
+                }
+            else {
+                highlight = true;
+                }
+        
             highlightFade = mCurMouseOverFade;
             }
         else {
@@ -1803,7 +1810,12 @@ void LivingLifePage::drawMapCell( int inMapI,
                 GridPos prev = mPrevMouseOverSpots.getElementDirect( i );
                 
                 if( prev.y * mMapD + prev.x == inMapI ) {
-                    highlight = true;
+                    if( mPrevMouseOverSpotsBehind.getElementDirect( i ) ) {
+                        highlight = inHighlightOnly;
+                        }
+                    else {
+                        highlight = true;
+                        }
                     highlightFade = 
                         mPrevMouseOverSpotFades.getElementDirect(i);
                     }    
@@ -1812,6 +1824,7 @@ void LivingLifePage::drawMapCell( int inMapI,
         
         
         int numPasses = 1;
+        int startPass = 0;
         
         if( highlight ) {
             
@@ -1822,9 +1835,13 @@ void LivingLifePage::drawMapCell( int inMapI,
             if( highlightFade != 1.0f ) {
                 //fadeHandle = addGlobalFade( highlightFade );
                 }
+
+            if( inHighlightOnly ) {
+                startPass = 1;
+                }
             }
         
-        for( int i=0; i<numPasses; i++ ) {
+        for( int i=startPass; i<numPasses; i++ ) {
             
             doublePair passPos = pos;
             
@@ -3490,9 +3507,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
     // finally, draw any highlighted our-placements
-    if( mCurMouseOverID != 0 &&
-        mMapOurPlayerPlacedFlags[ mCurMouseOverSpot.y * mMapD + 
-                                  mCurMouseOverSpot.x ] ) {
+    if( mCurMouseOverID != 0 && mCurMouseOverBehind ) {
         int worldY = mCurMouseOverSpot.y + mMapOffsetY - mMapD / 2;
         
         int screenY = CELL_D * worldY;
@@ -3501,21 +3516,28 @@ void LivingLifePage::draw( doublePair inViewCenter,
         int screenX = 
             CELL_D * ( mCurMouseOverSpot.x + mMapOffsetX - mMapD / 2 );
         
-        drawMapCell( mapI, screenX, screenY );
+        // highlights only
+        drawMapCell( mapI, screenX, screenY, true );
         }
-    /*
-        else {
-            for( int i=0; i<mPrevMouseOverSpots.size(); i++ ) {
-                GridPos prev = mPrevMouseOverSpots.getElementDirect( i );
+    
+    for( int i=0; i<mPrevMouseOverSpots.size(); i++ ) {
+        if( mPrevMouseOverSpotsBehind.getElementDirect( i ) ) {
                 
-                if( prev.y * mMapD + prev.x == inMapI ) {
-                    highlight = true;
-                    highlightFade = 
-                        mPrevMouseOverSpotFades.getElementDirect(i);
-                    }    
-                }
+            GridPos prev = mPrevMouseOverSpots.getElementDirect( i );
+            
+            int worldY = prev.y + mMapOffsetY - mMapD / 2;
+        
+            int screenY = CELL_D * worldY;
+        
+            int mapI = prev.y * mMapD + prev.x;
+            int screenX = 
+                CELL_D * ( prev.x + mMapOffsetX - mMapD / 2 );
+        
+            // highlights only
+            drawMapCell( mapI, screenX, screenY, true );
             }
-    */
+        }
+    
     
     
     for( int i=0; i<speakers.size(); i++ ) {
@@ -4799,6 +4821,7 @@ void LivingLifePage::step() {
         if( f <= 0 ) {
             mPrevMouseOverSpotFades.deleteElement( i );
             mPrevMouseOverSpots.deleteElement( i );
+            mPrevMouseOverSpotsBehind.deleteElement( i );
             i--;
             }
         else {
@@ -8649,6 +8672,12 @@ void LivingLifePage::makeActive( char inFresh ) {
     mLastMouseOverID = 0;
     mCurMouseOverID = 0;
     mCurMouseOverFade = 0;
+    mCurMouseOverBehind = false;
+
+    mPrevMouseOverSpots.deleteAll();
+    mPrevMouseOverSpotFades.deleteAll();
+    mPrevMouseOverSpotsBehind.deleteAll();
+    
     
     if( !inFresh ) {
         return;
@@ -8810,7 +8839,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
         // first all non drawn-behind map objects in this row
         // (in front of people)
         for( int x=clickDestX+1; x>=clickDestX-1  && 
-                 ! p->hit && ! p->hitOurPlacement; x-- ) {
+                 ! p->hit; x-- ) {
             float clickOffsetX = ( clickDestX  - x ) * CELL_D + clickExtraX;
 
             int mapX = x - mMapOffsetX + mMapD / 2;
@@ -8852,12 +8881,20 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                 
                 if( dist < minDistThatHits ) {
                     p->hit = true;
-                    p->closestCellX = x;
-                    p->closestCellY = y;
                     
-                    p->hitSlotIndex = sl;
+                    if( p->hitOurPlacement ) {
+                        if( p->closestCellY > y ) {
+                            p->hitOurPlacementBehind = true;
+                            }
+                        }
+                    else {
+                        p->closestCellX = x;
+                        p->closestCellY = y;
+                        
+                        p->hitSlotIndex = sl;
 
-                    p->hitAnObject = true;
+                        p->hitAnObject = true;
+                        }
                     }
                 }
             }
@@ -8949,7 +8986,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
         // now drawn-behind objects in this row
 
         for( int x=clickDestX+1; x>=clickDestX-1  
-                 && ! p->hit && ! p->hitOurPlacement; x-- ) {
+                 && ! p->hit; x-- ) {
             float clickOffsetX = ( clickDestX  - x ) * CELL_D + clickExtraX;
 
             int mapX = x - mMapOffsetX + mMapD / 2;
@@ -8990,12 +9027,20 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                 
                 if( dist < minDistThatHits ) {
                     p->hit = true;
-                    p->closestCellX = x;
-                    p->closestCellY = y;
                     
-                    p->hitSlotIndex = sl;
-
-                    p->hitAnObject = true;
+                    if( p->hitOurPlacement ) {
+                        if( p->closestCellY > y ) {
+                            p->hitOurPlacementBehind = true;
+                            }
+                        }
+                    else {
+                        p->closestCellX = x;
+                        p->closestCellY = y;
+                        
+                        p->hitSlotIndex = sl;
+                        
+                        p->hitAnObject = true;
+                        }
                     }
                 }
             }
@@ -9036,6 +9081,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
     p.hit = false;
     p.hitSelf = false;
     p.hitOurPlacement = false;
+    p.hitOurPlacementBehind = false;
     
     p.hitClothingIndex = -1;
     
@@ -9081,12 +9127,14 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             if( equal( old, prev ) ) {
                 mPrevMouseOverSpots.deleteElement( i );
                 mPrevMouseOverSpotFades.deleteElement( i );
+                mPrevMouseOverSpotsBehind.deleteElement( i );
                 break;
                 }
             }
         
         mPrevMouseOverSpots.push_back( prev );
         mPrevMouseOverSpotFades.push_back( mCurMouseOverFade );
+        mPrevMouseOverSpotsBehind.push_back( mCurMouseOverBehind );
         }
     
 
@@ -9103,7 +9151,9 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         mCurMouseOverID = destID;
         mCurMouseOverSpot.x = mapX;
         mCurMouseOverSpot.y = mapY;
-
+        
+        mCurMouseOverBehind = p.hitOurPlacementBehind;
+        
 
         // check if we already have a partial-fade-out for this cell
         // from previous mouse-overs
@@ -9116,6 +9166,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
                 
                 mPrevMouseOverSpots.deleteElement( i );
                 mPrevMouseOverSpotFades.deleteElement( i );
+                mPrevMouseOverSpotsBehind.deleteElement( i );
                 break;
                 }
             }
@@ -9123,6 +9174,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
     else if( mCurMouseOverID != 0 ) {
         mLastMouseOverID = mCurMouseOverID;
         mCurMouseOverID = 0;
+        mCurMouseOverBehind = false;
         mLastMouseOverFade = 1.0f;
         }
     
@@ -9164,6 +9216,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     p.hit = false;
     p.hitSelf = false;
     p.hitOurPlacement = false;
+    p.hitOurPlacementBehind = false;
     
     p.hitClothingIndex = -1;
     
