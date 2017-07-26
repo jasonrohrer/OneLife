@@ -2024,6 +2024,43 @@ void processLoggedInPlayer( Socket *inSock,
                         }
                     }
                 }
+            if( canHaveBaby && numPastBabies >= 10 ) {
+                int numDead = 0;
+                
+                for( int b=0; b < numPastBabies; b++ ) {
+                    
+                    int bID = 
+                        player->babyIDs->getElementDirect( b );
+
+                    char bAlive = false;
+                    
+                    for( int j=0; j<numPlayers; j++ ) {
+                        LiveObject *otherObj = players.getElement( j );
+                    
+                        if( otherObj->error ) {
+                            continue;
+                            }
+
+                        int id = otherObj->id;
+                    
+                        if( id == bID ) {
+                            bAlive = true;
+                            break;
+                            }
+                        }
+                    if( ! bAlive ) {
+                        numDead ++;
+                        }
+                    }
+                
+                if( numDead > numPastBabies - 2 ) {
+                    // all but at most one dead
+                    
+                    // this is a bad mother who lets all babies die
+                    // don't give them more babies
+                    canHaveBaby = false;
+                    }
+                }
             
             if( canHaveBaby ) {
                 parentChoices.push_back( player );

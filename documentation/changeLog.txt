@@ -52,6 +52,9 @@ Server fixes:
 --Shrunk default Eve placement radius from 20 down to 2 so finding the camp is
   easier.
 
+--Bad mother problem solved by not giving a mother more babies if they have
+  already had more than 10 babies and all of them are already dead.
+
 
 
 
