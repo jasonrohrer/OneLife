@@ -142,7 +142,7 @@ for( $i=0; $i<$numToShow; $i++ ) {
                 }
 
             echo "<table border=0 width=100%><tr><td align=left>".
-                "[<a href=news.php?postID=$topic_id>Link</a>]</td>".
+                "[<a href=newsPage.php?postID=$topic_id>Link</a>]</td>".
                 "<td align=right>".
                 "[<a href=$commentLink>$commentLinkText</a>]".
                 "</td></tr></table>";
