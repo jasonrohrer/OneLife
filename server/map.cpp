@@ -1812,21 +1812,28 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
 void setMapObject( int inX, int inY, int inID ) {
     dbPut( inX, inY, 0, inID );
 
-    // disable any old decay
-    setEtaDecay( inX, inY, 0 );
+
+    // actually need to set decay here
+    // otherwise, if we wait until getObject, it will assume that
+    // this is a never-before-seen object and randomize the decay.
+    TransRecord *newDecayT = getTrans( -1, inID );
     
-    // don't set up new decay here
-    // only set it up on the next get
-    // (if no one is looking at the object currently, it doesn't decay)
-    // decay is only set up when someone looks at it
-    //
-    // NOTE that after setting a new map object, a get almost always follows
-    // so we have "decay setup on get only" to avoid duplicate decay setups
+    unsigned int mapETA = 0;
+    
+    if( newDecayT != NULL && newDecayT->autoDecaySeconds > 0 ) {
+        
+        mapETA = time(NULL) + newDecayT->autoDecaySeconds;
+        }
+    
+    setEtaDecay( inX, inY, mapETA );
 
-    // also, when chosing between setting up decay on a set and setting
-    // it up on a get, we have to chose get, because there are loads
+
+    // note that we also potentially set up decay for objects on get
+    // if they have no decay set already
+    // We do this because there are loads
     // of gets that have no set (for example, getting a map chunk)
-
+    // Those decay times get randomized to avoid lock-step in newly-seen
+    // objects
     
     if( inID > 0 ) {
 

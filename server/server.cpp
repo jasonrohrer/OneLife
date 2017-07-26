@@ -2678,7 +2678,7 @@ int main() {
 
     // defaults to one hour
     int epochSeconds = 
-        SettingsManager::getIntSetting( "epocSeconds", 3600 );
+        SettingsManager::getIntSetting( "epochSeconds", 3600 );
     
     setTransitionEpoch( epochSeconds );
     

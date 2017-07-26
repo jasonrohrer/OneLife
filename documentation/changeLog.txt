@@ -60,6 +60,11 @@ Server fixes:
   adjusted with a server setting globally instead of needing to edit all the
   transition times.
 
+--Fixed to avoid randomizing decay time of map objects that are set by players.
+  Naturally-occurring objects still have their decay times set randomly the
+  first time they are seen (to avoid lock-step with identical objects in the
+  same area).  Now fires burn the same duration every time, and ember-making
+  isn't so time-finicky.
 
 
 
