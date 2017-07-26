@@ -350,7 +350,7 @@ class LivingLifePage : public GamePage {
 
         // true if this map spot was something that our
         // player was responsible for placing
-        char *mMapOurPlayerPlacedFlags;
+        char *mMapPlayerPlacedFlags;
         
 
         int mMapOffsetX;

@@ -468,6 +468,10 @@ char checkSpriteAncestor( ObjectRecord *inRecord, int inChildIndex,
 int getMaxDiameter( ObjectRecord *inObject );
 
 
+// gets estimate of object height from cell center
+double getObjectHeight( int inObjectID );
+
+
 
 // picked layer can be -1 if nothing is picked
 double getClosestObjectPart( ObjectRecord *inObject,

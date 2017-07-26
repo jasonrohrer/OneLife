@@ -27,6 +27,14 @@ Version 29     ???
 
 --Fixed two memory leaks.
 
+--When mousing over something dropped behind another object, highlight now
+  shows through the blocking object.
+
+--Drop-behind mousability now applies to objects dropped by other players in
+  your vacinity, as well as objects changed (but not dropped).  It is limited
+  to objects that are less than one tile tall (to prevent annoying click-
+  through on trees that are behind other trees).
+
 
 
 
@@ -43,9 +51,6 @@ Server fixes:
 
 --Shrunk default Eve placement radius from 20 down to 2 so finding the camp is
   easier.
-
---When mousing over something dropped behind another object, highlight now
-  shows through the blocking object.
 
 
 

@@ -2628,6 +2628,33 @@ int getMaxDiameter( ObjectRecord *inObject ) {
 
 
 
+double getObjectHeight( int inObjectID ) {
+    ObjectRecord *o = getObject( inObjectID );
+    
+    if( o == NULL ) {
+        return 0;
+        }
+    
+    int maxH = 0;
+    
+    for( int i=0; i<o->numSprites; i++ ) {
+        doublePair pos = o->spritePos[i];
+                
+        int rad = getSpriteRecord( o->sprites[i] )->maxD / 2;
+        
+        double h = pos.y + rad;
+        
+        if( h > maxH ) {
+            maxH = h;
+            }
+        }
+
+    return maxH;
+    }
+
+
+
+
 double getClosestObjectPart( ObjectRecord *inObject,
                              ClothingSet *inClothing,
                              SimpleVector<int> *inContained,

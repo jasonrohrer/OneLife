@@ -1161,7 +1161,7 @@ LivingLifePage::LivingLifePage()
     mMapDropSounds = new SoundUsage[ mMapD * mMapD ];
     mMapTileFlips = new char[ mMapD * mMapD ];
     
-    mMapOurPlayerPlacedFlags = new char[ mMapD * mMapD ];
+    mMapPlayerPlacedFlags = new char[ mMapD * mMapD ];
     
 
     for( int i=0; i<mMapD *mMapD; i++ ) {
@@ -1187,7 +1187,7 @@ LivingLifePage::LivingLifePage()
         
         mMapTileFlips[i] = false;
         
-        mMapOurPlayerPlacedFlags[i] = false;
+        mMapPlayerPlacedFlags[i] = false;
         }
     
 
@@ -1306,7 +1306,7 @@ LivingLifePage::~LivingLifePage() {
 
     delete [] mMapCellDrawnFlags;
 
-    delete [] mMapOurPlayerPlacedFlags;
+    delete [] mMapPlayerPlacedFlags;
 
     delete [] nextActionMessageToSend;
 
@@ -5221,7 +5221,7 @@ void LivingLifePage::step() {
             SoundUsage *newMapDropSounds = new SoundUsage[ mMapD * mMapD ];
             char *newMapTileFlips= new char[ mMapD * mMapD ];
 
-            char *newMapOurPlayerPlacedFlags = new char[ mMapD * mMapD ];
+            char *newMapPlayerPlacedFlags = new char[ mMapD * mMapD ];
 
             
             for( int i=0; i<mMapD *mMapD; i++ ) {
@@ -5246,7 +5246,7 @@ void LivingLifePage::step() {
                 newMapDropOffsets[i].y = 0;
 
                 newMapTileFlips[i] = false;
-                newMapOurPlayerPlacedFlags[i] = false;
+                newMapPlayerPlacedFlags[i] = false;
                 
 
                 
@@ -5277,8 +5277,8 @@ void LivingLifePage::step() {
                     newMapDropSounds[i] = mMapDropSounds[oI];
 
                     newMapTileFlips[i] = mMapTileFlips[oI];
-                    newMapOurPlayerPlacedFlags[i] = 
-                        mMapOurPlayerPlacedFlags[oI];
+                    newMapPlayerPlacedFlags[i] = 
+                        mMapPlayerPlacedFlags[oI];
                     }
                 }
             
@@ -5311,7 +5311,7 @@ void LivingLifePage::step() {
             memcpy( mMapTileFlips, newMapTileFlips,
                     mMapD * mMapD * sizeof( char ) );
 
-            memcpy( mMapOurPlayerPlacedFlags, newMapOurPlayerPlacedFlags,
+            memcpy( mMapPlayerPlacedFlags, newMapPlayerPlacedFlags,
                     mMapD * mMapD * sizeof( char ) );
             
             delete [] newMap;
@@ -5327,7 +5327,7 @@ void LivingLifePage::step() {
             delete [] newMapDropSounds;
             delete [] newMapTileFlips;
             
-            delete [] newMapOurPlayerPlacedFlags;
+            delete [] newMapPlayerPlacedFlags;
             
             
 
@@ -5402,7 +5402,7 @@ void LivingLifePage::step() {
                             
                             if( mMap[mapI] != oldMapID ) {
                                 // our placement status cleared
-                                mMapOurPlayerPlacedFlags[mapI] = false;
+                                mMapPlayerPlacedFlags[mapI] = false;
                                 }
 
                             mMapContainedStacks[mapI].deleteAll();
@@ -5598,7 +5598,7 @@ void LivingLifePage::step() {
                             // no one dropped this
                             
                             // our placement status cleared
-                            mMapOurPlayerPlacedFlags[mapI] = false;
+                            mMapPlayerPlacedFlags[mapI] = false;
                             }
                         
 
@@ -5702,9 +5702,25 @@ void LivingLifePage::step() {
                                 responsiblePlayerObject = 
                                     getGameObject( responsiblePlayerID );
 
-                                mMapOurPlayerPlacedFlags[mapI] = 
-                                    ( responsiblePlayerID == ourID );
                                 }
+                            if( responsiblePlayerID != -1 &&
+                                responsiblePlayerID != 0 &&
+                                getObjectHeight( mMap[mapI] ) < CELL_D ) {
+                                
+                                // try flagging objects as through-mousable
+                                // for any change caused by a player,
+                                // as long as object is small enough
+                                mMapPlayerPlacedFlags[mapI] = true;
+                                }
+                            else if( getObjectHeight( mMap[mapI] ) >= CELL_D ) {
+                                // object that has become tall enough
+                                // that through-highlights feel strange
+                                mMapPlayerPlacedFlags[mapI] = false;
+                                }
+                            // don't forget placement flags for objects
+                            // that someone placed but have naturally changed,
+                            // but remain short
+                            
                             
                             
                             if( responsiblePlayerObject == NULL ||
@@ -8790,7 +8806,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
     if( clickDestMapY >= 0 && clickDestMapY < mMapD &&
         clickDestMapX >= 0 && clickDestMapX < mMapD
         &&
-        mMapOurPlayerPlacedFlags[ clickDestMapI ] ) {
+        mMapPlayerPlacedFlags[ clickDestMapI ] ) {
         
         // check this cell first
         
