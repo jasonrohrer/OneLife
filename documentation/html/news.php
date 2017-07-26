@@ -37,13 +37,24 @@ if( $numNewsPerPage < 1 ) {
     }
 
 
+$postID = news_requestFilter( "postID", "/[0-9]+/", -1 );
+
+$postSQL = "";
+
+if( $postID != -1 ) {
+    $postSQL = " and id=$postID ";
+    }
+
+
+    
+
 $numToSkip = ( $pageNumber - 1 ) * $numNewsPerPage;
 
 $numToGet = $numNewsPerPage + 1;
 
 
 $query = "select id, num_replies, first_post_id, subject from topics ".
-    "where forum_id=$forumID order by first_post_id desc ".
+    "where forum_id=$forumID $postSQL order by first_post_id desc ".
     "limit $numToSkip, $numToGet;";
 
 $result = mysql_query( $query );
@@ -130,7 +141,9 @@ for( $i=0; $i<$numToShow; $i++ ) {
                     "forums/viewtopic.php?id=$topic_id#p$firstReplyID";
                 }
 
-            echo "<table border=0 width=100%><tr><td align=right>".
+            echo "<table border=0 width=100%><tr><td align=left>".
+                "[<a href=news.php?postID=$topic_id>Link</a>]</td>".
+                "<td align=right>".
                 "[<a href=$commentLink>$commentLinkText</a>]".
                 "</td></tr></table>";
             
