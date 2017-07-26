@@ -70,7 +70,7 @@ EditorTransitionPage::EditorTransitionPage()
         : mAutoDecayTimeField( smallFont, 
                                0,  -170, 6,
                                false,
-                               "AutoDecay Seconds", "0123456789", NULL ),
+                               "AutoDecay Seconds", "-0123456789", NULL ),
           mLastUseCheckbox( -400, 0, 2 ),
           mActorMinUseFractionField( smallFont, 
                                      -290,  115, 4,
@@ -320,7 +320,7 @@ void EditorTransitionPage::checkIfSaveVisible() {
         // can be auto-decay
         mAutoDecayTimeField.setVisible( true );
 
-        if( mCurrentTransition.autoDecaySeconds > 0 ) {
+        if( mCurrentTransition.autoDecaySeconds != 0 ) {
             char *decayString =
                 autoSprintf( "%d", mCurrentTransition.autoDecaySeconds );
             
@@ -484,7 +484,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
 
         int actor = mCurrentTransition.actor;
         
-        if( decayTime > 0 ) {
+        if( decayTime != 0 ) {
             // signal auto-delay
             actor = -1;
             }
@@ -562,7 +562,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
 
         int actor = mCurrentTransition.actor;
         
-        if( decayTime > 0 ) {
+        if( decayTime != 0 ) {
             // signal auto-delay
             actor = -1;
             }
@@ -985,7 +985,16 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         pos.x -= 20;
         smallFont->drawString( "Last Use", pos, alignRight );
         }
+    
 
+    if( mAutoDecayTimeField.isVisible() && 
+        mAutoDecayTimeField.getInt() == -1 ) {
+        
+        doublePair pos = mAutoDecayTimeField.getPosition();
+        pos.x += 38;
+        smallFont->drawString( "(epoch)", pos, alignLeft );
+        }
+    
     }
 
 

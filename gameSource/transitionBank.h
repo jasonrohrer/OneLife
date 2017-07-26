@@ -18,7 +18,11 @@ typedef struct TransRecord {
 
         // if actor is -1 and autoDecaySeconds is non-zero
         // then target decays to newTarget automatically in autoDecaySeconds
+        // if -1, decays according to server epoch time setting
         int autoDecaySeconds;
+        
+        // flag that this decay time is epoch time
+        char epochAutoDecay;
 
         // specially flagged last-use transitions
         char lastUse;
@@ -108,8 +112,9 @@ char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit );
 
 // inActor can be 0 (this is the bare-hands action on the target)
 
-// inActor can be -1 if inAutoDecaySeconds > 0 and inNewActor is 0
-// (this signals an auto-decay from inTarget to inNewTarget after X seconds)
+// inActor can be -1 if inAutoDecaySeconds != 0 and inNewActor is 0
+// (this signals an auto-decay from inTarget to inNewTarget after X seconds
+//   or after server-epoch seconds if inAutoDecaySeconds = -1 )
 
 // inActor can be -2 if inNewActor is 0 and inTarget is not 0
 // (this signals default transition to execute on target when no other 
@@ -148,6 +153,15 @@ void printTrans( TransRecord *inTrans );
 #define UNREACHABLE 999999999
 
 int getObjectDepth( int inObjectID );
+
+
+
+// walks through all transitions and replaces any epoch-based autoDecay
+// transition times with inEpocSeconds
+// Intended to be called at server startup or when epoch time changes
+void setTransitionEpoch( int inEpocSeconds );
+
+
 
 
 #endif

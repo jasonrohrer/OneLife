@@ -2675,7 +2675,14 @@ int main() {
     while( initTransBankStep() < 1.0 );
     initTransBankFinish();
     
+
+    // defaults to one hour
+    int epochSeconds = 
+        SettingsManager::getIntSetting( "epocSeconds", 3600 );
     
+    setTransitionEpoch( epochSeconds );
+    
+
     initMap();
     
     

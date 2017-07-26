@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 29     ???
+Version 30     ???
 
 --Fixed UnixSource build process to not overwrite user's custom settings.
 
@@ -54,6 +54,11 @@ Server fixes:
 
 --Bad mother problem solved by not giving a mother more babies if they have
   already had more than 10 babies and all of them are already dead.
+
+--Support for server-wide epoch time that can be specified in auto-decay
+  transitions with an auto-decay value of -1.  Thus, the epoch time can be
+  adjusted with a server setting globally instead of needing to edit all the
+  transition times.
 
 
 

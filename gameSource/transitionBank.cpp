@@ -107,13 +107,18 @@ float initTransBankStep() {
                 int newActor = 0;
                 int newTarget = 0;
                 int autoDecaySeconds = 0;
+                char epochAutoDecay = false;
                 float actorMinUseFraction = 0.0f;
                 float targetMinUseFraction = 0.0f;
                 
                 sscanf( contents, "%d %d %d %f %f", 
                         &newActor, &newTarget, &autoDecaySeconds,
                         &actorMinUseFraction, &targetMinUseFraction );
-                            
+                
+                if( autoDecaySeconds == -1 ) {
+                    epochAutoDecay = true;
+                    }
+
                 TransRecord *r = new TransRecord;
                             
                 r->actor = actor;
@@ -121,6 +126,7 @@ float initTransBankStep() {
                 r->newActor = newActor;
                 r->newTarget = newTarget;
                 r->autoDecaySeconds = autoDecaySeconds;
+                r->epochAutoDecay = epochAutoDecay;
                 r->lastUse = lastUse;
 
                 r->actorMinUseFraction = actorMinUseFraction;
@@ -259,8 +265,6 @@ void initTransBankFinish() {
                     int target = tr->target;
                     int newActor = tr->newActor;
                     int newTarget = tr->newTarget;
-                    int autoDecaySeconds = tr->autoDecaySeconds;
-
                     
                     // plug object in to replace parent
                     if( actor == parentID ) {
@@ -279,7 +283,7 @@ void initTransBankFinish() {
                     // don't write to disk
                     addTrans( actor, target, newActor, newTarget,
                               false, 
-                              autoDecaySeconds, 
+                              tr->autoDecaySeconds,
                               tr->actorMinUseFraction,
                               tr->targetMinUseFraction, 
                               true );
@@ -948,7 +952,7 @@ char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit ) {
             continue;
             }
         
-        if( r->autoDecaySeconds > 0 ) {
+        if( r->autoDecaySeconds != 0 ) {
             // don't count auto decays
             continue;
             }
@@ -1053,6 +1057,8 @@ void addTrans( int inActor, int inTarget,
         t->newActor = inNewActor;
         t->newTarget = inNewTarget;
         t->autoDecaySeconds = inAutoDecaySeconds;
+        t->epochAutoDecay = ( inAutoDecaySeconds == -1 );
+        
         t->lastUse = inLastUse;
         t->actorMinUseFraction = inActorMinUseFraction;
         t->targetMinUseFraction = inTargetMinUseFraction;
@@ -1110,6 +1116,8 @@ void addTrans( int inActor, int inTarget,
             t->newActor = inNewActor;
             t->newTarget = inNewTarget;
             t->autoDecaySeconds = inAutoDecaySeconds;
+            t->epochAutoDecay = ( inAutoDecaySeconds == -1 );
+            
             t->actorMinUseFraction = inActorMinUseFraction;
             t->targetMinUseFraction = inTargetMinUseFraction;
             
@@ -1374,3 +1382,14 @@ int getObjectDepth( int inObjectID ) {
         }
     }
 
+
+
+void setTransitionEpoch( int inEpocSeconds ) {
+    for( int i=0; i<records.size(); i++ ) {
+        TransRecord *tr = records.getElementDirect(i);
+
+        if( tr->epochAutoDecay ) {
+            tr->autoDecaySeconds = inEpocSeconds;
+            }
+        }
+    }
