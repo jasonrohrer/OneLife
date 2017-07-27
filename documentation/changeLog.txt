@@ -67,6 +67,9 @@ Server fixes:
   same area).  Now fires burn the same duration every time, and ember-making
   isn't so time-finicky.
 
+--Fixed so you can put things back into a grave.
+
+
 
 
 Version 28     2017-July-21     

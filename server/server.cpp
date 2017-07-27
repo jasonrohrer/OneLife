@@ -2399,6 +2399,11 @@ static char addHeldToContainer( LiveObject *inPlayer,
     ObjectRecord *targetObj =
         getObject( target );
     
+    if( isGrave( target ) ) {
+        return false;
+        }
+    
+
     int slotSize =
         targetObj->slotSize;
     
