@@ -807,7 +807,7 @@ void EditorObjectPage::updateAgingPanel() {
         mDeathMarkerCheckbox.setToggled( false );
         mDeathMarkerCheckbox.setVisible( false );
 
-        mNumUsesField.setInt( 0 );
+        mNumUsesField.setInt( 1 );
         mNumUsesField.setVisible( false );
         mUseVanishCheckbox.setVisible( false );
         
@@ -1507,7 +1507,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         delete [] mCurrentObject.spriteUseVanish;
         mCurrentObject.spriteUseVanish = new char[ 0 ];
         
-        mNumUsesField.setInt( 0 );
+        mNumUsesField.setInt( 1 );
         mNumUsesField.setVisible( true );
 
 
