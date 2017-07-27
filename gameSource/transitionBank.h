@@ -26,6 +26,10 @@ typedef struct TransRecord {
 
         // specially flagged last-use transitions
         char lastUse;
+        
+        // true if this transition undoes a use
+        char reverseUse;
+        
 
         // defaults to 0, which means that any transition on thje main
         // object with numUses can apply to generated useDummy objects
@@ -126,6 +130,7 @@ char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit );
 void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget,
                char inLastUse,
+               char inReverseUse,
                int inAutoDecaySeconds,
                float inActorMinUseFraction,
                float inTargetMinUseFraction,

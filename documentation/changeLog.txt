@@ -39,6 +39,7 @@ Version 30     ???
 
 
 
+
 Server fixes:
 
 --Fixed glitch in reported baby food capacity when baby is fed.
@@ -68,6 +69,8 @@ Server fixes:
   isn't so time-finicky.
 
 --Fixed so you can put things back into a grave.
+
+--Support for reverse-use transitions (example:  putting clay back in clay pit).
 
 
 
