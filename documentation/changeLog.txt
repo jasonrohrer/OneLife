@@ -35,6 +35,7 @@ Version 30     ???
   to objects that are less than one tile tall (to prevent annoying click-
   through on trees that are behind other trees).
 
+--Fixed to play useDummy using target sounds (even though target changes).
 
 
 

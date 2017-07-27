@@ -6579,7 +6579,8 @@ void LivingLifePage::step() {
 
                             // check for special case where target
                             // of transition didn't change
-
+                            // or is a use dummy
+                            
                             TransRecord *tr = 
                                 getTrans( oldHeld, 
                                           heldTransitionSourceID );
@@ -6587,7 +6588,14 @@ void LivingLifePage::step() {
                             if( tr != NULL &&
                                 tr->newActor == existing->holdingID &&
                                 tr->target == heldTransitionSourceID &&
-                                tr->newTarget == tr->target ) {
+                                ( tr->newTarget == tr->target 
+                                  ||
+                                  ( getObject( tr->target ) != NULL
+                                    && getObject( tr->target )->isUseDummy ) 
+                                  ||
+                                  ( getObject( tr->newTarget ) != NULL
+                                    && getObject( tr->newTarget )->isUseDummy )
+                                  ) ) {
                                 
                                 // what about "using" sound
                                 // of the target of our transition?
