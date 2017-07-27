@@ -6591,10 +6591,18 @@ void LivingLifePage::step() {
                                 ( tr->newTarget == tr->target 
                                   ||
                                   ( getObject( tr->target ) != NULL
-                                    && getObject( tr->target )->isUseDummy ) 
+                                    && 
+                                    ( getObject( tr->target )->isUseDummy 
+                                      ||
+                                      getObject( tr->target )->numUses > 1 )
+                                    ) 
                                   ||
                                   ( getObject( tr->newTarget ) != NULL
-                                    && getObject( tr->newTarget )->isUseDummy )
+                                    && 
+                                    ( getObject( tr->newTarget )->isUseDummy
+                                      ||
+                                      getObject( tr->newTarget )->numUses > 1 )
+                                    )
                                   ) ) {
                                 
                                 // what about "using" sound
