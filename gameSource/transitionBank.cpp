@@ -648,9 +648,43 @@ void initTransBankFinish() {
                             }
                         
                         }
-                    
                     }
                 
+                
+                SimpleVector<TransRecord*> *prodTrans = getAllProduces( oID );
+                
+                int numProdTrans = prodTrans->size();
+
+                for( int t=0; t<numProdTrans; t++ ) {
+                    
+                    TransRecord *tr = prodTrans->getElementDirect( t );
+                    
+                    TransRecord newTrans = *tr;
+                    newTrans.lastUse = false;
+                    newTrans.reverseUse = false;
+                    newTrans.actorMinUseFraction = 0.0f;
+                    newTrans.targetMinUseFraction = 0.0f;
+                    
+                    if( tr->actor != oID &&
+                        tr->newActor == oID &&
+                        tr->reverseUse ) {
+                    
+                        newTrans.newActor = o->useDummyIDs[ 0 ];
+                        
+                        transToAdd.push_back( newTrans );
+                        }
+                    else if( tr->target != oID && 
+                             tr->newTarget == oID &&
+                             tr->reverseUse ) {
+                        
+                        newTrans.newTarget = o->useDummyIDs[ 0 ];
+                        
+                        transToAdd.push_back( newTrans );
+                        }
+                    }
+
+                
+
                 for( int t=0; t<transToDelete.size(); t++ ) {
                     TransRecord *tr = transToDelete.getElementDirect( t );
                     
@@ -926,6 +960,16 @@ SimpleVector<TransRecord*> *getAllUses( int inUsesID ) {
         }
 
     return &( usesMap[inUsesID] );
+    }
+
+
+
+SimpleVector<TransRecord*> *getAllProduces( int inProducesID ) {
+    if( inProducesID >= mapSize ) {
+        return NULL;
+        }
+
+    return &( producesMap[inProducesID] );
     }
 
 

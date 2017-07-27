@@ -96,6 +96,9 @@ TransRecord **searchProduces( int inProducesID,
 SimpleVector<TransRecord*> *getAllUses( int inUsesID );
 
 
+SimpleVector<TransRecord*> *getAllProduces( int inUsesID );
+
+
 
 // returns true if inPossibleAncestorID is an ancestor of inTargetID
 // (used to make an ancestor of inTargetID no more than inStepLimit steps
