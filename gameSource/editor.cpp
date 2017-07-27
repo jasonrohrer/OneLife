@@ -19,6 +19,10 @@ int versionNumber = 26;
 
 
 
+// for testing
+char fillAbstracts = false;
+
+
 
 
 #include "minorGems/util/SimpleVector.h"
@@ -1171,7 +1175,7 @@ void drawFrame( char inUpdate ) {
                         char rebuilding;
                         
                         int numObjects = 
-                            initObjectBankStart( &rebuilding, false );
+                            initObjectBankStart( &rebuilding, fillAbstracts );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase( 
@@ -1251,9 +1255,10 @@ void drawFrame( char inUpdate ) {
                         char rebuilding;
                         
                         int numTrans = 
-                            initTransBankStart( &rebuilding, 
-                                                false, false, false );
-                                                //true, true, true );
+                            initTransBankStart( &rebuilding,
+                                                fillAbstracts,
+                                                fillAbstracts,
+                                                fillAbstracts );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase( 

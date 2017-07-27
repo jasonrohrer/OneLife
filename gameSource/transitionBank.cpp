@@ -247,7 +247,8 @@ void initTransBankFinish() {
                         // check if an override trans exists for the object
                         // as actor
                         
-                        TransRecord *oTR = getTrans( oID, tr->target );
+                        TransRecord *oTR = getTrans( oID, tr->target, 
+                                                     tr->lastUse );
                         
                         if( oTR != NULL ) {
                             // skip this abstract terans
@@ -258,7 +259,8 @@ void initTransBankFinish() {
                         // check if an override trans exists for the object
                         // as target
                         
-                        TransRecord *oTR = getTrans( tr->actor, oID );
+                        TransRecord *oTR = getTrans( tr->actor, oID,
+                                                     tr->lastUse );
                         
                         if( oTR != NULL ) {
                             // skip this abstract terans
