@@ -990,6 +990,8 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         
         }
     
+    setDrawColor( 1, 1, 1, 1 );
+    
     if( mLastUseCheckbox.isVisible() ) {
         doublePair pos = mLastUseCheckbox.getPosition();
         pos.x -= 20;
