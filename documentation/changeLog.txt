@@ -68,7 +68,7 @@ Server fixes:
   same area).  Now fires burn the same duration every time, and ember-making
   isn't so time-finicky.
 
---Fixed so you can put things back into a grave.
+--Fixed so you cannot put things back into a grave.
 
 --Support for reverse-use transitions (example:  putting clay back in clay pit).
 
