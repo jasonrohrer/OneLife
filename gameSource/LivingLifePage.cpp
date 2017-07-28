@@ -5687,7 +5687,9 @@ void LivingLifePage::step() {
                                     &&
                                     ( ! obj->creationSoundInitialOnly
                                       ||
-                                      ! isSpriteSubset( old, newID ) ) ) {
+                                      ( ! isSpriteSubset( old, newID ) 
+                                        &&
+                                        ! isAncestor( old, newID, 1 ) ) ) ) {
                                     
                                     playSound( obj->creationSound,
                                                getVectorFromCamera( x, y ) );
@@ -6573,10 +6575,15 @@ void LivingLifePage::step() {
                                                 (! heldObj->
                                                  creationSoundInitialOnly
                                                  ||
-                                                 ! isSpriteSubset( 
+                                                 ( ! isSpriteSubset( 
                                                      testAncestor, 
-                                                     existing->holdingID ) 
-                                                 ) ){
+                                                     existing->holdingID )
+                                                   &&
+                                                   ! isAncestor(
+                                                       testAncestor,
+                                                       existing->holdingID,
+                                                       1 ) )
+                                                 ) ) {
 
                                                 playSound( 
                                                 heldObj->creationSound,
