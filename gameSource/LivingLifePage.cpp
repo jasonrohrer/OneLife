@@ -8947,7 +8947,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
     // start in front row
     // right to left
     // (check things that are in front first
-    for( int y=clickDestY-2; y<=clickDestY+1 && ! p->hit; y++ ) {
+    for( int y=clickDestY-3; y<=clickDestY+1 && ! p->hit; y++ ) {
         float clickOffsetY = ( clickDestY  - y ) * CELL_D + clickExtraY;
 
         // first all non drawn-behind map objects in this row

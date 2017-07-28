@@ -44,6 +44,10 @@ Version 30     ???
 --Support for use-appear sprites in addition to use-vanish sprites (example:
   wear marks on axe).
 
+--Fixed so that mouse highlighting works for objects that are three tiles
+  below mouse instead of just two.
+
+
 
 
 Server fixes:
