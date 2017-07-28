@@ -5651,9 +5651,24 @@ void LivingLifePage::step() {
                                 // make sure this is really a fresh creation
                                 // of newID, and not a cycling back around
                                 // for a reusable object
-                                if( ! obj->creationSoundInitialOnly
-                                    ||
-                                    ! isAncestor( old, newID, 3 ) ) {
+
+                                // also not useDummies that have the same
+                                // parent
+                                char sameParent = false;
+                                
+                                if( old > 0 && newID > 0 &&
+                                    obj->isUseDummy &&
+                                    getObject( old )->isUseDummy &&
+                                    obj->useDummyParent ==
+                                    getObject( old )->useDummyParent ) {
+                                    sameParent = true;
+                                    }
+                                
+                                if( ! sameParent 
+                                    &&
+                                    ( ! obj->creationSoundInitialOnly
+                                      ||
+                                      ! isAncestor( old, newID, 3 ) ) ) {
                                     
                                     playSound( obj->creationSound,
                                                getVectorFromCamera( x, y ) );
@@ -6493,15 +6508,32 @@ void LivingLifePage::step() {
                                             // Check ancestor chains for
                                             // objects that loop back to their
                                             // initial state.
+                                            
 
+                                            // also not useDummies that have 
+                                            // the same parent
+                                            char sameParent = false;
+                                
+                                            if( testAncestor > 0 && 
+                                                existing->holdingID > 0 &&
+                                                heldObj->isUseDummy &&
+                                                getObject( testAncestor )->
+                                                    isUseDummy &&
+                                                heldObj->useDummyParent ==
+                                                getObject( testAncestor )->
+                                                    useDummyParent ) {
+                                                sameParent = true;
+                                                }
 
-                                            if( ! heldObj->
-                                                creationSoundInitialOnly
-                                                ||
-                                                ! isAncestor( 
-                                                    testAncestor, 
-                                                    existing->holdingID, 
-                                                    3 ) ){
+                                            if( ! sameParent 
+                                                &&
+                                                (! heldObj->
+                                                 creationSoundInitialOnly
+                                                 ||
+                                                 ! isAncestor( 
+                                                     testAncestor, 
+                                                     existing->holdingID, 
+                                                     3 ) ) ){
 
                                                 playSound( 
                                                 heldObj->creationSound,

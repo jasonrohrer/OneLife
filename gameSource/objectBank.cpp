@@ -875,9 +875,6 @@ void initObjectBankFinish() {
                         // dummies set to 0 so we don't recursively make
                         // more dummies out of them
                         dummyO->numUses = 0;
-                        
-                        // don't play creation sound
-                        dummyO->creationSound = blankSoundUsage;
 
                         // used objects never occur naturally
                         dummyO->mapChance = 0;
