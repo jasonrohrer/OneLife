@@ -3412,7 +3412,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
     if( mMaleCheckbox.isVisible() ) {
         pos = mMaleCheckbox.getPosition();
-        pos.y += checkboxSep;
+        pos.y += checkboxSep + 5;
         smallFont->drawString( "Male", pos, alignCenter );
         }
 
