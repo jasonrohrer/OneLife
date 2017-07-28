@@ -80,7 +80,7 @@ EditorCategoryPage::EditorCategoryPage()
     addKeyClassDescription( &mKeyLegend, "Up/Down", "Change selection" );
     addKeyClassDescription( &mKeyLegend, "Pg Up/Down", "Change order" );
     addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger jumps" );
-    addKeyClassDescription( &mKeyLegend, "Bkspce", "Remv category" );
+    addKeyClassDescription( &mKeyLegend, "Bkspce", "Remv item" );
     }
 
 
