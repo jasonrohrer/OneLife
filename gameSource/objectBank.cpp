@@ -632,11 +632,13 @@ float initObjectBankStep() {
                 
                 r->numUses = 1;
                 r->spriteUseVanish = new char[ r->numSprites ];
+                r->spriteUseAppear = new char[ r->numSprites ];
                 r->useDummyIDs = NULL;
                 r->isUseDummy = false;
                 r->useDummyParent = 0;
                 
                 memset( r->spriteUseVanish, false, r->numSprites );
+                memset( r->spriteUseAppear, false, r->numSprites );
 
                 r->spriteSkipDrawing = new char[ r->numSprites ];
                 memset( r->spriteSkipDrawing, false, r->numSprites );
@@ -737,12 +739,21 @@ float initObjectBankStep() {
                             
                     next++;
                     
-                    if( next < numLines )
+                    if( next < numLines ) {
                         sparseCommaLineToBoolArray( "useVanishIndex", 
                                                     lines[next],
                                                     r->spriteUseVanish, 
                                                     r->numSprites );
-                    next++;
+                        next++;
+
+                        if( next < numLines ) {
+                            sparseCommaLineToBoolArray( "useAppearIndex", 
+                                                        lines[next],
+                                                        r->spriteUseAppear, 
+                                                        r->numSprites );
+                            next++;
+                            }
+                        }
                     }
                 
                 
@@ -846,12 +857,26 @@ void initObjectBankFinish() {
                     
                     int numVanishingSprites = 0;
                     
-                    SimpleVector<int> vaninishingIndices;
+                    SimpleVector<int> vanishingIndices;
                     
                     for( int s=0; s<o->numSprites; s++ ) {
                         if( o->spriteUseVanish[s] ) {
                             numVanishingSprites ++;
-                            vaninishingIndices.push_back( s );
+                            vanishingIndices.push_back( s );
+                            }
+                        }
+
+                    int numAppearingSprites = 0;
+                    
+                    SimpleVector<int> appearingIndices;
+                    
+                    for( int s=0; s<o->numSprites; s++ ) {
+                        if( o->spriteUseAppear[s] ) {
+                            numAppearingSprites ++;
+                            appearingIndices.push_back( s );
+
+                            // hide all appearing sprites in parent object
+                            o->spriteSkipDrawing[s] = true;
                             }
                         }
                     
@@ -881,6 +906,12 @@ void initObjectBankFinish() {
                         
                         dummyO->isUseDummy = true;
                         dummyO->useDummyParent = mainID;
+                        
+                        // keep all appear sprites turned off
+                        // unless we turn them on for this dummy
+                        memcpy( dummyO->spriteSkipDrawing,
+                                o->spriteSkipDrawing,
+                                o->numSprites );
                         
                         // copy anims too
                         for( int t=0; t<endAnimType; t++ ) {
@@ -926,8 +957,35 @@ void initObjectBankFinish() {
                              v<numVanishingSprites; v++ ) {
                             
                             dummyO->spriteSkipDrawing[
-                                vaninishingIndices.getElementDirect( v ) ] =
+                                vanishingIndices.getElementDirect( v ) ] =
                                 true;
+                            }
+
+
+                        // now handle appearing sprites
+                        int numInvisSpritesLeft = 
+                            ( d * (numAppearingSprites) ) / numUses;
+                        
+                        /*
+                          // testing... do we need to do this?
+                        int numInvisInLastDummy = numAppearingSprites / numUses;
+                        
+                        if( numInLastDummy == 0 ) {
+                            // add 1 to everything to pad up, so last
+                            // dummy has 1 sprite in it
+                            numSpritesLeft += 1;
+                            }
+                        */
+
+                        if( numInvisSpritesLeft > numAppearingSprites ) {
+                            numInvisSpritesLeft = numAppearingSprites;
+                            }
+                        for( int v=numInvisSpritesLeft; 
+                             v<numAppearingSprites; v++ ) {
+                            
+                            dummyO->spriteSkipDrawing[
+                                appearingIndices.getElementDirect( v ) ] =
+                                false;
                             }
                         }
                     }
@@ -986,6 +1044,7 @@ static void freeObjectRecord( int inID ) {
             delete [] idMap[inID]->spriteIsFrontFoot;
 
             delete [] idMap[inID]->spriteUseVanish;
+            delete [] idMap[inID]->spriteUseAppear;
             
             if( idMap[inID]->useDummyIDs != NULL ) {
                 delete [] idMap[inID]->useDummyIDs;
@@ -1045,6 +1104,7 @@ void freeObjectBank() {
             delete [] idMap[i]->spriteIsFrontFoot;
 
             delete [] idMap[i]->spriteUseVanish;
+            delete [] idMap[i]->spriteUseAppear;
             
             if( idMap[i]->useDummyIDs != NULL ) {
                 delete [] idMap[i]->useDummyIDs;
@@ -1136,6 +1196,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->spriteIsFrontFoot,
                         inObject->numUses,
                         inObject->spriteUseVanish,
+                        inObject->spriteUseAppear,
                         inNoWriteToFile,
                         inReplaceID );
 
@@ -1326,6 +1387,7 @@ int addObject( const char *inDescription,
                char *inSpriteIsFrontFoot,
                int inNumUses,
                char *inSpriteUseVanish,
+               char *inSpriteUseAppear,
                char inNoWriteToFile,
                int inReplaceID ) {
     
@@ -1525,6 +1587,10 @@ int addObject( const char *inDescription,
             boolArrayToSparseCommaString( "useVanishIndex",
                                           inSpriteUseVanish, 
                                           inNumSprites ) );
+        lines.push_back(
+            boolArrayToSparseCommaString( "useAppearIndex",
+                                          inSpriteUseAppear, 
+                                          inNumSprites ) );
         
 
         char **linesArray = lines.getElementArray();
@@ -1701,6 +1767,7 @@ int addObject( const char *inDescription,
 
     r->numUses = inNumUses;
     r->spriteUseVanish = new char[ inNumSprites ];
+    r->spriteUseAppear = new char[ inNumSprites ];
     
     r->useDummyIDs = NULL;
     r->isUseDummy = false;
@@ -1750,6 +1817,8 @@ int addObject( const char *inDescription,
 
 
     memcpy( r->spriteUseVanish, inSpriteUseVanish, 
+            inNumSprites * sizeof( char ) );
+    memcpy( r->spriteUseAppear, inSpriteUseAppear, 
             inNumSprites * sizeof( char ) );
     
 

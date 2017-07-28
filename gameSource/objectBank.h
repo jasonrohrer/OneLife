@@ -211,6 +211,11 @@ typedef struct ObjectRecord {
         // (example:  berries getting picked)
         char *spriteUseVanish;
         
+        // sprites that appear with use
+        // (example:  wear marks on an axe head)
+        char *spriteUseAppear;
+        
+
         // NULL unless we are auto-populating use dummy objects
         // then contains ( numUses - 1 ) ids for auto-generated dummy objects
         // with dummy_1 at index 0, dummy_2 at index 1, etc.
@@ -368,6 +373,7 @@ int addObject( const char *inDescription,
                char *inSpriteIsFrontFoot,
                int inNumUses,
                char *inSpriteUseVanish,
+               char *inSpriteUseAppear,
                char inNoWriteToFile = false,
                int inReplaceID = -1 );
 

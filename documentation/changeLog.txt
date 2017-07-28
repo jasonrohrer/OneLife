@@ -37,6 +37,12 @@ Version 30     ???
 
 --Fixed to play useDummy using target sounds (even though target changes).
 
+--Support for reverse-use transitions (example:  putting clay back in clay pit).
+
+--Distinction between lastUse transition for actor and target.
+
+--Support for use-appear sprites in addition to use-vanish sprites (example:
+  wear marks on axe).
 
 
 
@@ -69,10 +75,6 @@ Server fixes:
   isn't so time-finicky.
 
 --Fixed so you cannot put things back into a grave.
-
---Support for reverse-use transitions (example:  putting clay back in clay pit).
-
---Distinction between lastUse transition for actor and target.
 
 
 
