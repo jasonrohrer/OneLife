@@ -47,6 +47,10 @@ Version 30     2017-July-28
 --Fixed so that mouse highlighting works for objects that are three tiles
   below mouse instead of just two.
 
+--Fixed so that music doesn't drop out for sake of hunger sounds at very end
+  of old age life.  There are no audible hunger sounds to interrupt the music
+  at that point.
+
 
 
 

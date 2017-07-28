@@ -7922,7 +7922,14 @@ void LivingLifePage::step() {
 
                         mHungerSlipVisible = 0;
                         }
-                    else if( ourLiveObject->foodStore <= 3 ) {
+                    else if( ourLiveObject->foodStore <= 3 &&
+                             computeCurrentAge( ourLiveObject ) < 57 ) {
+                        
+                        // don't play hunger sounds at end of life
+                        // because it interrupts our end-of-life song
+                        // currently it's 2:37 long
+
+
                         // quiet music so hunger sound can be heard
                         setMusicLoudness( 0 );
                         mHungerSlipVisible = 2;
@@ -7951,9 +7958,12 @@ void LivingLifePage::step() {
                         mHungerSlipVisible = -1;
                         }
 
-                    if( ourLiveObject->foodStore > 3 ) {
+                    if( ourLiveObject->foodStore > 3 ||
+                        computeCurrentAge( ourLiveObject ) >= 57 ) {
                         // restore music
                         setMusicLoudness( musicLoudness );
+                        
+                        mPulseHungerSound = false;
                         }
                     
                     }
