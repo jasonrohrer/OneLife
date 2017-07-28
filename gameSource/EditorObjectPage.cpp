@@ -3418,7 +3418,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
     if( mDeathMarkerCheckbox.isVisible() ) {
         pos = mDeathMarkerCheckbox.getPosition();
-        pos.y += checkboxSep;
+        pos.y += checkboxSep + 5;
         smallFont->drawString( "Death", pos, alignCenter );
         }
 
@@ -4295,6 +4295,23 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
 
         mCurrentObject.spriteParent[mPickedObjectLayer] =
             mCurrentObject.spriteParent[layerToDupe];
+
+        
+        mCurrentObject.spriteInvisibleWhenHolding[mPickedObjectLayer] =
+            mCurrentObject.spriteInvisibleWhenHolding[layerToDupe];
+
+        mCurrentObject.spriteInvisibleWhenWorn[mPickedObjectLayer] =
+            mCurrentObject.spriteInvisibleWhenWorn[layerToDupe];
+
+        mCurrentObject.spriteBehindSlots[mPickedObjectLayer] =
+            mCurrentObject.spriteBehindSlots[layerToDupe];
+
+        mCurrentObject.spriteUseVanish[mPickedObjectLayer] =
+            mCurrentObject.spriteUseVanish[layerToDupe];
+
+        mCurrentObject.spriteUseAppear[mPickedObjectLayer] =
+            mCurrentObject.spriteUseAppear[layerToDupe];
+
         // don't dupe body part status
         }
     if( mPickedObjectLayer != -1 && inASCII == 8 ) {
