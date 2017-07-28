@@ -112,9 +112,8 @@ EditorObjectPage::EditorObjectPage()
           mImportEditorButton( mainFont, -210, 260, "Sprites" ),
           mTransEditorButton( mainFont, 210, 260, "Trans" ),
           mAnimEditorButton( mainFont, 330, 260, "Anim" ),
-          mMoreSlotsButton( smallFont, -260, -113, "More" ),
-          mLessSlotsButton( smallFont, -260, -163, "Less" ),
-
+          mMoreSlotsButton( smallFont, -280, -110, "More" ),
+          mLessSlotsButton( smallFont, -280, -166, "Less" ),
           mAgingLayerCheckbox( 290, -22, 2 ),
           mHeadLayerCheckbox( 290, 104, 2 ),
           mBodyLayerCheckbox( 290, 84, 2 ),
@@ -161,8 +160,8 @@ EditorObjectPage::EditorObjectPage()
           mSimUseSlider( smallFont, 220, 64, 2, 50, 20, 0, 10, "" ),
           mDemoClothesButton( smallFont, 300, 200, "Pos" ),
           mEndClothesDemoButton( smallFont, 300, 160, "XPos" ),
-          mDemoSlotsButton( smallFont, 250, 110, "Demo Slots" ),
-          mClearSlotsDemoButton( smallFont, 250, 64, "End Demo" ),
+          mDemoSlotsButton( smallFont, -200, -166, "Demo Slots" ),
+          mClearSlotsDemoButton( smallFont, -200, -212, "End Demo" ),
           mSetHeldPosButton( smallFont, 250, -32, "Held Pos" ),
           mEndSetHeldPosButton( smallFont, 240, -76, "End Held" ),
           mNextHeldDemoButton( smallFont, 312, -76, ">" ),
@@ -186,7 +185,7 @@ EditorObjectPage::EditorObjectPage()
           mValueSlider( smallFont, -90, -189, 2,
                         75, 20,
                         0, 1, "V" ),
-          mSlotVertCheckbox( -90, -157, 2 ),
+          mSlotVertCheckbox( -150, -138, 2 ),
           mCreationSoundWidget( smallFont, -300, -310 ),
           mUsingSoundWidget( smallFont, -50, -310 ),
           mEatingSoundWidget( smallFont, +200, -310 ),
@@ -3328,7 +3327,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
 
     setDrawColor( 1, 1, 1, 1 );
-    pos.x -= 200;
+    pos.x = mMoreSlotsButton.getPosition().x - 40;
     
     pos.y = 0.5 * ( mMoreSlotsButton.getPosition().y + 
                     mLessSlotsButton.getPosition().y );
