@@ -1275,6 +1275,20 @@ void addTrans( int inActor, int inTarget,
 
             File *transFile = transDir.getChildFile( fileName );
             
+
+
+            // clear old-style file, which may be lingering
+            char *oldFileName = getOldFileName( inActor, inTarget, 
+                                             inLastUseActor, inLastUseTarget );
+            
+
+            File *oldTransFile = transDir.getChildFile( oldFileName );
+            
+            oldTransFile->remove();
+            delete oldTransFile;
+            delete [] oldFileName;
+            
+
             int reverseUseActorFlag = 0;
             int reverseUseTargetFlag = 0;
             
