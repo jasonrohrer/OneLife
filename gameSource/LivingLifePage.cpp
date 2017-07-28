@@ -5645,6 +5645,17 @@ void LivingLifePage::step() {
                                     if( old < 0 ) {
                                         old = 0;
                                         }
+
+                                    if( old > 0 ) {
+                                        TransRecord *p = 
+                                            getTransProducing( old,
+                                                               newID );
+                                        
+                                        if( p != NULL && 
+                                            p->actor > 0 ) {
+                                            old = p->actor;
+                                            }
+                                        }
                                     }
                                 
 

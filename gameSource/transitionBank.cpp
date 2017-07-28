@@ -920,6 +920,38 @@ TransRecord *getTrans( int inActor, int inTarget, char inLastUseActor,
     }
 
 
+
+TransRecord *getTransProducing( int inNewActor, int inNewTarget ) {
+    int mapIndex = inNewTarget;
+    
+    if( mapIndex < 0 ) {
+        mapIndex = inNewActor;
+        }
+    
+    if( mapIndex < 0 ) {
+        return NULL;
+        }
+
+    if( mapIndex >= mapSize ) {
+        return NULL;
+        }
+    
+    int numRecords = producesMap[mapIndex].size();
+    
+    for( int i=0; i<numRecords; i++ ) {
+        
+        TransRecord *r = producesMap[mapIndex].getElementDirect(i);
+        
+        if( r->newActor == inNewActor && r->newTarget == inNewTarget ) {
+            return r;
+            }
+        }
+    
+    return NULL;
+    }
+
+
+
 static TransRecord **search( SimpleVector<TransRecord *> inMapToSearch[],
                              int inID, 
                              int inNumToSkip, 

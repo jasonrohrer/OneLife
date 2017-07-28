@@ -79,6 +79,13 @@ TransRecord *getTrans( int inActor, int inTarget,
                        char inLastUseTarget = false );
 
 
+// might not be unique
+// Returns first transition producing inNewActor and inNewTarget
+// returns NULL if no such trans exists
+TransRecord *getTransProducing( int inNewActor, int inNewTarget );
+
+
+
 // return array destroyed by caller, NULL if none found
 TransRecord **searchUses( int inUsesID, 
                           int inNumToSkip, 
