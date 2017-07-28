@@ -71,7 +71,8 @@ EditorTransitionPage::EditorTransitionPage()
                                0,  -170, 6,
                                false,
                                "AutoDecay Seconds", "-0123456789", NULL ),
-          mLastUseCheckbox( -400, 20, 2 ),
+          mLastUseActorCheckbox( -330, 75, 2 ),
+          mLastUseTargetCheckbox( 130, 75, 2 ),
           mReverseUseActorCheckbox( -330, -75, 2 ),
           mReverseUseTargetCheckbox( 130, -75, 2 ),
           mActorMinUseFractionField( smallFont, 
@@ -101,8 +102,11 @@ EditorTransitionPage::EditorTransitionPage()
     addComponent( &mAutoDecayTimeField );
     mAutoDecayTimeField.setVisible( false );
     
-    addComponent( &mLastUseCheckbox );
-    mLastUseCheckbox.addActionListener( this );
+    addComponent( &mLastUseActorCheckbox );
+    mLastUseActorCheckbox.addActionListener( this );
+
+    addComponent( &mLastUseTargetCheckbox );
+    mLastUseTargetCheckbox.addActionListener( this );
 
     addComponent( &mReverseUseActorCheckbox );
     mReverseUseActorCheckbox.addActionListener( this );
@@ -168,7 +172,8 @@ EditorTransitionPage::EditorTransitionPage()
     mCurrentTransition.newActor = 0;
     mCurrentTransition.newTarget = 0;
     mCurrentTransition.autoDecaySeconds = 0;
-    mCurrentTransition.lastUse = false;
+    mCurrentTransition.lastUseActor = false;
+    mCurrentTransition.lastUseTarget = false;
     mCurrentTransition.reverseUseActor = false;
     mCurrentTransition.reverseUseTarget = false;
     mCurrentTransition.actorMinUseFraction = 0;
@@ -313,7 +318,9 @@ void EditorTransitionPage::checkIfSaveVisible() {
     mDelButton.setVisible( delVis );
     mDelConfirmButton.setVisible( false );
 
-    mLastUseCheckbox.setToggled( mCurrentTransition.lastUse );
+    mLastUseActorCheckbox.setToggled( mCurrentTransition.lastUseActor );
+    mLastUseTargetCheckbox.setToggled( mCurrentTransition.lastUseTarget );
+    
     mReverseUseActorCheckbox.setToggled( mCurrentTransition.reverseUseActor );
     mReverseUseTargetCheckbox.setToggled( mCurrentTransition.reverseUseTarget );
 
@@ -551,7 +558,8 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                   target,
                   mCurrentTransition.newActor,
                   mCurrentTransition.newTarget,
-                  mCurrentTransition.lastUse,
+                  mCurrentTransition.lastUseActor,
+                  mCurrentTransition.lastUseTarget,
                   mCurrentTransition.reverseUseActor,
                   mCurrentTransition.reverseUseTarget,
                   decayTime,
@@ -611,7 +619,9 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             actor = -2;
             }
 
-        deleteTransFromBank( actor, target, mLastUseCheckbox.getToggled() );
+        deleteTransFromBank( actor, target, 
+                             mLastUseActorCheckbox.getToggled(),
+                             mLastUseTargetCheckbox.getToggled() );
                              
         for( int i=0; i<4; i++ ) {
             setObjectByIndex( &mCurrentTransition, i, 0 );
@@ -638,8 +648,11 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             }
         
         }
-    else if( inTarget == &mLastUseCheckbox ) {
-        mCurrentTransition.lastUse = mLastUseCheckbox.getToggled();
+    else if( inTarget == &mLastUseActorCheckbox ) {
+        mCurrentTransition.lastUseActor = mLastUseActorCheckbox.getToggled();
+        }
+    else if( inTarget == &mLastUseTargetCheckbox ) {
+        mCurrentTransition.lastUseTarget = mLastUseTargetCheckbox.getToggled();
         }
     else if( inTarget == &mReverseUseActorCheckbox ) {
         mCurrentTransition.reverseUseActor = 
@@ -1004,10 +1017,15 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
     
     setDrawColor( 1, 1, 1, 1 );
     
-    if( mLastUseCheckbox.isVisible() ) {
-        doublePair pos = mLastUseCheckbox.getPosition();
+    if( mLastUseActorCheckbox.isVisible() ) {
+        doublePair pos = mLastUseActorCheckbox.getPosition();
         pos.x -= 20;
         smallFont->drawString( "Last Use", pos, alignRight );
+        }
+    if( mLastUseTargetCheckbox.isVisible() ) {
+        doublePair pos = mLastUseTargetCheckbox.getPosition();
+        pos.x += 20;
+        smallFont->drawString( "Last Use", pos, alignLeft );
         }
 
     if( mReverseUseActorCheckbox.isVisible() ) {

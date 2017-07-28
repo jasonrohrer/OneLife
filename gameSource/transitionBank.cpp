@@ -87,16 +87,22 @@ float initTransBankStep() {
                     
         int actor = 0;
         int target = -2;
-        char lastUse = false;
+        char lastUseActor = false;
+        char lastUseTarget = false;
         
-        if( strstr( txtFileName, "_L" ) != NULL ) {
-            lastUse = true;
-            
-            sscanf( txtFileName, "%d_%d_L.txt", &actor, &target );
+        if( strstr( txtFileName, "_LA" ) != NULL ) {
+            lastUseActor = true;
             }
-        else {
-            sscanf( txtFileName, "%d_%d.txt", &actor, &target );
+        if( strstr( txtFileName, "_LT" ) != NULL ) {
+            lastUseTarget = true;
             }
+        else if( strstr( txtFileName, "_L." ) != NULL ) {
+            // old file name format
+            // _L means last use of target
+            lastUseTarget = true;
+            }
+        
+        sscanf( txtFileName, "%d_%d", &actor, &target );
         
         if(  target != -2 ) {
 
@@ -132,7 +138,8 @@ float initTransBankStep() {
                 r->newTarget = newTarget;
                 r->autoDecaySeconds = autoDecaySeconds;
                 r->epochAutoDecay = epochAutoDecay;
-                r->lastUse = lastUse;
+                r->lastUseActor = lastUseActor;
+                r->lastUseTarget = lastUseTarget;
 
                 r->reverseUseActor = false;
                 if( reverseUseActorFlag == 1 ) {
@@ -255,7 +262,8 @@ void initTransBankFinish() {
                         // as actor
                         
                         TransRecord *oTR = getTrans( oID, tr->target, 
-                                                     tr->lastUse );
+                                                     tr->lastUseActor,
+                                                     tr->lastUseTarget );
                         
                         if( oTR != NULL ) {
                             // skip this abstract terans
@@ -267,7 +275,8 @@ void initTransBankFinish() {
                         // as target
                         
                         TransRecord *oTR = getTrans( tr->actor, oID,
-                                                     tr->lastUse );
+                                                     tr->lastUseActor,
+                                                     tr->lastUseTarget );
                         
                         if( oTR != NULL ) {
                             // skip this abstract terans
@@ -299,7 +308,8 @@ void initTransBankFinish() {
                     
                     // don't write to disk
                     addTrans( actor, target, newActor, newTarget,
-                              tr->lastUse, 
+                              tr->lastUseActor,
+                              tr->lastUseTarget,
                               tr->reverseUseActor,
                               tr->reverseUseTarget,
                               tr->autoDecaySeconds,
@@ -355,8 +365,8 @@ void initTransBankFinish() {
                 
                 if( genericTrans != NULL && genericTrans->newTarget == 0 ) {
                     
-                    char lastUse = genericTrans->lastUse;
-
+                    char lastUseActor = genericTrans->lastUseActor;
+                    
                     numGenerics ++;
                     
 
@@ -371,12 +381,12 @@ void initTransBankFinish() {
                             
                             // self-to-self tool use
 
-                            if( lastUse ) {
+                            if( lastUseActor ) {
                                 // add a new one
 
                                 TransRecord newTrans = *tr;
                                 
-                                newTrans.lastUse = true;
+                                newTrans.lastUseActor = true;
 
                                 newTrans.newActor = genericTrans->newActor;
                                 
@@ -403,7 +413,8 @@ void initTransBankFinish() {
             
             addTrans( tr.actor, tr.target,
                       tr.newActor, tr.newTarget,
-                      tr.lastUse,
+                      tr.lastUseActor,
+                      tr.lastUseTarget,
                       tr.reverseUseActor,
                       tr.reverseUseTarget,
                       tr.autoDecaySeconds,
@@ -463,36 +474,39 @@ void initTransBankFinish() {
                     TransRecord *tr = obTransCopy.getElement( t );
                     
                     TransRecord newTrans = *tr;
-                    newTrans.lastUse = false;
+                    newTrans.lastUseActor = false;
+                    newTrans.lastUseTarget = false;
                     newTrans.reverseUseActor = false;
                     newTrans.reverseUseTarget = false;
                     newTrans.actorMinUseFraction = 0.0f;
                     newTrans.targetMinUseFraction = 0.0f;
                     
 
-                    if( tr->lastUse ) {
-                        if( tr->actor == oID ) {
+                    if( tr->lastUseActor 
+                        &&
+                        tr->actor == oID ) {
                             
-                            if( ! tr->reverseUseActor ) {    
-                                newTrans.actor = 
-                                    o->useDummyIDs[0]; 
-                                }
-                            
-                            transToAdd.push_back( newTrans );
-                            
-                            transToDelete.push_back( tr );
+                        if( ! tr->reverseUseActor ) {    
+                            newTrans.actor = 
+                                o->useDummyIDs[0]; 
                             }
-                        else if( tr->target == oID ) {
+                        
+                        transToAdd.push_back( newTrans );
+                        
+                        transToDelete.push_back( tr );
+                        }
+                    else if( tr->lastUseTarget 
+                             &&
+                             tr->target == oID ) {
                             
-                            if( ! tr->reverseUseTarget ) {
-                                newTrans.target = 
-                                    o->useDummyIDs[0];
-                                }
-                            
-                            transToAdd.push_back( newTrans );
-                            
-                            transToDelete.push_back( tr );
+                        if( ! tr->reverseUseTarget ) {
+                            newTrans.target = 
+                                o->useDummyIDs[0];
                             }
+                        
+                        transToAdd.push_back( newTrans );
+                        
+                        transToDelete.push_back( tr );
                         }
                     else if( tr->actor == oID &&
                              tr->newActor == oID ) {
@@ -677,7 +691,8 @@ void initTransBankFinish() {
                     TransRecord *tr = prodTrans->getElementDirect( t );
                     
                     TransRecord newTrans = *tr;
-                    newTrans.lastUse = false;
+                    newTrans.lastUseActor = false;
+                    newTrans.lastUseTarget = false;
                     newTrans.reverseUseActor = false;
                     newTrans.reverseUseTarget = false;
                     newTrans.actorMinUseFraction = 0.0f;
@@ -707,7 +722,8 @@ void initTransBankFinish() {
                     TransRecord *tr = transToDelete.getElementDirect( t );
                     
                     deleteTransFromBank( tr->actor, tr->target,
-                                         tr->lastUse,
+                                         tr->lastUseActor,
+                                         tr->lastUseTarget,
                                          true );
                     numRemoved++;
                     }
@@ -719,7 +735,8 @@ void initTransBankFinish() {
                               newTrans->target,
                               newTrans->newActor,
                               newTrans->newTarget,
-                              newTrans->lastUse,
+                              newTrans->lastUseActor,
+                              newTrans->lastUseTarget,
                               newTrans->reverseUseActor,
                               newTrans->reverseUseTarget,
                               newTrans->autoDecaySeconds,
@@ -870,7 +887,8 @@ void regenerateDepthMap() {
 
 
 
-TransRecord *getTrans( int inActor, int inTarget, char inLastUse ) {
+TransRecord *getTrans( int inActor, int inTarget, char inLastUseActor,
+                       char inLastUseTarget ) {
     int mapIndex = inTarget;
     
     if( mapIndex < 0 ) {
@@ -892,7 +910,8 @@ TransRecord *getTrans( int inActor, int inTarget, char inLastUse ) {
         TransRecord *r = usesMap[mapIndex].getElementDirect(i);
         
         if( r->actor == inActor && r->target == inTarget &&
-            r->lastUse == inLastUse ) {
+            r->lastUseActor == inLastUseActor &&
+            r->lastUseTarget == inLastUseTarget ) {
             return r;
             }
         }
@@ -1047,11 +1066,36 @@ char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit ) {
 
 
 
-static char *getFileName( int inActor, int inTarget, char inLastUse ) {
+static char *getFileName( int inActor, int inTarget, 
+                          char inLastUseActor, char inLastUseTarget ) {
     const char *lastUseString = "";
     
-    if( inLastUse ) {
+    if( inLastUseActor && ! inLastUseTarget ) {
+        lastUseString = "_LA";
+        }
+    else if( ! inLastUseActor && inLastUseTarget ) {
+        lastUseString = "_LT";
+        }
+    else if( inLastUseActor && inLastUseTarget ) {
+        lastUseString = "_LA_LT";
+        }
+    
+    return autoSprintf( "%d_%d%s.txt", inActor, inTarget, lastUseString );
+    }
+
+
+static char *getOldFileName( int inActor, int inTarget, 
+                             char inLastUseActor, char inLastUseTarget ) {
+    const char *lastUseString = "";
+    
+    if( inLastUseActor && ! inLastUseTarget ) {
+        lastUseString = "_LA";
+        }
+    else if( ! inLastUseActor && inLastUseTarget ) {
         lastUseString = "_L";
+        }
+    else if( inLastUseActor && inLastUseTarget ) {
+        lastUseString = "_LA_LT";
         }
     
     return autoSprintf( "%d_%d%s.txt", inActor, inTarget, lastUseString );
@@ -1061,7 +1105,8 @@ static char *getFileName( int inActor, int inTarget, char inLastUse ) {
 
 void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget,
-               char inLastUse,
+               char inLastUseActor,
+               char inLastUseTarget,
                char inReverseUseActor,
                char inReverseUseTarget,
                int inAutoDecaySeconds,
@@ -1112,7 +1157,8 @@ void addTrans( int inActor, int inTarget,
     
 
     // one exists?
-    TransRecord *t = getTrans( inActor, inTarget, inLastUse );
+    TransRecord *t = getTrans( inActor, inTarget, 
+                               inLastUseActor, inLastUseTarget );
     
     char writeToFile = false;
     
@@ -1127,7 +1173,9 @@ void addTrans( int inActor, int inTarget,
         t->autoDecaySeconds = inAutoDecaySeconds;
         t->epochAutoDecay = ( inAutoDecaySeconds == -1 );
         
-        t->lastUse = inLastUse;
+        t->lastUseActor = inLastUseActor;
+        t->lastUseTarget = inLastUseTarget;
+
         t->reverseUseActor = inReverseUseActor;
         t->reverseUseTarget = inReverseUseTarget;
         
@@ -1221,7 +1269,8 @@ void addTrans( int inActor, int inTarget,
         
         if( transDir.exists() && transDir.isDirectory() ) {
 
-            char *fileName = getFileName( inActor, inTarget, inLastUse );
+            char *fileName = getFileName( inActor, inTarget, 
+                                          inLastUseActor, inLastUseTarget );
             
 
             File *transFile = transDir.getChildFile( fileName );
@@ -1265,11 +1314,13 @@ void addTrans( int inActor, int inTarget,
 
 
 void deleteTransFromBank( int inActor, int inTarget,
-                          char inLastUse,
+                          char inLastUseActor,
+                          char inLastUseTarget,
                           char inNoWriteToFile ) {
     
     // one exists?
-    TransRecord *t = getTrans( inActor, inTarget, inLastUse );
+    TransRecord *t = getTrans( inActor, inTarget, 
+                               inLastUseActor, inLastUseTarget );
     
     if( t != NULL ) {
         
@@ -1278,9 +1329,16 @@ void deleteTransFromBank( int inActor, int inTarget,
             
             if( transDir.exists() && transDir.isDirectory() ) {
                 
-                char *fileName = getFileName( inActor, inTarget, inLastUse );
+                char *fileName = getFileName( inActor, inTarget, 
+                                              inLastUseActor,
+                                              inLastUseTarget );
+                
+                char *oldFileName = getOldFileName( inActor, inTarget, 
+                                                    inLastUseActor,
+                                                    inLastUseTarget );
                 
                 File *transFile = transDir.getChildFile( fileName );
+                File *oldTransFile = transDir.getChildFile( oldFileName );
                 
                 
                 File *cacheFile = transDir.getChildFile( "cache.fcz" );
@@ -1288,12 +1346,16 @@ void deleteTransFromBank( int inActor, int inTarget,
                 cacheFile->remove();
                 
                 delete cacheFile;
-                
-            
+
                 
                 transFile->remove();
                 delete transFile;
                 delete [] fileName;
+                
+
+                oldTransFile->remove();
+                delete oldTransFile;
+                delete [] oldFileName;
                 }
             }
         
@@ -1451,8 +1513,11 @@ void printTrans( TransRecord *inTrans ) {
             getObjName( inTrans->newActor ), 
             getObjName( inTrans->newTarget ) );
     
-    if( inTrans->lastUse ) {
-        printf( " (lastUse)" );
+    if( inTrans->lastUseActor ) {
+        printf( " (lastUseActor)" );
+        }
+    if( inTrans->lastUseTarget ) {
+        printf( " (lastUseTarget)" );
         }
     if( inTrans->reverseUseActor ) {
         printf( " (reverseUseActor)" );

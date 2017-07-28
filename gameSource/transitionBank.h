@@ -25,7 +25,8 @@ typedef struct TransRecord {
         char epochAutoDecay;
 
         // specially flagged last-use transitions
-        char lastUse;
+        char lastUseActor;
+        char lastUseTarget;
         
         // true if this transition undoes a use
         char reverseUseActor;
@@ -73,7 +74,9 @@ void freeTransBank();
 
 
 // returns NULL if no trans defined
-TransRecord *getTrans( int inActor, int inTarget, char inLastUse = false );
+TransRecord *getTrans( int inActor, int inTarget, 
+                       char inLastUseActor = false,
+                       char inLastUseTarget = false );
 
 
 // return array destroyed by caller, NULL if none found
@@ -133,7 +136,8 @@ char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit );
 // 0 for inNewActor or inNewTarget means actor or target consumed
 void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget,
-               char inLastUse,
+               char inLastUseActor,
+               char inLastUseTarget,
                char inReverseUseActor,
                char inReverseUseTarget,
                int inAutoDecaySeconds,
@@ -144,7 +148,8 @@ void addTrans( int inActor, int inTarget,
 
 
 void deleteTransFromBank( int inActor, int inTarget,
-                          char inLastUse,
+                          char inLastUseActor,
+                          char inLastUseTarget,
                           char inNoWriteToFile = false );
 
 
