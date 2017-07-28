@@ -3004,7 +3004,8 @@ void EditorObjectPage::drawSpriteLayers( doublePair inDrawOffset,
                 // skip this sprite, simulating vanish order
                 }
             else if( mSimUseSlider.isVisible() &&
-                mSimUseSlider.getValue() >= i &&
+                     mSimUseSlider.getHighValue() - 
+                     mSimUseSlider.getValue() <= i &&
                 mCurrentObject.spriteUseAppear[i]  ) {
                 // skip this sprite, simulating appear order
                 }

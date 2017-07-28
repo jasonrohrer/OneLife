@@ -980,8 +980,9 @@ void initObjectBankFinish() {
                         if( numInvisSpritesLeft > numAppearingSprites ) {
                             numInvisSpritesLeft = numAppearingSprites;
                             }
-                        for( int v=numInvisSpritesLeft; 
-                             v<numAppearingSprites; v++ ) {
+                        for( int v=0; 
+                             v<numAppearingSprites - numInvisSpritesLeft; 
+                             v++ ) {
                             
                             dummyO->spriteSkipDrawing[
                                 appearingIndices.getElementDirect( v ) ] =

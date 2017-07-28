@@ -32,6 +32,8 @@ class ValueSlider : public PageComponent, public ActionListenerList,
 
         void setHighValue( double inHighValue );
         
+        double getHighValue();
+        
 
         char isPointerDown();
         

@@ -58,6 +58,12 @@ void ValueSlider::setHighValue( double inHighValue ) {
 
 
 
+double ValueSlider::getHighValue() {
+    return mHighValue;
+    }
+
+
+
 double ValueSlider::getValue() {
     return mValue;
     }
