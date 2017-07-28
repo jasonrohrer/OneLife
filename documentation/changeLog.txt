@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 30     ???
+Version 30     2017-July-28
 
 --Fixed UnixSource build process to not overwrite user's custom settings.
 
