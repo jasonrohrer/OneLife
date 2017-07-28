@@ -3347,6 +3347,61 @@ int getMaxWideRadius() {
     return maxWideRadius;
     }
 
+
+
+char isSpriteSubset( int inSuperObjectID, int inSubObjectID ) {
+    ObjectRecord *superO = getObject( inSuperObjectID );
+    ObjectRecord *subO = getObject( inSubObjectID );
+    
+    if( superO == NULL || subO == NULL ) {
+        return false;
+        }
+    
+    for( int s=0; s<subO->numSprites; s++ ) {
+        int spriteID = subO->sprites[s];
+        
+        doublePair spritePos = subO->spritePos[s];
+
+        double spriteRot = subO->spriteRot[s];
+        
+        char spriteHFlip = subO->spriteHFlip[s];
+
+        FloatRGB spriteColor = subO->spriteColor[s];
+
+        char found = false;
+        
+        for( int ss=0; ss<superO->numSprites; ss++ ) {
+            if( superO->sprites[ ss ] == spriteID &&
+                equal( superO->spritePos[ ss ], spritePos ) &&
+                superO->spriteRot[ ss ] == spriteRot &&
+                superO->spriteHFlip[ ss ] == spriteHFlip &&
+                equal( superO->spriteColor[ ss ], spriteColor ) ) {
+                
+
+                found = true;
+                break;
+                }
+            }
+
+        if( !found ) {
+            return false;
+            }
+        }
+    
+    return true;
+    }
+
+
+
+
+char equal( FloatRGB inA, FloatRGB inB ) {
+    return 
+        inA.r == inB.r &&
+        inA.g == inB.g &&
+        inA.b == inB.b;
+    }
+
+        
     
 
 

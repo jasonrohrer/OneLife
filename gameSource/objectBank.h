@@ -11,6 +11,9 @@ typedef struct FloatRGB {
     } FloatRGB;
 
 
+char equal( FloatRGB inA, FloatRGB inB );
+
+
 #include "SoundUsage.h"
 
 
@@ -548,6 +551,10 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject );
 
 // gets the largest possible radius of all wide objects
 int getMaxWideRadius();
+
+
+// returns true if inSubObjectID's sprites are all part of inSubObjectID
+char isSpriteSubset( int inSuperObjectID, int inSubObjectID );
 
 
 #endif

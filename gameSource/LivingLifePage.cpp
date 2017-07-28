@@ -5656,19 +5656,38 @@ void LivingLifePage::step() {
                                 // parent
                                 char sameParent = false;
                                 
-                                if( old > 0 && newID > 0 &&
-                                    obj->isUseDummy &&
-                                    getObject( old )->isUseDummy &&
-                                    obj->useDummyParent ==
-                                    getObject( old )->useDummyParent ) {
-                                    sameParent = true;
+                                if( old > 0 && newID > 0 ) {
+                                    ObjectRecord *oldObj = getObject( old );
+
+                                    if( obj->isUseDummy &&
+                                        oldObj->isUseDummy &&
+                                        obj->useDummyParent ==
+                                        oldObj->useDummyParent ) {
+                                        sameParent = true;
+                                        }
+                                    else if( obj->numUses > 1 
+                                             &&
+                                             oldObj->isUseDummy 
+                                             &&
+                                             oldObj->useDummyParent
+                                             == newID ) {
+                                        sameParent = true;
+                                        }
+                                    else if( oldObj->numUses > 1 
+                                             &&
+                                             obj->isUseDummy 
+                                             &&
+                                             obj->useDummyParent
+                                             == old ) {
+                                        sameParent = true;
+                                        }
                                     }
                                 
                                 if( ! sameParent 
                                     &&
                                     ( ! obj->creationSoundInitialOnly
                                       ||
-                                      ! isAncestor( old, newID, 3 ) ) ) {
+                                      ! isSpriteSubset( old, newID ) ) ) {
                                     
                                     playSound( obj->creationSound,
                                                getVectorFromCamera( x, y ) );
@@ -6515,25 +6534,49 @@ void LivingLifePage::step() {
                                             char sameParent = false;
                                 
                                             if( testAncestor > 0 && 
-                                                existing->holdingID > 0 &&
-                                                heldObj->isUseDummy &&
-                                                getObject( testAncestor )->
-                                                    isUseDummy &&
-                                                heldObj->useDummyParent ==
-                                                getObject( testAncestor )->
-                                                    useDummyParent ) {
-                                                sameParent = true;
+                                                existing->holdingID > 0 ) {
+                                                
+                                                int holdID =
+                                                    existing->holdingID;
+                                                
+                                                ObjectRecord *ancObj =
+                                                    getObject( testAncestor );
+                                                
+
+                                                if( heldObj->isUseDummy &&
+                                                    ancObj->isUseDummy &&
+                                                    heldObj->useDummyParent ==
+                                                    ancObj->useDummyParent ) {
+                                                    sameParent = true;
+                                                    }
+                                                else if( heldObj->numUses > 1 
+                                                         &&
+                                                         ancObj->isUseDummy 
+                                                         &&
+                                                         ancObj->useDummyParent
+                                                         == holdID ) {
+                                                    sameParent = true;
+                                                    }
+                                                else if( ancObj->numUses > 1 
+                                                         &&
+                                                         heldObj->isUseDummy 
+                                                         &&
+                                                         heldObj->useDummyParent
+                                                         == testAncestor ) {
+                                                    sameParent = true;
+                                                    }
                                                 }
+                                                
 
                                             if( ! sameParent 
                                                 &&
                                                 (! heldObj->
                                                  creationSoundInitialOnly
                                                  ||
-                                                 ! isAncestor( 
+                                                 ! isSpriteSubset( 
                                                      testAncestor, 
-                                                     existing->holdingID, 
-                                                     3 ) ) ){
+                                                     existing->holdingID ) 
+                                                 ) ){
 
                                                 playSound( 
                                                 heldObj->creationSound,
