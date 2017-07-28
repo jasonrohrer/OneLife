@@ -28,7 +28,8 @@ typedef struct TransRecord {
         char lastUse;
         
         // true if this transition undoes a use
-        char reverseUse;
+        char reverseUseActor;
+        char reverseUseTarget;
         
 
         // defaults to 0, which means that any transition on thje main
@@ -133,7 +134,8 @@ char isAncestor( int inTargetID, int inPossibleAncestorID, int inStepLimit );
 void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget,
                char inLastUse,
-               char inReverseUse,
+               char inReverseUseActor,
+               char inReverseUseTarget,
                int inAutoDecaySeconds,
                float inActorMinUseFraction,
                float inTargetMinUseFraction,

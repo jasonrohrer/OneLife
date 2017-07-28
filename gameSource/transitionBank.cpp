@@ -111,12 +111,14 @@ float initTransBankStep() {
                 float actorMinUseFraction = 0.0f;
                 float targetMinUseFraction = 0.0f;
                 
-                int reverseUseFlag = 0;
+                int reverseUseActorFlag = 0;
+                int reverseUseTargetFlag = 0;
 
-                sscanf( contents, "%d %d %d %f %f %d", 
+                sscanf( contents, "%d %d %d %f %f %d %d", 
                         &newActor, &newTarget, &autoDecaySeconds,
                         &actorMinUseFraction, &targetMinUseFraction,
-                        &reverseUseFlag );
+                        &reverseUseActorFlag,
+                        &reverseUseTargetFlag );
                 
                 if( autoDecaySeconds == -1 ) {
                     epochAutoDecay = true;
@@ -132,9 +134,14 @@ float initTransBankStep() {
                 r->epochAutoDecay = epochAutoDecay;
                 r->lastUse = lastUse;
 
-                r->reverseUse = false;
-                if( reverseUseFlag == 1 ) {
-                    r->reverseUse = true;
+                r->reverseUseActor = false;
+                if( reverseUseActorFlag == 1 ) {
+                    r->reverseUseActor = true;
+                    }
+
+                r->reverseUseTarget = false;
+                if( reverseUseTargetFlag == 1 ) {
+                    r->reverseUseTarget = true;
                     }
                 
                 r->actorMinUseFraction = actorMinUseFraction;
@@ -293,7 +300,8 @@ void initTransBankFinish() {
                     // don't write to disk
                     addTrans( actor, target, newActor, newTarget,
                               tr->lastUse, 
-                              tr->reverseUse,
+                              tr->reverseUseActor,
+                              tr->reverseUseTarget,
                               tr->autoDecaySeconds,
                               tr->actorMinUseFraction,
                               tr->targetMinUseFraction, 
@@ -396,7 +404,8 @@ void initTransBankFinish() {
             addTrans( tr.actor, tr.target,
                       tr.newActor, tr.newTarget,
                       tr.lastUse,
-                      tr.reverseUse,
+                      tr.reverseUseActor,
+                      tr.reverseUseTarget,
                       tr.autoDecaySeconds,
                       tr.actorMinUseFraction,
                       tr.targetMinUseFraction,
@@ -455,7 +464,8 @@ void initTransBankFinish() {
                     
                     TransRecord newTrans = *tr;
                     newTrans.lastUse = false;
-                    newTrans.reverseUse = false;
+                    newTrans.reverseUseActor = false;
+                    newTrans.reverseUseTarget = false;
                     newTrans.actorMinUseFraction = 0.0f;
                     newTrans.targetMinUseFraction = 0.0f;
                     
@@ -463,7 +473,7 @@ void initTransBankFinish() {
                     if( tr->lastUse ) {
                         if( tr->actor == oID ) {
                             
-                            if( ! tr->reverseUse ) {    
+                            if( ! tr->reverseUseActor ) {    
                                 newTrans.actor = 
                                     o->useDummyIDs[0]; 
                                 }
@@ -474,7 +484,7 @@ void initTransBankFinish() {
                             }
                         else if( tr->target == oID ) {
                             
-                            if( ! tr->reverseUse ) {
+                            if( ! tr->reverseUseTarget ) {
                                 newTrans.target = 
                                     o->useDummyIDs[0];
                                 }
@@ -495,7 +505,7 @@ void initTransBankFinish() {
                                 
                                 TransRecord newTransD = newTrans;
 
-                                if( tr->reverseUse ) {
+                                if( tr->reverseUseActor ) {
                                     newTransD.actor = o->useDummyIDs[ u ];
                                     newTransD.newActor = 
                                         o->useDummyIDs[ u + 1 ];
@@ -513,7 +523,7 @@ void initTransBankFinish() {
                         
                         if( useFraction >= tr->actorMinUseFraction ) {
                             
-                            if( tr->reverseUse ) {
+                            if( tr->reverseUseActor ) {
                                 newTrans.actor = 
                                     o->useDummyIDs[ o->numUses - 2 ];
                                 newTrans.newActor = oID;
@@ -546,7 +556,7 @@ void initTransBankFinish() {
                                     // back to parent object
                                     newTransD.target = o->useDummyIDs[ u ];
                                     }
-                                else if( tr->reverseUse ) {
+                                else if( tr->reverseUseTarget ) {
                                     newTransD.target = o->useDummyIDs[ u ];
                                     newTransD.newTarget = 
                                         o->useDummyIDs[ u + 1 ];
@@ -566,7 +576,7 @@ void initTransBankFinish() {
                         
                         if( useFraction >= tr->targetMinUseFraction ) {
                             
-                            if( tr->reverseUse ) {        
+                            if( tr->reverseUseTarget ) {        
                                 newTrans.target =
                                     o->useDummyIDs[ o->numUses - 2 ];
                                 newTrans.newTarget = oID;
@@ -668,13 +678,14 @@ void initTransBankFinish() {
                     
                     TransRecord newTrans = *tr;
                     newTrans.lastUse = false;
-                    newTrans.reverseUse = false;
+                    newTrans.reverseUseActor = false;
+                    newTrans.reverseUseTarget = false;
                     newTrans.actorMinUseFraction = 0.0f;
                     newTrans.targetMinUseFraction = 0.0f;
                     
                     if( tr->actor != oID &&
                         tr->newActor == oID &&
-                        tr->reverseUse ) {
+                        tr->reverseUseActor ) {
                     
                         newTrans.newActor = o->useDummyIDs[ 0 ];
                         
@@ -682,7 +693,7 @@ void initTransBankFinish() {
                         }
                     else if( tr->target != oID && 
                              tr->newTarget == oID &&
-                             tr->reverseUse ) {
+                             tr->reverseUseTarget ) {
                         
                         newTrans.newTarget = o->useDummyIDs[ 0 ];
                         
@@ -709,7 +720,8 @@ void initTransBankFinish() {
                               newTrans->newActor,
                               newTrans->newTarget,
                               newTrans->lastUse,
-                              newTrans->reverseUse,
+                              newTrans->reverseUseActor,
+                              newTrans->reverseUseTarget,
                               newTrans->autoDecaySeconds,
                               newTrans->actorMinUseFraction,
                               newTrans->targetMinUseFraction,
@@ -1050,7 +1062,8 @@ static char *getFileName( int inActor, int inTarget, char inLastUse ) {
 void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget,
                char inLastUse,
-               char inReverseUse,
+               char inReverseUseActor,
+               char inReverseUseTarget,
                int inAutoDecaySeconds,
                float inActorMinUseFraction,
                float inTargetMinUseFraction,
@@ -1115,7 +1128,8 @@ void addTrans( int inActor, int inTarget,
         t->epochAutoDecay = ( inAutoDecaySeconds == -1 );
         
         t->lastUse = inLastUse;
-        t->reverseUse = inReverseUse;
+        t->reverseUseActor = inReverseUseActor;
+        t->reverseUseTarget = inReverseUseTarget;
         
         t->actorMinUseFraction = inActorMinUseFraction;
         t->targetMinUseFraction = inTargetMinUseFraction;
@@ -1153,7 +1167,8 @@ void addTrans( int inActor, int inTarget,
             t->autoDecaySeconds == inAutoDecaySeconds &&
             t->actorMinUseFraction == inActorMinUseFraction &&
             t->targetMinUseFraction == inTargetMinUseFraction &&
-            t->reverseUse == inReverseUse ) {
+            t->reverseUseActor == inReverseUseActor &&
+            t->reverseUseTarget == inReverseUseTarget ) {
             
             // no change to produces map either... 
 
@@ -1176,7 +1191,8 @@ void addTrans( int inActor, int inTarget,
             t->autoDecaySeconds = inAutoDecaySeconds;
             t->epochAutoDecay = ( inAutoDecaySeconds == -1 );
 
-            t->reverseUse = inReverseUse;
+            t->reverseUseActor = inReverseUseActor;
+            t->reverseUseTarget = inReverseUseTarget;
             
             t->actorMinUseFraction = inActorMinUseFraction;
             t->targetMinUseFraction = inTargetMinUseFraction;
@@ -1210,18 +1226,23 @@ void addTrans( int inActor, int inTarget,
 
             File *transFile = transDir.getChildFile( fileName );
             
-            int reverseUseFlag = 0;
+            int reverseUseActorFlag = 0;
+            int reverseUseTargetFlag = 0;
             
-            if( inReverseUse ) {
-                reverseUseFlag = 1;
+            if( inReverseUseActor ) {
+                reverseUseActorFlag = 1;
+                }
+            if( inReverseUseTarget ) {
+                reverseUseTargetFlag = 1;
                 }
 
-            char *fileContents = autoSprintf( "%d %d %d %f %f %d", 
+            char *fileContents = autoSprintf( "%d %d %d %f %f %d %d", 
                                               inNewActor, inNewTarget,
                                               inAutoDecaySeconds,
                                               inActorMinUseFraction,
                                               inTargetMinUseFraction,
-                                              reverseUseFlag );
+                                              reverseUseActorFlag,
+                                              reverseUseTargetFlag );
 
         
             File *cacheFile = transDir.getChildFile( "cache.fcz" );
@@ -1433,8 +1454,11 @@ void printTrans( TransRecord *inTrans ) {
     if( inTrans->lastUse ) {
         printf( " (lastUse)" );
         }
-    if( inTrans->reverseUse ) {
-        printf( " (reverseUse)" );
+    if( inTrans->reverseUseActor ) {
+        printf( " (reverseUseActor)" );
+        }
+    if( inTrans->reverseUseTarget ) {
+        printf( " (reverseUseTarget)" );
         }
     
     printf( "\n" );
