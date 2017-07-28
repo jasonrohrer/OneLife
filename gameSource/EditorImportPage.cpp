@@ -35,6 +35,10 @@ extern EditorObjectPage *objectPage;
 #include "zoomView.h"
 
 
+// label distance from checkboxes
+static int checkboxSep = 12;
+
+
 EditorImportPage::EditorImportPage()
         : mImportButton( smallFont, +170, 280, "Sprite Import" ),
           mImportLinesButton( smallFont, +170, 240, "Lines Import" ),
@@ -1104,7 +1108,7 @@ void EditorImportPage::draw( doublePair inViewCenter,
 
     setDrawColor( 1, 1, 1, 1 );
     doublePair pos = mSolidCheckbox.getPosition();
-    pos.x -= 20;
+    pos.x -= checkboxSep;
     smallFont->drawString( "Solid", pos, alignRight );
 
 

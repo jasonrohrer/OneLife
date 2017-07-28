@@ -16,6 +16,9 @@
 #include "message.h"
 
 
+// label distance from checkboxes
+static int checkboxSep = 12;
+
 
 
 static int getObjectByIndex( TransRecord *inRecord, int inIndex ) {
@@ -1019,24 +1022,24 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
     
     if( mLastUseActorCheckbox.isVisible() ) {
         doublePair pos = mLastUseActorCheckbox.getPosition();
-        pos.x -= 20;
+        pos.x -= checkboxSep;
         smallFont->drawString( "Last Use", pos, alignRight );
         }
     if( mLastUseTargetCheckbox.isVisible() ) {
         doublePair pos = mLastUseTargetCheckbox.getPosition();
-        pos.x += 20;
+        pos.x += checkboxSep;
         smallFont->drawString( "Last Use", pos, alignLeft );
         }
 
     if( mReverseUseActorCheckbox.isVisible() ) {
         doublePair pos = mReverseUseActorCheckbox.getPosition();
-        pos.x -= 20;
+        pos.x -= checkboxSep;
         smallFont->drawString( "Reverse Use", pos, alignRight );
         }
 
     if( mReverseUseTargetCheckbox.isVisible() ) {
         doublePair pos = mReverseUseTargetCheckbox.getPosition();
-        pos.x += 20;
+        pos.x += checkboxSep;
         smallFont->drawString( "Reverse Use", pos, alignLeft );
         }
     
