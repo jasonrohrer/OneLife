@@ -9730,7 +9730,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         return;
                         }
                     else {
-                        // too far away, but try to kill later,
+                        // too far away, but try to use on baby later,
                         // once we walk there, using standard path-to-adjacent
                         // code below
                         useOnBabyLater = true;

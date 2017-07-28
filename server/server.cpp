@@ -1856,7 +1856,9 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
 
 
 
-static LiveObject *getHitPlayer( int inX, int inY, int inMaxAge = -1,
+static LiveObject *getHitPlayer( int inX, int inY, 
+                                 int inMaxAge = -1,
+                                 int inMinAge = -1,
                                  int *outHitIndex = NULL ) {
     GridPos targetPos = { inX, inY };
 
@@ -1874,6 +1876,11 @@ static LiveObject *getHitPlayer( int inX, int inY, int inMaxAge = -1,
 
         if( inMaxAge != -1 &&
             computeAge( otherPlayer ) > inMaxAge ) {
+            continue;
+            }
+
+        if( inMinAge != -1 &&
+            computeAge( otherPlayer ) < inMinAge ) {
             continue;
             }
 
@@ -4543,11 +4550,20 @@ int main() {
                                 else if( m.x < nextPlayer->xd ) {
                                     nextPlayer->facingOverride = -1;
                                     }
-
+                                
+                                // try click on baby
                                 int hitIndex;
                                 LiveObject *hitPlayer = 
-                                    getHitPlayer( m.x, m.y, 5, &hitIndex );
+                                    getHitPlayer( m.x, m.y, 5, -1 &hitIndex );
                                 
+                                if( hitPlayer == NULL ||
+                                    hitPlayer == nextPlayer ) {
+                                    // try click on elderly
+                                    hitPlayer = 
+                                        getHitPlayer( m.x, m.y, -1, 
+                                                      55, &hitIndex );
+                                    }
+
                                 if( hitPlayer != NULL &&
                                     hitPlayer != nextPlayer ) {
                                     

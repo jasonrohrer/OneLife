@@ -352,7 +352,7 @@ BABY is special case of USE action taken on a baby to pick them up.
      They are dropped with the normal DROP action.
 
 UBABY is a special case of SELF applied to a baby (to feed baby food
-	  or add/remove clothing from baby).
+	  or add/remove clothing from baby).  Also works on elderly.
 
 REMV is special case of removing an object from a container.
      i specifies the index of the container item to remove, or -1 to

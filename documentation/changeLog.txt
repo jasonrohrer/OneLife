@@ -51,6 +51,9 @@ Version 30     2017-July-28
   of old age life.  There are no audible hunger sounds to interrupt the music
   at that point.
 
+--You can now feed/cloth the elderly (over age 55) just like you can for a
+  baby (under age 5).
+
 
 
 
