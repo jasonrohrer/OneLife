@@ -140,8 +140,8 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 
 		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion objects/ -X objects/nextObjectNumber.txt | grep "R " | sed 's/R //')
 
-		# back to latest
-		hg update
+		# back to newer
+		hg update OneLife_v$newerVersion
 		
 
 		echo "$removedObjCount removed objects in report for v$newerVersion"
@@ -271,8 +271,8 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 
 		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion transitions/ | grep "R " | sed 's/R //')
 
-		# back to latest
-		hg update
+		# back to newer
+		hg update OneLife_v$newerVersion
 		
 
 		echo "$removedTransCount removed transitions in report for v$newerVersion"
