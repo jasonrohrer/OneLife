@@ -123,7 +123,7 @@ static CustomRandomSource randSource( randSeed );
 // 15 minutes
 static unsigned int maxSecondsForActiveDecayTracking = 900;
 
-// 1 minute
+// 10 seconds
 static unsigned int maxSecondsNoLookDecayTracking = 10;
 
 

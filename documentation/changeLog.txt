@@ -87,6 +87,10 @@ Server fixes:
 
 --Fixed so you cannot put things back into a grave.
 
+--Fixed so that we stop polling a socket once a player dies, even though we 
+  keep the socket open to allow them to receive their death message, to avoid
+  poll busy-looping on a closed socket in the event of a disconnection.
+
 
 
 

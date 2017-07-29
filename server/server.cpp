@@ -5196,6 +5196,10 @@ int main() {
                 // so they can get the message
                 nextPlayer->deleteSentDoneETA = Time::getCurrentTime() + 5;
                 
+                // stop listening for activity on this socket
+                sockPoll.removeSocket( nextPlayer->sock );
+
+
                 GridPos dropPos;
                 
                 if( nextPlayer->xd == 
@@ -6768,7 +6772,6 @@ int main() {
                 AppLog::infoF( "%d remaining player(s) alive on server ",
                                players.size() - 1 );
 
-                sockPoll.removeSocket( nextPlayer->sock );
                 
                 delete nextPlayer->sock;
                 delete nextPlayer->sockBuffer;
