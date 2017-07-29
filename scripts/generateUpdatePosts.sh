@@ -125,6 +125,9 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 
 
 
+		# update to old version so that removed object files exist
+		hg update -r OneLife_v$x
+		
 		removedObjCount=0
 		while read y;
 		do
@@ -135,8 +138,11 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 			
 			removedObjCount=$((removedObjCount+1))
 
-		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion objects/-X objects/nextObjectNumber.txt | grep "R " | sed 's/R //')
+		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion objects/ -X objects/nextObjectNumber.txt | grep "R " | sed 's/R //')
 
+		# back to latest
+		hg update
+		
 
 		echo "$removedObjCount removed objects in report for v$newerVersion"
 
@@ -234,6 +240,9 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 
 		echo "$changedTransCount changed transitions in report for v$newerVersion"
 
+		# update to old version so that objects exist
+		hg update -r OneLife_v$x
+		
 		removedTransCount=0
 		while read y;
 		do
@@ -262,6 +271,9 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 
 		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion transitions/ | grep "R " | sed 's/R //')
 
+		# back to latest
+		hg update
+		
 
 		echo "$removedTransCount removed transitions in report for v$newerVersion"
 
