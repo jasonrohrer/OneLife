@@ -111,7 +111,7 @@ mkdir ~/checkout/diffWorking
 
 
 echo "" 
-echo "Exporing latest data for diffing"
+echo "Exporting latest data for diffing"
 echo ""
 
 
@@ -122,7 +122,7 @@ echo -n "$newVersion" > ~/checkout/diffWorking/dataLatest/dataVersionNumber.txt
 
 
 echo "" 
-echo "Exporing last tagged data for diffing"
+echo "Exporting last tagged data for diffing"
 echo ""
 
 hg update -r OneLife_v$lastTaggedDataVersion
