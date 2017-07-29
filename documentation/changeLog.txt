@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server fixes:
+
+Fixed a typo that was causing a crash.
+
+
+
+
 Version 30     2017-July-28
 
 --Fixed UnixSource build process to not overwrite user's custom settings.

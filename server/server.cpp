@@ -4578,7 +4578,7 @@ int main() {
                                 // try click on baby
                                 int hitIndex;
                                 LiveObject *hitPlayer = 
-                                    getHitPlayer( m.x, m.y, 5, -1 &hitIndex );
+                                    getHitPlayer( m.x, m.y, 5, -1, &hitIndex );
                                 
                                 if( hitPlayer == NULL ||
                                     hitPlayer == nextPlayer ) {
