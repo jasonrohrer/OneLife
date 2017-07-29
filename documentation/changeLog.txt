@@ -91,6 +91,14 @@ Server fixes:
   keep the socket open to allow them to receive their death message, to avoid
   poll busy-looping on a closed socket in the event of a disconnection.
 
+--Fixed a memory leak if server is quit before connection is closed to a dead
+  player.
+
+--Server now has all players look at the map around them periodically to keep
+  decaying objects in a live state (so that we keep decay cycling them).
+  Before, objects with longer decays would stop transitioning on the player's
+  screen while the player was statnding still.
+
 
 
 

@@ -107,6 +107,11 @@ char *getMapChangeLineString( int inX, int inY,
 int getNextDecayDelta();
 
 
+// marks region as looked at, so that live decay tracking continues
+// there
+void lookAtRegion( int inXStart, int inYStart, int inXEnd, int inYEnd );
+
+
 
 // any change lines resulting from step are appended to inMapChanges
 // any change positions are added to end of inChangePosList

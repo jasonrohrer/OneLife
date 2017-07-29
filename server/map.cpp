@@ -1637,6 +1637,41 @@ int getMapObjectRaw( int inX, int inY ) {
 
 
 
+void lookAtRegion( int inXStart, int inYStart, int inXEnd, int inYEnd ) {
+    unsigned int currentTime = time( NULL );
+    
+    for( int y=inYStart; y<=inYEnd; y++ ) {
+        for( int x=inXStart; x<=inXEnd; x++ ) {
+        
+            char found;
+            unsigned int *oldLookTime = 
+                liveDecayRecordLastLookTimeHashTable.lookupPointer( x, y, 0,
+                                                                    &found );
+    
+            if( oldLookTime != NULL ) {
+                // we're tracking decay for this cell
+                *oldLookTime = currentTime;
+                }
+
+            int numContained = getNumContained( x, y );
+            
+            for( int c=0; c<numContained; c++ ) {
+                
+                char found;
+                oldLookTime =
+                    liveDecayRecordLastLookTimeHashTable.lookupPointer( 
+                        x, y, c + 1, &found );
+                if( oldLookTime != NULL ) {
+                    // look at it now
+                    *oldLookTime = currentTime;
+                    }
+                }
+            }
+        }
+    }
+
+
+
 int getMapObject( int inX, int inY ) {
 
     // look at this map cell

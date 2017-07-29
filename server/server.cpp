@@ -244,6 +244,9 @@ typedef struct LiveObject {
         SimpleVector<unsigned int> *babyBirthTimes;
         SimpleVector<int> *babyIDs;
         
+
+        time_t lastRegionLookTime;
+        
     } LiveObject;
 
 
@@ -354,10 +357,19 @@ void quitCleanup() {
         if( nextPlayer->containedIDs != NULL ) {
             delete [] nextPlayer->containedIDs;
             }
+
+        if( nextPlayer->containedEtaDecays != NULL ) {
+            delete [] nextPlayer->containedEtaDecays;
+            }
         
         if( nextPlayer->pathToDest != NULL ) {
             delete [] nextPlayer->pathToDest;
             }
+        
+        if( nextPlayer->deathReason != NULL ) {
+            delete [] nextPlayer->deathReason;
+            }
+
 
         delete nextPlayer->babyBirthTimes;
         delete nextPlayer->babyIDs;
@@ -2140,7 +2152,9 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.ys = 0;
     newObject.xd = 0;
     newObject.yd = 0;
-                
+    
+    newObject.lastRegionLookTime = 0;
+    
     
     LiveObject *parent = NULL;
                 
@@ -3311,6 +3325,8 @@ int main() {
         SimpleVector<ChangePosition> newSpeechPos;
 
         
+        time_t curLookTime = time(NULL);
+        
         for( int i=0; i<numLive; i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
             
@@ -3319,7 +3335,15 @@ int main() {
             if( nextPlayer->error ) {
                 continue;
                 }
+            
+            
+            if( curLookTime - nextPlayer->lastRegionLookTime > 5 ) {
+                lookAtRegion( nextPlayer->xd - 8, nextPlayer->yd - 7,
+                              nextPlayer->xd + 8, nextPlayer->yd + 7 );
+                nextPlayer->lastRegionLookTime = curLookTime;
+                }
 
+            
             char result = 
                 readSocketFull( nextPlayer->sock, nextPlayer->sockBuffer );
             
