@@ -4,9 +4,25 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 31     ???
+
+--Fixed assumption that time() returns 32-bit values, instead using time_t
+  everywhere, fixing the year 2038 problem.
+
+
+
+
 Server fixes:
 
-Fixed a typo that was causing a crash.
+--Fixed a typo that was causing a crash.
+
+--Fixed assumption that time() returns 32-bit values, instead using time_t
+  everywhere, fixing the year 2038 problem.
+
+--Storing time values in database as 64-bit floats (doubles).  Added a new
+  mapTime.db database to support this without doubling the rest of the
+  database size (time values are stored in a separate, double-wide database).
+
 
 
 

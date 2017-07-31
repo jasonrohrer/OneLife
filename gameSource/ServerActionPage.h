@@ -8,6 +8,9 @@
 #include "TextField.h"
 
 
+#include <time.h>
+
+
 
 
 // base class for pages that execute a server action and step
@@ -154,9 +157,9 @@ class ServerActionPage : public GamePage {
         char mResponseReady;
 
 
-        unsigned int mMinimumResponseSeconds;
+        int mMinimumResponseSeconds;
         
-        unsigned int mRequestStartTime;
+        time_t mRequestStartTime;
 
 
         char *mParameterHmacKey;

@@ -1,3 +1,5 @@
+#include <time.h>
+
 
 
 typedef struct ChangePosition {
@@ -55,27 +57,27 @@ int getMapObject( int inX, int inY );
 void setMapObject( int inX, int inY, int inID );
 
 
-void setEtaDecay( int inX, int inY, unsigned int inAbsoluteTimeInSeconds );
+void setEtaDecay( int inX, int inY, time_t inAbsoluteTimeInSeconds );
 
 
-unsigned int getEtaDecay( int inX, int inY );
+time_t getEtaDecay( int inX, int inY );
 
 // for container slots
 void setSlotEtaDecay( int inX, int inY, int inSlot,
-                      unsigned int inAbsoluteTimeInSeconds );
-unsigned int getSlotEtaDecay( int inX, int inY, int inSlot );
+                      time_t inAbsoluteTimeInSeconds );
+time_t getSlotEtaDecay( int inX, int inY, int inSlot );
 
 
 
 // adds to top of stack
 void addContained( int inX, int inY, int inContainedID, 
-                   unsigned int inEtaDecay );
+                   time_t inEtaDecay );
 
 int getNumContained( int inX, int inY );
 
 // destroyed by caller, returns NULL if empty
 int *getContained( int inX, int inY, int *outNumContained );
-unsigned int *getContainedEtaDecay( int inX, int inY, int *outNumContained );
+time_t *getContainedEtaDecay( int inX, int inY, int *outNumContained );
 
 // gets contained item from specified slot, or from top of stack
 // if inSlot is -1
@@ -84,11 +86,11 @@ int getContained( int inX, int inY, int inSlot );
 
 void setContained( int inX, int inY, int inNumContained, int *inContained );
 void setContainedEtaDecay( int inX, int inY, int inNumContained, 
-                           unsigned int *inContainedEtaDecay );
+                           time_t *inContainedEtaDecay );
 
 // removes contained item from specified slot, or remove from top of stack
 // if inSlot is -1
-int removeContained( int inX, int inY, int inSlot, unsigned int *outEtaDecay );
+int removeContained( int inX, int inY, int inSlot, time_t *outEtaDecay );
 
 void clearAllContained( int inX, int inY );
 
@@ -120,7 +122,7 @@ void stepMap( SimpleVector<char> *inMapChanges,
 
 
 
-void restretchDecays( int inNumDecays, unsigned int *inDecayEtas,
+void restretchDecays( int inNumDecays, time_t *inDecayEtas,
                       int inOldContainerID, int inNewContainerID );
 
 

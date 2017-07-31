@@ -12,6 +12,8 @@
 
 #include "minorGems/util/log/AppLog.h"
 
+#include "minorGems/system/Time.h"
+
 static FILE *logFile;
 
 static int currentYear;
@@ -128,8 +130,7 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
                 }
 
             fprintf( logFile, "B %.0f %d %s %c (%d,%d) %s pop=%d\n",
-                     // portable way to convert time to a double for printing
-                     difftime( time( NULL ), (time_t)0 ),
+                     Time::toDouble( time( NULL ) ),
                      inPlayerID, inPlayerEmail, genderChar, inMapX, inMapY, 
                      parentString,
                      inTotalPopulation );
@@ -201,8 +202,7 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
                 }
 
             fprintf( logFile, "D %.0f %d %s age=%.2f %c (%d,%d) %s pop=%d\n",
-                     // portable way to convert time to a double for printing
-                     difftime( time( NULL ), (time_t)0 ),
+                     Time::toDouble( time( NULL ) ),
                      inPlayerID, inPlayerEmail, 
                      inAge, genderChar,
                      inMapX, inMapY,
