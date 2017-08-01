@@ -2200,7 +2200,25 @@ void processLoggedInPlayer( Socket *inSock,
         
 
         
-        if( isFertileAge( parent ) ) {
+        if( ! newObject.isEve ) {
+            // mother giving birth to baby
+            // take a ton out of her food store
+
+            int min = 4;
+            if( parent->foodStore < min ) {
+                min = parent->foodStore;
+                }
+            parent->foodStore -= 10;
+            if( parent->foodStore < min ) {
+                parent->foodStore = min;
+                }
+
+            parent->foodDecrementETASeconds +=
+                computeFoodDecrementTimeSeconds( parent );
+            
+            parent->foodUpdate = true;
+            
+
             // only set race if the spawn-near player is our mother
             // otherwise, we are a new Eve spawning next to a baby
             

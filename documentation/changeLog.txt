@@ -37,6 +37,9 @@ Server fixes:
 --New baby is given to the most well-fed fertile woman on the server (still
   observing the 2-living-child-max rule and bad mother rule). 
 
+--Giving birth now takes 10 out of mother's food supply, with a min remaining 
+  food of 4.
+
 
 
 
