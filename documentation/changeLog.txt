@@ -34,6 +34,9 @@ Server fixes:
   mapTime.db database to support this without doubling the rest of the
   database size (time values are stored in a separate, double-wide database).
 
+--New baby is given to the most well-fed fertile woman on the server (still
+  observing the 2-living-child-max rule and bad mother rule). 
+
 
 
 

@@ -2161,12 +2161,43 @@ void processLoggedInPlayer( Socket *inSock,
     LiveObject *parent = NULL;
                 
     if( parentChoices.size() > 0 ) {
-        // spawned next to an existing player
-        int parentIndex = 
-            randSource.getRandomBoundedInt( 0,
-                                            parentChoices.size() - 1 );
-                    
-        parent = parentChoices.getElementDirect( parentIndex );
+
+        if( newObject.isEve ) {
+            // spawned next to random existing player
+            int parentIndex = 
+                randSource.getRandomBoundedInt( 0,
+                                                parentChoices.size() - 1 );
+            
+            parent = parentChoices.getElementDirect( parentIndex );
+            }
+        else {
+            // baby
+            
+            // pick the most well-fed mothers
+            int wellFedStore = 0;
+            
+            SimpleVector<LiveObject*> wellFedMothers;
+
+            for( int i=0; i<parentChoices.size(); i++ ) {
+                LiveObject *p = parentChoices.getElementDirect( i );
+
+                if( p->foodStore > wellFedStore ) {
+                    wellFedMothers.deleteAll();
+                    wellFedStore = p->foodStore;
+                    }
+
+                if( p->foodStore == wellFedStore ) {
+                    wellFedMothers.push_back( p );
+                    }
+                }
+            
+            int parentIndex = 
+                randSource.getRandomBoundedInt( 0,
+                                                wellFedMothers.size() - 1 );
+            
+            parent = wellFedMothers.getElementDirect( parentIndex );
+            }
+        
 
         
         if( isFertileAge( parent ) ) {
