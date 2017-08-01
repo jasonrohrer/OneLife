@@ -69,7 +69,8 @@ void checkBackup() {
 
             if( SettingsManager::getIntSetting( "saveBackups", 0 ) ) {
                 
-                AppLog::info( "Saving a backup of map.db and biome.db ..." );
+                AppLog::info( 
+                    "Saving a backup of map.db, mapTime.db, and biome.db ..." );
                 
                 char backupsSaved = false;
                 
@@ -85,6 +86,7 @@ void checkBackup() {
                                  timeStruct.tm_sec );
                 
                 File mapFile( NULL, "map.db" );
+                File mapTimeFile( NULL, "mapTime.db" );
                 File biomeFile( NULL, "biome.db" );
                 
 
@@ -96,6 +98,7 @@ void checkBackup() {
                 
                 if( backupFolder.isDirectory() &&
                     mapFile.exists() &&
+                    mapTimeFile.exists() &&
                     biomeFile.exists() ) {
                     
                     char *mapBackFileName =
@@ -108,6 +111,19 @@ void checkBackup() {
                     
                     delete [] mapBackFileName;
                     delete mapBackFile;
+
+
+                    char *mapTimeBackFileName =
+                        autoSprintf( "mapTime_%s.db", timeFileNamePart );
+                    
+                    File *mapTimeBackFile = 
+                        backupFolder.getChildFile( mapTimeBackFileName );
+
+                    mapTimeFile.copy( mapTimeBackFile );
+                    
+                    delete [] mapTimeBackFileName;
+                    delete mapTimeBackFile;
+
                     
 
                     char *biomeBackFileName =

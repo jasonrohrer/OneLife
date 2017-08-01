@@ -25,11 +25,13 @@ fi
 
 
 echo "" 
-echo "Deleting map and biome db files and recent placements"
+echo "Deleting map and biome and mapTime db files and recent placements"
 echo ""
 
 
-rm ~/checkout/OneLife/server/biome.db ~/checkout/OneLife/server/map.db
+rm ~/checkout/OneLife/server/biome.db 
+rm ~/checkout/OneLife/server/map.db
+rm ~/checkout/OneLife/server/mapTime.db
 rm ~/checkout/OneLife/server/recentPlacements.txt
 rm ~/checkout/OneLife/server/eveRadius.txt
 
