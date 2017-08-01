@@ -6,9 +6,8 @@ http://onehouronelife.com/updateLog.php
 
 Version 31     ???
 
---Fixed assumption that time() returns 32-bit values, instead using time_t
-  everywhere, fixing the year 2038 problem.
-
+--Fixed assumption that time() returns 32-bit int values (see server fixes
+  for details).
 
 
 
@@ -16,8 +15,16 @@ Server fixes:
 
 --Fixed a typo that was causing a crash.
 
---Fixed assumption that time() returns 32-bit values, instead using time_t
-  everywhere, fixing the year 2038 problem.
+--Fixed assumption that time() returns 32-bit int values.  In fact, the C 
+  standard says nothing about the time_t type.  It is not even safe to
+  subtract one time() value from another.  Completely overhauled my time
+  implementation to assume nothing beyond what is specified in the C standard,
+  now measuring time as a double-precision floating point number of seconds 
+  from my own epoch, which fixes the year 2038 problem in a standards-compliant
+  way for 285 million years into the future.
+  (Note:  the year 2038 problem is only fixed on platforms where the 
+   time.h time() function works beyond year 2038... for example NOT 32-bit
+   Linux.  On broken platforms, there is no way to measure time beyond 2038.)
 
 --Storing time values in database as 64-bit floats (doubles).  Added a new
   mapTime.db database to support this without doubling the rest of the

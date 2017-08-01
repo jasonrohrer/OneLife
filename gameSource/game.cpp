@@ -11,7 +11,6 @@ int accountHmacVersionNumber = 0;
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <time.h>
 #include <math.h>
 
 //#define USE_MALLINFO

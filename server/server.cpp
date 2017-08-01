@@ -16,6 +16,7 @@
 #include "minorGems/crypto/hashes/sha1.h"
 
 #include "minorGems/system/Thread.h"
+#include "minorGems/system/Time.h"
 
 #include "minorGems/game/doublePair.h"
 
@@ -163,7 +164,7 @@ typedef struct LiveObject {
 
         // absolute time in seconds that what we're holding should decay
         // or 0 if it never decays
-        time_t holdingEtaDecay;
+        timeSec_t holdingEtaDecay;
 
 
         // where on map held object was picked up from
@@ -178,12 +179,12 @@ typedef struct LiveObject {
 
         int numContained;
         int *containedIDs;
-        time_t *containedEtaDecays;
+        timeSec_t *containedEtaDecays;
 
         // if they've been killed and part of a weapon (bullet?) has hit them
         // this will be included in their grave
         int embeddedWeaponID;
-        time_t embeddedWeaponEtaDecay;
+        timeSec_t embeddedWeaponEtaDecay;
         
         Socket *sock;
         SimpleVector<char> *sockBuffer;
@@ -231,21 +232,21 @@ typedef struct LiveObject {
 
         ClothingSet clothing;
         
-        time_t clothingEtaDecay[NUM_CLOTHING_PIECES];
+        timeSec_t clothingEtaDecay[NUM_CLOTHING_PIECES];
 
         SimpleVector<int> clothingContained[NUM_CLOTHING_PIECES];
         
-        SimpleVector<time_t> 
+        SimpleVector<timeSec_t> 
             clothingContainedEtaDecays[NUM_CLOTHING_PIECES];
 
         char updateSent;
 
         // babies born to this player
-        SimpleVector<time_t> *babyBirthTimes;
+        SimpleVector<timeSec_t> *babyBirthTimes;
         SimpleVector<int> *babyIDs;
         
 
-        time_t lastRegionLookTime;
+        timeSec_t lastRegionLookTime;
         
     } LiveObject;
 
@@ -1577,7 +1578,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     setEtaDecay( targetX, targetY, inDroppingPlayer->holdingEtaDecay );
     
     if( inDroppingPlayer->numContained != 0 ) {
-        time_t curTime = time(NULL);
+        timeSec_t curTime = Time::timeSec();
         float stretch = 
             getObject( inDroppingPlayer->holdingID )->slotTimeStretch;
         
@@ -1588,10 +1589,10 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             if( stretch != 1.0 &&
                 inDroppingPlayer->containedEtaDecays[c] != 0 ) {
                 
-                time_t offset = 
+                timeSec_t offset = 
                     inDroppingPlayer->containedEtaDecays[c] - curTime;
                 
-                offset = lrint( offset * stretch );
+                offset = offset * stretch;
                 
                 inDroppingPlayer->containedEtaDecays[c] =
                     curTime + offset;
@@ -1999,7 +2000,7 @@ void processLoggedInPlayer( Socket *inSock,
             char canHaveBaby = true;
             
             int numPastBabies = player->babyBirthTimes->size();
-            time_t currentTime = time( NULL );
+            timeSec_t currentTime = Time::timeSec();
             
             int minChildSpacingSeconds = 
                 lrint( minChildSpacingAge / getAgeRate() );
@@ -2312,7 +2313,7 @@ void processLoggedInPlayer( Socket *inSock,
 
     newObject.updateSent = false;
     
-    newObject.babyBirthTimes = new SimpleVector<time_t>();
+    newObject.babyBirthTimes = new SimpleVector<timeSec_t>();
     newObject.babyIDs = new SimpleVector<int>();
     
                 
@@ -2575,18 +2576,18 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
             if( inPlayer->
                 holdingEtaDecay != 0 ) {
                                                 
-                time_t curTime = 
-                    time(NULL);
+                timeSec_t curTime = 
+                    Time::timeSec();
                                             
-                time_t offset = 
+                timeSec_t offset = 
                     inPlayer->
                     holdingEtaDecay - 
                     curTime;
                                             
                 offset = 
-                    lrint( offset / 
-                           cObj->
-                           slotTimeStretch );
+                    offset / 
+                    cObj->
+                    slotTimeStretch;
                                                 
                 inPlayer->holdingEtaDecay =
                     curTime + offset;
@@ -2804,7 +2805,7 @@ int main() {
                     }
                 for( int cc=0; cc<nextPlayer->clothingContained[c].size();
                      cc++ ) {
-                    time_t decay =
+                    timeSec_t decay =
                         nextPlayer->clothingContainedEtaDecays[c].
                         getElementDirect( cc );
                     
@@ -3326,7 +3327,7 @@ int main() {
         SimpleVector<ChangePosition> newSpeechPos;
 
         
-        time_t curLookTime = time(NULL);
+        timeSec_t curLookTime = Time::timeSec();
         
         for( int i=0; i<numLive; i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
@@ -3969,7 +3970,7 @@ int main() {
                                                   0 );
 
                                     int oldHolding = nextPlayer->holdingID;
-                                    time_t oldEtaDecay = 
+                                    timeSec_t oldEtaDecay = 
                                         nextPlayer->holdingEtaDecay;
 
                                     if( r != NULL ) {
@@ -4007,7 +4008,7 @@ int main() {
                                                 if( newDecayT != NULL ) {
                                                     hitPlayer->
                                                      embeddedWeaponEtaDecay = 
-                                                        time(NULL) + 
+                                                        Time::timeSec() + 
                                                         newDecayT->
                                                         autoDecaySeconds;
                                                     }
@@ -4180,7 +4181,7 @@ int main() {
                                             r->newTarget );
                                         }
                                     
-                                    time_t oldEtaDecay = 
+                                    timeSec_t oldEtaDecay = 
                                         getEtaDecay( m.x, m.y );
                                     
                                     setResponsiblePlayer( - nextPlayer->id );
@@ -4671,7 +4672,7 @@ int main() {
                                     // wearable
                                     
                                     nextPlayer->holdingID = 0;
-                                    time_t oldEtaDecay = 
+                                    timeSec_t oldEtaDecay = 
                                         nextPlayer->holdingEtaDecay;
                                     
                                     nextPlayer->holdingEtaDecay = 0;
@@ -4682,10 +4683,10 @@ int main() {
                                     nextPlayer->heldTransitionSourceID = -1;
                                     
                                     ObjectRecord *oldC = NULL;
-                                    time_t oldCEtaDecay = 0;
+                                    timeSec_t oldCEtaDecay = 0;
                                     int oldNumContained = 0;
                                     int *oldContainedIDs = NULL;
-                                    time_t *oldContainedETADecays = NULL;
+                                    timeSec_t *oldContainedETADecays = NULL;
                                     
 
                                     ObjectRecord **clothingSlot = NULL;
@@ -5006,7 +5007,7 @@ int main() {
                                             // swap what we're holding for
                                             // target
                                             
-                                            time_t newHoldingEtaDecay = 
+                                            timeSec_t newHoldingEtaDecay = 
                                                 getEtaDecay( m.x, m.y );
 
                                             int newNumContained = 0;
@@ -5016,7 +5017,7 @@ int main() {
                                                     &newNumContained );
                                     
                                             int numCont;
-                                            time_t *newContainedEtaDecays =
+                                            timeSec_t *newContainedEtaDecays =
                                                 getContainedEtaDecay( 
                                                     m.x, m.y,
                                                     &numCont );
@@ -5141,14 +5142,14 @@ int main() {
                                         clothingContainedEtaDecays[m.c].
                                         getElementDirect( slotToRemove );
                                     
-                                    time_t curTime = time(NULL);
+                                    timeSec_t curTime = Time::timeSec();
 
                                     if( nextPlayer->holdingEtaDecay != 0 ) {
                                         
-                                        time_t offset = 
+                                        timeSec_t offset = 
                                             nextPlayer->holdingEtaDecay
                                             - curTime;
-                                        offset = lrint( offset * stretch );
+                                        offset = offset * stretch;
                                         nextPlayer->holdingEtaDecay =
                                             curTime + offset;
                                         }
@@ -5277,7 +5278,7 @@ int main() {
                 int oldObject = getMapObject( dropPos.x, dropPos.y );
                 
                 SimpleVector<int> oldContained;
-                SimpleVector<time_t> oldContainedETADecay;
+                SimpleVector<timeSec_t> oldContainedETADecay;
                 
                 int nX[4] = { -1, 1,  0, 0 };
                 int nY[4] = {  0, 0, -1, 1 };
@@ -5293,7 +5294,7 @@ int main() {
                         int *contained = getContained( dropPos.x, dropPos.y, 
                                                        &numContained );
                         
-                        time_t *containedETA =
+                        timeSec_t *containedETA =
                             getContainedEtaDecay( dropPos.x, dropPos.y, 
                                                   &numContained );
                         
@@ -5420,7 +5421,7 @@ int main() {
                             }
                         
                         // room for what clothing contained
-                        time_t curTime = time(NULL);
+                        timeSec_t curTime = Time::timeSec();
                         
                         for( int c=0; c < NUM_CLOTHING_PIECES && roomLeft > 0; 
                              c++ ) {
@@ -5447,14 +5448,14 @@ int main() {
                                     getElementDirect( cc ) != 0 &&
                                     oldStretch != newStretch ) {
                                         
-                                    time_t offset = 
+                                    timeSec_t offset = 
                                         nextPlayer->
                                         clothingContainedEtaDecays[c].
                                         getElementDirect( cc ) - 
                                         curTime;
                                         
-                                    offset = lrint( offset * oldStretch );
-                                    offset = lrint( offset / newStretch );
+                                    offset = offset * oldStretch;
+                                    offset = offset / newStretch;
                                         
                                     *( nextPlayer->
                                        clothingContainedEtaDecays[c].
@@ -5552,13 +5553,13 @@ int main() {
                     char change = false;
                     
                     SimpleVector<int> newContained;
-                    SimpleVector<time_t> newContainedETA;
+                    SimpleVector<timeSec_t> newContainedETA;
                     
                     for( int c=0; c< nextPlayer->numContained; c++ ) {
                         int oldID = nextPlayer->containedIDs[c];
                         int newID = oldID;
                         
-                        time_t newDecay = 
+                        timeSec_t newDecay = 
                             nextPlayer->containedEtaDecays[c];
 
                         if( nextPlayer->containedEtaDecays[c] != 0 &&
@@ -5585,10 +5586,9 @@ int main() {
                                 
                                     if( newDecayT != NULL ) {
                                         newDecay = 
-                                            time(NULL) +
-                                            lrint( 
-                                                newDecayT->autoDecaySeconds /
-                                                stretch );
+                                            Time::timeSec() +
+                                            newDecayT->autoDecaySeconds /
+                                            stretch;
                                         }
                                     else {
                                         // no further decay
@@ -5687,7 +5687,7 @@ int main() {
                                 newCObj->slotTimeStretch;
                             
                             if( oldStretch != newStretch ) {
-                                time_t curTime = time( NULL );
+                                timeSec_t curTime = Time::timeSec();
                                 
                                 for( int cc=0;
                                      cc < nextPlayer->
@@ -5698,14 +5698,14 @@ int main() {
                                         clothingContainedEtaDecays[c].
                                         getElementDirect( cc ) != 0 ) {
                                         
-                                        time_t offset = 
+                                        timeSec_t offset = 
                                             nextPlayer->
                                             clothingContainedEtaDecays[c].
                                             getElementDirect( cc ) - 
                                             curTime;
                                         
-                                        offset = lrint( offset * oldStretch );
-                                        offset = lrint( offset / newStretch );
+                                        offset = offset * oldStretch;
+                                        offset = offset / newStretch;
                                         
                                         *( nextPlayer->
                                            clothingContainedEtaDecays[c].
@@ -5731,7 +5731,7 @@ int main() {
                         char change = false;
                         
                         SimpleVector<int> newContained;
-                        SimpleVector<time_t> newContainedETA;
+                        SimpleVector<timeSec_t> newContainedETA;
 
                         for( int cc=0; 
                              cc <
@@ -5743,11 +5743,11 @@ int main() {
                                 clothingContained[c].getElementDirect( cc );
                             int newID = oldID;
                         
-                            time_t decay = 
+                            timeSec_t decay = 
                                 nextPlayer->clothingContainedEtaDecays[c]
                                 .getElementDirect( cc );
 
-                            time_t newDecay = decay;
+                            timeSec_t newDecay = decay;
                             
                             if( decay != 0 && decay < curTime ) {
                                 
@@ -5766,10 +5766,10 @@ int main() {
                                         
                                         if( newDecayT != NULL ) {
                                             newDecay = 
-                                                time(NULL) +
-                                                lrint( newDecayT->
-                                                       autoDecaySeconds /
-                                                       cObj->slotTimeStretch );
+                                                Time::timeSec() +
+                                                newDecayT->
+                                                autoDecaySeconds /
+                                                cObj->slotTimeStretch;
                                             }
                                         else {
                                             // no further decay

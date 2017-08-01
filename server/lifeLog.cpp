@@ -1,6 +1,5 @@
 
 #include <stdio.h>
-#include <time.h>
 
 #include "map.h"
 
@@ -129,8 +128,8 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
                 genderChar = 'M';
                 }
 
-            fprintf( logFile, "B %.0f %d %s %c (%d,%d) %s pop=%d\n",
-                     Time::toDouble( time( NULL ) ),
+            fprintf( logFile, "B %.f %d %s %c (%d,%d) %s pop=%d\n",
+                     Time::timeSec(),
                      inPlayerID, inPlayerEmail, genderChar, inMapX, inMapY, 
                      parentString,
                      inTotalPopulation );
@@ -202,7 +201,7 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
                 }
 
             fprintf( logFile, "D %.0f %d %s age=%.2f %c (%d,%d) %s pop=%d\n",
-                     Time::toDouble( time( NULL ) ),
+                     Time::timeSec(),
                      inPlayerID, inPlayerEmail, 
                      inAge, genderChar,
                      inMapX, inMapY,

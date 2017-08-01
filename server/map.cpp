@@ -141,7 +141,7 @@ typedef struct LiveDecayRecord {
         // 1 - NUM_CONT_SLOT means contained object decay
         int slot;
         
-        time_t etaTimeSeconds;
+        timeSec_t etaTimeSeconds;
     } LiveDecayRecord;
 
 
@@ -155,11 +155,11 @@ static MinPriorityQueue<LiveDecayRecord> liveDecayQueue;
 // store the eta time here
 // before storing a new record in the queue, we can check this hash
 // table to see whether it already exists
-static HashTable<time_t> liveDecayRecordPresentHashTable( 1024 );
+static HashTable<timeSec_t> liveDecayRecordPresentHashTable( 1024 );
 
 // times in seconds that a tracked live decay map cell or slot
 // was last looked at
-static HashTable<time_t> liveDecayRecordLastLookTimeHashTable( 1024 );
+static HashTable<timeSec_t> liveDecayRecordLastLookTimeHashTable( 1024 );
 
 
 
@@ -225,16 +225,16 @@ int valueToInt( unsigned char *inValue ) {
 
 
 
-// one time_t to an 8-byte double value
-void timeToValue( time_t inT, unsigned char *outValue ) {
+// one timeSec_t to an 8-byte double value
+void timeToValue( timeSec_t inT, unsigned char *outValue ) {
     
 
     // pack double time into 8 bytes in whatever endian order the
     // double is stored on this platform
 
-    union{ double doubleTime; uint64_t intTime; };
+    union{ timeSec_t doubleTime; uint64_t intTime; };
 
-    doubleTime = Time::toDouble( inT );
+    doubleTime = inT;
     
     for( int i=0; i<8; i++ ) {
         outValue[i] = ( intTime >> (i * 8) ) & 0xFF;
@@ -242,9 +242,9 @@ void timeToValue( time_t inT, unsigned char *outValue ) {
     }
 
 
-time_t valueToTime( unsigned char *inValue ) {
+timeSec_t valueToTime( unsigned char *inValue ) {
 
-    union{ double doubleTime; uint64_t intTime; };
+    union{ timeSec_t doubleTime; uint64_t intTime; };
 
     // get bytes back out in same order they were put in
     intTime = 
@@ -253,8 +253,8 @@ time_t valueToTime( unsigned char *inValue ) {
         (uint64_t)inValue[3] << 24 | (uint64_t)inValue[2] << 16 | 
         (uint64_t)inValue[1] << 8  | (uint64_t)inValue[0];
     
-    // caste back to time_t
-    return (time_t)doubleTime;
+    // caste back to timeSec_t
+    return doubleTime;
     }
 
 
@@ -1045,10 +1045,10 @@ void initMap() {
         if( getMapObjectRaw( x, y ) != 0 ) {
             int numCont;
             int *cont = getContainedRaw( x, y, &numCont );
-            time_t *decay = getContainedEtaDecay( x, y, &numCont );
+            timeSec_t *decay = getContainedEtaDecay( x, y, &numCont );
             
             SimpleVector<int> newCont;
-            SimpleVector<time_t> newDecay;
+            SimpleVector<timeSec_t> newDecay;
             
             for( int c=0; c<numCont; c++ ) {
                 if( getObject( cont[c] ) != NULL ) {
@@ -1063,7 +1063,7 @@ void initMap() {
                 ( numCont - newCont.size() );
 
             int *newContArray = newCont.getElementArray();
-            time_t *newDecayArray = newDecay.getElementArray();
+            timeSec_t *newDecayArray = newDecay.getElementArray();
             
             setContained( x, y, newCont.size(), newContArray );
             setContainedEtaDecay( x, y, newDecay.size(), newDecayArray );
@@ -1268,7 +1268,7 @@ static int dbGet( int inX, int inY, int inSlot ) {
 
 
 // returns 0 if not found
-static time_t dbTimeGet( int inX, int inY, int inSlot ) {
+static timeSec_t dbTimeGet( int inX, int inY, int inSlot ) {
     unsigned char key[12];
     unsigned char value[8];
 
@@ -1282,7 +1282,7 @@ static time_t dbTimeGet( int inX, int inY, int inSlot ) {
         return valueToTime( value );
         }
     else {
-        return (time_t)0;
+        return 0;
         }
     }
 
@@ -1328,7 +1328,7 @@ static void dbPut( int inX, int inY, int inSlot, int inValue ) {
 
 
 
-static void dbTimePut( int inX, int inY, int inSlot, time_t inTime ) {
+static void dbTimePut( int inX, int inY, int inSlot, timeSec_t inTime ) {
     // ETA decay changes don't get reported as map changes    
     
     unsigned char key[12];
@@ -1348,8 +1348,8 @@ static void dbTimePut( int inX, int inY, int inSlot, time_t inTime ) {
 
 
 // slot is 0 for main map cell, or higher for container slots
-static void trackETA( int inX, int inY, int inSlot, time_t inETA ) {
-    time_t timeLeft = inETA - time( NULL );
+static void trackETA( int inX, int inY, int inSlot, timeSec_t inETA ) {
+    timeSec_t timeLeft = inETA - Time::timeSec();
         
     if( timeLeft < maxSecondsForActiveDecayTracking ) {
         // track it live
@@ -1361,13 +1361,13 @@ static void trackETA( int inX, int inY, int inSlot, time_t inETA ) {
         LiveDecayRecord r = { inX, inY, inSlot, inETA };
             
         char exists;
-        time_t existingETA =
+        timeSec_t existingETA =
             liveDecayRecordPresentHashTable.lookup( inX, inY, inSlot,
                                                     &exists );
 
         if( !exists || existingETA != inETA ) {
             
-            liveDecayQueue.insert( r, Time::toDouble( inETA ) );
+            liveDecayQueue.insert( r, inETA );
             
             liveDecayRecordPresentHashTable.insert( inX, inY, inSlot, inETA );
 
@@ -1379,7 +1379,7 @@ static void trackETA( int inX, int inY, int inSlot, time_t inETA ) {
             if( !exists ) {
                 // don't overwrite old one
                 liveDecayRecordLastLookTimeHashTable.insert( inX, inY, inSlot, 
-                                                             time( NULL ) );
+                                                             Time::timeSec() );
                 }
             }
         }
@@ -1441,11 +1441,11 @@ int *getContained( int inX, int inY, int *outNumContained ) {
     int *result = getContainedRaw( inX, inY, outNumContained );
     
     // look at these slots if they are subject to live decay
-    time_t currentTime = time( NULL );
+    timeSec_t currentTime = Time::timeSec();
     
     for( int i=0; i<*outNumContained; i++ ) {
         char found;
-        time_t *oldLookTime =
+        timeSec_t *oldLookTime =
             liveDecayRecordLastLookTimeHashTable.lookupPointer( inX, inY,
                                                                 i + 1,
                                                                 &found );
@@ -1466,7 +1466,7 @@ int *getContainedNoLook( int inX, int inY, int *outNumContained ) {
 
 
 
-time_t *getContainedEtaDecay( int inX, int inY, int *outNumContained ) {
+timeSec_t *getContainedEtaDecay( int inX, int inY, int *outNumContained ) {
     int num = getNumContained( inX, inY );
 
     *outNumContained = num;
@@ -1475,7 +1475,7 @@ time_t *getContainedEtaDecay( int inX, int inY, int *outNumContained ) {
         return NULL;
         }
    
-    time_t *containedEta = new time_t[ num ];
+    timeSec_t *containedEta = new timeSec_t[ num ];
 
     for( int i=0; i<num; i++ ) {
         // can be 0 if not found, which is okay
@@ -1500,11 +1500,11 @@ int checkDecayObject( int inX, int inY, int inID ) {
     int newID = inID;
 
     // is eta stored in map?
-    time_t mapETA = getEtaDecay( inX, inY );
+    timeSec_t mapETA = getEtaDecay( inX, inY );
     
     if( mapETA != 0 ) {
         
-        if( (int)mapETA <= time( NULL ) ) {
+        if( (int)mapETA <= Time::timeSec() ) {
             
             // object in map has decayed (eta expired)
 
@@ -1544,7 +1544,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 if( tweakedSeconds < 1 ) {
                     tweakedSeconds = 1;
                     }
-                mapETA = time(NULL) + tweakedSeconds;
+                mapETA = Time::timeSec() + tweakedSeconds;
                 }
             else {
                 // no further decay
@@ -1570,7 +1570,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
             decayTime = 1;
             }
         
-        mapETA = time( NULL ) + decayTime;
+        mapETA = Time::timeSec() + decayTime;
             
         setEtaDecay( inX, inY, mapETA );
         }
@@ -1596,7 +1596,7 @@ void checkDecayContained( int inX, int inY ) {
     int *contained = getContainedRaw( inX, inY, &numContained );
     
     SimpleVector<int> newContained;
-    SimpleVector<time_t> newDecayEta;
+    SimpleVector<timeSec_t> newDecayEta;
     
     char change = false;
     
@@ -1618,11 +1618,11 @@ void checkDecayContained( int inX, int inY ) {
         int newID = oldID;
 
         // is eta stored in map?
-        time_t mapETA = getSlotEtaDecay( inX, inY, i );
+        timeSec_t mapETA = getSlotEtaDecay( inX, inY, i );
     
         if( mapETA != 0 ) {
         
-            if( (int)mapETA <= time( NULL ) ) {
+            if( (int)mapETA <= Time::timeSec() ) {
             
                 // object in container slot has decayed (eta expired)
                 
@@ -1651,9 +1651,9 @@ void checkDecayContained( int inX, int inY ) {
                             }
                         
                         mapETA = 
-                            time(NULL) +
-                            lrint( tweakedSeconds / 
-                                   getMapContainerTimeStretch( inX, inY ) );
+                            Time::timeSec() +
+                            tweakedSeconds / 
+                            getMapContainerTimeStretch( inX, inY );
                         }
                     else {
                         // no further decay
@@ -1678,7 +1678,7 @@ void checkDecayContained( int inX, int inY ) {
         delete [] containedArray;
         
         for( int i=0; i<numContained; i++ ) {
-            time_t mapETA = newDecayEta.getElementDirect( i );
+            timeSec_t mapETA = newDecayEta.getElementDirect( i );
             
             if( mapETA != 0 ) {
                 trackETA( inX, inY, 1 + i, mapETA );
@@ -1756,13 +1756,13 @@ int getMapObjectRaw( int inX, int inY ) {
 
 
 void lookAtRegion( int inXStart, int inYStart, int inXEnd, int inYEnd ) {
-    time_t currentTime = time( NULL );
+    timeSec_t currentTime = Time::timeSec();
     
     for( int y=inYStart; y<=inYEnd; y++ ) {
         for( int x=inXStart; x<=inXEnd; x++ ) {
         
             char found;
-            time_t *oldLookTime = 
+            timeSec_t *oldLookTime = 
                 liveDecayRecordLastLookTimeHashTable.lookupPointer( x, y, 0,
                                                                     &found );
     
@@ -1794,13 +1794,13 @@ int getMapObject( int inX, int inY ) {
 
     // look at this map cell
     char found;
-    time_t *oldLookTime = 
+    timeSec_t *oldLookTime = 
         liveDecayRecordLastLookTimeHashTable.lookupPointer( inX, inY, 0,
                                                             &found );
     
     if( oldLookTime != NULL ) {
         // we're tracking decay for this cell
-        *oldLookTime = time( NULL );
+        *oldLookTime = Time::timeSec();
         }
 
 
@@ -1971,11 +1971,11 @@ void setMapObject( int inX, int inY, int inID ) {
     // this is a never-before-seen object and randomize the decay.
     TransRecord *newDecayT = getTrans( -1, inID );
     
-    time_t mapETA = 0;
+    timeSec_t mapETA = 0;
     
     if( newDecayT != NULL && newDecayT->autoDecaySeconds > 0 ) {
         
-        mapETA = time(NULL) + newDecayT->autoDecaySeconds;
+        mapETA = Time::timeSec() + newDecayT->autoDecaySeconds;
         }
     
     setEtaDecay( inX, inY, mapETA );
@@ -2037,7 +2037,7 @@ void setMapObject( int inX, int inY, int inID ) {
 
 
 
-void setEtaDecay( int inX, int inY, time_t inAbsoluteTimeInSeconds ) {
+void setEtaDecay( int inX, int inY, timeSec_t inAbsoluteTimeInSeconds ) {
     dbTimePut( inX, inY, DECAY_SLOT, inAbsoluteTimeInSeconds );
     if( inAbsoluteTimeInSeconds != 0 ) {
         trackETA( inX, inY, 0, inAbsoluteTimeInSeconds );
@@ -2047,7 +2047,7 @@ void setEtaDecay( int inX, int inY, time_t inAbsoluteTimeInSeconds ) {
 
 
 
-time_t getEtaDecay( int inX, int inY ) {
+timeSec_t getEtaDecay( int inX, int inY ) {
     // 0 if not found
     return dbTimeGet( inX, inY, DECAY_SLOT );
     }
@@ -2064,7 +2064,7 @@ static int getContainerDecaySlot( int inX, int inY, int inSlot ) {
 
 
 void setSlotEtaDecay( int inX, int inY, int inSlot,
-                      time_t inAbsoluteTimeInSeconds ) {
+                      timeSec_t inAbsoluteTimeInSeconds ) {
     dbTimePut( inX, inY, getContainerDecaySlot( inX, inY, inSlot ), 
                inAbsoluteTimeInSeconds );
     if( inAbsoluteTimeInSeconds != 0 ) {
@@ -2073,7 +2073,7 @@ void setSlotEtaDecay( int inX, int inY, int inSlot,
     }
 
 
-time_t getSlotEtaDecay( int inX, int inY, int inSlot ) {
+timeSec_t getSlotEtaDecay( int inX, int inY, int inSlot ) {
     // 0 if not found
     return dbTimeGet( inX, inY, getContainerDecaySlot( inX, inY, inSlot ) );
     }
@@ -2084,22 +2084,22 @@ time_t getSlotEtaDecay( int inX, int inY, int inSlot ) {
 
 
 void addContained( int inX, int inY, int inContainedID, 
-                   time_t inEtaDecay ) {
+                   timeSec_t inEtaDecay ) {
     int oldNum;
     
 
-    time_t curTime = time( NULL );
+    timeSec_t curTime = Time::timeSec();
 
     if( inEtaDecay != 0 ) {    
-        int etaOffset = inEtaDecay - curTime;
+        timeSec_t etaOffset = inEtaDecay - curTime;
         
         inEtaDecay = curTime + 
-            lrint( etaOffset / getMapContainerTimeStretch( inX, inY ) );
+            etaOffset / getMapContainerTimeStretch( inX, inY );
         }
     
     int *oldContained = getContained( inX, inY, &oldNum );
 
-    time_t *oldContainedETA = getContainedEtaDecay( inX, inY, &oldNum );
+    timeSec_t *oldContainedETA = getContainedEtaDecay( inX, inY, &oldNum );
 
     int *newContained = new int[ oldNum + 1 ];
     
@@ -2113,11 +2113,11 @@ void addContained( int inX, int inY, int inContainedID,
         delete [] oldContained;
         }
     
-    time_t *newContainedETA = new time_t[ oldNum + 1 ];
+    timeSec_t *newContainedETA = new timeSec_t[ oldNum + 1 ];
     
     if( oldNum != 0 ) {    
         memcpy( newContainedETA, 
-                oldContainedETA, oldNum * sizeof( time_t ) );
+                oldContainedETA, oldNum * sizeof( timeSec_t ) );
         }
     
     newContainedETA[ oldNum ] = inEtaDecay;
@@ -2163,7 +2163,7 @@ void setContained( int inX, int inY, int inNumContained, int *inContained ) {
 
 
 void setContainedEtaDecay( int inX, int inY, int inNumContained, 
-                           time_t *inContainedEtaDecay ) {
+                           timeSec_t *inContainedEtaDecay ) {
     for( int i=0; i<inNumContained; i++ ) {
         dbTimePut( inX, inY, FIRST_CONT_SLOT + inNumContained + i, 
                    inContainedEtaDecay[i] );
@@ -2205,7 +2205,7 @@ int getContained( int inX, int inY, int inSlot ) {
     
 
 // removes from top of stack
-int removeContained( int inX, int inY, int inSlot, time_t *outEtaDecay ) {
+int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay ) {
     int num = getNumContained( inX, inY );
     
     if( num == 0 ) {
@@ -2219,14 +2219,14 @@ int removeContained( int inX, int inY, int inSlot, time_t *outEtaDecay ) {
     
     int result = dbGet( inX, inY, FIRST_CONT_SLOT + inSlot );
 
-    time_t curTime = time(NULL);
+    timeSec_t curTime = Time::timeSec();
     
-    time_t resultEta = dbTimeGet( inX, inY, FIRST_CONT_SLOT + num + inSlot );
+    timeSec_t resultEta = dbTimeGet( inX, inY, FIRST_CONT_SLOT + num + inSlot );
 
     if( resultEta != 0 ) {    
-        time_t etaOffset = resultEta - curTime;
+        timeSec_t etaOffset = resultEta - curTime;
         
-        etaOffset = lrint( etaOffset * getMapContainerTimeStretch( inX, inY ) );
+        etaOffset = etaOffset * getMapContainerTimeStretch( inX, inY );
         
         resultEta = curTime + etaOffset;
         }
@@ -2236,10 +2236,10 @@ int removeContained( int inX, int inY, int inSlot, time_t *outEtaDecay ) {
     int oldNum;
     int *oldContained = getContained( inX, inY, &oldNum );
 
-    time_t *oldContainedETA = getContainedEtaDecay( inX, inY, &oldNum );
+    timeSec_t *oldContainedETA = getContainedEtaDecay( inX, inY, &oldNum );
 
     SimpleVector<int> newContainedList;
-    SimpleVector<time_t> newContainedETAList;
+    SimpleVector<timeSec_t> newContainedETAList;
     
     for( int i=0; i<oldNum; i++ ) {
         if( i != inSlot ) {
@@ -2249,7 +2249,7 @@ int removeContained( int inX, int inY, int inSlot, time_t *outEtaDecay ) {
         }
     
     int *newContained = newContainedList.getElementArray();
-    time_t *newContainedETA = newContainedETAList.getElementArray();
+    timeSec_t *newContainedETA = newContainedETAList.getElementArray();
 
     setContained( inX, inY, oldNum - 1, newContained );
     setContainedEtaDecay( inX, inY, oldNum - 1, newContainedETA );
@@ -2344,9 +2344,9 @@ int getNextDecayDelta() {
         return -1;
         }
     
-    time_t curTime = time( NULL );
+    timeSec_t curTime = Time::timeSec();
 
-    time_t minTime = (time_t)( liveDecayQueue.checkMinPriority() );
+    timeSec_t minTime = liveDecayQueue.checkMinPriority();
     
     
     if( minTime <= curTime ) {
@@ -2362,7 +2362,7 @@ int getNextDecayDelta() {
 void stepMap( SimpleVector<char> *inMapChanges, 
               SimpleVector<ChangePosition> *inChangePosList ) {
     
-    time_t curTime = time( NULL );
+    timeSec_t curTime = Time::timeSec();
 
     while( liveDecayQueue.size() > 0 && 
            liveDecayQueue.checkMinPriority() <= curTime ) {
@@ -2372,7 +2372,7 @@ void stepMap( SimpleVector<char> *inMapChanges,
         LiveDecayRecord r = liveDecayQueue.removeMin();        
 
         char storedFound;
-        time_t storedETA =
+        timeSec_t storedETA =
             liveDecayRecordPresentHashTable.lookup( r.x, r.y, r.slot,
                                                     &storedFound );
         
@@ -2381,13 +2381,13 @@ void stepMap( SimpleVector<char> *inMapChanges,
             liveDecayRecordPresentHashTable.remove( r.x, r.y, r.slot );
 
                     
-            time_t lastLookTime =
+            timeSec_t lastLookTime =
                 liveDecayRecordLastLookTimeHashTable.lookup( r.x, r.y, r.slot,
                                                              &storedFound );
 
             if( storedFound ) {
 
-                if( time(NULL) - lastLookTime > 
+                if( Time::timeSec() - lastLookTime > 
                     maxSecondsNoLookDecayTracking ) {
                     
                     // this cell or slot hasn't been looked at in too long
@@ -2456,21 +2456,21 @@ void stepMap( SimpleVector<char> *inMapChanges,
 
 
 
-void restretchDecays( int inNumDecays, time_t *inDecayEtas,
+void restretchDecays( int inNumDecays, timeSec_t *inDecayEtas,
                       int inOldContainerID, int inNewContainerID ) {
     
     float oldStrech = getObject( inOldContainerID )->slotTimeStretch;
     float newStetch = getObject( inNewContainerID )->slotTimeStretch;
             
     if( oldStrech != newStetch ) {
-        time_t curTime = time( NULL );
+        timeSec_t curTime = Time::timeSec();
 
         for( int i=0; i<inNumDecays; i++ ) {
             if( inDecayEtas[i] != 0 ) {
                 int offset = inDecayEtas[i] - curTime;
                         
-                offset = lrint( offset * oldStrech );
-                offset = lrint( offset / newStetch );
+                offset = offset * oldStrech;
+                offset = offset / newStetch;
                 inDecayEtas[i] = curTime + offset;
                 }
             }    
@@ -2489,7 +2489,7 @@ void restretchMapContainedDecays( int inX, int inY,
     if( oldStrech != newStetch ) {
                 
         int oldNum;
-        time_t *oldContDecay =
+        timeSec_t *oldContDecay =
             getContainedEtaDecay( inX, inY, &oldNum );
                 
         restretchDecays( oldNum, oldContDecay, 

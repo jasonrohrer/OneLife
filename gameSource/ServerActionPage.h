@@ -8,8 +8,7 @@
 #include "TextField.h"
 
 
-#include <time.h>
-
+#include "minorGems/system/Time.h"
 
 
 
@@ -159,7 +158,7 @@ class ServerActionPage : public GamePage {
 
         int mMinimumResponseSeconds;
         
-        time_t mRequestStartTime;
+        timeSec_t mRequestStartTime;
 
 
         char *mParameterHmacKey;

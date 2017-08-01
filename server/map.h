@@ -1,4 +1,4 @@
-#include <time.h>
+#include "minorGems/system/Time.h"
 
 
 
@@ -57,27 +57,27 @@ int getMapObject( int inX, int inY );
 void setMapObject( int inX, int inY, int inID );
 
 
-void setEtaDecay( int inX, int inY, time_t inAbsoluteTimeInSeconds );
+void setEtaDecay( int inX, int inY, timeSec_t inAbsoluteTimeInSeconds );
 
 
-time_t getEtaDecay( int inX, int inY );
+timeSec_t getEtaDecay( int inX, int inY );
 
 // for container slots
 void setSlotEtaDecay( int inX, int inY, int inSlot,
-                      time_t inAbsoluteTimeInSeconds );
-time_t getSlotEtaDecay( int inX, int inY, int inSlot );
+                      timeSec_t inAbsoluteTimeInSeconds );
+timeSec_t getSlotEtaDecay( int inX, int inY, int inSlot );
 
 
 
 // adds to top of stack
 void addContained( int inX, int inY, int inContainedID, 
-                   time_t inEtaDecay );
+                   timeSec_t inEtaDecay );
 
 int getNumContained( int inX, int inY );
 
 // destroyed by caller, returns NULL if empty
 int *getContained( int inX, int inY, int *outNumContained );
-time_t *getContainedEtaDecay( int inX, int inY, int *outNumContained );
+timeSec_t *getContainedEtaDecay( int inX, int inY, int *outNumContained );
 
 // gets contained item from specified slot, or from top of stack
 // if inSlot is -1
@@ -86,11 +86,11 @@ int getContained( int inX, int inY, int inSlot );
 
 void setContained( int inX, int inY, int inNumContained, int *inContained );
 void setContainedEtaDecay( int inX, int inY, int inNumContained, 
-                           time_t *inContainedEtaDecay );
+                           timeSec_t *inContainedEtaDecay );
 
 // removes contained item from specified slot, or remove from top of stack
 // if inSlot is -1
-int removeContained( int inX, int inY, int inSlot, time_t *outEtaDecay );
+int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay );
 
 void clearAllContained( int inX, int inY );
 
@@ -122,7 +122,7 @@ void stepMap( SimpleVector<char> *inMapChanges,
 
 
 
-void restretchDecays( int inNumDecays, time_t *inDecayEtas,
+void restretchDecays( int inNumDecays, timeSec_t *inDecayEtas,
                       int inOldContainerID, int inNewContainerID );
 
 

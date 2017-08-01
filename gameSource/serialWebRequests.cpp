@@ -4,6 +4,7 @@
 #include "minorGems/game/game.h"
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/stringUtils.h"
+#include "minorGems/system/Time.h"
 
 #include "accountHmac.h"
 
@@ -35,7 +36,7 @@ typedef struct SerialWebRecord {
         //  queued in front of it).
         char started;
         
-        time_t startTime;
+        timeSec_t startTime;
         
         int retryCount;
 
@@ -131,7 +132,7 @@ void checkForServerShutdown( SerialWebRecord *inR ) {
 
 
 static void checkForRequestRetry( SerialWebRecord *r ) {
-    time_t timePassed = game_time( NULL ) - r->startTime;
+    timeSec_t timePassed = game_timeSec() - r->startTime;
 
     if( timePassed > webRetrySeconds ) {
         // start a fresh request
@@ -156,7 +157,7 @@ static void checkForRequestRetry( SerialWebRecord *r ) {
         printf( "\nRestarting web request %d as %d [%s %s %s]\n\n", 
                 oldActiveHandle, r->activeHandle, r->method, r->url, r->body );
         
-        r->startTime = game_time( NULL );
+        r->startTime = game_timeSec();
         r->retryCount++;
 
 
@@ -313,7 +314,7 @@ int stepWebRequestSerial( int inHandle ) {
                 
                 printRequestStart( r );
                 
-                r->startTime = game_time( NULL );
+                r->startTime = game_timeSec();
                 r->started = true;
                 
                 currentActiveSerialWebRequest = r->handle;
@@ -367,7 +368,7 @@ int stepWebRequestSerial( int inHandle ) {
                     
                     printRequestStart( r );
 
-                    r->startTime = game_time( NULL );
+                    r->startTime = game_timeSec();
                     r->started = true;
                     
                     currentActiveSerialWebRequest = r->handle;
@@ -473,7 +474,7 @@ int getWebRequestRetryStatus( int inHandle ) {
 
             if( r->retryCount < 1 ) {
                 
-                time_t timePassed = game_time( NULL ) - r->startTime;
+                timeSec_t timePassed = game_timeSec( ) - r->startTime;
                 if( timePassed < webRetrySeconds / 2 ) {
                     return 0;
                     }

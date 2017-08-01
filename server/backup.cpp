@@ -1,16 +1,16 @@
 #include "backup.h"
 
-#include <time.h>
 
 
 #include "minorGems/util/SettingsManager.h"
 #include "minorGems/io/file/File.h"
 #include "minorGems/io/file/Directory.h"
+#include "minorGems/system/Time.h"
 
 #include "minorGems/util/log/AppLog.h"
 
 
-static time_t lastBackupTime = 0;
+static timeSec_t lastBackupTime = 0;
 static int targetHour = 8;
 
 void initBackup() {
@@ -36,7 +36,7 @@ void initBackup() {
                    SettingsManager::getIntSetting( "saveBackups", 0 ),
                    targetHour,
                    timeStruct.tm_hour,
-                   ( time( NULL ) - lastBackupTime ) / 3600.0 );
+                   ( Time::timeSec() - lastBackupTime ) / 3600.0 );
     }
 
     
@@ -45,7 +45,7 @@ void initBackup() {
 // makes a new backup if needed
 // also handles deleting old backups
 void checkBackup() {
-    time_t curTime = time( NULL );
+    timeSec_t curTime = Time::timeSec();
     
     if( curTime - lastBackupTime > 12 * 3600 
         ||
@@ -55,8 +55,10 @@ void checkBackup() {
         // last time not valid
         
 
+        time_t curTimeT = time( NULL );
+        
         struct tm timeStruct;
-        struct tm *gmTM = gmtime( &curTime );
+        struct tm *gmTM = gmtime( &curTimeT );
         
         // other calls overwrite it
         memcpy( &timeStruct, gmTM, sizeof( timeStruct ) );

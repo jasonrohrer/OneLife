@@ -15,7 +15,7 @@
 #include "serialWebRequests.h"
 #include "accountHmac.h"
 
-#include <time.h>
+#include "minorGems/system/Time.h"
 
 
 
@@ -264,7 +264,7 @@ void ServerActionPage::startRequest() {
 
     mResponseReady = false;
     
-    mRequestStartTime = game_time( NULL );
+    mRequestStartTime = game_timeSec();
 
     setWaiting( true );
     }
@@ -278,7 +278,7 @@ void ServerActionPage::step() {
         
         
         if( mMinimumResponseSeconds > 0 &&
-            game_time( NULL ) -  mRequestStartTime 
+            game_timeSec() -  mRequestStartTime 
             < mMinimumResponseSeconds ) {
             
             // wait to process result
@@ -535,7 +535,7 @@ void ServerActionPage::setupRequestParameterSecurity() {
     mParameterHmacKey = autoSprintf( "%s%d", pureKey, serverSequenceNumber );
     delete [] pureKey;
 
-    char *tagString = autoSprintf( "%d", time( NULL ) );
+    char *tagString = autoSprintf( "%.f", Time::timeSec() );
     char *request_tag = hmac_sha1( mParameterHmacKey, tagString );
     delete [] tagString;
 
