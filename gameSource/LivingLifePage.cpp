@@ -6967,7 +6967,11 @@ void LivingLifePage::step() {
                         
                         sscanf( reasonPos, "reason_%99s", reasonString );
                         
-                        if( strcmp( reasonString, "hunger" ) == 0 ) {
+                        if( strcmp( reasonString, "nursing_hunger" ) == 0 ) {
+                            mDeathReason = stringDuplicate( 
+                                translate( "reasonNursingHunger" ) );
+                            }
+                        else if( strcmp( reasonString, "hunger" ) == 0 ) {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonHunger" ) );
                             }
@@ -7008,6 +7012,10 @@ void LivingLifePage::step() {
                                 
                                 delete [] stringUpper;
                                 }
+                            }
+                        else {
+                            mDeathReason = stringDuplicate( 
+                                translate( "reasonUnknown" ) );
                             }
                         }
                     

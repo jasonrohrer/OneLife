@@ -101,6 +101,8 @@ reasonDisconnected "CAUSE:  CONNECTION LOST"
 
 reasonHunger "CAUSE:  STARVATION"
 
+reasonNursingHunger "CAUSE:  NURSING STARVATION"
+
 reasonKilled "CAUSE:  KILLED BY "
 
 reasonKilledUnknown "CAUSE:  KILLED BY UNKNOWN WEAPON"

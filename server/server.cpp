@@ -4575,12 +4575,42 @@ int main() {
                                     // if adult female, baby auto-fed
                                     if( getFemale( nextPlayer ) ) {
                                         
+                                        int oldStore = hitPlayer->foodStore;
+
                                         hitPlayer->foodStore = 
                                             computeFoodCapacity( hitPlayer );
                 
                                         hitPlayer->foodUpdate = true;
                                         hitPlayer->responsiblePlayerID =
                                             nextPlayer->id;
+                                        
+                                        // reset their food decrement time
+                                        hitPlayer->foodDecrementETASeconds =
+                                            Time::getCurrentTime() +
+                                            computeFoodDecrementTimeSeconds( 
+                                                hitPlayer );
+
+                                        int diff = 
+                                            hitPlayer->foodStore - oldStore;
+                                        
+                                        if( diff < 1 ) {
+                                            // we MUST dock the mother at
+                                            // least 1 in exchange for
+                                            // resetting baby's food
+                                            // decrement time.
+                                            diff = 1;
+                                            }
+                                        
+                                        nextPlayer->foodStore -= diff;
+                                        
+                                        if( nextPlayer->foodStore < 0 ) {
+                                            // catch mother death later
+                                            // at her next food decrement
+                                            nextPlayer->foodStore = 0;
+                                            }
+                                        // leave their food decrement
+                                        // time alone
+                                        nextPlayer->foodUpdate = true;
                                         }
                                     
                                     nextPlayer->heldOriginValid = 1;
@@ -5889,7 +5919,8 @@ int main() {
                     nextPlayer->foodDecrementETASeconds ) {
                     
                     char heldByFemale = false;
-
+                    LiveObject *holdingFemale = NULL;
+                    
                     if( nextPlayer->heldByOther ) {
                         LiveObject *adultO = getAdultHolding( nextPlayer );
                         
@@ -5897,64 +5928,81 @@ int main() {
                             getFemale( adultO ) ) {
                     
                             heldByFemale = true;
+                            holdingFemale = adultO;
                             }
                         }
                     
+                    
+                    LiveObject *decrementedPlayer;
+
                     if( !heldByFemale ) {
                         nextPlayer->foodStore --;
+                        decrementedPlayer = nextPlayer;
                         }
+                    else {
+                        holdingFemale->foodStore --;
+                        decrementedPlayer = holdingFemale;
+                        }
+                    
+                    // only update the time of the fed player
                     nextPlayer->foodDecrementETASeconds +=
                         computeFoodDecrementTimeSeconds( nextPlayer );
+
                     
-                    if( nextPlayer->foodStore <= 0 ) {
+
+                    if( decrementedPlayer->foodStore <= 0 ) {
                         // player has died
                         
                         // break the connection with them
 
-                        setDeathReason( nextPlayer, "hunger" );
-
-                        nextPlayer->error = true;
-                        nextPlayer->errorCauseString =
-                            "Player starved";
+                        if( heldByFemale ) {
+                            setDeathReason( decrementedPlayer, 
+                                            "nursing_hunger" );
+                            }
+                        else {
+                            setDeathReason( decrementedPlayer, 
+                                            "hunger" );
+                            }
+                        
+                        decrementedPlayer->error = true;
+                        decrementedPlayer->errorCauseString = "Player starved";
 
 
                         GridPos deathPos;
                                         
-                        if( nextPlayer->xd == 
-                            nextPlayer->xs &&
-                            nextPlayer->yd ==
-                            nextPlayer->ys ) {
+                        if( decrementedPlayer->xd == 
+                            decrementedPlayer->xs &&
+                            decrementedPlayer->yd ==
+                            decrementedPlayer->ys ) {
                             // deleted player standing still
                             
-                            deathPos.x = nextPlayer->xd;
-                            deathPos.y = nextPlayer->yd;
+                            deathPos.x = decrementedPlayer->xd;
+                            deathPos.y = decrementedPlayer->yd;
                             }
                         else {
                             // player moving
                             
                             deathPos = 
-                                computePartialMoveSpot( nextPlayer );
+                                computePartialMoveSpot( decrementedPlayer );
                             }
                         
-                        logDeath( nextPlayer->id,
-                                  nextPlayer->email,
-                                  nextPlayer->isEve,
-                                  computeAge( nextPlayer ),
-                                  ! getFemale( nextPlayer ),
+                        logDeath( decrementedPlayer->id,
+                                  decrementedPlayer->email,
+                                  decrementedPlayer->isEve,
+                                  computeAge( decrementedPlayer ),
+                                  ! getFemale( decrementedPlayer ),
                                   deathPos.x, deathPos.y,
                                   players.size() - 1,
                                   false );
                                         
-                        nextPlayer->deathLogged = true;
+                        decrementedPlayer->deathLogged = true;
                                         
 
                         // no negative
-                        nextPlayer->foodStore = 0;
+                        decrementedPlayer->foodStore = 0;
                         }
                     
-                    if( !heldByFemale ) {
-                        nextPlayer->foodUpdate = true;
-                        }
+                    decrementedPlayer->foodUpdate = true;
                     }
                 
                 }

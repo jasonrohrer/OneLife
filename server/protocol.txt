@@ -187,6 +187,7 @@ and a reason string a the tail end of the line.  Reason can be
 reason_disconnected
 reason_killed_id   (where id is the object that killed the player)
 reason_hunger
+reason_nursing_hunger  (starved while nursing a hungry baby)
 reason_age
 
 

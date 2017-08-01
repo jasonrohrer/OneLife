@@ -12,6 +12,8 @@ Version 31     ???
 --On screens larger than 1920x1080, or if settings/forceBigPointer.ini set,
   double-sized mouse pointer is used.
 
+--New death reason:  Nursing Starvation.
+
 
 
 
@@ -40,6 +42,13 @@ Server fixes:
 --Giving birth now takes 10 out of mother's food supply, with a min remaining 
   food of 4.
 
+--Nursing a baby now transfers food from the mother's store to the baby's
+  store.  This adds a new death reason:  Nursing Starvation.  Picking up a
+  baby always consumes at least one food, so a good baby will wait until they
+  need food before asking.  Nursing is still more efficient than hand-feeding
+  because the food transfer fits the baby perfectly (where as a berry has a
+  tendency to over-feed, beyond the size of the baby's stomach, thus wasting 
+  food).
 
 
 
