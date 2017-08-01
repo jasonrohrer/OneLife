@@ -9,6 +9,10 @@ Version 31     ???
 --Fixed assumption that time() returns 32-bit int values (see server fixes
   for details).
 
+--On screens larger than 1920x1080, or if settings/forceBigPointer.ini set,
+  double-sized mouse pointer is used.
+
+
 
 
 Server fixes:
