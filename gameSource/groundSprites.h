@@ -24,6 +24,8 @@ typedef struct GroundSpriteSet {
 
 // array sized for largest biome ID for direct indexing
 // sparse, with NULL entries
+
+// One extra place in array for unknown biome sprite
 extern int groundSpritesArraySize;
 extern GroundSpriteSet **groundSprites;
 

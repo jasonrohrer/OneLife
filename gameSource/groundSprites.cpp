@@ -47,7 +47,8 @@ int initGroundSpritesStart( char inPrintSteps ) {
             }
         }
     
-    groundSpritesArraySize = maxBiome + 1;
+    // extra space for unknown biome sprite
+    groundSpritesArraySize = maxBiome + 2;
     groundSprites = new GroundSpriteSet*[ groundSpritesArraySize ];
 
     
@@ -60,6 +61,9 @@ int initGroundSpritesStart( char inPrintSteps ) {
         groundTileCacheDir.makeDirectory();
         }
 
+    // -1 to trigger loading of unknown biome image
+    allBiomes.push_back( -1 );
+    
     return allBiomes.size();
     }
 
@@ -72,7 +76,19 @@ float initGroundSpritesStep() {
 
         int b = allBiomes.getElementDirect( i );
     
-        char *fileName = autoSprintf( "ground_%d.tga", b );
+        char *fileName;
+
+        if( b == -1 ) {
+            // special case
+            fileName = stringDuplicate( "ground_U.tga" );
+            
+            // stick it at end
+            b = groundSpritesArraySize - 1;
+            }
+        else {
+            fileName = autoSprintf( "ground_%d.tga", b );
+            }
+        
 
         File *groundFile = groundDir.getChildFile( fileName );
         

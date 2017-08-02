@@ -2981,6 +2981,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
             if( b >= 0 && b < groundSpritesArraySize ) {
                 s = groundSprites[ b ];
                 }
+            else if( b == -1 ) {
+                // unknown biome image at end
+                s = groundSprites[ groundSpritesArraySize - 1 ];
+                }
             
             if( s == NULL ) {
                 // find another
