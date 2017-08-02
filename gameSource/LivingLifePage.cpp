@@ -2791,6 +2791,13 @@ void LivingLifePage::drawHungerMaxFillLine( doublePair inAteWordsPos,
 
 
 
+static char isInBounds( int inX, int inY, int inMapD ) {
+    if( inX < 0 || inY < 0 || inX > inMapD - 1 || inY > inMapD - 1 ) {
+        return false;
+        }
+    return true;
+    }
+
 
 
 char drawAdd = true;
@@ -2912,6 +2919,17 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
 
 
+
+    // don't bound floor start and end here
+    // 
+    // we want to show unknown biome off edge
+    // instead, check before using to index mMapBiomes mid-loop
+    
+    // note that we can't check mMapCellDrawnFlags outside of map boundaries
+    // which will result in some over-drawing out there (whole sheets with
+    // tiles drawn on top).  However, given that we're not drawing anything
+    // else out there, this should be okay from a performance standpoint.
+
     int yStartFloor = gridCenterY - 3;
     int yEndFloor = gridCenterY + 3;
 
@@ -2919,35 +2937,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int xEndFloor = gridCenterX + 6;
 
     
-    // give us extra border from edge so we can safely check neighbors
-    if( xStartFloor < 1 ) {
-        xStartFloor = 1;
-        }
-    if( xStartFloor >= mMapD - 1 ) {
-        xStartFloor = mMapD - 2;
-        }
-    
-    if( yStartFloor < 1 ) {
-        yStartFloor = 1;
-        }
-    if( yStartFloor >= mMapD - 1 ) {
-        yStartFloor = mMapD - 2;
-        }
-
-    if( xEndFloor < 1 ) {
-        xEndFloor = 1;
-        }
-    if( xEndFloor >= mMapD - 1 ) {
-        xEndFloor = mMapD - 2;
-        }
-    
-    if( yEndFloor < 1 ) {
-        yEndFloor = 1;
-        }
-    if( yEndFloor >= mMapD - 1 ) {
-        yEndFloor = mMapD - 2;
-        }
-
 
 
     int numCells = mMapD * mMapD;
@@ -2965,7 +2954,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
         for( int x=xStartFloor; x<=xEndFloor; x++ ) {
             int mapI = y * mMapD + x;
             
-            if( mMapCellDrawnFlags[mapI] ) {
+            char inBounds = isInBounds( x, y, mMapD );
+
+            if( inBounds && mMapCellDrawnFlags[mapI] ) {
                 continue;
                 }
 
@@ -2974,8 +2965,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
             int tileX = lrint( screenX / CELL_D );
 
             
-            int b = mMapBiomes[mapI];
-                        
+            int b = -1;
+            
+            if( inBounds ) {
+                b = mMapBiomes[mapI];
+                }
+            
             GroundSpriteSet *s = NULL;
             
             if( b >= 0 && b < groundSpritesArraySize ) {
@@ -3031,7 +3026,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 if( nX >=0 && nX < mMapD ) {
                                     int nI = nY * mMapD + nX;
                                     
-                                    if( mMapBiomes[nI] != b ) {
+                                    int nB = -1;
+                                    
+                                    if( isInBounds( nX, nY, mMapD ) ) {
+                                        nB = mMapBiomes[nI];
+                                        }
+
+                                    if( nB != b ) {
                                         allSameBiome = false;
                                         break;
                                         }
@@ -3075,12 +3076,27 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
 
                 
-                if( ! mMapCellDrawnFlags[mapI] ) {
+                if( ! inBounds || ! mMapCellDrawnFlags[mapI] ) {
                     // not drawn as whole sheet
                     
-                    if( mMapBiomes[ mapI - 1 ] == b &&
-                        mMapBiomes[ mapI + mMapD ] == b &&
-                        mMapBiomes[ mapI + mMapD + 1 ] == b ) {
+                    int aboveB = -1;
+                    int leftB = -1;
+                    int diagB = -1;
+                    
+                    if( isInBounds( x -1, y, mMapD ) ) {    
+                        leftB = mMapBiomes[ mapI - 1 ];
+                        }
+                    if( isInBounds( x, y + 1, mMapD ) ) {    
+                        aboveB = mMapBiomes[ mapI + mMapD ];
+                        }
+                    
+                    if( isInBounds( x + 1, y + 1, mMapD ) ) {    
+                        diagB = mMapBiomes[ mapI + mMapD + 1 ];
+                        }
+                    
+                    if( leftB == b &&
+                        aboveB == b &&
+                        diagB == b ) {
                         
                         // surrounded by same biome above and to left
                         // AND diagonally to the above-right
@@ -3090,7 +3106,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     else {
                         drawSprite( s->tiles[setY][setX], pos );
                         }
-                    mMapCellDrawnFlags[mapI] = true;
+                    if( inBounds ) {
+                        mMapCellDrawnFlags[mapI] = true;
+                        }
                     }
                 }
             }

@@ -14,6 +14,9 @@ Version 31     ???
 
 --New death reason:  Nursing Starvation.
 
+--New noise graphic to draw outside of known map regions during server lag.
+
+
 
 
 
