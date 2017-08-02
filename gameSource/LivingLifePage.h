@@ -340,6 +340,13 @@ class LivingLifePage : public GamePage {
         double *mMapDropRot;
 
         SoundUsage *mMapDropSounds;
+        
+
+        // 0, 0 for most, except objects that are moving
+        doublePair *mMapMoveOffsets;
+        // speed in CELL_D per sec
+        double *mMapMoveSpeeds;
+        
 
         // true if left-right flipped (to match last drop)
         // not tracked on server, so resets when object goes off of screen

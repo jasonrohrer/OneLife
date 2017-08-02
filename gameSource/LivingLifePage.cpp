@@ -1159,6 +1159,10 @@ LivingLifePage::LivingLifePage()
     mMapDropOffsets = new doublePair[ mMapD * mMapD ];
     mMapDropRot = new double[ mMapD * mMapD ];
     mMapDropSounds = new SoundUsage[ mMapD * mMapD ];
+
+    mMapMoveOffsets = new doublePair[ mMapD * mMapD ];
+    mMapMoveSpeeds = new double[ mMapD * mMapD ];
+
     mMapTileFlips = new char[ mMapD * mMapD ];
     
     mMapPlayerPlacedFlags = new char[ mMapD * mMapD ];
@@ -1184,6 +1188,10 @@ LivingLifePage::LivingLifePage()
         mMapDropOffsets[i].y = 0;
         mMapDropRot[i] = 0;
         mMapDropSounds[i] = blankSoundUsage;
+
+        mMapMoveOffsets[i].x = 0;
+        mMapMoveOffsets[i].y = 0;
+        mMapMoveSpeeds[i] = 0;
         
         mMapTileFlips[i] = false;
         
@@ -1296,6 +1304,9 @@ LivingLifePage::~LivingLifePage() {
     delete [] mMapDropOffsets;
     delete [] mMapDropRot;
     delete [] mMapDropSounds;
+
+    delete [] mMapMoveOffsets;
+    delete [] mMapMoveSpeeds;
 
     delete [] mMapTileFlips;
     
@@ -1662,10 +1673,20 @@ void LivingLifePage::drawMapCell( int inMapI,
                 if( mMapLastAnimFade[ inMapI ] < 0 ) {
                     mMapLastAnimFade[ inMapI ] = 0;
                     
-                    if( mMapCurAnimType[ inMapI ] != ground ) {
-                        // transition to ground now
+                    AnimType newType;
+
+                    if( mMapMoveSpeeds[ inMapI ] == 0 ) {
+                        newType = ground;
+                        }
+                    else if( mMapMoveSpeeds[ inMapI ] > 0 ) {
+                        // transition to moving now
+                        newType = moving;
+                        }
+
+                    if( mMapCurAnimType[ inMapI ] != newType ) {
+                        
                         mMapLastAnimType[ inMapI ] = mMapCurAnimType[ inMapI ];
-                        mMapCurAnimType[ inMapI ] = ground;
+                        mMapCurAnimType[ inMapI ] = newType;
                         mMapLastAnimFade[ inMapI ] = 1;
                         
                         mMapAnimationLastFrameCount[ inMapI ] =
@@ -1673,6 +1694,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                         
                         mMapAnimationFrameCount[ inMapI ] = 0;
                         }
+                    
                     }
                 }
             }
@@ -1749,13 +1771,61 @@ void LivingLifePage::drawMapCell( int inMapI,
             
             rot = mMapDropRot[ inMapI ];
             }
+        
+        if( mMapMoveOffsets[ inMapI ].x != 0 ||
+            mMapMoveOffsets[ inMapI ].y != 0 ) {
+
+            
+            doublePair nullOffset = { 0, 0 };
+                    
+
+            doublePair delta = sub( nullOffset, 
+                                    mMapMoveOffsets[ inMapI ] );
+                    
+            double step = frameRateFactor * mMapMoveSpeeds[ inMapI ] / 60.0;
+                    
+            if( length( delta ) < step ) {
+                        
+                mMapMoveOffsets[ inMapI ].x = 0;
+                mMapMoveOffsets[ inMapI ].y = 0;
+                mMapMoveSpeeds[ inMapI ] = 0;
                 
+                if( mMapCurAnimType[ inMapI ] != ground ) {
+                        
+                    mMapLastAnimType[ inMapI ] = mMapCurAnimType[ inMapI ];
+                    mMapCurAnimType[ inMapI ] = ground;
+                    mMapLastAnimFade[ inMapI ] = 1;
+                    
+                    mMapAnimationLastFrameCount[ inMapI ] =
+                        mMapAnimationFrameCount[ inMapI ];
+                    
+                    mMapAnimationFrameCount[ inMapI ] = 0;
+                    }
+                }
+            else {
+                mMapMoveOffsets[ inMapI ] =
+                    add( mMapMoveOffsets[ inMapI ],
+                         mult( normalize( delta ), step ) );
+                }
+
+
+            pos = add( pos, mult( mMapMoveOffsets[ inMapI ], CELL_D ) );
+            }
+        
+
 
         setDrawColor( 1, 1, 1, 1 );
                 
         AnimType curType = ground;
         AnimType fadeTargetType = ground;
         double animFade = 1;
+
+        if( mMapMoveSpeeds[ inMapI ] > 0 ) {
+            curType = moving;
+            fadeTargetType = moving;
+            animFade = 1;
+            }
+        
 
 
         double timeVal = frameRateFactor * 
@@ -5219,6 +5289,11 @@ void LivingLifePage::step() {
             doublePair *newMapDropOffsets = new doublePair[ mMapD * mMapD ];
             double *newMapDropRot = new double[ mMapD * mMapD ];
             SoundUsage *newMapDropSounds = new SoundUsage[ mMapD * mMapD ];
+
+            doublePair *newMapMoveOffsets = new doublePair[ mMapD * mMapD ];
+            double *newMapMoveSpeeds = new double[ mMapD * mMapD ];
+
+
             char *newMapTileFlips= new char[ mMapD * mMapD ];
 
             char *newMapPlayerPlacedFlags = new char[ mMapD * mMapD ];
@@ -5244,6 +5319,12 @@ void LivingLifePage::step() {
                 newMapLastAnimFade[i] = 0;
                 newMapDropOffsets[i].x = 0;
                 newMapDropOffsets[i].y = 0;
+                
+                newMapDropSounds[i] = blankSoundUsage;
+                
+                newMapMoveOffsets[i].x = 0;
+                newMapMoveOffsets[i].y = 0;
+                newMapMoveSpeeds[i] = 0;
 
                 newMapTileFlips[i] = false;
                 newMapPlayerPlacedFlags[i] = false;
@@ -5276,6 +5357,9 @@ void LivingLifePage::step() {
                     newMapDropRot[i] = mMapDropRot[oI];
                     newMapDropSounds[i] = mMapDropSounds[oI];
 
+                    newMapMoveOffsets[i] = mMapMoveOffsets[oI];
+                    newMapMoveSpeeds[i] = mMapMoveSpeeds[oI];
+
                     newMapTileFlips[i] = mMapTileFlips[oI];
                     newMapPlayerPlacedFlags[i] = 
                         mMapPlayerPlacedFlags[oI];
@@ -5307,6 +5391,12 @@ void LivingLifePage::step() {
                     mMapD * mMapD * sizeof( double ) );
             memcpy( mMapDropSounds, newMapDropSounds,
                     mMapD * mMapD * sizeof( SoundUsage ) );
+
+            memcpy( mMapMoveOffsets, newMapMoveOffsets,
+                    mMapD * mMapD * sizeof( doublePair ) );
+            memcpy( mMapMoveSpeeds, newMapMoveSpeeds,
+                    mMapD * mMapD * sizeof( double ) );
+
             
             memcpy( mMapTileFlips, newMapTileFlips,
                     mMapD * mMapD * sizeof( char ) );
@@ -5325,6 +5415,10 @@ void LivingLifePage::step() {
             delete [] newMapDropOffsets;
             delete [] newMapDropRot;
             delete [] newMapDropSounds;
+
+            delete [] newMapMoveOffsets;
+            delete [] newMapMoveSpeeds;
+            
             delete [] newMapTileFlips;
             
             delete [] newMapPlayerPlacedFlags;
@@ -5478,7 +5572,7 @@ void LivingLifePage::step() {
                 
                 int x, y, responsiblePlayerID;
                 int oldX, oldY;
-                float speed;
+                float speed = 0;
                                 
                 char *idBuffer = new char[500];
 
@@ -5556,6 +5650,32 @@ void LivingLifePage::step() {
                             mMapContainedStacks[mapI].deleteAll();
                             }
                         
+                        if( speed > 0 ) {
+                            // this cell moved from somewhere
+                            
+                            applyReceiveOffset( &oldX, &oldY );
+                    
+                            mMapMoveSpeeds[mapI] = speed;
+                            
+                            mMapMoveOffsets[mapI].x = oldX - x;
+                            mMapMoveOffsets[mapI].y = oldY - y;
+                            
+
+                            if( x > oldX ) {
+                                mMapTileFlips[mapI] = false;
+                                }
+                            else if( x < oldX ) {
+                                mMapTileFlips[mapI] = true;
+                                }
+                            }
+                        else {
+                            mMapMoveSpeeds[mapI] = 0;
+                            
+                            mMapMoveOffsets[mapI].x = 0;
+                            mMapMoveOffsets[mapI].y = 0;
+                            }
+                        
+
                         if( old != 0 &&
                             old == newID &&
                             mMapContainedStacks[mapI].size() > 
@@ -5727,20 +5847,28 @@ void LivingLifePage::step() {
                             
                             printf( "New placement, responsible=%d\n",
                                     responsiblePlayerID );
-
-                            if( old == 0 ) {
-                                // set down into an empty spot
-                                // reset frame count
-                                mMapAnimationFrameCount[mapI] = 0;
-                                mMapAnimationLastFrameCount[mapI] = 0;
-                                }
-                            // else, leave existing frame count alone,
-                            // since object has simply gone through a
-                            // transition
                             
-                            mMapCurAnimType[mapI] = ground;
-                            mMapLastAnimType[mapI] = ground;
-                            mMapLastAnimFade[mapI] = 0;
+                            if( mMapMoveSpeeds[mapI] == 0 ) {
+                                
+                                if( old == 0 ) {
+                                    // set down into an empty spot
+                                    // reset frame count
+                                    mMapAnimationFrameCount[mapI] = 0;
+                                    mMapAnimationLastFrameCount[mapI] = 0;
+                                    }
+                                // else, leave existing frame count alone,
+                                // since object has simply gone through a
+                                // transition
+                                
+                                mMapCurAnimType[mapI] = ground;
+                                mMapLastAnimType[mapI] = ground;
+                                mMapLastAnimFade[mapI] = 0;
+                                }
+                            else {
+                                mMapLastAnimType[mapI] = mMapCurAnimType[mapI];
+                                mMapCurAnimType[mapI] = moving;
+                                mMapLastAnimFade[mapI] = 1;
+                                }
                             
                             mMapAnimationFrozenRotFrameCount[mapI] = 0;
                             
