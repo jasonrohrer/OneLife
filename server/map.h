@@ -11,6 +11,11 @@ typedef struct ChangePosition {
         char global;
         
         int responsiblePlayerID;
+
+        // for movement changes
+        int oldX, oldY;
+        float speed;
+        
     } ChangePosition;
 
 
@@ -99,8 +104,7 @@ void shrinkContainer( int inX, int inY, int inNumNewSlots );
 
 
 // line for a map change message
-char *getMapChangeLineString( int inX, int inY, 
-                              int inResponsiblePlayerID = -1  );
+char *getMapChangeLineString( ChangePosition inPos );
 
 
 // returns number of seconds from now until when next decay is supposed

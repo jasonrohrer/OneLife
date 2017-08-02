@@ -5477,13 +5477,15 @@ void LivingLifePage::step() {
             for( int i=1; i<numLines; i++ ) {
                 
                 int x, y, responsiblePlayerID;
-                
+                int oldX, oldY;
+                float speed;
                                 
                 char *idBuffer = new char[500];
 
-                int numRead = sscanf( lines[i], "%d %d %499s %d",
-                                      &x, &y, idBuffer, &responsiblePlayerID );
-                if( numRead == 4 ) {
+                int numRead = sscanf( lines[i], "%d %d %499s %d %d %d %f",
+                                      &x, &y, idBuffer, &responsiblePlayerID,
+                                      &oldX, &oldY, &speed );
+                if( numRead == 4 || numRead == 7) {
 
                     applyReceiveOffset( &x, &y );
 

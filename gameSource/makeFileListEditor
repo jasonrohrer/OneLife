@@ -51,6 +51,7 @@ fft.cpp \
 zoomView.cpp \
 categoryBank.cpp \
 EditorCategoryPage.cpp \
+RadioButtonSet.cpp \
 
 
 

@@ -30,6 +30,11 @@
 #include "../gameSource/objectBank.h"
 #include "../gameSource/GridPos.h"
 
+#include "../gameSource/GridPos.h"
+
+
+extern GridPos getClosestPlayerPos( int inX, int inY );
+
 
 
 // track recent placements to determine camp where
@@ -811,7 +816,9 @@ void initMap() {
     
             
 
-
+    // note that the various decay ETA slots in map.db 
+    // are define but unused, because we store times separately
+    // in mapTime.db
     int error = KISSDB_open( &db, 
                              "map.db", 
                              KISSDB_OPEN_MODE_RWCREAT,
@@ -1290,26 +1297,28 @@ static timeSec_t dbTimeGet( int inX, int inY, int inSlot ) {
 
 static void dbPut( int inX, int inY, int inSlot, int inValue ) {
     
-    if( inSlot != 1 ) {
-        // ETA decay changes don't get reported as map changes
-        
-        char found = false;
-        for( int i=0; i<mapChangePosSinceLastStep.size(); i++ ) {
+    // count all slot changes as changes, because we're storing
+    // time in a separate database now (so we don't need to worry
+    // about time changes being reported as map changes)
+    
+    char found = false;
+    for( int i=0; i<mapChangePosSinceLastStep.size(); i++ ) {
             
-            ChangePosition *p = mapChangePosSinceLastStep.getElement( i );
-            
-            if( p->x == inX && p->y == inY ) {
-                found = true;
-                
-                // update it
-                p->responsiblePlayerID = currentResponsiblePlayer;
-                }
-            }
+        ChangePosition *p = mapChangePosSinceLastStep.getElement( i );
         
-        if( ! found ) {
-            ChangePosition p = { inX, inY, false, currentResponsiblePlayer };
-            mapChangePosSinceLastStep.push_back( p );
+        if( p->x == inX && p->y == inY ) {
+            found = true;
+            
+            // update it
+            p->responsiblePlayerID = currentResponsiblePlayer;
+            break;
             }
+        }
+        
+    if( ! found ) {
+        ChangePosition p = { inX, inY, false, currentResponsiblePlayer,
+                             0, 0, 0.0 };
+        mapChangePosSinceLastStep.push_back( p );
         }
     
     
@@ -1498,6 +1507,11 @@ int checkDecayObject( int inX, int inY, int inID ) {
     // else decay exists for this object
     
     int newID = inID;
+    
+    // in case of movement
+    int newX = inX;
+    int newY = inY;
+    
 
     // is eta stored in map?
     timeSec_t mapETA = getEtaDecay( inX, inY );
@@ -1522,14 +1536,160 @@ int checkDecayObject( int inX, int inY, int inID ) {
             if( newSlots > 0 ) {    
                 restretchMapContainedDecays( inX, inY, inID, newID );
                 }
+
+
             
-            // set it in DB
-            dbPut( inX, inY, 0, newID );
+            if( t->move != 0 ) {
+                // moving
+                doublePair dir = { 0, 0 };
+                
+                if( t->move < 3 ) {
+                    
+                    GridPos p = getClosestPlayerPos( inX, inY );
+                    
+                    if( p.x != 0 || p.y != 0 ) {
+                        
+                        dir.x = p.x - inX;
+                        dir.y = p.y - inY;
+                        dir = normalize( dir );
+                        
+                        // round to one of 8 cardinal directions
+                        
+                        double a = angle( dir );
+                        
+                        a = lrint( a * 8 ) / 8.0;
+                        
+                        dir.x = 1;
+                        dir.y = 0;
+                        dir = rotate( dir, a );
+                        }
+                    if( t->move == 2 ) {
+                        // flee
+                        dir = mult( dir, -1 );
+                        }
+                    }
+
+                if( dir.x == 0 && dir.y == 0 ) {
+                    // random instead
+                    
+                    dir.x = 1;
+                    dir.y = 0;
+                    
+                    // 8 cardinal directions
+                    dir = rotate( 
+                        dir,
+                        randSource.getRandomBoundedInt( 0, 7 ) / 8.0 );
+                    }
+                
+                if( dir.x != 0 && dir.y != 0 ) {
+                    // diag
+
+                    // push both up to full step
+                    
+                    if( dir.x < 0 ) {
+                        dir.x = -1;
+                        }
+                    else if( dir.x > 0 ) {
+                        dir.x = 1;
+                        }
+
+                    if( dir.y < 0 ) {
+                        dir.y = -1;
+                        }
+                    else if( dir.y > 0 ) {
+                        dir.y = 1;
+                        }
+                    }
+                
+                // now we have the dir we want to go in    
+
+                // walk up to 4 steps in that direction, looking
+                // for non-blocking objects or an empty spot
+                
+                for( int i=0; i<4; i++ ) {
+                    int testX = lrint( inX + dir.x * i );
+                    int testY = lrint( inY + dir.y * i );
+                    
+                    int oID = getMapObjectRaw( testX, testY );
+                                               
+                    
+                    if( oID == 0 ) {
+                        // found a spot for it to move
+                        newX = testX;
+                        newY = testY;
+                        break;
+                        }
+                    else if( oID > 0 && getObject( oID ) != NULL &&
+                             getObject( oID )->blocksWalking ) {
+                        // blocked, stop now
+                        break;
+                        }
+                    // else walk through it
+                    }
+                
+
+                if( newX != inX || newY != inY ) {
+                    // a reall move!
+
+                    // move object
+                    // leave empty spot behind
+                    dbPut( inX, inY, 0, 0 );
+                    
+                    dbPut( newX, newY, 0, newID );
+
+
+                    // move contained
+                    int numCont;
+                    int *cont = getContained( inX, inY, &numCont );
+                    timeSec_t *contEta = 
+                        getContainedEtaDecay( inX, inY, &numCont );
+                    
+                    if( numCont > 0 ) {
+                        setContained( newX, newY, numCont, cont );
+                        setContainedEtaDecay( newX, newY, numCont, contEta );
+                        
+                        clearAllContained( inX, inY );
+                        
+                        delete [] cont;
+                        delete [] contEta;
+                        }
+
+                    // now patch up change record marking this as a move
+                    
+                    for( int i=0; i<mapChangePosSinceLastStep.size(); i++ ) {
+                        
+                        ChangePosition *p = 
+                            mapChangePosSinceLastStep.getElement( i );
+                        
+                        if( p->x == newX && p->y == newY ) {
+                            
+                            // update it
+                            p->oldX = inX;
+                            p->oldY = inY;
+                            p->speed = 4.0f;
+                            
+                            if( newID > 0 ) {
+                                ObjectRecord *newObj = getObject( newID );
+                                
+                                if( newObj != NULL ) {
+                                    p->speed *= newObj->speedMult;
+                                    }
+                                }
+                            break;
+                            }
+                        }
+                    }
+                }
             
+                
+            if( newX == inX && newY == inY ) {
+                // no move happened
 
-
-
-
+                // just set change in DB
+                dbPut( inX, inY, 0, newID );
+                }
+            
+                
             TransRecord *newDecayT = getTrans( -1, newID );
 
             if( newDecayT != NULL ) {
@@ -1551,7 +1711,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 mapETA = 0;
                 }
 
-            setEtaDecay( inX, inY, mapETA );
+            setEtaDecay( newX, newY, mapETA );
             }
 
         }
@@ -1577,7 +1737,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
     
 
     if( mapETA != 0 ) {
-        trackETA( inX, inY, 0, mapETA );
+        trackETA( newX, newY, 0, mapETA );
         }
     
     
@@ -2287,21 +2447,21 @@ void shrinkContainer( int inX, int inY, int inNumNewSlots ) {
 
 
 
-char *getMapChangeLineString( int inX, int inY,
-                              int inResponsiblePlayerID ) {
+char *getMapChangeLineString( ChangePosition inPos ) {
     
 
     SimpleVector<char> buffer;
     
 
-    char *header = autoSprintf( "%d %d ", inX, inY );
+    char *header = autoSprintf( "%d %d ", inPos.x, inPos.y );
     
     buffer.appendElementString( header );
     
     delete [] header;
     
 
-    char *idString = autoSprintf( "%d", getMapObjectNoLook( inX, inY ) );
+    char *idString = autoSprintf( "%d", getMapObjectNoLook( inPos.x,
+                                                            inPos.y ) );
     
     buffer.appendElementString( idString );
     
@@ -2309,7 +2469,7 @@ char *getMapChangeLineString( int inX, int inY,
     
     
     int numContained;
-    int *contained = getContainedNoLook( inX, inY, &numContained );
+    int *contained = getContainedNoLook( inPos.x, inPos.y, &numContained );
 
     for( int i=0; i<numContained; i++ ) {
         
@@ -2325,13 +2485,22 @@ char *getMapChangeLineString( int inX, int inY,
         }
     
 
-    char *player = autoSprintf( " %d", inResponsiblePlayerID );
+    char *player = autoSprintf( " %d", inPos.responsiblePlayerID );
     
     buffer.appendElementString( player );
     
     delete [] player;
 
     
+    if( inPos.speed > 0 ) {
+        char *moveString = autoSprintf( " %d %d %f", 
+                                        inPos.oldX, inPos.oldY, inPos.speed );
+        
+        buffer.appendElementString( moveString );
+    
+        delete [] moveString;
+        }
+
     buffer.appendElementString( "\n" );
 
     return buffer.getElementString();
@@ -2443,8 +2612,7 @@ void stepMap( SimpleVector<char> *inMapChanges,
         
         inChangePosList->push_back( p );
         
-        char *changeString = getMapChangeLineString( p.x, p.y,
-                                                     p.responsiblePlayerID );
+        char *changeString = getMapChangeLineString( p );
         inMapChanges->appendElementString( changeString );
         delete [] changeString;
         }

@@ -120,11 +120,14 @@ float initTransBankStep() {
                 int reverseUseActorFlag = 0;
                 int reverseUseTargetFlag = 0;
 
-                sscanf( contents, "%d %d %d %f %f %d %d", 
+                int move = 0;
+
+                sscanf( contents, "%d %d %d %f %f %d %d %d", 
                         &newActor, &newTarget, &autoDecaySeconds,
                         &actorMinUseFraction, &targetMinUseFraction,
                         &reverseUseActorFlag,
-                        &reverseUseTargetFlag );
+                        &reverseUseTargetFlag,
+                        &move );
                 
                 if( autoDecaySeconds == -1 ) {
                     epochAutoDecay = true;
@@ -140,6 +143,9 @@ float initTransBankStep() {
                 r->epochAutoDecay = epochAutoDecay;
                 r->lastUseActor = lastUseActor;
                 r->lastUseTarget = lastUseTarget;
+
+                r->move = move;
+
 
                 r->reverseUseActor = false;
                 if( reverseUseActorFlag == 1 ) {
@@ -315,6 +321,7 @@ void initTransBankFinish() {
                               tr->autoDecaySeconds,
                               tr->actorMinUseFraction,
                               tr->targetMinUseFraction, 
+                              tr->move,
                               true );
                     }
                 }
@@ -420,6 +427,7 @@ void initTransBankFinish() {
                       tr.autoDecaySeconds,
                       tr.actorMinUseFraction,
                       tr.targetMinUseFraction,
+                      tr.move,
                       true );
             }
         
@@ -742,6 +750,7 @@ void initTransBankFinish() {
                               newTrans->autoDecaySeconds,
                               newTrans->actorMinUseFraction,
                               newTrans->targetMinUseFraction,
+                              newTrans->move,
                               true );
                     numGenerated++;
                     }
@@ -1144,6 +1153,7 @@ void addTrans( int inActor, int inTarget,
                int inAutoDecaySeconds,
                float inActorMinUseFraction,
                float inTargetMinUseFraction,
+               int inMove,
                char inNoWriteToFile ) {
     
     // exapand id-indexed maps if a bigger ID is being added    
@@ -1213,6 +1223,8 @@ void addTrans( int inActor, int inTarget,
         
         t->actorMinUseFraction = inActorMinUseFraction;
         t->targetMinUseFraction = inTargetMinUseFraction;
+        
+        t->move = inMove;
 
         records.push_back( t );
 
@@ -1248,7 +1260,8 @@ void addTrans( int inActor, int inTarget,
             t->actorMinUseFraction == inActorMinUseFraction &&
             t->targetMinUseFraction == inTargetMinUseFraction &&
             t->reverseUseActor == inReverseUseActor &&
-            t->reverseUseTarget == inReverseUseTarget ) {
+            t->reverseUseTarget == inReverseUseTarget &&
+            t->move == inMove ) {
             
             // no change to produces map either... 
 
@@ -1276,6 +1289,9 @@ void addTrans( int inActor, int inTarget,
             
             t->actorMinUseFraction = inActorMinUseFraction;
             t->targetMinUseFraction = inTargetMinUseFraction;
+            
+            t->move = inMove;
+            
             
             if( inNewActor != 0 ) {
                 producesMap[inNewActor].push_back( t );
@@ -1331,13 +1347,14 @@ void addTrans( int inActor, int inTarget,
                 reverseUseTargetFlag = 1;
                 }
 
-            char *fileContents = autoSprintf( "%d %d %d %f %f %d %d", 
+            char *fileContents = autoSprintf( "%d %d %d %f %f %d %d %d", 
                                               inNewActor, inNewTarget,
                                               inAutoDecaySeconds,
                                               inActorMinUseFraction,
                                               inTargetMinUseFraction,
                                               reverseUseActorFlag,
-                                              reverseUseTargetFlag );
+                                              reverseUseTargetFlag,
+                                              inMove );
 
         
             File *cacheFile = transDir.getChildFile( "cache.fcz" );
@@ -1570,6 +1587,9 @@ void printTrans( TransRecord *inTrans ) {
         }
     if( inTrans->reverseUseTarget ) {
         printf( " (reverseUseTarget)" );
+        }
+    if( inTrans->move > 0 ) {
+        printf( " (move=%d)", inTrans->move );
         }
     
     printf( "\n" );

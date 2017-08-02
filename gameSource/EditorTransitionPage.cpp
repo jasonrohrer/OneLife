@@ -68,6 +68,10 @@ extern Font *smallFont;
 static ObjectPickable objectPickable;
 
 
+#define NUM_MOVE_BUTTONS 4
+static const char *moveButtonNames[NUM_MOVE_BUTTONS] =
+{ "None", "Chase", "Flee", "Random" };
+
 
 EditorTransitionPage::EditorTransitionPage()
         : mAutoDecayTimeField( smallFont, 
@@ -78,6 +82,8 @@ EditorTransitionPage::EditorTransitionPage()
           mLastUseTargetCheckbox( 130, 75, 2 ),
           mReverseUseActorCheckbox( -330, -75, 2 ),
           mReverseUseTargetCheckbox( 130, -75, 2 ),
+          mMovementButtons( smallFont, 220, 40,
+                            NUM_MOVE_BUTTONS, moveButtonNames, true, 2 ),
           mActorMinUseFractionField( smallFont, 
                                      -290,  115, 4,
                                      false,
@@ -116,6 +122,9 @@ EditorTransitionPage::EditorTransitionPage()
 
     addComponent( &mReverseUseTargetCheckbox );
     mReverseUseTargetCheckbox.addActionListener( this );
+
+    addComponent( &mMovementButtons );
+    mMovementButtons.addActionListener( this );
     
     mActorMinUseFractionField.setFloat( 0, -1, true );
     mTargetMinUseFractionField.setFloat( 0, -1, true );
@@ -342,6 +351,9 @@ void EditorTransitionPage::checkIfSaveVisible() {
         // can be auto-decay
         mAutoDecayTimeField.setVisible( true );
 
+        mMovementButtons.setVisible( true );
+        mMovementButtons.setSelectedItem( mCurrentTransition.move );
+
         if( mCurrentTransition.autoDecaySeconds != 0 ) {
             char *decayString =
                 autoSprintf( "%d", mCurrentTransition.autoDecaySeconds );
@@ -357,6 +369,9 @@ void EditorTransitionPage::checkIfSaveVisible() {
     else {
         mAutoDecayTimeField.setVisible( false );
         mAutoDecayTimeField.setText( "" );
+
+        mMovementButtons.setSelectedItem( 0 );
+        mMovementButtons.setVisible( false );
         }
         
     }
@@ -567,7 +582,8 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                   mCurrentTransition.reverseUseTarget,
                   decayTime,
                   mActorMinUseFractionField.getFloat(),
-                  mTargetMinUseFractionField.getFloat() );
+                  mTargetMinUseFractionField.getFloat(),
+                  mMovementButtons.getSelectedItem() );
             
         redoTransSearches( mLastSearchID, true );
         }
@@ -664,6 +680,9 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mReverseUseTargetCheckbox ) {
         mCurrentTransition.reverseUseTarget = 
             mReverseUseTargetCheckbox.getToggled();
+        }
+    else if( inTarget == &mMovementButtons ) {
+        mCurrentTransition.move = mMovementButtons.getSelectedItem();
         }
     else if( inTarget == &mSwapActorButton ) {
         

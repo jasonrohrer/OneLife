@@ -41,6 +41,13 @@ typedef struct TransRecord {
         // not the use dummy objects.
         float actorMinUseFraction;
         float targetMinUseFraction;
+
+        // 0 for normal, non-moving transition
+        // 1 for follow closest player
+        // 2 for flee closest player
+        // 3 for random movement
+        int move;
+
         
     } TransRecord;
 
@@ -150,6 +157,7 @@ void addTrans( int inActor, int inTarget,
                int inAutoDecaySeconds,
                float inActorMinUseFraction,
                float inTargetMinUseFraction,
+               int inMove,
                char inNoWriteToFile = false );
 
 

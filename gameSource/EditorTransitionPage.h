@@ -17,6 +17,8 @@
 
 #include "CheckboxButton.h"
 
+#include "RadioButtonSet.h"
+
 #include "Picker.h"
 
 #include "transitionBank.h"
@@ -65,6 +67,8 @@ class EditorTransitionPage : public GamePage, public ActionListener {
         CheckboxButton mReverseUseActorCheckbox;
         CheckboxButton mReverseUseTargetCheckbox;
         
+        RadioButtonSet mMovementButtons;
+ 
         TextField mActorMinUseFractionField, mTargetMinUseFractionField;
 
         TextButton mSaveTransitionButton;

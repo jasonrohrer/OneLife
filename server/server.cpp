@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <math.h>
 #include <assert.h>
+#include <float.h>
 
 
 #include "minorGems/util/stringUtils.h"
@@ -39,10 +40,7 @@
 static JenkinsRandomSource randSource;
 
 
-typedef struct GridPos {
-        int x;
-        int y;
-    } GridPos;
+#include "../gameSource/GridPos.h"
 
 
 #define HEAT_MAP_D 16
@@ -1049,6 +1047,33 @@ static double distance( GridPos inA, GridPos inB ) {
     return sqrt( ( inA.x - inB.x ) * ( inA.x - inB.x )
                  +
                  ( inA.y - inB.y ) * ( inA.y - inB.y ) );
+    }
+
+
+
+// returns (0,0) if no player found
+GridPos getClosestPlayerPos( int inX, int inY ) {
+    GridPos c = { inX, inY };
+    
+    double closeDist = DBL_MAX;
+    GridPos closeP = { 0, 0 };
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        if( o->error ) {
+            continue;
+            }
+        
+        GridPos p = computePartialMoveSpot( o );
+        
+        double d = distance( p, c );
+        
+        if( d < closeDist ) {
+            closeDist = d;
+            closeP = p;
+            }
+        }
+    return closeP;
     }
 
 
