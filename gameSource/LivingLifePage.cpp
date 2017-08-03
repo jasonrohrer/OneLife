@@ -3547,7 +3547,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 if( o->currentSpeed != 0 ) {
                     oX = lrint( o->currentPos.x );
-                    oY = lrint( o->currentPos.y - 0.15 );
+                    oY = lrint( o->currentPos.y - 0.20 );
                     }
                 
                 

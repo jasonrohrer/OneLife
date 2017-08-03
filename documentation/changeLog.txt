@@ -19,7 +19,11 @@ Version 31     ???
 --Now all short human-made or human-moveable objects are mouse-able when they
   are covered up by a foreground object. 
 
+--Fixed vertical cross-over point for player feet when walking between cells
+  to reduce the appearance of objects passing through their legs.
 
+
+ 
 
 Server fixes:
 
