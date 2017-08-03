@@ -9170,16 +9170,18 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
         }
     
 
+    // need to check 3 around cell in all directions because
+    // of moving object offsets
 
     // start in front row
     // right to left
     // (check things that are in front first
-    for( int y=clickDestY-3; y<=clickDestY+1 && ! p->hit; y++ ) {
+    for( int y=clickDestY-3; y<=clickDestY+3 && ! p->hit; y++ ) {
         float clickOffsetY = ( clickDestY  - y ) * CELL_D + clickExtraY;
 
         // first all non drawn-behind map objects in this row
         // (in front of people)
-        for( int x=clickDestX+1; x>=clickDestX-1  && 
+        for( int x=clickDestX+3; x>=clickDestX-3  && 
                  ! p->hit; x-- ) {
             float clickOffsetX = ( clickDestX  - x ) * CELL_D + clickExtraX;
 
@@ -10216,8 +10218,25 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                                  sendX( clickDestX ), 
                                  sendY( clickDestY ), extra );
                 
-                playerActionTargetX = clickDestX;
-                playerActionTargetY = clickDestY;
+                int trueClickDestX = clickDestX;
+                int trueClickDestY = clickDestY;
+                
+                if( mapY >= 0 && mapY < mMapD &&
+                    mapX >= 0 && mapX < mMapD ) {
+                    
+                    int mapI = mapY * mMapD + mapX;
+                    
+                    if( mMapMoveSpeeds[ mapI ] > 0 ) {        
+                        
+                        trueClickDestX = 
+                            lrint( clickDestX + mMapMoveOffsets[mapI].x );
+                        trueClickDestY = 
+                            lrint( clickDestY + mMapMoveOffsets[mapI].y );
+                        }
+                    }
+                
+                playerActionTargetX = trueClickDestX;
+                playerActionTargetY = trueClickDestY;
                 }
 
             delete [] extra;
