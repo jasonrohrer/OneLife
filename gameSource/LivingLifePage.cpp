@@ -9083,15 +9083,16 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
     int clickDestMapI = clickDestMapY * mMapD + clickDestMapX;
     
     if( clickDestMapY >= 0 && clickDestMapY < mMapD &&
-        clickDestMapX >= 0 && clickDestMapX < mMapD
-        &&
-        mMapPlayerPlacedFlags[ clickDestMapI ] ) {
+        clickDestMapX >= 0 && clickDestMapX < mMapD ) {
         
         // check this cell first
+
+        // all short human-made objects are mouse-through-able
         
         int oID = mMap[ clickDestMapI ];
         
-        if( oID > 0 ) {
+        if( oID > 0 && isHumanMade( oID ) && 
+            getObjectHeight( oID ) < CELL_D ) {
             ObjectRecord *obj = getObject( oID );
                 
             int sp, cl, sl;

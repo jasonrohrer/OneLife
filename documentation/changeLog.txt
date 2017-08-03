@@ -16,7 +16,8 @@ Version 31     ???
 
 --New noise graphic to draw outside of known map regions during server lag.
 
-
+--Now all short human-made or human-moveable objects are mouse-able when they
+  are covered up by a foreground object. 
 
 
 
