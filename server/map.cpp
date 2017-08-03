@@ -1750,8 +1750,15 @@ int checkDecayObject( int inX, int inY, int inID ) {
         trackETA( newX, newY, 0, mapETA );
         }
     
-    
-    return newID;
+
+    if( newX != inX ||
+        newY != inY ) {
+        // object moved and is gone
+        return 0;
+        }
+    else {
+        return newID;
+        }
     }
 
 
