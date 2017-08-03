@@ -16,6 +16,8 @@
 
 void regenerateDepthMap();
 
+void regenerateHumanMadeMap();
+
 
 
 // track pointers to all records
@@ -37,6 +39,10 @@ static SimpleVector<TransRecord *> *producesMap;
 
 static int depthMapSize = 0;
 static int *depthMap = NULL;
+
+
+static int humanMadeMapSize = 0;
+static char *humanMadeMap = NULL;
 
 
 
@@ -769,6 +775,7 @@ void initTransBankFinish() {
     
 
     regenerateDepthMap();
+    regenerateHumanMadeMap();
     }
 
 
@@ -788,6 +795,12 @@ void freeTransBank() {
         depthMap = NULL;
         }
     depthMapSize = 0;
+
+    if( humanMadeMap != NULL ) {
+        delete [] humanMadeMap;
+        humanMadeMap = NULL;
+        }
+    humanMadeMapSize = 0;
     
     }
 
@@ -892,6 +905,164 @@ void regenerateDepthMap() {
         }
     
     }
+
+
+
+void regenerateHumanMadeMap() {
+    
+    if( humanMadeMap != NULL ) {    
+        delete [] humanMadeMap;
+        humanMadeMap = NULL;
+        }
+    
+    humanMadeMapSize = getMaxObjectID() + 1;
+        
+    humanMadeMap = new char[ humanMadeMapSize ];
+
+    // temporary, those that we KNOW are natural-made
+    char *naturalMap = new char[ humanMadeMapSize ];
+    char *unreachableMap = new char[ humanMadeMapSize ];
+        
+    // all start unknown
+    for( int i=0; i<humanMadeMapSize; i++ ) {
+        humanMadeMap[i] = false;
+        naturalMap[i] = false;
+        unreachableMap[i] = false;
+        }
+    
+
+    int numObjects;
+        
+    ObjectRecord **objects = getAllObjects( &numObjects );
+
+    for( int i=0; i<numObjects; i++ ) {
+        ObjectRecord *o = objects[i];
+
+        int oID = o->id;
+
+        if( ! o->permanent ) {
+            // these can be moved around by people
+            humanMadeMap[oID] = true;
+            continue;
+            }
+        if( o->mapChance > 0 ) {
+            // natural object
+            naturalMap[oID] = true;
+            continue;
+            }
+        if( o->person ) {
+            humanMadeMap[oID] = true;
+            continue;
+            }
+        if( o->deathMarker ) {
+            humanMadeMap[oID] = true;
+            continue;
+            }
+        
+        SimpleVector<TransRecord*> *prodTrans = getAllProduces( o->id );
+        
+        int numTrans = prodTrans->size();
+
+        if( numTrans == 0 ) {
+            unreachableMap[oID] = true;
+            continue;
+            }
+        
+        // check for those immediately made by people
+        for( int t=0; t<numTrans; t++ ) {
+            TransRecord *trans = prodTrans->getElementDirect( t );
+            
+            if( trans->actor >= 0 || trans->actor == -2 ) {
+                // bare hand or tool use produces this
+                // or default human action
+                humanMadeMap[ oID ] = true;
+                break;
+                }
+            }
+        }
+    
+
+    // now step for unknown-origin objects and see if we find known objects
+    char anyUnknown = true;    
+
+    // if non are assigned and some are still unknown, we have an orphaned
+    // loop
+    char anyAssigned = true;
+    
+    while( anyUnknown && anyAssigned ) {
+        anyUnknown = false;
+        anyAssigned = false;
+        
+        for( int i=0; i<numObjects; i++ ) {
+            ObjectRecord *o = objects[i];
+            
+            int oID = o->id;
+
+            if( ! humanMadeMap[ oID ] && 
+                ! naturalMap[ oID ] &&
+                ! unreachableMap[ oID ] ) {
+                
+                
+                SimpleVector<TransRecord*> *prodTrans = getAllProduces( oID );
+        
+                int numTrans = prodTrans->size();
+                
+                char assignedThisObject = false;
+        
+                for( int t=0; t<numTrans; t++ ) {
+                    TransRecord *trans = prodTrans->getElementDirect( t );
+
+                    int targetID = trans->target;
+                    if( trans->actor == -1 && targetID > 0 ) {
+                        // auto-decay
+                        
+                        if( humanMadeMap[ targetID ] ) {
+                            humanMadeMap[ oID ] = true;
+                            assignedThisObject = true;
+                            anyAssigned = true;
+                            break;
+                            }
+                        if( naturalMap[ targetID ] ) {
+                            naturalMap[ oID ] = true;
+                            assignedThisObject = true;
+                            anyAssigned = true;
+                            break;
+                            }
+                        }
+                    }
+
+                if( ! assignedThisObject ) {
+                    anyUnknown = true;
+                    }
+                }
+            }
+        }
+   
+
+    /*
+    // print a report    
+    for( int i=0; i<numObjects; i++ ) {
+        ObjectRecord *o = objects[i];
+        
+        if( humanMadeMap[ o->id ] ) {
+            printf( "HUMAN-MADE:   " );
+            }
+        else if( naturalMap[ o->id ] ) {
+            printf( "NATURAL:      " );
+            }
+        else {
+            printf( "UNREACHABLE:  " );
+            }
+        
+        printf( "%s\n", o->description );
+        }
+    */
+
+    delete [] objects;
+    delete [] naturalMap;
+    delete [] unreachableMap;
+    }
+
 
 
 
@@ -1603,6 +1774,17 @@ int getObjectDepth( int inObjectID ) {
         }
     else {
         return depthMap[ inObjectID ];
+        }
+    }
+
+
+
+char isHumanMade( int inObjectID ) {
+    if( inObjectID >= humanMadeMapSize ) {
+        return false;
+        }
+    else {
+        return humanMadeMap[ inObjectID ];
         }
     }
 

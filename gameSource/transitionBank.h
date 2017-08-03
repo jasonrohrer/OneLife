@@ -185,6 +185,11 @@ void printTrans( TransRecord *inTrans );
 int getObjectDepth( int inObjectID );
 
 
+// true for objects that are not naturally occurring
+// or for natural objects that can be moved by humans
+char isHumanMade( int inObjectID );
+
+
 
 // walks through all transitions and replaces any epoch-based autoDecay
 // transition times with inEpocSeconds
