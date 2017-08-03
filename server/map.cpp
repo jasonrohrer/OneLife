@@ -1557,7 +1557,9 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         
                         double a = angle( dir );
                         
-                        a = lrint( a * 8 ) / 8.0;
+                        a = 2 * M_PI * 
+                            lrint( ( a / ( 2 * M_PI ) ) * 8 ) / 
+                            8.0;
                         
                         dir.x = 1;
                         dir.y = 0;
@@ -1569,6 +1571,13 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         }
                     }
 
+                // round to 1000ths to avoid rounding errors
+                // that can separate our values from zero
+
+                dir.x = lrint( dir.x * 1000 ) / 1000.0;
+                dir.y = lrint( dir.y * 1000 ) / 1000.0;
+                
+
                 if( dir.x == 0 && dir.y == 0 ) {
                     // random instead
                     
@@ -1578,6 +1587,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     // 8 cardinal directions
                     dir = rotate( 
                         dir,
+                        2 * M_PI * 
                         randSource.getRandomBoundedInt( 0, 7 ) / 8.0 );
                     }
                 
