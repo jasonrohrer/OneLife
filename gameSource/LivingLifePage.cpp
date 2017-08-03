@@ -6573,6 +6573,40 @@ void LivingLifePage::step() {
                                     existing->heldPosOverrideAlmostOver = false;
                                     existing->heldObjectPos.x = heldOriginX;
                                     existing->heldObjectPos.y = heldOriginY;
+
+
+                                    // check if held origin needs
+                                    // tweaking because what we picked up
+                                    // had a moving offset
+                                    int mapHeldOriginX = 
+                                        heldOriginX - mMapOffsetX + mMapD / 2;
+                                    int mapHeldOriginY = 
+                                        heldOriginY- mMapOffsetY + mMapD / 2;
+                    
+                                    if( mapHeldOriginX >= 0 && 
+                                        mapHeldOriginX < mMapD
+                                        &&
+                                        mapHeldOriginY >= 0 && 
+                                        mapHeldOriginY < mMapD ) {
+                                        
+                                        int mapHeldOriginI = 
+                                            mapHeldOriginY * mMapD + 
+                                            mapHeldOriginX;
+                                        
+                                        if( mMapMoveOffsets[ mapHeldOriginI ].x
+                                            != 0 
+                                            ||
+                                            mMapMoveOffsets[ mapHeldOriginI ].y
+                                            != 0 ) {
+                                            
+                                            existing->heldObjectPos =
+                                                add( existing->heldObjectPos,
+                                                     mMapMoveOffsets[ 
+                                                         mapHeldOriginI ] );
+                                            }    
+                                        }
+                                    
+
                                     existing->heldObjectRot = 0;
                                 
                                     
