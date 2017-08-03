@@ -3076,6 +3076,15 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         basePos.x += 128;
         }
 
+    // draw overlay to show foot-cross-over point
+
+    doublePair footRecPos = { 0, -96 };
+    
+    setDrawColor( 0, 0, 0, 0.1 );
+    
+    drawRect( footRecPos, 192, 32 );
+    
+
     
     doublePair barPos = { 0, 128 };
     

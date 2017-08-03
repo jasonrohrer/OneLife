@@ -22,6 +22,8 @@ Version 31     ???
 --Fixed vertical cross-over point for player feet when walking between cells
   to reduce the appearance of objects passing through their legs.
 
+--Added foot-cross-over guide mark in object editor.
+
 
  
 
