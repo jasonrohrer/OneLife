@@ -9094,7 +9094,18 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
         if( oID > 0 && isHumanMade( oID ) && 
             getObjectHeight( oID ) < CELL_D ) {
             ObjectRecord *obj = getObject( oID );
-                
+            
+
+            float thisObjClickExtraX = clickExtraX;
+            float thisObjClickExtraY = clickDestY;
+            
+            if( mMapMoveSpeeds[ clickDestMapI ] > 0 ) {
+                thisObjClickExtraX -= 
+                    mMapMoveOffsets[ clickDestMapI ].x * CELL_D;
+                thisObjClickExtraY -= 
+                    mMapMoveOffsets[ clickDestMapI ].y * CELL_D;
+                }
+            
             int sp, cl, sl;
                 
             double dist = getClosestObjectPart( 
@@ -9105,8 +9116,8 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                 -1,
                 -1,
                 mMapTileFlips[ clickDestMapI ],
-                clickExtraX,
-                clickExtraY,
+                thisObjClickExtraX,
+                thisObjClickExtraY,
                 &sp, &cl, &sl,
                 // ignore transparent parts
                 // allow objects behind smoke to be picked up
@@ -9158,6 +9169,17 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                 ! getObject( oID )->drawBehindPlayer ) {
                 ObjectRecord *obj = getObject( oID );
                 
+                float thisObjClickOffsetX = clickOffsetX;
+                float thisObjClickOffsetY = clickOffsetY;
+            
+                if( mMapMoveSpeeds[ mapI ] > 0 ) {
+                    thisObjClickOffsetX -= 
+                        mMapMoveOffsets[ mapI ].x * CELL_D;
+                    thisObjClickOffsetY -= 
+                        mMapMoveOffsets[ mapI ].y * CELL_D;
+                    }
+
+
                 int sp, cl, sl;
                 
                 double dist = getClosestObjectPart( 
@@ -9168,8 +9190,8 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                     -1,
                     -1,
                     mMapTileFlips[ mapI ],
-                    clickOffsetX,
-                    clickOffsetY,
+                    thisObjClickOffsetX,
+                    thisObjClickOffsetY,
                     &sp, &cl, &sl,
                     // ignore transparent parts
                     // allow objects behind smoke to be picked up
@@ -9304,6 +9326,18 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                 getObject( oID )->drawBehindPlayer ) {
                 ObjectRecord *obj = getObject( oID );
                 
+
+                float thisObjClickOffsetX = clickOffsetX;
+                float thisObjClickOffsetY = clickOffsetY;
+            
+                if( mMapMoveSpeeds[ mapI ] > 0 ) {
+                    thisObjClickOffsetX -= 
+                        mMapMoveOffsets[ mapI ].x * CELL_D;
+                    thisObjClickOffsetY -= 
+                        mMapMoveOffsets[ mapI ].y * CELL_D;
+                    }
+
+
                 int sp, cl, sl;
                 
                 double dist = getClosestObjectPart( 
@@ -9314,8 +9348,8 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                     -1,
                     -1,
                     mMapTileFlips[ mapI ],
-                    clickOffsetX,
-                    clickOffsetY,
+                    thisObjClickOffsetX,
+                    thisObjClickOffsetY,
                     &sp, &cl, &sl,
                     // ignore transparent parts
                     // allow objects behind smoke to be picked up
