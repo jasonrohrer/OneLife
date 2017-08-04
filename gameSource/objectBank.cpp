@@ -1225,7 +1225,25 @@ void resaveAll() {
     printf( "Starting to resave all objects\n..." );
     for( int i=0; i<mapSize; i++ ) {
         if( idMap[i] != NULL ) {
+
+            ObjectRecord *o = idMap[i];
+
+            char anyNotLoaded = true;
             
+            while( anyNotLoaded ) {
+                anyNotLoaded = false;
+                
+                for( int s=0; s< o->numSprites; s++ ) {
+                    
+                    char loaded = markSpriteLive( o->sprites[s] );
+                    
+                    if( ! loaded ) {
+                        anyNotLoaded = true;
+                        }
+                    }
+                stepSpriteBank();
+                }
+
             reAddObject( idMap[i], NULL, false, i );
             }
         }
@@ -1411,8 +1429,8 @@ int addObject( const char *inDescription,
     
     int newID = inReplaceID;
     
-    double newHeight = recomputeObjectHeight( inNumSprites,
-                                              inSprites, inSpritePos );
+    int newHeight = recomputeObjectHeight( inNumSprites,
+                                           inSprites, inSpritePos );
 
     // add it to file structure
     File objectsDir( NULL, "objects" );
