@@ -39,6 +39,9 @@
 #include <stdlib.h>//#include <math.h>
 
 
+#define MAP_D 64
+#define MAP_NUM_CELLS 4096
+
 extern double frameRateFactor;
 
 extern Font *mainFont;
@@ -1014,7 +1017,7 @@ LivingLifePage::LivingLifePage()
         : mServerSocket( -1 ), 
           mFirstServerMessagesReceived( 0 ),
           mMapGlobalOffsetSet( false ),
-          mMapD( 64 ),
+          mMapD( MAP_D ),
           mMapOffsetX( 0 ),
           mMapOffsetY( 0 ),
           mEKeyDown( false ),
@@ -3441,6 +3444,21 @@ void LivingLifePage::draw( doublePair inViewCenter,
         gameObjects.getElement( i )->onScreen = false;
         }
     
+    int numMoving = 0;
+    int movingObjectsIndices[ MAP_NUM_CELLS ];
+    
+    for( int y=0; y<mMapD; y++ ) {
+        for( int x=0; x<mMapD; x++ ) {
+            int mapI = y * mMapD + x;
+            
+            if( mMap[ mapI ] > 0 &&
+                mMapMoveSpeeds[ mapI ] > 0 ) {
+                
+                movingObjectsIndices[ numMoving ] = mapI;
+                numMoving++;
+                }
+            }
+        }
     
 
     for( int y=yEnd; y>=yStart; y-- ) {
@@ -3461,7 +3479,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             int screenX = CELL_D * worldX;
             
             if( mMap[ mapI ] > 0 && 
-                getObject( mMap[ mapI ] )->drawBehindPlayer ) {
+                getObject( mMap[ mapI ] )->drawBehindPlayer &&
+                mMapMoveSpeeds[ mapI ] == 0 ) {
                 
                 drawMapCell( mapI, screenX, screenY );
                 }
@@ -3592,6 +3611,26 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 }
             }
+        
+        // now draw moving objects that fall in this row
+        for( int i=0; i<numMoving; i++ ) {
+            int mapI = movingObjectsIndices[i];
+            
+            int oX = mapI % mMapD;
+            int oY = mapI / mMapD;
+            
+            int movingX = lrint( oX + mMapMoveOffsets[mapI].x );
+            int movingY = lrint( oY + mMapMoveOffsets[mapI].y - 0.20 );
+
+            if( movingY == y && movingX >= xStart && movingX <= xEnd ) {
+                
+                int movingScreenX = CELL_D * ( oX + mMapOffsetX - mMapD / 2 );
+                int movingScreenY = CELL_D * ( oY + mMapOffsetY - mMapD / 2 );
+
+                drawMapCell( mapI, movingScreenX, movingScreenY );
+                }
+            }
+        
 
 
         // now draw non-behind-marked map objects in this row
@@ -3603,7 +3642,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
             if( mMap[ mapI ] > 0 && 
-                ! getObject( mMap[ mapI ] )->drawBehindPlayer ) {
+                ! getObject( mMap[ mapI ] )->drawBehindPlayer &&
+                mMapMoveSpeeds[ mapI ] == 0 ) {
                 
                 drawMapCell( mapI, screenX, screenY );
                 }
