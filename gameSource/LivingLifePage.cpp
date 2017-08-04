@@ -2073,6 +2073,20 @@ FloatColor trailColor = { 0, 0.5, 0, 0.25 };
 
 
 
+int LivingLifePage::getMapIndex( int inWorldX, int inWorldY ) {
+    int mapTargetX = inWorldX - mMapOffsetX + mMapD / 2;
+    int mapTargetY = inWorldY - mMapOffsetY + mMapD / 2;
+
+    if( mapTargetY >= 0 && mapTargetY < mMapD &&
+        mapTargetX >= 0 && mapTargetX < mMapD ) {
+                    
+        return mapTargetY * mMapD + mapTargetX;
+        }
+    return -1;
+    }
+
+
+
 
 ObjectAnimPack LivingLifePage::drawLiveObject( 
     LiveObject *inObj,
@@ -2154,12 +2168,17 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
         inObj->pendingActionAnimationProgress != 0 ) {
                     
         // wiggle toward target
+
+        
+        int trueTargetX = targetX + inObj->actionTargetTweakX;
+        int trueTargetY = targetY + inObj->actionTargetTweakY;
+        
                     
         float xDir = 0;
         float yDir = 0;
                 
-        doublePair dir = { targetX - inObj->currentPos.x,
-                           targetY - inObj->currentPos.y };
+        doublePair dir = { trueTargetX - inObj->currentPos.x,
+                           trueTargetY - inObj->currentPos.y };
         
         if( dir.x != 0 || dir.y != 0 ) {    
             dir = normalize( dir );
@@ -2168,12 +2187,12 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
         xDir = dir.x;
         yDir = dir.y;
     
-        if( inObj->currentPos.x < targetX ) {
+        if( inObj->currentPos.x < trueTargetX ) {
             if( inObj->currentSpeed == 0 ) {
                 inObj->holdingFlip = false;
                 }
             }
-        if( inObj->currentPos.x > targetX ) {
+        if( inObj->currentPos.x > trueTargetX ) {
             if( inObj->currentSpeed == 0 ) {
                 inObj->holdingFlip = true;
                 }
@@ -6598,6 +6617,24 @@ void LivingLifePage::step() {
                                             ||
                                             mMapMoveOffsets[ mapHeldOriginI ].y
                                             != 0 ) {
+
+                                            // only do this if tweak not already
+                                            // set.  Don't want to interrupt
+                                            // an existing tweak
+                                            if( existing->actionTargetTweakX ==
+                                                0 &&
+                                                existing->actionTargetTweakY ==
+                                                0 ) {
+                                                
+                                                existing->actionTargetTweakX =
+                                                    lrint( 
+                                                        mMapMoveOffsets[
+                                                        mapHeldOriginI ].x );
+                                            
+                                                existing->actionTargetTweakY =
+                                                    lrint( mMapMoveOffsets[
+                                                           mapHeldOriginI ].y );
+                                                }
                                             
                                             existing->heldObjectPos =
                                                 add( existing->heldObjectPos,
@@ -8755,6 +8792,8 @@ void LivingLifePage::step() {
                     // no longer pending, finish last cycle by snapping
                     // back to 0
                     o->pendingActionAnimationProgress = 0;
+                    o->actionTargetTweakX = 0;
+                    o->actionTargetTweakY = 0;
                     }
                 }
             }
@@ -8766,6 +8805,8 @@ void LivingLifePage::step() {
                     // no longer pending, finish last cycle by snapping
                     // back to 0
                     o->pendingActionAnimationProgress = 0;
+                    o->actionTargetTweakX = 0;
+                    o->actionTargetTweakY = 0;
                     }
                 }
             }
@@ -10234,9 +10275,16 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                             lrint( clickDestY + mMapMoveOffsets[mapI].y );
                         }
                     }
+
+                ourLiveObject->actionTargetX = clickDestX;
+                ourLiveObject->actionTargetY = clickDestY;
+
+                ourLiveObject->actionTargetTweakX = trueClickDestX - clickDestX;
+                ourLiveObject->actionTargetTweakY = trueClickDestY - clickDestY;
                 
-                playerActionTargetX = trueClickDestX;
-                playerActionTargetY = trueClickDestY;
+
+                playerActionTargetX = clickDestX;
+                playerActionTargetY = clickDestY;
                 }
 
             delete [] extra;

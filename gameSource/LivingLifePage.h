@@ -176,6 +176,13 @@ typedef struct LiveObject {
         int actionTargetX;
         int actionTargetY;
         
+        // tweak for when we are performing an action on a moving object
+        // that hasn't reach its destination yet.  actionTargetX,Y is the
+        // destination, but this is the closest cell where it was at
+        // when we clicked on it.
+        int actionTargetTweakX;
+        int actionTargetTweakY;
+
         char pendingAction;
         float pendingActionAnimationProgress;
 
@@ -460,6 +467,8 @@ class LivingLifePage : public GamePage {
         char *getHintMessage( int inObjectID, int inIndex );
 
 
+        // -1 if outside bounds of locally stored map
+        int getMapIndex( int inWorldX, int inWorldY );
         
 
         int mCurrentArrowI;
