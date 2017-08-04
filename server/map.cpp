@@ -1,6 +1,8 @@
 #include "map.h"
 #include "HashTable.h"
 
+// cell pixel dimension on client
+#define CELL_D 128
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
 #include "minorGems/util/random/CustomRandomSource.h"
@@ -1918,10 +1920,27 @@ int getMapObjectRaw( int inX, int inY ) {
                                 }
                             }
                         }
-                    
-                    
                     }
                 }
+            else if( getObjectHeight( result ) < CELL_D ) {
+                // a short object should be here
+                // make sure there's not a tall object below already
+
+                
+                // south
+                int sID = getBaseMap( inX, inY - 1 );
+                        
+                if( sID > 0 && getObjectHeight( sID ) >= 2 ) {
+                    return 0;
+                    }
+                
+                int s2ID = getBaseMap( inX, inY - 2 );
+                        
+                if( s2ID > 0 && getObjectHeight( s2ID ) >= 3 ) {
+                    return 0;
+                    }                
+                }
+            
             }
         
         }

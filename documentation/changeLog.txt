@@ -24,6 +24,9 @@ Version 31     ???
 
 --Added foot-cross-over guide mark in object editor.
 
+--Added edit-time computation of object pixel heights.  Using this in server 
+  natural map generation to avoid placing short objects behind tall objects.
+
 
  
 
