@@ -52,6 +52,11 @@ static SimpleVector<int> racePersonObjectIDs[ MAX_RACE + 1 ];
 static SimpleVector<int> raceList;
 
 
+static int recomputeObjectHeight(  int inNumSprites, int *inSprites,
+                                   doublePair *inSpritePos );
+
+
+
 static void rebuildRaceList() {
     raceList.deleteAll();
     
@@ -636,6 +641,7 @@ float initObjectBankStep() {
                 r->useDummyIDs = NULL;
                 r->isUseDummy = false;
                 r->useDummyParent = 0;
+                r->cachedHeight = -1;
                 
                 memset( r->spriteUseVanish, false, r->numSprites );
                 memset( r->spriteUseAppear, false, r->numSprites );
@@ -756,7 +762,14 @@ float initObjectBankStep() {
                         }
                     }
                 
+                if( next < numLines ) {
+                    sscanf( lines[next], "pixHeight=%d", 
+                            &( r->cachedHeight ) );
+                    next++;
+                    }       
                 
+
+                    
                 records.push_back( r );
 
                             
@@ -1397,7 +1410,9 @@ int addObject( const char *inDescription,
         }
     
     int newID = inReplaceID;
-
+    
+    double newHeight = recomputeObjectHeight( inNumSprites,
+                                              inSprites, inSpritePos );
 
     // add it to file structure
     File objectsDir( NULL, "objects" );
@@ -1592,7 +1607,10 @@ int addObject( const char *inDescription,
             boolArrayToSparseCommaString( "useAppearIndex",
                                           inSpriteUseAppear, 
                                           inNumSprites ) );
-        
+
+        lines.push_back( autoSprintf( "pixHeight=%d",
+                                      newHeight ) );
+
 
         char **linesArray = lines.getElementArray();
         
@@ -1773,7 +1791,8 @@ int addObject( const char *inDescription,
     r->useDummyIDs = NULL;
     r->isUseDummy = false;
     r->useDummyParent = 0;
-
+    r->cachedHeight = newHeight;
+    
     r->spriteSkipDrawing = new char[ inNumSprites ];
     
     memset( r->spriteSkipDrawing, false, inNumSprites );
@@ -1822,9 +1841,7 @@ int addObject( const char *inDescription,
     memcpy( r->spriteUseAppear, inSpriteUseAppear, 
             inNumSprites * sizeof( char ) );
     
-
-
-
+    
     // delete old
 
     // grab this before freeing, in case inDescription is the same as
@@ -2695,19 +2712,68 @@ int getMaxDiameter( ObjectRecord *inObject ) {
 
 
 
-double getObjectHeight( int inObjectID ) {
+int getObjectHeight( int inObjectID ) {
     ObjectRecord *o = getObject( inObjectID );
     
     if( o == NULL ) {
         return 0;
         }
     
-    int maxH = 0;
+    if( o->cachedHeight == -1 ) {
+        o->cachedHeight =
+            recomputeObjectHeight( o->numSprites, o->sprites, o->spritePos );
+        }
     
-    for( int i=0; i<o->numSprites; i++ ) {
-        doublePair pos = o->spritePos[i];
+    return o->cachedHeight;
+    }
+
+
+
+int recomputeObjectHeight( int inNumSprites, int *inSprites,
+                           doublePair *inSpritePos ) {        
+    
+    double maxH = 0;
+    
+    for( int i=0; i<inNumSprites; i++ ) {
+        doublePair pos = inSpritePos[i];
                 
-        int rad = getSpriteRecord( o->sprites[i] )->maxD / 2;
+        SpriteRecord *spriteRec = getSpriteRecord( inSprites[i] );
+        
+        int rad = 0;
+        
+        if( spriteRec != NULL ) {
+
+            char hit = false;
+            
+            if( spriteRec->hitMap != NULL ) {
+                int h = spriteRec->h;
+                int w = spriteRec->w;
+                char *hitMap = spriteRec->hitMap;
+                
+                for( int y=0; y<h; y++ ) {
+                    for( int x=0; x<w; x++ ) {
+                     
+                        int p = y * spriteRec->w + x;
+                        
+                        if( hitMap[p] ) {
+                            hit = true;
+                            // can be negative if anchor above top
+                            // pixel
+                            rad = 
+                                ( h/2 - spriteRec->centerAnchorYOffset )
+                                - y;
+                            break;
+                            }
+                        }
+                    if( hit ) {
+                        break;
+                        }
+                    }
+                }
+            else {
+                rad = spriteRec->h / 2;
+                }
+            }
         
         double h = pos.y + rad;
         
@@ -2716,7 +2782,9 @@ double getObjectHeight( int inObjectID ) {
             }
         }
 
-    return maxH;
+    int returnH = lrint( maxH );
+    
+    return returnH;
     }
 
 

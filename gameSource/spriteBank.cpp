@@ -147,7 +147,11 @@ float initSpriteBankStep() {
         r->numStepsUnused = 0;
         
         r->maxD = 2;
-
+        
+        // dummy values until we load the image later
+        r->w = 2;
+        r->h = 2;
+        
         r->id = 0;
         
         sscanf( fileName, "%d.txt", &( r->id ) );

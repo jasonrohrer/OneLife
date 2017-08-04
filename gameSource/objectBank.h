@@ -233,7 +233,11 @@ typedef struct ObjectRecord {
         char isUseDummy;
         
         int useDummyParent;
-
+        
+        // -1 if not set
+        // used to avoid recomputing height repeatedly at client/server runtime
+        int cachedHeight;
+        
     } ObjectRecord;
 
 
@@ -481,7 +485,7 @@ int getMaxDiameter( ObjectRecord *inObject );
 
 
 // gets estimate of object height from cell center
-double getObjectHeight( int inObjectID );
+int getObjectHeight( int inObjectID );
 
 
 
