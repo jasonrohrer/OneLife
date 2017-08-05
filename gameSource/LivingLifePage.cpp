@@ -6267,7 +6267,8 @@ void LivingLifePage::step() {
                 char *clothingBuffer = new char[500];
                 
                 int justAte = 0;
-
+                int justAteID = 0;
+                
                 int facingOverride = 0;
                 int actionAttempt = 0;
                 int actionTargetX = 0;
@@ -6284,7 +6285,7 @@ void LivingLifePage::step() {
                                       "%d "
                                       "%d %d "
                                       "%499s %d %d %d %d %f %d %d %d %d "
-                                      "%lf %lf %lf %499s %d %d",
+                                      "%lf %lf %lf %499s %d %d %d",
                                       &( o.id ),
                                       &( o.displayID ),
                                       &facingOverride,
@@ -6306,10 +6307,11 @@ void LivingLifePage::step() {
                                       &( o.lastSpeed ),
                                       clothingBuffer,
                                       &justAte,
+                                      &justAteID,
                                       &responsiblePlayerID );
                 
                 
-                if( numRead == 22 ) {
+                if( numRead == 23 ) {
 
                     applyReceiveOffset( &actionTargetX, &actionTargetY );
                     applyReceiveOffset( &heldOriginX, &heldOriginY );
@@ -6576,6 +6578,34 @@ void LivingLifePage::step() {
                         char creationSoundPlayed = false;
                         char otherSoundPlayed = false;
                         
+
+                        if( justAte && 
+                            o.id != ourID && 
+                            existing->holdingID == oldHeld ) {
+                            // seems like this PU is about player being
+                            // fed by someone else
+
+                            // don't interrupt walking
+                            // but still play sound
+                            if( nearEndOfMovement( existing ) ) {
+                                addNewAnimPlayerOnly( 
+                                    existing, eating );
+                                }
+
+                            ObjectRecord *ateObj =
+                                getObject( justAteID );
+                                        
+                            if( ateObj->eatingSound.id != -1 ) {
+                                playSound( 
+                                    ateObj->eatingSound,
+                                    getVectorFromCamera( 
+                                        existing->currentPos.x, 
+                                        existing->currentPos.y ) );
+                                otherSoundPlayed = true;
+                                }
+                            }
+                        
+
                         if( existing->holdingID == 0 ) {
                                                         
                             // don't reset these when dropping something

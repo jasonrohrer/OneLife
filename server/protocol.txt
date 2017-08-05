@@ -138,12 +138,12 @@ a few other tricks to reduce it's size.  Check the code in map.cpp for details.
 
 
 PU
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e responsible_id
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e responsible_id
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c responsible_id
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e responsible_id
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set responsible_id
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id
 ...
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r s c e responsible_id
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id
 #
 
 List of player ids with their display object ids, facing direction, action
@@ -157,9 +157,9 @@ done_moving flag (to signal destination reached), force flag (to signal
 a move truncated unexpectedly), x,y grid positions of player,
 floating point age in "years", floating point aging rate in sec/year (how many
 seconds it takes the player to age 1 year), and
-floating point s move speeds (in grid square widths per second) and clothing
-set, e = 1 or 0 to indicate whether the player just ate what they were 
-holding, and the player responsible for this update.
+floating point move speeds (in grid square widths per second) and clothing
+set, just_ate = 1 or 0 to indicate whether the player just ate what they were 
+holding, the ID of the object they just ate, and the player responsible for this update.
 
 
 If facing is 0, then the player's facing direction doesn't change.

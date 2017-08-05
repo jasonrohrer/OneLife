@@ -222,12 +222,15 @@ typedef struct LiveObject {
         // should we send player a food status message
         char foodUpdate;
         
-        // info about the last thing we ate
+        // info about the last thing we ate, for FX food messages sent
+        // just to player
         int lastAteID;
         int lastAteFillMax;
         
+        // this is for PU messages sent to everyone
         char justAte;
-
+        int justAteID;
+        
         ClothingSet clothing;
         
         timeSec_t clothingEtaDecay[NUM_CLOTHING_PIECES];
@@ -1856,7 +1859,8 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
     
 
     char *updateLine = autoSprintf( 
-        "%d %d %d %d %d %d %s %d %d %d %d %.2f %s %.2f %.2f %.2f %s %d %d%s\n",
+        "%d %d %d %d %d %d %s %d %d %d %d"
+        "%.2f %s %.2f %.2f %.2f %s %d %d %d%s\n",
         inPlayer->id,
         inPlayer->displayID,
         inPlayer->facingOverride,
@@ -1875,10 +1879,12 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
         computeMoveSpeed( inPlayer ),
         clothingList,
         inPlayer->justAte,
+        inPlayer->justAteID,
         inPlayer->responsiblePlayerID,
         deathReason );
     
     inPlayer->justAte = false;
+    inPlayer->justAteID = 0;
     
     // held origin only valid once
     inPlayer->heldOriginValid = 0;
@@ -2168,6 +2174,7 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.lastAteID = 0;
     newObject.lastAteFillMax = 0;
     newObject.justAte = false;
+    newObject.justAteID = 0;
     
     newObject.clothing = getEmptyClothingSet();
 
@@ -4746,7 +4753,9 @@ int main() {
                                 
                                 if( obj->foodValue > 0 ) {
                                     targetPlayer->justAte = true;
-                                    
+                                    targetPlayer->justAteID = 
+                                        nextPlayer->holdingID;
+
                                     targetPlayer->lastAteID = 
                                         nextPlayer->holdingID;
                                     targetPlayer->lastAteFillMax =

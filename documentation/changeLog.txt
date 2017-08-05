@@ -35,6 +35,8 @@ Version 31     ???
 
 --You can now feed anyone, regardless of age.
 
+--Eating animation and eating sound played when someone is fed.
+
 
  
 
