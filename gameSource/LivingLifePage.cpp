@@ -7112,6 +7112,7 @@ void LivingLifePage::step() {
                         if( existing->heldByAdultID != -1 ) {
                             // got an update for a player that's being held
                             // this means they've been dropped
+                            printf( "Baby dropped\n" );
                             
                             existing->currentPos.x = o.xd;
                             existing->currentPos.y = o.yd;

@@ -1859,7 +1859,7 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
     
 
     char *updateLine = autoSprintf( 
-        "%d %d %d %d %d %d %s %d %d %d %d"
+        "%d %d %d %d %d %d %s %d %d %d %d "
         "%.2f %s %.2f %.2f %.2f %s %d %d %d%s\n",
         inPlayer->id,
         inPlayer->displayID,
@@ -5348,7 +5348,14 @@ int main() {
                     handleForcedBabyDrop( nextPlayer,
                                           &playerIndicesToSendUpdatesAbout );
                     }                
-
+                else if( nextPlayer->holdingID < 0 ) {
+                    LiveObject *babyO = 
+                        getLiveObject( - nextPlayer->holdingID );
+                    
+                    handleForcedBabyDrop( babyO,
+                                          &playerIndicesToSendUpdatesAbout );
+                    }
+                
                 char *updateLine = getUpdateLine( nextPlayer, true );
 
                 newDeleteUpdates.appendElementString( updateLine );
