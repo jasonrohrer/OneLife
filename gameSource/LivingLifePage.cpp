@@ -2822,6 +2822,18 @@ static char isInBounds( int inX, int inY, int inMapD ) {
 
 
 
+typedef struct DrawOrderRecord {
+        char person;
+        // if person
+        LiveObject *personO;
+        
+        // if cell
+        int mapI;
+        int screenX, screenY;
+    } DrawOrderRecord;
+        
+
+
 char drawAdd = true;
 char drawMult = true;
 
@@ -3447,6 +3459,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int numMoving = 0;
     int movingObjectsIndices[ MAP_NUM_CELLS ];
     
+    char movingDrawn[ MAP_NUM_CELLS ];
+        
     for( int y=0; y<mMapD; y++ ) {
         for( int x=0; x<mMapD; x++ ) {
             int mapI = y * mMapD + x;
@@ -3455,6 +3469,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 mMapMoveSpeeds[ mapI ] > 0 ) {
                 
                 movingObjectsIndices[ numMoving ] = mapI;
+                movingDrawn[ numMoving ] = false;
+                
                 numMoving++;
                 }
             }
@@ -3546,6 +3562,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         SimpleVector<ObjectAnimPack> heldToDrawOnTop;
 
+        // sorted queue of players and moving objects in this row
+        // build it, then draw them in sorted order
+        MinPriorityQueue<DrawOrderRecord> drawQueue;
+
         // draw players behind the objects in this row
 
         // run this loop twice, once for
@@ -3591,47 +3611,88 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 if( oY == worldY && oX == worldX ) {
                     
-                    // there's a player here, draw it
+                    // there's a player here, insert into sort queue
                     
-                    ObjectAnimPack heldPack =
-                        drawLiveObject( o, &speakers, &speakersPos );
-
-                    if( heldPack.inObjectID != -1 ) {
-                        // holding something, not drawn yet
-
-                        if( ! o->heldPosOverride ) {
-                            // not sliding into place
-                            // draw it now
-                            drawObjectAnim( heldPack );
-                            }
-                        else {
-                            heldToDrawOnTop.push_back( heldPack );
-                            }
-                        }
+                    DrawOrderRecord drawRec;
+                    drawRec.person = true;
+                    drawRec.personO = o;
+                    
+                    drawQueue.insert( drawRec, 0 - o->currentPos.y );
+                    
                     }
                 }
             }
         
-        // now draw moving objects that fall in this row
+        // now sort moving objects that fall in this row
         for( int i=0; i<numMoving; i++ ) {
+            if( movingDrawn[i] ) {
+                continue;
+                }
+            
             int mapI = movingObjectsIndices[i];
             
             int oX = mapI % mMapD;
             int oY = mapI / mMapD;
             
             int movingX = lrint( oX + mMapMoveOffsets[mapI].x );
-            int movingY = lrint( oY + mMapMoveOffsets[mapI].y - 0.20 );
 
-            if( movingY == y && movingX >= xStart && movingX <= xEnd ) {
+            double movingTrueCellY = oY + mMapMoveOffsets[mapI].y;
+            
+            double movingTrueY =  movingTrueCellY - 0.2;
+            
+            int movingCellY = lrint( movingTrueCellY - 0.50 );
+
+            if( movingCellY == y && movingX >= xStart && movingX <= xEnd ) {
                 
                 int movingScreenX = CELL_D * ( oX + mMapOffsetX - mMapD / 2 );
                 int movingScreenY = CELL_D * ( oY + mMapOffsetY - mMapD / 2 );
-
-                drawMapCell( mapI, movingScreenX, movingScreenY );
+                
+                double worldMovingY =  movingTrueY + mMapOffsetY - mMapD / 2;
+                
+                
+                //drawMapCell( mapI, movingScreenX, movingScreenY );
+                
+                // add to depth sorting queue
+                DrawOrderRecord drawRec;
+                drawRec.person = false;
+                drawRec.mapI = mapI;
+                drawRec.screenX = movingScreenX;
+                drawRec.screenY = movingScreenY;
+                drawQueue.insert( drawRec, 0 - worldMovingY );
+                
+                movingDrawn[i] = true;
                 }
             }
         
-
+        // now move through queue in order, drawing
+        int numQueued = drawQueue.size();
+        for( int q=0; q<numQueued; q++ ) {
+            DrawOrderRecord drawRec = drawQueue.removeMin();
+            
+            if( drawRec.person ) {
+                LiveObject *o = drawRec.personO;
+                
+                ObjectAnimPack heldPack =
+                    drawLiveObject( o, &speakers, &speakersPos );
+                
+                if( heldPack.inObjectID != -1 ) {
+                    // holding something, not drawn yet
+                    
+                    if( ! o->heldPosOverride ) {
+                        // not sliding into place
+                        // draw it now
+                        drawObjectAnim( heldPack );
+                        }
+                    else {
+                        heldToDrawOnTop.push_back( heldPack );
+                        }
+                    }
+                }
+            else {
+                drawMapCell( drawRec.mapI, drawRec.screenX, drawRec.screenY );
+                }
+            }
+        
 
         // now draw non-behind-marked map objects in this row
         // OVER the player objects in this row (so that pick up and set down
