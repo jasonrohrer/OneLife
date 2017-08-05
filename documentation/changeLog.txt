@@ -33,6 +33,8 @@ Version 31     ???
 
 --Fixed overlap issues for people moving in same cell.
 
+--You can now feed anyone, regardless of age.
+
 
  
 

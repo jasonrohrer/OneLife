@@ -4650,6 +4650,17 @@ int main() {
                     else if( m.type == SELF || m.type == UBABY ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
+                        char holdingFood = false;
+                        
+                        if( nextPlayer->holdingID > 0 ) {
+                            ObjectRecord *obj = 
+                                getObject( nextPlayer->holdingID );
+                            
+                            if( obj->foodValue > 0 ) {
+                                holdingFood = true;
+                                }
+                            }
+                        
                         LiveObject *targetPlayer = NULL;
                         
                         if( nextPlayer->holdingID < 0 ) {
@@ -4693,6 +4704,19 @@ int main() {
                                         getHitPlayer( m.x, m.y, -1, 
                                                       55, &hitIndex );
                                     }
+                                
+                                if( ( hitPlayer == NULL ||
+                                      hitPlayer == nextPlayer )
+                                    &&
+                                    holdingFood ) {
+                                    
+                                    // feeding action 
+                                    // try click on everyone
+                                    hitPlayer = 
+                                        getHitPlayer( m.x, m.y, -1, -1, 
+                                                      &hitIndex );
+                                    }
+                                
 
                                 if( hitPlayer != NULL &&
                                     hitPlayer != nextPlayer ) {
