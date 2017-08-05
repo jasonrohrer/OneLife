@@ -1759,11 +1759,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mTestSpeedSlider ) {
         
-        double factor = frameRateFactor;
-        
-        if( mCurrentType == moving ) {
-            factor = mCurrentObjectFrameRateFactor;
-            }
+        double factor = mCurrentObjectFrameRateFactor;
         
         // make sure frame time never goes backwards when we reduce speed
         // nor jumps forward when we increase speed
@@ -1877,11 +1873,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
 
 double EditorAnimationPage::computeFrameTime() {
 
-    double factor = frameRateFactor;
-    
-    if( mCurrentType == moving ) {
-        factor = mCurrentObjectFrameRateFactor;
-        }
+    double factor = mCurrentObjectFrameRateFactor;
+
 
     double animFade = 1.0;
     
@@ -1893,12 +1886,8 @@ double EditorAnimationPage::computeFrameTime() {
         ( mFrameCount / 60.0 ) * factor;
     
     if( animFade < 1 ) {
-        factor = frameRateFactor;
+        factor = mCurrentObjectFrameRateFactor;
 
-        if( mLastType == moving ) {
-            factor = mCurrentObjectFrameRateFactor;
-            }
-                
         frameTime = 
             ( mLastTypeFrameCount / 60.0 ) * 
             factor;
@@ -1973,11 +1962,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
             }
 
         if( anim != NULL ) {
-            double factor = frameRateFactor;
-            
-            if( mCurrentType == moving ) {
-                factor = mCurrentObjectFrameRateFactor;
-                }
+            double factor = mCurrentObjectFrameRateFactor;
             
             double frameTime = computeFrameTime();
             
