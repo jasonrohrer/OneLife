@@ -1998,7 +1998,9 @@ void processLoggedInPlayer( Socket *inSock,
     
     newObject.id = nextID;
     nextID++;
-                
+              
+    newObject.responsiblePlayerID = -1;
+    
     newObject.displayID = getRandomPersonObject();
     
     newObject.isEve = false;
@@ -2360,6 +2362,7 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.pathTruncated = 0;
     newObject.lastSentMapX = 0;
     newObject.lastSentMapY = 0;
+    newObject.moveStartTime = Time::getCurrentTime();
     newObject.moveTotalSeconds = 0;
     newObject.facingOverride = 0;
     newObject.actionAttempt = 0;
