@@ -6980,6 +6980,13 @@ void *getSprite( int ) {
     return NULL;
     }
 
+char markSpriteLive( int ) {
+    return false;
+    }
+
+void stepSpriteBank() {
+    }
+
 void drawSprite( void*, doublePair, double, double, char ) {
     }
 
