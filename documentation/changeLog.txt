@@ -27,6 +27,12 @@ Version 31     ???
 --Added edit-time computation of object pixel heights.  Using this in server 
   natural map generation to avoid placing short objects behind tall objects.
 
+--Fixed animation editor glitches when speed mult < 1.0
+
+--Moving animals.
+
+--Fixed overlap issues for people moving in same cell.
+
 
  
 
