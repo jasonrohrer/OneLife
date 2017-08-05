@@ -5947,8 +5947,9 @@ int main() {
                 // if so, send an update
                 
 
-                if( nextPlayer->xd != nextPlayer->xs ||
-                    nextPlayer->yd != nextPlayer->ys ) {
+                if( ! nextPlayer->error &&
+                    ( nextPlayer->xd != nextPlayer->xs ||
+                      nextPlayer->yd != nextPlayer->ys ) ) {
                 
                     
                     if( Time::getCurrentTime() - nextPlayer->moveStartTime
@@ -5976,7 +5977,8 @@ int main() {
                     }
                 
                 // check if we need to decrement their food
-                if( Time::getCurrentTime() > 
+                if( ! nextPlayer->error &&
+                    Time::getCurrentTime() > 
                     nextPlayer->foodDecrementETASeconds ) {
                     
                     char heldByFemale = false;

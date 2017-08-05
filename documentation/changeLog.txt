@@ -73,6 +73,9 @@ Server fixes:
   tendency to over-feed, beyond the size of the baby's stomach, thus wasting 
   food).
 
+--Fixed bug that could cause a walking player who dies to appear at their
+  destination after death.
+
 
 
 
