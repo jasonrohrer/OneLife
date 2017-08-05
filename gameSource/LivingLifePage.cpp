@@ -3459,8 +3459,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int numMoving = 0;
     int movingObjectsIndices[ MAP_NUM_CELLS ];
     
-    char movingDrawn[ MAP_NUM_CELLS ];
-        
+    // prevent double-drawing when cell goes from moving to non-moving
+    // mid-draw
+    char cellDrawn[ MAP_NUM_CELLS ];
+    
+    memset( cellDrawn, false, MAP_NUM_CELLS );
+    
     for( int y=0; y<mMapD; y++ ) {
         for( int x=0; x<mMapD; x++ ) {
             int mapI = y * mMapD + x;
@@ -3469,8 +3473,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 mMapMoveSpeeds[ mapI ] > 0 ) {
                 
                 movingObjectsIndices[ numMoving ] = mapI;
-                movingDrawn[ numMoving ] = false;
-                
+
                 numMoving++;
                 }
             }
@@ -3492,6 +3495,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
             int mapI = y * mMapD + x;
+
+            if( cellDrawn[mapI] ) {
+                continue;
+                }
+
             int screenX = CELL_D * worldX;
             
             if( mMap[ mapI ] > 0 && 
@@ -3499,6 +3507,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 mMapMoveSpeeds[ mapI ] == 0 ) {
                 
                 drawMapCell( mapI, screenX, screenY );
+                cellDrawn[mapI] = true;
                 }
 
             /*
@@ -3625,12 +3634,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         // now sort moving objects that fall in this row
         for( int i=0; i<numMoving; i++ ) {
-            if( movingDrawn[i] ) {
-                continue;
-                }
             
             int mapI = movingObjectsIndices[i];
             
+            if( cellDrawn[mapI] ) {
+                continue;
+                }
+            
+
             int oX = mapI % mMapD;
             int oY = mapI / mMapD;
             
@@ -3660,7 +3671,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 drawRec.screenY = movingScreenY;
                 drawQueue.insert( drawRec, 0 - worldMovingY );
                 
-                movingDrawn[i] = true;
+                cellDrawn[mapI] = true;
                 }
             }
         
@@ -3699,6 +3710,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
         // looks correct, and so players are behind all same-row objects)
         for( int x=xStart; x<=xEnd; x++ ) {
             int mapI = y * mMapD + x;
+            
+            if( cellDrawn[ mapI ] ) {
+                continue;
+                }
+            
             int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
 
 
@@ -3707,6 +3723,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 mMapMoveSpeeds[ mapI ] == 0 ) {
                 
                 drawMapCell( mapI, screenX, screenY );
+                cellDrawn[ mapI ] = true;
                 }
             }
 
