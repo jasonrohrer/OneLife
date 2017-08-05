@@ -852,6 +852,7 @@ void regenerateDepthMap() {
             
         SimpleVector<TransRecord*> *uses = getAllUses( nextID );
 
+        if( uses != NULL )
         for( int i=0; i<uses->size(); i++ ) {
                 
             TransRecord *tr = uses->getElementDirect( i );
@@ -1003,33 +1004,39 @@ void regenerateHumanMadeMap() {
                 ! unreachableMap[ oID ] ) {
                 
                 
-                SimpleVector<TransRecord*> *prodTrans = getAllProduces( oID );
-        
-                int numTrans = prodTrans->size();
-                
                 char assignedThisObject = false;
-        
-                for( int t=0; t<numTrans; t++ ) {
-                    TransRecord *trans = prodTrans->getElementDirect( t );
-
-                    int targetID = trans->target;
-                    if( trans->actor == -1 && targetID > 0 ) {
-                        // auto-decay
+                
+                
+                SimpleVector<TransRecord*> *prodTrans = getAllProduces( oID );
+                
+                if( prodTrans != NULL ) {
+                    
+                    int numTrans = prodTrans->size();
+                
+                    
+                    for( int t=0; t<numTrans; t++ ) {
+                        TransRecord *trans = prodTrans->getElementDirect( t );
                         
-                        if( humanMadeMap[ targetID ] ) {
-                            humanMadeMap[ oID ] = true;
-                            assignedThisObject = true;
-                            anyAssigned = true;
-                            break;
-                            }
-                        if( naturalMap[ targetID ] ) {
-                            naturalMap[ oID ] = true;
-                            assignedThisObject = true;
-                            anyAssigned = true;
-                            break;
+                        int targetID = trans->target;
+                        if( trans->actor == -1 && targetID > 0 ) {
+                            // auto-decay
+                            
+                            if( humanMadeMap[ targetID ] ) {
+                                humanMadeMap[ oID ] = true;
+                                assignedThisObject = true;
+                                anyAssigned = true;
+                                break;
+                                }
+                            if( naturalMap[ targetID ] ) {
+                                naturalMap[ oID ] = true;
+                                assignedThisObject = true;
+                                anyAssigned = true;
+                                break;
+                                }
                             }
                         }
                     }
+                
 
                 if( ! assignedThisObject ) {
                     anyUnknown = true;
