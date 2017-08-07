@@ -1011,6 +1011,38 @@ static void splitAndExpandSprites( const char *inTgaFileName, int inNumSprites,
 
 
 
+void LivingLifePage::clearMap() {
+    for( int i=0; i<mMapD *mMapD; i++ ) {
+        // -1 represents unknown
+        // 0 represents known empty
+        mMap[i] = -1;
+        mMapBiomes[i] = -1;
+        
+        mMapAnimationFrameCount[i] = randSource.getRandomBoundedInt( 0, 10000 );
+        mMapAnimationLastFrameCount[i] = 
+            randSource.getRandomBoundedInt( 0, 10000 );
+        
+        mMapAnimationFrozenRotFrameCount[i] = 0;
+
+        mMapCurAnimType[i] = ground;
+        mMapLastAnimType[i] = ground;
+        mMapLastAnimFade[i] = 0;
+
+        mMapDropOffsets[i].x = 0;
+        mMapDropOffsets[i].y = 0;
+        mMapDropRot[i] = 0;
+        mMapDropSounds[i] = blankSoundUsage;
+
+        mMapMoveOffsets[i].x = 0;
+        mMapMoveOffsets[i].y = 0;
+        mMapMoveSpeeds[i] = 0;
+        
+        mMapTileFlips[i] = false;
+        
+        mMapPlayerPlacedFlags[i] = false;
+        }
+    }
+
 
 
 LivingLifePage::LivingLifePage() 
@@ -1171,36 +1203,7 @@ LivingLifePage::LivingLifePage()
     mMapPlayerPlacedFlags = new char[ mMapD * mMapD ];
     
 
-    for( int i=0; i<mMapD *mMapD; i++ ) {
-        // -1 represents unknown
-        // 0 represents known empty
-        mMap[i] = -1;
-        mMapBiomes[i] = -1;
-        
-        mMapAnimationFrameCount[i] = randSource.getRandomBoundedInt( 0, 10000 );
-        mMapAnimationLastFrameCount[i] = 
-            randSource.getRandomBoundedInt( 0, 10000 );
-        
-        mMapAnimationFrozenRotFrameCount[i] = 0;
-
-        mMapCurAnimType[i] = ground;
-        mMapLastAnimType[i] = ground;
-        mMapLastAnimFade[i] = 0;
-
-        mMapDropOffsets[i].x = 0;
-        mMapDropOffsets[i].y = 0;
-        mMapDropRot[i] = 0;
-        mMapDropSounds[i] = blankSoundUsage;
-
-        mMapMoveOffsets[i].x = 0;
-        mMapMoveOffsets[i].y = 0;
-        mMapMoveSpeeds[i] = 0;
-        
-        mMapTileFlips[i] = false;
-        
-        mMapPlayerPlacedFlags[i] = false;
-        }
-    
+    clearMap();
 
 
     splitAndExpandSprites( "hungerBoxes.tga", NUM_HUNGER_BOX_SPRITES, 
@@ -9201,6 +9204,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+    
+    clearMap();
 
     mMapGlobalOffsetSet = false;
     mMapGlobalOffset.x = 0;

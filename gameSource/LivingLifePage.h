@@ -260,6 +260,9 @@ class LivingLifePage : public GamePage {
         LivingLifePage();
         ~LivingLifePage();
         
+        void clearMap();
+
+
         char isMapBeingPulled();
 
         // destroyed by caller
