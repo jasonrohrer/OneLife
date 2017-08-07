@@ -170,6 +170,24 @@ static HashTable<timeSec_t> liveDecayRecordLastLookTimeHashTable( 1024 );
 
 
 
+// track currently in-process movements so that we can be queried
+// about whether arrival has happened or not
+typedef struct MovementRecord {
+        int x, y;
+        double etaTime;
+    } MovementRecord;
+
+
+// clock time in fractional seconds of destination ETA
+// indexed as x, y, 0
+static HashTable<double> liveMovementEtaTimes( 1024, 0 );
+
+static MinPriorityQueue<MovementRecord> liveMovements;
+
+
+
+    
+
 // track all map changes that happened since the last
 // call to stepMap
 static SimpleVector<ChangePosition> mapChangePosSinceLastStep;
@@ -1665,6 +1683,31 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         delete [] cont;
                         delete [] contEta;
                         }
+                    
+                    double moveDist = sqrt( (newX - inX) * (newX - inX) +
+                                            (newY - inY) * (newY - inY) );
+                    
+                    double speed = 4.0f;
+                    
+                    
+                    if( newID > 0 ) {
+                        ObjectRecord *newObj = getObject( newID );
+                        
+                        if( newObj != NULL ) {
+                            speed *= newObj->speedMult;
+                            }
+                        }
+                    
+                    double moveTime = moveDist / speed;
+                    
+                    double etaTime = Time::getCurrentTime() + moveTime;
+                    
+                    MovementRecord moveRec = { newX, newY, etaTime };
+                    
+                    liveMovementEtaTimes.insert( newX, newY, 0, etaTime );
+                    
+                    liveMovements.insert( moveRec, etaTime );
+                    
 
                     // now patch up change record marking this as a move
                     
@@ -1678,15 +1721,8 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             // update it
                             p->oldX = inX;
                             p->oldY = inY;
-                            p->speed = 4.0f;
+                            p->speed = (float)speed;
                             
-                            if( newID > 0 ) {
-                                ObjectRecord *newObj = getObject( newID );
-                                
-                                if( newObj != NULL ) {
-                                    p->speed *= newObj->speedMult;
-                                    }
-                                }
                             break;
                             }
                         }
@@ -2010,6 +2046,24 @@ int getMapObjectNoLook( int inX, int inY ) {
     // apply any decay that should have happened by now
     return checkDecayObject( inX, inY, getMapObjectRaw( inX, inY ) );
     }
+
+
+
+char isMapObjectInTransit( int inX, int inY ) {
+    char found;
+    
+    double etaTime = 
+        liveMovementEtaTimes.lookup( inX, inY, 0, &found );
+    
+    if( found ) {
+        if( etaTime > Time::getCurrentTime() ) {
+            return true;
+            }
+        }
+    
+    return false;
+    }
+
 
 
 
@@ -2638,6 +2692,13 @@ void stepMap( SimpleVector<char> *inMapChanges,
         }
     
 
+    while( liveMovements.size() > 0 && 
+           liveMovements.checkMinPriority() <= curTime ) {
+        MovementRecord r = liveMovements.removeMin();    
+        liveMovementEtaTimes.remove( r.x, r.y, 0 );
+        }
+    
+        
     // all of them, including these new ones and others acculuated since
     // last step are accumulated in these global vectors
 

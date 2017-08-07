@@ -59,6 +59,11 @@ void setResponsiblePlayer( int inPlayerID );
 int getMapObject( int inX, int inY );
 
 
+// is the object returned by getMapObject still in motion with
+// destination inX, inY
+char isMapObjectInTransit( int inX, int inY );
+
+
 void setMapObject( int inX, int inY, int inID );
 
 

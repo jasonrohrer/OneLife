@@ -3422,6 +3422,43 @@ int main() {
                 continue;
                 }
             
+            GridPos curPos = { nextPlayer->xd, nextPlayer->yd };
+            
+            if( nextPlayer->xd != nextPlayer->xs ||
+                nextPlayer->yd != nextPlayer->ys ) {
+                
+                curPos = computePartialMoveSpot( nextPlayer );
+                }
+            
+            int curOverID = getMapObject( curPos.x, curPos.y );
+            
+
+            if( curOverID != 0 && 
+                ! isMapObjectInTransit( curPos.x, curPos.y ) ) {
+                
+                ObjectRecord *curOverObj = getObject( curOverID );
+                
+                if( curOverObj->permanent && curOverObj->deadlyDistance > 0 ) {
+                    
+                    setDeathReason( nextPlayer, 
+                                    "killed",
+                                    curOverID );
+
+                    nextPlayer->error = true;
+                    nextPlayer->errorCauseString =
+                        "Player killed by permanent object";
+
+                    // generic on-person
+                    TransRecord *r = 
+                        getTrans( curOverID, 0 );
+
+                    if( r != NULL ) {
+                        setMapObject( curPos.x, curPos.y, r->newActor );
+                        }
+                    continue;
+                    }
+                }
+            
             
             if( curLookTime - nextPlayer->lastRegionLookTime > 5 ) {
                 lookAtRegion( nextPlayer->xd - 8, nextPlayer->yd - 7,
