@@ -1778,8 +1778,9 @@ void LivingLifePage::drawMapCell( int inMapI,
             rot = mMapDropRot[ inMapI ];
             }
         
-        if( mMapMoveOffsets[ inMapI ].x != 0 ||
-            mMapMoveOffsets[ inMapI ].y != 0 ) {
+        if( mMapMoveSpeeds[inMapI] > 0 &&
+            ( mMapMoveOffsets[ inMapI ].x != 0 ||
+              mMapMoveOffsets[ inMapI ].y != 0  ) ) {
 
             
             doublePair nullOffset = { 0, 0 };
@@ -5819,22 +5820,41 @@ void LivingLifePage::step() {
                     
                             mMapMoveSpeeds[mapI] = speed;
                             
-                            mMapMoveOffsets[mapI].x = oldX - x;
-                            mMapMoveOffsets[mapI].y = oldY - y;
+                            int oldMapI = getMapIndex( oldX, oldY );
+
+                            doublePair oldOffset = { 0, 0 };
+                            
+                            if( oldMapI != -1 ) {
+                                oldOffset = mMapMoveOffsets[ oldMapI ];
+                                }
+
+                            double oldTrueX = oldX + oldOffset.x;
+                            double oldTrueY = oldY + oldOffset.y;
+                            
+                            mMapMoveOffsets[mapI].x = oldTrueX - x;
+                            mMapMoveOffsets[mapI].y = oldTrueY - y;
                             
 
-                            if( x > oldX ) {
+                            if( x > oldTrueX ) {
                                 mMapTileFlips[mapI] = false;
                                 }
-                            else if( x < oldX ) {
+                            else if( x < oldTrueX ) {
                                 mMapTileFlips[mapI] = true;
                                 }
                             }
                         else {
                             mMapMoveSpeeds[mapI] = 0;
                             
-                            mMapMoveOffsets[mapI].x = 0;
-                            mMapMoveOffsets[mapI].y = 0;
+                            if( newID > 0 ) {
+                                mMapMoveOffsets[mapI].x = 0;
+                                mMapMoveOffsets[mapI].y = 0;
+                                }
+                            // else cell has become empty
+                            // leave any old offset in place
+                            // because it may be a cell that a moving
+                            // object just left, and we want to
+                            // do smooth interpolation of movement
+                            // positions
                             }
                         
 
@@ -6763,11 +6783,15 @@ void LivingLifePage::step() {
                                             mapHeldOriginY * mMapD + 
                                             mapHeldOriginX;
                                         
-                                        if( mMapMoveOffsets[ mapHeldOriginI ].x
-                                            != 0 
-                                            ||
-                                            mMapMoveOffsets[ mapHeldOriginI ].y
-                                            != 0 ) {
+                                        if( mMapMoveSpeeds[ mapHeldOriginI ]
+                                            > 0 &&
+                                            ( mMapMoveOffsets[ 
+                                                  mapHeldOriginI ].x
+                                              != 0 
+                                              ||
+                                              mMapMoveOffsets[ 
+                                                  mapHeldOriginI ].y
+                                              != 0 ) ) {
 
                                             // only do this if tweak not already
                                             // set.  Don't want to interrupt
