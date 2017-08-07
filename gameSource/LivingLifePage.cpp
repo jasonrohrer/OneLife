@@ -5825,7 +5825,27 @@ void LivingLifePage::step() {
                             doublePair oldOffset = { 0, 0 };
                             
                             if( oldMapI != -1 ) {
+                                // location where we came from
                                 oldOffset = mMapMoveOffsets[ oldMapI ];
+
+                                mMapAnimationFrameCount[ mapI ] =
+                                    mMapAnimationFrameCount[ oldMapI ];
+                                
+                                mMapAnimationLastFrameCount[ mapI ] =
+                                    mMapAnimationLastFrameCount[ oldMapI ];
+                                
+        
+                                mMapAnimationFrozenRotFrameCount[ mapI ] =
+                                    mMapAnimationFrozenRotFrameCount[ 
+                                        oldMapI ];
+                                
+                                mMapCurAnimType[ mapI ] = 
+                                    mMapCurAnimType[ oldMapI ];
+                                mMapLastAnimType[ mapI ] = 
+                                    mMapLastAnimType[ oldMapI ];
+                                
+                                mMapLastAnimFade[ mapI ] =
+                                    mMapLastAnimFade[ oldMapI ];
                                 }
 
                             double oldTrueX = oldX + oldOffset.x;
@@ -5833,7 +5853,6 @@ void LivingLifePage::step() {
                             
                             mMapMoveOffsets[mapI].x = oldTrueX - x;
                             mMapMoveOffsets[mapI].y = oldTrueY - y;
-                            
 
                             if( x > oldTrueX ) {
                                 mMapTileFlips[mapI] = false;
@@ -5844,17 +5863,8 @@ void LivingLifePage::step() {
                             }
                         else {
                             mMapMoveSpeeds[mapI] = 0;
-                            
-                            if( newID > 0 ) {
-                                mMapMoveOffsets[mapI].x = 0;
-                                mMapMoveOffsets[mapI].y = 0;
-                                }
-                            // else cell has become empty
-                            // leave any old offset in place
-                            // because it may be a cell that a moving
-                            // object just left, and we want to
-                            // do smooth interpolation of movement
-                            // positions
+                            mMapMoveOffsets[mapI].x = 0;
+                            mMapMoveOffsets[mapI].y = 0;
                             }
                         
 
@@ -6045,14 +6055,9 @@ void LivingLifePage::step() {
                                 mMapCurAnimType[mapI] = ground;
                                 mMapLastAnimType[mapI] = ground;
                                 mMapLastAnimFade[mapI] = 0;
-                                }
-                            else {
-                                mMapLastAnimType[mapI] = mMapCurAnimType[mapI];
-                                mMapCurAnimType[mapI] = moving;
-                                mMapLastAnimFade[mapI] = 1;
+                                mMapAnimationFrozenRotFrameCount[mapI] = 0;
                                 }
                             
-                            mMapAnimationFrozenRotFrameCount[mapI] = 0;
                             
                             LiveObject *responsiblePlayerObject = NULL;
                             

@@ -1662,10 +1662,13 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     // a reall move!
 
                     // move object
-                    // leave empty spot behind
-                    dbPut( inX, inY, 0, 0 );
                     
                     dbPut( newX, newY, 0, newID );
+
+                    // leave empty spot behind
+                    // do this second, so that it is reported to client
+                    // after move is reported
+                    dbPut( inX, inY, 0, 0 );
 
 
                     // move contained
