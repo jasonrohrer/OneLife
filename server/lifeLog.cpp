@@ -53,7 +53,11 @@ static FILE *openCurrentLogFile() {
     if( file == NULL ) {
         AppLog::errorF( "Failed to open log file %s", newFileName );
         }
-
+    else {
+        currentYear = timeStruct->tm_year;
+        currentDay = timeStruct->tm_yday;
+        }
+    
     delete newFile;
     delete [] newFileName;
     
