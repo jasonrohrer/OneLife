@@ -6057,6 +6057,13 @@ void LivingLifePage::step() {
                                 mMapLastAnimFade[mapI] = 0;
                                 mMapAnimationFrozenRotFrameCount[mapI] = 0;
                                 }
+                            else {
+                                mMapLastAnimType[mapI] = mMapCurAnimType[mapI];
+                                mMapCurAnimType[mapI] = moving;
+                                if( mMapLastAnimType[mapI] != moving ) {
+                                    mMapLastAnimFade[mapI] = 1;
+                                    }
+                                }
                             
                             
                             LiveObject *responsiblePlayerObject = NULL;
