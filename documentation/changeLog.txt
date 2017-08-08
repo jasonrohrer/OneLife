@@ -82,6 +82,11 @@ Server fixes:
 
 --Server life log now records parent chain length for each birth.
 
+--Fixed bug in server life log that caused log file to be reopened repeatedly.
+
+--Added hourly food logging support to server.
+
+
 
 
 Version 30     2017-July-28

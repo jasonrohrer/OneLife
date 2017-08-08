@@ -32,6 +32,7 @@
 #include "../gameSource/categoryBank.h"
 
 #include "lifeLog.h"
+#include "foodLog.h"
 #include "backup.h"
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -384,6 +385,8 @@ void quitCleanup() {
 
     freeLifeLog();
     
+    freeFoodLog();
+
     freeMap();
 
     freeTransBank();
@@ -2810,6 +2813,9 @@ int main() {
         SettingsManager::getIntSetting( "epochSeconds", 3600 );
     
     setTransitionEpoch( epochSeconds );
+
+
+    initFoodLog();
     
 
     initMap();
@@ -4408,6 +4414,11 @@ int main() {
                                     nextPlayer->foodStore += 
                                         targetObj->foodValue;
                                     
+                                    logEating( targetObj->id,
+                                               targetObj->foodValue,
+                                               computeAge( nextPlayer ),
+                                               m.x, m.y );
+
                                     int cap =
                                         computeFoodCapacity( nextPlayer );
                                     
@@ -4820,6 +4831,11 @@ int main() {
                                     
                                     targetPlayer->foodStore += obj->foodValue;
                                     
+                                    logEating( obj->id,
+                                               obj->foodValue,
+                                               computeAge( targetPlayer ),
+                                               m.x, m.y );
+
                                     int cap =
                                         computeFoodCapacity( targetPlayer );
                                     
