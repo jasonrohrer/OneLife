@@ -116,6 +116,10 @@ typedef struct LiveObject {
         int displayID;
         
         char isEve;
+        
+        // 0 for Eve
+        int parentChainLength;
+        
 
         // time that this life started (for computing age)
         double lifeStartTimeSeconds;
@@ -1998,7 +2002,11 @@ void processLoggedInPlayer( Socket *inSock,
     
     newObject.id = nextID;
     nextID++;
-              
+
+    SettingsManager::setSetting( "nextPlayerID",
+                                 (int)nextID );
+
+
     newObject.responsiblePlayerID = -1;
     
     newObject.displayID = getRandomPersonObject();
@@ -2121,6 +2129,8 @@ void processLoggedInPlayer( Socket *inSock,
                 }
             }
         }
+
+    newObject.parentChainLength = 1;
 
     if( parentChoices.size() == 0 || numOfAge == 0 ) {
         // new Eve
@@ -2415,6 +2425,8 @@ void processLoggedInPlayer( Socket *inSock,
         // do not log babies that new Eve spawns next to as parents
         parentID = parent->id;
         parentEmail = parent->email;
+
+        newObject.parentChainLength = parent->parentChainLength + 1;
         }
     
     // parent pointer possibly no longer valid after push_back, which
@@ -2430,7 +2442,8 @@ void processLoggedInPlayer( Socket *inSock,
               ! getFemale( &newObject ),
               newObject.xd,
               newObject.yd,
-              players.size() );
+              players.size(),
+              newObject.parentChainLength );
     
     AppLog::infoF( "New player connected as player %d", newObject.id );
     }
@@ -2701,6 +2714,10 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
 
 
 int main() {
+
+    nextID = 
+        SettingsManager::getIntSetting( "nextPlayerID", 2 );
+
 
     // make backup and delete old backup every week
     AppLog::setLog( new FileLog( "log.txt", 604800 ) );

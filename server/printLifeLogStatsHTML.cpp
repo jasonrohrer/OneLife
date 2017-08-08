@@ -62,26 +62,31 @@ void processLogFile( File *inFile ) {
             parent[0] = '\0';
             deathReason[0] = '\0';        
 
-            int pop;
+            int pop = 0;
+            int parentChain = 0;
         
             fscanf( f, "%c ", &event );
         
         
             if( event == 'B' ) {
-                fscanf( f, "%lf %d %999s %c (%d,%d) %999s pop=%d\n",
+                fscanf( f, "%lf %d %999s %c (%d,%d) %999s pop=%d chain=%d\n",
                         &time, &id, email, &gender, 
-                        &locX, &locY, parent, &pop );
+                        &locX, &locY, parent, &pop, &parentChain );
             
                 Living l;
                 l.id = id;
             
-                l.birthAge = 0;
-                l.parentChainLength = 1;
+                l.birthAge = 1;
+                l.parentChainLength = parentChain;
 
                 if( strcmp( parent, "noParent" ) == 0 ) {
                     l.birthAge = 14;
                     }
-                else {
+                else if( l.parentChainLength == 1 ) {
+                    // parent chain length not recorded in log
+                    // (old-style record)
+                    
+                    // try recomputing it from scratch
                     int parentID = 0;
                 
                     sscanf( parent, "parent=%d,", &parentID );
@@ -140,6 +145,27 @@ void processLogFile( File *inFile ) {
 
 
 
+const char *checkpointFileName = "statsCheckpoint.txt";
+
+
+void saveNewCheckpoint( File *inCheckpointFile,
+                        char *inLastScannedFileName ) {
+    
+    char *fileName = inCheckpointFile->getFullFileName();
+            
+    FILE *f = fopen( fileName, "w" );
+            
+    if( f != NULL ) {
+        fprintf( f, "%s %f %d %d %d", inLastScannedFileName,
+                 totalAge, totalLives, 
+                 longestFamilyChain, over55Count );
+        fclose( f );
+        }
+    delete [] fileName;
+    }
+
+
+
 
 int main( int inNumArgs, char **inArgs ) {
 
@@ -158,17 +184,78 @@ int main( int inNumArgs, char **inArgs ) {
     File mainDir( NULL, path );
     
     if( mainDir.exists() && mainDir.isDirectory() ) {
+
+        
+        File *checkpointFile = mainDir.getChildFile( checkpointFileName );
+        
+        char lastScannedFileName[200];
+        lastScannedFileName[0] = '\0';
+        
+        char checkpointFound = false;
+        
+        if( checkpointFile->exists() ) {
+            char *fileName = checkpointFile->getFullFileName();
+            
+            FILE *f = fopen( fileName, "r" );
+            
+            if( f != NULL ) {
+                fscanf( f, "%199s %lf %d %d %d", lastScannedFileName,
+                        &totalAge, &totalLives, 
+                        &longestFamilyChain, &over55Count );
+                checkpointFound = true;
+                fclose( f );
+                }
+            delete [] fileName;
+            }
+        
+
+        char checkpointReached = false;
+        
+        
+        int numFilesProcessed = 0;
+        
         int numFiles;
-        File **logs = mainDir.getChildFiles( &numFiles );
+
+        File **logs = mainDir.getChildFilesSorted( &numFiles );
         
         for( int i=0; i<numFiles; i++ ) {
+
+            char *name = logs[i]->getFileName();
             
-            processLogFile( logs[i] );
+            if( strcmp( name, checkpointFileName ) != 0 ) {
             
+                if( ! checkpointFound ||
+                    checkpointReached ) {
+                    
+                    processLogFile( logs[i] );
+                    
+                    if( i < numFiles - 2 ) {
+                        // very last file is saved checkpoint file
+                        // second to last may still be getting filled by server
+                        saveNewCheckpoint( checkpointFile, name );
+                        }
+                    
+                    numFilesProcessed++;
+                    }
+                else if( checkpointFound && ! checkpointReached ) {
+                    
+                    if( strcmp( name, lastScannedFileName ) == 0 ) {
+                        // this is where we got on last scan
+                        checkpointReached = true;
+                        }
+                    }
+                }       
+
+            delete [] name;
+
             delete logs[i];
             }
         delete [] logs;
 
+
+        delete checkpointFile;
+        
+        printf( "Processed %d files\n", numFilesProcessed );
 
         FILE *outFile = fopen( outPath, "w" );
         
@@ -179,7 +266,8 @@ int main( int inNumArgs, char **inArgs ) {
                      "%d lives lived for a total of %0.2f hours<br>\n"
                      "%d people lived past age fifty-five ---- "
                      "%d generations in longest family line",
-                     totalLives, totalAge / 60, over55Count, longestFamilyChain );
+                     totalLives, totalAge / 60, over55Count,
+                     longestFamilyChain );
             
             fclose( outFile );
             }

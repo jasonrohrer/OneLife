@@ -107,7 +107,8 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
                int inParentID, char *inParentEmail,
                char inIsMale,
                int inMapX, int inMapY,
-               int inTotalPopulation ) {
+               int inTotalPopulation,
+               int inParentChainLength ) {
     if( logFile != NULL ) {
         stepLog();
 
@@ -128,11 +129,11 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
                 genderChar = 'M';
                 }
 
-            fprintf( logFile, "B %.f %d %s %c (%d,%d) %s pop=%d\n",
+            fprintf( logFile, "B %.f %d %s %c (%d,%d) %s pop=%d chain=%d\n",
                      Time::timeSec(),
                      inPlayerID, inPlayerEmail, genderChar, inMapX, inMapY, 
                      parentString,
-                     inTotalPopulation );
+                     inTotalPopulation, inParentChainLength );
             
             fflush( logFile );
 

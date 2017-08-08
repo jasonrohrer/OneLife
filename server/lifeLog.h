@@ -11,7 +11,8 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
                int inParentID, char *inParentEmail,
                char inIsMale,
                int inMapX, int inMapY,
-               int inTotalPopulation );
+               int inTotalPopulation,
+               int inParentChainLength );
 
 
 // killer email NULL if died of natural causes

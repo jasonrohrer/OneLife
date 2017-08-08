@@ -78,6 +78,9 @@ Server fixes:
 --Fixed bug that could cause a walking player who dies to appear at their
   destination after death.
 
+--Life stats script now works incrementally only on latest log files.
+
+--Server life log now records parent chain length for each birth.
 
 
 
