@@ -4589,6 +4589,48 @@ void playPendingReceivedMessages( LiveObject *inPlayer ) {
 
 
 
+void playPendingReceivedMessagesRegardingOthers( LiveObject *inPlayer ) {
+    for( int i=0; i<inPlayer->pendingReceivedMessages.size(); i++ ) {
+        char *message = inPlayer->pendingReceivedMessages.getElementDirect( i );
+        
+        if( strstr( message, "PU" ) == message ) {
+            // only keep PU's not about this player
+            
+            int messageID = -1;
+            
+            sscanf( message, "PU\n%d", &messageID );
+            
+            if( messageID != inPlayer->id ) {
+                readyPendingReceivedMessages.push_back( message );
+                }
+            else {
+                delete [] message;
+                }
+            }
+        else if( strstr( message, "PM" ) == message ) {
+            // only keep PU's not about this player
+            
+            int messageID = -1;
+            
+            sscanf( message, "PM\n%d", &messageID );
+            
+            if( messageID != inPlayer->id ) {
+                readyPendingReceivedMessages.push_back( message );
+                }
+            else {
+                delete [] message;
+                }
+            }
+        else {
+            // not a PU, keep it no matter what (map change, etc.
+            readyPendingReceivedMessages.push_back( message );
+            }
+        }
+    inPlayer->pendingReceivedMessages.deleteAll();
+    }
+
+
+
 void LivingLifePage::applyReceiveOffset( int *inX, int *inY ) {
     if( mMapGlobalOffsetSet ) {
         *inX -= mMapGlobalOffset.x;
@@ -5769,8 +5811,8 @@ void LivingLifePage::step() {
                                 }
                             LiveObject *rObj = getLiveObject( rID );
                             
-                            if( rObj->pendingReceivedMessages.size() 
-                                > 0 ) {
+                            if( rObj != NULL && 
+                                rObj->pendingReceivedMessages.size() > 0 ) {
                                 
                                 printf( "Holding MX message until later\n" );
                                 rObj->pendingReceivedMessages.push_back(
@@ -5954,20 +5996,23 @@ void LivingLifePage::step() {
                                     
                                     LiveObject *responsiblePlayerObject = 
                                         getGameObject( -responsiblePlayerID );
-                                    
-                                    old = responsiblePlayerObject->holdingID;
-                                    if( old < 0 ) {
-                                        old = 0;
-                                        }
-
-                                    if( old > 0 ) {
-                                        TransRecord *p = 
-                                            getTransProducing( old,
-                                                               newID );
+                                    if( responsiblePlayerObject != NULL ) {
                                         
-                                        if( p != NULL && 
-                                            p->actor > 0 ) {
-                                            old = p->actor;
+                                        old = 
+                                            responsiblePlayerObject->holdingID;
+                                        if( old < 0 ) {
+                                            old = 0;
+                                            }
+                                        
+                                        if( old > 0 ) {
+                                            TransRecord *p = 
+                                                getTransProducing( old,
+                                                                   newID );
+                                            
+                                            if( p != NULL && 
+                                                p->actor > 0 ) {
+                                                old = p->actor;
+                                                }
                                             }
                                         }
                                     }
@@ -6451,12 +6496,10 @@ void LivingLifePage::step() {
                     if( existing != NULL &&
                         existing->id != ourID &&
                         existing->currentSpeed != 0 &&
-                        ! forced &&
-                        strstr( lines[i], "X X" ) == NULL ) {
+                        ! forced ) {
                         // non-forced update about other player 
                         // while we're still playing their last movement
                         
-                        // not a death update
 
                         // defer it until they're done moving
                         printf( "Holding PU message until later\n" );
@@ -7450,6 +7493,9 @@ void LivingLifePage::step() {
                         
                         if( nextObject->id == o.id ) {
                             
+                            playPendingReceivedMessagesRegardingOthers( 
+                                nextObject );
+
                             if( nextObject->containedIDs != NULL ) {
                                 delete [] nextObject->containedIDs;
                                 }

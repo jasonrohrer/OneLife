@@ -37,6 +37,8 @@ Version 31     ???
 
 --Eating animation and eating sound played when someone is fed.
 
+--Fixed glitches when a moving parent dies while carrying you.
+
 
  
 
