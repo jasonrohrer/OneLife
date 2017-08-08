@@ -63,7 +63,7 @@ void processLogFile( File *inFile ) {
             deathReason[0] = '\0';        
 
             int pop = 0;
-            int parentChain = 0;
+            int parentChain = 1;
         
             fscanf( f, "%c ", &event );
         
