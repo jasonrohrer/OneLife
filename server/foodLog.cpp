@@ -10,9 +10,6 @@
 
 #include "minorGems/system/Time.h"
 
-
-#include "minorGems/util/SimpleVector.h"
-
 #include "../gameSource/objectBank.h"
 
 
@@ -64,15 +61,6 @@ static FILE *openCurrentLogFile() {
     }
 
 
-typedef struct EatRecord {
-        int foodID;
-        int foodValue;
-        double eaterAge;
-        int mapX, mapY;
-    } EatRecord;
-
-
-SimpleVector <EatRecord> recentEating;
 
 
 int maxObjectID;
