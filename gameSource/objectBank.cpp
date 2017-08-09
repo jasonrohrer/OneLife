@@ -2015,7 +2015,8 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
     
     
     for( int i=0; i<inObject->numSprites; i++ ) {
-        if( inObject->spriteSkipDrawing[i] ) {
+        if( inObject->spriteSkipDrawing != NULL &&
+            inObject->spriteSkipDrawing[i] ) {
             continue;
             }
         if( inObject->person &&

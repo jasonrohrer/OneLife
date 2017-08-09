@@ -42,6 +42,7 @@ Version 31     ???
 --Support for using non-human-deadly objects at a distance (e.g., for hunting 
   animals).
 
+--Fixed editor crash when testing clothing position.
 
  
 

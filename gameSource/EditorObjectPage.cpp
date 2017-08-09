@@ -481,6 +481,8 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.spriteUseVanish = new char[ 0 ];
     mCurrentObject.spriteUseAppear = new char[ 0 ];
     
+    mCurrentObject.spriteSkipDrawing = NULL;
+
     mPickedObjectLayer = -1;
     mPickedSlot = -1;
     
