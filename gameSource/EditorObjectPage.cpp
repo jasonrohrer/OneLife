@@ -93,6 +93,10 @@ EditorObjectPage::EditorObjectPage()
                                 150,  -220, 4,
                                 false,
                                 "Deadly Distance", "0123456789", NULL ),
+          mUseDistanceField( smallFont, 
+                             150,  -190, 4,
+                             false,
+                             "Use Dist", "0123456789", NULL ),
           mMinPickupAgeField( smallFont, 
                               300,  -220, 4,
                               false,
@@ -236,6 +240,7 @@ EditorObjectPage::EditorObjectPage()
     mSlotTimeStretchField.setVisible( false );
 
     addComponent( &mDeadlyDistanceField );
+    addComponent( &mUseDistanceField );
     addComponent( &mMinPickupAgeField );
     
     addComponent( &mRaceField );
@@ -505,6 +510,7 @@ EditorObjectPage::EditorObjectPage()
     mSlotTimeStretchField.setText( "1.0" );
 
     mDeadlyDistanceField.setInt( 0 );
+    mUseDistanceField.setInt( 1 );
 
     mMinPickupAgeField.setInt( 3 );
     
@@ -910,6 +916,7 @@ void EditorObjectPage::updateAgingPanel() {
 
     mBiomeField.setVisible( !person );
     mDeadlyDistanceField.setVisible( !person );
+    mUseDistanceField.setVisible( !person );
     
     if( mPickedObjectLayer == -1 || ! anyClothingToggled() ) {
         mInvisibleWhenWornCheckbox.setVisible( false );
@@ -1262,6 +1269,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.clothing,
                    mCurrentObject.clothingOffset,
                    mDeadlyDistanceField.getInt(),
+                   mUseDistanceField.getInt(),
                    mCreationSoundWidget.getSoundUsage(),
                    mUsingSoundWidget.getSoundUsage(),
                    mEatingSoundWidget.getSoundUsage(),
@@ -1379,6 +1387,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.clothing,
                    mCurrentObject.clothingOffset,
                    mDeadlyDistanceField.getInt(),
+                   mUseDistanceField.getInt(),
                    mCreationSoundWidget.getSoundUsage(),
                    mUsingSoundWidget.getSoundUsage(),
                    mEatingSoundWidget.getSoundUsage(),
@@ -1466,6 +1475,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mSlotTimeStretchField.setVisible( false );
         
         mDeadlyDistanceField.setInt( 0 );
+        mUseDistanceField.setInt( 1 );
         mMinPickupAgeField.setInt( 3 );
         
         mCurrentObject.numSlots = 0;
@@ -1775,6 +1785,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             mBiomeField.setVisible( false );
             mDeadlyDistanceField.setVisible( false );
+            mUseDistanceField.setVisible( false );
             }
         }
     else if( inTarget == &mEndSetHeldPosButton ) {
@@ -1798,6 +1809,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             mBiomeField.setVisible( false );
             mDeadlyDistanceField.setVisible( false );
+            mUseDistanceField.setVisible( false );
             }
         else {
             mPersonAgeSlider.setVisible( false );
@@ -1805,6 +1817,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             mBiomeField.setVisible( true );
             mDeadlyDistanceField.setVisible( true );
+            mUseDistanceField.setVisible( true );
             }
         
         if( anyClothingToggled() ) {
@@ -1849,6 +1862,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mBiomeField.setVisible( false );
             mDeadlyDistanceField.setVisible( false );
+            mUseDistanceField.setVisible( false );
             }
         }
     else if( inTarget == &mEndClothesDemoButton ) {
@@ -1865,6 +1879,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             
             mBiomeField.setVisible( false );
             mDeadlyDistanceField.setVisible( false );
+            mUseDistanceField.setVisible( false );
             }
         else {
             mPersonAgeSlider.setVisible( false );
@@ -1872,6 +1887,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mBiomeField.setVisible( true );
             mDeadlyDistanceField.setVisible( true );
+            mUseDistanceField.setVisible( true );
             }
 
         mSetHeldPosButton.setVisible( true );
@@ -2356,6 +2372,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                                             -1, true );
             
             mDeadlyDistanceField.setInt( pickedRecord->deadlyDistance );
+            mUseDistanceField.setInt( pickedRecord->useDistance );
             
             mMinPickupAgeField.setInt( pickedRecord->minPickupAge );
 

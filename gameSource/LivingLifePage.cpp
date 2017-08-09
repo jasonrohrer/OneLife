@@ -10179,6 +10179,50 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     
         }
     
+
+    if( ! killLater &&
+        destID != 0 &&
+        ! modClick &&
+        ourLiveObject->holdingID > 0 &&
+        getObject( ourLiveObject->holdingID )->useDistance > 1 &&
+        getTrans( ourLiveObject->holdingID, destID ) != NULL ) {
+        // check if we're close enough to use this from here 
+        
+        double d = sqrt( ( clickDestX - ourLiveObject->xd ) * 
+                         ( clickDestX - ourLiveObject->xd )
+                         +
+                         ( clickDestY - ourLiveObject->yd ) * 
+                         ( clickDestY - ourLiveObject->yd ) );
+
+        if( getObject( ourLiveObject->holdingID )->useDistance >= d ) {
+            // close enough to use object right now
+
+                        
+            if( nextActionMessageToSend != NULL ) {
+                delete [] nextActionMessageToSend;
+                nextActionMessageToSend = NULL;
+                }
+            
+            nextActionMessageToSend = 
+                autoSprintf( "USE %d %d#",
+                             sendX( clickDestX ), 
+                             sendY( clickDestY ) );
+            
+                        
+            playerActionTargetX = clickDestX;
+            playerActionTargetY = clickDestY;
+            
+            playerActionTargetNotAdjacent = true;
+                        
+            printf( "USE from a distance, src=(%d,%d), dest=(%d,%d)\n",
+                    ourLiveObject->xd, ourLiveObject->yd,
+                    clickDestX, clickDestY );
+            
+            return;
+            }
+        }
+    
+
     
     // true if we're too far away to use on baby BUT we should execute
     // UBABY once we get to destination

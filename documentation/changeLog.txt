@@ -39,6 +39,9 @@ Version 31     ???
 
 --Fixed glitches when a moving parent dies while carrying you.
 
+--Support for using non-human-deadly objects at a distance (e.g., for hunting 
+  animals).
+
 
  
 

@@ -89,6 +89,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
         TextField mSlotTimeStretchField;
 
         TextField mDeadlyDistanceField;
+        TextField mUseDistanceField;
         TextField mMinPickupAgeField;
         
         TextField mRaceField;

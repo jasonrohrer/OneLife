@@ -518,7 +518,20 @@ float initObjectBankStep() {
                         &( r->deadlyDistance ) );
                             
                 next++;
-
+                
+                
+                r->useDistance = 1;
+                
+                if( strstr( lines[next], 
+                            "useDistance=" ) != NULL ) {
+                    // use distance present
+                    
+                    sscanf( lines[next], "useDistance=%d", 
+                            &( r->useDistance ) );
+                    
+                    next++;
+                    }
+                
 
                 r->creationSound.id = -1;
                 r->usingSound.id = -1;
@@ -1182,6 +1195,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->clothing,
                         inObject->clothingOffset,
                         inObject->deadlyDistance,
+                        inObject->useDistance,
                         inObject->creationSound,
                         inObject->usingSound,
                         inObject->eatingSound,
@@ -1394,6 +1408,7 @@ int addObject( const char *inDescription,
                char inClothing,
                doublePair inClothingOffset,
                int inDeadlyDistance,
+               int inUseDistance,
                SoundUsage inCreationSound,
                SoundUsage inUsingSound,
                SoundUsage inEatingSound,
@@ -1535,6 +1550,9 @@ int addObject( const char *inDescription,
 
         lines.push_back( autoSprintf( "deadlyDistance=%d", 
                                       inDeadlyDistance ) );
+
+        lines.push_back( autoSprintf( "useDistance=%d", 
+                                      inUseDistance ) );
 
         lines.push_back( autoSprintf( "sounds=%d:%f,%d:%f,%d:%f,%d:%f", 
                                       inCreationSound.id, 
@@ -1763,6 +1781,7 @@ int addObject( const char *inDescription,
     r->clothing = inClothing;
     r->clothingOffset = inClothingOffset;
     r->deadlyDistance = inDeadlyDistance;
+    r->useDistance = inUseDistance;
     r->creationSound = inCreationSound;
     r->usingSound = inUsingSound;
     r->eatingSound = inEatingSound;

@@ -4193,8 +4193,37 @@ int main() {
                         // send update even if action fails (to let them
                         // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
+                        
+                        char distanceUseAllowed = false;
+                        
+                        if( nextPlayer->holdingID > 0 ) {
+                            
+                            // holding something
+                            ObjectRecord *heldObj = 
+                                getObject( nextPlayer->holdingID );
+                            
+                            if( heldObj->useDistance > 1 ) {
+                                // it's long-distance
 
-                        if( isGridAdjacent( m.x, m.y,
+                                GridPos targetPos = { m.x, m.y };
+                                GridPos playerPos = { nextPlayer->xd,
+                                                      nextPlayer->yd };
+                                
+                                double d = distance( targetPos,
+                                                     playerPos );
+                                
+                                if( heldObj->useDistance >= d &&
+                                    ! directLineBlocked( playerPos, 
+                                                         targetPos ) ) {
+                                    distanceUseAllowed = true;
+                                    }
+                                }
+                            }
+                        
+
+                        if( distanceUseAllowed 
+                            ||
+                            isGridAdjacent( m.x, m.y,
                                             nextPlayer->xd, 
                                             nextPlayer->yd ) 
                             ||
