@@ -2007,6 +2007,8 @@ void LivingLifePage::drawMapCell( int inMapI,
             doublePair squarePos = passPos;
             squarePos.y += 192;
             
+            int squareRad = 286;
+            
             switch( i ) {
                 case 0:
                     // normal color draw
@@ -2017,7 +2019,7 @@ void LivingLifePage::drawMapCell( int inMapI,
 
                     setDrawColor( 1, 1, 1, highlightFade * mainFade );
                     
-                    drawSquare( squarePos, 256 );
+                    drawSquare( squarePos, squareRad );
                     
                     stopStencil();
                     break;
@@ -2031,7 +2033,7 @@ void LivingLifePage::drawMapCell( int inMapI,
 
                     setDrawColor( 1, 1, 1, highlightFade * mainFade * .5 );
 
-                    drawSquare( squarePos, 256 );
+                    drawSquare( squarePos, squareRad );
 
                     stopStencil();                    
                     break;
@@ -2045,7 +2047,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                     
                     setDrawColor( 1, 1, 1, highlightFade * mainFade *.25 );
                     
-                    drawSquare( squarePos, 256 );
+                    drawSquare( squarePos, squareRad );
                     
                     stopStencil();
                     break;
