@@ -467,7 +467,11 @@ void initTransBankFinish() {
                 SimpleVector<TransRecord*> *objTransOrig = 
                     getAllUses( oID );
                 
-                int numTrans = objTransOrig->size();
+                int numTrans = 0;
+
+                if( objTransOrig != NULL ) {
+                    numTrans = objTransOrig->size();
+                    }
                 
                 SimpleVector<TransRecord*> transToDelete;
                 SimpleVector<TransRecord> transToAdd;
@@ -701,8 +705,12 @@ void initTransBankFinish() {
                 
                 SimpleVector<TransRecord*> *prodTrans = getAllProduces( oID );
                 
-                int numProdTrans = prodTrans->size();
-
+                int numProdTrans = 0;
+                
+                if( prodTrans != NULL ) {
+                    numProdTrans = prodTrans->size();
+                    }
+                
                 for( int t=0; t<numProdTrans; t++ ) {
                     
                     TransRecord *tr = prodTrans->getElementDirect( t );
@@ -965,8 +973,12 @@ void regenerateHumanMadeMap() {
         
         SimpleVector<TransRecord*> *prodTrans = getAllProduces( o->id );
         
-        int numTrans = prodTrans->size();
-
+        int numTrans = 0;
+        
+        if( prodTrans != NULL ) {
+            numTrans = prodTrans->size();
+            }
+        
         if( numTrans == 0 ) {
             unreachableMap[oID] = true;
             continue;
