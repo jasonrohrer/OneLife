@@ -1074,7 +1074,15 @@ GridPos getClosestPlayerPos( int inX, int inY ) {
             continue;
             }
         
-        GridPos p = computePartialMoveSpot( o );
+        GridPos p;
+
+        if( o->xs == o->xd && o->ys == o->yd ) {
+            p.x = o->xd;
+            p.y = o->yd;
+            }
+        else {
+            p = computePartialMoveSpot( o );
+            }
         
         double d = distance( p, c );
         
