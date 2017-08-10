@@ -9411,7 +9411,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
             
 
             float thisObjClickExtraX = clickExtraX;
-            float thisObjClickExtraY = clickDestY;
+            float thisObjClickExtraY = clickExtraY;
             
             if( mMapMoveSpeeds[ clickDestMapI ] > 0 ) {
                 thisObjClickExtraX -= 
