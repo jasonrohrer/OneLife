@@ -1062,7 +1062,19 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
     SimpleVector <int> legIndices;
     getAllLegIndices( obj, inAge, &legIndices );
 
-    
+
+    // worn clothing never goes to ground animation
+    // switches between moving, when the wearer is moving, and held,
+    // when they're not moving
+    AnimType clothingAnimType = inAnim->type;
+    AnimType clothingFadeTargetAnimType = inFadeTargetAnim->type;
+
+    if( inAnim->type != moving ) {
+        clothingAnimType = held;
+        }
+    if( inFadeTargetAnim->type != moving ) {
+        clothingFadeTargetAnimType = held;
+        }
 
 
     int headIndex = getHeadIndex( obj, inAge );
@@ -1752,10 +1764,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
                 char used;
                 drawObjectAnim( inClothing.bottom->id, 
-                                inAnim->type, 
+                                clothingAnimType, 
                                 inFrameTime,
                                 inAnimFade, 
-                                inFadeTargetAnim->type,
+                                clothingFadeTargetAnimType,
                                 inFadeTargetFrameTime,
                                 inFrozenRotFrameTime,
                                 &used,
@@ -1787,10 +1799,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 
                 char used;
                 drawObjectAnim( inClothing.tunic->id, 
-                                inAnim->type, 
+                                clothingAnimType, 
                                 inFrameTime,
                                 inAnimFade, 
-                                inFadeTargetAnim->type,
+                                clothingFadeTargetAnimType,
                                 inFadeTargetFrameTime,
                                 inFrozenRotFrameTime,
                                 &used,
@@ -1822,10 +1834,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
                 char used;
                 drawObjectAnim( inClothing.backpack->id, 
-                                inAnim->type, 
+                                clothingAnimType, 
                                 inFrameTime,
                                 inAnimFade, 
-                                inFadeTargetAnim->type,
+                                clothingFadeTargetAnimType,
                                 inFadeTargetFrameTime,
                                 inFrozenRotFrameTime,
                                 &used,
@@ -1965,10 +1977,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
             char used;
             drawObjectAnim( inClothing.backShoe->id, 
-                            inAnim->type, 
+                            clothingAnimType, 
                             inFrameTime,
                             inAnimFade, 
-                            inFadeTargetAnim->type,
+                            clothingFadeTargetAnimType,
                             inFadeTargetFrameTime,
                             inFrozenRotFrameTime,
                             &used,
@@ -2000,10 +2012,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             
             char used;
             drawObjectAnim( inClothing.frontShoe->id, 
-                            inAnim->type, 
+                            clothingAnimType, 
                             inFrameTime,
                             inAnimFade, 
-                            inFadeTargetAnim->type,
+                            clothingFadeTargetAnimType,
                             inFadeTargetFrameTime,
                             inFrozenRotFrameTime,
                             &used,
@@ -2060,10 +2072,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
         
         char used;
         drawObjectAnim( inClothing.hat->id, 
-                        inAnim->type, 
+                        clothingAnimType, 
                         inFrameTime,
                         inAnimFade, 
-                        inFadeTargetAnim->type,
+                        clothingFadeTargetAnimType,
                         inFadeTargetFrameTime,
                         inFrozenRotFrameTime,
                         &used,

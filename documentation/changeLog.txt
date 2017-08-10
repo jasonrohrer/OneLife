@@ -49,6 +49,9 @@ Version 31     ???
 --Copy All in animation editor now makes sure destination sprites match source
   sprites during paste.
  
+--Clothing now goes into its held animation instead of ground animation when 
+  wearer stops moving.
+
 
 
 Server fixes:
