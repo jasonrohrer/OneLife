@@ -220,6 +220,10 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextButton mNextSpriteOrSlotButton;
         TextButton mPrevSpriteOrSlotButton;
         
+        TextButton mChildButton;
+        TextButton mParentButton;
+        
+
         TextButton mNextSoundButton;
         TextButton mPrevSoundButton;
 

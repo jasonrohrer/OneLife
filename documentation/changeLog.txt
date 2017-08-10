@@ -44,6 +44,8 @@ Version 31     ???
 
 --Fixed editor crash when testing clothing position.
 
+--Parent/Child buttons in animation editor to make limb animation easier.
+
  
 
 Server fixes:

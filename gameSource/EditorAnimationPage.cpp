@@ -109,6 +109,8 @@ EditorAnimationPage::EditorAnimationPage()
           mClearButton( smallFont, -270, 230, "Clear" ),
           mNextSpriteOrSlotButton( smallFont, 280, -270, "Next Layer" ),
           mPrevSpriteOrSlotButton( smallFont, 100, -270, "Prev Layer" ),
+          mChildButton( smallFont, 380, -330, "Child" ),
+          mParentButton( smallFont, 380, -270, "Parent" ),
           mNextSoundButton( smallFont, -30, -160, ">" ),
           mPrevSoundButton( smallFont, -210, -160, "<" ),
           mCopySoundAnimButton( smallFont, -85, -160, "Copy" ),
@@ -243,6 +245,10 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mPrevSpriteOrSlotButton );
     
 
+    addComponent( &mChildButton );
+    addComponent( &mParentButton );
+    
+
     mObjectEditorButton.addActionListener( this );
     mSaveButton.addActionListener( this );
     mDeleteButton.addActionListener( this );
@@ -269,6 +275,12 @@ EditorAnimationPage::EditorAnimationPage()
 
     mNextSpriteOrSlotButton.addActionListener( this );
     mPrevSpriteOrSlotButton.addActionListener( this );
+
+    mChildButton.addActionListener( this );
+    mParentButton.addActionListener( this );
+    
+    mChildButton.setVisible( false );
+    mParentButton.setVisible( false );
 
     mClearSlotDemoButton.setVisible( false );
 
@@ -624,7 +636,10 @@ void EditorAnimationPage::checkNextPrevVisible() {
     if( mCurrentObjectID == -1 ) {
         mNextSpriteOrSlotButton.setVisible( false );
         mPrevSpriteOrSlotButton.setVisible( false );
-    
+        
+        mChildButton.setVisible( false );
+        mParentButton.setVisible( false );
+
         mPickSlotDemoButton.setVisible( false );
         mPickClothingButton.setVisible( false );
         
@@ -642,6 +657,22 @@ void EditorAnimationPage::checkNextPrevVisible() {
     
     mNextSpriteOrSlotButton.setVisible( mCurrentSpriteOrSlot < num - 1 );
     mPrevSpriteOrSlotButton.setVisible( mCurrentSpriteOrSlot > 0 );
+ 
+    mParentButton.setVisible( false );
+    mChildButton.setVisible( false );
+    
+    if( mCurrentSpriteOrSlot < r->numSprites ) {
+        if( r->spriteParent[ mCurrentSpriteOrSlot ] != -1 ) {
+            mParentButton.setVisible( true );
+            }
+
+        for( int i=0; i<r->numSprites; i++ ) {
+            if( r->spriteParent[ i ] == mCurrentSpriteOrSlot ) {
+                mChildButton.setVisible( true );
+                break;
+                }
+            }
+        }
     
 
     if( mCurrentSpriteOrSlot < r->numSprites ) {
@@ -1618,6 +1649,35 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         setWiggle();
         mFrameCount = 0;
         
+        checkNextPrevVisible();
+        updateSlidersFromAnim();
+        }
+    else if( inTarget == &mChildButton ) {
+        ObjectRecord *r = getObject( mCurrentObjectID );
+        for( int i=0; i<r->numSprites; i++ ) {
+            if( r->spriteParent[ i ] == mCurrentSpriteOrSlot ) {
+                mCurrentSpriteOrSlot = i;
+                break;
+                }
+            }
+        
+        mWiggleFade = 1.0;
+        mWiggleSpriteOrSlot = mCurrentSpriteOrSlot;
+        setWiggle();
+        mFrameCount = 0;
+
+        checkNextPrevVisible();
+        updateSlidersFromAnim();
+        }
+    else if( inTarget == &mParentButton ) {
+        ObjectRecord *r = getObject( mCurrentObjectID );
+        mCurrentSpriteOrSlot = r->spriteParent[ mCurrentSpriteOrSlot ];
+        
+        mWiggleFade = 1.0;
+        mWiggleSpriteOrSlot = mCurrentSpriteOrSlot;
+        setWiggle();
+        mFrameCount = 0;
+
         checkNextPrevVisible();
         updateSlidersFromAnim();
         }
