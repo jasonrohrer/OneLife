@@ -933,6 +933,11 @@ void initObjectBankFinish() {
                         dummyO->isUseDummy = true;
                         dummyO->useDummyParent = mainID;
                         
+                        if( o->creationSoundInitialOnly ) {
+                            dummyO->creationSound = blankSoundUsage;
+                            }
+                        
+
                         // keep all appear sprites turned off
                         // unless we turn them on for this dummy
                         memcpy( dummyO->spriteSkipDrawing,
