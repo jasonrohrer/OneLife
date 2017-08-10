@@ -7456,9 +7456,12 @@ void LivingLifePage::step() {
                                 }
                             else {
 
-                                char *stringUpper = stringToUpperCase(
+                                char *stringUpper = stringToUpperCase( 
                                     weaponO->description );
-                                
+
+                                stripDescriptionComment( stringUpper );
+
+
                                 mDeathReason = autoSprintf( 
                                     "%s%s",
                                     translate( "reasonKilled" ),
