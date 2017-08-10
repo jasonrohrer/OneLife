@@ -579,15 +579,18 @@ void initTransBankFinish() {
                             if( useFraction >= tr->targetMinUseFraction ) {
                                 TransRecord newTransD = newTrans;
                                 
-                                if( tr->autoDecaySeconds != 0 ) {
-                                    // this use dummy auto-decays
-                                    // back to parent object
-                                    newTransD.target = o->useDummyIDs[ u ];
-                                    }
-                                else if( tr->reverseUseTarget ) {
-                                    newTransD.target = o->useDummyIDs[ u ];
-                                    newTransD.newTarget = 
-                                        o->useDummyIDs[ u + 1 ];
+                                if( tr->reverseUseTarget ) {
+
+                                    if( tr->autoDecaySeconds != 0 ) {
+                                        // this use dummy auto-decays
+                                        // back to parent object
+                                        newTransD.target = o->useDummyIDs[ u ];
+                                        }
+                                    else {
+                                        newTransD.target = o->useDummyIDs[ u ];
+                                        newTransD.newTarget = 
+                                            o->useDummyIDs[ u + 1 ];
+                                        }
                                     }
                                 else {
                                     newTransD.target = o->useDummyIDs[ u + 1 ];
