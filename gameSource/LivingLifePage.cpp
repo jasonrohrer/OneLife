@@ -1660,9 +1660,14 @@ void LivingLifePage::drawMapCell( int inMapI,
                                   char inHighlightOnly ) {
             
     int oID = mMap[ inMapI ];
-            
+
+    int objectHeight = 0;
+    
     if( oID > 0 ) {
         
+        objectHeight = getObjectHeight( oID );
+        
+
         if( !mapPullMode ) {
             
             int oldFrameCount = mMapAnimationFrameCount[ inMapI ];
@@ -2005,7 +2010,10 @@ void LivingLifePage::drawMapCell( int inMapI,
             toggleAdditiveBlend( true );
             
             doublePair squarePos = passPos;
-            squarePos.y += 192;
+            
+            if( objectHeight > CELL_D ) {
+                squarePos.y += 192;
+                }
             
             int squareRad = 286;
             
