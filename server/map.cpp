@@ -1657,6 +1657,62 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     // else walk through it
                     }
                 
+                if( newX == inX && newY == inY &&
+                    t->move <= 3 ) {
+                    // can't move where we want to go in flee/chase/random
+
+                    // pick some random spot to go instead
+
+                    int possibleX[8];
+                    int possibleY[8];
+                    int numPossibleDirs = 0;
+                    
+                    for( int d=0; d<8; d++ ) {
+                        
+                        dir.x = 1;
+                        dir.y = 0;
+                    
+                        // 8 cardinal directions
+                        dir = rotate( 
+                            dir,
+                            2 * M_PI * d / 8.0 );
+                        
+                        // walk up to 4 steps in that direction, looking
+                        // for non-blocking objects or an empty spot
+                        
+                        for( int i=0; i<4; i++ ) {
+                            int testX = lrint( inX + dir.x * i );
+                            int testY = lrint( inY + dir.y * i );
+                            
+                            int oID = getMapObjectRaw( testX, testY );
+                                               
+                    
+                            if( oID == 0 ) {
+                                // found a spot for it to move
+                                possibleX[ numPossibleDirs ] = testX;
+                                possibleY[ numPossibleDirs ] = testY;
+                                numPossibleDirs++;
+                                break;
+                                }
+                            else if( oID > 0 && getObject( oID ) != NULL &&
+                                     getObject( oID )->blocksWalking ) {
+                                // blocked, stop now
+                                break;
+                                }
+                            // else walk through it
+                            }
+                        }
+                    
+                    if( numPossibleDirs > 0 ) {
+                        int pick = 
+                            randSource.getRandomBoundedInt( 0,
+                                                            numPossibleDirs );
+                        newX = possibleX[ pick ];
+                        newY = possibleY[ pick ];
+                        }
+                    }
+                
+                
 
                 if( newX != inX || newY != inY ) {
                     // a reall move!
