@@ -46,7 +46,10 @@ Version 31     ???
 
 --Parent/Child buttons in animation editor to make limb animation easier.
 
+--Copy All in animation editor now makes sure destination sprites match source
+  sprites during paste.
  
+
 
 Server fixes:
 

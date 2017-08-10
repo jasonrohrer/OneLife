@@ -1169,6 +1169,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         markAllCopyBufferSoundsNotLive();
 
         mAllCopyBufferSounds.deleteAll();
+        mAllCopySpriteIDs.deleteAll();
         mAllCopyBufferSprites.deleteAll();
         mAllCopyBufferSlots.deleteAll();
         mWalkCopied = false;
@@ -1265,6 +1266,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             markAllCopyBufferSoundsNotLive();
 
             mAllCopyBufferSounds.deleteAll();
+            mAllCopySpriteIDs.deleteAll();
             mAllCopyBufferSprites.deleteAll();
             mAllCopyBufferSlots.deleteAll();
             }
@@ -1278,6 +1280,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         markAllCopyBufferSoundsNotLive();
 
         mAllCopyBufferSounds.deleteAll();
+        mAllCopySpriteIDs.deleteAll();
         mAllCopyBufferSprites.deleteAll();
         mAllCopyBufferSlots.deleteAll();
         
@@ -1287,6 +1290,10 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             mAllCopyBufferSounds.push_back( anim->soundAnim[i] );
             countLiveUse( anim->soundAnim[i].sound.id );
             }
+
+        ObjectRecord *obj = getObject( mCurrentObjectID );
+        mAllCopySpriteIDs.appendArray( obj->sprites, obj->numSprites );    
+
         for( int i=0; i<anim->numSprites; i++ ) {
             mAllCopyBufferSprites.push_back( anim->spriteAnim[i] );
             }
@@ -1433,14 +1440,63 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 countLiveUse( anim->soundAnim[i].sound.id );
                 }
             
+            
+            ObjectRecord *obj = getObject( mCurrentObjectID );
 
+            // indices in source anim data that weren't used
+            SimpleVector<int> missedIndices;
+            
+            // indices in 
+            char *hitIndices = new char[ anim->numSprites ];
+            
+            memset( hitIndices, false, anim->numSprites );
+            
+            
             for( int i=0; 
                  i<anim->numSprites && i < mAllCopyBufferSprites.size(); 
                  i++ ) {
-
-                anim->spriteAnim[i] = 
-                    mAllCopyBufferSprites.getElementDirect( i );
+                
+                if( i < obj->numSprites &&
+                    i < mAllCopySpriteIDs.size() &&
+                    obj->sprites[i] == 
+                    mAllCopySpriteIDs.getElementDirect( i ) ) {
+                    
+                    anim->spriteAnim[i] = 
+                        mAllCopyBufferSprites.getElementDirect( i );
+                    
+                    hitIndices[i] = true;
+                    }
+                else {
+                    missedIndices.push_back( i );
+                    }
                 }
+
+            for( int i=0; i<missedIndices.size(); i++ ) {
+                int missedI = missedIndices.getElementDirect( i );
+                
+                int spriteID = mAllCopySpriteIDs.getElementDirect( missedI );
+                
+                // find sprite in dest obj
+                for( int s=0; 
+                     s<obj->numSprites && s < anim->numSprites; s++ ) {
+                    
+                    if( spriteID == obj->sprites[s] &&
+                        ! hitIndices[ s ] ) {
+                        
+                        // matching sprite in dest obj, and
+                        // no animation already assigned
+
+                        anim->spriteAnim[s] = 
+                            mAllCopyBufferSprites.getElementDirect( missedI );
+                    
+                        hitIndices[s] = true;
+                        break;
+                        }                    
+                    }
+                }
+            
+
+
             for( int i=0; 
                  i<anim->numSlots && i < mAllCopyBufferSlots.size(); 
                  i++ ) {

@@ -186,6 +186,10 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         SimpleVector<SpriteAnimationRecord> mChainCopyBuffer;
 
         SimpleVector<SoundAnimationRecord> mAllCopyBufferSounds;
+
+        // ID of sprite from source of copy
+        // we don't want to paste these on different sprites
+        SimpleVector<int> mAllCopySpriteIDs;
         SimpleVector<SpriteAnimationRecord> mAllCopyBufferSprites;
         SimpleVector<SpriteAnimationRecord> mAllCopyBufferSlots;
         
