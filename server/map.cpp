@@ -1568,7 +1568,12 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                     GridPos p = getClosestPlayerPos( inX, inY );
                     
-                    if( p.x != 0 || p.y != 0 ) {
+                    double dist = 
+                        sqrt( ( p.x - inX ) * ( p.x - inX ) + 
+                              ( p.y - inY ) * ( p.y - inY ) );
+
+                    if( dist <= 7 &&
+                        ( p.x != 0 || p.y != 0 ) ) {
                         
                         dir.x = p.x - inX;
                         dir.y = p.y - inY;
