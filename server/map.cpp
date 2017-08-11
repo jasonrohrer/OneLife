@@ -815,10 +815,6 @@ void initMap() {
                     &( recentPlacements[i].pos.x ),
                     &( recentPlacements[i].pos.y ),
                     &( recentPlacements[i].depth ) );
-            
-            if( recentPlacements[i].pos.x != 0 ||
-                recentPlacements[i].pos.y != 0 ) {
-                }
             }
         fscanf( placeFile, "\nnextPlacementIndex=%d", &nextPlacementIndex );
         
@@ -1675,6 +1671,12 @@ int checkDecayObject( int inX, int inY, int inID ) {
 
                     if( oID > 0 ) {
                         trans = getTrans( inID, oID );
+                        
+                        if( trans == NULL ) {
+                            // does trans exist for newID applied to
+                            // destination?
+                            trans = getTrans( newID, oID );
+                            }
                         }
                     
                     if( oID == 0 ) {
