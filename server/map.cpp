@@ -1757,10 +1757,10 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         getTrans( inID, -1 );
                     
                     if( bareGroundTrans != NULL &&
-                        bareGroundTrans->newActor == newID ) {
-                        // leave bare ground result behind
-                        dbPut( inX, inY, 0, bareGroundTrans->newTarget );
-                        leftBehindID = bareGroundTrans->newTarget;
+                        bareGroundTrans->newTarget == newID ) {
+                        // leave new actor behind
+                        dbPut( inX, inY, 0, bareGroundTrans->newActor );
+                        leftBehindID = bareGroundTrans->newActor;
 
                         
                         TransRecord *leftDecayT = getTrans( -1, leftBehindID );
