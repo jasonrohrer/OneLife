@@ -1734,7 +1734,10 @@ int checkDecayObject( int inX, int inY, int inID ) {
 
                 if( newX != inX || newY != inY ) {
                     // a reall move!
-
+                    
+                    printf( "Object moving from (%d,%d) to (%d,%d)\n",
+                            inX, inY, newX, newY );
+                    
                     // move object
                     
                     dbPut( newX, newY, 0, newID );
@@ -1835,6 +1838,34 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 // no further decay
                 mapETA = 0;
                 }
+            
+            if( mapETA != 0 && 
+                ( newX != inX ||
+                  newY != inY ) ) {
+                
+                // copy old last look time from where we came from
+                char foundInOldSpot;
+                
+                timeSec_t lastLookTime =
+                    liveDecayRecordLastLookTimeHashTable.lookup( 
+                        inX, inY, 0, &foundInOldSpot );
+                
+                if( foundInOldSpot ) {
+                    
+                    char foundInNewSpot;
+                    liveDecayRecordLastLookTimeHashTable.
+                        lookup( newX, newY, 0, &foundInNewSpot );
+    
+                    if( ! foundInNewSpot ) {
+                        // we're not tracking decay for this new cell yet
+                        // but leave a look time here to affect
+                        // the tracking that we're about to setup
+                        
+                        liveDecayRecordLastLookTimeHashTable.
+                            insert( newX, newY, 0, lastLookTime );
+                        }
+                    }
+                }            
 
             setEtaDecay( newX, newY, mapETA );
             }
@@ -1858,11 +1889,6 @@ int checkDecayObject( int inX, int inY, int inID ) {
         mapETA = Time::timeSec() + decayTime;
             
         setEtaDecay( inX, inY, mapETA );
-        }
-    
-
-    if( mapETA != 0 ) {
-        trackETA( newX, newY, 0, mapETA );
         }
     
 
