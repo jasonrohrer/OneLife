@@ -249,6 +249,32 @@ typedef struct OldArrow {
         float fade;
     } OldArrow;
 
+
+
+// for objects moving in-transit in special cases where we can't store
+// them in the map (if they're moving onto an occupied space that should
+// only change when they're done moving)
+// We track them separately from the map until they are done moving
+typedef struct ExtraMapObject {
+        int objectID;
+
+        double moveSpeed;
+        doublePair moveOffset;
+        
+        int animationFrameCount;
+        int animationLastFrameCount;
+        
+        int animationFrozenRotFrameCount;
+        
+        AnimType curAnimType;
+        AnimType lastAnimType;
+        double lastAnimFade;
+        char flip;
+
+        SimpleVector<int> containedStack;
+
+    } ExtraMapObject;
+        
         
 
 
@@ -369,7 +395,11 @@ class LivingLifePage : public GamePage {
         // player was responsible for placing
         char *mMapPlayerPlacedFlags;
         
+        SimpleVector<GridPos> mMapExtraMovingObjectsDestWorldPos;
+        SimpleVector<int> mMapExtraMovingObjectsDestObjectIDs;
+        SimpleVector<ExtraMapObject> mMapExtraMovingObjects;
 
+        
         int mMapOffsetX;
         int mMapOffsetY;
 
@@ -568,6 +598,11 @@ class LivingLifePage : public GamePage {
 
         // handles error detection, total byte counting, etc.
         void sendToServerSocket( char *inMessage );
+        
+
+        ExtraMapObject copyFromMap( int inMapI );
+        
+        void putInMap( int inMapI, ExtraMapObject *inObj );
         
     };
 

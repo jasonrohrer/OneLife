@@ -2810,6 +2810,11 @@ typedef struct DrawOrderRecord {
         // if cell
         int mapI;
         int screenX, screenY;
+
+        char extraMovingObj;
+        // if extra moving obj
+        int extraMovingIndex;
+        
     } DrawOrderRecord;
         
 
@@ -3646,6 +3651,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 // add to depth sorting queue
                 DrawOrderRecord drawRec;
                 drawRec.person = false;
+                drawRec.extraMovingObj = false;
                 drawRec.mapI = mapI;
                 drawRec.screenX = movingScreenX;
                 drawRec.screenY = movingScreenY;
@@ -3654,6 +3660,67 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 cellDrawn[mapI] = true;
                 }
             }
+
+
+
+        
+
+        // now sort extra moving objects that fall in this row
+        
+        int worldXStart = xStart + mMapOffsetX - mMapD / 2;
+        int worldXEnd = xEnd + mMapOffsetX - mMapD / 2;
+        
+        for( int i=0; i<mMapExtraMovingObjects.size(); i++ ) {
+            
+            GridPos movingWorldPos = 
+                mMapExtraMovingObjectsDestWorldPos.getElementDirect( i );
+
+            ExtraMapObject *extraO = 
+                mMapExtraMovingObjects.getElement( i );
+
+            
+            int movingX = lrint( movingWorldPos.x + extraO->moveOffset.x );
+
+            double movingTrueCellY = movingWorldPos.y + extraO->moveOffset.y;
+            
+            double movingTrueY =  movingTrueCellY - 0.2;
+            
+            int movingCellY = lrint( movingTrueCellY - 0.50 );
+
+            if( movingCellY == worldY && 
+                movingX >= worldXStart && 
+                movingX <= worldXEnd ) {
+                
+                int mapX = movingWorldPos.x - mMapOffsetX + mMapD / 2;
+                int mapY = movingWorldPos.y - mMapOffsetY + mMapD / 2;
+                    
+                int mapI = mapY * mMapD + mapX;
+
+
+                int movingScreenX = CELL_D * movingWorldPos.x;
+                int movingScreenY = CELL_D * movingWorldPos.y;
+                
+                double worldMovingY =  movingTrueY + mMapOffsetY - mMapD / 2;
+                
+                
+                //drawMapCell( mapI, movingScreenX, movingScreenY );
+                
+                // add to depth sorting queue
+                DrawOrderRecord drawRec;
+                drawRec.person = false;
+                drawRec.extraMovingObj = true;
+                drawRec.extraMovingIndex = i;
+                drawRec.mapI = mapI;
+                drawRec.screenX = movingScreenX;
+                drawRec.screenY = movingScreenY;
+                
+                drawQueue.insert( drawRec, 0 - worldMovingY );
+                }
+            }
+
+
+
+
         
         // now move through queue in order, drawing
         int numQueued = drawQueue.size();
@@ -3678,6 +3745,21 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         heldToDrawOnTop.push_back( heldPack );
                         }
                     }
+                }
+            else if( drawRec.extraMovingObj ) {
+                ExtraMapObject *mO = mMapExtraMovingObjects.getElement(
+                    drawRec.extraMovingIndex );
+                
+                // hold non-moving dest object
+                ExtraMapObject curO = copyFromMap( drawRec.mapI );
+                
+                // temporarily insert extra object for drawing
+                putInMap( drawRec.mapI, mO );
+
+                drawMapCell( drawRec.mapI, drawRec.screenX, drawRec.screenY );
+
+                // put original one back
+                putInMap( drawRec.mapI, &curO );
                 }
             else {
                 drawMapCell( drawRec.mapI, drawRec.screenX, drawRec.screenY );
@@ -5101,6 +5183,61 @@ void LivingLifePage::step() {
             }
         }
     
+    
+    // step extra moving objects
+    for( int i=0; i<mMapExtraMovingObjects.size(); i++ ) {
+        
+        ExtraMapObject *o = mMapExtraMovingObjects.getElement( i );
+        
+        doublePair nullOffset = { 0, 0 };
+                    
+
+        doublePair delta = sub( nullOffset, o->moveOffset );
+        
+        double step = frameRateFactor * o->moveSpeed / 60.0;
+                    
+        if( length( delta ) < step ) {
+            // reached dest
+            
+            o->moveOffset.x = 0;
+            o->moveOffset.y = 0;
+            o->moveSpeed = 0;
+                
+            if( o->curAnimType != ground ) {
+                        
+                o->lastAnimType = o->curAnimType;
+                o->curAnimType = ground;
+                o->lastAnimFade = 1;
+                    
+                o->animationLastFrameCount = o->animationFrameCount;
+                    
+                o->animationFrameCount = 0;
+                }
+
+            GridPos worldPos = 
+                mMapExtraMovingObjectsDestWorldPos.getElementDirect( i );
+            
+            int mapI = getMapIndex( worldPos.x, worldPos.y );
+            
+            if( mapI != -1 ) {
+                // put it in dest
+                putInMap( mapI, o );
+                mMap[ mapI ] = 
+                    mMapExtraMovingObjectsDestObjectIDs.getElementDirect( i );
+                }
+            
+            mMapExtraMovingObjects.deleteElement( i );
+            mMapExtraMovingObjectsDestWorldPos.deleteElement( i );
+            mMapExtraMovingObjectsDestObjectIDs.deleteElement( i );
+            i--;
+            }
+        else {
+            o->moveOffset =
+                add( o->moveOffset,
+                     mult( normalize( delta ), step ) );
+            }
+        }
+    
 
 
 
@@ -5883,10 +6020,31 @@ void LivingLifePage::step() {
                             // this cell moved from somewhere
                             
                             applyReceiveOffset( &oldX, &oldY );
-                    
-                            mMapMoveSpeeds[mapI] = speed;
                             
                             int oldMapI = getMapIndex( oldX, oldY );
+                            
+                            int sourceObjID = 0;
+                            if( oldMapI != -1 ) {
+                                sourceObjID = mMap[ oldMapI ];
+                                }
+                            
+                            ExtraMapObject oldObj;
+                            
+                            if( old != 0 && sourceObjID != 0 &&
+                                getTrans( sourceObjID, old ) != NULL ) {
+                                
+                                // save old object while we
+                                // set up new object
+                                oldObj = copyFromMap( mapI );
+                                oldObj.objectID = old;
+                                if( old == -1 ) {
+                                    oldObj.objectID = 0;
+                                    }
+                                }
+
+                            mMapMoveSpeeds[mapI] = speed;
+                            
+                            
 
                             doublePair oldOffset = { 0, 0 };
                             
@@ -5944,6 +6102,30 @@ void LivingLifePage::step() {
                             else if( x < oldTrueX ) {
                                 mMapTileFlips[mapI] = true;
                                 }
+
+                                                        
+                            if( old != 0 && sourceObjID != 0 &&
+                                getTrans( sourceObjID, old ) != NULL ) {
+                                
+                                // now that we've set up new object in dest
+                                // copy it
+                                ExtraMapObject newObj = copyFromMap( mapI );
+                                // leave source in place during move
+                                newObj.objectID = sourceObjID;
+                                
+                                // save it as an extra obj
+                                mMapExtraMovingObjects.push_back( newObj );
+                                GridPos worldDestPos = { x, y };
+                                mMapExtraMovingObjectsDestWorldPos.push_back(
+                                    worldDestPos );
+                                
+                                mMapExtraMovingObjectsDestObjectIDs.push_back(
+                                    newID );
+
+                                // put old object back in place for now
+                                putInMap( mapI, &oldObj );
+                                }
+
                             }
                         else {
                             mMapMoveSpeeds[mapI] = 0;
@@ -9346,6 +9528,11 @@ void LivingLifePage::makeActive( char inFresh ) {
         }
     
     clearMap();
+    
+    mMapExtraMovingObjects.deleteAll();
+    mMapExtraMovingObjectsDestWorldPos.deleteAll();
+    mMapExtraMovingObjectsDestObjectIDs.deleteAll();
+            
 
     mMapGlobalOffsetSet = false;
     mMapGlobalOffset.x = 0;
@@ -11057,3 +11244,42 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
     }
 
         
+
+
+
+ExtraMapObject LivingLifePage::copyFromMap( int inMapI ) {
+    ExtraMapObject o = {
+        mMap[ inMapI ],
+        mMapMoveSpeeds[ inMapI ],
+        mMapMoveOffsets[ inMapI ],
+        mMapAnimationFrameCount[ inMapI ],
+        mMapAnimationLastFrameCount[ inMapI ],
+        mMapAnimationFrozenRotFrameCount[ inMapI ],
+        mMapCurAnimType[ inMapI ],
+        mMapLastAnimType[ inMapI ],
+        mMapLastAnimFade[ inMapI ],
+        mMapTileFlips[ inMapI ],
+        mMapContainedStacks[ inMapI ] };
+    
+    return o;
+    }
+
+        
+void LivingLifePage::putInMap( int inMapI, ExtraMapObject *inObj ) {
+    mMap[ inMapI ] = inObj->objectID;
+    
+    mMapMoveSpeeds[ inMapI ] = inObj->moveSpeed;
+    mMapMoveOffsets[ inMapI ] = inObj->moveOffset;
+    mMapAnimationFrameCount[ inMapI ] = inObj->animationFrameCount;
+    mMapAnimationLastFrameCount[ inMapI ] = inObj->animationLastFrameCount;
+    mMapAnimationFrozenRotFrameCount[ inMapI ] = 
+        inObj->animationFrozenRotFrameCount;
+    
+    mMapCurAnimType[ inMapI ] = inObj->curAnimType;
+    mMapLastAnimType[ inMapI ] = inObj->lastAnimType;
+    mMapLastAnimFade[ inMapI ] = inObj->lastAnimFade;
+    mMapTileFlips[ inMapI ] = inObj->flip;
+    
+    mMapContainedStacks[ inMapI ] = inObj->containedStack;
+    }
+
