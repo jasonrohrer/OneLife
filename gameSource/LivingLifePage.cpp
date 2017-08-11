@@ -6026,6 +6026,18 @@ void LivingLifePage::step() {
                             int sourceObjID = 0;
                             if( oldMapI != -1 ) {
                                 sourceObjID = mMap[ oldMapI ];
+                            
+                                // check what move-trans for sourceID
+                                // produces.  If it produces something
+                                // show that moving instead
+                                
+                                TransRecord *moveTrans = 
+                                    getTrans( -1, sourceObjID );
+                                
+                                if( moveTrans != NULL &&
+                                    moveTrans->move > 0 ) {
+                                    sourceObjID = moveTrans->newTarget;
+                                    }
                                 }
                             
                             ExtraMapObject oldObj;
