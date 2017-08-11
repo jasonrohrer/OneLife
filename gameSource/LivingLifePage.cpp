@@ -5876,6 +5876,8 @@ void LivingLifePage::step() {
 
                             doublePair oldOffset = { 0, 0 };
                             
+                            char moveEastOrWest = false;
+                            
                             if( oldMapI != -1 ) {
                                 // location where we came from
                                 oldOffset = mMapMoveOffsets[ oldMapI ];
@@ -5898,6 +5900,22 @@ void LivingLifePage::step() {
                                 
                                 mMapLastAnimFade[ mapI ] =
                                     mMapLastAnimFade[ oldMapI ];
+                                
+                                
+                                int oldLocID = mMap[ oldMapI ];
+                                
+                                if( oldLocID > 0 ) {
+                                    TransRecord *decayTrans = 
+                                        getTrans( -1, oldLocID );
+                        
+                                    if( decayTrans != NULL ) {
+                                        
+                                        if( decayTrans->move == 6 ||
+                                            decayTrans->move == 7 ) {
+                                            moveEastOrWest = true;
+                                            }
+                                        }
+                                    }
                                 }
 
                             double oldTrueX = oldX + oldOffset.x;
@@ -5906,7 +5924,7 @@ void LivingLifePage::step() {
                             mMapMoveOffsets[mapI].x = oldTrueX - x;
                             mMapMoveOffsets[mapI].y = oldTrueY - y;
 
-                            if( x > oldTrueX ) {
+                            if( moveEastOrWest || x > oldTrueX ) {
                                 mMapTileFlips[mapI] = false;
                                 }
                             else if( x < oldTrueX ) {
@@ -5919,6 +5937,19 @@ void LivingLifePage::step() {
                             mMapMoveOffsets[mapI].y = 0;
                             }
                         
+                        
+                        TransRecord *nextDecayTrans = getTrans( -1, newID );
+                        
+                        if( nextDecayTrans != NULL ) {
+                            
+                            if( nextDecayTrans->move == 6 ||
+                                nextDecayTrans->move == 7 ) {
+                                // this object will move to left/right in future
+                                // force no flip now
+                                mMapTileFlips[mapI] = false;
+                                }
+                            }
+
 
                         if( old != 0 &&
                             old == newID &&
