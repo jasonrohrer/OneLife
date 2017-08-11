@@ -1523,6 +1523,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
     // else decay exists for this object
     
     int newID = inID;
+    int movingObjID = newID;
     int leftBehindID = 0;
     
     // in case of movement
@@ -1541,7 +1542,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
 
             // apply the transition
             newID = t->newTarget;
-            
+            movingObjID = newID;
 
             int oldSlots = getNumContainerSlots( inID );
 
@@ -1775,12 +1776,18 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     // do this second, so that it is reported to client
                     // after move is reported
                     
-                    if( destTrans == NULL ) {
+                    if( destTrans == NULL || destTrans->newActor == 0 ) {
                         // try bare ground trans
                         destTrans = getTrans( inID, -1 );
 
+                        if( destTrans == NULL ) {
+                            // another attempt at bare ground transition
+                            destTrans = getTrans( movingObjID, -1 );
+                            }
+                        
                         if( destTrans != NULL &&
-                            destTrans->newTarget != newID ) {
+                            destTrans->newTarget != newID &&
+                            destTrans->newTarget != movingObjID ) {
                             // for bare ground, make sure newTarget
                             // matches newTarget of our orginal move transition
                             destTrans = NULL;
