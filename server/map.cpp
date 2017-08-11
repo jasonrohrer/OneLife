@@ -1527,6 +1527,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
     // else decay exists for this object
     
     int newID = inID;
+    int leftBehindID = 0;
     
     // in case of movement
     int newX = inX;
@@ -1741,12 +1742,53 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     // move object
                     
                     dbPut( newX, newY, 0, newID );
+                    
 
-                    // leave empty spot behind
+                    // update old spot
                     // do this second, so that it is reported to client
                     // after move is reported
-                    dbPut( inX, inY, 0, 0 );
+                        
+                    TransRecord *bareGroundTrans =
+                        getTrans( inID, -1 );
+                    
+                    if( bareGroundTrans != NULL &&
+                        bareGroundTrans->newActor == newID ) {
+                        // leave bare ground result behind
+                        dbPut( inX, inY, 0, bareGroundTrans->newTarget );
+                        leftBehindID = bareGroundTrans->newTarget;
 
+                        
+                        TransRecord *leftDecayT = getTrans( -1, leftBehindID );
+
+                        double leftMapETA = 0;
+                        
+                        if( leftDecayT != NULL ) {
+
+                            // add some random variation to avoid lock-step
+                            // especially after a server restart
+                            int tweakedSeconds = 
+                                randSource.getRandomBoundedInt( 
+                                    lrint( 
+                                        leftDecayT->autoDecaySeconds * 0.9 ), 
+                                    leftDecayT->autoDecaySeconds );
+                            
+                            if( tweakedSeconds < 1 ) {
+                                tweakedSeconds = 1;
+                                }
+                            leftMapETA = Time::timeSec() + tweakedSeconds;
+                            }
+                        else {
+                            // no further decay
+                            leftMapETA = 0;
+                            }
+                        setEtaDecay( inX, inY, leftMapETA );
+                        }
+                    else {
+                        // leave empty spot behind
+                        dbPut( inX, inY, 0, 0 );
+                        leftBehindID = 0;
+                        }
+                    
 
                     // move contained
                     int numCont;
@@ -1895,7 +1937,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
     if( newX != inX ||
         newY != inY ) {
         // object moved and is gone
-        return 0;
+        return leftBehindID;
         }
     else {
         return newID;
