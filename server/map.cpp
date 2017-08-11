@@ -1590,7 +1590,25 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         dir = mult( dir, -1 );
                         }
                     }
+                else if( t->move > 3 ) {
+                    // NSEW
 
+                    switch( t->move ) {
+                        case 4:
+                            dir.y = 1;
+                            break;
+                        case 5:
+                            dir.y = -1;
+                            break;
+                        case 6:
+                            dir.x = 1;
+                            break;
+                        case 7:
+                            dir.x = -1;
+                            break;
+                        }
+                    }
+                
                 // round to 1000ths to avoid rounding errors
                 // that can separate our values from zero
 

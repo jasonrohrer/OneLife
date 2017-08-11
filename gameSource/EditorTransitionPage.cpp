@@ -68,9 +68,9 @@ extern Font *smallFont;
 static ObjectPickable objectPickable;
 
 
-#define NUM_MOVE_BUTTONS 4
+#define NUM_MOVE_BUTTONS 8
 static const char *moveButtonNames[NUM_MOVE_BUTTONS] =
-{ "None", "Chase", "Flee", "Random" };
+{ "None", "Chase", "Flee", "Random", "North", "South", "East", "West" };
 
 
 EditorTransitionPage::EditorTransitionPage()
@@ -82,7 +82,7 @@ EditorTransitionPage::EditorTransitionPage()
           mLastUseTargetCheckbox( 130, 75, 2 ),
           mReverseUseActorCheckbox( -330, -75, 2 ),
           mReverseUseTargetCheckbox( 130, -75, 2 ),
-          mMovementButtons( smallFont, 220, 40,
+          mMovementButtons( smallFont, 240, 40,
                             NUM_MOVE_BUTTONS, moveButtonNames, true, 2 ),
           mActorMinUseFractionField( smallFont, 
                                      -290,  115, 4,

@@ -46,6 +46,10 @@ typedef struct TransRecord {
         // 1 for follow closest player
         // 2 for flee closest player
         // 3 for random movement
+        // 4 for N
+        // 5 for S
+        // 6 for E
+        // 7 for W
         int move;
 
         
