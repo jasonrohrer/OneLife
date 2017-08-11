@@ -1564,6 +1564,9 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 // moving
                 doublePair dir = { 0, 0 };
                 
+                TransRecord *destTrans = NULL;
+                
+
                 if( t->move < 3 ) {
                     
                     GridPos p = getClosestPlayerPos( inX, inY );
@@ -1665,12 +1668,25 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     int testY = lrint( inY + dir.y * i );
                     
                     int oID = getMapObjectRaw( testX, testY );
-                                               
+                    
+                    // does trans exist for this object used on destination 
+                    // obj?
+                    TransRecord *trans = NULL;
+
+                    if( oID > 0 ) {
+                        trans = getTrans( inID, oID );
+                        }
                     
                     if( oID == 0 ) {
                         // found a spot for it to move
                         newX = testX;
                         newY = testY;
+                        break;
+                        }
+                    else if( trans != NULL ) {
+                        newX = testX;
+                        newY = testY;
+                        destTrans = trans;
                         break;
                         }
                     else if( oID > 0 && getObject( oID ) != NULL &&
@@ -1746,21 +1762,38 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                     // move object
                     
+                    if( destTrans != NULL ) {
+                        newID = destTrans->newTarget;
+                        }
+                    
                     dbPut( newX, newY, 0, newID );
                     
 
                     // update old spot
                     // do this second, so that it is reported to client
                     // after move is reported
-                        
-                    TransRecord *bareGroundTrans =
-                        getTrans( inID, -1 );
                     
-                    if( bareGroundTrans != NULL &&
-                        bareGroundTrans->newTarget == newID ) {
+                    if( destTrans == NULL ) {
+                        // try bare ground trans
+                        destTrans = getTrans( inID, -1 );
+
+                        if( destTrans != NULL &&
+                            destTrans->newTarget != newID ) {
+                            // for bare ground, make sure newTarget
+                            // matches newTarget of our orginal move transition
+                            destTrans = NULL;
+                            }
+                        }
+                    
+                        
+                    
+                    if( destTrans != NULL ) {
                         // leave new actor behind
-                        dbPut( inX, inY, 0, bareGroundTrans->newActor );
-                        leftBehindID = bareGroundTrans->newActor;
+                        
+                        leftBehindID = destTrans->newActor;
+                        
+                        dbPut( inX, inY, 0, leftBehindID );
+                        
 
                         
                         TransRecord *leftDecayT = getTrans( -1, leftBehindID );
