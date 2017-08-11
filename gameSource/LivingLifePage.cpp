@@ -1787,40 +1787,6 @@ void LivingLifePage::drawMapCell( int inMapI,
             ( mMapMoveOffsets[ inMapI ].x != 0 ||
               mMapMoveOffsets[ inMapI ].y != 0  ) ) {
 
-            
-            doublePair nullOffset = { 0, 0 };
-                    
-
-            doublePair delta = sub( nullOffset, 
-                                    mMapMoveOffsets[ inMapI ] );
-                    
-            double step = frameRateFactor * mMapMoveSpeeds[ inMapI ] / 60.0;
-                    
-            if( length( delta ) < step ) {
-                        
-                mMapMoveOffsets[ inMapI ].x = 0;
-                mMapMoveOffsets[ inMapI ].y = 0;
-                mMapMoveSpeeds[ inMapI ] = 0;
-                
-                if( mMapCurAnimType[ inMapI ] != ground ) {
-                        
-                    mMapLastAnimType[ inMapI ] = mMapCurAnimType[ inMapI ];
-                    mMapCurAnimType[ inMapI ] = ground;
-                    mMapLastAnimFade[ inMapI ] = 1;
-                    
-                    mMapAnimationLastFrameCount[ inMapI ] =
-                        mMapAnimationFrameCount[ inMapI ];
-                    
-                    mMapAnimationFrameCount[ inMapI ] = 0;
-                    }
-                }
-            else {
-                mMapMoveOffsets[ inMapI ] =
-                    add( mMapMoveOffsets[ inMapI ],
-                         mult( normalize( delta ), step ) );
-                }
-
-
             pos = add( pos, mult( mMapMoveOffsets[ inMapI ], CELL_D ) );
             }
         
@@ -5089,6 +5055,54 @@ void LivingLifePage::step() {
             }
         }
     
+
+
+    // move moving objects
+    int numCells = mMapD * mMapD;
+    
+    for( int i=0; i<numCells; i++ ) {
+                
+        if( mMapMoveSpeeds[i] > 0 &&
+            ( mMapMoveOffsets[ i ].x != 0 ||
+              mMapMoveOffsets[ i ].y != 0  ) ) {
+
+            
+            doublePair nullOffset = { 0, 0 };
+                    
+
+            doublePair delta = sub( nullOffset, 
+                                    mMapMoveOffsets[ i ] );
+                    
+            double step = frameRateFactor * mMapMoveSpeeds[ i ] / 60.0;
+                    
+            if( length( delta ) < step ) {
+                        
+                mMapMoveOffsets[ i ].x = 0;
+                mMapMoveOffsets[ i ].y = 0;
+                mMapMoveSpeeds[ i ] = 0;
+                
+                if( mMapCurAnimType[ i ] != ground ) {
+                        
+                    mMapLastAnimType[ i ] = mMapCurAnimType[ i ];
+                    mMapCurAnimType[ i ] = ground;
+                    mMapLastAnimFade[ i ] = 1;
+                    
+                    mMapAnimationLastFrameCount[ i ] =
+                        mMapAnimationFrameCount[ i ];
+                    
+                    mMapAnimationFrameCount[ i ] = 0;
+                    }
+                }
+            else {
+                mMapMoveOffsets[ i ] =
+                    add( mMapMoveOffsets[ i ],
+                         mult( normalize( delta ), step ) );
+                }
+            }
+        }
+    
+
+
 
     if( mCurMouseOverID != 0 ) {
         mCurMouseOverFade += 0.2 * frameRateFactor;
