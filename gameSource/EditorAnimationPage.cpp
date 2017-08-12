@@ -100,6 +100,10 @@ EditorAnimationPage::EditorAnimationPage()
           mPickingHeld( false ),
           mHeldID( -1 ),
           mClearHeldButton( smallFont, 280, -140, "X Held" ),
+          mPickSceneryButton( smallFont, 280, 180, "+ Scenery" ),
+          mPickingScenery( false ),
+          mSceneryID( -1 ),
+          mClearSceneryButton( smallFont, 280, 220, "X Scenery" ),
           mCopyButton( smallFont, -390, 230, "Copy" ),
           mCopyChainButton( smallFont, -390, 270, "Copy Child Chain" ),
           mCopyWalkButton( smallFont, -260, 270, "Copy Walk" ),
@@ -232,6 +236,9 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mPickHeldButton );
     addComponent( &mClearHeldButton );
 
+    addComponent( &mPickSceneryButton );
+    addComponent( &mClearSceneryButton );
+
     addComponent( &mCopyButton );
     addComponent( &mCopyChainButton );
     addComponent( &mCopyWalkButton );
@@ -264,6 +271,9 @@ EditorAnimationPage::EditorAnimationPage()
     mPickHeldButton.addActionListener( this );
     mClearHeldButton.addActionListener( this );
 
+    mPickSceneryButton.addActionListener( this );
+    mClearSceneryButton.addActionListener( this );
+
     mCopyButton.addActionListener( this );
     mCopyChainButton.addActionListener( this );
     mCopyWalkButton.addActionListener( this );
@@ -289,6 +299,8 @@ EditorAnimationPage::EditorAnimationPage()
     
     mPickHeldButton.setVisible( false );
     mClearHeldButton.setVisible( false );
+
+    mClearSceneryButton.setVisible( false );
 
     checkNextPrevVisible();
     
@@ -1573,6 +1585,9 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                         frameRateFactor * obj->speedMult;
                     }
                 }
+            else if( mPickingScenery ) {
+                mSceneryID = newPickID;
+                }
             else {
                 int oldID = mCurrentObjectID;
                 
@@ -1640,6 +1655,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mPickingSlotDemo = true;
         mPickingClothing = false;
         mPickingHeld = false;
+        mPickingScenery = false;
         mCurrentSlotDemoID = -1;
         mPickSlotDemoButton.setVisible( false );
         mClearSlotDemoButton.setVisible( true );
@@ -1654,6 +1670,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mPickingSlotDemo = false;
         mPickingClothing = true;
         mPickingHeld = false;
+        mPickingScenery = false;
         mPickClothingButton.setVisible( false );
         mClearClothingButton.setVisible( true );
         }
@@ -1668,6 +1685,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mPickingSlotDemo = false;
         mPickingClothing = false;
         mPickingHeld = true;
+        mPickingScenery = false;
         mPickHeldButton.setVisible( false );
         mClearHeldButton.setVisible( true );
         }
@@ -1685,6 +1703,20 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         if( obj->speedMult < 1.0 ) {
             mCurrentObjectFrameRateFactor =  frameRateFactor * obj->speedMult;
             }
+        }
+    else if( inTarget == &mPickSceneryButton ) {
+        mPickingSlotDemo = false;
+        mPickingClothing = false;
+        mPickingHeld = false;
+        mPickingScenery = true;
+        mClearSceneryButton.setVisible( true );
+        mPickSceneryButton.setVisible( false );
+        }
+    else if( inTarget == &mClearSceneryButton ) {
+        mPickingScenery = false;
+        mClearSceneryButton.setVisible( false );
+        mPickSceneryButton.setVisible( true );
+        mSceneryID = -1;
         }
     else if( inTarget == &mNextSpriteOrSlotButton ) {
         mCurrentSpriteOrSlot ++;
@@ -2076,6 +2108,8 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
         if( mPersonAgeSlider.isVisible() ) {
             age = mPersonAgeSlider.getValue();
             }
+        
+        SimpleVector<doublePair> groundPosList;
 
         if( anim != NULL ) {
             double factor = mCurrentObjectFrameRateFactor;
@@ -2126,6 +2160,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                         //              1.0 - ( fabs( groundPos.x ) / 128.0 ) );
 
                         drawSprite( mGroundSprite, groundPos );
+                        groundPosList.push_back( groundPos );
                         groundPos.x -= 128;
                         }
                     }
@@ -2140,6 +2175,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                         //              1.0 - ( fabs( groundPos.x ) / 128.0 ) );
                         
                         drawSprite( mGroundSprite, groundPos );
+                        groundPosList.push_back( groundPos );
                         groundPos.x += 128;
                         }
                     }
@@ -2342,6 +2378,30 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                 }
             }
         
+        if( mSceneryID != -1 ) {
+            
+            if( groundPosList.size() == 0 ) {
+                groundPosList.push_back( pos );
+                }
+
+            for( int g=0; g<groundPosList.size(); g++ ) {
+                
+                drawObject( getObject( mSceneryID ), 
+                            2,
+                            groundPosList.getElementDirect( g ),
+                            0,
+                            false,
+                            false,
+                            20,
+                            0,
+                            false,
+                            false,
+                            getEmptyClothingSet() );
+                }
+            
+            }
+        
+
         if( demoSlots != NULL ) {
             delete [] demoSlots;
             }
@@ -2854,6 +2914,12 @@ void EditorAnimationPage::clearUseOfObject( int inObjectID ) {
     if( mCurrentObjectID == inObjectID ) {
         mCurrentObjectID = -1;
         freeCurrentAnim();
+        }
+    if( mHeldID == inObjectID ) {
+        mHeldID = -1;
+        }
+    if( mCurrentSlotDemoID == inObjectID ) {
+        mCurrentSlotDemoID = -1;
         }
     }
 

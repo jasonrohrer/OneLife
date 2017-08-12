@@ -177,6 +177,13 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
         TextButton mClearHeldButton;
 
+
+        TextButton mPickSceneryButton;
+        char mPickingScenery;
+        int mSceneryID;
+        
+        TextButton mClearSceneryButton;
+        
         
 
 

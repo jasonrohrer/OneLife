@@ -52,6 +52,10 @@ Version 31     ???
 --Clothing now goes into its held animation instead of ground animation when 
   wearer stops moving.
 
+--Support for demo scenery in animation editor so we can test moving object
+  foot visibility behind non-blocking objects.
+
+
 
 
 Server fixes:
