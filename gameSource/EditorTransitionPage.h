@@ -68,7 +68,9 @@ class EditorTransitionPage : public GamePage, public ActionListener {
         CheckboxButton mReverseUseTargetCheckbox;
         
         RadioButtonSet mMovementButtons;
- 
+        
+        TextField mDesiredMoveDistField;
+        
         TextField mActorMinUseFractionField, mTargetMinUseFractionField;
 
         TextButton mSaveTransitionButton;

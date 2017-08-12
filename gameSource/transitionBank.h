@@ -52,6 +52,9 @@ typedef struct TransRecord {
         // 7 for W
         int move;
 
+        // for things that move longer distances per move
+        int desiredMoveDist;
+
         
     } TransRecord;
 
@@ -162,6 +165,7 @@ void addTrans( int inActor, int inTarget,
                float inActorMinUseFraction,
                float inTargetMinUseFraction,
                int inMove,
+               int inDesiredMoveDist,
                char inNoWriteToFile = false );
 
 

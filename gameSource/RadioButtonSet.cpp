@@ -73,8 +73,8 @@ void RadioButtonSet::setSelectedItem( int inIndex ) {
 void RadioButtonSet::actionPerformed( GUIComponent *inTarget ) {
     for( int i=0; i<mNumItems; i++ ) {
         if( inTarget == mCheckboxes[i] ) {
-            fireActionPerformed( this );
             mSelectedItem = i;
+            fireActionPerformed( this );
             }
         else {
             // untoggle others

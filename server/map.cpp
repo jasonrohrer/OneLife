@@ -1657,49 +1657,69 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 
                 // now we have the dir we want to go in    
 
-                // walk up to 4 steps in that direction, looking
-                // for non-blocking objects or an empty spot
-                
-                for( int i=0; i<4; i++ ) {
-                    int testX = lrint( inX + dir.x * i );
-                    int testY = lrint( inY + dir.y * i );
-                    
-                    int oID = getMapObjectRaw( testX, testY );
-                    
-                    // does trans exist for this object used on destination 
-                    // obj?
-                    TransRecord *trans = NULL;
 
-                    if( oID > 0 ) {
-                        trans = getTrans( inID, oID );
-                        
-                        if( trans == NULL ) {
-                            // does trans exist for newID applied to
-                            // destination?
-                            trans = getTrans( newID, oID );
-                            }
-                        }
-                    
-                    if( oID == 0 ) {
-                        // found a spot for it to move
-                        newX = testX;
-                        newY = testY;
-                        break;
-                        }
-                    else if( trans != NULL ) {
-                        newX = testX;
-                        newY = testY;
-                        destTrans = trans;
-                        break;
-                        }
-                    else if( oID > 0 && getObject( oID ) != NULL &&
-                             getObject( oID )->blocksWalking ) {
-                        // blocked, stop now
-                        break;
-                        }
-                    // else walk through it
+                int tryDist = t->desiredMoveDist;
+                
+                if( tryDist < 1 ) {
+                    tryDist = 1;
                     }
                 
+                int tryRadius = 4;
+
+                // try again and again with smaller distances until we
+                // find an empty spot
+                while( newX == inX && newY == inY && tryDist > 0 ) {
+
+                    // walk up to 4 steps past our dist in that direction,
+                    // looking for non-blocking objects or an empty spot
+                
+                    for( int i=0; i<tryDist + tryRadius; i++ ) {
+                        int testX = lrint( inX + dir.x * i );
+                        int testY = lrint( inY + dir.y * i );
+                    
+                        int oID = getMapObjectRaw( testX, testY );
+                        
+                        // does trans exist for this object used on destination 
+                        // obj?
+                        TransRecord *trans = NULL;
+                        
+                        if( oID > 0 ) {
+                            trans = getTrans( inID, oID );
+                            
+                            if( trans == NULL ) {
+                                // does trans exist for newID applied to
+                                // destination?
+                                trans = getTrans( newID, oID );
+                                }
+                            }
+                        
+                        if( i >= tryDist && oID == 0 ) {
+                            // found a spot for it to move
+                            newX = testX;
+                            newY = testY;
+                            break;
+                            }
+                        else if( i >= tryDist && trans != NULL ) {
+                            newX = testX;
+                            newY = testY;
+                            destTrans = trans;
+                            break;
+                            }
+                        else if( oID > 0 && getObject( oID ) != NULL &&
+                                 getObject( oID )->blocksWalking ) {
+                            // blocked, stop now
+                            break;
+                            }
+                        // else walk through it
+                        }
+                    
+                    tryDist--;
+                    // 4 on first try, but then 1 on remaining tries to
+                    // avoid overlap with previous tries
+                    tryRadius = 1;
+                    }
+                
+
                 if( newX == inX && newY == inY &&
                     t->move <= 3 ) {
                     // can't move where we want to go in flee/chase/random
@@ -1720,29 +1740,50 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             dir,
                             2 * M_PI * d / 8.0 );
                         
-                        // walk up to 4 steps in that direction, looking
-                        // for non-blocking objects or an empty spot
+
+                        tryDist = t->desiredMoveDist;
                         
-                        for( int i=0; i<4; i++ ) {
-                            int testX = lrint( inX + dir.x * i );
-                            int testY = lrint( inY + dir.y * i );
+                        if( tryDist < 1 ) {
+                            tryDist = 1;
+                            }
+                
+                        tryRadius = 4;
+
+                        // try again and again with smaller distances until we
+                        // find an empty spot
+                        char stopCheckingDir = false;
+
+                        while( !stopCheckingDir && tryDist > 0 ) {
+
+                            // walk up to 4 steps in that direction, looking
+                            // for non-blocking objects or an empty spot
+                        
+                            for( int i=0; i<tryDist + tryRadius; i++ ) {
+                                int testX = lrint( inX + dir.x * i );
+                                int testY = lrint( inY + dir.y * i );
                             
-                            int oID = getMapObjectRaw( testX, testY );
+                                int oID = getMapObjectRaw( testX, testY );
                                                
                     
-                            if( oID == 0 ) {
-                                // found a spot for it to move
-                                possibleX[ numPossibleDirs ] = testX;
-                                possibleY[ numPossibleDirs ] = testY;
-                                numPossibleDirs++;
-                                break;
+                                if( i >= tryDist && oID == 0 ) {
+                                    // found a spot for it to move
+                                    possibleX[ numPossibleDirs ] = testX;
+                                    possibleY[ numPossibleDirs ] = testY;
+                                    numPossibleDirs++;
+                                    stopCheckingDir = true;
+                                    break;
+                                    }
+                                else if( oID > 0 && getObject( oID ) != NULL &&
+                                         getObject( oID )->blocksWalking ) {
+                                    // blocked, stop now
+                                    break;
+                                    }
+                                // else walk through it
                                 }
-                            else if( oID > 0 && getObject( oID ) != NULL &&
-                                     getObject( oID )->blocksWalking ) {
-                                // blocked, stop now
-                                break;
-                                }
-                            // else walk through it
+
+                            tryDist --;
+                            // 1 on remaining tries to avoid overlap
+                            tryRadius = 1;
                             }
                         }
                     

@@ -84,6 +84,10 @@ EditorTransitionPage::EditorTransitionPage()
           mReverseUseTargetCheckbox( 130, -75, 2 ),
           mMovementButtons( smallFont, 240, 40,
                             NUM_MOVE_BUTTONS, moveButtonNames, true, 2 ),
+          mDesiredMoveDistField( smallFont,
+                                 240, 40 - NUM_MOVE_BUTTONS * 20 - 30, 4,
+                                 false,
+                                 "Dist", "0123456789", NULL ),
           mActorMinUseFractionField( smallFont, 
                                      -290,  115, 4,
                                      false,
@@ -126,6 +130,8 @@ EditorTransitionPage::EditorTransitionPage()
     addComponent( &mMovementButtons );
     mMovementButtons.addActionListener( this );
     
+    addComponent( &mDesiredMoveDistField );
+
     mActorMinUseFractionField.setFloat( 0, -1, true );
     mTargetMinUseFractionField.setFloat( 0, -1, true );
     
@@ -353,6 +359,14 @@ void EditorTransitionPage::checkIfSaveVisible() {
 
         mMovementButtons.setVisible( true );
         mMovementButtons.setSelectedItem( mCurrentTransition.move );
+        
+        if( mCurrentTransition.move > 0 ) {
+            mDesiredMoveDistField.setVisible( true );
+            mDesiredMoveDistField.setInt( mCurrentTransition.desiredMoveDist );
+            }
+        else {
+            mDesiredMoveDistField.setVisible( false );
+            }
 
         if( mCurrentTransition.autoDecaySeconds != 0 ) {
             char *decayString =
@@ -372,6 +386,9 @@ void EditorTransitionPage::checkIfSaveVisible() {
 
         mMovementButtons.setSelectedItem( 0 );
         mMovementButtons.setVisible( false );
+        
+        mDesiredMoveDistField.setInt( 1 );
+        mDesiredMoveDistField.setVisible( false );    
         }
         
     }
@@ -583,7 +600,8 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                   decayTime,
                   mActorMinUseFractionField.getFloat(),
                   mTargetMinUseFractionField.getFloat(),
-                  mMovementButtons.getSelectedItem() );
+                  mMovementButtons.getSelectedItem(),
+                  mDesiredMoveDistField.getInt() );
             
         redoTransSearches( mLastSearchID, true );
         }
@@ -683,6 +701,14 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mMovementButtons ) {
         mCurrentTransition.move = mMovementButtons.getSelectedItem();
+        
+        if( mCurrentTransition.move > 0 ) {
+            mDesiredMoveDistField.setVisible( true );
+            }
+        else {
+            mDesiredMoveDistField.setInt( 1 );
+            mDesiredMoveDistField.setVisible( false );
+            }
         }
     else if( inTarget == &mSwapActorButton ) {
         
