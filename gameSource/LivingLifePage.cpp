@@ -3634,9 +3634,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             double movingTrueCellY = oY + mMapMoveOffsets[mapI].y;
             
-            double movingTrueY =  movingTrueCellY - 0.2;
+            double movingTrueY =  movingTrueCellY - 0.1;
             
-            int movingCellY = lrint( movingTrueCellY - 0.50 );
+            int movingCellY = lrint( movingTrueCellY - 0.40 );
 
             if( movingCellY == y && movingX >= xStart && movingX <= xEnd ) {
                 
