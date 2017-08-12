@@ -75,6 +75,7 @@ graphics/clearButton.tga \
 graphics/copyButton.tga \
 graphics/pasteButton.tga \
 graphics/swapButton.tga \
+graphics/swapButtonH.tga \
 
 
 NEEDED_MINOR_GEMS_OBJECTS = \
