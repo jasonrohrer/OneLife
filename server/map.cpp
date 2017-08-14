@@ -662,16 +662,31 @@ void outputMapImage() {
     int w =  500;
     int h = 500;
     
-    Image im( w, h, 3, true );
+    Image objIm( w, h, 3, true );
+    Image biomeIm( w, h, 3, true );
     
     SimpleVector<Color> objColors;
+    SimpleVector<Color> biomeColors;
+    SimpleVector<int> objCounts;
+    
+    int totalCounts = 0;
+
     for( int i=0; i<allNaturalMapIDs.size(); i++ ) {
-        randSource.getRandomFloat();
         Color *c = Color::makeColorFromHSV( (float)i / allNaturalMapIDs.size(),
                                             1, 1 );
         objColors.push_back( *c );
+
+        objCounts.push_back( 0 );
+        
         delete c;
         }
+
+    for( int j=0; j<numBiomes; j++ ) {        
+        Color *c = Color::makeColorFromHSV( (float)j / numBiomes, 1, 1 );
+        
+        biomeColors.push_back( *c );
+        }
+    
     /*
     double startTime = Time::getCurrentTime();
     for( int y = 0; y<h; y++ ) {
@@ -722,26 +737,61 @@ void outputMapImage() {
             
             
             int id = getBaseMap( x, y );
-    
+            
+            int biomeInd = getMapBiomeIndex( x, y );
+
             if( id > 0 ) {
                 for( int i=0; i<allNaturalMapIDs.size(); i++ ) {
                     if( allNaturalMapIDs.getElementDirect(i) == id ) {
-                        im.setColor( y * w + x,
+                        objIm.setColor( y * w + x,
                                      objColors.getElementDirect( i ) );
+                        
+                        (* objCounts.getElement( i ) )++;
+                        totalCounts++;
                         break;
                         }
                     }
-                
                 }
+            
+            biomeIm.setColor( y * w + x,
+                              biomeColors.getElementDirect( biomeInd ) );
             }
         }
     
+    for( int i=0; i<allNaturalMapIDs.size(); i++ ) {
+        ObjectRecord *obj = getObject( allNaturalMapIDs.getElementDirect( i ) );
+        
+        int count = objCounts.getElementDirect( i );
+        
+        printf( 
+            "%d\t%-30s  (actual=%f, expected=%f\n",
+            objCounts.getElementDirect( i ),
+            obj->description,
+            count / (double)totalCounts,
+            obj->mapChance / allNaturalMapIDs.size() );
+        }
+
+    // rough legend in corner
+    for( int i=0; i<allNaturalMapIDs.size(); i++ ) {
+        if( i < h ) {
+            objIm.setColor( i * w + 0, objColors.getElementDirect( i ) );
+            }
+        }
+    
+
     File tgaFile( NULL, "mapOut.tga" );
     FileOutputStream tgaStream( &tgaFile );
     
     TGAImageConverter converter;
     
-    converter.formatImage( &im, &tgaStream );
+    converter.formatImage( &objIm, &tgaStream );
+
+
+    File tgaBiomeFile( NULL, "mapBiomeOut.tga" );
+    FileOutputStream tgaBiomeStream( &tgaBiomeFile );
+    
+    converter.formatImage( &biomeIm, &tgaBiomeStream );
+    
     exit(0);
     }
 
