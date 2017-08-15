@@ -1,0 +1,8 @@
+0 8 * * * /home/jcr15/checkout/OneLifeWorking/scripts/generateObjectReport.sh
+0 0 * * * /home/jcr15/updateMetascores.sh
+0 9 * * * /home/jcr15/mainBackupPush.sh
+15 9 * * * /home/jcr15/checkout/OneLifeWorking/scripts/checkForDataUpdateCron.sh
+30 9 * * * /home/jcr15/checkout/OneLifeWorking/scripts/checkForServerCodeUpdateCron.sh
+
+*/30 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/generateLifeStats.sh
+5 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/generateFoodStats.sh
