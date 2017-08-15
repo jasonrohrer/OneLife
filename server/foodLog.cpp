@@ -124,7 +124,6 @@ static void stepLog( char inForceOutput ) {
     struct tm *timeStruct = localtime( &t );
     
     if( timeStruct->tm_hour != currentHour || inForceOutput ) {
-        // FIXME
         // hour change
         // add latest data averages to file
         
@@ -151,6 +150,8 @@ static void stepLog( char inForceOutput ) {
                 mapLocationSums[i].y = 0.0;
                 }
             }
+        
+        fflush( logFile );
 
         maxSeenObjectID = 0;        
         currentHour = timeStruct->tm_hour;
@@ -171,16 +172,25 @@ static void stepLog( char inForceOutput ) {
 
 
 void freeFoodLog() {
-    // final output
-    stepLog( true );
     
     if( logFile != NULL ) {
+        // final output
+        stepLog( true );
+        
         fclose( logFile );
         }
     delete [] eatFoodCounts;
     delete [] eatFoodValueCounts;
     delete [] eaterAgeSums;
     delete [] mapLocationSums;
+    }
+
+
+
+void stepFoodLog() {
+    if( logFile != NULL ) {
+        stepLog( false );
+        }
     }
 
 

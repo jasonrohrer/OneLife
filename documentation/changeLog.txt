@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server fixes:
+
+--Food log now outputs every hour regardless of whether players are eating at
+  the turn of the hour.
+
+
+
+
 Version 32     2017-August-15
 
 --Fixed assumption that time() returns 32-bit int values (see server fixes

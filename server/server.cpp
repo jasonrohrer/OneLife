@@ -2847,6 +2847,9 @@ int main() {
     while( !quit ) {
         
         checkBackup();
+
+        stepFoodLog();
+
         
         int numLive = players.size();
         
