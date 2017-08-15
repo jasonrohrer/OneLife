@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 31     ???
+Version 32     ???
 
 --Fixed assumption that time() returns 32-bit int values (see server fixes
   for details).
