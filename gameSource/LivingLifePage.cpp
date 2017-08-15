@@ -6646,10 +6646,13 @@ void LivingLifePage::step() {
                     applyReceiveOffset( &heldOriginX, &heldOriginY );
                     applyReceiveOffset( &( o.xd ), &( o.yd ) );
                     
-                    printf( "PLAYER_UPDATE with orVal=%d, orx=%d, ory=%d, "
-                            "pX =%d, pY=%d\n",
+                    printf( "PLAYER_UPDATE with heldOrVal=%d, "
+                            "heldOrx=%d, heldOry=%d, "
+                            "pX=%d, pY=%d, heldTransSrcID=%d, "
+                            "holdingString=%s\n",
                             heldOriginValid, heldOriginX, heldOriginY,
-                            o.xd, o.yd );
+                            o.xd, o.yd, heldTransitionSourceID, 
+                            holdingIDBuffer );
                     if( forced ) {
                         printf( "  POSITION FORCED\n" );
                         }
