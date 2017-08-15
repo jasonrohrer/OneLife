@@ -2585,7 +2585,8 @@ static char removeFromContainerToHold( LiveObject *inPlayer,
     inPlayer->heldOriginValid = 0;
     inPlayer->heldOriginX = 0;
     inPlayer->heldOriginY = 0;                        
-
+    inPlayer->heldTransitionSourceID = -1;
+    
 
     if( isGridAdjacent( inContX, inContY,
                         inPlayer->xd, 

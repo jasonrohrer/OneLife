@@ -60,6 +60,8 @@ Version 31     ???
 
 
 
+
+
 Server fixes:
 
 --Fixed a typo that was causing a crash.
@@ -105,6 +107,9 @@ Server fixes:
 --Added hourly food logging support to server.
 
 --Food stats report for website.
+
+--Fixed server-side bug that was causing object creation sounds to sometimes
+  play when they are removed from a container.
 
 
 
