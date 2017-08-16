@@ -11,6 +11,15 @@
 #include "TextButton.h"
 
 
+
+typedef struct SceneCell {
+        int biome;
+        
+    } SceneCell;
+
+
+#define SCENE_W 12
+#define SCENE_H 7    
     
 
 class EditorScenePage : public GamePage, public ActionListener {
@@ -27,7 +36,7 @@ class EditorScenePage : public GamePage, public ActionListener {
         
         virtual void makeActive( char inFresh );
         
-        //virtual void specialKeyDown( int inKeyCode );
+        virtual void specialKeyDown( int inKeyCode );
         
         
     protected:
@@ -44,6 +53,14 @@ class EditorScenePage : public GamePage, public ActionListener {
         Picker mGroundPicker;
         Picker mObjectPicker;
         
+        SceneCell mCells[SCENE_H][SCENE_W];
+        
+        int mCurX, mCurY;
+        
+        
+
+        void floodFill( int inX, int inY, int inOldBiome, int inNewBiome );
+
     };
 
         

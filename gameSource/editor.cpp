@@ -1389,7 +1389,7 @@ void drawFrame( char inUpdate ) {
                 }
             }
         else if( currentGamePage == scenePage ) {
-            if( categoryPage->checkSignal( "animEditor" ) ) {
+            if( scenePage->checkSignal( "animEditor" ) ) {
                 currentGamePage = animPage;
                 currentGamePage->base_makeActive( true );
                 }
