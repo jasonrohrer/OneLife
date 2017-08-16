@@ -9,6 +9,8 @@
 #include "objectBank.h"
 
 
+#define QUOTE( arg )  #arg
+#define STRING_VAL( arg )  QUOTE( arg )
 #define NUM_GROUND_STRING_NAMES 30
 
 
@@ -106,7 +108,7 @@ class GroundPickable : public Pickable {
                 return sStringNames[r->biome];
                 }
             else {
-                return "";
+                return "? >= " STRING_VAL( NUM_GROUND_STRING_NAMES );
                 }
             }
 
