@@ -11,23 +11,6 @@
 #include "TextButton.h"
 
 
-typedef struct PickedRect {
-        int xStart;
-        int yStart;
-        int xEnd; 
-        int yEnd;
-
-        
-        // true if there's an intersection on this side
-        // order:  up, right, down, left
-        char intersectSides[4];
-        
-        // true if this side is covered by another tile
-        // we need to reduce the alpha values of semi-transparent areas
-        char coveredSides[4];
-
-    } PickedRect;
-
     
 
 class EditorScenePage : public GamePage, public ActionListener {

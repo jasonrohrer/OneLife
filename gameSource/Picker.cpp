@@ -62,6 +62,10 @@ Picker::Picker( Pickable *inPickable, double inX, double inY )
     mSearchField.setFireOnAnyTextChange( true );
 
     redoSearch( false );
+
+    if( ! mPickable->isSearchable() ) {
+        mSearchField.setVisible( false );
+        }
     }
 
 
@@ -419,7 +423,9 @@ void Picker::draw() {
     
     doublePair pos = { 0, -85 + 216 };
     
-    smallFont->drawString( "Type . for recent", pos, alignCenter );
+    if( mPickable->isSearchable() ) {    
+        smallFont->drawString( "Type . for recent", pos, alignCenter );
+        }
     
     }
 

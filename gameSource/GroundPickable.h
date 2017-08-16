@@ -9,6 +9,8 @@
 #include "objectBank.h"
 
 
+#define NUM_GROUND_STRING_NAMES 30
+
 
 class GroundPickable : public Pickable {
         
@@ -69,12 +71,16 @@ class GroundPickable : public Pickable {
             // getSprite needed to invoke dynamic sprite loading
             SpriteHandle sprite = r->squareTiles[0][0];
 
-            double zoom = 0.5;
+            double zoom = 0.4;
 
             drawSprite( sprite, inPos, zoom );
             }
 
 
+        virtual char isSearchable() {
+            return false;
+            }
+        
 
         virtual int getID( void *inObject ) {
             GroundSpriteSet *r = (GroundSpriteSet*)inObject;
@@ -94,7 +100,14 @@ class GroundPickable : public Pickable {
         
 
         virtual const char *getText( void *inObject ) {
-            return "";
+            GroundSpriteSet *r = (GroundSpriteSet*)inObject;
+
+            if( r->biome < NUM_GROUND_STRING_NAMES ) {
+                return sStringNames[r->biome];
+                }
+            else {
+                return "";
+                }
             }
 
     protected:
@@ -106,6 +119,11 @@ class GroundPickable : public Pickable {
 
         
         static SimpleVector<int> sStack;
+
+
+        
+        static const char *sStringNames[ NUM_GROUND_STRING_NAMES ];
+        
         
     };
         

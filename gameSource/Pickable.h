@@ -32,6 +32,11 @@ class Pickable {
 
         virtual char canDelete( int inID ) = 0;
 
+        virtual char isSearchable() {
+            return true;
+            }
+        
+
         // sub classed must call Pickable::deleteID()
         virtual void deleteID( int inID ) {
             getStack()->deleteElementEqualTo( inID );

@@ -76,6 +76,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         
 
         TextButton mObjectEditorButton;
+        TextButton mSceneEditorButton;
 
         TextButton mSaveButton;
         TextButton mDeleteButton;

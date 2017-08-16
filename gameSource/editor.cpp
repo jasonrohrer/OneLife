@@ -61,6 +61,7 @@ int accountHmacVersionNumber = 0;
 #include "EditorTransitionPage.h"
 #include "EditorAnimationPage.h"
 #include "EditorCategoryPage.h"
+#include "EditorScenePage.h"
 
 #include "LoadingPage.h"
 
@@ -68,6 +69,9 @@ int accountHmacVersionNumber = 0;
 #include "objectBank.h"
 #include "overlayBank.h"
 #include "soundBank.h"
+
+#include "groundSprites.h"
+
 
 #include "ageControl.h"
 
@@ -87,6 +91,7 @@ EditorObjectPage *objectPage;
 EditorTransitionPage *transPage;
 EditorAnimationPage *animPage;
 EditorCategoryPage *categoryPage;
+EditorScenePage *scenePage;
 
 LoadingPage *loadingPage;
 
@@ -480,6 +485,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     transPage = new EditorTransitionPage;
     animPage = new EditorAnimationPage;
     categoryPage = new EditorCategoryPage;
+    scenePage = new EditorScenePage;
     loadingPage = new LoadingPage;
     
     loadingPage->setCurrentPhase( "OVERLAYS" );
@@ -533,8 +539,11 @@ void freeFrameDrawer() {
     delete transPage;
     delete animPage;
     delete categoryPage;
+    delete scenePage;
     delete loadingPage;
 
+
+    freeGroundSprites();
 
 
     freeTransBank();
@@ -1288,6 +1297,30 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initTransBankFinish();
+                        
+                        loadingPage->setCurrentPhase( 
+                            translate( "groundTextures" ) );
+
+                        loadingPage->setCurrentProgress( 0 );
+                        
+                        initGroundSpritesStart();
+
+                        loadingStepBatchSize = 1;
+
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 7: {
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initGroundSpritesStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
+                    
+                    if( progress == 1.0 ) {
+                        initGroundSpritesFinish();
+                        
                         loadingPhase ++;
                         }
                     break;
@@ -1344,11 +1377,20 @@ void drawFrame( char inUpdate ) {
                 currentGamePage = objectPage;
                 currentGamePage->base_makeActive( true );
                 }
+            else if( animPage->checkSignal( "sceneEditor" ) ) {
+                currentGamePage = scenePage;
+                currentGamePage->base_makeActive( true );
+                }
             }
-        
         else if( currentGamePage == categoryPage ) {
             if( categoryPage->checkSignal( "transEditor" ) ) {
                 currentGamePage = transPage;
+                currentGamePage->base_makeActive( true );
+                }
+            }
+        else if( currentGamePage == scenePage ) {
+            if( categoryPage->checkSignal( "animEditor" ) ) {
+                currentGamePage = animPage;
                 currentGamePage->base_makeActive( true );
                 }
             }

@@ -43,6 +43,7 @@ EditorAnimationPage::EditorAnimationPage()
         : mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
           mGroundSprite( loadWhiteSprite( "testGround.tga" ) ),
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
+          mSceneEditorButton( mainFont, 210, 260, "Scene" ),
           mSaveButton( smallFont, 0, 200, "Save" ),
           mDeleteButton( smallFont, 140, 200, "Delete" ),
           mObjectPicker( &objectPickable, +410, 90 ),
@@ -133,6 +134,7 @@ EditorAnimationPage::EditorAnimationPage()
     mUpCopied = false;
     
     addComponent( &mObjectEditorButton );
+    addComponent( &mSceneEditorButton );
     addComponent( &mSaveButton );
     addComponent( &mDeleteButton );
     
@@ -257,6 +259,7 @@ EditorAnimationPage::EditorAnimationPage()
     
 
     mObjectEditorButton.addActionListener( this );
+    mSceneEditorButton.addActionListener( this );
     mSaveButton.addActionListener( this );
     mDeleteButton.addActionListener( this );
     
@@ -1042,6 +1045,9 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     
     if( inTarget == &mObjectEditorButton ) {
         setSignal( "objectEditor" );
+        }
+    else if( inTarget == &mSceneEditorButton ) {
+        setSignal( "sceneEditor" );
         }
     else if( inTarget == &mSaveButton ) {
         for( int i=0; i<endAnimType; i++ ) {

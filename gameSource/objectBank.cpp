@@ -3464,18 +3464,57 @@ char *getBiomesString( ObjectRecord *inObject ) {
                        
 
 
+
+int compareBiomeInt( const void *inA, const void *inB ) {
+    int *a = (int*)inA;
+    int *b = (int*)inB;
+    
+    if( *a > *b ) {
+        return 1;
+        }
+    if( *a < *b ) {
+        return -1;
+        }
+    return 0;
+    }
+
+
+
+
+static SimpleVector<int> biomeCache;
+
+
 void getAllBiomes( SimpleVector<int> *inVectorToFill ) {
-    for( int i=0; i<mapSize; i++ ) {
-        if( idMap[i] != NULL ) {
+    if( biomeCache.size() == 0 ) {
+        
+        for( int i=0; i<mapSize; i++ ) {
+            if( idMap[i] != NULL ) {
             
-            for( int j=0; j< idMap[i]->numBiomes; j++ ) {
-                int b = idMap[i]->biomes[j];
-                
-                if( inVectorToFill->getElementIndex( b ) == -1 ) {
-                    inVectorToFill->push_back( b );
+                for( int j=0; j< idMap[i]->numBiomes; j++ ) {
+                    int b = idMap[i]->biomes[j];
+                    
+                    if( biomeCache.getElementIndex( b ) == -1 ) {
+                        biomeCache.push_back( b );
+                        }
                     }
                 }
             }
+
+        // now sort it
+
+        int *a = biomeCache.getElementArray();
+        int num = biomeCache.size();
+        
+        qsort( a, num, sizeof(int), compareBiomeInt );
+
+        biomeCache.deleteAll();
+        biomeCache.appendArray( a, num );
+        
+        delete [] a;
+        }
+    
+    for( int i=0; i<biomeCache.size(); i++ ) {
+        inVectorToFill->push_back( biomeCache.getElementDirect( i ) );
         }
     }
 
