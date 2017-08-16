@@ -53,6 +53,8 @@ class EditorScenePage : public GamePage, public ActionListener {
         Picker mGroundPicker;
         Picker mObjectPicker;
         
+        SpriteHandle mGroundOverlaySprite[4];
+
         SceneCell mCells[SCENE_H][SCENE_W];
         
         int mCurX, mCurY;
@@ -60,6 +62,9 @@ class EditorScenePage : public GamePage, public ActionListener {
         
 
         void floodFill( int inX, int inY, int inOldBiome, int inNewBiome );
+        
+
+        void drawGroundOverlaySprites();
 
     };
 

@@ -24,6 +24,9 @@ static GroundPickable groundPickable;
 static ObjectPickable objectPickable;
 
 
+static double multAmount = 0.15;
+static double addAmount = 0.25;
+
 
 
 EditorScenePage::EditorScenePage()
@@ -47,6 +50,13 @@ EditorScenePage::EditorScenePage()
     addComponent( &mSaveNewButton );
     mSaveNewButton.addActionListener( this );
 
+
+    for( int i=0; i<4; i++ ) {
+        char *name = autoSprintf( "ground_t%d.tga", i );    
+        mGroundOverlaySprite[i] = loadSprite( name, false );
+        delete [] name;
+        }
+
     SceneCell emptyCell;
     
     emptyCell.biome = -1;
@@ -63,6 +73,9 @@ EditorScenePage::EditorScenePage()
 
 
 EditorScenePage::~EditorScenePage() {
+    for( int i=0; i<4; i++ ) {
+        freeSprite( mGroundOverlaySprite[i] );
+        }
     }
 
 
@@ -122,7 +135,26 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mSaveNewButton ) {
         }
     }
-        
+
+
+void EditorScenePage::drawGroundOverlaySprites() {
+    doublePair cornerPos = { - 640 + 512, 360 - 512 };
+    for( int y=0; y<1; y++ ) {
+        for( int x=0; x<2; x++ ) {
+            doublePair pos = cornerPos;
+            pos.x += x * 1024;
+            pos.y -= y * 1024;
+            
+            int tileY = y;
+            int tileX = x % 2;
+            
+            int tileI = tileY * 2 + tileX;
+            
+            drawSprite( mGroundOverlaySprite[tileI], pos );
+            }
+        }
+    }
+
 
 
 
@@ -158,6 +190,32 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
             }
         }
+
+
+
+    toggleMultiplicativeBlend( true );
+    
+    // use this to lighten ground overlay
+    toggleAdditiveTextureColoring( true );
+    setDrawColor( multAmount, multAmount, multAmount, 1 );
+    
+    drawGroundOverlaySprites();
+
+    toggleAdditiveTextureColoring( false );
+    toggleMultiplicativeBlend( false );
+
+
+    toggleAdditiveBlend( true );
+    
+    // use this to lighten ground overlay
+    //toggleAdditiveTextureColoring( true );
+    setDrawColor( 1, 1, 1, addAmount );
+
+    drawGroundOverlaySprites();
+
+    
+    toggleAdditiveBlend( false );
+
 
     
     doublePair curPos = cornerPos;
