@@ -8,6 +8,8 @@
 
 
 typedef struct GroundSpriteSet {
+        int biome;
+        
         int numTilesHigh;
         int numTilesWide;
         

@@ -77,6 +77,8 @@ float initGroundSpritesStep() {
         int b = allBiomes.getElementDirect( i );
     
         char *fileName;
+        
+        char isUnknownBiome = false;
 
         if( b == -1 ) {
             // special case
@@ -84,6 +86,8 @@ float initGroundSpritesStep() {
             
             // stick it at end
             b = groundSpritesArraySize - 1;
+            
+            isUnknownBiome = true;
             }
         else {
             fileName = autoSprintf( "ground_%d.tga", b );
@@ -124,6 +128,12 @@ float initGroundSpritesStep() {
                 }
             else {    
                 groundSprites[b] = new GroundSpriteSet;
+                groundSprites[b]->biome = b;
+                
+                if( isUnknownBiome ) {
+                    groundSprites[b]->biome = -1;
+                    }
+                
                 groundSprites[b]->numTilesWide = w / CELL_D;
                 groundSprites[b]->numTilesHigh = h / CELL_D;
                 

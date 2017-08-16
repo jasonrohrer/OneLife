@@ -52,8 +52,9 @@ zoomView.cpp \
 categoryBank.cpp \
 EditorCategoryPage.cpp \
 RadioButtonSet.cpp \
-
-
+EditorScenePage.cpp \
+groundSprites.cpp \
+../commonSource/fractalNoise.cpp \
 
 
 GAME_GRAPHICS = \
