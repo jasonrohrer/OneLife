@@ -72,40 +72,50 @@ void setEtaDecay( int inX, int inY, timeSec_t inAbsoluteTimeInSeconds );
 
 timeSec_t getEtaDecay( int inX, int inY );
 
+
+// for all these calls, inSubCont indexes the main container (when 0)
+// or sub-containers (when > 0).
+// So, if inSubCont=3 and inSlot=2, we get information about the 2nd
+// slot in the 3rd sub-container (the 3rd slot in the main container)
+
 // for container slots
 void setSlotEtaDecay( int inX, int inY, int inSlot,
-                      timeSec_t inAbsoluteTimeInSeconds );
-timeSec_t getSlotEtaDecay( int inX, int inY, int inSlot );
+                      timeSec_t inAbsoluteTimeInSeconds, int inSubCont = 0 );
+timeSec_t getSlotEtaDecay( int inX, int inY, int inSlot, int inSubCont = 0 );
 
 
 
 // adds to top of stack
 void addContained( int inX, int inY, int inContainedID, 
-                   timeSec_t inEtaDecay );
+                   timeSec_t inEtaDecay, int inSubCont = 0 );
 
-int getNumContained( int inX, int inY );
+int getNumContained( int inX, int inY, int inSubCont = 0 );
 
 // destroyed by caller, returns NULL if empty
-int *getContained( int inX, int inY, int *outNumContained );
-timeSec_t *getContainedEtaDecay( int inX, int inY, int *outNumContained );
+int *getContained( int inX, int inY, int *outNumContained, int inSubCont = 0 );
+timeSec_t *getContainedEtaDecay( int inX, int inY, int *outNumContained,
+                                 int inSubCont = 0 );
 
 // gets contained item from specified slot, or from top of stack
 // if inSlot is -1
-int getContained( int inX, int inY, int inSlot );
+int getContained( int inX, int inY, int inSlot, int inSubCont = 0 );
 
 
-void setContained( int inX, int inY, int inNumContained, int *inContained );
+void setContained( int inX, int inY, int inNumContained, int *inContained,
+                   int inSubCont = 0 );
 void setContainedEtaDecay( int inX, int inY, int inNumContained, 
-                           timeSec_t *inContainedEtaDecay );
+                           timeSec_t *inContainedEtaDecay,
+                           int inSubCont = 0 );
 
 // removes contained item from specified slot, or remove from top of stack
 // if inSlot is -1
-int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay );
+int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay,
+                     int inSubCont = 0 );
 
-void clearAllContained( int inX, int inY );
+void clearAllContained( int inX, int inY, int inSubCont = 0 );
 
 // if inNumNewSlots less than number contained, the excess are discarded
-void shrinkContainer( int inX, int inY, int inNumNewSlots );
+void shrinkContainer( int inX, int inY, int inNumNewSlots, int inSubCont = 0 );
 
 
 // line for a map change message

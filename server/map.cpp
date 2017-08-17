@@ -147,6 +147,11 @@ typedef struct LiveDecayRecord {
         // 0 means main object decay
         // 1 - NUM_CONT_SLOT means contained object decay
         int slot;
+
+        // 0 means main object
+        // >0 indexs sub containers of object
+        int subCont;
+        
         
         timeSec_t etaTimeSeconds;
     } LiveDecayRecord;
@@ -212,13 +217,15 @@ int getMaxChunkDimension() {
 
 
 
-// three ints to an 12-byte key
-void intTripleToKey( int inX, int inY, int inSlot, unsigned char *outKey ) {
+// four ints to a 16-byte key
+void intQuadToKey( int inX, int inY, int inSlot, int inB, 
+                   unsigned char *outKey ) {
     for( int i=0; i<4; i++ ) {
         int offset = i * 8;
         outKey[i] = ( inX >> offset ) & 0xFF;
         outKey[i+4] = ( inY >> offset ) & 0xFF;
         outKey[i+8] = ( inSlot >> offset ) & 0xFF;
+        outKey[i+12] = ( inB >> offset ) & 0xFF;
         }    
     }
 
@@ -798,7 +805,8 @@ void outputMapImage() {
 
 
 int getMapObjectRaw( int inX, int inY );
-int *getContainedRaw( int inX, int inY, int *outNumContained );
+int *getContainedRaw( int inX, int inY, int *outNumContained, 
+                      int inSubCont = 0 );
 
 
 
@@ -889,7 +897,7 @@ void initMap() {
                              "map.db", 
                              KISSDB_OPEN_MODE_RWCREAT,
                              80000,
-                             12, // three 32-bit ints, xys
+                             16, // four 32-bit ints, xysb
                                  // s is the slot number 
                                  // s=0 for base object
                                  // s=1 decay ETA seconds (wall clock time)
@@ -899,6 +907,13 @@ void initMap() {
                                  // s=... remaining contained objects
                                  // Then decay ETA for each slot, in order,
                                  //   after that.
+                             // If a contained object id is negative,
+                             // that indicates that it sub-contains
+                             // other objects in its corresponding b slot
+                             //
+                             // b is for indexing sub-container slots
+                             // b=0 is the main object 
+                             // b=1 is the first sub-slot, etc.
                              4 // one int, object ID at x,y in slot s
                                // OR contained count if s=1
                              );
@@ -919,7 +934,7 @@ void initMap() {
                          "mapTime.db", 
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
-                         12, // three 32-bit ints, xys
+                         16, // four 32-bit ints, xysb
                          // s is the slot number 
                          // s=0 for base object
                          // s=1 decay ETA seconds (wall clock time)
@@ -929,6 +944,13 @@ void initMap() {
                          // s=... remaining contained objects
                          // Then decay ETA for each slot, in order,
                          //   after that.
+                             // If a contained object id is negative,
+                             // that indicates that it sub-contains
+                             // other objects in its corresponding b slot
+                             //
+                             // b is for indexing sub-container slots
+                             // b=0 is the main object 
+                             // b=1 is the first sub-slot, etc.
                          8 // one 64-bit double, representing an ETA time
                            // in whatever binary format and byte order
                            // "double" on the server platform uses
@@ -1122,13 +1144,64 @@ void initMap() {
             
             SimpleVector<int> newCont;
             SimpleVector<timeSec_t> newDecay;
+
+            SimpleVector< SimpleVector<int> > newSubCont;
+            SimpleVector< SimpleVector<timeSec_t> > newSubContDecay;
             
             for( int c=0; c<numCont; c++ ) {
-                if( getObject( cont[c] ) != NULL ) {
-                    newCont.push_back( cont[c] );
-                    newDecay.push_back( decay[c] );
+                
+                SimpleVector<int> subCont;
+                SimpleVector<timeSec_t> subContDecay;
+                
+
+                char thisKept = false;
+                
+                int objID = cont[c];
+                
+                if( cont[c] < 0 ) {
+
+                    if( getObject( -  cont[c] ) != NULL ) {
+                        thisKept = true;
+                        
+                        newCont.push_back( cont[c] );
+                        newDecay.push_back( decay[c] );
+                        
+                        int numSub;
+                        
+                        int *contSub = 
+                            getContainedRaw( x, y, &numSub, c + 1 );
+                        timeSec_t *decaySub = 
+                            getContainedEtaDecay( x, y, &numSub, c + 1 );
+
+                        for( int s=0; s<numSub; s++ ) {
+                            
+                            if( getObject( contSub[s] ) != NULL ) {
+                                subCont.push_back( contSub[s] );
+                                subContDecay.push_back( decaySub[s] );
+                                }
+                            }
+                        
+                        delete [] contSub;
+                        delete [] decaySub;
+                        numContainedCleared += numSub - subCont.size();
+                        }
+                    }
+                else {
+                    if( getObject( cont[c] ) != NULL ) {
+                        thisKept = true;
+                        newCont.push_back( cont[c] );
+                        newDecay.push_back( decay[c] );
+                        }
+                    }
+
+                if( thisKept ) {        
+                    newSubCont.push_back( subCont );
+                    newSubContDecay.push_back( subContDecay );
                     }
                 }
+            
+
+
             delete [] cont;
             delete [] decay;
             
@@ -1141,6 +1214,27 @@ void initMap() {
             setContained( x, y, newCont.size(), newContArray );
             setContainedEtaDecay( x, y, newDecay.size(), newDecayArray );
             
+            for( int c=0; c<newCont.size(); c++ ) {
+                int numSub =
+                    newSubCont.getElementDirect( c ).size();
+                
+                if( numSub > 0 ) {
+                    int *newSubArray = 
+                        newSubCont.getElementDirect( c ).getElementArray();
+                    timeSec_t *newSubDecayArray = 
+                        newSubContDecay.getElementDirect( c ).getElementArray();
+                    
+                    setContained( x, y, numSub, newSubArray, c + 1 );
+
+                    setContainedEtaDecay( x, y, numSub, newSubDecayArray,
+                                          c + 1 );
+                    
+                    delete [] newSubArray;
+                    delete [] newSubDecayArray;
+                    }
+                }
+            
+
             delete [] newContArray;
             delete [] newDecayArray;
             }
@@ -1197,7 +1291,7 @@ void freeMap() {
     
         KISSDB_Iterator_init( &db, &dbi );
     
-        unsigned char key[12];
+        unsigned char key[16];
     
         unsigned char value[4];
 
@@ -1212,11 +1306,13 @@ void freeMap() {
         // container slots that need replacing
         SimpleVector<int> xContToCheck;
         SimpleVector<int> yContToCheck;
+        SimpleVector<int> bContToCheck;
         
         
         while( KISSDB_Iterator_next( &dbi, key, value ) > 0 ) {
         
             int s = valueToInt( &( key[8] ) );
+            int b = valueToInt( &( key[12] ) );
        
             if( s == 0 ) {
                 int id = valueToInt( value );
@@ -1243,6 +1339,7 @@ void freeMap() {
                     int y = valueToInt( &( key[4] ) );
                     xContToCheck.push_back( x );
                     yContToCheck.push_back( y );
+                    bContToCheck.push_back( b );
                     }
                 }
             }
@@ -1265,7 +1362,7 @@ void freeMap() {
             if( getMapObjectRaw( x, y ) != 0 ) {
 
                 int numCont;
-                int *cont = getContainedRaw( x, y, &numCont );
+                int *cont = getContainedRaw( x, y, &numCont, b );
 
                 for( int c=0; c<numCont; c++ ) {
                     ObjectRecord *contObj = getObject( cont[c] );
@@ -1276,7 +1373,7 @@ void freeMap() {
                         }
                     }
                 
-                setContained( x, y, numCont, cont );
+                setContained( x, y, numCont, cont, b );
                 delete [] cont;
                 }
             }
@@ -1319,12 +1416,12 @@ void freeMap() {
 
 
 // returns -1 if not found
-static int dbGet( int inX, int inY, int inSlot ) {
-    unsigned char key[12];
+static int dbGet( int inX, int inY, int inSlot, int inSubCont = 0 ) {
+    unsigned char key[16];
     unsigned char value[4];
 
     // look for changes to default in database
-    intTripleToKey( inX, inY, inSlot, key );
+    intQuadToKey( inX, inY, inSlot, inSubCont, key );
     
     int result = KISSDB_get( &db, key, value );
     
@@ -1341,12 +1438,12 @@ static int dbGet( int inX, int inY, int inSlot ) {
 
 
 // returns 0 if not found
-static timeSec_t dbTimeGet( int inX, int inY, int inSlot ) {
-    unsigned char key[12];
+static timeSec_t dbTimeGet( int inX, int inY, int inSlot, int inSubCont = 0 ) {
+    unsigned char key[16];
     unsigned char value[8];
 
     // look for changes to default in database
-    intTripleToKey( inX, inY, inSlot, key );
+    intQuadToKey( inX, inY, inSlot, inSubCont, key );
     
     int result = KISSDB_get( &timeDB, key, value );
     
@@ -1361,7 +1458,8 @@ static timeSec_t dbTimeGet( int inX, int inY, int inSlot ) {
 
 
 
-static void dbPut( int inX, int inY, int inSlot, int inValue ) {
+static void dbPut( int inX, int inY, int inSlot, int inValue, 
+                   int inSubCont = 0 ) {
     
     // count all slot changes as changes, because we're storing
     // time in a separate database now (so we don't need to worry
@@ -1388,11 +1486,11 @@ static void dbPut( int inX, int inY, int inSlot, int inValue ) {
         }
     
     
-    unsigned char key[12];
+    unsigned char key[16];
     unsigned char value[4];
     
 
-    intTripleToKey( inX, inY, inSlot, key );
+    intQuadToKey( inX, inY, inSlot, inSubCont, key );
     intToValue( inValue, value );
             
     
@@ -1403,14 +1501,15 @@ static void dbPut( int inX, int inY, int inSlot, int inValue ) {
 
 
 
-static void dbTimePut( int inX, int inY, int inSlot, timeSec_t inTime ) {
+static void dbTimePut( int inX, int inY, int inSlot, timeSec_t inTime,
+                       int inSubCont = 0 ) {
     // ETA decay changes don't get reported as map changes    
     
-    unsigned char key[12];
+    unsigned char key[16];
     unsigned char value[8];
     
 
-    intTripleToKey( inX, inY, inSlot, key );
+    intQuadToKey( inX, inY, inSlot, inSubCont, key );
     timeToValue( inTime, value );
             
     
@@ -1419,6 +1518,8 @@ static void dbTimePut( int inX, int inY, int inSlot, timeSec_t inTime ) {
 
 
 
+
+// NEXT FIXME
 
 
 

@@ -119,6 +119,29 @@ Client can expect to receive these at any time, and in any order.
 
 
 
+----
+CONTAINER OBJECT FORMAT:
+----
+
+Several message contain object IDs that may optionally be containers containing
+other objects.
+
+The presence of these can be detected if the object ID field contains commas.
+
+The format is as follows:
+
+containerObjectID,containedID1,containedID2,containedID3,...
+
+If the contained objects are ALSO themselves containers, their ID fields will
+contain a colon-delimited list of sub-contained objects, like so:
+
+containerObjectID,subContainerID1:subContainedID1:subContainedID2,containedID2,containedID3,...
+
+Containment can only go two layers deep.  A wagon full of baskets full of 
+carrots, for example.
+
+
+
 MC
 sizeX sizeY x y
 binary_raw_size binary_compressed_size 
@@ -204,6 +227,9 @@ clothing_obj_id,contained_id,contained_id,...
 
 If clothing ID is 0, player is not wearing anything in that spot.
 
+
+If the held object contains things, they are in the format described above
+in CONTAINER OBJECT FORMAT.
 
 If o_id (held object ID) is negative, it represents the p_id of the other
 player (baby) that this player is holding.
@@ -292,8 +318,7 @@ that the change was triggered by player -(p_id), but that the object
 wasn't dropped (transform triggered by a player action).
 
 Note that if cell contains other stuff (for a container object), new_id
-is a comma-delimited list of contained objects, with the container first
-in the list.
+is in the CONTAINER OBJECT FORMAT described above.
 
 
 Optionally, a line can contain old_x, old_y, and speed.
