@@ -43,7 +43,7 @@ EditorAnimationPage::EditorAnimationPage()
         : mCenterMarkSprite( loadSprite( "centerMark.tga" ) ),
           mGroundSprite( loadWhiteSprite( "testGround.tga" ) ),
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
-          mSceneEditorButton( mainFont, 210, 260, "Scene" ),
+          mSceneEditorButton( mainFont, -150, 260, "Scene" ),
           mSaveButton( smallFont, 0, 200, "Save" ),
           mDeleteButton( smallFont, 140, 200, "Delete" ),
           mObjectPicker( &objectPickable, +410, 90 ),

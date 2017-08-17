@@ -30,7 +30,7 @@ static double addAmount = 0.25;
 
 
 EditorScenePage::EditorScenePage()
-        : mAnimEditorButton( mainFont, -210, 260, "Anim" ),
+        : mAnimEditorButton( mainFont, 210, 260, "Anim" ),
           mSaveNewButton( mainFont, 400, 260, "Save" ),
           mGroundPicker( &groundPickable, -410, 90 ),
           mObjectPicker( &objectPickable, 410, 90 ),
