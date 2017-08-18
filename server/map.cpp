@@ -147,13 +147,13 @@ typedef struct LiveDecayRecord {
         // 0 means main object decay
         // 1 - NUM_CONT_SLOT means contained object decay
         int slot;
+        
+        timeSec_t etaTimeSeconds;
 
         // 0 means main object
         // >0 indexs sub containers of object
         int subCont;
-        
-        
-        timeSec_t etaTimeSeconds;
+
     } LiveDecayRecord;
 
 
@@ -1156,8 +1156,6 @@ void initMap() {
 
                 char thisKept = false;
                 
-                int objID = cont[c];
-                
                 if( cont[c] < 0 ) {
 
                     if( getObject( -  cont[c] ) != NULL ) {
@@ -1358,6 +1356,7 @@ void freeMap() {
         for( int i=0; i<xContToCheck.size(); i++ ) {
             int x = xContToCheck.getElementDirect( i );
             int y = yContToCheck.getElementDirect( i );
+            int b = bContToCheck.getElementDirect( i );
         
             if( getMapObjectRaw( x, y ) != 0 ) {
 
@@ -1524,7 +1523,9 @@ static void dbTimePut( int inX, int inY, int inSlot, timeSec_t inTime,
 
 
 // slot is 0 for main map cell, or higher for container slots
-static void trackETA( int inX, int inY, int inSlot, timeSec_t inETA ) {
+static void trackETA( int inX, int inY, int inSlot, timeSec_t inETA,
+                      int inSubCont = 0 ) {
+    
     timeSec_t timeLeft = inETA - Time::timeSec();
         
     if( timeLeft < maxSecondsForActiveDecayTracking ) {
@@ -1534,27 +1535,31 @@ static void trackETA( int inX, int inY, int inSlot, timeSec_t inETA ) {
         // we'll deal with them when they ripen
         // (we check the true ETA stored in map before acting
         //   on one stored in this queue)
-        LiveDecayRecord r = { inX, inY, inSlot, inETA };
+        LiveDecayRecord r = { inX, inY, inSlot, inETA, inSubCont };
             
         char exists;
         timeSec_t existingETA =
             liveDecayRecordPresentHashTable.lookup( inX, inY, inSlot,
+                                                    inSubCont,
                                                     &exists );
 
         if( !exists || existingETA != inETA ) {
             
             liveDecayQueue.insert( r, inETA );
             
-            liveDecayRecordPresentHashTable.insert( inX, inY, inSlot, inETA );
+            liveDecayRecordPresentHashTable.insert( inX, inY, inSlot, 
+                                                    inSubCont, inETA );
 
             char exists;
             
             liveDecayRecordLastLookTimeHashTable.lookup( inX, inY, inSlot,
+                                                         inSubCont,
                                                          &exists );
             
             if( !exists ) {
                 // don't overwrite old one
-                liveDecayRecordLastLookTimeHashTable.insert( inX, inY, inSlot, 
+                liveDecayRecordLastLookTimeHashTable.insert( inX, inY, inSlot,
+                                                             inSubCont,
                                                              Time::timeSec() );
                 }
             }
@@ -1565,12 +1570,21 @@ static void trackETA( int inX, int inY, int inSlot, timeSec_t inETA ) {
 
 
 
-float getMapContainerTimeStretch( int inX, int inY ) {
+float getMapContainerTimeStretch( int inX, int inY, int inSubCont=0 ) {
     
     float stretch = 1.0f;
                         
-    int containerID = getMapObjectRaw( inX, inY );
-                        
+    int containerID;
+
+    if( inSubCont == 0 ) {
+        containerID = getMapObjectRaw( inX, inY );
+        }
+    else {
+        containerID = getContained( inX, inY, inSubCont - 1 );
+        }
+    
+
+
     if( containerID != 0 ) {
         stretch = getObject( containerID )->slotTimeStretch;
         }
@@ -1579,7 +1593,7 @@ float getMapContainerTimeStretch( int inX, int inY ) {
 
 
 
-void checkDecayContained( int inX, int inY );
+void checkDecayContained( int inX, int inY, int inSubCont = 0 );
 
 
 
@@ -1587,8 +1601,9 @@ void checkDecayContained( int inX, int inY );
 
 
 
-int *getContainedRaw( int inX, int inY, int *outNumContained ) {
-    int num = getNumContained( inX, inY );
+int *getContainedRaw( int inX, int inY, int *outNumContained, 
+                      int inSubCont ) {
+    int num = getNumContained( inX, inY, inSubCont );
 
     *outNumContained = num;
     
@@ -1599,7 +1614,7 @@ int *getContainedRaw( int inX, int inY, int *outNumContained ) {
     int *contained = new int[ num ];
 
     for( int i=0; i<num; i++ ) {
-        int result = dbGet( inX, inY, FIRST_CONT_SLOT + i );
+        int result = dbGet( inX, inY, FIRST_CONT_SLOT + i, inSubCont );
         if( result != -1 ) {
             contained[i] = result;
             }
@@ -1612,9 +1627,9 @@ int *getContainedRaw( int inX, int inY, int *outNumContained ) {
 
 
 
-int *getContained( int inX, int inY, int *outNumContained ) {
-    checkDecayContained( inX, inY );
-    int *result = getContainedRaw( inX, inY, outNumContained );
+int *getContained( int inX, int inY, int *outNumContained, int inSubCont ) {
+    checkDecayContained( inX, inY, inSubCont );
+    int *result = getContainedRaw( inX, inY, outNumContained, inSubCont );
     
     // look at these slots if they are subject to live decay
     timeSec_t currentTime = Time::timeSec();
@@ -1624,6 +1639,7 @@ int *getContained( int inX, int inY, int *outNumContained ) {
         timeSec_t *oldLookTime =
             liveDecayRecordLastLookTimeHashTable.lookupPointer( inX, inY,
                                                                 i + 1,
+                                                                inSubCont,
                                                                 &found );
         if( oldLookTime != NULL ) {
             // look at it now
@@ -1635,15 +1651,17 @@ int *getContained( int inX, int inY, int *outNumContained ) {
     }
 
 
-int *getContainedNoLook( int inX, int inY, int *outNumContained ) {
-    checkDecayContained( inX, inY );
-    return getContainedRaw( inX, inY, outNumContained );
+int *getContainedNoLook( int inX, int inY, int *outNumContained, 
+                         int inSubCont = 0 ) {
+    checkDecayContained( inX, inY, inSubCont );
+    return getContainedRaw( inX, inY, outNumContained, inSubCont );
     }
 
 
 
-timeSec_t *getContainedEtaDecay( int inX, int inY, int *outNumContained ) {
-    int num = getNumContained( inX, inY );
+timeSec_t *getContainedEtaDecay( int inX, int inY, int *outNumContained,
+                                 int inSubCont ) {
+    int num = getNumContained( inX, inY, inSubCont );
 
     *outNumContained = num;
     
@@ -1655,7 +1673,8 @@ timeSec_t *getContainedEtaDecay( int inX, int inY, int *outNumContained ) {
 
     for( int i=0; i<num; i++ ) {
         // can be 0 if not found, which is okay
-        containedEta[i] = dbTimeGet( inX, inY, FIRST_CONT_SLOT + num + i );
+        containedEta[i] = dbTimeGet( inX, inY, FIRST_CONT_SLOT + num + i,
+                                     inSubCont );
         }
     return containedEta;
     }
@@ -2065,7 +2084,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                     MovementRecord moveRec = { newX, newY, etaTime };
                     
-                    liveMovementEtaTimes.insert( newX, newY, 0, etaTime );
+                    liveMovementEtaTimes.insert( newX, newY, 0, 0, etaTime );
                     
                     liveMovements.insert( moveRec, etaTime );
                     
@@ -2129,13 +2148,13 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 
                 timeSec_t lastLookTime =
                     liveDecayRecordLastLookTimeHashTable.lookup( 
-                        inX, inY, 0, &foundInOldSpot );
+                        inX, inY, 0, 0, &foundInOldSpot );
                 
                 if( foundInOldSpot ) {
                     
                     char foundInNewSpot;
                     liveDecayRecordLastLookTimeHashTable.
-                        lookup( newX, newY, 0, &foundInNewSpot );
+                        lookup( newX, newY, 0, 0, &foundInNewSpot );
     
                     if( ! foundInNewSpot ) {
                         // we're not tracking decay for this new cell yet
@@ -2143,7 +2162,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         // the tracking that we're about to setup
                         
                         liveDecayRecordLastLookTimeHashTable.
-                            insert( newX, newY, 0, lastLookTime );
+                            insert( newX, newY, 0, 0, lastLookTime );
                         }
                     }
                 }            
@@ -2185,27 +2204,42 @@ int checkDecayObject( int inX, int inY, int inID ) {
 
 
 
-void checkDecayContained( int inX, int inY ) {
+void checkDecayContained( int inX, int inY, int inSubCont ) {
     
-    if( getNumContained( inX, inY ) == 0 ) {
+    if( getNumContained( inX, inY, inSubCont ) == 0 ) {
         return;
         }
     
     int numContained;
-    int *contained = getContainedRaw( inX, inY, &numContained );
+    int *contained = getContainedRaw( inX, inY, &numContained, inSubCont );
     
     SimpleVector<int> newContained;
     SimpleVector<timeSec_t> newDecayEta;
     
+    SimpleVector< SimpleVector<int> > newSubCont;
+    SimpleVector< SimpleVector<timeSec_t> > newSubContDecay;
+    
+        
     char change = false;
     
     for( int i=0; i<numContained; i++ ) {
         int oldID = contained[i];
         
+        char isSubCont = false;
+        
+        if( oldID < 0 ) {
+            // negative ID means this is a sub-container
+            isSubCont = true;
+            oldID *= -1;
+            }
+    
         TransRecord *t = getTrans( -1, oldID );
 
         if( t == NULL ) {
             // no auto-decay for this object
+            if( isSubCont ) {
+                oldID *= -1;
+                }
             newContained.push_back( oldID );
             newDecayEta.push_back( 0 );
             continue;
@@ -2217,7 +2251,7 @@ void checkDecayContained( int inX, int inY ) {
         int newID = oldID;
 
         // is eta stored in map?
-        timeSec_t mapETA = getSlotEtaDecay( inX, inY, i );
+        timeSec_t mapETA = getSlotEtaDecay( inX, inY, i, inSubCont );
     
         if( mapETA != 0 ) {
         
@@ -2252,7 +2286,7 @@ void checkDecayContained( int inX, int inY ) {
                         mapETA = 
                             Time::timeSec() +
                             tweakedSeconds / 
-                            getMapContainerTimeStretch( inX, inY );
+                            getMapContainerTimeStretch( inX, inY, inSubCont );
                         }
                     else {
                         // no further decay
@@ -2263,6 +2297,23 @@ void checkDecayContained( int inX, int inY ) {
             }
         
         if( newID != 0 ) {    
+            if( isSubCont ) {
+                
+                int oldSlots = getNumContainerSlots( oldID );
+
+                int newSlots = getNumContainerSlots( newID );
+            
+                if( newSlots < oldSlots ) {
+                    shrinkContainer( inX, inY, newSlots, i + 1 );
+                    }
+                if( newSlots > 0 ) {    
+                    restretchMapContainedDecays( inX, inY, 
+                                                 oldID, newID, i + 1 );
+                    
+                    // negative IDs indicate sub-containment 
+                    newID *= -1;
+                    }
+                }
             newContained.push_back( newID );
             newDecayEta.push_back( mapETA );
             }
@@ -2273,17 +2324,18 @@ void checkDecayContained( int inX, int inY ) {
         int *containedArray = newContained.getElementArray();
         int numContained = newContained.size();
 
-        setContained( inX, inY, newContained.size(), containedArray );
+        setContained( inX, inY, newContained.size(), containedArray, 
+                      inSubCont );
         delete [] containedArray;
         
         for( int i=0; i<numContained; i++ ) {
             timeSec_t mapETA = newDecayEta.getElementDirect( i );
             
             if( mapETA != 0 ) {
-                trackETA( inX, inY, 1 + i, mapETA );
+                trackETA( inX, inY, 1 + i, mapETA, inSubCont );
                 }
             
-            setSlotEtaDecay( inX, inY, i, mapETA );
+            setSlotEtaDecay( inX, inY, i, mapETA, inSubCont );
             }
         }
 
@@ -2379,7 +2431,8 @@ void lookAtRegion( int inXStart, int inYStart, int inXEnd, int inYEnd ) {
         
             char found;
             timeSec_t *oldLookTime = 
-                liveDecayRecordLastLookTimeHashTable.lookupPointer( x, y, 0,
+                liveDecayRecordLastLookTimeHashTable.lookupPointer( x, y, 
+                                                                    0, 0,
                                                                     &found );
     
             if( oldLookTime != NULL ) {
@@ -2387,18 +2440,40 @@ void lookAtRegion( int inXStart, int inYStart, int inXEnd, int inYEnd ) {
                 *oldLookTime = currentTime;
                 }
 
-            int numContained = getNumContained( x, y );
+            int numContained;
             
+            int *contained = getContained( x, y, &numContained );
+
             for( int c=0; c<numContained; c++ ) {
                 
                 char found;
                 oldLookTime =
                     liveDecayRecordLastLookTimeHashTable.lookupPointer( 
-                        x, y, c + 1, &found );
+                        x, y, c + 1, 0, &found );
                 if( oldLookTime != NULL ) {
                     // look at it now
                     *oldLookTime = currentTime;
                     }
+                
+                if( contained[c] < 0 ) {
+                    // sub contained
+                    int numSub = getNumContained( x, y, c + 1 );
+                    
+                    for( int s=0; s<numSub; s++ ) {
+                        
+                        oldLookTime =
+                            liveDecayRecordLastLookTimeHashTable.lookupPointer( 
+                                x, y, s, c+1, &found );
+                        if( oldLookTime != NULL ) {
+                            // look at it now
+                            *oldLookTime = currentTime;
+                            }
+                        }
+                    }
+                }
+            
+            if( contained != NULL ) {
+                delete [] contained;
                 }
             }
         }
@@ -2411,7 +2486,7 @@ int getMapObject( int inX, int inY ) {
     // look at this map cell
     char found;
     timeSec_t *oldLookTime = 
-        liveDecayRecordLastLookTimeHashTable.lookupPointer( inX, inY, 0,
+        liveDecayRecordLastLookTimeHashTable.lookupPointer( inX, inY, 0, 0,
                                                             &found );
     
     if( oldLookTime != NULL ) {
@@ -2437,7 +2512,7 @@ char isMapObjectInTransit( int inX, int inY ) {
     char found;
     
     double etaTime = 
-        liveMovementEtaTimes.lookup( inX, inY, 0, &found );
+        liveMovementEtaTimes.lookup( inX, inY, 0, 0, &found );
     
     if( found ) {
         if( etaTime > Time::getCurrentTime() ) {
@@ -2464,6 +2539,10 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
     
     int *containedStackSizes = new int[ chunkCells ];
     int **containedStacks = new int*[ chunkCells ];
+
+    int **subContainedStackSizes = new int*[chunkCells];
+    int ***subContainedStacks = new int**[chunkCells];
+    
 
     // 0,0 is center of map
     
@@ -2509,10 +2588,34 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
             if( contained != NULL ) {
                 containedStackSizes[cI] = numContained;
                 containedStacks[cI] = contained;
+                
+                subContainedStackSizes[cI] = new int[numContained];
+                subContainedStacks[cI] = new int*[numContained];
+
+                for( int i=0; i<numContained; i++ ) {
+                    subContainedStackSizes[cI][i] = 0;
+                    subContainedStacks[cI][i] = NULL;
+                    
+                    if( containedStacks[cI][i] < 0 ) {
+                        // a sub container
+                        containedStacks[cI][i] *= -1;
+                        
+                        int numSubContained;
+                        int *subContained = getContained( x, y, 
+                                                          &numSubContained,
+                                                          i + 1 );
+                        if( subContained != NULL ) {
+                            subContainedStackSizes[cI][i] = numSubContained;
+                            subContainedStacks[cI][i] = subContained;
+                            }
+                        }
+                    }
                 }
             else {
                 containedStackSizes[cI] = 0;
                 containedStacks[cI] = NULL;
+                subContainedStackSizes[cI] = NULL;
+                subContainedStacks[cI] = NULL;
                 }
             }
         
@@ -2542,7 +2645,27 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
                 chunkDataBuffer.appendArray( (unsigned char*)containedString, 
                                              strlen( containedString ) );
                 delete [] containedString;
+
+                if( subContainedStacks[i][c] != NULL ) {
+                    
+                    for( int s=0; s<subContainedStackSizes[i][c]; s++ ) {
+                        
+                        char *subContainedString = 
+                            autoSprintf( ":%d", 
+                                         subContainedStacks[i][c][s] );
+        
+                        chunkDataBuffer.appendArray( 
+                            (unsigned char*)subContainedString, 
+                            strlen( subContainedString ) );
+                        delete [] subContainedString;
+                        }
+                    delete [] subContainedStacks[i][c];
+                    }
                 }
+
+            delete [] subContainedStackSizes[i];
+            delete [] subContainedStacks[i];
+
             delete [] containedStacks[i];
             }
         }
@@ -2552,6 +2675,10 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
 
     delete [] containedStackSizes;
     delete [] containedStacks;
+
+    delete [] subContainedStackSizes;
+    delete [] subContainedStacks;
+    
     
 
     unsigned char *chunkData = chunkDataBuffer.getElementArray();
@@ -2698,18 +2825,21 @@ static int getContainerDecaySlot( int inX, int inY, int inSlot ) {
 
 
 void setSlotEtaDecay( int inX, int inY, int inSlot,
-                      timeSec_t inAbsoluteTimeInSeconds ) {
-    dbTimePut( inX, inY, getContainerDecaySlot( inX, inY, inSlot ), 
+                      timeSec_t inAbsoluteTimeInSeconds, int inSubCont ) {
+    dbTimePut( inX, inY, getContainerDecaySlot( inX, inY, inSlot ),
+               inSubCont,
                inAbsoluteTimeInSeconds );
     if( inAbsoluteTimeInSeconds != 0 ) {
-        trackETA( inX, inY, inSlot + 1, inAbsoluteTimeInSeconds );
+        trackETA( inX, inY, inSlot + 1, inAbsoluteTimeInSeconds,
+                  inSubCont );
         }
     }
 
 
-timeSec_t getSlotEtaDecay( int inX, int inY, int inSlot ) {
+timeSec_t getSlotEtaDecay( int inX, int inY, int inSlot, int inSubCont ) {
     // 0 if not found
-    return dbTimeGet( inX, inY, getContainerDecaySlot( inX, inY, inSlot ) );
+    return dbTimeGet( inX, inY, getContainerDecaySlot( inX, inY, inSlot ),
+                      inSubCont );
     }
 
 
@@ -2718,7 +2848,7 @@ timeSec_t getSlotEtaDecay( int inX, int inY, int inSlot ) {
 
 
 void addContained( int inX, int inY, int inContainedID, 
-                   timeSec_t inEtaDecay ) {
+                   timeSec_t inEtaDecay, int inSubCont ) {
     int oldNum;
     
 
@@ -2728,12 +2858,13 @@ void addContained( int inX, int inY, int inContainedID,
         timeSec_t etaOffset = inEtaDecay - curTime;
         
         inEtaDecay = curTime + 
-            etaOffset / getMapContainerTimeStretch( inX, inY );
+            etaOffset / getMapContainerTimeStretch( inX, inY, inSubCont );
         }
     
-    int *oldContained = getContained( inX, inY, &oldNum );
+    int *oldContained = getContained( inX, inY, &oldNum, inSubCont );
 
-    timeSec_t *oldContainedETA = getContainedEtaDecay( inX, inY, &oldNum );
+    timeSec_t *oldContainedETA = getContainedEtaDecay( inX, inY, &oldNum,
+                                                       inSubCont );
 
     int *newContained = new int[ oldNum + 1 ];
     
@@ -2762,16 +2893,16 @@ void addContained( int inX, int inY, int inContainedID,
     
     int newNum = oldNum + 1;
     
-    setContained( inX, inY, newNum, newContained );
-    setContainedEtaDecay( inX, inY, newNum, newContainedETA );
+    setContained( inX, inY, newNum, newContained, inSubCont );
+    setContainedEtaDecay( inX, inY, newNum, newContainedETA, inSubCont );
     
     delete [] newContained;
     delete [] newContainedETA;
     }
 
 
-int getNumContained( int inX, int inY ) {
-    int result = dbGet( inX, inY, NUM_CONT_SLOT );
+int getNumContained( int inX, int inY, int inSubCont ) {
+    int result = dbGet( inX, inY, NUM_CONT_SLOT, inSubCont );
     
     if( result != -1 ) {
         // found
@@ -2788,22 +2919,24 @@ int getNumContained( int inX, int inY ) {
 
 
 
-void setContained( int inX, int inY, int inNumContained, int *inContained ) {
-    dbPut( inX, inY, NUM_CONT_SLOT, inNumContained );
+void setContained( int inX, int inY, int inNumContained, int *inContained,
+                   int inSubCont ) {
+    dbPut( inX, inY, NUM_CONT_SLOT, inSubCont, inNumContained );
     for( int i=0; i<inNumContained; i++ ) {
-        dbPut( inX, inY, FIRST_CONT_SLOT + i, inContained[i] );
+        dbPut( inX, inY, FIRST_CONT_SLOT + i, inSubCont, inContained[i] );
         }
     }
 
 
 void setContainedEtaDecay( int inX, int inY, int inNumContained, 
-                           timeSec_t *inContainedEtaDecay ) {
+                           timeSec_t *inContainedEtaDecay, int inSubCont ) {
     for( int i=0; i<inNumContained; i++ ) {
-        dbTimePut( inX, inY, FIRST_CONT_SLOT + inNumContained + i, 
+        dbTimePut( inX, inY, FIRST_CONT_SLOT + inNumContained + i,
+                   inSubCont,
                    inContainedEtaDecay[i] );
         
         if( inContainedEtaDecay[i] != 0 ) {
-            trackETA( inX, inY, i + 1, inContainedEtaDecay[i] );
+            trackETA( inX, inY, i + 1, inContainedEtaDecay[i], inSubCont );
             }
         }
     }
@@ -2812,8 +2945,8 @@ void setContainedEtaDecay( int inX, int inY, int inNumContained,
 
 
 
-int getContained( int inX, int inY, int inSlot ) {
-    int num = getNumContained( inX, inY );
+int getContained( int inX, int inY, int inSlot, int inSubCont ) {
+    int num = getNumContained( inX, inY, inSubCont );
     
     if( num == 0 ) {
         return 0;
@@ -2824,7 +2957,7 @@ int getContained( int inX, int inY, int inSlot ) {
         }
     
     
-    int result = dbGet( inX, inY, FIRST_CONT_SLOT + inSlot );
+    int result = dbGet( inX, inY, FIRST_CONT_SLOT + inSlot, inSubCont );
     
     if( result != -1 ) {    
         return result;
@@ -2839,8 +2972,9 @@ int getContained( int inX, int inY, int inSlot ) {
     
 
 // removes from top of stack
-int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay ) {
-    int num = getNumContained( inX, inY );
+int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay,
+                     int inSubCont ) {
+    int num = getNumContained( inX, inY, inSubCont );
     
     if( num == 0 ) {
         return 0;
@@ -2851,11 +2985,12 @@ int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay ) {
         }
     
     
-    int result = dbGet( inX, inY, FIRST_CONT_SLOT + inSlot );
+    int result = dbGet( inX, inY, FIRST_CONT_SLOT + inSlot, inSubCont );
 
     timeSec_t curTime = Time::timeSec();
     
-    timeSec_t resultEta = dbTimeGet( inX, inY, FIRST_CONT_SLOT + num + inSlot );
+    timeSec_t resultEta = dbTimeGet( inX, inY, FIRST_CONT_SLOT + num + inSlot,
+                                     inSubCont );
 
     if( resultEta != 0 ) {    
         timeSec_t etaOffset = resultEta - curTime;
@@ -2868,9 +3003,10 @@ int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay ) {
     *outEtaDecay = resultEta;
     
     int oldNum;
-    int *oldContained = getContained( inX, inY, &oldNum );
+    int *oldContained = getContained( inX, inY, &oldNum, inSubCont );
 
-    timeSec_t *oldContainedETA = getContainedEtaDecay( inX, inY, &oldNum );
+    timeSec_t *oldContainedETA = getContainedEtaDecay( inX, inY, &oldNum,
+                                                       inSubCont );
 
     SimpleVector<int> newContainedList;
     SimpleVector<timeSec_t> newContainedETAList;
@@ -2885,8 +3021,8 @@ int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay ) {
     int *newContained = newContainedList.getElementArray();
     timeSec_t *newContainedETA = newContainedETAList.getElementArray();
 
-    setContained( inX, inY, oldNum - 1, newContained );
-    setContainedEtaDecay( inX, inY, oldNum - 1, newContainedETA );
+    setContained( inX, inY, oldNum - 1, newContained, inSubCont );
+    setContainedEtaDecay( inX, inY, oldNum - 1, newContainedETA, inSubCont );
     
     delete [] oldContained;
     delete [] oldContainedETA;
@@ -2904,17 +3040,17 @@ int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay ) {
 
 
 
-void clearAllContained( int inX, int inY ) {
-    dbPut( inX, inY, NUM_CONT_SLOT, 0 );
+void clearAllContained( int inX, int inY, int inSubCont ) {
+    dbPut( inX, inY, NUM_CONT_SLOT, inSubCont, 0 );
     }
 
 
 
-void shrinkContainer( int inX, int inY, int inNumNewSlots ) {
-    int oldNum = getNumContained( inX, inY );
+void shrinkContainer( int inX, int inY, int inNumNewSlots, int inSubCont ) {
+    int oldNum = getNumContained( inX, inY, inSubCont );
     
     if( oldNum > inNumNewSlots ) {
-        dbPut( inX, inY, NUM_CONT_SLOT, inNumNewSlots );
+        dbPut( inX, inY, NUM_CONT_SLOT, inSubCont, inNumNewSlots );
         }
     }
 
@@ -2946,12 +3082,39 @@ char *getMapChangeLineString( ChangePosition inPos ) {
     int *contained = getContainedNoLook( inPos.x, inPos.y, &numContained );
 
     for( int i=0; i<numContained; i++ ) {
+
+        char subCont = false;
+        
+        if( contained[i] < 0 ) {
+            subCont = true;
+            contained[i] *= -1;
+            
+            }
         
         char *idString = autoSprintf( ",%d", contained[i] );
         
         buffer.appendElementString( idString );
         
         delete [] idString;
+
+        if( subCont ) {
+            
+            int numSubContained;
+            int *subContained = getContainedNoLook( inPos.x, inPos.y, 
+                                                    &numSubContained,
+                                                    i + 1 );
+            for( int s=0; s<numSubContained; s++ ) {
+                idString = autoSprintf( ":%d", subContained[s] );
+        
+                buffer.appendElementString( idString );
+        
+                delete [] idString;
+                }
+            if( subContained != NULL ) {
+                delete [] subContained;
+                }
+            }
+        
         }
     
     if( contained != NULL ) {
@@ -3017,15 +3180,18 @@ void stepMap( SimpleVector<char> *inMapChanges,
         char storedFound;
         timeSec_t storedETA =
             liveDecayRecordPresentHashTable.lookup( r.x, r.y, r.slot,
+                                                    r.subCont,
                                                     &storedFound );
         
         if( storedFound && storedETA == r.etaTimeSeconds ) {
             
-            liveDecayRecordPresentHashTable.remove( r.x, r.y, r.slot );
+            liveDecayRecordPresentHashTable.remove( r.x, r.y, r.slot,
+                                                    r.subCont );
 
                     
             timeSec_t lastLookTime =
                 liveDecayRecordLastLookTimeHashTable.lookup( r.x, r.y, r.slot,
+                                                             r.subCont,
                                                              &storedFound );
 
             if( storedFound ) {
@@ -3036,7 +3202,7 @@ void stepMap( SimpleVector<char> *inMapChanges,
                     // this cell or slot hasn't been looked at in too long
                     // don't even apply this decay now
                     liveDecayRecordLastLookTimeHashTable.remove( 
-                        r.x, r.y, r.slot );
+                        r.x, r.y, r.slot, r.subCont );
                     continue;
                     }
                 // else keep lastlook time around in case
@@ -3059,19 +3225,19 @@ void stepMap( SimpleVector<char> *inMapChanges,
             checkDecayObject( r.x, r.y, oldID );
             }
         else {
-            checkDecayContained( r.x, r.y );
+            checkDecayContained( r.x, r.y, r.subCont );
             }
         
         
         char stillExists;
-        liveDecayRecordPresentHashTable.lookup( r.x, r.y, r.slot,
+        liveDecayRecordPresentHashTable.lookup( r.x, r.y, r.slot, r.subCont,
                                                 &stillExists );
         
         if( !stillExists ) {
             // cell or slot no longer tracked
             // forget last look time
             liveDecayRecordLastLookTimeHashTable.remove( 
-                r.x, r.y, r.slot );
+                r.x, r.y, r.slot, r.subCont );
             }
         }
     
@@ -3079,7 +3245,7 @@ void stepMap( SimpleVector<char> *inMapChanges,
     while( liveMovements.size() > 0 && 
            liveMovements.checkMinPriority() <= curTime ) {
         MovementRecord r = liveMovements.removeMin();    
-        liveMovementEtaTimes.remove( r.x, r.y, 0 );
+        liveMovementEtaTimes.remove( r.x, r.y, 0, 0 );
         }
     
         
@@ -3130,7 +3296,7 @@ void restretchDecays( int inNumDecays, timeSec_t *inDecayEtas,
 
 void restretchMapContainedDecays( int inX, int inY,
                                   int inOldContainerID, 
-                                  int inNewContainerID ) {
+                                  int inNewContainerID, int inSubCont ) {
     
     float oldStrech = getObject( inOldContainerID )->slotTimeStretch;
     float newStetch = getObject( inNewContainerID )->slotTimeStretch;
@@ -3139,12 +3305,12 @@ void restretchMapContainedDecays( int inX, int inY,
                 
         int oldNum;
         timeSec_t *oldContDecay =
-            getContainedEtaDecay( inX, inY, &oldNum );
+            getContainedEtaDecay( inX, inY, &oldNum, inSubCont );
                 
         restretchDecays( oldNum, oldContDecay, 
                          inOldContainerID, inNewContainerID );        
         
-        setContainedEtaDecay( inX, inY, oldNum, oldContDecay );
+        setContainedEtaDecay( inX, inY, oldNum, oldContDecay, inSubCont );
         delete [] oldContDecay;
         }
     }

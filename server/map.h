@@ -146,4 +146,5 @@ void restretchDecays( int inNumDecays, timeSec_t *inDecayEtas,
 
 
 void restretchMapContainedDecays( int inX, int inY,
-                                  int inOldContainerID, int inNewContainerID );
+                                  int inOldContainerID, int inNewContainerID,
+                                  int inSubCont = 0 );
