@@ -1069,7 +1069,7 @@ void initMap() {
     
     KISSDB_Iterator_init( &db, &dbi );
     
-    unsigned char key[12];
+    unsigned char key[16];
     
     unsigned char value[4];
 
@@ -1091,6 +1091,7 @@ void initMap() {
     while( KISSDB_Iterator_next( &dbi, key, value ) > 0 ) {
         
         int s = valueToInt( &( key[8] ) );
+        int b = valueToInt( &( key[12] ) );
        
         if( s == 0 ) {
             int id = valueToInt( value );
@@ -1111,7 +1112,7 @@ void initMap() {
                     }
                 }
             }
-        if( s == 2 ) {
+        if( s == 2 && b == 0 ) {
             int numSlots = valueToInt( value );
             if( numSlots > 0 ) {
                 totalNumContained += numSlots;
@@ -1179,8 +1180,12 @@ void initMap() {
                                 }
                             }
                         
-                        delete [] contSub;
-                        delete [] decaySub;
+                        if( contSub != NULL ) {
+                            delete [] contSub;
+                            }
+                        if( decaySub != NULL ) {
+                            delete [] decaySub;
+                            }
                         numContainedCleared += numSub - subCont.size();
                         }
                     }
