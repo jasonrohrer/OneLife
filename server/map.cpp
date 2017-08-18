@@ -2832,8 +2832,7 @@ static int getContainerDecaySlot( int inX, int inY, int inSlot ) {
 void setSlotEtaDecay( int inX, int inY, int inSlot,
                       timeSec_t inAbsoluteTimeInSeconds, int inSubCont ) {
     dbTimePut( inX, inY, getContainerDecaySlot( inX, inY, inSlot ),
-               inSubCont,
-               inAbsoluteTimeInSeconds );
+               inAbsoluteTimeInSeconds, inSubCont );
     if( inAbsoluteTimeInSeconds != 0 ) {
         trackETA( inX, inY, inSlot + 1, inAbsoluteTimeInSeconds,
                   inSubCont );
@@ -2926,9 +2925,9 @@ int getNumContained( int inX, int inY, int inSubCont ) {
 
 void setContained( int inX, int inY, int inNumContained, int *inContained,
                    int inSubCont ) {
-    dbPut( inX, inY, NUM_CONT_SLOT, inSubCont, inNumContained );
+    dbPut( inX, inY, NUM_CONT_SLOT, inNumContained, inSubCont );
     for( int i=0; i<inNumContained; i++ ) {
-        dbPut( inX, inY, FIRST_CONT_SLOT + i, inSubCont, inContained[i] );
+        dbPut( inX, inY, FIRST_CONT_SLOT + i, inContained[i], inSubCont );
         }
     }
 
@@ -2937,8 +2936,7 @@ void setContainedEtaDecay( int inX, int inY, int inNumContained,
                            timeSec_t *inContainedEtaDecay, int inSubCont ) {
     for( int i=0; i<inNumContained; i++ ) {
         dbTimePut( inX, inY, FIRST_CONT_SLOT + inNumContained + i,
-                   inSubCont,
-                   inContainedEtaDecay[i] );
+                   inContainedEtaDecay[i], inSubCont );
         
         if( inContainedEtaDecay[i] != 0 ) {
             trackETA( inX, inY, i + 1, inContainedEtaDecay[i], inSubCont );
@@ -3046,7 +3044,7 @@ int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay,
 
 
 void clearAllContained( int inX, int inY, int inSubCont ) {
-    dbPut( inX, inY, NUM_CONT_SLOT, inSubCont, 0 );
+    dbPut( inX, inY, NUM_CONT_SLOT, 0, inSubCont );
     }
 
 
@@ -3055,7 +3053,7 @@ void shrinkContainer( int inX, int inY, int inNumNewSlots, int inSubCont ) {
     int oldNum = getNumContained( inX, inY, inSubCont );
     
     if( oldNum > inNumNewSlots ) {
-        dbPut( inX, inY, NUM_CONT_SLOT, inSubCont, inNumNewSlots );
+        dbPut( inX, inY, NUM_CONT_SLOT, inNumNewSlots, inSubCont );
         }
     }
 
