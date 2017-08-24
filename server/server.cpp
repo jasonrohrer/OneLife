@@ -184,6 +184,11 @@ typedef struct LiveObject {
         int *containedIDs;
         timeSec_t *containedEtaDecays;
 
+        // vector of sub-contained for each contained item
+        SimpleVector<int> *subContainedIDs;
+        SimpleVector<timeSec_t> *subContainedEtaDecays;
+        
+
         // if they've been killed and part of a weapon (bullet?) has hit them
         // this will be included in their grave
         int embeddedWeaponID;
@@ -273,6 +278,71 @@ static LiveObject *getLiveObject( int inID ) {
     
     return NULL;
     }
+
+
+
+typedef struct FullMapContained{ 
+        int numContained;
+        int *containedIDs;
+        timeSec_t *containedEtaDecays;
+        SimpleVector<int> *subContainedIDs;
+        SimpleVector<timeSec_t> *subContainedEtaDecays;
+    } FullMapContained;
+
+
+
+// including contained and sub contained in one call
+FullMapContained getFullMapContained( int inX, int inY ) {
+    FullMapContained r;
+    
+    r.containedIDs = getContained( inX, inY, &( r.numContained ) );
+    r.containedEtaDecays = 
+        getContainedEtaDecay( inX, inY, &( r.numContained ) );
+    
+    r.subContainedIDs = new SimpleVector<int>[ r.numContained ];
+    r.subContainedEtaDecays = new SimpleVector<timeSec_t>[ r.numContained ];
+    
+    for( int c=0; c< r.numContained; c++ ) {
+        if( r.containedIDs[c] < 0 ) {
+            
+            int numSub;
+            int *subContainedIDs = getContained( inX, inY, &numSub,
+                                                 c + 1 );
+            
+            r.subContainedIDs[c].appendArray( subContainedIDs, numSub );
+            
+            timeSec_t *subContainedEtaDecays = 
+                getContainedEtaDecay( inX, inY, &numSub,
+                                      c + 1 );
+
+            r.subContainedEtaDecays[c].appendArray( subContainedEtaDecays, 
+                                                     numSub );
+            
+            delete [] subContainedIDs;
+            delete [] subContainedEtaDecays;
+            }
+        }
+    
+    return r;
+    }
+
+
+void setContained( LiveObject *inPlayer, FullMapContained inContained ) {
+    
+    inPlayer->numContained = inContained.numContained;
+                                    
+    inPlayer->containedIDs = inContained.containedIDs;
+    
+    inPlayer->containedEtaDecays =
+        inContained.containedEtaDecays;
+    
+    inPlayer->subContainedIDs =
+        inContained.subContainedIDs;
+    inPlayer->subContainedEtaDecays =
+        inContained.subContainedEtaDecays;
+    }
+
+
 
 
 
@@ -368,6 +438,15 @@ void quitCleanup() {
         if( nextPlayer->containedEtaDecays != NULL ) {
             delete [] nextPlayer->containedEtaDecays;
             }
+        
+        if( nextPlayer->subContainedIDs != NULL ) {
+            delete [] nextPlayer->subContainedIDs;
+            }
+        
+        if( nextPlayer->subContainedEtaDecays != NULL ) {
+            delete [] nextPlayer->subContainedEtaDecays;
+            }
+        
         
         if( nextPlayer->pathToDest != NULL ) {
             delete [] nextPlayer->pathToDest;
@@ -1173,11 +1252,22 @@ char *getHoldingString( LiveObject *inObject ) {
     if( inObject->numContained > 0 ) {
         for( int i=0; i<inObject->numContained; i++ ) {
             
-            char *idString = autoSprintf( ",%d", inObject->containedIDs[i] );
+            char *idString = autoSprintf( ",%d", 
+                                          abs( inObject->containedIDs[i] ) );
     
             buffer.appendElementString( idString );
     
             delete [] idString;
+
+            if( inObject->subContainedIDs[i].size() > 0 ) {
+                idString = autoSprintf( 
+                    ":%d", 
+                    inObject->subContainedIDs[i].getElementDirect(i) );
+    
+                buffer.appendElementString( idString );
+                
+                delete [] idString;
+                }
             }
         }
     
@@ -1568,9 +1658,14 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             if( inDroppingPlayer->numContained != 0 ) {
                 delete [] inDroppingPlayer->containedIDs;
                 delete [] inDroppingPlayer->containedEtaDecays;
+                delete [] inDroppingPlayer->subContainedIDs;
+                delete [] inDroppingPlayer->subContainedEtaDecays;
                 
                 inDroppingPlayer->containedIDs = NULL;
                 inDroppingPlayer->containedEtaDecays = NULL;
+                inDroppingPlayer->subContainedIDs = NULL;
+                inDroppingPlayer->subContainedEtaDecays = NULL;
+                
                 inDroppingPlayer->numContained = 0;
                 }
             return;
@@ -1621,35 +1716,44 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     setEtaDecay( targetX, targetY, inDroppingPlayer->holdingEtaDecay );
     
     if( inDroppingPlayer->numContained != 0 ) {
-        timeSec_t curTime = Time::timeSec();
-        float stretch = 
-            getObject( inDroppingPlayer->holdingID )->slotTimeStretch;
         
         for( int c=0;
              c < inDroppingPlayer->numContained;
              c++ ) {
-            
-            if( stretch != 1.0 &&
-                inDroppingPlayer->containedEtaDecays[c] != 0 ) {
-                
-                timeSec_t offset = 
-                    inDroppingPlayer->containedEtaDecays[c] - curTime;
-                
-                offset = offset * stretch;
-                
-                inDroppingPlayer->containedEtaDecays[c] =
-                    curTime + offset;
-                }
 
             addContained( 
                 targetX, targetY,
                 inDroppingPlayer->containedIDs[c],
                 inDroppingPlayer->containedEtaDecays[c] );
+            
+            int numSub = inDroppingPlayer->subContainedIDs[c].size();
+            if( numSub > 0 ) {
+                int *subIDs = 
+                    inDroppingPlayer->subContainedIDs[c].getElementArray();
+                timeSec_t *subDecays = 
+                    inDroppingPlayer->subContainedEtaDecays[c].
+                    getElementArray();
+                
+                for( int s=0; s < numSub; s++ ) {
+                    
+                    addContained( targetX, targetY,
+                                  subIDs[s], subDecays[s],
+                                  c + 1 );
+                    }
+                delete [] subIDs;
+                delete [] subDecays;
+                }
             }
         delete [] inDroppingPlayer->containedIDs;
         delete [] inDroppingPlayer->containedEtaDecays;
+        delete [] inDroppingPlayer->subContainedIDs;
+        delete [] inDroppingPlayer->subContainedEtaDecays;
+        
         inDroppingPlayer->containedIDs = NULL;
         inDroppingPlayer->containedEtaDecays = NULL;
+        inDroppingPlayer->subContainedIDs = NULL;
+        inDroppingPlayer->subContainedEtaDecays = NULL;
+        
         inDroppingPlayer->numContained = 0;
         }
                                 
@@ -2398,6 +2502,8 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.numContained = 0;
     newObject.containedIDs = NULL;
     newObject.containedEtaDecays = NULL;
+    newObject.subContainedIDs = NULL;
+    newObject.subContainedEtaDecays = NULL;
     newObject.embeddedWeaponID = 0;
     newObject.embeddedWeaponEtaDecay = 0;
     newObject.sock = inSock;
@@ -4399,17 +4505,14 @@ int main() {
                                     
                                     nextPlayer->holdingEtaDecay = 
                                         getEtaDecay( m.x, m.y );
+                                    
+                                    FullMapContained f =
+                                        getFullMapContained( m.x, m.y );
 
-                                    nextPlayer->containedIDs =
-                                        getContained( 
-                                            m.x, m.y,
-                                            &( nextPlayer->numContained ) );
+                                    setContained( nextPlayer, f );
                                     
-                                    int numCont;
-                                    nextPlayer->containedEtaDecays =
-                                        getContainedEtaDecay( m.x, m.y,
-                                                              &numCont );
-                                    
+                                    // don't need to clear sub contained
+                                    // they are lost when contained are cleared
                                     clearAllContained( m.x, m.y );
                                     
                                     setResponsiblePlayer( - nextPlayer->id );
@@ -5055,6 +5158,18 @@ int main() {
                                                 containedEtaDecays;
                                             nextPlayer->containedEtaDecays = 
                                                 NULL;
+
+                                            // ignore sub-contained
+                                            // because clothing can
+                                            // never contain containers
+                                            delete [] 
+                                                nextPlayer->subContainedIDs;
+                                            delete []
+                                                nextPlayer->
+                                                subContainedEtaDecays;
+                                            nextPlayer->subContainedIDs = NULL;
+                                            nextPlayer->subContainedEtaDecays 
+                                                = NULL;
                                             }
                                             
                                         
@@ -5070,6 +5185,16 @@ int main() {
                                                 oldContainedIDs;
                                             nextPlayer->containedEtaDecays =
                                                 oldContainedETADecays;
+                                            
+                                            // empty sub-contained vectors
+                                            // because clothing never
+                                            // never contains containers
+                                            nextPlayer->subContainedIDs
+                                                = new SimpleVector<int>[
+                                                    nextPlayer->numContained ];
+                                            nextPlayer->subContainedEtaDecays
+                                                = new SimpleVector<timeSec_t>[
+                                                    nextPlayer->numContained ];
                                             }
                                         }
                                     }
@@ -5164,6 +5289,16 @@ int main() {
                                         clothingContainedEtaDecays[ind].
                                         deleteAll();
                                     
+                                    // empty sub contained in clothing
+                                    nextPlayer->subContainedIDs =
+                                        new SimpleVector<int>[
+                                            nextPlayer->numContained ];
+                                    
+                                    nextPlayer->subContainedEtaDecays =
+                                        new SimpleVector<timeSec_t>[
+                                            nextPlayer->numContained ];
+                                    
+
                                     nextPlayer->heldOriginValid = 0;
                                     nextPlayer->heldOriginX = 0;
                                     nextPlayer->heldOriginY = 0;
@@ -5261,18 +5396,10 @@ int main() {
                                             timeSec_t newHoldingEtaDecay = 
                                                 getEtaDecay( m.x, m.y );
 
-                                            int newNumContained = 0;
-                                            int *newContainedIDs = 
-                                                getContained( 
-                                                    m.x, m.y,
-                                                    &newNumContained );
-                                    
-                                            int numCont;
-                                            timeSec_t *newContainedEtaDecays =
-                                                getContainedEtaDecay( 
-                                                    m.x, m.y,
-                                                    &numCont );
+                                            FullMapContained f = 
+                                                getFullMapContained( m.x, m.y );
                                             
+
                                             clearAllContained( m.x, m.y );
                                             setMapObject( m.x, m.y, 0 );
                                     
@@ -5284,12 +5411,8 @@ int main() {
                                             nextPlayer->holdingID = target;
                                             nextPlayer->holdingEtaDecay =
                                                 newHoldingEtaDecay;
-                                            nextPlayer->numContained =
-                                                newNumContained;
-                                            nextPlayer->containedIDs =
-                                                newContainedIDs;
-                                            nextPlayer->containedEtaDecays =
-                                                newContainedEtaDecays;
+
+                                            setContained( nextPlayer, f );
                                             
                                     
                                             nextPlayer->heldOriginValid = 1;
@@ -5812,17 +5935,23 @@ int main() {
                     
                     SimpleVector<int> newContained;
                     SimpleVector<timeSec_t> newContainedETA;
+
+                    SimpleVector< SimpleVector<int> > newSubContained;
+                    SimpleVector< SimpleVector<timeSec_t> > newSubContainedETA;
                     
                     for( int c=0; c< nextPlayer->numContained; c++ ) {
-                        int oldID = nextPlayer->containedIDs[c];
+                        int oldID = abs( nextPlayer->containedIDs[c] );
                         int newID = oldID;
-                        
+
                         timeSec_t newDecay = 
                             nextPlayer->containedEtaDecays[c];
 
-                        if( nextPlayer->containedEtaDecays[c] != 0 &&
-                            nextPlayer->containedEtaDecays[c] <
-                            curTime ) {
+                        SimpleVector<int> subCont = 
+                            nextPlayer->subContainedIDs[c];
+                        SimpleVector<timeSec_t> subContDecay = 
+                            nextPlayer->subContainedEtaDecays[c];
+
+                        if( newDecay != 0 && newDecay < curTime ) {
                             
                             change = true;
                             
@@ -5856,17 +5985,91 @@ int main() {
                                 }
                             }
                         
+                        SimpleVector<int> cVec;
+                        SimpleVector<timeSec_t> dVec;
+
                         if( newID != 0 ) {
                             newContained.push_back( newID );
                             newContainedETA.push_back( newDecay );
+                            
+                            int newSlots = getObject( newID )->numSlots;
+                            
+                            if( newID != oldID
+                                &&
+                                newSlots < getObject( oldID )->numSlots ) {
+                                
+                                // shrink sub-contained
+                                subCont.shrink( newSlots );
+                                subContDecay.shrink( newSlots );
+                                }
+                            }
+                        else {
+                            subCont.deleteAll();
+                            subContDecay.deleteAll();
+                            }
+
+                        // handle decay for each sub-contained object
+                        for( int s=0; s<subCont.size(); s++ ) {
+                            int oldSubID = subCont.getElementDirect( s );
+                            int newSubID = oldSubID;
+                            timeSec_t newSubDecay = 
+                                subContDecay.getElementDirect( s );
+                            
+                            if( newSubDecay != 0 && newSubDecay < curTime ) {
+                            
+                                change = true;
+                            
+                                TransRecord *t = getTrans( -1, oldSubID );
+
+                                newSubDecay = 0;
+
+                                if( t != NULL ) {
+                                
+                                    newSubID = t->newTarget;
+                            
+                                    if( newSubID != 0 ) {
+                                        float subStretch = 
+                                            getObject( newID )->
+                                            slotTimeStretch;
+                                    
+                                        TransRecord *newSubDecayT = 
+                                            getTrans( -1, newSubID );
+                                
+                                        if( newSubDecayT != NULL ) {
+                                            newSubDecay = 
+                                                Time::timeSec() +
+                                                newSubDecayT->autoDecaySeconds /
+                                                subStretch;
+                                            }
+                                        else {
+                                            // no further decay
+                                            newSubDecay = 0;
+                                            }
+                                        }
+                                    }
+                                }
+                            
+                            if( newSubID != 0 ) {
+                                cVec.push_back( newSubID );
+                                dVec.push_back( newSubDecay );
+                                }
+                            }
+                        
+                        if( newID != 0 ) {    
+                            newSubContained.push_back( cVec );
+                            newSubContainedETA.push_back( dVec );
                             }
                         }
+                    
+                    
 
                     if( change ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
-                    
+                        
                         delete [] nextPlayer->containedIDs;
                         delete [] nextPlayer->containedEtaDecays;
+                        delete [] nextPlayer->subContainedIDs;
+                        delete [] nextPlayer->subContainedEtaDecays;
                         
                         nextPlayer->numContained = newContained.size();
                         
@@ -5874,6 +6077,11 @@ int main() {
                             newContained.getElementArray();
                         nextPlayer->containedEtaDecays = 
                             newContainedETA.getElementArray();
+                        
+                        nextPlayer->subContainedIDs =
+                            newSubContained.getElementArray();
+                        nextPlayer->subContainedEtaDecays =
+                            newSubContainedETA.getElementArray();
                         }
                     }
                 
@@ -7085,6 +7293,14 @@ int main() {
                 
                 if( nextPlayer->containedEtaDecays != NULL ) {
                     delete [] nextPlayer->containedEtaDecays;
+                    }
+
+                if( nextPlayer->subContainedIDs != NULL ) {
+                    delete [] nextPlayer->subContainedIDs;
+                    }
+                
+                if( nextPlayer->subContainedEtaDecays != NULL ) {
+                    delete [] nextPlayer->subContainedEtaDecays;
                     }
                 
                 if( nextPlayer->pathToDest != NULL ) {

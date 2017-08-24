@@ -86,21 +86,25 @@ timeSec_t getSlotEtaDecay( int inX, int inY, int inSlot, int inSubCont = 0 );
 
 
 // adds to top of stack
+// negative elements indicate sub-containers
 void addContained( int inX, int inY, int inContainedID, 
                    timeSec_t inEtaDecay, int inSubCont = 0 );
 
 int getNumContained( int inX, int inY, int inSubCont = 0 );
 
 // destroyed by caller, returns NULL if empty
+// negative elements indicate sub-containers
 int *getContained( int inX, int inY, int *outNumContained, int inSubCont = 0 );
 timeSec_t *getContainedEtaDecay( int inX, int inY, int *outNumContained,
                                  int inSubCont = 0 );
 
 // gets contained item from specified slot, or from top of stack
 // if inSlot is -1
+// negative elements indicate sub-containers
 int getContained( int inX, int inY, int inSlot, int inSubCont = 0 );
 
 
+// setting negative elements indicates sub containers
 void setContained( int inX, int inY, int inNumContained, int *inContained,
                    int inSubCont = 0 );
 void setContainedEtaDecay( int inX, int inY, int inNumContained, 

@@ -142,6 +142,8 @@ carrots, for example.
 
 
 
+
+
 MC
 sizeX sizeY x y
 binary_raw_size binary_compressed_size 
@@ -171,7 +173,7 @@ p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_o
 
 List of player ids with their display object ids, facing direction, action
 attempt flag, action attempt target position,
-held object ids, 
+held object ids (in CONTAINER OBJECT FORMAT, see above), 
 whether held origin is valid (1 or 0), origin position on map of that held 
 object (where it was picked up from), 
 transition source object id (or -1) if held object is result of a transition,
