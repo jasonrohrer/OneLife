@@ -86,9 +86,9 @@ EditorObjectPage::EditorObjectPage()
                           false,
                           "Slot Size", "0123456789", NULL ),
           mSlotTimeStretchField( smallFont, 
-                                 150,  -120, 6,
+                                 -155,  -110, 4,
                                  false,
-                                 "Time Strech", "0123456789.", NULL ),
+                                 "Tm Strch", "0123456789.", NULL ),
           mDeadlyDistanceField( smallFont, 
                                 150,  -220, 4,
                                 false,
@@ -1672,8 +1672,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         setSignal( "animEditor" );
         }
     else if( inTarget == &mMoreSlotsButton ) {
-        mCurrentObject.containable = 0;
-        mCurrentObject.vertContainRotationOffset = 0;
         
         int numSlots = mCurrentObject.numSlots;
         
@@ -1719,10 +1717,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mSlotSizeField.setVisible( true );
         mSlotTimeStretchField.setVisible( true );
         
-        mContainSizeField.setInt( 1 );
-        mContainSizeField.setVisible( false );
-        mCheckboxes[0]->setToggled( false );
-        hideVertRotButtons();
         
         mPersonAgeSlider.setVisible( false );
 
@@ -2689,18 +2683,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 
             mContainSizeField.setVisible( true );
             
-            mSlotSizeField.setInt( 1 );
-            mSlotSizeField.setVisible( false );
-            mSlotTimeStretchField.setText( "1.0" );
-            mSlotTimeStretchField.setVisible( false );
-            
-
-            mDemoSlotsButton.setVisible( false );
-            mDemoSlots = false;
-            mClearSlotsDemoButton.setVisible( false );
-                        
-            mCurrentObject.numSlots = 0;
-
             mPersonAgeSlider.setVisible( false );
             mCheckboxes[2]->setToggled( false );
             
@@ -4301,7 +4283,7 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         
         mPickedObjectLayer = mCurrentObject.numSprites - 1;
 
-        doublePair offset = { 16, 16 };
+        doublePair offset = { 15, 15 };
         
         mCurrentObject.spritePos[mPickedObjectLayer] =
             add( mCurrentObject.spritePos[layerToDupe], offset );
