@@ -2758,7 +2758,10 @@ static char removeFromContainerToHold( LiveObject *inPlayer,
             if( numIn > 0 ) {
                 toRemoveID = getContained( inContX, inContY, inSlotNumber );
                 }
-                                
+            
+            if( toRemoveID < 0 ) {
+                toRemoveID *= -1;
+                }
 
             if( inPlayer->holdingID == 0 && 
                 numIn > 0 &&

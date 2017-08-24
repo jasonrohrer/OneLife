@@ -1588,7 +1588,9 @@ float getMapContainerTimeStretch( int inX, int inY, int inSubCont=0 ) {
         containerID = getContained( inX, inY, inSubCont - 1 );
         }
     
-
+    if( containerID < 0 ) {
+        containerID *= -1;
+        }
 
     if( containerID != 0 ) {
         stretch = getObject( containerID )->slotTimeStretch;
