@@ -299,8 +299,14 @@ FullMapContained getFullMapContained( int inX, int inY ) {
     r.containedEtaDecays = 
         getContainedEtaDecay( inX, inY, &( r.numContained ) );
     
-    r.subContainedIDs = new SimpleVector<int>[ r.numContained ];
-    r.subContainedEtaDecays = new SimpleVector<timeSec_t>[ r.numContained ];
+    if( r.numContained == 0 ) {
+        r.subContainedIDs = NULL;
+        r.subContainedEtaDecays = NULL;
+        }
+    else {
+        r.subContainedIDs = new SimpleVector<int>[ r.numContained ];
+        r.subContainedEtaDecays = new SimpleVector<timeSec_t>[ r.numContained ];
+        }
     
     for( int c=0; c< r.numContained; c++ ) {
         if( r.containedIDs[c] < 0 ) {
@@ -309,17 +315,22 @@ FullMapContained getFullMapContained( int inX, int inY ) {
             int *subContainedIDs = getContained( inX, inY, &numSub,
                                                  c + 1 );
             
-            r.subContainedIDs[c].appendArray( subContainedIDs, numSub );
+            if( subContainedIDs != NULL ) {
+                
+                r.subContainedIDs[c].appendArray( subContainedIDs, numSub );
+                delete [] subContainedIDs;
+                }
             
             timeSec_t *subContainedEtaDecays = 
                 getContainedEtaDecay( inX, inY, &numSub,
                                       c + 1 );
 
-            r.subContainedEtaDecays[c].appendArray( subContainedEtaDecays, 
-                                                     numSub );
-            
-            delete [] subContainedIDs;
-            delete [] subContainedEtaDecays;
+            if( subContainedEtaDecays != NULL ) {
+                
+                r.subContainedEtaDecays[c].appendArray( subContainedEtaDecays, 
+                                                        numSub );
+                delete [] subContainedEtaDecays;
+                }
             }
         }
     
@@ -341,8 +352,25 @@ void setContained( LiveObject *inPlayer, FullMapContained inContained ) {
     inPlayer->subContainedEtaDecays =
         inContained.subContainedEtaDecays;
     }
-
-
+    
+    
+    
+    
+void clearPlayerHeldContained( LiveObject *inPlayer ) {
+    inPlayer->numContained = 0;
+    
+    delete [] inPlayer->containedIDs;
+    delete [] inPlayer->containedEtaDecays;
+    delete [] inPlayer->subContainedIDs;
+    delete [] inPlayer->subContainedEtaDecays;
+    
+    inPlayer->containedIDs = NULL;
+    inPlayer->containedEtaDecays = NULL;
+    inPlayer->subContainedIDs = NULL;
+    inPlayer->subContainedEtaDecays = NULL;
+    }
+    
+            
 
 
 
@@ -1656,17 +1684,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             inDroppingPlayer->heldTransitionSourceID = -1;
             
             if( inDroppingPlayer->numContained != 0 ) {
-                delete [] inDroppingPlayer->containedIDs;
-                delete [] inDroppingPlayer->containedEtaDecays;
-                delete [] inDroppingPlayer->subContainedIDs;
-                delete [] inDroppingPlayer->subContainedEtaDecays;
-                
-                inDroppingPlayer->containedIDs = NULL;
-                inDroppingPlayer->containedEtaDecays = NULL;
-                inDroppingPlayer->subContainedIDs = NULL;
-                inDroppingPlayer->subContainedEtaDecays = NULL;
-                
-                inDroppingPlayer->numContained = 0;
+                clearPlayerHeldContained( inDroppingPlayer );
                 }
             return;
             }            
@@ -1744,17 +1762,8 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                 delete [] subDecays;
                 }
             }
-        delete [] inDroppingPlayer->containedIDs;
-        delete [] inDroppingPlayer->containedEtaDecays;
-        delete [] inDroppingPlayer->subContainedIDs;
-        delete [] inDroppingPlayer->subContainedEtaDecays;
-        
-        inDroppingPlayer->containedIDs = NULL;
-        inDroppingPlayer->containedEtaDecays = NULL;
-        inDroppingPlayer->subContainedIDs = NULL;
-        inDroppingPlayer->subContainedEtaDecays = NULL;
-        
-        inDroppingPlayer->numContained = 0;
+
+        clearPlayerHeldContained( inDroppingPlayer );
         }
                                 
 
@@ -2662,10 +2671,32 @@ static char addHeldToContainer( LiveObject *inPlayer,
         setResponsiblePlayer( 
             inPlayer->id );
         
+        int idToAdd = inPlayer->holdingID;
+
+        if( inPlayer->numContained > 0 ) {
+            // negative to indicate sub-container
+            idToAdd *= -1;
+            }
+
+        
+
         addContained( 
             inContX, inContY,
-            inPlayer->holdingID,
+            idToAdd,
             inPlayer->holdingEtaDecay );
+
+        if( inPlayer->numContained > 0 ) {
+            for( int c=0; c<inPlayer->numContained; c++ ) {
+                
+                addContained( inContX, inContY, inPlayer->containedIDs[c],
+                              inPlayer->containedEtaDecays[c],
+                              numIn + 1 );
+                }
+            
+            clearPlayerHeldContained( inPlayer );
+            }
+        
+
         
         setResponsiblePlayer( -1 );
         
@@ -2740,7 +2771,29 @@ static char removeFromContainerToHold( LiveObject *inPlayer,
                     removeContained( 
                         inContX, inContY, inSlotNumber,
                         &( inPlayer->holdingEtaDecay ) );
-                                    
+                        
+
+                if( inPlayer->holdingID < 0 ) {
+                    // sub-contained
+                    
+                    inPlayer->holdingID *= -1;
+                    
+                    inPlayer->containedIDs =
+                        getContained( inContX, inContY, 
+                                      &( inPlayer->numContained ), 
+                                      inSlotNumber + 1 );
+                    inPlayer->containedEtaDecays =
+                        getContainedEtaDecay( inContX, inContY, 
+                                              &( inPlayer->numContained ), 
+                                              inSlotNumber + 1 );
+
+                    // empty vectors... there are no sub-sub containers
+                    inPlayer->subContainedIDs = 
+                        new SimpleVector<int>[ inPlayer->numContained ];
+                    inPlayer->subContainedEtaDecays = 
+                        new SimpleVector<timeSec_t>[ inPlayer->numContained ];
+                    }
+                
                 // contained objects aren't animating
                 // in a way that needs to be smooth
                 // transitioned on client
@@ -5139,11 +5192,6 @@ int main() {
                                                 .appendArray( 
                                                     nextPlayer->containedIDs,
                                                     nextPlayer->numContained );
-                                            
-                                            delete [] 
-                                                nextPlayer->containedIDs;
-                                            nextPlayer->containedIDs = NULL;
-                                            
 
                                             targetPlayer->
                                                 clothingContainedEtaDecays[ind]
@@ -5152,24 +5200,12 @@ int main() {
                                                     containedEtaDecays,
                                                     nextPlayer->numContained );
                                                 
-                                            nextPlayer->numContained = 0;
-                                            delete [] 
-                                                nextPlayer->
-                                                containedEtaDecays;
-                                            nextPlayer->containedEtaDecays = 
-                                                NULL;
 
                                             // ignore sub-contained
                                             // because clothing can
                                             // never contain containers
-                                            delete [] 
-                                                nextPlayer->subContainedIDs;
-                                            delete []
-                                                nextPlayer->
-                                                subContainedEtaDecays;
-                                            nextPlayer->subContainedIDs = NULL;
-                                            nextPlayer->subContainedEtaDecays 
-                                                = NULL;
+                                            clearPlayerHeldContained( 
+                                                nextPlayer );
                                             }
                                             
                                         
