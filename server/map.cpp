@@ -3046,6 +3046,15 @@ int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay,
 
 
 void clearAllContained( int inX, int inY, int inSubCont ) {
+    if( inSubCont == 0 ) {
+        // clear sub container slots too
+        int oldNum = getNumContained( inX, inY, inSubCont );
+    
+        for( int i=0; i<oldNum; i++ ) {
+            dbPut( inX, inY, NUM_CONT_SLOT, 0, i + 1 );
+            }
+        }
+    
     dbPut( inX, inY, NUM_CONT_SLOT, 0, inSubCont );
     }
 

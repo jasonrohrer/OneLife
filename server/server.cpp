@@ -2781,14 +2781,22 @@ static char removeFromContainerToHold( LiveObject *inPlayer,
                     
                     inPlayer->holdingID *= -1;
                     
+                    int subSlotNumber = inSlotNumber;
+                    
+                    if( subSlotNumber == -1 ) {
+                        subSlotNumber = numIn - 1;
+                        }
+
                     inPlayer->containedIDs =
                         getContained( inContX, inContY, 
                                       &( inPlayer->numContained ), 
-                                      inSlotNumber + 1 );
+                                      subSlotNumber + 1 );
                     inPlayer->containedEtaDecays =
                         getContainedEtaDecay( inContX, inContY, 
                                               &( inPlayer->numContained ), 
-                                              inSlotNumber + 1 );
+                                              subSlotNumber + 1 );
+
+                    clearAllContained( inContX, inContY, subSlotNumber + 1 );
 
                     // empty vectors... there are no sub-sub containers
                     inPlayer->subContainedIDs = 
@@ -4567,8 +4575,6 @@ int main() {
 
                                     setContained( nextPlayer, f );
                                     
-                                    // don't need to clear sub contained
-                                    // they are lost when contained are cleared
                                     clearAllContained( m.x, m.y );
                                     
                                     setResponsiblePlayer( - nextPlayer->id );

@@ -116,6 +116,9 @@ void setContainedEtaDecay( int inX, int inY, int inNumContained,
 int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay,
                      int inSubCont = 0 );
 
+
+// if inSubCont is 0, container and all sub-containers are cleared
+// otherwise, clears only a specific sub-container
 void clearAllContained( int inX, int inY, int inSubCont = 0 );
 
 // if inNumNewSlots less than number contained, the excess are discarded
