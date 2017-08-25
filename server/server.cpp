@@ -1734,18 +1734,45 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     setEtaDecay( targetX, targetY, inDroppingPlayer->holdingEtaDecay );
     
     if( inDroppingPlayer->numContained != 0 ) {
+        timeSec_t curTime = Time::timeSec();
+        float stretch = 
+            getObject( inDroppingPlayer->holdingID )->slotTimeStretch;
         
         for( int c=0;
              c < inDroppingPlayer->numContained;
              c++ ) {
+            
+            // undo decay stretch before adding
+            // (stretch applied by adding)
+            if( stretch != 1.0 &&
+                inDroppingPlayer->containedEtaDecays[c] != 0 ) {
+                
+                timeSec_t offset = 
+                    inDroppingPlayer->containedEtaDecays[c] - curTime;
+                
+                offset = offset * stretch;
+                
+                inDroppingPlayer->containedEtaDecays[c] =
+                    curTime + offset;
+                }
 
             addContained( 
                 targetX, targetY,
                 inDroppingPlayer->containedIDs[c],
                 inDroppingPlayer->containedEtaDecays[c] );
-            
+
             int numSub = inDroppingPlayer->subContainedIDs[c].size();
             if( numSub > 0 ) {
+
+                int container = inDroppingPlayer->containedIDs[c];
+                
+                if( container < 0 ) {
+                    container *= -1;
+                    }
+                
+                float subStretch = getObject( container )->slotTimeStretch;
+                    
+                
                 int *subIDs = 
                     inDroppingPlayer->subContainedIDs[c].getElementArray();
                 timeSec_t *subDecays = 
@@ -1754,6 +1781,18 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                 
                 for( int s=0; s < numSub; s++ ) {
                     
+                    // undo decay stretch before adding
+                    // (stretch applied by adding)
+                    if( subStretch != 1.0 &&
+                        subDecays[s] != 0 ) {
+                
+                        timeSec_t offset = subDecays[s] - curTime;
+                        
+                        offset = offset * subStretch;
+                        
+                        subDecays[s] = curTime + offset;
+                        }
+
                     addContained( targetX, targetY,
                                   subIDs[s], subDecays[s],
                                   c + 1 );
