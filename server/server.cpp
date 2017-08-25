@@ -2712,6 +2712,11 @@ static char addHeldToContainer( LiveObject *inPlayer,
         
         int idToAdd = inPlayer->holdingID;
 
+
+        float stretch = getObject( idToAdd )->slotTimeStretch;
+                    
+                    
+
         if( inPlayer->numContained > 0 ) {
             // negative to indicate sub-container
             idToAdd *= -1;
@@ -2725,8 +2730,24 @@ static char addHeldToContainer( LiveObject *inPlayer,
             inPlayer->holdingEtaDecay );
 
         if( inPlayer->numContained > 0 ) {
+            timeSec_t curTime = Time::timeSec();
+            
             for( int c=0; c<inPlayer->numContained; c++ ) {
                 
+                // undo decay stretch before adding
+                // (stretch applied by adding)
+                if( stretch != 1.0 &&
+                    inPlayer->containedEtaDecays[c] != 0 ) {
+                
+                    timeSec_t offset = 
+                        inPlayer->containedEtaDecays[c] - curTime;
+                    
+                    offset = offset * stretch;
+                    
+                    inPlayer->containedEtaDecays[c] = curTime + offset;
+                    }
+
+
                 addContained( inContX, inContY, inPlayer->containedIDs[c],
                               inPlayer->containedEtaDecays[c],
                               numIn + 1 );
