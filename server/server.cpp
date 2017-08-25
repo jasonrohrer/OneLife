@@ -2753,14 +2753,17 @@ static char removeFromContainerToHold( LiveObject *inPlayer,
             int numIn = 
                 getNumContained( inContX, inContY );
                                 
-            int toRemoveID = -1;
+            int toRemoveID = 0;
                                 
             if( numIn > 0 ) {
                 toRemoveID = getContained( inContX, inContY, inSlotNumber );
                 }
             
+            char subContain = false;
+            
             if( toRemoveID < 0 ) {
                 toRemoveID *= -1;
+                subContain = true;
                 }
 
             if( inPlayer->holdingID == 0 && 
@@ -2769,18 +2772,9 @@ static char removeFromContainerToHold( LiveObject *inPlayer,
                 getObject( toRemoveID )->minPickupAge <= 
                 computeAge( inPlayer ) ) {
                 // get from container
-                                    
-                inPlayer->holdingID =
-                    removeContained( 
-                        inContX, inContY, inSlotNumber,
-                        &( inPlayer->holdingEtaDecay ) );
-                        
 
-                if( inPlayer->holdingID < 0 ) {
-                    // sub-contained
-                    
-                    inPlayer->holdingID *= -1;
-                    
+
+                if( subContain ) {
                     int subSlotNumber = inSlotNumber;
                     
                     if( subSlotNumber == -1 ) {
@@ -2796,13 +2790,28 @@ static char removeFromContainerToHold( LiveObject *inPlayer,
                                               &( inPlayer->numContained ), 
                                               subSlotNumber + 1 );
 
-                    clearAllContained( inContX, inContY, subSlotNumber + 1 );
+                    // these will be cleared when removeContained is called
+                    // for this slot below, so just get them now without clearing
 
                     // empty vectors... there are no sub-sub containers
                     inPlayer->subContainedIDs = 
                         new SimpleVector<int>[ inPlayer->numContained ];
                     inPlayer->subContainedEtaDecays = 
                         new SimpleVector<timeSec_t>[ inPlayer->numContained ];
+                
+                    }
+                
+                                    
+                inPlayer->holdingID =
+                    removeContained( 
+                        inContX, inContY, inSlotNumber,
+                        &( inPlayer->holdingEtaDecay ) );
+                        
+
+                if( inPlayer->holdingID < 0 ) {
+                    // sub-contained
+                    
+                    inPlayer->holdingID *= -1;    
                     }
                 
                 // contained objects aren't animating

@@ -113,6 +113,7 @@ void setContainedEtaDecay( int inX, int inY, int inNumContained,
 
 // removes contained item from specified slot, or remove from top of stack
 // if inSlot is -1
+// if inSubCont = 0, then sub-container in that slot is cleared by this call
 int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay,
                      int inSubCont = 0 );
 

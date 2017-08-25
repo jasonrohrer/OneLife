@@ -1369,11 +1369,23 @@ void freeMap() {
                 int *cont = getContainedRaw( x, y, &numCont, b );
 
                 for( int c=0; c<numCont; c++ ) {
+
+                    char subCont = false;
+                    
+                    if( cont[c] < 0 ) {
+                        cont[c] *= -1;
+                        subCont = true;
+                        }
+                    
                     ObjectRecord *contObj = getObject( cont[c] );
                     
                     if( contObj != NULL && contObj->isUseDummy ) {
                         cont[c] = contObj->useDummyParent;
                         numContChanged ++;
+                        }
+                   
+                    if( subCont ) {
+                        cont[c] *= -1;
                         }
                     }
                 
@@ -3015,19 +3027,57 @@ int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay,
 
     SimpleVector<int> newContainedList;
     SimpleVector<timeSec_t> newContainedETAList;
+
+    SimpleVector<int> newSubContainedNumList;
+    SimpleVector<int*> newSubContainedList;
+    SimpleVector<timeSec_t*> newSubContainedEtaList;
+        
     
     for( int i=0; i<oldNum; i++ ) {
         if( i != inSlot ) {
             newContainedList.push_back( oldContained[i] );
             newContainedETAList.push_back( oldContainedETA[i] );
+            
+            if( inSubCont == 0 ) {
+                int num;
+                
+                newSubContainedList.push_back(
+                    getContained( inX, inY, &num, i + 1 ) );
+                newSubContainedNumList.push_back( num );
+
+                newSubContainedEtaList.push_back(
+                    getContainedEtaDecay( inX, inY, &num, i + 1 ) );
+                }
             }
         }
+    clearAllContained( inX, inY );
     
     int *newContained = newContainedList.getElementArray();
     timeSec_t *newContainedETA = newContainedETAList.getElementArray();
 
-    setContained( inX, inY, oldNum - 1, newContained, inSubCont );
-    setContainedEtaDecay( inX, inY, oldNum - 1, newContainedETA, inSubCont );
+    int newNum = oldNum - 1;
+
+    setContained( inX, inY, newNum, newContained, inSubCont );
+    setContainedEtaDecay( inX, inY, newNum, newContainedETA, inSubCont );
+
+    if( inSubCont == 0 ) {
+        for( int i=0; i<newNum; i++ ) {
+            int *idList = newSubContainedList.getElementDirect( i );
+            timeSec_t *etaList = newSubContainedEtaList.getElementDirect( i );
+            
+            if( idList != NULL ) {
+                int num = newSubContainedNumList.getElementDirect( i );
+                
+                setContained( inX, inY, num, idList, i + 1 );
+                setContainedEtaDecay( inX, inY, num, etaList, i + 1 );
+                
+                delete [] idList;
+                delete [] etaList;
+                }
+            }
+        }
+    
+
     
     delete [] oldContained;
     delete [] oldContainedETA;
