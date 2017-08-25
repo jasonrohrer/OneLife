@@ -3115,6 +3115,14 @@ void shrinkContainer( int inX, int inY, int inNumNewSlots, int inSubCont ) {
     
     if( oldNum > inNumNewSlots ) {
         dbPut( inX, inY, NUM_CONT_SLOT, inNumNewSlots, inSubCont );
+        
+        if( inSubCont == 0 ) {    
+            // clear sub cont slots too
+            for( int i=inNumNewSlots; i<oldNum; i++ ) {
+                dbPut( inX, inY, NUM_CONT_SLOT, 0, i + 1 );
+                }
+            }
+        
         }
     }
 
