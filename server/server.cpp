@@ -1288,13 +1288,16 @@ char *getHoldingString( LiveObject *inObject ) {
             delete [] idString;
 
             if( inObject->subContainedIDs[i].size() > 0 ) {
-                idString = autoSprintf( 
-                    ":%d", 
-                    inObject->subContainedIDs[i].getElementDirect(i) );
+                for( int s=0; s<inObject->subContainedIDs[i].size(); s++ ) {
+                    
+                    idString = autoSprintf( 
+                        ":%d", 
+                        inObject->subContainedIDs[i].getElementDirect( s ) );
     
-                buffer.appendElementString( idString );
+                    buffer.appendElementString( idString );
                 
-                delete [] idString;
+                    delete [] idString;
+                    }
                 }
             }
         }
