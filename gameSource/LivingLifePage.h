@@ -117,6 +117,7 @@ typedef struct LiveObject {
 
         int numContained;
         int *containedIDs;
+        SimpleVector<int> *subContainedIDs;
         
         ClothingSet clothing;
         // stacks of items contained in each piece of clothing

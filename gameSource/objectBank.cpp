@@ -2330,7 +2330,8 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                        char inHideAllLimbs,
                        char inHeldNotInPlaceYet,
                        ClothingSet inClothing,
-                       int inNumContained, int *inContainedIDs ) {
+                       int inNumContained, int *inContainedIDs,
+                       SimpleVector<int> *inSubContained ) {
     
     drawObject( inObject, 0, inPos, inRot, inWorn, inFlipH, inAge, 
                 inHideClosestArm,
@@ -2386,13 +2387,89 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
 
 
         doublePair pos = add( slotPos, inPos );
-
         
-        drawObject( contained, 2, pos, rot, false, inFlipH, inAge,
-                    0,
-                    false,
-                    false,
-                    emptyClothing );
+
+
+
+        if( inSubContained != NULL &&
+            inSubContained[i].size() > 0 ) {
+                
+            // behind sub-contained
+            drawObject( contained, 0, pos, rot, false, inFlipH, inAge,
+                        0,
+                        false,
+                        false,
+                        emptyClothing );
+
+            for( int s=0; s<contained->numSlots; s++ ) {
+                if( s < inSubContained[i].size() ) {
+                    
+                    doublePair subPos = contained->slotPos[s];
+                    
+                    
+                    ObjectRecord *subContained = getObject( 
+                        inSubContained[i].getElementDirect( s ) );
+                    
+                    doublePair subCenterOffset =
+                        getObjectCenterOffset( subContained );
+                    
+                    double subRot = rot;
+                    
+                    if( contained->slotVert[s] ) {
+                        double rotOffset = 
+                            0.25 + subContained->vertContainRotationOffset;
+                        
+                        if( inFlipH ) {
+                            subCenterOffset = 
+                                rotate( subCenterOffset, 
+                                        - rotOffset * 2 * M_PI );
+                            subRot -= rotOffset;
+                            }
+                        else {
+                            subCenterOffset = 
+                                rotate( subCenterOffset, 
+                                        - rotOffset * 2 * M_PI );
+                            subRot += rotOffset;
+                            }
+                        }
+                    
+                    subPos = sub( subPos, centerOffset );
+                    
+                    if( inFlipH ) {
+                        subPos.x *= -1;
+                        }
+                    
+                    if( rot != 0 ) {
+                        subPos = rotate( subPos, -2 * M_PI * rot );
+                        }
+                    
+
+                    subPos = add( subPos, pos );
+                    
+                    drawObject( subContained, 2, subPos, subRot, 
+                                false, inFlipH,
+                                inAge, 0, false, false, emptyClothing );
+                    }
+                }
+                
+            // in front of sub-contained
+            drawObject( contained, 1, pos, rot, false, inFlipH, inAge,
+                        0,
+                        false,
+                        false,
+                        emptyClothing );
+
+            }
+        else {
+            // no sub-contained
+            // draw contained all at once
+            drawObject( contained, 2, pos, rot, false, inFlipH, inAge,
+                        0,
+                        false,
+                        false,
+                        emptyClothing );
+            }
+        
         }
     
     return drawObject( inObject, 1, inPos, inRot, inWorn, inFlipH, inAge, 

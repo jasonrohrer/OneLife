@@ -2221,7 +2221,8 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 false,
                                 mClothingSet,
                                 NULL,
-                                obj->numSlots, demoSlots );
+                                obj->numSlots, demoSlots,
+                                NULL );
                 }
             else {
                 
@@ -2375,7 +2376,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                 drawObject( obj, pos, 0, false,
                             mFlipDraw, age, false, false, false, 
                             mClothingSet,
-                            obj->numSlots, demoSlots );
+                            obj->numSlots, demoSlots, NULL );
                 }
             else {
                 drawObject( obj, 2, pos, 0, false, 

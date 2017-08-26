@@ -1252,6 +1252,10 @@ void LivingLifePage::clearLiveObjects() {
         if( nextObject->containedIDs != NULL ) {
             delete [] nextObject->containedIDs;
             }
+
+        if( nextObject->subContainedIDs != NULL ) {
+            delete [] nextObject->subContainedIDs;
+            }
         
         if( nextObject->pathToDest != NULL ) {
             delete [] nextObject->pathToDest;
@@ -1947,7 +1951,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             getEmptyClothingSet(),
                             NULL,
                             mMapContainedStacks[ inMapI ].size(),
-                            stackArray );
+                            stackArray, NULL );  // FIXME
             delete [] stackArray;
             }
         else {
@@ -2662,7 +2666,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                 false,
                                 babyO->clothing,
                                 babyO->clothingContained,
-                                0, NULL );
+                                0, NULL, NULL );
 
                 if( babyO->currentSpeech != NULL ) {
                     
@@ -2689,7 +2693,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                             false,
                             inObj->holdingFlip, -1, false, false, false,
                             getEmptyClothingSet(), NULL,
-                            0, NULL );
+                            0, NULL, NULL );
             }
         else {
             returnPack =
@@ -2711,7 +2715,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                             getEmptyClothingSet(),
                             NULL,
                             inObj->numContained,
-                            inObj->containedIDs );
+                            inObj->containedIDs,
+                            inObj->subContainedIDs );
             }
         }
                 
@@ -6552,6 +6557,8 @@ void LivingLifePage::step() {
                 
                 o.pathToDest = NULL;
                 o.containedIDs = NULL;
+                o.subContainedIDs = NULL;
+                
                 o.onFinalPathStep = false;
 
                 // don't track these for other players
@@ -6719,9 +6726,30 @@ void LivingLifePage::step() {
 
                         o.numContained = numInts - 1;
                         o.containedIDs = new int[ o.numContained ];
+                        o.subContainedIDs = 
+                            new SimpleVector<int>[ o.numContained ];
                         
                         for( int c=0; c<o.numContained; c++ ) {
                             o.containedIDs[c] = atoi( ints[ c + 1 ] );
+                            
+                            if( strstr( ints[c + 1], ":" ) != NULL ) {
+                                // sub-container items
+                                
+                                int numSubInts;
+                                char **subInts = 
+                                    split( ints[c + 1], ":", &numSubInts );
+                                
+                                delete [] subInts[0];
+                                int numSubCont = numSubInts - 1;
+                                for( int s=0; s<numSubCont; s++ ) {
+                                    o.subContainedIDs[c].push_back(
+                                        atoi( subInts[ s + 1 ] ) );
+                                    delete [] subInts[ s + 1 ];
+                                    }
+                                
+                                delete [] subInts;
+                                }
+
                             delete [] ints[ c + 1 ];
                             }
                         delete [] ints;
@@ -7432,8 +7460,13 @@ void LivingLifePage::step() {
                         if( existing->containedIDs != NULL ) {
                             delete [] existing->containedIDs;
                             }
+                        if( existing->subContainedIDs != NULL ) {
+                            delete [] existing->subContainedIDs;
+                            }
+
                         existing->containedIDs = o.containedIDs;
                         existing->numContained = o.numContained;
+                        existing->subContainedIDs = o.subContainedIDs;
                         
                         existing->xServer = o.xServer;
                         existing->yServer = o.yServer;
@@ -7753,6 +7786,9 @@ void LivingLifePage::step() {
 
                             if( nextObject->containedIDs != NULL ) {
                                 delete [] nextObject->containedIDs;
+                                }
+                            if( nextObject->subContainedIDs != NULL ) {
+                                delete [] nextObject->subContainedIDs;
                                 }
                             
                             if( nextObject->pathToDest != NULL ) {
@@ -9469,6 +9505,11 @@ void LivingLifePage::step() {
                     for( int j=0; j<o->numContained; j++ ) {
                         addBaseObjectToLiveObjectSet(
                             o->containedIDs[j] );
+                        
+                        for( int s=0; s<o->subContainedIDs[j].size(); s++ ) {
+                            addBaseObjectToLiveObjectSet(
+                                o->subContainedIDs[j].getElementDirect( s ) );
+                            }
                         }
                     }
                 

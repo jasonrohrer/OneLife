@@ -211,6 +211,7 @@ typedef struct ObjectAnimPack {
         int inNumContained;
         // can be NULL if there are none contained
         int *inContainedIDs;
+        SimpleVector<int> *inSubContained;
     } ObjectAnimPack;
 
 
@@ -238,7 +239,8 @@ ObjectAnimPack drawObjectAnimPacked(
     SimpleVector<int> *inClothingContained,
     int inNumContained, 
     // set to NULL if not used
-    int *inContainedIDs );
+    int *inContainedIDs,
+    SimpleVector<int> *inSubContained );
 
 
 // draw a packed animation now
@@ -323,7 +325,8 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      char inHeldNotInPlaceYet,
                      ClothingSet inClothing,
                      SimpleVector<int> *inClothingContained,
-                     int inNumContained, int *inContainedIDs );
+                     int inNumContained, int *inContainedIDs,
+                     SimpleVector<int> *inSubContained );
                      
 
 
@@ -348,7 +351,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      char inHeldNotInPlaceYet,
                      ClothingSet inClothing,
                      SimpleVector<int> *inClothingContained,
-                     int inNumContained, int *inContainedIDs );
+                     int inNumContained, int *inContainedIDs,
+                     SimpleVector<int> *inSubContained );
 
 
 

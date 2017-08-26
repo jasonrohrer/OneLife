@@ -774,7 +774,8 @@ ObjectAnimPack drawObjectAnimPacked(
     char inHeldNotInPlaceYet,
     ClothingSet inClothing,
     SimpleVector<int> *inClothingContained,
-    int inNumContained, int *inContainedIDs ) {
+    int inNumContained, int *inContainedIDs,
+    SimpleVector<int> *inSubContained ) {
     
     ObjectAnimPack outPack = {
         inObjectID,
@@ -798,7 +799,8 @@ ObjectAnimPack drawObjectAnimPacked(
         inClothing,
         inClothingContained,
         inNumContained,
-        inContainedIDs };
+        inContainedIDs,
+        inSubContained };
     
     return outPack;
     }
@@ -854,7 +856,8 @@ void drawObjectAnim( ObjectAnimPack inPack ) {
             inPack.inClothing,
             inPack.inClothingContained,
             inPack.inNumContained,
-            inPack.inContainedIDs );
+            inPack.inContainedIDs,
+            inPack.inSubContained );
         }
     }
 
@@ -1783,7 +1786,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                                 false,
                                 emptyClothing,
                                 NULL,
-                                numCont, cont );
+                                numCont, cont,
+                                NULL );
                 
                 if( cont != NULL ) {
                     delete [] cont;
@@ -1818,7 +1822,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                                 false,
                                 emptyClothing,
                                 NULL,
-                                numCont, cont );
+                                numCont, cont,
+                                NULL );
 
                 if( cont != NULL ) {
                     delete [] cont;
@@ -1853,7 +1858,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                                 false,
                                 emptyClothing,
                                 NULL,
-                                numCont, cont );
+                                numCont, cont,
+                                NULL );
 
                 if( cont != NULL ) {
                     delete [] cont;
@@ -1996,7 +2002,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                             false,
                             emptyClothing,
                             NULL,
-                            numCont, cont );
+                            numCont, cont,
+                            NULL );
 
             if( cont != NULL ) {
                 delete [] cont;
@@ -2031,7 +2038,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                             false,
                             emptyClothing,
                             NULL,
-                            numCont, cont );
+                            numCont, cont,
+                            NULL );
 
             if( cont != NULL ) {
                 delete [] cont;
@@ -2091,7 +2099,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                         false,
                         emptyClothing,
                         NULL,
-                        numCont, cont );
+                        numCont, cont,
+                        NULL );
         
         if( cont != NULL ) {
             delete [] cont;
@@ -2126,7 +2135,8 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                      char inHeldNotInPlaceYet,
                      ClothingSet inClothing,
                      SimpleVector<int> *inClothingContained,
-                     int inNumContained, int *inContainedIDs ) {
+                     int inNumContained, int *inContainedIDs,
+                     SimpleVector<int> *inSubContained ) {
     
     if( inType == ground2 ) {
         inType = ground;
@@ -2138,7 +2148,8 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
         drawObject( getObject( inObjectID ), inPos, inRot, inWorn, 
                     inFlipH, inAge, inHideClosestArm, inHideAllLimbs, 
                     inHeldNotInPlaceYet, inClothing,
-                    inNumContained, inContainedIDs );
+                    inNumContained, inContainedIDs,
+                    inSubContained );
         }
     else {
         if( inFadeTargetType == ground2 ) {
@@ -2172,7 +2183,8 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
                         inHideClosestArm, inHideAllLimbs, inHeldNotInPlaceYet,
                         inClothing,
                         inClothingContained,
-                        inNumContained, inContainedIDs );
+                        inNumContained, inContainedIDs,
+                        inSubContained );
         }
     }
 
@@ -2198,7 +2210,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                      char inHeldNotInPlaceYet,
                      ClothingSet inClothing,
                      SimpleVector<int> *inClothingContained,
-                     int inNumContained, int *inContainedIDs ) {
+                     int inNumContained, int *inContainedIDs,
+                     SimpleVector<int> *inSubContained ) {
     
     ClothingSet emptyClothing = getEmptyClothingSet();
 
@@ -2320,10 +2333,78 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             
 
             pos = add( pos, inPos );
-
             
-            drawObject( contained, 2, pos, rot, false, inFlipH,
-                        inAge, 0, false, false, emptyClothing );
+
+            if( inSubContained != NULL &&
+                inSubContained[i].size() > 0 ) {
+                
+                // behind sub-contained
+                drawObject( contained, 0, pos, rot, false, inFlipH,
+                            inAge, 0, false, false, emptyClothing );
+
+
+                for( int s=0; s<contained->numSlots; s++ ) {
+                    if( s < inSubContained[i].size() ) {
+                    
+                        doublePair subPos = contained->slotPos[s];
+                    
+
+                        ObjectRecord *subContained = getObject( 
+                            inSubContained[i].getElementDirect( s ) );
+                    
+                        doublePair subCenterOffset =
+                            getObjectCenterOffset( subContained );
+                    
+                        double subRot = rot;
+
+                        if( contained->slotVert[s] ) {
+                            double rotOffset = 
+                                0.25 + subContained->vertContainRotationOffset;
+                
+                            if( inFlipH ) {
+                                subCenterOffset = 
+                                    rotate( subCenterOffset, 
+                                            - rotOffset * 2 * M_PI );
+                                subRot -= rotOffset;
+                                }
+                            else {
+                                subCenterOffset = 
+                                    rotate( subCenterOffset, 
+                                            - rotOffset * 2 * M_PI );
+                                subRot += rotOffset;
+                                }
+                            }
+                    
+                        subPos = sub( subPos, centerOffset );
+                    
+                        if( inFlipH ) {
+                            subPos.x *= -1;
+                            }
+                    
+                        if( rot != 0 ) {
+                            subPos = rotate( subPos, -2 * M_PI * rot );
+                            }
+            
+
+                        subPos = add( subPos, pos );
+
+                        drawObject( subContained, 2, subPos, subRot, 
+                                    false, inFlipH,
+                                    inAge, 0, false, false, emptyClothing );
+                        }
+                    }
+                
+                // in front of sub-contained
+                drawObject( contained, 1, pos, rot, false, inFlipH,
+                            inAge, 0, false, false, emptyClothing );
+
+                }
+            else {
+                // no sub-contained
+                // draw contained all at once
+                drawObject( contained, 2, pos, rot, false, inFlipH,
+                            inAge, 0, false, false, emptyClothing );
+                }
             }
         
         } 

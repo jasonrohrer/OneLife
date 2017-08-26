@@ -425,7 +425,8 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos,
                        char inHideAllLimbs,
                        char inHeldNotInPlaceYet,
                        ClothingSet inClothing,
-                       int inNumContained, int *inContainedIDs );
+                       int inNumContained, int *inContainedIDs,
+                       SimpleVector<int> *inSubContained );
 
 
 
