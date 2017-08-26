@@ -208,6 +208,9 @@ EditorTransitionPage::EditorTransitionPage()
     mCurrentTransition.actorMinUseFraction = 0;
     mCurrentTransition.targetMinUseFraction = 0;
     
+    mCurrentTransition.move = 0;
+    mCurrentTransition.desiredMoveDist = 1;
+
     mCurrentlyReplacing = 0;
     
 
