@@ -2433,7 +2433,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                             }
                         }
                     
-                    subPos = sub( subPos, centerOffset );
+                    subPos = sub( subPos, subCenterOffset );
                     
                     if( inFlipH ) {
                         subPos.x *= -1;

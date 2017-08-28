@@ -2375,7 +2375,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                                 }
                             }
                     
-                        subPos = sub( subPos, centerOffset );
+                        subPos = sub( subPos, subCenterOffset );
                     
                         if( inFlipH ) {
                             subPos.x *= -1;
