@@ -6399,6 +6399,8 @@ void LivingLifePage::step() {
                                     &&
                                     ( ! obj->creationSoundInitialOnly
                                       ||
+                                      old <= 0
+                                      ||
                                       ( ! isSpriteSubset( old, newID ) 
                                         &&
                                         ! isAncestor( old, newID, 1 ) ) ) ) {
