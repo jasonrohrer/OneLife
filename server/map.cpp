@@ -2077,6 +2077,28 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         setContained( newX, newY, numCont, cont );
                         setContainedEtaDecay( newX, newY, numCont, contEta );
                         
+                        for( int c=0; c<numCont; c++ ) {
+                            if( cont[c] < 0 ) {
+                                // sub cont
+                                int numSub;
+                                int *subCont = getContained( inX, inY, 
+                                                             &numSub,
+                                                             c + 1 );
+                                timeSec_t *subContEta = getContainedEtaDecay( 
+                                    inX, inY, &numSub, c + 1 );
+                                
+                                if( numSub > 0 ) {
+                                    setContained( newX, newY, numSub,
+                                                  subCont, c + 1 );
+                                    setContainedEtaDecay( 
+                                        newX, newY, numSub, subContEta, c + 1 );
+                                    }
+                                delete [] subCont;
+                                delete [] subContEta;
+                                }
+                            }
+                        
+
                         clearAllContained( inX, inY );
                         
                         delete [] cont;
