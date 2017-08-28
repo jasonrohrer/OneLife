@@ -50,6 +50,20 @@ ufw allow from 173.230.147.48 to any port 22
 ufw allow 8005
 ufw --force enable
 
+echo ""
+echo ""
+echo "Setting up custom core file name"
+echo ""
+echo ""
+
+echo "core.%e.%p.%t" > /proc/sys/kernel/core_pattern
+
+echo "" >> /etc/sysctl.conf
+echo "" >> /etc/sysctl.conf
+echo "# custom core file name" >> /etc/sysctl.conf
+echo "kernel.core_pattern=core.%e.%p.%t" >> /etc/sysctl.conf
+
+
 
 echo ""
 echo ""

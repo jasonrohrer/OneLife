@@ -4,7 +4,7 @@ echo "New remote BACKUP server DNS setup and configuration"
 
 echo ""
 
-echo "You must run this as root from server.thecastledoctrine.net"
+echo "You must run this as root from onehouronelife.com"
 
 echo ""
 
