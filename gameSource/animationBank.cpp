@@ -2338,6 +2338,14 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             if( inSubContained != NULL &&
                 inSubContained[i].size() > 0 ) {
                 
+                AnimationRecord *subAnim = getAnimation( contained->id,
+                                                         inAnim->type );
+                AnimationRecord *subFadeTargetAnim = 
+                    getAnimation( contained->id,
+                                  inFadeTargetAnim->type );
+                
+
+
                 // behind sub-contained
                 drawObject( contained, 0, pos, rot, false, inFlipH,
                             inAge, 0, false, false, emptyClothing );
@@ -2377,6 +2385,45 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     
                         subPos = sub( subPos, subCenterOffset );
                     
+                        // apply anim to sub-slots
+                        if( subAnim != NULL && s < subAnim->numSlots ) {
+                
+                            subPos.x += 
+                                inAnimFade *
+                                getOscOffset( 
+                                    slotFrameTime,
+                                    subAnim->slotAnim[s].xOscPerSec,
+                                    subAnim->slotAnim[s].xAmp,
+                                    subAnim->slotAnim[s].xPhase );
+                
+                            subPos.y += 
+                                inAnimFade * 
+                                getOscOffset( 
+                                    slotFrameTime,
+                                    subAnim->slotAnim[s].yOscPerSec,
+                                    subAnim->slotAnim[s].yAmp,
+                                    subAnim->slotAnim[s].yPhase );
+
+                            if( inAnimFade < 1 ) {
+                                double targetWeight = 1 - inAnimFade;
+                                
+                                subPos.x += targetWeight * getOscOffset( 
+                                    targetSlotFrameTime,
+                                    subFadeTargetAnim->slotAnim[s].xOscPerSec,
+                                    subFadeTargetAnim->slotAnim[s].xAmp,
+                                        subFadeTargetAnim->slotAnim[s].xPhase );
+                    
+                                subPos.y += targetWeight * getOscOffset( 
+                                    targetSlotFrameTime,
+                                    subFadeTargetAnim->slotAnim[s].yOscPerSec,
+                                    subFadeTargetAnim->slotAnim[s].yAmp,
+                                    subFadeTargetAnim->slotAnim[s].yPhase );
+                                }
+                            }
+            
+
+
+
                         if( inFlipH ) {
                             subPos.x *= -1;
                             }
