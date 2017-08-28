@@ -273,7 +273,7 @@ typedef struct ExtraMapObject {
         char flip;
 
         SimpleVector<int> containedStack;
-
+        SimpleVector< SimpleVector<int> > subContainedStack;
     } ExtraMapObject;
         
         
@@ -392,6 +392,9 @@ class LivingLifePage : public GamePage {
 
         SimpleVector<int> *mMapContainedStacks;
 
+        SimpleVector< SimpleVector<int> > *mMapSubContainedStacks;
+        
+        
         // true if this map spot was something that our
         // player was responsible for placing
         char *mMapPlayerPlacedFlags;

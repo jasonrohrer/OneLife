@@ -1182,6 +1182,8 @@ LivingLifePage::LivingLifePage()
     mMapCellDrawnFlags = new char[ mMapD * mMapD ];
 
     mMapContainedStacks = new SimpleVector<int>[ mMapD * mMapD ];
+    mMapSubContainedStacks = 
+        new SimpleVector< SimpleVector<int> >[ mMapD * mMapD ];
     
     mMapAnimationFrameCount =  new int[ mMapD * mMapD ];
     mMapAnimationLastFrameCount =  new int[ mMapD * mMapD ];
@@ -1321,6 +1323,7 @@ LivingLifePage::~LivingLifePage() {
     delete [] mMapTileFlips;
     
     delete [] mMapContainedStacks;
+    delete [] mMapSubContainedStacks;
     
     delete [] mMap;
     delete [] mMapBiomes;
@@ -1935,7 +1938,9 @@ void LivingLifePage::drawMapCell( int inMapI,
         if( mMapContainedStacks[ inMapI ].size() > 0 ) {
             int *stackArray = 
                 mMapContainedStacks[ inMapI ].getElementArray();
-                    
+            SimpleVector<int> *subStackArray =
+                mMapSubContainedStacks[ inMapI ].getElementArray();
+            
             drawObjectAnim( oID, 
                             curType, timeVal,
                             animFade,
@@ -1951,8 +1956,9 @@ void LivingLifePage::drawMapCell( int inMapI,
                             getEmptyClothingSet(),
                             NULL,
                             mMapContainedStacks[ inMapI ].size(),
-                            stackArray, NULL );  // FIXME
+                            stackArray, subStackArray );
             delete [] stackArray;
+            delete [] subStackArray;
             }
         else {
             drawObjectAnim( oID, 2, 
@@ -5666,6 +5672,12 @@ void LivingLifePage::step() {
 
 
             char *newMapTileFlips= new char[ mMapD * mMapD ];
+            
+            SimpleVector<int> *newMapContainedStacks = 
+                new SimpleVector<int>[ mMapD * mMapD ];
+            
+            SimpleVector< SimpleVector<int> > *newMapSubContainedStacks = 
+                new SimpleVector< SimpleVector<int> >[ mMapD * mMapD ];
 
             char *newMapPlayerPlacedFlags = new char[ mMapD * mMapD ];
 
@@ -5732,6 +5744,11 @@ void LivingLifePage::step() {
                     newMapMoveSpeeds[i] = mMapMoveSpeeds[oI];
 
                     newMapTileFlips[i] = mMapTileFlips[oI];
+                    
+
+                    newMapContainedStacks[i] = mMapContainedStacks[i];
+                    newMapSubContainedStacks[i] = mMapSubContainedStacks[i];
+
                     newMapPlayerPlacedFlags[i] = 
                         mMapPlayerPlacedFlags[oI];
                     }
@@ -5771,6 +5788,14 @@ void LivingLifePage::step() {
             
             memcpy( mMapTileFlips, newMapTileFlips,
                     mMapD * mMapD * sizeof( char ) );
+            
+            // can't memcpy vectors
+            // need to assign them so copy constructors are invoked
+            for( int i=0; i<mMapD *mMapD; i++ ) {
+                mMapContainedStacks[i] = newMapContainedStacks[i];
+                mMapSubContainedStacks[i] = newMapSubContainedStacks[i];
+                }
+            
 
             memcpy( mMapPlayerPlacedFlags, newMapPlayerPlacedFlags,
                     mMapD * mMapD * sizeof( char ) );
@@ -5791,6 +5816,8 @@ void LivingLifePage::step() {
             delete [] newMapMoveSpeeds;
             
             delete [] newMapTileFlips;
+            delete [] newMapContainedStacks;
+            delete [] newMapSubContainedStacks;
             
             delete [] newMapPlayerPlacedFlags;
             
@@ -5871,7 +5898,7 @@ void LivingLifePage::step() {
                                 }
 
                             mMapContainedStacks[mapI].deleteAll();
-                            
+                            mMapSubContainedStacks[mapI].deleteAll();
                             
                             if( strstr( tokens->getElementDirect(i), "," ) 
                                 != NULL ) {
@@ -5886,10 +5913,39 @@ void LivingLifePage::step() {
                                 int numContained = numInts - 1;
                                 
                                 for( int c=0; c<numContained; c++ ) {
+                                    SimpleVector<int> newSubStack;
+                                    
+                                    mMapSubContainedStacks[mapI].push_back(
+                                        newSubStack );
+                                    
                                     int contained = atoi( ints[ c + 1 ] );
                                     mMapContainedStacks[mapI].push_back( 
                                         contained );
                                     
+                                    if( strstr( ints[c + 1], ":" ) != NULL ) {
+                                        // sub-container items
+                                
+                                        int numSubInts;
+                                        char **subInts = 
+                                            split( ints[c + 1], 
+                                                   ":", &numSubInts );
+                                
+                                        delete [] subInts[0];
+                                        int numSubCont = numSubInts - 1;
+
+                                        SimpleVector<int> *subStack =
+                                            mMapSubContainedStacks[mapI].
+                                            getElement(c);
+
+                                        for( int s=0; s<numSubCont; s++ ) {
+                                            subStack->push_back(
+                                                atoi( subInts[ s + 1 ] ) );
+                                            delete [] subInts[ s + 1 ];
+                                            }
+
+                                        delete [] subInts;
+                                        }
+
                                     delete [] ints[ c + 1 ];
                                     }
                                 delete [] ints;
@@ -6004,12 +6060,43 @@ void LivingLifePage::step() {
                             delete [] ints[0];
 
                             mMapContainedStacks[mapI].deleteAll();
+                            mMapSubContainedStacks[mapI].deleteAll();
                             
                             int numContained = numInts - 1;
                             
                             for( int c=0; c<numContained; c++ ) {
+                                
+                                SimpleVector<int> newSubStack;
+                                    
+                                mMapSubContainedStacks[mapI].push_back(
+                                    newSubStack );
+                                
                                 mMapContainedStacks[mapI].push_back(
                                     atoi( ints[ c + 1 ] ) );
+                                
+                                if( strstr( ints[c + 1], ":" ) != NULL ) {
+                                    // sub-container items
+                                
+                                    int numSubInts;
+                                    char **subInts = 
+                                        split( ints[c + 1], ":", &numSubInts );
+                                
+                                    delete [] subInts[0];
+                                    int numSubCont = numSubInts - 1;
+                                    
+                                    SimpleVector<int> *subStack =
+                                        mMapSubContainedStacks[mapI].
+                                        getElement(c);
+
+                                    for( int s=0; s<numSubCont; s++ ) {
+                                        subStack->push_back(
+                                            atoi( subInts[ s + 1 ] ) );
+                                        delete [] subInts[ s + 1 ];
+                                        }
+
+                                    delete [] subInts;
+                                    }
+
                                 delete [] ints[ c + 1 ];
                                 }
                             delete [] ints;
@@ -6019,6 +6106,7 @@ void LivingLifePage::step() {
                             newID = atoi( idBuffer );
                             mMap[mapI] = newID;
                             mMapContainedStacks[mapI].deleteAll();
+                            mMapSubContainedStacks[mapI].deleteAll();
                             }
                         
                         if( speed > 0 ) {
@@ -9546,6 +9634,15 @@ void LivingLifePage::step() {
                     for( int j=0; j<numCont; j++ ) {
                         addBaseObjectToLiveObjectSet(
                             mMapContainedStacks[i].getElementDirect( j ) );
+                        
+                        SimpleVector<int> *subVec =
+                            mMapSubContainedStacks[i].getElement( j );
+                        
+                        int numSub = subVec->size();
+                        for( int s=0; s<numSub; s++ ) {
+                            addBaseObjectToLiveObjectSet( 
+                                subVec->getElementDirect( s ) );
+                            }
                         }
                     }
                 }
@@ -11315,7 +11412,8 @@ ExtraMapObject LivingLifePage::copyFromMap( int inMapI ) {
         mMapLastAnimType[ inMapI ],
         mMapLastAnimFade[ inMapI ],
         mMapTileFlips[ inMapI ],
-        mMapContainedStacks[ inMapI ] };
+        mMapContainedStacks[ inMapI ],
+        mMapSubContainedStacks[ inMapI ] };
     
     return o;
     }
@@ -11337,5 +11435,6 @@ void LivingLifePage::putInMap( int inMapI, ExtraMapObject *inObj ) {
     mMapTileFlips[ inMapI ] = inObj->flip;
     
     mMapContainedStacks[ inMapI ] = inObj->containedStack;
+    mMapSubContainedStacks[ inMapI ] = inObj->subContainedStack;
     }
 
