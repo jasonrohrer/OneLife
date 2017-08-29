@@ -1,0 +1,74 @@
+# include with:
+# valgrind --suppressions=./miniz.supp
+
+{
+  miniz.c conditional jump
+  Memcheck:Cond
+  fun:tdefl_flush_block
+  fun:*
+}
+
+
+{
+  miniz.c conditional jump
+  Memcheck:Cond
+  fun:tdefl_compress_lz_codes
+  fun:*
+}
+
+
+{
+  miniz.c value 4
+  Memcheck:Value4
+  fun:tdefl_compress_lz_codes
+  fun:*
+}
+
+
+{
+  miniz.c conditional jump
+  Memcheck:Cond
+  fun:tdefl_compress_normal
+  fun:*
+}
+
+
+{
+  miniz.c value 4
+  Memcheck:Value4
+  fun:tdefl_compress_normal
+  fun:*
+}
+
+
+
+{
+  miniz.c conditional jump
+  Memcheck:Cond
+  fun:tdefl_compress
+  fun:*
+}
+
+
+{
+  miniz.c conditional jump
+  Memcheck:Cond
+  fun:tdefl_find_match
+  fun:*
+}
+
+
+
+{
+  miniz.c conditional jump
+  Memcheck:Cond
+  fun:tdefl_record_match
+  fun:*
+}
+
+{
+  miniz.c value 4
+  Memcheck:Value4
+  fun:tdefl_record_match
+  fun:*
+}

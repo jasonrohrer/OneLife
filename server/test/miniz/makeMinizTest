@@ -1,0 +1,1 @@
+g++ -g -I ../../ -o minizTest minizTest.cpp ../../minorGems/formats/encodingUtils.cpp
