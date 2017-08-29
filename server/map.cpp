@@ -1978,8 +1978,9 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                     if( numPossibleDirs > 0 ) {
                         int pick = 
-                            randSource.getRandomBoundedInt( 0,
-                                                            numPossibleDirs );
+                            randSource.getRandomBoundedInt( 
+                                0, numPossibleDirs - 1 );
+                        
                         newX = possibleX[ pick ];
                         newY = possibleY[ pick ];
                         }

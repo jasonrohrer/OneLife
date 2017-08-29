@@ -5696,12 +5696,18 @@ void LivingLifePage::step() {
                 // each cell is different, but always the same
                 newMapAnimationFrameCount[i] =
                     lrint( getXYRandom( worldX, worldY ) * 10000 );
+                newMapAnimationLastFrameCount[i] =
+                    newMapAnimationFrameCount[i];
                 
+                newMapAnimationFrozenRotFameCount[i] = 0;
+                
+
                 newMapCurAnimType[i] = ground;
                 newMapLastAnimFade[i] = ground;
                 newMapLastAnimFade[i] = 0;
                 newMapDropOffsets[i].x = 0;
                 newMapDropOffsets[i].y = 0;
+                newMapDropRot[i] = 0;
                 
                 newMapDropSounds[i] = blankSoundUsage;
                 
