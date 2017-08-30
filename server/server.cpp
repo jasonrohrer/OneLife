@@ -6106,8 +6106,6 @@ int main() {
                         SimpleVector<timeSec_t> dVec;
 
                         if( newID != 0 ) {
-                            newContained.push_back( newID );
-                            newContainedETA.push_back( newDecay );
                             
                             int newSlots = getObject( newID )->numSlots;
                             
@@ -6175,6 +6173,13 @@ int main() {
                         if( newID != 0 ) {    
                             newSubContained.push_back( cVec );
                             newSubContainedETA.push_back( dVec );
+
+                            if( cVec.size() > 0 ) {
+                                newID *= -1;
+                                }
+                            
+                            newContained.push_back( newID );
+                            newContainedETA.push_back( newDecay );
                             }
                         }
                     
