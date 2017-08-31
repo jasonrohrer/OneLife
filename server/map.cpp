@@ -2549,7 +2549,7 @@ void lookAtRegion( int inXStart, int inYStart, int inXEnd, int inYEnd ) {
                         
                         oldLookTime =
                             liveDecayRecordLastLookTimeHashTable.lookupPointer( 
-                                x, y, s, c+1, &found );
+                                x, y, s + 1, c+1, &found );
                         if( oldLookTime != NULL ) {
                             // look at it now
                             *oldLookTime = currentTime;
