@@ -496,6 +496,19 @@ static int xLimit = 2147481977;
 static int yLimit = 2147481977;
 
 
+static char useTestMap = false;
+
+#define TEST_MAP_SIZE 2
+static int testMap[ TEST_MAP_SIZE ][ 3 ] = { 
+    { 3004, 4999, 242 }, 
+    { 3006, 4999, 49 } };
+
+    
+    
+
+
+
+
 static int getBaseMap( int inX, int inY ) {
     
     if( inX > xLimit || inX < -xLimit ||
@@ -504,6 +517,20 @@ static int getBaseMap( int inX, int inY ) {
         return edgeObjectID;
         }
     
+
+    if( useTestMap ) {
+        for( int i=0; i<TEST_MAP_SIZE; i++ ) {
+            if( testMap[i][0] == inX &&
+                testMap[i][1] == inY ) {
+                
+                return testMap[i][2];
+                }
+            }
+
+        return 0;
+        }
+
+
     
     // first step:  save rest of work if density tells us that
     // nothing is here anyway
@@ -1535,7 +1562,6 @@ static void dbTimePut( int inX, int inY, int inSlot, timeSec_t inTime,
 
 
 
-// NEXT FIXME
 
 
 
