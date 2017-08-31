@@ -200,6 +200,27 @@ static SimpleVector<ChangePosition> mapChangePosSinceLastStep;
 
 
 
+// if true, rest of natural map is blank
+static char useTestMap = false;
+
+// read from testMap.txt
+// unless testMapStale.txt is present
+
+// each line contains data in this order:
+// x y biome id_and_contained
+// id and contained are in CONTAINER OBJECT FORMAT described in protocol.txt
+// biome = -1 means use naturally-occurring biome
+typedef struct TestMapRecord {
+        int x, y;
+        int biome;
+        int id;
+        SimpleVector<int> contained;
+        SimpleVector< SimpleVector<int> > subContained;
+    } TestMapRecord;
+
+
+
+
 
 
 #include "../commonSource/fractalNoise.h"
@@ -495,14 +516,6 @@ static int lastCheckedBiome = -1;
 static int xLimit = 2147481977;
 static int yLimit = 2147481977;
 
-
-static char useTestMap = false;
-
-#define TEST_MAP_SIZE 2
-static int testMap[ TEST_MAP_SIZE ][ 3 ] = { 
-    { 3004, 4999, 242 }, 
-    { 3006, 4999, 49 } };
-
     
     
 
@@ -519,14 +532,7 @@ static int getBaseMap( int inX, int inY ) {
     
 
     if( useTestMap ) {
-        for( int i=0; i<TEST_MAP_SIZE; i++ ) {
-            if( testMap[i][0] == inX &&
-                testMap[i][1] == inY ) {
-                
-                return testMap[i][2];
-                }
-            }
-
+        // any spots not already put in DB are blank
         return 0;
         }
 
@@ -1292,6 +1298,118 @@ void initMap() {
 
         writeRecentPlacements();
         }
+
+
+
+    useTestMap = SettingsManager::getIntSetting( "useTestMap", 0 );
+    
+
+    if( useTestMap ) {        
+
+        FILE *testMapFile = fopen( "testMap.txt", "r" );
+        FILE *testMapStaleFile = fopen( "testMapStale.txt", "r" );
+        
+        if( testMapFile != NULL && testMapStaleFile == NULL ) {
+            
+            testMapStaleFile = fopen( "testMapStale.txt", "w" );
+            
+            if( testMapStaleFile != NULL ) {
+                fprintf( testMapStaleFile, "1" );
+                fclose( testMapStaleFile );
+                testMapStaleFile = NULL;
+                }
+            
+
+            // break out when read fails
+            while( true ) {
+                TestMapRecord r;
+                
+                char stringBuff[1000];
+                
+                int numRead = fscanf( testMapFile, "%d %d %d %999s", 
+                                      &(r.x), &(r.y), &(r.biome),
+                                      stringBuff );
+                
+                if( numRead != 4 ) {
+                    break;
+                    }
+                
+                int numSlots;
+                
+                char **slots = split( stringBuff, ",", &numSlots );
+                
+                for( int i=0; i<numSlots; i++ ) {
+                    
+                    if( i == 0 ) {
+                        r.id = atoi( slots[0] );
+                        }
+                    else {
+                        
+                        int numSub;
+                        char **subSlots = split( slots[i], ":", &numSub );
+                        
+                        for( int j=0; j<numSub; j++ ) {
+                            if( j == 0 ) {
+                                int contID = atoi( subSlots[0] );
+                                
+                                if( numSub > 1 ) {
+                                    contID *= -1;
+                                    }
+                                
+                                r.contained.push_back( contID );
+                                SimpleVector<int> subVec;
+                                
+                                r.subContained.push_back( subVec );
+                                }
+                            else {
+                                SimpleVector<int> *subVec =
+                                    r.subContained.getElement( i - 1 );
+                                subVec->push_back( atoi( subSlots[j] ) );
+                                }
+                            delete [] subSlots[j];
+                            }
+                        delete [] subSlots;
+                        }
+                    
+                    delete [] slots[i];
+                    }
+                delete [] slots;
+
+
+
+                // set all test map directly in database
+                biomeDBPut( r.x, r.y, r.biome, r.biome, 0.5 );
+                
+                setMapObject( r.x, r.y, r.id );
+                
+                int *contArray = r.contained.getElementArray();
+                
+                setContained( r.x, r.y, r.contained.size(), contArray );
+                delete [] contArray;
+                
+                for( int c=0; c<r.contained.size(); c++ ) {
+
+                    int *subContArray = 
+                        r.subContained.getElement( c )->getElementArray();
+                    
+                    setContained( r.x, r.y, 
+                                  r.subContained.getElement(c)->size(),
+                                  subContArray, c + 1 );
+                    
+                    delete [] subContArray;
+                    }
+                }
+
+            fclose( testMapFile );
+            }
+        
+        if( testMapStaleFile != NULL ) {
+            fclose( testMapStaleFile );
+            }
+        }
+
+
+
     
     // for debugging the map
     //outputMapImage();
