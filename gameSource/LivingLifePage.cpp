@@ -6237,6 +6237,14 @@ void LivingLifePage::step() {
                                 putInMap( mapI, &oldObj );
                                 }
 
+
+                            if( old == 0 && sourceObjID != 0 ) {
+                                // object moving into empty spot
+                                // track where it came from as old
+                                // so that we don't play initial
+                                // creation sound by accident
+                                old = sourceObjID;
+                                }
                             }
                         else {
                             mMapMoveSpeeds[mapI] = 0;
