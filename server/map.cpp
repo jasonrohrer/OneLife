@@ -1678,6 +1678,22 @@ int *getContainedNoLook( int inX, int inY, int *outNumContained,
 
 
 
+// gets DB slot number where a given container slot's decay time is stored
+// if inNumContained is -1, it will be looked up in database
+static int getContainerDecaySlot( int inX, int inY, int inSlot, 
+                                  int inSubCont = 0,
+                                  int inNumContained = -1 ) {
+    if( inNumContained == -1 ) {    
+        inNumContained = getNumContained( inX, inY, inSubCont );
+        }
+    
+    return FIRST_CONT_SLOT + inNumContained + inSlot;
+    }
+
+
+
+
+
 timeSec_t *getContainedEtaDecay( int inX, int inY, int *outNumContained,
                                  int inSubCont ) {
     int num = getNumContained( inX, inY, inSubCont );
@@ -1692,7 +1708,9 @@ timeSec_t *getContainedEtaDecay( int inX, int inY, int *outNumContained,
 
     for( int i=0; i<num; i++ ) {
         // can be 0 if not found, which is okay
-        containedEta[i] = dbTimeGet( inX, inY, FIRST_CONT_SLOT + num + i,
+        containedEta[i] = dbTimeGet( inX, inY, 
+                                     getContainerDecaySlot( inX, inY, i,
+                                                            inSubCont, num ),
                                      inSubCont );
         }
     return containedEta;
@@ -2857,18 +2875,13 @@ timeSec_t getEtaDecay( int inX, int inY ) {
 
 
 
-// gets DB slot number where a given container slot's decay time is stored
-static int getContainerDecaySlot( int inX, int inY, int inSlot ) {
-    int numSlots = getNumContained( inX, inY );
 
-    return FIRST_CONT_SLOT + numSlots + inSlot;
-    }
 
 
 
 void setSlotEtaDecay( int inX, int inY, int inSlot,
                       timeSec_t inAbsoluteTimeInSeconds, int inSubCont ) {
-    dbTimePut( inX, inY, getContainerDecaySlot( inX, inY, inSlot ),
+    dbTimePut( inX, inY, getContainerDecaySlot( inX, inY, inSlot, inSubCont ),
                inAbsoluteTimeInSeconds, inSubCont );
     if( inAbsoluteTimeInSeconds != 0 ) {
         trackETA( inX, inY, inSlot + 1, inAbsoluteTimeInSeconds,
@@ -2879,7 +2892,8 @@ void setSlotEtaDecay( int inX, int inY, int inSlot,
 
 timeSec_t getSlotEtaDecay( int inX, int inY, int inSlot, int inSubCont ) {
     // 0 if not found
-    return dbTimeGet( inX, inY, getContainerDecaySlot( inX, inY, inSlot ),
+    return dbTimeGet( inX, inY, getContainerDecaySlot( inX, inY, inSlot, 
+                                                       inSubCont ),
                       inSubCont );
     }
 
@@ -2972,7 +2986,9 @@ void setContained( int inX, int inY, int inNumContained, int *inContained,
 void setContainedEtaDecay( int inX, int inY, int inNumContained, 
                            timeSec_t *inContainedEtaDecay, int inSubCont ) {
     for( int i=0; i<inNumContained; i++ ) {
-        dbTimePut( inX, inY, FIRST_CONT_SLOT + inNumContained + i,
+        dbTimePut( inX, inY, 
+                   getContainerDecaySlot( inX, inY, i, inSubCont,
+                                          inNumContained ),
                    inContainedEtaDecay[i], inSubCont );
         
         if( inContainedEtaDecay[i] != 0 ) {
@@ -3029,7 +3045,9 @@ int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay,
 
     timeSec_t curTime = Time::timeSec();
     
-    timeSec_t resultEta = dbTimeGet( inX, inY, FIRST_CONT_SLOT + num + inSlot,
+    timeSec_t resultEta = dbTimeGet( inX, inY, 
+                                     getContainerDecaySlot( 
+                                         inX, inY, inSlot, inSubCont, num ),
                                      inSubCont );
 
     if( resultEta != 0 ) {    
