@@ -125,7 +125,7 @@ static void rebuildRaceList() {
 static JenkinsRandomSource randSource;
 
 
-static ClothingSet emptyClothing = getEmptyClothingSet();
+static ClothingSet emptyClothing = { NULL, NULL, NULL, NULL, NULL, NULL };
 
 
 
