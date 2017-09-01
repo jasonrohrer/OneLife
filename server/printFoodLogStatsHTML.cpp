@@ -26,6 +26,7 @@ typedef struct FoodRec {
     } FoodRec;
 
     
+SimpleVector<FoodRec> monthRecords;
 SimpleVector<FoodRec> weekRecords;
 SimpleVector<FoodRec> todayRecords;
 SimpleVector<FoodRec> yesterdayRecords;
@@ -101,6 +102,7 @@ void processLogFile( File *inFile ) {
     
     char *path = inFile->getFullFileName();
 
+    char isThisWeek = false;
     char isToday = false;
     char isYesterday = false;
     char isThisHour = false;
@@ -113,7 +115,17 @@ void processLogFile( File *inFile ) {
     char monthName[100];
 
     sscanf( name, "%d_%d%99[^_]_%d", &fileYear, &fileMonth, monthName, &fileDay );
+    struct tm fileTimeStruct;
 
+    time_t t = time( NULL );
+    fileTimeStruct = *( localtime ( &t ) );
+
+    fileTimeStruct.tm_year = fileYear - 1900;
+    fileTimeStruct.tm_mon = fileMonth - 1;
+    fileTimeStruct.tm_mday = fileDay;
+
+    time_t fileT = mktime( &fileTimeStruct );
+    
 
     int numDaysInFileMonth;  
     if( fileMonth == 4 || fileMonth == 6 || 
@@ -136,7 +148,6 @@ void processLogFile( File *inFile ) {
         }
     
     
-    time_t t = time( NULL );
     struct tm *timeStruct = localtime( &t );
     
     int currentYear = timeStruct->tm_year + 1900;
@@ -146,10 +157,20 @@ void processLogFile( File *inFile ) {
     int currentHour = timeStruct->tm_hour;
 
     if( currentYear == fileYear &&
+        currentMonth == fileMonth &&
         currentDay == fileDay ) {
         
         isToday = true;
         }
+
+
+    double secDiff = difftime( t, fileT );
+    
+    if( secDiff < 7 * 24 * 3600 ) {
+        isThisWeek = true;
+        }
+    
+    
     if( currentYearDay == 0 ) {
         // jan 1
         if( currentYear - 1 == fileYear &&
@@ -222,18 +243,22 @@ void processLogFile( File *inFile ) {
                         &id, &count, &value, &aveAge, &aveMapX, &aveMapY );
             
             if( numScanned == 6 ) {
-                
-                addCountAndValue( &weekRecords, id, count, value );
-                
 
-                if( isToday ) {
-                    addCountAndValue( &todayRecords, id, count, value );
-                    if( isThisHour ) {
-                        addCountAndValue( &hourRecords, id, count, value );
+                addCountAndValue( &monthRecords, id, count, value );
+
+                if( isThisWeek ) {
+                    
+                    addCountAndValue( &weekRecords, id, count, value );
+                    
+                    if( isToday ) {
+                        addCountAndValue( &todayRecords, id, count, value );
+                        if( isThisHour ) {
+                            addCountAndValue( &hourRecords, id, count, value );
+                            }
                         }
-                    }
-                else if( isYesterday ) {
-                    addCountAndValue( &yesterdayRecords, id, count, value );
+                    else if( isYesterday ) {
+                        addCountAndValue( &yesterdayRecords, id, count, value );
+                        }
                     }
 
                 scannedLine = true;
@@ -340,6 +365,7 @@ int main( int inNumArgs, char **inArgs ) {
         delete [] logs;
 
 
+        sortRecList( &monthRecords );
         sortRecList( &weekRecords );
         sortRecList( &todayRecords );
         sortRecList( &yesterdayRecords );
@@ -361,6 +387,9 @@ int main( int inNumArgs, char **inArgs ) {
             
             printTable( "Past week",
                         &objDir, outFile, &weekRecords );
+
+            printTable( "Past month",
+                        &objDir, outFile, &monthRecords );
         
             fclose( outFile );
             }

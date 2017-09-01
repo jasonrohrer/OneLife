@@ -27,6 +27,8 @@ Server fixes:
   New solo players are placed randomly in the wilderness.  Repeat solo Eves
   are returned to their last camp.
 
+--Food log report includes past month.
+
 
 
 
