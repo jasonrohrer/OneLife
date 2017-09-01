@@ -9812,11 +9812,11 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
         
         // check this cell first
 
-        // all short human-made objects are mouse-through-able
+        // all short objects are mouse-through-able
         
         int oID = mMap[ clickDestMapI ];
         
-        if( oID > 0 && isHumanMade( oID ) && 
+        if( oID > 0 && 
             getObjectHeight( oID ) < CELL_D ) {
             ObjectRecord *obj = getObject( oID );
             

@@ -10,6 +10,9 @@ Version 33     ???
 
 --Creation sound no longer played with an object moves.
 
+--Fixed so that not just short human-made objects are mouse-through-able, but
+  all short objects.  So if you build a wall in front of a rock, you can still
+  mouse through to the rock.
 
 
 
