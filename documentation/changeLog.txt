@@ -4,10 +4,27 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 33     ???
+
+--Sub-containers, one-level deep (basket in a cart) now supported.
+
+--Creation sound no longer played with an object moves.
+
+
+
+
 Server fixes:
 
 --Food log now outputs every hour regardless of whether players are eating at
   the turn of the hour.
+
+--Server can now load a test map from a file that overrides the proc-gen map.
+
+--New Eve placement that tracks most recent camp separately for each player.
+  New solo players are placed randomly in the wilderness.  Repeat solo Eves
+  are returned to their last camp.
+
+
 
 
 

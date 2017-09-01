@@ -160,6 +160,8 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
     
     if( inEve ) {
         
+        mapEveDeath( inPlayerEmail, inAge );
+        
         if( inAge > 20 ) {
             resetEveRadius();
             deadYoungEveCount = 0;

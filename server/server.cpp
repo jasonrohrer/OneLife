@@ -2513,7 +2513,7 @@ void processLoggedInPlayer( Socket *inSock,
     else {
         // else starts at civ outskirts (lone Eve)
         int startX, startY;
-        getEvePosition( &startX, &startY );
+        getEvePosition( newObject.email, &startX, &startY );
 
         if( SettingsManager::getIntSetting( "forceEveLocation", 0 ) ) {
 

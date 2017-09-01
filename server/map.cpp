@@ -121,6 +121,14 @@ static KISSDB biomeDB;
 static char biomeDBOpen = false;
 
 
+// per-player memory of where they should spawn as eve
+static KISSDB eveDB;
+static char eveDBOpen = false;
+
+
+
+
+
 static int randSeed = 124567;
 //static JenkinsRandomSource randSource( randSeed );
 static CustomRandomSource randSource( randSeed );
@@ -312,6 +320,25 @@ timeSec_t valueToTime( unsigned char *inValue ) {
 
 
 
+// converts any length email to a 50-byte key
+// outKey must be pre-allocated to 50 bytes
+void emailToKey( char *inEmail, unsigned char *outKey ) {
+    memset( outKey, ' ', 50 );
+    
+    int len = 50;
+
+    int emailLen = strlen( inEmail );
+    
+    if( emailLen < len ) {
+        len = emailLen;
+        }
+    
+    memcpy( outKey, inEmail, len );
+    }
+
+
+
+
 
 
 // returns -1 if not found
@@ -363,6 +390,49 @@ static void biomeDBPut( int inX, int inY, int inValue, int inSecondPlace,
     KISSDB_put( &biomeDB, key, value );
     }
     
+
+
+
+// returns -1 on failure, 1 on success
+static int eveDBGet( char *inEmail, int *outX, int *outY, int *outRadius ) {
+    unsigned char key[50];
+    
+    unsigned char value[12];
+
+
+    emailToKey( inEmail, key );
+    
+    int result = KISSDB_get( &eveDB, key, value );
+    
+    if( result == 0 ) {
+        // found
+        *outX = valueToInt( &( value[0] ) );
+        *outY = valueToInt( &( value[4] ) );
+        *outRadius = valueToInt( &( value[8] ) );
+        
+        return 1;
+        }
+    else {
+        return -1;
+        }
+    }
+
+
+
+static void eveDBPut( char *inEmail, int inX, int inY, int inRadius ) {
+    unsigned char key[50];
+    unsigned char value[12];
+    
+
+    emailToKey( inEmail, key );
+    
+    intToValue( inX, &( value[0] ) );
+    intToValue( inY, &( value[4] ) );
+    intToValue( inRadius, &( value[8] ) );
+            
+    
+    KISSDB_put( &eveDB, key, value );
+    }
 
 
 
@@ -885,6 +955,20 @@ void resetEveRadius() {
 
 
 
+void clearRecentPlacements() {
+    for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
+        recentPlacements[i].pos.x = 0;
+        recentPlacements[i].pos.y = 0;
+        recentPlacements[i].depth = 0;
+        }
+
+    writeRecentPlacements();
+    }
+
+
+
+
+
 void initMap() {
 
     edgeObjectID = SettingsManager::getIntSetting( "edgeObject", 0 );
@@ -1019,6 +1103,26 @@ void initMap() {
         }
     
     biomeDBOpen = true;
+
+
+
+
+    error = KISSDB_open( &eveDB, 
+                         "eve.db", 
+                         KISSDB_OPEN_MODE_RWCREAT,
+                         80000,
+                         50, // first 50 characters of email address
+                             // append spaces to the end if needed 
+                         12 // three ints,  x_center, y_center, radius
+                         );
+    
+    if( error ) {
+        AppLog::errorF( "Error %d opening eve KissDB", error );
+        return;
+        }
+    
+    biomeDBOpen = true;
+
 
     
 
@@ -1290,13 +1394,7 @@ void initMap() {
         // map has been cleared
 
         // ignore old value for placements
-        for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
-            recentPlacements[i].pos.x = 0;
-            recentPlacements[i].pos.y = 0;
-            recentPlacements[i].depth = 0;
-            }
-
-        writeRecentPlacements();
+        clearRecentPlacements();
         }
 
 
@@ -1559,6 +1657,10 @@ void freeMap() {
 
     if( biomeDBOpen ) {
         KISSDB_close( &biomeDB );
+        }
+
+    if( eveDBOpen ) {
+        KISSDB_close( &eveDB );
         }
     
     writeEveRadius();
@@ -3574,8 +3676,8 @@ void restretchMapContainedDecays( int inX, int inY,
 
 
 
-void getEvePosition( int *outX, int *outY ) {
-    
+
+doublePair computeRecentCampAve( int *outNumPosFound ) {
     SimpleVector<doublePair> pos;
     SimpleVector<double> weight;
     
@@ -3596,7 +3698,10 @@ void getEvePosition( int *outX, int *outY ) {
             
             pos.push_back( p );
 
-            int d = recentPlacements[i].depth;
+            // natural objects can be moved around, and they have depth 0
+            // this can result in a total weight sum of 0, causing NAN
+            // push all depths up to 1 or greater
+            int d = recentPlacements[i].depth + 1;
 
             double w = pow( d, depthFactor );
             
@@ -3608,7 +3713,10 @@ void getEvePosition( int *outX, int *outY ) {
             weightSum += w;
             }
         }
+    
 
+    *outNumPosFound = pos.size();
+    
     if( pos.size() == 0 ) {
         doublePair zeroPos = { 0, 0 };    
         pos.push_back( zeroPos );
@@ -3651,15 +3759,62 @@ void getEvePosition( int *outX, int *outY ) {
             }
         }
     
-    printf( "Placing new Eve:  "
-            "found an existing camp with %d placements and %f max radius\n",
-            pos.size(), maxDist );
+    printf( "Found an existing camp at (%f,%f) with %d placements "
+            "and %f max radius\n",
+            ave.x, ave.y, pos.size(), maxDist );
 
+    
     // ave is now center of camp
+    return ave;
+    }
+
+
+
+
+void getEvePosition( char *inEmail, int *outX, int *outY ) {
+
+    int currentEveRadius = eveRadius;
+
+    char forceEveToBorder = false;
+
+    doublePair ave = { 0, 0 };
+
+    printf( "Placing new Eve:  " );
+    
+    
+    int pX, pY, pR;
+    
+    int result = eveDBGet( inEmail, &pX, &pY, &pR );
+    
+    if( result == 1 ) {
+        printf( "Found camp center (%d,%d) r=%d in db for %s\n",
+                pX, pY, pR, inEmail );
+        
+        ave.x = pX;
+        ave.y = pY;
+        currentEveRadius = pR;
+        }
+    else {
+        // player has never been Eve before
+    
+        // use global most-recent camp, but expand the radius greatly
+        // to put them in a random clear location
+
+        currentEveRadius += 100;
+        
+        forceEveToBorder = true;
+        
+        int num;
+        
+        ave = computeRecentCampAve( &num );
+        }
+    
+
+
+
 
     // pick point in box according to eve radius
 
-    int currentEveRadius = eveRadius;
     
     char found = 0;
     
@@ -3676,7 +3831,18 @@ void getEvePosition( int *outX, int *outY ) {
                                                   +currentEveRadius ),
                 randSource.getRandomBoundedDouble(-currentEveRadius,
                                                   +currentEveRadius ) };
+
             
+            if( forceEveToBorder ) {
+                // or pick ap point on the circle instead
+                p.x = currentEveRadius;
+                p.y = 0;
+                
+                double a = randSource.getRandomBoundedDouble( 0, 2 * M_PI );
+                p = rotate( p, a );
+                }
+            
+
             p = add( p, ave );
             
             GridPos pInt = { (int)lrint( p.x ), (int)lrint( p.y ) };
@@ -3696,7 +3862,68 @@ void getEvePosition( int *outX, int *outY ) {
         
         }
 
+    // clear recent placements after placing a new Eve
+    // let her make new placements in her life which we will remember
+    // later
+
+    clearRecentPlacements();
     }
+
+
+
+
+void mapEveDeath( char *inEmail, double inAge ) {
+    
+    // record exists?
+
+    int pX, pY, pR;
+
+    pR = eveRadius;
+    
+    printf( "Logging Eve death:   " );
+    
+    int num = 0;
+    
+    doublePair ave = computeRecentCampAve( &num );
+    
+    int result = eveDBGet( inEmail, &pX, &pY, &pR );
+    
+    if( result == 1 ) {
+        
+        if( inAge < 16 ) {
+            pR *= 2;
+            }
+        else if( inAge > 20 ) {
+            pR = eveRadiusStart;
+            }
+        }
+    else {
+        // not found in DB
+        
+        // must overwrite no matter what
+        pX = lrint( ave.x );
+        pY = lrint( ave.y );
+        }
+    
+    
+    if( num > 0 ) {
+        // overwrite middle from last life with new middle of placements
+        // from this life
+        pX = lrint( ave.x );
+        pY = lrint( ave.y );
+        }
+    else {
+        // otherwise, leave last life's average alone
+        printf( "Logging Eve death:   "
+                "Keeping camp average (%d,%d) from last life\n",
+                pX, pY );
+        }
+    
+
+    
+    eveDBPut( inEmail, pX, pY, pR );
+    }
+
 
 
 
