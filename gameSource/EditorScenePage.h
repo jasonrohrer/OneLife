@@ -15,6 +15,15 @@
 typedef struct SceneCell {
         int biome;
         
+        int oID;
+        
+        SimpleVector<int> contained;
+        SimpleVector< SimpleVector<int> > subContained;
+        
+
+        char flipH;
+        double age;
+        
     } SceneCell;
 
 
@@ -36,6 +45,7 @@ class EditorScenePage : public GamePage, public ActionListener {
         
         virtual void makeActive( char inFresh );
         
+        virtual void keyDown( unsigned char inASCII );
         virtual void specialKeyDown( int inKeyCode );
         
         
@@ -57,7 +67,13 @@ class EditorScenePage : public GamePage, public ActionListener {
 
         SceneCell mCells[SCENE_H][SCENE_W];
         
+        SceneCell mEmptyCell;
+        SceneCell mCopyBuffer;
+        
+
         int mCurX, mCurY;
+        
+        double mFrameCount;
         
         
 
