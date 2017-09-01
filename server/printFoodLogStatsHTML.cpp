@@ -351,11 +351,11 @@ int main( int inNumArgs, char **inArgs ) {
 
         File **logs = mainDir.getChildFilesSorted( &numFiles );
         
-        // only process last 7 files, if there are more than 7
+        // only process last 30 files, if there are more than 30
         int startI = 0;
         
-        if( numFiles > 7 ) {
-            startI = numFiles - 7;
+        if( numFiles > 30 ) {
+            startI = numFiles - 30;
             }
 
         for( int i=startI; i<numFiles; i++ ) {
