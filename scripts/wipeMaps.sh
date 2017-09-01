@@ -53,6 +53,7 @@ echo ""
 rm ~/checkout/OneLife/server/biome.db 
 rm ~/checkout/OneLife/server/map.db 
 rm ~/checkout/OneLife/server/mapTime.db
+rm ~/checkout/OneLife/server/eve.db
 rm ~/checkout/OneLife/server/recentPlacements.txt
 rm ~/checkout/OneLife/server/eveRadius.txt
 
