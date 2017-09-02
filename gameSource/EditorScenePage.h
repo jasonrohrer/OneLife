@@ -9,6 +9,9 @@
 
 #include "Picker.h"
 #include "TextButton.h"
+#include "ValueSlider.h"
+
+#include "objectBank.h"
 
 
 
@@ -19,7 +22,10 @@ typedef struct SceneCell {
         
         SimpleVector<int> contained;
         SimpleVector< SimpleVector<int> > subContained;
-        
+
+        // person can co-occupy spot with object
+        int pID;
+        ClothingSet clothing;
 
         char flipH;
         double age;
@@ -63,6 +69,9 @@ class EditorScenePage : public GamePage, public ActionListener {
         Picker mGroundPicker;
         Picker mObjectPicker;
         
+        ValueSlider mPersonAgeSlider;
+
+
         SpriteHandle mGroundOverlaySprite[4];
 
         SceneCell mCells[SCENE_H][SCENE_W];
@@ -81,7 +90,16 @@ class EditorScenePage : public GamePage, public ActionListener {
         
 
         void drawGroundOverlaySprites();
+        
+        // check which GUI components should be visible
+        void checkVisible();
 
+        SceneCell *getCurrentCell();
+        
+        // clear everything but biome
+        void clearCell( SceneCell *inCell );
+
+        
     };
 
         

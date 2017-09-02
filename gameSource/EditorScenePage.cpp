@@ -35,6 +35,9 @@ EditorScenePage::EditorScenePage()
           mSaveNewButton( mainFont, 400, 260, "Save" ),
           mGroundPicker( &groundPickable, -410, 90 ),
           mObjectPicker( &objectPickable, 410, 90 ),
+          mPersonAgeSlider( smallFont, -55, -220, 2,
+                            100, 20,
+                            0, 100, "Age" ),
           mCurX( SCENE_W / 2 ),
           mCurY( SCENE_H / 2 ),
           mFrameCount( 0 ) {
@@ -53,6 +56,12 @@ EditorScenePage::EditorScenePage()
     mSaveNewButton.addActionListener( this );
 
 
+    addComponent( &mPersonAgeSlider );
+    mPersonAgeSlider.setValue( 20 );
+    mPersonAgeSlider.setVisible( false );
+    mPersonAgeSlider.addActionListener( this );
+    
+
     for( int i=0; i<4; i++ ) {
         char *name = autoSprintf( "ground_t%d.tga", i );    
         mGroundOverlaySprite[i] = loadSprite( name, false );
@@ -61,9 +70,7 @@ EditorScenePage::EditorScenePage()
 
     
     mEmptyCell.biome = -1;
-    mEmptyCell.oID = -1;
-    mEmptyCell.flipH = false;
-    mEmptyCell.age = -1;
+    clearCell( &mEmptyCell );
     
     mCopyBuffer = mEmptyCell;
     
@@ -111,6 +118,7 @@ void EditorScenePage::floodFill( int inX, int inY,
 
 
 void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
+    SceneCell *c = getCurrentCell();
     
     if( inTarget == &mAnimEditorButton ) {
         setSignal( "animEditor" );
@@ -126,7 +134,7 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
             if( wasRightClick ) {
                 
                 floodFill( mCurX, mCurY,
-                           mCells[ mCurY ][ mCurX ].biome,
+                           c->biome,
                            biome );
                 }
             else {
@@ -139,25 +147,73 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
         char wasRightClick = false;
         
         int id = mObjectPicker.getSelectedObject( &wasRightClick);
-        SceneCell *c = &( mCells[ mCurY ][ mCurX ] );
-        
+       
         if( id > 0 ) {
+            char placed = false;
+            ObjectRecord *o = getObject( id );
+            
             if( wasRightClick && c->oID > 0 ) {
+                
+                
                 if( getObject( c->oID )->numSlots > c->contained.size() ) {
                     c->contained.push_back( id );
                     SimpleVector<int> sub;
                     c->subContained.push_back( sub );
+                    placed = true;
                     }
                 }
-            else {
-                c->oID = id;
+            if( !placed && wasRightClick && c->pID > 0 ) {
+                if( getObject( c->pID )->person &&
+                    o->clothing != 'n' ) {
+                    
+                    switch( o->clothing ) {
+                        case 's': {
+                            if( c->clothing.backShoe == NULL ) {
+                                c->clothing.backShoe = o;
+                                }
+                            else if( c->clothing.frontShoe == NULL ) {
+                                c->clothing.frontShoe = o;
+                                }                            
+                            break;
+                            }
+                        case 'h':
+                            c->clothing.hat = o;
+                            break;
+                        case 't':
+                            c->clothing.tunic = o;
+                            break;
+                        case 'b':
+                            c->clothing.bottom = o;
+                            break;
+                        case 'p':
+                            c->clothing.backpack = o;
+                            break;
+                        }
+                    placed = true;
+                    }
+                }
+            
+            if( !placed ) {
+                if( getObject( id )->person ) {
+                    c->pID = id;
+                    c->age = 20;
+                    }
+                else {
+                    c->oID = id;
+                    }
+                
                 c->contained.deleteAll();
                 c->subContained.deleteAll();
                 }
             }
+        checkVisible();
         }
     else if( inTarget == &mSaveNewButton ) {
         }
+    else if( inTarget == &mPersonAgeSlider ) {
+        getCurrentCell()->age = mPersonAgeSlider.getValue();
+        }
+    
     }
 
 
@@ -176,6 +232,26 @@ void EditorScenePage::drawGroundOverlaySprites() {
             
             drawSprite( mGroundOverlaySprite[tileI], pos );
             }
+        }
+    }
+
+
+
+SceneCell *EditorScenePage::getCurrentCell() {
+    return &( mCells[ mCurY ][ mCurX ] );
+    }
+
+
+
+void EditorScenePage::checkVisible() {
+    SceneCell *c = getCurrentCell();
+
+    if( c->pID > 0 && getObject( c->pID )->person ) {
+        mPersonAgeSlider.setVisible( true );
+        mPersonAgeSlider.setValue( c->age );
+        }
+    else {
+        mPersonAgeSlider.setVisible( false );
         }
     }
 
@@ -243,60 +319,103 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     toggleAdditiveBlend( false );
 
     
+    double frameTime = frameRateFactor * mFrameCount / 60.0;
 
     for( int y=0; y<SCENE_H; y++ ) {
         
         // draw behind stuff first
-        for( int b=0; b<2; b++ )
-        for( int x=0; x<SCENE_W; x++ ) {
-            doublePair pos = cornerPos;
-                
-            pos.x += x * 128;
-            pos.y -= y * 128;
-                
-            SceneCell *c = &( mCells[y][x] );
+        for( int b=0; b<2; b++ ) {
             
-            if( c->oID > 0 ) {
+
+            if( b == 1 ) {
+                // draw players behind objects in this row
+
+                for( int x=0; x<SCENE_W; x++ ) {
+                    doublePair pos = cornerPos;
                 
-                ObjectRecord *o = getObject( c->oID );
-                
-                if( ( b == 0 && ! o->drawBehindPlayer ) 
-                    ||
-                    ( b == 1 && o->drawBehindPlayer ) ) {
-                    continue;
+                    pos.x += x * 128;
+                    pos.y -= y * 128;
+                    
+                    SceneCell *c = &( mCells[y][x] );
+
+                    if( c->pID > 0 &&
+                        getObject( c->pID )->person ) {
+                        
+                        char used;
+                    
+                        drawObjectAnim( c->pID, 2, ground, 
+                                        frameTime, 
+                                        0,
+                                        ground,
+                                        frameTime,
+                                        frameTime,
+                                        &used,
+                                        ground,
+                                        ground,
+                                        pos,
+                                        0,
+                                        false,
+                                        c->flipH,
+                                        c->age,
+                                        0,
+                                        false,
+                                        false,
+                                        c->clothing,
+                                        NULL );
+                        }
                     }
+                }
+            
+            // now objects in row
+            for( int x=0; x<SCENE_W; x++ ) {
+                doublePair pos = cornerPos;
+                
+                pos.x += x * 128;
+                pos.y -= y * 128;
+                
+                SceneCell *c = &( mCells[y][x] );
+                
+                if( c->oID > 0 ) {
+                    
+                    ObjectRecord *o = getObject( c->oID );
+                    
+                    if( ( b == 0 && ! o->drawBehindPlayer ) 
+                        ||
+                        ( b == 1 && o->drawBehindPlayer ) ) {
+                        continue;
+                        }
                 
 
-                double frameTime = frameRateFactor * mFrameCount / 60.0;
                 
-                char used;
-                int *contained = c->contained.getElementArray();
-                SimpleVector<int> *subContained = 
-                    c->subContained.getElementArray();
-                
-                drawObjectAnim( c->oID, ground, 
-                                frameTime, 
-                                0,
-                                ground,
-                                frameTime,
-                                frameTime,
-                                &used,
-                                ground,
-                                ground,
-                                pos,
-                                0,
-                                false,
-                                c->flipH,
-                                c->age,
-                                0,
-                                false,
-                                false,
-                                getEmptyClothingSet(),
-                                NULL,
-                                c->contained.size(), contained,
-                                subContained );
-                delete [] contained;
-                delete [] subContained;
+                    char used;
+                    int *contained = c->contained.getElementArray();
+                    SimpleVector<int> *subContained = 
+                        c->subContained.getElementArray();
+                    
+                    drawObjectAnim( c->oID, ground, 
+                                    frameTime, 
+                                    0,
+                                    ground,
+                                    frameTime,
+                                    frameTime,
+                                    &used,
+                                    ground,
+                                    ground,
+                                    pos,
+                                    0,
+                                    false,
+                                    c->flipH,
+                                    -1,
+                                    0,
+                                    false,
+                                    false,
+                                    c->clothing,
+                                    NULL,
+                                    c->contained.size(), contained,
+                                    subContained );
+                    delete [] contained;
+                    delete [] subContained;
+                    }
                 }
             }
         }
@@ -345,28 +464,30 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
         return;
         }
     
+    SceneCell *c = getCurrentCell();
+    
+
     if( inASCII == 'f' ) {
-        mCells[ mCurY ][ mCurX ].flipH = ! mCells[ mCurY ][ mCurX ].flipH;
+        c->flipH = ! c->flipH;
         }
     else if( inASCII == 'c' ) {
         // copy
-        mCopyBuffer = mCells[ mCurY ][ mCurX ];
+        mCopyBuffer = *c;
         }
     else if( inASCII == 'x' ) {
         // cut
         // delete all but biome
-        int oldBiome = mCells[ mCurY ][ mCurX ].biome;
-        mCopyBuffer = mCells[ mCurY ][ mCurX ];
-        mCells[ mCurY ][ mCurX ] = mEmptyCell;
-        mCells[ mCurY ][ mCurX ].biome = oldBiome;
+        int oldBiome = c->biome;
+        mCopyBuffer = *c;
+        *c = mEmptyCell;
+        c->biome = oldBiome;
         }
     else if( inASCII == 'v' ) {
         // paste
-        mCells[ mCurY ][ mCurX ] = mCopyBuffer;
+        *c = mCopyBuffer;
         }
     else if( inASCII == 'i' ) {
         // insert into container
-        SceneCell *c = &( mCells[ mCurY ][ mCurX ] );
         
         if( mCopyBuffer.oID > 0 &&
             c->oID > 0 &&
@@ -389,13 +510,23 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
         }
     else if( inASCII == 8 ) {
         // backspace
-        mCells[ mCurY ][ mCurX ].oID = -1;
-        mCells[ mCurY ][ mCurX ].flipH = false;
-        mCells[ mCurY ][ mCurX ].age = -1;
-
-        mCells[ mCurY ][ mCurX ].contained.deleteAll();
-        mCells[ mCurY ][ mCurX ].subContained.deleteAll();
+        clearCell( c );
         }
+    }
+
+
+
+
+void EditorScenePage::clearCell( SceneCell *inCell ) {
+    inCell->oID = -1;
+    inCell->flipH = false;
+    inCell->age = -1;
+    inCell->pID = -1;
+    
+    inCell->clothing = getEmptyClothingSet();
+    
+    inCell->contained.deleteAll();
+    inCell->subContained.deleteAll();    
     }
 
         
@@ -443,4 +574,6 @@ void EditorScenePage::specialKeyDown( int inKeyCode ) {
                 }
             break;
         }
+
+    checkVisible();
     }
