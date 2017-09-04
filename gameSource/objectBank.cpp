@@ -3728,6 +3728,83 @@ void getArmHoldingParameters( ObjectRecord *inHeldObject,
 
 
 
+void computeHeldDrawPos( HoldingPos inHoldingPos, doublePair inPos,
+                         ObjectRecord *inHeldObject,
+                         char inFlipH,
+                         doublePair *outHeldDrawPos, double *outHeldDrawRot ) {
+    
+    doublePair holdPos;
+    double holdRot = 0;
+    
+    if( inHoldingPos.valid ) {
+        holdPos = inHoldingPos.pos;
+        }
+    else {
+        holdPos = inPos;
+        }
+
+        
+
+        
+    if( inHeldObject != NULL ) {
+        
+        doublePair heldOffset = inHeldObject->heldOffset;
+        
+        
+        if( !inHeldObject->person ) {    
+            heldOffset = sub( heldOffset, 
+                              getObjectCenterOffset( inHeldObject ) );
+            }
+        
+        if( inFlipH ) {
+            heldOffset.x *= -1;
+            }
+
+        
+        if( inHoldingPos.valid && inHoldingPos.rot != 0  &&
+            ! inHeldObject->rideable ) {
+            
+            if( inFlipH ) {
+                heldOffset = 
+                    rotate( heldOffset, 
+                            2 * M_PI * inHoldingPos.rot );
+                }
+            else {
+                heldOffset = 
+                    rotate( heldOffset, 
+                            -2 * M_PI * inHoldingPos.rot );
+                }
+                        
+            if( inFlipH ) {
+                holdRot = -inHoldingPos.rot;
+                }
+            else {
+                holdRot = inHoldingPos.rot;
+                }
+
+            if( holdRot > 1 ) {
+                while( holdRot > 1 ) {
+                    holdRot -= 1;
+                    }
+                }
+            else if( holdRot < -1 ) {
+                while( holdRot < -1 ) {
+                    holdRot += 1;
+                    }
+                }
+            }
+
+        holdPos.x += heldOffset.x;
+        holdPos.y += heldOffset.y;        
+        }
+
+
+    *outHeldDrawPos = holdPos;
+    *outHeldDrawRot = holdRot;
+    }
+
+
+
 
 
 

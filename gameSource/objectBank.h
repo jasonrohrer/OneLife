@@ -584,5 +584,12 @@ void getArmHoldingParameters( ObjectRecord *inHeldObject,
                               char *outHideAllLimbs );
 
 
+void computeHeldDrawPos( HoldingPos inHoldingPos, doublePair inPos,
+                         ObjectRecord *inHeldObject,
+                         char inFlipH,
+                         doublePair *outHeldDrawPos, double *outHeldDrawRot );
+
+
+
 
 #endif

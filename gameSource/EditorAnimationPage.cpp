@@ -2266,66 +2266,23 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 mClothingSet,
                                 NULL );
                 
-                doublePair holdPos;
                 
-                if( holdingPos.valid ) {
-                    holdPos = holdingPos.pos;
-                    }
-                else {
-                    holdPos = pos;
-                    }
-
-        
-
-        
                 if( heldObject != NULL ) {
                     
-                    doublePair heldOffset = heldObject->heldOffset;
-            
+                    doublePair holdPos;
+                    double holdRot;
                     
-                    if( !heldObject->person ) {    
-                        heldOffset = sub( heldOffset, 
-                                          getObjectCenterOffset( heldObject ) );
-                        }
+                    computeHeldDrawPos( holdingPos, pos,
+                                        heldObject,
+                                        mFlipDraw,
+                                        &holdPos, &holdRot );
                     
-                    if( mFlipDraw ) {
-                        heldOffset.x *= -1;
+                    
+                    if( heldObject->person ) {
+                        // baby doesn't rotate when held
+                        holdRot = 0;
                         }
 
-                    double heldRot = 0;
-                    
-                    if( holdingPos.valid && holdingPos.rot != 0  &&
-                        ! heldObject->rideable ) {
-                        
-                        if( mFlipDraw ) {
-                            heldOffset = 
-                                rotate( heldOffset, 
-                                        2 * M_PI * holdingPos.rot );
-                            }
-                        else {
-                            heldOffset = 
-                                rotate( heldOffset, 
-                                        -2 * M_PI * holdingPos.rot );
-                            }
-                        
-                        if( ! heldObject->person ) {
-                            // baby doesn't rotate when held
-                        
-                            if( mFlipDraw ) {
-                                heldRot = -holdingPos.rot;
-                                }
-                            else {
-                                heldRot = holdingPos.rot;
-                                }
-                            }
-                        }
-            
-            
-            
-
-                    holdPos.x += heldOffset.x;
-                    holdPos.y += heldOffset.y;
-                    
                     double heldAge = -1;
                     AnimType heldAnimType = t;
                     AnimType heldFadeTargetType = mCurrentType;
@@ -2344,7 +2301,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                     &mFrozenRotFrameCountUsed,
                                     moving,
                                     moving,
-                                    holdPos, heldRot, false, mFlipDraw, heldAge,
+                                    holdPos, holdRot, false, mFlipDraw, heldAge,
                                     false,
                                     false,
                                     false,

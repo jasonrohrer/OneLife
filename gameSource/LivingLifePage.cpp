@@ -2379,68 +2379,12 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
         doublePair holdPos;
         
         double holdRot = 0;
-
-        if( holdingPos.valid ) {
-            holdPos = holdingPos.pos;
-            }
-        else {
-            holdPos = pos;
-            }
-
         
+        computeHeldDrawPos( holdingPos, pos,
+                            heldObject,
+                            inObj->holdingFlip,
+                            &holdPos, &holdRot );
 
-        
-        if( heldObject != NULL ) {
-            
-            doublePair heldOffset = heldObject->heldOffset;
-
-            if( ! heldObject->person ) {    
-                heldOffset = sub( heldOffset, 
-                                  getObjectCenterOffset( heldObject ) );
-                }
-            
-            if( inObj->holdingFlip ) {
-                heldOffset.x *= -1;
-                }
-                        
-            if( holdingPos.valid && holdingPos.rot != 0  &&
-                ! heldObject->rideable ) {
-            
-                if( inObj->holdingFlip ) {
-                    heldOffset = rotate( heldOffset, 
-                                         2 * M_PI * holdingPos.rot );
-                    }
-                else {
-                    heldOffset = rotate( heldOffset, 
-                                         -2 * M_PI * holdingPos.rot );
-                    }
-                if( inObj->holdingFlip ) {
-                    holdRot = -holdingPos.rot;
-                    }
-                else {        
-                    holdRot = holdingPos.rot;
-                    }
-
-                if( holdRot > 1 ) {
-                    while( holdRot > 1 ) {
-                        holdRot -= 1;
-                        }
-                    }
-                else if( holdRot < -1 ) {
-                    while( holdRot < -1 ) {
-                        holdRot += 1;
-                        }
-                    }
-                }
-            
-            
-
-            
-
-            holdPos.x += heldOffset.x;
-
-            holdPos.y += heldOffset.y;
-            }
                 
         doublePair heldObjectDrawPos = holdPos;
         
