@@ -577,4 +577,12 @@ int getMaxWideRadius();
 char isSpriteSubset( int inSuperObjectID, int inSubObjectID );
 
 
+
+// gets arm parameters for a given held object
+void getArmHoldingParameters( ObjectRecord *inHeldObject,
+                              int *outHideClosestArm,
+                              char *outHideAllLimbs );
+
+
+
 #endif

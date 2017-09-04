@@ -2237,34 +2237,16 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                     heldObject = getObject( mHeldID );
                     }
                 
+                getArmHoldingParameters( heldObject, 
+                                         &hideClosestArm, &hideAllLimbs );
 
-                if( heldObject != NULL ) {
-                    
-                    if( heldObject->person ) {
-                        // try hiding no arms, but freezing them instead
-                        // -2 means body position still returned as held pos
-                        // instead of hand pos
-                        hideClosestArm = -2;
-                        hideAllLimbs = false;
-                        frozenArmAnim = mCurrentAnim[ moving ];
-                        }
-                    else if( heldObject->heldInHand ) {
-                        hideClosestArm = 0;
-                        }
-                    else if( heldObject->rideable ) {
-                        hideClosestArm = 0;
-                        hideAllLimbs = true;
-                        frozenArmAnim = mCurrentAnim[ moving ];
-                        }
-                    else {
-                        // try hiding no arms, but freezing them instead
-                        // -2 means body position still returned as held pos
-                        // instead of hand pos
-                        hideClosestArm = -2;
-                        hideAllLimbs = false;
-                        frozenArmAnim = mCurrentAnim[ moving ];
-                        }
+
+                if( ( heldObject != NULL &&
+                      heldObject->rideable ) ||
+                    hideClosestArm == -2 ) {
+                    frozenArmAnim = mCurrentAnim[ moving ];
                     }
+                
 
 
                 HoldingPos holdingPos = 

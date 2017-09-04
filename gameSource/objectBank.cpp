@@ -3699,7 +3699,33 @@ char equal( FloatRGB inA, FloatRGB inB ) {
     }
 
         
+
+void getArmHoldingParameters( ObjectRecord *inHeldObject,
+                              int *outHideClosestArm,
+                              char *outHideAllLimbs ) {
+    *outHideClosestArm = 0;
+    *outHideAllLimbs = false;
     
+    if( inHeldObject != NULL ) {
+                    
+        if( inHeldObject->heldInHand ) {
+            *outHideClosestArm = 0;
+            }
+        else if( inHeldObject->rideable ) {
+            *outHideClosestArm = 0;
+            *outHideAllLimbs = true;
+            }
+        else {
+            // try hiding no arms, but freezing them instead
+            // -2 means body position still returned as held pos
+            // instead of hand pos
+            *outHideClosestArm = -2;
+            *outHideAllLimbs = false;
+            }
+        }
+
+    }
+
 
 
 

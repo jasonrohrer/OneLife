@@ -2280,38 +2280,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             }
         }
     
-        
     
-    if( inObj->holdingID != 0  && heldObject != NULL ) {
-                    
-        if( heldObject->heldInHand ) {
-            
-            hideClosestArm = 0;
-            }
-        else if( heldObject->rideable ) {
-            hideClosestArm = 0;
-            hideAllLimbs = true;
-            }
-        else {
-            // try hiding no arms, but freezing them instead
-            // -2 means body position still returned as held pos
-            // instead of hand pos
-            // -2 also causes frozen arm animation to be set below
-            hideClosestArm = -2;
-            hideAllLimbs = false;
-            }
-        }
-    else if( inObj->holdingID < 0 ) {
-        // carrying baby
-        //hideClosestArm = true;
-        
-        // try hiding no arms, but freezing them instead
-        // -2 means body position still returned as held pos
-        // instead of hand pos
-        // -2 also causes frozen arm animation to be set below
-        hideClosestArm = -2;
-        hideAllLimbs = false;
-        }
+    getArmHoldingParameters( heldObject, &hideClosestArm, &hideAllLimbs );
     
 
     // override animation types for people who are riding in something
