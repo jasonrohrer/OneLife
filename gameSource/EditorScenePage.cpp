@@ -88,7 +88,7 @@ EditorScenePage::EditorScenePage()
     addKeyClassDescription( &mKeyLegend, "c/C", "Copy obj/person" );
     addKeyClassDescription( &mKeyLegend, "x/X", "Cut obj/person" );
     addKeyClassDescription( &mKeyLegend, "v", "Paste" );
-    addKeyClassDescription( &mKeyLegend, "i", "Insert contained" );
+    addKeyClassDescription( &mKeyLegend, "i/I", "Insert contained/held" );
     addKeyClassDescription( &mKeyLegend, "Bkspc", "Clear cell" );
 
     addKeyClassDescription( &mKeyLegendG, "R-Click", "Flood fill" );
@@ -655,11 +655,24 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
             c->subContained.push_back( sub );
             }
         }
+    else if( inASCII == 'I' ) {
+        // insert as held
+        
+        if( mCopyBuffer.oID > 0 && p->oID > 0 ) {
+            
+            p->heldID = mCopyBuffer.oID;
+            
+            p->contained = mCopyBuffer.contained;
+            p->subContained = mCopyBuffer.subContained;
+            }
+        }
     else if( inASCII == 8 ) {
         // backspace
         clearCell( c );
         clearCell( p );
         }
+
+    checkVisible();
     }
 
 
