@@ -94,7 +94,7 @@ EditorScenePage::EditorScenePage()
     addKeyClassDescription( &mKeyLegendG, "R-Click", "Flood fill" );
 
     addKeyClassDescription( &mKeyLegendC, "R-Click", "Add to Container" );
-    addKeyClassDescription( &mKeyLegendP, "R-Click", "Add Clothing" );
+    addKeyClassDescription( &mKeyLegendP, "R-Click", "Add Clothing/Held" );
     }
 
 
@@ -203,6 +203,11 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
                             p->clothing.backpack = o;
                             break;
                         }
+                    placed = true;
+                    }
+                else {
+                    // set held
+                    p->heldID = id;
                     placed = true;
                     }
                 }
@@ -358,27 +363,104 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
                     if( p->oID > 0 ) {
                         
+
+                        int hideClosestArm = 0;
+                        char hideAllLimbs = false;
+                        
+                        ObjectRecord *heldObject = NULL;
+                        
+                        AnimType frozenArmAnimType = ground;
+                        
+                        if( p->heldID != -1 ) {
+                            heldObject = getObject( p->heldID );
+                            }
+                
+                        getArmHoldingParameters( heldObject, 
+                                                 &hideClosestArm, 
+                                                 &hideAllLimbs );
+                        
+
+                        if( ( heldObject != NULL &&
+                              heldObject->rideable ) ||
+                            hideClosestArm == -2 ) {
+                            frozenArmAnimType = moving;
+                            }
+
+
+
                         char used;
                     
-                        drawObjectAnim( p->oID, 2, ground, 
-                                        frameTime, 
-                                        0,
-                                        ground,
-                                        frameTime,
-                                        frameTime,
-                                        &used,
-                                        ground,
-                                        ground,
-                                        pos,
-                                        0,
-                                        false,
-                                        p->flipH,
-                                        p->age,
-                                        0,
-                                        false,
-                                        false,
-                                        p->clothing,
-                                        NULL );
+                        HoldingPos holdingPos = 
+                            drawObjectAnim( p->oID, 2, ground, 
+                                            frameTime, 
+                                            0,
+                                            ground,
+                                            frameTime,
+                                            frameTime,
+                                            &used,
+                                            frozenArmAnimType,
+                                            frozenArmAnimType,
+                                            pos,
+                                            0,
+                                            false,
+                                            p->flipH,
+                                            p->age,
+                                            hideClosestArm,
+                                            hideAllLimbs,
+                                            false,
+                                            p->clothing,
+                                            NULL );
+                    
+                    
+                        if( heldObject != NULL ) {
+                            
+                            doublePair holdPos;
+                            double holdRot;                            
+                        
+                            computeHeldDrawPos( holdingPos, pos,
+                                                heldObject,
+                                                p->flipH,
+                                                &holdPos, &holdRot );
+                            
+                            if( heldObject->person ) {
+                                // baby doesn't rotate when held
+                                holdRot = 0;
+                                }
+
+                            double heldAge = -1;
+                            AnimType heldAnimType = held;
+                            AnimType heldFadeTargetType = held;
+                    
+                            if( heldObject->person ) {
+                                heldAge = 0;
+                                }
+                            
+                            int *contained = p->contained.getElementArray();
+                            SimpleVector<int> *subContained = 
+                                p->subContained.getElementArray();
+
+                            drawObjectAnim( p->heldID,  
+                                            heldAnimType, frameTime,
+                                            0, 
+                                            heldFadeTargetType, 
+                                            frameTime, 
+                                            frameTime,
+                                            &used,
+                                            moving,
+                                            moving,
+                                            holdPos, holdRot, 
+                                            false, p->flipH, 
+                                            heldAge,
+                                            false,
+                                            false,
+                                            false,
+                                            getEmptyClothingSet(),
+                                            NULL,
+                                            p->contained.size(), contained,
+                                            subContained );
+                            delete [] contained;
+                            delete [] subContained;
+                            }
                         }
                     }
                 }
