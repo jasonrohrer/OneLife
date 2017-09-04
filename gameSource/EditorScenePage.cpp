@@ -77,10 +77,24 @@ EditorScenePage::EditorScenePage()
     for( int y=0; y<SCENE_H; y++ ) {
         for( int x=0; x<SCENE_W; x++ ) {
             mCells[y][x] = mEmptyCell;
+            mPersonCells[y][x] = mEmptyCell;
             }
         }
     
 
+    addKeyClassDescription( &mKeyLegend, "Arrows", "Change selected cell" );
+    addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger cell jumps" );
+    addKeyClassDescription( &mKeyLegend, "f/F", "Flip obj/person" );
+    addKeyClassDescription( &mKeyLegend, "c/C", "Copy obj/person" );
+    addKeyClassDescription( &mKeyLegend, "x/X", "Cut obj/person" );
+    addKeyClassDescription( &mKeyLegend, "v", "Paste" );
+    addKeyClassDescription( &mKeyLegend, "i", "Insert contained" );
+    addKeyClassDescription( &mKeyLegend, "Bkspc", "Clear cell" );
+
+    addKeyClassDescription( &mKeyLegendG, "R-Click", "Flood fill" );
+
+    addKeyClassDescription( &mKeyLegendC, "R-Click", "Add to Container" );
+    addKeyClassDescription( &mKeyLegendP, "R-Click", "Add Clothing" );
     }
 
 
@@ -119,6 +133,7 @@ void EditorScenePage::floodFill( int inX, int inY,
 
 void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
     SceneCell *c = getCurrentCell();
+    SceneCell *p = getCurrentPersonCell();
     
     if( inTarget == &mAnimEditorButton ) {
         setSignal( "animEditor" );
@@ -162,31 +177,30 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
                     placed = true;
                     }
                 }
-            if( !placed && wasRightClick && c->pID > 0 ) {
-                if( getObject( c->pID )->person &&
-                    o->clothing != 'n' ) {
+            if( !placed && wasRightClick && p->oID > 0 ) {
+                if( o->clothing != 'n' ) {
                     
                     switch( o->clothing ) {
                         case 's': {
-                            if( c->clothing.backShoe == NULL ) {
-                                c->clothing.backShoe = o;
+                            if( p->clothing.backShoe == NULL ) {
+                                p->clothing.backShoe = o;
                                 }
-                            else if( c->clothing.frontShoe == NULL ) {
-                                c->clothing.frontShoe = o;
+                            else if( p->clothing.frontShoe == NULL ) {
+                                p->clothing.frontShoe = o;
                                 }                            
                             break;
                             }
                         case 'h':
-                            c->clothing.hat = o;
+                            p->clothing.hat = o;
                             break;
                         case 't':
-                            c->clothing.tunic = o;
+                            p->clothing.tunic = o;
                             break;
                         case 'b':
-                            c->clothing.bottom = o;
+                            p->clothing.bottom = o;
                             break;
                         case 'p':
-                            c->clothing.backpack = o;
+                            p->clothing.backpack = o;
                             break;
                         }
                     placed = true;
@@ -195,15 +209,14 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
             
             if( !placed ) {
                 if( getObject( id )->person ) {
-                    c->pID = id;
-                    c->age = 20;
+                    p->oID = id;
+                    p->age = 20;
                     }
                 else {
                     c->oID = id;
+                    c->contained.deleteAll();
+                    c->subContained.deleteAll();
                     }
-                
-                c->contained.deleteAll();
-                c->subContained.deleteAll();
                 }
             }
         checkVisible();
@@ -211,7 +224,7 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mSaveNewButton ) {
         }
     else if( inTarget == &mPersonAgeSlider ) {
-        getCurrentCell()->age = mPersonAgeSlider.getValue();
+        getCurrentPersonCell()->age = mPersonAgeSlider.getValue();
         }
     
     }
@@ -242,13 +255,18 @@ SceneCell *EditorScenePage::getCurrentCell() {
     }
 
 
+SceneCell *EditorScenePage::getCurrentPersonCell() {
+    return &( mPersonCells[ mCurY ][ mCurX ] );
+    }
+
+
 
 void EditorScenePage::checkVisible() {
-    SceneCell *c = getCurrentCell();
+    SceneCell *p = getCurrentPersonCell();
 
-    if( c->pID > 0 && getObject( c->pID )->person ) {
+    if( p->oID > 0 ) {
         mPersonAgeSlider.setVisible( true );
-        mPersonAgeSlider.setValue( c->age );
+        mPersonAgeSlider.setValue( p->age );
         }
     else {
         mPersonAgeSlider.setVisible( false );
@@ -336,14 +354,13 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     pos.x += x * 128;
                     pos.y -= y * 128;
                     
-                    SceneCell *c = &( mCells[y][x] );
+                    SceneCell *p = &( mPersonCells[y][x] );
 
-                    if( c->pID > 0 &&
-                        getObject( c->pID )->person ) {
+                    if( p->oID > 0 ) {
                         
                         char used;
                     
-                        drawObjectAnim( c->pID, 2, ground, 
+                        drawObjectAnim( p->oID, 2, ground, 
                                         frameTime, 
                                         0,
                                         ground,
@@ -355,12 +372,12 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                         pos,
                                         0,
                                         false,
-                                        c->flipH,
-                                        c->age,
+                                        p->flipH,
+                                        p->age,
                                         0,
                                         false,
                                         false,
-                                        c->clothing,
+                                        p->clothing,
                                         NULL );
                         }
                     }
@@ -440,6 +457,35 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
     stopStencil();
  
+
+
+    doublePair legendPos = mAnimEditorButton.getPosition();
+            
+    legendPos.x = -150;
+    legendPos.y += 20;
+            
+    drawKeyLegend( &mKeyLegend, legendPos );
+
+
+    legendPos = mGroundPicker.getPosition();
+    legendPos.y -= 255;
+    drawKeyLegend( &mKeyLegendG, legendPos, alignCenter );
+
+
+    legendPos = mObjectPicker.getPosition();
+    legendPos.y -= 255;
+    
+    SceneCell *c = getCurrentCell();
+    SceneCell *p = getCurrentPersonCell();
+    
+    if( c->oID > 0 &&
+        getObject( c->oID )->numSlots > c->contained.size() ) {
+        
+        drawKeyLegend( &mKeyLegendC, legendPos, alignCenter );
+        }
+    else if( p->oID > 0 ) {
+        drawKeyLegend( &mKeyLegendP, legendPos, alignCenter );
+        }
     }
 
 
@@ -465,14 +511,22 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
         }
     
     SceneCell *c = getCurrentCell();
+    SceneCell *p = getCurrentPersonCell();
     
 
     if( inASCII == 'f' ) {
         c->flipH = ! c->flipH;
         }
+    else if( inASCII == 'F' ) {
+        p->flipH = ! p->flipH;
+        }
     else if( inASCII == 'c' ) {
         // copy
         mCopyBuffer = *c;
+        }
+    else if( inASCII == 'C' ) {
+        // copy
+        mCopyBuffer = *p;
         }
     else if( inASCII == 'x' ) {
         // cut
@@ -482,9 +536,20 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
         *c = mEmptyCell;
         c->biome = oldBiome;
         }
+    else if( inASCII == 'X' ) {
+        // cut person
+        mCopyBuffer = *p;
+        *p = mEmptyCell;
+        }
     else if( inASCII == 'v' ) {
         // paste
-        *c = mCopyBuffer;
+        if( mCopyBuffer.oID > 0 &&
+            getObject( mCopyBuffer.oID )->person ) {
+            *p = mCopyBuffer;
+            }
+        else {
+            *c = mCopyBuffer;
+            }
         }
     else if( inASCII == 'i' ) {
         // insert into container
@@ -511,6 +576,7 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
     else if( inASCII == 8 ) {
         // backspace
         clearCell( c );
+        clearCell( p );
         }
     }
 
@@ -521,7 +587,7 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->oID = -1;
     inCell->flipH = false;
     inCell->age = -1;
-    inCell->pID = -1;
+    inCell->heldID = -1;
     
     inCell->clothing = getEmptyClothingSet();
     

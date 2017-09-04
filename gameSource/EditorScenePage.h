@@ -13,22 +13,25 @@
 
 #include "objectBank.h"
 
+#include "keyLegend.h"
+
 
 
 typedef struct SceneCell {
         int biome;
         
         int oID;
+
+        int heldID;
         
         SimpleVector<int> contained;
         SimpleVector< SimpleVector<int> > subContained;
 
-        // person can co-occupy spot with object
-        int pID;
         ClothingSet clothing;
 
         char flipH;
         double age;
+
         
     } SceneCell;
 
@@ -75,6 +78,7 @@ class EditorScenePage : public GamePage, public ActionListener {
         SpriteHandle mGroundOverlaySprite[4];
 
         SceneCell mCells[SCENE_H][SCENE_W];
+        SceneCell mPersonCells[SCENE_H][SCENE_W];
         
         SceneCell mEmptyCell;
         SceneCell mCopyBuffer;
@@ -84,7 +88,8 @@ class EditorScenePage : public GamePage, public ActionListener {
         
         double mFrameCount;
         
-        
+        KeyLegend mKeyLegend, mKeyLegendG, mKeyLegendC, mKeyLegendP;
+
 
         void floodFill( int inX, int inY, int inOldBiome, int inNewBiome );
         
@@ -95,6 +100,7 @@ class EditorScenePage : public GamePage, public ActionListener {
         void checkVisible();
 
         SceneCell *getCurrentCell();
+        SceneCell *getCurrentPersonCell();
         
         // clear everything but biome
         void clearCell( SceneCell *inCell );
