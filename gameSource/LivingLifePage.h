@@ -202,7 +202,7 @@ typedef struct LiveObject {
         // messages that arrive while we're still showing our current
         // movement animation
         SimpleVector<char*> pendingReceivedMessages;
-        
+        char somePendingMessageIsMoreMovement;
 
     } LiveObject;
 

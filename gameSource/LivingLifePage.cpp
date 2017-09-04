@@ -4591,7 +4591,7 @@ void playPendingReceivedMessagesRegardingOthers( LiveObject *inPlayer ) {
                 }
             }
         else if( strstr( message, "PM" ) == message ) {
-            // only keep PU's not about this player
+            // only keep PM's not about this player
             
             int messageID = -1;
             
@@ -6610,6 +6610,8 @@ void LivingLifePage::step() {
                 o.heldFrozenRotFrameCountUsed = false;
                 o.clothing = getEmptyClothingSet();
                 
+                o.somePendingMessageIsMoreMovement = false;
+                
                 int forced = 0;
                 int done_moving = 0;
                 
@@ -7073,7 +7075,7 @@ void LivingLifePage::step() {
                                     }
                                 // don't interrupt walking
                                 if( nearEndOfMovement( existing ) ) {
-                                    addNewAnimPlayerOnly( existing, ground );
+                                    addNewAnimPlayerOnly( existing, ground2 );
                                     }
                                 }
                             
@@ -7548,12 +7550,14 @@ void LivingLifePage::step() {
                             existing->currentPos.y = o.yd;
                         
                             existing->currentSpeed = 0;
+                            if( ! existing->somePendingMessageIsMoreMovement ) {
+                                addNewAnim( existing, ground );
+                                }
                             playPendingReceivedMessages( existing );
 
                             existing->xd = o.xd;
                             existing->yd = o.yd;
 
-                            addNewAnim( existing, ground );
                             }
                         
                         if( existing->id == ourID ) {
@@ -8006,8 +8010,16 @@ void LivingLifePage::step() {
                                 existing->pendingReceivedMessages.push_back(
                                     autoSprintf( "PM\n%s\n#",
                                                  lines[i] ) );
+                                existing->somePendingMessageIsMoreMovement =
+                                    true;
+                                
                                 break;
                                 }
+                            
+                            // actually playing the PM message
+                            // that means nothing else is pending yet
+                            existing->somePendingMessageIsMoreMovement = false;
+                                
                             
 
 
@@ -9272,8 +9284,12 @@ void LivingLifePage::step() {
                     //trailColor.b = randSource.getRandomBoundedDouble( 0, .5 );
                     
 
-                    if( o->id != ourID || 
-                        nextActionMessageToSend == NULL ) {
+                    if( ( o->id != ourID && 
+                          ! o->somePendingMessageIsMoreMovement ) 
+                        ||
+                        ( o->id == ourID && 
+                          nextActionMessageToSend == NULL ) ) {
+                        
                         // simply stop walking
                         if( o->holdingID != 0 ) {
                             addNewAnim( o, ground2 );

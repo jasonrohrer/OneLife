@@ -14,6 +14,10 @@ Version 33     ???
   all short objects.  So if you build a wall in front of a rock, you can still
   mouse through to the rock.
 
+--Fixed arm position when other players pick something up.
+
+--Fixed stutter-step of other players during long, continuous movements.
+
 
 
 Server fixes:
