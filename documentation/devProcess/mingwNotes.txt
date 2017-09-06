@@ -1,0 +1,47 @@
+Getting libpng and zlib working on MinGW
+
+Zlib binaries available from MinGW:
+
+https://sourceforge.net/projects/mingw/files/MinGW/Base/zlib/
+
+Grab DLL and Dev packages.
+
+lzma -d will decompress them.
+
+.tar files do not contain a parent folder, so make one before de-tarring.
+
+Put include and lib files in
+
+/c/MinGW/include
+
+/c/MinGW/lib
+
+Put bin/ file in
+
+/c/MinGW/bin
+
+Download libpng 1.4.1 source:
+
+http://downloads.sourceforge.net/project/libpng/01-libpng-master/1. 4.1/libpng-1.4.1.tar.gz
+
+Info found here:
+
+http://www.gaia-gis.it/spatialite-2.4.0/mingw_how_to.html
+
+cp scripts/makefile.mingw .
+
+now you have to manually edit the makefile.mingw file completing some variable defs as follows:
+
+DESTDIR=/c/MinGW
+
+ZLIBLIB=/c/MinGW/lib
+
+ZLIBINC=/c/MinGW/include
+
+make -fmakefile.mingw
+
+cp png.h pngconf.h /c/MinGW/include
+
+cp libpng.a libpng.dll.a /c/MinGW/lib
+
+cp libpng14.dll pngtest-stat.exe pngtest.exe /c/MinGW/bin
