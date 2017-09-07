@@ -29,6 +29,17 @@ static double addAmount = 0.25;
 
 extern double frameRateFactor;
 
+#define NUM_CELL_ANIM 2
+static const char *cellAnimNames[ NUM_CELL_ANIM ] = { "Ground", "Moving" };
+static const AnimType cellAnimTypes[ NUM_CELL_ANIM ] = { ground, moving };
+
+#define NUM_PERSON_ANIM 4
+static const char *personAnimNames[ NUM_PERSON_ANIM ] = 
+    { "Ground", "Moving", "Eating", "Doing" };
+static const AnimType personAnimTypes[ NUM_PERSON_ANIM ] = 
+    { ground, moving, eating, doing };
+
+
 
 EditorScenePage::EditorScenePage()
         : mAnimEditorButton( mainFont, 210, 260, "Anim" ),
@@ -38,6 +49,12 @@ EditorScenePage::EditorScenePage()
           mPersonAgeSlider( smallFont, -55, -220, 2,
                             100, 20,
                             0, 100, "Age" ),
+          mCellAnimRadioButtons( smallFont, -200, -250, NUM_CELL_ANIM,
+                                 cellAnimNames,
+                                 true, 2 ),                                 
+          mPersonAnimRadioButtons( smallFont, -55, -250, NUM_PERSON_ANIM,
+                                   personAnimNames,
+                                   true, 2 ),                            
           mCurX( SCENE_W / 2 ),
           mCurY( SCENE_H / 2 ),
           mFrameCount( 0 ) {
@@ -61,6 +78,15 @@ EditorScenePage::EditorScenePage()
     mPersonAgeSlider.setVisible( false );
     mPersonAgeSlider.addActionListener( this );
     
+
+    addComponent( &mCellAnimRadioButtons );
+    addComponent( &mPersonAnimRadioButtons );
+
+    mCellAnimRadioButtons.setVisible( false );
+    mPersonAnimRadioButtons.setVisible( false );
+
+    mCellAnimRadioButtons.addActionListener( this );
+    mPersonAnimRadioButtons.addActionListener( this );
 
     for( int i=0; i<4; i++ ) {
         char *name = autoSprintf( "ground_t%d.tga", i );    
@@ -231,7 +257,14 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mPersonAgeSlider ) {
         getCurrentPersonCell()->age = mPersonAgeSlider.getValue();
         }
-    
+    else if( inTarget == &mCellAnimRadioButtons ) {
+        getCurrentCell()->anim = 
+            cellAnimTypes[ mCellAnimRadioButtons.getSelectedItem() ];
+        }
+    else if( inTarget == &mPersonAnimRadioButtons ) {
+        getCurrentPersonCell()->anim = 
+            personAnimTypes[ mPersonAnimRadioButtons.getSelectedItem() ];
+        }
     }
 
 
@@ -267,14 +300,40 @@ SceneCell *EditorScenePage::getCurrentPersonCell() {
 
 
 void EditorScenePage::checkVisible() {
+    SceneCell *c = getCurrentCell();
+
+    if( c->oID > 0 ) {
+        mCellAnimRadioButtons.setVisible( true );
+        
+        for( int a=0; a<NUM_CELL_ANIM; a++ ) {
+            if( cellAnimTypes[a] == c->anim ) {
+                mCellAnimRadioButtons.setSelectedItem( a );
+                break;
+                }
+            }
+        }
+    else {
+        mCellAnimRadioButtons.setVisible( false );
+        }
+    
+
     SceneCell *p = getCurrentPersonCell();
 
     if( p->oID > 0 ) {
         mPersonAgeSlider.setVisible( true );
         mPersonAgeSlider.setValue( p->age );
+        mPersonAnimRadioButtons.setVisible( true );
+        
+        for( int a=0; a<NUM_PERSON_ANIM; a++ ) {
+            if( personAnimTypes[a] == c->anim ) {
+                mPersonAnimRadioButtons.setSelectedItem( a );
+                break;
+                }
+            }
         }
     else {
         mPersonAgeSlider.setVisible( false );
+        mPersonAnimRadioButtons.setVisible( false );
         }
     }
 
@@ -351,7 +410,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
             
 
             if( b == 1 ) {
-                // draw players behind objects in this row
+                // draw people behind objects in this row
 
                 for( int x=0; x<SCENE_W; x++ ) {
                     doublePair pos = cornerPos;
@@ -369,7 +428,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         
                         ObjectRecord *heldObject = NULL;
                         
-                        AnimType frozenArmAnimType = ground;
+                        AnimType frozenArmAnimType = endAnimType;
                         
                         if( p->heldID != -1 ) {
                             heldObject = getObject( p->heldID );
@@ -391,10 +450,10 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         char used;
                     
                         HoldingPos holdingPos = 
-                            drawObjectAnim( p->oID, 2, ground, 
+                            drawObjectAnim( p->oID, 2, p->anim, 
                                             frameTime, 
                                             0,
-                                            ground,
+                                            p->anim,
                                             frameTime,
                                             frameTime,
                                             &used,
@@ -428,9 +487,13 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                 }
 
                             double heldAge = -1;
-                            AnimType heldAnimType = held;
+                            AnimType heldAnimType = p->anim;
                             AnimType heldFadeTargetType = held;
                     
+                            if( p->anim != moving ) {
+                                heldAnimType = held;
+                                }
+
                             if( heldObject->person ) {
                                 heldAge = 0;
                                 }
@@ -491,10 +554,10 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     SimpleVector<int> *subContained = 
                         c->subContained.getElementArray();
                     
-                    drawObjectAnim( c->oID, ground, 
+                    drawObjectAnim( c->oID, c->anim, 
                                     frameTime, 
                                     0,
-                                    ground,
+                                    c->anim,
                                     frameTime,
                                     frameTime,
                                     &used,
@@ -688,6 +751,8 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     
     inCell->contained.deleteAll();
     inCell->subContained.deleteAll();    
+    
+    inCell->anim = ground;
     }
 
         

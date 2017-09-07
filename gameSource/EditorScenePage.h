@@ -12,8 +12,11 @@
 #include "ValueSlider.h"
 
 #include "objectBank.h"
+#include "animationBank.h"
 
 #include "keyLegend.h"
+
+#include "RadioButtonSet.h"
 
 
 
@@ -31,7 +34,8 @@ typedef struct SceneCell {
 
         char flipH;
         double age;
-
+        
+        AnimType anim;
         
     } SceneCell;
 
@@ -73,6 +77,10 @@ class EditorScenePage : public GamePage, public ActionListener {
         Picker mObjectPicker;
         
         ValueSlider mPersonAgeSlider;
+        
+        RadioButtonSet mCellAnimRadioButtons;
+        RadioButtonSet mPersonAnimRadioButtons;
+        
 
 
         SpriteHandle mGroundOverlaySprite[4];
