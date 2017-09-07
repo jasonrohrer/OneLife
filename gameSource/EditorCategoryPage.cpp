@@ -305,8 +305,8 @@ void EditorCategoryPage::makeActive( char inFresh ) {
         return;
         }
     
-    mObjectChildPicker.redoSearch( true );
-    mObjectParentPicker.redoSearch( true );
+    mObjectChildPicker.redoSearch( false );
+    mObjectParentPicker.redoSearch( false );
     }
 
 

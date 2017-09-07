@@ -1367,6 +1367,10 @@ ObjectRecord **searchObjects( const char *inSearch,
         
     
     int numAfterSkip = numTotalMatches - inNumToSkip;
+
+    if( numAfterSkip < 0 ) {
+        numAfterSkip = 0;
+        }
     
     int numToGet = inNumToGet;
     if( numToGet > numAfterSkip ) {

@@ -2612,7 +2612,7 @@ void EditorAnimationPage::makeActive( char inFresh ) {
         return;
         }
     
-    mObjectPicker.redoSearch( true );
+    mObjectPicker.redoSearch( false );
 
     mSettingRotCenter = false;
     }

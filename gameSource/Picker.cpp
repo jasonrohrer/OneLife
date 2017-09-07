@@ -241,6 +241,21 @@ void Picker::redoSearch( char inClearPageSkip ) {
 
     mDelButton.setVisible( false );
     mDelConfirmButton.setVisible( false );
+
+    if( mNumResults == 0 &&
+        mSkip > 0 ) {
+        
+        // we're showing a blank page of results
+
+        // back up until we hit page 0 or find some results to show
+        
+        mSkip -= PER_PAGE;
+        
+        if( mSkip < 0 ) {
+            mSkip = 0;
+            }
+        redoSearch( false );
+        }
     }
 
 

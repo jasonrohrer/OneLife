@@ -3668,8 +3668,8 @@ void EditorObjectPage::makeActive( char inFresh ) {
         return;
         }
     
-    mSpritePicker.redoSearch( true );
-    mObjectPicker.redoSearch( true );
+    mSpritePicker.redoSearch( false );
+    mObjectPicker.redoSearch( false );
 
     mRotAdjustMode = false;
     

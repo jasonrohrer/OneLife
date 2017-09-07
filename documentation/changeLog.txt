@@ -27,6 +27,10 @@ Version 33     ???
   held position of the basket of bones, for example, which contains a wide
   sprite that is rotated vertically.
 
+--Fixed pickers in editor to not need to reset results page number when some
+  results potentially deleted on another editor screen.  All editor screens
+  now hold their picker pages when flipping back and forth between screens.
+  Pickers now automatically rewind back past empty results pages.
 
 
 

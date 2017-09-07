@@ -750,7 +750,7 @@ void EditorSpriteTrimPage::makeActive( char inFresh ) {
         return;
         }
 
-    mSpritePicker.redoSearch( true );
+    mSpritePicker.redoSearch( false );
     
     lastMouseX = 0;
     lastMouseY = 0;

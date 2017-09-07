@@ -1148,8 +1148,8 @@ void EditorImportPage::makeActive( char inFresh ) {
 
     mShowTagMessage = false;
 
-    mSpritePicker.redoSearch( true );
-    mOverlayPicker.redoSearch( true );
+    mSpritePicker.redoSearch( false );
+    mOverlayPicker.redoSearch( false );
     }
 
 

@@ -1162,7 +1162,7 @@ void EditorTransitionPage::makeActive( char inFresh ) {
         return;
         }
     
-    mObjectPicker.redoSearch( true );
+    mObjectPicker.redoSearch( false );
 
     }
 

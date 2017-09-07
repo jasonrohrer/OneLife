@@ -580,8 +580,8 @@ void EditorScenePage::makeActive( char inFresh ) {
     
     TextField::unfocusAll();
     
-    mGroundPicker.redoSearch( true );
-    mObjectPicker.redoSearch( true );
+    mGroundPicker.redoSearch( false );
+    mObjectPicker.redoSearch( false );
     }
 
 
