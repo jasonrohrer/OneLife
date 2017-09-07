@@ -152,6 +152,10 @@ float initSpriteBankStep() {
         r->w = 2;
         r->h = 2;
         
+        r->visibleW = 2;
+        r->visibleH = 2;
+
+
         r->id = 0;
         
         sscanf( fileName, "%d.txt", &( r->id ) );
@@ -484,6 +488,9 @@ void stepSpriteBank() {
                         ( maxY + minY ) / 2 - 
                         r->h / 2;
                     
+                    r->visibleW = maxX - minX;
+                    r->visibleH = maxY - minY;
+
                     delete spriteImage;
                     }
                 
@@ -807,6 +814,9 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     r->w = inSourceImage->getWidth();
     r->h = inSourceImage->getHeight();
     
+    r->visibleW = r->w;
+    r->visibleH = r->h;
+
     r->centerXOffset = 0;
     r->centerYOffset = 0;
     
@@ -874,6 +884,9 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
         ( maxY + minY ) / 2 - 
         r->h / 2;
 
+    r->visibleW = maxX - minX;
+    r->visibleH = maxY - minY;
+    
     
     // delete old
     freeSpriteRecord( newID );

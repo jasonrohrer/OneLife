@@ -19,11 +19,16 @@ typedef struct SpriteRecord {
         // (used for sizing in pickers)
         int maxD;
         
+        // total width of image
         int w, h;
         
         // center of non-transparent area of sprite
         // offset relative to w/2, h/2
         int centerXOffset, centerYOffset;
+
+
+        // size of visible a>= 0.25 area of sprite
+        int visibleW, visibleH;
 
         // center around which sprite is rotated and drawn
         // note that is is loaded into SpriteHandle and is used 

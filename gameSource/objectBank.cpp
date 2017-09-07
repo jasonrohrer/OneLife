@@ -3605,15 +3605,33 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject ) {
     SpriteRecord *widestRecord = NULL;
     
     int widestIndex = -1;
-
+    int widestWidth = 0;
+    
     for( int i=0; i<inObject->numSprites; i++ ) {
         SpriteRecord *sprite = getSpriteRecord( inObject->sprites[i] );
     
-        if( widestRecord == NULL ||
-            sprite->w > widestRecord->w ) {
+        int w = sprite->visibleW;
+        
+        double rot = inObject->spriteRot[i];
+        
+        if( rot != 0 ) {
+            double rotAbs = fabs( rot );
             
+            // just the fractional part
+            rotAbs -= floor( rotAbs );
+            
+            if( rotAbs == 0.25 || rotAbs == 0.75 ) {
+                w = sprite->visibleH;
+                }
+            }
+
+
+        if( widestRecord == NULL ||
+            w > widestWidth ) {
+
             widestRecord = sprite;
             widestIndex = i;
+            widestWidth = w;
             }
         }
     

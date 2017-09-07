@@ -18,6 +18,16 @@ Version 33     ???
 
 --Fixed stutter-step of other players during long, continuous movements.
 
+--Optimized sprite drawing code with profiler to increase maximum number of 
+  sprites that can be drawn per frame.
+
+--More improvements to the way object center offsets are computed to be used
+  for held positions.  Now true visible sprite width (instead of total image
+  width) is used, and 90 degree rotations are accounted for.  This fixes the
+  held position of the basket of bones, for example, which contains a wide
+  sprite that is rotated vertically.
+
+
 
 
 Server fixes:
