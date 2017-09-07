@@ -3610,10 +3610,17 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject ) {
     
     int widestIndex = -1;
     int widestWidth = 0;
+    double widestYPos = 0;
     
     for( int i=0; i<inObject->numSprites; i++ ) {
         SpriteRecord *sprite = getSpriteRecord( inObject->sprites[i] );
     
+        if( sprite->multiplicativeBlend ) {
+            // don't consider translucent sprites when computing wideness
+            continue;
+            }
+        
+
         int w = sprite->visibleW;
         
         double rot = inObject->spriteRot[i];
@@ -3631,11 +3638,16 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject ) {
 
 
         if( widestRecord == NULL ||
-            w > widestWidth ) {
+            // wider than what we've seen so far
+            w > widestWidth ||
+            // or tied for wideness, and lower
+            ( w == widestWidth &&
+              inObject->spritePos[i].y < widestYPos ) ) {
 
             widestRecord = sprite;
             widestIndex = i;
             widestWidth = w;
+            widestYPos = inObject->spritePos[i].y;
             }
         }
     
