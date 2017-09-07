@@ -37,6 +37,10 @@ typedef struct SceneCell {
         
         AnimType anim;
         
+        // negative to unfreeze time for cell, or positive to freeze
+        // time at a given point
+        double frozenAnimTime;
+        
     } SceneCell;
 
 
@@ -81,6 +85,8 @@ class EditorScenePage : public GamePage, public ActionListener {
         RadioButtonSet mCellAnimRadioButtons;
         RadioButtonSet mPersonAnimRadioButtons;
         
+        ValueSlider mCellAnimFreezeSlider;
+        ValueSlider mPersonAnimFreezeSlider;
 
 
         SpriteHandle mGroundOverlaySprite[4];

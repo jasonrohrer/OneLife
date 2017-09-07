@@ -55,6 +55,12 @@ EditorScenePage::EditorScenePage()
           mPersonAnimRadioButtons( smallFont, -55, -250, NUM_PERSON_ANIM,
                                    personAnimNames,
                                    true, 2 ),                            
+          mCellAnimFreezeSlider( smallFont, -450, -340, 2,
+                                 300, 20,
+                                 -0.1, 2, "Cell Time" ),
+          mPersonAnimFreezeSlider( smallFont, 50, -340, 2,
+                                   300, 20,
+                                   -0.1, 2, "Person Time" ),
           mCurX( SCENE_W / 2 ),
           mCurY( SCENE_H / 2 ),
           mFrameCount( 0 ) {
@@ -87,6 +93,19 @@ EditorScenePage::EditorScenePage()
 
     mCellAnimRadioButtons.addActionListener( this );
     mPersonAnimRadioButtons.addActionListener( this );
+
+
+    addComponent( &mCellAnimFreezeSlider );
+    addComponent( &mPersonAnimFreezeSlider );
+    
+    mCellAnimFreezeSlider.setVisible( false );
+    mCellAnimFreezeSlider.addActionListener( this );
+    
+    mPersonAnimFreezeSlider.setVisible( false );
+    mPersonAnimFreezeSlider.addActionListener( this );
+    
+    
+
 
     for( int i=0; i<4; i++ ) {
         char *name = autoSprintf( "ground_t%d.tga", i );    
@@ -255,15 +274,21 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mSaveNewButton ) {
         }
     else if( inTarget == &mPersonAgeSlider ) {
-        getCurrentPersonCell()->age = mPersonAgeSlider.getValue();
+        p->age = mPersonAgeSlider.getValue();
         }
     else if( inTarget == &mCellAnimRadioButtons ) {
-        getCurrentCell()->anim = 
+        c->anim = 
             cellAnimTypes[ mCellAnimRadioButtons.getSelectedItem() ];
         }
     else if( inTarget == &mPersonAnimRadioButtons ) {
-        getCurrentPersonCell()->anim = 
+        p->anim = 
             personAnimTypes[ mPersonAnimRadioButtons.getSelectedItem() ];
+        }
+    else if( inTarget == &mCellAnimFreezeSlider ) {
+        c->frozenAnimTime = mCellAnimFreezeSlider.getValue();
+        }
+    else if( inTarget == &mPersonAnimFreezeSlider ) {
+        p->frozenAnimTime = mPersonAnimFreezeSlider.getValue();
         }
     }
 
@@ -311,9 +336,12 @@ void EditorScenePage::checkVisible() {
                 break;
                 }
             }
+        mCellAnimFreezeSlider.setVisible( true );
+        mCellAnimFreezeSlider.setValue( c->frozenAnimTime );
         }
     else {
         mCellAnimRadioButtons.setVisible( false );
+        mCellAnimFreezeSlider.setVisible( false );
         }
     
 
@@ -330,10 +358,14 @@ void EditorScenePage::checkVisible() {
                 break;
                 }
             }
+
+        mPersonAnimFreezeSlider.setVisible( true );
+        mPersonAnimFreezeSlider.setValue( c->frozenAnimTime );
         }
     else {
         mPersonAgeSlider.setVisible( false );
         mPersonAnimRadioButtons.setVisible( false );
+        mPersonAnimFreezeSlider.setVisible( false );
         }
     }
 
@@ -444,18 +476,22 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             hideClosestArm == -2 ) {
                             frozenArmAnimType = moving;
                             }
-
-
+                        
+                        double thisFrameTime = p->frozenAnimTime;
+                        
+                        if( thisFrameTime < 0 ) {
+                            thisFrameTime = frameTime;
+                            }
 
                         char used;
                     
                         HoldingPos holdingPos = 
                             drawObjectAnim( p->oID, 2, p->anim, 
-                                            frameTime, 
+                                            thisFrameTime, 
                                             0,
                                             p->anim,
-                                            frameTime,
-                                            frameTime,
+                                            thisFrameTime,
+                                            thisFrameTime,
                                             &used,
                                             frozenArmAnimType,
                                             frozenArmAnimType,
@@ -503,11 +539,11 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                 p->subContained.getElementArray();
 
                             drawObjectAnim( p->heldID,  
-                                            heldAnimType, frameTime,
+                                            heldAnimType, thisFrameTime,
                                             0, 
                                             heldFadeTargetType, 
-                                            frameTime, 
-                                            frameTime,
+                                            thisFrameTime, 
+                                            thisFrameTime,
                                             &used,
                                             moving,
                                             moving,
@@ -547,6 +583,12 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         continue;
                         }
                 
+                    
+                    double thisFrameTime = c->frozenAnimTime;
+                        
+                    if( thisFrameTime < 0 ) {
+                        thisFrameTime = frameTime;
+                        }
 
                 
                     char used;
@@ -555,11 +597,11 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         c->subContained.getElementArray();
                     
                     drawObjectAnim( c->oID, c->anim, 
-                                    frameTime, 
+                                    thisFrameTime, 
                                     0,
                                     c->anim,
-                                    frameTime,
-                                    frameTime,
+                                    thisFrameTime,
+                                    thisFrameTime,
                                     &used,
                                     ground,
                                     ground,
@@ -753,6 +795,7 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->subContained.deleteAll();    
     
     inCell->anim = ground;
+    inCell->frozenAnimTime = -0.1;
     }
 
         
