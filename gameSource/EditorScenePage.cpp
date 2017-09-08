@@ -299,7 +299,9 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
             if( !placed ) {
                 if( getObject( id )->person ) {
                     p->oID = id;
-                    p->age = 20;
+                    if( p->age == -1 ) {
+                        p->age = 20;
+                        }
                     }
                 else {
                     c->oID = id;
