@@ -81,11 +81,15 @@ EditorScenePage::EditorScenePage()
           mPersonYOffsetSlider( smallFont, 200, -260, 2,
                               175, 20,
                               -128, 128, "Y Offset" ),
+          mCellDestSprite( loadSprite( "centerMark.tga" ) ),
+          mPersonDestSprite( loadSprite( "internalPaperMark.tga" ) ),
           mShiftX( 0 ), 
           mShiftY( 0 ),
           mCurX( SCENE_W / 2 ),
           mCurY( SCENE_H / 2 ),
-          mFrameCount( 0 ) {
+          mFrameCount( 0 ),
+          mLittleDheld( false ),
+          mBigDheld( false ) {
     
     addComponent( &mAnimEditorButton );
     mAnimEditorButton.addActionListener( this );
@@ -181,6 +185,7 @@ EditorScenePage::EditorScenePage()
     addKeyClassDescription( &mKeyLegend, "v", "Paste" );
     addKeyClassDescription( &mKeyLegend, "i/I", "Insert contained/held" );
     addKeyClassDescription( &mKeyLegend, "Bkspc", "Clear cell" );
+    addKeyClassDescription( &mKeyLegend, "Hold d/D", "Set obj/person dest" );
 
     addKeyClassDescription( &mKeyLegendG, "R-Click", "Flood fill" );
 
@@ -194,6 +199,8 @@ EditorScenePage::~EditorScenePage() {
     for( int i=0; i<4; i++ ) {
         freeSprite( mGroundOverlaySprite[i] );
         }
+    freeSprite( mCellDestSprite );
+    freeSprite( mPersonDestSprite );
     }
 
 
@@ -401,31 +408,46 @@ SceneCell *EditorScenePage::getCurrentPersonCell() {
 
 
 void EditorScenePage::checkVisible() {
-    if( mCurX >= 4 && mCurX <= 7 ) {
+    SceneCell *c = getCurrentCell();
+    SceneCell *p = getCurrentPersonCell();
+
+    int curFocusX = mCurX;
+    int curFocusY = mCurY;
+
+    if( mLittleDheld ) {
+        curFocusX += c->destCellXOffset;
+        curFocusY += c->destCellYOffset;
+        }
+    else if( mBigDheld ) {
+        curFocusX += p->destCellXOffset;
+        curFocusY += p->destCellYOffset;
+        }
+    
+
+    if( curFocusX >= 4 && curFocusX <= 7 ) {
         mShiftX = 0;
         }
     else {
-        if( mCurX < 4 ) {
-            mShiftX = 4 - mCurX;
+        if( curFocusX < 4 ) {
+            mShiftX = 4 - curFocusX;
             }
         else {
-            mShiftX = 7 - mCurX;
+            mShiftX = 7 - curFocusX;
             }
         }
     
-    if( mCurY >= 2 && mCurY <= 4 ) {
+    if( curFocusY >= 2 && curFocusY <= 4 ) {
         mShiftY = 0;
         }
     else {
-        if( mCurY < 2 ) {
-            mShiftY = mCurY - 2;
+        if( curFocusY < 2 ) {
+            mShiftY = curFocusY - 2;
             }
         else {
-            mShiftY = mCurY - 4;
+            mShiftY = curFocusY - 4;
             }
         }
 
-    SceneCell *c = getCurrentCell();
 
     if( c->oID > 0 ) {
         mCellAnimRadioButtons.setVisible( true );
@@ -466,7 +488,6 @@ void EditorScenePage::checkVisible() {
         }
     
 
-    SceneCell *p = getCurrentPersonCell();
 
     if( p->oID > 0 ) {
         mPersonAgeSlider.setVisible( true );
@@ -502,10 +523,94 @@ void EditorScenePage::checkVisible() {
 
 
 
+static void stepMovingCell( SceneCell *inC ) {
+    SceneCell *c = inC;
+    
+    if( c->oID <= 0 ) {
+        return;
+        }
+
+    if( c->destCellXOffset == 0 && c->destCellYOffset == 0 ) {
+        return;
+        }
+
+    ObjectRecord *cellO = getObject( c->oID );
+
+    // 4 cells per sec
+    // base speed
+    double speed = 4;
+
+    if( cellO->person ) {
+        // what they are holding applies speed mod to them
+        if( c->heldID > 0  ) {
+            speed *= getObject( c->heldID )->speedMult;
+            }
+        }
+    else {
+        // object itself has speed mod
+        speed *= cellO->speedMult;
+        }
+    
+    double totalCellDist = sqrt( c->destCellXOffset * c->destCellXOffset +
+                                 c->destCellYOffset * c->destCellYOffset );
+    
+    double totalSec = totalCellDist / speed;
+    
+    double totalFrames = totalSec * 60 / frameRateFactor;
+    
+    double fractionPerFrame = 1.0 / totalFrames;
+    
+    c->moveFractionDone += fractionPerFrame;
+
+    while( c->moveFractionDone > 1.0 ) {
+        c->moveFractionDone -= 1.0;
+        }
+    
+    c->moveOffset.x = c->destCellXOffset * c->moveFractionDone * CELL_D;
+    c->moveOffset.y = -c->destCellYOffset * c->moveFractionDone * CELL_D;
+    }
+
+
+
+static void restartCell( SceneCell *inC ) {
+    SceneCell *c = inC;
+    c->moveFractionDone = 0;
+    c->moveOffset.x = 0;
+    c->moveOffset.y = 0;
+    }
+
+
+
+void EditorScenePage::restartAllMoves() {
+    for( int y=0; y<SCENE_H; y++ ) {
+        for( int x=0; x<SCENE_W; x++ ) {
+            SceneCell *c = &( mCells[y][x] );
+            SceneCell *p = &( mPersonCells[y][x] );
+            
+            restartCell( c );
+            restartCell( p );
+            }
+        }
+    }
+
+
+
 void EditorScenePage::drawUnderComponents( doublePair inViewCenter, 
                                            double inViewSize ) {
     
     mFrameCount ++;
+
+
+    // step any moving cells
+    for( int y=0; y<SCENE_H; y++ ) {
+        for( int x=0; x<SCENE_W; x++ ) {
+            SceneCell *c = &( mCells[y][x] );
+            SceneCell *p = &( mPersonCells[y][x] );
+            
+            stepMovingCell( c );
+            stepMovingCell( p );
+            }
+        }
     
     
 
@@ -594,7 +699,9 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         
                         personPos.x += p->xOffset;
                         personPos.y += p->yOffset;
-
+                        
+                        personPos = add( personPos, p->moveOffset );
+                        
                         int hideClosestArm = 0;
                         char hideAllLimbs = false;
                         
@@ -731,6 +838,8 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     cellPos.x += c->xOffset;
                     cellPos.y += c->yOffset;
 
+                    cellPos = add( cellPos, c->moveOffset );
+
                     
                     double thisFrameTime = c->frozenAnimTime;
                         
@@ -812,8 +921,30 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     drawSquare( curPos, 64 );
 
     stopStencil();
- 
 
+    SceneCell *c = getCurrentCell();
+    SceneCell *p = getCurrentPersonCell();
+    
+
+    if( mLittleDheld || c->destCellXOffset != 0 || c->destCellYOffset != 0 ) {
+        doublePair markPos = curPos;
+        
+        markPos.x += c->destCellXOffset * CELL_D;
+        markPos.y -= c->destCellYOffset * CELL_D;
+        
+        drawSprite( mCellDestSprite, markPos );
+        }
+
+    if( mBigDheld || p->destCellXOffset != 0 || p->destCellYOffset != 0 ) {
+        doublePair markPos = curPos;
+        
+        markPos.x += p->destCellXOffset * CELL_D;
+        markPos.y -= p->destCellYOffset * CELL_D;
+        
+        drawSprite( mPersonDestSprite, markPos );
+        }
+    
+    
 
     doublePair legendPos = mAnimEditorButton.getPosition();
             
@@ -830,9 +961,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
     legendPos = mObjectPicker.getPosition();
     legendPos.y -= 255;
-    
-    SceneCell *c = getCurrentCell();
-    SceneCell *p = getCurrentPersonCell();
+
     
     if( c->oID > 0 &&
         getObject( c->oID )->numSlots > c->contained.size() ) {
@@ -856,6 +985,9 @@ void EditorScenePage::makeActive( char inFresh ) {
     
     mGroundPicker.redoSearch( false );
     mObjectPicker.redoSearch( false );
+
+    mLittleDheld = false;
+    mBigDheld = false;
     }
 
 
@@ -952,7 +1084,28 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
         clearCell( c );
         clearCell( p );
         }
+    else if( inASCII == 'd' ) {
+        mLittleDheld = true;
+        }
+    else if( inASCII == 'D' ) {
+        mBigDheld = true;
+        }
+    
+    checkVisible();
+    }
 
+
+
+void EditorScenePage::keyUp( unsigned char inASCII ) {
+    if( TextField::isAnyFocused() ) {
+        return;
+        }
+    
+    if( inASCII == 'd' || inASCII == 'D' ) {
+        mLittleDheld = false;
+        mBigDheld = false;
+        }
+    
     checkVisible();
     }
 
@@ -976,6 +1129,11 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
 
     inCell->xOffset = 0;
     inCell->yOffset = 0;
+
+    inCell->destCellXOffset = 0;
+    inCell->destCellYOffset = 0;
+
+    inCell->moveFractionDone = 0;
     }
 
         
@@ -993,40 +1151,75 @@ void EditorScenePage::specialKeyDown( int inKeyCode ) {
     if( isCommandKeyDown() ) {
         offset = 2;
         }
-    if( isShiftKeyDown() ) {
-        offset = 4;
-        }
-    if( isCommandKeyDown() && isShiftKeyDown() ) {
-        offset = 8;
+    if( ! mLittleDheld && ! mBigDheld ) {    
+        if( isShiftKeyDown() ) {
+            offset = 4;
+            }
+        if( isCommandKeyDown() && isShiftKeyDown() ) {
+            offset = 8;
+            }
         }
     
-
-    switch( inKeyCode ) {
-        case MG_KEY_LEFT:
-            mCurX -= offset;
-            if( mCurX < 0 ) {
-                mCurX = 0;
-                }
-            break;
-        case MG_KEY_RIGHT:
-            mCurX += offset;
-            if( mCurX >= SCENE_W ) {
-                mCurX = SCENE_W - 1;
-                }
-            break;
-        case MG_KEY_DOWN:
-            mCurY += offset;
-            if( mCurY >= SCENE_H ) {
-                mCurY = SCENE_H - 1;
-                }
-            break;
-        case MG_KEY_UP:
-            mCurY -= offset;
-            if( mCurY < 0 ) {
-                mCurY = 0;
-                }
-            break;
+    
+    if( ! mLittleDheld && ! mBigDheld ) {    
+        switch( inKeyCode ) {
+            case MG_KEY_LEFT:
+                mCurX -= offset;
+                if( mCurX < 0 ) {
+                    mCurX = 0;
+                    }
+                break;
+            case MG_KEY_RIGHT:
+                mCurX += offset;
+                if( mCurX >= SCENE_W ) {
+                    mCurX = SCENE_W - 1;
+                    }
+                break;
+            case MG_KEY_DOWN:
+                mCurY += offset;
+                if( mCurY >= SCENE_H ) {
+                    mCurY = SCENE_H - 1;
+                    }
+                break;
+            case MG_KEY_UP:
+                mCurY -= offset;
+                if( mCurY < 0 ) {
+                    mCurY = 0;
+                    }
+                break;
+            }
         }
+    else {
+        SceneCell *c;
+        
+        if( mLittleDheld ) {
+            c = getCurrentCell();
+            }
+        else {
+            c = getCurrentPersonCell();
+            }
+        
+        switch( inKeyCode ) {
+            case MG_KEY_LEFT:
+                c->destCellXOffset -= offset;
+                restartAllMoves();
+                break;
+            case MG_KEY_RIGHT:
+                c->destCellXOffset += offset;
+                restartAllMoves();
+                break;
+            case MG_KEY_DOWN:
+                c->destCellYOffset += offset;
+                restartAllMoves();
+                break;
+            case MG_KEY_UP:
+                c->destCellYOffset -= offset;
+                restartAllMoves();
+                break;
+            }
+        
+        }
+    
 
     checkVisible();
     }

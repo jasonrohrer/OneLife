@@ -46,6 +46,16 @@ typedef struct SceneCell {
         
         int xOffset;
         int yOffset;
+        
+        // for moving cell, where they should end up
+        int destCellXOffset;
+        int destCellYOffset;
+
+        // for live display only (not saved)
+        double moveFractionDone;
+
+        // current move offset in pixels
+        doublePair moveOffset;
 
     } SceneCell;
 
@@ -69,6 +79,7 @@ class EditorScenePage : public GamePage, public ActionListener {
         virtual void makeActive( char inFresh );
         
         virtual void keyDown( unsigned char inASCII );
+        virtual void keyUp( unsigned char inASCII );
         virtual void specialKeyDown( int inKeyCode );
         
         
@@ -103,6 +114,8 @@ class EditorScenePage : public GamePage, public ActionListener {
         ValueSlider mPersonYOffsetSlider;
         
 
+        SpriteHandle mCellDestSprite;
+        SpriteHandle mPersonDestSprite;
 
         SpriteHandle mGroundOverlaySprite[4];
 
@@ -121,6 +134,9 @@ class EditorScenePage : public GamePage, public ActionListener {
         
         double mFrameCount;
         
+        char mLittleDheld;
+        char mBigDheld;
+
         KeyLegend mKeyLegend, mKeyLegendG, mKeyLegendC, mKeyLegendP;
 
 
@@ -138,6 +154,7 @@ class EditorScenePage : public GamePage, public ActionListener {
         // clear everything but biome
         void clearCell( SceneCell *inCell );
 
+        void restartAllMoves();
         
     };
 
