@@ -40,6 +40,8 @@ static const AnimType personAnimTypes[ NUM_PERSON_ANIM ] =
     { ground, moving, eating, doing };
 
 
+#define CELL_D 128
+
 
 EditorScenePage::EditorScenePage()
         : mAnimEditorButton( mainFont, 210, 260, "Anim" ),
@@ -76,6 +78,8 @@ EditorScenePage::EditorScenePage()
           mPersonYOffsetSlider( smallFont, 200, -260, 2,
                               175, 20,
                               -128, 128, "Y Offset" ),
+          mShiftX( 0 ), 
+          mShiftY( 0 ),
           mCurX( SCENE_W / 2 ),
           mCurY( SCENE_H / 2 ),
           mFrameCount( 0 ) {
@@ -368,6 +372,9 @@ void EditorScenePage::drawGroundOverlaySprites() {
             
             int tileI = tileY * 2 + tileX;
             
+            pos.x += mShiftX * CELL_D;
+            pos.y += mShiftY * CELL_D;
+            
             drawSprite( mGroundOverlaySprite[tileI], pos );
             }
         }
@@ -387,6 +394,30 @@ SceneCell *EditorScenePage::getCurrentPersonCell() {
 
 
 void EditorScenePage::checkVisible() {
+    if( mCurX >= 3 && mCurX <= 7 ) {
+        mShiftX = 0;
+        }
+    else {
+        if( mCurX < 3 ) {
+            mShiftX = 3 - mCurX;
+            }
+        else {
+            mShiftX = 7 - mCurX;
+            }
+        }
+    
+    if( mCurY >= 2 && mCurY <= 4 ) {
+        mShiftY = 0;
+        }
+    else {
+        if( mCurY < 2 ) {
+            mShiftY = mCurY - 2;
+            }
+        else {
+            mShiftY = mCurY - 4;
+            }
+        }
+
     SceneCell *c = getCurrentCell();
 
     if( c->oID > 0 ) {
@@ -476,9 +507,13 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
         for( int x=0; x<SCENE_W; x++ ) {
             doublePair pos = cornerPos;
                 
-            pos.x += x * 128;
-            pos.y -= y * 128;
-                
+            pos.x += x * CELL_D;
+            pos.y -= y * CELL_D;
+
+            pos.x += mShiftX * CELL_D;
+            pos.y += mShiftY * CELL_D;
+
+
             SceneCell *c = &( mCells[y][x] );
             
             if( c->biome != -1 ) {
@@ -539,9 +574,12 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                 for( int x=0; x<SCENE_W; x++ ) {
                     doublePair pos = cornerPos;
                 
-                    pos.x += x * 128;
-                    pos.y -= y * 128;
-                    
+                    pos.x += x * CELL_D;
+                    pos.y -= y * CELL_D;
+
+                    pos.x += mShiftX * CELL_D;
+                    pos.y += mShiftY * CELL_D;
+
                     SceneCell *p = &( mPersonCells[y][x] );
 
                     if( p->oID > 0 ) {
@@ -664,9 +702,12 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
             for( int x=0; x<SCENE_W; x++ ) {
                 doublePair pos = cornerPos;
                 
-                pos.x += x * 128;
-                pos.y -= y * 128;
+                pos.x += x * CELL_D;
+                pos.y -= y * CELL_D;
                 
+                pos.x += mShiftX * CELL_D;
+                pos.y += mShiftY * CELL_D;
+
                 SceneCell *c = &( mCells[y][x] );
                 
                 if( c->oID > 0 ) {
@@ -746,8 +787,11 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     
     doublePair curPos = cornerPos;
                 
-    curPos.x += mCurX * 128;
-    curPos.y -= mCurY * 128;
+    curPos.x += mCurX * CELL_D;
+    curPos.y -= mCurY * CELL_D;
+
+    curPos.x += mShiftX * CELL_D;
+    curPos.y += mShiftY * CELL_D;
 
     // draw a frame around the current cell
     startAddingToStencil( false, true );
@@ -954,22 +998,26 @@ void EditorScenePage::specialKeyDown( int inKeyCode ) {
     switch( inKeyCode ) {
         case MG_KEY_LEFT:
             mCurX -= offset;
-            while( mCurX < 0 ) {
-                mCurX += SCENE_W;
+            if( mCurX < 0 ) {
+                mCurX = 0;
                 }
             break;
         case MG_KEY_RIGHT:
             mCurX += offset;
-            mCurX = mCurX % SCENE_W;
+            if( mCurX >= SCENE_W ) {
+                mCurX = SCENE_W - 1;
+                }
             break;
         case MG_KEY_DOWN:
             mCurY += offset;
-            mCurY = mCurY % SCENE_H;
+            if( mCurY >= SCENE_H ) {
+                mCurY = SCENE_H - 1;
+                }
             break;
         case MG_KEY_UP:
             mCurY -= offset;
-            while( mCurY < 0 ) {
-                mCurY += SCENE_H;
+            if( mCurY < 0 ) {
+                mCurY = 0;
                 }
             break;
         }

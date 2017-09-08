@@ -112,7 +112,11 @@ class EditorScenePage : public GamePage, public ActionListener {
         SceneCell mEmptyCell;
         SceneCell mCopyBuffer;
         
-
+        
+        // when we get near edge of screen with cell selection, we
+        // shift everything into the center
+        int mShiftX, mShiftY;
+        
         int mCurX, mCurY;
         
         double mFrameCount;
