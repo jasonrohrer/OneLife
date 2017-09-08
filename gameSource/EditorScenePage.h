@@ -44,6 +44,8 @@ typedef struct SceneCell {
         // for vanishing/appearing sprites based on use
         int numUsesRemaining;
         
+        int xOffset;
+        int yOffset;
 
     } SceneCell;
 
@@ -93,6 +95,13 @@ class EditorScenePage : public GamePage, public ActionListener {
         ValueSlider mPersonAnimFreezeSlider;
         
         ValueSlider mCellSpriteVanishSlider;
+
+        ValueSlider mCellXOffsetSlider;
+        ValueSlider mCellYOffsetSlider;
+
+        ValueSlider mPersonXOffsetSlider;
+        ValueSlider mPersonYOffsetSlider;
+        
 
 
         SpriteHandle mGroundOverlaySprite[4];

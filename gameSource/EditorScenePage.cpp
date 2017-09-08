@@ -64,6 +64,18 @@ EditorScenePage::EditorScenePage()
           mCellSpriteVanishSlider( smallFont, -450, -300, 2,
                                    100, 20,
                                    0, 1, "Use" ),
+          mCellXOffsetSlider( smallFont, -450, -230, 2,
+                              175, 20,
+                              -128, 128, "X Offset" ),
+          mCellYOffsetSlider( smallFont, -450, -260, 2,
+                              175, 20,
+                              -128, 128, "Y Offset" ),
+          mPersonXOffsetSlider( smallFont, 200, -230, 2,
+                              175, 20,
+                              -128, 128, "X Offset" ),
+          mPersonYOffsetSlider( smallFont, 200, -260, 2,
+                              175, 20,
+                              -128, 128, "Y Offset" ),
           mCurX( SCENE_W / 2 ),
           mCurY( SCENE_H / 2 ),
           mFrameCount( 0 ) {
@@ -112,6 +124,25 @@ EditorScenePage::EditorScenePage()
     mCellSpriteVanishSlider.setVisible( false );
     mCellSpriteVanishSlider.addActionListener( this );
     
+    
+    addComponent( &mCellXOffsetSlider );
+    addComponent( &mCellYOffsetSlider );
+    
+    mCellXOffsetSlider.setVisible( false );
+    mCellYOffsetSlider.setVisible( false );
+    
+    mCellXOffsetSlider.addActionListener( this );
+    mCellYOffsetSlider.addActionListener( this );
+
+
+    addComponent( &mPersonXOffsetSlider );
+    addComponent( &mPersonYOffsetSlider );
+    
+    mPersonXOffsetSlider.setVisible( false );
+    mPersonYOffsetSlider.setVisible( false );
+    
+    mPersonXOffsetSlider.addActionListener( this );
+    mPersonYOffsetSlider.addActionListener( this );
     
 
 
@@ -303,6 +334,22 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
         c->numUsesRemaining = lrint( mCellSpriteVanishSlider.getValue() );
         mCellSpriteVanishSlider.setValue( c->numUsesRemaining );
         }
+    else if( inTarget == &mCellXOffsetSlider ) {
+        c->xOffset = lrint( mCellXOffsetSlider.getValue() );
+        mCellXOffsetSlider.setValue( c->xOffset );
+        }
+    else if( inTarget == &mCellYOffsetSlider ) {
+        c->yOffset = lrint( mCellYOffsetSlider.getValue() );
+        mCellYOffsetSlider.setValue( c->yOffset );
+        }
+    else if( inTarget == &mPersonXOffsetSlider ) {
+        p->xOffset = lrint( mPersonXOffsetSlider.getValue() );
+        mPersonXOffsetSlider.setValue( p->xOffset );
+        }
+    else if( inTarget == &mPersonYOffsetSlider ) {
+        p->yOffset = lrint( mPersonYOffsetSlider.getValue() );
+        mPersonYOffsetSlider.setValue( p->yOffset );
+        }
     }
 
 
@@ -363,10 +410,19 @@ void EditorScenePage::checkVisible() {
         else {
             mCellSpriteVanishSlider.setVisible( false );
             }
+
+        mCellXOffsetSlider.setVisible( true );
+        mCellYOffsetSlider.setVisible( true );
+        
+        mCellXOffsetSlider.setValue( c->xOffset );
+        mCellYOffsetSlider.setValue( c->yOffset );
         }
     else {
         mCellAnimRadioButtons.setVisible( false );
         mCellAnimFreezeSlider.setVisible( false );
+        
+        mCellXOffsetSlider.setVisible( false );
+        mCellYOffsetSlider.setVisible( false );
         }
     
 
@@ -378,19 +434,28 @@ void EditorScenePage::checkVisible() {
         mPersonAnimRadioButtons.setVisible( true );
         
         for( int a=0; a<NUM_PERSON_ANIM; a++ ) {
-            if( personAnimTypes[a] == c->anim ) {
+            if( personAnimTypes[a] == p->anim ) {
                 mPersonAnimRadioButtons.setSelectedItem( a );
                 break;
                 }
             }
 
         mPersonAnimFreezeSlider.setVisible( true );
-        mPersonAnimFreezeSlider.setValue( c->frozenAnimTime );
+        mPersonAnimFreezeSlider.setValue( p->frozenAnimTime );
+        
+        mPersonXOffsetSlider.setVisible( true );
+        mPersonYOffsetSlider.setVisible( true );
+        
+        mPersonXOffsetSlider.setValue( p->xOffset );
+        mPersonYOffsetSlider.setValue( p->yOffset );
         }
     else {
         mPersonAgeSlider.setVisible( false );
         mPersonAnimRadioButtons.setVisible( false );
         mPersonAnimFreezeSlider.setVisible( false );
+        
+        mPersonXOffsetSlider.setVisible( false );
+        mPersonYOffsetSlider.setVisible( false );
         }
     }
 
@@ -479,6 +544,10 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
                     if( p->oID > 0 ) {
                         
+                        doublePair personPos = pos;
+                        
+                        personPos.x += p->xOffset;
+                        personPos.y += p->yOffset;
 
                         int hideClosestArm = 0;
                         char hideAllLimbs = false;
@@ -520,7 +589,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                             &used,
                                             frozenArmAnimType,
                                             frozenArmAnimType,
-                                            pos,
+                                            personPos,
                                             0,
                                             false,
                                             p->flipH,
@@ -537,7 +606,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             doublePair holdPos;
                             double holdRot;                            
                         
-                            computeHeldDrawPos( holdingPos, pos,
+                            computeHeldDrawPos( holdingPos, personPos,
                                                 heldObject,
                                                 p->flipH,
                                                 &holdPos, &holdRot );
@@ -607,7 +676,12 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         ( b == 1 && o->drawBehindPlayer ) ) {
                         continue;
                         }
-                
+                    
+                    doublePair cellPos = pos;
+                    
+                    cellPos.x += c->xOffset;
+                    cellPos.y += c->yOffset;
+
                     
                     double thisFrameTime = c->frozenAnimTime;
                         
@@ -640,7 +714,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                     &used,
                                     ground,
                                     ground,
-                                    pos,
+                                    cellPos,
                                     0,
                                     false,
                                     c->flipH,
@@ -840,6 +914,9 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->anim = ground;
     inCell->frozenAnimTime = -0.1;
     inCell->numUsesRemaining = 1;
+
+    inCell->xOffset = 0;
+    inCell->yOffset = 0;
     }
 
         
