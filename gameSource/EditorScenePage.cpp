@@ -61,6 +61,9 @@ EditorScenePage::EditorScenePage()
           mPersonAnimFreezeSlider( smallFont, 50, -340, 2,
                                    300, 20,
                                    -0.1, 2, "Person Time" ),
+          mCellSpriteVanishSlider( smallFont, -450, -300, 2,
+                                   100, 20,
+                                   0, 1, "Use" ),
           mCurX( SCENE_W / 2 ),
           mCurY( SCENE_H / 2 ),
           mFrameCount( 0 ) {
@@ -103,6 +106,11 @@ EditorScenePage::EditorScenePage()
     
     mPersonAnimFreezeSlider.setVisible( false );
     mPersonAnimFreezeSlider.addActionListener( this );
+    
+
+    addComponent( &mCellSpriteVanishSlider );
+    mCellSpriteVanishSlider.setVisible( false );
+    mCellSpriteVanishSlider.addActionListener( this );
     
     
 
@@ -266,6 +274,7 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
                     c->oID = id;
                     c->contained.deleteAll();
                     c->subContained.deleteAll();
+                    c->numUsesRemaining = o->numUses;                    
                     }
                 }
             }
@@ -289,6 +298,10 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mPersonAnimFreezeSlider ) {
         p->frozenAnimTime = mPersonAnimFreezeSlider.getValue();
+        }
+    else if( inTarget == &mCellSpriteVanishSlider ) {
+        c->numUsesRemaining = lrint( mCellSpriteVanishSlider.getValue() );
+        mCellSpriteVanishSlider.setValue( c->numUsesRemaining );
         }
     }
 
@@ -338,6 +351,18 @@ void EditorScenePage::checkVisible() {
             }
         mCellAnimFreezeSlider.setVisible( true );
         mCellAnimFreezeSlider.setValue( c->frozenAnimTime );
+
+        ObjectRecord *cellO = getObject( c->oID );
+        
+        if( cellO->numUses > 1 ) {
+            mCellSpriteVanishSlider.setVisible( true );
+            
+            mCellSpriteVanishSlider.setHighValue( cellO->numUses );
+            mCellSpriteVanishSlider.setValue( c->numUsesRemaining );
+            }
+        else {
+            mCellSpriteVanishSlider.setVisible( false );
+            }
         }
     else {
         mCellAnimRadioButtons.setVisible( false );
@@ -595,7 +620,17 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     int *contained = c->contained.getElementArray();
                     SimpleVector<int> *subContained = 
                         c->subContained.getElementArray();
+
+
+                    ObjectRecord *cellO = getObject( c->oID );
                     
+                    // temporarily set up sprite vanish
+                    if( cellO->numUses > 1 ) {
+                        setupSpriteUseVis( cellO, c->numUsesRemaining,
+                                           cellO->spriteSkipDrawing );
+                        }
+                    
+
                     drawObjectAnim( c->oID, c->anim, 
                                     thisFrameTime, 
                                     0,
@@ -619,6 +654,14 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                     subContained );
                     delete [] contained;
                     delete [] subContained;
+
+                                        
+                    // restore default sprite vanish
+                    if( cellO->numUses > 1 ) {
+                        setupSpriteUseVis( cellO, cellO->numUses,
+                                           cellO->spriteSkipDrawing );
+                        }
+
                     }
                 }
             }
@@ -796,6 +839,7 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     
     inCell->anim = ground;
     inCell->frozenAnimTime = -0.1;
+    inCell->numUsesRemaining = 1;
     }
 
         

@@ -41,6 +41,10 @@ typedef struct SceneCell {
         // time at a given point
         double frozenAnimTime;
         
+        // for vanishing/appearing sprites based on use
+        int numUsesRemaining;
+        
+
     } SceneCell;
 
 
@@ -87,6 +91,8 @@ class EditorScenePage : public GamePage, public ActionListener {
         
         ValueSlider mCellAnimFreezeSlider;
         ValueSlider mPersonAnimFreezeSlider;
+        
+        ValueSlider mCellSpriteVanishSlider;
 
 
         SpriteHandle mGroundOverlaySprite[4];
