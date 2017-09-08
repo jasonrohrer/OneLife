@@ -812,6 +812,13 @@ void EditorScenePage::makeActive( char inFresh ) {
 
 void EditorScenePage::keyDown( unsigned char inASCII ) {
     
+    if( inASCII == 13 ) {
+        // enter
+        // return to cursor control
+        TextField::unfocusAll();
+        }
+    
+
     if( TextField::isAnyFocused() ) {
         return;
         }
