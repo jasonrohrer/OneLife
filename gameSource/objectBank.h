@@ -591,5 +591,10 @@ void computeHeldDrawPos( HoldingPos inHoldingPos, doublePair inPos,
 
 
 
+// sets vis flags in inSpriteVis based on inUsesRemaining
+void setupSpriteUseVis( ObjectRecord *inObject, int inUsesRemaining,
+                        char *inSpriteVis );
+
+
 
 #endif

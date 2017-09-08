@@ -881,26 +881,9 @@ void initObjectBankFinish() {
                     
                     o->useDummyIDs = new int[ numDummyObj ];
                     
-                    int numVanishingSprites = 0;
-                    
-                    SimpleVector<int> vanishingIndices;
-                    
-                    for( int s=0; s<o->numSprites; s++ ) {
-                        if( o->spriteUseVanish[s] ) {
-                            numVanishingSprites ++;
-                            vanishingIndices.push_back( s );
-                            }
-                        }
 
-                    int numAppearingSprites = 0;
-                    
-                    SimpleVector<int> appearingIndices;
-                    
                     for( int s=0; s<o->numSprites; s++ ) {
                         if( o->spriteUseAppear[s] ) {
-                            numAppearingSprites ++;
-                            appearingIndices.push_back( s );
-
                             // hide all appearing sprites in parent object
                             o->spriteSkipDrawing[s] = true;
                             }
@@ -937,12 +920,9 @@ void initObjectBankFinish() {
                             dummyO->creationSound = blankSoundUsage;
                             }
                         
-
-                        // keep all appear sprites turned off
-                        // unless we turn them on for this dummy
-                        memcpy( dummyO->spriteSkipDrawing,
-                                o->spriteSkipDrawing,
-                                o->numSprites );
+                        
+                        setupSpriteUseVis( o, d, dummyO->spriteSkipDrawing );
+                        
                         
                         // copy anims too
                         for( int t=0; t<endAnimType; t++ ) {
@@ -965,60 +945,6 @@ void initObjectBankFinish() {
                                 a->objectID = mainID;
                                 }
                             }
-                        
-
-                        // hide some sprites
-
-                        int numSpritesLeft = 
-                            ( d * (numVanishingSprites) ) / numUses;
-                        
-                        int numInLastDummy = numVanishingSprites / numUses;
-                        
-                        if( numInLastDummy == 0 ) {
-                            // add 1 to everything to pad up, so last
-                            // dummy has 1 sprite in it
-                            numSpritesLeft += 1;
-                            }
-                        
-
-                        if( numSpritesLeft > numVanishingSprites ) {
-                            numSpritesLeft = numVanishingSprites;
-                            }
-                        for( int v=numSpritesLeft; 
-                             v<numVanishingSprites; v++ ) {
-                            
-                            dummyO->spriteSkipDrawing[
-                                vanishingIndices.getElementDirect( v ) ] =
-                                true;
-                            }
-
-
-                        // now handle appearing sprites
-                        int numInvisSpritesLeft = 
-                            ( d * (numAppearingSprites) ) / numUses;
-                        
-                        /*
-                          // testing... do we need to do this?
-                        int numInvisInLastDummy = numAppearingSprites / numUses;
-                        
-                        if( numInLastDummy == 0 ) {
-                            // add 1 to everything to pad up, so last
-                            // dummy has 1 sprite in it
-                            numSpritesLeft += 1;
-                            }
-                        */
-
-                        if( numInvisSpritesLeft > numAppearingSprites ) {
-                            numInvisSpritesLeft = numAppearingSprites;
-                            }
-                        for( int v=0; 
-                             v<numAppearingSprites - numInvisSpritesLeft; 
-                             v++ ) {
-                            
-                            dummyO->spriteSkipDrawing[
-                                appearingIndices.getElementDirect( v ) ] =
-                                false;
-                            }
                         }
                     }
                 
@@ -1033,6 +959,139 @@ void initObjectBankFinish() {
     
 
     // resaveAll();
+    }
+
+
+
+
+
+// working vectors for this setup function
+// don't re-compute these if we're repeating operation on same objectID
+// (which we do when we compute use dummy objects at startup)
+static int lastSetupObject = -1;
+static int numVanishingSprites = 0;
+static int numAppearingSprites = 0;
+
+static SimpleVector<int> vanishingIndices;
+static SimpleVector<int> appearingIndices;
+
+
+void setupSpriteUseVis( ObjectRecord *inObject, int inUsesRemaining,
+                        char *inSpriteSkipDrawing ) {
+    
+    memset( inSpriteSkipDrawing, false, inObject->numSprites );
+
+    if( inObject->numUses == inUsesRemaining ) {
+        
+        for( int s=0; s<inObject->numSprites; s++ ) {
+            if( inObject->spriteUseAppear[s] ) {
+                // hide all appearing sprites 
+                inSpriteSkipDrawing[s] = true;
+                }
+            }
+        return;
+        }
+    else if( inUsesRemaining == 0 ) {
+        for( int s=0; s<inObject->numSprites; s++ ) {
+            if( inObject->spriteUseVanish[s] ) {
+                // hide all vanishing sprites 
+                inSpriteSkipDrawing[s] = true;
+                }
+            }
+        }
+    else {
+        // generate vis for one of the use dummy objects
+        int numUses = inObject->numUses;
+                    
+        if( inObject->id != lastSetupObject ) {
+            
+            numVanishingSprites = 0;
+            numAppearingSprites = 0;
+            
+            vanishingIndices.deleteAll();
+            appearingIndices.deleteAll();
+            
+            for( int s=0; s<inObject->numSprites; s++ ) {
+                if( inObject->spriteUseVanish[s] ) {
+                    numVanishingSprites ++;
+                    vanishingIndices.push_back( s );
+                    }
+                }
+
+        
+        
+            for( int s=0; s<inObject->numSprites; s++ ) {
+                if( inObject->spriteUseAppear[s] ) {
+                    numAppearingSprites ++;
+                    appearingIndices.push_back( s );
+                
+                    // hide all appearing sprites as basis
+                    inSpriteSkipDrawing[s] = true;
+                    }
+                }
+            lastSetupObject = inObject->id;
+            }
+        else {
+            for( int i=0; i<numAppearingSprites; i++ ) {
+                // hide all appearing sprites as basis
+                inSpriteSkipDrawing[ appearingIndices.getElementDirect(i) ] =
+                    true;
+                }
+            }
+        
+
+        int d = inUsesRemaining;
+        
+        // hide some sprites
+        
+        int numSpritesLeft = 
+            ( d * (numVanishingSprites) ) / numUses;
+        
+        int numInLastDummy = numVanishingSprites / numUses;
+        
+        if( numInLastDummy == 0 ) {
+            // add 1 to everything to pad up, so last
+            // dummy has 1 sprite in it
+            numSpritesLeft += 1;
+            }
+                        
+
+        if( numSpritesLeft > numVanishingSprites ) {
+            numSpritesLeft = numVanishingSprites;
+            }
+
+        for( int v=numSpritesLeft; v<numVanishingSprites; v++ ) {
+            
+            inSpriteSkipDrawing[ vanishingIndices.getElementDirect( v ) ] = 
+                true;
+            }
+
+
+        // now handle appearing sprites
+        int numInvisSpritesLeft = 
+            ( d * (numAppearingSprites) ) / numUses;
+                        
+        /*
+        // testing... do we need to do this?
+        int numInvisInLastDummy = numAppearingSprites / numUses;
+        
+        if( numInLastDummy == 0 ) {
+        // add 1 to everything to pad up, so last
+        // dummy has 1 sprite in it
+        numSpritesLeft += 1;
+        }
+        */
+        
+        if( numInvisSpritesLeft > numAppearingSprites ) {
+            numInvisSpritesLeft = numAppearingSprites;
+            }
+
+        for( int v=0; v<numAppearingSprites - numInvisSpritesLeft; v++ ) {
+            
+            inSpriteSkipDrawing[ appearingIndices.getElementDirect( v ) ] = 
+                false;
+            }
+        }
     }
 
 
