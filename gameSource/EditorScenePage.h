@@ -50,8 +50,8 @@ typedef struct SceneCell {
     } SceneCell;
 
 
-#define SCENE_W 12
-#define SCENE_H 7    
+#define SCENE_W 13
+#define SCENE_H 9    
     
 
 class EditorScenePage : public GamePage, public ActionListener {

@@ -42,6 +42,9 @@ static const AnimType personAnimTypes[ NUM_PERSON_ANIM ] =
 
 #define CELL_D 128
 
+static doublePair cornerPos = { - 704, 360 };
+
+
 
 EditorScenePage::EditorScenePage()
         : mAnimEditorButton( mainFont, 210, 260, "Anim" ),
@@ -360,10 +363,14 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
 
 
 void EditorScenePage::drawGroundOverlaySprites() {
-    doublePair cornerPos = { - 640 + 512, 360 - 512 };
+    doublePair overlayCornerPos = cornerPos;
+
+    overlayCornerPos.x += 512;
+    overlayCornerPos.y -= 512;
+
     for( int y=0; y<1; y++ ) {
         for( int x=0; x<2; x++ ) {
-            doublePair pos = cornerPos;
+            doublePair pos = overlayCornerPos;
             pos.x += x * 1024;
             pos.y -= y * 1024;
             
@@ -394,12 +401,12 @@ SceneCell *EditorScenePage::getCurrentPersonCell() {
 
 
 void EditorScenePage::checkVisible() {
-    if( mCurX >= 3 && mCurX <= 7 ) {
+    if( mCurX >= 4 && mCurX <= 7 ) {
         mShiftX = 0;
         }
     else {
-        if( mCurX < 3 ) {
-            mShiftX = 3 - mCurX;
+        if( mCurX < 4 ) {
+            mShiftX = 4 - mCurX;
             }
         else {
             mShiftX = 7 - mCurX;
@@ -500,7 +507,6 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     
     mFrameCount ++;
     
-    doublePair cornerPos = { - 640, 360 };
     
 
     for( int y=0; y<SCENE_H; y++ ) {
