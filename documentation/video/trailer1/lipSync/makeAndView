@@ -1,0 +1,15 @@
+./makeGenMouthShapes.sh
+
+rm shapes/*
+
+mogrify -format tga shapesPNG/*.png
+
+mv shapesPNG/*.tga shapes
+
+./genMouthShapes  test.aiff  30 6 0.05 shapes out
+
+rm -f test.mkv
+
+./makeX264Video
+
+vlc test.mkv

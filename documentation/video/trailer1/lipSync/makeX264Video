@@ -1,0 +1,1 @@
+avconv -r 30 -i out/frame%05d.tga -i testStereo.wav -c:v libx264 -preset slow -crf 17 -acodec mp2 -ab 256k test.mkv
