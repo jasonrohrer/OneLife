@@ -208,7 +208,9 @@ int main( int inNumArgs, char **inArgs ) {
         // talking now
 
         int framesTalking = 0;
-        File *curShape = shapeFiles[1];
+        File *curShape = shapeFiles[
+            randSource.getRandomBoundedInt( 1,
+                                            numShapes - 1 ) ];
         while( i < numFrames && 
                ( getTalking( i, thresh ) ||
                  framesTalking < framesPerMove ) ) {

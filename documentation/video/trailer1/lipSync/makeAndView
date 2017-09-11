@@ -1,12 +1,12 @@
 ./makeGenMouthShapes.sh
 
-rm shapes/*
+rm mouths/*
 
-mogrify -format tga shapesPNG/*.png
+mogrify -format tga -background white -flatten mouthsPNG/shape*.png
 
-mv shapesPNG/*.tga shapes
+mv mouthsPNG/*.tga mouths
 
-./genMouthShapes  test.aiff  30 6 0.05 shapes out
+./genMouthShapes  test.aiff  30 6 0.05 mouths out
 
 rm -f test.mkv
 
