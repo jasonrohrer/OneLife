@@ -440,13 +440,16 @@ float initObjectBankStep() {
 
 
                 int personRead = 0;                            
-                sscanf( lines[next], "person=%d", 
-                        &( personRead ) );
+                int noSpawnRead = 0;
+                sscanf( lines[next], "person=%d,noSpawn=%d", 
+                        &personRead, &noSpawnRead );
                             
                 r->person = ( personRead > 0 );
                 
                 r->race = personRead;
                 
+                r->personNoSpawn = noSpawnRead;
+
                 next++;
 
 
@@ -786,7 +789,7 @@ float initObjectBankStep() {
                 records.push_back( r );
 
                             
-                if( r->person ) {
+                if( r->person && ! r->personNoSpawn ) {
                     personObjectIDs.push_back( r->id );
                     
                     if( ! r->male ) {
@@ -1250,6 +1253,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->heatValue,
                         inObject->rValue,
                         inObject->person,
+                        inObject->personNoSpawn,
                         inObject->male,
                         inObject->race,
                         inObject->deathMarker,
@@ -1467,6 +1471,7 @@ int addObject( const char *inDescription,
                int inHeatValue,
                float inRValue,
                char inPerson,
+               char inPersonNoSpawn,
                char inMale,
                int inRace,
                char inDeathMarker,
@@ -1599,7 +1604,8 @@ int addObject( const char *inDescription,
         if( inPerson ) {
             personNumber = inRace;
             }
-        lines.push_back( autoSprintf( "person=%d", (int)personNumber ) );
+        lines.push_back( autoSprintf( "person=%d,noSpawn=%d", personNumber,
+                                      (int)inPersonNoSpawn ) );
         lines.push_back( autoSprintf( "male=%d", (int)inMale ) );
         lines.push_back( autoSprintf( "deathMarker=%d", (int)inDeathMarker ) );
 
@@ -1840,6 +1846,7 @@ int addObject( const char *inDescription,
     r->rValue = inRValue;
 
     r->person = inPerson;
+    r->personNoSpawn = inPersonNoSpawn;
     r->race = inRace;
     r->male = inMale;
     r->deathMarker = inDeathMarker;
@@ -1985,7 +1992,7 @@ int addObject( const char *inDescription,
     
     delete [] lower;
     
-    if( r->person ) {    
+    if( r->person && ! r->personNoSpawn ) {    
         personObjectIDs.push_back( newID );
         
         if( ! r->male ) {

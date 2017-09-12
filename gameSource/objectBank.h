@@ -93,6 +93,9 @@ typedef struct ObjectRecord {
         float rValue;
 
         char person;
+        // true if this person should never spawn
+        // (a person for testing, a template, etc.)
+        char personNoSpawn;
         
         char male;
         
@@ -351,6 +354,7 @@ int addObject( const char *inDescription,
                int inHeatValue,
                float inRValue,
                char inPerson,
+               char inPersonNoSpawn,
                char inMale,
                int inRace,
                char inDeathMarker,

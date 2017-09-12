@@ -137,7 +137,7 @@ EditorObjectPage::EditorObjectPage()
                         "Out", "0123456789.", NULL ),
           mAgePunchInButton( smallFont, 310, -52, "S" ),
           mAgePunchOutButton( smallFont, 310, -90, "S" ),
-
+          mPersonNoSpawnCheckbox( 290, -150, 2 ),
           // these are in same spot because they're never shown at same time
           mMaleCheckbox( 290, -190, 2 ),
           mDeathMarkerCheckbox( 290, -190, 2 ),
@@ -537,6 +537,9 @@ EditorObjectPage::EditorObjectPage()
     mCheckboxes[2]->addActionListener( this );
 
 
+    addComponent( &mPersonNoSpawnCheckbox );
+    mPersonNoSpawnCheckbox.setVisible( false );
+
     addComponent( &mMaleCheckbox );
     mMaleCheckbox.setVisible( false );
 
@@ -804,6 +807,9 @@ void EditorObjectPage::updateAgingPanel() {
                 mCurrentObject.spriteUseAppear[ mPickedObjectLayer ] );
             }
 
+        mPersonNoSpawnCheckbox.setToggled( false );
+        mPersonNoSpawnCheckbox.setVisible( false );
+
         mMaleCheckbox.setToggled( false );
         mMaleCheckbox.setVisible( false );
 
@@ -830,6 +836,7 @@ void EditorObjectPage::updateAgingPanel() {
             }
         }
     else {
+        mPersonNoSpawnCheckbox.setVisible( true );
         mMaleCheckbox.setVisible( true );
 
         mDeathMarkerCheckbox.setToggled( false );
@@ -1262,6 +1269,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mHeatValueField.getInt(),
                    mRValueField.getFloat(),
                    mCheckboxes[2]->getToggled(),
+                   mPersonNoSpawnCheckbox.getToggled(),
                    mMaleCheckbox.getToggled(),
                    race,
                    mDeathMarkerCheckbox.getToggled(),
@@ -1380,6 +1388,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mHeatValueField.getInt(),
                    mRValueField.getFloat(),
                    mCheckboxes[2]->getToggled(),
+                   mPersonNoSpawnCheckbox.getToggled(),
                    mMaleCheckbox.getToggled(),
                    race,
                    mDeathMarkerCheckbox.getToggled(),
@@ -2576,6 +2585,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 hideVertRotButtons();
                 }
 
+            mPersonNoSpawnCheckbox.setToggled( pickedRecord->personNoSpawn );
+
             mMaleCheckbox.setToggled( pickedRecord->male );
             mDeathMarkerCheckbox.setToggled( pickedRecord->deathMarker );
             
@@ -3419,6 +3430,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         smallFont->drawString( "Holder", pos, alignRight );
         }
     
+
+    if( mPersonNoSpawnCheckbox.isVisible() ) {
+        pos = mPersonNoSpawnCheckbox.getPosition();
+        pos.y += checkboxSep + 5;
+        smallFont->drawString( "NoSpawn", pos, alignCenter );
+        }
 
     if( mMaleCheckbox.isVisible() ) {
         pos = mMaleCheckbox.getPosition();
