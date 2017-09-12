@@ -2,7 +2,10 @@
 
 rm mouths/*
 
-mogrify -format tga -background white -flatten mouthsPNG/shape*.png
+# to view mouths on white background separately
+# mogrify -format tga -background white -flatten mouthsPNG/shape*.png
+
+mogrify -format tga mouthsPNG/shape*.png
 
 mv mouthsPNG/*.tga mouths
 
