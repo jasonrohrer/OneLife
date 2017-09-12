@@ -9,7 +9,7 @@ mogrify -format tga mouthsPNG/shape*.png
 
 mv mouthsPNG/*.tga mouths
 
-./genMouthShapes  test.aiff  30 6 0.05 mouths out
+./genMouthShapes  test.aiff  30 6 0.05 mouths out mouthList.txt
 
 rm -f test.mkv
 
