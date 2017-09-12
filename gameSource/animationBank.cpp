@@ -49,9 +49,29 @@ const char *typeToName( AnimType inAnimType ) {
     }
 
 
+static char drawMouthShapes = false;
+static int mouthAnchorID = 776;
+static int numMouthShapes = 0;
+static SpriteHandle *mouthShapes = NULL;
+static int numMouthShapeFrames = 0;
+static SpriteHandle *mouthShapeFrameList = NULL;
+static int mouthShapeFrame = 0;
+
+
+
 
 
 int initAnimationBankStart( char *outRebuildingCache ) {
+
+    if( drawMouthShapes ) {
+        
+        // FIXME:
+        // load mouth shape sprites from a folder
+        
+        // load mouth shape list, parse it, and generate mouthShapeFrameList
+        }
+    
+
 
     maxID = 0;
 
@@ -248,6 +268,21 @@ float initAnimationBankStep() {
 
 
 void initAnimationBankFinish() {
+    
+    if( mouthShapes != NULL ) {
+        for( int i=0; i<numMouthShapes; i++ ) {
+            freeSprite( mouthShapes[i] );
+            }
+        delete [] mouthShapes;
+        mouthShapes = NULL;
+        }
+    
+    if( mouthShapeFrameList != NULL ) {
+        delete [] mouthShapeFrameList;
+        mouthShapeFrameList = NULL;
+        }
+    
+    
     freeFolderCache( cache );
     
     mapSize = maxID + 1;
@@ -1933,9 +1968,20 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 setDrawFade( workingSpriteFade[i] );
                 }
             
-            drawSprite( getSprite( obj->sprites[i] ), pos, 1.0, rot, 
-                        logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
-
+            int spriteID = obj->sprites[i];
+            
+            if( drawMouthShapes && spriteID == mouthAnchorID &&
+                mouthShapeFrame < numMouthShapeFrames ) {
+                drawSprite( mouthShapeFrameList[ mouthShapeFrame ], 
+                            pos, 1.0, rot, 
+                            logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
+                mouthShapeFrame ++;
+                }
+            else {
+                drawSprite( getSprite( spriteID ), pos, 1.0, rot, 
+                            logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
+                }
+            
             if( multiplicative ) {
                 toggleMultiplicativeBlend( false );
                 toggleAdditiveTextureColoring( false );
