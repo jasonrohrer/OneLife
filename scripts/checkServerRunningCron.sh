@@ -33,6 +33,7 @@ then
 		then
             # running
 			echo "Server is running"
+			exit 1
 		else
             # stopped
 			echo "Server is not running"
@@ -59,8 +60,9 @@ then
 			./runHeadlessServerLinux.sh
 
 			name=`hostname -A`
-			t=`date`
-
+			serverT=`date`
+			pdt=`TZ=":America/Los_Angeles" date`
+			
 			# send email report
 			
 			curl "https://api.postmarkapp.com/email" \
@@ -68,7 +70,10 @@ then
 				-H "Accept: application/json" \
 				-H "Content-Type: application/json" \
 				-H "X-Postmark-Server-Token: $postmarkToken" \
-				-d "{From: 'jason@thecastledoctrine.net', To: 'jasonrohrer@fastmail.fm', Subject: 'Subject: $name OneLifeServer restarted', TextBody: 'Server time: $t'}"
+				-d "{From: 'jason@thecastledoctrine.net', To: 'jasonrohrer@fastmail.fm', Subject: 'OneLifeServer on $name restarted', TextBody: 'Server time: $serverT\nPDT: $pdt'}"
+			exit 1
 		fi
 	fi
 fi
+
+echo "~/keepServerRunning.txt not set to 1"
