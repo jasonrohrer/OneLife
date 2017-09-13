@@ -10,6 +10,17 @@ then
 fi
 
 
+serverNameFile=~/serverName.txt
+
+serverName="unknown.onehouronelife.com"
+
+
+if [ -f $serverNameFile ]
+then
+	serverName=$(head -n 1 $serverNameFile)
+fi
+
+
 
 
 # put a 0 in this file to stop this
@@ -59,7 +70,6 @@ then
 			# launch it
 			./runHeadlessServerLinux.sh
 
-			name=`hostname -A`
 			serverT=`date`
 			pdt=`TZ=":America/Los_Angeles" date`
 			
@@ -70,7 +80,7 @@ then
 				-H "Accept: application/json" \
 				-H "Content-Type: application/json" \
 				-H "X-Postmark-Server-Token: $postmarkToken" \
-				-d "{From: 'jason@thecastledoctrine.net', To: 'jasonrohrer@fastmail.fm', Subject: 'OneLifeServer on $name restarted', TextBody: 'Server time: $serverT\nPDT: $pdt'}"
+				-d "{From: 'jason@thecastledoctrine.net', To: 'jasonrohrer@fastmail.fm', Subject: 'OneLifeServer on $serverName restarted', TextBody: 'Server time: $serverT\nPDT: $pdt'}"
 			exit 1
 		fi
 	fi

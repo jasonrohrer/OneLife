@@ -88,6 +88,12 @@ echo "jcr13 $subdomain.onehouronelife.com 8005" >> remoteServerList.ini
 
 scp -o StrictHostKeychecking=no ~/postmarkToken.txt jcr13@$subdomain.onehouronelife.com:
 
+echo -n "$subdomain.onehouronelife.com" > /tmp/serverName.txt
+
+scp -o StrictHostKeychecking=no /tmp/serverName.txt jcr13@$subdomain.onehouronelife.com:
+
+rm /tmp/serverName.txt
+
 
 EOSU2
 
