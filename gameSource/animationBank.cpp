@@ -57,6 +57,9 @@ static int numMouthShapeFrames = 0;
 static SpriteHandle *mouthShapeFrameList = NULL;
 static int mouthShapeFrame = 0;
 
+static char outputMouthFrames = false;
+static char mouthFrameOutputStarted = false;
+
 
 
 
@@ -65,10 +68,78 @@ int initAnimationBankStart( char *outRebuildingCache ) {
 
     if( drawMouthShapes ) {
         
-        // FIXME:
         // load mouth shape sprites from a folder
         
-        // load mouth shape list, parse it, and generate mouthShapeFrameList
+        File mouthShapeFolder( NULL, "mouthShapes" );
+        
+        if( mouthShapeFolder.exists() && mouthShapeFolder.isDirectory() ) {
+         
+            File **mouthShapeFiles = 
+                mouthShapeFolder.getChildFilesSorted( &numMouthShapes );
+            
+            mouthShapes = new SpriteHandle[ numMouthShapes ];
+            
+
+            for( int i=0; i<numMouthShapes; i++ ) {
+                char *fileName = mouthShapeFiles[i]->getFullFileName();
+                
+                mouthShapes[i] = loadSpriteBase( fileName, false );
+                
+                delete [] fileName;
+                delete mouthShapeFiles[i];
+                }
+            
+            delete [] mouthShapeFiles;
+            
+            printf( "Loaded %d mouth shapes\n", numMouthShapes );
+            
+            if( numMouthShapes > 0 ) {
+                
+                // load mouth shape list, parse it, 
+                // and generate mouthShapeFrameList
+                
+                File mouthFrameFile( NULL, "mouthFrameList.txt" );
+
+                if( mouthFrameFile.exists() && 
+                    ! mouthFrameFile.isDirectory() ) {
+                    
+                    char *cont = mouthFrameFile.readFileContents();
+                    
+                    if( cont != NULL ) {
+                        SimpleVector<char *> *tokens =
+                            tokenizeString( cont );
+                        
+                        delete [] cont;
+                        
+                        numMouthShapeFrames = tokens->size();
+                        
+                        SimpleVector<SpriteHandle> frameList;
+                        
+                        for( int i=0; i<numMouthShapeFrames; i++ ) {
+                            int index = -1;
+                            sscanf( tokens->getElementDirect( i ),
+                                    "%d", &index );
+
+                            if( index >= 0 &&
+                                index < numMouthShapes ) {
+                                frameList.push_back( mouthShapes[ index ] );
+                                }
+                            }
+
+                        numMouthShapeFrames = frameList.size();
+                        mouthShapeFrameList = frameList.getElementArray();
+
+                        printf( "Loaded %d mouth frames\n", 
+                                numMouthShapeFrames );
+                        
+                        tokens->deallocateStringElements();
+                        delete tokens;
+                        }
+                    }
+                }
+            
+            }
+        
         }
     
 
@@ -269,20 +340,6 @@ float initAnimationBankStep() {
 
 void initAnimationBankFinish() {
     
-    if( mouthShapes != NULL ) {
-        for( int i=0; i<numMouthShapes; i++ ) {
-            freeSprite( mouthShapes[i] );
-            }
-        delete [] mouthShapes;
-        mouthShapes = NULL;
-        }
-    
-    if( mouthShapeFrameList != NULL ) {
-        delete [] mouthShapeFrameList;
-        mouthShapeFrameList = NULL;
-        }
-    
-    
     freeFolderCache( cache );
     
     mapSize = maxID + 1;
@@ -322,6 +379,21 @@ void setAnimLayerFades( float *inFades ) {
 
 
 void freeAnimationBank() {
+
+    if( mouthShapes != NULL ) {
+        for( int i=0; i<numMouthShapes; i++ ) {
+            freeSprite( mouthShapes[i] );
+            }
+        delete [] mouthShapes;
+        mouthShapes = NULL;
+        }
+    
+    if( mouthShapeFrameList != NULL ) {
+        delete [] mouthShapeFrameList;
+        mouthShapeFrameList = NULL;
+        }
+
+
     if( animLayerFades != NULL ) {
         delete [] animLayerFades;
         animLayerFades = NULL;
@@ -1976,6 +2048,20 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                             pos, 1.0, rot, 
                             logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
                 mouthShapeFrame ++;
+                
+                if( outputMouthFrames ) {
+                    
+                    if( mouthShapeFrame < numMouthShapeFrames ) {
+                        
+                        if( !mouthFrameOutputStarted ) {
+                            startOutputAllFrames();
+                            }
+                        }
+                    else {
+                        // done
+                        stopOutputAllFrames();
+                        }
+                    }
                 }
             else {
                 drawSprite( getSprite( spriteID ), pos, 1.0, rot, 
