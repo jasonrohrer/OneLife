@@ -7528,3 +7528,10 @@ void toggleMultiplicativeBlend( char inMultiplicative ) {
 
 void unCountLiveUse( int inID ) {
     }
+
+
+
+// animation bank calls these only if lip sync hack is enabled, which
+// it never is for server
+void freeSprite( void* ) {
+    }
