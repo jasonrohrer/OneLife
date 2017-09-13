@@ -4352,6 +4352,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
             setDrawColor( v, v, v, 1 );
             pos2.x += ( a->heat - 0.5 ) * 120;
 
+            // no sub pixel positions
+            pos2.x = round( pos2.x );
+
             drawSprite( mTempArrowErasedSprites[a->i], pos2 );
             }
         toggleAdditiveTextureColoring( false );
@@ -4361,7 +4364,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
         mCurrentArrowHeat = ourLiveObject->heat;
         
         pos.x += ( mCurrentArrowHeat - 0.5 ) * 120;
-
+        
+        // no sub pixel positions
+        pos.x = round( pos.x );
+        
         drawSprite( mTempArrowSprites[mCurrentArrowI], pos );
         
         toggleMultiplicativeBlend( false );

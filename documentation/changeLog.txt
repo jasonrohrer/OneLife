@@ -32,6 +32,8 @@ Version 33     ???
   now hold their picker pages when flipping back and forth between screens.
   Pickers now automatically rewind back past empty results pages.
 
+--Temperature arrow positions now rounded to whole pixels.
+
 
 
 Server fixes:
