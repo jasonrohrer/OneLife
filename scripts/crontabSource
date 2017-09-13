@@ -6,3 +6,5 @@
 
 */30 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/generateLifeStats.sh
 5 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/generateFoodStats.sh
+
+* * * * * /home/jcr15/checkout/OneLifeWorking/scripts/checkServerRunningCron.sh
