@@ -20,6 +20,8 @@ void drawZoomView( doublePair inZoomLocation, int inZoomRadius,
     delete im;
 
     if( zoomSprite != NULL ) {
+        char oldFilter = getLinearMagFilterOn();
+        
         toggleLinearMagFilter( false );
         
         setDrawColor( 1, 1, 1, 1 );
@@ -27,7 +29,8 @@ void drawZoomView( doublePair inZoomLocation, int inZoomRadius,
         drawSprite( zoomSprite, inDrawLocation, inBlowupFactor );
 
         freeSprite( zoomSprite );
-        toggleLinearMagFilter( true );
+        
+        toggleLinearMagFilter( oldFilter );
         }
 
     }
