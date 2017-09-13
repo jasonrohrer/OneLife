@@ -86,6 +86,9 @@ echo "jcr13 $subdomain.onehouronelife.com 8005" >> remoteServerList.ini
 ~/checkout/OneLifeWorking/scripts/tellBackupServerAboutGameServerChanges.sh
 
 
+scp -o StrictHostKeychecking=no ~/postmarkToken.txt jcr13@$subdomain.onehouronelife.com:
+
+
 EOSU2
 
 

@@ -8,6 +8,8 @@ if [ -z $serverPID ]
 then
 	echo "Server not running!"
 else
+	echo -n "0" > ~/keepServerRunning.txt
+
 	echo -n "1" > ~/checkout/OneLife/server/settings/shutdownMode.ini
 
 	echo "" 
@@ -54,3 +56,7 @@ echo -n "0" > ~/checkout/OneLife/server/settings/shutdownMode.ini
 cd ~/checkout/OneLife/server/
 
 sh ./runHeadlessServerLinux.sh
+
+
+echo -n "1" > ~/keepServerRunning.txt
+

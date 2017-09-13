@@ -124,6 +124,10 @@ make
 
 ./runHeadlessServerLinux.sh
 
+echo -n "1" > ~/keepServerRunning.txt
+
+crontab /home/jcr13/checkout/OneLife/scripts/remoteServerCrontabSource
+
 
 cd /home/jcr13
 mkdir .ssh
