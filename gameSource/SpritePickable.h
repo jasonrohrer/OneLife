@@ -57,10 +57,6 @@ class SpritePickable : public Pickable {
                 zoom = 64.0 / r->maxD;
                 }
             
-            if( r->id == 0 ) {
-                printf( "Hey\n" );
-                }
-
             drawSprite( sprite, inPos, zoom );
             }
 
