@@ -50,3 +50,38 @@ Next:  In-game audio recording
     LightWorks (not sure what the problem is here).
 
 19. Load resulting audio in Lightworks and sync it.
+
+
+
+
+
+Getting PS3 controller to map to keyboard with USB on Linux:
+
+
+Enable bluetooth switch.
+
+
+sudo add-apt-repository ppa:falk-t-j/qtsixa
+sudo apt-get update
+sudo apt-get install qtsixa
+
+
+Connect with USB
+
+sixpair
+
+
+Disconnect sixaxis from USB
+
+sixad -s
+
+press PS button to connect over bluetooth
+
+
+
+Key mapping for joysticks
+
+sudo add-apt-repository ppa:mdeguzis/libregeek
+sudo apt-get update
+sudo apt-get install antimicro
+
