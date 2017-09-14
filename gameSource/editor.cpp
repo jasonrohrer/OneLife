@@ -1401,7 +1401,7 @@ void drawFrame( char inUpdate ) {
     // now draw stuff AFTER all updates
     drawFrameNoUpdate( true );
 
-
+    /*
     double recentFPS = getRecentFrameRate();
 
     if( recentFPS < 0.90 * ( 60.0 / frameRateFactor ) 
@@ -1418,7 +1418,7 @@ void drawFrame( char inUpdate ) {
 
         printf( "Adjusting framerate factor to %f\n", frameRateFactor );
         }
-    
+    */
 
     // draw tail end of pause screen, if it is still visible
     if( pauseScreenFade > 0 ) {
