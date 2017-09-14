@@ -3890,7 +3890,11 @@ void mapEveDeath( char *inEmail, double inAge ) {
     
     if( result == 1 ) {
         
-        if( inAge < 16 ) {
+        // don't keep growing radius after it gets too big
+        // if one player is dying young over and over, they will
+        // eventually overflow 32-bit integers
+
+        if( inAge < 16 && pR < 1024 ) {
             pR *= 2;
             }
         else if( inAge > 20 ) {
