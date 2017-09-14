@@ -2811,8 +2811,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
 
 
-    setDrawColor( 1, 1, 1, 1 );
-    drawSquare( lastScreenViewCenter, viewWidth );
+    //setDrawColor( 1, 1, 1, 1 );
+    //drawSquare( lastScreenViewCenter, viewWidth );
     
 
     //if( currentGamePage != NULL ) {
