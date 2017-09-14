@@ -49,6 +49,8 @@ Server fixes:
 
 --Food log report includes past month.
 
+--Fixed so that Eve placement radii don't grow beyond 1024 if a player 
+  continues to die young repeatedly.  They used to double until 32-bit overflow.
 
 
 

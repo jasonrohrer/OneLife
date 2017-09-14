@@ -942,8 +942,10 @@ static void writeEveRadius() {
 
 
 void doubleEveRadius() {
-    eveRadius *= 2;
-    writeEveRadius();
+    if( eveRadius < 1024 ) {
+        eveRadius *= 2;
+        writeEveRadius();
+        }
     }
 
 
