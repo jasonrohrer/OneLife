@@ -2532,6 +2532,20 @@ void processLoggedInPlayer( Socket *inSock,
         }
     
 
+    int forceID = SettingsManager::getIntSetting( "forceEveObject", 0 );
+    
+    if( forceID > 0 ) {
+        newObject.displayID = forceID;
+        }
+    
+    
+    float forceAge = SettingsManager::getFloatSetting( "forceEveAge", 0.0 );
+    
+    if( forceAge > 0 ) {
+        newObject.lifeStartTimeSeconds = 
+            Time::getCurrentTime() - forceAge * ( 1.0 / getAgeRate() );
+        }
+    
     
     newObject.pathLength = 0;
     newObject.pathToDest = NULL;
@@ -2613,7 +2627,8 @@ void processLoggedInPlayer( Socket *inSock,
               players.size(),
               newObject.parentChainLength );
     
-    AppLog::infoF( "New player connected as player %d", newObject.id );
+    AppLog::infoF( "New player %s connected as player %d",
+                   newObject.email, newObject.id );
     }
 
 
@@ -7533,5 +7548,16 @@ void unCountLiveUse( int inID ) {
 
 // animation bank calls these only if lip sync hack is enabled, which
 // it never is for server
+void *loadSpriteBase( const char*, char ) {
+    return NULL;
+    }
+
 void freeSprite( void* ) {
     }
+
+void startOutputAllFrames() {
+    }
+
+void stopOutputAllFrames() {
+    }
+
