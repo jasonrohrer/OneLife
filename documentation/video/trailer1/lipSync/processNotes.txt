@@ -1,0 +1,17 @@
+
+
+1.  Shrink game window to ensure 60 fps during audio recording
+
+2.  Move around world and talk live into mic.
+
+3.  Switch on white background in makeAndView and then run it to test sync.
+
+4.  Switch back to transparent background in makeAndView and run it one more 
+    time.
+
+5.  Run genMouthShapes on resulting audio like this (see makeAndView):
+
+./genMouthShapes  test2.aiff  60 6 0.05 mouthShapes out mouthFrameList.txt 
+
+6.  Copy mouthShapes folder and mouthFrameList into gameSource folder.
+
