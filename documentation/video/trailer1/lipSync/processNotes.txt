@@ -1,8 +1,9 @@
 
 
-1.  Shrink game window to ensure 60 fps during audio recording
+1.  Use fast computer to ensure 60 fps during audio recording
 
-2.  Move around world and talk live into mic.
+2.  Move around world and talk live into mic.  Trim resulting audio 
+    and save as mono AIFF.
 
 3.  Switch on white background in makeAndView and then run it to test sync.
 
@@ -15,3 +16,37 @@
 
 6.  Copy mouthShapes folder and mouthFrameList into gameSource folder.
 
+7.  Enable drawMouths and frame output in animation bank and rebuild game.
+
+8.  Copy recoded game file into playback folder.
+
+9.  Run and disable onscreen display during playback.  Frames output.
+
+10. Save mono AIFF as a stereo WAV file.
+
+11. Merge resulting frames with audio into a movie (see makeX264VideoTest)
+    to test.
+
+12. Convert frames to png for lightworks:
+    mogrify -f png frame0*.tga
+
+13. Load frames and audio into Lightworks and test.
+
+
+Next:  In-game audio recording
+
+14. Disable drawMouths in animation bank.
+
+15. Edit minorGems/game/platforms/openGL/gameGraphicsGL.cpp to disable
+    all drawSprite calls (for 60 fps during audio output).
+
+16. Rebuild game.
+
+16. Enable recordAudio setting and set recordAudioLengthInSeconds setting.
+
+17. Run game again for another playback to output audio.
+
+18. Converted recordedAudio.aiff in Audacity to make it compatible with 
+    LightWorks (not sure what the problem is here).
+
+19. Load resulting audio in Lightworks and sync it.
