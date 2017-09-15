@@ -64,8 +64,6 @@ typedef struct SceneCell {
     } SceneCell;
 
 
-#define SCENE_W 13
-#define SCENE_H 9    
     
 
 class EditorScenePage : public GamePage, public ActionListener {
@@ -127,8 +125,10 @@ class EditorScenePage : public GamePage, public ActionListener {
 
         SpriteHandle mGroundOverlaySprite[4];
 
-        SceneCell mCells[SCENE_H][SCENE_W];
-        SceneCell mPersonCells[SCENE_H][SCENE_W];
+        int mSceneW, mSceneH;
+        
+        SceneCell **mCells;
+        SceneCell **mPersonCells;
         
         SceneCell mEmptyCell;
         SceneCell mCopyBuffer;

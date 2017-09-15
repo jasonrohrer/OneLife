@@ -91,10 +91,12 @@ EditorScenePage::EditorScenePage()
                                "0123456789." ),
           mCellDestSprite( loadSprite( "centerMark.tga" ) ),
           mPersonDestSprite( loadSprite( "internalPaperMark.tga" ) ),
+          mSceneW( 130 ),
+          mSceneH( 90 ),
           mShiftX( 0 ), 
           mShiftY( 0 ),
-          mCurX( SCENE_W / 2 ),
-          mCurY( SCENE_H / 2 ),
+          mCurX( 6 ),
+          mCurY( 3 ),
           mFrameCount( 0 ),
           mLittleDheld( false ),
           mBigDheld( false ) {
@@ -188,9 +190,16 @@ EditorScenePage::EditorScenePage()
     clearCell( &mEmptyCell );
     
     mCopyBuffer = mEmptyCell;
+
+    mCells = new SceneCell*[mSceneH];
+    mPersonCells = new SceneCell*[mSceneH];
     
-    for( int y=0; y<SCENE_H; y++ ) {
-        for( int x=0; x<SCENE_W; x++ ) {
+    
+    for( int y=0; y<mSceneH; y++ ) {
+        mCells[y] = new SceneCell[ mSceneW ];
+        mPersonCells[y] = new SceneCell[ mSceneW ];
+        
+        for( int x=0; x<mSceneW; x++ ) {
             mCells[y][x] = mEmptyCell;
             mPersonCells[y][x] = mEmptyCell;
             }
@@ -221,6 +230,13 @@ EditorScenePage::~EditorScenePage() {
         }
     freeSprite( mCellDestSprite );
     freeSprite( mPersonDestSprite );
+
+    for( int y=0; y<mSceneH; y++ ) {
+        delete [] mCells[y];
+        delete [] mPersonCells[y];
+        }
+    delete [] mCells;
+    delete [] mPersonCells;
     }
 
 
@@ -228,8 +244,8 @@ EditorScenePage::~EditorScenePage() {
 void EditorScenePage::floodFill( int inX, int inY, 
                                  int inOldBiome, int inNewBiome ) {
     
-    if( inX < 0 || inX >= SCENE_W ||
-        inY < 0 || inY >= SCENE_H ) {
+    if( inX < 0 || inX >= mSceneW ||
+        inY < 0 || inY >= mSceneH ) {
         return;
         }
     
@@ -634,8 +650,8 @@ static void restartCell( SceneCell *inC ) {
 
 
 void EditorScenePage::restartAllMoves() {
-    for( int y=0; y<SCENE_H; y++ ) {
-        for( int x=0; x<SCENE_W; x++ ) {
+    for( int y=0; y<mSceneH; y++ ) {
+        for( int x=0; x<mSceneW; x++ ) {
             SceneCell *c = &( mCells[y][x] );
             SceneCell *p = &( mPersonCells[y][x] );
             
@@ -654,8 +670,8 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
 
     // step any moving cells
-    for( int y=0; y<SCENE_H; y++ ) {
-        for( int x=0; x<SCENE_W; x++ ) {
+    for( int y=0; y<mSceneH; y++ ) {
+        for( int x=0; x<mSceneW; x++ ) {
             SceneCell *c = &( mCells[y][x] );
             SceneCell *p = &( mPersonCells[y][x] );
             
@@ -666,12 +682,21 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     
     
 
-    for( int y=0; y<SCENE_H; y++ ) {
-        for( int x=0; x<SCENE_W; x++ ) {
+    for( int y=0; y<mSceneH; y++ ) {
+        for( int x=0; x<mSceneW; x++ ) {
             doublePair pos = cornerPos;
                 
             pos.x += x * CELL_D;
             pos.y -= y * CELL_D;
+
+            if( y > mCurY + 4 || 
+                y < mCurY -4 ||
+                x > mCurX + 6 || 
+                x < mCurX -6 ) {
+                
+                continue;
+                }
+            
 
             pos.x += mShiftX * CELL_D;
             pos.y += mShiftY * CELL_D;
@@ -725,8 +750,15 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     
     double frameTime = frameRateFactor * mFrameCount / 60.0;
 
-    for( int y=0; y<SCENE_H; y++ ) {
+    for( int y=0; y<mSceneH; y++ ) {
         
+        if( y > mCurY + 6 || 
+            y < mCurY -4 ) {
+                
+            continue;
+            }
+
+
         // draw behind stuff first
         for( int b=0; b<2; b++ ) {
             
@@ -734,7 +766,15 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
             if( b == 1 ) {
                 // draw people behind objects in this row
 
-                for( int x=0; x<SCENE_W; x++ ) {
+                for( int x=0; x<mSceneW; x++ ) {
+
+                    if( x > mCurX + 7 || 
+                        x < mCurX -7 ) {
+                    
+                        continue;
+                        }
+
+
                     doublePair pos = cornerPos;
                 
                     pos.x += x * CELL_D;
@@ -864,7 +904,13 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                 }
             
             // now objects in row
-            for( int x=0; x<SCENE_W; x++ ) {
+            for( int x=0; x<mSceneW; x++ ) {
+                if( x > mCurX + 7 || 
+                    x < mCurX -7 ) {
+                    
+                    continue;
+                    }
+
                 doublePair pos = cornerPos;
                 
                 pos.x += x * CELL_D;
@@ -1227,14 +1273,14 @@ void EditorScenePage::specialKeyDown( int inKeyCode ) {
                 break;
             case MG_KEY_RIGHT:
                 mCurX += offset;
-                if( mCurX >= SCENE_W ) {
-                    mCurX = SCENE_W - 1;
+                if( mCurX >= mSceneW ) {
+                    mCurX = mSceneW - 1;
                     }
                 break;
             case MG_KEY_DOWN:
                 mCurY += offset;
-                if( mCurY >= SCENE_H ) {
-                    mCurY = SCENE_H - 1;
+                if( mCurY >= mSceneH ) {
+                    mCurY = mSceneH - 1;
                     }
                 break;
             case MG_KEY_UP:
