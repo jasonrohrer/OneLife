@@ -91,6 +91,8 @@ EditorScenePage::EditorScenePage()
                                "0123456789." ),
           mCellDestSprite( loadSprite( "centerMark.tga" ) ),
           mPersonDestSprite( loadSprite( "internalPaperMark.tga" ) ),
+          mShowUI( true ),
+          mCursorFade( 1.0 ),
           mSceneW( 130 ),
           mSceneH( 90 ),
           mShiftX( 0 ), 
@@ -215,6 +217,7 @@ EditorScenePage::EditorScenePage()
     addKeyClassDescription( &mKeyLegend, "i/I", "Insert contained/held" );
     addKeyClassDescription( &mKeyLegend, "Bkspc", "Clear cell" );
     addKeyClassDescription( &mKeyLegend, "Hold d/D", "Set obj/person dest" );
+    addKeyClassDescription( &mKeyLegend, "h", "Hide/show UI" );
 
     addKeyClassDescription( &mKeyLegendG, "R-Click", "Flood fill" );
 
@@ -452,16 +455,10 @@ SceneCell *EditorScenePage::getCurrentPersonCell() {
 
 
 void EditorScenePage::checkVisible() {
+    mCursorFade = 1.0f;
+    
     SceneCell *c = getCurrentCell();
     SceneCell *p = getCurrentPersonCell();
-
-
-    mCellMoveDelayField.setVisible( c->destCellXOffset != 0 ||
-                                    c->destCellYOffset != 0 );
-    mPersonMoveDelayField.setVisible( p->destCellXOffset != 0 ||
-                                      p->destCellYOffset != 0 );
-    
-                                    
 
     int curFocusX = mCurX;
     int curFocusY = mCurY;
@@ -499,6 +496,76 @@ void EditorScenePage::checkVisible() {
             mShiftY = curFocusY - 4;
             }
         }
+
+
+    if( ! mShowUI ) {
+        
+        mAnimEditorButton.setVisible( false );
+        mSaveNewButton.setVisible( false );
+
+        mGroundPicker.setVisible( false );
+        mObjectPicker.setVisible( false );
+        
+        mPersonAgeSlider.setVisible( false );
+        
+        mCellAnimRadioButtons.setVisible( false );
+        mPersonAnimRadioButtons.setVisible( false );
+        
+        mCellAnimFreezeSlider.setVisible( false );
+        mPersonAnimFreezeSlider.setVisible( false );
+        
+
+        mCellXOffsetSlider.setVisible( false );
+        mCellYOffsetSlider.setVisible( false );
+
+        mPersonXOffsetSlider.setVisible( false );
+        mPersonYOffsetSlider.setVisible( false );
+        
+        mCellMoveDelayField.setVisible( false );
+        mPersonMoveDelayField.setVisible( false );
+
+        return;
+        }
+    else {
+        // make all visible if showing UI, then turn some off selectively
+        // below
+        
+        mAnimEditorButton.setVisible( true );
+        mSaveNewButton.setVisible( true );
+
+        mGroundPicker.setVisible( true );
+        mObjectPicker.setVisible( true );
+        
+        mPersonAgeSlider.setVisible( true );
+        
+        mCellAnimRadioButtons.setVisible( true );
+        mPersonAnimRadioButtons.setVisible( true );
+        
+        mCellAnimFreezeSlider.setVisible( true );
+        mPersonAnimFreezeSlider.setVisible( true );
+        
+
+        mCellXOffsetSlider.setVisible( true );
+        mCellYOffsetSlider.setVisible( true );
+
+        mPersonXOffsetSlider.setVisible( true );
+        mPersonYOffsetSlider.setVisible( true );
+        
+        mCellMoveDelayField.setVisible( true );
+        mPersonMoveDelayField.setVisible( true );
+
+        }
+    
+
+
+
+    mCellMoveDelayField.setVisible( c->destCellXOffset != 0 ||
+                                    c->destCellYOffset != 0 );
+    mPersonMoveDelayField.setVisible( p->destCellXOffset != 0 ||
+                                      p->destCellYOffset != 0 );
+    
+                                    
+
 
 
     if( c->oID > 0 ) {
@@ -767,10 +834,10 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                 // draw people behind objects in this row
 
                 for( int x=0; x<mSceneW; x++ ) {
-
+                    
                     if( x > mCurX + 7 || 
                         x < mCurX -7 ) {
-                    
+                        
                         continue;
                         }
 
@@ -1005,6 +1072,23 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
     curPos.x += mShiftX * CELL_D;
     curPos.y += mShiftY * CELL_D;
+    
+
+    if( mShowUI ) {
+        mCursorFade += 0.05;
+        if( mCursorFade > 1 ) {
+            mCursorFade = 1;
+            }
+        }
+    else {
+        mCursorFade -= 0.05;
+        if( mCursorFade < 0 ) {
+            mCursorFade = 0;
+            }
+        }
+    
+
+
 
     // draw a frame around the current cell
     startAddingToStencil( false, true );
@@ -1015,10 +1099,16 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
     startDrawingThroughStencil( true );
     
-    setDrawColor( 1, 1, 1, 0.75 );
+    setDrawColor( 1, 1, 1, 0.75 * mCursorFade );
     drawSquare( curPos, 64 );
 
     stopStencil();
+
+
+    if( !mShowUI ) {
+        return;
+        }
+
 
     SceneCell *c = getCurrentCell();
     SceneCell *p = getCurrentPersonCell();
@@ -1106,8 +1196,10 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
     SceneCell *c = getCurrentCell();
     SceneCell *p = getCurrentPersonCell();
     
-
-    if( inASCII == 'f' ) {
+    if( inASCII == 'h' ) {
+        mShowUI = ! mShowUI;
+        }
+    else if( inASCII == 'f' ) {
         c->flipH = ! c->flipH;
         }
     else if( inASCII == 'F' ) {

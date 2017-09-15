@@ -124,7 +124,10 @@ class EditorScenePage : public GamePage, public ActionListener {
         SpriteHandle mPersonDestSprite;
 
         SpriteHandle mGroundOverlaySprite[4];
-
+        
+        char mShowUI;
+        float mCursorFade;
+        
         int mSceneW, mSceneH;
         
         SceneCell **mCells;
