@@ -8,6 +8,8 @@
 
 #include "minorGems/io/file/File.h"
 
+#include "minorGems/system/Time.h"
+
 
 
 extern Font *mainFont;
@@ -81,6 +83,12 @@ EditorScenePage::EditorScenePage()
           mPersonYOffsetSlider( smallFont, 200, -260, 2,
                               175, 20,
                               -128, 128, "Y Offset" ),
+          mCellMoveDelayField( smallFont, -450, -290, 4,
+                               false, "Move Delay Sec",
+                               "0123456789." ),
+          mPersonMoveDelayField( smallFont, 200, -290, 4,
+                               false, "Move Delay Sec",
+                               "0123456789." ),
           mCellDestSprite( loadSprite( "centerMark.tga" ) ),
           mPersonDestSprite( loadSprite( "internalPaperMark.tga" ) ),
           mShiftX( 0 ), 
@@ -154,7 +162,19 @@ EditorScenePage::EditorScenePage()
     
     mPersonXOffsetSlider.addActionListener( this );
     mPersonYOffsetSlider.addActionListener( this );
+
+
+    addComponent( &mCellMoveDelayField );
+    addComponent( &mPersonMoveDelayField );
     
+    mCellMoveDelayField.setText( "0.0" );
+    mPersonMoveDelayField.setText( "0.0" );
+    
+    mCellMoveDelayField.setVisible( false );
+    mPersonMoveDelayField.setVisible( false );
+    
+    mCellMoveDelayField.addActionListener( this );
+    mPersonMoveDelayField.addActionListener( this );
 
 
     for( int i=0; i<4; i++ ) {
@@ -366,6 +386,14 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
         p->yOffset = lrint( mPersonYOffsetSlider.getValue() );
         mPersonYOffsetSlider.setValue( p->yOffset );
         }
+    else if( inTarget == &mCellMoveDelayField ) {
+        c->moveDelayTime = mCellMoveDelayField.getFloat();
+        restartAllMoves();
+        }
+    else if( inTarget == &mPersonMoveDelayField ) {
+        p->moveDelayTime = mPersonMoveDelayField.getFloat();
+        restartAllMoves();
+        }
     }
 
 
@@ -410,6 +438,14 @@ SceneCell *EditorScenePage::getCurrentPersonCell() {
 void EditorScenePage::checkVisible() {
     SceneCell *c = getCurrentCell();
     SceneCell *p = getCurrentPersonCell();
+
+
+    mCellMoveDelayField.setVisible( c->destCellXOffset != 0 ||
+                                    c->destCellYOffset != 0 );
+    mPersonMoveDelayField.setVisible( p->destCellXOffset != 0 ||
+                                      p->destCellYOffset != 0 );
+    
+                                    
 
     int curFocusX = mCurX;
     int curFocusY = mCurY;
@@ -527,12 +563,21 @@ static void stepMovingCell( SceneCell *inC ) {
     SceneCell *c = inC;
     
     if( c->oID <= 0 ) {
+        c->moveStartTime = Time::getCurrentTime();
         return;
         }
 
     if( c->destCellXOffset == 0 && c->destCellYOffset == 0 ) {
+        c->moveStartTime = Time::getCurrentTime();
         return;
         }
+
+    if( c->moveDelayTime > 0 ) {
+        if( c->moveStartTime + c->moveDelayTime > Time::getCurrentTime() ) {
+            return;
+            }
+        }
+    
 
     ObjectRecord *cellO = getObject( c->oID );
 
@@ -562,10 +607,16 @@ static void stepMovingCell( SceneCell *inC ) {
     
     c->moveFractionDone += fractionPerFrame;
 
+    char wrap = false;
     while( c->moveFractionDone > 1.0 ) {
         c->moveFractionDone -= 1.0;
+        wrap = true;
         }
     
+    if( wrap ) {
+        c->moveStartTime = Time::getCurrentTime();
+        }
+
     c->moveOffset.x = c->destCellXOffset * c->moveFractionDone * CELL_D;
     c->moveOffset.y = -c->destCellYOffset * c->moveFractionDone * CELL_D;
     }
@@ -577,6 +628,7 @@ static void restartCell( SceneCell *inC ) {
     c->moveFractionDone = 0;
     c->moveOffset.x = 0;
     c->moveOffset.y = 0;
+    c->moveStartTime = Time::getCurrentTime();
     }
 
 
@@ -1045,6 +1097,7 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
         else {
             *c = mCopyBuffer;
             }
+        restartAllMoves();
         }
     else if( inASCII == 'i' ) {
         // insert into container
@@ -1134,6 +1187,9 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->destCellYOffset = 0;
 
     inCell->moveFractionDone = 0;
+
+    inCell->moveOffset.x = 0;
+    inCell->moveOffset.y = 0;
     }
 
         

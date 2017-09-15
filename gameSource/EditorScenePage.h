@@ -56,6 +56,10 @@ typedef struct SceneCell {
 
         // current move offset in pixels
         doublePair moveOffset;
+        
+        double moveDelayTime;
+        
+        double moveStartTime;
 
     } SceneCell;
 
@@ -113,7 +117,11 @@ class EditorScenePage : public GamePage, public ActionListener {
         ValueSlider mPersonXOffsetSlider;
         ValueSlider mPersonYOffsetSlider;
         
+        TextField mCellMoveDelayField;
+        TextField mPersonMoveDelayField;
+        
 
+        
         SpriteHandle mCellDestSprite;
         SpriteHandle mPersonDestSprite;
 
