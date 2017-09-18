@@ -1107,7 +1107,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                 }
 
                             if( heldObject->person ) {
-                                heldAge = 0;
+                                heldAge = 0.2;
                                 }
                             
                             int *contained = p->contained.getElementArray();
