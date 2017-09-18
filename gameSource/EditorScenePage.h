@@ -95,6 +95,8 @@ class EditorScenePage : public GamePage, public ActionListener {
         TextButton mReplaceButton;
         TextButton mDeleteButton;
         
+        TextButton mSaveTestMapButton;
+
         TextButton mNextSceneButton;
         TextButton mPrevSceneButton;
 

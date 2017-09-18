@@ -53,6 +53,7 @@ EditorScenePage::EditorScenePage()
           mSaveNewButton( smallFont, -300, 260, "Save New" ),
           mReplaceButton( smallFont, -500, 260, "Replace" ),
           mDeleteButton( smallFont, 500, 260, "Delete" ),
+          mSaveTestMapButton( smallFont, -300, 200, "Export Test Map" ),
           mNextSceneButton( smallFont, -420, 260, ">" ),
           mPrevSceneButton( smallFont, -580, 260, "<" ),
           mClearSceneButton( smallFont, 350, 260, "Clear" ),
@@ -128,6 +129,10 @@ EditorScenePage::EditorScenePage()
 
     addComponent( &mDeleteButton );
     mDeleteButton.addActionListener( this );
+
+    addComponent( &mSaveTestMapButton );
+    mSaveTestMapButton.addActionListener( this );
+
 
     addComponent( &mNextSceneButton );
     mNextSceneButton.addActionListener( this );
@@ -433,6 +438,45 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
         mReplaceButton.setVisible( true );
         mNextSceneButton.setVisible( false );
         checkNextPrevVisible();
+        }
+    else if( inTarget == &mSaveTestMapButton ) {
+        FILE *f = fopen( "testMap.txt", "w" );
+        
+        if( f != NULL ) {
+            
+            for( int y=0; y<mSceneH; y++ ) {
+                for( int x=0; x<mSceneW; x++ ) {
+                    SceneCell *c = &( mCells[y][x] );
+                    
+                    int oID = c->oID;
+                    
+                    if( oID == -1 && c->biome == -1 ) {
+                        continue;
+                        }
+                    
+                    if( oID == -1 ) {
+                        oID = 0;
+                        }
+                    
+                    fprintf( f, "%d %d %d %d", x - mCurX, -( y - mCurY ), 
+                             c->biome, oID );
+
+                    for( int i=0; i< c->contained.size(); i++ ) {
+                        fprintf( f, ",%d",
+                                 c->contained.getElementDirect( i ) );
+                        SimpleVector<int> *subVec =
+                            c->subContained.getElement(i);
+                        
+                        for( int s=0; s< subVec->size(); s++ ) {
+                            
+                            fprintf( f, ":%d", subVec->getElementDirect( s ) );
+                            }
+                        }
+                    fprintf( f, "\n" );
+                    }
+                }
+            fclose( f );
+            }
         }
     else if( inTarget == &mReplaceButton ) {
         writeSceneToFile( mSceneID );
