@@ -37,6 +37,10 @@ typedef struct SceneCell {
         char flipH;
         double age;
         
+        double heldAge;
+        ClothingSet heldClothing;
+        
+
         AnimType anim;
         
         // negative to unfreeze time for cell, or positive to freeze

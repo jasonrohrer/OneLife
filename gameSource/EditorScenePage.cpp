@@ -1102,12 +1102,15 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             AnimType heldAnimType = p->anim;
                             AnimType heldFadeTargetType = held;
                     
+                            ClothingSet heldClothing = getEmptyClothingSet();
+                            
                             if( p->anim != moving ) {
                                 heldAnimType = held;
                                 }
 
                             if( heldObject->person ) {
-                                heldAge = 0.2;
+                                heldAge = p->heldAge;
+                                heldClothing = p->heldClothing;
                                 }
                             
                             int *contained = p->contained.getElementArray();
@@ -1129,7 +1132,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                             false,
                                             false,
                                             false,
-                                            getEmptyClothingSet(),
+                                            heldClothing,
                                             NULL,
                                             p->contained.size(), contained,
                                             subContained );
@@ -1438,6 +1441,12 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
             
             p->contained = mCopyBuffer.contained;
             p->subContained = mCopyBuffer.subContained;
+            
+            if( getObject( p->heldID )->person ) {
+                // add their clothing too
+                p->heldClothing = mCopyBuffer.clothing;
+                p->heldAge = mCopyBuffer.age;
+                }
             }
         }
     else if( inASCII == 8 ) {
@@ -1479,7 +1488,10 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->age = -1;
     inCell->heldID = -1;
     
+    inCell->heldAge = -1;
+
     inCell->clothing = getEmptyClothingSet();
+    inCell->heldClothing = getEmptyClothingSet();
     
     inCell->contained.deleteAll();
     inCell->subContained.deleteAll();    
@@ -1613,6 +1625,47 @@ File *EditorScenePage::getSceneFile( int inSceneID ) {
 
 
 
+
+void addClothingSetLines( SimpleVector<char*> *inLines,
+                          ClothingSet inSet ) {
+    inLines->push_back( 
+        autoSprintf( "hat=%d",
+                     inSet.hat == NULL 
+                     ? 0 
+                     : inSet.hat->id ) );
+    inLines->push_back( 
+        autoSprintf( "tunic=%d",
+                     inSet.tunic == NULL 
+                     ? 0 
+                     : inSet.tunic->id ) );
+    
+    inLines->push_back( 
+        autoSprintf( "frontShoe=%d",
+                     inSet.frontShoe == NULL 
+                     ? 0 
+                     : inSet.frontShoe->id ) );
+        
+    inLines->push_back( 
+        autoSprintf( "backShoe=%d",
+                     inSet.backShoe == NULL 
+                     ? 0 
+                     : inSet.backShoe->id ) );
+    
+    inLines->push_back( 
+        autoSprintf( "bottom=%d",
+                     inSet.bottom == NULL 
+                     ? 0 
+                     : inSet.bottom->id ) );
+    
+    inLines->push_back( 
+        autoSprintf( "backpack=%d",
+                     inSet.backpack == NULL 
+                     ? 0 
+                     : inSet.backpack->id ) );
+    }
+
+
+
 void addCellLines( SimpleVector<char*> *inLines, 
                    SceneCell *inCell, char isPersonCell ) {
     
@@ -1651,44 +1704,17 @@ void addCellLines( SimpleVector<char*> *inLines,
             }
         }
     
-    inLines->push_back( 
-        autoSprintf( "hat=%d",
-                     inCell->clothing.hat == NULL 
-                     ? 0 
-                     : inCell->clothing.hat->id ) );
-    inLines->push_back( 
-        autoSprintf( "tunic=%d",
-                     inCell->clothing.tunic == NULL 
-                     ? 0 
-                     : inCell->clothing.tunic->id ) );
     
-    inLines->push_back( 
-        autoSprintf( "frontShoe=%d",
-                     inCell->clothing.frontShoe == NULL 
-                     ? 0 
-                     : inCell->clothing.frontShoe->id ) );
-        
-    inLines->push_back( 
-        autoSprintf( "backShoe=%d",
-                     inCell->clothing.backShoe == NULL 
-                     ? 0 
-                     : inCell->clothing.backShoe->id ) );
+    addClothingSetLines( inLines, inCell->clothing );
     
-    inLines->push_back( 
-        autoSprintf( "bottom=%d",
-                     inCell->clothing.bottom == NULL 
-                     ? 0 
-                     : inCell->clothing.bottom->id ) );
-    
-    inLines->push_back( 
-        autoSprintf( "backpack=%d",
-                     inCell->clothing.backpack == NULL 
-                     ? 0 
-                     : inCell->clothing.backpack->id ) );
-
     
     inLines->push_back( autoSprintf( "flipH=%d", (int)( inCell->flipH ) ) );
     inLines->push_back( autoSprintf( "age=%f", inCell->age ) );
+
+    inLines->push_back( autoSprintf( "heldAge=%f", inCell->heldAge ) );
+
+    addClothingSetLines( inLines, inCell->heldClothing );
+
 
     inLines->push_back( autoSprintf( "anim=%d", (int)( inCell->anim ) ) );
     
@@ -1758,7 +1784,8 @@ void EditorScenePage::writeSceneToFile( int inIDToUse ) {
 
 
 
-void scanClothing( char *inLine, ObjectRecord **inSpot, const char *inFormat ) {
+void scanClothingLine( char *inLine, ObjectRecord **inSpot, 
+                       const char *inFormat ) {
     int id = -1;
     sscanf( inLine, "hat=%d", &id );
     
@@ -1768,6 +1795,32 @@ void scanClothing( char *inLine, ObjectRecord **inSpot, const char *inFormat ) {
     else {
         *inSpot = getObject( id );
         }
+    }
+
+
+int scanClothingSet( char **inLines, int inNextLine, ClothingSet *inSet ) {
+    char **lines = inLines;
+    int next = inNextLine;
+    
+    scanClothingLine( lines[next], &( inSet->hat ), "hat=%d" );
+    next++;
+    
+    scanClothingLine( lines[next], &( inSet->tunic ), "tunic=%d" );
+    next++;
+    
+    scanClothingLine( lines[next], &( inSet->frontShoe ), "frontShoe=%d" );
+    next++;
+    
+    scanClothingLine( lines[next], &( inSet->backShoe ), "backShoe=%d" );
+    next++;
+    
+    scanClothingLine( lines[next], &( inSet->bottom ), "bottom=%d" );
+    next++;
+    
+    scanClothingLine( lines[next], &( inSet->backpack ), "backpack=%d" );
+    next++;
+    
+    return next;
     }
 
 
@@ -1828,28 +1881,10 @@ int scanCell( char **inLines, int inNextLine, SceneCell *inCell ) {
         }
     
     
-    scanClothing( lines[next], &( inCell->clothing.hat ), "hat=%d" );
-    next++;
-    
-    scanClothing( lines[next], &( inCell->clothing.tunic ), "tunic=%d" );
-    next++;
-    
-    scanClothing( lines[next], &( inCell->clothing.frontShoe ), 
-                  "frontShoe=%d" );
-    next++;
-    
-    
-    scanClothing( lines[next], &( inCell->clothing.backShoe ), "backShoe=%d" );
-    next++;
-    
-    scanClothing( lines[next], &( inCell->clothing.bottom ), "bottom=%d" );
-    next++;
-    
-    scanClothing( lines[next], &( inCell->clothing.backpack ), "backpack=%d" );
-    next++;
-    
-
-
+    next = scanClothingSet( inLines, next, &( inCell->clothing ) );
+                            
+                            
+                         
     int flip;
     sscanf( inLines[next], "flipH=%d", &flip );
     next++;
@@ -1858,6 +1893,13 @@ int scanCell( char **inLines, int inNextLine, SceneCell *inCell ) {
 
     sscanf( inLines[next], "age=%lf", &( inCell->age ) );
     next++;
+
+    sscanf( inLines[next], "heldAge=%lf", &( inCell->heldAge ) );
+    next++;
+    
+    
+    next = scanClothingSet( inLines, next, &( inCell->heldClothing ) );
+
 
     int anim;
     sscanf( inLines[next], "anim=%d", &anim );
