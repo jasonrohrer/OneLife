@@ -4,6 +4,8 @@
 
 #include "minorGems/ui/event/ActionListener.h"
 
+#include "minorGems/io/file/File.h"
+
 
 #include "GamePage.h"
 
@@ -90,11 +92,14 @@ class EditorScenePage : public GamePage, public ActionListener {
         TextButton mAnimEditorButton;
         
         TextButton mSaveNewButton;
-        //TextButton mReplaceButton;
-        //TextButton mDeleteButton;
+        TextButton mReplaceButton;
+        TextButton mDeleteButton;
+        
+        TextButton mNextSceneButton;
+        TextButton mPrevSceneButton;
 
 
-        //TextButton mClearCellButton;
+        TextButton mClearSceneButton;
 
         Picker mGroundPicker;
         Picker mObjectPicker;
@@ -130,6 +135,8 @@ class EditorScenePage : public GamePage, public ActionListener {
         
         int mSceneW, mSceneH;
         
+        int mSceneID;
+
         SceneCell **mCells;
         SceneCell **mPersonCells;
         
@@ -148,6 +155,11 @@ class EditorScenePage : public GamePage, public ActionListener {
         char mLittleDheld;
         char mBigDheld;
 
+        File mScenesFolder;
+        File *mNextFile;
+        int mNextSceneNumber;
+        
+
         KeyLegend mKeyLegend, mKeyLegendG, mKeyLegendC, mKeyLegendP;
 
 
@@ -164,9 +176,23 @@ class EditorScenePage : public GamePage, public ActionListener {
         
         // clear everything but biome
         void clearCell( SceneCell *inCell );
+        
+        void clearScene();
+        
 
         void restartAllMoves();
         
+
+        File *getSceneFile( int inSceneID );
+        
+        char tryLoadScene( int inSceneID );
+        
+        void writeSceneToFile( int inIDToUse );
+        
+        void checkNextPrevVisible();
+        
+        void resizeGrid( int inNewH, int inNewW );
+
     };
 
         

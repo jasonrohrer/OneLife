@@ -50,7 +50,12 @@ static doublePair cornerPos = { - 704, 360 };
 
 EditorScenePage::EditorScenePage()
         : mAnimEditorButton( mainFont, 210, 260, "Anim" ),
-          mSaveNewButton( mainFont, 400, 260, "Save" ),
+          mSaveNewButton( smallFont, -300, 260, "Save New" ),
+          mReplaceButton( smallFont, -500, 260, "Replace" ),
+          mDeleteButton( smallFont, 500, 260, "Delete" ),
+          mNextSceneButton( smallFont, -420, 260, ">" ),
+          mPrevSceneButton( smallFont, -580, 260, "<" ),
+          mClearSceneButton( smallFont, 350, 260, "Clear" ),
           mGroundPicker( &groundPickable, -410, 90 ),
           mObjectPicker( &objectPickable, 410, 90 ),
           mPersonAgeSlider( smallFont, -55, -220, 2,
@@ -101,7 +106,9 @@ EditorScenePage::EditorScenePage()
           mCurY( 3 ),
           mFrameCount( 0 ),
           mLittleDheld( false ),
-          mBigDheld( false ) {
+          mBigDheld( false ),
+          mScenesFolder( NULL, "scenes" ),
+          mNextFile( NULL ) {
     
     addComponent( &mAnimEditorButton );
     mAnimEditorButton.addActionListener( this );
@@ -116,6 +123,25 @@ EditorScenePage::EditorScenePage()
     addComponent( &mSaveNewButton );
     mSaveNewButton.addActionListener( this );
 
+    addComponent( &mReplaceButton );
+    mReplaceButton.addActionListener( this );
+
+    addComponent( &mDeleteButton );
+    mDeleteButton.addActionListener( this );
+
+    addComponent( &mNextSceneButton );
+    mNextSceneButton.addActionListener( this );
+
+    addComponent( &mPrevSceneButton );
+    mPrevSceneButton.addActionListener( this );
+
+    addComponent( &mClearSceneButton );
+    mClearSceneButton.addActionListener( this );
+
+
+    mReplaceButton.setVisible( false );
+    mDeleteButton.setVisible( false );
+    
 
     addComponent( &mPersonAgeSlider );
     mPersonAgeSlider.setValue( 20 );
@@ -207,6 +233,23 @@ EditorScenePage::EditorScenePage()
             }
         }
     
+    mSceneID = -1;
+    
+    
+    if( ! mScenesFolder.exists() ) {
+        mScenesFolder.makeDirectory();
+        }
+    
+    mNextSceneNumber = 0;
+    if( mScenesFolder.isDirectory() ) {
+        mNextFile = mScenesFolder.getChildFile( "next.txt" );
+        
+        mNextSceneNumber = mNextFile->readFileIntContents( 0 );
+        }
+    
+
+    checkNextPrevVisible();
+
 
     addKeyClassDescription( &mKeyLegend, "Arrows", "Change selected cell" );
     addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger cell jumps" );
@@ -240,6 +283,10 @@ EditorScenePage::~EditorScenePage() {
         }
     delete [] mCells;
     delete [] mPersonCells;
+
+    if( mNextFile != NULL ) {
+        delete mNextFile;
+        }
     }
 
 
@@ -249,6 +296,14 @@ void EditorScenePage::floodFill( int inX, int inY,
     
     if( inX < 0 || inX >= mSceneW ||
         inY < 0 || inY >= mSceneH ) {
+        return;
+        }
+    
+    // also limit based on cur pos, so we don't fill entire huge canvas
+    // (given sparse file format that skips blank cells)
+    
+    if( inX < mCurX - 6 || inX > mCurX + 6 ||
+        inY < mCurY - 4 || inY > mCurY + 4 ) {
         return;
         }
     
@@ -367,6 +422,64 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
         checkVisible();
         }
     else if( inTarget == &mSaveNewButton ) {
+
+        writeSceneToFile( mNextSceneNumber );
+        mSceneID = mNextSceneNumber;
+        
+        mNextSceneNumber++;
+        mNextFile->writeToFile( mNextSceneNumber );
+        
+        mDeleteButton.setVisible( true );
+        mReplaceButton.setVisible( true );
+        mNextSceneButton.setVisible( false );
+        checkNextPrevVisible();
+        }
+    else if( inTarget == &mReplaceButton ) {
+        writeSceneToFile( mSceneID );
+        }
+    else if( inTarget == &mDeleteButton ) {
+        File *f = getSceneFile( mSceneID );
+        
+        f->remove();
+        
+        delete f;
+        
+        mSceneID = -1;
+        
+        mDeleteButton.setVisible( false );
+        mReplaceButton.setVisible( false );
+        checkNextPrevVisible();
+        }
+    else if( inTarget == &mNextSceneButton ) {
+        mSceneID++;
+        while( mSceneID < mNextSceneNumber &&
+               ! tryLoadScene( mSceneID ) ) {
+            mSceneID++;
+            }
+        mReplaceButton.setVisible( true );
+        mDeleteButton.setVisible( true );
+        checkNextPrevVisible();
+        checkVisible();
+        restartAllMoves();
+        }
+    else if( inTarget == &mPrevSceneButton ) {
+        if( mSceneID == -1 ) {
+            mSceneID = mNextSceneNumber;
+            }
+        mSceneID--;
+        while( mSceneID >= 0 &&
+               ! tryLoadScene( mSceneID ) ) {
+            mSceneID--;
+            }
+        mReplaceButton.setVisible( true );
+        mDeleteButton.setVisible( true );
+        checkNextPrevVisible();
+        checkVisible();
+        restartAllMoves();
+        }
+    else if( inTarget == &mClearSceneButton ) {
+        clearScene();
+        checkVisible();
         }
     else if( inTarget == &mPersonAgeSlider ) {
         p->age = mPersonAgeSlider.getValue();
@@ -501,8 +614,14 @@ void EditorScenePage::checkVisible() {
     if( ! mShowUI ) {
         
         mAnimEditorButton.setVisible( false );
+        
         mSaveNewButton.setVisible( false );
-
+        mReplaceButton.setVisible( false );
+        mDeleteButton.setVisible( false );
+        mClearSceneButton.setVisible( false );
+        mNextSceneButton.setVisible( false );
+        mPrevSceneButton.setVisible( false );
+        
         mGroundPicker.setVisible( false );
         mObjectPicker.setVisible( false );
         
@@ -532,6 +651,13 @@ void EditorScenePage::checkVisible() {
         
         mAnimEditorButton.setVisible( true );
         mSaveNewButton.setVisible( true );
+        mClearSceneButton.setVisible( true );
+
+        mReplaceButton.setVisible( mSceneID != -1 );
+        mDeleteButton.setVisible( mSceneID != -1 );
+        
+        checkNextPrevVisible();
+        
 
         mGroundPicker.setVisible( true );
         mObjectPicker.setVisible( true );
@@ -1328,6 +1454,19 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
 
     inCell->moveOffset.x = 0;
     inCell->moveOffset.y = 0;
+
+    inCell->moveDelayTime = 0;
+    }
+
+
+
+void EditorScenePage::clearScene() {    
+    for( int y=0; y<mSceneH; y++ ) {
+        for( int x=0; x<mSceneW; x++ ) {
+            mCells[y][x] = mEmptyCell;
+            mPersonCells[y][x] = mEmptyCell;
+            }
+        }
     }
 
         
@@ -1417,3 +1556,447 @@ void EditorScenePage::specialKeyDown( int inKeyCode ) {
 
     checkVisible();
     }
+
+
+
+File *EditorScenePage::getSceneFile( int inSceneID ) {
+    char *name = autoSprintf( "%d.txt", inSceneID );
+    File *f = mScenesFolder.getChildFile( name );
+    delete [] name;
+    
+    return f;
+    }
+
+
+
+void addCellLines( SimpleVector<char*> *inLines, 
+                   SceneCell *inCell, char isPersonCell ) {
+    
+    
+    if( !isPersonCell ) {    
+        inLines->push_back( autoSprintf( "biome=%d", inCell->biome ) );
+        }
+    
+    if( inCell->oID == -1 ) {
+        inLines->push_back( stringDuplicate( "empty" ) );
+        return;
+        }
+    
+
+    inLines->push_back( autoSprintf( "oID=%d", inCell->oID ) );
+    inLines->push_back( autoSprintf( "heldID=%d", inCell->heldID ) );
+
+    int numCont = inCell->contained.size();
+    
+    inLines->push_back( autoSprintf( "numCont=%d", numCont ) );
+    
+    for( int i=0; i<numCont; i++ ) {
+        inLines->push_back( 
+            autoSprintf( "cont=%d", 
+                         inCell->contained.getElementDirect( i ) ) );
+        
+        int numSub = inCell->subContained.getElementDirect(i).size();
+        
+        inLines->push_back( autoSprintf( "numSubCont=%d", numSub ) );
+        
+        for( int s=0; s<numSub; s++ ) {
+            inLines->push_back( 
+                autoSprintf( "subCont=%d", 
+                             inCell->subContained.getElementDirect( i ).
+                             getElementDirect( s ) ) );
+            }
+        }
+    
+    inLines->push_back( 
+        autoSprintf( "hat=%d",
+                     inCell->clothing.hat == NULL 
+                     ? 0 
+                     : inCell->clothing.hat->id ) );
+    inLines->push_back( 
+        autoSprintf( "tunic=%d",
+                     inCell->clothing.tunic == NULL 
+                     ? 0 
+                     : inCell->clothing.tunic->id ) );
+    
+    inLines->push_back( 
+        autoSprintf( "frontShoe=%d",
+                     inCell->clothing.frontShoe == NULL 
+                     ? 0 
+                     : inCell->clothing.frontShoe->id ) );
+        
+    inLines->push_back( 
+        autoSprintf( "backShoe=%d",
+                     inCell->clothing.backShoe == NULL 
+                     ? 0 
+                     : inCell->clothing.backShoe->id ) );
+    
+    inLines->push_back( 
+        autoSprintf( "bottom=%d",
+                     inCell->clothing.bottom == NULL 
+                     ? 0 
+                     : inCell->clothing.bottom->id ) );
+    
+    inLines->push_back( 
+        autoSprintf( "backpack=%d",
+                     inCell->clothing.backpack == NULL 
+                     ? 0 
+                     : inCell->clothing.backpack->id ) );
+
+    
+    inLines->push_back( autoSprintf( "flipH=%d", (int)( inCell->flipH ) ) );
+    inLines->push_back( autoSprintf( "age=%f", inCell->age ) );
+
+    inLines->push_back( autoSprintf( "anim=%d", (int)( inCell->anim ) ) );
+    
+    inLines->push_back( autoSprintf( "frozenAnimTime=%f", 
+                                     inCell->frozenAnimTime ) );
+    
+    inLines->push_back( autoSprintf( "numUsesRemaining=%d", 
+                                     inCell->numUsesRemaining ) );
+    
+    inLines->push_back( autoSprintf( "xOffset=%d", inCell->xOffset ) );
+    inLines->push_back( autoSprintf( "yOffset=%d", inCell->yOffset ) );
+
+    inLines->push_back( autoSprintf( "destCellXOffset=%d", 
+                                     inCell->destCellXOffset ) );
+    
+    inLines->push_back( autoSprintf( "destCellYOffset=%d", 
+                                     inCell->destCellYOffset ) );
+    
+    inLines->push_back( autoSprintf( "moveDelayTime=%f", 
+                                     inCell->moveDelayTime ) );
+    }
+
+
+
+void EditorScenePage::writeSceneToFile( int inIDToUse ) {
+    File *f = getSceneFile( inIDToUse );
+
+    SimpleVector<char*> lines;
+        
+    lines.push_back( autoSprintf( "w=%d", mSceneW ) );
+    lines.push_back( autoSprintf( "h=%d", mSceneH ) );
+    
+    for( int y=0; y<mSceneH; y++ ) {
+        for( int x=0; x<mSceneW; x++ ) {
+            SceneCell *c = &( mCells[y][x] );
+            SceneCell *p = &( mPersonCells[y][x] );
+            
+
+            if( c->biome == -1 &&
+                c->oID == -1 &&
+                p->oID == -1 ) {
+                // don't represent blank cells at all
+                }
+            else {
+                lines.push_back( autoSprintf( "x=%d,y=%d", x, y ) );
+                addCellLines( &lines, c, false );
+                addCellLines( &lines, p, true );
+                }
+            }
+        }
+    
+        
+    
+    char **linesArray = lines.getElementArray();
+    
+    
+    char *contents = join( linesArray, lines.size(), "\n" );
+    
+    delete [] linesArray;
+    lines.deallocateStringElements();
+
+    f->writeToFile( contents );
+    delete [] contents;
+
+    delete f;
+    }
+
+
+
+void scanClothing( char *inLine, ObjectRecord **inSpot, const char *inFormat ) {
+    int id = -1;
+    sscanf( inLine, "hat=%d", &id );
+    
+    if( id == -1 ) {
+        *inSpot = NULL;
+        }
+    else {
+        *inSpot = getObject( id );
+        }
+    }
+
+
+
+// returns next line index after scan
+int scanCell( char **inLines, int inNextLine, SceneCell *inCell ) {
+    char **lines = inLines;
+    int next = inNextLine;
+
+
+    int numRead = sscanf( lines[next], "biome=%d", &( inCell->biome ) );
+    
+    if( numRead == 1 ) {
+        // person cells don't have biome listed
+        next++;
+        }
+    
+    if( strcmp( lines[next], "empty" ) == 0 ) {
+        next++;
+        return next;
+        }
+    
+
+    sscanf( lines[next], "oID=%d", &( inCell->oID ) );
+    next++;
+
+    sscanf( lines[next], "heldID=%d", &( inCell->heldID ) );
+    next++;
+
+    int numCont = 0;
+    
+    sscanf( lines[next], "numCont=%d", &numCont );
+    next++;
+    
+    for( int i=0; i<numCont; i++ ) {
+        int cont;
+        
+        sscanf( lines[next], "cont=%d", &cont );
+        next++;
+            
+        inCell->contained.push_back( cont );
+        
+        int numSub;
+        
+        SimpleVector<int> subVec;
+        
+        sscanf( lines[next], "numSubCont=%d", &numSub );
+        next++;
+    
+        for( int s=0; s<numSub; s++ ) {
+            int subCont;
+            sscanf( lines[next], "subCont=%d", &subCont );
+            next++;
+            
+            subVec.push_back( subCont );
+            }
+        inCell->subContained.push_back( subVec );
+        }
+    
+    
+    scanClothing( lines[next], &( inCell->clothing.hat ), "hat=%d" );
+    next++;
+    
+    scanClothing( lines[next], &( inCell->clothing.tunic ), "tunic=%d" );
+    next++;
+    
+    scanClothing( lines[next], &( inCell->clothing.frontShoe ), 
+                  "frontShoe=%d" );
+    next++;
+    
+    
+    scanClothing( lines[next], &( inCell->clothing.backShoe ), "backShoe=%d" );
+    next++;
+    
+    scanClothing( lines[next], &( inCell->clothing.bottom ), "bottom=%d" );
+    next++;
+    
+    scanClothing( lines[next], &( inCell->clothing.backpack ), "backpack=%d" );
+    next++;
+    
+
+
+    int flip;
+    sscanf( inLines[next], "flipH=%d", &flip );
+    next++;
+
+    inCell->flipH = (char)flip;
+
+    sscanf( inLines[next], "age=%lf", &( inCell->age ) );
+    next++;
+
+    int anim;
+    sscanf( inLines[next], "anim=%d", &anim );
+    inCell->anim = (AnimType)anim;
+    next++;
+
+    
+    sscanf( inLines[next], "frozenAnimTime=%lf", &( inCell->frozenAnimTime ) );
+    next++;
+
+    
+    sscanf( inLines[next], "numUsesRemaining=%d",
+            &( inCell->numUsesRemaining ) );
+    next++;
+
+    
+    sscanf( inLines[next], "xOffset=%d", &( inCell->xOffset ) );
+    next++;
+
+    sscanf( inLines[next], "yOffset=%d", &( inCell->yOffset ) );
+    next++;
+
+
+    sscanf( inLines[next], "destCellXOffset=%d", &( inCell->destCellXOffset ) );
+    next++;
+
+    
+    sscanf( inLines[next], "destCellYOffset=%d", &( inCell->destCellYOffset ) );
+    next++;
+
+    sscanf( inLines[next], "moveDelayTime=%lf", &( inCell->moveDelayTime ) );
+    next++;
+
+
+    return next;
+    }
+
+
+
+
+char EditorScenePage::tryLoadScene( int inSceneID ) {
+    File *f = getSceneFile( inSceneID );
+    
+    char r = false;
+    
+    if( f->exists() && ! f->isDirectory() ) {
+        
+        
+        char *fileText = f->readFileContents();
+        
+        if( fileText != NULL ) {
+            
+            int numLines = 0;
+            
+            char **lines = split( fileText, "\n", &numLines );
+            delete [] fileText;
+            
+            int next = 0;
+            
+            
+            int w = mSceneW;
+            int h = mSceneH;
+            
+            sscanf( lines[next], "w=%d", &w );
+            next++;
+            sscanf( lines[next], "h=%d", &h );
+            next++;
+            
+            if( w != mSceneW || h != mSceneH ) {
+                resizeGrid( h, w );
+                }
+            
+            clearScene();
+            
+            int numRead = 0;
+            
+            int x, y;
+            
+            numRead = sscanf( lines[next], "x=%d,y=%d", &x, &y );
+            next++;
+            
+            while( numRead == 2 ) {
+                SceneCell *c = &( mCells[y][x] );
+                SceneCell *p = &( mPersonCells[y][x] );
+                    
+                next = scanCell( lines, next, c );
+                next = scanCell( lines, next, p );
+                
+                numRead = 0;
+                
+                if( next < numLines ) {    
+                    numRead = sscanf( lines[next], "x=%d,y=%d", &x, &y );
+                    next++;
+                    }
+                }
+            
+            for( int i=0; i<numLines; i++ ) {
+                delete [] lines[i];
+                }
+            delete [] lines;
+
+            r = true;
+            }
+        }
+    
+    
+    delete f;
+    
+    return r;
+    }
+
+        
+
+
+void EditorScenePage::checkNextPrevVisible() {
+    int num = 0;
+    File **cf = mScenesFolder.getChildFiles( &num );
+        
+    mNextSceneButton.setVisible( false );
+    mPrevSceneButton.setVisible( false );
+
+
+    if( mSceneID == -1 ) {
+        mNextSceneButton.setVisible( false );
+        
+        mPrevSceneButton.setVisible( num > 1 );        
+        }
+    else {
+        for( int i=0; i<num; i++ ) {
+            int id = -1;
+            char *name = cf[i]->getFileName();
+            
+            sscanf( name, "%d.txt", &id );
+            
+            if( id > -1 ) {
+                
+                if( id > mSceneID ) {
+                    mNextSceneButton.setVisible( true );
+                    }
+                else if( id < mSceneID ) {
+                    mPrevSceneButton.setVisible( true );
+                    }
+                }
+            delete [] name;
+            }
+        }
+    
+    
+        
+    for( int i=0; i<num; i++ ) {
+        delete cf[i];
+        }
+    delete [] cf;
+    }
+
+
+
+void EditorScenePage::resizeGrid( int inNewH, int inNewW ) {
+    
+    for( int y=0; y<mSceneH; y++ ) {
+        delete [] mCells[y];
+        delete [] mPersonCells[y];
+        }
+    delete [] mCells;
+    delete [] mPersonCells;
+
+    mSceneH = inNewH;
+    mSceneW = inNewW;
+    
+    mCells = new SceneCell*[mSceneH];
+    mPersonCells = new SceneCell*[mSceneH];
+    
+    
+    for( int y=0; y<mSceneH; y++ ) {
+        mCells[y] = new SceneCell[ mSceneW ];
+        mPersonCells[y] = new SceneCell[ mSceneW ];
+        
+        for( int x=0; x<mSceneW; x++ ) {
+            mCells[y][x] = mEmptyCell;
+            mPersonCells[y][x] = mEmptyCell;
+            }
+        }
+    }
+
+
+        
