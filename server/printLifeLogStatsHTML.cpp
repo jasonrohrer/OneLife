@@ -264,7 +264,7 @@ int main( int inNumArgs, char **inArgs ) {
             
             fprintf( outFile, 
                      "%d lives lived for a total of %0.2f hours<br>\n"
-                     "%d people lived past age fifty-five ---- "
+                     "%d people lived past age fifty-five<br>\n"
                      "%d generations in longest family line",
                      totalLives, totalAge / 60, over55Count,
                      longestFamilyChain );
