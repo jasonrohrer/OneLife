@@ -1372,6 +1372,13 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
         return;
         }
     
+    if( inASCII == '=' ) {
+        // screen shot
+        // don't checkVisible, because it makes cur cell border appear
+        return;
+        }
+    
+
     SceneCell *c = getCurrentCell();
     SceneCell *p = getCurrentPersonCell();
     
@@ -1405,7 +1412,7 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
         mCopyBuffer = *p;
         *p = mEmptyCell;
         }
-    else if( inASCII == 'v' ) {
+    else if( inASCII == 'v' || inASCII == 'V' ) {
         // paste
         if( mCopyBuffer.oID > 0 &&
             getObject( mCopyBuffer.oID )->person ) {
@@ -1477,6 +1484,13 @@ void EditorScenePage::keyUp( unsigned char inASCII ) {
         return;
         }
     
+    if( inASCII == '=' ) {
+        // screen shot
+        // don't checkVisible, because it makes cur cell border appear
+        return;
+        }
+
+
     if( inASCII == 'd' || inASCII == 'D' ) {
         mLittleDheld = false;
         mBigDheld = false;
