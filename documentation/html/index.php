@@ -7,15 +7,12 @@
 <tr>
 <td><img src=portraitLeft.png border=0 width=197 height=414></td>
 <td>
-<?php include( "lifeStats.php" ); ?>
-<br>
-<br>
+<center><?php include( "lifeStats.php" ); ?></center>
 
 
 
 <img src=logo558x305_border.png border=0 width=558 height=305>
 
-<br><br>
 <br>
 <center>a multiplayer survival game of parenting<br>and civilization building by <a href=http://hcsoftware.sf.net/jason-rohrer>Jason Rohrer</a></center>
 
