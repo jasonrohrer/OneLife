@@ -934,7 +934,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
             if( y > mCurY + 4 || 
                 y < mCurY -4 ||
-                x > mCurX + 6 || 
+                x > mCurX + 7 || 
                 x < mCurX -6 ) {
                 
                 continue;
