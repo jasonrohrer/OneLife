@@ -1793,7 +1793,7 @@ void EditorScenePage::writeSceneToFile( int inIDToUse ) {
 void scanClothingLine( char *inLine, ObjectRecord **inSpot, 
                        const char *inFormat ) {
     int id = -1;
-    sscanf( inLine, "hat=%d", &id );
+    sscanf( inLine, inFormat, &id );
     
     if( id == -1 ) {
         *inSpot = NULL;
