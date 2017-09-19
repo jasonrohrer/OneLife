@@ -662,6 +662,9 @@ void EditorScenePage::checkVisible() {
         mSaveNewButton.setVisible( false );
         mReplaceButton.setVisible( false );
         mDeleteButton.setVisible( false );
+        
+        mSaveTestMapButton.setVisible( false );
+        
         mClearSceneButton.setVisible( false );
         mNextSceneButton.setVisible( false );
         mPrevSceneButton.setVisible( false );
@@ -696,6 +699,9 @@ void EditorScenePage::checkVisible() {
         mAnimEditorButton.setVisible( true );
         mSaveNewButton.setVisible( true );
         mClearSceneButton.setVisible( true );
+        
+        mSaveTestMapButton.setVisible( true );
+
 
         mReplaceButton.setVisible( mSceneID != -1 );
         mDeleteButton.setVisible( mSceneID != -1 );
