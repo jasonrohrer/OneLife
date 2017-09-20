@@ -34,6 +34,9 @@ Version 33     ???
 
 --Temperature arrow positions now rounded to whole pixels.
 
+--Fixed bug in way objectHeight calculation made use of sprite anchor offsets.
+
+
 
 
 Server fixes:

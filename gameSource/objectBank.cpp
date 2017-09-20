@@ -2950,7 +2950,7 @@ int recomputeObjectHeight( int inNumSprites, int *inSprites,
                             // can be negative if anchor above top
                             // pixel
                             rad = 
-                                ( h/2 - spriteRec->centerAnchorYOffset )
+                                ( h/2 + spriteRec->centerAnchorYOffset )
                                 - y;
                             break;
                             }
