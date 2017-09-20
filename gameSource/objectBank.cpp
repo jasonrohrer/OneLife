@@ -2931,7 +2931,8 @@ int recomputeObjectHeight( int inNumSprites, int *inSprites,
         
         int rad = 0;
         
-        if( spriteRec != NULL ) {
+        // don't count transparent sprites as part of height
+        if( spriteRec != NULL && ! spriteRec->multiplicativeBlend ) {
 
             char hit = false;
             
