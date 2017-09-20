@@ -44,6 +44,8 @@ static const AnimType personAnimTypes[ NUM_PERSON_ANIM ] =
 
 #define CELL_D 128
 
+#define MAX_OFFSET 2 * CELL_D
+
 static doublePair cornerPos = { - 704, 360 };
 
 
@@ -79,16 +81,16 @@ EditorScenePage::EditorScenePage()
                                    0, 1, "Use" ),
           mCellXOffsetSlider( smallFont, -450, -230, 2,
                               175, 20,
-                              -128, 128, "X Offset" ),
+                              -MAX_OFFSET, MAX_OFFSET, "X Offset" ),
           mCellYOffsetSlider( smallFont, -450, -260, 2,
                               175, 20,
-                              -128, 128, "Y Offset" ),
+                              -MAX_OFFSET, MAX_OFFSET, "Y Offset" ),
           mPersonXOffsetSlider( smallFont, 200, -230, 2,
                               175, 20,
-                              -128, 128, "X Offset" ),
+                              -MAX_OFFSET, MAX_OFFSET, "X Offset" ),
           mPersonYOffsetSlider( smallFont, 200, -260, 2,
                               175, 20,
-                              -128, 128, "Y Offset" ),
+                              -MAX_OFFSET, MAX_OFFSET, "Y Offset" ),
           mCellMoveDelayField( smallFont, -450, -290, 4,
                                false, "Move Delay Sec",
                                "0123456789." ),
