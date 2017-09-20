@@ -1987,7 +1987,7 @@ void LivingLifePage::drawMapCell( int inMapI,
             
             doublePair squarePos = passPos;
             
-            if( objectHeight > CELL_D ) {
+            if( objectHeight > 1.5 * CELL_D ) {
                 squarePos.y += 192;
                 }
             
