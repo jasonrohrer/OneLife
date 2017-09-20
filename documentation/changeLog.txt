@@ -36,6 +36,9 @@ Version 33     ???
 
 --Fixed bug in way objectHeight calculation made use of sprite anchor offsets.
 
+--Fixed so that target fps is chosen from list of possible fps in settings file,
+  even if vsync isn't enforcing that fps.
+
 
 
 
