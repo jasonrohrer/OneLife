@@ -325,7 +325,17 @@ char pathFind( int inMapH, int inMapW,
             neighbors[7].x = bestPos.x + 1;
             neighbors[7].y = bestPos.y - 1;
 
-
+            // watch for case where our current pos is blocked
+            // this can only happen when our start pos is blocked
+            int bestSquareIndex = bestPos.y * inMapW + bestPos.x;
+            
+            char currentBlocked = false;
+            
+            if( inBlockedMap[ bestSquareIndex ] ) {
+                currentBlocked = true;
+                }
+            
+            
             
             // one step to neighbors from best record
             int cost = bestRecord.cost + 1;
@@ -341,6 +351,17 @@ char pathFind( int inMapH, int inMapW,
                     continue;
                     }
                 
+                
+                if( currentBlocked && 
+                    y == bestPos.y - 1 ) {
+                    // forbid "down" (including diag down) moves 
+                    // if our current position is blocked
+                    // object we're standing on is drawn in front of us
+                    // so it looks weird
+                    continue;
+                    }
+                
+
                 int neighborSquareIndex = y * inMapW + x;
                 
                 if( ! inBlockedMap[ neighborSquareIndex ] ) {

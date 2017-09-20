@@ -39,6 +39,9 @@ Version 33     ???
 --Fixed so that target fps is chosen from list of possible fps in settings file,
   even if vsync isn't enforcing that fps.
 
+--Pathfinding fixed to prevent walking through a door in your grid square after
+  it has been closed in front of you.
+
 
 
 
