@@ -4163,6 +4163,17 @@ int main() {
 
                                 // However, we will adjust timing, below,
                                 // to match where we think they should be
+                                
+                                // enforce client behavior of not walking
+                                // down through objects in our cell that are
+                                // blocking us
+                                char currentBlocked = false;
+                                
+                                if( isMapSpotBlocking( lastValidPathStep.x,
+                                                       lastValidPathStep.y ) ) {
+                                    currentBlocked = true;
+                                    }
+                                
 
                                 for( int p=0; 
                                      p<unfilteredPath.size(); p++ ) {
@@ -4176,6 +4187,15 @@ int main() {
                                         truncated = 1;
                                         break;
                                         }
+                                    
+                                    if( currentBlocked && p == 0 &&
+                                        pos.y == lastValidPathStep.y - 1 ) {
+                                        // attempt to walk down through
+                                        // blocking object at starting location
+                                        truncated = 1;
+                                        break;
+                                        }
+                                    
 
                                     // make sure it's not more
                                     // than one step beyond
