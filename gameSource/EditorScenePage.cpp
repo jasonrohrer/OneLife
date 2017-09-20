@@ -822,12 +822,10 @@ static void stepMovingCell( SceneCell *inC ) {
     SceneCell *c = inC;
     
     if( c->oID <= 0 ) {
-        c->moveStartTime = Time::getCurrentTime();
         return;
         }
 
     if( c->destCellXOffset == 0 && c->destCellYOffset == 0 ) {
-        c->moveStartTime = Time::getCurrentTime();
         return;
         }
 
@@ -884,10 +882,16 @@ static void stepMovingCell( SceneCell *inC ) {
 
 static void restartCell( SceneCell *inC ) {
     SceneCell *c = inC;
-    c->moveFractionDone = 0;
-    c->moveOffset.x = 0;
-    c->moveOffset.y = 0;
-    c->moveStartTime = Time::getCurrentTime();
+    
+    if( c->oID > 0 && 
+        ( c->destCellXOffset != 0 ||
+          c->destCellYOffset != 0 ) ) {
+    
+        c->moveFractionDone = 0;
+        c->moveOffset.x = 0;
+        c->moveOffset.y = 0;
+        c->moveStartTime = Time::getCurrentTime();
+        }
     }
 
 
