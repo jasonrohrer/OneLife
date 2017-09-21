@@ -49,6 +49,10 @@ Version 33     ???
 --Fixed so that camera-settle speed takes FPS into account (before, it took too
   long to settle at lower fps after the player stops moving).
 
+--Fixed so that only one sound plays during a transition, even if something new
+  is created in the player's hand and on the ground.  The ground object's
+  creation sound takes priority.
+
 
 
 

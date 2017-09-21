@@ -5014,6 +5014,60 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
         return stringDuplicate( translate( "noHint" ) );
         }
 
+
+
+// inNewID > 0
+static char shouldCreationSoundPlay( int inOldID, int inNewID ) {
+    // make sure this is really a fresh creation
+    // of newID, and not a cycling back around
+    // for a reusable object
+    
+    // also not useDummies that have the same
+    // parent
+    char sameParent = false;
+    
+    ObjectRecord *obj = getObject( inNewID );
+
+    if( inOldID > 0 && inNewID > 0 ) {
+        ObjectRecord *oldObj = getObject( inOldID );
+        
+        if( obj->isUseDummy &&
+            oldObj->isUseDummy &&
+            obj->useDummyParent ==
+            oldObj->useDummyParent ) {
+            sameParent = true;
+            }
+        else if( obj->numUses > 1 
+                 &&
+                 oldObj->isUseDummy 
+                 &&
+                 oldObj->useDummyParent
+                 == inNewID ) {
+            sameParent = true;
+            }
+        else if( oldObj->numUses > 1 
+                 &&
+                 obj->isUseDummy 
+                 &&
+                 obj->useDummyParent
+                 == inOldID ) {
+            sameParent = true;
+            }
+        }
+    
+    if( ! sameParent 
+        &&
+        ( ! obj->creationSoundInitialOnly
+          ||
+          inOldID <= 0
+          ||
+          ( ! isSpriteSubset( inOldID, inNewID ) 
+            &&
+            ! isAncestor( inOldID, inNewID, 1 ) ) ) ) {
+        return true;
+        }
+
+    return false;
     }
 
 
@@ -6294,51 +6348,7 @@ void LivingLifePage::step() {
                                     }
                                 
 
-                                // make sure this is really a fresh creation
-                                // of newID, and not a cycling back around
-                                // for a reusable object
-
-                                // also not useDummies that have the same
-                                // parent
-                                char sameParent = false;
-                                
-                                if( old > 0 && newID > 0 ) {
-                                    ObjectRecord *oldObj = getObject( old );
-
-                                    if( obj->isUseDummy &&
-                                        oldObj->isUseDummy &&
-                                        obj->useDummyParent ==
-                                        oldObj->useDummyParent ) {
-                                        sameParent = true;
-                                        }
-                                    else if( obj->numUses > 1 
-                                             &&
-                                             oldObj->isUseDummy 
-                                             &&
-                                             oldObj->useDummyParent
-                                             == newID ) {
-                                        sameParent = true;
-                                        }
-                                    else if( oldObj->numUses > 1 
-                                             &&
-                                             obj->isUseDummy 
-                                             &&
-                                             obj->useDummyParent
-                                             == old ) {
-                                        sameParent = true;
-                                        }
-                                    }
-                                
-                                if( ! sameParent 
-                                    &&
-                                    ( ! obj->creationSoundInitialOnly
-                                      ||
-                                      old <= 0
-                                      ||
-                                      ( ! isSpriteSubset( old, newID ) 
-                                        &&
-                                        ! isAncestor( old, newID, 1 ) ) ) ) {
-                                    
+                                if( shouldCreationSoundPlay( old, newID ) ) {
                                     playSound( obj->creationSound,
                                                getVectorFromCamera( x, y ) );
                                     }
@@ -7271,9 +7281,40 @@ void LivingLifePage::step() {
                                             otherSoundPlayed = true;
                                             }
                                         }
+                                    else if( oldHeld > 0 &&
+                                             heldTransitionSourceID != -1 ) {
+                                        
+                                        TransRecord *t = 
+                                            getTrans( oldHeld,
+                                                      heldTransitionSourceID );
+                                        
+                                        if( t != NULL &&
+                                            t->target != t->newTarget &&
+                                            t->newTarget > 0 ) {
+                                            
+                                            // something produced on
+                                            // ground by this transition
+                                            
+                                            // does it make a sound on
+                                            // creation?
+                                            
+                                            if( getObject( t->newTarget )->
+                                                creationSound.id != -1 ) {
+                                                
+                                                if( shouldCreationSoundPlay(
+                                                        t->target,
+                                                        t->newTarget ) ) {
+                                                    
+                                                    // only make one sound
+                                                    otherSoundPlayed = true;
+                                                    }
+                                                }
+                                            }
+                                        }
                                     
                                     
-                                    if( ! clothingChanged &&
+                                    if( ! otherSoundPlayed &&
+                                        ! clothingChanged &&
                                         heldObj->creationSound.id != -1 ) {
                                         
                                         int testAncestor = oldHeld;
