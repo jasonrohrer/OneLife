@@ -55,6 +55,8 @@ Version 33     ???
 
 --Fixed to avoid clicking on objects during continued, mouse-held-down walking.
 
+--Fixed misclick issue when clicking on objects near the edge of the screen.
+
 
 
 

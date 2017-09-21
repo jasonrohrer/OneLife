@@ -75,6 +75,7 @@ static JenkinsRandomSource randSource( 340403 );
 
 static int lastScreenMouseX, lastScreenMouseY;
 static char mouseDown = false;
+static int mouseDownFrames = 0;
 
 static int screenCenterPlayerOffsetX, screenCenterPlayerOffsetY;
 
@@ -5075,6 +5076,9 @@ static char shouldCreationSoundPlay( int inOldID, int inNewID ) {
 
         
 void LivingLifePage::step() {
+    if( mouseDown ) {
+        mouseDownFrames++;
+        }
     
     if( mServerSocket == -1 ) {
         mServerSocket = openSocketConnection( serverIP, serverPort );
@@ -9313,11 +9317,20 @@ void LivingLifePage::step() {
                                                     CELL_D );
                     doublePair delta = sub( worldMouse, worldCurrent );
 
-                    if( abs( delta.x ) > CELL_D * 4 
-                        ||
-                        abs( delta.y ) > CELL_D * 1 ) {
+                    // if player started by clicking on nothing
+                    // allow continued movement right away
+                    // however, if they started by clicking on something
+                    // make sure they are really holding the mouse down
+                    // (give them time to unpress the mouse)
+                    if( nextActionMessageToSend == NULL ||
+                        mouseDownFrames >  30 / frameRateFactor ) {
                         
-                        pointerDown( worldMouseX, worldMouseY );
+                        if( abs( delta.x ) > CELL_D * 4 
+                            ||
+                            abs( delta.y ) > CELL_D * 1 ) {
+                            
+                            pointerDown( worldMouseX, worldMouseY );
+                            }
                         }
                     }
 
@@ -10244,6 +10257,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     char mouseAlreadyDown = mouseDown;
     
     mouseDown = true;
+    if( !mouseAlreadyDown ) {
+        mouseDownFrames = 0;
+        }
+    
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
     
     if( mFirstServerMessagesReceived != 3 || ! mDoneLoadingFirstObjectSet ) {
@@ -10355,10 +10372,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             }
         
-        // don't count as mouse held down if they clicked on something
-        // that results in an action
-        mouseDown = false;
-        
+
         return;
         }
     
@@ -10584,10 +10598,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         playerActionTargetNotAdjacent = true;
                         
                         printf( "KILL with target player %d\n", o->id );
-                        
-                        // don't count as mouse held down if they clicked on 
-                        // something that results in an action
-                        mouseDown = false;
 
                         return;
                         }
@@ -10643,10 +10653,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             printf( "USE from a distance, src=(%d,%d), dest=(%d,%d)\n",
                     ourLiveObject->xd, ourLiveObject->yd,
                     clickDestX, clickDestY );
-            
-            // don't count as mouse held down if they clicked on 
-            // something that results in an action
-            mouseDown = false;
             
             return;
             }
@@ -10709,10 +10715,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         
                         printf( "UBABY with target player %d\n", o->id );
 
-                        // don't count as mouse held down if they clicked on 
-                        // something that results in an action
-                        mouseDown = false;
-                        
                         return;
                         }
                     else {
@@ -10999,11 +11001,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
                 playerActionTargetX = clickDestX;
                 playerActionTargetY = clickDestY;
-                
-                // don't count as mouse held down if they clicked on 
-                // something that results in an action
-                mouseDown = false;
-                
                 }
 
             delete [] extra;
