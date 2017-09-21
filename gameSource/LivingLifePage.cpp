@@ -9863,7 +9863,12 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                 if( dist < minDistThatHits ) {
                     p->hit = true;
                     
-                    if( p->hitOurPlacement ) {
+                    // already hit a short object
+                    // AND this object is tall
+                    // (don't click through short behind short)
+                    if( p->hitOurPlacement &&
+                        getObjectHeight( oID ) > CELL_D ) {
+                        
                         if( p->closestCellY > y ) {
                             p->hitOurPlacementBehind = true;
                             }
@@ -10021,7 +10026,13 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                 if( dist < minDistThatHits ) {
                     p->hit = true;
                     
-                    if( p->hitOurPlacement ) {
+                                        
+                    // already hit a short object
+                    // AND this object is tall
+                    // (don't click through short behind short)
+                    if( p->hitOurPlacement &&
+                        getObjectHeight( oID ) > CELL_D ) {
+                        
                         if( p->closestCellY > y ) {
                             p->hitOurPlacementBehind = true;
                             }

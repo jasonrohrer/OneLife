@@ -42,6 +42,10 @@ Version 33     ???
 --Pathfinding fixed to prevent walking through a door in your grid square after
   it has been closed in front of you.
 
+--Fixed to prevent click-through of short objects behind short objects 
+  (example:  open door that partially overlaps nearby wall, wall should not be
+  able to click through door to hit wall).
+
 
 
 
