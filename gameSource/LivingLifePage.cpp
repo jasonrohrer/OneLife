@@ -5013,6 +5013,7 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
     else {
         return stringDuplicate( translate( "noHint" ) );
         }
+    }
 
 
 
