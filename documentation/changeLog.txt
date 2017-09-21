@@ -53,6 +53,8 @@ Version 33     ???
   is created in the player's hand and on the ground.  The ground object's
   creation sound takes priority.
 
+--Fixed to avoid clicking on objects during continued, mouse-held-down walking.
+
 
 
 

@@ -10237,6 +10237,12 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
 void LivingLifePage::pointerDown( float inX, float inY ) {
     mLastMouseOverID = 0;
     
+    // detect cases where mouse is held down already
+    // this is for long-distance player motion, and we don't want
+    // this to result in an action by accident if they mouse over
+    // something actionable along the way
+    char mouseAlreadyDown = mouseDown;
+    
     mouseDown = true;
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
     
@@ -10277,9 +10283,17 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     p.hitOtherPerson = false;
     
 
-
     checkForPointerHit( &p, inX, inY );
     
+    // don't allow clicking on object during continued motion
+    if( mouseAlreadyDown ) {
+        p.hit = false;
+        p.hitSelf = false;
+        p.hitOurPlacement = false;
+        p.hitAnObject = false;
+        p.hitOtherPerson = false;
+        }
+
     
     int clickDestX = p.closestCellX;
     int clickDestY = p.closestCellY;
@@ -10341,7 +10355,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             }
         
-
+        // don't count as mouse held down if they clicked on something
+        // that results in an action
+        mouseDown = false;
+        
         return;
         }
     
@@ -10567,6 +10584,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         playerActionTargetNotAdjacent = true;
                         
                         printf( "KILL with target player %d\n", o->id );
+                        
+                        // don't count as mouse held down if they clicked on 
+                        // something that results in an action
+                        mouseDown = false;
 
                         return;
                         }
@@ -10622,6 +10643,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             printf( "USE from a distance, src=(%d,%d), dest=(%d,%d)\n",
                     ourLiveObject->xd, ourLiveObject->yd,
                     clickDestX, clickDestY );
+            
+            // don't count as mouse held down if they clicked on 
+            // something that results in an action
+            mouseDown = false;
             
             return;
             }
@@ -10684,6 +10709,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         
                         printf( "UBABY with target player %d\n", o->id );
 
+                        // don't count as mouse held down if they clicked on 
+                        // something that results in an action
+                        mouseDown = false;
+                        
                         return;
                         }
                     else {
@@ -10970,6 +10999,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
                 playerActionTargetX = clickDestX;
                 playerActionTargetY = clickDestY;
+                
+                // don't count as mouse held down if they clicked on 
+                // something that results in an action
+                mouseDown = false;
+                
                 }
 
             delete [] extra;
