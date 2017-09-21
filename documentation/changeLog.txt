@@ -46,6 +46,9 @@ Version 33     ???
   (example:  open door that partially overlaps nearby wall, wall should not be
   able to click through door to hit wall).
 
+--Fixed so that camera-settle speed takes FPS into account (before, it took too
+  long to settle at lower fps after the player stops moving).
+
 
 
 

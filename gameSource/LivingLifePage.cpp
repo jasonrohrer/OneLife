@@ -8934,7 +8934,7 @@ void LivingLifePage::step() {
         double moveSpeedFactor = 20 * cameraFollowsObject->currentSpeed;
         
         if( moveSpeedFactor < 1 ) {
-            moveSpeedFactor = 1;
+            moveSpeedFactor = 1 * frameRateFactor;
             }
 
         if( abs( dir.x ) > maxRX ) {
@@ -8986,6 +8986,8 @@ void LivingLifePage::step() {
         
 
         if( viewChange ) {
+            //lastScreenViewCenter.x = screenTargetPos.x;
+            //lastScreenViewCenter.y = screenTargetPos.y;
             
             setViewCenterPosition( lastScreenViewCenter.x, 
                                    lastScreenViewCenter.y );
