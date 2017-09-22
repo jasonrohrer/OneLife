@@ -57,6 +57,9 @@ Version 33     ???
 
 --Fixed misclick issue when clicking on objects near the edge of the screen.
 
+--Fixed case where continous walking mode cancelled after mousing over a clump 
+  of blocking objects.
+
 
 
 

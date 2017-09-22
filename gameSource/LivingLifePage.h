@@ -608,6 +608,10 @@ class LivingLifePage : public GamePage {
         
         void putInMap( int inMapI, ExtraMapObject *inObj );
         
+
+        char getCellBlocksWalking( int inMapX, int inMapY );
+        
+
     };
 
 

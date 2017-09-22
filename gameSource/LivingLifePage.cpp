@@ -77,6 +77,9 @@ static int lastScreenMouseX, lastScreenMouseY;
 static char mouseDown = false;
 static int mouseDownFrames = 0;
 
+static int minMouseDownFrames = 30;
+
+
 static int screenCenterPlayerOffsetX, screenCenterPlayerOffsetY;
 
 
@@ -9323,7 +9326,8 @@ void LivingLifePage::step() {
                     // make sure they are really holding the mouse down
                     // (give them time to unpress the mouse)
                     if( nextActionMessageToSend == NULL ||
-                        mouseDownFrames >  30 / frameRateFactor ) {
+                        mouseDownFrames >  
+                        minMouseDownFrames / frameRateFactor ) {
                         
                         if( abs( delta.x ) > CELL_D * 4 
                             ||
@@ -10244,6 +10248,54 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
 
 
 
+char LivingLifePage::getCellBlocksWalking( int inMapX, int inMapY ) {
+    
+    if( inMapY >= 0 && inMapY < mMapD &&
+        inMapX >= 0 && inMapX < mMapD ) {
+        
+        int destID = mMap[ inMapY * mMapD + inMapX ];
+        
+        
+        if( destID > 0 && getObject( destID )->blocksWalking ) {
+            return true;
+            }
+        else {
+            // check for wide neighbors
+            
+            int r = getMaxWideRadius();
+            
+            int startX = inMapX - r;
+            int endX = inMapX + r;
+            
+            if( startX < 0 ) {
+                startX = 0;
+                }
+            if( endX >= mMapD ) {
+                endX = mMapD - 1;
+                }
+            for( int x=startX; x<=endX; x++ ) {
+                int nID = mMap[ inMapY * mMapD + x ];
+
+                if( nID > 0 ) {
+                    ObjectRecord *nO = getObject( nID );
+                    
+                    if( nO->blocksWalking && nO->wide &&
+                        ( x - inMapX <= nO->rightBlockingRadius || 
+                          inMapX - x >= nO->leftBlockingRadius ) ) {
+                        return true;
+                        }
+                    }
+                }
+            }
+        
+        return false;
+        }
+    else {
+        // off map blocks
+        return true;
+        }
+    }
+
 
 
 
@@ -10315,6 +10367,88 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     int clickDestX = p.closestCellX;
     int clickDestY = p.closestCellY;
 
+    int destID = 0;
+        
+    int destNumContained = 0;
+    
+    int mapX = clickDestX - mMapOffsetX + mMapD / 2;
+    int mapY = clickDestY - mMapOffsetY + mMapD / 2;
+    
+
+    
+    if( mouseAlreadyDown && 
+        mouseDownFrames >  
+        minMouseDownFrames / frameRateFactor ) {
+        
+        // continuous movement mode
+
+        // watch out for case where they mouse over a blocked spot by accident
+        
+        if( getCellBlocksWalking( mapX, mapY ) ) {
+            printf( "Blocked at cont move click dest %d,%d\n",
+                    clickDestX, clickDestY );
+            
+            double xDelta = clickDestX - ourLiveObject->currentPos.x;
+            double yDelta = clickDestY - ourLiveObject->currentPos.y;
+
+            int step = 1;
+            int limit = 10;
+                
+            if( fabs( xDelta ) > fabs( yDelta ) ) {
+                // push out further in x direction
+                if( xDelta < 0 ) {
+                    step = -step;
+                    limit = -limit;
+                    }
+
+                for( int xd=step; xd != limit; xd += step ) {
+                    if( ! getCellBlocksWalking( mapX + xd, mapY ) ) {
+                        // found
+                        clickDestX += xd;
+                        break;
+                        }
+                    }
+                }
+            else {
+                // push out further in y direction
+                if( yDelta < 0 ) {
+                    step = -step;
+                    limit = -limit;
+                    }
+
+                for( int yd=step; yd != limit; yd += step ) {
+                    if( ! getCellBlocksWalking( mapX, mapY + yd ) ) {
+                        // found
+                        clickDestY += yd;
+                        break;
+                        }
+                    }
+                }
+            
+            printf( "Pushing out to click dest %d,%d\n",
+                    clickDestX, clickDestY );
+            
+            // recompute
+            mapX = clickDestX - mMapOffsetX + mMapD / 2;
+            mapY = clickDestY - mMapOffsetY + mMapD / 2;
+            }
+        }
+    
+
+    printf( "clickDestX,Y = %d, %d,  mapX,Y = %d, %d, curX,Y = %d, %d\n", 
+            clickDestX, clickDestY, 
+            mapX, mapY,
+            ourLiveObject->xd, ourLiveObject->yd );
+    if( mapY >= 0 && mapY < mMapD &&
+        mapX >= 0 && mapX < mMapD ) {
+        
+        destID = mMap[ mapY * mMapD + mapX ];
+        
+        destNumContained = mMapContainedStacks[ mapY * mMapD + mapX ].size();
+        }
+
+
+
     nextActionEating = false;
     nextActionDropping = false;
     
@@ -10384,24 +10518,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     char mustMove = false;
 
 
-    int destID = 0;
-        
-    int destNumContained = 0;
     
-    int mapX = clickDestX - mMapOffsetX + mMapD / 2;
-    int mapY = clickDestY - mMapOffsetY + mMapD / 2;
-    
-    printf( "clickDestX,Y = %d, %d,  mapX,Y = %d, %d, curX,Y = %d, %d\n", 
-            clickDestX, clickDestY, 
-            mapX, mapY,
-            ourLiveObject->xd, ourLiveObject->yd );
-    if( mapY >= 0 && mapY < mMapD &&
-        mapX >= 0 && mapX < mMapD ) {
-        
-        destID = mMap[ mapY * mMapD + mapX ];
-    
-        destNumContained = mMapContainedStacks[ mapY * mMapD + mapX ].size();
-        }
 
 
     if( destID > 0 && p.hitAnObject ) {
