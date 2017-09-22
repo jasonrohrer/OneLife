@@ -4662,6 +4662,9 @@ int main() {
                                     if( r->newTarget > 0 
                                         && getObject( r->newTarget )->floor ) {
 
+                                        // it turns into a floor
+                                        setMapObject( m.x, m.y, 0 );
+                                        
                                         setMapFloor( m.x, m.y, r->newTarget );
                                         
                                         if( r->newTarget == target ) {
