@@ -141,7 +141,7 @@ EditorObjectPage::EditorObjectPage()
           // these are in same spot because they're never shown at same time
           mMaleCheckbox( 290, -190, 2 ),
           mDeathMarkerCheckbox( 290, -190, 2 ),
-
+          mFloorCheckbox( 290, -150, 2 ),
           mHeldInHandCheckbox( 290, 36, 2 ),
           mRideableCheckbox( 290, 16, 2 ),
           mBlocksWalkingCheckbox( 290, -4, 2 ),
@@ -546,6 +546,11 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mDeathMarkerCheckbox );
     mDeathMarkerCheckbox.setVisible( true );
     mDeathMarkerCheckbox.addActionListener( this );
+
+
+    addComponent( &mFloorCheckbox );
+    mFloorCheckbox.setVisible( true );
+    mFloorCheckbox.addActionListener( this );
     
 
     addComponent( &mHeldInHandCheckbox );
@@ -814,6 +819,11 @@ void EditorObjectPage::updateAgingPanel() {
         mMaleCheckbox.setVisible( false );
 
         mDeathMarkerCheckbox.setVisible( true );
+        
+        if( ! mContainSizeField.isVisible() ) {
+            mFloorCheckbox.setVisible( true );
+            }
+        
         mHeldInHandCheckbox.setVisible( true );
         mRideableCheckbox.setVisible( true );
         mBlocksWalkingCheckbox.setVisible( true );
@@ -841,7 +851,10 @@ void EditorObjectPage::updateAgingPanel() {
 
         mDeathMarkerCheckbox.setToggled( false );
         mDeathMarkerCheckbox.setVisible( false );
-
+        
+        mFloorCheckbox.setToggled( false );
+        mFloorCheckbox.setVisible( false );
+        
         mNumUsesField.setInt( 1 );
         mNumUsesField.setVisible( false );
         mUseVanishCheckbox.setVisible( false );
@@ -1273,6 +1286,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mMaleCheckbox.getToggled(),
                    race,
                    mDeathMarkerCheckbox.getToggled(),
+                   mFloorCheckbox.getToggled(),
                    mFoodValueField.getInt(),
                    mSpeedMultField.getFloat(),
                    mCurrentObject.heldOffset,
@@ -1392,6 +1406,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mMaleCheckbox.getToggled(),
                    race,
                    mDeathMarkerCheckbox.getToggled(),
+                   mFloorCheckbox.getToggled(),
                    mFoodValueField.getInt(),
                    mSpeedMultField.getFloat(),
                    mCurrentObject.heldOffset,
@@ -1485,6 +1500,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mSlotSizeField.setVisible( false );
         mSlotTimeStretchField.setVisible( false );
         
+        mFloorCheckbox.setToggled( false );
+        mFloorCheckbox.setVisible( true );
+        
+
         mDeadlyDistanceField.setInt( 0 );
         mUseDistanceField.setInt( 1 );
         mMinPickupAgeField.setInt( 3 );
@@ -2589,6 +2608,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mMaleCheckbox.setToggled( pickedRecord->male );
             mDeathMarkerCheckbox.setToggled( pickedRecord->deathMarker );
+            mFloorCheckbox.setToggled( pickedRecord->floor );
             
             mCreationSoundWidget.setSoundUsage( pickedRecord->creationSound );
             mUsingSoundWidget.setSoundUsage( pickedRecord->usingSound );
@@ -2669,9 +2689,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             if( ! pickedRecord->containable ) {
                 mContainSizeField.setInt( 1 );
                 mContainSizeField.setVisible( false );
+                mFloorCheckbox.setVisible( true );
                 }
             else {
                 mContainSizeField.setVisible( true );
+                mFloorCheckbox.setVisible( false );
                 }
             
             if( pickedRecord->numSlots == 0 ) {
@@ -2693,6 +2715,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             showVertRotButtons();
                 
             mContainSizeField.setVisible( true );
+            mFloorCheckbox.setToggled( false );
+            mFloorCheckbox.setVisible( false );
             
             mPersonAgeSlider.setVisible( false );
             mCheckboxes[2]->setToggled( false );
@@ -2712,6 +2736,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         else {
             mContainSizeField.setInt( 1 );
             mContainSizeField.setVisible( false );
+            mFloorCheckbox.setVisible( true );
             mCurrentObject.vertContainRotationOffset = 0;
             hideVertRotButtons();
             }
@@ -2732,6 +2757,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCheckboxes[0]->setToggled( false );
             hideVertRotButtons();
             
+            mFloorCheckbox.setVisible( true );
+
             mCurrentObject.vertContainRotationOffset = 0;
             
             mSlotSizeField.setInt( 1 );
@@ -3447,6 +3474,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         pos = mDeathMarkerCheckbox.getPosition();
         pos.y += checkboxSep + 5;
         smallFont->drawString( "Death", pos, alignCenter );
+        }
+
+    if( mFloorCheckbox.isVisible() ) {
+        pos = mFloorCheckbox.getPosition();
+        pos.y += checkboxSep + 5;
+        smallFont->drawString( "Floor", pos, alignCenter );
         }
 
     if( mHeldInHandCheckbox.isVisible() ) {

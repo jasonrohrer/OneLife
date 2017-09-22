@@ -471,6 +471,19 @@ float initObjectBankStep() {
                 next++;
 
 
+                r->floor = false;
+                
+                if( strstr( lines[next], "floor=" ) != NULL ) {
+                    // floor flag present
+                    
+                    int floorRead = 0;
+                    sscanf( lines[next], "floor=%d", &( floorRead ) );
+                    
+                    r->floor = floorRead;
+                    
+                    next++;
+                    }
+
                             
                 sscanf( lines[next], "foodValue=%d", 
                         &( r->foodValue ) );
@@ -1257,6 +1270,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->male,
                         inObject->race,
                         inObject->deathMarker,
+                        inObject->floor,
                         inObject->foodValue,
                         inObject->speedMult,
                         inObject->heldOffset,
@@ -1475,6 +1489,7 @@ int addObject( const char *inDescription,
                char inMale,
                int inRace,
                char inDeathMarker,
+               char inFloor,
                int inFoodValue,
                float inSpeedMult,
                doublePair inHeldOffset,
@@ -1608,6 +1623,8 @@ int addObject( const char *inDescription,
                                       (int)inPersonNoSpawn ) );
         lines.push_back( autoSprintf( "male=%d", (int)inMale ) );
         lines.push_back( autoSprintf( "deathMarker=%d", (int)inDeathMarker ) );
+        
+        lines.push_back( autoSprintf( "floor=%d", (int)inFloor ) );
 
         lines.push_back( autoSprintf( "foodValue=%d", inFoodValue ) );
         
@@ -1850,6 +1867,7 @@ int addObject( const char *inDescription,
     r->race = inRace;
     r->male = inMale;
     r->deathMarker = inDeathMarker;
+    r->floor = inFloor;
     r->foodValue = inFoodValue;
     r->speedMult = inSpeedMult;
     r->heldOffset = inHeldOffset;

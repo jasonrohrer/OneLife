@@ -106,7 +106,12 @@ typedef struct ObjectRecord {
         // true if this object can be placed by server to mark a death
         char deathMarker;
         
-
+        
+        // floor objects are drawn under everything else
+        // and can have other objects in the same cell
+        char floor;
+        
+        
         int foodValue;
         
         // multiplier on walking speed when holding
@@ -358,6 +363,7 @@ int addObject( const char *inDescription,
                char inMale,
                int inRace,
                char inDeathMarker,
+               char inFloor,
                int inFoodValue,
                float inSpeedMult,
                doublePair inHeldOffset,
