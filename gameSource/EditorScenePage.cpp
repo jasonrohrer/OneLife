@@ -226,20 +226,12 @@ EditorScenePage::EditorScenePage()
     
     mCopyBuffer = mEmptyCell;
 
-    mCells = new SceneCell*[mSceneH];
-    mPersonCells = new SceneCell*[mSceneH];
     
+    mCells = NULL;
     
-    for( int y=0; y<mSceneH; y++ ) {
-        mCells[y] = new SceneCell[ mSceneW ];
-        mPersonCells[y] = new SceneCell[ mSceneW ];
-        
-        for( int x=0; x<mSceneW; x++ ) {
-            mCells[y][x] = mEmptyCell;
-            mPersonCells[y][x] = mEmptyCell;
-            }
-        }
+    resizeGrid( mSceneH, mSceneW );
     
+
     mSceneID = -1;
     
     
@@ -287,9 +279,11 @@ EditorScenePage::~EditorScenePage() {
     for( int y=0; y<mSceneH; y++ ) {
         delete [] mCells[y];
         delete [] mPersonCells[y];
+        delete [] mFloorCells[y];
         }
     delete [] mCells;
     delete [] mPersonCells;
+    delete [] mFloorCells;
 
     if( mNextFile != NULL ) {
         delete mNextFile;
@@ -333,6 +327,7 @@ void EditorScenePage::floodFill( int inX, int inY,
 void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
     SceneCell *c = getCurrentCell();
     SceneCell *p = getCurrentPersonCell();
+    SceneCell *f = getCurrentFloorCell();
     
     if( inTarget == &mAnimEditorButton ) {
         setSignal( "animEditor" );
@@ -360,7 +355,7 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mObjectPicker ) {
         char wasRightClick = false;
         
-        int id = mObjectPicker.getSelectedObject( &wasRightClick);
+        int id = mObjectPicker.getSelectedObject( &wasRightClick );
        
         if( id > 0 ) {
             char placed = false;
@@ -376,6 +371,12 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
                     placed = true;
                     }
                 }
+            if( !placed && wasRightClick && p->oID <= 0 ) {
+                // place floor
+                f->oID = id;
+                placed = true;
+                }
+            
             if( !placed && wasRightClick && p->oID > 0 ) {
                 if( o->clothing != 'n' ) {
                     
@@ -609,6 +610,11 @@ SceneCell *EditorScenePage::getCurrentCell() {
 
 SceneCell *EditorScenePage::getCurrentPersonCell() {
     return &( mPersonCells[ mCurY ][ mCurX ] );
+    }
+
+
+SceneCell *EditorScenePage::getCurrentFloorCell() {
+    return &( mFloorCells[ mCurY ][ mCurX ] );
     }
 
 
@@ -971,6 +977,60 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
             }
         }
 
+    
+    double frameTime = frameRateFactor * mFrameCount / 60.0;
+
+
+    // floors on top of ground
+    for( int y=0; y<mSceneH; y++ ) {
+        for( int x=0; x<mSceneW; x++ ) {
+            doublePair pos = cornerPos;
+                
+            pos.x += x * CELL_D;
+            pos.y -= y * CELL_D;
+
+            if( y > mCurY + 4 || 
+                y < mCurY -4 ||
+                x > mCurX + 7 || 
+                x < mCurX -6 ) {
+                
+                continue;
+                }
+            
+
+            pos.x += mShiftX * CELL_D;
+            pos.y += mShiftY * CELL_D;
+
+
+            SceneCell *f = &( mFloorCells[y][x] );
+            
+            if( f->oID > 0 ) {
+                char used;
+                
+                drawObjectAnim( f->oID, 2, ground, 
+                                frameTime, 
+                                0,
+                                ground,
+                                frameTime,
+                                frameTime,
+                                &used,
+                                ground,
+                                ground,
+                                pos,
+                                0,
+                                false,
+                                false,
+                                -1,
+                                false,
+                                false,
+                                false,
+                                getEmptyClothingSet(),
+                                NULL );
+                }
+
+            }
+        }
+
 
 
     toggleMultiplicativeBlend( true );
@@ -997,7 +1057,6 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     toggleAdditiveBlend( false );
 
     
-    double frameTime = frameRateFactor * mFrameCount / 60.0;
 
     for( int y=0; y<mSceneH; y++ ) {
         
@@ -1547,6 +1606,7 @@ void EditorScenePage::clearScene() {
         for( int x=0; x<mSceneW; x++ ) {
             mCells[y][x] = mEmptyCell;
             mPersonCells[y][x] = mEmptyCell;
+            mFloorCells[y][x] = mEmptyCell;
             }
         }
     }
@@ -1772,22 +1832,26 @@ void EditorScenePage::writeSceneToFile( int inIDToUse ) {
         
     lines.push_back( autoSprintf( "w=%d", mSceneW ) );
     lines.push_back( autoSprintf( "h=%d", mSceneH ) );
+    lines.push_back( stringDuplicate( "floorPresent" ) );
     
     for( int y=0; y<mSceneH; y++ ) {
         for( int x=0; x<mSceneW; x++ ) {
             SceneCell *c = &( mCells[y][x] );
             SceneCell *p = &( mPersonCells[y][x] );
+            SceneCell *f = &( mFloorCells[y][x] );
             
 
             if( c->biome == -1 &&
                 c->oID == -1 &&
-                p->oID == -1 ) {
+                p->oID == -1 &&
+                f->oID == -1 ) {
                 // don't represent blank cells at all
                 }
             else {
                 lines.push_back( autoSprintf( "x=%d,y=%d", x, y ) );
                 addCellLines( &lines, c, false );
                 addCellLines( &lines, p, true );
+                addCellLines( &lines, f, true );
                 }
             }
         }
@@ -1998,6 +2062,14 @@ char EditorScenePage::tryLoadScene( int inSceneID ) {
                 resizeGrid( h, w );
                 }
             
+            char floorPresent = false;
+            
+            if( strstr( lines[next], "floorPresent" ) != NULL ) {
+                floorPresent = true;
+                next++;
+                }
+            
+
             clearScene();
             
             int numRead = 0;
@@ -2010,9 +2082,14 @@ char EditorScenePage::tryLoadScene( int inSceneID ) {
             while( numRead == 2 ) {
                 SceneCell *c = &( mCells[y][x] );
                 SceneCell *p = &( mPersonCells[y][x] );
+                SceneCell *f = &( mFloorCells[y][x] );
                     
                 next = scanCell( lines, next, c );
                 next = scanCell( lines, next, p );
+                
+                if( floorPresent ) {
+                    next = scanCell( lines, next, f );
+                    }
                 
                 numRead = 0;
                 
@@ -2084,28 +2161,36 @@ void EditorScenePage::checkNextPrevVisible() {
 
 
 void EditorScenePage::resizeGrid( int inNewH, int inNewW ) {
-    
-    for( int y=0; y<mSceneH; y++ ) {
-        delete [] mCells[y];
-        delete [] mPersonCells[y];
+    if( mCells != NULL ) {
+        
+        for( int y=0; y<mSceneH; y++ ) {
+            delete [] mCells[y];
+            delete [] mPersonCells[y];
+            delete [] mFloorCells[y];
+            }
+        delete [] mCells;
+        delete [] mPersonCells;
+        delete [] mFloorCells;
         }
-    delete [] mCells;
-    delete [] mPersonCells;
+    
 
     mSceneH = inNewH;
     mSceneW = inNewW;
     
     mCells = new SceneCell*[mSceneH];
     mPersonCells = new SceneCell*[mSceneH];
+    mFloorCells = new SceneCell*[mSceneH];
     
     
     for( int y=0; y<mSceneH; y++ ) {
         mCells[y] = new SceneCell[ mSceneW ];
         mPersonCells[y] = new SceneCell[ mSceneW ];
+        mFloorCells[y] = new SceneCell[ mSceneW ];
         
         for( int x=0; x<mSceneW; x++ ) {
             mCells[y][x] = mEmptyCell;
             mPersonCells[y][x] = mEmptyCell;
+            mFloorCells[y][x] = mEmptyCell;
             }
         }
     }

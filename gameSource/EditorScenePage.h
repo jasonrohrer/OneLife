@@ -145,6 +145,7 @@ class EditorScenePage : public GamePage, public ActionListener {
 
         SceneCell **mCells;
         SceneCell **mPersonCells;
+        SceneCell **mFloorCells;
         
         SceneCell mEmptyCell;
         SceneCell mCopyBuffer;
@@ -179,6 +180,7 @@ class EditorScenePage : public GamePage, public ActionListener {
 
         SceneCell *getCurrentCell();
         SceneCell *getCurrentPersonCell();
+        SceneCell *getCurrentFloorCell();
         
         // clear everything but biome
         void clearCell( SceneCell *inCell );
