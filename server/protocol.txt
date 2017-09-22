@@ -295,25 +295,26 @@ Text that each player says must not contain # or newline.
 
 
 MX
-x y new_id p_id
-x y new_id p_id
-x y new_id p_id
+x y new_floor_id new_id p_id
+x y new_floor_id new_id p_id
+x y new_floor_id new_id p_id
 ...
-x y new_id p_id
+x y new_floor_id new_id p_id
 #
 
 
 Or optionally, some lines can have 3 extra parameters, like this:
 
 MX
-x y new_id p_id old_x old_y speed
-x y new_id p_id 
-x y new_id p_id old_x old_y speed
+x y new_floor_id new_id p_id old_x old_y speed
+x y new_floor_id new_id p_id 
+x y new_floor_id new_id p_id old_x old_y speed
 ...
-x y new_id p_id
+x y new_floor_id new_id p_id
 #
 
-Grid position of changes, and new object id that position must change to.
+Grid position of changes, and new floor id and object id that position must 
+change to.
 p_id is the player that was responsible for the change (in the case of an 
 object drop only), or -1 if change was not player triggered.  p_id < -1 means
 that the change was triggered by player -(p_id), but that the object

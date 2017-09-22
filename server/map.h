@@ -131,6 +131,23 @@ void clearAllContained( int inX, int inY, int inSubCont = 0 );
 void shrinkContainer( int inX, int inY, int inNumNewSlots, int inSubCont = 0 );
 
 
+
+// unlike normal objects, there is no live tracking of floors and when
+// they will decay in stepMap
+// Decay of floors only applied on next call to getMapFloor
+// Thus, short-term floor decay isn't supported (e.g., burning floor that
+// finishes burning while player still has it on the screen).
+int getMapFloor( int inX, int inY );
+
+void setMapFloor( int inX, int inY, int inID );
+
+void setFloorEtaDecay( int inX, int inY, timeSec_t inAbsoluteTimeInSeconds );
+
+timeSec_t getFloorEtaDecay( int inX, int inY );
+
+
+
+
 // line for a map change message
 char *getMapChangeLineString( ChangePosition inPos );
 

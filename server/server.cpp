@@ -2981,6 +2981,52 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
 
 
 
+// change held as the result of a transition
+static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
+    
+    LiveObject *nextPlayer = inPlayer;
+
+    int oldHolding = nextPlayer->holdingID;
+    
+    int oldContained = 
+        nextPlayer->numContained;
+
+    nextPlayer->holdingID = inNewHeldID;
+    
+    if( oldHolding != nextPlayer->holdingID ) {
+        setFreshEtaDecayForHeld( nextPlayer );
+        }
+    
+    nextPlayer->heldOriginValid = 0;
+    nextPlayer->heldOriginX = 0;
+    nextPlayer->heldOriginY = 0;
+    
+    // can newly changed container hold
+    // less than what it could contain
+    // before?
+    
+    int newHeldSlots = getNumContainerSlots( 
+        nextPlayer->holdingID );
+    
+    if( newHeldSlots < oldContained ) {
+        // truncate
+        nextPlayer->numContained
+            = newHeldSlots;
+        }
+    
+    if( newHeldSlots > 0 && 
+        oldHolding != 0 ) {
+                                        
+        restretchDecays( 
+            newHeldSlots,
+            nextPlayer->containedEtaDecays,
+            oldHolding,
+            nextPlayer->holdingID );
+        }
+                                    
+    }
+
+
 
 int main() {
 
@@ -4466,7 +4512,7 @@ int main() {
                                             // were holding
                                             if( oldHolding == r->newTarget ) {
                                                 // preserve old decay time 
-                                                // of what we were holing
+                                                // of what we were holding
                                                 setEtaDecay( m.x, m.y,
                                                              oldEtaDecay );
                                                 }
@@ -4579,13 +4625,9 @@ int main() {
                                       getObject( r->newActor )->minPickupAge <= 
                                       computeAge( nextPlayer ) ) ) {
                                     
-                                    int oldContained = 
-                                        nextPlayer->numContained;
-                                    
-                                    int oldHolding = nextPlayer->holdingID;
-                                    
                                     if( ! defaultTrans ) {    
-                                        nextPlayer->holdingID = r->newActor;
+                                        handleHoldingChange( nextPlayer,
+                                                             r->newActor );
                                         
                                         if( r->target > 0 ) {    
                                             nextPlayer->heldTransitionSourceID =
@@ -4595,37 +4637,6 @@ int main() {
                                             nextPlayer->heldTransitionSourceID =
                                                 -1;
                                             }
-                                        }
-                                    
-                                    if( oldHolding != nextPlayer->holdingID ) {
-                                        setFreshEtaDecayForHeld( nextPlayer );
-                                        }
-                                    
-                                    nextPlayer->heldOriginValid = 0;
-                                    nextPlayer->heldOriginX = 0;
-                                    nextPlayer->heldOriginY = 0;
-
-                                    // can newly changed container hold
-                                    // less than what it could contain
-                                    // before?
-
-                                    int newHeldSlots = getNumContainerSlots( 
-                                        nextPlayer->holdingID );
-
-                                    if( newHeldSlots < oldContained ) {
-                                        // truncate
-                                        nextPlayer->numContained
-                                            = newHeldSlots;
-                                        }
-                                    
-                                    if( newHeldSlots > 0 && 
-                                        oldHolding != 0 ) {
-                                        
-                                        restretchDecays( 
-                                            newHeldSlots,
-                                            nextPlayer->containedEtaDecays,
-                                            oldHolding,
-                                            nextPlayer->holdingID );
                                         }
                                     
 
@@ -4647,7 +4658,24 @@ int main() {
                                         getEtaDecay( m.x, m.y );
                                     
                                     setResponsiblePlayer( - nextPlayer->id );
-                                    setMapObject( m.x, m.y, r->newTarget );
+                                    
+                                    if( r->newTarget > 0 
+                                        && getObject( r->newTarget )->floor ) {
+
+                                        setMapFloor( m.x, m.y, r->newTarget );
+                                        
+                                        if( r->newTarget == target ) {
+                                            // unchanged
+                                            // keep old decay in place
+                                            setFloorEtaDecay( m.x, m.y, 
+                                                              oldEtaDecay );
+                                            }
+                                        }
+                                    else {    
+                                        setMapObject( m.x, m.y, r->newTarget );
+                                        }
+                                    
+                                    
                                     setResponsiblePlayer( -1 );
 
                                     if( target == r->newTarget ) {
@@ -4821,12 +4849,69 @@ int main() {
                                 // target not where we're standing
                                 // we're holding something
                                 
+                                char usedOnFloor = false;
+                                int floorID = getMapFloor( m.x, m.y );
+                                
+                                if( floorID > 0 ) {
+                                    
+                                    TransRecord *r = 
+                                        getTrans( nextPlayer->holdingID,
+                                                  floorID );
+                                
+                                    if( r != NULL && 
+                                        // make sure we're not too young
+                                        // to hold result of on-floor
+                                        // transition
+                                        ( r->newActor == 0 ||
+                                          getObject( r->newActor )->
+                                             minPickupAge <= 
+                                          computeAge( nextPlayer ) ) ) {
+
+                                        // applies to floor
+                                        int resultID = r->newTarget;
+                                        
+                                        if( getObject( resultID )->floor ) {
+                                            // changing floor to floor
+                                            // go ahead
+                                            usedOnFloor = true;
+                                            
+                                            if( resultID != floorID ) {
+                                                setMapFloor( m.x, m.y,
+                                                             resultID );
+                                                }
+                                            handleHoldingChange( nextPlayer,
+                                                                 r->newActor );
+                                            }
+                                        else {
+                                            // changing floor to non-floor
+                                            char canPlace = true;
+                                            if( getObject( resultID )->
+                                                blocksWalking &&
+                                                ! isMapSpotEmpty( m.x, m.y ) ) {
+                                                canPlace = false;
+                                                }
+                                            if( canPlace ) {
+                                                setMapObject( m.x, m.y,
+                                                              resultID );
+                                                
+                                                handleHoldingChange( 
+                                                    nextPlayer,
+                                                    r->newActor );
+                                            
+                                                usedOnFloor = true;
+                                                }
+                                            }
+                                        }
+                                    }
+                                
+
+
                                 // consider a use-on-bare-ground transtion
                                 
                                 ObjectRecord *obj = 
                                     getObject( nextPlayer->holdingID );
                                 
-                                if( obj->foodValue == 0 ) {
+                                if( ! usedOnFloor && obj->foodValue == 0 ) {
                                     
                                     // get no-target transtion
                                     // (not a food transition, since food
@@ -4866,42 +4951,24 @@ int main() {
                                     
                                     if( canPlace ) {
 
-                                        int oldContained = 
-                                            nextPlayer->numContained;
-                                        
-                                        int oldHolding = nextPlayer->holdingID;
-                                        nextPlayer->holdingID = r->newActor;
-                                        
-                                        if( oldHolding != 
-                                            nextPlayer->holdingID ) {
-                                            
-                                            setFreshEtaDecayForHeld( 
-                                                nextPlayer );
-                                            }
-                                        
-                                        nextPlayer->heldOriginValid = 0;
-                                        nextPlayer->heldOriginX = 0;
-                                        nextPlayer->heldOriginY = 0;
-                                        nextPlayer->heldTransitionSourceID = -1;
-                                        
-                                        // can newly changed container hold
-                                        // less than what it could contain
-                                        // before?
-
-                                        int newHeldSlots = 
-                                            getNumContainerSlots( 
-                                                nextPlayer->holdingID );
-
-                                        if( newHeldSlots < oldContained ) {
-                                            // truncate
-                                            nextPlayer->numContained
-                                                = newHeldSlots;
-                                            }
-                                        
+                                        handleHoldingChange( nextPlayer,
+                                                             r->newActor );
                                         
                                         setResponsiblePlayer( 
                                             - nextPlayer->id );
-                                        setMapObject( m.x, m.y, r->newTarget );
+                                        
+                                        if( r->newTarget > 0 
+                                            && getObject( r->newTarget )->
+                                               floor ) {
+
+                                            setMapFloor( m.x, m.y, 
+                                                         r->newTarget );
+                                            }
+                                        else {    
+                                            setMapObject( m.x, m.y, 
+                                                          r->newTarget );
+                                            }
+                                        
                                         setResponsiblePlayer( -1 );
                                         
                                         handleMapChangeToPaths( 

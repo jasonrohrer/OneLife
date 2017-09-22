@@ -356,6 +356,7 @@ class LivingLifePage : public GamePage {
         int *mMap;
         
         int *mMapBiomes;
+        int *mMapFloors;
 
         char *mMapCellDrawnFlags;
 
@@ -364,6 +365,9 @@ class LivingLifePage : public GamePage {
         
         int *mMapAnimationFrozenRotFrameCount;
         
+
+        int *mMapFloorAnimationFrameCount;
+
 
         // all tiles on ground work their way toward animation type of
         // "ground" but may have a lingering types after being dropped

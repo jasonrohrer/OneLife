@@ -121,6 +121,13 @@ static KISSDB biomeDB;
 static char biomeDBOpen = false;
 
 
+static KISSDB floorDB;
+static char floorDBOpen = false;
+
+static KISSDB floorTimeDB;
+static char floorTimeDBOpen = false;
+
+
 // per-player memory of where they should spawn as eve
 static KISSDB eveDB;
 static char eveDBOpen = false;
@@ -1033,8 +1040,8 @@ void initMap() {
                              // b is for indexing sub-container slots
                              // b=0 is the main object 
                              // b=1 is the first sub-slot, etc.
-                             4 // one int, object ID at x,y in slot s
-                               // OR contained count if s=1
+                             4 // one int, object ID at x,y in slot (s-3)
+                               // OR contained count if s=2
                              );
     
     if( error ) {
@@ -1105,6 +1112,46 @@ void initMap() {
         }
     
     biomeDBOpen = true;
+
+
+
+
+
+    error = KISSDB_open( &floorDB, 
+                         "floor.db", 
+                         KISSDB_OPEN_MODE_RWCREAT,
+                         80000,
+                         8, // two 32-bit ints, xy
+                         4 // one int, the floor object ID at x,y 
+                         );
+    
+    if( error ) {
+        AppLog::errorF( "Error %d opening floor KissDB", error );
+        return;
+        }
+    
+    floorDBOpen = true;
+
+
+
+    error = KISSDB_open( &floorTimeDB, 
+                         "floorTime.db", 
+                         KISSDB_OPEN_MODE_RWCREAT,
+                         80000,
+                         8, // two 32-bit ints, xy
+                         8 // one 64-bit double, representing an ETA time
+                           // in whatever binary format and byte order
+                           // "double" on the server platform uses
+                         );
+    
+    if( error ) {
+        AppLog::errorF( "Error %d opening floor time KissDB", error );
+        return;
+        }
+    
+    floorTimeDBOpen = true;
+
+
 
 
 
@@ -1419,7 +1466,8 @@ void initMap() {
                 testMapStaleFile = NULL;
                 }
             
-
+            printf( "Loading testMap.txt\n" );
+            
             // break out when read fails
             while( true ) {
                 TestMapRecord r;
@@ -1661,6 +1709,16 @@ void freeMap() {
         KISSDB_close( &biomeDB );
         }
 
+
+    if( floorDBOpen ) {
+        KISSDB_close( &floorDB );
+        }
+
+    if( floorTimeDBOpen ) {
+        KISSDB_close( &floorTimeDB );
+        }
+
+
     if( eveDBOpen ) {
         KISSDB_close( &eveDB );
         }
@@ -1723,6 +1781,48 @@ static timeSec_t dbTimeGet( int inX, int inY, int inSlot, int inSubCont = 0 ) {
 
 
 
+static int dbFloorGet( int inX, int inY ) {
+    unsigned char key[9];
+    unsigned char value[4];
+
+    // look for changes to default in database
+    intPairToKey( inX, inY, key );
+    
+    int result = KISSDB_get( &floorDB, key, value );
+    
+    if( result == 0 ) {
+        // found
+        return valueToInt( value );
+        }
+    else {
+        return -1;
+        }
+    }
+
+
+
+// returns 0 if not found
+static timeSec_t dbFloorTimeGet( int inX, int inY ) {
+    unsigned char key[8];
+    unsigned char value[8];
+
+    intPairToKey( inX, inY, key );
+    
+    int result = KISSDB_get( &floorTimeDB, key, value );
+    
+    if( result == 0 ) {
+        // found
+        return valueToTime( value );
+        }
+    else {
+        return 0;
+        }
+    }
+
+
+
+
+
 static void dbPut( int inX, int inY, int inSlot, int inValue, 
                    int inSubCont = 0 ) {
     
@@ -1779,6 +1879,59 @@ static void dbTimePut( int inX, int inY, int inSlot, timeSec_t inTime,
             
     
     KISSDB_put( &timeDB, key, value );
+    }
+
+
+
+
+static void dbFloorPut( int inX, int inY, int inValue ) {
+    
+    char found = false;
+    for( int i=0; i<mapChangePosSinceLastStep.size(); i++ ) {
+        
+        ChangePosition *p = mapChangePosSinceLastStep.getElement( i );
+        
+        if( p->x == inX && p->y == inY ) {
+            found = true;
+            
+            // update it
+            p->responsiblePlayerID = currentResponsiblePlayer;
+            break;
+            }
+        }
+        
+    if( ! found ) {
+        ChangePosition p = { inX, inY, false, currentResponsiblePlayer,
+                             0, 0, 0.0 };
+        mapChangePosSinceLastStep.push_back( p );
+        }
+    
+    
+    unsigned char key[8];
+    unsigned char value[4];
+    
+
+    intPairToKey( inX, inY, key );
+    intToValue( inValue, value );
+            
+    
+    KISSDB_put( &floorDB, key, value );
+    }
+
+
+
+static void dbFloorTimePut( int inX, int inY, timeSec_t inTime ) {
+    // ETA decay changes don't get reported as map changes    
+    
+    unsigned char key[8];
+    unsigned char value[8];
+    
+
+    intPairToKey( inX, inY, key );
+    timeToValue( inTime, value );
+            
+    
+    KISSDB_put( &floorTimeDB, key, value );
     }
 
 
@@ -2844,6 +2997,7 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
     int *chunk = new int[chunkCells];
 
     int *chunkBiomes = new int[chunkCells];
+    int *chunkFloors = new int[chunkCells];
     
     int *containedStackSizes = new int[ chunkCells ];
     int **containedStacks = new int*[ chunkCells ];
@@ -2888,6 +3042,8 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
                 lastCheckedBiome = biomes[getMapBiomeIndex( x, y )];
                 }
             chunkBiomes[ cI ] = lastCheckedBiome;
+
+            chunkFloors[cI] = getMapFloor( x, y );
             
 
             int numContained;
@@ -2940,7 +3096,8 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
             }
         
 
-        char *cell = autoSprintf( "%d:%d", chunkBiomes[i], chunk[i] );
+        char *cell = autoSprintf( "%d:%d:%d", chunkBiomes[i],
+                                  chunkFloors[i], chunk[i] );
         
         chunkDataBuffer.appendArray( (unsigned char*)cell, strlen(cell) );
         delete [] cell;
@@ -2980,6 +3137,7 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
     
     delete [] chunk;
     delete [] chunkBiomes;
+    delete [] chunkFloors;
 
     delete [] containedStackSizes;
     delete [] containedStacks;
@@ -3424,7 +3582,8 @@ char *getMapChangeLineString( ChangePosition inPos ) {
     SimpleVector<char> buffer;
     
 
-    char *header = autoSprintf( "%d %d ", inPos.x, inPos.y );
+    char *header = autoSprintf( "%d %d %d ", inPos.x, inPos.y,
+                                getMapFloor( inPos.x, inPos.y ) );
     
     buffer.appendElementString( header );
     
@@ -3503,6 +3662,84 @@ char *getMapChangeLineString( ChangePosition inPos ) {
 
     return buffer.getElementString();
     }
+
+
+
+
+
+int getMapFloor( int inX, int inY ) {
+    int id = dbFloorGet( inX, inY );
+    
+    if( id <= 0 ) {
+        return 0;
+        }
+    
+    TransRecord *t = getTrans( -1, id );
+
+    if( t == NULL ) {
+        // no auto-decay for this floor
+        return id;
+        }
+
+    timeSec_t etaTime = getFloorEtaDecay( inX, inY );
+    
+    timeSec_t curTime = Time::timeSec();
+    
+
+    if( etaTime == 0 ) {
+        // not set
+        // start decay now for future
+
+        setFloorEtaDecay( inX, inY, curTime + t->autoDecaySeconds );
+        
+        return id;
+        }
+    
+        
+    if( etaTime > curTime ) {
+        return id;
+        }
+    
+    // else eta expired, apply decay
+    
+    int newID = t->newTarget;
+    
+    setMapFloor( inX, inY, newID );
+
+    return newID;
+    }
+
+
+
+void setMapFloor( int inX, int inY, int inID ) {
+    dbFloorPut( inX, inY, inID );
+
+
+    // further decay from here
+    TransRecord *newT = getTrans( -1, inID );
+
+    timeSec_t newEta = 0;
+
+    if( newT != NULL ) {
+        timeSec_t curTime = Time::timeSec();
+        newEta = curTime + newT->autoDecaySeconds;
+        }
+
+    setFloorEtaDecay( inX, inY, newEta );
+    }
+
+
+
+void setFloorEtaDecay( int inX, int inY, timeSec_t inAbsoluteTimeInSeconds ) {
+    dbFloorTimePut( inX, inY, inAbsoluteTimeInSeconds );
+    }
+
+
+timeSec_t getFloorEtaDecay( int inX, int inY ) {
+    return dbFloorTimeGet( inX, inY );
+    }
+
+
 
 
 

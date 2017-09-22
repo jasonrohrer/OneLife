@@ -1021,12 +1021,16 @@ void LivingLifePage::clearMap() {
         // 0 represents known empty
         mMap[i] = -1;
         mMapBiomes[i] = -1;
+        mMapFloors[i] = -1;
         
         mMapAnimationFrameCount[i] = randSource.getRandomBoundedInt( 0, 10000 );
         mMapAnimationLastFrameCount[i] = 
             randSource.getRandomBoundedInt( 0, 10000 );
         
         mMapAnimationFrozenRotFrameCount[i] = 0;
+
+        mMapFloorAnimationFrameCount[i] = 
+            randSource.getRandomBoundedInt( 0, 10000 );
 
         mMapCurAnimType[i] = ground;
         mMapLastAnimType[i] = ground;
@@ -1182,6 +1186,7 @@ LivingLifePage::LivingLifePage()
 
     mMap = new int[ mMapD * mMapD ];
     mMapBiomes = new int[ mMapD * mMapD ];
+    mMapFloors = new int[ mMapD * mMapD ];
     
     mMapCellDrawnFlags = new char[ mMapD * mMapD ];
 
@@ -1193,6 +1198,8 @@ LivingLifePage::LivingLifePage()
     mMapAnimationLastFrameCount =  new int[ mMapD * mMapD ];
     mMapAnimationFrozenRotFrameCount =  new int[ mMapD * mMapD ];
     
+    mMapFloorAnimationFrameCount =  new int[ mMapD * mMapD ];
+
     mMapCurAnimType =  new AnimType[ mMapD * mMapD ];
     mMapLastAnimType =  new AnimType[ mMapD * mMapD ];
     mMapLastAnimFade =  new double[ mMapD * mMapD ];
@@ -1313,6 +1320,8 @@ LivingLifePage::~LivingLifePage() {
     delete [] mMapAnimationLastFrameCount;
     delete [] mMapAnimationFrozenRotFrameCount;
 
+    delete [] mMapFloorAnimationFrameCount;
+
     delete [] mMapCurAnimType;
     delete [] mMapLastAnimType;
     delete [] mMapLastAnimFade;
@@ -1331,6 +1340,7 @@ LivingLifePage::~LivingLifePage() {
     
     delete [] mMap;
     delete [] mMapBiomes;
+    delete [] mMapFloors;
 
     delete [] mMapCellDrawnFlags;
 
@@ -1418,6 +1428,11 @@ void LivingLifePage::adjustAllFrameCounts( double inOldFrameRateFactor,
 
         timeVal = inOldFrameRateFactor * mMapAnimationLastFrameCount[ i ];
         mMapAnimationLastFrameCount[i] = 
+            lrint( timeVal / inNewFrameRateFactor );
+        
+        timeVal = 
+            inOldFrameRateFactor * mMapFloorAnimationFrameCount[ i ];
+        mMapFloorAnimationFrameCount[i] = 
             lrint( timeVal / inNewFrameRateFactor );
         }
 
@@ -3064,7 +3079,67 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
 
-    // draw overlay evenly over all biomes
+
+    // draw floors on top of biome
+    for( int y=yEnd; y>=yStart; y-- ) {
+        
+        int worldY = y + mMapOffsetY - mMapD / 2;
+
+        int screenY = CELL_D * worldY;
+        
+
+        // draw marked objects behind everything else, including players
+        
+        for( int x=xStart; x<=xEnd; x++ ) {
+            
+            int worldX = x + mMapOffsetX - mMapD / 2;
+
+
+            int mapI = y * mMapD + x;
+
+            int oID = mMapFloors[mapI];
+            if( oID <= 0) {
+                continue;
+                }
+
+            int screenX = CELL_D * worldX;
+            
+            doublePair pos = { (double)screenX, (double)screenY };
+            
+            if( !mapPullMode ) {
+                int oldFrameCount = mMapFloorAnimationFrameCount[ mapI ];
+                mMapFloorAnimationFrameCount[ mapI ] ++;
+                
+                handleAnimSound( oID, 0, ground, oldFrameCount, 
+                                 mMapFloorAnimationFrameCount[ mapI ],
+                                 (double)screenX / CELL_D,
+                                 (double)screenY / CELL_D );
+                }
+            
+            double timeVal = frameRateFactor * 
+                mMapFloorAnimationFrameCount[ mapI ] / 60.0;
+
+            char used;
+            drawObjectAnim( oID, 2, 
+                            ground, timeVal,
+                            0,
+                            ground, 
+                            timeVal,
+                            timeVal,
+                            &used,
+                            ground,
+                            ground,
+                            pos, 0,
+                            false,
+                            false, -1,
+                            false, false, false,
+                            getEmptyClothingSet(), NULL );
+            }
+        }
+    
+
+
+    // draw overlay evenly over all floors and biomes
     doublePair groundCenterPos;
 
     int groundWTile = getSpriteWidth( mGroundOverlaySprite[0] );
@@ -5634,12 +5709,15 @@ void LivingLifePage::step() {
             
             int *newMap = new int[ mMapD * mMapD ];
             int *newMapBiomes = new int[ mMapD * mMapD ];
+            int *newMapFloors = new int[ mMapD * mMapD ];
             
 
             int *newMapAnimationFrameCount = new int[ mMapD * mMapD ];
             int *newMapAnimationLastFrameCount = new int[ mMapD * mMapD ];
 
             int *newMapAnimationFrozenRotFameCount = new int[ mMapD * mMapD ];
+
+            int *newMapFloorAnimationFrameCount = new int[ mMapD * mMapD ];
         
             AnimType *newMapCurAnimType = new AnimType[ mMapD * mMapD ];
             AnimType *newMapLastAnimType = new AnimType[ mMapD * mMapD ];
@@ -5668,6 +5746,7 @@ void LivingLifePage::step() {
                 // starts uknown, not empty
                 newMap[i] = -1;
                 newMapBiomes[i] = -1;
+                newMapFloors[i] = -1;
 
                 int newX = i % mMapD;
                 int newY = i / mMapD;
@@ -5682,6 +5761,10 @@ void LivingLifePage::step() {
                     newMapAnimationFrameCount[i];
                 
                 newMapAnimationFrozenRotFameCount[i] = 0;
+                
+                newMapFloorAnimationFrameCount[i] =
+                    lrint( getXYRandom( worldX, worldY ) * 13853 );
+                
                 
 
                 newMapCurAnimType[i] = ground;
@@ -5713,6 +5796,7 @@ void LivingLifePage::step() {
 
                     newMap[i] = mMap[oI];
                     newMapBiomes[i] = mMapBiomes[oI];
+                    newMapFloors[i] = mMapFloors[oI];
 
                     newMapAnimationFrameCount[i] = mMapAnimationFrameCount[oI];
                     newMapAnimationLastFrameCount[i] = 
@@ -5721,6 +5805,9 @@ void LivingLifePage::step() {
                     newMapAnimationFrozenRotFameCount[i] = 
                         mMapAnimationFrozenRotFrameCount[oI];
 
+                    newMapFloorAnimationFrameCount[i] = 
+                        mMapFloorAnimationFrameCount[oI];
+                    
                     newMapCurAnimType[i] = mMapCurAnimType[oI];
                     newMapLastAnimFade[i] = mMapLastAnimFade[oI];
                     newMapLastAnimFade[i] = mMapLastAnimFade[oI];
@@ -5744,6 +5831,7 @@ void LivingLifePage::step() {
             
             memcpy( mMap, newMap, mMapD * mMapD * sizeof( int ) );
             memcpy( mMapBiomes, newMapBiomes, mMapD * mMapD * sizeof( int ) );
+            memcpy( mMapFloors, newMapFloors, mMapD * mMapD * sizeof( int ) );
 
             memcpy( mMapAnimationFrameCount, newMapAnimationFrameCount, 
                     mMapD * mMapD * sizeof( int ) );
@@ -5754,6 +5842,12 @@ void LivingLifePage::step() {
             memcpy( mMapAnimationFrozenRotFrameCount, 
                     newMapAnimationFrozenRotFameCount, 
                     mMapD * mMapD * sizeof( int ) );
+
+            
+            memcpy( mMapFloorAnimationFrameCount, 
+                    newMapFloorAnimationFrameCount, 
+                    mMapD * mMapD * sizeof( int ) );
+
             
             memcpy( mMapCurAnimType, newMapCurAnimType, 
                     mMapD * mMapD * sizeof( AnimType ) );
@@ -5790,9 +5884,12 @@ void LivingLifePage::step() {
             
             delete [] newMap;
             delete [] newMapBiomes;
+            delete [] newMapFloors;
             delete [] newMapAnimationFrameCount;
             delete [] newMapAnimationLastFrameCount;
             delete [] newMapAnimationFrozenRotFameCount;
+            delete [] newMapFloorAnimationFrameCount;
+            
             delete [] newMapCurAnimType;
             delete [] newMapLastAnimType;
             delete [] newMapLastAnimFade;
@@ -5876,8 +5973,9 @@ void LivingLifePage::step() {
                             int oldMapID = mMap[mapI];
                             
                             sscanf( tokens->getElementDirect(i),
-                                    "%d:%d", 
+                                    "%d:%d:%d", 
                                     &( mMapBiomes[mapI] ),
+                                    &( mMapFloors[mapI] ),
                                     &( mMap[mapI] ) );
                             
                             if( mMap[mapI] != oldMapID ) {
@@ -5985,16 +6083,17 @@ void LivingLifePage::step() {
             
             for( int i=1; i<numLines; i++ ) {
                 
-                int x, y, responsiblePlayerID;
+                int x, y, floorID, responsiblePlayerID;
                 int oldX, oldY;
                 float speed = 0;
                                 
                 char *idBuffer = new char[500];
 
-                int numRead = sscanf( lines[i], "%d %d %499s %d %d %d %f",
-                                      &x, &y, idBuffer, &responsiblePlayerID,
+                int numRead = sscanf( lines[i], "%d %d %d %499s %d %d %d %f",
+                                      &x, &y, &floorID, 
+                                      idBuffer, &responsiblePlayerID,
                                       &oldX, &oldY, &speed );
-                if( numRead == 4 || numRead == 7) {
+                if( numRead == 5 || numRead == 8) {
 
                     applyReceiveOffset( &x, &y );
 
@@ -6006,6 +6105,9 @@ void LivingLifePage::step() {
                         mapY >= 0 && mapY < mMapD ) {
                         
                         int mapI = mapY * mMapD + mapX;
+                        
+                        mMapFloors[ mapI ] = floorID;
+                        
 
                         int old = mMap[mapI];
 
@@ -9637,6 +9739,10 @@ void LivingLifePage::step() {
             int numMapCells = mMapD * mMapD;
             
             for( int i=0; i<numMapCells; i++ ) {
+                if( mMapFloors[i] > 0 ) {
+                    addBaseObjectToLiveObjectSet( mMapFloors[i] );
+                    }
+                
                 if( mMap[i] > 0 ) {
                     
                     addBaseObjectToLiveObjectSet( mMap[i] );
