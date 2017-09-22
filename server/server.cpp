@@ -4893,7 +4893,10 @@ int main() {
                                                 ! isMapSpotEmpty( m.x, m.y ) ) {
                                                 canPlace = false;
                                                 }
+                                            
                                             if( canPlace ) {
+                                                setMapFloor( m.x, m.y, 0 );
+                                                
                                                 setMapObject( m.x, m.y,
                                                               resultID );
                                                 

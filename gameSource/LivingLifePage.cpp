@@ -10474,7 +10474,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     int clickDestY = p.closestCellY;
 
     int destID = 0;
-        
+    int floorDestID = 0;
+    
     int destNumContained = 0;
     
     int mapX = clickDestX - mMapOffsetX + mMapD / 2;
@@ -10549,6 +10550,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         mapX >= 0 && mapX < mMapD ) {
         
         destID = mMap[ mapY * mMapD + mapX ];
+        floorDestID = mMapFloors[ mapY * mMapD + mapX ];
         
         destNumContained = mMapContainedStacks[ mapY * mMapD + mapX ].size();
         }
@@ -11128,7 +11130,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     }
                 else {
                     // check for other special case
-                    // a use-on-ground transition
+                    // a use-on-ground transition or use-on-floor transition
 
                     if( ourLiveObject->holdingID > 0 ) {
                         
@@ -11148,6 +11150,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                                 
                                 // override the drop action
                                 action = "USE";
+                                }
+                            else if( floorDestID > 0 ) {
+                                // check if use on floor exists
+                                r = 
+                                    getTrans( ourLiveObject->holdingID,
+                                              floorDestID );
+                                
+                                if( r != NULL ) {
+                                    // a use-on-floor transition exists!
+                                
+                                    // override the drop action
+                                    action = "USE";
+                                    
+                                    }
                                 }
                             }
                         }
