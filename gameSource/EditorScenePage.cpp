@@ -265,6 +265,7 @@ EditorScenePage::EditorScenePage()
 
     addKeyClassDescription( &mKeyLegendC, "R-Click", "Add to Container" );
     addKeyClassDescription( &mKeyLegendP, "R-Click", "Add Clothing/Held" );
+    addKeyClassDescription( &mKeyLegendF, "R-Click", "Add Floor" );
     }
 
 
@@ -371,7 +372,7 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
                     placed = true;
                     }
                 }
-            if( !placed && wasRightClick && p->oID <= 0 ) {
+            if( !placed && wasRightClick && p->oID <= 0 && o->floor ) {
                 // place floor
                 f->oID = id;
                 placed = true;
@@ -1402,6 +1403,9 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
         }
     else if( p->oID > 0 ) {
         drawKeyLegend( &mKeyLegendP, legendPos, alignCenter );
+        }
+    else {
+        drawKeyLegend( &mKeyLegendF, legendPos, alignCenter );
         }
     }
 

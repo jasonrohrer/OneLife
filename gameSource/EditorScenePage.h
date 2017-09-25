@@ -167,7 +167,8 @@ class EditorScenePage : public GamePage, public ActionListener {
         int mNextSceneNumber;
         
 
-        KeyLegend mKeyLegend, mKeyLegendG, mKeyLegendC, mKeyLegendP;
+        KeyLegend mKeyLegend, mKeyLegendG, mKeyLegendC, mKeyLegendP, 
+            mKeyLegendF;
 
 
         void floodFill( int inX, int inY, int inOldBiome, int inNewBiome );
