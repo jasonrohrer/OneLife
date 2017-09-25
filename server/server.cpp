@@ -6860,7 +6860,9 @@ int main() {
             if( nextPlayer->heat > 1 ) {
                 nextPlayer->heat = 1;
                 }
-            
+            if( nextPlayer->heat < 0 ) {
+                nextPlayer->heat = 0;
+                }
 
             
             char *updateLine = getUpdateLine( nextPlayer, false );

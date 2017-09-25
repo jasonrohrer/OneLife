@@ -4475,7 +4475,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
                 
         
-        doublePair pos = { lastScreenViewCenter.x + 542, 
+        doublePair pos = { lastScreenViewCenter.x + 546, 
                            lastScreenViewCenter.y - 319 };
 
         if( mCurrentArrowHeat != -1 ) {

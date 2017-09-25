@@ -64,7 +64,7 @@ EditorObjectPage::EditorObjectPage()
           mHeatValueField( smallFont, 
                            -250,  32, 4,
                            false,
-                           "Heat", "0123456789", NULL ),
+                           "Heat", "-0123456789", NULL ),
           mRValueField( smallFont, 
                         -250,  0, 4,
                         false,
