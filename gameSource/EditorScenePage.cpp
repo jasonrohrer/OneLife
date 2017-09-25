@@ -454,19 +454,24 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
             for( int y=0; y<mSceneH; y++ ) {
                 for( int x=0; x<mSceneW; x++ ) {
                     SceneCell *c = &( mCells[y][x] );
-                    
+
                     int oID = c->oID;
+                    int floorID = mFloorCells[y][x].oID;
                     
-                    if( oID == -1 && c->biome == -1 ) {
+                    if( oID == -1 && c->biome == -1 && floorID == -1 ) {
                         continue;
                         }
                     
                     if( oID == -1 ) {
                         oID = 0;
                         }
+
+                    if( floorID == -1 ) {
+                        floorID = 0;
+                        }
                     
-                    fprintf( f, "%d %d %d %d", x - mCurX, -( y - mCurY ), 
-                             c->biome, oID );
+                    fprintf( f, "%d %d %d %d %d", x - mCurX, -( y - mCurY ), 
+                             c->biome, floorID, oID );
 
                     for( int i=0; i< c->contained.size(); i++ ) {
                         fprintf( f, ",%d",

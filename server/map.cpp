@@ -228,6 +228,7 @@ static char useTestMap = false;
 typedef struct TestMapRecord {
         int x, y;
         int biome;
+        int floor;
         int id;
         SimpleVector<int> contained;
         SimpleVector< SimpleVector<int> > subContained;
@@ -440,6 +441,10 @@ static void eveDBPut( char *inEmail, int inX, int inY, int inRadius ) {
     
     KISSDB_put( &eveDB, key, value );
     }
+
+
+
+static void dbFloorPut( int inX, int inY, int inValue );
 
 
 
@@ -1474,11 +1479,12 @@ void initMap() {
                 
                 char stringBuff[1000];
                 
-                int numRead = fscanf( testMapFile, "%d %d %d %999s", 
+                int numRead = fscanf( testMapFile, "%d %d %d %d %999s", 
                                       &(r.x), &(r.y), &(r.biome),
+                                      &(r.floor),
                                       stringBuff );
                 
-                if( numRead != 4 ) {
+                if( numRead != 5 ) {
                     break;
                     }
                 
@@ -1528,6 +1534,8 @@ void initMap() {
                 // set all test map directly in database
                 biomeDBPut( r.x, r.y, r.biome, r.biome, 0.5 );
                 
+                dbFloorPut( r.x, r.y, r.floor );
+
                 setMapObject( r.x, r.y, r.id );
                 
                 int *contArray = r.contained.getElementArray();
