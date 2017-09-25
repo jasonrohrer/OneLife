@@ -20,10 +20,15 @@
 
 
 static int mapSize;
-// maps IDs to records
+// maps IDs and AnimTyps to anim records
 // sparse, so some entries are NULL
 static AnimationRecord * **idMap;
 
+
+// maps IDs to arbitrary number of extra animation records 
+// non-sparse
+// entries here that correspond to NULL entries above are just empty vectors
+static SimpleVector<AnimationRecord*> *idExtraMap;
 
 
 static ClothingSet emptyClothing = getEmptyClothingSet();
@@ -40,8 +45,9 @@ static int maxID;
 
 
 
-static const char *animTypeNames[7] = { "ground", "held", "moving", "ground2",
-                                        "eating", "doing", "endAnimType" };
+static const char *animTypeNames[9] = { "ground", "held", "moving", "ground2",
+                                        "eating", "doing", "endAnimType",
+                                        "extraA", "extraB" };
 
 
 const char *typeToName( AnimType inAnimType ) {
@@ -196,11 +202,22 @@ float initAnimationBankStep() {
 
                             
                 int typeRead = 0;
+                int extraIndexRead = -1;
                 int randomStartPhaseRead = 0;
                 
-                sscanf( lines[next], "type=%d,randStartPhase=%d", 
-                        &( typeRead ), &randomStartPhaseRead );
+                if( strchr( lines[next], ':' ) != NULL ) {
+
+                    sscanf( lines[next], "type=%d:%d,randStartPhase=%d", 
+                            &( typeRead ), &extraIndexRead, 
+                            &randomStartPhaseRead );
+                    }
+                else {
+                    sscanf( lines[next], "type=%d,randStartPhase=%d", 
+                            &( typeRead ), &randomStartPhaseRead );
+                    }
+                
                 r->type = (AnimType)typeRead;
+                r->extraIndex = extraIndexRead;
                 r->randomStartPhase = randomStartPhaseRead;
                 next++;
                 
@@ -346,6 +363,8 @@ void initAnimationBankFinish() {
     
     idMap = new AnimationRecord**[ mapSize ];
     
+    idExtraMap = new SimpleVector<AnimationRecord*>[ mapSize ];
+
     for( int i=0; i<mapSize; i++ ) {
         idMap[i] = new AnimationRecord*[ endAnimType ];
         for( int j=0; j<endAnimType; j++ ) {    
@@ -358,7 +377,12 @@ void initAnimationBankFinish() {
     for( int i=0; i<numRecords; i++ ) {
         AnimationRecord *r = records.getElementDirect(i);
         
-        idMap[ r->objectID ][ r->type ] = r;
+        if( r->type < endAnimType ) {
+            idMap[ r->objectID ][ r->type ] = r;
+            }
+        else {
+            idExtraMap[ r->objectID ].push_back( r );
+            }
         }
 
     printf( "Loaded %d animations from animations folder\n", numRecords );
@@ -412,9 +436,29 @@ void freeAnimationBank() {
                 }
             }
         delete [] idMap[i];
+
+        for( int j=0; j<idExtraMap[i].size(); j++ ) {
+            delete [] idExtraMap[i].getElementDirect( j );
+            }
         }
 
     delete [] idMap;
+    delete [] idExtraMap;
+    }
+
+
+
+static int extraIndexA = 0;
+static int extraIndexB = 0;
+
+
+void setExtraIndexA( int inIndex ) {
+    extraIndexA = inIndex;
+    }
+
+
+void setExtraIndexB( int inIndex ) {
+    extraIndexB = inIndex;
     }
 
 
@@ -429,8 +473,16 @@ static File *getFile( int inID, AnimType inType ) {
     
     if( animationsDir.exists() && animationsDir.isDirectory() ) {
         
-        char *fileName = autoSprintf( "%d_%d.txt", inID, inType );
-
+        char *fileName;
+        
+        if( inType >= endAnimType ) {
+            fileName = autoSprintf( "%d_%d_%d.txt", 
+                                    inID, endAnimType, extraIndexA );
+            }
+        else {
+            fileName = autoSprintf( "%d_%d.txt", inID, inType );
+            }
+        
 
         File *animationFile = animationsDir.getChildFile( fileName );
 
@@ -445,9 +497,26 @@ static File *getFile( int inID, AnimType inType ) {
 
 
 AnimationRecord *getAnimation( int inID, AnimType inType ) {
-    if( inID < mapSize && inType < endAnimType && inType != ground2 ) {
-        return idMap[inID][inType];
+    if( inID < mapSize ) {
+        if( inType < endAnimType && inType != ground2 ) {
+            return idMap[inID][inType];
+            }
+        else if( inType >= endAnimType ) {
+            
+            int numExtra = idExtraMap[inID].size();
+            
+            int extraIndex = extraIndexA;
+            
+            if( inType == extraB ) {
+                extraIndex = extraIndexB;
+                }
+
+            if( extraIndex < numExtra ) {
+                return idExtraMap[inID].getElementDirect( extraIndex );
+                }
+            }
         }
+    
     return NULL;
     }
 
@@ -495,14 +564,44 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
             }
 
         idMap = newMap;
+
+        SimpleVector<AnimationRecord*> *newExtraMap = 
+            new SimpleVector<AnimationRecord*>[ newMapSize ];
+        
+        // can't memcpy, because we need copy constructors to be called
+        // because destructors are called when we delete idMap
+        for( int i=0; i<mapSize; i++ ) {
+            newExtraMap[i] = idExtraMap[i];
+            }
+        
+        delete [] idExtraMap;
+        
+        idExtraMap = newExtraMap;
+        
+
         mapSize = newMapSize;
         }
 
     
     // copy to add it to memory bank    
     
+    if( inRecord->type < endAnimType ) {
+        idMap[newID][inRecord->type] = copyRecord( inRecord );
+        }
+    else {
+        // extra
 
-    idMap[newID][inRecord->type] = copyRecord( inRecord );
+        // remove existing with same extra index
+        for( int i=0; i<idExtraMap[newID].size(); i++ ) {
+            if( idExtraMap[newID].getElementDirect( i )->extraIndex ==
+                extraIndexA ) {
+                idExtraMap[newID].deleteElement( i );
+                break;
+                }
+            }
+        
+        idExtraMap[newID].push_back( copyRecord( inRecord ) );
+        }
     
     
     if( ! inNoWriteToFile ) {
@@ -637,9 +736,21 @@ void clearAnimation( int inObjectID, AnimType inType ) {
         delete [] r->slotAnim;
         
         delete r;
-        
-        idMap[inObjectID][inType] = NULL;
 
+        if( inType < endAnimType ) {    
+            idMap[inObjectID][inType] = NULL;
+            }
+        else {
+            // extra
+            for( int i=0; i<idExtraMap[inObjectID].size(); i++ ) {
+                if( idExtraMap[inObjectID].getElementDirect( i )->extraIndex ==
+                    extraIndexA ) {
+                    idExtraMap[inObjectID].deleteElement( i );
+                    break;
+                    }
+                }
+            }
+        
         File animationsDir( NULL, "animations" );
             
 
@@ -2774,6 +2885,21 @@ char isSoundUsedByAnim( int inSoundID ) {
     for( int i=0; i<mapSize; i++ ) {
         for( int j=0; j<endAnimType; j++ ) {
             AnimationRecord *r = idMap[i][j];
+            
+            if( r != NULL ) {
+                
+                if( r->numSounds > 0 ) {
+                    
+                    for( int k=0; k < r->numSounds; k++ ) {
+                        if( r->soundAnim[k].sound.id == inSoundID ) {
+                            return true;
+                            }
+                        }
+                    }
+                }
+            }
+        for( int j=0; j<idExtraMap[i].size(); j++ ) {
+            AnimationRecord *r = idExtraMap[i].getElementDirect(j);
             
             if( r != NULL ) {
                 

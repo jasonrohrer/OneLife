@@ -25,7 +25,12 @@ typedef enum AnimType {
     // animation that only applies to a person as they eat something
     eating,
     doing,
-    endAnimType
+    endAnimType,
+    // arbitrary number of extra animation slots
+    // indexed by calling setExtraIndexA or setExtraIndexB before calling
+    // other animation calls
+    extraA,
+    extraB
     } AnimType;
 
 
@@ -102,6 +107,9 @@ typedef struct AnimationRecord {
         
         AnimType type;
         
+        // for extra anim types
+        int extraIndex;
+        
         // true if start of animation should be randomized in time
         // (animation can start from anywhere along its timeline and
         //  loop from there)
@@ -146,6 +154,12 @@ void initAnimationBankFinish();
 
 void freeAnimationBank();
 
+
+// set index for subsequent animation calls with type = extraA
+// most calls only pay attention to extraA, but draw calls can use
+// both for blending between two
+void setExtraIndexA( int inIndex );
+void setExtraIndexB( int inIndex );
 
 
 // return value not destroyed by caller
