@@ -1063,6 +1063,7 @@ LivingLifePage::LivingLifePage()
           mEKeyDown( false ),
           mGuiPanelSprite( loadSprite( "guiPanel.tga", false ) ),
           mNotePaperSprite( loadSprite( "notePaper.tga", false ) ),
+          mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
@@ -1358,6 +1359,7 @@ LivingLifePage::~LivingLifePage() {
 
     freeSprite( mGuiPanelSprite );
     
+    freeSprite( mFloorSplitSprite );
     freeSprite( mNotePaperSprite );
     freeSprite( mChalkBlotSprite );
     freeSprite( mPathMarkSprite );
@@ -3209,7 +3211,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 if( p > 0 ) {
                     stopStencil();
                     }
-                }                
+                }
+            
+            if( passIDs[1] != passIDs[2] ) {
+                setDrawColor( 1, 1, 1, 1 );
+                pos.y += 10;
+                drawSprite( mFloorSplitSprite, pos );
+                }
             }
         }
     

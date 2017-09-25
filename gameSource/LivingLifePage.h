@@ -434,6 +434,8 @@ class LivingLifePage : public GamePage {
 
         SpriteHandle mNotePaperSprite;
 
+        SpriteHandle mFloorSplitSprite;
+
         // offset from current view center
         doublePair mNotePaperHideOffset;
         doublePair mNotePaperPosOffset;
