@@ -111,6 +111,10 @@ typedef struct ObjectRecord {
         // and can have other objects in the same cell
         char floor;
         
+        // for vertical walls, neighboring floors auto-extended to meet
+        // them
+        char floorHugging;
+        
         
         int foodValue;
         
@@ -364,6 +368,7 @@ int addObject( const char *inDescription,
                int inRace,
                char inDeathMarker,
                char inFloor,
+               char inFloorHugging,
                int inFoodValue,
                float inSpeedMult,
                doublePair inHeldOffset,

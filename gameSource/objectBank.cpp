@@ -484,6 +484,20 @@ float initObjectBankStep() {
                     next++;
                     }
 
+
+                r->floorHugging = false;
+                
+                if( strstr( lines[next], "floorHugging=" ) != NULL ) {
+                    // floorHugging flag present
+                    
+                    int hugRead = 0;
+                    sscanf( lines[next], "floorHugging=%d", &( hugRead ) );
+                    
+                    r->floorHugging = hugRead;
+                    
+                    next++;
+                    }
+
                             
                 sscanf( lines[next], "foodValue=%d", 
                         &( r->foodValue ) );
@@ -1271,6 +1285,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->race,
                         inObject->deathMarker,
                         inObject->floor,
+                        inObject->floorHugging,
                         inObject->foodValue,
                         inObject->speedMult,
                         inObject->heldOffset,
@@ -1490,6 +1505,7 @@ int addObject( const char *inDescription,
                int inRace,
                char inDeathMarker,
                char inFloor,
+               char inFloorHugging,
                int inFoodValue,
                float inSpeedMult,
                doublePair inHeldOffset,
@@ -1625,6 +1641,8 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "deathMarker=%d", (int)inDeathMarker ) );
         
         lines.push_back( autoSprintf( "floor=%d", (int)inFloor ) );
+        lines.push_back( autoSprintf( "floorHugging=%d", 
+                                      (int)inFloorHugging ) );
 
         lines.push_back( autoSprintf( "foodValue=%d", inFoodValue ) );
         
@@ -1868,6 +1886,7 @@ int addObject( const char *inDescription,
     r->male = inMale;
     r->deathMarker = inDeathMarker;
     r->floor = inFloor;
+    r->floorHugging = inFloorHugging;
     r->foodValue = inFoodValue;
     r->speedMult = inSpeedMult;
     r->heldOffset = inHeldOffset;
