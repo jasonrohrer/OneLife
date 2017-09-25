@@ -60,6 +60,11 @@ Version 33     ???
 --Fixed case where continous walking mode cancelled after mousing over a clump 
   of blocking objects.
 
+--Fixed so that held object can produce heat.  Contained and sub-contained
+  objects now can produce heat as well, shielded by the r-value of their
+  container.  Items contained in clothing can produce heat, shielded by
+  clothing r-value.
+
 
 
 

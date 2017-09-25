@@ -6683,6 +6683,55 @@ int main() {
                             // contribute to r-value (like dropped clothing)
                             rGrid[j] = o->rValue;
                             }
+
+
+                        if( o->numSlots > 0 ) {
+                            // contained can produce heat shielded by container
+                            // r value
+                            double oRFactor = 1 - o->rValue;
+                            
+                            int numCont;
+                            int *cont = getContained( mapX, mapY, &numCont );
+                            
+                            if( cont != NULL ) {
+                                
+                                for( int c=0; c<numCont; c++ ) {
+                                    
+                                    int cID = cont[c];
+                                    char hasSub = false;
+                                    if( cID < 0 ) {
+                                        hasSub = true;
+                                        cID = -cID;
+                                        }
+
+                                    ObjectRecord *cO = getObject( cID );
+                                    heatOutputGrid[j] += 
+                                        lrint( cO->heatValue * oRFactor );
+                                    
+                                    if( hasSub ) {
+                                        double cRFactor = 1 - cO->rValue;
+                                        
+                                        int numSub;
+                                        int *sub = getContained( mapX, mapY, 
+                                                                 &numSub, 
+                                                                 c + 1 );
+                                        if( sub != NULL ) {
+                                            for( int s=0; s<numSub; s++ ) {
+                                                ObjectRecord *sO = 
+                                                    getObject( sub[s] );
+                                                
+                                                heatOutputGrid[j] += 
+                                                    lrint( sO->heatValue * 
+                                                           cRFactor * 
+                                                           oRFactor );
+                                                }
+                                            delete [] sub;
+                                            }
+                                        }
+                                    }
+                                delete [] cont;
+                                }
+                            }
                         }
                     }
                 }
@@ -6740,6 +6789,78 @@ int main() {
             // body itself produces 1 unit of heat
             // (r value of clothing can hold this in
             heatOutputGrid[ playerMapIndex ] += 1;
+            
+
+            // what player is holding can contribute heat
+            if( nextPlayer->holdingID > 0 ) {
+                ObjectRecord *heldO = getObject( nextPlayer->holdingID );
+                
+                heatOutputGrid[ playerMapIndex ] += heldO->heatValue;
+                
+                double heldRFactor = 1 - heldO->rValue;
+                
+                // contained can contribute too, but shielded by r-value
+                // of container
+                for( int c=0; c<nextPlayer->numContained; c++ ) {
+                    
+                    int cID = nextPlayer->containedIDs[c];
+                    char hasSub = false;
+                    
+                    if( cID < 0 ) {
+                        hasSub = true;
+                        cID = -cID;
+                        }
+
+                    ObjectRecord *contO = getObject( cID );
+                    
+                    heatOutputGrid[ playerMapIndex ] += 
+                        lrint( contO->heatValue * heldRFactor );
+                    
+
+                    if( hasSub ) {
+                        // sub contained too, but shielded by both r-values
+                        double contRFactor = 1 - contO->rValue;
+
+                        for( int s=0; 
+                             s<nextPlayer->subContainedIDs[c].size(); s++ ) {
+                        
+                            ObjectRecord *subO =
+                                getObject( nextPlayer->subContainedIDs[c].
+                                       getElementDirect( s ) );
+                            
+                            heatOutputGrid[ playerMapIndex ] += 
+                                lrint( subO->heatValue * 
+                                       contRFactor * heldRFactor );
+                            }
+                        }
+                    }
+                }
+            
+            // clothing can contribute heat
+            for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+                
+                ObjectRecord *cO = clothingByIndex( nextPlayer->clothing, c );
+            
+                if( cO != NULL ) {
+                    heatOutputGrid[playerMapIndex ] += cO->heatValue;
+
+                    // contained items in clothing can contribute
+                    // heat, shielded by clothing r-values
+                    double cRFactor = 1 - cO->rValue;
+
+                    for( int s=0; 
+                         s < nextPlayer->clothingContained[c].size(); s++ ) {
+                        
+                        ObjectRecord *sO = 
+                            getObject( nextPlayer->clothingContained[c].
+                                       getElementDirect( s ) );
+                        
+                        heatOutputGrid[ playerMapIndex ] += 
+                            sO->heatValue * cRFactor;
+                        }
+                    }
+                }
+            
 
             
             //double startTime = Time::getCurrentTime();
