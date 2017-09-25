@@ -654,7 +654,7 @@ void initTransBankFinish() {
                                 if( newActorObj != NULL &&
                                     newActorObj->numUses > 1 ) {
                                     
-                                    // propage used status to new actor
+                                    // propagate used status to new actor
                                     
                                     int usesLeft = 
                                         (int)( useFraction * 
@@ -690,7 +690,7 @@ void initTransBankFinish() {
                                 if( newTargetObj != NULL &&
                                     newTargetObj->numUses > 1 ) {
                                     
-                                    // propage used status to new target
+                                    // propagate used status to new target
                                     
                                     int usesLeft = 
                                         (int)( useFraction * 
