@@ -3079,17 +3079,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
 
+    double hugR = CELL_D * 0.6;
 
     // draw floors on top of biome
     for( int y=yEnd; y>=yStart; y-- ) {
         
         int worldY = y + mMapOffsetY - mMapD / 2;
 
-        int screenY = CELL_D * worldY;
-        
+        int screenY = CELL_D * worldY;        
 
-        // draw marked objects behind everything else, including players
-        
         for( int x=xStart; x<=xEnd; x++ ) {
             
             int worldX = x + mMapOffsetX - mMapD / 2;
@@ -3098,42 +3096,120 @@ void LivingLifePage::draw( doublePair inViewCenter,
             int mapI = y * mMapD + x;
 
             int oID = mMapFloors[mapI];
-            if( oID <= 0) {
-                continue;
-                }
 
+            
             int screenX = CELL_D * worldX;
             
             doublePair pos = { (double)screenX, (double)screenY };
+
+
+            char drawHuggingFloor = false;
             
-            if( !mapPullMode ) {
-                int oldFrameCount = mMapFloorAnimationFrameCount[ mapI ];
-                mMapFloorAnimationFrameCount[ mapI ] ++;
-                
-                handleAnimSound( oID, 0, ground, oldFrameCount, 
-                                 mMapFloorAnimationFrameCount[ mapI ],
-                                 (double)screenX / CELL_D,
-                                 (double)screenY / CELL_D );
+            // for main floor, and left and right hugging floor
+            // 0 to skip a pass
+            int passIDs[3] = { 0, 0, 0 };
+            
+            if( oID > 0 ) {
+                passIDs[0] = oID;
                 }
             
-            double timeVal = frameRateFactor * 
-                mMapFloorAnimationFrameCount[ mapI ] / 60.0;
 
-            char used;
-            drawObjectAnim( oID, 2, 
-                            ground, timeVal,
-                            0,
-                            ground, 
-                            timeVal,
-                            timeVal,
-                            &used,
-                            ground,
-                            ground,
-                            pos, 0,
-                            false,
-                            false, -1,
-                            false, false, false,
-                            getEmptyClothingSet(), NULL );
+
+            if( oID <= 0) {
+
+                
+                int cellOID = mMap[mapI];
+                
+                if( cellOID > 0 && getObject( cellOID )->floorHugging ) {
+                    
+                    if( x > 0 && mMapFloors[ mapI - 1 ] > 0 ) {
+                        // floor to our left
+                        passIDs[1] = mMapFloors[ mapI - 1 ];
+                        drawHuggingFloor = true;
+                        }
+                    
+                    if( x < mMapD - 1 && mMapFloors[ mapI + 1 ] > 0 ) {
+                        // floor to our right
+                        passIDs[2] = mMapFloors[ mapI + 1 ];
+                        drawHuggingFloor = true;
+                        
+                        }
+                    }
+                
+
+                if( ! drawHuggingFloor ) {
+                    continue;
+                    }
+                }
+            
+            
+                    
+            int oldFrameCount = 
+                mMapFloorAnimationFrameCount[ mapI ];
+            
+            if( ! mapPullMode ) {
+                mMapFloorAnimationFrameCount[ mapI ] ++;
+                }
+
+
+
+            for( int p=0; p<3; p++ ) {
+                if( passIDs[p] == 0 ) {
+                    continue;
+                    }
+                
+                oID = passIDs[p];
+            
+                if( p > 0 ) {    
+                    startAddingToStencil( false, true );
+                    }
+                
+                if( p == 1 ) {    
+                    drawRect( pos.x - hugR, pos.y + hugR, 
+                              pos.x, pos.y - hugR );
+                    }
+                else if( p == 2 ) {
+                        
+                    drawRect( pos.x, pos.y + hugR, 
+                              pos.x + hugR, pos.y - hugR );
+                    }
+
+                if( p > 0 ) {
+                    startDrawingThroughStencil();
+                    }
+                
+
+            
+                if( !mapPullMode ) {                    
+                    handleAnimSound( oID, 0, ground, oldFrameCount, 
+                                     mMapFloorAnimationFrameCount[ mapI ],
+                                     (double)screenX / CELL_D,
+                                     (double)screenY / CELL_D );
+                    }
+            
+                double timeVal = frameRateFactor * 
+                    mMapFloorAnimationFrameCount[ mapI ] / 60.0;
+                
+                char used;
+                drawObjectAnim( oID, 2, 
+                                ground, timeVal,
+                                0,
+                                ground, 
+                                timeVal,
+                                timeVal,
+                                &used,
+                                ground,
+                                ground,
+                                pos, 0,
+                                false,
+                                false, -1,
+                                false, false, false,
+                                getEmptyClothingSet(), NULL );
+
+                if( p > 0 ) {
+                    stopStencil();
+                    }
+                }                
             }
         }
     
@@ -11137,6 +11213,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         ObjectRecord *held = 
                             getObject( ourLiveObject->holdingID );
                         
+                        char foundAlt = false;
+                        
                         if( held->foodValue == 0 ) {
                             
                             TransRecord *r = 
@@ -11150,22 +11228,25 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                                 
                                 // override the drop action
                                 action = "USE";
-                                }
-                            else if( floorDestID > 0 ) {
-                                // check if use on floor exists
-                                r = 
-                                    getTrans( ourLiveObject->holdingID,
-                                              floorDestID );
-                                
-                                if( r != NULL ) {
-                                    // a use-on-floor transition exists!
-                                
-                                    // override the drop action
-                                    action = "USE";
-                                    
-                                    }
+                                foundAlt = true;
                                 }
                             }
+
+                        if( !foundAlt && floorDestID > 0 ) {
+                            // check if use on floor exists
+                            TransRecord *r = 
+                                getTrans( ourLiveObject->holdingID, 
+                                          floorDestID );
+                                
+                            if( r != NULL ) {
+                                // a use-on-floor transition exists!
+                                
+                                // override the drop action
+                                action = "USE";
+                                
+                                }
+                            }
+
                         }
                     }
                 }
