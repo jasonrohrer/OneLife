@@ -65,6 +65,8 @@ Version 33     ???
   container.  Items contained in clothing can produce heat, shielded by
   clothing r-value.
 
+--Support for floors.
+
 
 
 
