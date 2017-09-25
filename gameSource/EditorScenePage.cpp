@@ -99,6 +99,7 @@ EditorScenePage::EditorScenePage()
                                "0123456789." ),
           mCellDestSprite( loadSprite( "centerMark.tga" ) ),
           mPersonDestSprite( loadSprite( "internalPaperMark.tga" ) ),
+          mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
           mShowUI( true ),
           mCursorFade( 1.0 ),
           mSceneW( 130 ),
@@ -274,6 +275,8 @@ EditorScenePage::~EditorScenePage() {
     for( int i=0; i<4; i++ ) {
         freeSprite( mGroundOverlaySprite[i] );
         }
+
+    freeSprite( mFloorSplitSprite );
     freeSprite( mCellDestSprite );
     freeSprite( mPersonDestSprite );
 
@@ -982,6 +985,8 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     double frameTime = frameRateFactor * mFrameCount / 60.0;
 
 
+    double hugR = CELL_D * 0.6;
+
     // floors on top of ground
     for( int y=0; y<mSceneH; y++ ) {
         for( int x=0; x<mSceneW; x++ ) {
@@ -1004,11 +1009,76 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
 
             SceneCell *f = &( mFloorCells[y][x] );
+
+
+            // for main floor, and left and right hugging floor
+            // 0 to skip a pass
+            int passIDs[3] = { 0, 0, 0 };
             
             if( f->oID > 0 ) {
+                passIDs[0] = f->oID;
+                }
+            
+
+
+            if( f->oID <= 0 ) {
+                
+                char drawHuggingFloor = false;
+                
+                int cellOID = mCells[y][x].oID;
+                
+                if( cellOID > 0 && getObject( cellOID )->floorHugging ) {
+                    
+                    if( x > 0 && mFloorCells[y][ x - 1 ].oID > 0 ) {
+                        // floor to our left
+                        passIDs[1] = mFloorCells[y][ x - 1 ].oID;
+                        drawHuggingFloor = true;
+                        }
+                    
+                    if( x < mSceneW - 1 && mFloorCells[y][ x + 1 ].oID > 0 ) {
+                        // floor to our right
+                        passIDs[2] = mFloorCells[y][ x + 1 ].oID;
+                        drawHuggingFloor = true;
+                        }
+                    }
+                
+
+                if( ! drawHuggingFloor ) {
+                    continue;
+                    }
+                }
+
+
+
+            
+            for( int p=0; p<3; p++ ) {
+                if( passIDs[p] == 0 ) {
+                    continue;
+                    }
+                
+                int oID = passIDs[p];
+            
+                if( p > 0 ) {    
+                    startAddingToStencil( false, true );
+                    }
+                
+                if( p == 1 ) {    
+                    drawRect( pos.x - hugR, pos.y + hugR, 
+                              pos.x, pos.y - hugR );
+                    }
+                else if( p == 2 ) {
+                        
+                    drawRect( pos.x, pos.y + hugR, 
+                              pos.x + hugR, pos.y - hugR );
+                    }
+
+                if( p > 0 ) {
+                    startDrawingThroughStencil();
+                    }
+
                 char used;
                 
-                drawObjectAnim( f->oID, 2, ground, 
+                drawObjectAnim( oID, 2, ground, 
                                 frameTime, 
                                 0,
                                 ground,
@@ -1027,8 +1097,16 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                 false,
                                 getEmptyClothingSet(),
                                 NULL );
+                if( p > 0 ) {
+                    stopStencil();
+                    }
                 }
-
+            
+            if( passIDs[1] != passIDs[2] ) {
+                setDrawColor( 1, 1, 1, 1 );
+                pos.y += 10;
+                drawSprite( mFloorSplitSprite, pos );
+                }
             }
         }
 
@@ -1450,6 +1528,7 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
 
     SceneCell *c = getCurrentCell();
     SceneCell *p = getCurrentPersonCell();
+    SceneCell *f = getCurrentFloorCell();
     
     if( inASCII == 'h' ) {
         mShowUI = ! mShowUI;
@@ -1535,6 +1614,7 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
         // backspace
         clearCell( c );
         clearCell( p );
+        clearCell( f );
         }
     else if( inASCII == 'd' ) {
         mLittleDheld = true;

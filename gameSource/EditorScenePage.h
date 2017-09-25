@@ -136,6 +136,9 @@ class EditorScenePage : public GamePage, public ActionListener {
 
         SpriteHandle mGroundOverlaySprite[4];
         
+        SpriteHandle mFloorSplitSprite;
+        
+
         char mShowUI;
         float mCursorFade;
         
