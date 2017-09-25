@@ -6733,6 +6733,15 @@ int main() {
                                 }
                             }
                         }
+                    
+
+                    // floor can insulate or produce heat too
+                    ObjectRecord *fO = getObject( getMapFloor( mapX, mapY ) );
+                    
+                    if( fO != NULL ) {
+                        heatOutputGrid[j] += fO->heatValue;
+                        rGrid[j] += fO->rValue;
+                        }
                     }
                 }
 
