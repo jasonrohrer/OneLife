@@ -2046,7 +2046,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
 
         mLastType = extraB;
         mLastTypeFade = 1.0;
-
+        mLastTypeFrameCount = mFrameCount;
+        
         mCurrentExtraIndex --;
         
         setNextExtraButtonColor();
@@ -2063,6 +2064,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
 
         mLastType = extraB;
         mLastTypeFade = 1.0;
+        mLastTypeFrameCount = mFrameCount;
 
         mCurrentExtraIndex ++;
         
