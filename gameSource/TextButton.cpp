@@ -44,6 +44,16 @@ void TextButton::setLabelText( const char *inLabelText ) {
 
 
 
+void TextButton::setPadding( double inHorizontalPadding, 
+                             double inVerticalPadding ) {
+    mWide = mFont->measureString( mLabelText ) + 
+        2 * ( inHorizontalPadding + mPixWidth );
+    
+    mHigh = mFont->getFontHeight() + 2 * ( inVerticalPadding + mPixWidth );
+    }
+
+
+
 
         
 void TextButton::drawContents() {

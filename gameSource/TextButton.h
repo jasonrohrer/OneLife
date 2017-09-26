@@ -23,6 +23,10 @@ class TextButton : public Button {
         // copied internally
         void setLabelText( const char *inLabelText );
         
+        // set padding between text and button border
+        // default padding based on text width
+        void setPadding( double inHorizontalPadding, double inVerticalPadding );
+        
 
     protected:
         Font *mFont;
