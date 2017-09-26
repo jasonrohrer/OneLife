@@ -130,9 +130,10 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         double mCurrentObjectFrameRateFactor;
         
         // endAnimType index allways NULL
-        // extra index sometimes contains pointer to mCurrentExtraAnim record
+        // extra and extraB indices sometimes contain 
+        //   pointers to mCurrentExtraAnim record
         //   from mCurrentExtraIndex
-        AnimationRecord *mCurrentAnim[ extraB ];
+        AnimationRecord *mCurrentAnim[ extraB + 1 ];
         
         SimpleVector<AnimationRecord*> mCurrentExtraAnim;
         

@@ -128,7 +128,7 @@ EditorAnimationPage::EditorAnimationPage()
           mPasteSoundAnimButton( smallFont, -155, -160, "Paste" ) {
     
     
-    for( int i=0; i<extraB; i++ ) {
+    for( int i=0; i<=extraB; i++ ) {
         mCurrentAnim[i] = NULL;
         }
     mCurrentExtraIndex = -1;
@@ -2041,6 +2041,12 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             mRandomStartPhaseCheckbox.getToggled();
         }
     else if( inTarget == &mPrevExtraButton ) {
+        mCurrentAnim[ extraB ] = 
+            mCurrentExtraAnim.getElementDirect( mCurrentExtraIndex );
+
+        mLastType = extraB;
+        mLastTypeFade = 1.0;
+
         mCurrentExtraIndex --;
         
         setNextExtraButtonColor();
@@ -2051,6 +2057,13 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 mCurrentExtraAnim.getElementDirect( mCurrentExtraIndex );
         }
     else if( inTarget == &mNextExtraButton ) {
+        
+        mCurrentAnim[ extraB ] = 
+            mCurrentExtraAnim.getElementDirect( mCurrentExtraIndex );
+
+        mLastType = extraB;
+        mLastTypeFade = 1.0;
+
         mCurrentExtraIndex ++;
         
         if( mCurrentExtraIndex > mCurrentExtraAnim.size() - 1 ) {
