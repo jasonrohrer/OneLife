@@ -1513,7 +1513,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                     }
                 }
             
-
+            delete [] hitIndices;
 
             for( int i=0; 
                  i<anim->numSlots && i < mAllCopyBufferSlots.size(); 

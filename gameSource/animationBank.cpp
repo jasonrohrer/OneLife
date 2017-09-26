@@ -47,7 +47,7 @@ static int maxID;
 
 static const char *animTypeNames[9] = { "ground", "held", "moving", "ground2",
                                         "eating", "doing", "endAnimType",
-                                        "extraA", "extraB" };
+                                        "extra", "extraB" };
 
 
 const char *typeToName( AnimType inAnimType ) {
@@ -448,12 +448,12 @@ void freeAnimationBank() {
 
 
 
-static int extraIndexA = 0;
+static int extraIndex = 0;
 static int extraIndexB = 0;
 
 
-void setExtraIndexA( int inIndex ) {
-    extraIndexA = inIndex;
+void setExtraIndex( int inIndex ) {
+    extraIndex = inIndex;
     }
 
 
@@ -475,9 +475,9 @@ static File *getFile( int inID, AnimType inType ) {
         
         char *fileName;
         
-        if( inType >= endAnimType ) {
+        if( inType > endAnimType ) {
             fileName = autoSprintf( "%d_%d_%d.txt", 
-                                    inID, endAnimType, extraIndexA );
+                                    inID, extra, extraIndex );
             }
         else {
             fileName = autoSprintf( "%d_%d.txt", inID, inType );
@@ -501,18 +501,18 @@ AnimationRecord *getAnimation( int inID, AnimType inType ) {
         if( inType < endAnimType && inType != ground2 ) {
             return idMap[inID][inType];
             }
-        else if( inType >= endAnimType ) {
+        else if( inType > endAnimType ) {
             
             int numExtra = idExtraMap[inID].size();
             
-            int extraIndex = extraIndexA;
+            int extraI = extraIndex;
             
             if( inType == extraB ) {
-                extraIndex = extraIndexB;
+                extraI = extraIndexB;
                 }
 
-            if( extraIndex < numExtra ) {
-                return idExtraMap[inID].getElementDirect( extraIndex );
+            if( extraI < numExtra ) {
+                return idExtraMap[inID].getElementDirect( extraI );
                 }
             }
         }
@@ -526,6 +526,12 @@ AnimationRecord *getAnimation( int inID, AnimType inType ) {
 // record destroyed by caller
 void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
     
+    if( inRecord->type == ground2 ) {
+        // never add ground2
+        return;
+        }
+    
+
     AnimationRecord *oldRecord = getAnimation( inRecord->objectID, 
                                                inRecord->type );
     
@@ -594,7 +600,7 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
         // remove existing with same extra index
         for( int i=0; i<idExtraMap[newID].size(); i++ ) {
             if( idExtraMap[newID].getElementDirect( i )->extraIndex ==
-                extraIndexA ) {
+                extraIndex ) {
                 idExtraMap[newID].deleteElement( i );
                 break;
                 }
@@ -744,7 +750,7 @@ void clearAnimation( int inObjectID, AnimType inType ) {
             // extra
             for( int i=0; i<idExtraMap[inObjectID].size(); i++ ) {
                 if( idExtraMap[inObjectID].getElementDirect( i )->extraIndex ==
-                    extraIndexA ) {
+                    extraIndex ) {
                     idExtraMap[inObjectID].deleteElement( i );
                     break;
                     }

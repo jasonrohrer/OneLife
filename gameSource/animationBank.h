@@ -27,9 +27,9 @@ typedef enum AnimType {
     doing,
     endAnimType,
     // arbitrary number of extra animation slots
-    // indexed by calling setExtraIndexA or setExtraIndexB before calling
+    // indexed by calling setExtraIndex or setExtraIndexB before calling
     // other animation calls
-    extraA,
+    extra,
     extraB
     } AnimType;
 
@@ -155,10 +155,10 @@ void initAnimationBankFinish();
 void freeAnimationBank();
 
 
-// set index for subsequent animation calls with type = extraA
-// most calls only pay attention to extraA, but draw calls can use
+// set index for subsequent animation calls with type = extra
+// most calls only pay attention to extra, but draw calls can use
 // both for blending between two
-void setExtraIndexA( int inIndex );
+void setExtraIndex( int inIndex );
 void setExtraIndexB( int inIndex );
 
 
