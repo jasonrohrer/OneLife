@@ -484,7 +484,7 @@ static File *getFile( int inID, AnimType inType ) {
         char *fileName;
         
         if( inType > endAnimType ) {
-            fileName = autoSprintf( "%d_%d_%d.txt", 
+            fileName = autoSprintf( "%d_%dx%d.txt", 
                                     inID, extra, extraIndex );
             }
         else {
