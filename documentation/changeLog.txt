@@ -67,6 +67,8 @@ Version 33     ???
 
 --Support for floors.
 
+--Support for extra animation slots (for use in trailer animations).
+
 
 
 

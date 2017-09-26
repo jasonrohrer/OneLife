@@ -426,19 +426,27 @@ void freeAnimationBank() {
     for( int i=0; i<mapSize; i++ ) {
         for( int j=0; j<endAnimType; j++ ) {
             if( idMap[i][j] != NULL ) {
+                AnimationRecord *r = idMap[i][j];
+                
+                delete [] r->soundAnim;
 
-                delete [] idMap[i][j]->soundAnim;
+                delete [] r->spriteAnim;
+                delete [] r->slotAnim;
 
-                delete [] idMap[i][j]->spriteAnim;
-                delete [] idMap[i][j]->slotAnim;
-
-                delete idMap[i][j];
+                delete r;
                 }
             }
         delete [] idMap[i];
 
         for( int j=0; j<idExtraMap[i].size(); j++ ) {
-            delete [] idExtraMap[i].getElementDirect( j );
+            AnimationRecord *r = idExtraMap[i].getElementDirect( j );
+
+            delete [] r->soundAnim;
+
+            delete [] r->spriteAnim;
+            delete [] r->slotAnim;
+            
+            delete r;
             }
         }
 
