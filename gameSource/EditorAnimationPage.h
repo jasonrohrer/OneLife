@@ -27,7 +27,7 @@
 #include "keyLegend.h"
 
 
-#define NUM_ANIM_CHECKBOXES 5
+#define NUM_ANIM_CHECKBOXES 6
 #define NUM_ANIM_SLIDERS 18
 
 
@@ -124,8 +124,17 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         
         double mCurrentObjectFrameRateFactor;
         
-        AnimationRecord *mCurrentAnim[ endAnimType ];
+        // endAnimType index allways NULL
+        // extra index sometimes contains pointer to mCurrentExtraAnim record
+        //   from mCurrentExtraIndex
+        AnimationRecord *mCurrentAnim[ extraB ];
         
+        SimpleVector<AnimationRecord*> mCurrentExtraAnim;
+        
+        int mCurrentExtraIndex;
+        
+
+
         AnimationRecord *mWiggleAnim;
         
         double mWiggleFade;

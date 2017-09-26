@@ -94,9 +94,9 @@ EditorAnimationPage::EditorAnimationPage()
           mPickSlotDemoButton( smallFont, 280, 60, "Fill Slots" ),
           mPickingSlotDemo( false ),
           mClearSlotDemoButton( smallFont, 280, -90, "Clear Slots" ),
-          mPickClothingButton( smallFont, 280, 60, "+ Clothes" ),
+          mPickClothingButton( smallFont, 280, 100, "+ Clothes" ),
           mPickingClothing( false ),
-          mClearClothingButton( smallFont, 280, 120, "X Clothes" ),
+          mClearClothingButton( smallFont, 280, 140, "X Clothes" ),
           mPickHeldButton( smallFont, 280, -100, "+ Held" ),
           mPickingHeld( false ),
           mHeldID( -1 ),
@@ -123,9 +123,10 @@ EditorAnimationPage::EditorAnimationPage()
           mPasteSoundAnimButton( smallFont, -155, -160, "Paste" ) {
     
     
-    for( int i=0; i<endAnimType; i++ ) {
+    for( int i=0; i<extraB; i++ ) {
         mCurrentAnim[i] = NULL;
         }
+    mCurrentExtraIndex = -1;
     
     zeroRecord( &mCopyBuffer );
     zeroRecord( &mSoundAnimCopyBuffer );
@@ -308,7 +309,7 @@ EditorAnimationPage::EditorAnimationPage()
     checkNextPrevVisible();
     
     
-    double boxY = 20;
+    double boxY = 60;
     
     for( int i=0; i<NUM_ANIM_CHECKBOXES; i++ ) {
         mCheckboxes[i] = new CheckboxButton( 310, boxY, 2 );
@@ -322,12 +323,13 @@ EditorAnimationPage::EditorAnimationPage()
     mCheckboxNames[2] = "Moving";
     mCheckboxNames[3] = "Eating";
     mCheckboxNames[4] = "Doing";
+    mCheckboxNames[5] = "Extra";
 
     mCheckboxAnimTypes[0] = ground;
     mCheckboxAnimTypes[1] = held;
     mCheckboxAnimTypes[2] = moving;
     mCheckboxAnimTypes[3] = eating;
-    mCheckboxAnimTypes[4] = doing;
+    mCheckboxAnimTypes[5] = extra;
 
     mCheckboxes[0]->setToggled( true );
     
@@ -482,6 +484,12 @@ void EditorAnimationPage::freeCurrentAnim() {
             mCurrentAnim[i] = NULL;
             }
         }
+    
+    for( int i=0; i<mCurrentExtraAnim.size(); i++ ) {
+        freeRecord( mCurrentExtraAnim.getElementDirect( i ) );
+        }
+    mCurrentExtraAnim.deleteAll();
+
     if( mWiggleAnim != NULL ) {
         freeRecord( mWiggleAnim );
         mWiggleAnim = NULL;
@@ -521,6 +529,47 @@ static void adjustRecordList( SpriteAnimationRecord **inOldList,
 
 
 
+static AnimationRecord *createRecordForObject( int inObjectID, 
+                                               AnimType inType ) {
+
+    ObjectRecord *obj = getObject( inObjectID );
+
+    int sprites = obj->numSprites;
+    int slots = obj->numSlots;
+
+
+    AnimationRecord *r = new AnimationRecord;
+        
+    r->objectID = inObjectID;
+    r->type = inType;
+        
+    r->randomStartPhase = false;
+        
+    r->numSounds = 0;
+    r->soundAnim = new SoundAnimationRecord[ 0 ];
+            
+    r->numSprites = sprites;
+    r->numSlots = slots;
+            
+    r->spriteAnim = 
+        new SpriteAnimationRecord[ sprites ];
+            
+    r->slotAnim = 
+        new SpriteAnimationRecord[ slots ];
+            
+    for( int j=0; j<sprites; j++ ) {
+        zeroRecord( &( r->spriteAnim[j] ) );
+        }
+    for( int j=0; j<slots; j++ ) {
+        zeroRecord( &( r->slotAnim[j] ) );
+        }
+
+    return r;
+    }
+
+
+
+
 void EditorAnimationPage::populateCurrentAnim() {
     freeCurrentAnim();
 
@@ -532,42 +581,19 @@ void EditorAnimationPage::populateCurrentAnim() {
         mCurrentObjectFrameRateFactor =  frameRateFactor * obj->speedMult;
         }
     
+    
+    int sprites = obj->numSprites;
+    int slots = obj->numSlots;
 
     for( int i=0; i<endAnimType; i++ ) {
 
         AnimationRecord *oldRecord =
-            getAnimation( mCurrentObjectID, (AnimType)i );
-            
-        int sprites = obj->numSprites;
-        int slots = obj->numSlots;
+            getAnimation( mCurrentObjectID, (AnimType)i );            
         
         if( oldRecord == NULL ) {
             // no anim exists
-            mCurrentAnim[i] = new AnimationRecord;
-        
-            mCurrentAnim[i]->objectID = mCurrentObjectID;
-            mCurrentAnim[i]->type = (AnimType)i;
-        
-            mCurrentAnim[i]->randomStartPhase = false;
-        
-            mCurrentAnim[i]->numSounds = 0;
-            mCurrentAnim[i]->soundAnim = new SoundAnimationRecord[ 0 ];
-            
-            mCurrentAnim[i]->numSprites = sprites;
-            mCurrentAnim[i]->numSlots = slots;
-            
-            mCurrentAnim[i]->spriteAnim = 
-                new SpriteAnimationRecord[ sprites ];
-            
-            mCurrentAnim[i]->slotAnim = 
-                new SpriteAnimationRecord[ slots ];
-            
-            for( int j=0; j<sprites; j++ ) {
-                zeroRecord( &( mCurrentAnim[i]->spriteAnim[j] ) );
-                }
-            for( int j=0; j<slots; j++ ) {
-                zeroRecord( &( mCurrentAnim[i]->slotAnim[j] ) );
-                }
+            mCurrentAnim[i] = createRecordForObject( mCurrentObjectID, 
+                                                     (AnimType)i );
             }
         else {
             mCurrentAnim[i] = copyRecord( oldRecord );
@@ -590,6 +616,43 @@ void EditorAnimationPage::populateCurrentAnim() {
             }        
     
         }
+
+    int numExtra = getNumExtraAnim( mCurrentObjectID );
+        
+    for( int i=0; i<numExtra; i++ ) {
+        setExtraIndex( i );
+
+        AnimationRecord *oldRecord =
+            getAnimation( mCurrentObjectID, extra );
+        
+        mCurrentExtraAnim.push_back( copyRecord( oldRecord ) );
+        
+
+        mCurrentAnim[extra] = mCurrentExtraAnim.getElementDirect( 
+            mCurrentExtraAnim.size() - 1 );
+        
+        
+        for( int s=0; s<mCurrentAnim[extra]->numSounds; s++ ) {
+            countLiveUse( mCurrentAnim[extra]->soundAnim[s].sound.id );
+            }
+
+        adjustRecordList( &( mCurrentAnim[extra]->spriteAnim ),
+                          mCurrentAnim[extra]->numSprites,
+                          sprites );
+        
+        mCurrentAnim[extra]->numSprites = sprites;
+            
+        adjustRecordList( &( mCurrentAnim[extra]->slotAnim ),
+                          mCurrentAnim[extra]->numSlots,
+                          slots );
+        
+        mCurrentAnim[extra]->numSlots = slots;
+        }        
+    
+    if( numExtra > 0 ) {
+        mCurrentExtraIndex = 0;
+        }
+    
     
     mRandomStartPhaseCheckbox.setToggled( 
         mCurrentAnim[ mCurrentType ]->randomStartPhase );
@@ -1052,6 +1115,20 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mSaveButton ) {
         for( int i=0; i<endAnimType; i++ ) {
             addAnimation( mCurrentAnim[i] );
+            }
+        
+        // clear the old ones first, because we might have a
+        // different number of extras now
+        int oldExtras = getNumExtraAnim( mCurrentObjectID );
+        
+        for( int i=0; i<oldExtras; i++ ) {
+            setExtraIndex( i );
+            clearAnimation( mCurrentObjectID, extra );
+            }
+
+        for( int i=0; i<mCurrentExtraAnim.size(); i++ ) {
+            setExtraIndex( i );
+            addAnimation( mCurrentExtraAnim.getElementDirect( i ) );
             }
         }
     else if( inTarget == &mDeleteButton ) {
@@ -1542,6 +1619,15 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         updateSlidersFromAnim();
         }
     else if( inTarget == &mObjectPicker ) {
+
+        // if extra currently checked, we don't know that an extra anim
+        // exists in the new object that we picked
+        if( mCheckboxes[5]->getToggled() ) {
+            actionPerformed( mCheckboxes[0] );
+            }
+        mCurrentExtraIndex = -1;
+        
+        
         int newPickID = mObjectPicker.getSelectedObject();
 
         if( newPickID != -1 ) {
@@ -1969,6 +2055,22 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             }
         
+        if( mCurrentType == extra && mCurrentExtraIndex == -1 ) {
+            // user just pressed extra checkbox, but no extra exists
+            // create first one
+            AnimationRecord *r = 
+                createRecordForObject( mCurrentObjectID, extra );
+            mCurrentExtraAnim.push_back( r );
+            mCurrentExtraIndex = 0;
+            }
+        
+
+        if( mCurrentType == extra && mCurrentExtraIndex > -1 ) {
+            mCurrentAnim[ mCurrentType ] = 
+                mCurrentExtraAnim.getElementDirect( mCurrentExtraIndex );
+            }
+        
+
         if( mCurrentObjectID != -1 &&
             oldType != mCurrentType ) {
             

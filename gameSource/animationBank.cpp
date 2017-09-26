@@ -496,6 +496,17 @@ static File *getFile( int inID, AnimType inType ) {
 
 
 
+int getNumExtraAnim( int inID ) {
+    if( inID < mapSize ) {
+        return idExtraMap[inID].size();
+        }
+
+    return 0;
+    }
+
+
+
+
 AnimationRecord *getAnimation( int inID, AnimType inType ) {
     if( inID < mapSize ) {
         if( inType < endAnimType && inType != ground2 ) {
@@ -597,16 +608,12 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
     else {
         // extra
 
-        // remove existing with same extra index
-        for( int i=0; i<idExtraMap[newID].size(); i++ ) {
-            if( idExtraMap[newID].getElementDirect( i )->extraIndex ==
-                extraIndex ) {
-                idExtraMap[newID].deleteElement( i );
-                break;
-                }
-            }
+        AnimationRecord *r = copyRecord( inRecord );
         
-        idExtraMap[newID].push_back( copyRecord( inRecord ) );
+        // make sure index is set correctly
+        r->extraIndex = extraIndex;
+        
+        idExtraMap[newID].push_back( r );
         }
     
     
@@ -737,11 +744,6 @@ void clearAnimation( int inObjectID, AnimType inType ) {
     
     if( r != NULL ) {
         
-        delete [] r->soundAnim;
-        delete [] r->spriteAnim;
-        delete [] r->slotAnim;
-        
-        delete r;
 
         if( inType < endAnimType ) {    
             idMap[inObjectID][inType] = NULL;
@@ -756,6 +758,12 @@ void clearAnimation( int inObjectID, AnimType inType ) {
                     }
                 }
             }
+
+        delete [] r->soundAnim;
+        delete [] r->spriteAnim;
+        delete [] r->slotAnim;
+        
+        delete r;
         
         File animationsDir( NULL, "animations" );
             

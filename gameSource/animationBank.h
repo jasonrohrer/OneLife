@@ -162,6 +162,9 @@ void setExtraIndex( int inIndex );
 void setExtraIndexB( int inIndex );
 
 
+int getNumExtraAnim( int inID );
+
+
 // return value not destroyed by caller
 // should not be modifed by caller
 // change an animation by re-adding it using addAnimation below
