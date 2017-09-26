@@ -2709,14 +2709,18 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             pickedLayerChanged();
 
+            mFloorCheckbox.setVisible( false );
+            
             if( ! pickedRecord->containable ) {
                 mContainSizeField.setInt( 1 );
                 mContainSizeField.setVisible( false );
-                mFloorCheckbox.setVisible( true );
+                
+                if( ! mCheckboxes[2]->getToggled() ) {
+                    mFloorCheckbox.setVisible( true );
+                    }
                 }
             else {
-                mContainSizeField.setVisible( true );
-                mFloorCheckbox.setVisible( false );
+                mContainSizeField.setVisible( true );    
                 }
             
             if( pickedRecord->numSlots == 0 ) {
