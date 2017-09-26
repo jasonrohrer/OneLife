@@ -110,6 +110,11 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         const char *mCheckboxNames[NUM_ANIM_CHECKBOXES];
         AnimType mCheckboxAnimTypes[NUM_ANIM_CHECKBOXES];
         
+        TextButton mPrevExtraButton, mNextExtraButton, mDelExtraButton;
+
+        void setNextExtraButtonColor();
+        
+
         ValueSlider *mSliders[ NUM_ANIM_SLIDERS ];
         
         CheckboxButton mReverseRotationCheckbox;

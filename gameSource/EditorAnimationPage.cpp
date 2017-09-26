@@ -72,6 +72,11 @@ EditorAnimationPage::EditorAnimationPage()
           mTestSpeedSlider( smallFont, 100, -170, 2,
                             100, 20,
                             0, 1, "Test Speed" ),
+          
+          mPrevExtraButton( smallFont, 250, -65, "<" ), 
+          mNextExtraButton( smallFont, 310, -65, ">" ), 
+          mDelExtraButton( smallFont, 280, -65, "x" ), 
+
           mReverseRotationCheckbox( 0, 0, 2 ),
           mRandomStartPhaseCheckbox( -80, 200, 2 ),
           mCurrentObjectID( -1 ),
@@ -229,6 +234,26 @@ EditorAnimationPage::EditorAnimationPage()
     mLastTestSpeed = 1.0;
     mFrameTimeOffset = 0;
     
+    addComponent( &mPrevExtraButton );
+    addComponent( &mNextExtraButton );
+    addComponent( &mDelExtraButton );
+    
+    double vPad = 0;
+    double hPad = 3;
+
+    mPrevExtraButton.setPadding( hPad, vPad );
+    mNextExtraButton.setPadding( hPad, vPad );
+    mDelExtraButton.setPadding( hPad, vPad );
+    
+
+    mPrevExtraButton.addActionListener( this );
+    mNextExtraButton.addActionListener( this );
+    mDelExtraButton.addActionListener( this );
+    
+    mPrevExtraButton.setVisible( false );
+    mNextExtraButton.setVisible( false );
+    mDelExtraButton.setVisible( false );
+
 
     addComponent( &mPickSlotDemoButton );
     addComponent( &mClearSlotDemoButton );
@@ -1104,6 +1129,23 @@ void EditorAnimationPage::markAllCopyBufferSoundsNotLive() {
 
 
 
+void EditorAnimationPage::setNextExtraButtonColor() {
+    if( mCurrentExtraIndex < mCurrentExtraAnim.size() - 1 ) {
+        mNextExtraButton.setFillColor( 0.25, 0.25, 0.25, 1 );
+        mNextExtraButton.setNoHoverColor( 1, 1, 1, 1 );
+        mNextExtraButton.setHoverColor( 0.886, 0.764, 0.475, 1 );
+        }
+    else {
+        // will make a new one
+        // make it green
+        mNextExtraButton.setFillColor( 0, 0.75, 0, 1 );
+        mNextExtraButton.setNoHoverColor( 0, 0, 0, 1 );
+        mNextExtraButton.setHoverColor( .75, 0, 0, 1 );
+        }
+    }
+
+
+
 void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     
     if( inTarget == &mObjectEditorButton ) {
@@ -1624,6 +1666,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         // exists in the new object that we picked
         if( mCheckboxes[5]->getToggled() ) {
             actionPerformed( mCheckboxes[0] );
+            mLastType = ground;
             }
         mCurrentExtraIndex = -1;
         
@@ -1997,6 +2040,60 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mCurrentAnim[ mCurrentType ]->randomStartPhase =
             mRandomStartPhaseCheckbox.getToggled();
         }
+    else if( inTarget == &mPrevExtraButton ) {
+        mCurrentExtraIndex --;
+        
+        setNextExtraButtonColor();
+        
+        mPrevExtraButton.setVisible( mCurrentExtraIndex > 0 );
+        
+        mCurrentAnim[ mCurrentType ] = 
+                mCurrentExtraAnim.getElementDirect( mCurrentExtraIndex );
+        }
+    else if( inTarget == &mNextExtraButton ) {
+        mCurrentExtraIndex ++;
+        
+        if( mCurrentExtraIndex > mCurrentExtraAnim.size() - 1 ) {
+            // add a new one
+            AnimationRecord *r = 
+                createRecordForObject( mCurrentObjectID, extra );
+            mCurrentExtraAnim.push_back( r );
+            }
+        
+        setNextExtraButtonColor();
+        
+        mPrevExtraButton.setVisible( true );
+        
+        mCurrentAnim[ mCurrentType ] = 
+                mCurrentExtraAnim.getElementDirect( mCurrentExtraIndex );
+        }
+    else if( inTarget == &mDelExtraButton ) {
+        AnimationRecord *r = 
+            mCurrentExtraAnim.getElementDirect( mCurrentExtraIndex );
+        
+        freeRecord( r );
+        mCurrentExtraAnim.deleteElement( mCurrentExtraIndex );
+        
+        if( mCurrentExtraIndex > 0 ) {
+            mCurrentExtraIndex --;
+            }
+        // else we can't back up index
+        // make sure we're not off the end now (case where we deleted last one)
+
+        if( mCurrentExtraIndex > mCurrentExtraAnim.size() - 1 ) {
+            // add a new one
+            AnimationRecord *r = 
+                createRecordForObject( mCurrentObjectID, extra );
+            mCurrentExtraAnim.push_back( r );
+            }
+
+        mPrevExtraButton.setVisible( mCurrentExtraIndex > 0 );
+        
+        mCurrentAnim[ mCurrentType ] = 
+                mCurrentExtraAnim.getElementDirect( mCurrentExtraIndex );
+        
+        setNextExtraButtonColor();
+        }
     else if( inTarget == &mTestSpeedSlider ) {
         
         double factor = mCurrentObjectFrameRateFactor;
@@ -2063,11 +2160,26 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentExtraAnim.push_back( r );
             mCurrentExtraIndex = 0;
             }
+
+
+        mPrevExtraButton.setVisible( false );
+        mNextExtraButton.setVisible( false );
+        mDelExtraButton.setVisible( false );
         
 
-        if( mCurrentType == extra && mCurrentExtraIndex > -1 ) {
+        if( mCurrentType == extra ) {
             mCurrentAnim[ mCurrentType ] = 
                 mCurrentExtraAnim.getElementDirect( mCurrentExtraIndex );
+            
+            mDelExtraButton.setVisible( true );
+            
+            // next creates a new one if we go off the end
+            mNextExtraButton.setVisible( true );
+            setNextExtraButtonColor();
+            
+            if( mCurrentExtraIndex > 0 ) {
+                mPrevExtraButton.setVisible( true );
+                }
             }
         
 

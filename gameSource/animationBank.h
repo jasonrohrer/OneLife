@@ -108,6 +108,8 @@ typedef struct AnimationRecord {
         AnimType type;
         
         // for extra anim types
+        // used internally, ignored by addAnimation() in favor
+        // of value set by calling setExtraIndex()
         int extraIndex;
         
         // true if start of animation should be randomized in time
@@ -172,6 +174,9 @@ AnimationRecord *getAnimation( int inID, AnimType inType );
 
 
 // record destroyed by caller
+// note that if inRecord->type == extra, inRecord->extraIndex is ignored
+// and the value last set by setExtraIndex is used instead
+// AnimationRecord.extraIndex is used internally only
 void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile = false );
 
 

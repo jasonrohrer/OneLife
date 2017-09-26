@@ -522,8 +522,13 @@ AnimationRecord *getAnimation( int inID, AnimType inType ) {
                 extraI = extraIndexB;
                 }
 
-            if( extraI < numExtra ) {
-                return idExtraMap[inID].getElementDirect( extraI );
+            for( int i=0; i<numExtra; i++ ) {
+                AnimationRecord *r = 
+                    idExtraMap[inID].getElementDirect( i );
+                
+                if( r->extraIndex == extraI ) {
+                    return r;
+                    }
                 }
             }
         }
@@ -626,10 +631,19 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
             SimpleVector<char*> lines;
         
             lines.push_back( autoSprintf( "id=%d", newID ) );
-            lines.push_back( autoSprintf( "type=%d,randStartPhase=%d", 
-                                          inRecord->type, 
-                                          inRecord->randomStartPhase ) );
-
+            
+            if( inRecord->type < endAnimType ) {    
+                lines.push_back( autoSprintf( "type=%d,randStartPhase=%d", 
+                                              inRecord->type, 
+                                              inRecord->randomStartPhase ) );
+                }
+            else {
+                lines.push_back( autoSprintf( "type=%d:%d,randStartPhase=%d", 
+                                              extra,
+                                              extraIndex,
+                                              inRecord->randomStartPhase ) );
+                }
+            
             lines.push_back( 
                 autoSprintf( "numSounds=%d", inRecord->numSounds ) );
 
