@@ -355,6 +355,7 @@ EditorAnimationPage::EditorAnimationPage()
     mCheckboxAnimTypes[1] = held;
     mCheckboxAnimTypes[2] = moving;
     mCheckboxAnimTypes[3] = eating;
+    mCheckboxAnimTypes[4] = doing;
     mCheckboxAnimTypes[5] = extra;
 
     mCheckboxes[0]->setToggled( true );
