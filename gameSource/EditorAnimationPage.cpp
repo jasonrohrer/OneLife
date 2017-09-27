@@ -82,6 +82,7 @@ EditorAnimationPage::EditorAnimationPage()
           mCurrentObjectID( -1 ),
           mCurrentSlotDemoID( -1 ),
           mFlipDraw( false ),
+          mHideUI( false ),
           mWiggleAnim( NULL ),
           mWiggleFade( 0.0 ),
           mWiggleSpriteOrSlot( -1 ),
@@ -457,6 +458,7 @@ EditorAnimationPage::EditorAnimationPage()
                             "Move layer rot anchor" );
     addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger jumps" );
     addKeyDescription( &mKeyLegend, 'f', "Flip horizontally" );
+    addKeyDescription( &mKeyLegend, 'h', "Hide/show UI" );
     
     addKeyClassDescription( &mKeyLegendB, "R-Click", "Copy animations" );
     }
@@ -2603,7 +2605,8 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
         }
     
     setDrawColor( 1, 1, 1, 1 );
-
+    
+    if( !mHideUI )
     for( int i=0; i<NUM_ANIM_CHECKBOXES; i++ ) {
         if( mCheckboxes[i]->isVisible() ) {
             pos = mCheckboxes[i]->getPosition();
@@ -2614,20 +2617,20 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
             }
         }
 
-    if( mReverseRotationCheckbox.isVisible() ) {
+    if( !mHideUI && mReverseRotationCheckbox.isVisible() ) {
         pos = mReverseRotationCheckbox.getPosition();
         pos.x -= 10;
         smallFont->drawString( "CCW", pos, alignRight );
         }
 
-    if( mRandomStartPhaseCheckbox.isVisible() ) {
+    if( !mHideUI && mRandomStartPhaseCheckbox.isVisible() ) {
         pos = mRandomStartPhaseCheckbox.getPosition();
         pos.x -= 10;
         smallFont->drawString( "Random Start Point", pos, alignRight );
         }
         
     
-    if( mCurrentObjectID != -1 ) {
+    if( !mHideUI && mCurrentObjectID != -1 ) {
         
         setDrawColor( 1, 1, 1, 1 );
         
@@ -3027,6 +3030,10 @@ void EditorAnimationPage::keyDown( unsigned char inASCII ) {
 
     if( inASCII == 'f' ) {
         mFlipDraw = ! mFlipDraw;
+        }
+    else if( inASCII == 'h' ) {
+        mHideUI = ! mHideUI;
+        skipDrawingSubComponents( mHideUI );
         }
     }
 

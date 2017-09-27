@@ -256,11 +256,11 @@ EditorScenePage::EditorScenePage()
     addKeyClassDescription( &mKeyLegend, "f/F", "Flip obj/person" );
     addKeyClassDescription( &mKeyLegend, "c/C", "Copy obj/person" );
     addKeyClassDescription( &mKeyLegend, "x/X", "Cut obj/person" );
-    addKeyClassDescription( &mKeyLegend, "v", "Paste" );
+    addKeyDescription( &mKeyLegend, 'v', "Paste" );
     addKeyClassDescription( &mKeyLegend, "i/I", "Insert contained/held" );
     addKeyClassDescription( &mKeyLegend, "Bkspc", "Clear cell" );
     addKeyClassDescription( &mKeyLegend, "Hold d/D", "Set obj/person dest" );
-    addKeyClassDescription( &mKeyLegend, "h", "Hide/show UI" );
+    addKeyDescription( &mKeyLegend, 'h', "Hide/show UI" );
 
     addKeyClassDescription( &mKeyLegendG, "R-Click", "Flood fill" );
 

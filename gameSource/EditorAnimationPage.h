@@ -126,6 +126,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         int mCurrentSlotDemoID;
 
         char mFlipDraw;
+        char mHideUI;
         
         double mCurrentObjectFrameRateFactor;
         
