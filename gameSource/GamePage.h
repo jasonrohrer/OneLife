@@ -89,6 +89,12 @@ class GamePage : public PageComponent {
     protected:
         
 
+        // set to true to skip drawing sub-components
+        // (only results of drawUnderComponents and draw will be shown)
+        // Used to "hide the UI" cleanly.
+        // defaults to false
+        void skipDrawingSubComponents( char inSkip );
+        
 
         // subclasses override these to provide custom functionality
 
@@ -185,6 +191,8 @@ class GamePage : public PageComponent {
         char mStatusError;
         const char *mStatusMessageKey;
         char *mStatusMessage;
+        
+        char mSkipDrawingSubComponents;
         
 
         char *mTip;

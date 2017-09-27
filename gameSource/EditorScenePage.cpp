@@ -671,83 +671,42 @@ void EditorScenePage::checkVisible() {
             }
         }
 
-
-    if( ! mShowUI ) {
+    // make all visible, then turn some off selectively
+    // below
         
-        mAnimEditorButton.setVisible( false );
+    mAnimEditorButton.setVisible( true );
+    mSaveNewButton.setVisible( true );
+    mClearSceneButton.setVisible( true );
         
-        mSaveNewButton.setVisible( false );
-        mReplaceButton.setVisible( false );
-        mDeleteButton.setVisible( false );
-        
-        mSaveTestMapButton.setVisible( false );
-        
-        mClearSceneButton.setVisible( false );
-        mNextSceneButton.setVisible( false );
-        mPrevSceneButton.setVisible( false );
-        
-        mGroundPicker.setVisible( false );
-        mObjectPicker.setVisible( false );
-        
-        mPersonAgeSlider.setVisible( false );
-        
-        mCellAnimRadioButtons.setVisible( false );
-        mPersonAnimRadioButtons.setVisible( false );
-        
-        mCellAnimFreezeSlider.setVisible( false );
-        mPersonAnimFreezeSlider.setVisible( false );
-        
-
-        mCellXOffsetSlider.setVisible( false );
-        mCellYOffsetSlider.setVisible( false );
-
-        mPersonXOffsetSlider.setVisible( false );
-        mPersonYOffsetSlider.setVisible( false );
-        
-        mCellMoveDelayField.setVisible( false );
-        mPersonMoveDelayField.setVisible( false );
-
-        return;
-        }
-    else {
-        // make all visible if showing UI, then turn some off selectively
-        // below
-        
-        mAnimEditorButton.setVisible( true );
-        mSaveNewButton.setVisible( true );
-        mClearSceneButton.setVisible( true );
-        
-        mSaveTestMapButton.setVisible( true );
+    mSaveTestMapButton.setVisible( true );
 
 
-        mReplaceButton.setVisible( mSceneID != -1 );
-        mDeleteButton.setVisible( mSceneID != -1 );
+    mReplaceButton.setVisible( mSceneID != -1 );
+    mDeleteButton.setVisible( mSceneID != -1 );
         
-        checkNextPrevVisible();
-        
-
-        mGroundPicker.setVisible( true );
-        mObjectPicker.setVisible( true );
-        
-        mPersonAgeSlider.setVisible( true );
-        
-        mCellAnimRadioButtons.setVisible( true );
-        mPersonAnimRadioButtons.setVisible( true );
-        
-        mCellAnimFreezeSlider.setVisible( true );
-        mPersonAnimFreezeSlider.setVisible( true );
+    checkNextPrevVisible();
         
 
-        mCellXOffsetSlider.setVisible( true );
-        mCellYOffsetSlider.setVisible( true );
-
-        mPersonXOffsetSlider.setVisible( true );
-        mPersonYOffsetSlider.setVisible( true );
+    mGroundPicker.setVisible( true );
+    mObjectPicker.setVisible( true );
         
-        mCellMoveDelayField.setVisible( true );
-        mPersonMoveDelayField.setVisible( true );
+    mPersonAgeSlider.setVisible( true );
+        
+    mCellAnimRadioButtons.setVisible( true );
+    mPersonAnimRadioButtons.setVisible( true );
+        
+    mCellAnimFreezeSlider.setVisible( true );
+    mPersonAnimFreezeSlider.setVisible( true );
+        
 
-        }
+    mCellXOffsetSlider.setVisible( true );
+    mCellYOffsetSlider.setVisible( true );
+
+    mPersonXOffsetSlider.setVisible( true );
+    mPersonYOffsetSlider.setVisible( true );
+        
+    mCellMoveDelayField.setVisible( true );
+    mPersonMoveDelayField.setVisible( true );
     
 
 
@@ -1537,6 +1496,7 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
     
     if( inASCII == 'h' ) {
         mShowUI = ! mShowUI;
+        skipDrawingSubComponents( ! mShowUI );
         }
     else if( inASCII == 'f' ) {
         c->flipH = ! c->flipH;

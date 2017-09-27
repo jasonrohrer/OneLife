@@ -41,6 +41,7 @@ GamePage::GamePage()
           mStatusError( false ),
           mStatusMessageKey( NULL ),
           mStatusMessage( NULL ),
+          mSkipDrawingSubComponents( false ),
           mTip( NULL ),
           mLastTip( NULL ),
           mLastTipFade( 1 ),
@@ -88,6 +89,13 @@ GamePage::~GamePage() {
         sWaitingSprites[2] = NULL;
         sResponseWarningSprite = NULL;
         }
+    }
+
+
+
+
+void GamePage::skipDrawingSubComponents( char inSkip ) {
+    mSkipDrawingSubComponents = inSkip;
     }
 
 
@@ -197,8 +205,9 @@ void GamePage::base_draw( doublePair inViewCenter,
     
     drawUnderComponents( inViewCenter, inViewSize );
 
-
-    PageComponent::base_draw( inViewCenter, inViewSize );
+    if( !mSkipDrawingSubComponents ) {
+        PageComponent::base_draw( inViewCenter, inViewSize );
+        }
     
     char statusDrawn = false;
     
