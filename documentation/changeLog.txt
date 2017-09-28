@@ -69,6 +69,7 @@ Version 33     ???
 
 --Support for extra animation slots (for use in trailer animations).
 
+--Support for live animation triggers in game client (for trailer).
 
 
 

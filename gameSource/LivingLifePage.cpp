@@ -14,6 +14,8 @@
 #include "ageControl.h"
 #include "musicPlayer.h"
 
+#include "liveAnimationTriggers.h"
+
 #include "../commonSource/fractalNoise.h"
 
 #include "minorGems/util/SimpleVector.h"
@@ -1071,6 +1073,8 @@ LivingLifePage::LivingLifePage()
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! " ),
           mDeathReason( NULL ) {
+    
+    initLiveTriggers();
 
     for( int i=0; i<4; i++ ) {
         char *name = autoSprintf( "ground_t%d.tga", i );    
@@ -1295,6 +1299,7 @@ LivingLifePage::~LivingLifePage() {
             numServerBytesRead, overheadServerBytesRead,
             numServerBytesSent, overheadServerBytesSent );
     
+    freeLiveTriggers();
 
     readyPendingReceivedMessages.deallocateStringElements();
     
@@ -5462,6 +5467,22 @@ void LivingLifePage::step() {
     
     
     LiveObject *ourObject = getOurLiveObject();
+
+
+    if( ourObject != NULL ) {
+        char newTrigger = false;
+        
+        AnimType anim = stepLiveTriggers( &newTrigger );
+        
+        if( anim != endAnimType && newTrigger ) {
+            addNewAnim( ourObject, anim );
+            }
+        else if( anim == endAnimType && ourObject->curAnim > endAnimType ) {
+            // trigger is over, back to ground
+            addNewAnim( ourObject, ground );
+            }
+        }
+    
     
     if( ourObject != NULL && mNextHintObjectID != 0 &&
         getNumHints( mNextHintObjectID ) > 0 ) {
@@ -11513,6 +11534,8 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
     }
 
 void LivingLifePage::keyDown( unsigned char inASCII ) {
+    
+    registerTriggerKeyCommand( inASCII );
     
     switch( inASCII ) {
         /*

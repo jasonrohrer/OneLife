@@ -55,6 +55,7 @@ ValueSlider.cpp \
 SpriteButton.cpp \
 SpriteToggleButton.cpp \
 categoryBank.cpp \
+liveAnimationTriggers.cpp \
 
 
 
