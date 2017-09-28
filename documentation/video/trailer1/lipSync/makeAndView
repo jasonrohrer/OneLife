@@ -1,5 +1,8 @@
 ./makeGenMouthShapes.sh
 
+mkdir out
+mkdir mouthShapes
+
 rm mouthShapes/*
 
 # to view mouths on white background separately
@@ -11,7 +14,7 @@ mv mouthsPNG/*.tga mouthShapes
 
 rm out/*
 
-./genMouthShapes  test2.aiff  60 6 0.05 mouthShapes out mouthFrameList.txt
+./genMouthShapes  test.aiff  60 6 0.05 mouthShapes out mouthFrameList.txt
 
 rm -f test.mkv
 
