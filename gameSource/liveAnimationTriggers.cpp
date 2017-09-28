@@ -8,7 +8,8 @@
 
 static char enabled = false;
 
-static char triggerKey = '@';
+// backtick is trigger key
+static char triggerKey = '`';
 
 
 static const char *triggerFileName = "liveTriggers.txt";
