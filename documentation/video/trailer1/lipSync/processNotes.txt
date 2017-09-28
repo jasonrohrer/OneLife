@@ -2,8 +2,13 @@
 
 1.  Use fast computer to ensure 60 fps during audio recording
 
-2.  Move around world and talk live into mic.  Trim resulting audio 
-    and save as mono AIFF.
+2.  Start audio recording.
+
+2b. Launch game and make POP sound as soon as character is visible, then
+    rest for a second and prepare to live-act the video.
+ 
+2c. Move around world and talk live into mic.  Trim resulting audio at POP 
+    and save as mono AIFF test.aiff.  Also convert to stereo as testStereo.wav 
 
 3.  Switch on white background in makeAndView and then run it to test sync.
 
