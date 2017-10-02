@@ -2564,6 +2564,28 @@ void processLoggedInPlayer( Socket *inSock,
             Time::getCurrentTime() - forceAge * ( 1.0 / getAgeRate() );
         }
     
+
+    if( areTriggersEnabled() ) {
+        int id = getTriggerPlayerDisplayID( inEmail );
+        
+        if( id != -1 ) {
+            newObject.displayID = id;
+            
+            newObject.lifeStartTimeSeconds = 
+                Time::getCurrentTime() - 
+                getTriggerPlayerAge( inEmail ) * ( 1.0 / getAgeRate() );
+        
+            GridPos pos = getTriggerPlayerPos( inEmail );
+            
+            newObject.xd = pos.x;
+            newObject.yd = pos.y;
+            newObject.xs = pos.x;
+            newObject.ys = pos.y;
+            newObject.xd = pos.x;
+            }
+        }
+    
+
     
     newObject.pathLength = 0;
     newObject.pathToDest = NULL;
@@ -3268,6 +3290,11 @@ int main() {
                 break;
                 }
             }
+
+        if( areTriggersEnabled() ) {
+            minMoveTime = 0;
+            }
+        
         
         SocketOrServer *readySock =  NULL;
 
@@ -3429,7 +3456,9 @@ int main() {
             }
         
 
-
+        stepTriggers();
+        
+        
         // listen for messages from new connections
 
         for( int i=0; i<newConnections.size(); i++ ) {

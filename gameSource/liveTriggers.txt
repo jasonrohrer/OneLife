@@ -6,4 +6,9 @@ anim 1 120
 anim 0 240
 server 0
 server 1
-server 0
+server 2
+server 3
+server 4
+server 5
+server 6
+server 7
