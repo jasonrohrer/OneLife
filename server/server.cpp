@@ -34,6 +34,8 @@
 #include "lifeLog.h"
 #include "foodLog.h"
 #include "backup.h"
+#include "triggers.h"
+
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
 
@@ -493,6 +495,8 @@ void quitCleanup() {
     freeLifeLog();
     
     freeFoodLog();
+    
+    freeTriggers();
 
     freeMap();
 
@@ -619,6 +623,7 @@ typedef enum messageType {
     KILL,
     SAY,
     MAP,
+    TRIGGER,
     UNKNOWN
     } messageType;
 
@@ -628,6 +633,9 @@ typedef enum messageType {
 typedef struct ClientMessage {
         messageType type;
         int x, y, c, i;
+        
+        int trigger;
+        
 
         // some messages have extra positions attached
         int numExtraPos;
@@ -653,6 +661,7 @@ ClientMessage parseMessage( char *inMessage ) {
     
     m.i = -1;
     m.c = -1;
+    m.trigger = -1;
     m.numExtraPos = 0;
     m.extraPos = NULL;
     m.saidText = NULL;
@@ -663,7 +672,16 @@ ClientMessage parseMessage( char *inMessage ) {
 
 
     if( numRead != 3 ) {
-        m.type = UNKNOWN;
+        
+        if( numRead == 2 &&
+            strcmp( nameBuffer, "TRIGGER" ) == 0 ) {
+            m.type = TRIGGER;
+            m.trigger = m.x;
+            }
+        else {
+            m.type = UNKNOWN;
+            }
+        
         return m;
         }
     
@@ -3047,7 +3065,8 @@ int main() {
     
     initLifeLog();
     initBackup();
-
+    initTriggers();
+    
 
     nextSequenceNumber = 
         SettingsManager::getIntSetting( "sequenceNumber", 1 );
@@ -3891,6 +3910,11 @@ int main() {
                     else {
                         AppLog::infoF( "Map pull request rejected for %s", 
                                        nextPlayer->email );
+                        }
+                    }
+                else if( m.type == TRIGGER ) {
+                    if( areTriggersEnabled() ) {
+                        trigger( m.trigger );
                         }
                     }
                 // if player is still moving, ignore all actions

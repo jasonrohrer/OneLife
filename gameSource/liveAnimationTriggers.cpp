@@ -2,6 +2,7 @@
 
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/SettingsManager.h"
+#include "minorGems/util/stringUtils.h"
 
 #include <stdio.h>
 
@@ -20,6 +21,9 @@ typedef struct Trigger {
         int extraAnimIndex;
         int stepDuration;
         int numStepsPlayed;
+
+        char isServerTrigger;
+        int serverTriggerNumber;
     } Trigger;
 
 
@@ -46,30 +50,54 @@ void initLiveTriggers() {
         return;
         }
     
-    int numRead = 2;
+    char readTrigger = true;
     
     // switch back and forth between these
     // so that triggered animations automatically blend between each other
     AnimType anim1 = extra;
     AnimType anim2 = extraB;
 
-    while( numRead == 2 ) {
+    while( readTrigger ) {
         Trigger t;
         
+        readTrigger = false;
 
-        numRead = fscanf( f, "%d %d", 
-                          &( t.extraAnimIndex ), &( t.stepDuration ) );
+        char buffer[100];
         
-        if( numRead == 2 ) {
-            t.numStepsPlayed = 0;
-            t.anim = anim1;
+        int numRead = fscanf( f, "%99s ", buffer );
+        
+        if( numRead == 1 ) {
             
-            // swap
-            AnimType temp = anim1;
-            anim1 = anim2;
-            anim2 = temp;
+            if( strcmp( buffer, "anim" ) == 0 ) {
 
-            triggers.push_back( t );
+                numRead = fscanf( f, "%d %d", 
+                                  &( t.extraAnimIndex ), &( t.stepDuration ) );
+        
+                if( numRead == 2 ) {
+                    t.numStepsPlayed = 0;
+                    t.anim = anim1;
+                    t.isServerTrigger = false;
+                    
+                    // swap
+                    AnimType temp = anim1;
+                    anim1 = anim2;
+                    anim2 = temp;
+                    
+                    triggers.push_back( t );
+                    readTrigger = true;
+                    }
+                }
+            else if( strcmp( buffer, "server" ) == 0 ) {
+                numRead = fscanf( f, "%d", 
+                                  &( t.serverTriggerNumber ) );
+        
+                if( numRead == 1 ) {
+                    t.isServerTrigger = true;
+                    
+                    triggers.push_back( t );
+                    readTrigger = true;
+                    }
+                }            
             }
         }
     
@@ -90,12 +118,26 @@ void freeLiveTriggers() {
 
 
 // send in a key command received from user that make trigger an animation
-void registerTriggerKeyCommand( unsigned char inASCII ) {
+void registerTriggerKeyCommand( unsigned char inASCII,
+                                LivingLifePage *inPage ) {
     if( !enabled ) return;
     
     if( inASCII == triggerKey && triggers.size() > 0 ) {
-        
-        currentTrigger = triggers.getElementDirect( 0 );
+
+        Trigger nextTrigger = triggers.getElementDirect( 0 );
+
+        if( nextTrigger.isServerTrigger ) {
+            
+            char *message = autoSprintf( "TRIGGER %d#",
+                                         nextTrigger.serverTriggerNumber );
+            
+            inPage->sendToServerSocket( message );
+            
+            delete [] message;
+            }
+        else {
+            currentTrigger = nextTrigger;
+            }
         
         triggers.deleteElement( 0 );
         }

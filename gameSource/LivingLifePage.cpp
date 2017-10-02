@@ -11535,7 +11535,7 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
 
 void LivingLifePage::keyDown( unsigned char inASCII ) {
     
-    registerTriggerKeyCommand( inASCII );
+    registerTriggerKeyCommand( inASCII, this );
     
     switch( inASCII ) {
         /*

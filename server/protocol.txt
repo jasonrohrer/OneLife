@@ -449,9 +449,20 @@ SAY text cannot contain the # character and will be truncated at the
 
 
 
-Finally, a special command client can send, but only if the server
-is configured to allow it (if disabled on server, it has no effect)
+Finally, special commands client can send, but only if the server
+is configured to allow it (if disabled on server, they have no effect)
 
 MAP x y#
 
 Requests a map chunk centered on (x,y)
+
+
+
+
+TRIGGER trigger_number#
+
+Sends trigger trigger_number to server.
+
+Example:
+
+TRIGGER 5#

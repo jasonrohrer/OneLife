@@ -30,7 +30,8 @@ map.cpp \
 kissdb.cpp \
 lifeLog.cpp \
 foodLog.cpp \
-backup.cpp
+backup.cpp \
+triggers.cpp \
 
 GAME_GRAPHICS = \
 

@@ -1,5 +1,9 @@
-0 60
-1 60
-0 60
-1 120
-0 240
+anim 0 60
+anim 1 60
+anim 0 60
+server 0
+anim 1 120
+anim 0 240
+server 0
+server 1
+server 0

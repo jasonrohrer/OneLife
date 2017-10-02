@@ -319,6 +319,9 @@ class LivingLifePage : public GamePage {
         virtual void keyUp( unsigned char inASCII );
 
         
+        // handles error detection, total byte counting, etc.
+        void sendToServerSocket( char *inMessage );
+        
     protected:
 
         int mServerSocket;
@@ -606,8 +609,6 @@ class LivingLifePage : public GamePage {
         
 
 
-        // handles error detection, total byte counting, etc.
-        void sendToServerSocket( char *inMessage );
         
 
         ExtraMapObject copyFromMap( int inMapI );

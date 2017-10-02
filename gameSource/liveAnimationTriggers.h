@@ -1,4 +1,5 @@
 #include "animationBank.h"
+#include "LivingLifePage.h"
 
 // live triggers for video-making
 
@@ -10,7 +11,7 @@ void freeLiveTriggers();
 
 
 // send in a key command received from user that make trigger an animation
-void registerTriggerKeyCommand( unsigned char inASCII );
+void registerTriggerKeyCommand( unsigned char inASCII, LivingLifePage *inPage );
 
 
 // Returns endAnimType if no trigger present this step
