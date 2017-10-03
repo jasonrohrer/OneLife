@@ -167,6 +167,8 @@ static LiveDummySocket newDummyPlayer( const char *inEmail,
                       messageLength, 
                       false, false );
     
+    delete [] message;
+    
     return s;
     }
 
@@ -183,11 +185,13 @@ void sendDummyMove( LiveDummySocket *inDummy,
         
         char *oldMessage = message;
         
-        message = 
-            concatonate( message,
-                         autoSprintf( "%d %d ",
-                                      inOffsets->getElementDirect( i ).x,
-                                      inOffsets->getElementDirect( i ).y ) );
+        char *newPart = autoSprintf( "%d %d ",
+                                     inOffsets->getElementDirect( i ).x,
+                                     inOffsets->getElementDirect( i ).y );
+        message = concatonate( message, newPart );
+        
+        delete [] newPart;
+        
         delete [] oldMessage;
         }
 
@@ -225,12 +229,14 @@ void sendDummyAction( LiveDummySocket *inDummy,
         char *oldMessage = message;
         message = concatonate( message, extra );
         delete [] oldMessage;
+        delete [] extra;
         }
     if( inUseExtraB ) {
         char *extra = autoSprintf( " %d", inExtraB );
         char *oldMessage = message;
         message = concatonate( message, extra );
         delete [] oldMessage;
+        delete [] extra;
         }
     
     char *oldMessage = message;
