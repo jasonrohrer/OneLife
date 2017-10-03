@@ -108,6 +108,8 @@ EditorScenePage::EditorScenePage()
           mShiftY( 0 ),
           mCurX( 6 ),
           mCurY( 3 ),
+          mZeroX( 6 ),
+          mZeroY( 3 ),
           mFrameCount( 0 ),
           mLittleDheld( false ),
           mBigDheld( false ),
@@ -260,6 +262,7 @@ EditorScenePage::EditorScenePage()
     addKeyClassDescription( &mKeyLegend, "i/I", "Insert contained/held" );
     addKeyClassDescription( &mKeyLegend, "Bkspc", "Clear cell" );
     addKeyClassDescription( &mKeyLegend, "Hold d/D", "Set obj/person dest" );
+    addKeyDescription( &mKeyLegend, 'o', "Set map origin" );
     addKeyDescription( &mKeyLegend, 'h', "Hide/show UI" );
 
     addKeyClassDescription( &mKeyLegendG, "R-Click", "Flood fill" );
@@ -470,7 +473,7 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
                         floorID = 0;
                         }
                     
-                    fprintf( f, "%d %d %d %d %d", x - mCurX, -( y - mCurY ), 
+                    fprintf( f, "%d %d %d %d %d", x - mZeroX, -( y - mZeroY ), 
                              c->biome, floorID, oID );
 
                     for( int i=0; i< c->contained.size(); i++ ) {
@@ -1397,6 +1400,52 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
         }
 
 
+
+    // draw + at origin
+    doublePair zeroPos = cornerPos;
+                
+    zeroPos.x += mZeroX * CELL_D;
+    zeroPos.y -= mZeroY * CELL_D;
+
+    zeroPos.x += mShiftX * CELL_D;
+    zeroPos.y += mShiftY * CELL_D;
+    
+
+    startAddingToStencil( false, true );
+    
+    setDrawColor( 1, 1, 1, 1 );
+    
+    
+    doublePair cornerPos = zeroPos;
+    cornerPos.x -= 33;
+    cornerPos.y -= 33;
+    drawSquare( cornerPos, 32 );
+
+    cornerPos = zeroPos;
+    cornerPos.x += 33;
+    cornerPos.y -= 33;
+    drawSquare( cornerPos, 32 );
+
+    cornerPos = zeroPos;
+    cornerPos.x -= 33;
+    cornerPos.y += 33;
+    drawSquare( cornerPos, 32 );
+
+    cornerPos = zeroPos;
+    cornerPos.x += 33;
+    cornerPos.y += 33;
+    drawSquare( cornerPos, 32 );
+
+    startDrawingThroughStencil( true );
+    
+    setDrawColor( 1, 0, 0, 0.75 );
+    drawSquare( zeroPos, 64 );
+
+    stopStencil();
+
+    
+
+
     SceneCell *c = getCurrentCell();
     SceneCell *p = getCurrentPersonCell();
     
@@ -1497,6 +1546,10 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
     if( inASCII == 'h' ) {
         mShowUI = ! mShowUI;
         skipDrawingSubComponents( ! mShowUI );
+        }
+    else if( inASCII == 'o' ) {
+        mZeroX = mCurX;
+        mZeroY = mCurY;
         }
     else if( inASCII == 'f' ) {
         c->flipH = ! c->flipH;
@@ -1608,9 +1661,9 @@ void EditorScenePage::keyUp( unsigned char inASCII ) {
     if( inASCII == 'd' || inASCII == 'D' ) {
         mLittleDheld = false;
         mBigDheld = false;
+            
+        checkVisible();
         }
-    
-    checkVisible();
     }
 
 
@@ -1881,6 +1934,7 @@ void EditorScenePage::writeSceneToFile( int inIDToUse ) {
         
     lines.push_back( autoSprintf( "w=%d", mSceneW ) );
     lines.push_back( autoSprintf( "h=%d", mSceneH ) );
+    lines.push_back( autoSprintf( "origin=%d,%d", mZeroX, mZeroY ) );
     lines.push_back( stringDuplicate( "floorPresent" ) );
     
     for( int y=0; y<mSceneH; y++ ) {
@@ -2109,6 +2163,11 @@ char EditorScenePage::tryLoadScene( int inSceneID ) {
             
             if( w != mSceneW || h != mSceneH ) {
                 resizeGrid( h, w );
+                }
+
+            if( strstr( lines[next], "origin" ) != NULL ) {
+                sscanf( lines[next], "origin=%d,%d", &mZeroX, &mZeroY );
+                next++;
                 }
             
             char floorPresent = false;

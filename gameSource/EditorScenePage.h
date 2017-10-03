@@ -160,6 +160,9 @@ class EditorScenePage : public GamePage, public ActionListener {
         
         int mCurX, mCurY;
         
+        // location of origing in scene
+        int mZeroX, mZeroY;
+
         double mFrameCount;
         
         char mLittleDheld;
