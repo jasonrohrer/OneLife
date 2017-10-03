@@ -71,6 +71,9 @@ Version 33     ???
 
 --Support for live animation triggers in game client (for trailer).
 
+--Fixed other player wiggle direction on first action caused by uninitialized
+  value.
+
 
 
 Server fixes:

@@ -6842,7 +6842,12 @@ void LivingLifePage::step() {
                 o.clothing = getEmptyClothingSet();
                 
                 o.somePendingMessageIsMoreMovement = false;
+
                 
+                o.actionTargetTweakX = 0;
+                o.actionTargetTweakY = 0;
+                
+
                 int forced = 0;
                 int done_moving = 0;
                 
