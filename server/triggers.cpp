@@ -279,6 +279,28 @@ LiveDummySocket *alice = NULL;
 
 
 
+static char moveUsed = false;
+static SimpleVector<GridPos> workingMove;
+
+
+static void addToMove( int inXOffset, int inYOffset ) {
+    if( moveUsed ) {
+        workingMove.deleteAll();
+        moveUsed = false;
+        }
+
+    GridPos p = { inXOffset, inYOffset };
+    workingMove.push_back( p );
+    }
+
+
+static SimpleVector<GridPos> *finishMove() {
+    moveUsed = true;
+    return &workingMove;
+    }
+
+
+
 
 void trigger( int inTriggerNumber ) {
     
@@ -321,43 +343,29 @@ void trigger( int inTriggerNumber ) {
             dummySockets.getElement( dummySockets.size() - 1 );        
         }
     else if( inTriggerNumber == t++ ) {
-        SimpleVector<GridPos> move;
-        offset.x = 1;
+        addToMove( 1, 0 );
+        addToMove( 2, 0 );
         
-        move.push_back( offset );
-        offset.x = 2;
-        
-        move.push_back( offset );
-        
-        sendDummyMove( alice, &move );
+        sendDummyMove( alice, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         offset.y = 1;
         sendDummyAction( alice, "DROP", offset, true, -1 );
         }
     else if( inTriggerNumber == t++ ) {
-        SimpleVector<GridPos> move;
-        offset.x = -1;
+        addToMove( -1, 0 );
+        addToMove( -2, 0 );
         
-        move.push_back( offset );
-        offset.x = -2;
-        
-        move.push_back( offset );
-        
-        sendDummyMove( alice, &move );
+        sendDummyMove( alice, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         offset.y = 1;
         sendDummyAction( alice, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {        
-        SimpleVector<GridPos> move;
-        
-        offset.x = -1;
-        
-        move.push_back( offset );
-        
-        sendDummyMove( alice, &move );
+        addToMove( -1, 0 );
+
+        sendDummyMove( alice, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         offset.y = 1;
