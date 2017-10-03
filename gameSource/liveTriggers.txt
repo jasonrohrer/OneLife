@@ -1,9 +1,4 @@
-anim 0 60
 anim 1 60
-anim 0 60
-server 0
-anim 1 120
-anim 0 240
 server 0
 server 1
 server 2
@@ -13,3 +8,14 @@ server 5
 server 6
 server 7
 server 8
+server 9
+server 10
+server 11
+server 12
+server 13
+server 14
+server 15
+server 16
+server 17
+server 18
+server 19
