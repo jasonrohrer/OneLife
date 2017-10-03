@@ -12,7 +12,6 @@
 
 static char triggersEnabled = false;
 
-static double triggerStartTime = 0;
 
 
 typedef struct PlayerMapping {
@@ -58,6 +57,20 @@ void initTriggers() {
                     "is enabled in server settings folder.  Exiting.\n\n" );
             exit( 0 );
             }
+
+        ClothingSet clothing = getEmptyClothingSet();
+        
+        clothing.hat = getObject( 199 );
+        clothing.bottom = getObject( 200 );
+
+        PlayerMapping narrator = {
+            "test@test.com",
+            433,
+            20,
+            { 0, 0 },
+            0, clothing };
+        
+        playerMap.push_back( narrator );
         }
     }
 
@@ -298,9 +311,6 @@ static SimpleVector<GridPos> *finishMove() {
 
 void trigger( int inTriggerNumber ) {
     
-    if( triggerStartTime == 0 ) {
-        triggerStartTime = Time::getCurrentTime();
-        }
     
     GridPos offset = { 0, 0 };
     ClothingSet clothing = getEmptyClothingSet();
