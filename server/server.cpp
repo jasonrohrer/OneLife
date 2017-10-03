@@ -3295,10 +3295,6 @@ int main() {
                 break;
                 }
             }
-
-        if( areTriggersEnabled() ) {
-            minMoveTime = 0;
-            }
         
         
         SocketOrServer *readySock =  NULL;

@@ -28,10 +28,6 @@ static SimpleVector<PlayerMapping> playerMap;
     
 
 
-typedef struct DummyMove {
-        double triggerTimeSec;
-        const char *moveText;
-    } DummyMoves;
         
 
 
@@ -39,8 +35,6 @@ typedef struct LiveDummySocket {
         double socketStartTime;
         Socket *sock;
         GridPos pos;
-
-        SimpleVector<DummyMove> moves;
     } LiveDummySocket;
 
 
@@ -381,8 +375,6 @@ void stepTriggers() {
         return;
         }
     
-    double curTime = Time::getCurrentTime();
-    
     for( int i=0; i<dummySockets.size(); i++ ) {
         LiveDummySocket *s = dummySockets.getElement( i );
         
@@ -394,35 +386,6 @@ void stepTriggers() {
         
         while( numRead > 0 ) {
             numRead = s->sock->receive( (unsigned char*)buffer, 512, 0 );
-            }
-        
-        
-
-        if( s->moves.size() > 0
-            &&
-            s->socketStartTime + s->moves.getElementDirect(0).triggerTimeSec <= 
-            curTime ) {
-            
-            const char *text = s->moves.getElementDirect(0).moveText;
-            
-            int messageLength = strlen( text );
-
-            int numSent = 
-                s->sock->send( (unsigned char*)text, 
-                               messageLength, 
-                               false, false );
-            
-            if( numSent == -1 ) {
-                delete s->sock;
-                dummySockets.deleteElement( i );
-                i--;
-                }
-            else if( numSent == messageLength ) {
-                // done sending this message
-                s->moves.deleteElement( 0 );
-                }
-            // else hold for later
-            
             }
         }
     
