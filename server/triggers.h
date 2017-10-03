@@ -1,4 +1,5 @@
 #include "../gameSource/GridPos.h"
+#include "../gameSource/objectBank.h"
 
 
 // client-issued server-side triggers
@@ -21,6 +22,12 @@ int getTriggerPlayerDisplayID( const char *inPlayerEmail );
 double getTriggerPlayerAge( const char *inPlayerEmail );
 
 GridPos getTriggerPlayerPos( const char *inPlayerEmail );
+
+// only supports a single held id, and not containment
+int getTriggerPlayerHolding( const char *inPlayerEmail );
+
+ClothingSet getTriggerPlayerClothing( const char *inPlayerEmail );
+
 
 
 void trigger( int inTriggerNumber );

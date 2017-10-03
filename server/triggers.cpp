@@ -20,6 +20,8 @@ typedef struct PlayerMapping {
         int displayID;
         double startAge;
         GridPos startPos;
+        int holdingID;
+        ClothingSet clothing;
     } PlayerMapping;
 
 static SimpleVector<PlayerMapping> playerMap;
@@ -83,26 +85,35 @@ char areTriggersEnabled() {
 
 
 
-int getTriggerPlayerDisplayID( const char *inPlayerEmail ) {
+static PlayerMapping *getTriggerPlayer( const char *inPlayerEmail ) {
     for( int i=0; i<playerMap.size(); i++ ) {
-        PlayerMapping p = playerMap.getElementDirect( i );
+        PlayerMapping *p = playerMap.getElement( i );
         
-        if( strcmp( p.email, inPlayerEmail ) == 0 ) {
-            return p.displayID;
+        if( strcmp( p->email, inPlayerEmail ) == 0 ) {
+            return p;
             }
         }
+    return NULL;
+    }
 
+        
+
+int getTriggerPlayerDisplayID( const char *inPlayerEmail ) {
+    PlayerMapping *p = getTriggerPlayer( inPlayerEmail );
+    
+    if( p != NULL ) {
+        return p->displayID;
+        }
+    
     return -1;
     }
 
 
 double getTriggerPlayerAge( const char *inPlayerEmail ) {
-    for( int i=0; i<playerMap.size(); i++ ) {
-        PlayerMapping p = playerMap.getElementDirect( i );
-        
-        if( strcmp( p.email, inPlayerEmail ) == 0 ) {
-            return p.startAge;
-            }
+    PlayerMapping *p = getTriggerPlayer( inPlayerEmail );
+    
+    if( p != NULL ) {
+        return p->startAge;
         }
 
     return -1;
@@ -111,12 +122,10 @@ double getTriggerPlayerAge( const char *inPlayerEmail ) {
 
 
 GridPos getTriggerPlayerPos( const char *inPlayerEmail ) {
-    for( int i=0; i<playerMap.size(); i++ ) {
-        PlayerMapping p = playerMap.getElementDirect( i );
-        
-        if( strcmp( p.email, inPlayerEmail ) == 0 ) {
-            return p.startPos;
-            }
+    PlayerMapping *p = getTriggerPlayer( inPlayerEmail );
+    
+    if( p != NULL ) {
+        return p->startPos;
         }
 
     GridPos badPos = { -1, -1 };
@@ -125,11 +134,38 @@ GridPos getTriggerPlayerPos( const char *inPlayerEmail ) {
 
 
 
+int getTriggerPlayerHolding( const char *inPlayerEmail ) {
+    PlayerMapping *p = getTriggerPlayer( inPlayerEmail );
+    
+    if( p != NULL ) {
+        return p->holdingID;
+        }
+
+    return 0;
+    }
+
+
+
+ClothingSet getTriggerPlayerClothing( const char *inPlayerEmail ) {
+    PlayerMapping *p = getTriggerPlayer( inPlayerEmail );
+    
+    if( p != NULL ) {
+        return p->clothing;
+        }
+
+    return getEmptyClothingSet();
+    }
+
+
+
 static LiveDummySocket newDummyPlayer( const char *inEmail,
                                        int inDisplayID,
                                        double inStartAge,
-                                       GridPos inStartPos ) {
-    PlayerMapping m = { inEmail, inDisplayID, inStartAge, inStartPos };
+                                       GridPos inStartPos,
+                                       int inHoldingID,
+                                       ClothingSet inClothing ) {
+    PlayerMapping m = { inEmail, inDisplayID, inStartAge, inStartPos,
+                        inHoldingID, inClothing };
     
     playerMap.push_back( m );
     
@@ -201,11 +237,31 @@ void sendDummyMove( LiveDummySocket *inDummy,
 
 // offset is from current pos
 void sendDummyAction( LiveDummySocket *inDummy, 
-                      const char *inAction, GridPos inOffset ) {
-    char *message = autoSprintf( "%s %d %d#",
+                      const char *inAction, GridPos inOffset,
+                      char inUseExtraA = false, int inExtraA = -1,
+                      char inUseExtraB = false, int inExtraB = -1 ) {
+    char *message = autoSprintf( "%s %d %d",
                                  inAction, 
                                  inDummy->pos.x + inOffset.x,
                                  inDummy->pos.y + inOffset.y );
+    
+    if( inUseExtraA ) {
+        char *extra = autoSprintf( " %d", inExtraA );
+        char *oldMessage = message;
+        message = concatonate( message, extra );
+        delete [] oldMessage;
+        }
+    if( inUseExtraB ) {
+        char *extra = autoSprintf( " %d", inExtraB );
+        char *oldMessage = message;
+        message = concatonate( message, extra );
+        delete [] oldMessage;
+        }
+    
+    char *oldMessage = message;
+    message = concatonate( message, "#" );
+    delete [] oldMessage;
+
     
     inDummy->sock->send( (unsigned char*)message, 
                          strlen( message ), 
@@ -231,19 +287,32 @@ void trigger( int inTriggerNumber ) {
         }
     
     GridPos offset = { 0, 0 };
+    ClothingSet clothing = getEmptyClothingSet();
 
     
-    if( inTriggerNumber == 0 ) {
+    // increment this as we check for matches
+    // thus, we can rearrange trigger order below
+    // without having to update all the trigger numbers
+    int t = 0;
+    
+    
+    if( inTriggerNumber == t++ ) {
         setMapObject( 2, 0, 418 );
         }
-    else if( inTriggerNumber == 1 ) {
+    else if( inTriggerNumber == t++ ) {
         setMapObject( 2, 0, 153 );
         }
-    else if( inTriggerNumber == 2 ) {
+    else if( inTriggerNumber == t++ ) {
         GridPos startPos = { 1, 1 };
         
+        clothing.hat = getObject( 199 );
+        clothing.bottom = getObject( 200 );
+        
+        
         LiveDummySocket s = newDummyPlayer( "dummy1@test.com", 350, 20,
-                                            startPos );
+                                            startPos,
+                                            71,
+                                            clothing );
         
         dummySockets.push_back( s );
 
@@ -251,7 +320,7 @@ void trigger( int inTriggerNumber ) {
         alice = 
             dummySockets.getElement( dummySockets.size() - 1 );        
         }
-    else if( inTriggerNumber == 3 ) {
+    else if( inTriggerNumber == t++ ) {
         SimpleVector<GridPos> move;
         offset.x = 1;
         
@@ -262,7 +331,11 @@ void trigger( int inTriggerNumber ) {
         
         sendDummyMove( alice, &move );
         }
-    else if( inTriggerNumber == 4 ) {
+    else if( inTriggerNumber == t++ ) {
+        offset.y = 1;
+        sendDummyAction( alice, "DROP", offset, true, -1 );
+        }
+    else if( inTriggerNumber == t++ ) {
         SimpleVector<GridPos> move;
         offset.x = -1;
         
@@ -273,11 +346,11 @@ void trigger( int inTriggerNumber ) {
         
         sendDummyMove( alice, &move );
         }
-    else if( inTriggerNumber == 5 ) {
+    else if( inTriggerNumber == t++ ) {
         offset.y = 1;
         sendDummyAction( alice, "USE", offset );
         }
-    else if( inTriggerNumber == 6 ) {        
+    else if( inTriggerNumber == t++ ) {        
         SimpleVector<GridPos> move;
         
         offset.x = -1;
@@ -286,7 +359,7 @@ void trigger( int inTriggerNumber ) {
         
         sendDummyMove( alice, &move );
         }
-    else if( inTriggerNumber == 7 ) {
+    else if( inTriggerNumber == t++ ) {
         offset.y = 1;
         sendDummyAction( alice, "USE", offset );
         }

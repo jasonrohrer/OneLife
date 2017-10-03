@@ -2565,6 +2565,9 @@ void processLoggedInPlayer( Socket *inSock,
         }
     
 
+    newObject.holdingID = 0;
+
+
     if( areTriggersEnabled() ) {
         int id = getTriggerPlayerDisplayID( inEmail );
         
@@ -2582,6 +2585,9 @@ void processLoggedInPlayer( Socket *inSock,
             newObject.xs = pos.x;
             newObject.ys = pos.y;
             newObject.xd = pos.x;
+            
+            newObject.holdingID = getTriggerPlayerHolding( inEmail );
+            newObject.clothing = getTriggerPlayerClothing( inEmail );
             }
         }
     
@@ -2598,7 +2604,6 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.actionAttempt = 0;
     newObject.actionTarget.x = 0;
     newObject.actionTarget.y = 0;
-    newObject.holdingID = 0;
     newObject.holdingEtaDecay = 0;
     newObject.heldOriginValid = 0;
     newObject.heldOriginX = 0;
