@@ -3092,7 +3092,6 @@ int main() {
     
     initLifeLog();
     initBackup();
-    initTriggers();
     
 
     nextSequenceNumber = 
@@ -3175,6 +3174,8 @@ int main() {
 
     initFoodLog();
     
+    initTriggers();
+
 
     initMap();
     
