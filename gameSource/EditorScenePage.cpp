@@ -1498,6 +1498,47 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     else {
         drawKeyLegend( &mKeyLegendF, legendPos, alignCenter );
         }
+
+
+    
+    int relX = mCurX - mZeroX;
+    int relY = mZeroY - mCurY;
+    
+    
+    
+    char *posStringX = autoSprintf( "%d,", relX );
+    char *posStringY = autoSprintf( " %d", relY );
+    
+    double w = smallFont->measureString( posStringX ) + 
+        smallFont->measureString( posStringY );
+
+    double h = smallFont->getFontHeight();
+    
+    w += 8;
+    h += 8;
+    
+    if( w < 84 ) {
+        w = 84;
+        }
+    
+    
+
+    doublePair posStringPos = mSaveNewButton.getPosition();
+    
+    posStringPos.y += 40;
+    
+
+    setDrawColor( 0, 0, 0, 0.5 );
+    
+    drawRect( posStringPos, w / 2, h / 2 );
+    
+    setDrawColor( 1, 1, 1, 1 );
+
+    smallFont->drawString( posStringX, posStringPos, alignRight );
+    smallFont->drawString( posStringY, posStringPos, alignLeft );
+
+    delete [] posStringX;
+    delete [] posStringY;
     }
 
 
