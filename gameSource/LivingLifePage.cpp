@@ -1072,7 +1072,8 @@ LivingLifePage::LivingLifePage()
           mPathMarkSprite( loadWhiteSprite( "pathMark.tga" ) ),
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! " ),
-          mDeathReason( NULL ) {
+          mDeathReason( NULL ),
+          mShowHighlights( true ) {
     
     initLiveTriggers();
 
@@ -1254,6 +1255,10 @@ LivingLifePage::LivingLifePage()
     mCurrentArrowHeat = -1;
     mCurrentDes = NULL;
     mCurrentLastAteString = NULL;
+
+    mShowHighlights = 
+        SettingsManager::getIntSetting( "showMouseOverHighlights", 1 );
+    
     }
 
 
@@ -1901,6 +1906,10 @@ void LivingLifePage::drawMapCell( int inMapI,
                         mPrevMouseOverSpotFades.getElementDirect(i);
                     }    
                 }
+            }
+        
+        if( ! mShowHighlights ) {
+            highlight = false;
             }
         
         
