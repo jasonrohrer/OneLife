@@ -19,7 +19,7 @@ static void customInit() {
 
 
 
-static LiveDummySocket *alice = NULL;
+static LiveDummySocket alice;
 
 
 
@@ -48,45 +48,39 @@ static void customTrigger( int inTriggerNumber ) {
         clothing.bottom = getObject( 200 );
         
         
-        LiveDummySocket s = newDummyPlayer( "dummy1@test.com", 350, 20,
-                                            startPos,
-                                            71,
-                                            clothing );
-        
-        dummySockets.push_back( s );
-
-        
-        alice = 
-            dummySockets.getElement( dummySockets.size() - 1 );        
+        alice = newDummyPlayer( "dummy1@test.com", 350, 20,
+                                startPos,
+                                71,
+                                clothing );
         }
     else if( inTriggerNumber == t++ ) {
         addToMove( 1, 0 );
         addToMove( 2, 0 );
         
-        sendDummyMove( alice, finishMove() );
+        sendDummyMove( &alice, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         offset.y = 1;
-        sendDummyAction( alice, "DROP", offset, true, -1 );
+        sendDummyAction( &alice, "DROP", offset, true, -1 );
         }
     else if( inTriggerNumber == t++ ) {
         addToMove( -1, 0 );
         addToMove( -2, 0 );
         
-        sendDummyMove( alice, finishMove() );
+        sendDummyMove( &alice, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         offset.y = 1;
-        sendDummyAction( alice, "USE", offset );
+        sendDummyAction( &alice, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {        
         addToMove( -1, 0 );
 
-        sendDummyMove( alice, finishMove() );
+        sendDummyMove( &alice, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         offset.y = 1;
-        sendDummyAction( alice, "USE", offset );
+        sendDummyAction( &alice, "USE", offset );
         }
     
     }

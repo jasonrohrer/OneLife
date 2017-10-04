@@ -18,9 +18,15 @@ static void customInit() {
 
 
 
-static LiveDummySocket *eve = NULL;
+// eve scene
+static LiveDummySocket eve;
+static LiveDummySocket firstBaby;
 
-static LiveDummySocket *firstBaby = NULL;
+// hunter-gatherer camp
+static LiveDummySocket bob;
+static LiveDummySocket alice;
+static LiveDummySocket bobby;
+
 
 
 
@@ -41,57 +47,51 @@ static void customTrigger( int inTriggerNumber ) {
         
         
         
-        LiveDummySocket s = newDummyPlayer( "dummy1@test.com", 19, 14,
+        eve = newDummyPlayer( "dummy1@test.com", 19, 14,
                                             startPos,
                                             0,
-                                            clothing );
-        
-        dummySockets.push_back( s );
-
-        
-        eve = 
-            dummySockets.getElement( dummySockets.size() - 1 );        
+                                            clothing );        
         }
     else if( inTriggerNumber == t++ ) {
         // grab stone
         offset.x = -1;
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         addToMove( -1, -1 );
         addToMove( -1, -2 );
         
-        sendDummyMove( eve, finishMove() );
+        sendDummyMove( &eve, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         // sharpen stone
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         addToMove( 1, -1 );
         addToMove( 2, -2 );
         addToMove( 2, -3 );
         
-        sendDummyMove( eve, finishMove() );
+        sendDummyMove( &eve, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         // cut reeds
         offset.x = -1;
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // drop stone
         offset.y = -1;
-        sendDummyAction( eve, "DROP", offset, true, -1 );
+        sendDummyAction( &eve, "DROP", offset, true, -1 );
         }
     else if( inTriggerNumber == t++ ) {
         // grab reeds
         offset.x = -1;
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // drop at feet
-        sendDummyAction( eve, "DROP", offset, true, -1 );
+        sendDummyAction( &eve, "DROP", offset, true, -1 );
         }
     else if( inTriggerNumber == t++ ) {
         // walk to milkweed patch A
@@ -100,102 +100,96 @@ static void customTrigger( int inTriggerNumber ) {
         addToMove( -1, 2 );
         addToMove( -2, 2 );
         
-        sendDummyMove( eve, finishMove() );
+        sendDummyMove( &eve, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         // grab stalk
         offset.x = -1;
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // drop at feet
-        sendDummyAction( eve, "DROP", offset, true, -1 );
+        sendDummyAction( &eve, "DROP", offset, true, -1 );
         }
     else if( inTriggerNumber == t++ ) {
         // grab other stalk
         offset.x = 1;
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // make strand at feet
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // walk to milkweed patch B
         addToMove( 0, -1 );
 
-        sendDummyMove( eve, finishMove() );
+        sendDummyMove( &eve, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         // grab stalk
         offset.x = -1;
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // drop at feet
-        sendDummyAction( eve, "DROP", offset, true, -1 );
+        sendDummyAction( &eve, "DROP", offset, true, -1 );
         }
     else if( inTriggerNumber == t++ ) {
         // grab other stalk
         offset.x = 1;
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // make strand at feet
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // grab other strand
         offset.y = 1;
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // make rope at feet
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // grab rope
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // walk back to reeds
         addToMove( 1, 0 );
         addToMove( 2, -1 );
         
-        sendDummyMove( eve, finishMove() );
+        sendDummyMove( &eve, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         // make skirt
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // grab skirt
-        sendDummyAction( eve, "USE", offset );
+        sendDummyAction( &eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // put on skirt
-        sendDummyAction( eve, "SELF", offset, true, 4 );
+        sendDummyAction( &eve, "SELF", offset, true, 4 );
         }
     else if( inTriggerNumber == t++ ) {
 
-        GridPos startPos = eve->pos;
+        GridPos startPos = eve.pos;
         
         
         
-        LiveDummySocket s = newDummyPlayer( "dummy2@test.com", 19, 0,
-                                            startPos,
-                                            0,
-                                            clothing );
-        
-        dummySockets.push_back( s );
-
-        
-        firstBaby = 
-            dummySockets.getElement( dummySockets.size() - 1 );        
+        firstBaby = newDummyPlayer( "dummy2@test.com", 19, 0,
+                                    startPos,
+                                    0,
+                                    clothing );
         }
     else if( inTriggerNumber == t++ ) {        
         // grab baby
-        sendDummyAction( eve, "BABY", offset );
+        sendDummyAction( &eve, "BABY", offset );
         }
     else if( inTriggerNumber == t++ ) {        
         // run away
@@ -206,8 +200,103 @@ static void customTrigger( int inTriggerNumber ) {
         addToMove( 5, -5 );
         addToMove( 6, -6 );
         
-        sendDummyMove( eve, finishMove() );
+        sendDummyMove( &eve, finishMove() );
         }
-    
+    else if( inTriggerNumber == t++ ) {
+        
+        GridPos startPos = { 26, -17 };
+        
+        clothing.bottom = getObject( 200 );
+        
+        bob = newDummyPlayer( "dummy3@test.com", 352, 50,
+                              startPos,
+                              0,
+                              clothing );
+
+        
+
+        GridPos startPosB = { 25, -19 };
+        
+        clothing.tunic = getObject( 201 );
+        
+        alice = newDummyPlayer( "dummy4@test.com", 350, 20,
+                                startPosB,
+                                67,
+                                clothing );
+        
+
+        GridPos startPosC = { 28, -18 };
+        
+        clothing.tunic = NULL;
+        
+        bobby = newDummyPlayer( "dummy5@test.com", 347, 6,
+                                startPosC,
+                                0,
+                                clothing );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // grab bow
+        offset.x = 1;
+        sendDummyAction( &bob, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // make ember
+        offset.y = 1;
+        sendDummyAction( &bob, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // drop bow
+        offset.x = 1;
+        sendDummyAction( &bob, "DROP", offset, true, -1 );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // grab leaf
+        offset.x = -1;
+        sendDummyAction( &bob, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // grab ember
+        offset.y = 1;
+        sendDummyAction( &bob, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {        
+        // walk nw
+        addToMove( -1, 1 );
+        
+        sendDummyMove( &bob, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // start tinder
+        sendDummyAction( &bob, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {        
+        // walk to kindling
+        addToMove( 1, -1 );
+        addToMove( 1, -2 );
+        
+        sendDummyMove( &bob, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // drop leaf
+        offset.y = 1;
+        sendDummyAction( &bob, "DROP", offset, true, -1 );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // grab kindling
+        sendDummyAction( &bob, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {        
+        // walk back up
+        addToMove( 0, 1 );
+        addToMove( 0, 2 );
+        
+        sendDummyMove( &bob, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // start fire
+        offset.x = -1;
+        sendDummyAction( &bob, "USE", offset );
+        }
+
     }
 

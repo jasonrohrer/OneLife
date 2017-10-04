@@ -37,7 +37,7 @@ typedef struct LiveDummySocket {
     } LiveDummySocket;
 
 
-SimpleVector<LiveDummySocket> dummySockets;
+SimpleVector<Socket*> dummySockets;
 
     
 
@@ -48,7 +48,7 @@ void freeTriggers() {
     triggersEnabled = false;
 
     for( int i=0; i<dummySockets.size(); i++ ) {
-        delete dummySockets.getElementDirect(i).sock;
+        delete dummySockets.getElementDirect(i);
         }
     dummySockets.deleteAll();
     }
@@ -156,6 +156,11 @@ static LiveDummySocket newDummyPlayer( const char *inEmail,
 
     char timeout;
     s.sock = SocketClient::connectToServer( &a, 100, &timeout );
+
+    if( s.sock != NULL ) {
+        dummySockets.push_back( s.sock );
+        }
+    
 
     // next send login message
 
@@ -286,6 +291,7 @@ static SimpleVector<GridPos> *finishMove() {
 // and
 // customTrigger
 #include "triggers/testVideo.cpp"
+//#include "triggers/test.cpp"
 
 
 
@@ -325,7 +331,7 @@ void stepTriggers() {
         }
     
     for( int i=0; i<dummySockets.size(); i++ ) {
-        LiveDummySocket *s = dummySockets.getElement( i );
+        Socket *s = dummySockets.getElementDirect( i );
         
         // read all available data and discard it
         
@@ -334,7 +340,7 @@ void stepTriggers() {
         int numRead = 1;
         
         while( numRead > 0 ) {
-            numRead = s->sock->receive( (unsigned char*)buffer, 512, 0 );
+            numRead = s->receive( (unsigned char*)buffer, 512, 0 );
             }
         }
     
