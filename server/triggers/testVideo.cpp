@@ -80,11 +80,6 @@ static void customTrigger( int inTriggerNumber ) {
         sendDummyAction( eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
-        // cut reeds
-        offset.x = 1;
-        sendDummyAction( eve, "USE", offset );
-        }
-    else if( inTriggerNumber == t++ ) {
         // drop stone
         offset.y = -1;
         sendDummyAction( eve, "DROP", offset, true, -1 );
@@ -99,15 +94,81 @@ static void customTrigger( int inTriggerNumber ) {
         sendDummyAction( eve, "DROP", offset, true, -1 );
         }
     else if( inTriggerNumber == t++ ) {
-        // grab reeds
+        // walk to milkweed patch A
+        addToMove( 0, 1 );
+        addToMove( 0, 2 );
+        addToMove( -1, 2 );
+        addToMove( -2, 2 );
+        
+        sendDummyMove( eve, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // grab stalk
+        offset.x = -1;
+        sendDummyAction( eve, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // drop at feet
+        sendDummyAction( eve, "DROP", offset, true, -1 );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // grab other stalk
         offset.x = 1;
         sendDummyAction( eve, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
-        // use at feet
+        // make strand at feet
         sendDummyAction( eve, "USE", offset );
         }
-    /*    else if( inTriggerNumber == t++ ) {        
+    else if( inTriggerNumber == t++ ) {
+        // walk to milkweed patch B
+        addToMove( 0, -1 );
+
+        sendDummyMove( eve, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // grab stalk
+        offset.x = -1;
+        sendDummyAction( eve, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // drop at feet
+        sendDummyAction( eve, "DROP", offset, true, -1 );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // grab other stalk
+        offset.x = 1;
+        sendDummyAction( eve, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // make strand at feet
+        sendDummyAction( eve, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // grab other strand
+        offset.y = 1;
+        sendDummyAction( eve, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // make rope at feet
+        sendDummyAction( eve, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // grab rope
+        sendDummyAction( eve, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // walk back to reeds
+        addToMove( 1, 0 );
+        addToMove( 2, -1 );
+        
+        sendDummyMove( eve, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // make skirt
+        sendDummyAction( eve, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
         // grab skirt
         sendDummyAction( eve, "USE", offset );
         }
@@ -115,7 +176,6 @@ static void customTrigger( int inTriggerNumber ) {
         // put on skirt
         sendDummyAction( eve, "SELF", offset, true, 4 );
         }
-    */
     else if( inTriggerNumber == t++ ) {
 
         GridPos startPos = eve->pos;
