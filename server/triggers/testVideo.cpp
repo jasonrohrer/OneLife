@@ -297,6 +297,51 @@ static void customTrigger( int inTriggerNumber ) {
         offset.x = -1;
         sendDummyAction( &bob, "USE", offset );
         }
+    else if( inTriggerNumber == t++ ) {        
+        // now Alice
+        // walk up and over
+        addToMove( 0, 1 );
+        addToMove( 0, 2 );
+        addToMove( -1, 3 );
+        
+        sendDummyMove( &alice, finishMove() );
+        
+
+        // now kid
+        // walk up
+        addToMove( 0, 1 );
+        
+        sendDummyMove( &bobby, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // light shaft
+        offset.x = 1;
+        sendDummyAction( &alice, "USE", offset );
+
+        
+        // grab skewer
+        offset.x = 0;
+        offset.y = 1;
+        sendDummyAction( &bobby, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // light other kindling
+        offset.x = -1;
+        sendDummyAction( &alice, "USE", offset );
+        
+
+        // walk nw
+        addToMove( -1, 1 );
+        addToMove( -2, 2 );
+        
+        sendDummyMove( &bobby, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // skewer rabbit
+        offset.x = -1;
+        sendDummyAction( &bobby, "USE", offset );
+        }
+
 
     }
 
