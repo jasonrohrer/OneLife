@@ -3713,8 +3713,21 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     drawRec.person = true;
                     drawRec.personO = o;
                     
-                    drawQueue.insert( drawRec, 0 - o->currentPos.y );
+
+                    double depth = 0 - o->currentPos.y;
                     
+                    if( lrint( depth ) - depth == 0 ) {
+                        // break ties (co-occupied cells) by drawing 
+                        // younger players in front
+                        // (so that babies born appear in front of 
+                        //  their mothers)
+
+                        // vary by a tiny amount, so we don't change
+                        // the way they are sorted relative to other objects
+                        depth += ( 60.0 - o->age ) / 6000.0;
+                        }
+                    
+                    drawQueue.insert( drawRec, depth );
                     }
                 }
             }
