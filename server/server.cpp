@@ -1101,7 +1101,7 @@ char *getMovesMessage( char inNewMovesOnly,
                 delete [] stepString;
                 }
         
-        
+            messageLineBuffer.appendElementString( "\n" );
 
             char *messageLine = messageLineBuffer.getElementString();
                                     
