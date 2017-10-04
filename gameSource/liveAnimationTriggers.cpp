@@ -57,6 +57,8 @@ void initLiveTriggers() {
     AnimType anim1 = extra;
     AnimType anim2 = extraB;
 
+    int nextServerTrigger = 0;
+
     while( readTrigger ) {
         Trigger t;
         
@@ -88,14 +90,32 @@ void initLiveTriggers() {
                     }
                 }
             else if( strcmp( buffer, "server" ) == 0 ) {
-                numRead = fscanf( f, "%d", 
-                                  &( t.serverTriggerNumber ) );
+                char buffer[100];
+                
+                numRead = fscanf( f, "%99s", buffer );
+        
         
                 if( numRead == 1 ) {
                     t.isServerTrigger = true;
                     
-                    triggers.push_back( t );
-                    readTrigger = true;
+                    if( strcmp( buffer, "n" ) == 0 ) {
+                        t.serverTriggerNumber = nextServerTrigger;
+                        
+                        nextServerTrigger++;
+                        triggers.push_back( t );
+                        readTrigger = true;
+                       
+                        }
+                    else {
+                                    
+                        numRead = sscanf( buffer, "%d", 
+                                          &( t.serverTriggerNumber ) );
+                        
+                        if( numRead == 1 ) {
+                            triggers.push_back( t );
+                            readTrigger = true;
+                            }
+                        }
                     }
                 }            
             }
