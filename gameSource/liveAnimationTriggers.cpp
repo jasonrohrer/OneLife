@@ -136,30 +136,49 @@ void freeLiveTriggers() {
     }
 
 
+static int lastPlayedServerTrigger = 0;
+
 
 // send in a key command received from user that make trigger an animation
 void registerTriggerKeyCommand( unsigned char inASCII,
                                 LivingLifePage *inPage ) {
     if( !enabled ) return;
     
-    if( inASCII == triggerKey && triggers.size() > 0 ) {
+    if( inASCII == triggerKey ) {
+        
+        if( triggers.size() > 0 ) {
 
-        Trigger nextTrigger = triggers.getElementDirect( 0 );
-
-        if( nextTrigger.isServerTrigger ) {
+            Trigger nextTrigger = triggers.getElementDirect( 0 );
+            
+            if( nextTrigger.isServerTrigger ) {
+                
+                char *message = autoSprintf( "TRIGGER %d#",
+                                             nextTrigger.serverTriggerNumber );
+                
+                lastPlayedServerTrigger = nextTrigger.serverTriggerNumber;
+                
+                inPage->sendToServerSocket( message );
+                
+                delete [] message;
+                }
+            else {
+                currentTrigger = nextTrigger;
+                }
+            
+            triggers.deleteElement( 0 );
+            }
+        else {
+            // send another server trigger by default
+            
+            lastPlayedServerTrigger++;
             
             char *message = autoSprintf( "TRIGGER %d#",
-                                         nextTrigger.serverTriggerNumber );
-            
+                                         lastPlayedServerTrigger );
+                
             inPage->sendToServerSocket( message );
             
             delete [] message;
             }
-        else {
-            currentTrigger = nextTrigger;
-            }
-        
-        triggers.deleteElement( 0 );
         }
     }
 
