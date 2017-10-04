@@ -889,6 +889,30 @@ void EditorScenePage::restartAllMoves() {
 
 
 
+static void drawOutlineString( const char *inString, 
+                               doublePair inPos, TextAlignment inAlign ) {
+    
+    setDrawColor( 0, 0, 0, 1 );
+    
+    doublePair offsets[8] = 
+        { {-2, 0 }, {2, 0 },
+          { 0, -2 }, {0, 2},
+          {-2, -2 }, {-2, 2 },
+          {2, -2 }, {2, 2 } };
+    
+    for( int i=0; i<8; i++ ){
+        doublePair pos = add( inPos, offsets[i] );
+        
+        smallFont->drawString( inString, pos, inAlign );
+        }
+
+    setDrawColor( 1, 1, 1, 1 );
+    
+    smallFont->drawString( inString, inPos, inAlign );
+    }
+
+
+
 void EditorScenePage::drawUnderComponents( doublePair inViewCenter, 
                                            double inViewSize ) {
     
@@ -1539,6 +1563,78 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
     delete [] posStringX;
     delete [] posStringY;
+
+
+    if( p->oID > 0 ) {
+        
+        doublePair pos = { 450, -230 };
+        
+        char *s = autoSprintf( "oID=%d", p->oID );
+        
+
+        drawOutlineString( s, pos, alignLeft );
+
+        delete [] s;
+        
+        if( p->heldID > 0 ) {
+            pos.y -= 20;
+            
+            s = autoSprintf( "heldID=%d", p->heldID );
+
+            drawOutlineString( s, pos, alignLeft );
+            delete [] s;
+            }
+        if( p->clothing.hat != NULL ) {
+            pos.y -= 20;
+            
+            s = autoSprintf( "hat=%d", p->clothing.hat->id );
+            
+            drawOutlineString( s, pos, alignLeft );
+            delete [] s;
+            }
+        if( p->clothing.tunic != NULL ) {
+            pos.y -= 20;
+            
+            s = autoSprintf( "tunic=%d", p->clothing.tunic->id );
+            
+            drawOutlineString( s, pos, alignLeft );
+            delete [] s;
+            }
+        if( p->clothing.bottom != NULL ) {
+            pos.y -= 20;
+            
+            s = autoSprintf( "bottom=%d", p->clothing.bottom->id );
+            
+            drawOutlineString( s, pos, alignLeft );
+            delete [] s;
+            }
+        if( p->clothing.frontShoe != NULL ) {
+            pos.y -= 20;
+            
+            s = autoSprintf( "frontShoe=%d", p->clothing.frontShoe->id );
+            
+            drawOutlineString( s, pos, alignLeft );
+            delete [] s;
+            }
+        if( p->clothing.backShoe != NULL ) {
+            pos.y -= 20;
+            
+            s = autoSprintf( "backShoe=%d", p->clothing.backShoe->id );
+            
+            drawOutlineString( s, pos, alignLeft );
+            delete [] s;
+            }
+        if( p->clothing.backpack != NULL ) {
+            pos.y -= 20;
+            
+            s = autoSprintf( "backpack=%d", p->clothing.backpack->id );
+            
+            drawOutlineString( s, pos, alignLeft );
+            delete [] s;
+            }
+        
+        }
+    
     }
 
 
