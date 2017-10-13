@@ -123,7 +123,7 @@ echo ""
 echo "Exporting last tagged data for diffing"
 echo ""
 
-git checkout OneLife_v$lastTaggedDataVersion
+git checkout -q OneLife_v$lastTaggedDataVersion
 
 git clone . ~/checkout/diffWorking/dataLast
 rm -rf ~/checkout/diffWorking/dataLast/.git*
@@ -132,7 +132,7 @@ rm -r ~/checkout/diffWorking/dataLast/*.sh ~/checkout/diffWorking/dataLast/worki
 
 
 # restore repository to latest, to avoid confusion later
-git checkout master
+git checkout -q master
 
 
 echo "" 
@@ -308,7 +308,7 @@ echo "Pushing tag change to central git server"
 echo ""
 
 git push
-git push $newTag
+git push origin $newTag
 
 
 
