@@ -1,8 +1,8 @@
 <?php
 
 
-$hgPath = "readOnlyOneLifeData/";
-$path = "$hgPath/objects/";
+$gitPath = "readOnlyOneLifeData/";
+$path = "$gitPath/objects/";
 
 echo "<a href=index.php?update=1>Run Update<a><br><br>";
 
@@ -11,17 +11,17 @@ $update = ts_requestFilter( "update", "/[01]/", "0" );
 
 if( $update ) {
     echo "Running update...<br><br>";
-    echo exec( "cd $hgPath; hg pull; hg update" );
+    echo exec( "cd $gitPath; git pull" );
     echo "<br>";
-    echo exec( "cd $hgPath/sprites; mogrify -format png *.tga" );
+    echo exec( "cd $gitPath/sprites; mogrify -format png *.tga" );
     echo "<br>";
-    echo exec( "cd $hgPath/overlays; mogrify -format png *.tga" );
+    echo exec( "cd $gitPath/overlays; mogrify -format png *.tga" );
     echo "<br>";
     echo "...Done</br></br>";
     }
 
 
-echo "<a href=$hgPath/overlays>View Overlays</a><br><br>";
+echo "<a href=$gitPath/overlays>View Overlays</a><br><br>";
 
 
 $files = scandir( $path );

@@ -35,7 +35,7 @@ echo ""
 
 
 apt-get -o Acquire::ForceIPv4=true update
-apt-get -y install emacs-nox mercurial g++ expect gdb make fail2ban ufw
+apt-get -y install emacs-nox mercurial git g++ expect gdb make fail2ban ufw
 
 
 echo ""
@@ -92,21 +92,21 @@ cd checkout
 
 echo "Using data repository $dataName"
 
-hg clone http://hg.code.sf.net/p/hcsoftware/OneLife
-hg clone http://hg.code.sf.net/p/hcsoftware/$dataName
-hg clone http://hg.code.sf.net/p/minorgems/minorGems
+git clone https://github.com/jasonrohrer/OneLife.git
+git clone https://github.com/jasonrohrer/$dataName.git
+git clone https://github.com/jasonrohrer/minorGems.git
 
 
 cd $dataName
 
-lastTaggedDataVersion=\`hg tags | grep "OneLife" -m 1 | awk '{print \$1}' | sed -e 's/OneLife_v//'\`
+lastTaggedDataVersion=\`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags | sed -e 's/OneLife_v//'\`
 
 
 echo "" 
-echo "Most recent Data hg version is:  \$lastTaggedDataVersion"
+echo "Most recent Data git version is:  \$lastTaggedDataVersion"
 echo ""
 
-hg update OneLife_v\$lastTaggedDataVersion
+git checkout -q OneLife_v\$lastTaggedDataVersion
 
 
 

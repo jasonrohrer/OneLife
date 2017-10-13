@@ -9,7 +9,7 @@ Scheduling a data-only update for tonight at 9:15 UTC for all platforms.
 ++++
 
 1. Commit and push data in OneLifeData7
-   Do NOT generate an hg tag for the data
+   Do NOT generate an git tag for the data
 
 2. Log in as jcr15@onehouronelife.com
 
@@ -24,7 +24,7 @@ Generating a data-only update NOW for all platforms.
 ++++
 
 1. Commit and push data in OneLifeData7
-   Do NOT generate an hg tag for the data
+   Do NOT generate an git tag for the data
 
 2. Log in as jcr15@onehouronelife.com
 

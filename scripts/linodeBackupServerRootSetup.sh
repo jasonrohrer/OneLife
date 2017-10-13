@@ -33,7 +33,7 @@ echo ""
 
 
 apt-get -o Acquire::ForceIPv4=true update
-apt-get -y install emacs-nox mercurial fail2ban ufw
+apt-get -y install emacs-nox mercurial git fail2ban ufw
 
 
 
@@ -70,7 +70,7 @@ mkdir backups/main
 
 mkdir checkout
 cd checkout
-hg clone http://hg.code.sf.net/p/hcsoftware/OneLife
+git clone https://github.com/jasonrohrer/OneLife.git
 
 
 echo ""
