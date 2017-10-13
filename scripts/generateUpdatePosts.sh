@@ -29,8 +29,7 @@ echo "Updating OneLifeData7Latest"
 echo ""
 
 cd ~/checkout/OneLifeData7Latest
-hg pull
-hg update
+git pull
 
 
 newerVersion="D"
@@ -48,7 +47,7 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 	   [[ $newerVersion -gt $latestPostVersion ]];
 		then
 
-		hg update OneLife_v$newerVersion
+		git checkout -q OneLife_v$newerVersion
 		
 		echo ""
 		echo "Generating report for v$newerVersion as compared to v$x"
@@ -60,7 +59,7 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 		objDiffURL=updatePosts/${newerVersion}_objDiff.php
 
 		
-		versionDate=$(hg log -r OneLife_v$newerVersion | grep "date" | sed 's/date:\s\s*//' | sed 's/ [0-9]\+:[0-9]\+:[0-9]\+/,/' | sed 's/\(20[0-9][0-9]\)\s[-+]*[0-9][0-9][0-9][0-9]/\1/' | sed 's/ 0\([0-9]\),/ \1,/' )
+		versionDate=$(git log -1 OneLife_v$newerVersion | grep "Date" | sed 's/Date:\s\s*//' | sed 's/ [0-9]\+:[0-9]\+:[0-9]\+/,/' | sed 's/\(20[0-9][0-9]\)\s[-+]*[0-9][0-9][0-9][0-9]/\1/' | sed 's/ 0\([0-9]\),/ \1,/' )
 
 		echo "<h3>Version $newerVersion ($versionDate)</h3>" > $reportFile
 		
@@ -78,7 +77,7 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 			
 			newObjCount=$((newObjCount+1))
 
-		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion objects/ -X objects/nextObjectNumber.txt | grep "A " | sed 's/A //')
+		done < <(git diff --name-status OneLife_v$x OneLife_v$newerVersion objects/ | grep -v nextObjectNumber.txt | grep "^A" | sed 's/A\t//')
 		
 
 		
@@ -102,7 +101,7 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 			echo "<b>$objName</b></br>" >> $objDiffFile
 			echo "<pre>" >> $objDiffFile
 			
-			hg diff --rev OneLife_v$x:OneLife_v$newerVersion $y | \
+		   git diff OneLife_v$x OneLife_v$newerVersion $y | \
 				sed 's/^\(\+[^\+].*\)/<font color=#00DD00>\1<\/font>/' | \
 				sed 's/^\(\-[^\-].*\)/<font color=#FF0000>\1<\/font>/' \
 				>> $objDiffFile
@@ -111,7 +110,8 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 			
 			changedObjCount=$((changedObjCount+1))
 
-		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion objects/ -X objects/nextObjectNumber.txt | grep "M " | sed 's/M //')
+		done < <(git diff --name-status OneLife_v$x OneLife_v$newerVersion objects/ | grep -v nextObjectNumber.txt | grep "^M" | sed 's/M\t//')
+
 
 		echo "<?php include_once( '../footer.php' );?>" >> $objDiffFile
 
@@ -126,7 +126,7 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 
 
 		# update to old version so that removed object files exist
-		hg update -r OneLife_v$x
+		git checkout -q OneLife_v$x
 		
 		removedObjCount=0
 		while read y;
@@ -138,10 +138,10 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 			
 			removedObjCount=$((removedObjCount+1))
 
-		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion objects/ -X objects/nextObjectNumber.txt | grep "R " | sed 's/R //')
+		done < <(git diff --name-status OneLife_v$x OneLife_v$newerVersion objects/ | grep -v nextObjectNumber.txt | grep "^D" | sed 's/D\t//')
 
 		# back to newer
-		hg update OneLife_v$newerVersion
+		git checkout -q OneLife_v$newerVersion
 		
 
 		echo "$removedObjCount removed objects in report for v$newerVersion"
@@ -203,8 +203,8 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 
 			newTransCount=$((newTransCount+1))
 
-		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion transitions/ | grep "A " | sed 's/A //')
-		
+		done < <(git diff --name-status OneLife_v$x OneLife_v$newerVersion transitions/ | grep "^A" | sed 's/A\t//')
+
 		echo "$newTransCount new transitions in report for v$newerVersion"
 
 		
@@ -235,13 +235,12 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 			
 			changedTransCount=$((changedTransCount+1))
 
-		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion transitions/ | grep "M " | sed 's/M //')
-
+		done < <(git diff --name-status OneLife_v$x OneLife_v$newerVersion transitions/ | grep "^M" | sed 's/M\t//')
 
 		echo "$changedTransCount changed transitions in report for v$newerVersion"
 
 		# update to old version so that objects exist
-		hg update -r OneLife_v$x
+		git checkout -q OneLife_v$x
 		
 		removedTransCount=0
 		while read y;
@@ -269,10 +268,9 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 			
 			removedTransCount=$((removedTransCount+1))
 
-		done < <(hg status --rev OneLife_v$x:OneLife_v$newerVersion transitions/ | grep "R " | sed 's/R //')
-
+		done < <(git diff --name-status OneLife_v$x OneLife_v$newerVersion transitions/ | grep "^D" | sed 's/D\t//')
 		# back to newer
-		hg update OneLife_v$newerVersion
+		git checkout -q OneLife_v$newerVersion
 		
 
 		echo "$removedTransCount removed transitions in report for v$newerVersion"
@@ -304,7 +302,10 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 	newerVersion=$x
 fi
 
-done < <( hg tags | grep "OneLife" | sed 's/\s\s.*//' | sed 's/OneLife_v\([0-9a-zA-Z]\+\)/\1/')
+done < <( git for-each-ref --sort=-creatordate --format '%(refname:short)' refs/tags | grep "OneLife" | sed 's/\s\s.*//' | sed 's/OneLife_v\([0-9a-zA-Z]\+\)/\1/')
+
+
+git checkout -q master
 
 
 echo ""

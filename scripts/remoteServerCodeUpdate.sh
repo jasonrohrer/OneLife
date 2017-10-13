@@ -31,13 +31,11 @@ echo "Re-compiling server"
 echo ""
 
 cd ~/checkout/minorGems
-hg pull
-hg update
+git pull
 
 
 cd ~/checkout/OneLife/server
-hg pull
-hg update
+git pull
 
 ./configure 1
 make

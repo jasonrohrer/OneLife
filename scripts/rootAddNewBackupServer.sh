@@ -37,8 +37,7 @@ echo "Copying remote setup script onto new server"
 echo ""
 
 cd ~/checkout/OneLifeWorking
-hg pull
-hg update
+git pull
 cd scripts
 
 scp -o StrictHostKeychecking=no linodeBackupServerRootSetup.sh root@$address:

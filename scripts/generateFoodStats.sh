@@ -1,8 +1,7 @@
 cd /home/jcr15
 cd checkout/OneLifeWorking/server
 
-hg pull
-hg update
+git pull
 
 
 sh makePrintFoodLogStatsHTML
