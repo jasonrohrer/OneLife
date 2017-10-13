@@ -2,9 +2,7 @@ cd ../../minorGems
 
 echo "Pulling minorGems changes from server..."
 
-hg pull
-
-hg update
+git pull
 
 
 
@@ -12,9 +10,7 @@ cd ../OneLife
 
 echo "Pulling editor changes from server..."
 
-hg pull
-
-hg update
+git pull
 
 
 ./configure 1
