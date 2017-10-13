@@ -322,6 +322,16 @@ float getTotalGlobalFade() {
 
 
 
+void startOutputAllFrames() {
+    }
+
+
+void stopOutputAllFrames() {
+    }
+
+
+
+
 
 // these implementations copied from gameSDL.cpp
 
