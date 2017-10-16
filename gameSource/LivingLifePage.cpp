@@ -1,6 +1,7 @@
 #include "LivingLifePage.h"
 
 #include "objectBank.h"
+#include "spriteBank.h"
 #include "transitionBank.h"
 #include "categoryBank.h"
 #include "soundBank.h"
@@ -2123,12 +2124,19 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 
     inObj->onScreen = true;
 
+    ObjectAnimPack returnPack;
+    returnPack.inObjectID = -1;
+
+
+    if( ! inObj->allSpritesLoaded ) {
+        // skip drawing until fully loaded
+        return returnPack;
+        }
+
     // current pos
                     
     doublePair pos = mult( inObj->currentPos, CELL_D );
     
-    ObjectAnimPack returnPack;
-    returnPack.inObjectID = -1;
 
     if( inObj->heldByDropOffset.x != 0 ||
         inObj->heldByDropOffset.y != 0 ) {
@@ -6824,6 +6832,8 @@ void LivingLifePage::step() {
 
                 o.onScreen = false;
                 
+                o.allSpritesLoaded = false;
+                
                 o.holdingID = 0;
                 
                 o.pathToDest = NULL;
@@ -9832,6 +9842,26 @@ void LivingLifePage::step() {
                 
                 addBaseObjectToLiveObjectSet( o->displayID );
                 
+                
+                if( ! o->allSpritesLoaded ) {
+                    // check if they're loaded yet
+                    
+                    int numLoaded = 0;
+
+                    ObjectRecord *displayObj = getObject( o->displayID );
+                    for( int s=0; s<displayObj->numSprites; s++ ) {
+                        
+                        if( markSpriteLive( displayObj->sprites[s] ) ) {
+                            numLoaded ++;
+                            }
+                        }
+                    
+                    if( numLoaded == displayObj->numSprites ) {
+                        o->allSpritesLoaded = true;
+                        }
+                    }
+                
+
                 // and what they're holding
                 if( o->holdingID > 0 ) {
                     addBaseObjectToLiveObjectSet( o->holdingID );

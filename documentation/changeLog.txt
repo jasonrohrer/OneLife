@@ -74,6 +74,8 @@ Version 33     ???
 --Fixed other player wiggle direction on first action caused by uninitialized
   value.
 
+--Fixed so that newly-added player doesn't get drawn until all their sprites are loaded.
+
 
 
 Server fixes:

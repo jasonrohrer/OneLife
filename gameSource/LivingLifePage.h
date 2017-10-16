@@ -34,6 +34,9 @@ typedef struct LiveObject {
         int id;
 
         int displayID;
+
+        char allSpritesLoaded;
+
         char onScreen;
         
         double age;
