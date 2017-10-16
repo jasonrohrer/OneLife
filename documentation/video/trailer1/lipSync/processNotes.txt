@@ -45,19 +45,14 @@ Next:  In-game audio recording
 
 14. Disable drawMouths in animation bank.
 
-15. Edit minorGems/game/platforms/openGL/gameGraphicsGL.cpp to disable
-    all drawSprite calls (for 60 fps during audio output).
+15. Enable recordAudio setting and set recordAudioLengthInSeconds setting.
 
-16. Rebuild game.
+16. Run game again for another playback to output audio.
 
-16. Enable recordAudio setting and set recordAudioLengthInSeconds setting.
-
-17. Run game again for another playback to output audio.
-
-18. Converted recordedAudio.aiff in Audacity to make it compatible with 
+17. Converted recordedAudio.aiff in Audacity to make it compatible with 
     LightWorks (not sure what the problem is here).
 
-19. Load resulting audio in Lightworks and sync it.
+18. Load resulting audio in Lightworks and sync it.
 
 
 
