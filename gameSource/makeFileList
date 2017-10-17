@@ -91,6 +91,9 @@ graphics/hintSheet2.tga \
 graphics/hintSheet3.tga \
 graphics/hintSheet4.tga \
 graphics/bigPointer.tga \
+graphics/cellBorder.tga \
+graphics/cellFill.tga \
+
 
 
 NEEDED_MINOR_GEMS_OBJECTS = \

@@ -1067,6 +1067,8 @@ LivingLifePage::LivingLifePage()
           mGuiPanelSprite( loadSprite( "guiPanel.tga", false ) ),
           mNotePaperSprite( loadSprite( "notePaper.tga", false ) ),
           mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
+          mCellBorderSprite( loadWhiteSprite( "cellBorder.tga" ) ),
+          mCellFillSprite( loadWhiteSprite( "cellFill.tga" ) ),
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
@@ -1371,6 +1373,10 @@ LivingLifePage::~LivingLifePage() {
     freeSprite( mGuiPanelSprite );
     
     freeSprite( mFloorSplitSprite );
+    
+    freeSprite( mCellBorderSprite );
+    freeSprite( mCellFillSprite );
+    
     freeSprite( mNotePaperSprite );
     freeSprite( mChalkBlotSprite );
     freeSprite( mPathMarkSprite );
@@ -3344,6 +3350,49 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     //toggleAdditiveTextureColoring( false );
     toggleAdditiveBlend( false );
+    
+
+
+    // FIXME:
+    // this is placeholder behavior
+    // need to track actual last mouse pos
+    // and fade square in/out
+    if( mCurMouseOverID == 0 
+        &&
+        mCurMouseOverSpot.x >= 0 && mCurMouseOverSpot.x < mMapD
+        &&
+        mCurMouseOverSpot.y >= 0 && mCurMouseOverSpot.y < mMapD ) {
+        
+        int worldY = mCurMouseOverSpot.y + mMapOffsetY - mMapD / 2;
+        
+        int screenY = CELL_D * worldY;
+
+        
+        int mapI = mCurMouseOverSpot.y * mMapD + mCurMouseOverSpot.x;
+        
+        int screenX = 
+            CELL_D * ( mCurMouseOverSpot.x + mMapOffsetX - mMapD / 2 );
+        
+        int id = mMap[mapI];
+        
+        if( id > 0 ) {
+            
+            setDrawColor( 0, 0, 0, .75 );
+            
+            doublePair cellPos = { (double)screenX, (double)screenY };
+            
+
+            ObjectRecord *cellO = getObject( id );
+            
+            drawSprite( mCellBorderSprite, cellPos );
+
+            if( cellO->blocksWalking ) {
+                drawSprite( mCellFillSprite, cellPos );
+                }
+            
+            }
+        
+        }
     
 
     
