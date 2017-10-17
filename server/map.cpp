@@ -61,6 +61,8 @@ static int eveRadius = eveRadiusStart;
 // what human-placed stuff, together, counts as a camp
 static int campRadius = 20;
 
+static float minEveCampRespawnAge = 60.0;
+
 
 
 static int chunkDimensionX = 32;
@@ -986,6 +988,9 @@ void clearRecentPlacements() {
 void initMap() {
 
     edgeObjectID = SettingsManager::getIntSetting( "edgeObject", 0 );
+    
+    minEveCampRespawnAge = 
+        SettingsManager::getFloatSetting( "minEveCampRespawnAge", 60.0f );
     
 
     for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
@@ -4033,7 +4038,7 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
     
     int result = eveDBGet( inEmail, &pX, &pY, &pR );
     
-    if( result == 1 ) {
+    if( result == 1 && pR > 0 ) {
         printf( "Found camp center (%d,%d) r=%d in db for %s\n",
                 pX, pY, pR, inEmail );
         
@@ -4042,7 +4047,7 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
         currentEveRadius = pR;
         }
     else {
-        // player has never been Eve before
+        // player has never been an Eve that survived to old age before
     
         // use global most-recent camp, but expand the radius greatly
         // to put them in a random clear location
@@ -4129,13 +4134,26 @@ void mapEveDeath( char *inEmail, double inAge ) {
     
     printf( "Logging Eve death:   " );
     
+
+    if( inAge < minEveCampRespawnAge ) {
+        printf( "Eve died too young (age=%f, min=%f), "
+                "not remembering her camp, and clearing any old camp memory\n",
+                inAge, minEveCampRespawnAge );
+        
+        // 0 for radius means not set
+        eveDBPut( inEmail, 0, 0, 0 );
+
+        return;
+        }
+    
+
     int num = 0;
     
     doublePair ave = computeRecentCampAve( &num );
     
     int result = eveDBGet( inEmail, &pX, &pY, &pR );
     
-    if( result == 1 ) {
+    if( result == 1 && pR > 0 ) {
         
         // don't keep growing radius after it gets too big
         // if one player is dying young over and over, they will

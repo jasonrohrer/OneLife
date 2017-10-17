@@ -77,6 +77,11 @@ Version 33     ???
 --Fixed so that newly-added player doesn't get drawn until all their sprites
   are loaded.
 
+--Eve's camp location only remembered if Eve dies of old age (for that same
+  player to spawn there the next time they play Eve).  If Eve dies younger than
+  that, that player will respawn in a random location in their next Eve life.
+  Repeat suicide is no longer a viable solo player strategy.
+
 
 
 
