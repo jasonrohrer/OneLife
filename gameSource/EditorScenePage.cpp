@@ -590,17 +590,28 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
 
 void EditorScenePage::drawGroundOverlaySprites() {
     doublePair overlayCornerPos = cornerPos;
+    
+    while( overlayCornerPos.x < mCurX * CELL_D - 2048 - 704 ) {
+        overlayCornerPos.x += 2048;
+        }
+    
+    
+    while( overlayCornerPos.y > 2048 - mCurY * CELL_D  + 360 ) {
+        overlayCornerPos.y -= 2048;
+        }
+    
 
-    overlayCornerPos.x += 512;
-    overlayCornerPos.y -= 512;
 
-    for( int y=0; y<1; y++ ) {
-        for( int x=0; x<2; x++ ) {
+    overlayCornerPos.x += 512 - 1024;
+    overlayCornerPos.y -= 512 - 1024;
+
+    for( int y=0; y<4; y++ ) {
+        for( int x=0; x<5; x++ ) {
             doublePair pos = overlayCornerPos;
             pos.x += x * 1024;
             pos.y -= y * 1024;
             
-            int tileY = y;
+            int tileY = y % 2;
             int tileX = x % 2;
             
             int tileI = tileY * 2 + tileX;
