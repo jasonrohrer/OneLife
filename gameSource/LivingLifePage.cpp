@@ -3358,7 +3358,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
-    if( mCurMouseOverCellFade > 0 
+    if( mShowHighlights 
+        &&
+        mCurMouseOverCellFade > 0 
         &&
         mCurMouseOverCell.x >= 0 && mCurMouseOverCell.x < mMapD
         &&
@@ -3394,7 +3396,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         
         }
+
     
+    if( mShowHighlights )
     for( int i=0; i<mPrevMouseOverCells.size(); i++ ) {
         float fade = mPrevMouseOverCellFades.getElementDirect( i );
         
@@ -5539,10 +5543,18 @@ void LivingLifePage::step() {
             *( mPrevMouseOverSpotFades.getElement( i ) ) = f;
             }
         }
+    
+    
+    int minMousePause = 1;
 
-
-
-    if( mCurMouseOverCell.x != -1 ) {
+    
+    if( mCurMouseOverCell.x != -1 &&
+        // mouse has paused
+        // OR
+        // we've already started fading in
+        ( mFramesSinceLastMouseMove >= minMousePause 
+          ||
+          mCurMouseOverCellFade > 0 ) ) {
         if( mCurMouseOverID == 0 ) {
             // fade cell border in
             mCurMouseOverCellFade += 0.2 * frameRateFactor;
@@ -5575,7 +5587,9 @@ void LivingLifePage::step() {
             }
         }
     
-
+    mFramesSinceLastMouseMove++;
+    
+    
     if( ! equal( mNotePaperPosOffset, mNotePaperPosTargetOffset ) ) {
         doublePair delta = 
             sub( mNotePaperPosTargetOffset, mNotePaperPosOffset );
@@ -10086,6 +10100,7 @@ void LivingLifePage::makeActive( char inFresh ) {
     mPrevMouseOverCells.deleteAll();
     mPrevMouseOverCellFades.deleteAll();
 
+    mFramesSinceLastMouseMove = 0;
     
     if( !inFresh ) {
         return;
@@ -10558,6 +10573,8 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
 
 
 void LivingLifePage::pointerMove( float inX, float inY ) {
+    mFramesSinceLastMouseMove = 0;
+    
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
 
     if( mFirstServerMessagesReceived != 3 || ! mDoneLoadingFirstObjectSet ) {

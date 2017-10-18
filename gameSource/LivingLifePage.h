@@ -550,6 +550,10 @@ class LivingLifePage : public GamePage {
                                     char inSkipDashes );
         
 
+        // used to detect mouse pause
+        int mFramesSinceLastMouseMove;
+        
+
         // the object that we're mousing over
         int mLastMouseOverID;
         int mCurMouseOverID;
