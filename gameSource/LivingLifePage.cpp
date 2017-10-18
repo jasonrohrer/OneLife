@@ -86,6 +86,8 @@ static int minMouseDownFrames = 30;
 static int screenCenterPlayerOffsetX, screenCenterPlayerOffsetY;
 
 
+static float lastMouseX = 0;
+static float lastMouseY = 0;
 
 
 
@@ -3696,6 +3698,47 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 drawMapCell( mapI, screenX, screenY );
                 cellDrawn[mapI] = true;
                 }
+
+            
+            doublePair cellPos = { (double)screenX, (double)screenY };
+            
+
+            // under-mouse grid
+
+            float gray = getXYRandom( worldX, worldY );
+                
+            if( gray > 0.5f ) {
+                gray = 1.0f;
+                }
+            else {
+                gray = 0;
+                }
+            
+            doublePair mousePos = { lastMouseX, lastMouseY };
+                
+            double mouseDist = distance( mousePos, cellPos );
+            
+            float fade = 1 - mouseDist / 256;
+            
+            float mousePauseFactor = 
+                frameRateFactor * mFramesSinceLastMouseMove / 10.0f;
+            
+            if( mousePauseFactor > 1 ) {
+                mousePauseFactor = 1;
+                }
+            
+            //fade *= mousePauseFactor;
+            
+            if( fade > 0 ) {    
+                setDrawColor( gray, gray, gray, 0.25 * fade );
+                drawSprite( mCellFillSprite, cellPos );
+                
+                gray = 1 - gray;
+                setDrawColor( gray, gray, gray, 0.25 * fade );
+                drawSprite( mCellBorderSprite, cellPos );
+                }
+            
+
 
             /*
               // debugging grid
@@ -10573,6 +10616,9 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
 
 
 void LivingLifePage::pointerMove( float inX, float inY ) {
+    lastMouseX = inX;
+    lastMouseY = inY;
+    
     mFramesSinceLastMouseMove = 0;
     
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
@@ -10743,6 +10789,9 @@ char LivingLifePage::getCellBlocksWalking( int inMapX, int inMapY ) {
 
 
 void LivingLifePage::pointerDown( float inX, float inY ) {
+    lastMouseX = inX;
+    lastMouseY = inY;
+    
     mLastMouseOverID = 0;
     
     // detect cases where mouse is held down already
@@ -11758,10 +11807,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
 
 void LivingLifePage::pointerDrag( float inX, float inY ) {
+    lastMouseX = inX;
+    lastMouseY = inY;
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
     }
 
 void LivingLifePage::pointerUp( float inX, float inY ) {
+    lastMouseX = inX;
+    lastMouseY = inY;
     mouseDown = false;
     }
 
