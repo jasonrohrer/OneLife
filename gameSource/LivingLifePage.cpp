@@ -1078,6 +1078,10 @@ LivingLifePage::LivingLifePage()
           mDeathReason( NULL ),
           mShowHighlights( true ) {
     
+    mCurMouseOverCell.x = -1;
+    mCurMouseOverCell.y = -1;
+    mCurMouseOverCellFade = 0.0f;
+    
     initLiveTriggers();
 
     for( int i=0; i<4; i++ ) {
@@ -3353,31 +3357,28 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
 
-    // FIXME:
-    // this is placeholder behavior
-    // need to track actual last mouse pos
-    // and fade square in/out
-    if( mCurMouseOverID == 0 
+
+    if( mCurMouseOverCellFade > 0 
         &&
-        mCurMouseOverSpot.x >= 0 && mCurMouseOverSpot.x < mMapD
+        mCurMouseOverCell.x >= 0 && mCurMouseOverCell.x < mMapD
         &&
-        mCurMouseOverSpot.y >= 0 && mCurMouseOverSpot.y < mMapD ) {
+        mCurMouseOverCell.y >= 0 && mCurMouseOverCell.y < mMapD ) {
         
-        int worldY = mCurMouseOverSpot.y + mMapOffsetY - mMapD / 2;
+        int worldY = mCurMouseOverCell.y + mMapOffsetY - mMapD / 2;
         
         int screenY = CELL_D * worldY;
 
         
-        int mapI = mCurMouseOverSpot.y * mMapD + mCurMouseOverSpot.x;
+        int mapI = mCurMouseOverCell.y * mMapD + mCurMouseOverCell.x;
         
         int screenX = 
-            CELL_D * ( mCurMouseOverSpot.x + mMapOffsetX - mMapD / 2 );
+            CELL_D * ( mCurMouseOverCell.x + mMapOffsetX - mMapD / 2 );
         
         int id = mMap[mapI];
         
         if( id > 0 ) {
             
-            setDrawColor( 0, 0, 0, .75 );
+            setDrawColor( 0, 0, 0, .75 * mCurMouseOverCellFade );
             
             doublePair cellPos = { (double)screenX, (double)screenY };
             
@@ -3394,7 +3395,45 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         }
     
+    for( int i=0; i<mPrevMouseOverCells.size(); i++ ) {
+        float fade = mPrevMouseOverCellFades.getElementDirect( i );
+        
+        if( fade <= 0 ) {
+            continue;
+            }
 
+        GridPos prev = mPrevMouseOverCells.getElementDirect( i );
+            
+        int worldY = prev.y + mMapOffsetY - mMapD / 2;
+        
+        int screenY = CELL_D * worldY;
+
+        
+        int mapI = prev.y * mMapD + prev.x;
+        
+        int screenX = 
+            CELL_D * ( prev.x + mMapOffsetX - mMapD / 2 );
+        
+        int id = mMap[mapI];
+        
+        if( id > 0 ) {
+            
+            setDrawColor( 0, 0, 0, .75 * fade );
+            
+            doublePair cellPos = { (double)screenX, (double)screenY };
+            
+
+            ObjectRecord *cellO = getObject( id );
+            
+            drawSprite( mCellBorderSprite, cellPos );
+
+            if( cellO->blocksWalking ) {
+                drawSprite( mCellFillSprite, cellPos );
+                }
+            
+            }
+        }
+    
     
     //int worldXStart = xStart + mMapOffsetX - mMapD / 2;
     //int worldXEnd = xEnd + mMapOffsetX - mMapD / 2;
@@ -5498,6 +5537,41 @@ void LivingLifePage::step() {
             }
         else {
             *( mPrevMouseOverSpotFades.getElement( i ) ) = f;
+            }
+        }
+
+
+
+    if( mCurMouseOverCell.x != -1 ) {
+        if( mCurMouseOverID == 0 ) {
+            // fade cell border in
+            mCurMouseOverCellFade += 0.2 * frameRateFactor;
+            if( mCurMouseOverCellFade >= 1 ) {
+                mCurMouseOverCellFade = 1.0;
+                }
+            }
+        else {
+            // fade cell border out
+            mCurMouseOverCellFade -= 0.1 * frameRateFactor;
+            if( mCurMouseOverCellFade < 0 ) {
+                mCurMouseOverCellFade = 0;
+                }
+            }
+        }
+    
+    for( int i=0; i<mPrevMouseOverCellFades.size(); i++ ) {
+        float f = mPrevMouseOverCellFades.getElementDirect( i );
+        
+        f -= 0.1 * frameRateFactor;
+        
+        
+        if( f <= 0 ) {
+            mPrevMouseOverCellFades.deleteElement( i );
+            mPrevMouseOverCells.deleteElement( i );
+            i--;
+            }
+        else {
+            *( mPrevMouseOverCellFades.getElement( i ) ) = f;
             }
         }
     
@@ -10005,6 +10079,13 @@ void LivingLifePage::makeActive( char inFresh ) {
     mPrevMouseOverSpotFades.deleteAll();
     mPrevMouseOverSpotsBehind.deleteAll();
     
+    mCurMouseOverCell.x = -1;
+    mCurMouseOverCell.y = -1;
+    mCurMouseOverCellFade = 0;
+    
+    mPrevMouseOverCells.deleteAll();
+    mPrevMouseOverCellFades.deleteAll();
+
     
     if( !inFresh ) {
         return;
@@ -10123,6 +10204,34 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
     
     if( clickDestMapY >= 0 && clickDestMapY < mMapD &&
         clickDestMapX >= 0 && clickDestMapX < mMapD ) {
+
+        if( clickDestMapX != mCurMouseOverCell.x ||
+            clickDestMapY != mCurMouseOverCell.y ) {
+            
+            float oldFade = 0.0f;
+            
+            for( int i=0; i<mPrevMouseOverCells.size(); i++ ) {
+                GridPos old = mPrevMouseOverCells.getElementDirect( i );
+            
+                if( equal( old, mCurMouseOverCell ) ) {
+                    oldFade = mPrevMouseOverCellFades.getElementDirect( i );
+                    
+                    mPrevMouseOverSpots.deleteElement( i );
+                    mPrevMouseOverSpotFades.deleteElement( i );
+                    mPrevMouseOverSpotsBehind.deleteElement( i );
+                    break;
+                    }
+                }
+
+
+            mPrevMouseOverCells.push_back( mCurMouseOverCell );
+            mPrevMouseOverCellFades.push_back( mCurMouseOverCellFade );
+
+            mCurMouseOverCell.x = clickDestMapX;
+            mCurMouseOverCell.y = clickDestMapY;
+            mCurMouseOverCellFade = oldFade;
+            }
+        
         
         // check this cell first
 

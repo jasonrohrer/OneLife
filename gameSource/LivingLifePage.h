@@ -550,6 +550,7 @@ class LivingLifePage : public GamePage {
                                     char inSkipDashes );
         
 
+        // the object that we're mousing over
         int mLastMouseOverID;
         int mCurMouseOverID;
         float mCurMouseOverFade;
@@ -561,6 +562,14 @@ class LivingLifePage : public GamePage {
         SimpleVector<GridPos> mPrevMouseOverSpots;
         SimpleVector<char> mPrevMouseOverSpotsBehind;
         SimpleVector<float> mPrevMouseOverSpotFades;
+        
+
+        // the ground cell that we're mousing over
+        GridPos mCurMouseOverCell;
+        float mCurMouseOverCellFade;
+        
+        SimpleVector<GridPos> mPrevMouseOverCells;
+        SimpleVector<float> mPrevMouseOverCellFades;
         
 
         float mLastMouseOverFade;
