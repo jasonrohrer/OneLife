@@ -11756,11 +11756,19 @@ void LivingLifePage::pointerDrag( float inX, float inY ) {
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
     }
 
+
 void LivingLifePage::pointerUp( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
     mouseDown = false;
+
+    // clear mouse over cell
+    mPrevMouseOverCells.push_back( mCurMouseOverCell );
+    mPrevMouseOverCellFades.push_back( mCurMouseOverCellFade );
+    mCurMouseOverCell.x = -1;
+    mCurMouseOverCell.y = -1;
     }
+
 
 void LivingLifePage::keyDown( unsigned char inASCII ) {
     
