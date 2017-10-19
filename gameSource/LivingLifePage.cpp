@@ -3358,7 +3358,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
     toggleAdditiveBlend( false );
     
     
-    float maxCellFade = 0.5;
+    float maxFullCellFade = 0.5;
+    float maxEmptyCellFade = 0.75;
 
 
     if( mShowHighlights 
@@ -3381,11 +3382,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
         int id = mMap[mapI];
         
         float fill = 1;
-        float border = 0;
-
+        float border = 0;        
+        char drawFill = false;
+        float maxFade = maxEmptyCellFade;
+        
         if( id > 0 ) {
             fill = 0;
             border = 1;
+            drawFill = true;
+            maxFade = maxFullCellFade;
             }
 
 
@@ -3393,12 +3398,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
         cellPos.x += 2;
 
-        setDrawColor( fill, fill, fill, maxCellFade * mCurMouseOverCellFade );
-        drawSprite( mCellFillSprite, cellPos );
-
-
-        setDrawColor( border, border, border, 
-                      0.75  * maxCellFade * mCurMouseOverCellFade );
+        if( drawFill ) {    
+            setDrawColor( fill, fill, fill, maxFade * mCurMouseOverCellFade );
+            drawSprite( mCellFillSprite, cellPos );
+            }
+        
+        
+        setDrawColor( border, border, border,
+                      0.75  * maxFade * mCurMouseOverCellFade );
         drawSprite( mCellBorderSprite, cellPos );        
         }
 
@@ -3435,21 +3442,27 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         float fill = 1;
         float border = 0;
-
+        char drawFill = false;
+        float maxFade = maxEmptyCellFade;
+                
         if( id > 0 ) {
             fill = 0;
             border = 1;
+            drawFill = true;
+            maxFade = maxFullCellFade;
             }
 
             
         doublePair cellPos = { (double)screenX, (double)screenY };
             
         cellPos.x += 2;
-            
-        setDrawColor( fill, fill, fill, maxCellFade * fade );
-        drawSprite( mCellFillSprite, cellPos );
-
-        setDrawColor( border, border, border, 0.75 * maxCellFade * fade );
+        
+        if( drawFill ) {    
+            setDrawColor( fill, fill, fill, maxFade * fade );
+            drawSprite( mCellFillSprite, cellPos );
+            }
+        
+        setDrawColor( border, border, border, 0.75 * maxFade * fade );
         drawSprite( mCellBorderSprite, cellPos );
         }
     
@@ -5570,12 +5583,8 @@ void LivingLifePage::step() {
         
         LiveObject *ourObject = getOurLiveObject();
 
-        // either we're not mousing over any object
-        // OR the object we're mousing over is in the cell we're mousing over
-        if( ( mCurMouseOverID == 0 ||
-              ( mCurMouseOverSpot.x == mCurMouseOverCell.x &&
-                mCurMouseOverSpot.y == mCurMouseOverCell.y  ) )
-            &&
+        // we're not mousing over any object
+        if( mCurMouseOverID == 0 &&
             // AND we're not moving AND we're holding something
             ourObject != NULL &&
             ! ourObject->inMotion &&
