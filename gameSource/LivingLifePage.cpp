@@ -1724,7 +1724,11 @@ void LivingLifePage::drawMapCell( int inMapI,
             int oldFrameCount = mMapAnimationFrameCount[ inMapI ];
             mMapAnimationFrameCount[ inMapI ] ++;
             mMapAnimationLastFrameCount[ inMapI ] ++;
-                
+            
+            if( mMapCurAnimType[ inMapI ] == moving ) {
+                mMapAnimationFrozenRotFrameCount[ inMapI ] ++;
+                }
+    
             handleAnimSound( oID, 0, ground, oldFrameCount, 
                              mMapAnimationFrameCount[ inMapI ],
                              (double)inScreenX / CELL_D,
@@ -1755,6 +1759,11 @@ void LivingLifePage::drawMapCell( int inMapI,
                             mMapAnimationFrameCount[ inMapI ];
                         
                         mMapAnimationFrameCount[ inMapI ] = 0;
+                        
+                        if( newType == moving ) {
+                            mMapAnimationFrameCount[ inMapI ] = 
+                                mMapAnimationFrozenRotFrameCount[ inMapI ];
+                            }
                         }
                     
                     }
@@ -5484,6 +5493,9 @@ void LivingLifePage::step() {
                     mMapAnimationLastFrameCount[ i ] =
                         mMapAnimationFrameCount[ i ];
                     
+                    mMapAnimationFrozenRotFrameCount[ i ] = 
+                        mMapAnimationLastFrameCount[ i ];
+                    
                     mMapAnimationFrameCount[ i ] = 0;
                     }
                 }
@@ -6571,6 +6583,20 @@ void LivingLifePage::step() {
                                 mMapLastAnimFade[ mapI ] =
                                     mMapLastAnimFade[ oldMapI ];
                                 
+                                if( mMapLastAnimFade[ mapI ] == 0 &&
+                                    mMapCurAnimType[ mapI ] != moving ) {
+                                    // not in the middle of a fade
+                                    
+                                    // fade to moving
+                                    mMapLastAnimType[ mapI ] =
+                                        mMapCurAnimType[ mapI ];
+                                    mMapCurAnimType[ mapI ] = moving;
+                                    mMapLastAnimFade[ mapI ] = 1;
+
+                                    mMapAnimationFrameCount[ mapI ] =
+                                        mMapAnimationFrozenRotFrameCount[ 
+                                            oldMapI ];
+                                    }
                                 
                                 int oldLocID = mMap[ oldMapI ];
                                 

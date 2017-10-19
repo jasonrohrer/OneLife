@@ -82,6 +82,8 @@ Version 33     ???
   that, that player will respawn in a random location in their next Eve life.
   Repeat suicide is no longer a viable solo player strategy.
 
+--Fixed animation blending when a moving object comes to rest.
+
 
 
 
