@@ -5570,7 +5570,13 @@ void LivingLifePage::step() {
         
         LiveObject *ourObject = getOurLiveObject();
 
-        if( mCurMouseOverID == 0 && 
+        // either we're not mousing over any object
+        // OR the object we're mousing over is in the cell we're mousing over
+        if( ( mCurMouseOverID == 0 ||
+              ( mCurMouseOverSpot.x == mCurMouseOverCell.x &&
+                mCurMouseOverSpot.y == mCurMouseOverCell.y  ) )
+            &&
+            // AND we're not moving AND we're holding something
             ourObject != NULL &&
             ! ourObject->inMotion &&
             ourObject->holdingID > 0 ) {
