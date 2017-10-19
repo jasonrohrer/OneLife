@@ -10233,6 +10233,8 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
     
     if( clickDestMapY >= 0 && clickDestMapY < mMapD &&
         clickDestMapX >= 0 && clickDestMapX < mMapD ) {
+                
+        int oID = mMap[ clickDestMapI ];
 
         if( ! ourLiveObject->inMotion &&
             ( clickDestMapX != mCurMouseOverCell.x ||
@@ -10263,6 +10265,12 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
 
             mCurMouseOverCell.x = clickDestMapX;
             mCurMouseOverCell.y = clickDestMapY;
+
+            if( oldFade < 0 && oID > 0 ) {
+                // show cell instantly when mousing over and occupied space
+                oldFade = 0;
+                }
+            
             mCurMouseOverCellFade = oldFade;
             }
         
@@ -10270,8 +10278,6 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
         // check this cell first
 
         // all short objects are mouse-through-able
-        
-        int oID = mMap[ clickDestMapI ];
         
         if( oID > 0 && 
             getObjectHeight( oID ) < CELL_D ) {
