@@ -1,0 +1,25 @@
+This file explains various nuances of the editing process.
+
+
+
+
+===TRANSITION EDITOR====
+
+Transition block represents
+
+    ACTOR  +  TARGET
+           =
+NEW ACTOR  +  NEW TARGET
+
+
+
+==Moving Objects==
+
+To specify what is left behind by a moving object, set ACTOR and NEW TARGET
+to moving object (or before/after objects of move transition) and set
+NEW ACTOR to what is left behind by moving object.
+
+If moving object can consume an object that it moves onto, set TARGET as well.
+
+Thus, a moving object can have distinct effects based on whether it is moving
+into an empty space (bare ground) or moving onto an object that it can consume.
