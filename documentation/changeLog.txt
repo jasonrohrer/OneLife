@@ -93,6 +93,9 @@ Version 33     ???
 
 --Fixed poor cornering and endless circling at high movement speeds.
 
+--Fixed overshooting at very high movement speeds.  Speed multiplier of 10 is
+  now useable, and 20 is borderline useable.
+
 
 
 

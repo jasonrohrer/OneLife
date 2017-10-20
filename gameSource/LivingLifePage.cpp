@@ -9711,6 +9711,21 @@ void LivingLifePage::step() {
             doublePair endPos = { (double)nextStepDest.x, 
                                   (double)nextStepDest.y };
             
+            while( distance( o->currentPos, endPos ) <= o->currentSpeed &&
+                   o->currentPathStep < o->pathLength - 2 ) {
+                
+                // speed too great, overshooting next step
+                
+                o->currentPathStep ++;
+                o->numFramesOnCurrentStep = 0;
+                
+                nextStepDest = o->pathToDest[ o->currentPathStep + 1 ];
+            
+                endPos.x = nextStepDest.x;
+                endPos.y = nextStepDest.y;
+                }
+
+
             doublePair dir = normalize( sub( endPos, o->currentPos ) );
             
 
