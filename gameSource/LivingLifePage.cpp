@@ -1084,7 +1084,10 @@ LivingLifePage::LivingLifePage()
     mCurMouseOverCell.y = -1;
     mCurMouseOverCellFade = 0.0f;
     mCurMouseOverCellFadeRate = 0.04;
-    
+    mLastClickCell.x = -1;
+    mLastClickCell.y = -1;
+
+
     initLiveTriggers();
 
     for( int i=0; i<4; i++ ) {
@@ -10160,6 +10163,9 @@ void LivingLifePage::makeActive( char inFresh ) {
     mCurMouseOverCell.x = -1;
     mCurMouseOverCell.y = -1;
     mCurMouseOverCellFade = 0;
+    mLastClickCell.x = -1;
+    mLastClickCell.y = -1;
+    
     
     mPrevMouseOverCells.deleteAll();
     mPrevMouseOverCellFades.deleteAll();
@@ -10284,7 +10290,13 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                 
         int oID = mMap[ clickDestMapI ];
 
-        if( ! ourLiveObject->inMotion &&
+        if( ! ourLiveObject->inMotion 
+            &&
+            // don't allow them to mouse over clicked cell after click
+            // until they mouse out and back in again
+            ( clickDestMapX != mLastClickCell.x ||
+              clickDestMapY != mLastClickCell.y )  
+            &&
             ( clickDestMapX != mCurMouseOverCell.x ||
               clickDestMapY != mCurMouseOverCell.y ) ) {
 
@@ -10314,6 +10326,11 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
             mCurMouseOverCell.x = clickDestMapX;
             mCurMouseOverCell.y = clickDestMapY;
             
+            // moused somewhere new, clear last click
+            mLastClickCell.x = -1;
+            mLastClickCell.y = -1;
+            
+
             mCurMouseOverCellFadeRate = 0.04;
             
             if( oldFade < 0 && oID > 0 ) {
@@ -10889,6 +10906,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     // clear mouse over cell
     mPrevMouseOverCells.push_back( mCurMouseOverCell );
     mPrevMouseOverCellFades.push_back( mCurMouseOverCellFade );
+    
+    if( mCurMouseOverCell.x != -1 ) {    
+        mLastClickCell = mCurMouseOverCell;
+        }
+
     mCurMouseOverCell.x = -1;
     mCurMouseOverCell.y = -1;
 
