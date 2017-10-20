@@ -86,6 +86,8 @@ Version 33     ???
 
 --Fixed frozen rotation frame count use in animation editor.
 
+--Drawing grid square highlights when holding something (to show you where it 
+  will be put down).
 
 
 
