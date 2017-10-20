@@ -131,6 +131,10 @@ typedef struct LiveObject {
         // current speed is move delta per frame
         double currentSpeed;
 
+        // current move speed in grid cells per sec
+        double currentGridSpeed;
+        
+
         // for instant reaction to move command when server hasn't
         // responded yet
         // in grid spaces per sec

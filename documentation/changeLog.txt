@@ -91,6 +91,8 @@ Version 33     ???
 
 --Fixed youth body position on rideable objects.
 
+--Fixed poor cornering and endless circling at high movement speeds.
+
 
 
 

@@ -580,6 +580,7 @@ void updateMoveSpeed( LiveObject *inObject ) {
     inObject->currentSpeed = speedPerSec / fps;
     printf( "fixed speed = %f\n", inObject->currentSpeed );
     
+    inObject->currentGridSpeed = speedPerSec;
     
     // slow move speed for testing
     //inObject->currentSpeed *= 0.25;
@@ -8018,6 +8019,7 @@ void LivingLifePage::step() {
                             existing->currentPos.y = o.yd;
                             
                             existing->currentSpeed = 0;
+                            existing->currentGridSpeed = 0;
                             playPendingReceivedMessages( existing );
                             
                             existing->xd = o.xd;
@@ -8063,6 +8065,7 @@ void LivingLifePage::step() {
                             existing->currentPos.y = o.yd;
                         
                             existing->currentSpeed = 0;
+                            existing->currentGridSpeed = 0;
                             if( ! existing->somePendingMessageIsMoreMovement ) {
                                 addNewAnim( existing, ground );
                                 }
@@ -8201,6 +8204,7 @@ void LivingLifePage::step() {
                         o.heldObjectRot = 0;
 
                         o.currentSpeed = 0;
+                        o.currentGridSpeed = 0;
                         
                         o.moveTotalTime = 0;
                         
@@ -8977,6 +8981,8 @@ void LivingLifePage::step() {
                                     
                                     // hard jump back
                                     existing->currentSpeed = 0;
+                                    existing->currentGridSpeed = 0;
+                                    
                                     playPendingReceivedMessages( existing );
 
                                     existing->currentPos.x =
@@ -9716,6 +9722,13 @@ void LivingLifePage::step() {
                 // don't miss it and circle around it forever
                 turnFactor = 0.5;
                 }
+
+            if( o->currentGridSpeed > 4 ) {
+                // tighten turns as speed increases to avoid
+                // circling around forever
+                turnFactor *= o->currentGridSpeed / 4;
+                }
+            
             
             
             o->currentMoveDirection = 
@@ -9729,6 +9742,12 @@ void LivingLifePage::step() {
                 // go directly there instead
                 o->currentMoveDirection = dir;
                 }
+
+            if( o->currentGridSpeed * frameRateFactor > 12 ) {
+                // at high speed, can't round turns at all without circling
+                o->currentMoveDirection = dir;
+                }
+            
             
             
 
@@ -9802,6 +9821,8 @@ void LivingLifePage::step() {
                     // reached destination
                     o->currentPos = endPos;
                     o->currentSpeed = 0;
+                    o->currentGridSpeed = 0;
+                    
                     playPendingReceivedMessages( o );
                     
                     //trailColor.r = randSource.getRandomBoundedDouble( 0, .5 );
