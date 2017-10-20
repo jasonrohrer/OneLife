@@ -6544,7 +6544,7 @@ void LivingLifePage::step() {
                             
                             ExtraMapObject oldObj;
                             
-                            if( old != 0 && sourceObjID != 0 &&
+                            if( old > 0 && sourceObjID != 0 &&
                                 getTrans( sourceObjID, old ) != NULL ) {
                                 
                                 // save old object while we
@@ -6632,7 +6632,7 @@ void LivingLifePage::step() {
                                 }
 
                                                         
-                            if( old != 0 && sourceObjID != 0 &&
+                            if( old > 0 && sourceObjID != 0 &&
                                 getTrans( sourceObjID, old ) != NULL ) {
                                 
                                 // now that we've set up new object in dest
@@ -6683,7 +6683,7 @@ void LivingLifePage::step() {
                             }
 
 
-                        if( old != 0 &&
+                        if( old > 0 &&
                             old == newID &&
                             mMapContainedStacks[mapI].size() > 
                             oldContainedCount &&
