@@ -4015,6 +4015,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                 drawMapCell( drawRec.mapI, drawRec.screenX, drawRec.screenY );
 
+                // copy back out of map to preserve effects of draw call
+                // (frame count update, etc.)
+                *mO = copyFromMap( drawRec.mapI );
+
                 // put original one back
                 putInMap( drawRec.mapI, &curO );
                 }
