@@ -3188,6 +3188,8 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
         ObjectRecord *personObject = getObject( mDemoPersonObject );
 
+        doublePair personPos = drawOffset;
+
         if( mHeldInHandCheckbox.getToggled() ) {
             
             hideClosestArm = 0;
@@ -3195,6 +3197,13 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         else if( mRideableCheckbox.getToggled() ) {
             hideAllLimbs = true;
             hideClosestArm = 0;
+
+            personPos = 
+                sub( personPos, 
+                     getAgeBodyOffset( 
+                         age,
+                         personObject->spritePos[ 
+                             getBodyIndex( personObject, age ) ] ) );
             }
         else {
             // no longer hiding arm for non-handheld objects
@@ -3208,7 +3217,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         
         HoldingPos holdingPos =
-            drawObject( personObject, 2, drawOffset, 0, false, false, 
+            drawObject( personObject, 2, personPos, 0, false, false, 
                         age, hideClosestArm, hideAllLimbs, false,
                         getEmptyClothingSet() );
 

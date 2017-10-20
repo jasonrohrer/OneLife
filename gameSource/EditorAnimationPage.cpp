@@ -14,6 +14,7 @@
 
 #include "soundBank.h"
 #include "zoomView.h"
+#include "ageControl.h"
 
 
 extern Font *mainFont;
@@ -2480,7 +2481,22 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                     frozenArmAnim = mCurrentAnim[ moving ];
                     }
                 
+                doublePair personPos = pos;
+                
+                if( ( heldObject != NULL &&
+                      heldObject->rideable ) ) {
+                    
+                    ObjectRecord *personObj = getObject( mCurrentObjectID );
 
+                    personPos = 
+                        sub( personPos, 
+                             getAgeBodyOffset( 
+                                 age,
+                                 personObj->spritePos[ 
+                                     getBodyIndex( personObj, age ) ] ) );
+                    }
+                
+                
 
                 HoldingPos holdingPos = 
                     drawObjectAnim( mCurrentObjectID, 2, 
@@ -2492,7 +2508,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 animRotFrozen,
                                 frozenArmAnim,
                                 frozenArmAnim,
-                                pos, 0, false, mFlipDraw, age,
+                                personPos, 0, false, mFlipDraw, age,
                                 hideClosestArm,
                                 hideAllLimbs,
                                 false,

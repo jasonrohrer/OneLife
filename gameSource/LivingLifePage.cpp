@@ -2560,6 +2560,16 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             doublePair personPos = pos;
             
             doublePair targetRidingOffset = sub( personPos, holdPos );
+
+            
+            ObjectRecord *personObj = getObject( inObj->displayID );
+
+            targetRidingOffset = 
+                sub( targetRidingOffset, 
+                     getAgeBodyOffset( 
+                         age,
+                         personObj->spritePos[ 
+                             getBodyIndex( personObj, age ) ] ) );
             
             // step toward target to smooth
             doublePair delta = sub( targetRidingOffset, 

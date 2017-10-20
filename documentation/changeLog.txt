@@ -89,6 +89,9 @@ Version 33     ???
 --Drawing grid square highlights when holding something (to show you where it 
   will be put down).
 
+--Fixed youth body position on rideable objects.
+
+
 
 
 Server fixes:
