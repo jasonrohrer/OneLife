@@ -1083,6 +1083,7 @@ LivingLifePage::LivingLifePage()
     mCurMouseOverCell.x = -1;
     mCurMouseOverCell.y = -1;
     mCurMouseOverCellFade = 0.0f;
+    mCurMouseOverCellFadeRate = 0.04;
     
     initLiveTriggers();
 
@@ -3390,14 +3391,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         int id = mMap[mapI];
         
-        float fill = 1;
-        float border = 0;        
+        float fill = 0;
+        float border = 1;        
         char drawFill = false;
         float maxFade = maxEmptyCellFade;
         
         if( id > 0 ) {
-            fill = 0;
-            border = 1;
+            fill = 1;
+            border = 0;
             drawFill = true;
             maxFade = maxFullCellFade;
             }
@@ -3449,14 +3450,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         int id = mMap[mapI];
         
-        float fill = 1;
-        float border = 0;
+        float fill = 0;
+        float border = 1;
         char drawFill = false;
         float maxFade = maxEmptyCellFade;
                 
         if( id > 0 ) {
-            fill = 0;
-            border = 1;
+            fill = 1;
+            border = 0;
             drawFill = true;
             maxFade = maxFullCellFade;
             }
@@ -5606,7 +5607,9 @@ void LivingLifePage::step() {
             ! ourObject->inMotion &&
             ourObject->holdingID > 0 ) {
             // fade cell in
-            mCurMouseOverCellFade += 0.04 * frameRateFactor;
+            mCurMouseOverCellFade += 
+                mCurMouseOverCellFadeRate * frameRateFactor;
+            
             if( mCurMouseOverCellFade >= 1 ) {
                 mCurMouseOverCellFade = 1.0;
                 }
@@ -10310,10 +10313,13 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
 
             mCurMouseOverCell.x = clickDestMapX;
             mCurMouseOverCell.y = clickDestMapY;
-
+            
+            mCurMouseOverCellFadeRate = 0.04;
+            
             if( oldFade < 0 && oID > 0 ) {
                 // show cell instantly when mousing over and occupied space
                 oldFade = 0;
+                mCurMouseOverCellFadeRate = 0.2;
                 }
             
             mCurMouseOverCellFade = oldFade;

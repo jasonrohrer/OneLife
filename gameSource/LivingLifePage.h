@@ -567,6 +567,7 @@ class LivingLifePage : public GamePage {
         // the ground cell that we're mousing over
         GridPos mCurMouseOverCell;
         float mCurMouseOverCellFade;
+        float mCurMouseOverCellFadeRate;
         
         SimpleVector<GridPos> mPrevMouseOverCells;
         SimpleVector<float> mPrevMouseOverCellFades;
