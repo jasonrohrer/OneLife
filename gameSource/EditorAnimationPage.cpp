@@ -2222,6 +2222,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 // switching back to moving
                 // resume from where frozen
                 mFrameCount = mFrozenRotFrameCount;
+                mLastTypeFrameCount = mFrozenRotFrameCount;
                 }
             
             if( ! isAnimFadeNeeded( mCurrentObjectID,

@@ -84,6 +84,8 @@ Version 33     ???
 
 --Fixed animation blending when a moving object comes to rest.
 
+--Fixed frozen rotation frame count use in animation editor.
+
 
 
 
