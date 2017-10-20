@@ -1210,6 +1210,12 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         if( thisFrameTime < 0 ) {
                             thisFrameTime = frameTime;
                             }
+                        
+                        double frozenRotFrameTime = thisFrameTime;
+                        
+                        if( p->anim != moving ) {
+                            frozenRotFrameTime = 0;
+                            }
 
                         char used;
                     
@@ -1219,7 +1225,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                             0,
                                             p->anim,
                                             thisFrameTime,
-                                            thisFrameTime,
+                                            frozenRotFrameTime,
                                             &used,
                                             frozenArmAnimType,
                                             frozenArmAnimType,
@@ -1256,8 +1262,11 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     
                             ClothingSet heldClothing = getEmptyClothingSet();
                             
+                            double heldFrozenRotFrameTime = thisFrameTime;
+                            
                             if( p->anim != moving ) {
                                 heldAnimType = held;
+                                heldFrozenRotFrameTime = 0;
                                 }
 
                             if( heldObject->person ) {
@@ -1274,7 +1283,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                             0, 
                                             heldFadeTargetType, 
                                             thisFrameTime, 
-                                            thisFrameTime,
+                                            heldFrozenRotFrameTime,
                                             &used,
                                             moving,
                                             moving,
@@ -1352,13 +1361,19 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                            cellO->spriteSkipDrawing );
                         }
                     
+                    
+                    double frozenRotFrameTime = 0;
+                    
+                    if( c->anim == moving ) {
+                        frozenRotFrameTime = thisFrameTime;
+                        }
 
                     drawObjectAnim( c->oID, c->anim, 
                                     thisFrameTime, 
                                     0,
                                     c->anim,
                                     thisFrameTime,
-                                    thisFrameTime,
+                                    frozenRotFrameTime,
                                     &used,
                                     ground,
                                     ground,
