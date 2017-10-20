@@ -24,9 +24,19 @@ So, left for almost everything.  Right for drop/containers/killing.
 
 ==CHAT==
 
-The only thing that is NOT accomplished with the mouse is chat, which is
+The first thing that is not accomplished with the mouse is chat, which is
 invoked by pressing ENTER, typing what you want to say, and pressing ENTER
 again to say it.
+
+
+
+==CRAFTING NOTES==
+
+The second thing that is not accomplished with the mouse is paging through
+the crafting notes that appear in the lower right corner of the screen.
+Press TAB (as indicated) to go to the next page.  SHIFT-TAB goes to the
+previous page.  CTRL-TAB jumps ahead by five pages, and CTRL-SHIFT-TAB jumps
+back by five pages.
 
 
 
