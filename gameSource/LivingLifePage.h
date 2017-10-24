@@ -562,6 +562,8 @@ class LivingLifePage : public GamePage {
         GridPos mCurMouseOverSpot;
         char mCurMouseOverBehind;
         
+        char mCurMouseOverPerson;
+
 
         SimpleVector<GridPos> mPrevMouseOverSpots;
         SimpleVector<char> mPrevMouseOverSpotsBehind;

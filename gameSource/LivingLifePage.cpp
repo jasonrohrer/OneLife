@@ -5614,8 +5614,9 @@ void LivingLifePage::step() {
         
         LiveObject *ourObject = getOurLiveObject();
 
-        // we're not mousing over any object
+        // we're not mousing over any object or person
         if( mCurMouseOverID == 0 &&
+            ! mCurMouseOverPerson &&
             // AND we're not moving AND we're holding something
             ourObject != NULL &&
             ! ourObject->inMotion &&
@@ -10742,6 +10743,8 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
     p.hitOtherPerson = false;
 
     checkForPointerHit( &p, inX, inY );
+
+    mCurMouseOverPerson = p.hitOtherPerson || p.hitSelf;
     
     
     int clickDestX = p.closestCellX;
@@ -10940,6 +10943,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     checkForPointerHit( &p, inX, inY );
     
+    mCurMouseOverPerson = p.hitOtherPerson || p.hitSelf;
+
     // don't allow clicking on object during continued motion
     if( mouseAlreadyDown ) {
         p.hit = false;
