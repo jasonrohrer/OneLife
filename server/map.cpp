@@ -4172,6 +4172,8 @@ void mapEveDeath( char *inEmail, double inAge ) {
         // must overwrite no matter what
         pX = lrint( ave.x );
         pY = lrint( ave.y );
+
+        pR = eveRadiusStart;
         }
     
     
@@ -4189,6 +4191,8 @@ void mapEveDeath( char *inEmail, double inAge ) {
         }
     
 
+    printf( "Remembering Eve's camp in database (%d,%d) r=%d for %s\n",
+            pX, pY, pR, inEmail );
     
     eveDBPut( inEmail, pX, pY, pR );
     }
