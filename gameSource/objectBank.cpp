@@ -631,14 +631,18 @@ float initObjectBankStep() {
 
                 r->slotPos = new doublePair[ r->numSlots ];
                 r->slotVert = new char[ r->numSlots ];
-                            
+                r->slotParent = new int[ r->numSlots ];
+            
                 for( int i=0; i< r->numSlots; i++ ) {
                     r->slotVert[i] = false;
+                    r->slotParent[i] = -1;
+                    
                     int vertRead = 0;
-                    sscanf( lines[ next ], "slotPos=%lf,%lf,vert=%d", 
+                    sscanf( lines[ next ], "slotPos=%lf,%lf,vert=%d,parent=%d", 
                             &( r->slotPos[i].x ),
                             &( r->slotPos[i].y ),
-                            &vertRead );
+                            &vertRead,
+                            &( r->slotParent[i] ) );
                     r->slotVert[i] = vertRead;
                     next++;
                     }
@@ -1145,6 +1149,7 @@ static void freeObjectRecord( int inID ) {
             
             delete [] idMap[inID]->slotPos;
             delete [] idMap[inID]->slotVert;
+            delete [] idMap[inID]->slotParent;
             delete [] idMap[inID]->sprites;
             delete [] idMap[inID]->spritePos;
             delete [] idMap[inID]->spriteRot;
@@ -1202,6 +1207,7 @@ void freeObjectBank() {
             
             delete [] idMap[i]->slotPos;
             delete [] idMap[i]->slotVert;
+            delete [] idMap[i]->slotParent;
             delete [] idMap[i]->description;
             delete [] idMap[i]->biomes;
             
@@ -1302,6 +1308,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->slotSize, 
                         inObject->slotPos,
                         inObject->slotVert,
+                        inObject->slotParent,
                         inObject->slotTimeStretch,
                         inObject->numSprites, 
                         inObject->sprites, 
@@ -1520,6 +1527,7 @@ int addObject( const char *inDescription,
                char inCreationSoundInitialOnly,
                int inNumSlots, int inSlotSize, doublePair *inSlotPos,
                char *inSlotVert,
+               int *inSlotParent,
                float inSlotTimeStretch,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
@@ -1681,10 +1689,11 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "slotSize=%d", inSlotSize ) );
 
         for( int i=0; i<inNumSlots; i++ ) {
-            lines.push_back( autoSprintf( "slotPos=%f,%f,vert=%d", 
+            lines.push_back( autoSprintf( "slotPos=%f,%f,vert=%d,parent=%d", 
                                           inSlotPos[i].x,
                                           inSlotPos[i].y,
-                                          (int)( inSlotVert[i] ) ) );
+                                          (int)( inSlotVert[i] ),
+                                          inSlotParent[i] ) );
             }
 
         
@@ -1905,9 +1914,10 @@ int addObject( const char *inDescription,
     
     r->slotPos = new doublePair[ inNumSlots ];
     r->slotVert = new char[ inNumSlots ];
+    r->slotParent = new int[ inNumSlots ];
     
     memcpy( r->slotPos, inSlotPos, inNumSlots * sizeof( doublePair ) );
-    memcpy( r->slotVert, inSlotVert, inNumSlots * sizeof( char ) );
+    memcpy( r->slotParent, inSlotParent, inNumSlots * sizeof( int ) );
     
     r->slotTimeStretch = inSlotTimeStretch;
     

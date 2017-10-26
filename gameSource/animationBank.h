@@ -302,7 +302,11 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                            // if true, we draw holding parts anyway
                            char inHeldNotInPlaceYet,
                            ClothingSet inClothing,
-                           SimpleVector<int> *inClothingContained );
+                           SimpleVector<int> *inClothingContained,
+                           // set to non-NULL properly sized arrays
+                           // to receive info about slot rots and positions
+                           double *outSlotRots = NULL,
+                           doublePair *outSlotOffsets = NULL );
 
 
 HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
@@ -325,7 +329,11 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                            char inHideAllLimbs,
                            char inHeldNotInPlaceYet,
                            ClothingSet inClothing,
-                           SimpleVector<int> *inClothingContained );
+                           SimpleVector<int> *inClothingContained,
+                           // set to non-NULL properly sized arrays
+                           // to receive info about slot rots and positions
+                           double *outSlotRots = NULL,
+                           doublePair *outSlotOffsets = NULL );
 
 
 void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime, 

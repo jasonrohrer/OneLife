@@ -383,6 +383,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             
             doublePair *slotPos = new doublePair[ 0 ];
             char *slotVert = new char[ 0 ];
+            int *slotParent = new int[ 0 ];
 
             addObject( objName,
                        false,
@@ -420,6 +421,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        0,
                        0, 0, slotPos,
                        slotVert,
+                       slotParent,
                        1,
                        numSprites, spriteIDs, 
                        spritePos,
@@ -463,6 +465,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] objName;
             delete [] slotPos;
             delete [] slotVert;
+            delete [] slotParent;
             }
         }
     }

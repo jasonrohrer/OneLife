@@ -458,6 +458,7 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.numSlots = 0;
     mCurrentObject.slotPos = new doublePair[ 0 ];
     mCurrentObject.slotVert = new char[ 0 ];
+    mCurrentObject.slotParent = new int[ 0 ];
     
     mCurrentObject.numSprites = 0;
     mCurrentObject.sprites = new int[ 0 ];
@@ -660,6 +661,7 @@ EditorObjectPage::~EditorObjectPage() {
     delete [] mCurrentObject.description;
     delete [] mCurrentObject.slotPos;
     delete [] mCurrentObject.slotVert;
+    delete [] mCurrentObject.slotParent;
     delete [] mCurrentObject.sprites;
     delete [] mCurrentObject.spritePos;
     delete [] mCurrentObject.spriteRot;
@@ -1014,7 +1016,20 @@ static void recursiveRotate( ObjectRecord *inObject,
                              inRotationCenter, inRotationDelta );
             }
         }
-    
+
+    for( int i=0; i<inObject->numSlots; i++ ) {
+        if( inObject->slotParent[i] == inRotatingParentIndex ) {
+            
+            inObject->slotPos[i] = sub( inObject->slotPos[i],
+                                        inRotationCenter );
+            
+            inObject->slotPos[i] = rotate( inObject->slotPos[i],
+                                           -2 * M_PI * inRotationDelta );
+            
+            inObject->slotPos[i] = add( inObject->slotPos[i],
+                                        inRotationCenter );
+            }
+        }
     }
 
 
@@ -1309,6 +1324,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mSlotSizeField.getInt(),
                    mCurrentObject.slotPos,
                    mCurrentObject.slotVert,
+                   mCurrentObject.slotParent,
                    mSlotTimeStretchField.getFloat(),
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
@@ -1430,6 +1446,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mSlotSizeField.getInt(), 
                    mCurrentObject.slotPos,
                    mCurrentObject.slotVert,
+                   mCurrentObject.slotParent,
                    mSlotTimeStretchField.getFloat(), 
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
@@ -1538,6 +1555,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         delete [] mCurrentObject.slotVert;
         mCurrentObject.slotVert = new char[ 0 ];
+
+        delete [] mCurrentObject.slotParent;
+        mCurrentObject.slotParent = new int[ 0 ];
 
         
         mCurrentObject.numSprites = 0;
@@ -1719,10 +1739,17 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         memcpy( slotsVert, mCurrentObject.slotVert, 
                 sizeof( char ) * numSlots );
+
+
+        int *slotsParent = new int[ numSlots + 1 ];
+        
+        memcpy( slotsParent, mCurrentObject.slotParent, 
+                sizeof( int ) * numSlots );
         
 
         if( mCurrentObject.numSlots == 0 ) {
             slotsVert[numSlots] = false;
+            slotsParent[numSlots] = -1;
             slots[numSlots].x = 0;
             slots[numSlots].y = 0;
             mDemoSlotsButton.setVisible( true );
@@ -1730,6 +1757,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }
         else {
             slotsVert[numSlots] = slotsVert[ numSlots - 1 ];
+            slotsParent[numSlots] = slotsParent[ numSlots - 1 ];
             slots[numSlots].x = 
                 slots[numSlots - 1].x + 16;
             slots[numSlots].y = 
@@ -1744,6 +1772,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         delete [] mCurrentObject.slotVert;
         mCurrentObject.slotVert = slotsVert;
+
+        delete [] mCurrentObject.slotParent;
+        mCurrentObject.slotParent = slotsParent;
+
 
         mCurrentObject.numSlots = numSlots + 1;
         
@@ -2363,6 +2395,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 
             delete [] mCurrentObject.slotPos;
             delete [] mCurrentObject.slotVert;
+            delete [] mCurrentObject.slotParent;
             delete [] mCurrentObject.sprites;
             delete [] mCurrentObject.spritePos;
             delete [] mCurrentObject.spriteRot;
@@ -2440,6 +2473,13 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 
             memcpy( mCurrentObject.slotVert, pickedRecord->slotVert,
                     sizeof( char ) * pickedRecord->numSlots );
+
+            mCurrentObject.slotParent = 
+                new int[ pickedRecord->numSlots ];
+                
+            memcpy( mCurrentObject.slotParent, pickedRecord->slotParent,
+                    sizeof( int ) * pickedRecord->numSlots );
+
 
             mCurrentObject.numSprites = pickedRecord->numSprites;
                 
@@ -3891,6 +3931,20 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     
     
     mCurrentObject.numSprites = newNumSprites;
+
+
+    for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+        if( mCurrentObject.spriteParent[i] >= newNumSprites ) {
+            mCurrentObject.spriteParent[i] = -1;
+            }
+        }
+
+
+    for( int i=0; i<mCurrentObject.numSlots; i++ ) {
+        if( mCurrentObject.slotParent[i] >= newNumSprites ) {
+            mCurrentObject.slotParent[i] = -1;
+            }
+        }
     }
 
 
@@ -4150,6 +4204,26 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
             }
         }
     
+
+    if( isLastMouseButtonRight() && mPickedSlot != -1 ) {
+        // pick new parent for this slot
+
+        int obj, slot;
+        
+        double smallestDist = 
+            getClosestSpriteOrSlot( inX, inY, &obj, &slot );
+
+        if( smallestDist < 200 && obj != -1 && slot == -1 ) {
+            // parent picked
+            
+            mCurrentObject.slotParent[ mPickedSlot ] = obj;
+            }
+        else {
+            // parent cleared
+            mCurrentObject.slotParent[ mPickedSlot ] = -1;
+            }
+        }
+    
     
 
     mDragging = true;
@@ -4210,7 +4284,14 @@ static void recursiveMove( ObjectRecord *inObject,
             recursiveMove( inObject, i, inMoveDelta );
             }
         }
-    
+
+    for( int i=0; i<inObject->numSlots; i++ ) {
+        if( inObject->slotParent[i] == inMovingParentIndex ) {
+            
+            inObject->slotPos[i] =
+                add( inObject->slotPos[i], inMoveDelta );
+            }
+        }
     }
 
 
@@ -4614,6 +4695,12 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
             else if( mCurrentObject.spriteParent[i] > mPickedObjectLayer ) {
                 // all parents above move down one index
                 mCurrentObject.spriteParent[i] --;
+                }
+            }
+        
+        for( int i=0; i<mCurrentObject.numSlots; i++ ) {
+            if( mCurrentObject.slotParent[i] >= newNumSprites ) {
+                mCurrentObject.slotParent[i] = -1;
                 }
             }
 

@@ -1136,7 +1136,9 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                            char inHideAllLimbs,
                            char inHeldNotInPlaceYet,
                            ClothingSet inClothing,
-                           SimpleVector<int> *inClothingContained ) {
+                           SimpleVector<int> *inClothingContained,
+                           double *outSlotRots,
+                           doublePair *outSlotOffsets ) {
     
     if( inType == ground2 ) {
         inType = ground;
@@ -1187,7 +1189,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                                inHideClosestArm, inHideAllLimbs, 
                                inHeldNotInPlaceYet,
                                inClothing,
-                               inClothingContained );
+                               inClothingContained,
+                               outSlotRots, outSlotOffsets );
         }
     }
 
@@ -1203,12 +1206,15 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 // avoid mallocs every draw call by statically allocating this
 // here, we assume no object has more than 1000 sprites
 #define MAX_WORKING_SPRITES 1000
-static doublePair workingSpritePos[1000];
-static doublePair workingDeltaSpritePos[1000];
-static double workingRot[1000];
-static double workingDeltaRot[1000];
-static double workingSpriteFade[1000];
+static doublePair workingSpritePos[MAX_WORKING_SPRITES];
+static doublePair workingDeltaSpritePos[MAX_WORKING_SPRITES];
+static double workingRot[MAX_WORKING_SPRITES];
+static double workingDeltaRot[MAX_WORKING_SPRITES];
+static double workingSpriteFade[MAX_WORKING_SPRITES];
 
+// also assume not more than 1000 slots
+static double workingSlotRots[MAX_WORKING_SPRITES];
+static doublePair workingSlotOffsets[MAX_WORKING_SPRITES];
 
 
 static double processFrameTimeWithPauses( AnimationRecord *inAnim,
@@ -1289,7 +1295,9 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                            char inHideAllLimbs,
                            char inHeldNotInPlaceYet,
                            ClothingSet inClothing,
-                           SimpleVector<int> *inClothingContained ) {
+                           SimpleVector<int> *inClothingContained,
+                           double *outSlotRots,
+                           doublePair *outSlotOffsets ) {
 
     HoldingPos returnHoldingPos = { false, {0, 0}, 0 };
 
@@ -2390,6 +2398,60 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
         delete [] animLayerFades;
         animLayerFades = NULL;
         }
+
+    
+    // now compute adjustments for slots based on their parent relationships
+    // if requested
+    if( outSlotRots != NULL && outSlotOffsets != NULL ) {
+        
+        for( int i=0; i<obj->numSlots; i++ ) {
+            doublePair slotPos = obj->slotPos[i];
+            double rot = 0;
+            
+            
+            int nextParent = obj->slotParent[i];
+        
+            while( nextParent != -1 ) {
+            
+            
+            
+                if( workingDeltaRot[nextParent] != 0 ) {
+                    rot += workingDeltaRot[ nextParent ];
+                    
+                    double angle = - 2 * M_PI * workingDeltaRot[ nextParent ];
+                    
+                    slotPos = add( slotPos, 
+                                      rotate( 
+                                          workingDeltaSpritePos[ nextParent ],
+                                          -angle ) );
+
+                    // add in positional change based on arm's length rotation
+                    // around parent
+            
+                    doublePair childOffset = 
+                        sub( slotPos, 
+                             obj->spritePos[nextParent] );
+                
+                    doublePair newChildOffset = rotate( childOffset, angle );
+                
+                    slotPos = 
+                        add( slotPos, sub( newChildOffset, childOffset ) );
+                    }
+                else {
+                    slotPos = add( slotPos, 
+                                   workingDeltaSpritePos[ nextParent ] );
+                    }
+                    
+                nextParent = obj->spriteParent[nextParent];
+                }
+            
+            outSlotRots[i] = rot;
+            outSlotOffsets[i] = sub( slotPos, obj->slotPos[i] );
+            }
+        }
+    
+    
+
     
     return returnHoldingPos;
     }
@@ -2494,6 +2556,18 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     
     ClothingSet emptyClothing = getEmptyClothingSet();
 
+    ObjectRecord *obj = getObject( inObjectID );
+
+
+    double *slotRots = NULL;
+    doublePair *slotOffsets = NULL;
+    
+
+    if( obj->numSlots < MAX_WORKING_SPRITES ) {
+        slotRots = workingSlotRots;
+        slotOffsets = workingSlotOffsets;
+        }
+
 
     // draw portion of animating object behind slots
     drawObjectAnim( inObjectID, 0, inAnim, inFrameTime,
@@ -2507,13 +2581,14 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     inAge, inHideClosestArm, inHideAllLimbs, 
                     inHeldNotInPlaceYet,
                     inClothing,
-                    inClothingContained );
+                    inClothingContained,
+                    slotRots,
+                    slotOffsets );
 
     
     // next, draw jiggling (never rotating) objects in slots
     // can't safely rotate them, because they may be compound objects
     
-    ObjectRecord *obj = getObject( inObjectID );
 
     for( int i=0; i<obj->numSlots; i++ ) {
         if( i < inNumContained ) {
@@ -2543,6 +2618,13 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             
             double rot = inRot;
             
+            if( slotRots != NULL ) {
+                rot += slotRots[i];
+
+                centerOffset = rotate( centerOffset, 
+                                       - slotRots[i] * 2 * M_PI );
+                }
+            
             if( obj->slotVert[i] ) {
                 double rotOffset = 
                     0.25 + contained->vertContainRotationOffset;
@@ -2562,10 +2644,16 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
             pos = sub( pos, centerOffset );
             
+            if( slotRots != NULL ) {
+                pos = add( pos, slotOffsets[i] );                
+                }
         
+            doublePair posWiggle = { 0, 0 };
+            
+
             if( i < inAnim->numSlots ) {
                 
-                pos.x += 
+                posWiggle.x += 
                     inAnimFade *
                     getOscOffset( 
                         slotFrameTime,
@@ -2573,7 +2661,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                         inAnim->slotAnim[i].xAmp,
                         inAnim->slotAnim[i].xPhase );
                 
-                pos.y += 
+                posWiggle.y += 
                     inAnimFade * 
                     getOscOffset( 
                         slotFrameTime,
@@ -2584,7 +2672,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                 if( inAnimFade < 1 ) {
                     double targetWeight = 1 - inAnimFade;
                 
-                    pos.x += 
+                    posWiggle.x += 
                         targetWeight *
                         getOscOffset( 
                             targetSlotFrameTime,
@@ -2592,7 +2680,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                             inFadeTargetAnim->slotAnim[i].xAmp,
                             inFadeTargetAnim->slotAnim[i].xPhase );
                     
-                    pos.y += 
+                    posWiggle.y += 
                         targetWeight *
                         getOscOffset( 
                             targetSlotFrameTime,
@@ -2602,6 +2690,11 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     }
                 }
                   
+            if( slotRots != NULL ) {
+                posWiggle = rotate( posWiggle, -2 * M_PI * slotRots[i] );
+                }
+            pos = add( pos, posWiggle );
+
             if( inFlipH ) {
                 pos.x *= -1;
                 }

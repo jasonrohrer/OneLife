@@ -96,6 +96,8 @@ Version 33     ???
 --Fixed overshooting at very high movement speeds.  Speed multiplier of 10 is
   now useable, and 20 is borderline useable.
 
+--Support for container slots having a parent sprite so that they move and
+  rotate with that parent sprite.
 
 
 

@@ -171,6 +171,11 @@ typedef struct ObjectRecord {
         // should objects be flipped vertically?
         char *slotVert;
 
+        // index of this slot's parent in the sprite list
+        // or -1 if this slot doesn't follow the motion of a sprite
+        int *slotParent;
+        
+
         // does being contained in one of this object's slots
         // adjust the passage of decay time?
         // 1.0 means normal time rate
@@ -383,6 +388,7 @@ int addObject( const char *inDescription,
                char inCreationSoundInitialOnly,
                int inNumSlots, int inSlotSize, doublePair *inSlotPos,
                char *inSlotVert,
+               int *inSlotParent,
                float inSlotTimeStretch,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
