@@ -375,6 +375,11 @@ SpriteHandle fillSprite( Image*, char ) {
     return NULL;
     }
 
+SpriteHandle loadSpriteBase( const char *inTGAFileName, 
+                             char inTransparentLowerLeftCorner ) {
+    return NULL;
+    }
+
 void drawSprite( SpriteHandle, doublePair, double, double, char ) {
     }
 
@@ -393,4 +398,12 @@ float getTotalGlobalFade() {
 
 
 void toggleAdditiveTextureColoring( char ) {
+    }
+
+
+void startOutputAllFrames() {
+    }
+
+
+void stopOutputAllFrames() {
     }
