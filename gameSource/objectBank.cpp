@@ -3801,11 +3801,41 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID ) {
     if( superO == NULL || subO == NULL ) {
         return false;
         }
+
+    if( subO->numSprites == 0 ) {
+        return true;
+        }
+
+    // allow global position adjustments, as long as all sub-sprites in same
+    // relative position to each other
+    
+    int spriteSubSeroID = subO->sprites[0];
+    doublePair spriteSubZeroPos = subO->spritePos[0];
+
+    doublePair spriteSuperZeroPos;
+    
+    // find zero sprite in super
+
+    char found = false;
+    for( int ss=0; ss<superO->numSprites; ss++ ) {
+        if( superO->sprites[ ss ] == spriteSubSeroID ) {
+            found = true;
+            spriteSuperZeroPos = superO->spritePos[ ss ];
+            break;
+            }
+        }
+    
+
+    if( !found ) {
+        return false;
+        }
+
     
     for( int s=0; s<subO->numSprites; s++ ) {
         int spriteID = subO->sprites[s];
         
-        doublePair spritePos = subO->spritePos[s];
+        doublePair spritePosRel = sub( subO->spritePos[s],
+                                       spriteSubZeroPos );
 
         double spriteRot = subO->spriteRot[s];
         
@@ -3817,7 +3847,8 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID ) {
         
         for( int ss=0; ss<superO->numSprites; ss++ ) {
             if( superO->sprites[ ss ] == spriteID &&
-                equal( superO->spritePos[ ss ], spritePos ) &&
+                equal( sub( superO->spritePos[ ss ],
+                            spriteSuperZeroPos ), spritePosRel ) &&
                 superO->spriteRot[ ss ] == spriteRot &&
                 superO->spriteHFlip[ ss ] == spriteHFlip &&
                 equal( superO->spriteColor[ ss ], spriteColor ) ) {

@@ -99,6 +99,12 @@ Version 33     ???
 --Support for container slots having a parent sprite so that they move and
   rotate with that parent sprite.
 
+--Fixed creation-sound-playing code that checks if newly created object is a
+  sprite-sub-set of the source object so that it allows for global
+  transpositions of the sub-sprites (example:  picking up froe from pile of
+  boards should not play froe creation sound).
+
+
 
 
 Server fixes:

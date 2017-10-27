@@ -594,7 +594,7 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject );
 int getMaxWideRadius();
 
 
-// returns true if inSubObjectID's sprites are all part of inSubObjectID
+// returns true if inSubObjectID's sprites are all part of inSuperObjectID
 char isSpriteSubset( int inSuperObjectID, int inSubObjectID );
 
 
