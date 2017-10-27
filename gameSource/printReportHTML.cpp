@@ -222,21 +222,23 @@ int main( int inNumArgs, char **inArgs ) {
             
             char humanMade = true;
             
-            for( int t=0; t<numTrans; t++ ) {
-                if( trans[t]->actor == -1 &&
-                    trans[t]->autoDecaySeconds != 0 ) {
-                    humanMade = false;
-                    break;
+            if( trans != NULL ) {    
+                for( int t=0; t<numTrans; t++ ) {
+                    if( trans[t]->actor == -1 &&
+                        trans[t]->autoDecaySeconds != 0 ) {
+                        humanMade = false;
+                        break;
+                        }
+                    if( trans[t]->actor == -2 ) {
+                        // default transition
+                        // doesn't count as making something
+                        humanMade = false;
+                        break;
+                        }
                     }
-                if( trans[t]->actor == -2 ) {
-                    // default transition
-                    // doesn't count as making something
-                    humanMade = false;
-                    break;
-                    }
+                delete [] trans;
                 }
-            delete [] trans;
-
+            
             if( humanMade ) {
                 numHumanMade ++;
                 
