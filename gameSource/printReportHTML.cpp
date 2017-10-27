@@ -205,7 +205,9 @@ int main( int inNumArgs, char **inArgs ) {
                 }
             }
         else if( o->person ) {
-            numPeople++;
+            if( ! o->personNoSpawn ) {
+                numPeople++;
+                }
             }
         else {
             // find out how it comes to exist
