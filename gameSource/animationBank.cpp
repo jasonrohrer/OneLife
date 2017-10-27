@@ -2619,7 +2619,12 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             double rot = inRot;
             
             if( slotRots != NULL ) {
-                rot += slotRots[i];
+                if( inFlipH ) {
+                    rot -= slotRots[i];
+                    }
+                else {
+                    rot += slotRots[i];
+                    }
 
                 centerOffset = rotate( centerOffset, 
                                        - slotRots[i] * 2 * M_PI );
