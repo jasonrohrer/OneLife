@@ -5173,6 +5173,14 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 mCurrentObject.spriteParent[i] = indexA;
                                 }
                             }
+                        for( int i=0; i<mCurrentObject.numSlots; i++ ) {
+                            if( mCurrentObject.slotParent[i] == indexA ) {
+                                mCurrentObject.slotParent[i] = indexB;
+                                }
+                            else if( mCurrentObject.slotParent[i] == indexB ) {
+                                mCurrentObject.slotParent[i] = indexA;
+                                }
+                            }
                         }
                     }
                 break;
@@ -5404,6 +5412,15 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 mCurrentObject.spriteParent[i] = indexA;
                                 }
                             }
+                        for( int i=0; i<mCurrentObject.numSlots; i++ ) {
+                            if( mCurrentObject.slotParent[i] == indexA ) {
+                                mCurrentObject.slotParent[i] = indexB;
+                                }
+                            else if( mCurrentObject.slotParent[i] == indexB ) {
+                                mCurrentObject.slotParent[i] = indexA;
+                                }
+                            }
+
                         }
                     }
                 break;   
