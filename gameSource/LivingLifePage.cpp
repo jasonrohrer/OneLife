@@ -6443,6 +6443,8 @@ void LivingLifePage::step() {
                         
                         int mapI = mapY * mMapD + mapX;
                         
+                        int oldFloor = mMapFloors[ mapI ];
+
                         mMapFloors[ mapI ] = floorID;
                         
 
@@ -6699,7 +6701,19 @@ void LivingLifePage::step() {
                                 mMapTileFlips[mapI] = false;
                                 }
                             }
+                        
 
+                        if( oldFloor != floorID && floorID > 0 ) {
+                            // floor changed
+                            
+                            ObjectRecord *obj = getObject( floorID );
+                            if( obj->creationSound.id != -1 ) {    
+                                    
+                                playSound( obj->creationSound,
+                                           getVectorFromCamera( x, y ) );
+                                }
+                            }
+                        
 
                         if( old > 0 &&
                             old == newID &&
