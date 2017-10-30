@@ -108,6 +108,9 @@ Version 33     ???
 
 --Added scene editor and support for test maps on server.
 
+--Anim editor now shows test ground sprite when showing a still person with a
+  held object.
+
 
 
 Server fixes:

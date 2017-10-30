@@ -2361,13 +2361,19 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
             
             double fadeTargetFrameTime = frameTime;
 
-            if( mCurrentType == moving ) {
+            if( mCurrentType == moving ||
+                mHeldID != -1 ) {
+                
                 doublePair groundPos = pos;
                 
                 setDrawColor( 0, 0, 0, 1 );
 
-                double groundFrameTime = frameTime;
-
+                double groundFrameTime = 0;
+                
+                if( mCurrentType == moving ) {
+                    groundFrameTime = frameTime;
+                    }
+                
                 if( obj->speedMult > 1.0 ) {                    
                     groundFrameTime *= obj->speedMult;
                     }
