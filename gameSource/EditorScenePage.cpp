@@ -1258,7 +1258,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
                             double heldAge = -1;
                             AnimType heldAnimType = p->anim;
-                            AnimType heldFadeTargetType = held;
+                            AnimType heldFadeTargetType = p->anim;
                     
                             ClothingSet heldClothing = getEmptyClothingSet();
                             
@@ -1266,6 +1266,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             
                             if( p->anim != moving ) {
                                 heldAnimType = held;
+                                heldFadeTargetType = held;
                                 heldFrozenRotFrameTime = 0;
                                 }
 

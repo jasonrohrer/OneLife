@@ -106,6 +106,8 @@ Version 33     ???
 
 --Fixed display of animation for held object in animation editor.
 
+--Added scene editor and support for test maps on server.
+
 
 
 Server fixes:
