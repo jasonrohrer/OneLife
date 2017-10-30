@@ -101,6 +101,7 @@ EditorScenePage::EditorScenePage()
           mPersonDestSprite( loadSprite( "internalPaperMark.tga" ) ),
           mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
           mShowUI( true ),
+          mShowWhite( false ),
           mCursorFade( 1.0 ),
           mSceneW( 130 ),
           mSceneH( 90 ),
@@ -1137,6 +1138,16 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     
     toggleAdditiveBlend( false );
 
+    if( mShowWhite ) {
+        setDrawColor( 1, 1, 1, 1 );
+        
+        doublePair squarePos = cornerPos;
+        squarePos.x += 640;
+        squarePos.y -= 360;
+        
+        drawRect( squarePos, 700, 400 );
+        }
+    
     
 
     for( int y=0; y<mSceneH; y++ ) {
@@ -1710,6 +1721,9 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
     if( inASCII == 'h' ) {
         mShowUI = ! mShowUI;
         skipDrawingSubComponents( ! mShowUI );
+        }
+    if( inASCII == 'w' ) {
+        mShowWhite = ! mShowWhite;
         }
     else if( inASCII == 'o' ) {
         mZeroX = mCurX;

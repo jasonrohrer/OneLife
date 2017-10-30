@@ -140,6 +140,8 @@ class EditorScenePage : public GamePage, public ActionListener {
         
 
         char mShowUI;
+        char mShowWhite;
+        
         float mCursorFade;
         
         int mSceneW, mSceneH;
