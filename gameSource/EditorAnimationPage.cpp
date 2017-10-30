@@ -2542,6 +2542,13 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                         heldFadeTargetType = held;
                         }
                     
+                    if( heldAnimType != moving ) {
+                        heldAnimType = held;
+                        }
+                    if( heldFadeTargetType != moving ) {
+                        heldFadeTargetType = held;
+                        }
+                    
                     drawObjectAnim( mHeldID, 2,  
                                     heldAnimType, frameTime,
                                     animFade, 

@@ -104,6 +104,7 @@ Version 33     ???
   transpositions of the sub-sprites (example:  picking up froe from pile of
   boards should not play froe creation sound).
 
+--Fixed display of animation for held object in animation editor.
 
 
 
