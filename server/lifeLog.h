@@ -1,5 +1,8 @@
 
 
+double getAgeRate();
+
+
 void initLifeLog();
 
 
@@ -19,6 +22,7 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
 void logDeath( int inPlayerID, char *inPlayerEmail,
                char inEve,
                double inAge,
+               int inSecPlayed,
                char inIsMale,
                int inMapX, int inMapY,  
                int inTotalRemainingPopulation,

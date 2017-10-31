@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "map.h"
+#include "playerStats.h"
 
 
 
@@ -152,11 +153,14 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
 void logDeath( int inPlayerID, char *inPlayerEmail,
                char inEve,
                double inAge,
+               int inSecPlayed,
                char inIsMale,
                int inMapX, int inMapY, 
                int inTotalRemainingPopulation,
                char inDisconnect, int inKillerID, 
                char *inKillerEmail ) {
+    
+    recordPlayerLifeStats( inPlayerEmail, inSecPlayed );
     
     if( inEve ) {
         

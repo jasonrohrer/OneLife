@@ -126,8 +126,15 @@ typedef struct LiveObject {
         
 
         // time that this life started (for computing age)
+        // not actual creation time (can be adjusted to tweak starting age,
+        // for example, in case of Eve who starts older).
         double lifeStartTimeSeconds;
         
+        // the wall clock time when this life started
+        // used for computing playtime, not age
+        double trueStartTimeSeconds;
+        
+
         double lastSayTimeSeconds;
 
         // held by other player?
@@ -938,6 +945,15 @@ double computeAge( LiveObject *inPlayer ) {
         inPlayer->error = true;
         }
     return age;
+    }
+
+
+
+int getSecondsPlayed( LiveObject *inPlayer ) {
+    double deltaSeconds = 
+        Time::getCurrentTime() - inPlayer->trueStartTimeSeconds;
+
+    return lrint( deltaSeconds );
     }
 
 
@@ -2200,7 +2216,9 @@ void processLoggedInPlayer( Socket *inSock,
     
     newObject.isEve = false;
 
-    newObject.lifeStartTimeSeconds = Time::getCurrentTime();
+
+    newObject.trueStartTimeSeconds = Time::getCurrentTime();
+    newObject.lifeStartTimeSeconds = newObject.trueStartTimeSeconds;
                             
 
     newObject.lastSayTimeSeconds = Time::getCurrentTime();
@@ -4487,6 +4505,7 @@ int main() {
                                                   hitPlayer->email,
                                                   hitPlayer->isEve,
                                                   computeAge( hitPlayer ),
+                                                  getSecondsPlayed( hitPlayer ),
                                                   ! getFemale( hitPlayer ),
                                                   m.x, m.y,
                                                   players.size() - 1,
@@ -5923,6 +5942,7 @@ int main() {
                               nextPlayer->email,
                               nextPlayer->isEve,
                               computeAge( nextPlayer ),
+                              getSecondsPlayed( nextPlayer ),
                               ! getFemale( nextPlayer ),
                               dropPos.x, dropPos.y,
                               players.size() - 1,
@@ -6669,6 +6689,7 @@ int main() {
                                   decrementedPlayer->email,
                                   decrementedPlayer->isEve,
                                   computeAge( decrementedPlayer ),
+                                  getSecondsPlayed( decrementedPlayer ),
                                   ! getFemale( decrementedPlayer ),
                                   deathPos.x, deathPos.y,
                                   players.size() - 1,
