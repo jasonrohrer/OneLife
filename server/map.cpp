@@ -19,8 +19,8 @@
 
 #include "kissdb.h"
 
+#include "dbCommon.h"
 
-#include "kissdb.h"
 
 #include <stdarg.h>
 #include <math.h>
@@ -279,19 +279,7 @@ void intPairToKey( int inX, int inY, unsigned char *outKey ) {
     }
 
 
-// one int to a 4-byte value
-void intToValue( int inV, unsigned char *outValue ) {
-    for( int i=0; i<4; i++ ) {
-        outValue[i] = ( inV >> (i * 8) ) & 0xFF;
-        }    
-    }
 
-
-int valueToInt( unsigned char *inValue ) {
-    return 
-        inValue[3] << 24 | inValue[2] << 16 | 
-        inValue[1] << 8 | inValue[0];
-    }
 
 
 
@@ -330,21 +318,6 @@ timeSec_t valueToTime( unsigned char *inValue ) {
 
 
 
-// converts any length email to a 50-byte key
-// outKey must be pre-allocated to 50 bytes
-void emailToKey( char *inEmail, unsigned char *outKey ) {
-    memset( outKey, ' ', 50 );
-    
-    int len = 50;
-
-    int emailLen = strlen( inEmail );
-    
-    if( emailLen < len ) {
-        len = emailLen;
-        }
-    
-    memcpy( outKey, inEmail, len );
-    }
 
 
 
@@ -1180,7 +1153,7 @@ void initMap() {
         return;
         }
     
-    biomeDBOpen = true;
+    eveDBOpen = true;
 
 
     

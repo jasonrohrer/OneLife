@@ -32,6 +32,9 @@ lifeLog.cpp \
 foodLog.cpp \
 backup.cpp \
 triggers.cpp \
+dbCommon.cpp \
+playerStats.cpp \
+
 
 GAME_GRAPHICS = \
 

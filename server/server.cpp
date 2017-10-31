@@ -35,6 +35,7 @@
 #include "foodLog.h"
 #include "backup.h"
 #include "triggers.h"
+#include "playerStats.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -491,6 +492,8 @@ void quitCleanup() {
         delete nextPlayer->babyIDs;
         }
     players.deleteAll();
+
+    freePlayerStats();
 
     freeLifeLog();
     
@@ -3092,6 +3095,8 @@ int main() {
     
     initLifeLog();
     initBackup();
+    
+    initPlayerStats();
     
 
     nextSequenceNumber = 
