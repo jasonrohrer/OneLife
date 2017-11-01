@@ -11,6 +11,7 @@
 #include "musicPlayer.h"
 #include "soundBank.h"
 #include "objectBank.h"
+#include "buttonStyle.h"
 
 
 extern Font *mainFont;
@@ -28,6 +29,9 @@ SettingsPage::SettingsPage()
           mSoundEffectsLoudnessSlider( mainFont, 0, -128, 4, 200, 30,
                                        0.0, 1.0, 
                                        translate( "soundLoudness" ) ) {
+    
+    setButtonStyle( &mBackButton );
+    setButtonStyle( &mRestartButton );
     
     addComponent( &mBackButton );
     mBackButton.addActionListener( this );

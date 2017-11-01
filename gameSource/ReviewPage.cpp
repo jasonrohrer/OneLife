@@ -11,6 +11,7 @@
 #include "musicPlayer.h"
 #include "soundBank.h"
 #include "objectBank.h"
+#include "buttonStyle.h"
 
 
 extern Font *mainFont;
@@ -21,6 +22,8 @@ extern float musicLoudness;
 ReviewPage::ReviewPage()
         : mBackButton( mainFont, 0, -250, translate( "backButton" ) ) {
     
+    setButtonStyle( &mBackButton );
+
     addComponent( &mBackButton );
     mBackButton.addActionListener( this );
     }
