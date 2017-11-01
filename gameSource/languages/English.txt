@@ -34,6 +34,7 @@ atSignTip "INSERT '@' SIGN (INTL KEYBOARDS)"
 loginButton "LOGIN"
 loginNoSaveButton "TEMP LOGIN"
 settingsButton "SETTINGS"
+reviewButton "POST REVIEW"
 
 
 saveTip "LOGIN AND STORE DETAILS LOCALLY"

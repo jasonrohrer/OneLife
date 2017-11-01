@@ -43,8 +43,10 @@ ExistingAccountPage::ExistingAccountPage()
                               translate( "loginNoSaveButton" ) ),
           mCancelButton( mainFont, -400, -280, 
                          translate( "quit" ) ),
-          mSettingsButton( mainFont, -400, -200, 
-                           translate( "settingsButton" ) ) {
+          mSettingsButton( mainFont, -400, -120, 
+                           translate( "settingsButton" ) ),
+          mReviewButton( mainFont, -400, -200, 
+                         translate( "reviewButton" ) ) {
     
     
     // center this in free space
@@ -66,6 +68,7 @@ ExistingAccountPage::ExistingAccountPage()
     setButtonStyle( &mLoginNoSaveButton );
     setButtonStyle( &mCancelButton );
     setButtonStyle( &mSettingsButton );
+    setButtonStyle( &mReviewButton );
     setButtonStyle( &mAtSignButton );
     setButtonStyle( &mPasteButton );
 
@@ -77,6 +80,7 @@ ExistingAccountPage::ExistingAccountPage()
     addComponent( &mLoginNoSaveButton );
     addComponent( &mCancelButton );
     addComponent( &mSettingsButton );
+    addComponent( &mReviewButton );
     addComponent( &mAtSignButton );
     addComponent( &mPasteButton );
     addComponent( &mEmailField );
@@ -87,6 +91,7 @@ ExistingAccountPage::ExistingAccountPage()
     
     mCancelButton.addActionListener( this );
     mSettingsButton.addActionListener( this );
+    mReviewButton.addActionListener( this );
     
     mAtSignButton.addActionListener( this );
     mPasteButton.addActionListener( this );
@@ -150,6 +155,19 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mSettingsButton ) {
         setSignal( "settings" );
+        }
+    else if( inTarget == &mReviewButton ) {
+        if( userEmail != NULL ) {
+            delete [] userEmail;
+            }
+        userEmail = mEmailField.getText();
+        
+        if( accountKey != NULL ) {
+            delete [] accountKey;
+            }
+        accountKey = mKeyField.getText();
+        
+        setSignal( "review" );
         }
     else if( inTarget == &mAtSignButton ) {
         mEmailField.insertCharacter( '@' );

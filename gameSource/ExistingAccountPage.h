@@ -53,6 +53,7 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         TextButton mCancelButton;
 
         TextButton mSettingsButton;
+        TextButton mReviewButton;
         
         void switchFields();
         
