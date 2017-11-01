@@ -5,6 +5,8 @@ void initPlayerStats();
 
 void freePlayerStats();
 
+void stepPlayerStats();
+
 
 void recordPlayerLifeStats( char *inEmail, int inNumSecondsLived );
 

@@ -3222,7 +3222,9 @@ int main() {
         checkBackup();
 
         stepFoodLog();
-
+        
+        stepPlayerStats();
+        
         
         int numLive = players.size();
         

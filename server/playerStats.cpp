@@ -4,10 +4,35 @@
 #include "dbCommon.h"
 
 #include "minorGems/util/log/AppLog.h"
+#include "minorGems/util/SettingsManager.h"
+#include "minorGems/util/SimpleVector.h"
+
+#include "minorGems/network/web/WebRequest.h"
+
+#include "minorGems/crypto/hashes/sha1.h"
+
 
 
 static KISSDB db;
 static char dbOpen = false;
+
+static char useStatsServer = false;
+
+static char *statsServerURL = NULL;
+static char *statsServerSharedSecret = NULL;
+
+
+typedef struct StatRecord {
+        char *email;
+        int numGameSeconds;
+        WebRequest *request;
+        // -1 until first request gets it
+        int sequenceNumber;
+    } StatRecord;
+
+
+static SimpleVector<StatRecord> records;
+
 
 
 void initPlayerStats() {
@@ -26,6 +51,18 @@ void initPlayerStats() {
         }
     
     dbOpen = true;
+
+
+    useStatsServer = SettingsManager::getIntSetting( "useStatsServer", 0 );    
+    
+    statsServerURL = 
+        SettingsManager::
+        getStringSetting( "statsServerURL", 
+                          "http://localhost/jcr13/reviewServer/server.php" );
+    
+    statsServerSharedSecret = 
+        SettingsManager::getStringSetting( "statsServerSharedSecret", 
+                                           "secret_phrase" );
     }
 
 
@@ -35,6 +72,21 @@ void freePlayerStats() {
         KISSDB_close( &db );
         dbOpen = false;
         }    
+
+    if( statsServerURL != NULL ) {
+        delete [] statsServerURL;
+        statsServerURL = NULL;
+        }
+    
+    if( statsServerSharedSecret != NULL ) {
+        delete [] statsServerSharedSecret;
+        statsServerSharedSecret = NULL;
+        }
+
+    for( int i=0; i<records.size(); i++ ) {
+        delete [] records.getElement(i)->email;
+        }
+    records.deleteAll();
     }
 
 
@@ -86,5 +138,113 @@ void recordPlayerLifeStats( char *inEmail, int inNumSecondsLived ) {
             
     
     KISSDB_put( &db, key, value );
+
+    if( useStatsServer ) {
+        
+        WebRequest *request;
+        
+        char *url = autoSprintf( 
+            "%s?action=get_sequence_number"
+            "&email=%s",
+            statsServerURL,
+            inEmail );
+        
+        request = new WebRequest( "GET", url, NULL );
+        printf( "Starting new web request for %s\n", url );
+        
+        delete [] url;
+
+        StatRecord r = { stringDuplicate( inEmail ), inNumSecondsLived, 
+                         request, -1 };
+        records.push_back( r );
+        }
+    }
+
+
+
+void stepPlayerStats() {
+    if( ! useStatsServer ) {
+        return;
+        }
+    
+    for( int i=0; i<records.size(); i++ ) {
+        StatRecord *r = records.getElement( i );
+        
+        int result = r->request->step();
+            
+        char recordDone = false;
+
+        if( result == -1 ) {
+            AppLog::info( "Request to stats server failed." );
+            recordDone = true;
+            }
+        else if( result == 1 ) {
+            // done, have result
+
+            char *webResult = r->request->getResult();
+            
+            if( r->sequenceNumber == -1 ) {
+                // still waiting for sequence number response
+
+                int numRead = sscanf( webResult, "%d", &( r->sequenceNumber ) );
+
+                if( numRead != 1 ) {
+                    AppLog::info( "Failed to read sequence number "
+                                  "from stats server response." );
+                    recordDone = true;
+                    }
+                else {
+                    delete r->request;
+                    
+                    // start stats-posting request
+
+                    char *seqString = autoSprintf( "%d", r->sequenceNumber );
+                    
+                    char *hash = hmac_sha1( statsServerSharedSecret,
+                                                seqString );
+                    
+                    delete [] seqString;
+                    
+
+                    char *url = autoSprintf( 
+                        "%s?action=log_game"
+                        "&email=%s"
+                        "&game_seconds=%d"
+                        "&sequence_number=%d"
+                        "&hash_value=%s",
+                        statsServerURL,
+                        r->email,
+                        r->numGameSeconds,
+                        r->sequenceNumber,
+                        hash );
+                    
+                    delete [] hash;
+
+                    r->request = new WebRequest( "GET", url, NULL );
+                    printf( "Starting new web request for %s\n", url );
+                    
+                    delete [] url;
+                    }
+                }
+            else {
+                
+                if( strstr( webResult, "INVALID" ) != NULL ) {
+                    AppLog::info( 
+                        "Server log_game request rejected by stats server" );
+                    }
+                recordDone = true;
+                }
+            
+            delete [] webResult;
+            }
+
+        if( recordDone ) {
+            delete r->request;
+            delete [] r->email;
+            
+            records.deleteElement( i );
+            i--;
+            }
+        }
     }
 
