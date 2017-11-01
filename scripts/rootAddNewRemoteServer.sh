@@ -94,6 +94,14 @@ scp -o StrictHostKeychecking=no /tmp/serverName.txt jcr13@$subdomain.onehouronel
 rm /tmp/serverName.txt
 
 
+
+echo "Sending stats server settings to remote server and restarting it."
+
+
+scp -o StrictHostKeychecking=no ~/checkout/OneLife/server/settings/statsServerSharedSecret.ini ~/checkout/OneLife/server/settings/statsServerURL.ini ~/checkout/OneLife/server/settings/useStatsServer.ini jcr13@$subdomain.onehouronelife.com:checkout/OneLife/server/settings/
+
+ssh -o StrictHostKeychecking=no jcr13@$subdomain.onehouronelife.com '~/checkout/OneLife/scripts/remoteServerCodeUpdate.sh'
+
 EOSU2
 
 
