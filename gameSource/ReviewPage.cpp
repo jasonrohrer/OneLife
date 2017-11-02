@@ -36,6 +36,9 @@ ReviewPage::ReviewPage()
     mBackButton.addActionListener( this );
 
     addComponent( &mReviewTextArea );
+
+    mReviewTextArea.setText( "This is a test of a very long message that we will want to edit later using the arrow keys.  It's a pain to type this long message over and over each time we test the game." );
+    
     }
 
 

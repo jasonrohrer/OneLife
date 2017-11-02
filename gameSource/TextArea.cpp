@@ -3,6 +3,7 @@
 
 #include "minorGems/game/drawUtils.h"
 #include "minorGems/util/stringUtils.h"
+#include "minorGems/graphics/openGL/KeyboardHandlerGL.h"
 
 
 
@@ -14,7 +15,8 @@ TextArea::TextArea( Font *inDisplayFont,
                     const char *inForbiddenChars ) 
         : TextField( inDisplayFont, inX, inY, 1, inForceCaps, inLabelText,
                      inAllowedChars, inForbiddenChars ),
-          mWide( inWide ), mHigh( inHigh ) {
+          mWide( inWide ), mHigh( inHigh ),
+          mLastCursorXOffset( 0 ) {
     
     }
         
@@ -249,13 +251,13 @@ void TextArea::draw() {
             
             setDrawColor( 0, 0, 0, 0.5 );
         
-            int cursorXOffset = mFont->measureString( beforeCursor );
+            mLastCursorXOffset = mFont->measureString( beforeCursor );
             
             
 
-            drawRect( pos.x + cursorXOffset, 
+            drawRect( pos.x + mLastCursorXOffset, 
                       pos.y - mFont->getFontHeight() / 2,
-                      pos.x + cursorXOffset + pixWidth, 
+                      pos.x + mLastCursorXOffset + pixWidth, 
                       pos.y + mFont->getFontHeight() / 2 );
             
             }
@@ -271,6 +273,72 @@ void TextArea::draw() {
 
 void TextArea::specialKeyDown( int inKeyCode ) {
     TextField::specialKeyDown( inKeyCode );
+
+     if( !mFocused ) {
+        return;
+        }
+    
+    switch( inKeyCode ) {
+        case MG_KEY_UP:
+            if( ! mIgnoreArrowKeys ) {    
+                
+                double targetOffset = mWide;
+                
+                int oldCursorPos = mCursorPosition;
+                
+                while( mCursorPosition > 0 ) {
+                    
+                    SimpleVector<char> subStringChars;
+                    
+                    for( int i=mCursorPosition; i<=oldCursorPos; i++ ) {
+                        subStringChars.push_back( mText[ i ] );
+                        }
+                    
+                    char *subString = subStringChars.getElementString();
+                    
+                    double measure = mFont->measureString( subString );
+                    delete [] subString;
+                    
+                    if( measure >= targetOffset ) {
+                        break;
+                        }
+                    mCursorPosition --;
+                    }
+                }
+            break;
+        case MG_KEY_DOWN:
+            if( ! mIgnoreArrowKeys ) {
+                
+                int textLen = strlen( mText );
+
+                double targetOffset = mWide;
+                
+                int oldCursorPos = mCursorPosition;
+                
+                while( mCursorPosition < textLen ) {
+                    
+                    SimpleVector<char> subStringChars;
+                    
+                    for( int i=oldCursorPos; i<=mCursorPosition; i++ ) {
+                        subStringChars.push_back( mText[ i ] );
+                        }
+                    
+                    char *subString = subStringChars.getElementString();
+                    
+                    double measure = mFont->measureString( subString );
+                    delete [] subString;
+                    
+                    if( measure >= targetOffset ) {
+                        break;
+                        }
+                    mCursorPosition ++;
+                    }
+
+                }
+            break;
+        default:
+            break;
+        }
     }
 
 

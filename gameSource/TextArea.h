@@ -28,6 +28,8 @@ class TextArea : public TextField {
 
     protected:
         double mWide, mHigh;
+
+        double mLastCursorXOffset;
     };
 
 
