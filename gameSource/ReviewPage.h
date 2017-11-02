@@ -1,6 +1,7 @@
 #include "GamePage.h"
 
 #include "TextButton.h"
+#include "TextArea.h"
 #include "CheckboxButton.h"
 #include "ValueSlider.h"
 #include "SoundUsage.h"
@@ -31,7 +32,8 @@ class ReviewPage : public GamePage, public ActionListener {
 
     protected:
 
-
+        TextArea mReviewTextArea;
+        
         TextButton mBackButton;
         
     };

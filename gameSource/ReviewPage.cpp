@@ -15,17 +15,27 @@
 
 
 extern Font *mainFont;
+extern Font *mainFontReview;
 
 extern float musicLoudness;
 
 
 ReviewPage::ReviewPage()
-        : mBackButton( mainFont, 0, -250, translate( "backButton" ) ) {
+        : mReviewTextArea( 
+            mainFontReview, 0, 0, 100, 100, false, 
+            translate( "reviewText" ), 
+            "abcdefghijklmnopqrstuvwxyz"
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            "1234567890"
+            " !?$%*&()+-='\":;,.", NULL ),
+          mBackButton( mainFont, 0, -250, translate( "backButton" ) ) {
     
     setButtonStyle( &mBackButton );
 
     addComponent( &mBackButton );
     mBackButton.addActionListener( this );
+
+    addComponent( &mReviewTextArea );
     }
 
 
@@ -55,6 +65,8 @@ void ReviewPage::step() {
 void ReviewPage::makeActive( char inFresh ) {
     if( inFresh ) {        
         }
+
+    mReviewTextArea.focus();
     }
 
 

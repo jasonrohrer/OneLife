@@ -269,6 +269,8 @@ char gamePlayingBack = false;
 
 Font *mainFont;
 Font *mainFontFixed;
+// closer spacing
+Font *mainFontReview;
 Font *numbersFontFixed;
 Font *handwritingFont;
 Font *pencilFont;
@@ -465,7 +467,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
     
     
-    
+    mainFontReview = new Font( getFontTGAFileName(), 4, 8, false, 16 );
+    mainFontReview->setMinimumPositionPrecision( 1 );
+
     mainFontFixed = new Font( getFontTGAFileName(), 6, 16, true, 16 );
     numbersFontFixed = new Font( getFontTGAFileName(), 6, 16, true, 16, 16 );
     
@@ -617,6 +621,7 @@ void freeFrameDrawer() {
 
     freeSprite( instructionsSprite );
     
+    delete mainFontReview;
     delete mainFontFixed;
     delete numbersFontFixed;
     

@@ -57,6 +57,7 @@ SpriteToggleButton.cpp \
 categoryBank.cpp \
 liveAnimationTriggers.cpp \
 ReviewPage.cpp \
+TextArea.cpp \
 
 
 
