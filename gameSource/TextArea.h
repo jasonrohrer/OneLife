@@ -29,10 +29,10 @@ class TextArea : public TextField {
     protected:
         double mWide, mHigh;
 
-        double mLastCursorXOffset;
-
-        double mCursorLineLength;
-        double mBeforeCursorLineLength;
+        // where cursor should go if down or up arrow pressed
+        int mCursorUpPosition;
+        int mCursorDownPosition;
+        
     };
 
 

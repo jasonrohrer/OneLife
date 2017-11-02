@@ -5,6 +5,7 @@
 #include "minorGems/util/stringUtils.h"
 #include "minorGems/graphics/openGL/KeyboardHandlerGL.h"
 
+#include <math.h>
 
 
 TextArea::TextArea( Font *inDisplayFont, 
@@ -16,8 +17,8 @@ TextArea::TextArea( Font *inDisplayFont,
         : TextField( inDisplayFont, inX, inY, 1, inForceCaps, inLabelText,
                      inAllowedChars, inForbiddenChars ),
           mWide( inWide ), mHigh( inHigh ),
-          mLastCursorXOffset( 0 ),
-          mCursorLineLength( 0 ), mBeforeCursorLineLength( 0 ) {
+          mCursorUpPosition( 0 ),
+          mCursorDownPosition( 0 ) {
     
     }
         
@@ -251,22 +252,70 @@ void TextArea::draw() {
             
             setDrawColor( 0, 0, 0, 0.5 );
         
-            mLastCursorXOffset = mFont->measureString( beforeCursor );
+            double cursorXOffset = mFont->measureString( beforeCursor );
             
             delete [] beforeCursor;
-            
-            mCursorLineLength = 
-                mFont->measureString( lines.getElementDirect( i ) );
-            
+
+            mCursorUpPosition = 0;
+            mCursorDownPosition = strlen( mText );
+                    
             if( i > 0 ) {
-                mBeforeCursorLineLength = 
-                    mFont->measureString( lines.getElementDirect( i - 1 ) );
+
+                mCursorUpPosition = 
+                    mCursorPosition - cursorInLine.getElementDirect( i );
+                
+                char *prevLine = 
+                    stringDuplicate( lines.getElementDirect( i - 1 ) );
+                int remainingLength = strlen( prevLine );
+                
+                double bestUpDiff = 9999999;
+                
+                while( fabs( mFont->measureString( prevLine ) - 
+                            cursorXOffset ) < bestUpDiff ) {
+                    
+                    bestUpDiff = fabs( mFont->measureString( prevLine ) - 
+                                      cursorXOffset );
+                    mCursorUpPosition --;
+                    remainingLength --;
+                    
+                    prevLine[ remainingLength ] = '\0';
+                    }
+                mCursorUpPosition += 1;
+                }
+
+            if( i < lines.size() - 1 ) {
+
+                // start at end of next line and walk backward
+                mCursorDownPosition = 
+                    mCursorPosition + 
+                    strlen( lines.getElementDirect( i ) ) -  
+                    cursorInLine.getElementDirect( i ) +
+                    strlen( lines.getElementDirect( i + 1 ) );
+                
+                char *nextLine = 
+                    stringDuplicate( lines.getElementDirect( i + 1 ) );
+                int remainingLength = strlen( nextLine );
+                
+                double bestDownDiff = 9999999;
+                
+                while( fabs( mFont->measureString( nextLine ) - 
+                            cursorXOffset ) < bestDownDiff ) {
+                    
+                    bestDownDiff = fabs( mFont->measureString( nextLine ) - 
+                                         cursorXOffset );
+                    mCursorDownPosition --;
+                    remainingLength --;
+                    
+                    nextLine[ remainingLength ] = '\0';
+                    }
+                mCursorDownPosition += 1;
+                
                 }
             
-
-            drawRect( pos.x + mLastCursorXOffset, 
+            
+            drawRect( pos.x + cursorXOffset, 
                       pos.y - mFont->getFontHeight() / 2,
-                      pos.x + mLastCursorXOffset + pixWidth, 
+                      pos.x + cursorXOffset + pixWidth, 
                       pos.y + mFont->getFontHeight() / 2 );
             
             }
@@ -290,66 +339,12 @@ void TextArea::specialKeyDown( int inKeyCode ) {
     switch( inKeyCode ) {
         case MG_KEY_UP:
             if( ! mIgnoreArrowKeys ) {    
-                
-                double targetOffset = mBeforeCursorLineLength;
-
-                if( targetOffset <= 
-                    mLastCursorXOffset + 2 * mFont->getSpaceWidth() ) {
-                    
-                    targetOffset = mLastCursorXOffset + 
-                        2 * mFont->getSpaceWidth();
-                    }                
-                
-                int oldCursorPos = mCursorPosition;
-                
-                while( mCursorPosition > 0 ) {
-                    
-                    SimpleVector<char> subStringChars;
-                    
-                    for( int i=mCursorPosition; i<=oldCursorPos; i++ ) {
-                        subStringChars.push_back( mText[ i ] );
-                        }
-                    
-                    char *subString = subStringChars.getElementString();
-                    
-                    double measure = mFont->measureString( subString );
-                    delete [] subString;
-                    
-                    if( measure - mFont->getSpaceWidth() >= targetOffset ) {
-                        break;
-                        }
-                    mCursorPosition --;
-                    }
+                mCursorPosition = mCursorUpPosition;
                 }
             break;
         case MG_KEY_DOWN:
             if( ! mIgnoreArrowKeys ) {
-                
-                int textLen = strlen( mText );
-
-                double targetOffset = mCursorLineLength;
-                
-                int oldCursorPos = mCursorPosition;
-                
-                while( mCursorPosition < textLen ) {
-                    
-                    SimpleVector<char> subStringChars;
-                    
-                    for( int i=oldCursorPos; i<=mCursorPosition; i++ ) {
-                        subStringChars.push_back( mText[ i ] );
-                        }
-                    
-                    char *subString = subStringChars.getElementString();
-                    
-                    double measure = mFont->measureString( subString );
-                    delete [] subString;
-                    
-                    if( measure - mFont->getSpaceWidth() >= targetOffset ) {
-                        break;
-                        }
-                    mCursorPosition ++;
-                    }
-
+                mCursorPosition = mCursorDownPosition;
                 }
             break;
         default:
