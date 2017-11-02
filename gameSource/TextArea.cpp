@@ -16,7 +16,8 @@ TextArea::TextArea( Font *inDisplayFont,
         : TextField( inDisplayFont, inX, inY, 1, inForceCaps, inLabelText,
                      inAllowedChars, inForbiddenChars ),
           mWide( inWide ), mHigh( inHigh ),
-          mLastCursorXOffset( 0 ) {
+          mLastCursorXOffset( 0 ),
+          mCursorLineLength( 0 ), mBeforeCursorLineLength( 0 ) {
     
     }
         
@@ -244,8 +245,7 @@ void TextArea::draw() {
 
         if( cursorInLine.getElementDirect( i ) != -1 ) {
             
-            // okay to modify it without copying
-            char *beforeCursor = lines.getElementDirect( i );
+            char *beforeCursor = stringDuplicate( lines.getElementDirect( i ) );
             
             beforeCursor[ cursorInLine.getElementDirect( i ) ] = '\0';
             
@@ -253,6 +253,15 @@ void TextArea::draw() {
         
             mLastCursorXOffset = mFont->measureString( beforeCursor );
             
+            delete [] beforeCursor;
+            
+            mCursorLineLength = 
+                mFont->measureString( lines.getElementDirect( i ) );
+            
+            if( i > 0 ) {
+                mBeforeCursorLineLength = 
+                    mFont->measureString( lines.getElementDirect( i - 1 ) );
+                }
             
 
             drawRect( pos.x + mLastCursorXOffset, 
@@ -282,7 +291,14 @@ void TextArea::specialKeyDown( int inKeyCode ) {
         case MG_KEY_UP:
             if( ! mIgnoreArrowKeys ) {    
                 
-                double targetOffset = mWide;
+                double targetOffset = mBeforeCursorLineLength;
+
+                if( targetOffset <= 
+                    mLastCursorXOffset + 2 * mFont->getSpaceWidth() ) {
+                    
+                    targetOffset = mLastCursorXOffset + 
+                        2 * mFont->getSpaceWidth();
+                    }                
                 
                 int oldCursorPos = mCursorPosition;
                 
@@ -299,7 +315,7 @@ void TextArea::specialKeyDown( int inKeyCode ) {
                     double measure = mFont->measureString( subString );
                     delete [] subString;
                     
-                    if( measure >= targetOffset ) {
+                    if( measure - mFont->getSpaceWidth() >= targetOffset ) {
                         break;
                         }
                     mCursorPosition --;
@@ -311,7 +327,7 @@ void TextArea::specialKeyDown( int inKeyCode ) {
                 
                 int textLen = strlen( mText );
 
-                double targetOffset = mWide;
+                double targetOffset = mCursorLineLength;
                 
                 int oldCursorPos = mCursorPosition;
                 
@@ -328,7 +344,7 @@ void TextArea::specialKeyDown( int inKeyCode ) {
                     double measure = mFont->measureString( subString );
                     delete [] subString;
                     
-                    if( measure >= targetOffset ) {
+                    if( measure - mFont->getSpaceWidth() >= targetOffset ) {
                         break;
                         }
                     mCursorPosition ++;

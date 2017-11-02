@@ -30,6 +30,9 @@ class TextArea : public TextField {
         double mWide, mHigh;
 
         double mLastCursorXOffset;
+
+        double mCursorLineLength;
+        double mBeforeCursorLineLength;
     };
 
 
