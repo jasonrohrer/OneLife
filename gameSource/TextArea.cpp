@@ -17,11 +17,18 @@ TextArea::TextArea( Font *inDisplayFont,
         : TextField( inDisplayFont, inX, inY, 1, inForceCaps, inLabelText,
                      inAllowedChars, inForbiddenChars ),
           mWide( inWide ), mHigh( inHigh ),
-          mCursorUpPosition( 0 ),
-          mCursorDownPosition( 0 ) {
+          mCurrentLine( 0 ),
+          mLastComputedCursorPos( 0 ),
+          mLastComputedCursorText( stringDuplicate( "" ) ) {
     
     }
+
+
         
+TextArea::~TextArea() {
+    delete [] mLastComputedCursorText;
+    }
+
 
 
 void TextArea::draw() {
@@ -255,69 +262,54 @@ void TextArea::draw() {
             double cursorXOffset = mFont->measureString( beforeCursor );
             
             delete [] beforeCursor;
-
-            mCursorUpPosition = 0;
-            mCursorDownPosition = strlen( mText );
-                    
-            if( i > 0 ) {
-
-                mCursorUpPosition = 
-                    mCursorPosition - cursorInLine.getElementDirect( i );
-                
-                char *prevLine = 
-                    stringDuplicate( lines.getElementDirect( i - 1 ) );
-                int remainingLength = strlen( prevLine );
-                
-                double bestUpDiff = 9999999;
-                
-                while( fabs( mFont->measureString( prevLine ) - 
-                            cursorXOffset ) < bestUpDiff ) {
-                    
-                    bestUpDiff = fabs( mFont->measureString( prevLine ) - 
-                                      cursorXOffset );
-                    mCursorUpPosition --;
-                    remainingLength --;
-                    
-                    prevLine[ remainingLength ] = '\0';
-                    }
-                mCursorUpPosition += 1;
-                }
-
-            if( i < lines.size() - 1 ) {
-
-                // start at end of next line and walk backward
-                mCursorDownPosition = 
-                    mCursorPosition + 
-                    strlen( lines.getElementDirect( i ) ) -  
-                    cursorInLine.getElementDirect( i ) +
-                    strlen( lines.getElementDirect( i + 1 ) );
-                
-                char *nextLine = 
-                    stringDuplicate( lines.getElementDirect( i + 1 ) );
-                int remainingLength = strlen( nextLine );
-                
-                double bestDownDiff = 9999999;
-                
-                while( fabs( mFont->measureString( nextLine ) - 
-                            cursorXOffset ) < bestDownDiff ) {
-                    
-                    bestDownDiff = fabs( mFont->measureString( nextLine ) - 
-                                         cursorXOffset );
-                    mCursorDownPosition --;
-                    remainingLength --;
-                    
-                    nextLine[ remainingLength ] = '\0';
-                    }
-                mCursorDownPosition += 1;
-                
-                }
-            
             
             drawRect( pos.x + cursorXOffset, 
                       pos.y - mFont->getFontHeight() / 2,
                       pos.x + cursorXOffset + pixWidth, 
                       pos.y + mFont->getFontHeight() / 2 );
             
+            
+            mCurrentLine = i;
+
+            if( mLastComputedCursorPos != mCursorPosition ||
+                strcmp( mLastComputedCursorText, mText ) != 0 ) {
+
+                delete [] mLastComputedCursorText;
+                mLastComputedCursorPos = mCursorPosition;
+                mLastComputedCursorText = stringDuplicate( mText );
+                
+                
+                mCursorTargetPositions.deleteAll();
+                
+                int totalLineLengthSoFar = 0;
+                
+                for( int j=0; j<lines.size(); j++ ) {
+                    
+                    totalLineLengthSoFar += 
+                        strlen( lines.getElementDirect( j ) );
+                    
+                    int cursorPos = totalLineLengthSoFar;
+                    
+                    char *line = 
+                        stringDuplicate( lines.getElementDirect( j ) );
+                    int remainingLength = strlen( line );
+                    
+                    double bestUpDiff = 9999999;
+                
+                    while( fabs( mFont->measureString( line ) - 
+                                 cursorXOffset ) < bestUpDiff ) {
+                    
+                        bestUpDiff = fabs( mFont->measureString( line ) - 
+                                           cursorXOffset );
+                        cursorPos --;
+                        remainingLength --;
+                        
+                        line[ remainingLength ] = '\0';
+                        }
+                    cursorPos += 1;
+                    mCursorTargetPositions.push_back( cursorPos );
+                    }
+                }
             }
         
         pos.y -= mFont->getFontHeight();
@@ -338,13 +330,27 @@ void TextArea::specialKeyDown( int inKeyCode ) {
     
     switch( inKeyCode ) {
         case MG_KEY_UP:
-            if( ! mIgnoreArrowKeys ) {    
-                mCursorPosition = mCursorUpPosition;
+            if( ! mIgnoreArrowKeys ) {
+                if( mCurrentLine > 0 ) {
+                    mCurrentLine--;
+                    mCursorPosition = 
+                        mCursorTargetPositions.getElementDirect( mCurrentLine );
+                    }
+                else {
+                    mCursorPosition = 0;
+                    }
                 }
             break;
         case MG_KEY_DOWN:
             if( ! mIgnoreArrowKeys ) {
-                mCursorPosition = mCursorDownPosition;
+                if( mCurrentLine < mCursorTargetPositions.size() - 1 ) {
+                    mCurrentLine++;
+                    mCursorPosition = 
+                        mCursorTargetPositions.getElementDirect( mCurrentLine );
+                    }
+                else {
+                    mCursorPosition = strlen( mText );
+                    }
                 }
             break;
         default:

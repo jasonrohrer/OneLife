@@ -19,6 +19,8 @@ class TextArea : public TextField {
                   const char *inAllowedChars = NULL,
                   const char *inForbiddenChars = NULL );
 
+        virtual ~TextArea();
+        
 
 
         virtual void draw();
@@ -29,9 +31,15 @@ class TextArea : public TextField {
     protected:
         double mWide, mHigh;
 
-        // where cursor should go if down or up arrow pressed
-        int mCursorUpPosition;
-        int mCursorDownPosition;
+
+        int mCurrentLine;
+        
+        // one per line, to help cursor move up and down evenly
+        SimpleVector<int> mCursorTargetPositions;
+        
+
+        int mLastComputedCursorPos;
+        char *mLastComputedCursorText;
         
     };
 
