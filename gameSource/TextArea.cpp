@@ -88,9 +88,66 @@ void TextArea::draw() {
             
             index ++;
             }
+        
+        char *wordString = thisWord.getElementString();
+        
+        if( mFont->measureString( wordString ) < mWide ) {
+            words.push_back( wordString );
+            cursorInWord.push_back( thisWordCursorPos );
+            }
+        else {
+            delete [] wordString;
+            
+            // need to break up this long word
+            SimpleVector<char> curSplitWord;
+            int cursorOffset = 0;
 
-        words.push_back( thisWord.getElementString() );
-        cursorInWord.push_back( thisWordCursorPos );
+            int curSplitWordCursorPos = -1;
+
+            for( int i=0; i<thisWord.size(); i++ ) {
+                
+                curSplitWord.push_back( thisWord.getElementDirect( i ) );
+
+                char *curTestWord = curSplitWord.getElementString();
+                
+                
+                if( i == thisWordCursorPos ) {
+                    curSplitWordCursorPos = i - cursorOffset;
+                    }
+
+                if( mFont->measureString( curTestWord ) < mWide ) {
+                    // keep going
+                    }
+                else {
+                    // too long
+
+                    curSplitWord.deleteElement( curSplitWord.size() - 1 );
+                    
+                    char *finalSplitWord = curSplitWord.getElementString();
+                    
+                    words.push_back( finalSplitWord );
+                    cursorInWord.push_back( curSplitWordCursorPos );
+
+                    curSplitWord.deleteAll();
+                    curSplitWordCursorPos = -1;
+                    
+                    cursorOffset += strlen( finalSplitWord );
+                    
+                    // add the too-long character to the start of the 
+                    // next working split word
+                    curSplitWord.push_back( thisWord.getElementDirect( i ) );
+                    }
+                delete [] curTestWord;
+                }
+
+            if( curSplitWord.size() > 0 ) {
+                char *finalSplitWord = curSplitWord.getElementString();
+                words.push_back( finalSplitWord );
+                cursorInWord.push_back( curSplitWordCursorPos );
+                }
+            
+            }
+        
         }
     
     // now split words into lines
