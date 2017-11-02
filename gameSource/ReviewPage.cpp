@@ -22,12 +22,12 @@ extern float musicLoudness;
 
 ReviewPage::ReviewPage()
         : mReviewTextArea( 
-            mainFontReview, 0, 0, 100, 100, false, 
+            mainFontReview, 0, 0, 480, 320, false, 
             translate( "reviewText" ), 
             "abcdefghijklmnopqrstuvwxyz"
             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
             "1234567890"
-            " !?$%*&()+-='\":;,.", NULL ),
+            " !?$%*&()+-='\":;,.\r", NULL ),
           mBackButton( mainFont, 0, -250, translate( "backButton" ) ) {
     
     setButtonStyle( &mBackButton );

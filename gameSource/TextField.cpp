@@ -678,7 +678,25 @@ void TextField::keyDown( unsigned char inASCII ) {
         }
     else if( inASCII == 13 ) {
         // enter hit in field
-        fireActionPerformed( this );
+        unsigned char processedChar = processCharacter( inASCII );    
+
+        if( processedChar != 0 ) {
+            // newline is allowed
+            insertCharacter( processedChar );
+            
+            mHoldDeleteSteps = -1;
+            mFirstDeleteRepeatDone = false;
+            
+            clearArrowRepeat();
+            
+            if( mFireOnAnyChange ) {
+                fireActionPerformed( this );
+                }
+            }
+        else {
+            // newline not allowed in this field
+            fireActionPerformed( this );
+            }
         }
     else if( inASCII >= 32 ) {
 

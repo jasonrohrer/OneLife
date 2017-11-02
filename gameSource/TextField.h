@@ -8,7 +8,8 @@
 #include "PageComponent.h"
 
 
-// fires action performed when ENTER hit inside field
+// fires action performed when ENTER hit inside field, but only if
+// \r is not an allowed character.
 // (can be toggled to fire on every text change or every focus loss)
 class TextField : public PageComponent, public ActionListenerList {
         
