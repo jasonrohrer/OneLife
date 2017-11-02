@@ -38,7 +38,7 @@ class TextArea : public TextField {
         SimpleVector<int> mCursorTargetPositions;
         
 
-        int mLastComputedCursorPos;
+        char mRecomputeCursorPositions;
         char *mLastComputedCursorText;
         
     };

@@ -18,7 +18,7 @@ TextArea::TextArea( Font *inDisplayFont,
                      inAllowedChars, inForbiddenChars ),
           mWide( inWide ), mHigh( inHigh ),
           mCurrentLine( 0 ),
-          mLastComputedCursorPos( 0 ),
+          mRecomputeCursorPositions( false ),
           mLastComputedCursorText( stringDuplicate( "" ) ) {
     
     }
@@ -39,11 +39,11 @@ void TextArea::draw() {
 
     double pixWidth = mCharWidth / 8;
     
-    drawRect( pos, mWide / 2 + 2 * pixWidth, mHigh / 2 + 2 * pixWidth );
+    drawRect( pos, mWide / 2 + 3 * pixWidth, mHigh / 2 + 3 * pixWidth );
 
     setDrawColor( 0.25, 0.25, 0.25, 1 );
 
-    drawRect( pos, mWide / 2 + pixWidth, mHigh / 2 + pixWidth );
+    drawRect( pos, mWide / 2 + 2 * pixWidth, mHigh / 2 + 2 * pixWidth );
 
 
     // first, split into words
@@ -261,23 +261,29 @@ void TextArea::draw() {
         
             double cursorXOffset = mFont->measureString( beforeCursor );
             
+            double extra = 0;
+            if( cursorXOffset == 0 ) {
+                extra = -pixWidth;
+                }
+            
             delete [] beforeCursor;
             
-            drawRect( pos.x + cursorXOffset, 
+            drawRect( pos.x + cursorXOffset + extra, 
                       pos.y - mFont->getFontHeight() / 2,
-                      pos.x + cursorXOffset + pixWidth, 
+                      pos.x + cursorXOffset + pixWidth + extra, 
                       pos.y + mFont->getFontHeight() / 2 );
             
             
             mCurrentLine = i;
 
-            if( mLastComputedCursorPos != mCursorPosition ||
+            if( mRecomputeCursorPositions ||
                 strcmp( mLastComputedCursorText, mText ) != 0 ) {
-
-                delete [] mLastComputedCursorText;
-                mLastComputedCursorPos = mCursorPosition;
-                mLastComputedCursorText = stringDuplicate( mText );
                 
+                // recompute cursor offsets for every line
+                
+                delete [] mLastComputedCursorText;
+                mLastComputedCursorText = stringDuplicate( mText );
+                mRecomputeCursorPositions = false;
                 
                 mCursorTargetPositions.deleteAll();
                 
@@ -306,7 +312,14 @@ void TextArea::draw() {
                         
                         line[ remainingLength ] = '\0';
                         }
-                    cursorPos += 1;
+                    
+                    if( cursorPos < totalLineLengthSoFar - 1 ) {
+                        // not right at end of line
+                        
+                        // give it a nudge to make movement look better
+                        cursorPos += 1;
+                        }
+                    
                     mCursorTargetPositions.push_back( cursorPos );
                     }
                 }
@@ -327,6 +340,12 @@ void TextArea::specialKeyDown( int inKeyCode ) {
      if( !mFocused ) {
         return;
         }
+
+     if( inKeyCode == MG_KEY_RIGHT ||
+         inKeyCode == MG_KEY_LEFT ) {
+         mRecomputeCursorPositions = true;
+         }
+         
     
     switch( inKeyCode ) {
         case MG_KEY_UP:
