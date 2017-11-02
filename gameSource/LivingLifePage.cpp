@@ -1088,6 +1088,9 @@ LivingLifePage::LivingLifePage()
     mLastClickCell.x = -1;
     mLastClickCell.y = -1;
 
+    // we're not showing a cursor on note paper, so arrow key behavior
+    // is confusing.
+    mSayField.setIgnoreArrowKeys( true );
 
     initLiveTriggers();
 

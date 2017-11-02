@@ -37,6 +37,7 @@ TextField::TextField( Font *inDisplayFont,
           mAllowedChars( NULL ), mForbiddenChars( NULL ),
           mFocused( false ), mText( new char[1] ),
           mCursorPosition( 0 ),
+          mIgnoreArrowKeys( false ),
           mDrawnText( NULL ),
           mCursorDrawPosition( 0 ),
           mHoldDeleteSteps( -1 ), mFirstDeleteRepeatDone( false ),
@@ -620,6 +621,12 @@ void TextField::cursorReset() {
 
 
 
+void TextField::setIgnoreArrowKeys( char inIgnore ) {
+    mIgnoreArrowKeys = inIgnore;
+    }
+
+
+
 double TextField::getRightEdgeX() {
     
     return mX + mWide / 2;
@@ -765,14 +772,18 @@ void TextField::specialKeyDown( int inKeyCode ) {
     
     switch( inKeyCode ) {
         case MG_KEY_LEFT:
-            leftHit();
-            clearArrowRepeat();
-            mHoldArrowSteps[0] = 0;
+            if( ! mIgnoreArrowKeys ) {    
+                leftHit();
+                clearArrowRepeat();
+                mHoldArrowSteps[0] = 0;
+                }
             break;
         case MG_KEY_RIGHT:
-            rightHit(); 
-            clearArrowRepeat();
-            mHoldArrowSteps[1] = 0;
+            if( ! mIgnoreArrowKeys ) {
+                rightHit(); 
+                clearArrowRepeat();
+                mHoldArrowSteps[1] = 0;
+                }
             break;
         default:
             break;

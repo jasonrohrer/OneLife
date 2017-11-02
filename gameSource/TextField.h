@@ -46,6 +46,11 @@ class TextField : public PageComponent, public ActionListenerList {
         // at current cursor position
         void insertCharacter( unsigned char inASCII );
 
+        
+        // controls whether arrow keys have an effect on cursor or not
+        // (default to having an effect)
+        void setIgnoreArrowKeys( char inIgnore );
+        
 
         // brings cursor back to start of string
         void cursorReset();
@@ -152,6 +157,8 @@ class TextField : public PageComponent, public ActionListenerList {
         char *mText;
 
         int mCursorPosition;
+        
+        char mIgnoreArrowKeys;
         
         
         char *mDrawnText;

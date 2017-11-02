@@ -111,6 +111,9 @@ Version 33     ???
 --Anim editor now shows test ground sprite when showing a still person with a
   held object.
 
+--Fixed so that arrow keys have no effect on invisible cursor position when
+  typing a chat message on note paper.
+
 
 
 Server fixes:
