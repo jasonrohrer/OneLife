@@ -171,7 +171,10 @@ void processLogFile( File *inFile ) {
             
                 double yearsLived = age;
 
-                for( int i=0; i<currentLiving.size(); i++ ) {
+                // walk backwards, finding most recent birth that matches
+                // thus, we don't consider orphaned births (from server crashes)
+                // by accident
+                for( int i=currentLiving.size() - 1; i>=0; i-- ) {
                     Living l = currentLiving.getElementDirect( i );
                     
                     if( l.id == id && strcmp( l.email, email ) == 0 ) {
