@@ -130,7 +130,7 @@ void processLogFile( File *inFile ) {
                 Living l;
                 l.id = id;
             
-                l.birthAge = 1;
+                l.birthAge = 0;
                 l.parentChainLength = parentChain;
 
                 l.birthTime = time;
