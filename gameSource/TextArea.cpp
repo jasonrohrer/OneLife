@@ -205,13 +205,22 @@ void TextArea::draw() {
             }
 
         lines.push_back( thisLine.getElementString() );
-        cursorInLine.push_back( thisLineCursorPos );
         
         if( index < words.size() &&
             strcmp( words.getElementDirect( index ), "\n" ) == 0 ) {
             // eat one newline per line, possibly 
+            
+            if( cursorInWord.getElementDirect( index ) != -1 ) {
+                // cursor in newline word
+                
+                // put cursor at end of line
+                thisLineCursorPos = thisLine.size();
+                }
+            
             index ++;
             }
+        
+        cursorInLine.push_back( thisLineCursorPos );
         }
     
 
@@ -244,8 +253,47 @@ void TextArea::draw() {
     
     pos.y += mHigh / 2;
     pos.y -= mFont->getFontHeight() * .5;
+
+
+    int firstLine = 0;
+    int lastLine = lines.size() - 1;
+    
+    int lineWithCursor = 0;
     
     for( int i=0; i<lines.size(); i++ ) {
+        if( cursorInLine.getElementDirect( i ) != -1 ) {
+            lineWithCursor = i;
+            break;
+            }
+        }
+    
+    int linesPossible = floor( mHigh / mFont->getFontHeight() );
+    
+    if( lines.size() > linesPossible ) {
+        int linesBeforeCursor = linesPossible / 2;
+        int linesAfterCursor = linesPossible - linesBeforeCursor - 1;
+            
+        if( lineWithCursor <= linesBeforeCursor ) {
+            // show beginning
+            lastLine = linesPossible - 1;
+            }
+        else if( lines.size() - 1 - lineWithCursor <= linesAfterCursor ) {
+            // show end
+            firstLine = lines.size() - linesPossible;
+            }
+        else {
+            //firstLine = lines.size() - linesPossible;
+            // cursor in middle
+            
+            firstLine = lineWithCursor - linesBeforeCursor;
+            lastLine = lineWithCursor + linesAfterCursor;
+            }
+        
+        }
+    
+
+
+    for( int i=firstLine; i<=lastLine; i++ ) {
 
         setDrawColor( 1, 1, 1, 1 );
 
@@ -357,6 +405,7 @@ void TextArea::specialKeyDown( int inKeyCode ) {
                     }
                 else {
                     mCursorPosition = 0;
+                    mRecomputeCursorPositions = true;
                     }
                 }
             break;
@@ -369,6 +418,7 @@ void TextArea::specialKeyDown( int inKeyCode ) {
                     }
                 else {
                     mCursorPosition = strlen( mText );
+                    mRecomputeCursorPositions = true;
                     }
                 }
             break;
