@@ -134,7 +134,7 @@ void processLogFile( File *inFile ) {
                 l.parentChainLength = parentChain;
 
                 l.birthTime = time;
-                l.email = stringDuplicate( email );
+                l.email = stringToLowerCase( email );
 
                 if( strcmp( parent, "noParent" ) == 0 ) {
                     l.birthAge = 14;
@@ -170,29 +170,42 @@ void processLogFile( File *inFile ) {
                         deathReason, &pop );            
             
                 double yearsLived = age;
+                
+                char *lowerEmail = stringToLowerCase( email );
 
                 // walk backwards, finding most recent birth that matches
                 // thus, we don't consider orphaned births (from server crashes)
                 // by accident
+                char foundBirth = false;
                 for( int i=currentLiving.size() - 1; i>=0; i-- ) {
                     Living l = currentLiving.getElementDirect( i );
                     
-                    if( l.id == id && strcmp( l.email, email ) == 0 ) {
+                    if( l.id == id && strcmp( l.email, lowerEmail ) == 0 ) {
                         yearsLived -= l.birthAge;
                         
                         addPlayerGame( l.email, l.birthTime, time );
 
                         delete [] l.email;
                         currentLiving.deleteElement( i );
+                        foundBirth = true;
                         break;
                         }
                     }
             
-                totalAge += yearsLived;
-            
-                if( age >= 55 ) {
-                    over55Count++;
+                if( foundBirth ) {    
+                    totalAge += yearsLived;
+                    
+                    if( age >= 55 ) {
+                        over55Count++;
+                        }
                     }
+                else {
+                    printf( "Orphaned death that had no matching birth:  "
+                            "%.0f %d %s\n",
+                            time, id, lowerEmail );
+                    }
+
+                delete [] lowerEmail;
                 }
             else {
                 scannedLine = false;

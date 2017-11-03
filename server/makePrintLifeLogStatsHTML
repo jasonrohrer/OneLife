@@ -1,1 +1,1 @@
-g++ -g -o printLifeLogStatsHTML -I../.. printLifeLogStatsHTML.cpp ../../minorGems/io/file/linux/PathLinux.cpp
+g++ -g -o printLifeLogStatsHTML -I../.. printLifeLogStatsHTML.cpp ../../minorGems/io/file/linux/PathLinux.cpp ../../minorGems/util/stringUtils.cpp
