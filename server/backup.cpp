@@ -39,6 +39,32 @@ void initBackup() {
                    ( Time::timeSec() - lastBackupTime ) / 3600.0 );
     }
 
+
+// call with "map" or "eve" for example
+void backupDBFile( const char *inFileNamePrefix, char *inTimeFileNamePart,
+                   File *inBackupFolder ) {
+    char *fileName = autoSprintf( "%s.db", inFileNamePrefix );
+    
+    File dbFile( NULL, fileName );
+
+    delete [] fileName;
+
+    if( dbFile.exists() ) {
+        
+
+        char *backFileName =
+            autoSprintf( "%s_%s.db", inFileNamePrefix, inTimeFileNamePart );
+        
+        File *backFile = 
+            inBackupFolder->getChildFile( backFileName );
+        
+        dbFile.copy( backFile );
+        
+        delete [] backFileName;
+        delete backFile;
+        }
+    }
+
     
 
 
@@ -70,7 +96,8 @@ void checkBackup() {
             if( SettingsManager::getIntSetting( "saveBackups", 0 ) ) {
                 
                 AppLog::info( 
-                    "Saving a backup of map.db, mapTime.db, and biome.db ..." );
+                    "Saving a backup of map.db, mapTime.db, and biome.db "
+                    "floor.db, floorTime.db, playerStats.db, and eve.db ..." );
                 
                 char backupsSaved = false;
                 
@@ -84,11 +111,6 @@ void checkBackup() {
                                  timeStruct.tm_hour,
                                  timeStruct.tm_min,
                                  timeStruct.tm_sec );
-                
-                File mapFile( NULL, "map.db" );
-                File mapTimeFile( NULL, "mapTime.db" );
-                File biomeFile( NULL, "biome.db" );
-                
 
                 File backupFolder( NULL, "backups" );
                 
@@ -96,46 +118,24 @@ void checkBackup() {
                     Directory::makeDirectory( &backupFolder );
                     }
                 
-                if( backupFolder.isDirectory() &&
-                    mapFile.exists() &&
-                    mapTimeFile.exists() &&
-                    biomeFile.exists() ) {
+                if( backupFolder.isDirectory() ) {
                     
-                    char *mapBackFileName =
-                        autoSprintf( "map_%s.db", timeFileNamePart );
+                    backupDBFile( "map", timeFileNamePart, &backupFolder );
                     
-                    File *mapBackFile = 
-                        backupFolder.getChildFile( mapBackFileName );
+                    backupDBFile( "mapTime", timeFileNamePart, &backupFolder );
+                    
+                    backupDBFile( "biome", timeFileNamePart, &backupFolder );
+                    
+                    backupDBFile( "eve", timeFileNamePart, &backupFolder );
+                    
+                    backupDBFile( "floor", timeFileNamePart, &backupFolder );
+                    
+                    backupDBFile( "floorTime", timeFileNamePart, 
+                                  &backupFolder );
+                    
+                    backupDBFile( "playerStats", 
+                                  timeFileNamePart, &backupFolder );
 
-                    mapFile.copy( mapBackFile );
-                    
-                    delete [] mapBackFileName;
-                    delete mapBackFile;
-
-
-                    char *mapTimeBackFileName =
-                        autoSprintf( "mapTime_%s.db", timeFileNamePart );
-                    
-                    File *mapTimeBackFile = 
-                        backupFolder.getChildFile( mapTimeBackFileName );
-
-                    mapTimeFile.copy( mapTimeBackFile );
-                    
-                    delete [] mapTimeBackFileName;
-                    delete mapTimeBackFile;
-
-                    
-
-                    char *biomeBackFileName =
-                        autoSprintf( "biome_%s.db", timeFileNamePart );
-                    
-                    File *biomeBackFile = 
-                        backupFolder.getChildFile( biomeBackFileName );
-
-                    biomeFile.copy( biomeBackFile );
-                    
-                    delete [] biomeBackFileName;
-                    delete biomeBackFile;
 
                     AppLog::info( "...Done saving backups" );
                     backupsSaved = true;
