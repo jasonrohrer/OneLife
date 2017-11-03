@@ -15,6 +15,10 @@ gzip -f ~/backups/ol_ticket_$date.mysql
 mysqldump -u jcr15_olForumU --password=$passwordForums jcr15_olForums > ~/backups/ol_forums_$date.mysql
 gzip -f ~/backups/ol_forums_$date.mysql
 
+cd ~/checkout/OneLife/server/
+tar czf ~/backups/lifeLog_$date.tar.gz lifeLog
+
+cd ~
 
 # delete backup files older than two weeks
 find ~/backups -mtime +14 -delete
