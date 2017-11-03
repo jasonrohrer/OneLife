@@ -2,6 +2,7 @@
 
 
 #include "minorGems/io/file/File.h"
+#include "minorGems/util/stringUtils.h"
 
 
 void usage() {
@@ -20,11 +21,26 @@ typedef struct Living {
         int id;
         double birthAge;
         int parentChainLength;
+        double birthTime;
+        char *email;
     } Living;
 
     
 SimpleVector<Living> currentLiving;
 
+
+typedef struct Player {
+        char *email;
+        int gameCount;
+        int gameTotalSeconds;
+        double firstGameTime;
+        double lastGameTime;
+        int lastGameSeconds;
+    } Player;
+
+SimpleVector<Player> allPlayers;
+
+        
 
 // stats
 double totalAge = 0;
@@ -33,6 +49,44 @@ int longestFamilyChain = 0;
 
 int over55Count = 0;
 
+
+
+void addPlayerGame( char *inEmail, 
+                    double inGameStartTime, double inGameEndTime ) {
+
+    Player *thisPlayer;
+    char found = false;
+    
+    for( int i=0; i < allPlayers.size(); i++ ) {
+        thisPlayer = allPlayers.getElement( i );
+        
+        if( strcmp( thisPlayer->email, inEmail ) == 0 ) {
+            found = true;
+            break;
+            }
+        }
+    
+    if( !found ) {    
+        // else add a new one
+        Player newPlayer;
+
+        newPlayer.email = stringDuplicate( inEmail );
+        newPlayer.gameCount = 0;
+        newPlayer.gameTotalSeconds = 0;
+        newPlayer.firstGameTime = inGameEndTime;
+        
+        allPlayers.push_back( newPlayer );
+        
+        thisPlayer = allPlayers.getElement( allPlayers.size() - 1 );
+        }
+    
+    int gameSeconds = lrint( inGameEndTime - inGameStartTime );
+
+    thisPlayer->gameCount ++;
+    thisPlayer->gameTotalSeconds += gameSeconds;
+    thisPlayer->lastGameSeconds = gameSeconds;
+    thisPlayer->lastGameTime = inGameEndTime;    
+    }
 
 
 
@@ -79,6 +133,9 @@ void processLogFile( File *inFile ) {
                 l.birthAge = 1;
                 l.parentChainLength = parentChain;
 
+                l.birthTime = time;
+                l.email = stringDuplicate( email );
+
                 if( strcmp( parent, "noParent" ) == 0 ) {
                     l.birthAge = 14;
                     }
@@ -119,7 +176,10 @@ void processLogFile( File *inFile ) {
                     
                     if( l.id == id ) {
                         yearsLived -= l.birthAge;
-                    
+                        
+                        addPlayerGame( l.email, l.birthTime, time );
+
+                        delete [] l.email;
                         currentLiving.deleteElement( i );
                         break;
                         }
@@ -271,7 +331,33 @@ int main( int inNumArgs, char **inArgs ) {
             
             fclose( outFile );
             }
+
+        for( int i=0; i<currentLiving.size(); i++ ) {
+            Living l = currentLiving.getElementDirect( i );
+            delete [] l.email;
+            }
         
+
+        printf( "\n\nMySQL query to kickstart stats database:\n\n" );
+        
+        for( int i=0; i<allPlayers.size(); i++ ) {
+            Player p = allPlayers.getElementDirect( i );
+            
+            
+            printf( 
+                "INSERT INTO reviewServer_user_stats SET " 
+                "email='%s', sequence_number=0, "
+                "first_game_date=FROM_UNIXTIME( %.0f ), "
+                "last_game_date=FROM_UNIXTIME( %.0f ), "
+                "last_game_seconds=%d, game_count=%d, game_total_seconds=%d, "
+                "review_score=-1, review_name='', review_text='', "
+                "review_date=CURRENT_TIMESTAMP, review_game_seconds=0, "
+                "review_game_count=0, review_votes=0;\n\n",
+                p.email, p.firstGameTime, p.lastGameTime, p.lastGameSeconds,
+                p.gameCount, p.gameTotalSeconds );
+
+            delete [] p.email;
+            }
         }
     else {
         usage();
