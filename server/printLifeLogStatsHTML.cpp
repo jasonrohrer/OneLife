@@ -174,7 +174,7 @@ void processLogFile( File *inFile ) {
                 for( int i=0; i<currentLiving.size(); i++ ) {
                     Living l = currentLiving.getElementDirect( i );
                     
-                    if( l.id == id ) {
+                    if( l.id == id && strcmp( l.email, email ) == 0 ) {
                         yearsLived -= l.birthAge;
                         
                         addPlayerGame( l.email, l.birthTime, time );
@@ -334,6 +334,8 @@ int main( int inNumArgs, char **inArgs ) {
 
         for( int i=0; i<currentLiving.size(); i++ ) {
             Living l = currentLiving.getElementDirect( i );
+            printf( "Orphaned birth that had no matching death:  %.0f %d %s\n",
+                    l.birthTime, l.id, l.email );
             delete [] l.email;
             }
         
