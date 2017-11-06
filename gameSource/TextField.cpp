@@ -14,8 +14,10 @@
 // start:  none focused
 TextField *TextField::sFocusedTextField = NULL;
 
-int TextField::sDeleteFirstDelaySteps = 30;
-int TextField::sDeleteNextDelaySteps = 2;
+extern double frameRateFactor;
+
+int TextField::sDeleteFirstDelaySteps = 30 / frameRateFactor;
+int TextField::sDeleteNextDelaySteps = 2 / frameRateFactor;
 
 
 
