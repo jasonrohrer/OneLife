@@ -735,10 +735,31 @@ void TextField::keyUp( unsigned char inASCII ) {
 void TextField::deleteHit() {
     if( mCursorPosition > 0 ) {
 
+        int newCursorPos = mCursorPosition - 1;
+        
+        if( isCommandKeyDown() ) {
+            // word delete 
+
+            newCursorPos = mCursorPosition;
+
+            // skip non-space characters
+            while( newCursorPos > 0 &&
+                   mText[ newCursorPos - 1 ] != ' ' ) {
+                newCursorPos --;
+                }
+        
+            // skip space characters
+            while( newCursorPos > 0 &&
+                   mText[ newCursorPos - 1 ] == ' ' ) {
+                newCursorPos --;
+                }
+            }
+
+
         char *oldText = mText;
         
         char *preCursor = stringDuplicate( mText );
-        preCursor[ mCursorPosition - 1 ] = '\0';
+        preCursor[ newCursorPos ] = '\0';
         char *postCursor = &( mText[ mCursorPosition ] );
 
         mText = autoSprintf( "%s%s", preCursor, postCursor );
@@ -747,7 +768,7 @@ void TextField::deleteHit() {
 
         delete [] oldText;
 
-        mCursorPosition--;
+        mCursorPosition = newCursorPos;
 
         if( mFireOnAnyChange ) {
             fireActionPerformed( this );
@@ -767,18 +788,56 @@ void TextField::clearArrowRepeat() {
 
 
 void TextField::leftHit() {
-    mCursorPosition --;
-    if( mCursorPosition < 0 ) {
-        mCursorPosition = 0;
+    if( isCommandKeyDown() ) {
+        // word jump 
+
+        // skip non-space characters
+        while( mCursorPosition > 0 &&
+               mText[ mCursorPosition - 1 ] != ' ' ) {
+            mCursorPosition --;
+            }
+        
+        // skip space characters
+        while( mCursorPosition > 0 &&
+               mText[ mCursorPosition - 1 ] == ' ' ) {
+            mCursorPosition --;
+            }
+        
+        }
+    else {    
+        mCursorPosition --;
+        if( mCursorPosition < 0 ) {
+            mCursorPosition = 0;
+            }
         }
     }
 
 
 
 void TextField::rightHit() {
-    mCursorPosition ++;
-    if( mCursorPosition > (int)strlen( mText ) ) {
-        mCursorPosition = strlen( mText );
+    if( isCommandKeyDown() ) {
+        // word jump 
+        int textLen = strlen( mText );
+        
+        // skip space characters
+        while( mCursorPosition < textLen &&
+               mText[ mCursorPosition ] == ' ' ) {
+            mCursorPosition ++;
+            }
+
+        // skip non-space characters
+        while( mCursorPosition < textLen &&
+               mText[ mCursorPosition ] != ' ' ) {
+            mCursorPosition ++;
+            }
+        
+        
+        }
+    else {
+        mCursorPosition ++;
+        if( mCursorPosition > (int)strlen( mText ) ) {
+            mCursorPosition = strlen( mText );
+            }
         }
     }
 
