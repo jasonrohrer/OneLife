@@ -54,6 +54,8 @@ class TextArea : public TextField {
         double mVertSlideOffset;
         char mSmoothSlidingUp, mSmoothSlidingDown;
 
+        float mTopShadingFade, mBottomShadingFade;
+
     };
 
 

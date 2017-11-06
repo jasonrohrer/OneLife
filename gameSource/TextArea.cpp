@@ -24,7 +24,9 @@ TextArea::TextArea( Font *inDisplayFont,
           mLastComputedCursorText( stringDuplicate( "" ) ),
           mVertSlideOffset( 0 ),
           mSmoothSlidingUp( false ),
-          mSmoothSlidingDown( false ) {
+          mSmoothSlidingDown( false ),
+          mTopShadingFade( 0 ),
+          mBottomShadingFade( 0 ) {
     
     clearVertArrowRepeat();
     }
@@ -564,6 +566,46 @@ void TextArea::draw() {
     double cover = 2;
 
     if( firstLine != 0 ) {
+        // fade top shading in
+        if( mTopShadingFade < 1 ) {
+            mTopShadingFade += 0.1 * frameRateFactor;
+            if( mTopShadingFade > 1 ) {
+                mTopShadingFade = 1;
+                }
+            }
+        }
+    else {
+        // fade top shading out
+        if( mTopShadingFade > 0 ) {
+            mTopShadingFade -= 0.1 * frameRateFactor;
+            if( mTopShadingFade < 0 ) {
+                mTopShadingFade = 0;
+                }
+            }
+        }
+
+
+    if( lastLine != lines.size() - 1 ) {
+        // fade bottom shading in
+        if( mBottomShadingFade < 1 ) {
+            mBottomShadingFade += 0.1 * frameRateFactor;
+            if( mBottomShadingFade > 1 ) {
+                mBottomShadingFade = 1;
+                }
+            }
+        }
+    else {
+        // fade bottom shading out
+        if( mBottomShadingFade > 0 ) {
+            mBottomShadingFade -= 0.1 * frameRateFactor;
+            if( mBottomShadingFade < 0 ) {
+                mBottomShadingFade = 0;
+                }
+            }
+        }
+
+
+    if( mTopShadingFade > 0 ) {
         // draw shaded overlay over top of text area
         
 
@@ -571,15 +613,15 @@ void TextArea::draw() {
                            rectEndX, rectStartY,
                            rectEndX, rectStartY - cover * charHeight,
                            rectStartX, rectStartY -  cover * charHeight };
-        float vertColors[] = { 0.25, 0.25, 0.25, 1,
-                               0.25, 0.25, 0.25, 1,
+        float vertColors[] = { 0.25, 0.25, 0.25, mTopShadingFade,
+                               0.25, 0.25, 0.25, mTopShadingFade,
                                0.25, 0.25, 0.25, 0,
                                0.25, 0.25, 0.25, 0 };
 
         drawQuads( 1, verts , vertColors );
         }
     
-    if( lastLine != lines.size() - 1 ) {
+    if( mBottomShadingFade > 0 ) {
         // draw shaded overlay over bottom of text area
 
 
@@ -588,8 +630,8 @@ void TextArea::draw() {
                            rectEndX, rectEndY,
                            rectEndX, rectEndY + cover * charHeight,
                            rectStartX, rectEndY +  cover * charHeight };
-        float vertColors[] = { 0.25, 0.25, 0.25, 1,
-                               0.25, 0.25, 0.25, 1,
+        float vertColors[] = { 0.25, 0.25, 0.25, mBottomShadingFade,
+                               0.25, 0.25, 0.25, mBottomShadingFade,
                                0.25, 0.25, 0.25, 0,
                                0.25, 0.25, 0.25, 0 };
 
