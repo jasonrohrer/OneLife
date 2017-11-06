@@ -166,6 +166,8 @@ void TextArea::draw() {
     
     // same as case for cursor in word, with -1 if cursor not in line
     SimpleVector<int> cursorInLine;
+
+    SimpleVector<char> newlineEatenInLine;
     
     index = 0;
     
@@ -218,7 +220,13 @@ void TextArea::draw() {
                 }
             
             index ++;
+        
+            newlineEatenInLine.push_back( true );
             }
+        else {
+            newlineEatenInLine.push_back( false );
+            }
+        
         
         cursorInLine.push_back( thisLineCursorPos );
         }
@@ -329,6 +337,8 @@ void TextArea::draw() {
                 
                 // recompute cursor offsets for every line
                 
+                int totalTextLen = strlen( mText );
+
                 delete [] mLastComputedCursorText;
                 mLastComputedCursorText = stringDuplicate( mText );
                 mRecomputeCursorPositions = false;
@@ -349,26 +359,38 @@ void TextArea::draw() {
                     int remainingLength = strlen( line );
                     
                     double bestUpDiff = 9999999;
-                
+                    double bestX = 0;
+                    int bestPos = 0;
+                    
                     while( fabs( mFont->measureString( line ) - 
                                  cursorXOffset ) < bestUpDiff ) {
-                    
-                        bestUpDiff = fabs( mFont->measureString( line ) - 
-                                           cursorXOffset );
+                        
+                        bestX = mFont->measureString( line );
+                        
+                        bestUpDiff = fabs( bestX - cursorXOffset );
+                        
+                        bestPos = cursorPos;
+
                         cursorPos --;
                         remainingLength --;
                         
                         line[ remainingLength ] = '\0';
                         }
                     
-                    if( cursorPos < totalLineLengthSoFar - 1 ) {
-                        // not right at end of line
-                        
-                        // give it a nudge to make movement look better
-                        cursorPos += 1;
+
+                    if( newlineEatenInLine.getElementDirect( j ) ) {
+                        totalLineLengthSoFar++;
+                        }
+
+                    if( bestPos == totalLineLengthSoFar && 
+                        bestPos != 0 &&
+                        bestPos != totalTextLen ) {
+                        // best is at end of line, which will wrap
+                        // around to next line
+                        bestPos --;
                         }
                     
-                    mCursorTargetPositions.push_back( cursorPos );
+                    mCursorTargetPositions.push_back( bestPos );
                     }
                 }
             }
