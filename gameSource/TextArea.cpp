@@ -7,6 +7,8 @@
 
 #include <math.h>
 
+extern double frameRateFactor;
+
 
 TextArea::TextArea( Font *inDisplayFont, 
                     double inX, double inY, double inWide, double inHigh,
@@ -19,7 +21,10 @@ TextArea::TextArea( Font *inDisplayFont,
           mWide( inWide ), mHigh( inHigh ),
           mCurrentLine( 0 ),
           mRecomputeCursorPositions( false ),
-          mLastComputedCursorText( stringDuplicate( "" ) ) {
+          mLastComputedCursorText( stringDuplicate( "" ) ),
+          mVertSlideOffset( 0 ),
+          mSmoothSlidingUp( false ),
+          mSmoothSlidingDown( false ) {
     
     clearVertArrowRepeat();
     }
@@ -63,6 +68,51 @@ void TextArea::step() {
                 }
             }
         }
+
+    if( mVertSlideOffset > 0 ) {
+        double speedFactor = 4;
+        
+        // ease toward end of move
+        if( mVertSlideOffset <= mFont->getFontHeight() / 4 ) {
+            speedFactor = 8;
+            }
+        if( mVertSlideOffset <= mFont->getFontHeight() / 8 ) {
+            speedFactor = 16;
+            }
+        if( mVertSlideOffset <= mFont->getFontHeight() / 16 ) {
+            speedFactor = 32;
+            }
+
+        mVertSlideOffset -= 
+            mFont->getFontHeight() / speedFactor * frameRateFactor;
+        
+        if( mVertSlideOffset < 0 ) {
+            mVertSlideOffset = 0;
+            }
+        }
+    else if( mVertSlideOffset < 0 ) {
+
+        double speedFactor = 4;
+        
+        // ease toward end of move
+        if( -mVertSlideOffset <= mFont->getFontHeight() / 4 ) {
+            speedFactor = 8;
+            }
+        if( -mVertSlideOffset <= mFont->getFontHeight() / 8 ) {
+            speedFactor = 16;
+            }
+        if( -mVertSlideOffset <= mFont->getFontHeight() / 16 ) {
+            speedFactor = 32;
+            }
+
+        mVertSlideOffset += 
+            mFont->getFontHeight() / speedFactor * frameRateFactor;
+        
+        if( mVertSlideOffset > 0 ) {
+            mVertSlideOffset = 0;
+            }
+        }
+    
     }
 
 
@@ -313,9 +363,10 @@ void TextArea::draw() {
     
     int linesPossible = floor( mHigh / mFont->getFontHeight() );
     
+    int linesBeforeCursor = linesPossible / 2;
+    int linesAfterCursor = linesPossible - linesBeforeCursor - 1;
+    
     if( lines.size() > linesPossible ) {
-        int linesBeforeCursor = linesPossible / 2;
-        int linesAfterCursor = linesPossible - linesBeforeCursor - 1;
             
         if( lineWithCursor <= linesBeforeCursor ) {
             // show beginning
@@ -336,6 +387,41 @@ void TextArea::draw() {
         }
     
 
+    if( firstLine > 0 && lastLine < lines.size() - 1 ) {
+        mSmoothSlidingUp = true;
+        mSmoothSlidingDown = true;
+        }
+    else if( firstLine == 0 && lineWithCursor == linesBeforeCursor ) {
+        mSmoothSlidingUp = false;
+        mSmoothSlidingDown = true;
+        }
+    else if( lastLine == lines.size() - 1 && 
+             lineWithCursor == lines.size() - linesAfterCursor - 1 ) {
+        mSmoothSlidingUp = true;
+        mSmoothSlidingDown = false;
+        }
+    else {
+        mSmoothSlidingUp = false;
+        mSmoothSlidingDown = false;
+        }
+    
+    
+    for( int i=firstLine; i<=lastLine; i++ ) {
+        if( cursorInLine.getElementDirect( i ) != -1 ) {
+            if( mCurrentLine != i && mVertSlideOffset == 0 ) {
+                // switched lines through horizontal cursor movement
+                if( i < mCurrentLine && mSmoothSlidingUp ) {
+                    mVertSlideOffset += mFont->getFontHeight();
+                    }
+                else if( i > mCurrentLine && mSmoothSlidingDown ) {
+                    mVertSlideOffset -= mFont->getFontHeight();
+                    }
+                }
+            }
+        }
+    
+
+    pos.y += mVertSlideOffset;
 
     for( int i=firstLine; i<=lastLine; i++ ) {
 
@@ -497,6 +583,10 @@ void TextArea::upHit() {
         mCurrentLine--;
         mCursorPosition = 
             mCursorTargetPositions.getElementDirect( mCurrentLine );
+        
+        if( mSmoothSlidingUp ) {
+            mVertSlideOffset += mFont->getFontHeight();
+            }
         }
     else {
         mCursorPosition = 0;
@@ -511,6 +601,10 @@ void TextArea::downHit() {
         mCurrentLine++;
         mCursorPosition = 
             mCursorTargetPositions.getElementDirect( mCurrentLine );
+        
+        if( mSmoothSlidingDown ) {
+            mVertSlideOffset -= mFont->getFontHeight();
+            }
         }
     else {
         mCursorPosition = strlen( mText );

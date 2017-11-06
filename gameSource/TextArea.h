@@ -50,6 +50,10 @@ class TextArea : public TextField {
         void downHit();
         
         void clearVertArrowRepeat();
+
+        double mVertSlideOffset;
+        char mSmoothSlidingUp, mSmoothSlidingDown;
+
     };
 
 
