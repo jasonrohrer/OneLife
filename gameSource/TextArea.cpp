@@ -72,15 +72,21 @@ void TextArea::step() {
     if( mVertSlideOffset > 0 ) {
         double speedFactor = 4;
         
-        // ease toward end of move
-        if( mVertSlideOffset <= mFont->getFontHeight() / 4 ) {
-            speedFactor = 8;
+        if( mHoldVertArrowSteps[0] == -1 ) {
+            // arrow not held down    
+            // ease toward end of move
+            if( mVertSlideOffset <= mFont->getFontHeight() / 4 ) {
+                speedFactor = 8;
+                }
+            if( mVertSlideOffset <= mFont->getFontHeight() / 8 ) {
+                speedFactor = 16;
+                }
+            if( mVertSlideOffset <= mFont->getFontHeight() / 16 ) {
+                speedFactor = 32;
+                }
             }
-        if( mVertSlideOffset <= mFont->getFontHeight() / 8 ) {
-            speedFactor = 16;
-            }
-        if( mVertSlideOffset <= mFont->getFontHeight() / 16 ) {
-            speedFactor = 32;
+        else {
+            speedFactor = 5;
             }
 
         mVertSlideOffset -= 
@@ -94,17 +100,23 @@ void TextArea::step() {
 
         double speedFactor = 4;
         
-        // ease toward end of move
-        if( -mVertSlideOffset <= mFont->getFontHeight() / 4 ) {
-            speedFactor = 8;
+        if( mHoldVertArrowSteps[1] == -1 ) {
+            // arrow not held down    
+            // ease toward end of move
+            if( -mVertSlideOffset <= mFont->getFontHeight() / 4 ) {
+                speedFactor = 8;
+                }
+            if( -mVertSlideOffset <= mFont->getFontHeight() / 8 ) {
+                speedFactor = 16;
+                }
+            if( -mVertSlideOffset <= mFont->getFontHeight() / 16 ) {
+                speedFactor = 32;
+                }
             }
-        if( -mVertSlideOffset <= mFont->getFontHeight() / 8 ) {
-            speedFactor = 16;
+        else {
+            speedFactor = 5;
             }
-        if( -mVertSlideOffset <= mFont->getFontHeight() / 16 ) {
-            speedFactor = 32;
-            }
-
+        
         mVertSlideOffset += 
             mFont->getFontHeight() / speedFactor * frameRateFactor;
         
@@ -535,7 +547,7 @@ void TextArea::draw() {
     
     double charHeight = mFont->getFontHeight();
 
-    double cover = 3;
+    double cover = 2;
 
     if( firstLine != 0 ) {
         // draw shaded overlay over top of text area
