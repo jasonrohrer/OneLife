@@ -29,6 +29,8 @@ class TextArea : public TextField {
         virtual void specialKeyDown( int inKeyCode );
         virtual void specialKeyUp( int inKeyCode );
 
+        virtual void pointerUp( float inX, float inY );
+
     protected:
         double mWide, mHigh;
 

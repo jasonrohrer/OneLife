@@ -724,6 +724,12 @@ void TextArea::specialKeyDown( int inKeyCode ) {
             mCursorPosition = 
                 mCursorTargetPositions.getElementDirect( mCurrentLine );
             break;
+        case MG_KEY_HOME:
+            mCursorPosition = 0;
+            break;
+        case MG_KEY_END:
+            mCursorPosition = strlen( mText );
+            break;
         default:
             break;
         }
@@ -749,6 +755,12 @@ void TextArea::specialKeyUp( int inKeyCode ) {
         mFirstVertArrowRepeatDone[1] = false;
         }
     }
+
+
+
+void TextArea::pointerUp( float inX, float inY ) {
+    }
+
 
 
 
