@@ -37,10 +37,15 @@ class TextArea : public TextField {
 
         int mCurrentLine;
         
-        // one per line, to help cursor move up and down evenly
-        SimpleVector<int> mCursorTargetPositions;
+        SimpleVector<char*> mLineStrings;
         
+        // one per line, to help cursor move up and down evenly
+        // absolute positions in mText
+        SimpleVector<int> mCursorTargetPositions;
+        // relative positions in each line's string
+        SimpleVector<int> mCursorTargetLinePositions;
 
+        
         char mRecomputeCursorPositions;
         char *mLastComputedCursorText;
         
@@ -59,7 +64,10 @@ class TextArea : public TextField {
         float mTopShadingFade, mBottomShadingFade;
 
         int mMaxLinesShown;
-
+        
+        int mFirstVisibleLine;
+        int mLastVisibleLine;
+        
     };
 
 

@@ -27,7 +27,9 @@ TextArea::TextArea( Font *inDisplayFont,
           mSmoothSlidingDown( false ),
           mTopShadingFade( 0 ),
           mBottomShadingFade( 0 ),
-          mMaxLinesShown( 0 ) {
+          mMaxLinesShown( 0 ),
+          mFirstVisibleLine( 0 ), 
+          mLastVisibleLine( 0 ) {
     
     clearVertArrowRepeat();
     }
@@ -36,6 +38,7 @@ TextArea::TextArea( Font *inDisplayFont,
         
 TextArea::~TextArea() {
     delete [] mLastComputedCursorText;
+    mLineStrings.deallocateStringElements();    
     }
 
 
@@ -406,6 +409,52 @@ void TextArea::draw() {
         }
     
 
+    
+
+
+    int drawFirstLine = firstLine;
+    int drawLastLine = lastLine;
+    
+    if( firstLine > 0 ) {
+        drawFirstLine --;
+        pos.y += mFont->getFontHeight();
+        }
+
+    if( lastLine < lines.size() - 1 ) {
+        drawLastLine ++;
+        }
+
+
+    
+    for( int i=firstLine; i<=lastLine; i++ ) {
+        if( cursorInLine.getElementDirect( i ) != -1 ) {
+            if( mCurrentLine != i && mVertSlideOffset == 0 ) {
+                // switched lines through horizontal cursor movement
+                // or mouse clicks
+                if( i < mCurrentLine && mSmoothSlidingUp ) {
+                    mVertSlideOffset += 
+                        mFont->getFontHeight() * ( mCurrentLine - i );
+                    if( firstLine == 0 ) {
+                        mVertSlideOffset -= 
+                            mFont->getFontHeight() *
+                            ( linesBeforeCursor - i );
+                        }
+                    }
+                else if( i > mCurrentLine && mSmoothSlidingDown ) {
+                    mVertSlideOffset -= 
+                        mFont->getFontHeight() * ( i - mCurrentLine );
+
+                    if( lastLine == lines.size() - 1 ) {
+                        mVertSlideOffset += 
+                            mFont->getFontHeight() *
+                            ( linesAfterCursor - ( lastLine - i ) );
+                        }
+                    }
+                }
+            }
+        }
+
+
     if( firstLine > 0 && lastLine < lines.size() - 1 ) {
         mSmoothSlidingUp = true;
         mSmoothSlidingDown = true;
@@ -423,37 +472,41 @@ void TextArea::draw() {
         mSmoothSlidingUp = false;
         mSmoothSlidingDown = false;
         }
+
+
     
-    
-    for( int i=firstLine; i<=lastLine; i++ ) {
-        if( cursorInLine.getElementDirect( i ) != -1 ) {
-            if( mCurrentLine != i && mVertSlideOffset == 0 ) {
-                // switched lines through horizontal cursor movement
-                if( i < mCurrentLine && mSmoothSlidingUp ) {
-                    mVertSlideOffset += mFont->getFontHeight();
-                    }
-                else if( i > mCurrentLine && mSmoothSlidingDown ) {
-                    mVertSlideOffset -= mFont->getFontHeight();
-                    }
-                }
+    if( mVertSlideOffset > mFont->getFontHeight() ) {
+        
+        drawLastLine += lrint( mVertSlideOffset / mFont->getFontHeight() );
+        if( drawLastLine >= lines.size() ) {
+            drawLastLine = lines.size() - 1;
+            }
+        }
+    else if( mVertSlideOffset < - mFont->getFontHeight() ) {
+
+        // diff is negative
+        int diff = lrint( mVertSlideOffset / mFont->getFontHeight() );
+        drawFirstLine += diff;
+
+        pos.y -= mFont->getFontHeight() * diff;
+
+        if( drawFirstLine < 0 ) {
+            int extraDiff = 0 - drawFirstLine;
+            
+            pos.y -= mFont->getFontHeight() * extraDiff;
+            
+            drawFirstLine = 0;
             }
         }
     
+                    
 
     pos.y += mVertSlideOffset;
 
-    int drawFirstLine = firstLine;
-    int drawLastLine = lastLine;
+
+    mFirstVisibleLine = firstLine;
+    mLastVisibleLine = lastLine;
     
-    if( firstLine > 0 ) {
-        drawFirstLine --;
-        pos.y += mFont->getFontHeight();
-        }
-
-    if( lastLine < lines.size() - 1 ) {
-        drawLastLine ++;
-        }
-
     for( int i=drawFirstLine; i<=drawLastLine; i++ ) {
 
         setDrawColor( 1, 1, 1, 1 );
@@ -497,6 +550,7 @@ void TextArea::draw() {
                 mRecomputeCursorPositions = false;
                 
                 mCursorTargetPositions.deleteAll();
+                mCursorTargetLinePositions.deleteAll();
                 
                 int totalLineLengthSoFar = 0;
                 
@@ -514,6 +568,7 @@ void TextArea::draw() {
                     double bestUpDiff = 9999999;
                     double bestX = 0;
                     int bestPos = 0;
+                    int bestLinePos = 0;
                     
                     while( fabs( mFont->measureString( line ) - 
                                  cursorXOffset ) < bestUpDiff ) {
@@ -523,7 +578,8 @@ void TextArea::draw() {
                         bestUpDiff = fabs( bestX - cursorXOffset );
                         
                         bestPos = cursorPos;
-
+                        bestLinePos = remainingLength;
+                        
                         cursorPos --;
                         remainingLength --;
                         
@@ -544,6 +600,7 @@ void TextArea::draw() {
                         }
                     
                     mCursorTargetPositions.push_back( bestPos );
+                    mCursorTargetLinePositions.push_back( bestLinePos );
                     }
                 }
             }
@@ -642,8 +699,13 @@ void TextArea::draw() {
         }
     
     
-    lines.deallocateStringElements();
+
+    mLineStrings.deallocateStringElements();
     
+    for( int i=0; i<lines.size(); i++ ) {
+        mLineStrings.push_back( lines.getElementDirect( i ) );
+        }
+         
     
     stopStencil();
     }
@@ -759,6 +821,68 @@ void TextArea::specialKeyUp( int inKeyCode ) {
 
 
 void TextArea::pointerUp( float inX, float inY ) {
+    float pixelHitY = mHigh / 2 - inY;
+    
+    float pixelHitX = inX + mWide / 2;
+    printf( "inX = %f, mWide = %f, Pixel hit x = %f\n", inX, mWide, pixelHitX );
+    
+    int lineHit = lrint( pixelHitY / mFont->getFontHeight() -
+                         0.5 );
+    
+    if( lineHit < 0 ||
+        lineHit >= mMaxLinesShown ) {
+        return;
+        }
+    
+    lineHit += mFirstVisibleLine;
+    
+    if( lineHit <= mLastVisibleLine ) {
+        // in range
+        
+        printf( "Line hit:  %s\n", mLineStrings.getElementDirect( lineHit ) );
+
+        
+        int bestCursorLinePos = 0;
+        double bestDistance = mWide * 2;
+        
+        char *lineString = mLineStrings.getElementDirect( lineHit );
+        
+
+        int drawnTextLength = strlen( lineString );
+        
+        // find gap between drawn letters that is closest to clicked x
+
+        for( int i=0; i<=drawnTextLength; i++ ) {
+            
+            char *textCopy = stringDuplicate( lineString );
+            
+            textCopy[i] = '\0';
+
+            double thisGapX = 
+                mFont->measureString( textCopy ) +
+                mFont->getCharSpacing() / 2;
+            
+            delete [] textCopy;
+            
+            double thisDistance = fabs( thisGapX - pixelHitX );
+            
+            if( thisDistance < bestDistance ) {
+                bestCursorLinePos = i;
+                bestDistance = thisDistance;
+                }
+            }
+        
+        int delta = bestCursorLinePos - 
+            mCursorTargetLinePositions.getElementDirect( lineHit );
+
+        printf( "target pos = %d, best line pos = %d\n",
+                mCursorTargetLinePositions.getElementDirect( lineHit ),
+                bestCursorLinePos );
+
+        mCursorPosition = 
+            mCursorTargetPositions.getElementDirect( lineHit ) + delta;
+        
+        }
     }
 
 
