@@ -349,7 +349,7 @@ void TextArea::draw() {
             
             beforeCursor[ cursorInLine.getElementDirect( i ) ] = '\0';
             
-            setDrawColor( 0, 0, 0, 0.5 );
+            setDrawColor( 0, 0, 0, 0.75 );
         
             double cursorXOffset = mFont->measureString( beforeCursor );
             
@@ -434,7 +434,60 @@ void TextArea::draw() {
         pos.y -= mFont->getFontHeight();
         }
     
+    
+    double xRad = mWide / 2 + 2 * pixWidth;
+    double yRad = mHigh / 2;
+    
+    pos.x = 0;
+    pos.y = 0;
+    
+    double rectStartX = pos.x - xRad;
+    double rectEndX = pos.x + xRad;
+
+    double rectStartY = pos.y + yRad;
+    double rectEndY = pos.y - yRad;
+    
+    double charHeight = mFont->getFontHeight();
+
+    double cover = 3;
+
+    if( firstLine != 0 ) {
+        // draw shaded overlay over top of text area
+        
+
+        double verts[] = { rectStartX, rectStartY,
+                           rectEndX, rectStartY,
+                           rectEndX, rectStartY - cover * charHeight,
+                           rectStartX, rectStartY -  cover * charHeight };
+        float vertColors[] = { 0.25, 0.25, 0.25, 1,
+                               0.25, 0.25, 0.25, 1,
+                               0.25, 0.25, 0.25, 0,
+                               0.25, 0.25, 0.25, 0 };
+
+        drawQuads( 1, verts , vertColors );
+        }
+    
+    if( lastLine != lines.size() - 1 ) {
+        // draw shaded overlay over bottom of text area
+
+
+        
+        double verts[] = { rectStartX, rectEndY,
+                           rectEndX, rectEndY,
+                           rectEndX, rectEndY + cover * charHeight,
+                           rectStartX, rectEndY +  cover * charHeight };
+        float vertColors[] = { 0.25, 0.25, 0.25, 1,
+                               0.25, 0.25, 0.25, 1,
+                               0.25, 0.25, 0.25, 0,
+                               0.25, 0.25, 0.25, 0 };
+
+        drawQuads( 1, verts , vertColors );
+        }
+    
+    
     lines.deallocateStringElements();
+    
+
     }
 
 
