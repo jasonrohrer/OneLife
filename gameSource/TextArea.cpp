@@ -141,8 +141,10 @@ void TextArea::draw() {
 
     setDrawColor( 0.25, 0.25, 0.25, 1 );
 
+    startAddingToStencil( true, true );
     drawRect( pos, mWide / 2 + 2 * pixWidth, mHigh / 2 + 2 * pixWidth );
 
+    startDrawingThroughStencil();
 
     // first, split into words
     SimpleVector<char*> words;
@@ -435,7 +437,19 @@ void TextArea::draw() {
 
     pos.y += mVertSlideOffset;
 
-    for( int i=firstLine; i<=lastLine; i++ ) {
+    int drawFirstLine = firstLine;
+    int drawLastLine = lastLine;
+    
+    if( firstLine > 0 ) {
+        drawFirstLine --;
+        pos.y += mFont->getFontHeight();
+        }
+
+    if( lastLine < lines.size() - 1 ) {
+        drawLastLine ++;
+        }
+
+    for( int i=drawFirstLine; i<=drawLastLine; i++ ) {
 
         setDrawColor( 1, 1, 1, 1 );
 
@@ -534,7 +548,7 @@ void TextArea::draw() {
     
     
     double xRad = mWide / 2 + 2 * pixWidth;
-    double yRad = mHigh / 2;
+    double yRad = mHigh / 2 + 2 * pixWidth;
     
     pos.x = 0;
     pos.y = 0;
@@ -585,7 +599,8 @@ void TextArea::draw() {
     
     lines.deallocateStringElements();
     
-
+    
+    stopStencil();
     }
 
 
