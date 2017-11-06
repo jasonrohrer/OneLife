@@ -56,6 +56,8 @@ class TextArea : public TextField {
 
         float mTopShadingFade, mBottomShadingFade;
 
+        int mMaxLinesShown;
+
     };
 
 

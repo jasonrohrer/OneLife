@@ -26,7 +26,8 @@ TextArea::TextArea( Font *inDisplayFont,
           mSmoothSlidingUp( false ),
           mSmoothSlidingDown( false ),
           mTopShadingFade( 0 ),
-          mBottomShadingFade( 0 ) {
+          mBottomShadingFade( 0 ),
+          mMaxLinesShown( 0 ) {
     
     clearVertArrowRepeat();
     }
@@ -379,6 +380,8 @@ void TextArea::draw() {
     
     int linesPossible = floor( mHigh / mFont->getFontHeight() );
     
+    mMaxLinesShown = linesPossible;
+
     int linesBeforeCursor = linesPossible / 2;
     int linesAfterCursor = linesPossible - linesBeforeCursor - 1;
     
@@ -704,6 +707,22 @@ void TextArea::specialKeyDown( int inKeyCode ) {
                 clearVertArrowRepeat();
                 mHoldVertArrowSteps[1] = 0;
                 }
+            break;
+        case MG_KEY_PAGE_UP:
+            mCurrentLine -= mMaxLinesShown - 1;
+            if( mCurrentLine < 0 ) {
+                mCurrentLine = 0;
+                }
+            mCursorPosition = 
+                mCursorTargetPositions.getElementDirect( mCurrentLine );
+            break;
+        case MG_KEY_PAGE_DOWN:
+            mCurrentLine += mMaxLinesShown - 1;
+            if( mCurrentLine >= mCursorTargetPositions.size() ) {
+                mCurrentLine = mCursorTargetPositions.size() - 1;
+                }
+            mCursorPosition = 
+                mCursorTargetPositions.getElementDirect( mCurrentLine );
             break;
         default:
             break;
