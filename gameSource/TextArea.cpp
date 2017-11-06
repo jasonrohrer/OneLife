@@ -21,12 +21,48 @@ TextArea::TextArea( Font *inDisplayFont,
           mRecomputeCursorPositions( false ),
           mLastComputedCursorText( stringDuplicate( "" ) ) {
     
+    clearVertArrowRepeat();
     }
 
 
         
 TextArea::~TextArea() {
     delete [] mLastComputedCursorText;
+    }
+
+
+
+void TextArea::step() {
+    TextField::step();
+    
+    for( int i=0; i<2; i++ ) {
+        
+        if( mHoldVertArrowSteps[i] > -1 ) {
+            mHoldVertArrowSteps[i] ++;
+            
+            int stepsBetween = sDeleteFirstDelaySteps;
+        
+            if( mFirstVertArrowRepeatDone[i] ) {
+                // vert arrows move cursor more slowly
+                stepsBetween = sDeleteNextDelaySteps * 2 ;
+                }
+        
+            if( mHoldVertArrowSteps[i] > stepsBetween ) {
+                // arrow repeat
+                mHoldVertArrowSteps[i] = 0;
+                mFirstVertArrowRepeatDone[i] = true;
+            
+                switch( i ) {
+                    case 0:
+                        upHit();
+                        break;
+                    case 1:
+                        downHit();
+                        break;
+                    }
+                }
+            }
+        }
     }
 
 
@@ -403,45 +439,54 @@ void TextArea::draw() {
 
 
 
+void TextArea::upHit() {
+    if( mCurrentLine > 0 ) {
+        mCurrentLine--;
+        mCursorPosition = 
+            mCursorTargetPositions.getElementDirect( mCurrentLine );
+        }
+    else {
+        mCursorPosition = 0;
+        mRecomputeCursorPositions = true;
+        }
+    }
+
+
+
+void TextArea::downHit() {
+    if( mCurrentLine < mCursorTargetPositions.size() - 1 ) {
+        mCurrentLine++;
+        mCursorPosition = 
+            mCursorTargetPositions.getElementDirect( mCurrentLine );
+        }
+    else {
+        mCursorPosition = strlen( mText );
+        mRecomputeCursorPositions = true;
+        }
+    }
+
+
 
 void TextArea::specialKeyDown( int inKeyCode ) {
     TextField::specialKeyDown( inKeyCode );
 
      if( !mFocused ) {
         return;
-        }
-
-     if( inKeyCode == MG_KEY_RIGHT ||
-         inKeyCode == MG_KEY_LEFT ) {
-         mRecomputeCursorPositions = true;
-         }
-         
+        }         
     
     switch( inKeyCode ) {
         case MG_KEY_UP:
             if( ! mIgnoreArrowKeys ) {
-                if( mCurrentLine > 0 ) {
-                    mCurrentLine--;
-                    mCursorPosition = 
-                        mCursorTargetPositions.getElementDirect( mCurrentLine );
-                    }
-                else {
-                    mCursorPosition = 0;
-                    mRecomputeCursorPositions = true;
-                    }
+                upHit();
+                clearVertArrowRepeat();
+                mHoldVertArrowSteps[0] = 0;
                 }
             break;
         case MG_KEY_DOWN:
             if( ! mIgnoreArrowKeys ) {
-                if( mCurrentLine < mCursorTargetPositions.size() - 1 ) {
-                    mCurrentLine++;
-                    mCursorPosition = 
-                        mCursorTargetPositions.getElementDirect( mCurrentLine );
-                    }
-                else {
-                    mCursorPosition = strlen( mText );
-                    mRecomputeCursorPositions = true;
-                    }
+                downHit();
+                clearVertArrowRepeat();
+                mHoldVertArrowSteps[1] = 0;
                 }
             break;
         default:
@@ -453,4 +498,28 @@ void TextArea::specialKeyDown( int inKeyCode ) {
 
 void TextArea::specialKeyUp( int inKeyCode ) {
     TextField::specialKeyUp( inKeyCode );
+
+    if( inKeyCode == MG_KEY_RIGHT ||
+         inKeyCode == MG_KEY_LEFT ) {
+         mRecomputeCursorPositions = true;
+         }
+
+
+    if( inKeyCode == MG_KEY_UP ) {
+        mHoldVertArrowSteps[0] = -1;
+        mFirstVertArrowRepeatDone[0] = false;
+        }
+    else if( inKeyCode == MG_KEY_DOWN ) {
+        mHoldVertArrowSteps[1] = -1;
+        mFirstVertArrowRepeatDone[1] = false;
+        }
+    }
+
+
+
+void TextArea::clearVertArrowRepeat() {
+    for( int i=0; i<2; i++ ) {
+        mHoldVertArrowSteps[i] = -1;
+        mFirstVertArrowRepeatDone[i] = false;
+        }
     }

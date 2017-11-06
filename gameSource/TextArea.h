@@ -24,6 +24,7 @@ class TextArea : public TextField {
 
 
         virtual void draw();
+        virtual void step();
         
         virtual void specialKeyDown( int inKeyCode );
         virtual void specialKeyUp( int inKeyCode );
@@ -41,6 +42,14 @@ class TextArea : public TextField {
         char mRecomputeCursorPositions;
         char *mLastComputedCursorText;
         
+
+        int mHoldVertArrowSteps[2];
+        char mFirstVertArrowRepeatDone[2];
+
+        void upHit();
+        void downHit();
+        
+        void clearVertArrowRepeat();
     };
 
 
