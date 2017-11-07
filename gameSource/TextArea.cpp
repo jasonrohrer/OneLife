@@ -597,6 +597,7 @@ void TextArea::draw() {
                         // best is at end of line, which will wrap
                         // around to next line
                         bestPos --;
+                        bestLinePos --;
                         }
                     
                     mCursorTargetPositions.push_back( bestPos );
@@ -852,7 +853,14 @@ void TextArea::pointerUp( float inX, float inY ) {
         
         // find gap between drawn letters that is closest to clicked x
 
-        for( int i=0; i<=drawnTextLength; i++ ) {
+        // don't consider placing cursor after space at end of line
+        int limit = drawnTextLength - 1;
+        
+        if( lineString[ limit ] != ' ' ) {
+            limit++;
+            }
+
+        for( int i=0; i<=limit; i++ ) {
             
             char *textCopy = stringDuplicate( lineString );
             
@@ -881,7 +889,7 @@ void TextArea::pointerUp( float inX, float inY ) {
 
         mCursorPosition = 
             mCursorTargetPositions.getElementDirect( lineHit ) + delta;
-        
+        mRecomputeCursorPositions = true;
         }
     }
 
