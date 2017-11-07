@@ -16,6 +16,7 @@ class ReviewPage : public GamePage, public ActionListener {
     public:
         
         ReviewPage();
+        ~ReviewPage();
         
 
         virtual void draw( doublePair inViewCenter, 
@@ -35,7 +36,7 @@ class ReviewPage : public GamePage, public ActionListener {
 
         TextField mReviewNameField;
         
-        //RadioButtonSet mRecommendChoice;
+        RadioButtonSet *mRecommendChoice;
 
         TextArea mReviewTextArea;
         

@@ -13,11 +13,9 @@
 extern Font *mainFont;
 extern Font *mainFontReview;
 
-extern float musicLoudness;
-
 
 ReviewPage::ReviewPage()
-        : mReviewNameField( mainFont, 0, 250, 10, false,
+        : mReviewNameField( mainFont, -242, 250, 10, false,
                             translate( "reviewName"), 
                             "abcdefghijklmnopqrstuvwxyz"
                             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -30,7 +28,16 @@ ReviewPage::ReviewPage()
               "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
               "1234567890"
               " !?$%*&()+-='\":;,.\r", NULL ),
-          mBackButton( mainFont, 0, -250, translate( "backButton" ) ) {
+          mBackButton( mainFont, -480, -140, translate( "backButton" ) ) {
+
+    const char *choiceList[2] = { translate( "recommendYes" ),
+                                  translate( "recommendNo" ) };
+    
+    mRecommendChoice = 
+        new RadioButtonSet( mainFont, 396, 258,
+                            2, choiceList,
+                            false, 4 ),
+    
     
     setButtonStyle( &mBackButton );
 
@@ -42,12 +49,20 @@ ReviewPage::ReviewPage()
     addComponent( &mReviewTextArea );    
     addComponent( &mReviewNameField );
 
+    addComponent( mRecommendChoice );
+
 
     mReviewNameField.setMaxLength( 20 );
 
     mReviewNameField.addActionListener( this );
 
     mReviewNameField.setLabelTop( true );
+    }
+
+
+
+ReviewPage::~ReviewPage() {
+    delete mRecommendChoice;
     }
 
 
@@ -65,6 +80,14 @@ void ReviewPage::actionPerformed( GUIComponent *inTarget ) {
 
 void ReviewPage::draw( doublePair inViewCenter, 
                          double inViewSize ) {
+
+    doublePair pos = mRecommendChoice->getPosition();
+    
+    pos.y += 32;
+    pos.x += 12;
+    
+    setDrawColor( 1, 1, 1, 1 );
+    mainFont->drawString( translate( "recommend" ), pos, alignRight );
     }
 
 
@@ -80,7 +103,7 @@ void ReviewPage::makeActive( char inFresh ) {
     if( inFresh ) {        
         }
 
-    mReviewTextArea.focus();
+    mReviewNameField.focus();
     }
 
 
