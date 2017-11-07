@@ -582,7 +582,7 @@ void TextArea::draw() {
                 drawRect( pos.x + cursorXOffset + extra, 
                           pos.y - mFont->getFontHeight() / 2,
                           pos.x + cursorXOffset + pixWidth + extra, 
-                          pos.y + mFont->getFontHeight() / 2 );
+                          pos.y + 0.55 * mFont->getFontHeight() );
                 }
             
             
