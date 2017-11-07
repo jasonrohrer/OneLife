@@ -209,6 +209,8 @@ void ReviewPage::checkCanPost() {
             }
         
         mPostButton.setVisible( ! hide );
+
+        delete [] text;
         }
     }
 
