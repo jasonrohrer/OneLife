@@ -822,8 +822,13 @@ void TextArea::specialKeyUp( int inKeyCode ) {
 
 
 void TextArea::pointerUp( float inX, float inY ) {
-    float pixelHitY = mHigh / 2 - inY;
+    if( mVertSlideOffset != 0 ) {
+        // disable click in middle of slide
+        return;
+        }
     
+    float pixelHitY = mHigh / 2 - inY;
+
     float pixelHitX = inX + mWide / 2;
     printf( "inX = %f, mWide = %f, Pixel hit x = %f\n", inX, mWide, pixelHitX );
     
