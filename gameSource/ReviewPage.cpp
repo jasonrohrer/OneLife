@@ -4,6 +4,7 @@
 #include "minorGems/game/Font.h"
 
 #include "minorGems/util/SettingsManager.h"
+#include "minorGems/util/stringUtils.h"
 
 #include "minorGems/game/game.h"
 
@@ -29,7 +30,10 @@ ReviewPage::ReviewPage()
               "1234567890"
               " !?$%*&()+-='\":;,.\r", NULL ),
           mBackButton( mainFont, -526, -140, translate( "backButton" ) ),
-          mPostButton( mainFont, 526, -140, translate( "postReviewButton" ) ) {
+          mPostButton( mainFont, 526, -140, translate( "postReviewButton" ) ),
+          mCopyButton( mainFont, -526, 140, translate( "copy" ) ),
+          mPasteButton( mainFont, -526, 40, translate( "paste" ) ),
+          mClearButton( mainFont, 526, 140, translate( "clear" ) ) {
 
     const char *choiceList[2] = { translate( "recommendYes" ),
                                   translate( "recommendNo" ) };
@@ -42,12 +46,25 @@ ReviewPage::ReviewPage()
     
     setButtonStyle( &mBackButton );
     setButtonStyle( &mPostButton );
+    setButtonStyle( &mCopyButton );
+    setButtonStyle( &mPasteButton );
+    setButtonStyle( &mClearButton );
+    
 
     addComponent( &mBackButton );
     addComponent( &mPostButton );
 
+    addComponent( &mCopyButton );
+    addComponent( &mPasteButton );
+    addComponent( &mClearButton );
+
+        
+
     mBackButton.addActionListener( this );
     mPostButton.addActionListener( this );
+    mCopyButton.addActionListener( this );
+    mPasteButton.addActionListener( this );
+    mClearButton.addActionListener( this );
     
     // add name field after so we can hit return in name field
     // and advance to text area without sending a return key to the text area
@@ -58,6 +75,7 @@ ReviewPage::ReviewPage()
 
 
     mReviewNameField.setMaxLength( 20 );
+    mReviewTextArea.setMaxLength( 5000 );
 
     mReviewNameField.addActionListener( this );
 
@@ -65,6 +83,16 @@ ReviewPage::ReviewPage()
 
 
     mPostButton.setMouseOverTip( translate( "postReviewTip" ) );
+
+
+    mCopyButton.setMouseOverTip( translate( "copyReviewTip" ) );
+
+
+    if( ! isClipboardSupported() ) {
+        mCopyButton.setVisible( false );
+        mPasteButton.setVisible( false );
+        }
+    
     }
 
 
@@ -82,10 +110,48 @@ void ReviewPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mReviewNameField ) {
         switchFields();
         }
+    else if( inTarget == &mCopyButton ) {
+        mReviewTextArea.focus();
+
+        char *text = mReviewTextArea.getText();
+        setClipboardText( text );
+        delete [] text;
+        }
+    else if( inTarget == &mPasteButton ) {
+        mReviewTextArea.focus();
+
+        char *text = getClipboardText();
+
+        int len = strlen( text );
+        
+        for( int i=0; i<len; i++ ) {
+            char c = text[i];
+            if( c == '\n' ) {
+                c = '\r';
+                }
+            mReviewTextArea.insertCharacter( c );
+            }
+        delete [] text;
+        }
+    else if( inTarget == &mClearButton ) {
+        mReviewTextArea.focus();
+
+        char *text = stringDuplicate( "" );
+
+        mReviewTextArea.setText( text );
+        delete [] text;
+        }
     else if( inTarget == &mPostButton ) {
+        mCopyButton.setActive( false );
+        mPasteButton.setActive( false );
+        mClearButton.setActive( false );
         mReviewNameField.setActive( false );
         mReviewTextArea.setActive( false );
         mRecommendChoice->setActive( false );
+        
+        //mBackButton.setActive( false );
+
+        mPostButton.setVisible( false );
         }
     }
 
@@ -105,7 +171,57 @@ void ReviewPage::draw( doublePair inViewCenter,
 
 
 
+
+void ReviewPage::checkCanPost() {
+    if( mReviewNameField.isActive() ) {
+        // make post button inactive until they at least type a name
+
+        char *text = mReviewNameField.getText();
+        
+        int len = strlen( text );
+
+        char hide = false;
+        
+        if( len == 0 ) {
+            hide = true;
+            }
+        else {
+            char nonSpace = false;
+            for( int i=0; i<len; i++ ) {
+                if( text[i] != ' ' ) {
+                    nonSpace = true;
+                    break;
+                    }
+                }
+
+            if( !nonSpace ) {
+                hide = true;
+                }
+            }
+        
+        mPostButton.setVisible( ! hide );
+        }
+    }
+
+
+
+void ReviewPage::checkCanPaste() {
+    if( mReviewTextArea.isActive() ) {
+        
+        char foc = mReviewTextArea.isFocused();
+        
+        mCopyButton.setVisible( foc );
+        mPasteButton.setVisible( foc );
+        mClearButton.setVisible( foc );
+        }
+    }
+
+
+
+
 void ReviewPage::step() {
+    checkCanPost();
+    checkCanPaste();
     }
 
 
@@ -120,6 +236,17 @@ void ReviewPage::makeActive( char inFresh ) {
     mReviewNameField.setActive( true );
     mReviewTextArea.setActive( true );
     mRecommendChoice->setActive( true );
+
+    
+    checkCanPost();
+    checkCanPaste();
+
+    mCopyButton.setActive( true );
+    mPasteButton.setActive( true );
+    mClearButton.setActive( true );
+
+    
+
     mReviewNameField.focus();
     }
 

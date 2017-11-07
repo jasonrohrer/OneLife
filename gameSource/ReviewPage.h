@@ -46,11 +46,15 @@ class ReviewPage : public GamePage, public ActionListener {
         TextButton mPostButton;
         
 
-        //TextButton mCopyButton;
-        //TextButton mPasteButton;
+        TextButton mCopyButton;
+        TextButton mPasteButton;
+
+        TextButton mClearButton;
 
 
         void switchFields();
-        
+
+        void checkCanPost();
+        void checkCanPaste();
         
     };

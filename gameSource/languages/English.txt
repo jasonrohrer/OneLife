@@ -47,12 +47,17 @@ postReviewButton "POST"
 postReviewTip "POST TO ONEHOURONELIFE.COM"
 
 
+copyReviewTip "COPY REVIEW TEXT TO CLIPBOARD"
+
+
 saveTip "LOGIN AND STORE DETAILS LOCALLY"
 noSaveTip "DO NOT STORE DETAILS LOCALLY"
 
 
 accountKey "KEY"
 paste "PASTE"
+copy "COPY"
+clear "CLEAR"
 
 
 backButton "BACK"
