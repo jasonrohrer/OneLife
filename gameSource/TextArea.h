@@ -45,6 +45,8 @@ class TextArea : public TextField {
         // relative positions in each line's string
         SimpleVector<int> mCursorTargetLinePositions;
 
+
+        char *mLastDrawnText;
         
         char mRecomputeCursorPositions;
         char *mLastComputedCursorText;
@@ -60,6 +62,10 @@ class TextArea : public TextField {
 
         double mVertSlideOffset;
         char mSmoothSlidingUp, mSmoothSlidingDown;
+
+        // override smooth movement for HOME and END and PAGE keys
+        char mSnapMove;
+        
 
         float mTopShadingFade, mBottomShadingFade;
 

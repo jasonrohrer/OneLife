@@ -31,6 +31,10 @@ TextArea::TextArea( Font *inDisplayFont,
           mFirstVisibleLine( 0 ), 
           mLastVisibleLine( 0 ) {
     
+    mLastDrawnText = stringDuplicate( "" );
+    
+    mSnapMove = false;
+    
     clearVertArrowRepeat();
     }
 
@@ -38,7 +42,8 @@ TextArea::TextArea( Font *inDisplayFont,
         
 TextArea::~TextArea() {
     delete [] mLastComputedCursorText;
-    mLineStrings.deallocateStringElements();    
+    mLineStrings.deallocateStringElements();
+    delete [] mLastDrawnText;
     }
 
 
@@ -425,13 +430,22 @@ void TextArea::draw() {
         }
 
 
+    char textChange = ( strcmp( mLastDrawnText, mText ) != 0 );
     
+    delete [] mLastDrawnText;
+    mLastDrawnText = stringDuplicate( mText );
+    
+    // if same text, check for cursor changes that should
+    // result in additional smooth movement
+    if( !textChange && !mSnapMove )
     for( int i=firstLine; i<=lastLine; i++ ) {
         if( cursorInLine.getElementDirect( i ) != -1 ) {
             if( mCurrentLine != i && mVertSlideOffset == 0 ) {
                 // switched lines through horizontal cursor movement
                 // or mouse clicks
-                if( i < mCurrentLine && mSmoothSlidingUp ) {
+                if( i < mCurrentLine && 
+                    ( mSmoothSlidingUp ||
+                      lastLine != mLastVisibleLine ) ) {
                     mVertSlideOffset += 
                         mFont->getFontHeight() * ( mCurrentLine - i );
                     if( firstLine == 0 ) {
@@ -439,8 +453,16 @@ void TextArea::draw() {
                             mFont->getFontHeight() *
                             ( linesBeforeCursor - i );
                         }
+                    else if( mLastVisibleLine == lines.size() - 1 ) {
+                        mVertSlideOffset -= 
+                            mFont->getFontHeight() *
+                            ( linesAfterCursor - 
+                              ( lines.size() - 1 - mCurrentLine ) );
+                        }
                     }
-                else if( i > mCurrentLine && mSmoothSlidingDown ) {
+                else if( i > mCurrentLine && 
+                         ( mSmoothSlidingDown ||
+                           firstLine != mFirstVisibleLine ) ) {
                     mVertSlideOffset -= 
                         mFont->getFontHeight() * ( i - mCurrentLine );
 
@@ -448,6 +470,11 @@ void TextArea::draw() {
                         mVertSlideOffset += 
                             mFont->getFontHeight() *
                             ( linesAfterCursor - ( lastLine - i ) );
+                        }
+                    else if( mFirstVisibleLine == 0 ) {
+                        mVertSlideOffset += 
+                            mFont->getFontHeight() *
+                            ( linesBeforeCursor - mCurrentLine );
                         }
                     }
                 }
@@ -709,6 +736,7 @@ void TextArea::draw() {
          
     
     stopStencil();
+    mSnapMove = false;
     }
 
 
@@ -771,27 +799,51 @@ void TextArea::specialKeyDown( int inKeyCode ) {
                 mHoldVertArrowSteps[1] = 0;
                 }
             break;
-        case MG_KEY_PAGE_UP:
+        case MG_KEY_PAGE_UP: {
+            int old = mCurrentLine;
+
             mCurrentLine -= mMaxLinesShown - 1;
             if( mCurrentLine < 0 ) {
                 mCurrentLine = 0;
                 }
+
+            // disable smooth pg up/down for now
+            if( false && mSmoothSlidingUp ) {
+                mVertSlideOffset += 
+                    (old - mCurrentLine ) * mFont->getFontHeight();
+                }
+            
             mCursorPosition = 
                 mCursorTargetPositions.getElementDirect( mCurrentLine );
+            mSnapMove = true;
             break;
-        case MG_KEY_PAGE_DOWN:
+            }
+        case MG_KEY_PAGE_DOWN: {
+            int old = mCurrentLine;
+            
             mCurrentLine += mMaxLinesShown - 1;
             if( mCurrentLine >= mCursorTargetPositions.size() ) {
                 mCurrentLine = mCursorTargetPositions.size() - 1;
                 }
+            
+            // disable smooth pg up/down for now
+            if( false && mSmoothSlidingDown ) {
+                mVertSlideOffset -= 
+                    (mCurrentLine - old ) * mFont->getFontHeight();
+                }
+            
             mCursorPosition = 
                 mCursorTargetPositions.getElementDirect( mCurrentLine );
+            mSnapMove = true;
             break;
+            }
         case MG_KEY_HOME:
             mCursorPosition = 0;
+            mSnapMove = true;
             break;
         case MG_KEY_END:
             mCursorPosition = strlen( mText );
+            mSnapMove = true;
             break;
         default:
             break;
