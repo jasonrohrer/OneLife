@@ -28,8 +28,8 @@ ReviewPage::ReviewPage()
               "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
               "1234567890"
               " !?$%*&()+-='\":;,.\r", NULL ),
-          mBackButton( mainFont, -480, -140, translate( "backButton" ) ),
-          mPostButton( mainFont, 480, -140, translate( "postReviewButton" ) ) {
+          mBackButton( mainFont, -526, -140, translate( "backButton" ) ),
+          mPostButton( mainFont, 526, -140, translate( "postReviewButton" ) ) {
 
     const char *choiceList[2] = { translate( "recommendYes" ),
                                   translate( "recommendNo" ) };
