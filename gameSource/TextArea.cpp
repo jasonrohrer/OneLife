@@ -634,6 +634,7 @@ void TextArea::draw() {
                         line[ remainingLength ] = '\0';
                         }
                     
+                    delete [] line;
 
                     if( newlineEatenInLine.getElementDirect( j ) ) {
                         totalLineLengthSoFar++;
