@@ -754,9 +754,18 @@ void TextArea::draw() {
     for( int i=0; i<lines.size(); i++ ) {
         mLineStrings.push_back( lines.getElementDirect( i ) );
         }
-         
     
     stopStencil();
+
+    
+    if( ! mActive ) {
+        setDrawColor( 0, 0, 0, 0.5 );
+        // dark overlay
+
+        drawRect( pos, mWide / 2 + 3 * pixWidth, mHigh / 2 + 3 * pixWidth );
+        }
+
+
     mSnapMove = false;
     }
 

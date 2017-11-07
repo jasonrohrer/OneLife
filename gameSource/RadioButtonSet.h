@@ -25,6 +25,11 @@ class RadioButtonSet : public PageComponent, public ActionListenerList,
         int getSelectedItem();
         
         void setSelectedItem( int inIndex );
+
+
+        virtual void setActive( char inActive );
+
+        virtual char isActive();
         
 
     protected:

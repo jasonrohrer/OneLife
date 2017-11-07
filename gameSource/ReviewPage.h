@@ -43,8 +43,7 @@ class ReviewPage : public GamePage, public ActionListener {
         TextButton mBackButton;
 
         
-        //TextButton mSaveButton;
-        //TextButton mPostButton;
+        TextButton mPostButton;
         
 
         //TextButton mCopyButton;

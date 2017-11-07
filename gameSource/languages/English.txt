@@ -43,6 +43,10 @@ recommend "RECOMMEND"
 recommendYes "YES"
 recommendNo "NO"
 
+postReviewButton "POST"
+postReviewTip "POST TO ONEHOURONELIFE.COM"
+
+
 saveTip "LOGIN AND STORE DETAILS LOCALLY"
 noSaveTip "DO NOT STORE DETAILS LOCALLY"
 

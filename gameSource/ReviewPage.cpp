@@ -28,7 +28,8 @@ ReviewPage::ReviewPage()
               "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
               "1234567890"
               " !?$%*&()+-='\":;,.\r", NULL ),
-          mBackButton( mainFont, -480, -140, translate( "backButton" ) ) {
+          mBackButton( mainFont, -480, -140, translate( "backButton" ) ),
+          mPostButton( mainFont, 480, -140, translate( "postReviewButton" ) ) {
 
     const char *choiceList[2] = { translate( "recommendYes" ),
                                   translate( "recommendNo" ) };
@@ -40,10 +41,14 @@ ReviewPage::ReviewPage()
     
     
     setButtonStyle( &mBackButton );
+    setButtonStyle( &mPostButton );
 
     addComponent( &mBackButton );
-    mBackButton.addActionListener( this );
+    addComponent( &mPostButton );
 
+    mBackButton.addActionListener( this );
+    mPostButton.addActionListener( this );
+    
     // add name field after so we can hit return in name field
     // and advance to text area without sending a return key to the text area
     addComponent( &mReviewTextArea );    
@@ -57,6 +62,9 @@ ReviewPage::ReviewPage()
     mReviewNameField.addActionListener( this );
 
     mReviewNameField.setLabelTop( true );
+
+
+    mPostButton.setMouseOverTip( translate( "postReviewTip" ) );
     }
 
 
@@ -73,6 +81,11 @@ void ReviewPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mReviewNameField ) {
         switchFields();
+        }
+    else if( inTarget == &mPostButton ) {
+        mReviewNameField.setActive( false );
+        mReviewTextArea.setActive( false );
+        mRecommendChoice->setActive( false );
         }
     }
 
@@ -103,6 +116,10 @@ void ReviewPage::makeActive( char inFresh ) {
     if( inFresh ) {        
         }
 
+
+    mReviewNameField.setActive( true );
+    mReviewTextArea.setActive( true );
+    mRecommendChoice->setActive( true );
     mReviewNameField.focus();
     }
 

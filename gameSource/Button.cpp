@@ -11,7 +11,7 @@ Button::Button( double inX, double inY,
                 double inWide, double inHigh,
                 double inPixelSize )
         : PageComponent( inX, inY ),
-          mHover( false ), mDragOver( false ),
+          mActive( true ), mHover( false ), mDragOver( false ),
           mWide( inWide ), mHigh( inHigh ), mPixWidth( inPixelSize ),
           mMouseOverTip( NULL ),
           mBracketCoverLength( -1.0 ),
@@ -38,6 +38,17 @@ Button::~Button() {
     if( mMouseOverTip != NULL ) {
         delete [] mMouseOverTip;
         }
+    }
+
+
+void Button::setActive( char inActive ) {
+    mActive = inActive;
+    }
+
+
+
+char Button::isActive() {
+    return mActive;
     }
 
 
@@ -160,6 +171,14 @@ void Button::draw() {
     drawContents();
     
     setViewCenterPosition( oldViewCenter.x, oldViewCenter.y );
+    
+
+    if( ! mActive ) {
+        // dark overlay
+        setDrawColor( 0, 0, 0, 0.5 );
+        drawRect( - mWide / 2, - mHigh / 2, 
+                  mWide / 2, mHigh / 2 );
+        }
     }
 
 

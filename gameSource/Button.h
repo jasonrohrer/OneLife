@@ -89,6 +89,10 @@ class Button : public PageComponent, public ActionListenerList {
 
         virtual char isMouseOver();
         
+        
+        virtual void setActive( char inActive );
+        virtual char isActive();
+
 
     protected:
 
@@ -105,6 +109,7 @@ class Button : public PageComponent, public ActionListenerList {
         // fires action performed to listener list
         virtual void pointerUp( float inX, float inY );        
 
+        char mActive;
 
         char mHover;
         char mDragOver;

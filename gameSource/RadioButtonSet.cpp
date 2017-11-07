@@ -47,6 +47,23 @@ RadioButtonSet::~RadioButtonSet() {
 
 
 
+void RadioButtonSet::setActive( char inActive ) {
+    for( int i=0; i<mNumItems; i++ ) {
+        mCheckboxes[i]->setActive( inActive );
+        }
+    }
+
+
+
+char RadioButtonSet::isActive() {
+    // return active status of first checkbox that exists
+    for( int i=0; i<mNumItems; i++ ) {
+        return mCheckboxes[i]->isActive();
+        }
+    return false;
+    }
+
+
 
 int RadioButtonSet::getSelectedItem() {
     return mSelectedItem;
