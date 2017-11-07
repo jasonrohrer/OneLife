@@ -10,7 +10,7 @@
 extern double frameRateFactor;
 
 
-TextArea::TextArea( Font *inDisplayFont, 
+TextArea::TextArea( Font *inLabelFont, Font *inDisplayFont, 
                     double inX, double inY, double inWide, double inHigh,
                     char inForceCaps,
                     const char *inLabelText,
@@ -19,6 +19,7 @@ TextArea::TextArea( Font *inDisplayFont,
         : TextField( inDisplayFont, inX, inY, 1, inForceCaps, inLabelText,
                      inAllowedChars, inForbiddenChars ),
           mWide( inWide ), mHigh( inHigh ),
+          mLabelFont( inLabelFont ),
           mCurrentLine( 0 ),
           mRecomputeCursorPositions( false ),
           mLastComputedCursorText( stringDuplicate( "" ) ),
@@ -141,14 +142,32 @@ void TextArea::step() {
 
 
 void TextArea::draw() {
+
     
-    setDrawColor( 1, 1, 1, 1 );
-    
+    if( mFocused ) {    
+        setDrawColor( 1, 1, 1, 1 );
+        }
+    else {
+        setDrawColor( 0.5, 0.5, 0.5, 1 );
+        }
+
     doublePair pos = { 0, 0 };
 
     double pixWidth = mCharWidth / 8;
     
     drawRect( pos, mWide / 2 + 3 * pixWidth, mHigh / 2 + 3 * pixWidth );
+
+    
+    setDrawColor( 1, 1, 1, 1 );
+        
+    doublePair labelPos = pos;
+    labelPos.y += mHigh / 2 + 7 * pixWidth;
+    
+    labelPos.x -= mWide / 2 + 2 * pixWidth;
+    
+    mLabelFont->drawString( mLabelText, labelPos, alignLeft );
+    
+
 
     setDrawColor( 0.25, 0.25, 0.25, 1 );
 
@@ -557,10 +576,12 @@ void TextArea::draw() {
             
             delete [] beforeCursor;
             
-            drawRect( pos.x + cursorXOffset + extra, 
-                      pos.y - mFont->getFontHeight() / 2,
-                      pos.x + cursorXOffset + pixWidth + extra, 
-                      pos.y + mFont->getFontHeight() / 2 );
+            if( mFocused ) {    
+                drawRect( pos.x + cursorXOffset + extra, 
+                          pos.y - mFont->getFontHeight() / 2,
+                          pos.x + cursorXOffset + pixWidth + extra, 
+                          pos.y + mFont->getFontHeight() / 2 );
+                }
             
             
             mCurrentLine = i;
@@ -874,6 +895,21 @@ void TextArea::specialKeyUp( int inKeyCode ) {
 
 
 void TextArea::pointerUp( float inX, float inY ) {
+    
+    double pixWidth = mCharWidth / 8;
+
+    if( inX > -mWide / 2 - 3 * pixWidth &&
+        inX < mWide / 2 + 3 * pixWidth &&
+        inY > -mHigh / 2 - 3 * pixWidth &&
+        inY < mHigh / 2 + 3 * pixWidth ) {
+        printf( "Focusing\n" );
+        focus();
+        }
+    else {
+        return;
+        }
+        
+    
     if( mVertSlideOffset != 0 ) {
         // disable click in middle of slide
         return;

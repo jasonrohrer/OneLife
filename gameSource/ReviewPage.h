@@ -2,9 +2,8 @@
 
 #include "TextButton.h"
 #include "TextArea.h"
-#include "CheckboxButton.h"
-#include "ValueSlider.h"
-#include "SoundUsage.h"
+#include "TextField.h"
+#include "RadioButtonSet.h"
 
 
 #include "minorGems/ui/event/ActionListener.h"
@@ -25,6 +24,8 @@ class ReviewPage : public GamePage, public ActionListener {
         virtual void step();
 
         virtual void actionPerformed( GUIComponent *inTarget );
+        
+        virtual void keyDown( unsigned char inASCII );
 
         
         virtual void makeActive( char inFresh );
@@ -32,8 +33,24 @@ class ReviewPage : public GamePage, public ActionListener {
 
     protected:
 
+        TextField mReviewNameField;
+        
+        //RadioButtonSet mRecommendChoice;
+
         TextArea mReviewTextArea;
         
         TextButton mBackButton;
+
+        
+        //TextButton mSaveButton;
+        //TextButton mPostButton;
+        
+
+        //TextButton mCopyButton;
+        //TextButton mPasteButton;
+
+
+        void switchFields();
+        
         
     };

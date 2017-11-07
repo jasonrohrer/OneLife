@@ -43,7 +43,8 @@ TextField::TextField( Font *inDisplayFont,
           mDrawnText( NULL ),
           mCursorDrawPosition( 0 ),
           mHoldDeleteSteps( -1 ), mFirstDeleteRepeatDone( false ),
-          mLabelOnRight( false ) {
+          mLabelOnRight( false ),
+          mLabelOnTop( false ) {
     
     if( inLabelText != NULL ) {
         mLabelText = stringDuplicate( inLabelText );
@@ -282,12 +283,29 @@ void TextField::draw() {
         TextAlignment a = alignRight;
         double xPos = -mWide/2 - mBorderWide;
         
+        double yPos = 0;
+        
+        if( mLabelOnTop ) {
+            xPos += mBorderWide + pixWidth;
+            yPos = mHigh / 2 + 2 * mBorderWide;
+            }
+
         if( mLabelOnRight ) {
             a = alignLeft;
             xPos = -xPos;
             }
         
-        doublePair labelPos = { xPos, 0 };
+        if( mLabelOnTop ) {
+            // reverse align if on top
+            if( a == alignLeft ) {
+                a = alignRight;
+                }
+            else {
+                a = alignLeft;
+                }
+            }
+        
+        doublePair labelPos = { xPos, yPos };
         
         mFont->drawString( mLabelText, labelPos, a );
         }
@@ -1028,6 +1046,12 @@ void TextField::setFloat( float inF, int inDigitsAfterDecimal,
 
 void TextField::setLabelSide( char inLabelOnRight ) {
     mLabelOnRight = inLabelOnRight;
+    }
+
+
+
+void TextField::setLabelTop( char inLabelOnTop ) {
+    mLabelOnTop = inLabelOnTop;
     }
 
 

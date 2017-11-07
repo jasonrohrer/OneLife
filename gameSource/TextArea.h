@@ -12,7 +12,7 @@ class TextArea : public TextField {
     public:
         
         // label text and char maps copied internally
-        TextArea( Font *inDisplayFont, 
+        TextArea( Font *inLabelFont, Font *inDisplayFont, 
                   double inX, double inY, double inWide, double inHigh,
                   char inForceCaps = false,
                   const char *inLabelText = NULL,
@@ -33,7 +33,8 @@ class TextArea : public TextField {
 
     protected:
         double mWide, mHigh;
-
+        
+        Font *mLabelFont;
 
         int mCurrentLine;
         

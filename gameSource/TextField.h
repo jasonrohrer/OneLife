@@ -83,6 +83,9 @@ class TextField : public PageComponent, public ActionListenerList {
         // defaults to label on left
         void setLabelSide( char inLabelOnRight );
         
+        // defaults to side
+        void setLabelTop( char inLabelOnTop );
+        
 
         
         virtual void setActive( char inActive );
@@ -177,6 +180,7 @@ class TextField : public PageComponent, public ActionListenerList {
         
 
         char mLabelOnRight;
+        char mLabelOnTop;
         
 
         void deleteHit();

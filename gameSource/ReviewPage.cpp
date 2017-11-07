@@ -6,11 +6,7 @@
 #include "minorGems/util/SettingsManager.h"
 
 #include "minorGems/game/game.h"
-#include "minorGems/system/Time.h"
 
-#include "musicPlayer.h"
-#include "soundBank.h"
-#include "objectBank.h"
 #include "buttonStyle.h"
 
 
@@ -21,13 +17,19 @@ extern float musicLoudness;
 
 
 ReviewPage::ReviewPage()
-        : mReviewTextArea( 
-            mainFontReview, 0, 0, 480, 320, false, 
-            translate( "reviewText" ), 
-            "abcdefghijklmnopqrstuvwxyz"
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            "1234567890"
-            " !?$%*&()+-='\":;,.\r", NULL ),
+        : mReviewNameField( mainFont, 0, 250, 10, false,
+                            translate( "reviewName"), 
+                            "abcdefghijklmnopqrstuvwxyz"
+                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                            "1234567890"
+                            " ._-" ),
+          mReviewTextArea( 
+              mainFont, mainFontReview, 0, 0, 800, 320, false, 
+              translate( "reviewText" ), 
+              "abcdefghijklmnopqrstuvwxyz"
+              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+              "1234567890"
+              " !?$%*&()+-='\":;,.\r", NULL ),
           mBackButton( mainFont, 0, -250, translate( "backButton" ) ) {
     
     setButtonStyle( &mBackButton );
@@ -35,14 +37,17 @@ ReviewPage::ReviewPage()
     addComponent( &mBackButton );
     mBackButton.addActionListener( this );
 
-    addComponent( &mReviewTextArea );
+    // add name field after so we can hit return in name field
+    // and advance to text area without sending a return key to the text area
+    addComponent( &mReviewTextArea );    
+    addComponent( &mReviewNameField );
 
-    mReviewTextArea.setText( 
-        "This is a test of a very long message that we will want to edit later using the arrow keys.  It's a pain to type this long message over and over each time we test the game.\r"
-        "This is a test of a very long message that we will want to edit later using the arrow keys.  It's a pain to type this long message over and over each time we test the game.\r"
-        "This is a test of a very long message that we will want to edit later using the arrow keys.  It's a pain to type this long message over and over each time we test the game."
-                             );
-    
+
+    mReviewNameField.setMaxLength( 20 );
+
+    mReviewNameField.addActionListener( this );
+
+    mReviewNameField.setLabelTop( true );
     }
 
 
@@ -50,7 +55,9 @@ ReviewPage::ReviewPage()
 void ReviewPage::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mBackButton ) {
         setSignal( "back" );
-        setMusicLoudness( 0 );
+        }
+    else if( inTarget == &mReviewNameField ) {
+        switchFields();
         }
     }
 
@@ -81,3 +88,22 @@ void ReviewPage::makeActive( char inFresh ) {
 void ReviewPage::makeNotActive() {
     }
 
+
+void ReviewPage::switchFields() {
+    if( mReviewNameField.isFocused() ) {
+        mReviewTextArea.focus();
+        }
+    else if( mReviewTextArea.isFocused() ) {
+        mReviewNameField.focus();
+        }
+    }
+
+
+
+void ReviewPage::keyDown( unsigned char inASCII ) {
+    if( inASCII == 9 ) {
+        // tab
+        switchFields();
+        return;
+        }
+    }

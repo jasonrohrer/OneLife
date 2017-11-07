@@ -36,6 +36,9 @@ loginNoSaveButton "TEMP LOGIN"
 settingsButton "SETTINGS"
 reviewButton "POST REVIEW"
 
+reviewText "REVIEW TEXT"
+reviewName "DISPLAY NAME"
+
 
 saveTip "LOGIN AND STORE DETAILS LOCALLY"
 noSaveTip "DO NOT STORE DETAILS LOCALLY"
