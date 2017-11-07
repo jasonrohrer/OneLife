@@ -505,12 +505,14 @@ void TextArea::draw() {
         mSmoothSlidingUp = true;
         mSmoothSlidingDown = true;
         }
-    else if( firstLine == 0 && lineWithCursor == linesBeforeCursor ) {
+    else if( firstLine == 0 && lineWithCursor == linesBeforeCursor &&
+             lastLine < lines.size() - 1 ) {
         mSmoothSlidingUp = false;
         mSmoothSlidingDown = true;
         }
     else if( lastLine == lines.size() - 1 && 
-             lineWithCursor == lines.size() - linesAfterCursor - 1 ) {
+             lineWithCursor == lines.size() - linesAfterCursor - 1 &&
+             firstLine > 0 ) {
         mSmoothSlidingUp = true;
         mSmoothSlidingDown = false;
         }
@@ -797,6 +799,7 @@ void TextArea::downHit() {
             mCursorTargetPositions.getElementDirect( mCurrentLine );
         
         if( mSmoothSlidingDown ) {
+            printf( "Smooth sliding down\n" );
             mVertSlideOffset -= mFont->getFontHeight();
             }
         }
