@@ -59,6 +59,9 @@ paste "PASTE"
 copy "COPY"
 clear "CLEAR"
 
+charLimit "5000 CHARACTER LIMIT REACHED"
+
+
 
 backButton "BACK"
 restartButton "RESTART"

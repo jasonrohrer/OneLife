@@ -125,12 +125,12 @@ void ReviewPage::actionPerformed( GUIComponent *inTarget ) {
         int len = strlen( text );
         
         for( int i=0; i<len; i++ ) {
-            char c = text[i];
-            if( c == '\n' ) {
-                c = '\r';
+            if( text[i] == '\n' ) {
+                text[i] = '\r';
                 }
-            mReviewTextArea.insertCharacter( c );
             }
+        
+        mReviewTextArea.insertString( text );
         delete [] text;
         }
     else if( inTarget == &mClearButton ) {
@@ -167,6 +167,15 @@ void ReviewPage::draw( doublePair inViewCenter,
     
     setDrawColor( 1, 1, 1, 1 );
     mainFont->drawString( translate( "recommend" ), pos, alignRight );
+
+
+    if( mReviewTextArea.isAtLimit() ) {
+        
+        pos.x = 0;
+        pos.y = -193;
+        mainFont->drawString( translate( "charLimit" ), pos, alignCenter );
+        }
+    
     }
 
 

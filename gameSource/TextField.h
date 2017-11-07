@@ -41,12 +41,16 @@ class TextField : public PageComponent, public ActionListenerList {
         
         // returns -1 if no limit
         int getMaxLength();
+
+        // returns true if field is full
+        char isAtLimit();
         
         
 
         // at current cursor position
         void insertCharacter( unsigned char inASCII );
-
+        void insertString( char *inString );
+        
         
         // controls whether arrow keys have an effect on cursor or not
         // (default to having an effect)
@@ -159,7 +163,8 @@ class TextField : public PageComponent, public ActionListenerList {
         char mFocused;
 
         char *mText;
-
+        int mTextLen;
+        
         int mCursorPosition;
         
         char mIgnoreArrowKeys;

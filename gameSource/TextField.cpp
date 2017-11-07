@@ -152,7 +152,8 @@ void TextField::setText( const char *inText ) {
     
 
     mText = filteredText.getElementString();
-
+    mTextLen = strlen( mText );
+    
     mCursorPosition = strlen( mText );
 
     // hold-downs broken
@@ -179,6 +180,18 @@ void TextField::setMaxLength( int inLimit ) {
 int TextField::getMaxLength() {
     return mMaxLength;
     }
+
+
+
+char TextField::isAtLimit() {
+    if( mMaxLength == -1 ) {
+        return false;
+        }
+    else {
+        return ( mTextLen == mMaxLength );
+        }
+    }
+    
 
 
 
@@ -625,12 +638,54 @@ void TextField::insertCharacter( unsigned char inASCII ) {
     
     mText = autoSprintf( "%s%c%s", 
                          preCursor, inASCII, postCursor );
-    
+    mTextLen = strlen( mText );
+
     delete [] preCursor;
     
     delete [] oldText;
     
     mCursorPosition++;
+    }
+
+
+
+void TextField::insertString( char *inString ) {
+    
+    // add to it
+    char *oldText = mText;
+    
+
+    char *preCursor = stringDuplicate( mText );
+    preCursor[ mCursorPosition ] = '\0';
+    char *postCursor = &( mText[ mCursorPosition ] );
+    
+    mText = autoSprintf( "%s%s%s", 
+                         preCursor, inString, postCursor );
+    
+    mTextLen = strlen( mText );
+
+    if( mMaxLength != -1 &&
+        mTextLen > mMaxLength ) {
+        // truncate
+        mText[ mMaxLength ] = '\0';
+        
+        char *longString = mText;
+        mText = stringDuplicate( mText );
+        delete [] longString;
+        
+        mTextLen = strlen( mText );
+        }
+    
+
+    delete [] preCursor;
+    
+    delete [] oldText;
+    
+    mCursorPosition += strlen( inString );
+
+    if( mCursorPosition > mTextLen ) {
+        mCursorPosition = mTextLen;
+        }
     }
 
 
@@ -783,6 +838,7 @@ void TextField::deleteHit() {
         char *postCursor = &( mText[ mCursorPosition ] );
 
         mText = autoSprintf( "%s%s", preCursor, postCursor );
+        mTextLen = strlen( mText );
         
         delete [] preCursor;
 
