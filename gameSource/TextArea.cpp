@@ -799,7 +799,6 @@ void TextArea::downHit() {
             mCursorTargetPositions.getElementDirect( mCurrentLine );
         
         if( mSmoothSlidingDown ) {
-            printf( "Smooth sliding down\n" );
             mVertSlideOffset -= mFont->getFontHeight();
             }
         }
@@ -915,7 +914,6 @@ void TextArea::pointerUp( float inX, float inY ) {
         inX < mWide / 2 + 3 * pixWidth &&
         inY > -mHigh / 2 - 3 * pixWidth &&
         inY < mHigh / 2 + 3 * pixWidth ) {
-        printf( "Focusing\n" );
         focus();
         }
     else {
@@ -931,7 +929,6 @@ void TextArea::pointerUp( float inX, float inY ) {
     float pixelHitY = mHigh / 2 - inY;
 
     float pixelHitX = inX + mWide / 2;
-    printf( "inX = %f, mWide = %f, Pixel hit x = %f\n", inX, mWide, pixelHitX );
     
     int lineHit = lrint( pixelHitY / mFont->getFontHeight() -
                          0.5 );
@@ -946,8 +943,7 @@ void TextArea::pointerUp( float inX, float inY ) {
     if( lineHit <= mLastVisibleLine ) {
         // in range
         
-        printf( "Line hit:  %s\n", mLineStrings.getElementDirect( lineHit ) );
-
+        
         
         int bestCursorLinePos = 0;
         double bestDistance = mWide * 2;
@@ -989,10 +985,7 @@ void TextArea::pointerUp( float inX, float inY ) {
         int delta = bestCursorLinePos - 
             mCursorTargetLinePositions.getElementDirect( lineHit );
 
-        printf( "target pos = %d, best line pos = %d\n",
-                mCursorTargetLinePositions.getElementDirect( lineHit ),
-                bestCursorLinePos );
-
+        
         mCursorPosition = 
             mCursorTargetPositions.getElementDirect( lineHit ) + delta;
         mRecomputeCursorPositions = true;
