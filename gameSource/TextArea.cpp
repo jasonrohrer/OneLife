@@ -472,7 +472,7 @@ void TextArea::draw() {
                             mFont->getFontHeight() *
                             ( linesBeforeCursor - i );
                         }
-                    else if( mLastVisibleLine == lines.size() - 1 ) {
+                    if( mLastVisibleLine == lines.size() - 1 ) {
                         mVertSlideOffset -= 
                             mFont->getFontHeight() *
                             ( linesAfterCursor - 
@@ -490,7 +490,7 @@ void TextArea::draw() {
                             mFont->getFontHeight() *
                             ( linesAfterCursor - ( lastLine - i ) );
                         }
-                    else if( mFirstVisibleLine == 0 ) {
+                    if( mFirstVisibleLine == 0 ) {
                         mVertSlideOffset += 
                             mFont->getFontHeight() *
                             ( linesBeforeCursor - mCurrentLine );
