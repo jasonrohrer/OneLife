@@ -760,15 +760,17 @@ void TextField::deleteHit() {
 
             newCursorPos = mCursorPosition;
 
-            // skip non-space characters
+            // skip non-space, non-newline characters
             while( newCursorPos > 0 &&
-                   mText[ newCursorPos - 1 ] != ' ' ) {
+                   mText[ newCursorPos - 1 ] != ' ' &&
+                   mText[ newCursorPos - 1 ] != '\r' ) {
                 newCursorPos --;
                 }
         
-            // skip space characters
+            // skip space and newline characters
             while( newCursorPos > 0 &&
-                   mText[ newCursorPos - 1 ] == ' ' ) {
+                   ( mText[ newCursorPos - 1 ] == ' ' ||
+                     mText[ newCursorPos - 1 ] == '\r' ) ) {
                 newCursorPos --;
                 }
             }
@@ -809,15 +811,17 @@ void TextField::leftHit() {
     if( isCommandKeyDown() ) {
         // word jump 
 
-        // skip non-space characters
+        // skip non-space, non-newline characters
         while( mCursorPosition > 0 &&
-               mText[ mCursorPosition - 1 ] != ' ' ) {
+               mText[ mCursorPosition - 1 ] != ' ' &&
+               mText[ mCursorPosition - 1 ] != '\r' ) {
             mCursorPosition --;
             }
         
-        // skip space characters
+        // skip space and newline characters
         while( mCursorPosition > 0 &&
-               mText[ mCursorPosition - 1 ] == ' ' ) {
+               ( mText[ mCursorPosition - 1 ] == ' ' ||
+                 mText[ mCursorPosition - 1 ] == '\r' ) ) {
             mCursorPosition --;
             }
         
@@ -837,15 +841,17 @@ void TextField::rightHit() {
         // word jump 
         int textLen = strlen( mText );
         
-        // skip space characters
+        // skip space and newline characters
         while( mCursorPosition < textLen &&
-               mText[ mCursorPosition ] == ' ' ) {
+               ( mText[ mCursorPosition ] == ' ' ||
+                 mText[ mCursorPosition ] == '\r'  ) ) {
             mCursorPosition ++;
             }
 
-        // skip non-space characters
+        // skip non-space and non-newline characters
         while( mCursorPosition < textLen &&
-               mText[ mCursorPosition ] != ' ' ) {
+               mText[ mCursorPosition ] != ' ' &&
+               mText[ mCursorPosition ] != '\r' ) {
             mCursorPosition ++;
             }
         
