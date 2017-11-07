@@ -114,6 +114,10 @@ Version 33     ???
 --Fixed so that arrow keys have no effect on invisible cursor position when
   typing a chat message on note paper.
 
+--Fixed glitch in pasting from clipboard on Linux.  Now uses xclip to avoid 
+  X Windows event issues.
+
+
 
 
 Server fixes:
