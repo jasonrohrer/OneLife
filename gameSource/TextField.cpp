@@ -46,7 +46,8 @@ TextField::TextField( Font *inDisplayFont,
           mLabelOnRight( false ),
           mLabelOnTop( false ),
           mSelectionStart( -1 ),
-          mSelectionEnd( -1 ) {
+          mSelectionEnd( -1 ),
+          mShiftPlusArrowsCanSelect( false ) {
     
     if( inLabelText != NULL ) {
         mLabelText = stringDuplicate( inLabelText );
@@ -886,6 +887,19 @@ void TextField::clearArrowRepeat() {
 
 
 void TextField::leftHit() {
+    if( isShiftKeyDown() && mShiftPlusArrowsCanSelect ) {
+        if( !isAnythingSelected() ) {
+            mSelectionStart = mCursorPosition;
+            mSelectionEnd = mCursorPosition;
+            mSelectionAdjusting = &mSelectionStart;
+            }
+        }
+
+    if( ! isShiftKeyDown() ) {
+        mSelectionStart = -1;
+        mSelectionEnd = -1;
+        }
+
     if( isCommandKeyDown() ) {
         // word jump 
 
@@ -910,11 +924,30 @@ void TextField::leftHit() {
             mCursorPosition = 0;
             }
         }
+
+    if( isShiftKeyDown() && mShiftPlusArrowsCanSelect ) {
+        *mSelectionAdjusting = mCursorPosition;
+        fixSelectionStartEnd();
+        }
+
     }
 
 
 
 void TextField::rightHit() {
+    if( isShiftKeyDown() && mShiftPlusArrowsCanSelect ) {
+        if( !isAnythingSelected() ) {
+            mSelectionStart = mCursorPosition;
+            mSelectionEnd = mCursorPosition;
+            mSelectionAdjusting = &mSelectionEnd;
+            }
+        }
+    
+    if( ! isShiftKeyDown() ) {
+        mSelectionStart = -1;
+        mSelectionEnd = -1;
+        }
+
     if( isCommandKeyDown() ) {
         // word jump 
         int textLen = strlen( mText );
@@ -941,6 +974,12 @@ void TextField::rightHit() {
             mCursorPosition = strlen( mText );
             }
         }
+
+    if( isShiftKeyDown() && mShiftPlusArrowsCanSelect ) {
+        *mSelectionAdjusting = mCursorPosition;
+        fixSelectionStartEnd();
+        }
+    
     }
 
 
@@ -1188,3 +1227,10 @@ void TextField::fixSelectionStartEnd() {
         }
     
     }
+
+
+
+void TextField::setShiftArrowsCanSelect( char inCanSelect ) {
+    mShiftPlusArrowsCanSelect = inCanSelect;
+    }
+

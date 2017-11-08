@@ -52,6 +52,11 @@ class TextField : public PageComponent, public ActionListenerList {
         // NULL if nothing selected
         char *getSelectedText();
 
+        
+        // defaults to false
+        // true means shift + arrow keys can modify selection from current
+        // cursor
+        void setShiftArrowsCanSelect( char inCanSelect );
 
 
         // at current cursor position, or replacing current selection
@@ -199,7 +204,9 @@ class TextField : public PageComponent, public ActionListenerList {
         
         // pointer to end of selection that is being adjusted
         int *mSelectionAdjusting;
-
+        
+        char mShiftPlusArrowsCanSelect;
+        
         
         void fixSelectionStartEnd();
 

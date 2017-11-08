@@ -2,6 +2,7 @@
 #include "TextArea.h"
 
 #include "minorGems/game/drawUtils.h"
+#include "minorGems/game/game.h"
 #include "minorGems/util/stringUtils.h"
 #include "minorGems/graphics/openGL/KeyboardHandlerGL.h"
 
@@ -37,6 +38,8 @@ TextArea::TextArea( Font *inLabelFont, Font *inDisplayFont,
     mSnapMove = false;
     
     clearVertArrowRepeat();
+
+    setShiftArrowsCanSelect( true );
     }
 
 
@@ -919,6 +922,8 @@ void TextArea::draw() {
 
 
 void TextArea::upHit() {
+    cursorUpFromKey();
+    
     if( mCurrentLine > 0 ) {
         mCurrentLine--;
         mCursorPosition = 
@@ -932,11 +937,18 @@ void TextArea::upHit() {
         mCursorPosition = 0;
         mRecomputeCursorPositions = true;
         }
+
+    if( isShiftKeyDown() ) {
+        *mSelectionAdjusting = mCursorPosition;
+        fixSelectionStartEnd();
+        }
     }
 
 
 
 void TextArea::downHit() {
+    cursorDownFromKey();
+    
     if( mCurrentLine < mCursorTargetPositions.size() - 1 ) {
         mCurrentLine++;
         mCursorPosition = 
@@ -949,6 +961,43 @@ void TextArea::downHit() {
     else {
         mCursorPosition = strlen( mText );
         mRecomputeCursorPositions = true;
+        }
+
+    if( isShiftKeyDown() ) {
+        *mSelectionAdjusting = mCursorPosition;
+        fixSelectionStartEnd();
+        }
+    }
+
+
+
+void TextArea::cursorUpFromKey() {
+    if( isShiftKeyDown() ) {
+        if( !isAnythingSelected() ) {
+            mSelectionStart = mCursorPosition;
+            mSelectionEnd = mCursorPosition;
+            mSelectionAdjusting = &mSelectionStart;
+            }
+        }
+    else {
+        mSelectionStart = -1;
+        mSelectionEnd = -1;
+        }
+    }
+
+
+
+void TextArea::cursorDownFromKey() {
+    if( isShiftKeyDown() ) {
+        if( !isAnythingSelected() ) {
+            mSelectionStart = mCursorPosition;
+            mSelectionEnd = mCursorPosition;
+            mSelectionAdjusting = &mSelectionEnd;
+            }
+        }
+    else {
+        mSelectionStart = -1;
+        mSelectionEnd = -1;
         }
     }
 
@@ -977,6 +1026,8 @@ void TextArea::specialKeyDown( int inKeyCode ) {
                 }
             break;
         case MG_KEY_PAGE_UP: {
+            cursorUpFromKey();
+            
             int old = mCurrentLine;
 
             mCurrentLine -= mMaxLinesShown - 1;
@@ -993,9 +1044,15 @@ void TextArea::specialKeyDown( int inKeyCode ) {
             mCursorPosition = 
                 mCursorTargetPositions.getElementDirect( mCurrentLine );
             mSnapMove = true;
+            if( isShiftKeyDown() ) {
+                *mSelectionAdjusting = mCursorPosition;
+                fixSelectionStartEnd();
+                }
             break;
             }
         case MG_KEY_PAGE_DOWN: {
+            cursorDownFromKey();
+            
             int old = mCurrentLine;
             
             mCurrentLine += mMaxLinesShown - 1;
@@ -1012,15 +1069,31 @@ void TextArea::specialKeyDown( int inKeyCode ) {
             mCursorPosition = 
                 mCursorTargetPositions.getElementDirect( mCurrentLine );
             mSnapMove = true;
+            if( isShiftKeyDown() ) {
+                *mSelectionAdjusting = mCursorPosition;
+                fixSelectionStartEnd();
+                }
             break;
             }
         case MG_KEY_HOME:
+            cursorUpFromKey();
+
             mCursorPosition = 0;
             mSnapMove = true;
+            if( isShiftKeyDown() ) {
+                *mSelectionAdjusting = mCursorPosition;
+                fixSelectionStartEnd();
+                }
             break;
         case MG_KEY_END:
+            cursorDownFromKey();
+
             mCursorPosition = strlen( mText );
             mSnapMove = true;
+            if( isShiftKeyDown() ) {
+                *mSelectionAdjusting = mCursorPosition;
+                fixSelectionStartEnd();
+                }
             break;
         default:
             break;

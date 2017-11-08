@@ -81,7 +81,10 @@ class TextArea : public TextField {
 
         int getClickHitCursorIndex( float inX, float inY );
 
-
+        // starts adjusting selection if shift held
+        void cursorUpFromKey();
+        void cursorDownFromKey();
+        
 
     };
 
