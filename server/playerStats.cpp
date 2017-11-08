@@ -228,7 +228,7 @@ void stepPlayerStats() {
                 }
             else {
                 
-                if( strstr( webResult, "INVALID" ) != NULL ) {
+                if( strstr( webResult, "DENIED" ) != NULL ) {
                     AppLog::info( 
                         "Server log_game request rejected by stats server" );
                     }
