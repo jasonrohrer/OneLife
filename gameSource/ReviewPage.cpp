@@ -132,8 +132,15 @@ void ReviewPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mCopyButton ) {
         mReviewTextArea.focus();
-
-        char *text = mReviewTextArea.getText();
+        
+        char *text;
+        if( mReviewTextArea.isAnythingSelected() ) {
+            text = mReviewTextArea.getSelectedText();
+            }
+        else {
+            text = mReviewTextArea.getText();
+            }
+        
         setClipboardText( text );
         delete [] text;
         }
@@ -247,6 +254,13 @@ void ReviewPage::checkCanPaste() {
         mCopyButton.setVisible( foc && clipSupport );
         mPasteButton.setVisible( foc && clipSupport );
         mClearButton.setVisible( foc );
+
+        if( mReviewTextArea.isAnythingSelected() ) {
+            mCopyButton.setMouseOverTip( translate( "copySelectionTip" ) );
+            }
+        else {
+            mCopyButton.setMouseOverTip( translate( "copyReviewTip" ) );
+            }
         }
     }
 

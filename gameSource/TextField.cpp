@@ -44,7 +44,9 @@ TextField::TextField( Font *inDisplayFont,
           mCursorDrawPosition( 0 ),
           mHoldDeleteSteps( -1 ), mFirstDeleteRepeatDone( false ),
           mLabelOnRight( false ),
-          mLabelOnTop( false ) {
+          mLabelOnTop( false ),
+          mSelectionStart( -1 ),
+          mSelectionEnd( -1 ) {
     
     if( inLabelText != NULL ) {
         mLabelText = stringDuplicate( inLabelText );
@@ -622,6 +624,11 @@ unsigned char TextField::processCharacter( unsigned char inASCII ) {
 
 void TextField::insertCharacter( unsigned char inASCII ) {
     
+    if( isAnythingSelected() ) {
+        // delete selected first
+        deleteHit();
+        }
+
     // add to it
     char *oldText = mText;
     
@@ -650,6 +657,10 @@ void TextField::insertCharacter( unsigned char inASCII ) {
 
 
 void TextField::insertString( char *inString ) {
+    if( isAnythingSelected() ) {
+        // delete selected first
+        deleteHit();
+        }
     
     // add to it
     char *oldText = mText;
@@ -809,8 +820,19 @@ void TextField::deleteHit() {
     if( mCursorPosition > 0 ) {
 
         int newCursorPos = mCursorPosition - 1;
-        
-        if( isCommandKeyDown() ) {
+
+
+        if( isAnythingSelected() ) {
+            // selection delete
+            
+            mCursorPosition = mSelectionEnd;
+            
+            newCursorPos = mSelectionStart;
+
+            mSelectionStart = -1;
+            mSelectionEnd = -1;
+            }
+        else if( isCommandKeyDown() ) {
             // word delete 
 
             newCursorPos = mCursorPosition;
@@ -1118,3 +1140,51 @@ void TextField::setLabelTop( char inLabelOnTop ) {
 
 
         
+char TextField::isAnythingSelected() {
+    return 
+        ( mSelectionStart != -1 && 
+          mSelectionEnd != -1 &&
+          mSelectionStart != mSelectionEnd );
+    }
+
+
+
+char *TextField::getSelectedText() {
+
+    if( ! isAnythingSelected() ) {
+        return NULL;
+        }
+    
+    char *textCopy = stringDuplicate( mText );
+
+    textCopy[ mSelectionEnd ] = '\0';
+    
+    char *startPointer = &( textCopy[ mSelectionStart ] );
+    
+    char *returnVal = stringDuplicate( startPointer );
+    
+    delete [] textCopy;
+    
+    return returnVal;
+    }
+
+
+
+void TextField::fixSelectionStartEnd() {
+    if( mSelectionEnd < mSelectionStart ) {
+        int temp = mSelectionEnd;
+        mSelectionEnd = mSelectionStart;
+        mSelectionStart = temp;
+
+        if( mSelectionAdjusting == &mSelectionStart ) {
+            mSelectionAdjusting = &mSelectionEnd;
+            }
+        else if( mSelectionAdjusting == &mSelectionEnd ) {
+            mSelectionAdjusting = &mSelectionStart;
+            }
+        }
+    else if( mSelectionEnd == mSelectionStart ) {
+        mSelectionAdjusting = &mSelectionEnd;
+        }
+    
+    }

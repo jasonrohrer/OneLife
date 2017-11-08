@@ -46,8 +46,15 @@ class TextField : public PageComponent, public ActionListenerList {
         char isAtLimit();
         
         
+        char isAnythingSelected();
 
-        // at current cursor position
+        // destroyed by caller.
+        // NULL if nothing selected
+        char *getSelectedText();
+
+
+
+        // at current cursor position, or replacing current selection
         void insertCharacter( unsigned char inASCII );
         void insertString( char *inString );
         
@@ -186,7 +193,16 @@ class TextField : public PageComponent, public ActionListenerList {
 
         char mLabelOnRight;
         char mLabelOnTop;
+
+        int mSelectionStart;
+        int mSelectionEnd;
         
+        // pointer to end of selection that is being adjusted
+        int *mSelectionAdjusting;
+
+        
+        void fixSelectionStartEnd();
+
 
         void deleteHit();
         void leftHit();

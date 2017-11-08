@@ -29,6 +29,8 @@ class TextArea : public TextField {
         virtual void specialKeyDown( int inKeyCode );
         virtual void specialKeyUp( int inKeyCode );
 
+        virtual void pointerDown( float inX, float inY );
+        virtual void pointerDrag( float inX, float inY );
         virtual void pointerUp( float inX, float inY );
 
     protected:
@@ -75,6 +77,12 @@ class TextArea : public TextField {
         int mFirstVisibleLine;
         int mLastVisibleLine;
         
+        
+
+        int getClickHitCursorIndex( float inX, float inY );
+
+
+
     };
 
 

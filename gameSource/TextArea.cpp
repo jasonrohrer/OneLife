@@ -181,6 +181,8 @@ void TextArea::draw() {
     
     // -1 if not present, or index in word
     SimpleVector<int> cursorInWord;
+    SimpleVector<int> selectionStartInWord;
+    SimpleVector<int> selectionEndInWord;
     
 
     int index = 0;
@@ -201,17 +203,39 @@ void TextArea::draw() {
             else {
                 cursorInWord.push_back( -1 );
                 }
+
+            if( mSelectionStart == index ) {
+                selectionStartInWord.push_back( 0 );
+                }
+            else {
+                selectionStartInWord.push_back( -1 );
+                }
+
+            if( mSelectionEnd == index ) {
+                selectionEndInWord.push_back( 0 );
+                }
+            else {
+                selectionEndInWord.push_back( -1 );
+                }
             index++;
             }
 
         SimpleVector<char> thisWord;
         int thisWordCursorPos = -1;
+        int thisWordSelectionStartPos = -1;
+        int thisWordSelectionEndPos = -1;
         
         while( index < textLen && mText[ index ] != ' ' &&  
                mText[ index ] != '\r' ) {
             
             if( mCursorPosition == index ) {
                 thisWordCursorPos = thisWord.size();
+                }
+            if( mSelectionStart == index ) {
+                thisWordSelectionStartPos = thisWord.size();
+                }
+            if( mSelectionEnd == index ) {
+                thisWordSelectionEndPos = thisWord.size();
                 }
 
             thisWord.push_back( mText[ index ] );
@@ -224,6 +248,12 @@ void TextArea::draw() {
             if( mCursorPosition == index ) {
                 thisWordCursorPos = thisWord.size();
                 }
+            if( mSelectionStart == index ) {
+                thisWordSelectionStartPos = thisWord.size();
+                }
+            if( mSelectionEnd == index ) {
+                thisWordSelectionEndPos = thisWord.size();
+                }
             thisWord.push_back( mText[ index ] );
             
             
@@ -235,6 +265,8 @@ void TextArea::draw() {
         if( mFont->measureString( wordString ) < mWide ) {
             words.push_back( wordString );
             cursorInWord.push_back( thisWordCursorPos );
+            selectionStartInWord.push_back( thisWordSelectionStartPos );
+            selectionEndInWord.push_back( thisWordSelectionEndPos );            
             }
         else {
             delete [] wordString;
@@ -244,6 +276,8 @@ void TextArea::draw() {
             int cursorOffset = 0;
 
             int curSplitWordCursorPos = -1;
+            int curSplitWordSelectionStartPos = -1;
+            int curSplitWordSelectionEndPos = -1;
 
             for( int i=0; i<thisWord.size(); i++ ) {
                 
@@ -254,6 +288,12 @@ void TextArea::draw() {
                 
                 if( i == thisWordCursorPos ) {
                     curSplitWordCursorPos = i - cursorOffset;
+                    }
+                if( i == thisWordSelectionStartPos ) {
+                    curSplitWordSelectionStartPos = i - cursorOffset;
+                    }
+                if( i == thisWordSelectionEndPos ) {
+                    curSplitWordSelectionEndPos = i - cursorOffset;
                     }
 
                 if( mFont->measureString( curTestWord ) < mWide ) {
@@ -268,9 +308,17 @@ void TextArea::draw() {
                     
                     words.push_back( finalSplitWord );
                     cursorInWord.push_back( curSplitWordCursorPos );
+                    
+                    selectionStartInWord.push_back( 
+                        curSplitWordSelectionStartPos );
+                    
+                    selectionEndInWord.push_back( 
+                        curSplitWordSelectionEndPos );
 
                     curSplitWord.deleteAll();
                     curSplitWordCursorPos = -1;
+                    curSplitWordSelectionStartPos = -1;
+                    curSplitWordSelectionEndPos = -1;
                     
                     cursorOffset += strlen( finalSplitWord );
                     
@@ -285,6 +333,8 @@ void TextArea::draw() {
                 char *finalSplitWord = curSplitWord.getElementString();
                 words.push_back( finalSplitWord );
                 cursorInWord.push_back( curSplitWordCursorPos );
+                selectionStartInWord.push_back( curSplitWordSelectionStartPos );
+                selectionEndInWord.push_back( curSplitWordSelectionEndPos );
                 }
             
             }
@@ -296,6 +346,8 @@ void TextArea::draw() {
     
     // same as case for cursor in word, with -1 if cursor not in line
     SimpleVector<int> cursorInLine;
+    SimpleVector<int> selectionStartInLine;
+    SimpleVector<int> selectionEndInLine;
 
     SimpleVector<char> newlineEatenInLine;
     
@@ -305,6 +357,8 @@ void TextArea::draw() {
         
         SimpleVector<char> thisLine;
         int thisLineCursorPos = -1;
+        int thisLineSelectionStartPos = -1;
+        int thisLineSelectionEndPos = -1;
 
         double lineLength = 0;
         
@@ -324,6 +378,16 @@ void TextArea::draw() {
             if( cursorInWord.getElementDirect( index ) != -1 ) {
                 thisLineCursorPos = 
                     oldNumChars + cursorInWord.getElementDirect( index );
+                }
+            if( selectionStartInWord.getElementDirect( index ) != -1 ) {
+                thisLineSelectionStartPos = 
+                    oldNumChars + 
+                    selectionStartInWord.getElementDirect( index );
+                }
+            if( selectionEndInWord.getElementDirect( index ) != -1 ) {
+                thisLineSelectionEndPos = 
+                    oldNumChars + 
+                    selectionEndInWord.getElementDirect( index );
                 }
             
 
@@ -348,6 +412,18 @@ void TextArea::draw() {
                 // put cursor at end of line
                 thisLineCursorPos = thisLine.size();
                 }
+            if( selectionStartInWord.getElementDirect( index ) != -1 ) {
+                // start in newline word
+                
+                // put start at end of line
+                thisLineSelectionStartPos = thisLine.size();
+                }
+            if( selectionEndInWord.getElementDirect( index ) != -1 ) {
+                // end in newline word
+                
+                // put end at end of line
+                thisLineSelectionEndPos = thisLine.size();
+                }
             
             index ++;
         
@@ -359,13 +435,22 @@ void TextArea::draw() {
         
         
         cursorInLine.push_back( thisLineCursorPos );
+        selectionStartInLine.push_back( thisLineSelectionStartPos );
+        selectionEndInLine.push_back( thisLineSelectionEndPos );
         }
     
 
     char anyLineHasCursor = false;
+    char anyLineHasSelectionEnd = false;
     for( int i=0; i<lines.size(); i++ ) {
         if( cursorInLine.getElementDirect( i ) != -1 ) {
             anyLineHasCursor = true;
+            break;
+            }
+        }
+    for( int i=0; i<lines.size(); i++ ) {
+        if( selectionEndInLine.getElementDirect( i ) != -1 ) {
+            anyLineHasSelectionEnd = true;
             break;
             }
         }
@@ -380,6 +465,14 @@ void TextArea::draw() {
         char *lastLine = lines.getElementDirect( lines.size() - 1 );
     
         *( cursorInLine.getElement( lines.size() - 1 ) ) = strlen( lastLine );
+        }
+
+    if( !anyLineHasSelectionEnd && mSelectionEnd != -1 ) {
+        // stick selection end at end of last line
+        char *lastLine = lines.getElementDirect( lines.size() - 1 );
+    
+        *( selectionEndInLine.getElement( lines.size() - 1 ) ) = 
+            strlen( lastLine );
         }
     
 
@@ -656,6 +749,57 @@ void TextArea::draw() {
                     }
                 }
             }
+        if( mSelectionStart != mSelectionEnd &&
+            selectionStartInLine.getElementDirect(i) != -1 ) {
+            
+            char *beforeSel = stringDuplicate( lines.getElementDirect( i ) );
+            
+            beforeSel[ selectionStartInLine.getElementDirect( i ) ] = '\0';
+            
+            setDrawColor( 0, 1, 0, 0.75 );
+        
+            double selXOffset = mFont->measureString( beforeSel );
+            
+            double extra = 0;
+            if( selXOffset == 0 ) {
+                extra = -pixWidth;
+                }
+            
+            delete [] beforeSel;
+            
+            if( mFocused ) {    
+                drawRect( pos.x + selXOffset + extra, 
+                          pos.y - mFont->getFontHeight() / 2,
+                          pos.x + selXOffset + pixWidth + extra, 
+                          pos.y + 0.55 * mFont->getFontHeight() );
+                }
+            }
+        if( mSelectionStart != mSelectionEnd &&
+            selectionEndInLine.getElementDirect(i) != -1 ) {
+            
+            char *beforeSel = stringDuplicate( lines.getElementDirect( i ) );
+            
+            beforeSel[ selectionEndInLine.getElementDirect( i ) ] = '\0';
+            
+            setDrawColor( 1, 0, 0, 0.75 );
+        
+            double selXOffset = mFont->measureString( beforeSel );
+            
+            double extra = 0;
+            if( selXOffset == 0 ) {
+                extra = -pixWidth;
+                }
+            
+            delete [] beforeSel;
+            
+            if( mFocused ) {    
+                drawRect( pos.x + selXOffset + extra, 
+                          pos.y - mFont->getFontHeight() / 2,
+                          pos.x + selXOffset + pixWidth + extra, 
+                          pos.y + 0.55 * mFont->getFontHeight() );
+                }
+            }
+                    
         
         pos.y -= mFont->getFontHeight();
         }
@@ -906,26 +1050,7 @@ void TextArea::specialKeyUp( int inKeyCode ) {
 
 
 
-void TextArea::pointerUp( float inX, float inY ) {
-    
-    double pixWidth = mCharWidth / 8;
-
-    if( inX > -mWide / 2 - 3 * pixWidth &&
-        inX < mWide / 2 + 3 * pixWidth &&
-        inY > -mHigh / 2 - 3 * pixWidth &&
-        inY < mHigh / 2 + 3 * pixWidth ) {
-        focus();
-        }
-    else {
-        return;
-        }
-        
-    
-    if( mVertSlideOffset != 0 ) {
-        // disable click in middle of slide
-        return;
-        }
-    
+int TextArea::getClickHitCursorIndex( float inX, float inY ) {
     float pixelHitY = mHigh / 2 - inY;
 
     float pixelHitX = inX + mWide / 2;
@@ -935,7 +1060,7 @@ void TextArea::pointerUp( float inX, float inY ) {
     
     if( lineHit < 0 ||
         lineHit >= mMaxLinesShown ) {
-        return;
+        return -1;
         }
     
     lineHit += mFirstVisibleLine;
@@ -986,9 +1111,114 @@ void TextArea::pointerUp( float inX, float inY ) {
             mCursorTargetLinePositions.getElementDirect( lineHit );
 
         
-        mCursorPosition = 
-            mCursorTargetPositions.getElementDirect( lineHit ) + delta;
+        return mCursorTargetPositions.getElementDirect( lineHit ) + delta;
+        }
+    else {
+        return -1;
+        }
+    }
+
+
+
+
+
+
+void TextArea::pointerDown( float inX, float inY ) {
+    
+    double pixWidth = mCharWidth / 8;
+
+    if( inX > -mWide / 2 - 3 * pixWidth &&
+        inX < mWide / 2 + 3 * pixWidth &&
+        inY > -mHigh / 2 - 3 * pixWidth &&
+        inY < mHigh / 2 + 3 * pixWidth ) {
+        }
+    else {
+        return;
+        }
+        
+    
+    if( mVertSlideOffset != 0 ) {
+        // disable click in middle of slide
+        return;
+        }
+    
+    int newCursor = getClickHitCursorIndex( inX, inY );
+    
+    if( newCursor != -1 ) {
+        mSelectionStart = newCursor;
+        mSelectionEnd = newCursor;
+        mSelectionAdjusting = &mSelectionEnd;
+        }
+    }
+
+
+void TextArea::pointerDrag( float inX, float inY ) {
+    
+    double pixWidth = mCharWidth / 8;
+
+    if( inX > -mWide / 2 - 3 * pixWidth &&
+        inX < mWide / 2 + 3 * pixWidth &&
+        inY > -mHigh / 2 - 3 * pixWidth &&
+        inY < mHigh / 2 + 3 * pixWidth ) {
+        }
+    else {
+        return;
+        }
+        
+    
+    if( mVertSlideOffset != 0 ) {
+        // disable click in middle of slide
+        return;
+        }
+    
+    if( mSelectionStart != -1 ) {
+        
+        int newCursor = getClickHitCursorIndex( inX, inY );
+    
+        if( newCursor != -1 ) {
+            *mSelectionAdjusting = newCursor;
+            
+            fixSelectionStartEnd();
+            }
+        }
+    }
+
+
+
+void TextArea::pointerUp( float inX, float inY ) {
+    
+    double pixWidth = mCharWidth / 8;
+
+    if( inX > -mWide / 2 - 3 * pixWidth &&
+        inX < mWide / 2 + 3 * pixWidth &&
+        inY > -mHigh / 2 - 3 * pixWidth &&
+        inY < mHigh / 2 + 3 * pixWidth ) {
+        focus();
+        }
+    else {
+        return;
+        }
+        
+    
+    if( mVertSlideOffset != 0 ) {
+        // disable click in middle of slide
+        return;
+        }
+
+    if( isAnythingSelected() ) {
+        // cursor in middle of selection, so selection is centered
+        // in text area
+        mCursorPosition = ( mSelectionEnd + mSelectionStart ) / 2;
         mRecomputeCursorPositions = true;
+        }
+    else {
+        
+        int newCursor = getClickHitCursorIndex( inX, inY );
+        
+        if( newCursor != -1 ) {
+            mCursorPosition = newCursor;
+            mRecomputeCursorPositions = true;
+            }
         }
     }
 
