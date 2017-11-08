@@ -34,7 +34,8 @@ atSignTip "INSERT '@' SIGN (INTL KEYBOARDS)"
 loginButton "LOGIN"
 loginNoSaveButton "TEMP LOGIN"
 settingsButton "SETTINGS"
-reviewButton "POST REVIEW"
+postReviewButton "POST REVIEW"
+updateReviewButton "UPDATE REVIEW"
 
 reviewText "REVIEW TEXT"
 reviewName "DISPLAY NAME"
@@ -43,11 +44,14 @@ recommend "RECOMMEND"
 recommendYes "YES"
 recommendNo "NO"
 
-postReviewButton "POST"
+postButton "POST"
 postReviewTip "POST TO ONEHOURONELIFE.COM"
 
 
 copyReviewTip "COPY REVIEW TEXT TO CLIPBOARD"
+
+requestDenied "POST REQUEST DENIED"
+
 
 
 saveTip "LOGIN AND STORE DETAILS LOCALLY"

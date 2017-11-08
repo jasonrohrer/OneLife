@@ -46,7 +46,7 @@ ExistingAccountPage::ExistingAccountPage()
           mSettingsButton( mainFont, -400, -120, 
                            translate( "settingsButton" ) ),
           mReviewButton( mainFont, -400, -200, 
-                         translate( "reviewButton" ) ) {
+                         translate( "postReviewButton" ) ) {
     
     
     // center this in free space
@@ -101,6 +101,13 @@ ExistingAccountPage::ExistingAccountPage()
     mLoginButton.setMouseOverTip( translate( "saveTip" ) );
     mLoginNoSaveButton.setMouseOverTip( translate( "noSaveTip" ) );
     
+    int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
+    
+    if( reviewPosted ) {
+        mReviewButton.setLabelText( translate( "updateReviewButton" ) );
+        }
+    
+
     // to dodge quit message
     setTipPosition( true );
     }
@@ -115,6 +122,12 @@ ExistingAccountPage::~ExistingAccountPage() {
 void ExistingAccountPage::clearFields() {
     mEmailField.setText( "" );
     mKeyField.setText( "" );
+    }
+
+
+
+void ExistingAccountPage::showReviewButton( char inShow ) {
+    mReviewButton.setVisible( inShow );
     }
 
 

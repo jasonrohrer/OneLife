@@ -14,6 +14,9 @@ class RebirthChoicePage : public GamePage, public ActionListener {
         RebirthChoicePage();
         
 
+        void showReviewButton( char inShow );
+
+
         virtual void actionPerformed( GUIComponent *inTarget );
 
         virtual void draw( doublePair inViewCenter, 
@@ -22,6 +25,7 @@ class RebirthChoicePage : public GamePage, public ActionListener {
     protected:
         
         TextButton mQuitButton;
+        TextButton mReviewButton;
         TextButton mRebornButton;
 
 

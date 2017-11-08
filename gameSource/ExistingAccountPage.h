@@ -17,6 +17,11 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         virtual ~ExistingAccountPage();
         
         void clearFields();
+
+
+        // defaults to true
+        void showReviewButton( char inShow );
+        
         
         virtual void actionPerformed( GUIComponent *inTarget );
 

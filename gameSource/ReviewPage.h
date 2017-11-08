@@ -1,4 +1,4 @@
-#include "GamePage.h"
+#include "ServerActionPage.h"
 
 #include "TextButton.h"
 #include "TextArea.h"
@@ -11,11 +11,11 @@
 
 
 
-class ReviewPage : public GamePage, public ActionListener {
+class ReviewPage : public ServerActionPage, public ActionListener {
         
     public:
         
-        ReviewPage();
+        ReviewPage( const char *inReviewServerURL );
         ~ReviewPage();
         
 
@@ -57,4 +57,6 @@ class ReviewPage : public GamePage, public ActionListener {
         void checkCanPost();
         void checkCanPaste();
         
+        void saveReview();
+
     };

@@ -15,8 +15,9 @@ extern Font *mainFont;
 extern Font *mainFontReview;
 
 
-ReviewPage::ReviewPage()
-        : mReviewNameField( mainFont, -242, 250, 10, false,
+ReviewPage::ReviewPage( const char *inReviewServerURL )
+        : ServerActionPage( inReviewServerURL, "submit_review", false ),
+          mReviewNameField( mainFont, -242, 250, 10, false,
                             translate( "reviewName"), 
                             "abcdefghijklmnopqrstuvwxyz"
                             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -30,7 +31,7 @@ ReviewPage::ReviewPage()
               "1234567890"
               " !?$%*&()+-='\":;,.\r", NULL ),
           mBackButton( mainFont, -526, -140, translate( "backButton" ) ),
-          mPostButton( mainFont, 526, -140, translate( "postReviewButton" ) ),
+          mPostButton( mainFont, 526, -140, translate( "postButton" ) ),
           mCopyButton( mainFont, -526, 140, translate( "copy" ) ),
           mPasteButton( mainFont, -526, 40, translate( "paste" ) ),
           mClearButton( mainFont, 526, 140, translate( "clear" ) ) {
@@ -103,8 +104,27 @@ ReviewPage::~ReviewPage() {
 
 
 
+void ReviewPage::saveReview() {
+    char *reviewName = mReviewNameField.getText();
+    char *reviewText = mReviewTextArea.getText();
+    
+    int reviewRecommend = 0;
+    if( mRecommendChoice->getSelectedItem() == 0 ) {
+        reviewRecommend = 1;
+        }
+
+    SettingsManager::setSetting( "reviewName", reviewName );
+    SettingsManager::setSetting( "reviewText", reviewText );
+    SettingsManager::setSetting( "reviewRecommend", reviewRecommend );
+    
+    delete [] reviewName;
+    delete [] reviewText;
+    }
+
+
 void ReviewPage::actionPerformed( GUIComponent *inTarget ) {
-    if( inTarget == &mBackButton ) {
+    if( inTarget == &mBackButton ) {        
+        saveReview();
         setSignal( "back" );
         }
     else if( inTarget == &mReviewNameField ) {
@@ -142,6 +162,7 @@ void ReviewPage::actionPerformed( GUIComponent *inTarget ) {
         delete [] text;
         }
     else if( inTarget == &mPostButton ) {
+        saveReview();
         mCopyButton.setActive( false );
         mPasteButton.setActive( false );
         mClearButton.setActive( false );
@@ -220,9 +241,11 @@ void ReviewPage::checkCanPaste() {
     if( mReviewTextArea.isActive() ) {
         
         char foc = mReviewTextArea.isFocused();
-        
-        mCopyButton.setVisible( foc );
-        mPasteButton.setVisible( foc );
+
+        char clipSupport = isClipboardSupported();
+
+        mCopyButton.setVisible( foc && clipSupport );
+        mPasteButton.setVisible( foc && clipSupport );
         mClearButton.setVisible( foc );
         }
     }
@@ -249,8 +272,6 @@ void ReviewPage::makeActive( char inFresh ) {
     mRecommendChoice->setActive( true );
 
     
-    checkCanPost();
-    checkCanPaste();
 
     mCopyButton.setActive( true );
     mPasteButton.setActive( true );
@@ -259,6 +280,39 @@ void ReviewPage::makeActive( char inFresh ) {
     
 
     mReviewNameField.focus();
+
+
+    char *reviewName = SettingsManager::getStringSetting( "reviewName", "" );
+    char *reviewText = SettingsManager::getStringSetting( "reviewText", "" );
+    
+    int reviewRecommend = 
+        SettingsManager::getIntSetting( "reviewRecommend", 1 );
+    
+    if( reviewRecommend == 0 ) {    
+        mRecommendChoice->setSelectedItem( 1 );
+        }
+    else {
+        mRecommendChoice->setSelectedItem( 0 );
+        }
+    
+    mReviewNameField.setText( reviewName );
+    mReviewTextArea.setText( reviewText );
+
+    delete [] reviewName;
+    delete [] reviewText;
+    
+
+    checkCanPost();
+
+    
+    if( mPostButton.isVisible() ) {
+        // name field has something already
+        // put focus on review text
+        mReviewTextArea.focus();
+        }
+    
+
+    checkCanPaste();
     }
 
 

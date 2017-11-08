@@ -575,8 +575,19 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     extendedMessagePage = new ExtendedMessagePage;
     rebirthChoicePage = new RebirthChoicePage;
     settingsPage = new SettingsPage;
-    reviewPage = new ReviewPage;
+
+
+    char *reviewURL = 
+        SettingsManager::getStringSetting( "reviewServerURL", "" );
     
+    if( strcmp( reviewURL, "" ) == 0 ) {
+        existingAccountPage->showReviewButton( false );
+        rebirthChoicePage->showReviewButton( false );
+        }
+
+    reviewPage = new ReviewPage( reviewURL );
+    
+    delete [] reviewURL;
 
 
     // 0 music headroom needed, because we fade sounds before playing music
