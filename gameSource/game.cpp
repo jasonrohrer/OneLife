@@ -1682,6 +1682,10 @@ void drawFrame( char inUpdate ) {
                 // the server we were on just crashed
                 startConnecting();
                 }
+            else if( rebirthChoicePage->checkSignal( "review" ) ) {
+                currentGamePage = reviewPage;
+                currentGamePage->base_makeActive( true );
+                }
             else if( rebirthChoicePage->checkSignal( "quit" ) ) {
                 quitGame();
                 }

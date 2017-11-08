@@ -23,17 +23,17 @@ extern char *accountKey;
 RebirthChoicePage::RebirthChoicePage()
         : mQuitButton( mainFont, -150, -128, 
                        translate( "quit" ) ),
-          mReviewButton( mainFont, 0, 0, 
+          mReviewButton( mainFont, 150, 64, 
                        translate( "postReviewButton" ) ),
           mRebornButton( mainFont, 150, -128, 
                          translate( "reborn" ) ) {
 
     addComponent( &mQuitButton );
-    addComponent( &mRebornButton );
+    addComponent( &mReviewButton );
     addComponent( &mRebornButton );
     
     setButtonStyle( &mQuitButton );
-    setButtonStyle( &mRebornButton );
+    setButtonStyle( &mReviewButton );
     setButtonStyle( &mRebornButton );
     
     mQuitButton.addActionListener( this );
