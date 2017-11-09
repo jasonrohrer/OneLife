@@ -681,7 +681,7 @@ void TextArea::draw() {
             
             beforeCursor[ cursorInLine.getElementDirect( i ) ] = '\0';
             
-            setDrawColor( 0, 0, 0, 0.75 );
+            setDrawColor( 1, 1, 0, .75 );
         
             double cursorXOffset = mFont->measureString( beforeCursor );
             
