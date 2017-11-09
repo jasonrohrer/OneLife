@@ -896,9 +896,16 @@ void TextField::leftHit() {
             mSelectionEnd = mCursorPosition;
             mSelectionAdjusting = &mSelectionStart;
             }
+        else {
+            mCursorPosition = *mSelectionAdjusting;
+            }
         }
 
     if( ! isShiftKeyDown() ) {
+        if( isAnythingSelected() ) {
+            mCursorPosition = *mSelectionAdjusting;
+            }
+
         mSelectionStart = -1;
         mSelectionEnd = -1;
         }
@@ -944,9 +951,16 @@ void TextField::rightHit() {
             mSelectionEnd = mCursorPosition;
             mSelectionAdjusting = &mSelectionEnd;
             }
+        else {
+            mCursorPosition = *mSelectionAdjusting;
+            }
         }
     
     if( ! isShiftKeyDown() ) {
+        if( isAnythingSelected() ) {
+            mCursorPosition = *mSelectionAdjusting;
+            }
+            
         mSelectionStart = -1;
         mSelectionEnd = -1;
         }

@@ -1286,12 +1286,9 @@ void TextArea::pointerDown( float inX, float inY ) {
     if( newCursor != -1 ) {
         
         if( ! isShiftKeyDown() ) {
-            
-            if( ! isAnythingSelected() ) {    
-                mSelectionStart = newCursor;
-                mSelectionEnd = newCursor;
-                mSelectionAdjusting = &mSelectionEnd;
-                }
+            mSelectionStart = newCursor;
+            mSelectionEnd = newCursor;
+            mSelectionAdjusting = &mSelectionEnd;
             }
         else {
             // shift click
