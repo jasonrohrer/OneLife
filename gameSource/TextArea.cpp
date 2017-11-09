@@ -144,6 +144,13 @@ void TextArea::step() {
 
 
 
+typedef struct SelRect {
+        double startX, startY, endX, endY;
+    } SelRect;
+
+
+
+
 void TextArea::draw() {
 
     
@@ -659,6 +666,8 @@ void TextArea::draw() {
     mFirstVisibleLine = firstLine;
     mLastVisibleLine = lastLine;
     
+    SimpleVector<SelRect> selRects;
+
     for( int i=drawFirstLine; i<=drawLastLine; i++ ) {
 
         setDrawColor( 1, 1, 1, 1 );
@@ -804,17 +813,22 @@ void TextArea::draw() {
                 setDrawColor( 1, 1, 0, 0.25 );
             
                 if( mFocused ) {    
-                    double extraStart = mFont->getCharSpacing() / 2;
-                    double extraEnd = extraStart;
+                    double extra = mFont->getCharSpacing() / 2;
+                    double extraStart = extra;
+                    double extraEnd = extra;
 
                     if( selRectStartX == 0 ) {
                         extraStart = -extraStart;
                         }
 
-                    drawRect( pos.x + selRectStartX + extraStart, 
-                              pos.y - mFont->getFontHeight() / 2,
-                              pos.x + selRectEndX + extraEnd, 
-                              pos.y + 0.5 * mFont->getFontHeight() );
+                    SelRect r = { pos.x + selRectStartX + extraStart, 
+                                  pos.y - mFont->getFontHeight() / 2,
+                                  pos.x + selRectEndX + extraEnd, 
+                                  pos.y + 0.5 * mFont->getFontHeight() };
+                    
+                    selRects.push_back( r );
+                    
+                    drawRect( r.startX, r.startY, r.endX, r.endY );
                     }
                 }
             }       
@@ -822,7 +836,10 @@ void TextArea::draw() {
         pos.y -= mFont->getFontHeight();
         }
     
-    
+    stopStencil();
+
+
+
     double xRad = mWide / 2 + 2 * pixWidth;
     double yRad = mHigh / 2 + 2 * pixWidth;
     
@@ -834,6 +851,41 @@ void TextArea::draw() {
 
     double rectStartY = pos.y + yRad;
     double rectEndY = pos.y - yRad;
+
+
+    
+    
+    if( selRects.size() > 0 ) {
+        double extra = mFont->getCharSpacing() / 2;
+        
+        setDrawColor( 1, 1, 1, 1 );
+        
+        // border
+        startAddingToStencil( false, true );
+        for( int i=0; i<selRects.size(); i++ ) {
+            SelRect r = selRects.getElementDirect( i );
+            drawRect( r.startX - extra, r.startY - extra, 
+                      r.endX + extra, r.endY + extra );
+            }
+        // clear center
+        startAddingToStencil( false, false );
+        for( int i=0; i<selRects.size(); i++ ) {
+            SelRect r = selRects.getElementDirect( i );
+            drawRect( r.startX, r.startY, 
+                      r.endX, r.endY );
+            }
+        
+        startDrawingThroughStencil();
+        
+        setDrawColor( 0, 0, 0, .3 );
+
+        drawRect( rectStartX, rectStartY, rectEndX, rectEndY );
+
+        stopStencil();
+        }
+    
+
+    
     
     double charHeight = mFont->getFontHeight();
 
@@ -920,7 +972,6 @@ void TextArea::draw() {
         mLineStrings.push_back( lines.getElementDirect( i ) );
         }
     
-    stopStencil();
 
     
     if( ! mActive ) {
