@@ -207,6 +207,8 @@ class TextField : public PageComponent, public ActionListenerList {
         
         char mShiftPlusArrowsCanSelect;
         
+        int mCursorFlashSteps;
+        
         
         void fixSelectionStartEnd();
 

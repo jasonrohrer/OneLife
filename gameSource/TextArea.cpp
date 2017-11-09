@@ -154,6 +154,16 @@ typedef struct SelRect {
 
 void TextArea::draw() {
 
+    int stepsPerFlash = 30 / frameRateFactor;
+    
+    int flashState = mCursorFlashSteps / stepsPerFlash;
+    
+    char cursorFlashOn = true;
+    
+    if( flashState % 2 == 1 ) {
+        cursorFlashOn = false;
+        }
+
     
     if( mFocused ) {    
         setDrawColor( 1, 1, 1, 1 );
@@ -681,8 +691,13 @@ void TextArea::draw() {
             
             beforeCursor[ cursorInLine.getElementDirect( i ) ] = '\0';
             
-            setDrawColor( 1, 1, 0, .75 );
-        
+            if( cursorFlashOn ) {
+                setDrawColor( 1, 1, 0, .75 );
+                }
+            else {
+                setDrawColor( 0, 0, 0, .75 );
+                }
+
             double cursorXOffset = mFont->measureString( beforeCursor );
             
             double extra = 0;
@@ -1021,6 +1036,8 @@ void TextArea::draw() {
 
 
 void TextArea::upHit() {
+    mCursorFlashSteps = 0;
+    
     cursorUpFromKey();
     
     if( mCurrentLine > 0 ) {
@@ -1046,6 +1063,8 @@ void TextArea::upHit() {
 
 
 void TextArea::downHit() {
+    mCursorFlashSteps = 0;
+    
     cursorDownFromKey();
     
     if( mCurrentLine < mCursorTargetPositions.size() - 1 ) {
@@ -1125,6 +1144,7 @@ void TextArea::specialKeyDown( int inKeyCode ) {
                 }
             break;
         case MG_KEY_PAGE_UP: {
+            mCursorFlashSteps = 0;
             cursorUpFromKey();
             
             int old = mCurrentLine;
@@ -1150,6 +1170,7 @@ void TextArea::specialKeyDown( int inKeyCode ) {
             break;
             }
         case MG_KEY_PAGE_DOWN: {
+            mCursorFlashSteps = 0;
             cursorDownFromKey();
             
             int old = mCurrentLine;
@@ -1175,6 +1196,7 @@ void TextArea::specialKeyDown( int inKeyCode ) {
             break;
             }
         case MG_KEY_HOME:
+            mCursorFlashSteps = 0;
             cursorUpFromKey();
 
             mCursorPosition = 0;
@@ -1185,6 +1207,7 @@ void TextArea::specialKeyDown( int inKeyCode ) {
                 }
             break;
         case MG_KEY_END:
+            mCursorFlashSteps = 0;
             cursorDownFromKey();
 
             mCursorPosition = strlen( mText );
@@ -1408,7 +1431,9 @@ void TextArea::pointerUp( float inX, float inY ) {
     else {
         return;
         }
-        
+    
+    mCursorFlashSteps = 0;
+    
     
     if( mVertSlideOffset != 0 ) {
         // disable click in middle of slide

@@ -47,7 +47,8 @@ TextField::TextField( Font *inDisplayFont,
           mLabelOnTop( false ),
           mSelectionStart( -1 ),
           mSelectionEnd( -1 ),
-          mShiftPlusArrowsCanSelect( false ) {
+          mShiftPlusArrowsCanSelect( false ),
+          mCursorFlashSteps( 0 ) {
     
     if( inLabelText != NULL ) {
         mLabelText = stringDuplicate( inLabelText );
@@ -215,7 +216,7 @@ char TextField::isActive() {
 
 void TextField::step() {
 
-    
+    mCursorFlashSteps ++;
 
     if( mHoldDeleteSteps > -1 ) {
         mHoldDeleteSteps ++;
@@ -740,6 +741,7 @@ void TextField::keyDown( unsigned char inASCII ) {
     if( !mFocused ) {
         return;
         }
+    mCursorFlashSteps = 0;
     
     if( isCommandKeyDown() ) {
         // not a normal key stroke (command key)
@@ -822,7 +824,8 @@ void TextField::keyUp( unsigned char inASCII ) {
 
 void TextField::deleteHit() {
     if( mCursorPosition > 0 ) {
-
+        mCursorFlashSteps = 0;
+    
         int newCursorPos = mCursorPosition - 1;
 
 
@@ -890,6 +893,8 @@ void TextField::clearArrowRepeat() {
 
 
 void TextField::leftHit() {
+    mCursorFlashSteps = 0;
+    
     if( isShiftKeyDown() && mShiftPlusArrowsCanSelect ) {
         if( !isAnythingSelected() ) {
             mSelectionStart = mCursorPosition;
@@ -945,6 +950,8 @@ void TextField::leftHit() {
 
 
 void TextField::rightHit() {
+    mCursorFlashSteps = 0;
+    
     if( isShiftKeyDown() && mShiftPlusArrowsCanSelect ) {
         if( !isAnythingSelected() ) {
             mSelectionStart = mCursorPosition;
@@ -1006,6 +1013,8 @@ void TextField::specialKeyDown( int inKeyCode ) {
     if( !mFocused ) {
         return;
         }
+    
+    mCursorFlashSteps = 0;
     
     switch( inKeyCode ) {
         case MG_KEY_LEFT:
