@@ -77,6 +77,7 @@ class TextArea : public TextField {
         int mFirstVisibleLine;
         int mLastVisibleLine;
         
+        char mPointerDownInside;
         
 
         int getClickHitCursorIndex( float inX, float inY );

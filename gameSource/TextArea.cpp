@@ -31,7 +31,8 @@ TextArea::TextArea( Font *inLabelFont, Font *inDisplayFont,
           mBottomShadingFade( 0 ),
           mMaxLinesShown( 0 ),
           mFirstVisibleLine( 0 ), 
-          mLastVisibleLine( 0 ) {
+          mLastVisibleLine( 0 ),
+          mPointerDownInside( false ) {
     
     mLastDrawnText = stringDuplicate( "" );
     
@@ -691,7 +692,9 @@ void TextArea::draw() {
             
             delete [] beforeCursor;
             
-            if( mFocused ) {    
+            if( mFocused && 
+                ! isAnythingSelected() &&
+                ! ( mSelectionStart != -1 && mPointerDownInside ) ) {    
                 drawRect( pos.x + cursorXOffset + extra, 
                           pos.y - mFont->getFontHeight() / 2,
                           pos.x + cursorXOffset + pixWidth + extra, 
@@ -831,7 +834,37 @@ void TextArea::draw() {
                     drawRect( r.startX, r.startY, r.endX, r.endY );
                     }
                 }
-            }       
+            }
+        else if( mSelectionStart != -1 && mSelectionEnd != -1 &&
+                 mPointerDownInside &&
+                 selStartLine == i &&
+                 selEndLine == i ) {
+            // 0-char selection in progress in this line
+            setDrawColor( 0, 0, 0, 0.75 );
+
+            char *beforeSel = 
+                stringDuplicate( lines.getElementDirect( i ) );
+            
+            beforeSel[ selectionStartInLine.getElementDirect( i ) ] = '\0';
+            
+            double dummyCursorXOffset = mFont->measureString( beforeSel );
+        
+            double extra = 0;
+            if( dummyCursorXOffset == 0 ) {
+                extra = -pixWidth;
+                }
+            
+            delete [] beforeSel;
+            
+            if( mFocused ) {    
+                drawRect( pos.x + dummyCursorXOffset + extra, 
+                          pos.y - mFont->getFontHeight() / 2,
+                          pos.x + dummyCursorXOffset + pixWidth + extra, 
+                          pos.y + 0.55 * mFont->getFontHeight() );
+                }
+
+            }
+        
         
         pos.y -= mFont->getFontHeight();
         }
@@ -1270,11 +1303,14 @@ void TextArea::pointerDown( float inX, float inY ) {
         inX < mWide / 2 + 3 * pixWidth &&
         inY > -mHigh / 2 - 3 * pixWidth &&
         inY < mHigh / 2 + 3 * pixWidth ) {
+        mPointerDownInside = true;
         }
     else {
+        mPointerDownInside = false;
         return;
         }
         
+    focus();
     
     if( mVertSlideOffset != 0 ) {
         // disable click in middle of slide
@@ -1321,7 +1357,11 @@ void TextArea::pointerDown( float inX, float inY ) {
     }
 
 
+
 void TextArea::pointerDrag( float inX, float inY ) {
+    if( ! mPointerDownInside ) {
+        return;
+        }
     
     double pixWidth = mCharWidth / 8;
 
@@ -1355,6 +1395,7 @@ void TextArea::pointerDrag( float inX, float inY ) {
 
 
 void TextArea::pointerUp( float inX, float inY ) {
+    mPointerDownInside = false;
     
     double pixWidth = mCharWidth / 8;
 
