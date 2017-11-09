@@ -141,6 +141,9 @@ TextField::~TextField() {
 void TextField::setText( const char *inText ) {
     delete [] mText;
     
+    mSelectionStart = -1;
+    mSelectionEnd = -1;
+
     // obeys same rules as typing (skip blocked characters)
     SimpleVector<char> filteredText;
     

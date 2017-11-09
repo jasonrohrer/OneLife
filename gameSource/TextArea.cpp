@@ -451,10 +451,17 @@ void TextArea::draw() {
             break;
             }
         }
+
+    int selStartLine = -1;
+    int selEndLine = -1;
+    
     for( int i=0; i<lines.size(); i++ ) {
+        if( selectionStartInLine.getElementDirect( i ) != -1 ) {
+            selStartLine = i;
+            }
         if( selectionEndInLine.getElementDirect( i ) != -1 ) {
             anyLineHasSelectionEnd = true;
-            break;
+            selEndLine = i;
             }
         }
     
@@ -476,6 +483,7 @@ void TextArea::draw() {
     
         *( selectionEndInLine.getElement( lines.size() - 1 ) ) = 
             strlen( lastLine );
+        selEndLine = lines.size() - 1;
         }
     
 
@@ -752,57 +760,64 @@ void TextArea::draw() {
                     }
                 }
             }
-        if( mSelectionStart != mSelectionEnd &&
-            selectionStartInLine.getElementDirect(i) != -1 ) {
+        if( mSelectionStart != mSelectionEnd ) {
             
-            char *beforeSel = stringDuplicate( lines.getElementDirect( i ) );
+            char drawSelThisLine = false;
             
-            beforeSel[ selectionStartInLine.getElementDirect( i ) ] = '\0';
+            // start and end of sell on this line
+            double selRectStartX = 0;
+            double selRectEndX = 0;
             
-            setDrawColor( 0, 1, 0, 0.75 );
-        
-            double selXOffset = mFont->measureString( beforeSel );
+            if( selStartLine < i && selEndLine > i ) {
+                drawSelThisLine = true;
+                selRectEndX = 
+                    mFont->measureString( lines.getElementDirect( i ) );
+                }
+            if( selStartLine == i ) {
+                drawSelThisLine = true;                
+                char *beforeSel = 
+                    stringDuplicate( lines.getElementDirect( i ) );
             
-            double extra = 0;
-            if( selXOffset == 0 ) {
-                extra = -pixWidth;
+                beforeSel[ selectionStartInLine.getElementDirect( i ) ] = '\0';
+            
+                selRectStartX = mFont->measureString( beforeSel );
+                selRectEndX = 
+                    mFont->measureString( lines.getElementDirect( i ) );
+                
+                delete [] beforeSel;
+                }
+            if( selEndLine == i ) {
+                drawSelThisLine = true;
+                char *beforeSel = 
+                    stringDuplicate( lines.getElementDirect( i ) );
+            
+                beforeSel[ selectionEndInLine.getElementDirect( i ) ] = '\0';
+            
+                selRectEndX = mFont->measureString( beforeSel );
+                
+                delete [] beforeSel;
                 }
             
-            delete [] beforeSel;
             
-            if( mFocused ) {    
-                drawRect( pos.x + selXOffset + extra, 
-                          pos.y - mFont->getFontHeight() / 2,
-                          pos.x + selXOffset + pixWidth + extra, 
-                          pos.y + 0.55 * mFont->getFontHeight() );
+            if( drawSelThisLine ) {
+                
+                setDrawColor( 1, 1, 0, 0.25 );
+            
+                if( mFocused ) {    
+                    double extraStart = mFont->getCharSpacing() / 2;
+                    double extraEnd = extraStart;
+
+                    if( selRectStartX == 0 ) {
+                        extraStart = -extraStart;
+                        }
+
+                    drawRect( pos.x + selRectStartX + extraStart, 
+                              pos.y - mFont->getFontHeight() / 2,
+                              pos.x + selRectEndX + extraEnd, 
+                              pos.y + 0.5 * mFont->getFontHeight() );
+                    }
                 }
-            }
-        if( mSelectionStart != mSelectionEnd &&
-            selectionEndInLine.getElementDirect(i) != -1 ) {
-            
-            char *beforeSel = stringDuplicate( lines.getElementDirect( i ) );
-            
-            beforeSel[ selectionEndInLine.getElementDirect( i ) ] = '\0';
-            
-            setDrawColor( 1, 0, 0, 0.75 );
-        
-            double selXOffset = mFont->measureString( beforeSel );
-            
-            double extra = 0;
-            if( selXOffset == 0 ) {
-                extra = -pixWidth;
-                }
-            
-            delete [] beforeSel;
-            
-            if( mFocused ) {    
-                drawRect( pos.x + selXOffset + extra, 
-                          pos.y - mFont->getFontHeight() / 2,
-                          pos.x + selXOffset + pixWidth + extra, 
-                          pos.y + 0.55 * mFont->getFontHeight() );
-                }
-            }
-                    
+            }       
         
         pos.y -= mFont->getFontHeight();
         }
