@@ -30,6 +30,8 @@ OGG Vorbis decoder by <a href="http://nothings.org/stb_vorbis/">Sean Barrett</a>
 
 Reverb impulse response data from <a href="http://www.echothief.com/woodruff-lane/">EchoThief</a>.<br><br><br>
 
+Spelling dictionary compiled using <a href="http://wordlist.aspell.net/">SCOWL and Friends</a>.<br><br><br>
+     
 The <a href="http://www.libsdl.org/">SDL</a> library provides cross-platform screen, sound, and user input.<br><br><br>
 																			   
 <a href="http://www.mingw.org/">MinGW</a> was used to build the game for Windows.<br><br><br>
