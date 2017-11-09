@@ -1284,9 +1284,42 @@ void TextArea::pointerDown( float inX, float inY ) {
     int newCursor = getClickHitCursorIndex( inX, inY );
     
     if( newCursor != -1 ) {
-        mSelectionStart = newCursor;
-        mSelectionEnd = newCursor;
-        mSelectionAdjusting = &mSelectionEnd;
+        
+        if( ! isShiftKeyDown() ) {
+            
+            if( ! isAnythingSelected() ) {    
+                mSelectionStart = newCursor;
+                mSelectionEnd = newCursor;
+                mSelectionAdjusting = &mSelectionEnd;
+                }
+            }
+        else {
+            // shift click
+            if( ! isAnythingSelected() ) {
+                // create new selection from here to cursor
+                if( newCursor > mCursorPosition ) {
+                    mSelectionStart = mCursorPosition;
+                    mSelectionEnd = newCursor;
+                    mSelectionAdjusting = &mSelectionEnd;
+                    }
+                else {
+                    mSelectionStart = newCursor;
+                    mSelectionEnd = mCursorPosition;
+                    mSelectionAdjusting = &mSelectionStart;
+                    }
+                }
+            else {
+                // shift click to add to existing selection
+                if( newCursor > mSelectionEnd ) {
+                    mSelectionEnd = newCursor;
+                    mSelectionAdjusting = &mSelectionEnd;
+                    }
+                if( newCursor < mSelectionStart ) {
+                    mSelectionStart = newCursor;
+                    mSelectionAdjusting = &mSelectionStart;
+                    }
+                }
+            }
         }
     }
 
