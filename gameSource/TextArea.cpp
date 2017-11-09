@@ -1039,21 +1039,43 @@ void TextArea::upHit() {
     mCursorFlashSteps = 0;
     
     cursorUpFromKey();
-    
-    if( mCurrentLine > 0 ) {
-        mCurrentLine--;
-        mCursorPosition = 
-            mCursorTargetPositions.getElementDirect( mCurrentLine );
+
+    if( isCommandKeyDown() ) {
+        // up to end of previous paragraph
         
-        if( mSmoothSlidingUp ) {
-            mVertSlideOffset += mFont->getFontHeight();
+        // skip non-newline characters
+        while( mCursorPosition > 0 &&
+               mText[ mCursorPosition - 1 ] != '\r' ) {
+            mCursorPosition --;
             }
-        }
-    else {
-        mCursorPosition = 0;
+        
+        // skip space and newline characters
+        while( mCursorPosition > 0 &&
+               ( mText[ mCursorPosition - 1 ] == ' ' ||
+                 mText[ mCursorPosition - 1 ] == '\r' ) ) {
+            mCursorPosition --;
+            }
+        mSnapMove = true;
         mRecomputeCursorPositions = true;
         }
-
+    else {
+        // up one line
+    
+        if( mCurrentLine > 0 ) {
+            mCurrentLine--;
+            mCursorPosition = 
+                mCursorTargetPositions.getElementDirect( mCurrentLine );
+            
+            if( mSmoothSlidingUp ) {
+                mVertSlideOffset += mFont->getFontHeight();
+                }
+            }
+        else {
+            mCursorPosition = 0;
+            mRecomputeCursorPositions = true;
+            }
+        }
+        
     if( isShiftKeyDown() ) {
         *mSelectionAdjusting = mCursorPosition;
         fixSelectionStartEnd();
@@ -1067,20 +1089,45 @@ void TextArea::downHit() {
     
     cursorDownFromKey();
     
-    if( mCurrentLine < mCursorTargetPositions.size() - 1 ) {
-        mCurrentLine++;
-        mCursorPosition = 
-            mCursorTargetPositions.getElementDirect( mCurrentLine );
+    if( isCommandKeyDown() ) {
+        // down to end of previous paragraph
+        int textLen = strlen( mText );
         
-        if( mSmoothSlidingDown ) {
-            mVertSlideOffset -= mFont->getFontHeight();
+        // skip space and newline characters
+        while( mCursorPosition < textLen &&
+               ( mText[ mCursorPosition ] == ' ' ||
+                 mText[ mCursorPosition ] == '\r' ) ) {
+            mCursorPosition ++;
             }
-        }
-    else {
-        mCursorPosition = strlen( mText );
+
+        // skip non-newline characters
+        while( mCursorPosition < textLen &&
+               mText[ mCursorPosition ] != '\r' ) {
+            mCursorPosition ++;
+            }
+        
+        mSnapMove = true;
         mRecomputeCursorPositions = true;
         }
+    else {
+        // down one line
 
+        if( mCurrentLine < mCursorTargetPositions.size() - 1 ) {
+            mCurrentLine++;
+            mCursorPosition = 
+                mCursorTargetPositions.getElementDirect( mCurrentLine );
+            
+            if( mSmoothSlidingDown ) {
+                mVertSlideOffset -= mFont->getFontHeight();
+                }
+            }
+        else {
+            mCursorPosition = strlen( mText );
+            mRecomputeCursorPositions = true;
+            }
+
+        }
+    
     if( isShiftKeyDown() ) {
         *mSelectionAdjusting = mCursorPosition;
         fixSelectionStartEnd();
@@ -1148,10 +1195,13 @@ void TextArea::specialKeyDown( int inKeyCode ) {
             cursorUpFromKey();
             
             int old = mCurrentLine;
-
+            
+            char overshoot = false;
+            
             mCurrentLine -= mMaxLinesShown - 1;
             if( mCurrentLine < 0 ) {
                 mCurrentLine = 0;
+                overshoot = true;
                 }
 
             // disable smooth pg up/down for now
@@ -1162,6 +1212,9 @@ void TextArea::specialKeyDown( int inKeyCode ) {
             
             mCursorPosition = 
                 mCursorTargetPositions.getElementDirect( mCurrentLine );
+            if( overshoot ) {
+                mCursorPosition = 0;
+                }
             mSnapMove = true;
             if( isShiftKeyDown() ) {
                 *mSelectionAdjusting = mCursorPosition;
@@ -1175,9 +1228,12 @@ void TextArea::specialKeyDown( int inKeyCode ) {
             
             int old = mCurrentLine;
             
+            char overshoot = false;
+
             mCurrentLine += mMaxLinesShown - 1;
             if( mCurrentLine >= mCursorTargetPositions.size() ) {
                 mCurrentLine = mCursorTargetPositions.size() - 1;
+                overshoot = true;
                 }
             
             // disable smooth pg up/down for now
@@ -1188,6 +1244,11 @@ void TextArea::specialKeyDown( int inKeyCode ) {
             
             mCursorPosition = 
                 mCursorTargetPositions.getElementDirect( mCurrentLine );
+            
+            if( overshoot ) {
+                mCursorPosition = strlen( mText );
+                }
+            
             mSnapMove = true;
             if( isShiftKeyDown() ) {
                 *mSelectionAdjusting = mCursorPosition;
