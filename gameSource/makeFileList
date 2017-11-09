@@ -59,7 +59,7 @@ liveAnimationTriggers.cpp \
 ReviewPage.cpp \
 TextArea.cpp \
 RadioButtonSet.cpp \
-
+spellCheck.cpp \
 
 
 GAME_GRAPHICS = \

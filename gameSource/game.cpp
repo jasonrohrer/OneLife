@@ -80,6 +80,7 @@ CustomRandomSource randSource( 34957197 );
 #include "ServerActionPage.h"
 
 #include "ageControl.h"
+#include "spellCheck.h"
 
 #include "musicPlayer.h"
 
@@ -414,6 +415,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
     instructionsSprite = loadWhiteSprite( "instructions.tga" );
     
+    initSpellCheck();
+    
 
     initAgeControl();
     
@@ -629,6 +632,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
 
 void freeFrameDrawer() {
+
+    freeSpellCheck();
 
     freeSprite( instructionsSprite );
     
