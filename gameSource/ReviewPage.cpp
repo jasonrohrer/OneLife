@@ -9,6 +9,7 @@
 #include "minorGems/game/game.h"
 
 #include "buttonStyle.h"
+#include "spellCheck.h"
 
 
 extern Font *mainFont;
@@ -100,6 +101,10 @@ ReviewPage::ReviewPage( const char *inReviewServerURL )
 
 ReviewPage::~ReviewPage() {
     delete mRecommendChoice;
+    
+    if( isSpellCheckReady() ) {
+        freeSpellCheck();
+        }
     }
 
 
@@ -280,6 +285,10 @@ void ReviewPage::makeActive( char inFresh ) {
     if( inFresh ) {        
         }
 
+    if( ! isSpellCheckReady() ) {
+        initSpellCheck();
+        }
+    
 
     mReviewNameField.setActive( true );
     mReviewTextArea.setActive( true );
@@ -290,6 +299,10 @@ void ReviewPage::makeActive( char inFresh ) {
     mCopyButton.setActive( true );
     mPasteButton.setActive( true );
     mClearButton.setActive( true );
+
+
+    mReviewTextArea.enableSpellCheck( 
+        SettingsManager::getIntSetting( "spellCheckOn", 1 ) );
 
     
 

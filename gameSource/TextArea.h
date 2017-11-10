@@ -21,6 +21,8 @@ class TextArea : public TextField {
 
         virtual ~TextArea();
         
+        // defaults to false
+        void enableSpellCheck( char inSpellCheckOn );
 
 
         virtual void draw();
@@ -37,6 +39,8 @@ class TextArea : public TextField {
         double mWide, mHigh;
         
         Font *mLabelFont;
+        
+        char mSpellCheckOn;
 
         int mCurrentLine;
         

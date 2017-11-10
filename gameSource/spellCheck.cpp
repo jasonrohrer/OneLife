@@ -132,6 +132,8 @@ typedef struct HashNode {
 
 
 
+static char ready;
+
 // slightly larger than list of words
 static int tableSize = 0;
 static HashNode *hashTable = NULL;
@@ -153,6 +155,11 @@ static int numExtraNodes;
 static int nextUnusedExtraNode;
 static HashNode *extraNodes = NULL;
 
+
+
+// maps extended ascii to true/false of whether character is in the dictionary
+// other characters are punctuation
+static char allowedChars[256];
 
 
 // returns true on success, false on collision
@@ -233,6 +240,7 @@ static char lookupString( char *inString ) {
 
 
 void initSpellCheck() {
+    ready = false;
     
     double startTime = Time::getCurrentTime();
 
@@ -243,6 +251,12 @@ void initSpellCheck() {
     File dictFile( NULL, dictName );
     
     delete [] dictName;
+
+
+    for( int i=0; i<256; i++ ) {
+        allowedChars[i] = false;
+        }
+    
     
     if( dictFile.exists() ) {
         allStrings = dictFile.readFileContents();
@@ -266,6 +280,9 @@ void initSpellCheck() {
                             stringPointers.push_back( &( allStrings[i+1] ) );
                             }
                         }
+                    }
+                else {
+                    allowedChars[ (unsigned char)( allStrings[i] ) ] = true;
                     }
                 }
         
@@ -302,6 +319,8 @@ void initSpellCheck() {
 
             printf( "Parsing dictionary file of %d words took %f ms\n",
                     numStrings, (Time::getCurrentTime() - startTime)*1000 );
+            
+            ready = true;
             }
         }
     }
@@ -333,12 +352,62 @@ void freeSpellCheck() {
     
     allStrings = NULL;
     numStrings = 0;
+    
+    ready = false;
     }
 
 
 
+char isSpellCheckReady() {
+    return ready;
+    }
+
 
 char checkWord( char *inWord ) {
-    return lookupString( inWord );
+
+    char allAllowed = true;
+    
+    int len = strlen( inWord );
+    
+    for( int i=0; i<len; i++ ) {
+        if( ! allowedChars[ (unsigned char)( inWord[i] ) ] ) {
+            allAllowed = false;
+            break;
+            }
+        }
+    
+    if( allAllowed ) {
+        return lookupString( inWord );
+        }
+    else {
+        char *workingString = stringDuplicate( inWord );
+        
+        // replace forbidded chars with space
+        for( int i=0; i<len; i++ ) {
+            if( ! allowedChars[ (unsigned char)( workingString[i] ) ] ) {
+                workingString[i] = ' ';
+                }
+            }
+
+        // split into allowed-char runs
+        SimpleVector<char*> *tokens = tokenizeString( workingString );
+        
+        char inDict = true;
+
+        for( int i=0; i<tokens->size(); i++ ) {
+            inDict = lookupString( tokens->getElementDirect( i ) );
+            
+            if( ! inDict ) {
+                break;
+                }
+            }
+
+        tokens->deallocateStringElements();
+        delete tokens;
+        
+        delete [] workingString;
+
+        return inDict;
+        }
     }
 

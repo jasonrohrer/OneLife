@@ -8,6 +8,8 @@
 
 #include <math.h>
 
+#include "spellCheck.h"
+
 extern double frameRateFactor;
 
 
@@ -21,6 +23,7 @@ TextArea::TextArea( Font *inLabelFont, Font *inDisplayFont,
                      inAllowedChars, inForbiddenChars ),
           mWide( inWide ), mHigh( inHigh ),
           mLabelFont( inLabelFont ),
+          mSpellCheckOn( false ),
           mCurrentLine( 0 ),
           mRecomputeCursorPositions( false ),
           mLastComputedCursorText( stringDuplicate( "" ) ),
@@ -49,6 +52,12 @@ TextArea::~TextArea() {
     delete [] mLastComputedCursorText;
     mLineStrings.deallocateStringElements();
     delete [] mLastDrawnText;
+    }
+
+
+
+void TextArea::enableSpellCheck( char inSpellCheckOn ) {
+    mSpellCheckOn = inSpellCheckOn;
     }
 
 
@@ -200,6 +209,9 @@ void TextArea::draw() {
     // first, split into words
     SimpleVector<char*> words;
     
+    // true for spelling errors
+    SimpleVector<char> wordsMisspelled;
+
     // -1 if not present, or index in word
     SimpleVector<int> cursorInWord;
     SimpleVector<int> selectionStartInWord;
@@ -217,6 +229,7 @@ void TextArea::draw() {
         while( index < textLen && mText[ index ] == '\r' ) {
             // newlines are separate words
             words.push_back( autoSprintf( "\n" ) );
+            wordsMisspelled.push_back( false );
             
             if( mCursorPosition == index ) {
                 cursorInWord.push_back( 0 );
@@ -282,9 +295,51 @@ void TextArea::draw() {
             }
         
         char *wordString = thisWord.getElementString();
+
+        if( index == textLen && 
+            mCursorPosition == textLen &&
+            thisWordCursorPos == -1 &&
+            wordString[ strlen( wordString ) - 1 ] != ' ' ) {
+            thisWordCursorPos = strlen( wordString );
+            }
         
+
         if( mFont->measureString( wordString ) < mWide ) {
             words.push_back( wordString );
+            
+            char spellFlag = false;
+            
+            if( mSpellCheckOn && thisWordCursorPos == -1 ) {
+                char *trimmedWord = trimWhitespace( wordString );
+            
+                char inDict = checkWord( trimmedWord );
+                
+                if( !inDict ) {
+                    if( trimmedWord[0] >= 65 && trimmedWord[0] <= 90 ) {
+                        // upper case word
+                        
+                        // see if lowercase version is in dictionary
+                        trimmedWord[0] += 32;
+                        inDict = checkWord( trimmedWord );
+
+                        if( !inDict ) {
+                            spellFlag = true;
+                            }
+                        }
+                    else {
+                        spellFlag = true;
+                        }
+                    }
+                delete [] trimmedWord;
+                }
+                
+            wordsMisspelled.push_back( spellFlag );
+
+            if( spellFlag ) {
+                printf( "%s misspelled\n", wordString );
+                }
+            
+
             cursorInWord.push_back( thisWordCursorPos );
             selectionStartInWord.push_back( thisWordSelectionStartPos );
             selectionEndInWord.push_back( thisWordSelectionEndPos );            
@@ -328,6 +383,9 @@ void TextArea::draw() {
                     char *finalSplitWord = curSplitWord.getElementString();
                     
                     words.push_back( finalSplitWord );
+                    // ignore spelling on ridiculously long words
+                    wordsMisspelled.push_back( false );
+                    
                     cursorInWord.push_back( curSplitWordCursorPos );
                     
                     selectionStartInWord.push_back( 
@@ -353,6 +411,7 @@ void TextArea::draw() {
             if( curSplitWord.size() > 0 ) {
                 char *finalSplitWord = curSplitWord.getElementString();
                 words.push_back( finalSplitWord );
+                wordsMisspelled.push_back( false );
                 cursorInWord.push_back( curSplitWordCursorPos );
                 selectionStartInWord.push_back( curSplitWordSelectionStartPos );
                 selectionEndInWord.push_back( curSplitWordSelectionEndPos );
