@@ -299,6 +299,9 @@ void initSpellCheck() {
             printf( "Reading dictionary file took %f sec\n",
                     (Time::getCurrentTime() - startTime)*1000 );
             
+
+            startTime = Time::getCurrentTime();
+
             int fullLen = strlen( allStrings );
             
             SimpleVector<char*> stringPointers;
