@@ -216,11 +216,35 @@ static char lookupString( char *inString ) {
 
 
 
-void initSpellCheck() {
+int lastAllocCount = 0;
+
+
+int getAllocTotal() {
     struct mallinfo mi = mallinfo();
+    return mi.uordblks;
+    }
+
+
+int getAllocDelta() {
+    int total = getAllocTotal();
     
-    printf( "%f MiB allocated before loading dictionary\n",
-            mi.uordblks / ( 1024.0 * 1024.0 ) );
+    int delta = total - lastAllocCount;
+    
+    lastAllocCount = total;
+    
+    return delta;
+    }
+
+
+
+
+
+void initSpellCheck() {
+
+    int beforeAlloc = getAllocTotal();
+    
+    
+    getAllocDelta();
     
     
 
@@ -237,9 +261,8 @@ void initSpellCheck() {
         
         char *listText = dictFile.readFileContents();
         
-        mi = mallinfo();
-        printf( "%f MiB allocated after loading dict file contents\n",
-                mi.uordblks / ( 1024.0 * 1024.0 ) );
+        printf( "%d B allocated by loading dict file contents\n",
+                getAllocDelta() );
 
         printf( "Reading dictionary file took %f sec\n",
                 (Time::getCurrentTime() - startTime)*1000 );
@@ -247,9 +270,8 @@ void initSpellCheck() {
         if( listText != NULL ) {
             SimpleVector<char *> *list = tokenizeString( listText );
             
-            mi = mallinfo();
-            printf( "%f MiB allocated after tokenizing\n",
-                    mi.uordblks / ( 1024.0 * 1024.0 ) );            
+            printf( "%d B allocated by tokenizing\n", getAllocDelta() );
+
             
             tableSize = list->size();
             hashTable = new HashNode[ tableSize ];
@@ -262,14 +284,17 @@ void initSpellCheck() {
             printf( "Allocating %f MiB of hash table space\n",
             sizeof( HashNode ) * tableSize / ( 1024.0 * 1024.0 ) );
 
-            mi = mallinfo();
-            printf( "%f MiB allocated after allocating hash table\n",
-                    mi.uordblks / ( 1024.0 * 1024.0 ) );            
+            printf( "%d B allocated by allocating hash table\n", 
+                    getAllocDelta() );
 
 
             for( int i=0; i<list->size(); i++ ) {
                 insertString( list->getElementDirect( i ) );
                 }
+
+            printf( "%d B allocated by inserting words into table\n", 
+                    getAllocDelta() );
+
 
             delete list;
 
@@ -281,12 +306,6 @@ void initSpellCheck() {
                     numNodes, numCollisions );
             }
         }
-
-    
-    mi = mallinfo();
-    printf( "%f MiB allocated after loading dictionary\n",
-            mi.uordblks / ( 1024.0 * 1024.0 ) );
-
 
     double startTime = Time::getCurrentTime();
     for( int i = 0; i<1000000; i++ ) {
@@ -323,7 +342,9 @@ void initSpellCheck() {
     printf( "Test:  monnnster is in dictionary:  %d\n",
             checkWord( (char*)"monnnster" ) );
     
-
+    
+    printf( "Dictionary total alloc = %d B\n",
+            getAllocTotal() - beforeAlloc );
     }
 
 
