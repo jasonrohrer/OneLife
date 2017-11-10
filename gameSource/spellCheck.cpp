@@ -131,19 +131,36 @@ typedef struct HashNode {
     } HashNode;
 
 
+
 // slightly larger than list of words
 static int tableSize = 0;
 static HashNode *hashTable = NULL;
 
+// all strings in dictionary in one long, \0-delimited block
+// avoid allocation overhead of allocating them separately
+static int numStrings = 0;
+static char *allStrings = NULL;
+
 int numNodes = 0;
 
 int numCollisions = 0;
+int numNewNodes = 0;
 
 char *worstWord = (char*)"";
 int worstNumSteps = 0;
 
 
-static void insertString( char *inString ) {
+// storage space for collisions
+// allocate them in one big block instead of separately to avoid
+// overhead from allocating them separately
+static int numExtraNodes;
+static int nextUnusedExtraNode;
+static HashNode *extraNodes = NULL;
+
+
+
+// returns true on success, false on collision
+static char insertString( char *inString ) {
 
     int key = MurmurHash2( inString, strlen( inString ), 0 ) % tableSize;
 
@@ -153,20 +170,33 @@ static void insertString( char *inString ) {
         // empty spot at hit
         node->string = inString;
         numNodes++;
+        return true;
         }
-    else {
-        // full spot 
+    return false;
+    }
+
+
+// must allocate space in extraNodes before calling this
+static void insertCollisionStirng( char *inString ) {
+
+    int key = MurmurHash2( inString, strlen( inString ), 0 ) % tableSize;
+
+    HashNode *node = &( hashTable[ key ] );
+    
+    if( node->string != NULL ) {
+        // full spot, as expected
         int step = 0;
         
         // walk chain
         while( node->next != NULL ) {
-            //printf( "Collision for %s with %s, step %d\n",
-            //        inString, node->string, step );
             node = node->next;
             numCollisions++;
             step++;
             }
-        node->next = new HashNode;
+        node->next = &( extraNodes[nextUnusedExtraNode] );
+        nextUnusedExtraNode++;
+        numNewNodes++;
+        
         node->next->string = inString;
         node->next->next = NULL;
         numNodes++;
@@ -259,21 +289,42 @@ void initSpellCheck() {
     if( dictFile.exists() ) {
         double startTime = Time::getCurrentTime();
         
-        char *listText = dictFile.readFileContents();
+        allStrings = dictFile.readFileContents();
         
-        printf( "%d B allocated by loading dict file contents\n",
-                getAllocDelta() );
-
-        printf( "Reading dictionary file took %f sec\n",
-                (Time::getCurrentTime() - startTime)*1000 );
+        if( allStrings != NULL ) {
+            
+            printf( "%d B allocated by loading dict file contents\n",
+                    getAllocDelta() );
+            
+            printf( "Reading dictionary file took %f sec\n",
+                    (Time::getCurrentTime() - startTime)*1000 );
+            
+            int fullLen = strlen( allStrings );
+            
+            SimpleVector<char*> stringPointers;
+            
+            // pointer to first string
+            stringPointers.push_back( allStrings );
+            
+            
+            for( int i=0; i<fullLen; i++ ) {
+                if( allStrings[i] == '\n' ) {
+                    allStrings[i] = '\0';
+                    
+                    if( i < fullLen - 1 ) {
+                        if( allStrings[i+1] != '\0' ) {
+                            stringPointers.push_back( &( allStrings[i+1] ) );
+                            }
+                        }
+                    }
+                }
         
-        if( listText != NULL ) {
-            SimpleVector<char *> *list = tokenizeString( listText );
-            
-            printf( "%d B allocated by tokenizing\n", getAllocDelta() );
+            numStrings = stringPointers.size();
 
-            
-            tableSize = list->size();
+            printf( "%d B allocated by tokenizing word list\n", 
+                    getAllocDelta() );
+
+            tableSize = numStrings;
             hashTable = new HashNode[ tableSize ];
             
             for( int i=0; i<tableSize; i++ ) {
@@ -281,30 +332,48 @@ void initSpellCheck() {
                 hashTable[i].next = NULL;
                 }
 
-            printf( "Allocating %f MiB of hash table space\n",
-            sizeof( HashNode ) * tableSize / ( 1024.0 * 1024.0 ) );
-
             printf( "%d B allocated by allocating hash table\n", 
                     getAllocDelta() );
 
 
-            for( int i=0; i<list->size(); i++ ) {
-                insertString( list->getElementDirect( i ) );
+            SimpleVector<char*> failedStrings;
+            
+            for( int i=0; i<stringPointers.size(); i++ ) {
+                char worked =
+                    insertString( stringPointers.getElementDirect( i ) );
+                
+                if( ! worked ) {
+                    failedStrings.push_back( 
+                        stringPointers.getElementDirect( i ) );
+                    }
                 }
+
+            numExtraNodes = failedStrings.size();
+            extraNodes = new HashNode[ numExtraNodes ];
+            nextUnusedExtraNode = 0;
+            
+            printf( "%d failed insert strings\n",
+                    numExtraNodes );
+            
+
+            for( int i=0; i<failedStrings.size(); i++ ) {
+                insertCollisionStirng( failedStrings.getElementDirect( i ) );
+                }
+            
 
             printf( "%d B allocated by inserting words into table\n", 
                     getAllocDelta() );
 
 
-            delete list;
-
-            delete [] listText;
-
             printf( "Parsing dictionary file took %f ms, making %d nodes "
-                    "with %d collisions\n",
+                    "with %d collisions and %d new nodes\n",
                     (Time::getCurrentTime() - startTime)*1000,
-                    numNodes, numCollisions );
+                    numNodes, numCollisions, numNewNodes );
             }
+        
+        printf( "%d B allocated by freeing vector\n", 
+                getAllocDelta() );
+
         }
 
     double startTime = Time::getCurrentTime();
@@ -353,37 +422,27 @@ void initSpellCheck() {
 
 void freeSpellCheck() {
     if( hashTable != NULL ) {
-        
-        for( int c=0; c<tableSize; c++ ) {
-            HashNode *node = &( hashTable[c] );
-        
-            if( node->string != NULL ) {
-                delete [] node->string;
-                }
-
-            HashNode *childNode = node->next;
-        
-            while( childNode != NULL ) {
-                if( childNode->string != NULL ) {
-                    delete [] childNode->string;
-                    }
-
-                HashNode *lastNode = childNode;
-            
-                childNode = childNode->next;
-            
-                delete lastNode;
-                }
-
-            node->next = NULL;
-            }
-
         delete [] hashTable;
         hashTable = NULL;
         tableSize = 0;
         }
-    
+
     numNodes = 0;
+
+    if( extraNodes != NULL ) {
+        delete [] extraNodes;
+        extraNodes = NULL;
+        }
+    
+    numExtraNodes = 0;
+    
+
+    if( allStrings != NULL ) {
+        delete [] allStrings;
+        }
+    
+    allStrings = NULL;
+    numStrings = 0;
     }
 
 
