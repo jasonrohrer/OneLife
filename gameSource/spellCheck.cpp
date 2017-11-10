@@ -229,10 +229,6 @@ void initSpellCheck() {
     
     hashTable = new HashNode[ TABLE_SIZE ];
     
-    
-    
-    HashNode *test = new HashNode[10];
-    
     mi = mallinfo();
     
     printf( "%f MiB allocated after initializing hash table space\n",
