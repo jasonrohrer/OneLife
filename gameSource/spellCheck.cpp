@@ -132,20 +132,20 @@ typedef struct HashNode {
 
 
 // slightly larger than list of words
-#define TABLE_SIZE 130000
-static HashNode *hashTable;
+static int tableSize = 0;
+static HashNode *hashTable = NULL;
 
 int numNodes = 0;
 
 int numCollisions = 0;
 
-char *worstWord = "";
+char *worstWord = (char*)"";
 int worstNumSteps = 0;
 
 
 static void insertString( char *inString ) {
 
-    int key = MurmurHash2( inString, strlen( inString ), 0 ) % TABLE_SIZE;
+    int key = MurmurHash2( inString, strlen( inString ), 0 ) % tableSize;
 
     HashNode *node = &( hashTable[ key ] );
     
@@ -184,7 +184,7 @@ static void insertString( char *inString ) {
 
 static char lookupString( char *inString ) {
     
-    int key = MurmurHash2( inString, strlen( inString ), 0 ) % TABLE_SIZE;
+    int key = MurmurHash2( inString, strlen( inString ), 0 ) % tableSize;
         
 
     HashNode *node = &( hashTable[ key ] );
@@ -216,37 +216,11 @@ static char lookupString( char *inString ) {
 
 
 
-
 void initSpellCheck() {
     struct mallinfo mi = mallinfo();
     
     printf( "%f MiB allocated before loading dictionary\n",
             mi.uordblks / ( 1024.0 * 1024.0 ) );
-    
-
-    printf( "Allocating %f MiB of hash table space\n",
-            sizeof( HashNode ) * TABLE_SIZE / ( 1024.0 * 1024.0 ) );
-    
-    hashTable = new HashNode[ TABLE_SIZE ];
-    
-    mi = mallinfo();
-    
-    printf( "%f MiB allocated after initializing hash table space\n",
-            mi.uordblks / ( 1024.0 * 1024.0 ) );
-    
-
-    for( int c=0; c<TABLE_SIZE; c++ ) {
-        hashTable[c].string = NULL;
-        hashTable[c].next = NULL;
-        }
-    
-    printf( "Touched %d hash table nodes\n", TABLE_SIZE );
-    
-    mi = mallinfo();
-    
-    printf( "%f MiB allocated after touching hash table space\n",
-            mi.uordblks / ( 1024.0 * 1024.0 ) );
-    
     
     
 
@@ -263,13 +237,25 @@ void initSpellCheck() {
         
         char *listText = dictFile.readFileContents();
         
+        mi = mallinfo();
+        printf( "%f MiB allocated after loading dict file contents\n",
+                mi.uordblks / ( 1024.0 * 1024.0 ) );
+
         printf( "Reading dictionary file took %f sec\n",
                 (Time::getCurrentTime() - startTime)*1000 );
         
         if( listText != NULL ) {
-            SimpleVector<char *> *tokenizeString( const char *inString );
-            
             SimpleVector<char *> *list = tokenizeString( listText );
+            
+            mi = mallinfo();
+            printf( "%f MiB allocated after tokenizing\n",
+                    mi.uordblks / ( 1024.0 * 1024.0 ) );            
+            
+            tableSize = list->size();
+            hashTable = new HashNode[ tableSize ];
+            
+            printf( "Allocating %f MiB of hash table space\n",
+            sizeof( HashNode ) * tableSize / ( 1024.0 * 1024.0 ) );
 
             for( int i=0; i<list->size(); i++ ) {
                 insertString( list->getElementDirect( i ) );
@@ -309,10 +295,10 @@ void initSpellCheck() {
 
     startTime = Time::getCurrentTime();
     for( int i = 0; i<1000000; i++ ) {
-        checkWord( (char*)"psychiatry's" );
+        checkWord( worstWord );
         }
-    printf( "Looking up psychiatry's 1M times took  %f ms\n",
-            (Time::getCurrentTime() - startTime)*1000 );
+    printf( "Looking worst word %s 1M times took  %f ms\n",
+            worstWord, (Time::getCurrentTime() - startTime)*1000 );
 
 
     startTime = Time::getCurrentTime();
@@ -335,32 +321,37 @@ void initSpellCheck() {
 
 
 void freeSpellCheck() {
-    for( int c=0; c<TABLE_SIZE; c++ ) {
-        HashNode *node = &( hashTable[c] );
+    if( hashTable != NULL ) {
         
-        if( node->string != NULL ) {
-            delete [] node->string;
-            }
-
-        HashNode *childNode = node->next;
+        for( int c=0; c<tableSize; c++ ) {
+            HashNode *node = &( hashTable[c] );
         
-        while( childNode != NULL ) {
-            if( childNode->string != NULL ) {
-                delete [] childNode->string;
+            if( node->string != NULL ) {
+                delete [] node->string;
                 }
 
-            HashNode *lastNode = childNode;
+            HashNode *childNode = node->next;
+        
+            while( childNode != NULL ) {
+                if( childNode->string != NULL ) {
+                    delete [] childNode->string;
+                    }
+
+                HashNode *lastNode = childNode;
             
-            childNode = childNode->next;
+                childNode = childNode->next;
             
-            delete lastNode;
+                delete lastNode;
+                }
+
+            node->next = NULL;
             }
 
-        node->next = NULL;
+        delete [] hashTable;
+        hashTable = NULL;
+        tableSize = 0;
         }
-
-    delete [] hashTable;
-
+    
     numNodes = 0;
     }
 
