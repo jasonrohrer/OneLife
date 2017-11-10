@@ -209,9 +209,6 @@ void TextArea::draw() {
     // first, split into words
     SimpleVector<char*> words;
     
-    // true for spelling errors
-    SimpleVector<char> wordsMisspelled;
-
     // -1 if not present, or index in word
     SimpleVector<int> cursorInWord;
     SimpleVector<int> selectionStartInWord;
@@ -229,7 +226,6 @@ void TextArea::draw() {
         while( index < textLen && mText[ index ] == '\r' ) {
             // newlines are separate words
             words.push_back( autoSprintf( "\n" ) );
-            wordsMisspelled.push_back( false );
             
             if( mCursorPosition == index ) {
                 cursorInWord.push_back( 0 );
@@ -295,51 +291,9 @@ void TextArea::draw() {
             }
         
         char *wordString = thisWord.getElementString();
-
-        if( index == textLen && 
-            mCursorPosition == textLen &&
-            thisWordCursorPos == -1 &&
-            wordString[ strlen( wordString ) - 1 ] != ' ' ) {
-            thisWordCursorPos = strlen( wordString );
-            }
         
-
         if( mFont->measureString( wordString ) < mWide ) {
             words.push_back( wordString );
-            
-            char spellFlag = false;
-            
-            if( mSpellCheckOn && thisWordCursorPos == -1 ) {
-                char *trimmedWord = trimWhitespace( wordString );
-            
-                char inDict = checkWord( trimmedWord );
-                
-                if( !inDict ) {
-                    if( trimmedWord[0] >= 65 && trimmedWord[0] <= 90 ) {
-                        // upper case word
-                        
-                        // see if lowercase version is in dictionary
-                        trimmedWord[0] += 32;
-                        inDict = checkWord( trimmedWord );
-
-                        if( !inDict ) {
-                            spellFlag = true;
-                            }
-                        }
-                    else {
-                        spellFlag = true;
-                        }
-                    }
-                delete [] trimmedWord;
-                }
-                
-            wordsMisspelled.push_back( spellFlag );
-
-            if( spellFlag ) {
-                printf( "%s misspelled\n", wordString );
-                }
-            
-
             cursorInWord.push_back( thisWordCursorPos );
             selectionStartInWord.push_back( thisWordSelectionStartPos );
             selectionEndInWord.push_back( thisWordSelectionEndPos );            
@@ -383,9 +337,6 @@ void TextArea::draw() {
                     char *finalSplitWord = curSplitWord.getElementString();
                     
                     words.push_back( finalSplitWord );
-                    // ignore spelling on ridiculously long words
-                    wordsMisspelled.push_back( false );
-                    
                     cursorInWord.push_back( curSplitWordCursorPos );
                     
                     selectionStartInWord.push_back( 
@@ -411,7 +362,6 @@ void TextArea::draw() {
             if( curSplitWord.size() > 0 ) {
                 char *finalSplitWord = curSplitWord.getElementString();
                 words.push_back( finalSplitWord );
-                wordsMisspelled.push_back( false );
                 cursorInWord.push_back( curSplitWordCursorPos );
                 selectionStartInWord.push_back( curSplitWordSelectionStartPos );
                 selectionEndInWord.push_back( curSplitWordSelectionEndPos );
@@ -743,6 +693,71 @@ void TextArea::draw() {
         setDrawColor( 1, 1, 1, 1 );
 
         mFont->drawString( lines.getElementDirect( i ), pos, alignLeft );
+
+        if( mSpellCheckOn ) {
+            char *lineString = lines.getElementDirect( i );
+            int lineLen = strlen( lineString );
+            
+            int wordStartIndex = 0;
+            double beforeWordX = 0;
+            
+            while( wordStartIndex < lineLen ) {
+                int wordCharIndex = wordStartIndex;
+                
+                while( wordCharIndex < lineLen &&
+                       lineString[ wordCharIndex ] != ' ' ) {
+                    wordCharIndex++;
+                    }
+
+                if( wordCharIndex == lineLen ) {
+                    // end of line
+                    wordCharIndex --;
+                    }
+                
+                char *wordPointer = &( lineString[ wordStartIndex ] );
+                int wordLen = wordCharIndex - wordStartIndex;
+                
+                char *wordCopy = stringDuplicate( wordPointer );
+                wordCopy[ wordLen ] = '\0';
+                
+                char inDict = checkWord( wordCopy );
+                
+                if( !inDict && wordCopy[0] >= 65 && wordCopy[0] <= 90 ) {
+                    // upper case first letter
+                    // try lower case version
+                    wordCopy[0] += 32;
+                    inDict = checkWord( wordCopy );
+                    }
+
+                if( ! checkWord( wordCopy ) ) {
+                    
+                    double afterWordX = mFont->measureString( lineString,
+                                                              wordCharIndex );
+                    
+                    setDrawColor( 1, 0, 0, 0.5 );
+                    drawRect( pos.x + beforeWordX,
+                              pos.y,
+                              pos.x + afterWordX,
+                              pos.y + mFont->getFontHeight() / 8 );
+                    }
+                delete [] wordCopy;
+                
+                
+                wordStartIndex = wordCharIndex + 1;
+                
+                // skip spaces until start of next word
+                while( wordStartIndex < lineLen &&
+                       lineString[ wordStartIndex ] == ' ' ) {
+                    wordStartIndex++;
+                    }
+                
+                if( wordStartIndex < lineLen ) {
+                    beforeWordX = mFont->measureString( lineString,
+                                                        wordStartIndex );
+                    }
+                }
+            }
+        
 
         if( cursorInLine.getElementDirect( i ) != -1 ) {
             
