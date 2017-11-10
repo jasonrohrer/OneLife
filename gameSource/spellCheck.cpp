@@ -143,11 +143,7 @@ static char *allStrings = NULL;
 
 int numNodes = 0;
 
-int numCollisions = 0;
 int numNewNodes = 0;
-
-char *worstWord = (char*)"";
-int worstNumSteps = 0;
 
 
 // storage space for collisions
@@ -185,13 +181,10 @@ static void insertCollisionStirng( char *inString ) {
     
     if( node->string != NULL ) {
         // full spot, as expected
-        int step = 0;
-        
+
         // walk chain
         while( node->next != NULL ) {
             node = node->next;
-            numCollisions++;
-            step++;
             }
         node->next = &( extraNodes[nextUnusedExtraNode] );
         nextUnusedExtraNode++;
@@ -200,13 +193,6 @@ static void insertCollisionStirng( char *inString ) {
         node->next->string = inString;
         node->next->next = NULL;
         numNodes++;
-
-        if( worstNumSteps < step ) {
-            worstNumSteps = step;
-            worstWord = inString;
-            printf( "New worst collision word %d steps %s\n",
-                    step, inString );
-            }
         }
     }
 
@@ -246,37 +232,9 @@ static char lookupString( char *inString ) {
 
 
 
-int lastAllocCount = 0;
-
-
-int getAllocTotal() {
-    struct mallinfo mi = mallinfo();
-    return mi.uordblks;
-    }
-
-
-int getAllocDelta() {
-    int total = getAllocTotal();
-    
-    int delta = total - lastAllocCount;
-    
-    lastAllocCount = total;
-    
-    return delta;
-    }
-
-
-
-
-
 void initSpellCheck() {
-
-    int beforeAlloc = getAllocTotal();
     
-    
-    getAllocDelta();
-    
-    
+    double startTime = Time::getCurrentTime();
 
     char *dictName = 
         SettingsManager::getStringSetting( "spellingDictionary.ini", 
@@ -287,20 +245,9 @@ void initSpellCheck() {
     delete [] dictName;
     
     if( dictFile.exists() ) {
-        double startTime = Time::getCurrentTime();
-        
         allStrings = dictFile.readFileContents();
         
         if( allStrings != NULL ) {
-            
-            printf( "%d B allocated by loading dict file contents\n",
-                    getAllocDelta() );
-            
-            printf( "Reading dictionary file took %f sec\n",
-                    (Time::getCurrentTime() - startTime)*1000 );
-            
-
-            startTime = Time::getCurrentTime();
 
             int fullLen = strlen( allStrings );
             
@@ -324,9 +271,6 @@ void initSpellCheck() {
         
             numStrings = stringPointers.size();
 
-            printf( "%d B allocated by tokenizing word list\n", 
-                    getAllocDelta() );
-
             tableSize = numStrings;
             hashTable = new HashNode[ tableSize ];
             
@@ -334,10 +278,6 @@ void initSpellCheck() {
                 hashTable[i].string = NULL;
                 hashTable[i].next = NULL;
                 }
-
-            printf( "%d B allocated by allocating hash table\n", 
-                    getAllocDelta() );
-
 
             SimpleVector<char*> failedStrings;
             
@@ -353,70 +293,17 @@ void initSpellCheck() {
 
             numExtraNodes = failedStrings.size();
             extraNodes = new HashNode[ numExtraNodes ];
-            nextUnusedExtraNode = 0;
-            
-            printf( "%d failed insert strings\n",
-                    numExtraNodes );
-            
+            nextUnusedExtraNode = 0;            
 
             for( int i=0; i<failedStrings.size(); i++ ) {
                 insertCollisionStirng( failedStrings.getElementDirect( i ) );
                 }
-            
-
-            printf( "%d B allocated by inserting words into table\n", 
-                    getAllocDelta() );
 
 
-            printf( "Parsing dictionary file took %f ms, making %d nodes "
-                    "with %d collisions and %d new nodes\n",
-                    (Time::getCurrentTime() - startTime)*1000,
-                    numNodes, numCollisions, numNewNodes );
+            printf( "Parsing dictionary file of %d words took %f ms\n",
+                    numStrings, (Time::getCurrentTime() - startTime)*1000 );
             }
-        
-        printf( "%d B allocated by freeing vector\n", 
-                getAllocDelta() );
-
         }
-
-    double startTime = Time::getCurrentTime();
-    for( int i = 0; i<1000000; i++ ) {
-        checkWord( (char*)"monster" );
-        }
-    printf( "Looking up monster 1M times took  %f ms\n",
-            (Time::getCurrentTime() - startTime)*1000 );
-
-    startTime = Time::getCurrentTime();
-    for( int i = 0; i<1000000; i++ ) {
-        checkWord( (char*)"strawberry" );
-        }
-    printf( "Looking up strawberry 1M times took  %f ms\n",
-            (Time::getCurrentTime() - startTime)*1000 );
-
-
-    startTime = Time::getCurrentTime();
-    for( int i = 0; i<1000000; i++ ) {
-        checkWord( worstWord );
-        }
-    printf( "Looking worst word %s 1M times took  %f ms\n",
-            worstWord, (Time::getCurrentTime() - startTime)*1000 );
-
-
-    startTime = Time::getCurrentTime();
-    for( int i = 0; i<1000000; i++ ) {
-        checkWord( (char*)"Andrianampoinimerina" );
-        }
-    printf( "Looking up Andrianampoinimerina 1M times took  %f ms\n",
-            (Time::getCurrentTime() - startTime)*1000 );
-    
-    printf( "Test:  monster is in dictionary:  %d\n",
-            checkWord( (char*)"monster" ) );
-    printf( "Test:  monnnster is in dictionary:  %d\n",
-            checkWord( (char*)"monnnster" ) );
-    
-    
-    printf( "Dictionary total alloc = %d B\n",
-            getAllocTotal() - beforeAlloc );
     }
 
 
