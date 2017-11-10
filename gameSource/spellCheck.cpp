@@ -254,8 +254,18 @@ void initSpellCheck() {
             tableSize = list->size();
             hashTable = new HashNode[ tableSize ];
             
+            for( int i=0; i<tableSize; i++ ) {
+                hashTable[i].string = NULL;
+                hashTable[i].next = NULL;
+                }
+
             printf( "Allocating %f MiB of hash table space\n",
             sizeof( HashNode ) * tableSize / ( 1024.0 * 1024.0 ) );
+
+            mi = mallinfo();
+            printf( "%f MiB allocated after allocating hash table\n",
+                    mi.uordblks / ( 1024.0 * 1024.0 ) );            
+
 
             for( int i=0; i<list->size(); i++ ) {
                 insertString( list->getElementDirect( i ) );
