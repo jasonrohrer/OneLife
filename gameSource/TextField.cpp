@@ -908,7 +908,7 @@ void TextField::leftHit() {
 
     if( ! isShiftKeyDown() ) {
         if( isAnythingSelected() ) {
-            mCursorPosition = *mSelectionAdjusting;
+            mCursorPosition = mSelectionStart;
             }
 
         mSelectionStart = -1;
@@ -965,7 +965,7 @@ void TextField::rightHit() {
     
     if( ! isShiftKeyDown() ) {
         if( isAnythingSelected() ) {
-            mCursorPosition = *mSelectionAdjusting;
+            mCursorPosition = mSelectionEnd;
             }
             
         mSelectionStart = -1;

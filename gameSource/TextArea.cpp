@@ -1157,12 +1157,18 @@ void TextArea::upHit() {
         // up one line
     
         if( mCurrentLine > 0 ) {
-            mCurrentLine--;
-            mCursorPosition = 
-                mCursorTargetPositions.getElementDirect( mCurrentLine );
+            // check for match before moving up
+            // otherwise, we may have moved up from top of selection already
+            if( mCursorPosition == 
+                mCursorTargetPositions.getElementDirect( mCurrentLine ) ) {
             
-            if( mSmoothSlidingUp ) {
-                mVertSlideOffset += mFont->getFontHeight();
+                mCurrentLine--;
+                mCursorPosition = 
+                    mCursorTargetPositions.getElementDirect( mCurrentLine );
+                
+                if( mSmoothSlidingUp ) {
+                    mVertSlideOffset += mFont->getFontHeight();
+                    }
                 }
             }
         else {
@@ -1208,12 +1214,19 @@ void TextArea::downHit() {
         // down one line
 
         if( mCurrentLine < mCursorTargetPositions.size() - 1 ) {
-            mCurrentLine++;
-            mCursorPosition = 
-                mCursorTargetPositions.getElementDirect( mCurrentLine );
+            // check for match before moving down
+            // otherwise, we may have moved down from bottom of 
+            // selection already
+            if( mCursorPosition == 
+                mCursorTargetPositions.getElementDirect( mCurrentLine ) ) {
+
+                mCurrentLine++;
+                mCursorPosition = 
+                    mCursorTargetPositions.getElementDirect( mCurrentLine );
             
-            if( mSmoothSlidingDown ) {
-                mVertSlideOffset -= mFont->getFontHeight();
+                if( mSmoothSlidingDown ) {
+                    mVertSlideOffset -= mFont->getFontHeight();
+                    }
                 }
             }
         else {
@@ -1240,6 +1253,10 @@ void TextArea::cursorUpFromKey() {
             }
         }
     else {
+        if( isAnythingSelected() ) {
+            mCursorPosition = mSelectionStart;
+            mRecomputeCursorPositions = true;
+            }
         mSelectionStart = -1;
         mSelectionEnd = -1;
         }
@@ -1256,6 +1273,10 @@ void TextArea::cursorDownFromKey() {
             }
         }
     else {
+        if( isAnythingSelected() ) {
+            mCursorPosition = mSelectionEnd;
+            mRecomputeCursorPositions = true;
+            }
         mSelectionStart = -1;
         mSelectionEnd = -1;
         }
