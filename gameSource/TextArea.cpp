@@ -36,7 +36,8 @@ TextArea::TextArea( Font *inLabelFont, Font *inDisplayFont,
           mFirstVisibleLine( 0 ), 
           mLastVisibleLine( 0 ),
           mPointerDownInside( false ),
-          mStepsSinceTextChanged( 0 ) {
+          mStepsSinceTextChanged( 0 ),
+          mEverDrawn( false ) {
     
     mLastDrawnText = stringDuplicate( "" );
     
@@ -1026,7 +1027,11 @@ void TextArea::draw() {
 
     if( firstLine != 0 ) {
         // fade top shading in
-        if( mTopShadingFade < 1 ) {
+        if( !mEverDrawn ) {
+            // start faded in
+            mTopShadingFade = 1;
+            }
+        else if( mTopShadingFade < 1 ) {
             mTopShadingFade += 0.1 * frameRateFactor;
             if( mTopShadingFade > 1 ) {
                 mTopShadingFade = 1;
@@ -1046,7 +1051,11 @@ void TextArea::draw() {
 
     if( lastLine != lines.size() - 1 ) {
         // fade bottom shading in
-        if( mBottomShadingFade < 1 ) {
+        if( !mEverDrawn ) {
+            // start faded in
+            mBottomShadingFade = 1;
+            }
+        else if( mBottomShadingFade < 1 ) {
             mBottomShadingFade += 0.1 * frameRateFactor;
             if( mBottomShadingFade > 1 ) {
                 mBottomShadingFade = 1;
@@ -1116,6 +1125,7 @@ void TextArea::draw() {
 
 
     mSnapMove = false;
+    mEverDrawn = true;
     }
 
 
