@@ -35,7 +35,8 @@ TextArea::TextArea( Font *inLabelFont, Font *inDisplayFont,
           mMaxLinesShown( 0 ),
           mFirstVisibleLine( 0 ), 
           mLastVisibleLine( 0 ),
-          mPointerDownInside( false ) {
+          mPointerDownInside( false ),
+          mStepsSinceTextChanged( 0 ) {
     
     mLastDrawnText = stringDuplicate( "" );
     
@@ -150,6 +151,7 @@ void TextArea::step() {
             }
         }
     
+    mStepsSinceTextChanged++;
     }
 
 
@@ -584,6 +586,10 @@ void TextArea::draw() {
     
     delete [] mLastDrawnText;
     mLastDrawnText = stringDuplicate( mText );
+
+    if( textChange ) {
+        mStepsSinceTextChanged = 0;
+        }
     
     // if same text, check for cursor changes that should
     // result in additional smooth movement
@@ -690,9 +696,6 @@ void TextArea::draw() {
 
     for( int i=drawFirstLine; i<=drawLastLine; i++ ) {
 
-        setDrawColor( 1, 1, 1, 1 );
-
-        mFont->drawString( lines.getElementDirect( i ), pos, alignLeft );
 
         if( mSpellCheckOn ) {
             char *lineString = lines.getElementDirect( i );
@@ -702,20 +705,15 @@ void TextArea::draw() {
             double beforeWordX = 0;
             
             while( wordStartIndex < lineLen ) {
-                int wordCharIndex = wordStartIndex;
+                int wordEndIndex = wordStartIndex;
                 
-                while( wordCharIndex < lineLen &&
-                       lineString[ wordCharIndex ] != ' ' ) {
-                    wordCharIndex++;
-                    }
-
-                if( wordCharIndex == lineLen ) {
-                    // end of line
-                    wordCharIndex --;
+                while( wordEndIndex < lineLen &&
+                       lineString[ wordEndIndex ] != ' ' ) {
+                    wordEndIndex++;
                     }
                 
                 char *wordPointer = &( lineString[ wordStartIndex ] );
-                int wordLen = wordCharIndex - wordStartIndex;
+                int wordLen = wordEndIndex - wordStartIndex;
                 
                 char *wordCopy = stringDuplicate( wordPointer );
                 wordCopy[ wordLen ] = '\0';
@@ -729,21 +727,37 @@ void TextArea::draw() {
                     inDict = checkWord( wordCopy );
                     }
 
-                if( ! checkWord( wordCopy ) ) {
+                int cursorPos = cursorInLine.getElementDirect( i );
+                
+                if( cursorPos != -1 &&
+                    cursorPos >= wordStartIndex &&
+                    cursorPos <= wordEndIndex &&
+                    mStepsSinceTextChanged < 30 / frameRateFactor ) {
+                    
+                    // don't spell check word we're typing in
+                    inDict = true;
+                    }
+                
+
+                if( !inDict ) {
                     
                     double afterWordX = mFont->measureString( lineString,
-                                                              wordCharIndex );
+                                                              wordEndIndex );
                     
-                    setDrawColor( 1, 0, 0, 0.5 );
+                    setDrawColor( 1, 0, 0, 1.0 );
+                    double y = pos.y - 
+                        mFont->getFontHeight() / 4 - 
+                        mFont->getFontHeight() / 16;
+                    
                     drawRect( pos.x + beforeWordX,
-                              pos.y,
+                              y,
                               pos.x + afterWordX,
-                              pos.y + mFont->getFontHeight() / 8 );
+                              y + mFont->getFontHeight() / 16 );
                     }
                 delete [] wordCopy;
                 
                 
-                wordStartIndex = wordCharIndex + 1;
+                wordStartIndex = wordEndIndex;
                 
                 // skip spaces until start of next word
                 while( wordStartIndex < lineLen &&
@@ -758,7 +772,11 @@ void TextArea::draw() {
                 }
             }
         
+        setDrawColor( 1, 1, 1, 1 );
 
+        mFont->drawString( lines.getElementDirect( i ), pos, alignLeft );
+
+        
         if( cursorInLine.getElementDirect( i ) != -1 ) {
             
             char *beforeCursor = stringDuplicate( lines.getElementDirect( i ) );

@@ -323,7 +323,16 @@ void ReviewPage::makeActive( char inFresh ) {
         }
     
     mReviewNameField.setText( reviewName );
-    mReviewTextArea.setText( reviewText );
+
+    char *oldText = mReviewTextArea.getText();
+    
+    if( strcmp( oldText, reviewText ) != 0 ) {    
+        // keep cursor pos if text hasn't changed
+        mReviewTextArea.setText( reviewText );
+        }
+    
+    delete [] oldText;
+    
 
     delete [] reviewName;
     delete [] reviewText;
