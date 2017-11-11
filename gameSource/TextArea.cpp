@@ -7,6 +7,7 @@
 #include "minorGems/graphics/openGL/KeyboardHandlerGL.h"
 
 #include <math.h>
+#include <stdlib.h>
 
 #include "spellCheck.h"
 
@@ -597,9 +598,15 @@ void TextArea::draw() {
     if( !textChange && !mSnapMove )
     for( int i=firstLine; i<=lastLine; i++ ) {
         if( cursorInLine.getElementDirect( i ) != -1 ) {
-            if( mCurrentLine != i && mVertSlideOffset == 0 ) {
+            if( mCurrentLine != i && mVertSlideOffset == 0 && 
+                abs( mCurrentLine - i ) < linesPossible ) {
+                
                 // switched lines through horizontal cursor movement
                 // or mouse clicks
+                
+                // AND not already sliding
+                // AND jump isn't too big
+                
                 if( i < mCurrentLine && 
                     ( mSmoothSlidingUp ||
                       lastLine != mLastVisibleLine ) ) {
