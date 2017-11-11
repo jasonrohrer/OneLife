@@ -40,6 +40,8 @@ class ReviewPage : public ServerActionPage, public ActionListener {
 
         TextArea mReviewTextArea;
         
+        CheckboxButton mSpellcheckButton;
+
         TextButton mBackButton;
 
         

@@ -31,6 +31,7 @@ ReviewPage::ReviewPage( const char *inReviewServerURL )
               "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
               "1234567890"
               " !?$%*&()+-='\":;,.\r", NULL ),
+          mSpellcheckButton( 396, -200, 4 ),
           mBackButton( mainFont, -526, -140, translate( "backButton" ) ),
           mPostButton( mainFont, 526, -140, translate( "postButton" ) ),
           mCopyButton( mainFont, -526, 140, translate( "copy" ) ),
@@ -71,10 +72,14 @@ ReviewPage::ReviewPage( const char *inReviewServerURL )
     // add name field after so we can hit return in name field
     // and advance to text area without sending a return key to the text area
     addComponent( &mReviewTextArea );    
+    addComponent( &mSpellcheckButton );
+    
     addComponent( &mReviewNameField );
 
     addComponent( mRecommendChoice );
 
+
+    mSpellcheckButton.addActionListener( this );
 
     mReviewNameField.setMaxLength( 20 );
     mReviewTextArea.setMaxLength( 5000 );
@@ -173,6 +178,12 @@ void ReviewPage::actionPerformed( GUIComponent *inTarget ) {
         mReviewTextArea.setText( text );
         delete [] text;
         }
+    else if( inTarget == &mSpellcheckButton ) {
+        char spellCheck = mSpellcheckButton.getToggled();
+        
+        mReviewTextArea.enableSpellCheck( spellCheck );
+        SettingsManager::setSetting( "spellCheckOn", (int)spellCheck );
+        }
     else if( inTarget == &mPostButton ) {
         saveReview();
         mCopyButton.setActive( false );
@@ -209,6 +220,12 @@ void ReviewPage::draw( doublePair inViewCenter,
         mainFont->drawString( translate( "charLimit" ), pos, alignCenter );
         }
     
+    pos = mSpellcheckButton.getPosition();
+    
+    pos.x -= 24;
+    pos.y -= 2;
+    
+    mainFont->drawString( translate( "spellCheck" ), pos, alignRight );
     }
 
 
@@ -300,10 +317,12 @@ void ReviewPage::makeActive( char inFresh ) {
     mPasteButton.setActive( true );
     mClearButton.setActive( true );
 
+    
+    char spellCheck = SettingsManager::getIntSetting( "spellCheckOn", 1 );
+    
+    mReviewTextArea.enableSpellCheck( spellCheck );
 
-    mReviewTextArea.enableSpellCheck( 
-        SettingsManager::getIntSetting( "spellCheckOn", 1 ) );
-
+    mSpellcheckButton.setToggled( spellCheck );
     
 
     mReviewNameField.focus();

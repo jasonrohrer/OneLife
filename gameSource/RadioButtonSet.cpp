@@ -125,6 +125,7 @@ void RadioButtonSet::draw() {
         doublePair pos = mCheckboxes[i]->getPosition();
     
         pos.x += sep;
+        pos.y -= 2;
         
         mDisplayFont->drawString( mItemNames[i], pos, a );
         }
