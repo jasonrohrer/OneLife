@@ -84,6 +84,7 @@ class TextArea : public TextField {
         char mPointerDownInside;
         
         int mStepsSinceTextChanged;
+        char mEverDrawn;
         
 
         int getClickHitCursorIndex( float inX, float inY );
