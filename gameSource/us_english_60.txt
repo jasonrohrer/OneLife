@@ -1551,6 +1551,8 @@ Ayurveda
 Ayurveda's
 Ayyubid
 Ayyubid's
+Ayza
+Ayza's
 Azana
 Azana's
 Azania
@@ -12827,6 +12829,8 @@ Meyerbeer
 Meyerbeer's
 Meyers
 Meyers's
+Mez
+Mez's
 Mfume
 Mfume's
 Mg
@@ -14155,6 +14159,8 @@ Novokuznetsk
 Novokuznetsk's
 Novosibirsk
 Novosibirsk's
+Novy
+Novy's
 Noxzema
 Noxzema's
 Noyce
@@ -16389,6 +16395,8 @@ Rogers
 Rogers's
 Roget
 Roget's
+Rohrer
+Rohrer's
 Rojas
 Rojas's
 Roku
@@ -17361,6 +17369,8 @@ Septuagint's
 Septuagints
 Sequoya
 Sequoya's
+Serafin
+Serafin's
 Serb
 Serb's
 Serbia
