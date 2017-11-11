@@ -719,13 +719,6 @@ void TextArea::draw() {
                 wordCopy[ wordLen ] = '\0';
                 
                 char inDict = checkWord( wordCopy );
-                
-                if( !inDict && wordCopy[0] >= 65 && wordCopy[0] <= 90 ) {
-                    // upper case first letter
-                    // try lower case version
-                    wordCopy[0] += 32;
-                    inDict = checkWord( wordCopy );
-                    }
 
                 int cursorPos = cursorInLine.getElementDirect( i );
                 

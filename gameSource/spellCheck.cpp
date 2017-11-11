@@ -377,7 +377,24 @@ char checkWord( char *inWord ) {
         }
     
     if( allAllowed ) {
-        return lookupString( inWord );
+        char inDict = lookupString( inWord );
+
+        if( inDict ) {
+            return true;
+            }
+        else if( inWord[0] >= 65 && inWord[0] <= 90 ) {
+            // upper case first letter
+            char *workingString = stringDuplicate( inWord );
+            
+            // try lower case
+            workingString[0] += 32;
+            
+            inDict = lookupString( workingString );
+            delete [] workingString;
+            
+            return inDict;
+            }
+        return false;
         }
     else {
         char *workingString = stringDuplicate( inWord );
@@ -395,7 +412,18 @@ char checkWord( char *inWord ) {
         char inDict = true;
 
         for( int i=0; i<tokens->size(); i++ ) {
-            inDict = lookupString( tokens->getElementDirect( i ) );
+            char *token = tokens->getElementDirect( i );
+            
+            inDict = lookupString( token );
+            
+            if( ! inDict && token[0] >= 65 && token[0] <= 90 ) {
+                // upper case first letter
+                
+                // try lower case
+                token[0] += 32;
+            
+                inDict = lookupString( token );
+                }
             
             if( ! inDict ) {
                 break;
