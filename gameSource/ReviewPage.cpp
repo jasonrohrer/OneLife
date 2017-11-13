@@ -8,12 +8,20 @@
 
 #include "minorGems/game/game.h"
 
+#include "minorGems/network/web/URLUtils.h"
+#include "minorGems/crypto/hashes/sha1.h"
+
+
 #include "buttonStyle.h"
 #include "spellCheck.h"
+#include "accountHmac.h"
 
 
 extern Font *mainFont;
 extern Font *mainFontReview;
+
+extern char *userEmail;
+
 
 
 ReviewPage::ReviewPage( const char *inReviewServerURL )
@@ -132,9 +140,16 @@ void ReviewPage::saveReview() {
     }
 
 
+
 void ReviewPage::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mBackButton ) {        
         saveReview();
+        
+        if( mWebRequest != -1 ) {
+            clearWebRequest( mWebRequest );
+            mWebRequest = -1;
+            }
+        
         setSignal( "back" );
         }
     else if( inTarget == &mReviewNameField ) {
@@ -196,6 +211,77 @@ void ReviewPage::actionPerformed( GUIComponent *inTarget ) {
         //mBackButton.setActive( false );
 
         mPostButton.setVisible( false );
+        
+        clearActionParameters();
+        
+        
+        char *encodedEmail = URLUtils::urlEncode( userEmail );
+        setActionParameter( "email", encodedEmail );
+        delete [] encodedEmail;
+        
+        int reviewScore = 0;
+        if( mRecommendChoice->getSelectedItem() == 0 ) {
+            reviewScore = 1;
+            }
+        
+        setActionParameter( "review_score", reviewScore );
+        
+        char *name = mReviewNameField.getText();
+        
+        char *encodedName = URLUtils::urlEncode( name );
+        
+
+        setActionParameter( "review_name", encodedName );
+        delete [] encodedName;
+        
+
+        char *text = mReviewTextArea.getText();
+        
+        int textLen = strlen( text );
+        for( int i=0; i<textLen; i++ ) {
+            if( text[i] == '\r' ) {
+                text[i] = '\n';
+                }
+            }
+        
+
+        char *encodedText = URLUtils::urlEncode( text );
+        
+        setActionParameter( "review_text", encodedText );
+        delete [] encodedText;
+        
+        char *textSHA1 = computeSHA1Digest( text );
+
+        
+
+        char *nameSHA1 = computeSHA1Digest( name );
+
+        
+        
+        char *stringToHash = autoSprintf( "%d%s%s",
+                                          reviewScore, nameSHA1, textSHA1 );
+
+        delete [] name;
+        delete [] text;
+        delete [] textSHA1;
+        delete [] nameSHA1;
+        
+
+        char *pureKey = getPureAccountKey();
+        
+        char *hash = hmac_sha1( pureKey, stringToHash );
+        
+        delete [] pureKey;
+        delete [] stringToHash;
+        
+
+        setActionParameter( "hash_value", hash );
+        
+        delete [] hash;
+        
+
+
+        startRequest();
         }
     }
 
@@ -292,6 +378,21 @@ void ReviewPage::checkCanPaste() {
 void ReviewPage::step() {
     checkCanPost();
     checkCanPaste();
+
+    ServerActionPage::step();
+
+    if( isResponseReady() ) {
+        int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
+
+        if( reviewPosted ) {
+            setStatus( "reviewUpdated", false );
+            }
+        else {
+            setStatus( "reviewPosted", false );
+            }
+        
+        SettingsManager::setSetting( "reviewPosted", 1 );
+        }
     }
 
 
@@ -305,6 +406,9 @@ void ReviewPage::makeActive( char inFresh ) {
     if( ! isSpellCheckReady() ) {
         initSpellCheck();
         }
+    
+    setStatus( NULL, false );
+    mResponseReady = false;
     
 
     mReviewNameField.setActive( true );
@@ -355,6 +459,20 @@ void ReviewPage::makeActive( char inFresh ) {
 
     delete [] reviewName;
     delete [] reviewText;
+
+
+        
+    int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
+    
+    if( reviewPosted ) {
+        mPostButton.setLabelText( translate( "updateButton" ) );
+        mPostButton.setMouseOverTip( translate( "updateReviewTip" ) );
+        }
+    else {
+        mPostButton.setLabelText( translate( "postButton" ) );
+        mPostButton.setMouseOverTip( translate( "postReviewTip" ) );
+        }
+
     
 
     checkCanPost();

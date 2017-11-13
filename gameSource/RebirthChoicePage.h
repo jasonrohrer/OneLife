@@ -21,6 +21,8 @@ class RebirthChoicePage : public GamePage, public ActionListener {
 
         virtual void draw( doublePair inViewCenter, 
                            double inViewSize );
+
+        virtual void makeActive( char inFresh );
         
     protected:
         

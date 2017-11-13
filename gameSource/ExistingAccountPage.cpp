@@ -136,6 +136,16 @@ void ExistingAccountPage::makeActive( char inFresh ) {
     mEmailField.focus();
     mPasteButton.setVisible( false );
     mAtSignButton.setVisible( true );
+
+
+    int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
+    
+    if( reviewPosted ) {
+        mReviewButton.setLabelText( translate( "updateReviewButton" ) );
+        }
+    else {
+        mReviewButton.setLabelText( translate( "postReviewButton" ) );
+        }
     }
 
 

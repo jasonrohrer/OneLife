@@ -204,6 +204,11 @@ void ServerActionPage::makeActive( char inFresh ) {
 
 void ServerActionPage::startRequest() {
 
+    if( mWebRequest != -1 ) {
+        clearWebRequest( mWebRequest );
+        mWebRequest = -1;
+        }
+    
     mResponseParts.deallocateStringElements();
 
 

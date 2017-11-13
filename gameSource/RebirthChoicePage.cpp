@@ -79,3 +79,16 @@ void RebirthChoicePage::draw( doublePair inViewCenter,
     //drawMessage( "", pos );
     }
 
+
+
+void RebirthChoicePage::makeActive( char inFresh ) {
+    
+    int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
+    
+    if( reviewPosted ) {
+        mReviewButton.setLabelText( translate( "updateReviewButton" ) );
+        }
+    else {
+        mReviewButton.setLabelText( translate( "postReviewButton" ) );
+        }
+    }
