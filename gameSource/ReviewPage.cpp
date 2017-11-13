@@ -442,6 +442,9 @@ void ReviewPage::step() {
                 int seq = 0;
                 sscanf( seqString, "%d", &seq );
                 
+                delete [] seqString;
+                
+
                 mResponseReady = false;
                 
                 setActionName( "remove_review" );
