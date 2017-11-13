@@ -42,9 +42,12 @@ ReviewPage::ReviewPage( const char *inReviewServerURL )
           mSpellcheckButton( 396, -200, 4 ),
           mBackButton( mainFont, -526, -140, translate( "backButton" ) ),
           mPostButton( mainFont, 526, -140, translate( "postButton" ) ),
+          mRemoveButton( mainFont, 526, -40, translate( "removeButton" ) ),
           mCopyButton( mainFont, -526, 140, translate( "copy" ) ),
           mPasteButton( mainFont, -526, 40, translate( "paste" ) ),
-          mClearButton( mainFont, 526, 140, translate( "clear" ) ) {
+          mClearButton( mainFont, 526, 140, translate( "clear" ) ),
+          mGettingSequenceNumber( false ),
+          mRemoving( false ) {
 
     const char *choiceList[2] = { translate( "recommendYes" ),
                                   translate( "recommendNo" ) };
@@ -57,6 +60,7 @@ ReviewPage::ReviewPage( const char *inReviewServerURL )
     
     setButtonStyle( &mBackButton );
     setButtonStyle( &mPostButton );
+    setButtonStyle( &mRemoveButton );
     setButtonStyle( &mCopyButton );
     setButtonStyle( &mPasteButton );
     setButtonStyle( &mClearButton );
@@ -64,6 +68,7 @@ ReviewPage::ReviewPage( const char *inReviewServerURL )
 
     addComponent( &mBackButton );
     addComponent( &mPostButton );
+    addComponent( &mRemoveButton );
 
     addComponent( &mCopyButton );
     addComponent( &mPasteButton );
@@ -73,6 +78,7 @@ ReviewPage::ReviewPage( const char *inReviewServerURL )
 
     mBackButton.addActionListener( this );
     mPostButton.addActionListener( this );
+    mRemoveButton.addActionListener( this );
     mCopyButton.addActionListener( this );
     mPasteButton.addActionListener( this );
     mClearButton.addActionListener( this );
@@ -98,6 +104,7 @@ ReviewPage::ReviewPage( const char *inReviewServerURL )
 
 
     mPostButton.setMouseOverTip( translate( "postReviewTip" ) );
+    mRemoveButton.setMouseOverTip( translate( "removeReviewTip" ) );
 
 
     mCopyButton.setMouseOverTip( translate( "copyReviewTip" ) );
@@ -207,10 +214,12 @@ void ReviewPage::actionPerformed( GUIComponent *inTarget ) {
         mReviewNameField.setActive( false );
         mReviewTextArea.setActive( false );
         mRecommendChoice->setActive( false );
+        mSpellcheckButton.setActive( false );
         
-        //mBackButton.setActive( false );
-
+        mRemoveButton.setVisible( false );
         mPostButton.setVisible( false );
+
+        setActionName( "submit_review" );
         
         clearActionParameters();
         
@@ -281,6 +290,34 @@ void ReviewPage::actionPerformed( GUIComponent *inTarget ) {
         
 
 
+        mGettingSequenceNumber = false;
+        mRemoving = false;
+        startRequest();
+        }
+    else if( inTarget == &mRemoveButton ) {
+        saveReview();
+
+        mCopyButton.setActive( false );
+        mPasteButton.setActive( false );
+        mClearButton.setActive( false );
+        mReviewNameField.setActive( false );
+        mReviewTextArea.setActive( false );
+        mRecommendChoice->setActive( false );
+        mSpellcheckButton.setActive( false );
+
+        mRemoveButton.setVisible( false );
+        mPostButton.setVisible( false );
+
+        setActionName( "get_sequence_number" );
+        
+        clearActionParameters();
+
+        char *encodedEmail = URLUtils::urlEncode( userEmail );
+        setActionParameter( "email", encodedEmail );
+        delete [] encodedEmail;
+        
+        mGettingSequenceNumber = true;
+        mRemoving = false;
         startRequest();
         }
     }
@@ -382,16 +419,71 @@ void ReviewPage::step() {
     ServerActionPage::step();
 
     if( isResponseReady() ) {
-        int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
 
-        if( reviewPosted ) {
-            setStatus( "reviewUpdated", false );
-            }
-        else {
-            setStatus( "reviewPosted", false );
-            }
+        if( ! mGettingSequenceNumber && ! mRemoving ) {
+            
+            int reviewPosted = SettingsManager::getIntSetting( 
+                "reviewPosted", 0 );
+            
+            if( reviewPosted ) {
+                setStatus( "reviewUpdated", false );
+                }
+            else {
+                setStatus( "reviewPosted", false );
+                }
         
-        SettingsManager::setSetting( "reviewPosted", 1 );
+            SettingsManager::setSetting( "reviewPosted", 1 );
+            }
+        else if( ! mRemoving ) {
+            
+            char *seqString = getResponse( 0 );
+            
+            if( seqString != NULL ) {
+                int seq = 0;
+                sscanf( seqString, "%d", &seq );
+                
+                mResponseReady = false;
+                
+                setActionName( "remove_review" );
+        
+                clearActionParameters();
+        
+        
+                char *encodedEmail = URLUtils::urlEncode( userEmail );
+                setActionParameter( "email", encodedEmail );
+                delete [] encodedEmail;
+        
+                setActionParameter( "sequence_number", seq );
+                
+        
+        
+                char *stringToHash = autoSprintf( "%d", seq );
+
+                
+                char *pureKey = getPureAccountKey();
+                
+                char *hash = hmac_sha1( pureKey, stringToHash );
+                
+                delete [] pureKey;
+                delete [] stringToHash;
+                
+                
+                setActionParameter( "hash_value", hash );
+        
+                delete [] hash;
+        
+
+
+                mGettingSequenceNumber = false;
+                mRemoving = true;
+                startRequest();
+                }
+            }
+        else if( mRemoving ) {
+            setStatus( "reviewRemoved", false );
+            
+            SettingsManager::setSetting( "reviewPosted", 0 );
+            }
         }
     }
 
@@ -414,7 +506,7 @@ void ReviewPage::makeActive( char inFresh ) {
     mReviewNameField.setActive( true );
     mReviewTextArea.setActive( true );
     mRecommendChoice->setActive( true );
-
+    mSpellcheckButton.setActive( true );
     
 
     mCopyButton.setActive( true );
@@ -467,10 +559,12 @@ void ReviewPage::makeActive( char inFresh ) {
     if( reviewPosted ) {
         mPostButton.setLabelText( translate( "updateButton" ) );
         mPostButton.setMouseOverTip( translate( "updateReviewTip" ) );
+        mRemoveButton.setVisible( true );
         }
     else {
         mPostButton.setLabelText( translate( "postButton" ) );
         mPostButton.setMouseOverTip( translate( "postReviewTip" ) );
+        mRemoveButton.setVisible( false );
         }
 
     

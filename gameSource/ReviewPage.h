@@ -46,13 +46,17 @@ class ReviewPage : public ServerActionPage, public ActionListener {
 
         
         TextButton mPostButton;
+        TextButton mRemoveButton;
         
 
         TextButton mCopyButton;
         TextButton mPasteButton;
 
         TextButton mClearButton;
-
+        
+        char mGettingSequenceNumber;
+        char mRemoving;
+        
 
         void switchFields();
 

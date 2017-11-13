@@ -50,6 +50,9 @@ postReviewTip "POST TO ONEHOURONELIFE.COM"
 updateButton "UPDATE"
 updateReviewTip "UPDATE ON ONEHOURONELIFE.COM"
 
+removeButton "REMOVE"
+removeReviewTip "REMOVE FROM ONEHOURONELIFE.COM"
+
 
 copyReviewTip "COPY REVIEW TEXT TO CLIPBOARD"
 copySelectionTip "COPY SELECTION TO CLIPBOARD"
@@ -60,6 +63,7 @@ requestDenied "POST REQUEST DENIED"
 
 reviewPosted "REVIEW HAS BEEN POSTED"
 reviewUpdated "REVIEW HAS BEEN UPDATED"
+reviewRemoved "REVIEW HAS BEEN REMOVED"
 
 
 
