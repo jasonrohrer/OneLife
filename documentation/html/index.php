@@ -1,5 +1,8 @@
 <?php include( "header.php" ); ?>
 
+<?php include( "reviewPages/reviewCount.php" ); ?>
+
+
 <center>
 
 
@@ -22,6 +25,7 @@
 </tr>
 </table>
 
+<a href="#reviews"><?php echo $rs_reviewCount;?> Player Reviews</a>, <?php echo $rs_positivePercent;?>% Positive 
 <br>
 <br>
 <center><img src=lifeLine.png border=0 width=712 height=222></center>
@@ -60,12 +64,50 @@ Sign up for release announcement emails: <input type="text" name="email" value="
 </form>
 <br>
 
-<br>
-
 </center>
-<br>
+
+     
+<center>     
+<table border=0 cellspacing=0><tr>
+
+<?php
+if( $rs_reviewCount > 0 ) {
+?>
+
+
+<td>
+<font size=6 id="reviews">Recent Reviews:</font><br><br>
+<?php
+include( "reviewPages/recentReviews.html" );
+?>
+</td>
+
+<?php
+    }
+if( $rs_reviewCount > 16 ) {
+?>
+<td width=80></td>    
+<td>
+<font size=6>Top Playtime Reviews:</font><br><br>
+<?php
+include( "reviewPages/playtimeReviews.html" );
+?>
+</td>
+
+<?php
+    }
+?>
+      
+</tr>
+</table>
+</center>
+
 <br>
 
+<br>
+
+<br>
+     
 
 <?php 
 $artSummaryOnly = 1;
