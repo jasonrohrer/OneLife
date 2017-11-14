@@ -25,7 +25,17 @@
 </tr>
 </table>
 
-<a href="#reviews"><?php echo $rs_reviewCount;?> Player Reviews</a>, <?php echo $rs_positivePercent;?>% Positive 
+     
+<?php
+if( $rs_reviewCount > 0 ) {
+?>
+
+<a href="#reviews"><?php echo $rs_reviewCount;?> Player Reviews</a>, <?php echo $rs_positivePercent;?>% Positive
+
+<?php
+    }
+?>
+
 <br>
 <br>
 <center><img src=lifeLine.png border=0 width=712 height=222></center>
