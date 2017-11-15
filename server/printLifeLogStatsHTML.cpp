@@ -364,7 +364,7 @@ int main( int inNumArgs, char **inArgs ) {
             
             printf( 
                 "INSERT INTO reviewServer_user_stats SET " 
-                "email='%s', sequence_number=0, "
+                "email='%s', sequence_number=1, "
                 "first_game_date=FROM_UNIXTIME( %.0f ), "
                 "last_game_date=FROM_UNIXTIME( %.0f ), "
                 "last_game_seconds=%d, game_count=%d, game_total_seconds=%d, "
