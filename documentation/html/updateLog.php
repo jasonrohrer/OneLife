@@ -44,7 +44,7 @@ $numFiles = sizeof( $files );
 
 
 echo
-"<center><table width=100% border=0><tr><td align=left>[<a href='https://github.com/jasonrohrer/OneLife/blob/master/documentation/changeLog.txt'>Code Changes</a>]</td><td align=center><font size=5>One Hour One Life - Content Update Log</font></td><td align=right></td></tr></table></center>";
+"<center><table width=100% border=0><tr><td align=left width=25%>[<a href='https://github.com/jasonrohrer/OneLife/blob/master/documentation/changeLog.txt'>Code Changes</a>]</td><td align=center width=50%><font size=5>One Hour One Life - Content Update Log</font></td><td align=right width=25%></td></tr></table></center>";
 echo "<br><br><br>";
 
 
