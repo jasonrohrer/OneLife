@@ -5,9 +5,6 @@
 #include "minorGems/system/Time.h"
 
 
-#include <malloc.h>
-
-
 /*
 
 Hash table based dictionary implementation.
