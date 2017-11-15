@@ -28,9 +28,13 @@
      
 <?php
 if( $rs_reviewCount > 0 ) {
+    $reviewWord = "Reviews";
+    if( $rs_reviewCount == 1 ) {
+        $reviewWord = "Review";
+        }
 ?>
 
-<a href="#reviews"><?php echo $rs_reviewCount;?> Player Reviews</a>, <?php echo $rs_positivePercent;?>% Positive
+<a href="#reviews"><?php echo $rs_reviewCount;?> Player <?php echo $reviewWord;?></a>, <?php echo $rs_positivePercent;?>% Positive
 
 <?php
     }
