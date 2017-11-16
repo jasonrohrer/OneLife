@@ -11,6 +11,14 @@ Version 37     ???
 
 
 
+Server Fixes:
+
+--Food capacity decays down to 4 at old age instead of 2.
+
+
+
+
+
 Version 35     2017-November-15
 
 --Sub-containers, one-level deep (basket in a cart) now supported.
