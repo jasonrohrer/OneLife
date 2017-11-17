@@ -621,6 +621,15 @@ unsigned char TextField::processCharacter( unsigned char inASCII ) {
             return 0;
             }
         }
+    else {
+        // no allowed list specified 
+        
+        if( processedChar == '\r' ) {
+            // \r only permitted if it is listed explicitly
+            return 0;
+            }
+        }
+        
 
     return processedChar;
     }

@@ -10,6 +10,8 @@
 
 // fires action performed when ENTER hit inside field, but only if
 // \r is not an allowed character.
+// Note that \r has to be specifically listed in the inAllowedChars list
+// otherwise, it is forbidden by default.
 // (can be toggled to fire on every text change or every focus loss)
 class TextField : public PageComponent, public ActionListenerList {
         
