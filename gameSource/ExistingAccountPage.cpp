@@ -30,8 +30,8 @@ ExistingAccountPage::ExistingAccountPage()
         : mEmailField( mainFont, 0, 128, 10, false, 
                        translate( "email" ),
                        NULL,
-                       // forbid only spaces
-                       " "),
+                       // forbid only spaces and newlines
+                       " \r\n" ),
           mKeyField( mainFont, 0, 0, 15, true,
                      translate( "accountKey" ),
                      // allow only ticket code characters

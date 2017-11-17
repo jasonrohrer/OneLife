@@ -7,6 +7,9 @@ Version 37     ???
 
 --Windows can't handle pointers larger than 32x32, which caused a crash in
   bigPointer support on large displays when we tried to load a 40x40 cursor.
+  Thanks Erik O.
+
+--Fixed login error if you hit ENTER to leave the email field.  Thanks Erik O.
 
 
 

@@ -527,8 +527,8 @@ void ReviewPage::makeActive( char inFresh ) {
     mReviewNameField.focus();
 
 
-    char *reviewName = SettingsManager::getStringSetting( "reviewName", "" );
-    char *reviewText = SettingsManager::getStringSetting( "reviewText", "" );
+    char *reviewName = SettingsManager::getSettingContents( "reviewName", "" );
+    char *reviewText = SettingsManager::getSettingContents( "reviewText", "" );
     
     int reviewRecommend = 
         SettingsManager::getIntSetting( "reviewRecommend", 1 );
