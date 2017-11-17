@@ -582,6 +582,10 @@ class LivingLifePage : public GamePage {
         SimpleVector<float> mPrevMouseOverCellFades;
         
 
+        SimpleVector<GridPos> mPrevMouseClickCells;
+        SimpleVector<float> mPrevMouseClickCellFades;
+        
+
         float mLastMouseOverFade;
 
         SpriteHandle mChalkBlotSprite;

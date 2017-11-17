@@ -3492,6 +3492,46 @@ void LivingLifePage::draw( doublePair inViewCenter,
         setDrawColor( border, border, border, 0.75 * maxFade * fade );
         drawSprite( mCellBorderSprite, cellPos );
         }
+
+
+
+
+    if( mShowHighlights )
+    for( int i=0; i<mPrevMouseClickCells.size(); i++ ) {
+        float fade = mPrevMouseClickCellFades.getElementDirect( i );
+        
+        if( fade <= 0 ) {
+            continue;
+            }
+
+        GridPos prev = mPrevMouseClickCells.getElementDirect( i );
+        
+        if( prev.x < 0 || prev.x >= mMapD
+            ||
+            prev.y < 0 || prev.y >= mMapD ) {
+            
+            continue;
+            }
+        
+            
+        int worldY = prev.y + mMapOffsetY - mMapD / 2;
+        
+        int screenY = CELL_D * worldY;
+        
+        int screenX = 
+            CELL_D * ( prev.x + mMapOffsetX - mMapD / 2 );
+        
+        float border = 1;
+        float maxFade = maxEmptyCellFade;
+        
+            
+        doublePair cellPos = { (double)screenX, (double)screenY };
+            
+        cellPos.x += 2;
+        
+        setDrawColor( border, border, border, 0.75 * maxFade * fade );
+        drawSprite( mCellBorderSprite, cellPos );
+        }
     
     
     //int worldXStart = xStart + mMapOffsetX - mMapD / 2;
@@ -5654,6 +5694,23 @@ void LivingLifePage::step() {
             }
         else {
             *( mPrevMouseOverCellFades.getElement( i ) ) = f;
+            }
+        }
+
+
+    for( int i=0; i<mPrevMouseClickCellFades.size(); i++ ) {
+        float f = mPrevMouseClickCellFades.getElementDirect( i );
+        
+        f -= 0.02 * frameRateFactor;
+        
+        
+        if( f <= 0 ) {
+            mPrevMouseClickCellFades.deleteElement( i );
+            mPrevMouseClickCells.deleteElement( i );
+            i--;
+            }
+        else {
+            *( mPrevMouseClickCellFades.getElement( i ) ) = f;
             }
         }
     
@@ -10234,6 +10291,11 @@ void LivingLifePage::makeActive( char inFresh ) {
     mPrevMouseOverCells.deleteAll();
     mPrevMouseOverCellFades.deleteAll();
 
+    mPrevMouseClickCells.deleteAll();
+    mPrevMouseClickCellFades.deleteAll();
+
+    
+
     if( !inFresh ) {
         return;
         }
@@ -10905,6 +10967,12 @@ char LivingLifePage::getCellBlocksWalking( int inMapX, int inMapY ) {
 void LivingLifePage::pointerDown( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
+
+    char modClick = false;
+    
+    if( mEKeyDown || isLastMouseButtonRight() ) {
+        modClick = true;
+        }
     
     mLastMouseOverID = 0;
     
@@ -11066,6 +11134,32 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         floorDestID = mMapFloors[ mapY * mMapD + mapX ];
         
         destNumContained = mMapContainedStacks[ mapY * mMapD + mapX ].size();
+        
+
+        // if holding something, and this is a set-down action
+        // show click reaction
+        if( modClick &&
+            ourLiveObject->holdingID != 0 ) {
+        
+            int mapI = mapY * mMapD + mapX;
+            
+            int id = mMap[mapI];
+            
+            if( id == 0 || ! getObject( id )->permanent ) {
+                
+                // empty cell, or something we can swap held with
+                
+                GridPos clickPos = { mapX, mapY };
+                
+                mPrevMouseClickCells.push_back( clickPos );
+                mPrevMouseClickCellFades.push_back( 1 );
+                
+                // instantly fade current cell to get it out of the way
+                // of our click indicator
+                mCurMouseOverCellFade = 0;
+                }
+            
+            }
         }
 
 
@@ -11073,11 +11167,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     nextActionEating = false;
     nextActionDropping = false;
     
-    char modClick = false;
-    
-    if( mEKeyDown || isLastMouseButtonRight() ) {
-        modClick = true;
-        }
+
 
     if( p.hitSelf ) {
         // click on self
