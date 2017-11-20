@@ -455,47 +455,9 @@ double sigmoid( double inInput, double inKnee ) {
 
 
 
-
-static int getMapBiomeIndex( int inX, int inY, 
-                             int *outSecondPlaceIndex = NULL,
-                             double *outSecondPlaceGap = NULL ) {
-    
-    int secondPlaceBiome;
-    
-    int dbBiome = biomeDBGet( inX, inY,
-                              &secondPlaceBiome,
-                              outSecondPlaceGap );
-    if( dbBiome != -1 ) {
-
-        int index = getBiomeIndex( dbBiome );
-        
-        if( index != -1 ) {
-            // biome still exists!
-
-            char secondPlaceFailed = false;
-            
-            if( outSecondPlaceIndex != NULL ) {
-                int secondIndex = getBiomeIndex( secondPlaceBiome );
-
-                if( secondIndex != -1 ) {
-                    
-                    *outSecondPlaceIndex = secondIndex;
-                    }
-                else {
-                    secondPlaceFailed = true;
-                    }
-                }
-
-            if( ! secondPlaceFailed ) {
-                return index;
-                }
-            }
-        
-        // else a biome or second place in biome.db that isn't in game anymore
-        // ignore it
-        }
-    
-
+static int computeMapBiomeIndex( int inX, int inY, 
+                                 int *outSecondPlaceIndex = NULL,
+                                 double *outSecondPlaceGap = NULL ) {
     int pickedBiome = -1;
         
     double maxValue = -DBL_MAX;
@@ -540,9 +502,74 @@ static int getMapBiomeIndex( int inX, int inY,
         *outSecondPlaceGap = secondPlaceGap;
         }
     
+    return pickedBiome;
+    }
 
-    if( dbBiome == -1 ) {
-        // not stored, store it
+
+
+
+static int getMapBiomeIndex( int inX, int inY, 
+                             int *outSecondPlaceIndex = NULL,
+                             double *outSecondPlaceGap = NULL ) {
+    
+    int secondPlaceBiome = -1;
+    
+    int dbBiome = biomeDBGet( inX, inY,
+                              &secondPlaceBiome,
+                              outSecondPlaceGap );
+    if( dbBiome != -1 ) {
+
+        int index = getBiomeIndex( dbBiome );
+        
+        if( index != -1 ) {
+            // biome still exists!
+
+            char secondPlaceFailed = false;
+            
+            if( outSecondPlaceIndex != NULL ) {
+                int secondIndex = getBiomeIndex( secondPlaceBiome );
+
+                if( secondIndex != -1 ) {
+                    
+                    *outSecondPlaceIndex = secondIndex;
+                    }
+                else {
+                    secondPlaceFailed = true;
+                    }
+                }
+
+            if( ! secondPlaceFailed ) {
+                return index;
+                }
+            }
+        else {
+            dbBiome = -1;
+            }
+        
+        // else a biome or second place in biome.db that isn't in game anymore
+        // ignore it
+        }
+    
+        
+    int secondPlace = -1;
+    
+    double secondPlaceGap = 0;
+
+
+    int pickedBiome = computeMapBiomeIndex( inX, inY, 
+                                            &secondPlace, &secondPlaceGap );
+
+    
+    if( outSecondPlaceIndex != NULL ) {
+        *outSecondPlaceIndex = secondPlace;
+        }
+    if( outSecondPlaceGap != NULL ) {
+        *outSecondPlaceGap = secondPlaceGap;
+        }
+
+
+    if( dbBiome == -1 || secondPlaceBiome == -1 ) {
+        // not stored, OR some part of stored stale, re-store it
 
         secondPlaceBiome = 0;
         if( secondPlace != -1 ) {
@@ -954,6 +981,35 @@ void clearRecentPlacements() {
     writeRecentPlacements();
     }
 
+
+
+
+static void printBiomeSamples() {
+    int *biomeSamples = new int[ numBiomes ];
+    
+    for( int i=0; i<numBiomes; i++ ) {
+        biomeSamples[i] = 0;
+        }
+    
+    JenkinsRandomSource sampleRandSource;
+
+    int numSamples = 10000;
+
+    int range = 2000;
+
+    for( int i=0; i<numSamples; i++ ) {
+        int x = sampleRandSource.getRandomBoundedInt( -range, range );
+        int y = sampleRandSource.getRandomBoundedInt( -range, range );
+        
+        biomeSamples[ computeMapBiomeIndex( x, y ) ] ++;
+        }
+    
+    for( int i=0; i<numBiomes; i++ ) {
+        printf( "Biome %d:  %d (%.2f)\n",
+                biomes[ i ], biomeSamples[i], 
+                biomeSamples[i] / (double)numSamples );
+        }
+    }
 
 
 
@@ -1545,9 +1601,16 @@ void initMap() {
 
 
     
+    
+    
+
+    
     // for debugging the map
+    // printBiomeSamples();
     //outputMapImage();
     }
+
+
 
 
 
