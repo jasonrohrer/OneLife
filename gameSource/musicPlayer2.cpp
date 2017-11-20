@@ -375,6 +375,15 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
         }
     
 
+    if( getOGGChannels( musicOGG ) == 1 ) {
+        // mono
+        // coercion rules don't apply to float samples
+        // SO, what we get is just L samples and all zero R samples
+
+        memcpy( samplesR, samplesL, numRead * sizeof( float ) );
+        }
+   
+
     // now copy samples into Uint8 buffer
     // while also adjusting loudness of whole mix
     char loudnessChanging = false;

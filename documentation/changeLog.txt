@@ -13,6 +13,9 @@ Version 37     ???
 
 --Click-to-drop now highlights target square of drop.  Thanks Casey C.
 
+--Fixed OGG player to handle mono OGG files (was only playing in L channel).
+
+
 
 
 

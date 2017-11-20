@@ -15,6 +15,8 @@ OGGHandle openOGG( File *inOggFile );
 OGGHandle openOGG( unsigned char *inAllBytes, int inLength );
 
 
+int getOGGChannels( OGGHandle inOGG );
+
 
 int getOGGTotalSamples( OGGHandle inOGG );
 

@@ -32,6 +32,14 @@ OGGHandle openOGG( unsigned char *inAllBytes, int inLength ) {
 
 
 
+int getOGGChannels( OGGHandle inOGG ) {
+    stb_vorbis *v = (stb_vorbis*)inOGG;
+
+    return stb_vorbis_get_info( v ).channels;
+    }
+
+
+
 int getOGGTotalSamples( OGGHandle inOGG ) {
     stb_vorbis *v = (stb_vorbis*)inOGG;
 
