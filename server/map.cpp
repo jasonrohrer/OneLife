@@ -984,7 +984,7 @@ void clearRecentPlacements() {
 
 
 
-static void printBiomeSamples() {
+void printBiomeSamples() {
     int *biomeSamples = new int[ numBiomes ];
     
     for( int i=0; i<numBiomes; i++ ) {
