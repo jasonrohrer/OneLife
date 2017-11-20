@@ -91,6 +91,136 @@ static float lastMouseY = 0;
 
 
 
+typedef struct ClickRecord {
+        int x, y;
+        // 0 for empty record
+        int count;
+        timeSec_t lastClickTime;
+    } ClickRecord;
+
+
+
+#define NUM_CLICK_RECORDS 100
+
+static ClickRecord clicks[ NUM_CLICK_RECORDS ];
+
+// radius of nearby click locations that get incremented on a click
+static int clickRadius = 5;
+
+// how many clicks a home location has to have before being considered a home
+static int minClicksForHome = 20;
+
+
+// clicks older than this get decremented once click elsewhere
+static double staleTimeThreshold = 5 * 60;
+
+
+static void clearClicks() {
+    for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
+        clicks[i].count = 0;
+        }
+    }
+
+static void addClick( int inX, int inY ) {
+    int foundIndex = -1;
+    
+    timeSec_t t = game_timeSec();
+    
+
+    for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
+        if( clicks[i].count > 0 ) {
+            
+            if( clicks[i].x == inX && clicks[i].y == inY ) {
+                foundIndex = i;
+                }
+            else {
+                if( abs( clicks[i].x - inX ) < clickRadius &&
+                    abs( clicks[i].y - inY ) < clickRadius ) {
+                    // these close neighbors get incremented too
+                    clicks[i].count ++;
+                    clicks[i].lastClickTime = t;
+                    }
+                else if( t - clicks[i].lastClickTime > staleTimeThreshold ) {
+                    // this click hasn't been visited in a long time
+                    clicks[i].count --;
+                    }
+                }
+            }
+        }
+    
+    if( foundIndex != -1 ) {
+        clicks[foundIndex].count ++;
+        clicks[foundIndex].lastClickTime = t;
+        }
+    else {
+        // insert new record
+        
+        for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
+            if( clicks[i].count == 0 ) {
+                clicks[i].x = inX;
+                clicks[i].y = inY;
+                clicks[i].count = 1;
+                clicks[i].lastClickTime = t;
+                return;
+                }
+            }
+        
+        // no empty spots
+
+        // find spot with fewest clicks
+        // and and oldest spot, on tie
+        int minClicks = 9999999;
+        timeSec_t oldestTime = t;
+        
+        int mostStaleIndex = -1;
+
+        for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
+            if( clicks[i].count < minClicks ) {
+                minClicks = clicks[i].count;
+                oldestTime = clicks[i].lastClickTime;
+                mostStaleIndex = i;
+                }
+            else if( clicks[i].count == minClicks &&
+                     clicks[i].lastClickTime < oldestTime ) {
+                oldestTime = clicks[i].lastClickTime;
+                mostStaleIndex = i;
+                }
+            }
+        
+        // replace stale
+        clicks[ mostStaleIndex ].x = inX;
+        clicks[ mostStaleIndex ].y = inY;
+        clicks[ mostStaleIndex ].count = 1;
+        clicks[ mostStaleIndex ].lastClickTime = t;
+        }
+    }
+
+
+
+
+// returns pointer to record, NOT destroyed by caller, or NULL if 
+// home unknown
+static ClickRecord *getHomeLocation() {
+    int maxClicks = 0;
+    int maxIndex = -1;
+    
+    for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
+        if( clicks[i].count > maxClicks ) {
+            maxClicks = clicks[i].count;
+            maxIndex = i;
+            }
+        }
+    
+    if( maxIndex != -1 && maxClicks >= minClicksForHome ) {
+        return &( clicks[ maxIndex ] );
+        }
+    else {
+        return NULL;
+        }
+    }
+
+
+
 
 // base speed for animations that aren't speeded up or slowed down
 // when player moving at a different speed, anim speed is modified
@@ -4200,6 +4330,42 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                    o->speechFade, widthLimit );
         }
     
+
+    /*
+      // for debugging home location
+
+    ClickRecord *home = getHomeLocation();
+    
+    if( home != NULL ) {
+        setDrawColor( 1, 0, 0, 0.5 );
+        
+        int screenY = CELL_D * home->y;
+        
+        int screenX = CELL_D * home->x;
+        
+        doublePair pos = { (double)screenX, (double)screenY };
+        
+        drawSquare( pos, CELL_D * .45 );
+
+        int startX = CELL_D * ourLiveObject->currentPos.x;
+        int startY = CELL_D * ourLiveObject->currentPos.y;
+        
+        doublePair start = { (double)startX, (double)startY };
+
+        doublePair delta = sub( pos, start );
+        
+        int numSteps = length( delta ) / CELL_D;
+
+        delta = mult( delta, 1.0 / numSteps );
+        
+        for( int i=0; i<numSteps; i++ ) {
+            
+            pos = add( start, mult( delta, i ) );
+            
+            drawSquare( pos, CELL_D * .25 );
+            }
+        }
+    */
 
         
     //doublePair lastChunkCenter = { (double)( CELL_D * mMapOffsetX ), 
@@ -10378,6 +10544,8 @@ void LivingLifePage::makeActive( char inFresh ) {
         delete [] nextActionMessageToSend;
         nextActionMessageToSend = NULL;
         }
+
+    clearClicks();
     }
 
 
@@ -11062,7 +11230,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     int mapX = clickDestX - mMapOffsetX + mMapD / 2;
     int mapY = clickDestY - mMapOffsetY + mMapD / 2;
     
-
+    
+    if( !mouseAlreadyDown ) {
+        addClick( clickDestX, clickDestY );
+        }
+    
     
     if( mouseAlreadyDown && 
         mouseDownFrames >  
