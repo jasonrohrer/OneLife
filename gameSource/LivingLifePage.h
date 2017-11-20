@@ -30,6 +30,10 @@
 #define NUM_HINT_SHEETS 4
 
 
+#define NUM_HOME_ARROWS 8
+
+
+
 typedef struct LiveObject {
         int id;
 
@@ -450,10 +454,21 @@ class LivingLifePage : public GamePage {
         SpriteHandle mCellFillSprite;
         
 
+        SpriteHandle mHomeSlipSprite;
+        SpriteHandle mHomeArrowSprites[ NUM_HOME_ARROWS ];
+        SpriteHandle mHomeArrowErasedSprites[ NUM_HOME_ARROWS ];
+        
+
         // offset from current view center
         doublePair mNotePaperHideOffset;
         doublePair mNotePaperPosOffset;
         doublePair mNotePaperPosTargetOffset;
+
+
+        doublePair mHomeSlipHideOffset;
+        doublePair mHomeSlipPosOffset;
+        doublePair mHomeSlipPosTargetOffset;
+
         
         SimpleVector<char*> mLastKnownNoteLines;
         

@@ -220,6 +220,42 @@ static ClickRecord *getHomeLocation() {
     }
 
 
+// returns -1 if no home needs to be shown (too close or not enough data
+// otherwise, returns 0..7 index of arrow
+static int getHomeDir( doublePair inCurrentPlayerPos ) {
+    ClickRecord *c = getHomeLocation();
+    
+    if( c == NULL ) {
+        return -1;
+        }
+    
+    doublePair homePos = { (double)c->x, (double)c->y };
+    
+    doublePair vector = sub( homePos, inCurrentPlayerPos );
+
+    if( length( vector ) < 5 ) {
+        // too close
+        return -1;
+        }
+    
+    
+    double a = angle( vector );
+
+    // north is 0
+    a -= M_PI / 2; 
+
+    // center for rounding
+    a -= M_PI / 8;
+    
+    if( a <  - M_PI / 8 ) {
+        a += 2 * M_PI;
+        }
+    
+    int index = lrint( 8 * a / ( 2 * M_PI ) );
+    
+    return index;
+    }
+
 
 
 // base speed for animations that aren't speeded up or slowed down
@@ -1202,6 +1238,7 @@ LivingLifePage::LivingLifePage()
           mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
           mCellBorderSprite( loadWhiteSprite( "cellBorder.tga" ) ),
           mCellFillSprite( loadWhiteSprite( "cellFill.tga" ) ),
+          mHomeSlipSprite( loadSprite( "homeSlip.tga", false ) ),
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
@@ -1259,6 +1296,11 @@ LivingLifePage::LivingLifePage()
     
     mNotePaperHideOffset.x = -242;
     mNotePaperHideOffset.y = -420;
+
+
+    mHomeSlipHideOffset.x = 0;
+    mHomeSlipHideOffset.y = -360;
+
 
     for( int i=0; i<3; i++ ) {    
         mHungerSlipShowOffsets[i].x = -540;
@@ -1398,6 +1440,12 @@ LivingLifePage::LivingLifePage()
                            mHungerBarErasedSprites );
 
     
+    splitAndExpandSprites( "homeArrows.tga", NUM_HOME_ARROWS, 
+                           mHomeArrowSprites );
+    splitAndExpandSprites( "homeArrowsErased.tga", NUM_HOME_ARROWS, 
+                           mHomeArrowErasedSprites );
+
+
     mCurrentArrowI = 0;
     mCurrentArrowHeat = -1;
     mCurrentDes = NULL;
@@ -1524,7 +1572,7 @@ LivingLifePage::~LivingLifePage() {
     freeSprite( mNotePaperSprite );
     freeSprite( mChalkBlotSprite );
     freeSprite( mPathMarkSprite );
-
+    freeSprite( mHomeSlipSprite );
     
     for( int i=0; i<4; i++ ) {
         freeSprite( mGroundOverlaySprite[i] );
@@ -1550,6 +1598,12 @@ LivingLifePage::~LivingLifePage() {
         freeSprite( mHungerBarSprites[i] );
         freeSprite( mHungerBarErasedSprites[i] );
         }
+    
+    for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
+        freeSprite( mHomeArrowSprites[i] );
+        freeSprite( mHomeArrowErasedSprites[i] );
+        }
+
 
 
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
@@ -4486,6 +4540,36 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
 
 
+    doublePair slipPos = add( mHomeSlipPosOffset, lastScreenViewCenter );
+    
+    if( ! equal( mHomeSlipPosOffset, mHomeSlipHideOffset ) ) {
+        setDrawColor( 1, 1, 1, 1 );
+        drawSprite( mHomeSlipSprite, slipPos );
+
+        
+        doublePair arrowPos = slipPos;
+        
+        arrowPos.y += 35;
+
+        if( ourLiveObject != NULL ) {
+            
+            int arrowIndex = getHomeDir( ourLiveObject->currentPos );
+            
+            if( arrowIndex != -1 ) {
+                
+                toggleMultiplicativeBlend( true );
+                
+                setDrawColor( 1, 1, 1, 1 );
+                
+                drawSprite( mHomeArrowSprites[arrowIndex], arrowPos );
+                
+                toggleMultiplicativeBlend( false );
+                }
+            }
+        }
+
+
+
     doublePair notePos = add( mNotePaperPosOffset, lastScreenViewCenter );
 
     if( ! equal( mNotePaperPosOffset, mNotePaperHideOffset ) ) {
@@ -5926,6 +6010,54 @@ void LivingLifePage::step() {
     
     LiveObject *ourObject = getOurLiveObject();
 
+    if( ourObject != NULL ) {    
+        int homeArrow = getHomeDir( ourObject->currentPos );
+        
+        if( homeArrow != -1 ) {
+            mHomeSlipPosTargetOffset.y = mHomeSlipHideOffset.y + 68;
+            }
+        else {
+            mHomeSlipPosTargetOffset.y = mHomeSlipHideOffset.y;
+            }
+        }
+
+    
+
+    if( ! equal( mHomeSlipPosOffset, mHomeSlipPosTargetOffset ) ) {
+        doublePair delta = 
+            sub( mHomeSlipPosTargetOffset, mHomeSlipPosOffset );
+        
+        double d = distance( mHomeSlipPosTargetOffset, mHomeSlipPosOffset );
+        
+        
+        if( d <= 1 ) {
+            mHomeSlipPosOffset = mHomeSlipPosTargetOffset;
+            }
+        else {
+            int speed = 4;
+
+            if( d < 8 ) {
+                speed = lrint( frameRateFactor * d / 2 );
+                }
+
+            if( speed > d ) {
+                speed = floor( d );
+                }
+
+            if( speed < 1 ) {
+                speed = 1;
+                }
+            
+            doublePair dir = normalize( delta );
+            
+            mHomeSlipPosOffset = 
+                add( mHomeSlipPosOffset,
+                     mult( dir, speed ) );
+            }        
+        }
+    
+    
+    
 
     if( ourObject != NULL ) {
         char newTrigger = false;
@@ -10481,6 +10613,11 @@ void LivingLifePage::makeActive( char inFresh ) {
     mNotePaperPosOffset = mNotePaperHideOffset;
 
     mNotePaperPosTargetOffset = mNotePaperPosOffset;
+
+    
+    mHomeSlipPosOffset = mHomeSlipHideOffset;
+    mHomeSlipPosTargetOffset = mHomeSlipPosOffset;
+    
 
     mLastKnownNoteLines.deallocateStringElements();
     mErasedNoteChars.deleteAll();
