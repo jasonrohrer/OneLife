@@ -11,6 +11,8 @@ Version 37     ???
 
 --Fixed login error if you hit ENTER to leave the email field.  Thanks Erik O.
 
+--Click-to-drop now highlights target square of drop.  Thanks Casey C.
+
 
 
 
