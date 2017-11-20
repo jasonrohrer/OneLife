@@ -96,6 +96,9 @@ graphics/hintSheet4.tga \
 graphics/bigPointer.tga \
 graphics/cellBorder.tga \
 graphics/cellFill.tga \
+graphics/homeArrows.tga \
+graphics/homeArrowsErased.tga \
+graphics/homeSlip.tga \
 
 
 
