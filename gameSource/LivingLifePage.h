@@ -263,6 +263,16 @@ typedef struct OldArrow {
 
 
 
+typedef struct HomeArrow {
+        // true for at most one arrow, the current one
+        char solid;
+        
+        // fade for erased arrows
+        float fade;
+    } HomeArrow;
+        
+
+
 // for objects moving in-transit in special cases where we can't store
 // them in the map (if they're moving onto an occupied space that should
 // only change when they're done moving)
@@ -457,6 +467,8 @@ class LivingLifePage : public GamePage {
         SpriteHandle mHomeSlipSprite;
         SpriteHandle mHomeArrowSprites[ NUM_HOME_ARROWS ];
         SpriteHandle mHomeArrowErasedSprites[ NUM_HOME_ARROWS ];
+        
+        HomeArrow mHomeArrowStates[ NUM_HOME_ARROWS ];
         
 
         // offset from current view center

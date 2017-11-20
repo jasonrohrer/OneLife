@@ -244,8 +244,6 @@ static int getHomeDir( doublePair inCurrentPlayerPos ) {
     // north is 0
     a -= M_PI / 2; 
 
-    // center for rounding
-    a -= M_PI / 8;
     
     if( a <  - M_PI / 8 ) {
         a += 2 * M_PI;
@@ -4555,16 +4553,67 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             int arrowIndex = getHomeDir( ourLiveObject->currentPos );
             
+            if( arrowIndex == -1 || ! mHomeArrowStates[arrowIndex].solid ) {
+                // solid change
+
+                // fade any solid
+                
+                int foundSolid = -1;
+                for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
+                    if( mHomeArrowStates[i].solid ) {
+                        mHomeArrowStates[i].solid = false;
+                        foundSolid = i;
+                        }
+                    }
+                if( foundSolid != -1 ) {
+                    for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
+                        if( i != foundSolid ) {
+                            mHomeArrowStates[i].fade -= 0.0625;
+                            printf( "Fade %d down to %f\n",
+                                    i,
+                                    mHomeArrowStates[i].fade );
+                            
+                            if( mHomeArrowStates[i].fade < 0 ) {
+                                mHomeArrowStates[i].fade = 0;
+                                }
+                            }
+                        }                
+                    }
+                }
+            
+            if( arrowIndex != -1 ) {
+                mHomeArrowStates[arrowIndex].solid = true;
+                mHomeArrowStates[arrowIndex].fade = 1.0;
+                }
+            
+            toggleMultiplicativeBlend( true );
+            
+            toggleAdditiveTextureColoring( true );
+        
+            for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
+                HomeArrow a = mHomeArrowStates[i];
+                
+                if( ! a.solid ) {
+                    
+                    float v = 1.0 - a.fade;
+                    setDrawColor( v, v, v, 1 );
+                    drawSprite( mHomeArrowErasedSprites[i], arrowPos );
+                    }
+                }
+            
+            toggleAdditiveTextureColoring( false );
+
+
+            
             if( arrowIndex != -1 ) {
                 
-                toggleMultiplicativeBlend( true );
                 
                 setDrawColor( 1, 1, 1, 1 );
                 
                 drawSprite( mHomeArrowSprites[arrowIndex], arrowPos );
-                
-                toggleMultiplicativeBlend( false );
                 }
+                            
+            toggleMultiplicativeBlend( false );
             }
         }
 
@@ -6032,6 +6081,15 @@ void LivingLifePage::step() {
         
         if( d <= 1 ) {
             mHomeSlipPosOffset = mHomeSlipPosTargetOffset;
+
+            if( equal( mHomeSlipPosTargetOffset, mHomeSlipHideOffset ) ) {
+                // fully hidden
+                // clear all arrow states
+                for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
+                    mHomeArrowStates[i].solid = false;
+                    mHomeArrowStates[i].fade = 0;
+                    }
+                }
             }
         else {
             int speed = 4;
@@ -10683,6 +10741,12 @@ void LivingLifePage::makeActive( char inFresh ) {
         }
 
     clearClicks();
+
+
+    for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
+        mHomeArrowStates[i].solid = false;
+        mHomeArrowStates[i].fade = 0;
+        }
     }
 
 
