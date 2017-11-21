@@ -1039,13 +1039,37 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
     if( speed < 0.1 ) {
         speed = 0.1;
         }
+
+    char riding = false;
     
     if( inPlayer->holdingID > 0 ) {
         ObjectRecord *r = getObject( inPlayer->holdingID );
 
-        speed *= r->speedMult;
+        if( r->clothing == 'n' ) {
+            // clothing only changes your speed when it's worn
+            speed *= r->speedMult;
+            }
+        
+        if( r->rideable ) {
+            riding = true;
+            }
         }
     
+
+    if( !riding ) {
+        // clothing can affect speed
+
+        for( int i=0; i<NUM_CLOTHING_PIECES; i++ ) {
+            ObjectRecord *c = clothingByIndex( inPlayer->clothing, i );
+            
+            if( c != NULL ) {
+                
+                speed *= c->speedMult;
+                }
+            }
+        }
+    
+
 
     return speed;
     }
