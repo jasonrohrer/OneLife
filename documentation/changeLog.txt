@@ -15,6 +15,11 @@ Version 37     ???
 
 --Fixed OGG player to handle mono OGG files (was only playing in L channel).
 
+--Added an automatic HOME compass (based on area where you conducted the most
+  activity.  Thanks Paul V.
+
+--Improved camera to not move at all if player is moving around center of
+  screen.  Thanks Bennett F.
 
 
 
