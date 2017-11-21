@@ -24,6 +24,9 @@ Version 37     ???
 --Clothing speed multiplier applies when clothing is worn (but not when riding
   something else).
 
+--Each character now has their own speed multiplier (some people can be faster
+  or slower).  Thanks Mez.
+
 
 
 

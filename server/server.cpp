@@ -1040,6 +1040,10 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
         speed = 0.1;
         }
 
+    // apply character's speed mult
+    speed *= getObject( inPlayer->displayID )->speedMult;
+    
+
     char riding = false;
     
     if( inPlayer->holdingID > 0 ) {
