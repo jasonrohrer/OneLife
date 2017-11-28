@@ -114,6 +114,11 @@ static int minClicksForHome = 20;
 // clicks older than this get decremented once click elsewhere
 static double staleTimeThreshold = 5 * 60;
 
+// number of seconds that must pass before repeat click on same spot
+// registers as a new click
+static double repeatClickTime = 5;
+
+
 
 static void clearClicks() {
     for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
@@ -132,25 +137,26 @@ static void addClick( int inX, int inY ) {
             
             if( clicks[i].x == inX && clicks[i].y == inY ) {
                 foundIndex = i;
-                }
-            else {
-                if( abs( clicks[i].x - inX ) < clickRadius &&
-                    abs( clicks[i].y - inY ) < clickRadius ) {
-                    // these close neighbors get incremented too
-                    clicks[i].count ++;
-                    clicks[i].lastClickTime = t;
-                    }
-                else if( t - clicks[i].lastClickTime > staleTimeThreshold ) {
-                    // this click hasn't been visited in a long time
-                    clicks[i].count --;
-                    }
+                break;
                 }
             }
         }
+
+    int actuallyClickedIndex = -1;
     
     if( foundIndex != -1 ) {
-        clicks[foundIndex].count ++;
-        clicks[foundIndex].lastClickTime = t;
+
+        if( t - clicks[foundIndex].lastClickTime >= repeatClickTime ) {
+            // haven't clicked here directly too recently
+
+            // we don't want to keep registering clicks for multiple
+            // clicks on same berry bush when gobbling berries, for example.
+
+            clicks[foundIndex].count ++;
+            clicks[foundIndex].lastClickTime = t;
+        
+            actuallyClickedIndex = foundIndex;
+            }
         }
     else {
         // insert new record
@@ -161,38 +167,70 @@ static void addClick( int inX, int inY ) {
                 clicks[i].y = inY;
                 clicks[i].count = 1;
                 clicks[i].lastClickTime = t;
-                return;
+
+                actuallyClickedIndex = i;
+                break;
                 }
             }
         
-        // no empty spots
-
-        // find spot with fewest clicks
-        // and and oldest spot, on tie
-        int minClicks = 9999999;
-        timeSec_t oldestTime = t;
-        
-        int mostStaleIndex = -1;
-
-        for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
-            if( clicks[i].count < minClicks ) {
-                minClicks = clicks[i].count;
-                oldestTime = clicks[i].lastClickTime;
-                mostStaleIndex = i;
+        if( actuallyClickedIndex == -1 ) {
+            
+            // no empty spots
+            
+            // find spot with fewest clicks
+            // and and oldest spot, on tie
+            int minClicks = 9999999;
+            timeSec_t oldestTime = t;
+            
+            int mostStaleIndex = -1;
+            
+            for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
+                if( clicks[i].count < minClicks ) {
+                    minClicks = clicks[i].count;
+                    oldestTime = clicks[i].lastClickTime;
+                    mostStaleIndex = i;
+                    }
+                else if( clicks[i].count == minClicks &&
+                         clicks[i].lastClickTime < oldestTime ) {
+                    oldestTime = clicks[i].lastClickTime;
+                    mostStaleIndex = i;
+                    }
                 }
-            else if( clicks[i].count == minClicks &&
-                     clicks[i].lastClickTime < oldestTime ) {
-                oldestTime = clicks[i].lastClickTime;
-                mostStaleIndex = i;
-                }
+            
+            // replace stale
+            clicks[ mostStaleIndex ].x = inX;
+            clicks[ mostStaleIndex ].y = inY;
+            clicks[ mostStaleIndex ].count = 1;
+            clicks[ mostStaleIndex ].lastClickTime = t;
+            actuallyClickedIndex = mostStaleIndex;
             }
-        
-        // replace stale
-        clicks[ mostStaleIndex ].x = inX;
-        clicks[ mostStaleIndex ].y = inY;
-        clicks[ mostStaleIndex ].count = 1;
-        clicks[ mostStaleIndex ].lastClickTime = t;
         }
+
+    
+        
+    if( actuallyClickedIndex != -1 ) {
+        // something clicked directly
+
+        // process others too
+        for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
+            if( i != actuallyClickedIndex && clicks[i].count > 0 ) {
+                
+                if( abs( clicks[i].x - inX ) < clickRadius &&
+                    abs( clicks[i].y - inY ) < clickRadius ) {
+                    // these close neighbors get incremented too
+                    clicks[i].count ++;
+                    // BUT their last click time is not set
+                    // until they actually get clicked directly again
+                    }
+                else if( t - clicks[i].lastClickTime > 
+                         staleTimeThreshold ) {
+                    // this far-away click hasn't been visited 
+                    // in a long time
+                    clicks[i].count --;
+                    }
+                }
+            }
+        }    
     }
 
 
