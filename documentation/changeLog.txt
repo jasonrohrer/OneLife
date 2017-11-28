@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 37     ???
+Version 37     2017-November-28
 
 --Windows can't handle pointers larger than 32x32, which caused a crash in
   bigPointer support on large displays when we tried to load a 40x40 cursor.
@@ -16,7 +16,7 @@ Version 37     ???
 --Fixed OGG player to handle mono OGG files (was only playing in L channel).
 
 --Added an automatic HOME compass (based on area where you conducted the most
-  activity.  Thanks Paul V.
+  activity).  Thanks Paul V.
 
 --Improved camera to not move at all if player is moving around center of
   screen.  Thanks Bennett F.
