@@ -2259,7 +2259,19 @@ void processLoggedInPlayer( Socket *inSock,
     int numPlayers = players.size();
                             
     SimpleVector<LiveObject*> parentChoices;
-                            
+    
+
+    // lower the bad mother limit in low-population situations
+    // so that babies aren't stuck with the same low-skill mother over and
+    // over
+    int badMotherLimit = 1 + numPlayers;
+
+    if( badMotherLimit > 10 ) {
+        badMotherLimit = 10;
+        }
+    
+    
+
     for( int i=0; i<numPlayers; i++ ) {
         LiveObject *player = players.getElement( i );
         
@@ -2319,7 +2331,7 @@ void processLoggedInPlayer( Socket *inSock,
                         }
                     }
                 }
-            if( canHaveBaby && numPastBabies >= 10 ) {
+            if( canHaveBaby && numPastBabies >= badMotherLimit ) {
                 int numDead = 0;
                 
                 for( int b=0; b < numPastBabies; b++ ) {
@@ -2379,20 +2391,34 @@ void processLoggedInPlayer( Socket *inSock,
         if( femaleID != -1 ) {
             newObject.displayID = femaleID;
             }
-        }
     
 
-    if( numOfAge == 0 ) {
-        // all existing babies are good spawn spot for Eve
-                    
+        // all existing babies are good spawn spot for Eve       
         for( int i=0; i<numPlayers; i++ ) {
             LiveObject *player = players.getElement( i );
             
             if( player->error ) {
                 continue;
                 }
-
+            
             if( computeAge( player ) < babyAge ) {
+                parentChoices.push_back( player );
+                }
+            }
+
+        // if no babies exist to spawn Eve near, spawn her next to a random
+        // adult
+        // This situation is only likely in low-pop situations, and we
+        // want people to play together if possible (and not spawn Eve
+        // off in the wilderness)
+        if( parentChoices.size() == 0 ) {
+            for( int i=0; i<numPlayers; i++ ) {
+                LiveObject *player = players.getElement( i );
+                
+                if( player->error ) {
+                    continue;
+                    }
+
                 parentChoices.push_back( player );
                 }
             }

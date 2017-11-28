@@ -21,12 +21,6 @@ Version 37     ???
 --Improved camera to not move at all if player is moving around center of
   screen.  Thanks Bennett F.
 
---Clothing speed multiplier applies when clothing is worn (but not when riding
-  something else).
-
---Each character now has their own speed multiplier (some people can be faster
-  or slower).  Thanks Mez.
-
 
 
 
@@ -34,6 +28,17 @@ Server Fixes:
 
 --Food capacity decays down to 4 at old age instead of 2.
 
+--Clothing speed multiplier applies when clothing is worn (but not when riding
+  something else).
+
+--Each character now has their own speed multiplier (some people can be faster
+  or slower).  Thanks Mez.
+
+--Improved bad mother detection in low-population situations.  A lone Eve now
+  only needs to have two babies die before a new Eve is spawned, and that new
+  Eve is spawned near the existing Eve, instead of in the wilderness, so that
+  they can play together.  The bad mother threashold increases from 2 up to 10
+  dead babies as the server population increases.
 
 
 
