@@ -2391,34 +2391,20 @@ void processLoggedInPlayer( Socket *inSock,
         if( femaleID != -1 ) {
             newObject.displayID = femaleID;
             }
+        }
     
 
-        // all existing babies are good spawn spot for Eve       
+    if( numOfAge == 0 ) {
+        // all existing babies are good spawn spot for Eve
+                    
         for( int i=0; i<numPlayers; i++ ) {
             LiveObject *player = players.getElement( i );
             
             if( player->error ) {
                 continue;
                 }
-            
+
             if( computeAge( player ) < babyAge ) {
-                parentChoices.push_back( player );
-                }
-            }
-
-        // if no babies exist to spawn Eve near, spawn her next to a random
-        // adult
-        // This situation is only likely in low-pop situations, and we
-        // want people to play together if possible (and not spawn Eve
-        // off in the wilderness)
-        if( parentChoices.size() == 0 ) {
-            for( int i=0; i<numPlayers; i++ ) {
-                LiveObject *player = players.getElement( i );
-                
-                if( player->error ) {
-                    continue;
-                    }
-
                 parentChoices.push_back( player );
                 }
             }
