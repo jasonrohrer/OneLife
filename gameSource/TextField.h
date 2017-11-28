@@ -70,6 +70,10 @@ class TextField : public PageComponent, public ActionListenerList {
         // (default to having an effect)
         void setIgnoreArrowKeys( char inIgnore );
         
+        
+        // index in string of character that cursor is in front of
+        int getCursorPosition();
+        
 
         // brings cursor back to start of string
         void cursorReset();

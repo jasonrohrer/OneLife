@@ -55,6 +55,7 @@ RadioButtonSet.cpp \
 EditorScenePage.cpp \
 groundSprites.cpp \
 ../commonSource/fractalNoise.cpp \
+spellCheck.cpp \
 
 
 GAME_GRAPHICS = \

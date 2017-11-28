@@ -3,6 +3,7 @@
 #include "ageControl.h"
 
 #include "zoomView.h"
+#include "spellCheck.h"
 
 
 #include "minorGems/game/game.h"
@@ -658,6 +659,10 @@ EditorObjectPage::EditorObjectPage()
 
 EditorObjectPage::~EditorObjectPage() {
 
+    if( isSpellCheckReady() ) {
+        freeSpellCheck();
+        }
+
     delete [] mCurrentObject.description;
     delete [] mCurrentObject.slotPos;
     delete [] mCurrentObject.slotVert;
@@ -1241,6 +1246,9 @@ void EditorObjectPage::showVertRotButtons() {
 void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
     
     if( inTarget == &mDescriptionField ) {
+        
+        mStepsSinceDescriptionChange = 0;
+        
         char *text = mDescriptionField.getText();
         
 
@@ -3723,6 +3731,117 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     
 
 
+    if( isSpellCheckReady() ) {
+        char *desc = mDescriptionField.getText();
+        
+        SimpleVector<char*> *words = tokenizeString( desc );
+        
+        if( mDescriptionField.isFocused() ) {
+            int cursorPos = mDescriptionField.getCursorPosition();
+            
+            int descLen = strlen( desc );
+
+            if( cursorPos > 0 &&
+                cursorPos < descLen &&
+                desc[ cursorPos ] == ' ' ) {
+                cursorPos--;
+                }
+                
+            int wordFirstChar = cursorPos;
+            int wordLastChar = cursorPos;
+            
+
+
+            // walk back to space
+            while( wordFirstChar - 1 >= 0 &&
+                   desc[ wordFirstChar - 1 ] != ' ' ) {
+                wordFirstChar--;
+                }
+
+            // walk forward to space
+            while( wordLastChar + 1  < descLen &&
+                   desc[ wordLastChar + 1 ] != ' ' ) {
+                wordLastChar++;
+                }
+            
+            if( wordLastChar == descLen ) {
+                wordLastChar --;
+                }
+
+            if( wordFirstChar < wordLastChar &&
+                // show spelling error in cursor word if enough
+                // time has passed (pause in typing)
+                mStepsSinceDescriptionChange < 60 / frameRateFactor ) {
+
+                SimpleVector<char> wordVec;
+                
+                for( int i=wordFirstChar; i<=wordLastChar; i++ ) {
+                    wordVec.push_back( desc[i] );
+                    }
+                char *word = wordVec.getElementString();
+                
+                // remove word from list
+                
+                for( int i=0; i<words->size(); i++ ) {
+                    
+                    if( strcmp( words->getElementDirect( i ), word ) == 0 ) {
+                        delete [] words->getElementDirect( i );
+                        
+                        words->deleteElement( i );
+                        break;
+                        }
+                    }
+                delete [] word;
+                }
+            }
+        
+
+        delete [] desc;
+        
+        SimpleVector<char*> badWords;
+        
+        for( int i=0; i<words->size(); i++ ) {
+            if( ! checkWord( words->getElementDirect( i ) ) ) {
+                badWords.push_back( 
+                    stringDuplicate( words->getElementDirect( i ) ) );
+                }
+            }
+        
+
+        words->deallocateStringElements();
+        delete words;
+        
+        
+        
+
+        if( badWords.size() > 0 ) {
+            badWords.push_front( stringDuplicate( "Spelling: " ) );
+            
+            char **badArray = badWords.getElementArray();
+            
+            char *badString = join( badArray, badWords.size(), " " );
+            
+            delete [] badArray;
+            
+            doublePair pos = mDescriptionField.getPosition();
+            
+            pos.x -= 157;
+            pos.y += 19;
+            
+            setDrawColor( 1, 0, 0, 1 );
+            
+            smallFont->drawString( badString, pos, alignLeft );
+            delete [] badString;
+            }
+        
+
+        badWords.deallocateStringElements();
+        }
+
+
+
+
+
     doublePair zoomPos = { lastMouseX, lastMouseY };
 
     pos.x = -500;
@@ -3734,6 +3853,8 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
 
 void EditorObjectPage::step() {
+    
+    mStepsSinceDescriptionChange ++;
     
     int creationSoundID = mCreationSoundWidget.getSoundUsage().id;
     
@@ -3800,6 +3921,12 @@ void EditorObjectPage::makeActive( char inFresh ) {
         return;
         }
     
+    if( ! isSpellCheckReady() ) {
+        initSpellCheck();
+        }
+
+    mStepsSinceDescriptionChange = 0;
+
     mSpritePicker.redoSearch( false );
     mObjectPicker.redoSearch( false );
 

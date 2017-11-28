@@ -245,6 +245,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         char mDragging;
         
+        int mStepsSinceDescriptionChange;
         
         double getClosestSpriteOrSlot( float inX, float inY,
                                        int *outSprite,

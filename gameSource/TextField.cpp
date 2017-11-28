@@ -715,6 +715,11 @@ void TextField::insertString( char *inString ) {
 
 
 
+int TextField::getCursorPosition() {
+    return mCursorPosition;
+    }
+
+
 void TextField::cursorReset() {
     mCursorPosition = 0;
     }
