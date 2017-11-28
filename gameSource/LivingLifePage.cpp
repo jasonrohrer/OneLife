@@ -95,7 +95,10 @@ typedef struct ClickRecord {
         int x, y;
         // 0 for empty record
         int count;
+        // time of last click on self or nearby cells
         timeSec_t lastClickTime;
+        // time of last click directly on this cell
+        timeSec_t lastDirectClickTime;
     } ClickRecord;
 
 
@@ -117,6 +120,29 @@ static double staleTimeThreshold = 5 * 60;
 // number of seconds that must pass before repeat click on same spot
 // registers as a new click
 static double repeatClickTime = 5;
+
+
+
+// returns pointer to record, NOT destroyed by caller, or NULL if 
+// home unknown
+static ClickRecord *getHomeLocation() {
+    int maxClicks = 0;
+    int maxIndex = -1;
+    
+    for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
+        if( clicks[i].count > maxClicks ) {
+            maxClicks = clicks[i].count;
+            maxIndex = i;
+            }
+        }
+    
+    if( maxIndex != -1 && maxClicks >= minClicksForHome ) {
+        return &( clicks[ maxIndex ] );
+        }
+    else {
+        return NULL;
+        }
+    }
 
 
 
@@ -146,13 +172,14 @@ static void addClick( int inX, int inY ) {
     
     if( foundIndex != -1 ) {
 
-        if( t - clicks[foundIndex].lastClickTime >= repeatClickTime ) {
+        if( t - clicks[foundIndex].lastDirectClickTime >= repeatClickTime ) {
             // haven't clicked here directly too recently
 
             // we don't want to keep registering clicks for multiple
             // clicks on same berry bush when gobbling berries, for example.
 
             clicks[foundIndex].count ++;
+            clicks[foundIndex].lastDirectClickTime = t;
             clicks[foundIndex].lastClickTime = t;
         
             actuallyClickedIndex = foundIndex;
@@ -167,6 +194,7 @@ static void addClick( int inX, int inY ) {
                 clicks[i].y = inY;
                 clicks[i].count = 1;
                 clicks[i].lastClickTime = t;
+                clicks[i].lastDirectClickTime = t;
 
                 actuallyClickedIndex = i;
                 break;
@@ -177,31 +205,46 @@ static void addClick( int inX, int inY ) {
             
             // no empty spots
             
-            // find spot with fewest clicks
-            // and and oldest spot, on tie
-            int minClicks = 9999999;
+            // find oldest spot with not-very-many clicks
+
+            // only consider spot with half as many clicks as home
+            int maxClicks = 9999999;
+
+            ClickRecord *home = getHomeLocation();
+            
+            if( home != NULL ) {
+                maxClicks = home->count / 2;
+            
+                if( maxClicks < 2 ) {
+                    maxClicks = 2;
+                    }
+                }
+            
+
             timeSec_t oldestTime = t;
             
             int mostStaleIndex = -1;
             
             for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
-                if( clicks[i].count < minClicks ) {
-                    minClicks = clicks[i].count;
-                    oldestTime = clicks[i].lastClickTime;
-                    mostStaleIndex = i;
-                    }
-                else if( clicks[i].count == minClicks &&
-                         clicks[i].lastClickTime < oldestTime ) {
+                if( clicks[i].count <= maxClicks &&
+                    clicks[i].lastClickTime < oldestTime ) {
+                    
                     oldestTime = clicks[i].lastClickTime;
                     mostStaleIndex = i;
                     }
                 }
             
+            if( mostStaleIndex == -1 ) {
+                mostStaleIndex = 0;
+                }
+
             // replace stale
             clicks[ mostStaleIndex ].x = inX;
             clicks[ mostStaleIndex ].y = inY;
             clicks[ mostStaleIndex ].count = 1;
             clicks[ mostStaleIndex ].lastClickTime = t;
+            clicks[ mostStaleIndex ].lastDirectClickTime = t;
+            
             actuallyClickedIndex = mostStaleIndex;
             }
         }
@@ -219,8 +262,7 @@ static void addClick( int inX, int inY ) {
                     abs( clicks[i].y - inY ) < clickRadius ) {
                     // these close neighbors get incremented too
                     clicks[i].count ++;
-                    // BUT their last click time is not set
-                    // until they actually get clicked directly again
+                    clicks[i].lastClickTime = t;
                     }
                 else if( t - clicks[i].lastClickTime > 
                          staleTimeThreshold ) {
@@ -236,26 +278,6 @@ static void addClick( int inX, int inY ) {
 
 
 
-// returns pointer to record, NOT destroyed by caller, or NULL if 
-// home unknown
-static ClickRecord *getHomeLocation() {
-    int maxClicks = 0;
-    int maxIndex = -1;
-    
-    for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
-        if( clicks[i].count > maxClicks ) {
-            maxClicks = clicks[i].count;
-            maxIndex = i;
-            }
-        }
-    
-    if( maxIndex != -1 && maxClicks >= minClicksForHome ) {
-        return &( clicks[ maxIndex ] );
-        }
-    else {
-        return NULL;
-        }
-    }
 
 
 // returns -1 if no home needs to be shown (too close or not enough data
@@ -3951,6 +3973,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             }
         }
+
+    
     
 
     // reset flags so that only drawn objects get flagged
@@ -4453,6 +4477,25 @@ void LivingLifePage::draw( doublePair inViewCenter,
             pos = add( start, mult( delta, i ) );
             
             drawSquare( pos, CELL_D * .25 );
+            }
+        }
+    */
+    
+    /*
+    // for debugging click counts
+    for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
+        if( clicks[i].count > 0 ) {
+            setDrawColor( 1, 0, 0, 1 );
+            
+            doublePair pos;
+            pos.x = clicks[i].x * CELL_D;
+            pos.y = clicks[i].y * CELL_D;
+            
+            char *string = autoSprintf( "%d", clicks[i].count );
+            
+            mainFont->drawString( string, pos, alignCenter );
+            
+            delete [] string;
             }
         }
     */
