@@ -5,6 +5,8 @@ if [ $# -lt 2 ] ; then
    echo "Example: $0  v37  v39"
    echo 
    echo "NOTE:  The old release folder must exist in this directory diffing."
+   echo 
+   echo "NOTE:  Assumes old release built with v25 data."
    exit 1
 fi
 
@@ -22,8 +24,12 @@ cd game/diffBundle
 ./diffBundleCompile
 
 
+cd ../../../OneLifeData7
+git checkout OneLife_v25
 
-cd ../../../OneLife/build/source
+
+
+cd ../OneLife/build/source
 
 ./makeLinuxBuild $2
 
@@ -31,4 +37,9 @@ cd ../../../OneLife/build/source
 ../../../minorGems/game/diffBundle/diffBundle OneLife_$1 OneLife_$2 $2_inc_linux.dbz
 
 
+
 scp $2_inc_linux.dbz jcr15@onehouronelife.com:diffBundles/ 
+
+
+cd ../../../OneLifeData7
+git checkout master
