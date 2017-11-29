@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 39     ???
+
+--Fixed git handling of .txt line endings on Windows.
+
+
+
+
 Version 37     2017-November-28
 
 --Windows can't handle pointers larger than 32x32, which caused a crash in
