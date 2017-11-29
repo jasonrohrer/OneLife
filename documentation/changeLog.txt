@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 39     ???
+Version 39     2017-November-29
 
 --Fixed git handling of .txt line endings on Windows.
 
@@ -14,6 +14,7 @@ Version 39     ???
 
 --Replaced piano hunger sound with ukulele A-minor chord so that it stands out
   from the piano music.
+
 
 
 
