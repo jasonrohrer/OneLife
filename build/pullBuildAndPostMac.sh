@@ -8,6 +8,13 @@ if [ $# -lt 2 ] ; then
    exit 1
 fi
 
+if [ ! -f "mac/OneLife_$1" ]
+then
+    echo "$0: Folder 'mac/OneLife_$1' not found."
+	exit 1
+fi
+
+
 
 cd ../../minorGems
 git pull
