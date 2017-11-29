@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ $# -lt 1 ] ; then
+if [ $# -lt 2 ] ; then
    echo "Usage: $0  last_release_name  new_release_name"
    echo "Example: $0  v37  v39"
    echo 
