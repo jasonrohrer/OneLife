@@ -9,7 +9,7 @@ if [ $# -lt 2 ] ; then
 fi
 
 
-if [ ! -f "OneLife_$1" ]
+if [ ! -d "OneLife_$1" ]
 then
     echo "$0: Folder 'OneLife_$1' not found."
 	exit 1
