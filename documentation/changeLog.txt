@@ -9,6 +9,9 @@ Version 39     ???
 
 --Fixed unix2dos conversion program behavior on Windows.
 
+--Back to old camera movement.  It's jumpier, but doesn't let you get so annoyingly close to the edge of the screen.  Thanks Casey C. and Jared J.
+
+
 
 
 Version 37     2017-November-28

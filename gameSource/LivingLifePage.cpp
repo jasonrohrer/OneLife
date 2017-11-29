@@ -9882,17 +9882,17 @@ void LivingLifePage::step() {
                 lrint( moveScale * 
                        cameraFollowsObject->currentMoveDirection.y );
  
-            if( screenCenterPlayerOffsetX < -9 * viewWidth / 15 ) {
-                screenCenterPlayerOffsetX =  -9 * viewWidth / 15;
+            if( screenCenterPlayerOffsetX < -viewWidth / 3 ) {
+                screenCenterPlayerOffsetX =  -viewWidth / 3;
                 }
-            if( screenCenterPlayerOffsetX >  9 * viewWidth / 15 ) {
-                screenCenterPlayerOffsetX =  9 * viewWidth / 15;
+            if( screenCenterPlayerOffsetX >  viewWidth / 3 ) {
+                screenCenterPlayerOffsetX =  viewWidth / 3;
                 }
-            if( screenCenterPlayerOffsetY < -7 * viewHeight / 15 ) {
-                screenCenterPlayerOffsetY =  -7 * viewHeight / 15;
+            if( screenCenterPlayerOffsetY < -viewHeight / 5 ) {
+                screenCenterPlayerOffsetY =  -viewHeight / 5;
                 }
-            if( screenCenterPlayerOffsetY >  13 * viewHeight / 30 ) {
-                screenCenterPlayerOffsetY =  13 * viewHeight / 30;
+            if( screenCenterPlayerOffsetY >  viewHeight / 6 ) {
+                screenCenterPlayerOffsetY =  viewHeight / 6;
                 }
             }
         else if( false ) { // skip for now
@@ -9953,8 +9953,8 @@ void LivingLifePage::step() {
         
         char viewChange = false;
         
-        int maxRX = viewWidth / 3;
-        int maxRY = viewHeight / 3;
+        int maxRX = viewWidth / 15;
+        int maxRY = viewHeight / 15;
         int maxR = 0;
         double moveSpeedFactor = 20 * cameraFollowsObject->currentSpeed;
         
