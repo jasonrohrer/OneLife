@@ -38,3 +38,5 @@ cd mac
 scp $2_inc_mac.dbz jcr15@onehouronelife.com:diffBundles/ 
 
 
+
+
