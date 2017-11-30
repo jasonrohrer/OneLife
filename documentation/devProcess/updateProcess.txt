@@ -120,7 +120,12 @@ Adding new Linode remote server (game server, download server).
 
 4. Log in to root@onehouronelife.com
 
-5. run ~/checkout/OneLife/scripts/rootAddNewDownloadServer.sh
+5. Wait 15+ minutes for DNS to propagate.
+   Check with:
+   nslookup  newdomain.onehouronelife.com   ns1.linode.com
+   NOTE:  don't ping it too early or a negative record will be cached.
+
+6. run ~/checkout/OneLife/scripts/rootAddNewDownloadServer.sh
        OR
        ~/checkout/OneLife/scripts/rootAddNewRemoteServer.sh
 
