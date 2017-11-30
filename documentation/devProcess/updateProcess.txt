@@ -67,6 +67,14 @@ Generating platform-specific (binary code) update for a platform.
 
 1. Update game.cpp version number.
 
+NOTE:  On Mac and Linux, steps 2-4 can be accomplished with these scripts:
+       pullBuildAndPostMac.sh
+       buildAndPostLinux.sh
+       
+       On Windows, a manual pull is needed in both minorGems and OneLife,
+       and then steps 2-4 can be accomplished with:
+       buildAndPostWindows.sh
+
 2. Build on each platform
 
 3. Run minorGems/game/diffBundle/diffBundle to generate an incremental binary
