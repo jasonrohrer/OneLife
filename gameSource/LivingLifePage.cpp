@@ -7149,14 +7149,56 @@ void LivingLifePage::step() {
                             if( rID == ourID ) {
                                 // local player triggered
                                 
+                                char addedOrRemoved = false;
+                                
                                 if( newID != 0 &&
                                     getObject( newID )->homeMarker ) {
                                     
                                     addHomeLocation( x, y );
+                                    addedOrRemoved = true;
                                     }
                                 else if( old != 0 &&
                                          getObject( old )->homeMarker ) {
                                     removeHomeLocation( x, y );
+                                    addedOrRemoved = true;
+                                    }
+                                
+                                if( addedOrRemoved ) {
+                                    // look in region for our home locations
+                                    // that may have been removed by others
+                                    // (other people pulling up our stake)
+                                    // and clear them.  Our player can
+                                    // no longer clear them, because they
+                                    // don't exist on the map anymore
+                                    
+                                    for( int ry=y-7; ry<=y+7; ry++ ) {
+                                        for( int rx=x-7; rx<=x+7; rx++ ) {
+                                    
+                                            int mapRX = 
+                                                rx - mMapOffsetX + mMapD / 2;
+                                            int mapRY = 
+                                                ry - mMapOffsetY + mMapD / 2;
+                    
+                                            if( mapRX >= 0 && mapRX < mMapD
+                                                &&
+                                                mapRY >= 0 && mapRY < mMapD ) {
+                        
+                                                int mapRI = 
+                                                    mapRY * mMapD + mapRX;
+                        
+                                                int cellID = mMap[ mapRI ];
+                                                
+                                                if( cellID == 0 ||
+                                                    ( cellID > 0 &&
+                                                      ! getObject( cellID )->
+                                                        homeMarker ) ) {
+                                                    
+                                                    removeHomeLocation(
+                                                        rx, ry );
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
