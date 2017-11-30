@@ -3,6 +3,16 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 40     ???
+
+--Old object's using sound now played when a player causes an object on the
+  ground to change, and the new object has no creation sound (example: digging
+  up a home marker produces a skewer, which has no creation sound, so the home
+  marking using sound is played).
+
+
+
+
 Version 39     2017-November-29
 
 --Fixed git handling of .txt line endings on Windows.

@@ -2430,7 +2430,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             
             if( displayObj->usingSound.id != -1 ) {
                 // play baby's using sound as they are put down
-                // we no longer have acces
+                // we no longer have access to parent's using sound
                 playSound( displayObj->usingSound,
                            getVectorFromCamera(
                                inObj->currentPos.x, inObj->currentPos.y ) );
@@ -7265,27 +7265,48 @@ void LivingLifePage::step() {
                             responsiblePlayerID <= -1 ) {
                             // ID change, and not just a player setting
                             // an object down
+                            
+                            ObjectRecord *newObj = getObject( newID );
 
-                            if( old > 0 &&
-                                responsiblePlayerID == -1 ) {
-                                // object auto-decayed from some other
-                                // object
+
+                            if( old > 0 ) {
                                 
-                                // play decay sound
-                                ObjectRecord *obj = getObject( old );
-                                if( obj->decaySound.id != -1 ) {    
+                                if( responsiblePlayerID == -1 ) {
+                                    // object auto-decayed from some other
+                                    // object
                                     
-                                    playSound( obj->decaySound,
-                                               getVectorFromCamera( x, y ) );
+                                    // play decay sound
+                                    ObjectRecord *obj = getObject( old );
+                                    if( obj->decaySound.id != -1 ) {    
+                                    
+                                        playSound( 
+                                            obj->decaySound,
+                                            getVectorFromCamera( x, y ) );
+                                        }
                                     }
-                                
-                                
+                                else if( responsiblePlayerID < -1 ) {
+                                    // player caused this object to change
+                                    
+                                    if( newObj->creationSound.id == -1 ||
+                                        ! shouldCreationSoundPlay( old, 
+                                                                   newID ) ) {
+                                        // no creation sound will play for new
+                                        // (if it will, it will be played
+                                        //  below)
+                                        ObjectRecord *obj = getObject( old );
+                                        if( obj->usingSound.id != -1 ) {    
+                                            
+                                            playSound( 
+                                                obj->usingSound,
+                                                getVectorFromCamera( x, y ) );
+                                            }
+                                        }
+                                    }
                                 }
                             
 
-                            ObjectRecord *obj = getObject( newID );
                             
-                            if( obj->creationSound.id != -1 ) {
+                            if( newObj->creationSound.id != -1 ) {
                                 
                                 if( old == 0 && responsiblePlayerID < -1 ) {
                                     // new placement, but not set-down
@@ -7321,7 +7342,7 @@ void LivingLifePage::step() {
                                 
 
                                 if( shouldCreationSoundPlay( old, newID ) ) {
-                                    playSound( obj->creationSound,
+                                    playSound( newObj->creationSound,
                                                getVectorFromCamera( x, y ) );
                                     }
                                 }
