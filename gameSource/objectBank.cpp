@@ -471,6 +471,21 @@ float initObjectBankStep() {
                 next++;
 
 
+                r->homeMarker = false;
+                
+                if( strstr( lines[next], "homeMarker=" ) != NULL ) {
+                    // home marker flag present
+                    
+                    int homeMarkerRead = 0;
+                    sscanf( lines[next], "homeMarker=%d", &( homeMarkerRead ) );
+                    
+                    r->homeMarker = homeMarkerRead;
+                    
+                    next++;
+                    }
+
+
+
                 r->floor = false;
                 
                 if( strstr( lines[next], "floor=" ) != NULL ) {
@@ -1290,6 +1305,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->male,
                         inObject->race,
                         inObject->deathMarker,
+                        inObject->homeMarker,
                         inObject->floor,
                         inObject->floorHugging,
                         inObject->foodValue,
@@ -1511,6 +1527,7 @@ int addObject( const char *inDescription,
                char inMale,
                int inRace,
                char inDeathMarker,
+               char inHomeMarker,
                char inFloor,
                char inFloorHugging,
                int inFoodValue,
@@ -1647,6 +1664,7 @@ int addObject( const char *inDescription,
                                       (int)inPersonNoSpawn ) );
         lines.push_back( autoSprintf( "male=%d", (int)inMale ) );
         lines.push_back( autoSprintf( "deathMarker=%d", (int)inDeathMarker ) );
+        lines.push_back( autoSprintf( "homeMarker=%d", (int)inHomeMarker ) );
         
         lines.push_back( autoSprintf( "floor=%d", (int)inFloor ) );
         lines.push_back( autoSprintf( "floorHugging=%d", 
@@ -1894,6 +1912,7 @@ int addObject( const char *inDescription,
     r->race = inRace;
     r->male = inMale;
     r->deathMarker = inDeathMarker;
+    r->homeMarker = inHomeMarker;
     r->floor = inFloor;
     r->floorHugging = inFloorHugging;
     r->foodValue = inFoodValue;

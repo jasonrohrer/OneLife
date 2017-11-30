@@ -142,6 +142,7 @@ EditorObjectPage::EditorObjectPage()
           // these are in same spot because they're never shown at same time
           mMaleCheckbox( 290, -190, 2 ),
           mDeathMarkerCheckbox( 290, -190, 2 ),
+          mHomeMarkerCheckbox( 100, -120, 2 ),
           mFloorCheckbox( 290, -150, 2 ),
           mHeldInHandCheckbox( 290, 36, 2 ),
           mRideableCheckbox( 290, 16, 2 ),
@@ -550,6 +551,10 @@ EditorObjectPage::EditorObjectPage()
     mDeathMarkerCheckbox.setVisible( true );
     mDeathMarkerCheckbox.addActionListener( this );
 
+    addComponent( &mHomeMarkerCheckbox );
+    mHomeMarkerCheckbox.setVisible( true );
+    mHomeMarkerCheckbox.addActionListener( this );
+
 
     addComponent( &mFloorCheckbox );
     mFloorCheckbox.setVisible( true );
@@ -831,6 +836,7 @@ void EditorObjectPage::updateAgingPanel() {
         mMaleCheckbox.setVisible( false );
 
         mDeathMarkerCheckbox.setVisible( true );
+        mHomeMarkerCheckbox.setVisible( true );
         
         if( ! mContainSizeField.isVisible() ) {
             mFloorCheckbox.setVisible( true );
@@ -864,6 +870,9 @@ void EditorObjectPage::updateAgingPanel() {
         mDeathMarkerCheckbox.setToggled( false );
         mDeathMarkerCheckbox.setVisible( false );
         
+        mHomeMarkerCheckbox.setToggled( false );
+        mHomeMarkerCheckbox.setVisible( false );
+
         mFloorCheckbox.setToggled( false );
         mFloorCheckbox.setVisible( false );
         
@@ -1314,6 +1323,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mMaleCheckbox.getToggled(),
                    race,
                    mDeathMarkerCheckbox.getToggled(),
+                   mHomeMarkerCheckbox.getToggled(),
                    mFloorCheckbox.getToggled(),
                    mFloorHuggingCheckbox.getToggled(),
                    mFoodValueField.getInt(),
@@ -1436,6 +1446,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mMaleCheckbox.getToggled(),
                    race,
                    mDeathMarkerCheckbox.getToggled(),
+                   mHomeMarkerCheckbox.getToggled(),
                    mFloorCheckbox.getToggled(),
                    mFloorHuggingCheckbox.getToggled(),
                    mFoodValueField.getInt(),
@@ -2006,10 +2017,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mLeftBlockingRadiusField.setInt( 0 );
             mRightBlockingRadiusField.setInt( 0 );
             mDrawBehindPlayerCheckbox.setToggled( false );
-            mDrawBehindPlayerCheckbox.setVisible( false );
             mFloorHuggingCheckbox.setToggled( false );
-            mFloorHuggingCheckbox.setVisible( false );
-            }
+            } 
         }
     else if( inTarget == &mBlocksWalkingCheckbox ) {
         mLeftBlockingRadiusField.setVisible( false );
@@ -2672,6 +2681,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mMaleCheckbox.setToggled( pickedRecord->male );
             mDeathMarkerCheckbox.setToggled( pickedRecord->deathMarker );
+            mHomeMarkerCheckbox.setToggled( pickedRecord->homeMarker );
             mFloorCheckbox.setToggled( pickedRecord->floor );
             
             mCreationSoundWidget.setSoundUsage( pickedRecord->creationSound );
@@ -3558,6 +3568,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         pos = mDeathMarkerCheckbox.getPosition();
         pos.y += checkboxSep + 5;
         smallFont->drawString( "Death", pos, alignCenter );
+        }
+
+    if( mHomeMarkerCheckbox.isVisible() ) {
+        pos = mHomeMarkerCheckbox.getPosition();
+        pos.x -= checkboxSep;
+        smallFont->drawString( "Home", pos, alignRight );
         }
 
     if( mFloorCheckbox.isVisible() ) {

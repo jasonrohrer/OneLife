@@ -145,6 +145,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
         CheckboxButton mPersonNoSpawnCheckbox;
         CheckboxButton mMaleCheckbox;
         CheckboxButton mDeathMarkerCheckbox;
+        CheckboxButton mHomeMarkerCheckbox;
         CheckboxButton mFloorCheckbox;
 
         CheckboxButton mHeldInHandCheckbox;

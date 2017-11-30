@@ -106,6 +106,11 @@ typedef struct ObjectRecord {
         // true if this object can be placed by server to mark a death
         char deathMarker;
         
+        // true if this object can serve as a home marker
+        // (remembered by client when a player makes it, and client points
+        //  HOME arrow back toward it).
+        char homeMarker;
+        
         
         // floor objects are drawn under everything else
         // and can have other objects in the same cell
@@ -372,6 +377,7 @@ int addObject( const char *inDescription,
                char inMale,
                int inRace,
                char inDeathMarker,
+               char inHomeMarker,
                char inFloor,
                char inFloorHugging,
                int inFoodValue,

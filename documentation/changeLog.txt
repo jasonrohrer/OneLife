@@ -10,6 +10,9 @@ Version 40     ???
   up a home marker produces a skewer, which has no creation sound, so the home
   marking using sound is played).
 
+--Fixed death marker checkbox in editor to not hide a few other checkboxes,
+  simplifying the widget visibility calculation in the editor.
+
 
 
 
