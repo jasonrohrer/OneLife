@@ -13,6 +13,10 @@ Version 40     ???
 --Fixed death marker checkbox in editor to not hide a few other checkboxes,
   simplifying the widget visibility calculation in the editor.
 
+--Replaced finicky auto-HOME system with player-settable homeMarker objects.
+  Thanks Paul V.
+
+
 
 
 

@@ -91,53 +91,19 @@ static float lastMouseY = 0;
 
 
 
-typedef struct ClickRecord {
-        int x, y;
-        // 0 for empty record
-        int count;
-        // time of last click on self or nearby cells
-        timeSec_t lastClickTime;
-        // time of last click directly on this cell
-        timeSec_t lastDirectClickTime;
-    } ClickRecord;
 
 
 
-#define NUM_CLICK_RECORDS 100
-
-static ClickRecord clicks[ NUM_CLICK_RECORDS ];
-
-// radius of nearby click locations that get incremented on a click
-static int clickRadius = 5;
-
-// how many clicks a home location has to have before being considered a home
-static int minClicksForHome = 20;
-
-
-// clicks older than this get decremented once click elsewhere
-static double staleTimeThreshold = 5 * 60;
-
-// number of seconds that must pass before repeat click on same spot
-// registers as a new click
-static double repeatClickTime = 5;
-
+// most recent home at end
+static SimpleVector<GridPos> homePosStack;
 
 
 // returns pointer to record, NOT destroyed by caller, or NULL if 
 // home unknown
-static ClickRecord *getHomeLocation() {
-    int maxClicks = 0;
-    int maxIndex = -1;
-    
-    for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
-        if( clicks[i].count > maxClicks ) {
-            maxClicks = clicks[i].count;
-            maxIndex = i;
-            }
-        }
-    
-    if( maxIndex != -1 && maxClicks >= minClicksForHome ) {
-        return &( clicks[ maxIndex ] );
+static  GridPos *getHomeLocation() {
+    int num = homePosStack.size();
+    if( num > 0 ) {
+        return homePosStack.getElement( num - 1 );
         }
     else {
         return NULL;
@@ -146,133 +112,23 @@ static ClickRecord *getHomeLocation() {
 
 
 
-static void clearClicks() {
-    for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
-        clicks[i].count = 0;
+static void removeHomeLocation( int inX, int inY ) {
+    for( int i=0; i<homePosStack.size(); i++ ) {
+        GridPos p = homePosStack.getElementDirect( i );
+        
+        if( p.x == inX && p.y == inY ) {
+            homePosStack.deleteElement( i );
+            break;
+            }
         }
     }
 
-static void addClick( int inX, int inY ) {
-    int foundIndex = -1;
-    
-    timeSec_t t = game_timeSec();
-    
 
-    for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
-        if( clicks[i].count > 0 ) {
-            
-            if( clicks[i].x == inX && clicks[i].y == inY ) {
-                foundIndex = i;
-                break;
-                }
-            }
-        }
 
-    int actuallyClickedIndex = -1;
-    
-    if( foundIndex != -1 ) {
-
-        if( t - clicks[foundIndex].lastDirectClickTime >= repeatClickTime ) {
-            // haven't clicked here directly too recently
-
-            // we don't want to keep registering clicks for multiple
-            // clicks on same berry bush when gobbling berries, for example.
-
-            clicks[foundIndex].count ++;
-            clicks[foundIndex].lastDirectClickTime = t;
-            clicks[foundIndex].lastClickTime = t;
-        
-            actuallyClickedIndex = foundIndex;
-            }
-        }
-    else {
-        // insert new record
-        
-        for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
-            if( clicks[i].count == 0 ) {
-                clicks[i].x = inX;
-                clicks[i].y = inY;
-                clicks[i].count = 1;
-                clicks[i].lastClickTime = t;
-                clicks[i].lastDirectClickTime = t;
-
-                actuallyClickedIndex = i;
-                break;
-                }
-            }
-        
-        if( actuallyClickedIndex == -1 ) {
-            
-            // no empty spots
-            
-            // find oldest spot with not-very-many clicks
-
-            // only consider spot with half as many clicks as home
-            int maxClicks = 9999999;
-
-            ClickRecord *home = getHomeLocation();
-            
-            if( home != NULL ) {
-                maxClicks = home->count / 2;
-            
-                if( maxClicks < 2 ) {
-                    maxClicks = 2;
-                    }
-                }
-            
-
-            timeSec_t oldestTime = t;
-            
-            int mostStaleIndex = -1;
-            
-            for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
-                if( clicks[i].count <= maxClicks &&
-                    clicks[i].lastClickTime < oldestTime ) {
-                    
-                    oldestTime = clicks[i].lastClickTime;
-                    mostStaleIndex = i;
-                    }
-                }
-            
-            if( mostStaleIndex == -1 ) {
-                mostStaleIndex = 0;
-                }
-
-            // replace stale
-            clicks[ mostStaleIndex ].x = inX;
-            clicks[ mostStaleIndex ].y = inY;
-            clicks[ mostStaleIndex ].count = 1;
-            clicks[ mostStaleIndex ].lastClickTime = t;
-            clicks[ mostStaleIndex ].lastDirectClickTime = t;
-            
-            actuallyClickedIndex = mostStaleIndex;
-            }
-        }
-
-    
-        
-    if( actuallyClickedIndex != -1 ) {
-        // something clicked directly
-
-        // process others too
-        for( int i=0; i<NUM_CLICK_RECORDS; i++ ) {
-            if( i != actuallyClickedIndex && clicks[i].count > 0 ) {
-                
-                if( abs( clicks[i].x - inX ) < clickRadius &&
-                    abs( clicks[i].y - inY ) < clickRadius ) {
-                    // these close neighbors get incremented too
-                    clicks[i].count ++;
-                    clicks[i].lastClickTime = t;
-                    }
-                else if( t - clicks[i].lastClickTime > 
-                         staleTimeThreshold ) {
-                    // this far-away click hasn't been visited 
-                    // in a long time
-                    clicks[i].count --;
-                    }
-                }
-            }
-        }    
+static void addHomeLocation( int inX, int inY ) {
+    removeHomeLocation( inX, inY );
+    GridPos newPos = { inX, inY };
+    homePosStack.push_back( newPos );
     }
 
 
@@ -280,22 +136,39 @@ static void addClick( int inX, int inY ) {
 
 
 
-// returns -1 if no home needs to be shown (too close or not enough data
+// returns if -1 no home needs to be shown (home unknown)
 // otherwise, returns 0..7 index of arrow
-static int getHomeDir( doublePair inCurrentPlayerPos ) {
-    ClickRecord *c = getHomeLocation();
+static int getHomeDir( doublePair inCurrentPlayerPos, 
+                       char *outTooClose = NULL ) {
+    GridPos *p = getHomeLocation();
     
-    if( c == NULL ) {
+    if( p == NULL ) {
         return -1;
         }
     
-    doublePair homePos = { (double)c->x, (double)c->y };
+    
+    if( outTooClose != NULL ) {
+        *outTooClose = false;
+        }
+    
+
+    doublePair homePos = { (double)p->x, (double)p->y };
     
     doublePair vector = sub( homePos, inCurrentPlayerPos );
 
-    if( length( vector ) < 5 ) {
+    double dist = length( vector );
+
+    if( dist < 5 ) {
         // too close
-        return -1;
+
+        if( outTooClose != NULL ) {
+            *outTooClose = true;
+            }
+        
+        if( dist == 0 ) {
+            // can't compute angle
+            return -1;
+            }
         }
     
     
@@ -6141,9 +6014,11 @@ void LivingLifePage::step() {
     LiveObject *ourObject = getOurLiveObject();
 
     if( ourObject != NULL ) {    
-        int homeArrow = getHomeDir( ourObject->currentPos );
+        char tooClose = false;
         
-        if( homeArrow != -1 ) {
+        int homeArrow = getHomeDir( ourObject->currentPos, &tooClose );
+        
+        if( homeArrow != -1 && ! tooClose ) {
             mHomeSlipPosTargetOffset.y = mHomeSlipHideOffset.y + 68;
             }
         else {
@@ -7259,6 +7134,34 @@ void LivingLifePage::step() {
                             mMapPlayerPlacedFlags[mapI] = false;
                             }
                         
+
+                        // Check if a home marker has been set or removed
+                        if( responsiblePlayerID != -1 &&
+                            ( old != 0 ||
+                              newID != 0 ) ) {
+                            // player-triggered change
+                            
+                            int rID = responsiblePlayerID;
+                            if( rID < -1 ) {
+                                rID = -rID;
+                                }
+                            
+                            if( rID == ourID ) {
+                                // local player triggered
+                                
+                                if( newID != 0 &&
+                                    getObject( newID )->homeMarker ) {
+                                    
+                                    addHomeLocation( x, y );
+                                    }
+                                else if( old != 0 &&
+                                         getObject( old )->homeMarker ) {
+                                    removeHomeLocation( x, y );
+                                    }
+                                }
+                            }
+                        
+
 
                         if( old != newID && 
                             newID != 0 && 
@@ -10841,9 +10744,8 @@ void LivingLifePage::makeActive( char inFresh ) {
         delete [] nextActionMessageToSend;
         nextActionMessageToSend = NULL;
         }
-
-    clearClicks();
-
+    
+    homePosStack.deleteAll();
 
     for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
         mHomeArrowStates[i].solid = false;
@@ -11531,12 +11433,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     int destNumContained = 0;
     
     int mapX = clickDestX - mMapOffsetX + mMapD / 2;
-    int mapY = clickDestY - mMapOffsetY + mMapD / 2;
-    
-    
-    if( !mouseAlreadyDown ) {
-        addClick( clickDestX, clickDestY );
-        }
+    int mapY = clickDestY - mMapOffsetY + mMapD / 2;    
     
     
     if( mouseAlreadyDown && 
