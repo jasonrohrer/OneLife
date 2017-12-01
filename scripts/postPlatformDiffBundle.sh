@@ -44,12 +44,14 @@ echo ""
 if [ $lastMGVersion -ne $lastOneLifeVersion ]
 then
 	echo "Most recent OneLife and minorGems versions differ, exiting."
+	exit 1
 fi
 
 
 if [ $lastOneLifeVersion -ge $newVersion ]
 then
 	echo "Requested version $newVersion not newer than most recent version."
+	exit 1
 fi
 
 
