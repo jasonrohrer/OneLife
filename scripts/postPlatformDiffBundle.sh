@@ -16,7 +16,57 @@ fi
 newVersion=$1
 
 
-# first, check for all platforms
+
+# first, check that existing tagged versions make sense
+
+cd ~/checkout/OneLifeWorking
+git pull
+
+lastOneLifeVersion=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags | sed -e 's/OneLife_v//'`
+
+
+echo "" 
+echo "Most recent OneLife version is:  $lastOneLifeVersion"
+echo ""
+
+
+cd ~/checkout/minorGems
+git pull
+
+lastMGVersion=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags | sed -e 's/OneLife_v//'`
+
+
+echo "" 
+echo "Most recent minorGems version is:  $lastMGVersion"
+echo ""
+
+
+if [ $lastMGVersion -ne $lastOneLifeVersion ]
+then
+	echo "Most recent OneLife and minorGems versions differ, exiting."
+fi
+
+
+if [ $lastOneLifeVersion -ge $newVersion ]
+then
+	echo "Requested version $newVersion not newer than most recent version."
+fi
+
+
+echo ""
+echo "Most recent version $lastOneLifeVersion"
+echo "About to post and tag $newVersion"
+echo ""
+echo -n "Hit [ENTER] when ready: "
+read
+
+
+
+
+
+
+
+# next, check that incremental bundles exist for all platforms
 # don't proceed unless we can proceed for all
 for platform in linux mac win; do
 	dbzFileName=${newVersion}_inc_${platform}.dbz
@@ -36,6 +86,7 @@ for platform in linux mac win; do
 		exit 1
 	fi
 done 
+
 
 
 
@@ -82,6 +133,26 @@ echo "Using rsync to push non-diff binary bundles too."
 
 
 ~/checkout/OneLife/scripts/pushDownloadsAndDiffsToMirrors.sh
+
+
+echo ""
+echo "Tagging OneLife and minorGems with OneLife_v$newVersion"
+
+cd ~/checkout/OneLifeWorking
+git pull
+
+git tag -a -m "Tagging for binary version $newVersion" OneLife_v$newVersion
+
+git push --tags
+
+
+cd ~/checkout/minorGems
+git pull
+
+
+git tag -a -m "Tagging for OneLife version $newVersion" OneLife_v$newVersion
+
+git push --tags
 
 
 

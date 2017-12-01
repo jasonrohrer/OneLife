@@ -89,9 +89,12 @@ No longer needed with latest git pull Unix Source distribution:
 | 5. Build UnixSource bundle and scp it to 
 |    jcr15@onehouronelife.com:oneLifeDownloads/
 
-6. Run "git tag -a" in Onelife and minorGems to tag version and push with
-   "git push --tags" (to push the tags to the remote server).
-   (Do this here so that UnixSource folks get latest tagged versions.)
+No longer needed because postPlatformDiffBundle.sh tags automatically
+|
+| 6. Run "git tag -a" in Onelife and minorGems to tag version and push with
+|    "git push --tags" (to push the tags to the remote server).
+|    (Do this here so that UnixSource folks get latest tagged versions.)
+
 
 7. Log in as jcr15@onehouronelife.com
 
@@ -101,6 +104,8 @@ No longer needed with latest git pull Unix Source distribution:
 |
 | 8. Editting www/ticketServer/settings.php to list latest UnixSource build.
 |
+
+9. git pull in minorGems and OneLife on working laptop.
 
 
 
