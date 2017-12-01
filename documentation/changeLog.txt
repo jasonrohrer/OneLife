@@ -3,7 +3,8 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 40     ???
+
+Version 40     2017-December-1
 
 --Old object's using sound now played when a player causes an object on the
   ground to change, and the new object has no creation sound (example: digging
