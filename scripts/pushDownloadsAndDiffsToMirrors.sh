@@ -1,4 +1,4 @@
-while read user server
+while read user server port
 do
   echo ""
   echo "Using rsync to sync all .dbz files to $server"
