@@ -68,7 +68,7 @@ for platform in linux mac win; do
 		
 		echo "Adding url for $server to mirror list for this .dbz"
 		
-		echo "http://$server/downloads/$dbzFileName" > $urlFilePath
+		echo "http://$server/downloads/$dbzFileName" >> $urlFilePath
 		
 	done <  <( grep "" ~/diffBundles/remoteServerList.ini )
 	
