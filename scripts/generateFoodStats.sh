@@ -18,7 +18,7 @@ do
   then
 	  echo "Making local directory foodLog_$server"
 	  mkdir ~/checkout/OneLife/server/foodLog_$server
-  fi  if
+  fi
 
   rsync -avz -e ssh --progress $user@$server:checkout/OneLife/server/foodLog/*.txt ~/checkout/OneLife/server/foodLog_$server
 
