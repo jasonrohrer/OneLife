@@ -44,9 +44,9 @@ echo ""
 
 
 
-if [ $numNewChangsets -lt 2 ]
+if [ $numNewChangsets -lt 1 ]
 then
-	echo "Too few revisions to bundle (only tag revision), exiting."
+	echo "No new revisions to bundle, exiting."
 	exit 1
 fi
 
