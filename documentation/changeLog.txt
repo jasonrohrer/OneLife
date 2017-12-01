@@ -16,6 +16,8 @@ Version 40     ???
 --Replaced finicky auto-HOME system with player-settable homeMarker objects.
   Thanks Paul V.
 
+--hardToQuit mode now hides buttons on rebirth choice page.  autoLogin support.
+  Preparing game for being show in public.
 
 
 

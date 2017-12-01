@@ -88,6 +88,7 @@ CustomRandomSource randSource( 34957197 );
 
 // should we pull the map
 static char mapPullMode = 0;
+static char autoLogIn = 0;
 
 
 // start at reflector URL
@@ -1466,6 +1467,8 @@ void drawFrame( char inUpdate ) {
                     
                     mapPullMode = 
                         SettingsManager::getIntSetting( "mapPullMode", 0 );
+                    autoLogIn = 
+                        SettingsManager::getIntSetting( "autoLogIn", 0 );
 
                     currentGamePage = existingAccountPage;
                     currentGamePage->base_makeActive( true );
@@ -1503,12 +1506,15 @@ void drawFrame( char inUpdate ) {
                 currentGamePage = reviewPage;
                 currentGamePage->base_makeActive( true );
                 }
-            else if( existingAccountPage->checkSignal( "done" ) || 
-                     mapPullMode ) {
+            else if( existingAccountPage->checkSignal( "done" ) 
+                     || 
+                     mapPullMode || autoLogIn ) {
                 
                 // auto-log-in one time for map pull
+                // or one time for autoLogInMode
                 mapPullMode = false;
-
+                autoLogIn = false;
+                
                 startConnecting();
                 }
             }

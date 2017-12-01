@@ -27,9 +27,14 @@ RebirthChoicePage::RebirthChoicePage()
                        translate( "postReviewButton" ) ),
           mRebornButton( mainFont, 150, -128, 
                          translate( "reborn" ) ) {
-
-    addComponent( &mQuitButton );
-    addComponent( &mReviewButton );
+    if( !isHardToQuitMode() ) {
+        addComponent( &mQuitButton );
+        addComponent( &mReviewButton );
+        }
+    else {
+        mRebornButton.setPosition( 0, -128 );
+        }
+    
     addComponent( &mRebornButton );
     
     setButtonStyle( &mQuitButton );
