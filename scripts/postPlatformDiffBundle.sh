@@ -113,7 +113,7 @@ for platform in linux mac win; do
     # otherwise, read skips the last line if it doesn't end with newline
 
     # send this new .dbz to all the download servers
-	while read user server port
+	while read user server
 	do
 		echo ""
 		echo "Sending $dbzFileName to $server"
