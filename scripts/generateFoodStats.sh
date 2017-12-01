@@ -22,7 +22,7 @@ do
 
   rsync -avz -e ssh --progress $user@$server:checkout/OneLife/server/foodLog/*.txt ~/checkout/OneLife/server/foodLog_$server
 
-done <  <( grep "" ~/diffBundles/remoteServerList.ini )
+done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
 /home/jcr15/checkout/OneLifeWorking/server/printFoodLogStatsHTML /home/jcr15/checkout/OneLife/server /home/jcr15/checkout/OneLife/server/objects /home/jcr15/public_html/foodStatsData.php
