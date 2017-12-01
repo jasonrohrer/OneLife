@@ -7,12 +7,16 @@
 
 void usage() {
     printf( "Usage:\n" );
-    printf( "printFoodLogStatsHTML path_to_foodLog_dir path_to_objects_dir "
+    printf( "printFoodLogStatsHTML path_to_server_dir path_to_objects_dir "
             "outHTMLFile\n\n" );
+    
+    printf( "NOTE:  server dir can contain multiple foodLog dirs\n" );
+    printf( "       (foodLog, foodLog_server2, etc.)\n\nd" );
+
     
     printf( "Example:\n" );
     printf( "printFoodLogStatsHTML "
-            "~/checkout/OneFood/server/foodLog "
+            "~/checkout/OneFood/server "
             "~/checkout/OneFood/server/objects out.html\n\n" );
     
     exit( 1 );
@@ -321,6 +325,31 @@ void printTable( const char *inName, File *inObjectDir, FILE *inFile,
 
 
 
+void processFoodLogFolder( File *inFolder ) {
+    int numFiles;
+    
+    File **logs = inFolder->getChildFilesSorted( &numFiles );
+    
+    // only process last 30 files, if there are more than 30
+    int startI = 0;
+    
+    if( numFiles > 30 ) {
+        startI = numFiles - 30;
+        }
+
+    for( int i=startI; i<numFiles; i++ ) {
+        processLogFile( logs[i] );
+        }
+    
+    for( int i=0; i<numFiles; i++ ) {
+        delete logs[i];
+        }
+    
+    delete [] logs;
+    }
+
+
+
 int main( int inNumArgs, char **inArgs ) {
 
     if( inNumArgs != 4 ) {
@@ -346,24 +375,27 @@ int main( int inNumArgs, char **inArgs ) {
     if( mainDir.exists() && mainDir.isDirectory() &&
         objDir.exists() && objDir.isDirectory() ) {
 
+        int numChildFiles;
+        File **childFiles = mainDir.getChildFiles( &numChildFiles );
         
-        int numFiles;
-
-        File **logs = mainDir.getChildFilesSorted( &numFiles );
+        for( int i=0; i<numChildFiles; i++ ) {
         
-        // only process last 30 files, if there are more than 30
-        int startI = 0;
-        
-        if( numFiles > 30 ) {
-            startI = numFiles - 30;
+            if( childFiles[i]->isDirectory() ) {
+                
+                char *name = childFiles[i]->getFileName();
+                
+                if( strstr( name, "foodLog" ) == name ) {
+                    // file name starts with foodLog
+                    processFoodLogFolder( childFiles[i] );
+                    }
+                delete [] name;
+                }
+            
+            delete childFiles[i];
             }
+        delete [] childFiles;
 
-        for( int i=startI; i<numFiles; i++ ) {
-            processLogFile( logs[i] );
-            delete logs[i];
-            }
-        delete [] logs;
-
+        
 
         sortRecList( &monthRecords );
         sortRecList( &weekRecords );

@@ -7,11 +7,14 @@
 
 void usage() {
     printf( "Usage:\n" );
-    printf( "printLifeLogStatsHTML path_to_lifeLog_dir outHTMLFile\n\n" );
+    printf( "printLifeLogStatsHTML path_to_server_dir outHTMLFile\n\n" );
     
+    printf( "NOTE:  server dir can contain multiple lifeLog dirs\n" );
+    printf( "       (lifeLog, lifeLog_server2, etc.)\n\nd" );
+
     printf( "Example:\n" );
     printf( "printLifeLogStatsHTML "
-            "~/checkout/OneLife/server/lifeLog out.html\n\n" );
+            "~/checkout/OneLife/server out.html\n\n" );
     
     exit( 1 );
     }
@@ -242,6 +245,83 @@ void saveNewCheckpoint( File *inCheckpointFile,
 
 
 
+// returns num files processed
+int processLifeLogFolder( File *inFolder ) {
+
+    File *checkpointFile = inFolder->getChildFile( checkpointFileName );
+        
+    char lastScannedFileName[200];
+    lastScannedFileName[0] = '\0';
+        
+    char checkpointFound = false;
+        
+    if( checkpointFile->exists() ) {
+        char *fileName = checkpointFile->getFullFileName();
+            
+        FILE *f = fopen( fileName, "r" );
+            
+        if( f != NULL ) {
+            fscanf( f, "%199s %lf %d %d %d", lastScannedFileName,
+                    &totalAge, &totalLives, 
+                    &longestFamilyChain, &over55Count );
+            checkpointFound = true;
+            fclose( f );
+            }
+        delete [] fileName;
+        }
+        
+
+    char checkpointReached = false;
+        
+        
+    int numFilesProcessed = 0;
+        
+    int numFiles;
+
+    File **logs = inFolder->getChildFilesSorted( &numFiles );
+        
+    for( int i=0; i<numFiles; i++ ) {
+
+        char *name = logs[i]->getFileName();
+            
+        if( strcmp( name, checkpointFileName ) != 0 ) {
+            
+            if( ! checkpointFound ||
+                checkpointReached ) {
+                    
+                processLogFile( logs[i] );
+                    
+                if( i < numFiles - 2 ) {
+                    // very last file is saved checkpoint file
+                    // second to last may still be getting filled by server
+                    saveNewCheckpoint( checkpointFile, name );
+                    }
+                    
+                numFilesProcessed++;
+                }
+            else if( checkpointFound && ! checkpointReached ) {
+                    
+                if( strcmp( name, lastScannedFileName ) == 0 ) {
+                    // this is where we got on last scan
+                    checkpointReached = true;
+                    }
+                }
+            }       
+        
+        delete [] name;
+
+        delete logs[i];
+        }
+    delete [] logs;
+
+
+    delete checkpointFile;
+
+    return numFilesProcessed;
+    }
+
+
+
 
 int main( int inNumArgs, char **inArgs ) {
 
@@ -260,76 +340,33 @@ int main( int inNumArgs, char **inArgs ) {
     File mainDir( NULL, path );
     
     if( mainDir.exists() && mainDir.isDirectory() ) {
-
-        
-        File *checkpointFile = mainDir.getChildFile( checkpointFileName );
-        
-        char lastScannedFileName[200];
-        lastScannedFileName[0] = '\0';
-        
-        char checkpointFound = false;
-        
-        if( checkpointFile->exists() ) {
-            char *fileName = checkpointFile->getFullFileName();
-            
-            FILE *f = fopen( fileName, "r" );
-            
-            if( f != NULL ) {
-                fscanf( f, "%199s %lf %d %d %d", lastScannedFileName,
-                        &totalAge, &totalLives, 
-                        &longestFamilyChain, &over55Count );
-                checkpointFound = true;
-                fclose( f );
-                }
-            delete [] fileName;
-            }
-        
-
-        char checkpointReached = false;
         
         
         int numFilesProcessed = 0;
         
-        int numFiles;
-
-        File **logs = mainDir.getChildFilesSorted( &numFiles );
+        int numChildFiles;
+        File **childFiles = mainDir.getChildFiles( &numChildFiles );
         
-        for( int i=0; i<numFiles; i++ ) {
-
-            char *name = logs[i]->getFileName();
-            
-            if( strcmp( name, checkpointFileName ) != 0 ) {
-            
-                if( ! checkpointFound ||
-                    checkpointReached ) {
-                    
-                    processLogFile( logs[i] );
-                    
-                    if( i < numFiles - 2 ) {
-                        // very last file is saved checkpoint file
-                        // second to last may still be getting filled by server
-                        saveNewCheckpoint( checkpointFile, name );
-                        }
-                    
-                    numFilesProcessed++;
+        for( int i=0; i<numChildFiles; i++ ) {
+        
+            if( childFiles[i]->isDirectory() ) {
+                
+                char *name = childFiles[i]->getFileName();
+                
+                if( strstr( name, "lifeLog" ) == name ) {
+                    // file name starts with lifeLog
+                    numFilesProcessed += processLifeLogFolder( childFiles[i] );
                     }
-                else if( checkpointFound && ! checkpointReached ) {
-                    
-                    if( strcmp( name, lastScannedFileName ) == 0 ) {
-                        // this is where we got on last scan
-                        checkpointReached = true;
-                        }
-                    }
-                }       
-
-            delete [] name;
-
-            delete logs[i];
+                delete [] name;
+                }
+            
+            delete childFiles[i];
             }
-        delete [] logs;
+        delete [] childFiles;
+        
 
-
-        delete checkpointFile;
+        
+            
         
         printf( "Processed %d files\n", numFilesProcessed );
 
