@@ -48,6 +48,7 @@
 extern double frameRateFactor;
 
 extern Font *mainFont;
+extern Font *mainFontReview;
 extern Font *handwritingFont;
 extern Font *pencilFont;
 extern Font *pencilErasedFont;
@@ -4485,6 +4486,74 @@ void LivingLifePage::draw( doublePair inViewCenter,
         // skip gui
         return;
         }
+
+
+    // special mode for teaser video
+    if( true ) {
+        
+        // black bars at top and bottom
+        doublePair barPos = lastScreenViewCenter;
+
+        barPos.y += 360;
+        setDrawColor( 0, 0, 0, 1 );
+        
+        drawRect( barPos, 640, 64 );
+        
+        barPos = lastScreenViewCenter;
+
+        barPos.y -= 360;
+        setDrawColor( 0, 0, 0, 1 );
+        
+        drawRect( barPos, 640, 64 );
+        
+
+        for( int y=yEnd; y>=yStart; y-- ) {
+        
+            int worldY = y + mMapOffsetY - mMapD / 2;
+            //printf( "World y = %d\n", worldY );
+            
+            if( worldY == 1 ) {
+
+                int screenY = CELL_D * worldY;
+        
+                
+                for( int x=xStart; x<=xEnd; x++ ) {
+            
+                    int worldX = x + mMapOffsetX - mMapD / 2;
+
+                    if( worldX > 0 ) {
+                        int mapI = y * mMapD + x;
+                    
+                        int screenX = CELL_D * worldX;
+                        
+                        if( mMap[ mapI ] > 0 ) {
+                            
+                            doublePair labelPos;
+                            labelPos.x = screenX;
+                            labelPos.y = lastScreenViewCenter.y;
+                            
+                            if( worldX % 2 == 0 ) {
+                                labelPos.y += 328;
+                                }
+                            else {
+                                labelPos.y -= 328;
+                                }
+                            
+                            setDrawColor( 1, 1, 1, 1 );
+                            
+                            mainFontReview->drawString( 
+                                getObject( mMap[mapI] )->description, 
+                                labelPos,
+                                alignCenter );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    
+
+
     
     if( hideGuiPanel ) {
         // skip gui
@@ -6397,12 +6466,32 @@ void LivingLifePage::step() {
                     binarySize, compressedSize );
             
             if( ! mMapGlobalOffsetSet ) {
-                printf( "Using this first chunk center as our global offset:  "
-                        "%d, %d\n", x, y );
                 
-                mMapGlobalOffset.x = x;
-                mMapGlobalOffset.y = y;
-                mMapGlobalOffsetSet = true;
+                // we need 7 fraction bits to represent 128 pixels per tile
+                // 32-bit float has 23 significant bits, not counting sign
+                // that leaves 16 bits for tile coordinate, or 65,536
+                // Give two extra bits of wiggle room
+                int maxOK = 16384;
+                
+                if( x < maxOK &&
+                    x > -maxOK &&
+                    y < maxOK &&
+                    y > -maxOK ) {
+                    printf( "First chunk isn't too far from center, using "
+                            "0,0 as our global offset\n" );
+                    
+                    mMapGlobalOffset.x = 0;
+                    mMapGlobalOffset.y = 0;
+                    mMapGlobalOffsetSet = true;
+                    }
+                else {
+                    printf( 
+                        "Using this first chunk center as our global offset:  "
+                        "%d, %d\n", x, y );
+                    mMapGlobalOffset.x = x;
+                    mMapGlobalOffset.y = y;
+                    mMapGlobalOffsetSet = true;
+                    }
                 }
             
             applyReceiveOffset( &x, &y );
