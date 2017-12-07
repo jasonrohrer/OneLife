@@ -226,12 +226,41 @@ int main( int inNumArgs, char **inArgs ) {
                 delete [] trans;
                 }
             
+            if( humanMade && o->permanent ) {
+                // make sure it won't auto-decay back to natural
+                
+                TransRecord **trans =
+                    searchUses( o->id, 
+                                0,
+                                1000,
+                                &numTrans, &numRemain );
+                
+                if( trans != NULL ) {    
+                    for( int t=0; t<numTrans; t++ ) {
+                        if( trans[t]->actor == -1 &&
+                            trans[t]->autoDecaySeconds != 0 &&
+                            trans[t]->newTarget > 0 ) {
+
+                            if( getObjectDepth( trans[t]->newTarget ) 
+                                == 0 ) {
+                                // one step of decay back to natural
+                                humanMade = false;
+                                }
+                            break;
+                            }
+                        }
+                    delete [] trans;
+                    }
+                }
+            
+
             if( humanMade ) {
                 
                         
                 int d = getObjectDepth( o->id );
-                
-                queue.insert( o->id, d );
+                if( d != UNREACHABLE ) {
+                    queue.insert( o->id, d );
+                    }
                 }
             }    
         }
