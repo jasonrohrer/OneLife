@@ -12,6 +12,10 @@
 #include "minorGems/system/Thread.h"
 #include "minorGems/game/game.h"
 #include "minorGems/util/MinPriorityQueue.h"
+#include "minorGems/util/random/JenkinsRandomSource.h"
+
+
+JenkinsRandomSource randSource;
 
 
 #include <stdlib.h>
@@ -186,6 +190,9 @@ int main( int inNumArgs, char **inArgs ) {
 
     MinPriorityQueue<int> queue;
     
+    SimpleVector<int> treeList;
+    
+
     int numObjects;
     ObjectRecord **objects = getAllObjects( &numObjects );
 
@@ -262,7 +269,12 @@ int main( int inNumArgs, char **inArgs ) {
                     queue.insert( o->id, d );
                     }
                 }
-            }    
+            }
+        else if( o->mapChance > 0 && getObjectDepth( o->id ) == 0 ) {
+            if( strstr( o->description, "Tree" ) != NULL ) {
+                treeList.push_back( o->id );
+                }
+            }
         }
         
     delete [] objects;
@@ -296,18 +308,49 @@ int main( int inNumArgs, char **inArgs ) {
     
     for( int y=-5; y<=5; y++ ) {
         int biome = 2;
-        if( y < -1 || y > 2 ) {
+        if( y < 0 || y > 1 ) {
             biome = 0;
             }
-        for( int x=0; x<=xMax; x++ ) {
+        for( int x=-20; x<=xMax+20; x++ ) {
             int id = 0;
-            if( y == 1 && x % spacing == 0 ) {
-                id = orderedObjects.getElementDirect( x / spacing );
-                printf( "Finding object %d with name %s\n",
-                        id, getObject(id)->description );
+            int rowBiome = biome;
+            if( x <= -2 ) {
+                rowBiome = 0;
                 }
+            
+            if( y == 1 && x % spacing == 0 ) {
+                
+                int objectIndex = x / spacing;
+                
+                if( objectIndex >=0 && objectIndex < orderedObjects.size() ) {
+                    id = orderedObjects.getElementDirect( objectIndex );
+                    }
+                }
+
+            char addTree = false;
+            
+
+            if( y == 2  ||
+                y == 3  ||
+                ( ( x >= 0 || x < -2 ) 
+                  && 
+                  ( y == -3 ||
+                    y == -4 ) ) ) {
+                addTree = true;
+                }
+            else if( x < -2 && y >= -4 && y <=3 ) {
+                addTree = true;
+                }
+
+            
+            if( addTree  ) {
+                id = treeList.getElementDirect( 
+                    randSource.getRandomBoundedInt( 0, treeList.size() - 1 ) );
+                }
+            
+
             fprintf( outFile, "%d %d %d 0 %d\n",
-                     x, y, biome, id );
+                     x, y, rowBiome, id );
             }
         }        
 
@@ -417,6 +460,7 @@ void setDrawFade( float ) {
     }
 
 float getTotalGlobalFade() {
+    return 1.0f;
     }
 
 
