@@ -4490,22 +4490,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     // special mode for teaser video
     if( true ) {
-        
-        // black bars at top and bottom
-        doublePair barPos = lastScreenViewCenter;
 
-        barPos.y += 360;
-        setDrawColor( 0, 0, 0, 1 );
-        
-        drawRect( barPos, 640, 64 );
-        
-        barPos = lastScreenViewCenter;
-
-        barPos.y -= 360;
-        setDrawColor( 0, 0, 0, 1 );
-        
-        drawRect( barPos, 640, 64 );
-        
 
         for( int y=yEnd; y>=yStart; y-- ) {
         
@@ -4521,7 +4506,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
                     int worldX = x + mMapOffsetX - mMapD / 2;
 
-                    if( worldX > 0 ) {
+                    if( worldX >= 0 ) {
                         int mapI = y * mMapD + x;
                     
                         int screenX = CELL_D * worldX;
@@ -4529,20 +4514,101 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         if( mMap[ mapI ] > 0 ) {
                             
                             doublePair labelPos;
-                            labelPos.x = screenX;
+
+                            double speedWiggle = 
+                                getXYRandom( worldX, 0 );
+                            
+                            double centerWeight = 
+                                0.5 + ( speedWiggle - 0.5 ) * 0.2;
+
+                            
+
+                            labelPos.x = 
+                                (1 - centerWeight ) * screenX + 
+                                centerWeight * lastScreenViewCenter.x;
+
                             labelPos.y = lastScreenViewCenter.y;
+
+                            double yWiggle = 
+                                getXYRandom( worldX, 29 );
+                            
+                            yWiggle = 0;
+                            labelPos.y += (yWiggle - 0.5) * 64;
                             
                             if( worldX % 2 == 0 ) {
-                                labelPos.y += 328;
+                                labelPos.y += 256;
+                                
+                                if( worldX % 6 == 2 ) {
+                                    labelPos.y -= 96;
+                                    }
+                                else if( worldX % 6 == 4 ) {
+                                    labelPos.y += 96;
+                                    }
                                 }
                             else {
-                                labelPos.y -= 328;
+                                labelPos.y -= 192;
+                                
+                                if( worldX % 6 == 3 ) {
+                                    labelPos.y -= 96;
+                                    }
+                                else if( worldX % 6 == 5 ) {
+                                    labelPos.y += 96;
+                                    }
+                                }                            
+
+                            
+                            double fade = 0;
+                            
+                            if( fabs( lastScreenViewCenter.x - screenX )
+                                < 400 ) {
+                                
+                                if( fabs( lastScreenViewCenter.x - screenX )
+                                    < 300 ) {
+                                    fade = 1;
+                                    }
+                                else {
+                                    fade = 
+                                        ( 400 - fabs( lastScreenViewCenter.x - 
+                                                      screenX ) ) / 100.0;
+                                    }
                                 }
                             
-                            setDrawColor( 1, 1, 1, 1 );
+
                             
+                            char *des = stringToUpperCase( 
+                                getObject( mMap[mapI] )->description );
+                            
+
+                            double w = mainFontReview->measureString( des );
+                            
+                            setDrawColor( 0, 0, 0, fade );
+                            doublePair rectPos = labelPos;
+                            rectPos.y += 
+                                mainFontReview->getFontHeight() * 0.125;
+                            
+                            drawRect( rectPos, 
+                                      w/2 + 
+                                      mainFontReview->getFontHeight() / 2, 
+                                      mainFontReview->getFontHeight() * 0.75 );
+
+                            double lineVerts[8] = 
+                                { labelPos.x - 5, labelPos.y,
+                                  labelPos.x + 5, labelPos.y,
+                                  (double)screenX + 1, (double)screenY,
+                                  (double)screenX - 1, (double)screenY };
+                            
+                            float lineColors[16] = 
+                                { 0, 0, 0, (float)fade,
+                                  0, 0, 0, (float)fade,
+                                  0, 0, 0, 0,
+                                  0, 0, 0, 0 };
+
+                            drawQuads( 1, lineVerts, lineColors );
+                            
+
+                            setDrawColor( 1, 1, 1, fade );
                             mainFontReview->drawString( 
-                                getObject( mMap[mapI] )->description, 
+                                des, 
                                 labelPos,
                                 alignCenter );
                             }
