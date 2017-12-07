@@ -35,6 +35,23 @@
 #include "../gameSource/GridPos.h"
 
 
+
+timeSec_t startFrozenTime = -1;
+
+timeSec_t frozenTime() {
+    if( startFrozenTime == -1 ) {
+        startFrozenTime = Time::timeSec();
+        }
+    return startFrozenTime;
+    }
+
+
+// can replace with frozenTime to freeze time
+// or slowTime to slow it down
+#define MAP_TIMESEC Time::timeSec()
+//#define MAP_TIMESEC frozenTime()
+
+
 extern GridPos getClosestPlayerPos( int inX, int inY );
 
 
@@ -1993,7 +2010,7 @@ static void dbFloorTimePut( int inX, int inY, timeSec_t inTime ) {
 static void trackETA( int inX, int inY, int inSlot, timeSec_t inETA,
                       int inSubCont = 0 ) {
     
-    timeSec_t timeLeft = inETA - Time::timeSec();
+    timeSec_t timeLeft = inETA - MAP_TIMESEC;
         
     if( timeLeft < maxSecondsForActiveDecayTracking ) {
         // track it live
@@ -2027,7 +2044,7 @@ static void trackETA( int inX, int inY, int inSlot, timeSec_t inETA,
                 // don't overwrite old one
                 liveDecayRecordLastLookTimeHashTable.insert( inX, inY, inSlot,
                                                              inSubCont,
-                                                             Time::timeSec() );
+                                                             MAP_TIMESEC );
                 }
             }
         }
@@ -2101,7 +2118,7 @@ int *getContained( int inX, int inY, int *outNumContained, int inSubCont ) {
     int *result = getContainedRaw( inX, inY, outNumContained, inSubCont );
     
     // look at these slots if they are subject to live decay
-    timeSec_t currentTime = Time::timeSec();
+    timeSec_t currentTime = MAP_TIMESEC;
     
     for( int i=0; i<*outNumContained; i++ ) {
         char found;
@@ -2193,7 +2210,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
     
     if( mapETA != 0 ) {
         
-        if( (int)mapETA <= Time::timeSec() ) {
+        if( (int)mapETA <= MAP_TIMESEC ) {
             
             // object in map has decayed (eta expired)
 
@@ -2521,7 +2538,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             if( tweakedSeconds < 1 ) {
                                 tweakedSeconds = 1;
                                 }
-                            leftMapETA = Time::timeSec() + tweakedSeconds;
+                            leftMapETA = MAP_TIMESEC + tweakedSeconds;
                             }
                         else {
                             // no further decay
@@ -2642,7 +2659,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 if( tweakedSeconds < 1 ) {
                     tweakedSeconds = 1;
                     }
-                mapETA = Time::timeSec() + tweakedSeconds;
+                mapETA = MAP_TIMESEC + tweakedSeconds;
                 }
             else {
                 // no further decay
@@ -2696,7 +2713,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
             decayTime = 1;
             }
         
-        mapETA = Time::timeSec() + decayTime;
+        mapETA = MAP_TIMESEC + decayTime;
             
         setEtaDecay( inX, inY, mapETA );
         }
@@ -2765,7 +2782,7 @@ void checkDecayContained( int inX, int inY, int inSubCont ) {
     
         if( mapETA != 0 ) {
         
-            if( (int)mapETA <= Time::timeSec() ) {
+            if( (int)mapETA <= MAP_TIMESEC ) {
             
                 // object in container slot has decayed (eta expired)
                 
@@ -2794,7 +2811,7 @@ void checkDecayContained( int inX, int inY, int inSubCont ) {
                             }
                         
                         mapETA = 
-                            Time::timeSec() +
+                            MAP_TIMESEC +
                             tweakedSeconds / 
                             getMapContainerTimeStretch( inX, inY, inSubCont );
                         }
@@ -2934,7 +2951,7 @@ int getMapObjectRaw( int inX, int inY ) {
 
 
 void lookAtRegion( int inXStart, int inYStart, int inXEnd, int inYEnd ) {
-    timeSec_t currentTime = Time::timeSec();
+    timeSec_t currentTime = MAP_TIMESEC;
     
     for( int y=inYStart; y<=inYEnd; y++ ) {
         for( int x=inXStart; x<=inXEnd; x++ ) {
@@ -3001,7 +3018,7 @@ int getMapObject( int inX, int inY ) {
     
     if( oldLookTime != NULL ) {
         // we're tracking decay for this cell
-        *oldLookTime = Time::timeSec();
+        *oldLookTime = MAP_TIMESEC;
         }
 
 
@@ -3251,7 +3268,7 @@ void setMapObject( int inX, int inY, int inID ) {
     
     if( newDecayT != NULL && newDecayT->autoDecaySeconds > 0 ) {
         
-        mapETA = Time::timeSec() + newDecayT->autoDecaySeconds;
+        mapETA = MAP_TIMESEC + newDecayT->autoDecaySeconds;
         }
     
     setEtaDecay( inX, inY, mapETA );
@@ -3362,7 +3379,7 @@ void addContained( int inX, int inY, int inContainedID,
     int oldNum;
     
 
-    timeSec_t curTime = Time::timeSec();
+    timeSec_t curTime = MAP_TIMESEC;
 
     if( inEtaDecay != 0 ) {    
         timeSec_t etaOffset = inEtaDecay - curTime;
@@ -3498,7 +3515,7 @@ int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay,
     
     int result = dbGet( inX, inY, FIRST_CONT_SLOT + inSlot, inSubCont );
 
-    timeSec_t curTime = Time::timeSec();
+    timeSec_t curTime = MAP_TIMESEC;
     
     timeSec_t resultEta = dbTimeGet( inX, inY, 
                                      getContainerDecaySlot( 
@@ -3732,7 +3749,7 @@ int getMapFloor( int inX, int inY ) {
 
     timeSec_t etaTime = getFloorEtaDecay( inX, inY );
     
-    timeSec_t curTime = Time::timeSec();
+    timeSec_t curTime = MAP_TIMESEC;
     
 
     if( etaTime == 0 ) {
@@ -3770,7 +3787,7 @@ void setMapFloor( int inX, int inY, int inID ) {
     timeSec_t newEta = 0;
 
     if( newT != NULL ) {
-        timeSec_t curTime = Time::timeSec();
+        timeSec_t curTime = MAP_TIMESEC;
         newEta = curTime + newT->autoDecaySeconds;
         }
 
@@ -3797,7 +3814,7 @@ int getNextDecayDelta() {
         return -1;
         }
     
-    timeSec_t curTime = Time::timeSec();
+    timeSec_t curTime = MAP_TIMESEC;
 
     timeSec_t minTime = liveDecayQueue.checkMinPriority();
     
@@ -3815,7 +3832,7 @@ int getNextDecayDelta() {
 void stepMap( SimpleVector<char> *inMapChanges, 
               SimpleVector<ChangePosition> *inChangePosList ) {
     
-    timeSec_t curTime = Time::timeSec();
+    timeSec_t curTime = MAP_TIMESEC;
 
     while( liveDecayQueue.size() > 0 && 
            liveDecayQueue.checkMinPriority() <= curTime ) {
@@ -3843,7 +3860,7 @@ void stepMap( SimpleVector<char> *inMapChanges,
 
             if( storedFound ) {
 
-                if( Time::timeSec() - lastLookTime > 
+                if( MAP_TIMESEC - lastLookTime > 
                     maxSecondsNoLookDecayTracking ) {
                     
                     // this cell or slot hasn't been looked at in too long
@@ -3925,7 +3942,7 @@ void restretchDecays( int inNumDecays, timeSec_t *inDecayEtas,
     float newStetch = getObject( inNewContainerID )->slotTimeStretch;
             
     if( oldStrech != newStetch ) {
-        timeSec_t curTime = Time::timeSec();
+        timeSec_t curTime = MAP_TIMESEC;
 
         for( int i=0; i<inNumDecays; i++ ) {
             if( inDecayEtas[i] != 0 ) {
