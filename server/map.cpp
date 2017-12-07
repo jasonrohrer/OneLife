@@ -224,7 +224,7 @@ static char useTestMap = false;
 // unless testMapStale.txt is present
 
 // each line contains data in this order:
-// x y biome id_and_contained
+// x y biome floor id_and_contained
 // id and contained are in CONTAINER OBJECT FORMAT described in protocol.txt
 // biome = -1 means use naturally-occurring biome
 typedef struct TestMapRecord {
