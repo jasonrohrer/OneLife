@@ -4,6 +4,23 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 42     ???
+
+
+
+
+Server Fixes:
+
+--Base movement speed is now 3.75 tiles per second instead of 4 tiles per
+  second to ensure that client camera moves at a whole number of pixels (8) per
+  frame at 60 fps.  Modified speeds due to age or carrying things) are also
+  rounded to ensure a whole number of pixels per frame, or in the case of very
+  slow speeds, a whole number of frames per pixel.
+ 
+
+
+
+
 Version 40     2017-December-1
 
 --Old object's using sound now played when a player causes an object on the

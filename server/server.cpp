@@ -995,9 +995,12 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
     double age = computeAge( inPlayer );
     
 
-    double speed = 4;
+    // with 128-wide tiles, character moves at 480 pixels per second
+    // at 60 fps, this is 8 pixels per frame
+    // important that it's a whole number of pixels for smooth camera movement
+    double speed = 3.75;
     
-    
+    // baby moves at 360 pixels per second, or 6 pixels per frame
     double babySpeedFactor = 0.75;
 
     double fullSpeedAge = 10.0;
@@ -1073,8 +1076,28 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
             }
         }
     
+    // after all multipliers, make sure it's a whole number of pixels per frame
 
-
+    double pixelsPerFrame = speed * 128.0 / 60.0;
+    
+    
+    if( pixelsPerFrame > 0.5 ) {
+        // can round to at least one pixel per frame
+        pixelsPerFrame = lrint( pixelsPerFrame );
+        }
+    else {
+        // fractional pixels per frame
+        
+        // ensure a whole number of frames per pixel
+        double framesPerPixel = 1.0 / pixelsPerFrame;
+        
+        framesPerPixel = lrint( framesPerPixel );
+        
+        pixelsPerFrame = 1.0 / framesPerPixel;
+        }
+    
+    speed = pixelsPerFrame * 60 / 128.0;
+        
     return speed;
     }
 
