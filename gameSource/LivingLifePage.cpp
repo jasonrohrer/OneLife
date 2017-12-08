@@ -4490,7 +4490,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     // special mode for teaser video
     if( true ) {
-
+        setDrawColor( 1, 1, 1, 1 );
+        drawRect( lastScreenViewCenter, 640, 360 );
+        
         // two passes
         // first for arrows, second for labels
         // make sure arrows don't cross labels
@@ -4535,7 +4537,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             double yWiggle = 
                                 getXYRandom( worldX, 29 );
                             
-                            labelPos.y += (yWiggle - 0.5) * 32;
+                            labelPos.y += lrint( (yWiggle - 0.5) * 32 );
                             
                             if( worldX % 2 == 0 ) {
                                 labelPos.y += 224;
@@ -4578,9 +4580,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
                             if( pass == 0 ) {
+                                double arrowStart = 27;
+                                
+                                if( worldX % 2 == 0 ) {
+                                    arrowStart = -21;
+                                    }
+                                
                                 double lineVerts[8] = 
-                                    { labelPos.x - 5, labelPos.y - 21,
-                                      labelPos.x + 5, labelPos.y - 21,
+                                    { labelPos.x - 5, labelPos.y + arrowStart,
+                                      labelPos.x + 5, labelPos.y + arrowStart,
                                       (double)screenX + 1, (double)screenY,
                                       (double)screenX - 1, (double)screenY };
                                 
