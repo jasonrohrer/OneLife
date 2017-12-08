@@ -4491,7 +4491,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
     // special mode for teaser video
     if( true ) {
 
-
+        // two passes
+        // first for arrows, second for labels
+        // make sure arrows don't cross labels
+        for( int pass=0; pass<2; pass++ )
         for( int y=yEnd; y>=yStart; y-- ) {
         
             int worldY = y + mMapOffsetY - mMapD / 2;
@@ -4573,50 +4576,52 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 }
                             
 
-                            
-                            char *des = stringToUpperCase( 
-                                getObject( mMap[mapI] )->description );
-                            
-                            char *poundPos = strstr( des, "#" );
-                            
-                            if( poundPos != NULL ) {
-                                // terminate at pound
-                                poundPos[0] = '\0';
+
+                            if( pass == 0 ) {
+                                double lineVerts[8] = 
+                                    { labelPos.x - 5, labelPos.y - 21,
+                                      labelPos.x + 5, labelPos.y - 21,
+                                      (double)screenX + 1, (double)screenY,
+                                      (double)screenX - 1, (double)screenY };
+                                
+                                float lineColors[16] = 
+                                    { 0, 0, 0, (float)fade,
+                                      0, 0, 0, (float)fade,
+                                      0, 0, 0, 0,
+                                      0, 0, 0, 0 };
+                                
+                                drawQuads( 1, lineVerts, lineColors );
                                 }
-                            
-                            double w = mainFontReview->measureString( des );
-                            
-                            setDrawColor( 0, 0, 0, fade );
-                            doublePair rectPos = labelPos;
-                            rectPos.y += 3;
-                            
-                            drawRect( rectPos, 
-                                      w/2 + 
-                                      mainFontReview->getFontHeight() / 2, 
-                                      24 );
+                            else {
+                                char *des = stringToUpperCase( 
+                                    getObject( mMap[mapI] )->description );
+                                
+                                char *poundPos = strstr( des, "#" );
+                                
+                                if( poundPos != NULL ) {
+                                    // terminate at pound
+                                    poundPos[0] = '\0';
+                                    }
+                                
+                                double w = mainFontReview->measureString( des );
+                                
+                                setDrawColor( 0, 0, 0, fade );
+                                doublePair rectPos = labelPos;
+                                rectPos.y += 3;
+                                
+                                drawRect( rectPos, 
+                                          w/2 + 
+                                          mainFontReview->getFontHeight() / 2, 
+                                          24 );
 
-                            double lineVerts[8] = 
-                                { labelPos.x - 5, labelPos.y,
-                                  labelPos.x + 5, labelPos.y,
-                                  (double)screenX + 1, (double)screenY,
-                                  (double)screenX - 1, (double)screenY };
-                            
-                            float lineColors[16] = 
-                                { 0, 0, 0, (float)fade,
-                                  0, 0, 0, (float)fade,
-                                  0, 0, 0, 0,
-                                  0, 0, 0, 0 };
-
-                            drawQuads( 1, lineVerts, lineColors );
-                            
-
-                            setDrawColor( 1, 1, 1, fade );
-                            mainFontReview->drawString( 
-                                des, 
-                                labelPos,
-                                alignCenter );
-                            
-                            delete [] des;
+                                setDrawColor( 1, 1, 1, fade );
+                                mainFontReview->drawString( 
+                                    des, 
+                                    labelPos,
+                                    alignCenter );
+                                
+                                delete [] des;
+                                }
                             }
                         }
                     }
