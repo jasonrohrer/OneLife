@@ -4490,8 +4490,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     // special mode for teaser video
     if( true ) {
-        setDrawColor( 1, 1, 1, 1 );
-        drawRect( lastScreenViewCenter, 640, 360 );
+        //setDrawColor( 1, 1, 1, 1 );
+        //drawRect( lastScreenViewCenter, 640, 360 );
         
         // two passes
         // first for arrows, second for labels
@@ -4522,10 +4522,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                             double speedWiggle = 
                                 getXYRandom( worldX, 0 );
-                            
-                            double centerWeight = 
-                                0.5 + ( speedWiggle - 0.5 ) * 0.2;
 
+
+                            // round to nearest 8th
+                            // even distribution between 3/8 and 7/8
+                            double centerWeight = 
+                                0.32 + ( speedWiggle ) * .61;
+                            
+                            centerWeight = lrint( 8 * centerWeight ) / 8.0;
                             
 
                             labelPos.x = 
