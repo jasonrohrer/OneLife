@@ -4532,11 +4532,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             double yWiggle = 
                                 getXYRandom( worldX, 29 );
                             
-                            yWiggle = 0;
-                            labelPos.y += (yWiggle - 0.5) * 64;
+                            labelPos.y += (yWiggle - 0.5) * 32;
                             
                             if( worldX % 2 == 0 ) {
-                                labelPos.y += 256;
+                                labelPos.y += 224;
                                 
                                 if( worldX % 6 == 2 ) {
                                     labelPos.y -= 96;
@@ -4578,18 +4577,23 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             char *des = stringToUpperCase( 
                                 getObject( mMap[mapI] )->description );
                             
-
+                            char *poundPos = strstr( des, "#" );
+                            
+                            if( poundPos != NULL ) {
+                                // terminate at pound
+                                poundPos[0] = '\0';
+                                }
+                            
                             double w = mainFontReview->measureString( des );
                             
                             setDrawColor( 0, 0, 0, fade );
                             doublePair rectPos = labelPos;
-                            rectPos.y += 
-                                mainFontReview->getFontHeight() * 0.125;
+                            rectPos.y += 3;
                             
                             drawRect( rectPos, 
                                       w/2 + 
                                       mainFontReview->getFontHeight() / 2, 
-                                      mainFontReview->getFontHeight() * 0.75 );
+                                      24 );
 
                             double lineVerts[8] = 
                                 { labelPos.x - 5, labelPos.y,
@@ -4611,6 +4615,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 des, 
                                 labelPos,
                                 alignCenter );
+                            
+                            delete [] des;
                             }
                         }
                     }
