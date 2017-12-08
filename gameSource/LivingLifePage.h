@@ -619,6 +619,11 @@ class LivingLifePage : public GamePage {
         SpriteHandle mPathMarkSprite;
         SpriteHandle mGroundOverlaySprite[4];
         
+        SpriteHandle mTeaserArrowLongSprite;
+        SpriteHandle mTeaserArrowMedSprite;
+        SpriteHandle mTeaserArrowShortSprite;
+        SpriteHandle mTeaserArrowVeryShortSprite;
+        
         
         // not visible, but used for its text filtering
         // capabilities

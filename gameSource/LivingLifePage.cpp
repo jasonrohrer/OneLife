@@ -1175,6 +1175,12 @@ LivingLifePage::LivingLifePage()
           mCurMouseOverID( 0 ),
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
           mPathMarkSprite( loadWhiteSprite( "pathMark.tga" ) ),
+          mTeaserArrowLongSprite( loadSprite( "teaserArrowLong.tga", false ) ),
+          mTeaserArrowMedSprite( loadSprite( "teaserArrowMed.tga", false ) ),
+          mTeaserArrowShortSprite( 
+              loadSprite( "teaserArrowShort.tga", false ) ),
+          mTeaserArrowVeryShortSprite( 
+              loadSprite( "teaserArrowVeryShort.tga", false ) ),
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! " ),
           mDeathReason( NULL ),
@@ -1506,6 +1512,11 @@ LivingLifePage::~LivingLifePage() {
     freeSprite( mPathMarkSprite );
     freeSprite( mHomeSlipSprite );
     
+    freeSprite( mTeaserArrowLongSprite );
+    freeSprite( mTeaserArrowMedSprite );
+    freeSprite( mTeaserArrowShortSprite );
+    freeSprite( mTeaserArrowVeryShortSprite );
+
     for( int i=0; i<4; i++ ) {
         freeSprite( mGroundOverlaySprite[i] );
         }
@@ -3072,7 +3083,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     // tiles drawn on top).  However, given that we're not drawing anything
     // else out there, this should be okay from a performance standpoint.
 
-    int yStartFloor = gridCenterY - 3;
+    int yStartFloor = gridCenterY - 4;
     int yEndFloor = gridCenterY + 3;
 
     int xStartFloor = gridCenterX - 5;
@@ -4543,14 +4554,18 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             
                             labelPos.y += lrint( (yWiggle - 0.5) * 32 );
                             
+                            SpriteHandle arrowSprite = mTeaserArrowMedSprite;
+
                             if( worldX % 2 == 0 ) {
                                 labelPos.y += 224;
                                 
                                 if( worldX % 6 == 2 ) {
                                     labelPos.y -= 96;
+                                    arrowSprite = mTeaserArrowVeryShortSprite;
                                     }
                                 else if( worldX % 6 == 4 ) {
                                     labelPos.y += 96;
+                                    arrowSprite = mTeaserArrowLongSprite;
                                     }
                                 }
                             else {
@@ -4558,9 +4573,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 
                                 if( worldX % 6 == 3 ) {
                                     labelPos.y -= 96;
+                                    arrowSprite = mTeaserArrowLongSprite;
                                     }
                                 else if( worldX % 6 == 5 ) {
                                     labelPos.y += 96;
+                                    arrowSprite = mTeaserArrowShortSprite;
                                     }
                                 }                            
 
@@ -4589,20 +4606,25 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 if( worldX % 2 == 0 ) {
                                     arrowStart = -21;
                                     }
+
+                                doublePair spriteVerts[4] = 
+                                    { { labelPos.x - 11, 
+                                        labelPos.y + arrowStart },
+                                      { labelPos.x + 11, 
+                                        labelPos.y + arrowStart },
+                                      { (double)screenX + 11, 
+                                        (double)screenY },
+                                      { (double)screenX - 11, 
+                                        (double)screenY } };
+
+                                FloatColor spriteColors[4] = 
+                                    { { 1, 1, 1, (float)fade },
+                                      { 1, 1, 1, (float)fade },
+                                      { 1, 1, 1, 0 },
+                                      { 1, 1, 1, 0 } };
                                 
-                                double lineVerts[8] = 
-                                    { labelPos.x - 5, labelPos.y + arrowStart,
-                                      labelPos.x + 5, labelPos.y + arrowStart,
-                                      (double)screenX + 1, (double)screenY,
-                                      (double)screenX - 1, (double)screenY };
-                                
-                                float lineColors[16] = 
-                                    { 0, 0, 0, (float)fade,
-                                      0, 0, 0, (float)fade,
-                                      0, 0, 0, 0,
-                                      0, 0, 0, 0 };
-                                
-                                drawQuads( 1, lineVerts, lineColors );
+                                drawSprite( arrowSprite,
+                                            spriteVerts, spriteColors );
                                 }
                             else {
                                 char *des = stringToUpperCase( 
