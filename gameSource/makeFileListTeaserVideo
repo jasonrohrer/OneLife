@@ -1,0 +1,8 @@
+include makeFileList.bak
+
+
+GAME_GRAPHICS := ${GAME_GRAPHICS} \
+graphics/teaserArrowLong.tga \
+graphics/teaserArrowMed.tga \
+graphics/teaserArrowShort.tga \
+graphics/teaserArrowVeryShort.tga \

@@ -91,6 +91,9 @@ static float lastMouseX = 0;
 static float lastMouseY = 0;
 
 
+// set to true to render for teaser video
+static char teaserVideo = true;
+
 
 
 
@@ -1175,12 +1178,6 @@ LivingLifePage::LivingLifePage()
           mCurMouseOverID( 0 ),
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
           mPathMarkSprite( loadWhiteSprite( "pathMark.tga" ) ),
-          mTeaserArrowLongSprite( loadSprite( "teaserArrowLong.tga", false ) ),
-          mTeaserArrowMedSprite( loadSprite( "teaserArrowMed.tga", false ) ),
-          mTeaserArrowShortSprite( 
-              loadSprite( "teaserArrowShort.tga", false ) ),
-          mTeaserArrowVeryShortSprite( 
-              loadSprite( "teaserArrowVeryShort.tga", false ) ),
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! " ),
           mDeathReason( NULL ),
@@ -1392,6 +1389,16 @@ LivingLifePage::LivingLifePage()
     mShowHighlights = 
         SettingsManager::getIntSetting( "showMouseOverHighlights", 1 );
     
+
+    if( teaserVideo ) {
+        mTeaserArrowLongSprite = loadSprite( "teaserArrowLong.tga", false );
+        mTeaserArrowMedSprite = loadSprite( "teaserArrowMed.tga", false );
+        mTeaserArrowShortSprite = loadSprite( "teaserArrowShort.tga", false );
+        mTeaserArrowVeryShortSprite = 
+            loadSprite( "teaserArrowVeryShort.tga", false );
+        }
+          
+
     }
 
 
@@ -1512,11 +1519,13 @@ LivingLifePage::~LivingLifePage() {
     freeSprite( mPathMarkSprite );
     freeSprite( mHomeSlipSprite );
     
-    freeSprite( mTeaserArrowLongSprite );
-    freeSprite( mTeaserArrowMedSprite );
-    freeSprite( mTeaserArrowShortSprite );
-    freeSprite( mTeaserArrowVeryShortSprite );
-
+    if( teaserVideo ) {
+        freeSprite( mTeaserArrowLongSprite );
+        freeSprite( mTeaserArrowMedSprite );
+        freeSprite( mTeaserArrowShortSprite );
+        freeSprite( mTeaserArrowVeryShortSprite );
+        }
+    
     for( int i=0; i<4; i++ ) {
         freeSprite( mGroundOverlaySprite[i] );
         }
@@ -4500,7 +4509,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
     // special mode for teaser video
-    if( true ) {
+    if( teaserVideo ) {
         //setDrawColor( 1, 1, 1, 1 );
         //drawRect( lastScreenViewCenter, 640, 360 );
         
