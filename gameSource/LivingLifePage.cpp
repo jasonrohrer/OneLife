@@ -4615,15 +4615,27 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 if( worldX % 2 == 0 ) {
                                     arrowStart = -21;
                                     }
+                                
+                                double w = 11;
+                                
+                                double deltaX = screenX - labelPos.x;
+                                double deltaY = screenY - 
+                                    ( labelPos.y + arrowStart );
+                                
+                                double a = atan( deltaX / deltaY );
+                                
+                                a = 0.85 * a;
+                                
+                                w = w / cos( a );
 
                                 doublePair spriteVerts[4] = 
-                                    { { labelPos.x - 11, 
+                                    { { labelPos.x - w, 
                                         labelPos.y + arrowStart },
-                                      { labelPos.x + 11, 
+                                      { labelPos.x + w, 
                                         labelPos.y + arrowStart },
-                                      { (double)screenX + 11, 
+                                      { (double)screenX + w, 
                                         (double)screenY },
-                                      { (double)screenX - 11, 
+                                      { (double)screenX - w, 
                                         (double)screenY } };
 
                                 FloatColor spriteColors[4] = 
