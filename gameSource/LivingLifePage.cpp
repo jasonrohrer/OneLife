@@ -1396,6 +1396,8 @@ LivingLifePage::LivingLifePage()
         mTeaserArrowShortSprite = loadWhiteSprite( "teaserArrowShort.tga" );
         mTeaserArrowVeryShortSprite = 
             loadWhiteSprite( "teaserArrowVeryShort.tga" );
+        
+        mLineSegmentSprite = loadWhiteSprite( "lineSegment.tga" );
         }
           
 
@@ -1524,6 +1526,7 @@ LivingLifePage::~LivingLifePage() {
         freeSprite( mTeaserArrowMedSprite );
         freeSprite( mTeaserArrowShortSprite );
         freeSprite( mTeaserArrowVeryShortSprite );
+        freeSprite( mLineSegmentSprite );
         }
     
     for( int i=0; i<4; i++ ) {
@@ -2936,6 +2939,47 @@ void LivingLifePage::drawHungerMaxFillLine( doublePair inAteWordsPos,
 
 
 
+static void drawLine( SpriteHandle inSegmentSprite,
+                      doublePair inStart, doublePair inEnd,
+                      FloatColor inColor ) {
+    
+    doublePair dir = normalize( sub( inEnd, inStart ) );
+    
+    doublePair perpDir = { -dir.y, dir.x };
+    
+    perpDir = mult( perpDir, 2 );
+    
+
+    doublePair spriteVerts[4] = 
+        { { inStart.x - perpDir.x,
+            inStart.y - perpDir.y },
+          { inEnd.x - perpDir.x,
+            inEnd.y - perpDir.y },
+          { inEnd.x + perpDir.x,
+            inEnd.y + perpDir.y },
+          { inStart.x + perpDir.x,
+            inStart.y + perpDir.y } };
+    
+    FloatColor spriteColors[4] = 
+        { inColor, inColor, inColor, inColor };
+    
+                                
+    drawSprite( inSegmentSprite,
+                spriteVerts, spriteColors );
+    }
+
+
+
+static double getBoundedRandom( int inX, int inY,
+                                double inUpper, double inLower ) {
+    double val = getXYRandom( inX, inY );
+    
+    return val * ( inUpper - inLower ) + inLower;
+    }
+
+
+
+
 static char isInBounds( int inX, int inY, int inMapD ) {
     if( inX < 0 || inY < 0 || inX > inMapD - 1 || inY > inMapD - 1 ) {
         return false;
@@ -2967,6 +3011,11 @@ char drawMult = true;
 
 double multAmount = 0.15;
 double addAmount = 0.25;
+
+
+char blackBorder = true;
+                                
+char whiteBorder = false;
 
 
 void LivingLifePage::draw( doublePair inViewCenter, 
@@ -4700,32 +4749,95 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 doublePair rectPos = labelPos;
                                 rectPos.y += 3;
                                 
-                                // block hole in border
-                                startAddingToStencil( false, true );
-                                setDrawColor( 1, 1, 1, 1 );
-                                drawRect( rectPos, 
-                                          w/2 + 
-                                          mainFontReview->getFontHeight() / 2, 
-                                          24 );
-
-                                startDrawingThroughStencil( true );
                                 
-                                setDrawColor( 0, 0, 0, fade );
-                                drawRect( 
+                                
+
+                                if( blackBorder ) {
+                                    
+                                    // block hole in border
+                                    startAddingToStencil( false, true );
+                                    setDrawColor( 1, 1, 1, 1 );
+                                    drawRect( 
+                                        rectPos, 
+                                        w/2 + 
+                                        mainFontReview->getFontHeight() / 2, 
+                                        24 );
+                                    
+                                    startDrawingThroughStencil( true );
+                                    
+                                    setDrawColor( 0, 0, 0, fade );
+                                    drawRect( 
                                         rectPos, 
                                         w/2 + 
                                         mainFontReview->getFontHeight() / 2 +
                                         2, 
                                         24 + 2 );
-
-                                stopStencil();
+                                    
+                                    stopStencil();
+                                    }
                                 
+                                double rectW = 
+                                    w/2 + mainFontReview->getFontHeight() / 2;
+                                
+                                double rectH = 24;
                                 
                                 setDrawColor( 1, 1, 1, fade );
-                                drawRect( rectPos, 
-                                          w/2 + 
-                                          mainFontReview->getFontHeight() / 2, 
-                                          24 );
+                                drawRect( rectPos, rectW, rectH );
+
+                                
+                                if( whiteBorder ) {
+
+                                    FloatColor lineColor = 
+                                        { 1, 1, 1, (float)fade };
+                                
+                                    doublePair corners[4];
+                                    
+                                    double rOut = 20;
+                                    double rIn = 4;
+                                    
+                                    
+
+                                    corners[0].x = rectPos.x - rectW - 
+                                        getBoundedRandom( worldX, 34,
+                                                          rOut, rIn );
+                                    corners[0].y = rectPos.y - rectH - 
+                                        getBoundedRandom( worldX, 87,
+                                                          rOut, rIn );
+                                    
+                                    
+                                    corners[1].x = rectPos.x + rectW + 
+                                        getBoundedRandom( worldX, 94,
+                                                          rOut, rIn );
+                                    corners[1].y = rectPos.y - rectH - 
+                                        getBoundedRandom( worldX, 103,
+                                                          rOut, rIn );
+                                    
+                                    
+                                    corners[2].x = rectPos.x + rectW + 
+                                        getBoundedRandom( worldX, 99,
+                                                          rOut, rIn );
+                                    corners[2].y = rectPos.y + rectH + 
+                                        getBoundedRandom( worldX, 113,
+                                                          rOut, rIn );
+                                    
+                                    
+                                    corners[3].x = rectPos.x - rectW - 
+                                        getBoundedRandom( worldX, 123,
+                                                          rOut, rIn );
+                                    corners[3].y = rectPos.y + rectH + 
+                                        getBoundedRandom( worldX, 135,
+                                                          rOut, rIn );
+                                    
+                                    
+                                    for( int i=0; i<4; i++ ) {
+                                        
+                                        drawLine( mLineSegmentSprite,
+                                                  corners[i], 
+                                                  corners[ ( i + 1 ) % 4 ], 
+                                                  lineColor );
+                                        }
+                                    }
+                                
 
                                 setDrawColor( 0, 0, 0, fade );
                                 mainFontReview->drawString( 
@@ -12741,6 +12853,14 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
     registerTriggerKeyCommand( inASCII, this );
     
     switch( inASCII ) {
+        case 'b':
+            blackBorder = true;
+            whiteBorder = false;
+            break;
+        case 'B':
+            blackBorder = false;
+            whiteBorder = true;
+            break;
         /*
         case 'a':
             drawAdd = ! drawAdd;

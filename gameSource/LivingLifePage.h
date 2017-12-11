@@ -623,6 +623,7 @@ class LivingLifePage : public GamePage {
         SpriteHandle mTeaserArrowMedSprite;
         SpriteHandle mTeaserArrowShortSprite;
         SpriteHandle mTeaserArrowVeryShortSprite;
+        SpriteHandle mLineSegmentSprite;
         
         
         // not visible, but used for its text filtering
