@@ -1391,11 +1391,11 @@ LivingLifePage::LivingLifePage()
     
 
     if( teaserVideo ) {
-        mTeaserArrowLongSprite = loadSprite( "teaserArrowLong.tga", false );
-        mTeaserArrowMedSprite = loadSprite( "teaserArrowMed.tga", false );
-        mTeaserArrowShortSprite = loadSprite( "teaserArrowShort.tga", false );
+        mTeaserArrowLongSprite = loadWhiteSprite( "teaserArrowLong.tga" );
+        mTeaserArrowMedSprite = loadWhiteSprite( "teaserArrowMed.tga" );
+        mTeaserArrowShortSprite = loadWhiteSprite( "teaserArrowShort.tga" );
         mTeaserArrowVeryShortSprite = 
-            loadSprite( "teaserArrowVeryShort.tga", false );
+            loadWhiteSprite( "teaserArrowVeryShort.tga" );
         }
           
 
@@ -4629,8 +4629,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 FloatColor spriteColors[4] = 
                                     { { 1, 1, 1, (float)fade },
                                       { 1, 1, 1, (float)fade },
-                                      { 1, 1, 1, 0 },
-                                      { 1, 1, 1, 0 } };
+                                      { 0, 0, 0, 0 },
+                                      { 0, 0, 0, 0 } };
                                 
                                 drawSprite( arrowSprite,
                                             spriteVerts, spriteColors );
@@ -4648,7 +4648,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 
                                 double w = mainFontReview->measureString( des );
                                 
-                                setDrawColor( 0, 0, 0, fade );
+                                setDrawColor( 1, 1, 1, fade );
                                 doublePair rectPos = labelPos;
                                 rectPos.y += 3;
                                 
@@ -4657,7 +4657,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                           mainFontReview->getFontHeight() / 2, 
                                           24 );
 
-                                setDrawColor( 1, 1, 1, fade );
+                                setDrawColor( 0, 0, 0, fade );
                                 mainFontReview->drawString( 
                                     des, 
                                     labelPos,
