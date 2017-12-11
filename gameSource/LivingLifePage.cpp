@@ -4648,9 +4648,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                             spriteVerts, spriteColors );
                                 }
                             else {
-                                char *des = autoSprintf( 
-                                    "%d. %s", 
-                                    worldX,
+                                char *des = stringDuplicate(
                                     getObject( mMap[mapI] )->description );
                                 
                                 char *poundPos = strstr( des, "#" );
@@ -4660,7 +4658,44 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                     poundPos[0] = '\0';
                                     }
                                 
-                                double w = mainFontReview->measureString( des );
+                                SimpleVector<char*> *words = 
+                                    tokenizeString( des );
+                                
+                                SimpleVector<char*> finalWords;
+                                for( int i=0; i< words->size(); i++ ) {
+                                    char *word = words->getElementDirect( i );
+                                    
+                                    if( word[0] >= 65 &&
+                                        word[0] <= 90 ) {
+                                        
+                                        char *u = stringToUpperCase( word );
+                                        
+                                        delete [] word;
+                                        finalWords.push_back( u );
+                                        }
+                                    else {
+                                        finalWords.push_back( word );
+                                        }
+                                    }
+                                delete words;
+                                
+                                char **wordArray = finalWords.getElementArray();
+                                
+                                char *newDes = join( wordArray,
+                                                     finalWords.size(),
+                                                     " " );
+                                finalWords.deallocateStringElements();
+                                delete [] wordArray;
+                                
+
+                                char *finalDes = autoSprintf( 
+                                    "%d. %s", 
+                                    worldX,
+                                    newDes );
+                                delete [] newDes;
+                                
+                                double w = 
+                                    mainFontReview->measureString( finalDes );
                                 
                                 doublePair rectPos = labelPos;
                                 rectPos.y += 3;
@@ -4694,11 +4729,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                                 setDrawColor( 0, 0, 0, fade );
                                 mainFontReview->drawString( 
-                                    des, 
+                                    finalDes, 
                                     labelPos,
                                     alignCenter );
                                 
-                                delete [] des;
+                                delete [] finalDes;
                                 }
                             }
                         }
