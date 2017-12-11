@@ -4648,7 +4648,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                             spriteVerts, spriteColors );
                                 }
                             else {
-                                char *des = stringToUpperCase( 
+                                char *des = autoSprintf( 
+                                    "%d. %s", 
+                                    worldX,
                                     getObject( mMap[mapI] )->description );
                                 
                                 char *poundPos = strstr( des, "#" );
@@ -4660,10 +4662,31 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 
                                 double w = mainFontReview->measureString( des );
                                 
-                                setDrawColor( 1, 1, 1, fade );
                                 doublePair rectPos = labelPos;
                                 rectPos.y += 3;
                                 
+                                // block hole in border
+                                startAddingToStencil( false, true );
+                                setDrawColor( 1, 1, 1, 1 );
+                                drawRect( rectPos, 
+                                          w/2 + 
+                                          mainFontReview->getFontHeight() / 2, 
+                                          24 );
+
+                                startDrawingThroughStencil( true );
+                                
+                                setDrawColor( 0, 0, 0, fade );
+                                drawRect( 
+                                        rectPos, 
+                                        w/2 + 
+                                        mainFontReview->getFontHeight() / 2 +
+                                        2, 
+                                        24 + 2 );
+
+                                stopStencil();
+                                
+                                
+                                setDrawColor( 1, 1, 1, fade );
                                 drawRect( rectPos, 
                                           w/2 + 
                                           mainFontReview->getFontHeight() / 2, 
