@@ -4579,7 +4579,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             int worldY = y + mMapOffsetY - mMapD / 2;
             //printf( "World y = %d\n", worldY );
             
-            if( worldY == 1 ) {
+            if( worldY == 1 || worldY == 0 ) {
 
                 int screenY = CELL_D * worldY;
         
@@ -4598,7 +4598,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             doublePair labelPos;
 
                             double speedWiggle = 
-                                getXYRandom( worldX, 0 );
+                                getXYRandom( worldX, worldY );
 
 
                             // round to nearest 8th
@@ -4616,7 +4616,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             labelPos.y = lastScreenViewCenter.y;
 
                             double yWiggle = 
-                                getXYRandom( worldX, 29 );
+                                getXYRandom( worldX, 29 + worldY );
                             
                             labelPos.y += lrint( (yWiggle - 0.5) * 32 );
                             
