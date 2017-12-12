@@ -2290,10 +2290,18 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
     SimpleVector<LiveObject *> *inSpeakers,
     SimpleVector<doublePair> *inSpeakersPos ) {    
 
-    inObj->onScreen = true;
 
     ObjectAnimPack returnPack;
     returnPack.inObjectID = -1;
+
+
+    if( inObj->hide ) {
+        return returnPack;
+        }
+
+
+    inObj->onScreen = true;
+
 
 
     if( ! inObj->allSpritesLoaded ) {
@@ -9056,7 +9064,8 @@ void LivingLifePage::step() {
                         o.lastHeldAnim = held;
                         o.lastHeldAnimFade = 0;
                         
-
+                        o.hide = false;
+                        
                         o.inMotion = false;
                         
                         o.holdingFlip = false;
@@ -9169,10 +9178,18 @@ void LivingLifePage::step() {
                             }
                         }
                     
-
-                    closeSocket( mServerSocket );
-                    mServerSocket = -1;
-                    handleOurDeath();
+                    if( ! anyLiveTriggersLeft() ) {
+                        // if we're in live trigger mode, leave 
+                        // server connection open so we can see what happens
+                        // next
+                        closeSocket( mServerSocket );
+                        mServerSocket = -1;
+                        handleOurDeath();
+                        }
+                    else {
+                        // just hide our object, but leave it around
+                        getOurLiveObject()->hide = true;
+                        }
                     }
                 else if( strstr( lines[i], "X X" ) != NULL  ) {
                     // object deleted

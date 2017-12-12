@@ -180,6 +180,8 @@ typedef struct LiveObject {
         // wall clock time in seconds object should arrive
         double moveEtaTime;
 
+        // skip drawing this object
+        char hide;
         
         char inMotion;
         

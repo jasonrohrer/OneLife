@@ -136,6 +136,17 @@ void freeLiveTriggers() {
     }
 
 
+
+char anyLiveTriggersLeft() {
+    if( !enabled ) {
+        return false;
+        }
+    
+    return ( triggers.size() > 0 );
+    }
+
+    
+
 static int lastPlayedServerTrigger = 0;
 
 

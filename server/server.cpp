@@ -36,6 +36,7 @@
 #include "backup.h"
 #include "triggers.h"
 #include "playerStats.h"
+#include "serverCalls.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -287,6 +288,20 @@ static LiveObject *getLiveObject( int inID ) {
         }
     
     return NULL;
+    }
+
+
+
+
+void killPlayer( const char *inEmail ) {
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( strcmp( o->email, inEmail ) == 0 ) {
+            o->error = true;
+            break;
+            }
+        }
     }
 
 
@@ -5972,9 +5987,23 @@ int main() {
                 // so they can get the message
                 nextPlayer->deleteSentDoneETA = Time::getCurrentTime() + 5;
                 
-                // stop listening for activity on this socket
-                sockPoll.removeSocket( nextPlayer->sock );
+                if( areTriggersEnabled() ) {
+                    // add extra time so that rest of triggers can be received
+                    // and rest of trigger results can be sent
+                    // back to this client
+                    
+                    // another hour...
+                    nextPlayer->deleteSentDoneETA += 3600;
+                    // and don't set their error flag after all
+                    // keep receiving triggers from them
 
+                    nextPlayer->error = false;
+                    }
+                else {
+                    // stop listening for activity on this socket
+                    sockPoll.removeSocket( nextPlayer->sock );
+                    }
+                
 
                 GridPos dropPos;
                 

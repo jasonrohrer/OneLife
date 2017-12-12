@@ -10,6 +10,9 @@ void initLiveTriggers();
 void freeLiveTriggers();
 
 
+char anyLiveTriggersLeft();
+
+
 // send in a key command received from user that make trigger an animation
 void registerTriggerKeyCommand( unsigned char inASCII, LivingLifePage *inPage );
 

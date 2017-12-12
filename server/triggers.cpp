@@ -290,7 +290,8 @@ static SimpleVector<GridPos> *finishMove() {
 // customInit
 // and
 // customTrigger
-#include "triggers/testVideo.cpp"
+//#include "triggers/testVideo.cpp"
+#include "triggers/teaserVideo.cpp"
 //#include "triggers/test.cpp"
 
 
