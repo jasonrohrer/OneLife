@@ -1,3 +1,8 @@
+#ifndef MAP_H_INCLUDED
+#define MAP_H_INCLUDED
+
+
+
 #include "minorGems/system/Time.h"
 
 
@@ -178,3 +183,7 @@ void restretchDecays( int inNumDecays, timeSec_t *inDecayEtas,
 void restretchMapContainedDecays( int inX, int inY,
                                   int inOldContainerID, int inNewContainerID,
                                   int inSubCont = 0 );
+
+
+
+#endif

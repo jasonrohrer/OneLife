@@ -3021,9 +3021,9 @@ double multAmount = 0.15;
 double addAmount = 0.25;
 
 
-char blackBorder = true;
+char blackBorder = false;
                                 
-char whiteBorder = false;
+char whiteBorder = true;
 
 
 void LivingLifePage::draw( doublePair inViewCenter, 
@@ -4579,7 +4579,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
             int worldY = y + mMapOffsetY - mMapD / 2;
             //printf( "World y = %d\n", worldY );
             
-            if( worldY == 1 || worldY == 0 ) {
+            if( worldY == 1 || worldY == 0 || worldY == -10 ) {
+
+                int xLimit = 0;
+                
+                if( worldY == -10 ) {
+                    xLimit = -20;
+                    }
 
                 int screenY = CELL_D * worldY;
         
@@ -4588,12 +4594,39 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
                     int worldX = x + mMapOffsetX - mMapD / 2;
 
-                    if( worldX >= 0 ) {
+                    if( worldX >= xLimit ) {
+                        
                         int mapI = y * mMapD + x;
                     
                         int screenX = CELL_D * worldX;
                         
+                        int arrowTipX = screenX;
+                        int arrowTipY = screenY;
+                        
+                        const char *baseDes = NULL;
+                        
                         if( mMap[ mapI ] > 0 ) {
+                            baseDes = getObject( mMap[mapI] )->description;
+                            }
+                        else if( worldX == -20 && worldY == -10 &&
+                                 gameObjects.size() == 1 ) {
+                            baseDes = "PLAYER ONE";
+                            LiveObject *o =  gameObjects.getElement( 0 );
+                            arrowTipX = o->currentPos.x * CELL_D;
+                            arrowTipY += 64;
+                            }
+                        else if( worldX == -10 && worldY == -10 &&
+                                 gameObjects.size() == 2 ) {
+                            baseDes = "PLAYER TWO";
+                            // point to parent location
+                            // they pick up baby and keep walking
+                            LiveObject *o =  gameObjects.getElement( 0 );
+                            arrowTipX = o->currentPos.x * CELL_D;
+                            arrowTipY += 64;
+                            }
+                        
+                        
+                        if( baseDes != NULL ) {
                             
                             doublePair labelPos;
 
@@ -4675,8 +4708,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 
                                 double w = 11;
                                 
-                                double deltaX = screenX - labelPos.x;
-                                double deltaY = screenY - 
+                                double deltaX = arrowTipX - labelPos.x;
+                                double deltaY = arrowTipY - 
                                     ( labelPos.y + arrowStart );
                                 
                                 double a = atan( deltaX / deltaY );
@@ -4690,10 +4723,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                         labelPos.y + arrowStart },
                                       { labelPos.x + w, 
                                         labelPos.y + arrowStart },
-                                      { (double)screenX + w, 
-                                        (double)screenY },
-                                      { (double)screenX - w, 
-                                        (double)screenY } };
+                                      { (double)arrowTipX + w, 
+                                        (double)arrowTipY },
+                                      { (double)arrowTipX - w, 
+                                        (double)arrowTipY } };
 
                                 FloatColor spriteColors[4] = 
                                     { { 1, 1, 1, (float)fade },
@@ -4705,8 +4738,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                             spriteVerts, spriteColors );
                                 }
                             else {
-                                char *des = stringDuplicate(
-                                    getObject( mMap[mapI] )->description );
+                                char *des = stringDuplicate( baseDes );
                                 
                                 char *poundPos = strstr( des, "#" );
                                 
@@ -4744,11 +4776,19 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 finalWords.deallocateStringElements();
                                 delete [] wordArray;
                                 
-
-                                char *finalDes = autoSprintf( 
-                                    "%d. %s", 
-                                    worldX,
-                                    newDes );
+                                
+                                char *finalDes;
+                                
+                                if( worldY == 1 ) {
+                                    finalDes = autoSprintf( 
+                                        "%d. %s", 
+                                        worldX,
+                                        newDes );
+                                    }
+                                else {
+                                    finalDes = stringDuplicate( newDes );
+                                    }
+                                
                                 delete [] newDes;
                                 
                                 double w = 

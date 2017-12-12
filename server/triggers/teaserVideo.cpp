@@ -1,6 +1,7 @@
 
 
 #include "../serverCalls.h"
+#include "../map.h"
 
 
 
@@ -17,7 +18,7 @@ static void customInit() {
         "test@test.com",
         19,
         20,
-        { 0, 0 },
+        { -30, -10 },
         0, clothing };
     
     playerMap.push_back( narrator );
@@ -46,7 +47,7 @@ static void customTrigger( int inTriggerNumber ) {
     
     if( inTriggerNumber == t++ ) {
         
-        GridPos startPos = { 10, 0 };
+        GridPos startPos = { -10, -10 };
         
         
         
@@ -54,6 +55,9 @@ static void customTrigger( int inTriggerNumber ) {
                                     startPos,
                                     0,
                                     clothing );
+
+        // stick a loincloth to right so we can put it on baby
+        setMapObject( 0, -10, 200 );
         }
     else if( inTriggerNumber == t++ ) {
         killPlayer( "test@test.com" );
