@@ -191,7 +191,8 @@ int main( int inNumArgs, char **inArgs ) {
     MinPriorityQueue<int> queue;
     
     SimpleVector<int> treeList;
-    
+
+    int berryBush = -1;
 
     int numObjects;
     ObjectRecord **objects = getAllObjects( &numObjects );
@@ -288,6 +289,9 @@ int main( int inNumArgs, char **inArgs ) {
 
                 treeList.push_back( o->id );
                 }
+            if( strstr( o->description, "Gooseberry Bush" ) != NULL  ) {
+                berryBush = o->id;
+                }
             }
         }
         
@@ -320,7 +324,7 @@ int main( int inNumArgs, char **inArgs ) {
     int spacing = 1;
     int xMax = ( orderedObjects.size() - 1 ) * spacing;
     
-    for( int y=-5; y<=5; y++ ) {
+    for( int y=-20; y<=5; y++ ) {
         int biome = 2;
         if( y < 0 || y > 1 ) {
             biome = 0;
@@ -331,10 +335,23 @@ int main( int inNumArgs, char **inArgs ) {
             if( x <= -2 ) {
                 rowBiome = 0;
                 }
+            if( y < 2 && x >= -2 && x < 0 ) {
+                rowBiome = 2;
+                }
+            if( y >=-10 && y<=-9 && x < 0 ) {
+                rowBiome = 2;
+                }
             
-            if( y == 1 && x % spacing == 0 ) {
+            if( y == 1 && x == -2 ) {
+                rowBiome = 0;
+                }
+            
+
+            
+            if( y == 1 && x > 10 && 
+                x % spacing == 0 ) {
                 
-                int objectIndex = x / spacing;
+                int objectIndex = x / spacing - 10;
                 
                 if( objectIndex >=0 && objectIndex < orderedObjects.size() ) {
                     id = orderedObjects.getElementDirect( objectIndex );
@@ -355,11 +372,18 @@ int main( int inNumArgs, char **inArgs ) {
             else if( x < -2 && y >= -4 && y <=3 ) {
                 addTree = true;
                 }
-
+            else if( rowBiome == 0 && y < -5 && y != -11 &&
+                     x != -10 ) {
+                // grassy
+                addTree = ( randSource.getRandomBoundedInt( 0, 100 ) < 10 );
+                }
             
             if( addTree  ) {
                 id = treeList.getElementDirect( 
                     randSource.getRandomBoundedInt( 0, treeList.size() - 1 ) );
+                }
+            else if( y == -12 && x == -10 ) {
+                id = berryBush;
                 }
             
 
