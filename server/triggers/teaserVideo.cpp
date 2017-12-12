@@ -70,13 +70,15 @@ static void customTrigger( int inTriggerNumber ) {
         }
     else if( inTriggerNumber == t++ ) {
 
-        killPlayer( "test@test.com" );
+        GridPos deathPos = killPlayer( "test@test.com" );
+        firstBaby.pos = deathPos;
         }
     else if( inTriggerNumber == t++ ) {        
         // baby walks around at end
         addToMove( 1, 0 );
         addToMove( 2, 0 );
         addToMove( 3, 0 );
+        addToMove( 4, 0 );
         
         sendDummyMove( &firstBaby, finishMove() );
         }
@@ -84,6 +86,7 @@ static void customTrigger( int inTriggerNumber ) {
         // baby walks around at end
         addToMove( -1, 0 );
         addToMove( -2, 0 );
+        addToMove( -3, 0 );
         
         sendDummyMove( &firstBaby, finishMove() );
         }

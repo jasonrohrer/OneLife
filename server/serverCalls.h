@@ -1,4 +1,4 @@
 
 
 
-void killPlayer( const char *inEmail );
+GridPos killPlayer( const char *inEmail );

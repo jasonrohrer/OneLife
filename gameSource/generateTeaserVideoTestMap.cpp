@@ -15,7 +15,7 @@
 #include "minorGems/util/random/JenkinsRandomSource.h"
 
 
-JenkinsRandomSource randSource;
+JenkinsRandomSource randSource( 100 );
 
 
 #include <stdlib.h>
@@ -322,7 +322,10 @@ int main( int inNumArgs, char **inArgs ) {
         }
     
     int spacing = 1;
-    int xMax = ( orderedObjects.size() - 1 ) * spacing;
+    int xMax = ( orderedObjects.size() - 1 ) * spacing + 10;
+
+    // for testing
+    //int xMax = 25 * spacing + 10;
     
     for( int y=-20; y<=5; y++ ) {
         int biome = 2;
@@ -385,7 +388,9 @@ int main( int inNumArgs, char **inArgs ) {
             else if( y == -12 && x == -10 ) {
                 id = berryBush;
                 }
-            
+            else if( y == 1 && x == xMax + 10 ) {
+                id = berryBush;
+                }
 
             fprintf( outFile, "%d %d %d 0 %d\n",
                      x, y, rowBiome, id );

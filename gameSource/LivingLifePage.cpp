@@ -4614,8 +4614,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         
                         const char *baseDes = NULL;
                         
+                        char numbered = false;
+                        
                         if( mMap[ mapI ] > 0 ) {
-                            baseDes = getObject( mMap[mapI] )->description;
+                            ObjectRecord *o = getObject( mMap[mapI] );
+                            
+                            baseDes = o->description;
+                            
+                            // don't number natural objects
+                            numbered = ( o->mapChance == 0 );
                             }
                         else if( worldX == -20 && worldY == -10 &&
                                  gameObjects.size() == 1 ) {
@@ -4664,30 +4671,44 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             
                             SpriteHandle arrowSprite = mTeaserArrowMedSprite;
 
-                            if( worldX % 2 == 0 ) {
-                                labelPos.y += 224;
+                            if( worldY != 0 ) {
                                 
-                                if( worldX % 6 == 2 ) {
-                                    labelPos.y -= 96;
-                                    arrowSprite = mTeaserArrowVeryShortSprite;
+                                if( worldX % 2 == 0 ) {
+                                    labelPos.y += 224;
+                                    
+                                    if( worldX % 6 == 2 ) {
+                                        labelPos.y -= 96;
+                                        arrowSprite = 
+                                            mTeaserArrowVeryShortSprite;
+                                        }
+                                    else if( worldX % 6 == 4 ) {
+                                        labelPos.y += 96;
+                                        arrowSprite = mTeaserArrowLongSprite;
+
+                                        }
                                     }
-                                else if( worldX % 6 == 4 ) {
-                                    labelPos.y += 96;
-                                    arrowSprite = mTeaserArrowLongSprite;
-                                    }
+                                else {
+                                    labelPos.y -= 192;
+                                    
+                                    if( worldX % 6 == 3 ) {
+                                        labelPos.y -= 96;
+                                        arrowSprite = mTeaserArrowLongSprite;
+                                        }
+                                    else if( worldX % 6 == 5 ) {
+                                        labelPos.y += 96;
+                                        arrowSprite = mTeaserArrowShortSprite;
+                                        }
+                                    }        
                                 }
                             else {
-                                labelPos.y -= 192;
-                                
-                                if( worldX % 6 == 3 ) {
-                                    labelPos.y -= 96;
-                                    arrowSprite = mTeaserArrowLongSprite;
+                                if( worldX % 2 == 0 ) {
+                                    labelPos.y = lastScreenViewCenter.y + 224;
                                     }
-                                else if( worldX % 6 == 5 ) {
-                                    labelPos.y += 96;
-                                    arrowSprite = mTeaserArrowShortSprite;
+                                else {
+                                    labelPos.y = lastScreenViewCenter.y - 224;
                                     }
-                                }                            
+                                }
+                            
 
                             
                             double fade = 0;
@@ -4788,10 +4809,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 
                                 char *finalDes;
                                 
-                                if( worldY == 1 ) {
+                                if( worldY == 1 && numbered ) {
                                     finalDes = autoSprintf( 
                                         "%d. %s", 
-                                        worldX,
+                                        worldX - 10,
                                         newDes );
                                     }
                                 else {

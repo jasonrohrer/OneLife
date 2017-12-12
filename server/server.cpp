@@ -293,16 +293,6 @@ static LiveObject *getLiveObject( int inID ) {
 
 
 
-void killPlayer( const char *inEmail ) {
-    for( int i=0; i<players.size(); i++ ) {
-        LiveObject *o = players.getElement( i );
-        
-        if( strcmp( o->email, inEmail ) == 0 ) {
-            o->error = true;
-            break;
-            }
-        }
-    }
 
 
 
@@ -897,6 +887,23 @@ GridPos computePartialMoveSpot( LiveObject *inPlayer ) {
         
         return cPos;
         }
+    }
+
+
+
+GridPos killPlayer( const char *inEmail ) {
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( strcmp( o->email, inEmail ) == 0 ) {
+            o->error = true;
+            
+            return computePartialMoveSpot( o );
+            }
+        }
+    
+    GridPos noPos = { 0, 0 };
+    return noPos;
     }
 
 

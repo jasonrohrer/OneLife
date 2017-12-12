@@ -632,10 +632,6 @@ static int getBaseMap( int inX, int inY ) {
         }
     
 
-    if( useTestMap ) {
-        // any spots not already put in DB are blank
-        return 0;
-        }
 
 
     
