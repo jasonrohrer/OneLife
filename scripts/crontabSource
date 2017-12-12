@@ -5,9 +5,9 @@
 30 9 * * * /home/jcr15/checkout/OneLifeWorking/scripts/checkForServerCodeUpdateCron.sh
 
 */30 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/generateLifeStats.sh
-5 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/generateFoodStats.sh
+*/5 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/generateFoodStats.sh
 
 * * * * * /home/jcr15/checkout/OneLifeWorking/scripts/checkServerRunningCron.sh
 
 
-5 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/updateReviewHTML.sh
+*/5 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/updateReviewHTML.sh
