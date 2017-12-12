@@ -271,7 +271,21 @@ int main( int inNumArgs, char **inArgs ) {
                 }
             }
         else if( o->mapChance > 0 && getObjectDepth( o->id ) == 0 ) {
-            if( strstr( o->description, "Tree" ) != NULL ) {
+            if( strstr( o->description, "Tree" ) != NULL  ) {
+                
+                if( strstr( o->description, "Branch" ) != NULL ) {
+
+                    // see if bare hand applies to remove branch
+                    TransRecord *t = getTrans( 0, o->id );
+                    
+                    
+                    if( t != NULL && t->newTarget != o->id &&
+                        t->newTarget > 0 ) {
+                        
+                        o = getObject( t->newTarget );
+                        }
+                    }
+
                 treeList.push_back( o->id );
                 }
             }
