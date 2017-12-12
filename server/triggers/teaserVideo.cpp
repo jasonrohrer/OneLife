@@ -57,9 +57,19 @@ static void customTrigger( int inTriggerNumber ) {
                                     clothing );
 
         // stick a loincloth to right so we can put it on baby
-        setMapObject( 0, -10, 200 );
+        setMapObject( -1, -10, 200 );
         }
     else if( inTriggerNumber == t++ ) {
+        sendDummySay( &firstBaby, "O" );
+        }
+    else if( inTriggerNumber == t++ ) {
+        sendDummySay( &firstBaby, "K" );
+        }
+    else if( inTriggerNumber == t++ ) {
+        sendDummySay( &firstBaby, "Y" );
+        }
+    else if( inTriggerNumber == t++ ) {
+
         killPlayer( "test@test.com" );
         }
     else if( inTriggerNumber == t++ ) {        

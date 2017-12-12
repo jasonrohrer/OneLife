@@ -256,6 +256,20 @@ void sendDummyAction( LiveDummySocket *inDummy,
     delete [] message;
     }
 
+
+
+
+void sendDummySay( LiveDummySocket *inDummy,
+                   const char *inSay ) {
+    char *message = autoSprintf( "SAY 0 0 %s#", inSay );
+    
+    inDummy->sock->send( (unsigned char*)message, 
+                         strlen( message ), 
+                         false, false );
+    
+    delete [] message;
+    }
+
                                  
 
 

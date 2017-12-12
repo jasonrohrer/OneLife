@@ -24,6 +24,9 @@ typedef struct Trigger {
 
         char isServerTrigger;
         int serverTriggerNumber;
+
+        // NULL if not a SAY trigger
+        char *sayMessage;
     } Trigger;
 
 
@@ -62,6 +65,10 @@ void initLiveTriggers() {
     while( readTrigger ) {
         Trigger t;
         
+        t.isServerTrigger = false;
+        t.sayMessage = NULL;
+
+        
         readTrigger = false;
 
         char buffer[100];
@@ -78,13 +85,24 @@ void initLiveTriggers() {
                 if( numRead == 2 ) {
                     t.numStepsPlayed = 0;
                     t.anim = anim1;
-                    t.isServerTrigger = false;
                     
                     // swap
                     AnimType temp = anim1;
                     anim1 = anim2;
                     anim2 = temp;
                     
+                    triggers.push_back( t );
+                    readTrigger = true;
+                    }
+                }
+            else if( strcmp( buffer, "say" ) == 0 ) {
+                char buffer[100];
+                
+                // read quoted string
+                numRead = fscanf( f, "\"%99[^\"]\"", buffer );
+                if( numRead == 1 ) {
+                    // read a string
+                    t.sayMessage = stringDuplicate( buffer );
                     triggers.push_back( t );
                     readTrigger = true;
                     }
@@ -131,9 +149,18 @@ void initLiveTriggers() {
 
 
 void freeLiveTriggers() {
-    if( !enabled ) return;
+    if( !enabled ) return;    
 
+    for( int i=0; i<triggers.size(); i++ ) {
+        Trigger t = triggers.getElementDirect(i);
+        if( t.sayMessage != NULL ) {
+            delete [] t.sayMessage;
+            }
+        }
+
+    triggers.deleteAll();
     }
+
 
 
 
@@ -171,6 +198,16 @@ void registerTriggerKeyCommand( unsigned char inASCII,
                 inPage->sendToServerSocket( message );
                 
                 delete [] message;
+                }
+            else if( nextTrigger.sayMessage != NULL ) {
+                char *message = 
+                    autoSprintf( "SAY 0 0 %s#", nextTrigger.sayMessage );
+                
+                inPage->sendToServerSocket( message );
+                
+                delete [] message;
+                
+                delete [] nextTrigger.sayMessage;
                 }
             else {
                 currentTrigger = nextTrigger;

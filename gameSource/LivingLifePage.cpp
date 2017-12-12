@@ -1769,6 +1769,15 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
             double rot = blotRandSource.getRandomDouble();
             drawSprite( mChalkBlotSprite, blotPos, 1.0, rot );
             drawSprite( mChalkBlotSprite, blotPos, 1.0, rot );
+            
+            // double hit vertically
+            blotPos.y += 5;
+            rot = blotRandSource.getRandomDouble();
+            drawSprite( mChalkBlotSprite, blotPos, 1.0, rot );
+            
+            blotPos.y -= 10;
+            rot = blotRandSource.getRandomDouble();
+            drawSprite( mChalkBlotSprite, blotPos, 1.0, rot );
             }
         }
     
@@ -13011,7 +13020,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 else {
                     // send text to server
                     char *message = 
-                        autoSprintf( "SAY 0 0 %s\n#",
+                        autoSprintf( "SAY 0 0 %s#",
                                      typedText );
                     for( int i=0; i<mSentChatPhrases.size(); i++ ) {
                         if( strcmp( 
