@@ -4624,7 +4624,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             // don't number natural objects
                             // or objects that occur before the
                             // start of our line
-                            numbered = ( o->mapChance == 0 || worldX > 10 );
+                            numbered = ( o->mapChance == 0 && worldX > 10 );
                             }
                         else if( worldX == -20 && worldY == -10 &&
                                  gameObjects.size() == 1 ) {
