@@ -58,6 +58,10 @@ static void customTrigger( int inTriggerNumber ) {
 
         // stick a loincloth to right so we can put it on baby
         setMapObject( -1, -10, 200 );
+
+        // set up phonograph
+        setMapObject( 3, 0, 488 );
+        setMapObject( 4, 0, 491 );
         }
     else if( inTriggerNumber == t++ ) {
         sendDummySay( &firstBaby, "O" );

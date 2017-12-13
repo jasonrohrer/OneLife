@@ -380,6 +380,15 @@ int main( int inNumArgs, char **inArgs ) {
                 // grassy
                 addTree = ( randSource.getRandomBoundedInt( 0, 100 ) < 10 );
                 }
+
+            if( y == -3 && x < 7 ) {
+                addTree = false;
+                }
+
+            if( y == -3 && x >= xMax + 10 ) {
+                addTree = false;
+                }
+            
             
             if( addTree  ) {
                 id = treeList.getElementDirect( 

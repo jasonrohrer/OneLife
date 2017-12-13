@@ -4622,7 +4622,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             baseDes = o->description;
                             
                             // don't number natural objects
-                            numbered = ( o->mapChance == 0 );
+                            // or objects that occur before the
+                            // start of our line
+                            numbered = ( o->mapChance == 0 || worldX > 10 );
                             }
                         else if( worldX == -20 && worldY == -10 &&
                                  gameObjects.size() == 1 ) {
@@ -4671,7 +4673,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             
                             SpriteHandle arrowSprite = mTeaserArrowMedSprite;
 
-                            if( worldY != 0 ) {
+                            if( worldY != 0 ||
+                                ( worldX > 0 && worldX < 7 ) ) {
                                 
                                 if( worldX % 2 == 0 ) {
                                     labelPos.y += 224;
@@ -4689,6 +4692,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                     }
                                 else {
                                     labelPos.y -= 192;
+                                    arrowTipY -= 48;
                                     
                                     if( worldX % 6 == 3 ) {
                                         labelPos.y -= 96;
@@ -4726,6 +4730,22 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                                       screenX ) ) / 100.0;
                                     }
                                 }
+                            
+                            if( fade > 0  ) {
+                                if( fabs( lastScreenViewCenter.y - screenY )
+                                    > 200 ) {
+                                    fade = 0;
+                                    }
+                                else if( 
+                                    fabs( lastScreenViewCenter.y - screenY )
+                                    > 100 ) {
+                                    fade = ( 200 - 
+                                             fabs( lastScreenViewCenter.y - 
+                                                   screenY ) ) / 100.0;
+                                    }
+                                }
+                            
+
                             
 
 
