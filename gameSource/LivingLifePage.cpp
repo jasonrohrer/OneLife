@@ -4624,7 +4624,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             // don't number natural objects
                             // or objects that occur before the
                             // start of our line
-                            numbered = ( o->mapChance == 0 && worldX > 10 );
+                            // or use dummies (berry bush is picked from
+                            // at end of teaser video).
+                            numbered = ( o->mapChance == 0 && worldX > 10 
+                                         &&
+                                         ! o->isUseDummy );
                             }
                         else if( worldX == -20 && worldY == -10 &&
                                  gameObjects.size() == 1 ) {
