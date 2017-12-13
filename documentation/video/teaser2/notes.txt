@@ -6,9 +6,7 @@ Date:   Wed Dec 13 12:17:37 2017 -0800
 
 
 main.txt recorded game used for bulk of video
-
-
-Will save end.txt soon for video ending.
+ending.txt recorded game used for ending of video
 
 
 By saving recordings, we don't need to store actual frames, which are huge.
