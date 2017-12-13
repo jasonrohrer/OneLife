@@ -1,8 +1,8 @@
 Frames generated using client from commit:
 
-commit 35cdf6e6ff5211de633be29910d386176d8331eb
+commit 3b30032e97ed7673f8128aaf522eddbe8b6b3c40
 Author: Jason Rohrer <jasonrohrer@fastmail.fm>
-Date:   Wed Dec 13 12:17:37 2017 -0800
+Date:   Wed Dec 13 13:20:13 2017 -0800
 
 
 main.txt recorded game used for bulk of video
