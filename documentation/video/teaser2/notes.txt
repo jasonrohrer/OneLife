@@ -1,0 +1,16 @@
+Frames generated using client from commit:
+
+commit 35cdf6e6ff5211de633be29910d386176d8331eb
+Author: Jason Rohrer <jasonrohrer@fastmail.fm>
+Date:   Wed Dec 13 12:17:37 2017 -0800
+
+
+main.txt recorded game used for bulk of video
+
+
+Will save end.txt soon for video ending.
+
+
+By saving recordings, we don't need to store actual frames, which are huge.
+
+
