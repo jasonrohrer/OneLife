@@ -20,3 +20,10 @@ ending.txt recorded game used for ending of video
 By saving recordings, we don't need to store actual frames, which are huge.
 
 
+
+Thumbnail taken by turning labels off in LivingLifePage.cpp
+Thumbnail is frame 967 from main.txt replay.
+
+Font is Futura Bold 150
+Shadow is black blurred at 50 radius, and then doubled, with second
+copy at 31% opacity.
