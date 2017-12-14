@@ -4652,21 +4652,66 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             
                             doublePair labelPos;
 
-                            double speedWiggle = 
-                                getXYRandom( worldX, worldY );
-
-
-                            // round to nearest 8th
-                            // even distribution between 3/8 and 7/8
-                            double centerWeight = 
-                                0.32 + ( speedWiggle ) * .61;
                             
-                            centerWeight = lrint( 8 * centerWeight ) / 8.0;
+                            // speeds are center weights picked from
+                            // 7/8, 8/8, or 9/8
+                            // 8/8 means the label sticks to the x-center
+                            // of the screen.
+                            // 7/8 means it lags behind the center a bit
+                            // 9/8 means it moves faster than the center a bit
+                            double centerWeight = 8.0/8.0;
+                            
+
+                            // pick a new speed order every 6 tiles
+                            double randOrder =
+                                getXYRandom( worldX/6, worldY + 300 );
+                            
+                            int orderOffsets[3] = { 0, 2, 4 };
+                            
+                            // even distribution among 0,1,2
+                            int orderIndex = 
+                                lrint( ( randOrder * 2.98 ) - 0.49 );
+                            
+                            int orderOffset = orderOffsets[ orderIndex ];
+                            
+                            int worldXOffset = worldX - 11 + orderOffset;
+
+                            if( ( worldX - 11 ) % 2 == 0 ) {
+                                
+                                if( worldXOffset % 6 == 0 ) {    
+                                    centerWeight = 8.0 / 8.0;
+                                    }
+                                else if( worldXOffset % 6 == 2 ) {
+                                    centerWeight = 7.0/8.0;
+                                    }
+                                else if( worldXOffset % 6 == 4 ) {
+                                    centerWeight = 9.0/8.0;
+                                    }
+                                }
+                            else {
+                                
+                                if( worldXOffset % 6 == 1 ) {
+                                    centerWeight = 7.0 / 8.0;
+                                    }
+                                else if( worldXOffset % 6 == 3 ) {
+                                    centerWeight = 8.0/8.0;
+                                    }
+                                else if( worldXOffset % 6 == 5 ) {
+                                    centerWeight = 6.0/8.0;
+                                    }
+                                }
                             
 
                             labelPos.x = 
                                 (1 - centerWeight ) * screenX + 
                                 centerWeight * lastScreenViewCenter.x;
+
+
+                            double xWiggle = 
+                                getXYRandom( worldX, 924 + worldY );
+                            
+                            labelPos.x += lrint( (xWiggle - 0.5) *  512 );
+
 
                             labelPos.y = lastScreenViewCenter.y;
 
@@ -4680,15 +4725,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             if( worldY != 0 ||
                                 ( worldX > 0 && worldX < 7 ) ) {
                                 
-                                if( worldX % 2 == 0 ) {
+                                if( ( worldX - 11 ) % 2 == 0 ) {
                                     labelPos.y += 224;
                                     
-                                    if( worldX % 6 == 2 ) {
+                                    if( ( worldX - 11 ) % 6 == 2 ) {
                                         labelPos.y -= 96;
                                         arrowSprite = 
                                             mTeaserArrowVeryShortSprite;
                                         }
-                                    else if( worldX % 6 == 4 ) {
+                                    else if( ( worldX - 11 ) % 6 == 4 ) {
                                         labelPos.y += 96;
                                         arrowSprite = mTeaserArrowLongSprite;
 
@@ -4698,11 +4743,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                     labelPos.y -= 192;
                                     arrowTipY -= 48;
                                     
-                                    if( worldX % 6 == 3 ) {
+                                    if( ( worldX - 11 ) % 6 == 3 ) {
                                         labelPos.y -= 96;
                                         arrowSprite = mTeaserArrowLongSprite;
                                         }
-                                    else if( worldX % 6 == 5 ) {
+                                    else if( ( worldX - 11 ) % 6 == 5 ) {
                                         labelPos.y += 96;
                                         arrowSprite = mTeaserArrowShortSprite;
                                         }
@@ -4756,7 +4801,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             if( pass == 0 ) {
                                 double arrowStart = 27;
                                 
-                                if( worldX % 2 == 0 ) {
+                                if( ( worldX - 11 ) % 2 == 0 ) {
                                     arrowStart = -21;
                                     }
                                 
