@@ -42,6 +42,11 @@ if( $rs_reviewCount > 0 ) {
 
 <br>
 <br>
+
+<center><iframe title="YouTube video player" width="640" height="390" src="http://www.youtube.com/embed/1sU7ZGbL8YQ?rel=0" frameborder="0" allowfullscreen></iframe></center>
+
+<br>
+<br>
 <center><img src=lifeLine.png border=0 width=712 height=222></center>
 
 <table border=0><tr><td align=justify>
