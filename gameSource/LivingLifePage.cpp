@@ -4770,11 +4770,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             if( worldX == -1 && worldY == -10 ) {
                                 labelPos.y = lastScreenViewCenter.y - 224;
                                 labelAbove = false;
+                                arrowTipY -= 48;
                                 }
                             // phonograph sleve
                             if( worldX == 3 && worldY == 0 ) {
-                                labelPos.y = lastScreenViewCenter.y - 192;
+                                labelPos.y = lastScreenViewCenter.y - 224;
                                 labelAbove = false;
+                                arrowTipY -= 48;
                                 }
                             // phonograph
                             if( worldX == 4 && worldY == 0 ) {
