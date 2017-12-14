@@ -1,8 +1,16 @@
-Frames generated using client from commit:
+Frames generated using client from OneLife commit:
 
-commit 3b30032e97ed7673f8128aaf522eddbe8b6b3c40
+
+commit eb287a6754e3338869ae31a9292d45b0262b212a
 Author: Jason Rohrer <jasonrohrer@fastmail.fm>
-Date:   Wed Dec 13 13:20:13 2017 -0800
+Date:   Wed Dec 13 19:13:59 2017 -0800
+
+minorGems commit:
+
+commit 4323d4a78d134961e29dee8d8172f228eac12f95
+Author: Jason Rohrer <jasonrohrer@fastmail.fm>
+Date:   Wed Dec 13 15:20:24 2017 -0800
+
 
 
 main.txt recorded game used for bulk of video
