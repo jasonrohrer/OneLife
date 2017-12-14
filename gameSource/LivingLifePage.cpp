@@ -4762,7 +4762,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                     }
                                 }
                             
-
+                            // special case loincloth for baby
+                            if( worldX == -1 && worldY == -10 ) {
+                                labelPos.y = lastScreenViewCenter.y - 224;
+                                }
+                            // phonograph
+                            if( worldX == 4 && worldY == 0 ) {
+                                labelPos.y -= 128;
+                                }
                             
                             double fade = 0;
                             
