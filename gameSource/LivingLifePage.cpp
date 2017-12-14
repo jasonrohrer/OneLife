@@ -4705,7 +4705,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             labelPos.x = 
                                 (1 - centerWeight ) * screenX + 
                                 centerWeight * lastScreenViewCenter.x;
-
+                            
+                            char labelAbove = false;
 
                             double xWiggle = 
                                 getXYRandom( worldX, 924 + worldY );
@@ -4726,6 +4727,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 ( worldX > 0 && worldX < 7 ) ) {
                                 
                                 if( ( worldX - 11 ) % 2 == 0 ) {
+                                    labelAbove = true;
                                     labelPos.y += 224;
                                     
                                     if( ( worldX - 11 ) % 6 == 2 ) {
@@ -4756,19 +4758,29 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             else {
                                 if( worldX % 2 == 0 ) {
                                     labelPos.y = lastScreenViewCenter.y + 224;
+                                    labelAbove = true;
                                     }
                                 else {
                                     labelPos.y = lastScreenViewCenter.y - 224;
+                                    labelAbove = false;
                                     }
                                 }
                             
                             // special case loincloth for baby
                             if( worldX == -1 && worldY == -10 ) {
                                 labelPos.y = lastScreenViewCenter.y - 224;
+                                labelAbove = false;
+                                }
+                            // phonograph sleve
+                            if( worldX == 3 && worldY == 0 ) {
+                                labelPos.y = lastScreenViewCenter.y - 192;
+                                labelAbove = false;
                                 }
                             // phonograph
                             if( worldX == 4 && worldY == 0 ) {
-                                labelPos.y -= 128;
+                                labelPos.y = lastScreenViewCenter.y + 224;
+                                labelAbove = true;
+                                labelPos.x += 256;
                                 }
                             
                             double fade = 0;
@@ -4808,7 +4820,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             if( pass == 0 ) {
                                 double arrowStart = 27;
                                 
-                                if( ( worldX - 11 ) % 2 == 0 ) {
+                                if( labelAbove ) {
                                     arrowStart = -21;
                                     }
                                 
