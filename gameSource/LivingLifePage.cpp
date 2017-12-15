@@ -4728,29 +4728,37 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 
                                 if( ( worldX - 11 ) % 2 == 0 ) {
                                     labelAbove = true;
-                                    labelPos.y += 224;
+                                    labelPos.y += 214;
                                     
                                     if( ( worldX - 11 ) % 6 == 2 ) {
-                                        labelPos.y -= 96;
+                                        labelPos.y -= 106;
                                         arrowSprite = 
                                             mTeaserArrowVeryShortSprite;
                                         }
                                     else if( ( worldX - 11 ) % 6 == 4 ) {
-                                        labelPos.y += 96;
+                                        labelPos.y += 86;
                                         arrowSprite = mTeaserArrowLongSprite;
-
+                                        
+                                        // prevent top row from
+                                        // going off top of screen
+                                        if( labelPos.y - 
+                                            lastScreenViewCenter.y
+                                            > 224 + 86 ) {
+                                            labelPos.y = lastScreenViewCenter.y
+                                                + 224 + 86;
+                                            }
                                         }
                                     }
                                 else {
-                                    labelPos.y -= 192;
+                                    labelPos.y -= 202;
                                     arrowTipY -= 48;
                                     
                                     if( ( worldX - 11 ) % 6 == 3 ) {
-                                        labelPos.y -= 96;
+                                        labelPos.y -= 106;
                                         arrowSprite = mTeaserArrowLongSprite;
                                         }
                                     else if( ( worldX - 11 ) % 6 == 5 ) {
-                                        labelPos.y += 96;
+                                        labelPos.y += 86;
                                         arrowSprite = mTeaserArrowShortSprite;
                                         }
                                     }        
@@ -4777,12 +4785,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 labelPos.y = lastScreenViewCenter.y - 224;
                                 labelAbove = false;
                                 arrowTipY -= 48;
+                                arrowSprite = mTeaserArrowVeryShortSprite;
                                 }
                             // phonograph
                             if( worldX == 4 && worldY == 0 ) {
                                 labelPos.y = lastScreenViewCenter.y + 224;
                                 labelAbove = true;
                                 labelPos.x += 256;
+                                arrowTipY += 48;
                                 }
                             
                             double fade = 0;
@@ -4851,8 +4861,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 FloatColor spriteColors[4] = 
                                     { { 1, 1, 1, (float)fade },
                                       { 1, 1, 1, (float)fade },
-                                      { 0, 0, 0, 0 },
-                                      { 0, 0, 0, 0 } };
+                                      { 1, 1, 1, (float)fade * .25f },
+                                      { 1, 1, 1, (float)fade * .25f } };
                                 
                                 drawSprite( arrowSprite,
                                             spriteVerts, spriteColors );
