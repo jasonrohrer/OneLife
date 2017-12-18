@@ -25,7 +25,6 @@
 
 
 
-SoundUsage blankSoundUsage = { -1, .25 };
 
 
 static int mapSize;
@@ -578,15 +577,10 @@ float initObjectBankStep() {
                     }
                 
 
-                r->creationSound.id = -1;
-                r->usingSound.id = -1;
-                r->eatingSound.id = -1;
-                r->decaySound.id = -1;
-                
-                r->creationSound.volume = 1;
-                r->usingSound.volume = 1;
-                r->eatingSound.volume = 1;
-                r->decaySound.volume = 1;
+                r->creationSound.numSubSounds = 0;
+                r->usingSound.numSubSounds = 0;
+                r->eatingSound.numSubSounds = 0;
+                r->decaySound.numSubSounds = 0;
                 
                 
                 if( strstr( lines[next], "sounds=" ) != NULL ) {

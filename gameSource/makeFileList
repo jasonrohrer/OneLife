@@ -60,6 +60,7 @@ ReviewPage.cpp \
 TextArea.cpp \
 RadioButtonSet.cpp \
 spellCheck.cpp \
+SoundUsage.cpp \
 
 
 GAME_GRAPHICS = \

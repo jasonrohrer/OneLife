@@ -56,6 +56,9 @@ EditorScenePage.cpp \
 groundSprites.cpp \
 ../commonSource/fractalNoise.cpp \
 spellCheck.cpp \
+SoundUsage.cpp \
+
+
 
 
 GAME_GRAPHICS = \
