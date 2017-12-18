@@ -1800,9 +1800,10 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
 
 
 
-static void handleAnimSound( int inObjectID, double inAge, AnimType inType,
-                             int inOldFrameCount, int inNewFrameCount,
-                             double inPosX, double inPosY ) {    
+void LivingLifePage::handleAnimSound( int inObjectID, double inAge, 
+                                      AnimType inType,
+                                      int inOldFrameCount, int inNewFrameCount,
+                                      double inPosX, double inPosY ) {    
     
             
     double oldTimeVal = frameRateFactor * inOldFrameCount / 60.0;
@@ -1850,7 +1851,31 @@ static void handleAnimSound( int inObjectID, double inAge, AnimType inType,
                                period ) );
                 
                 if( newPeriods > oldPeriods ) {
-                    playSound( anim->soundAnim[s].sound,
+                    SoundUsage u = anim->soundAnim[s].sound;
+                    
+                    
+                    if( anim->soundAnim[s].footstep ) {
+                        
+                        // check if we're on a floor
+
+                        int x = lrint( inPosX );
+                        int y = lrint( inPosY );
+
+                        int i = getMapIndex( x, y );
+                        
+                        if( i != -1 && mMapFloors[i] > 0 ) {
+                            
+                            ObjectRecord *f = getObject( mMapFloors[i] );
+                            
+                            if( f->usingSound.id != -1 ) {
+                                u = f->usingSound;
+                                }
+                            }
+                        }
+                    
+                    
+                    
+                    playSound( u,
                                getVectorFromCamera( inPosX, inPosY ) );
                     
                     }

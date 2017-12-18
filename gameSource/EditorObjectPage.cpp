@@ -3919,7 +3919,8 @@ void EditorObjectPage::step() {
     if( mPersonAgeSlider.isVisible() || 
         mSlotSizeField.isVisible() ||
         anyClothingToggled() ||
-        mCheckboxes[1]->getToggled() ) {
+        mCheckboxes[1]->getToggled() ||
+        mFloorCheckbox.getToggled() ) {
         
         mUsingSoundWidget.setVisible( true );
         }

@@ -685,6 +685,13 @@ class LivingLifePage : public GamePage {
         
         
         char mShowHighlights;
+
+
+        void handleAnimSound( int inObjectID, double inAge, 
+                              AnimType inType,
+                              int inOldFrameCount, int inNewFrameCount,
+                              double inPosX, double inPosY );
+
         
     };
 
