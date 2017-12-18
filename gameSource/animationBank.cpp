@@ -242,14 +242,22 @@ float initAnimationBankStep() {
                         r->soundAnim[j].ageStart = -1;
                         r->soundAnim[j].ageEnd = -1;
                         
+                        
+
+                        int footstepValue = 0;
+
                         sscanf( lines[next], 
-                                "soundParam=%d %lf %lf %lf %lf %lf",
+                                "soundParam=%d %lf %lf %lf %lf %lf %d",
                                 &( r->soundAnim[j].sound.id ),
                                 &( r->soundAnim[j].sound.volume ),
                                 &( r->soundAnim[j].repeatPerSec ),
                                 &( r->soundAnim[j].repeatPhase ),
                                 &( r->soundAnim[j].ageStart ),
-                                &( r->soundAnim[j].ageEnd ) );
+                                &( r->soundAnim[j].ageEnd ),
+                                &footstepValue );
+                        
+                        r->soundAnim[j].footstep = footstepValue;
+                        
                         next++;
                         }
                     }
@@ -657,13 +665,14 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
 
             for( int j=0; j<inRecord->numSounds; j++ ) {
                 lines.push_back( autoSprintf( 
-                                     "soundParam=%d %lf %lf %lf %lf %lf",
+                                     "soundParam=%d %lf %lf %lf %lf %lf %d",
                                      inRecord->soundAnim[j].sound.id,
                                      inRecord->soundAnim[j].sound.volume,
                                      inRecord->soundAnim[j].repeatPerSec,
                                      inRecord->soundAnim[j].repeatPhase,
                                      inRecord->soundAnim[j].ageStart,
-                                     inRecord->soundAnim[j].ageEnd ) );
+                                     inRecord->soundAnim[j].ageEnd,
+                                     inRecord->soundAnim[j].footstep ) );
                 }
         
             lines.push_back( 
@@ -2931,6 +2940,7 @@ void zeroRecord( SoundAnimationRecord *inRecord ) {
     inRecord->repeatPhase = 0;
     inRecord->ageStart = -1;
     inRecord->ageEnd = -1;
+    inRecord->footstep = 0;
     }
 
 

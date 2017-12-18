@@ -78,6 +78,9 @@ graphics/copyButton.tga \
 graphics/pasteButton.tga \
 graphics/swapButton.tga \
 graphics/swapButtonH.tga \
+graphics/footstepOnButton.tga \
+graphics/footstepOffButton.tga \
+
 
 
 NEEDED_MINOR_GEMS_OBJECTS = \

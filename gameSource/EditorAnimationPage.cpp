@@ -64,7 +64,10 @@ EditorAnimationPage::EditorAnimationPage()
                              false,
                              "Out", "0123456789.", NULL ),
           mSoundAgePunchInButton( smallFont, -130, -328, "S" ),
-          mSoundAgePunchOutButton( smallFont, -10, -328, "S" ),
+          mSoundAgePunchOutButton( smallFont, 0, -328, "S" ),
+          mSoundFootstepButton( "footstepOffButton.tga",
+                                "footstepOnButton.tga",
+                                35, -328 ),
           mPersonAgeSlider( smallFont, 100, -212, 2,
                             100, 20,
                             0, 100, "Age" ),
@@ -160,14 +163,22 @@ EditorAnimationPage::EditorAnimationPage()
     addComponent( &mSoundAgePunchInButton );
     addComponent( &mSoundAgePunchOutButton );
     
+    mSoundFootstepButton.setPixelSize( 2 );
+
+    addComponent( &mSoundFootstepButton );
+
     mSoundAgePunchInButton.addActionListener( this );
     mSoundAgePunchOutButton.addActionListener( this );
+
+    mSoundFootstepButton.addActionListener( this );
+    
 
     mSoundAgeInField.setVisible( false );
     mSoundAgeOutField.setVisible( false );
     mSoundAgePunchInButton.setVisible( false );
     mSoundAgePunchOutButton.setVisible( false );
-
+    mSoundFootstepButton.setVisible( false );
+    
 
     mSoundAgeInField.addActionListener( this );
     mSoundAgeOutField.addActionListener( this );
@@ -175,10 +186,6 @@ EditorAnimationPage::EditorAnimationPage()
     mSoundAgeInField.setFireOnLoseFocus( true );
     mSoundAgeOutField.setFireOnLoseFocus( true );
 
-    
-    mSoundAgePunchOutButton.addActionListener( this );
-    mSoundAgePunchInButton.addActionListener( this );
-    
 
 
     addComponent( &mNextSoundButton );
@@ -1077,6 +1084,11 @@ void EditorAnimationPage::soundIndexChanged() {
         mSoundAgePunchInButton.setVisible( person );
         mSoundAgePunchOutButton.setVisible( person );
 
+        mSoundFootstepButton.setVisible( true );
+
+        mSoundFootstepButton.setToggled(
+            mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].footstep );
+
         if( person ) {
 
             double in = mCurrentAnim[ mCurrentType ]->
@@ -1106,6 +1118,8 @@ void EditorAnimationPage::soundIndexChanged() {
         mSoundAgePunchInButton.setVisible( false );
         mSoundAgePunchOutButton.setVisible( false );
         
+        mSoundFootstepButton.setVisible( false );
+
         mCopySoundAnimButton.setVisible( false );
 
         if( mCurrentAnim[ mCurrentType ]->numSounds > 0 ) {    
@@ -1985,7 +1999,10 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 soundAnim[ mCurrentSound ].ageStart = -1;
             mCurrentAnim[ mCurrentType ]->
                 soundAnim[ mCurrentSound ].ageEnd = -1;
-
+            
+            mCurrentAnim[ mCurrentType ]->
+                soundAnim[ mCurrentSound ].footstep = false;
+            
             countLiveUse( u.id );
             }
         
@@ -2017,6 +2034,10 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].ageEnd = out;
         
         mSoundAgeOutField.setFloat( out, 2 );
+        }
+    else if( inTarget == &mSoundFootstepButton ) {
+        mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].footstep
+            = mSoundFootstepButton.getToggled();
         }
     else if( inTarget == &mNextSoundButton ) {
         mCurrentSound ++;

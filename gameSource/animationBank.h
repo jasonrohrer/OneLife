@@ -94,6 +94,11 @@ typedef struct SoundAnimationRecord {
 
         double ageStart;
         double ageEnd;
+
+        // default footstep sounds are replaced with floor usage
+        // sound when walking across floor
+        char footstep;
+        
     } SoundAnimationRecord;
     
 

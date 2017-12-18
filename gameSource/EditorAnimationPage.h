@@ -16,6 +16,8 @@
 
 #include "CheckboxButton.h"
 
+#include "SpriteToggleButton.h"
+
 #include "ValueSlider.h"
 
 
@@ -93,6 +95,8 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         
         TextButton mSoundAgePunchInButton;
         TextButton mSoundAgePunchOutButton;
+
+        SpriteToggleButton mSoundFootstepButton;
 
 
         ValueSlider mPersonAgeSlider;
