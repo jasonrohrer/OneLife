@@ -23,27 +23,32 @@ class SoundWidget : public PageComponent, public ActionListenerList,
         ~SoundWidget();
         
 
-        void setSound( int inSoundID );
         
-        int getSound();
-        
-        double getVolume();
-        
+        // returns internal copy
+        // not deallocated by caller
+        // returns blankSoundUsage during recording
         SoundUsage getSoundUsage();
 
+        // copies internally
         void setSoundUsage( SoundUsage inUsage );
 
         char isRecording();
         
     protected:
 
-        void setSoundInternal( int inSoundID );
+        SoundUsage mSoundUsage;
+        
+        // subsound index in Usage
+        // if == numSubSounds, then we are recording a new subsount
+        int mCurSoundIndex;
+        
+
+        void setSoundInternal( SoundUsage inUsage );
 
 
         int mSoundID;
         
-        static int sClipboardSound;
-        static double sClipboardVolume;
+        static SoundUsage sClipboardSoundUsage;
         
         // for propagating clipboard changes
         static SimpleVector<SoundWidget*> sWidgetList;
@@ -52,6 +57,8 @@ class SoundWidget : public PageComponent, public ActionListenerList,
         SpriteButton mStopButton;
         SpriteButton mPlayButton;
         
+
+        SpriteButton mPlayRandButton;
         SpriteButton mClearButton;
         
         SpriteButton mCopyButton;

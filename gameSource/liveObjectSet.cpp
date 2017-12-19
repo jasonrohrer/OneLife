@@ -77,6 +77,15 @@ void clearLiveObjectSet() {
 
 
 
+static void markSoundUsageLiveInternal( SoundUsage inUsage ) {
+    for( int i=0; i<inUsage.numSubSounds; i++ ) {
+        liveSoundIDMap[ inUsage.ids[i] ] = true;
+        liveSoundSet.push_back( inUsage.ids[i] );
+        }
+    }
+
+
+
 // adds an object to the base set of live objects
 // objects one transition step away will be auto-added as well  
 void addBaseObjectToLiveObjectSet( int inID ) {
@@ -98,29 +107,19 @@ void addBaseObjectToLiveObjectSet( int inID ) {
                 }
             }
         
-        if( o->creationSound.id != -1 ) {
-            liveSoundIDMap[ o->creationSound.id ] = true;
-            liveSoundSet.push_back( o->creationSound.id );
-            }
-        if( o->usingSound.id != -1 ) {
-            liveSoundIDMap[ o->usingSound.id ] = true;
-            liveSoundSet.push_back( o->usingSound.id );
-            }
-        if( o->eatingSound.id != -1 ) {
-            liveSoundIDMap[ o->eatingSound.id ] = true;
-            liveSoundSet.push_back( o->eatingSound.id );
-            }
+
+        markSoundUsageLiveInternal( o->creationSound );
+        markSoundUsageLiveInternal( o->usingSound );
+        markSoundUsageLiveInternal( o->eatingSound );
+        markSoundUsageLiveInternal( o->decaySound );
+        
 
         for( int t=ground; t<endAnimType; t += 1 ) {
             AnimationRecord *r = getAnimation( inID, (AnimType)t );
             
             if( r != NULL ) {
-                for( int s=0; s<r->numSounds; s++ ) {
-                    
-                    int sID = r->soundAnim[s].sound.id;
-                    
-                    liveSoundIDMap[ sID ] = true;
-                    liveSoundSet.push_back( sID );
+                for( int s=0; s<r->numSounds; s++ ) {                    
+                    markSoundUsageLiveInternal( r->soundAnim[s].sound );
                     }
                 }
             }

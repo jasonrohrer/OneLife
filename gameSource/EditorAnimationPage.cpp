@@ -478,12 +478,10 @@ EditorAnimationPage::~EditorAnimationPage() {
     freeCurrentAnim();
     
     for( int i=0; i<mAllCopyBufferSounds.size(); i++ ) {
-        unCountLiveUse( mAllCopyBufferSounds.getElementDirect(i).sound.id );
+        unCountLiveUse( mAllCopyBufferSounds.getElementDirect(i).sound );
         }
 
-    if( mSoundAnimCopyBuffer.sound.id != -1 ) {
-        unCountLiveUse( mSoundAnimCopyBuffer.sound.id );
-        }
+    unCountLiveUse( mSoundAnimCopyBuffer.sound );
         
     for( int i=0; i<NUM_ANIM_CHECKBOXES; i++ ) {
         delete mCheckboxes[i];
@@ -635,7 +633,7 @@ void EditorAnimationPage::populateCurrentAnim() {
             mCurrentAnim[i] = copyRecord( oldRecord );
         
             for( int s=0; s<mCurrentAnim[i]->numSounds; s++ ) {
-                countLiveUse( mCurrentAnim[i]->soundAnim[s].sound.id );
+                countLiveUse( mCurrentAnim[i]->soundAnim[s].sound );
                 }
 
             adjustRecordList( &( mCurrentAnim[i]->spriteAnim ),
@@ -669,7 +667,7 @@ void EditorAnimationPage::populateCurrentAnim() {
         
         
         for( int s=0; s<mCurrentAnim[extra]->numSounds; s++ ) {
-            countLiveUse( mCurrentAnim[extra]->soundAnim[s].sound.id );
+            countLiveUse( mCurrentAnim[extra]->soundAnim[s].sound );
             }
 
         adjustRecordList( &( mCurrentAnim[extra]->spriteAnim ),
@@ -1033,8 +1031,8 @@ void EditorAnimationPage::soundIndexChanged() {
     if( mCurrentSound < mCurrentAnim[ mCurrentType ]->numSounds - 1 
         ||
         ( mCurrentSound == mCurrentAnim[ mCurrentType ]->numSounds -1 &&
-          mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].sound.id 
-          != -1 ) ) {
+          mCurrentAnim[ mCurrentType ]->
+          soundAnim[ mCurrentSound ].sound.numSubSounds > 0 ) ) {
             
         mNextSoundButton.setVisible( true );
         }
@@ -1130,7 +1128,9 @@ void EditorAnimationPage::soundIndexChanged() {
             }
         }
     
-    mPasteSoundAnimButton.setVisible( mSoundAnimCopyBuffer.sound.id != -1 ||
+    mPasteSoundAnimButton.setVisible( mSoundAnimCopyBuffer.sound.numSubSounds
+                                      > 0 
+                                      ||
                                       mAllCopyBufferSounds.size() > 0 );
 
 
@@ -1141,7 +1141,7 @@ void EditorAnimationPage::soundIndexChanged() {
 
 void EditorAnimationPage::markAllCopyBufferSoundsNotLive() {
     for( int i=0; i<mAllCopyBufferSounds.size(); i++ ) {
-        unCountLiveUse( mAllCopyBufferSounds.getElementDirect( i ).sound.id );
+        unCountLiveUse( mAllCopyBufferSounds.getElementDirect( i ).sound );
         }
     }
 
@@ -1208,14 +1208,13 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         updateSlidersFromAnim();
         }
     else if( inTarget == &mCopySoundAnimButton ) {
-        if( mSoundAnimCopyBuffer.sound.id != -1 ) {
-            unCountLiveUse( mSoundAnimCopyBuffer.sound.id );
-            }
+        unCountLiveUse( mSoundAnimCopyBuffer.sound );
+        
         mSoundAnimCopyBuffer = 
             mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ];
         
-        if( mSoundAnimCopyBuffer.sound.id != -1 ) {
-            countLiveUse( mSoundAnimCopyBuffer.sound.id );
+        if( mSoundAnimCopyBuffer.sound.numSubSounds > 0 ) {
+            countLiveUse( mSoundAnimCopyBuffer.sound );
             mPasteSoundAnimButton.setVisible( true );
             }
         }
@@ -1237,7 +1236,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
 
         for( int i=0; i<anim->numSounds; i++ ) {
             mAllCopyBufferSounds.push_back( anim->soundAnim[i] );
-            countLiveUse( anim->soundAnim[i].sound.id );
+            countLiveUse( anim->soundAnim[i].sound );
             }
         mPasteSoundAnimButton.setVisible( mAllCopyBufferSounds.size() > 0 );
         }
@@ -1272,7 +1271,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                     mAllCopyBufferSounds.getElementDirect( i );
                 
                 countLiveUse( mCurrentAnim[ mCurrentType ]->
-                              soundAnim[ mCurrentSound ].sound.id );
+                              soundAnim[ mCurrentSound ].sound );
                 }
             }
         else {
@@ -1281,7 +1280,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 // replace
             
                 unCountLiveUse( mCurrentAnim[ mCurrentType ]->
-                                soundAnim[ mCurrentSound ].sound.id );
+                                soundAnim[ mCurrentSound ].sound );
                 
                 mSoundWidget.setSoundUsage( mCurrentAnim[ mCurrentType ]->
                                             soundAnim[ mCurrentSound ].sound );
@@ -1310,9 +1309,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                     mSoundAnimCopyBuffer;
                 }
             
-            if( mSoundAnimCopyBuffer.sound.id != -1 ) {
-                countLiveUse( mSoundAnimCopyBuffer.sound.id );
-                }
+            countLiveUse( mSoundAnimCopyBuffer.sound );
             }
         
         soundIndexChanged();
@@ -1443,7 +1440,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
 
         for( int i=0; i<anim->numSounds; i++ ) {
             mAllCopyBufferSounds.push_back( anim->soundAnim[i] );
-            countLiveUse( anim->soundAnim[i].sound.id );
+            countLiveUse( anim->soundAnim[i].sound );
             }
 
         ObjectRecord *obj = getObject( mCurrentObjectID );
@@ -1576,7 +1573,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
 
             for( int i=0; i<anim->numSounds; i++ ) {
-                unCountLiveUse( anim->soundAnim[i].sound.id );
+                unCountLiveUse( anim->soundAnim[i].sound );
                 }
 
             delete [] anim->soundAnim;
@@ -1592,7 +1589,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 anim->soundAnim[i] = 
                     mAllCopyBufferSounds.getElementDirect( i );
 
-                countLiveUse( anim->soundAnim[i].sound.id );
+                countLiveUse( anim->soundAnim[i].sound );
                 }
             
             
@@ -1932,19 +1929,22 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             }
         
         if( mCurrentSound < mCurrentAnim[ mCurrentType ]->numSounds ) {
-            if( u.id != -1 ) { // just set it
-                int oldID = mCurrentAnim[ mCurrentType ]->
-                    soundAnim[ mCurrentSound ].sound.id;
+            if( u.numSubSounds > 0 ) {  // just set it
+                SoundUsage oldU = mCurrentAnim[ mCurrentType ]->
+                    soundAnim[ mCurrentSound ].sound;
                 mCurrentAnim[ mCurrentType ]->
-                    soundAnim[ mCurrentSound ].sound = u;
-                countLiveUse( u.id );
-                unCountLiveUse( oldID );
+                    soundAnim[ mCurrentSound ].sound = copyUsage( u );
+                countLiveUse( u );
+                unCountLiveUse( oldU );
+                clearSoundUsage( &oldU );
                 }
             else if( !mSoundWidget.isRecording() ) {
                 // delete this sound
-                unCountLiveUse( mCurrentAnim[ mCurrentType ]->
-                                soundAnim[ mCurrentSound ].sound.id );
-                
+                SoundUsage oldU = mCurrentAnim[ mCurrentType ]->
+                    soundAnim[ mCurrentSound ].sound;
+                unCountLiveUse( oldU );
+                clearSoundUsage( &oldU );
+
                 if( mCurrentAnim[ mCurrentType ]->numSounds > 
                     mCurrentSound + 1 ) {
                     
@@ -1960,21 +1960,21 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 mCurrentSound = mCurrentAnim[ mCurrentType ]->numSounds;
                 }
             else {
-                // leave sound anim in place, but just clear soundID 
+                // leave sound anim in place, but just clear sound usage 
                 // so it stops repeat-playing while we're recording
                 // its replacement
                 unCountLiveUse( mCurrentAnim[ mCurrentType ]->
-                                soundAnim[ mCurrentSound ].sound.id );
-                
-                mCurrentAnim[ mCurrentType ]->
-                    soundAnim[ mCurrentSound ].sound.id = -1;
-                
+                                soundAnim[ mCurrentSound ].sound );
+
+                clearSoundUsage( &( mCurrentAnim[ mCurrentType ]->
+                                    soundAnim[ mCurrentSound ].sound ) );
+
                 // don't allow save or copy-all in this weird state
                 mCopyAllButton.setVisible( false );
                 mSaveButton.setVisible( false );
                 }
             }
-        else if( u.id != -1 ) {
+        else if( u.numSubSounds > 0 ) {
             // expand it to make room
             mCurrentAnim[ mCurrentType ]->numSounds++;
             SoundAnimationRecord *old = mCurrentAnim[ mCurrentType ]->soundAnim;
@@ -1990,7 +1990,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             
             delete [] old;
 
-            mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].sound = u;
+            mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].sound = 
+                copyUsage( u );
             mCurrentAnim[ mCurrentType ]->
                 soundAnim[ mCurrentSound ].repeatPerSec = 0;
             mCurrentAnim[ mCurrentType ]->
@@ -2003,7 +2004,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentAnim[ mCurrentType ]->
                 soundAnim[ mCurrentSound ].footstep = false;
             
-            countLiveUse( u.id );
+            countLiveUse( u );
             }
         
         soundIndexChanged();
@@ -2775,7 +2776,7 @@ void EditorAnimationPage::step() {
                 mCurrentAnim[ mCurrentType ]->soundAnim[s];
             
             
-            if( soundAnim.sound.id == -1 ) {
+            if( soundAnim.sound.numSubSounds == 0 ) {
                 continue;
                 }
             
@@ -2798,7 +2799,7 @@ void EditorAnimationPage::step() {
             double phase = soundAnim.repeatPhase;
 
             // mark them live to keep them loaded whether they play or not
-            markSoundLive( soundAnim.sound.id );
+            markSoundUsageLive( soundAnim.sound );
             
             if( hz != 0 ) {
                 double period = 1 / hz;

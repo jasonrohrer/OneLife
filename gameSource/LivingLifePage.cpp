@@ -1816,7 +1816,7 @@ void LivingLifePage::handleAnimSound( int inObjectID, double inAge,
                     
         for( int s=0; s<anim->numSounds; s++ ) {
             
-            if( anim->soundAnim[s].sound.id == -1 ) {
+            if( anim->soundAnim[s].sound.numSubSounds == 0 ) {
                 continue;
                 }
             
@@ -1867,7 +1867,7 @@ void LivingLifePage::handleAnimSound( int inObjectID, double inAge,
                             
                             ObjectRecord *f = getObject( mMapFloors[i] );
                             
-                            if( f->usingSound.id != -1 ) {
+                            if( f->usingSound.numSubSounds > 0 ) {
                                 u = f->usingSound;
                                 }
                             }
@@ -1980,7 +1980,7 @@ void LivingLifePage::drawMapCell( int inMapI,
             if( mMapDropOffsets[ inMapI ].x == 0 &&
                 mMapDropOffsets[ inMapI ].y == 0 ) {
                 // done dropping into place
-                if( mMapDropSounds[ inMapI ].id != -1 ) {
+                if( mMapDropSounds[ inMapI ].numSubSounds > 0 ) {
                     
                     playSound( mMapDropSounds[ inMapI ],
                                getVectorFromCamera( 
@@ -2367,7 +2367,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             ObjectRecord *displayObj = 
                 getObject( inObj->displayID );
             
-            if( displayObj->usingSound.id != -1 ) {
+            if( displayObj->usingSound.numSubSounds > 0 ) {
                 // play baby's using sound as they are put down
                 // we no longer have access to parent's using sound
                 playSound( displayObj->usingSound,
@@ -4905,6 +4905,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 SimpleVector<char*> *words = 
                                     tokenizeString( des );
                                 
+                                delete [] des;
+
                                 SimpleVector<char*> finalWords;
                                 for( int i=0; i< words->size(); i++ ) {
                                     char *word = words->getElementDirect( i );
@@ -7673,7 +7675,7 @@ void LivingLifePage::step() {
                             // floor changed
                             
                             ObjectRecord *obj = getObject( floorID );
-                            if( obj->creationSound.id != -1 ) {    
+                            if( obj->creationSound.numSubSounds > 0 ) {    
                                     
                                 playSound( obj->creationSound,
                                            getVectorFromCamera( x, y ) );
@@ -7695,7 +7697,7 @@ void LivingLifePage::step() {
                             SoundUsage contSound = 
                                 getObject( mMap[mapI] )->usingSound;
                             
-                            if( contSound.id != -1 ) {
+                            if( contSound.numSubSounds > 0 ) {
                                 playSound( contSound, 
                                            getVectorFromCamera( x, y ) );
                                 soundPlayed = true;
@@ -7713,7 +7715,7 @@ void LivingLifePage::step() {
                                     responsiblePlayerObject->displayID )->
                                     usingSound;
 
-                                if( s.id != -1 ) {
+                                if( s.numSubSounds > 0 ) {
                                     playSound( s, getVectorFromCamera( x, y ) );
                                     }
                                 }
@@ -7816,7 +7818,7 @@ void LivingLifePage::step() {
                                     
                                     // play decay sound
                                     ObjectRecord *obj = getObject( old );
-                                    if( obj->decaySound.id != -1 ) {    
+                                    if( obj->decaySound.numSubSounds > 0 ) {    
                                     
                                         playSound( 
                                             obj->decaySound,
@@ -7826,14 +7828,16 @@ void LivingLifePage::step() {
                                 else if( responsiblePlayerID < -1 ) {
                                     // player caused this object to change
                                     
-                                    if( newObj->creationSound.id == -1 ||
+                                    if( newObj->creationSound.numSubSounds == 0
+                                        ||
                                         ! shouldCreationSoundPlay( old, 
                                                                    newID ) ) {
                                         // no creation sound will play for new
                                         // (if it will, it will be played
                                         //  below)
                                         ObjectRecord *obj = getObject( old );
-                                        if( obj->usingSound.id != -1 ) {    
+                                        if( obj->usingSound.numSubSounds 
+                                            > 0 ) {    
                                             
                                             playSound( 
                                                 obj->usingSound,
@@ -7845,7 +7849,7 @@ void LivingLifePage::step() {
                             
 
                             
-                            if( newObj->creationSound.id != -1 ) {
+                            if( newObj->creationSound.numSubSounds > 0 ) {
                                 
                                 if( old == 0 && responsiblePlayerID < -1 ) {
                                     // new placement, but not set-down
@@ -8437,7 +8441,7 @@ void LivingLifePage::step() {
                             SoundUsage clothingSound = 
                                 newClothing->usingSound;
                             
-                            if( clothingSound.id != -1 ) {
+                            if( clothingSound.numSubSounds > 0 ) {
                                 playSound( clothingSound, 
                                            getVectorFromCamera( 
                                                o.xd,
@@ -8450,7 +8454,7 @@ void LivingLifePage::step() {
                                 ObjectRecord *existingObj = 
                                     getObject( existing->displayID );
                                 
-                                if( existingObj->usingSound.id != -1 ) {
+                                if( existingObj->usingSound.numSubSounds > 0 ) {
                                     
                                     playSound( existingObj->usingSound,
                                                getVectorFromCamera(
@@ -8528,7 +8532,7 @@ void LivingLifePage::step() {
                             ObjectRecord *ateObj =
                                 getObject( justAteID );
                                         
-                            if( ateObj->eatingSound.id != -1 ) {
+                            if( ateObj->eatingSound.numSubSounds > 0 ) {
                                 playSound( 
                                     ateObj->eatingSound,
                                     getVectorFromCamera( 
@@ -8565,7 +8569,9 @@ void LivingLifePage::step() {
                                         ObjectRecord *oldHeldObj =
                                             getObject( oldHeld );
                                         
-                                        if( oldHeldObj->eatingSound.id != -1 ) {
+                                        if( oldHeldObj->
+                                            eatingSound.numSubSounds > 0 ) {
+                                            
                                             playSound( 
                                                 oldHeldObj->eatingSound,
                                                 getVectorFromCamera( 
@@ -8612,7 +8618,9 @@ void LivingLifePage::step() {
                                     ObjectRecord *oldHeldObj =
                                         getObject( oldHeld );
                                         
-                                    if( oldHeldObj->eatingSound.id != -1 ) {
+                                    if( oldHeldObj->eatingSound.numSubSounds
+                                        > 0 ) {
+                                        
                                         playSound( 
                                             oldHeldObj->eatingSound,
                                             getVectorFromCamera( 
@@ -8640,7 +8648,7 @@ void LivingLifePage::step() {
                                 ObjectRecord *existingObj = 
                                     getObject( existing->displayID );
                                 
-                                if( existingObj->usingSound.id != -1 ) {
+                                if( existingObj->usingSound.numSubSounds > 0 ) {
                                     
                                     playSound( existingObj->usingSound,
                                                getVectorFromCamera(
@@ -8810,7 +8818,8 @@ void LivingLifePage::step() {
                                         // play decay sound
                                         ObjectRecord *obj = 
                                             getObject( oldHeld );
-                                        if( obj->decaySound.id != -1 ) {    
+                                        if( obj->decaySound.numSubSounds 
+                                            > 0 ) {    
                                             
                                             playSound( 
                                                 obj->decaySound,
@@ -8838,7 +8847,8 @@ void LivingLifePage::step() {
                                             // creation?
                                             
                                             if( getObject( t->newTarget )->
-                                                creationSound.id != -1 ) {
+                                                creationSound.numSubSounds 
+                                                > 0 ) {
                                                 
                                                 if( shouldCreationSoundPlay(
                                                         t->target,
@@ -8854,7 +8864,8 @@ void LivingLifePage::step() {
                                     
                                     if( ! otherSoundPlayed &&
                                         ! clothingChanged &&
-                                        heldObj->creationSound.id != -1 ) {
+                                        heldObj->creationSound.numSubSounds 
+                                        > 0 ) {
                                         
                                         int testAncestor = oldHeld;
                                         
@@ -8964,8 +8975,8 @@ void LivingLifePage::step() {
                                                 getObject( 
                                                     existing->displayID );
                                 
-                                            if( existingObj->usingSound.id != 
-                                                -1 ) {
+                                            if( existingObj->
+                                                usingSound.numSubSounds > 0 ) {
                                     
                                                 playSound( 
                                                     existingObj->usingSound,
@@ -9043,7 +9054,8 @@ void LivingLifePage::step() {
                                 ObjectRecord *targetObject = 
                                     getObject( heldTransitionSourceID );
                                 
-                                if( targetObject->usingSound.id != -1 ) {
+                                if( targetObject->usingSound.numSubSounds 
+                                    > 0 ) {
                                     
                                     playSound( 
                                         targetObject->usingSound,
@@ -9205,7 +9217,7 @@ void LivingLifePage::step() {
                                     clothingByIndex( 
                                         existing->clothing, c )->usingSound;
                             
-                                if( contSound.id != -1 ) {
+                                if( contSound.numSubSounds > 0 ) {
                                     playSound( contSound, 
                                                getVectorFromCamera( 
                                                    existing->xd,
@@ -9221,7 +9233,7 @@ void LivingLifePage::step() {
                                         existing->displayID )->
                                         usingSound;
 
-                                    if( s.id != -1 ) {
+                                    if( s.numSubSounds > 0 ) {
                                         playSound( 
                                             s, 
                                             getVectorFromCamera(
@@ -9289,7 +9301,7 @@ void LivingLifePage::step() {
                         
                         ObjectRecord *obj = getObject( o.displayID );
                         
-                        if( obj->creationSound.id != -1 ) {
+                        if( obj->creationSound.numSubSounds > 0 ) {
                                 
                             playSound( obj->creationSound,
                                        getVectorFromCamera( 
@@ -11067,7 +11079,7 @@ void LivingLifePage::step() {
                 if( ourLiveObject->holdingID > 0 ) {
                     ObjectRecord *held = getObject( ourLiveObject->holdingID );
                     
-                    if( held->eatingSound.id != -1 ) {
+                    if( held->eatingSound.numSubSounds > 0 ) {
                         playSound( held->eatingSound,
                                    getVectorFromCamera( 
                                        ourLiveObject->currentPos.x, 

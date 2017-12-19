@@ -47,7 +47,7 @@ SettingsPage::SettingsPage()
     mOldFullscreenSetting = 
         SettingsManager::getIntSetting( "fullscreen", 1 );
     
-    mTestSound.id = -1;
+    mTestSound = blankSoundUsage;
 
     mMusicStartTime = 0;
 
@@ -98,7 +98,7 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
             setSoundEffectsLoudness( 
                 mSoundEffectsLoudnessSlider.getValue() );
         
-            if( mTestSound.id != -1 ) {
+            if( mTestSound.numSubSounds > 0 ) {
                 doublePair pos = { 0, 0 };
                 
                 playSound( mTestSound, pos );
@@ -149,8 +149,8 @@ void SettingsPage::draw( doublePair inViewCenter,
 
 
 void SettingsPage::step() {
-    if( mTestSound.id != -1 ) {
-        markSoundLive( mTestSound.id );
+    if( mTestSound.numSubSounds > 0 ) {
+        markSoundUsageLive( mTestSound );
         }
     stepMusicPlayer();
     }
@@ -168,14 +168,20 @@ void SettingsPage::makeActive( char inFresh ) {
         
         int tryCount = 0;
         
-        while( mTestSound.id == -1 && tryCount < 10 ) {
+        while( mTestSound.numSubSounds == 0 && tryCount < 10 ) {
 
             int oID = getRandomPersonObject();
 
             if( oID > 0 ) {
                 ObjectRecord *r = getObject( oID );
                 mTestSound = r->usingSound;
-                mTestSound.volume = 1.0;
+
+                if( mTestSound.numSubSounds >= 1 ) {
+                    // constrain to only first subsound                    
+                    mTestSound.numSubSounds = 1;
+                    // play it at full volume
+                    mTestSound.volumes[1] = 1.0;
+                    }
                 }
             tryCount ++;
             }

@@ -1296,7 +1296,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         char creationSoundInitialOnly = false;
         
-        if( mCreationSoundWidget.getSoundUsage().id != -1 ) {
+        if( mCreationSoundWidget.getSoundUsage().numSubSounds > 0 ) {
             creationSoundInitialOnly = 
                 mCreationSoundInitialOnlyCheckbox.getToggled();
             }
@@ -1419,7 +1419,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         char creationSoundInitialOnly = false;
         
-        if( mCreationSoundWidget.getSoundUsage().id != -1 ) {
+        if( mCreationSoundWidget.getSoundUsage().numSubSounds > 0 ) {
             creationSoundInitialOnly = 
                 mCreationSoundInitialOnlyCheckbox.getToggled();
             }
@@ -2693,7 +2693,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 pickedRecord->creationSoundInitialOnly );
 
             mCreationSoundInitialOnlyCheckbox.setVisible( 
-                mCreationSoundWidget.getSoundUsage().id != -1 );
+                mCreationSoundWidget.getSoundUsage().numSubSounds > 0 );
             
 
             mRaceField.setText( "A" );
@@ -3872,12 +3872,12 @@ void EditorObjectPage::step() {
     
     mStepsSinceDescriptionChange ++;
     
-    int creationSoundID = mCreationSoundWidget.getSoundUsage().id;
+    char creationSoundPresent = 
+        ( mCreationSoundWidget.getSoundUsage().numSubSounds > 0 );
     
-    mCreationSoundInitialOnlyCheckbox.setVisible( 
-        creationSoundID != -1 );
-
-    if( creationSoundID == -1 ) {
+    mCreationSoundInitialOnlyCheckbox.setVisible( creationSoundPresent );
+    
+    if( ! creationSoundPresent ) {
         // un-toggle whenever sound cleared
         mCreationSoundInitialOnlyCheckbox.setToggled( false );
         }

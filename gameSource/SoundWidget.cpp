@@ -5,8 +5,7 @@
 
 
 
-int SoundWidget::sClipboardSound = -1;
-double SoundWidget::sClipboardVolume = .25;
+SoundUsage SoundWidget::sClipboardSoundUsage = { 0, NULL, NULL };
 
 
 SimpleVector<SoundWidget*> SoundWidget::sWidgetList;
@@ -22,21 +21,30 @@ static void styleButton( Button *inButton ) {
 SoundWidget::SoundWidget( Font *inDisplayFont, 
                           int inX, int inY ) 
         : PageComponent( inX, inY ),
-          mSoundID( -1 ),
-          mRecordButton( "recordButton.tga", -85, 0 ),
-          mStopButton( "stopButton.tga", -51, 0 ),
-          mPlayButton( "playButton.tga", -17, 0 ),
+          mSoundUsage( blankSoundUsage ),
+          mCurSoundIndex( 0 ),
+          mRecordButton( "recordButton.tga", -85, -30 ),
+          mStopButton( "stopButton.tga", -85, -30 ),
+          mPlayButton( "playButton.tga", -51, -30 ),
+          
+          mPlayRandButton( "playRandButton.tga", -51, 0 ),
           mClearButton( "clearButton.tga", 17, 0 ),
           mCopyButton( "copyButton.tga", 51, 0 ),
           mPasteButton( "pasteButton.tga", 85, 0 ),
-          mVolumeSlider( inDisplayFont, -148, -30, 2,
-                         202, 20,
+          mVolumeSlider( inDisplayFont, -70, -30, 2,
+                         124, 20,
                          0, 1.0, "V" ),
           mDefaultVolumeButton( inDisplayFont, 118, -30, "D" ) {
 
-    addComponent( &mRecordButton );
+    // stop button receives events before record button
+    // this lets them be in same spot (record click already ignored
+    // by invisible stop button by time record click causes stop button
+    // to become visible)
     addComponent( &mStopButton );
+    addComponent( &mRecordButton );
     addComponent( &mPlayButton );
+
+    addComponent( &mPlayRandButton );
     addComponent( &mClearButton );
     addComponent( &mCopyButton );
     addComponent( &mPasteButton );
@@ -47,6 +55,8 @@ SoundWidget::SoundWidget( Font *inDisplayFont,
     styleButton( &mRecordButton );
     styleButton( &mStopButton );
     styleButton( &mPlayButton );
+
+    styleButton( &mPlayRandButton );
     styleButton( &mClearButton );
     styleButton( &mCopyButton );
     styleButton( &mPasteButton );
@@ -60,6 +70,8 @@ SoundWidget::SoundWidget( Font *inDisplayFont,
     mRecordButton.addActionListener( this );
     mStopButton.addActionListener( this );
     mPlayButton.addActionListener( this );
+
+    mPlayRandButton.addActionListener( this );
     mClearButton.addActionListener( this );
     mCopyButton.addActionListener( this );
     mPasteButton.addActionListener( this );
@@ -68,7 +80,7 @@ SoundWidget::SoundWidget( Font *inDisplayFont,
 
     mStopButton.setVisible( false );
 
-    setSound( -1 );
+    setSoundUsage( blankSoundUsage );
 
     mVolumeSlider.setValue( .25 );
 
@@ -80,70 +92,55 @@ SoundWidget::SoundWidget( Font *inDisplayFont,
         
 
 SoundWidget::~SoundWidget() {
-    setSound( -1 );
+    setSoundUsage( blankSoundUsage );
     sWidgetList.deleteElementEqualTo( this );
     
     if( sWidgetList.size() == 0 ) {
-        if( sClipboardSound != -1 ) {
-            unCountLiveUse( sClipboardSound );
-            sClipboardSound = -1;
-            }
+        unCountLiveUse( sClipboardSoundUsage );
+        clearSoundUsage( &sClipboardSoundUsage );
         }
     }
 
 
 
-void SoundWidget::setSound( int inSoundID ) {
-    if( inSoundID != -1 ) {
-        countLiveUse( inSoundID );
-        }
-
-    if( mSoundID != -1 ) {
-        unCountLiveUse( mSoundID );
-        }
-
-    mSoundID = inSoundID;
-    
-    
-    mPlayButton.setVisible( mSoundID != -1 );
-    mVolumeSlider.setVisible( mSoundID != -1 );
-    mCopyButton.setVisible( mSoundID != -1 );
-    mClearButton.setVisible( mSoundID != -1 );
-    mDefaultVolumeButton.setVisible( mSoundID != -1 );
-    }
-
-
-
-void SoundWidget::setSoundInternal( int inSoundID ) {
-    setSound( inSoundID );
+void SoundWidget::setSoundInternal( SoundUsage inUsage ) {
+    setSoundUsage( inUsage );
     fireActionPerformed( this );
     }
 
 
 
-        
-int SoundWidget::getSound() {
-    return mSoundID;
-    }
-
-
-
-double SoundWidget::getVolume() {
-    return mVolumeSlider.getValue();
-    }
-
-
-
 SoundUsage SoundWidget::getSoundUsage() {
-    SoundUsage s = { mSoundID, mVolumeSlider.getValue() };
-    return s;
+    if( mStopButton.isVisible() ) {
+        return blankSoundUsage;
+        }
+    return mSoundUsage;
     }
 
 
 
 void SoundWidget::setSoundUsage( SoundUsage inUsage ) {
-    setSound( inUsage.id );
-    mVolumeSlider.setValue( inUsage.volume );
+    unCountLiveUse( mSoundUsage );
+    clearSoundUsage( &mSoundUsage );
+    
+    mSoundUsage = copyUsage( inUsage );
+    countLiveUse( mSoundUsage );
+    
+    
+        
+    char show = ( mSoundUsage.numSubSounds > 0 );
+    
+    mPlayButton.setVisible( show );
+    mPlayRandButton.setVisible( show );
+    mVolumeSlider.setVisible( show );
+    mCopyButton.setVisible( show );
+    mClearButton.setVisible( show );
+    mDefaultVolumeButton.setVisible( show );
+    
+
+    if( mSoundUsage.numSubSounds > mCurSoundIndex ) {
+        mVolumeSlider.setValue( mSoundUsage.volumes[ mCurSoundIndex ] );
+        }
     }
 
 
@@ -164,34 +161,57 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
         mStopButton.setVisible( started );
         mRecordButton.setVisible( !started );
         
-        setSoundInternal( -1 );
+        if( started ) {
+            mPlayButton.setVisible( false );
+            mPlayRandButton.setVisible( false );
+            mCopyButton.setVisible( false );
+            mClearButton.setVisible( false );
+            }
         updatePasteButton();
+        fireActionPerformed( this );
         }
     else if( inTarget == &mStopButton ) {
         mStopButton.setVisible( false );
         
         int id = stopRecordingSound();
         
-        setSoundInternal( id );
+        if( id != -1 ) {
+            
+            if( mCurSoundIndex == mSoundUsage.numSubSounds ) {
+                addSound( &mSoundUsage, id, mVolumeSlider.getValue() );
+                }
+            else {
+                mSoundUsage.ids[ mCurSoundIndex ] = id;
+                }
+            }
         
-        mRecordButton.setVisible( true );
+        // don't make record visible here
+        // wait until next step so that it won't receive this click
+        mPlayButton.setVisible( true );
+        mPlayRandButton.setVisible( true );
+        mCopyButton.setVisible( true );
+        mClearButton.setVisible( true );
+        
         updatePasteButton();
+        fireActionPerformed( this );
         }
     else if( inTarget == &mPlayButton ) {
-        playSound( mSoundID, mVolumeSlider.getValue(), 0.5 );
+        playSound( mSoundUsage.ids[mCurSoundIndex], 
+                   mVolumeSlider.getValue(), 0.5 );
         }
     else if( inTarget == &mClearButton ) {
-        setSoundInternal( -1 );
+        setSoundInternal( blankSoundUsage );
         }
     else if( inTarget == &mCopyButton ) {
-        if( mSoundID != -1 && mSoundID != sClipboardSound ) {
-            if( sClipboardSound != -1 ) {
-                unCountLiveUse( sClipboardSound );
-                }
-            sClipboardSound = mSoundID;
-            sClipboardVolume = mVolumeSlider.getValue();
+        if( mSoundUsage.numSubSounds > 0 && 
+            ! equal( mSoundUsage, sClipboardSoundUsage ) ) {
+
+            unCountLiveUse( sClipboardSoundUsage );
+            clearSoundUsage( &sClipboardSoundUsage );
+
+            sClipboardSoundUsage = copyUsage( mSoundUsage );
             
-            countLiveUse( sClipboardSound );
+            countLiveUse( sClipboardSoundUsage );
             
             for( int i=0; i<sWidgetList.size(); i++ ) {
                 sWidgetList.getElementDirect(i)->updatePasteButton();
@@ -199,9 +219,9 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
             }
         }
     else if( inTarget == &mPasteButton ) {
-        if( sClipboardSound != -1 ) {
-            setSoundInternal( sClipboardSound );
-            mVolumeSlider.setValue( sClipboardVolume );
+        if( sClipboardSoundUsage.numSubSounds > 0 ) {
+            mCurSoundIndex = 0;
+            setSoundInternal( sClipboardSoundUsage );
             }
         }
     }
@@ -209,7 +229,7 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
 
 
 void SoundWidget::updatePasteButton() {
-    mPasteButton.setVisible( sClipboardSound != -1  && 
+    mPasteButton.setVisible( sClipboardSoundUsage.numSubSounds > 0  && 
                              mRecordButton.isVisible() );
     }
 
@@ -217,7 +237,14 @@ void SoundWidget::updatePasteButton() {
 
 void SoundWidget::draw() {    
     if( mSoundID != -1 ) {
-        markSoundLive( mSoundID );
+        markSoundUsageLive( mSoundUsage );
+        }
+
+    if( ! mRecordButton.isVisible() &&
+        ! mStopButton.isVisible() ) {
+        // re-enable record button the step after stop is clicked to
+        // avoid repeat click
+        mRecordButton.setVisible( true );
         }
     }
 

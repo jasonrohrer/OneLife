@@ -708,7 +708,10 @@ void playSound( int inID, double inVolumeTweak, double inStereoPosition,
 
 void playSound( SoundUsage inUsage,
                 double inStereoPosition, double inReverbMix ) {
-    playSound( inUsage.id, inUsage.volume, inStereoPosition, inReverbMix );
+    
+    SoundUsagePlay p = playRandom( inUsage );
+    
+    playSound( p.id, p.volume, inStereoPosition, inReverbMix );
     }
 
 
@@ -810,7 +813,9 @@ void playSound( SoundUsage inUsage,
         ( 1.0 - reverbContstant ) * ( 1.0 - volumeScale ) + 
         reverbContstant;
 
-    playSound( inUsage.id, volumeScale * inUsage.volume, xPan / 16.0,
+    SoundUsagePlay p = playRandom( inUsage );
+
+    playSound( p.id, volumeScale * p.volume, xPan / 16.0,
                reverbMix );
     }
 
@@ -838,6 +843,17 @@ char markSoundLive( int inID ) {
     else {
         return false;
         }
+    }
+
+
+
+char markSoundUsageLive( SoundUsage inUsage ) {
+    char allLive = true;
+    
+    for( int i=0; i<inUsage.numSubSounds; i++ ) {
+        allLive = allLive && markSoundLive( inUsage.ids[i] );
+        }
+    return allLive;
     }
 
 
@@ -1125,6 +1141,24 @@ void unCountLiveUse( int inID ) {
             }
         }
     }
+
+
+
+void countLiveUse( SoundUsage inUsage ) {
+    for( int i=0; i<inUsage.numSubSounds; i++ ) {
+        countLiveUse( inUsage.ids[i] );
+        }
+    }
+
+
+
+void unCountLiveUse( SoundUsage inUsage ) {
+    for( int i=0; i<inUsage.numSubSounds; i++ ) {
+        unCountLiveUse( inUsage.ids[i] );
+        }
+    }
+
+
 
 
 

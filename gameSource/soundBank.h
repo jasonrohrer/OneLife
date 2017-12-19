@@ -96,6 +96,9 @@ int stopRecordingSound();
 // returns true if sound is already loaded
 char markSoundLive( int inID );
 
+// returns true if all subsounds are already loaded
+char markSoundUsageLive( SoundUsage inUsage );
+
 
 
 // for tracking of sounds used by recording widgets that may or 
@@ -104,6 +107,11 @@ char markSoundLive( int inID );
 void countLiveUse( int inID );
 
 void unCountLiveUse( int inID );
+
+void countLiveUse( SoundUsage inUsage );
+
+void unCountLiveUse( SoundUsage inUsage );
+
 
 
 void checkIfSoundStillNeeded( int inID );

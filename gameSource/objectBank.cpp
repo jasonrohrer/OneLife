@@ -577,24 +577,31 @@ float initObjectBankStep() {
                     }
                 
 
-                r->creationSound.numSubSounds = 0;
-                r->usingSound.numSubSounds = 0;
-                r->eatingSound.numSubSounds = 0;
-                r->decaySound.numSubSounds = 0;
+                r->creationSound = blankSoundUsage;
+                r->usingSound = blankSoundUsage;
+                r->eatingSound = blankSoundUsage;
+                r->decaySound = blankSoundUsage;
                 
                 
                 if( strstr( lines[next], "sounds=" ) != NULL ) {
                     // sounds present
-                    sscanf( lines[next], "sounds=%d:%lf,%d:%lf,%d:%lf,%d:%lf", 
-                            &( r->creationSound.id ),
-                            &( r->creationSound.volume ), 
-                            &( r->usingSound.id ),
-                            &( r->usingSound.volume ),
-                            &( r->eatingSound.id ),
-                            &( r->eatingSound.volume ),
-                            &( r->decaySound.id ),
-                            &( r->decaySound.volume ) );
+
+                    int numParts = 0;
                     
+                    char **parts = split( &( lines[next][7] ), ",", &numParts );
+                    
+                    if( numParts == 4 ) {
+                        r->creationSound = scanSoundUsage( parts[0] );
+                        r->usingSound = scanSoundUsage( parts[1] );
+                        r->eatingSound = scanSoundUsage( parts[2] );
+                        r->decaySound = scanSoundUsage( parts[3] );
+                        }
+                    
+                    for( int i=0; i<numParts; i++ ) {
+                        delete [] parts[i];
+                        }
+                    delete [] parts;
+
                     next++;
                     }
                 
@@ -872,6 +879,8 @@ void initObjectBankFinish() {
   
     freeFolderCache( cache );
     
+    printf( "Max id = %d\n", maxID );
+    
     mapSize = maxID + 1;
     
     idMap = new ObjectRecord*[ mapSize ];
@@ -960,7 +969,7 @@ void initObjectBankFinish() {
                         dummyO->useDummyParent = mainID;
                         
                         if( o->creationSoundInitialOnly ) {
-                            dummyO->creationSound = blankSoundUsage;
+                            clearSoundUsage( &( dummyO->creationSound ) );
                             }
                         
                         
@@ -1186,6 +1195,12 @@ static void freeObjectRecord( int inID ) {
                 }
 
             delete [] idMap[inID]->spriteSkipDrawing;
+            
+            clearSoundUsage( &( idMap[inID]->creationSound ) );
+            clearSoundUsage( &( idMap[inID]->usingSound ) );
+            clearSoundUsage( &( idMap[inID]->eatingSound ) );
+            clearSoundUsage( &( idMap[inID]->decaySound ) );
+            
 
             delete idMap[inID];
             idMap[inID] = NULL;
@@ -1210,6 +1225,7 @@ static void freeObjectRecord( int inID ) {
 
 
 void freeObjectBank() {
+    printf( "mapSize on free = %d\n", mapSize );
     
     for( int i=0; i<mapSize; i++ ) {
         if( idMap[i] != NULL ) {
@@ -1248,6 +1264,11 @@ void freeObjectBank() {
 
             delete [] idMap[i]->spriteSkipDrawing;
 
+            //printf( "\n\nClearing sound usage for id %d\n", i );            
+            clearSoundUsage( &( idMap[i]->creationSound ) );
+            clearSoundUsage( &( idMap[i]->usingSound ) );
+            clearSoundUsage( &( idMap[i]->eatingSound ) );
+            clearSoundUsage( &( idMap[i]->decaySound ) );
 
             delete idMap[i];
             }
@@ -1683,15 +1704,11 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "useDistance=%d", 
                                       inUseDistance ) );
 
-        lines.push_back( autoSprintf( "sounds=%d:%f,%d:%f,%d:%f,%d:%f", 
-                                      inCreationSound.id, 
-                                      inCreationSound.volume, 
-                                      inUsingSound.id,
-                                      inUsingSound.volume,
-                                      inEatingSound.id,
-                                      inEatingSound.volume,
-                                      inDecaySound.id,
-                                      inDecaySound.volume ) );
+        lines.push_back( autoSprintf( "sounds=%s,%s,%s:%s,%s",
+                                      printSoundUsage( inCreationSound ),
+                                      printSoundUsage( inUsingSound ),
+                                      printSoundUsage( inEatingSound ),
+                                      printSoundUsage( inDecaySound ) ) );
 
         lines.push_back( autoSprintf( "creationSoundInitialOnly=%d", 
                                       (int)inCreationSoundInitialOnly ) );
@@ -1916,10 +1933,10 @@ int addObject( const char *inDescription,
     r->clothingOffset = inClothingOffset;
     r->deadlyDistance = inDeadlyDistance;
     r->useDistance = inUseDistance;
-    r->creationSound = inCreationSound;
-    r->usingSound = inUsingSound;
-    r->eatingSound = inEatingSound;
-    r->decaySound = inDecaySound;
+    r->creationSound = copyUsage( inCreationSound );
+    r->usingSound = copyUsage( inUsingSound );
+    r->eatingSound = copyUsage( inEatingSound );
+    r->decaySound = copyUsage( inDecaySound );
     r->creationSoundInitialOnly = inCreationSoundInitialOnly;
 
     r->numSlots = inNumSlots;
@@ -2026,17 +2043,17 @@ int addObject( const char *inDescription,
     SimpleVector<int> oldSoundIDs;
     if( oldRecord != NULL ) {
         
-        if( oldRecord->creationSound.id != -1 ) {
-            oldSoundIDs.push_back( oldRecord->creationSound.id );
+        for( int i=0; i<oldRecord->creationSound.numSubSounds; i++ ) {    
+            oldSoundIDs.push_back( oldRecord->creationSound.ids[i] );
             }
-        if( oldRecord->usingSound.id != -1 ) {
-            oldSoundIDs.push_back( oldRecord->usingSound.id );
+        for( int i=0; i<oldRecord->usingSound.numSubSounds; i++ ) {    
+            oldSoundIDs.push_back( oldRecord->usingSound.ids[i] );
             }
-        if( oldRecord->eatingSound.id != -1 ) {
-            oldSoundIDs.push_back( oldRecord->eatingSound.id );
+        for( int i=0; i<oldRecord->eatingSound.numSubSounds; i++ ) {    
+            oldSoundIDs.push_back( oldRecord->eatingSound.ids[i] );
             }
-        if( oldRecord->decaySound.id != -1 ) {
-            oldSoundIDs.push_back( oldRecord->decaySound.id );
+        for( int i=0; i<oldRecord->decaySound.numSubSounds; i++ ) {    
+            oldSoundIDs.push_back( oldRecord->decaySound.ids[i] );
             }
         }
     
@@ -2664,10 +2681,10 @@ char isSoundUsedByObject( int inSoundID ) {
 
     for( int i=0; i<mapSize; i++ ) {
         if( idMap[i] != NULL ) {            
-            if( idMap[i]->creationSound.id == inSoundID ||
-                idMap[i]->usingSound.id == inSoundID ||
-                idMap[i]->eatingSound.id == inSoundID ||
-                idMap[i]->decaySound.id == inSoundID ) {
+            if( doesUseSound( idMap[i]->creationSound, inSoundID ) ||
+                doesUseSound( idMap[i]->usingSound, inSoundID ) ||
+                doesUseSound( idMap[i]->eatingSound, inSoundID ) ||
+                doesUseSound( idMap[i]->decaySound,  inSoundID ) ) {
                 return true;
                 }
             }        

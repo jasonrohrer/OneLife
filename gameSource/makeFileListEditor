@@ -75,6 +75,7 @@ graphics/centerMark.tga \
 graphics/testGround.tga \
 graphics/recordButton.tga \
 graphics/playButton.tga \
+graphics/playRandButton.tga \
 graphics/stopButton.tga \
 graphics/clearButton.tga \
 graphics/copyButton.tga \

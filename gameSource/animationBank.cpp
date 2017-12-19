@@ -244,19 +244,34 @@ float initAnimationBankStep() {
                         
                         
 
-                        int footstepValue = 0;
-
-                        sscanf( lines[next], 
-                                "soundParam=%d %lf %lf %lf %lf %lf %d",
-                                &( r->soundAnim[j].sound.id ),
-                                &( r->soundAnim[j].sound.volume ),
-                                &( r->soundAnim[j].repeatPerSec ),
-                                &( r->soundAnim[j].repeatPhase ),
-                                &( r->soundAnim[j].ageStart ),
-                                &( r->soundAnim[j].ageEnd ),
-                                &footstepValue );
                         
-                        r->soundAnim[j].footstep = footstepValue;
+                        char *start = &( lines[next][11] );
+
+                        char *end = strstr( start, " " );
+                        
+                        if( end != NULL ) {
+                            // terminate at end of first token
+                            // this should be a SoundUsage string
+                            end[0] = '\0';
+                            
+                            r->soundAnim[j].sound = scanSoundUsage( start );
+                            
+
+                            // restore and scan remaining parameters
+                            end[0] = ' ';
+                            
+                            
+                            int footstepValue = 0;
+                            sscanf( &( end[1] ), 
+                                    "%lf %lf %lf %lf %d",
+                                    &( r->soundAnim[j].repeatPerSec ),
+                                    &( r->soundAnim[j].repeatPhase ),
+                                    &( r->soundAnim[j].ageStart ),
+                                    &( r->soundAnim[j].ageEnd ),
+                                    &footstepValue );
+                            
+                            r->soundAnim[j].footstep = footstepValue;
+                            }
                         
                         next++;
                         }
@@ -436,6 +451,10 @@ void freeAnimationBank() {
             if( idMap[i][j] != NULL ) {
                 AnimationRecord *r = idMap[i][j];
                 
+                for( int s=0; s< r->numSounds; s++ ) {
+                    clearSoundUsage( & ( r->soundAnim[s].sound ) );
+                    }
+                
                 delete [] r->soundAnim;
 
                 delete [] r->spriteAnim;
@@ -448,6 +467,10 @@ void freeAnimationBank() {
 
         for( int j=0; j<idExtraMap[i].size(); j++ ) {
             AnimationRecord *r = idExtraMap[i].getElementDirect( j );
+            
+            for( int s=0; s< r->numSounds; s++ ) {
+                clearSoundUsage( & ( r->soundAnim[s].sound ) );
+                }
 
             delete [] r->soundAnim;
 
@@ -570,8 +593,8 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
     SimpleVector<int> oldSoundIDs;
     if( oldRecord != NULL ) {
         for( int i=0; i<oldRecord->numSounds; i++ ) {
-            if( oldRecord->soundAnim[i].sound.id != -1 ) {
-                oldSoundIDs.push_back( oldRecord->soundAnim[i].sound.id );
+            for( int j=0; j< oldRecord->soundAnim[i].sound.numSubSounds; j++ ) {
+                oldSoundIDs.push_back( oldRecord->soundAnim[i].sound.ids[j] );
                 }
             }
         }
@@ -665,9 +688,9 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
 
             for( int j=0; j<inRecord->numSounds; j++ ) {
                 lines.push_back( autoSprintf( 
-                                     "soundParam=%d %lf %lf %lf %lf %lf %d",
-                                     inRecord->soundAnim[j].sound.id,
-                                     inRecord->soundAnim[j].sound.volume,
+                                     "soundParam=%s %lf %lf %lf %lf %d",
+                                     printSoundUsage( 
+                                         inRecord->soundAnim[j].sound ),
                                      inRecord->soundAnim[j].repeatPerSec,
                                      inRecord->soundAnim[j].repeatPhase,
                                      inRecord->soundAnim[j].ageStart,
@@ -789,7 +812,11 @@ void clearAnimation( int inObjectID, AnimType inType ) {
                     }
                 }
             }
-
+        
+        for( int i=0; i<r->numSounds; i++ ) {
+            clearSoundUsage( &( r->soundAnim[i].sound ) );
+            }
+        
         delete [] r->soundAnim;
         delete [] r->spriteAnim;
         delete [] r->slotAnim;
@@ -2872,6 +2899,11 @@ AnimationRecord *copyRecord( AnimationRecord *inRecord ) {
     memcpy( newRecord->soundAnim, inRecord->soundAnim,
             sizeof( SoundAnimationRecord ) * newRecord->numSounds );
 
+    for( int i=0; i<newRecord->numSounds; i++ ) {
+        newRecord->soundAnim[i].sound = 
+            copyUsage( inRecord->soundAnim[i].sound );
+        }
+
     newRecord->numSprites = inRecord->numSprites;
     newRecord->numSlots = inRecord->numSlots;
     
@@ -2891,9 +2923,11 @@ AnimationRecord *copyRecord( AnimationRecord *inRecord ) {
 
 void freeRecord( AnimationRecord *inRecord ) {
     for( int s=0; s<inRecord->numSounds; s++ ) {
-        unCountLiveUse( inRecord->soundAnim[s].sound.id );
+        for( int i=0; i<inRecord->soundAnim[s].sound.numSubSounds; i++ ) {    
+            unCountLiveUse( inRecord->soundAnim[s].sound.ids[i] );
+            }
+        clearSoundUsage( &( inRecord->soundAnim[s].sound ) );
         }
-    
     delete [] inRecord->soundAnim;
     delete [] inRecord->spriteAnim;
     delete [] inRecord->slotAnim;
@@ -2935,7 +2969,7 @@ void zeroRecord( SpriteAnimationRecord *inRecord ) {
 
 
 void zeroRecord( SoundAnimationRecord *inRecord ) {
-    inRecord->sound = blankSoundUsage;
+    clearSoundUsage( &( inRecord->sound ) );
     inRecord->repeatPerSec = 0;
     inRecord->repeatPhase = 0;
     inRecord->ageStart = -1;
@@ -3035,7 +3069,7 @@ char isSoundUsedByAnim( int inSoundID ) {
                 if( r->numSounds > 0 ) {
                     
                     for( int k=0; k < r->numSounds; k++ ) {
-                        if( r->soundAnim[k].sound.id == inSoundID ) {
+                        if( doesUseSound( r->soundAnim[k].sound, inSoundID ) ) {
                             return true;
                             }
                         }
@@ -3050,7 +3084,7 @@ char isSoundUsedByAnim( int inSoundID ) {
                 if( r->numSounds > 0 ) {
                     
                     for( int k=0; k < r->numSounds; k++ ) {
-                        if( r->soundAnim[k].sound.id == inSoundID ) {
+                        if( doesUseSound( r->soundAnim[k].sound, inSoundID ) ) {
                             return true;
                             }
                         }

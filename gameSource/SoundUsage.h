@@ -14,6 +14,15 @@ typedef struct SoundUsage {
 extern SoundUsage blankSoundUsage;
 
 
+
+// for an individual play instance of a SoundUsage
+typedef struct SoundUsagePlay {
+        int id;
+        double volume;
+    } SoundUsagePlay;
+
+
+
 // scans a usage from a string
 // format:
 // id:vol#id:vol#id:vol
@@ -26,11 +35,29 @@ const char *printSoundUsage( SoundUsage inUsage );
 
 
 // frees memory and sets sound usage back to 0 subsounds
-void clearSoundUsage( SoundUsage inUsage );
+void clearSoundUsage( SoundUsage *inUsage );
 
 
 // don't need to call if printSoundUsage never called
 void freeSoundUsagePrintBuffer();
+
+
+// true if sound id inID is used by inUsage
+char doesUseSound( SoundUsage inUsage, int inID );
+
+
+// copies usage, allocating new memory
+SoundUsage copyUsage( SoundUsage inUsage );
+
+
+SoundUsagePlay playRandom( SoundUsage inUsage );
+
+
+// causes reallocation
+void addSound( SoundUsage *inUsage, int inID, double inVolume );
+
+
+char equal( SoundUsage inA, SoundUsage inB );
 
 
 

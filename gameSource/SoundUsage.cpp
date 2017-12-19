@@ -5,6 +5,11 @@
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/stringUtils.h"
 
+#include "minorGems/util/random/JenkinsRandomSource.h"
+
+
+static JenkinsRandomSource randSource( 4583 );
+
 
 
 SoundUsage blankSoundUsage = { 0, NULL, NULL };
@@ -36,6 +41,11 @@ SoundUsage scanSoundUsage( char *inString ) {
     
     if( idVector.size() > 0 ) {
         
+        if( idVector.size() == 1 &&
+            idVector.getElementDirect( 0 ) == -1 ) {
+            return blankSoundUsage;
+            }
+
         SoundUsage u = { idVector.size(), idVector.getElementArray(),
                          volVector.getElementArray() };
         return u;
@@ -54,7 +64,11 @@ static char *printBuffer = NULL;
 
 
 const char *printSoundUsage( SoundUsage inUsage ) {
-    
+    if( inUsage.numSubSounds == 0 ) {
+        return "-1:0.0";
+        }
+
+
     if( printBufferLength < inUsage.numSubSounds * 20 ) {
         printBufferLength = 0;
         delete [] printBuffer;
@@ -86,16 +100,16 @@ const char *printSoundUsage( SoundUsage inUsage ) {
 
 
 
-void clearSoundUsage( SoundUsage inUsage ) {
-    if( inUsage.ids != NULL ) {
-        delete [] inUsage.ids;
-        inUsage.ids = NULL;
+void clearSoundUsage( SoundUsage *inUsage ) {
+    if( inUsage->ids != NULL ) {
+        delete [] inUsage->ids;
+        inUsage->ids = NULL;
         }
-    if( inUsage.volumes != NULL ) {
-        delete [] inUsage.volumes;
-        inUsage.volumes = NULL;
+    if( inUsage->volumes != NULL ) {
+        delete [] inUsage->volumes;
+        inUsage->volumes = NULL;
         }
-    inUsage.numSubSounds = 0;
+    inUsage->numSubSounds = 0;
     }    
 
 
@@ -108,4 +122,95 @@ void freeSoundUsagePrintBuffer() {
         }
     printBufferLength = 0;
     }
+
+
+
+
+char doesUseSound( SoundUsage inUsage, int inID ) {
+    for( int i=0; i<inUsage.numSubSounds; i++ ) {
+        if( inUsage.ids[i] == inID ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+
+SoundUsage copyUsage( SoundUsage inUsage ) {
+    SoundUsage out = blankSoundUsage;
+
+    if( inUsage.numSubSounds == 0 ) {
+        return out;
+        }
+    
+    out.numSubSounds = inUsage.numSubSounds;
+    
+    out.ids = new int[ out.numSubSounds ];
+    out.volumes = new double[ out.numSubSounds ];
+    
+    memcpy( out.ids, inUsage.ids, out.numSubSounds * sizeof( int ) );
+
+    memcpy( out.volumes, inUsage.volumes, 
+            out.numSubSounds * sizeof( double ) );
+
+    return out;
+    }
+
+
+
+SoundUsagePlay playRandom( SoundUsage inUsage ) {
+    int pick = randSource.getRandomBoundedInt( 0, inUsage.numSubSounds - 1 );
+    
+    SoundUsagePlay p = { inUsage.ids[pick], inUsage.volumes[pick] };
+    return p;
+    }
+
+
+
+void addSound( SoundUsage *inUsage, int inID, double inVolume ) {
+    int newNum = inUsage->numSubSounds + 1;
+    int *newIDs = new int[ newNum ];
+    double *newVols = new double[ newNum ];
+    
+    if( inUsage->numSubSounds > 0 ) {
+        memcpy( newIDs, inUsage->ids, inUsage->numSubSounds * sizeof( int ) );
+        memcpy( newVols, inUsage->volumes, 
+                inUsage->numSubSounds * sizeof( double ) );
+        }
+    
+    newIDs[ inUsage->numSubSounds ] = inID;
+    newVols[ inUsage->numSubSounds ] = inVolume;
+    
+
+    clearSoundUsage( inUsage );
+    
+    inUsage->numSubSounds = newNum;
+    inUsage->ids = newIDs;
+    inUsage->volumes = newVols;
+    }
+
+
+
+char equal( SoundUsage inA, SoundUsage inB ) {
+    if( inA.numSubSounds == inB.numSubSounds ) {
+        
+        for( int i=0; i< inA.numSubSounds; i++ ) {
+            if( inA.ids[i] != inB.ids[i]
+                ||
+                inA.volumes[i] != inB.volumes[i] ) {
+                
+                return false;
+                }
+            }
+        
+        return true;
+        }
+    return false;
+    }
+
+
+
+
+    
 
