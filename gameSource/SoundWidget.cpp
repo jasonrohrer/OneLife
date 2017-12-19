@@ -94,11 +94,13 @@ SoundWidget::SoundWidget( Font *inDisplayFont,
 SoundWidget::~SoundWidget() {
     setSoundUsage( blankSoundUsage );
     sWidgetList.deleteElementEqualTo( this );
-    
-    if( sWidgetList.size() == 0 ) {
-        unCountLiveUse( sClipboardSoundUsage );
-        clearSoundUsage( &sClipboardSoundUsage );
-        }
+    }
+
+
+
+void SoundWidget::clearClipboard() {
+    unCountLiveUse( sClipboardSoundUsage );
+    clearSoundUsage( &sClipboardSoundUsage );
     }
 
 
@@ -120,11 +122,13 @@ SoundUsage SoundWidget::getSoundUsage() {
 
 
 void SoundWidget::setSoundUsage( SoundUsage inUsage ) {
+    countLiveUse( inUsage );
+    
     unCountLiveUse( mSoundUsage );
     clearSoundUsage( &mSoundUsage );
     
     mSoundUsage = copyUsage( inUsage );
-    countLiveUse( mSoundUsage );
+    
     
     
         
@@ -173,6 +177,9 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mStopButton ) {
         mStopButton.setVisible( false );
         
+
+        SoundUsage oldUsage = copyUsage( mSoundUsage );
+        
         int id = stopRecordingSound();
         
         if( id != -1 ) {
@@ -185,6 +192,11 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
                 }
             }
         
+        countLiveUse( mSoundUsage );
+
+        unCountLiveUse( oldUsage );
+        clearSoundUsage( &oldUsage );
+
         // don't make record visible here
         // wait until next step so that it won't receive this click
         mPlayButton.setVisible( true );

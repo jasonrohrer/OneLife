@@ -22,7 +22,8 @@ class SoundWidget : public PageComponent, public ActionListenerList,
 
         ~SoundWidget();
         
-
+        static void clearClipboard();
+        
         
         // returns internal copy
         // not deallocated by caller

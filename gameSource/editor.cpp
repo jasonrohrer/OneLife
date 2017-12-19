@@ -70,6 +70,8 @@ int accountHmacVersionNumber = 0;
 #include "overlayBank.h"
 #include "soundBank.h"
 
+#include "SoundWidget.h"
+
 #include "groundSprites.h"
 
 
@@ -542,6 +544,9 @@ void freeFrameDrawer() {
     delete scenePage;
     delete loadingPage;
 
+
+    SoundWidget::clearClipboard();
+    
 
     freeGroundSprites();
 
