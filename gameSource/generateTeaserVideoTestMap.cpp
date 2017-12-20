@@ -327,7 +327,7 @@ int main( int inNumArgs, char **inArgs ) {
     // for testing
     //int xMax = 25 * spacing + 10;
     
-    for( int y=-20; y<=5; y++ ) {
+    for( int y=-5; y<=5; y++ ) {
         int biome = 2;
         if( y < 0 || y > 1 ) {
             biome = 0;
@@ -338,6 +338,7 @@ int main( int inNumArgs, char **inArgs ) {
             if( x <= -2 ) {
                 rowBiome = 0;
                 }
+            /*
             if( y < 2 && x >= -2 && x < 0 ) {
                 rowBiome = 2;
                 }
@@ -345,11 +346,15 @@ int main( int inNumArgs, char **inArgs ) {
                 rowBiome = 2;
                 }
             
+            */
+
+            if( y < 2 && y >= -5 && x >= -2 && x < 0 ) {
+                rowBiome = 2;
+                }
+
             if( y == 1 && x == -2 ) {
                 rowBiome = 0;
                 }
-            
-
             
             if( y == 1 && x > 10 && 
                 x % spacing == 0 ) {
@@ -375,10 +380,10 @@ int main( int inNumArgs, char **inArgs ) {
             else if( x < -2 && y >= -4 && y <=3 ) {
                 addTree = true;
                 }
-            else if( rowBiome == 0 && y < -5 && y != -11 &&
-                     x != -10 ) {
+            else if( rowBiome == 0 && y <= -5 && y != -11 &&
+                     x != -10 && ( x >= 0 || x < -2 ) ) {
                 // grassy
-                addTree = ( randSource.getRandomBoundedInt( 0, 100 ) < 10 );
+                addTree = ( randSource.getRandomBoundedInt( 0, 20 ) < 10 );
                 }
 
             if( y == -3 && x < 7 ) {
