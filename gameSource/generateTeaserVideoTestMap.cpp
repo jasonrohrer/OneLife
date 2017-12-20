@@ -76,7 +76,9 @@ void runSteps( const char *inBankName,
 
 
 static void usage() {
-    printf( "\nUsage:\n\n generateTeaserVideoTestMap outMap.txt\n\n" );
+    printf(
+    "\nUsage:\n\n generateTeaserVideoTestMap ""outMap.txt [baseMap.txt]\n\n" );
+    
     exit( 0 );
     }
 
@@ -108,7 +110,8 @@ char *getLatestString( int inID ) {
 
 int main( int inNumArgs, char **inArgs ) {
     
-    if( inNumArgs != 2  ) {
+    if( inNumArgs != 2 && inNumArgs != 3 ) {
+        usage();
         }
     
     FILE *outFile = fopen( inArgs[1], "w" );
@@ -117,6 +120,17 @@ int main( int inNumArgs, char **inArgs ) {
         usage();
         }
     
+    FILE *baseFile = NULL;
+    
+    if( inNumArgs == 3 ) {
+        baseFile = fopen( inArgs[2], "r" );
+        
+        if( baseFile == NULL ) {
+            usage();
+            }
+        }
+    
+
 
     char rebuilding;
 
@@ -410,7 +424,18 @@ int main( int inNumArgs, char **inArgs ) {
                      x, y, rowBiome, id );
             }
         }        
-
+        
+    if( baseFile != NULL ) {
+        unsigned char buffer[512];
+        int numRead = fread( buffer, 1, 512, baseFile );
+        
+        while( numRead > 0 ) {
+            fwrite( buffer, 1, numRead, outFile );
+            numRead = fread( buffer, 1, 512, baseFile );
+            }
+        fclose( baseFile );
+        }
+    
     fclose( outFile );
     
     
