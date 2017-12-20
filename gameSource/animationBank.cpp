@@ -2900,8 +2900,7 @@ AnimationRecord *copyRecord( AnimationRecord *inRecord ) {
             sizeof( SoundAnimationRecord ) * newRecord->numSounds );
 
     for( int i=0; i<newRecord->numSounds; i++ ) {
-        newRecord->soundAnim[i].sound = 
-            copyUsage( inRecord->soundAnim[i].sound );
+        newRecord->soundAnim[i] = copyRecord( inRecord->soundAnim[i] );
         }
 
     newRecord->numSprites = inRecord->numSprites;
@@ -2923,16 +2922,33 @@ AnimationRecord *copyRecord( AnimationRecord *inRecord ) {
 
 void freeRecord( AnimationRecord *inRecord ) {
     for( int s=0; s<inRecord->numSounds; s++ ) {
-        for( int i=0; i<inRecord->soundAnim[s].sound.numSubSounds; i++ ) {    
-            unCountLiveUse( inRecord->soundAnim[s].sound.ids[i] );
-            }
-        clearSoundUsage( &( inRecord->soundAnim[s].sound ) );
+        freeRecord( &( inRecord->soundAnim[s] ) );
         }
     delete [] inRecord->soundAnim;
     delete [] inRecord->spriteAnim;
     delete [] inRecord->slotAnim;
     delete inRecord;
     }
+
+
+
+SoundAnimationRecord copyRecord( SoundAnimationRecord inRecord ) {
+    SoundAnimationRecord copy = inRecord;
+    
+    copy.sound = copyUsage( inRecord.sound );
+    
+    countLiveUse( copy.sound );
+
+    return copy;
+    }
+
+
+
+void freeRecord( SoundAnimationRecord *inRecord ) {
+    unCountLiveUse( inRecord->sound );
+    clearSoundUsage( &( inRecord->sound ) );
+    }
+
 
 
 
@@ -3049,9 +3065,7 @@ void performLayerSwaps( int inObjectID,
 
         addAnimation( r );
         
-        delete [] r->spriteAnim;
-        delete [] r->slotAnim;
-        delete r;
+        freeRecord( r );
         }
     
 

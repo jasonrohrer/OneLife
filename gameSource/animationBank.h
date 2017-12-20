@@ -151,6 +151,16 @@ AnimationRecord *copyRecord( AnimationRecord *inRecord );
 void freeRecord( AnimationRecord *inRecord );
 
 
+
+SoundAnimationRecord copyRecord( SoundAnimationRecord inRecord );
+
+// takes pointer, but DOES NOT free on heap
+// meant to operate on pointer to a record on the stack or 
+// in an array
+void freeRecord( SoundAnimationRecord *inRecord );
+
+
+
 // returns number of animations that need to be loaded
 int initAnimationBankStart( char *outRebuildingCache );
 
