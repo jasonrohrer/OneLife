@@ -348,3 +348,8 @@ char Button::isMouseOver() {
     return mHover || mDragOver;
     }
 
+
+char Button::isMouseDragOver() {
+    return mDragOver;
+    }
+

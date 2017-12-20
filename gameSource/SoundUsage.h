@@ -55,6 +55,7 @@ SoundUsagePlay playRandom( SoundUsage inUsage );
 
 // causes reallocation
 void addSound( SoundUsage *inUsage, int inID, double inVolume );
+void removeSound( SoundUsage *inUsage, int inIndex );
 
 
 char equal( SoundUsage inA, SoundUsage inB );

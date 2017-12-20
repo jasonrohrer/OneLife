@@ -89,6 +89,8 @@ class Button : public PageComponent, public ActionListenerList {
 
         virtual char isMouseOver();
         
+        virtual char isMouseDragOver();
+        
         
         virtual void setActive( char inActive );
         virtual char isActive();

@@ -196,6 +196,40 @@ void addSound( SoundUsage *inUsage, int inID, double inVolume ) {
 
 
 
+void removeSound( SoundUsage *inUsage, int inIndex ) {
+    if( inUsage->numSubSounds > inIndex ) {
+        
+        int newNum = inUsage->numSubSounds - 1;
+        int *newIDs = new int[ newNum ];
+        double *newVols = new double[ newNum ];
+    
+        // before removed
+        memcpy( newIDs, inUsage->ids, inIndex * sizeof( int ) );
+        memcpy( newVols, inUsage->volumes, inIndex * sizeof( double ) );
+        
+        if( inIndex < inUsage->numSubSounds - 1 ) {
+            // after removed
+            memcpy( &( newIDs[inIndex] ), 
+                    &( inUsage->ids[ inIndex + 1 ] ), 
+                    ( inUsage->numSubSounds - inIndex - 1 ) 
+                    * sizeof( int ) );
+            
+            memcpy( &( newVols[inIndex] ), 
+                    &( inUsage->volumes[ inIndex + 1 ] ), 
+                    ( inUsage->numSubSounds - inIndex - 1 ) 
+                    * sizeof( double ) );
+            }
+        clearSoundUsage( inUsage );
+        
+        inUsage->numSubSounds = newNum;
+        inUsage->ids = newIDs;
+        inUsage->volumes = newVols;
+        }
+    }
+
+
+
+
 char equal( SoundUsage inA, SoundUsage inB ) {
     if( inA.numSubSounds == inB.numSubSounds ) {
         

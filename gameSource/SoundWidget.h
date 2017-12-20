@@ -51,6 +51,11 @@ class SoundWidget : public PageComponent, public ActionListenerList,
         
         // for propagating clipboard changes
         static SimpleVector<SoundWidget*> sWidgetList;
+
+        TextButton mPrevSubSoundButton;
+        TextButton mNextSubSoundButton;
+        TextButton mRemoveSubSoundButton;
+        
         
         SpriteButton mRecordButton;
         SpriteButton mStopButton;
@@ -77,6 +82,9 @@ class SoundWidget : public PageComponent, public ActionListenerList,
                 
         void updatePasteButton();
 
+
+        void nextPrevVisible();
+        
 
     };
 
