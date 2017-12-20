@@ -1331,6 +1331,7 @@ void drawFrame( char inUpdate ) {
                     break;
                     }
                 default:
+                    //printOrphanedSoundReport();
                     currentGamePage = importPage;
                     loadingComplete();
                     currentGamePage->base_makeActive( true );

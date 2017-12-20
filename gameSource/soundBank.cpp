@@ -1178,3 +1178,23 @@ void checkIfSoundStillNeeded( int inID ) {
     }
 
 
+
+void printOrphanedSoundReport() {
+    int num = 0;
+    
+    for( int i=0; i<mapSize; i++ ) {
+        if( i < mapSize ) {
+            if( idMap[i] != NULL ) {
+                if( ! isSoundUsedByObject( i ) && 
+                    ! isSoundUsedByAnim( i ) ) {
+                    
+                    printf( "Sound %d orphaned\n", i );
+                    num++;
+                    }
+                }    
+            }
+        }
+    printf( "%d sounds found orphaned\n", num );
+    }
+
+

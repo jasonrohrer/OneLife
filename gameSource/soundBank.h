@@ -116,4 +116,8 @@ void unCountLiveUse( SoundUsage inUsage );
 
 void checkIfSoundStillNeeded( int inID );
 
+
+void printOrphanedSoundReport();
+
+
 #endif
