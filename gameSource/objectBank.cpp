@@ -879,8 +879,6 @@ void initObjectBankFinish() {
   
     freeFolderCache( cache );
     
-    printf( "Max id = %d\n", maxID );
-    
     mapSize = maxID + 1;
     
     idMap = new ObjectRecord*[ mapSize ];
@@ -1225,8 +1223,6 @@ static void freeObjectRecord( int inID ) {
 
 
 void freeObjectBank() {
-    printf( "mapSize on free = %d\n", mapSize );
-    
     for( int i=0; i<mapSize; i++ ) {
         if( idMap[i] != NULL ) {
             
