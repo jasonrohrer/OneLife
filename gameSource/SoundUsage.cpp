@@ -101,14 +101,18 @@ const char *printSoundUsage( SoundUsage inUsage ) {
 
 
 void clearSoundUsage( SoundUsage *inUsage ) {
-    if( inUsage->ids != NULL ) {
-        delete [] inUsage->ids;
-        inUsage->ids = NULL;
+    if( inUsage->numSubSounds > 0 ) {
+        if( inUsage->ids != NULL ) {
+            delete [] inUsage->ids;
+            }
+        if( inUsage->volumes != NULL ) {
+            delete [] inUsage->volumes;
+            }
         }
-    if( inUsage->volumes != NULL ) {
-        delete [] inUsage->volumes;
-        inUsage->volumes = NULL;
-        }
+    
+    inUsage->ids = NULL;
+    inUsage->volumes = NULL;
+            
     inUsage->numSubSounds = 0;
     }    
 

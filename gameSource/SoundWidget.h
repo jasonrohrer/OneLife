@@ -46,8 +46,6 @@ class SoundWidget : public PageComponent, public ActionListenerList,
 
         void setSoundInternal( SoundUsage inUsage );
 
-
-        int mSoundID;
         
         static SoundUsage sClipboardSoundUsage;
         

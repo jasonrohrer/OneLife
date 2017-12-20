@@ -248,10 +248,8 @@ void SoundWidget::updatePasteButton() {
 
 
 void SoundWidget::draw() {    
-    if( mSoundID != -1 ) {
-        markSoundUsageLive( mSoundUsage );
-        }
-
+    markSoundUsageLive( mSoundUsage );
+    
     if( ! mRecordButton.isVisible() &&
         ! mStopButton.isVisible() ) {
         // re-enable record button the step after stop is clicked to

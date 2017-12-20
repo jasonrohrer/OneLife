@@ -139,6 +139,8 @@ EditorAnimationPage::EditorAnimationPage()
     mCurrentExtraIndex = -1;
     
     zeroRecord( &mCopyBuffer );
+
+    mSoundAnimCopyBuffer.sound.numSubSounds = 0;
     zeroRecord( &mSoundAnimCopyBuffer );
     
     mWalkCopied = false;
