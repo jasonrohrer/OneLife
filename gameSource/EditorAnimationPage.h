@@ -266,7 +266,9 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
         void checkNextPrevVisible();
         
-        void soundIndexChanged();
+        // if inPageChange is false, SoundWidget sound usage is not
+        // reset
+        void soundIndexChanged( char inPageChange=true );
         
 
         void updateAnimFromSliders();

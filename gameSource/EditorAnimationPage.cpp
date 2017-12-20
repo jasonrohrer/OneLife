@@ -1027,7 +1027,7 @@ static void pasteChainToBody( ObjectRecord *inObject,
 
 
 
-void EditorAnimationPage::soundIndexChanged() {
+void EditorAnimationPage::soundIndexChanged( char inPageChange ) {
     if( mCurrentSound < mCurrentAnim[ mCurrentType ]->numSounds - 1 
         ||
         ( mCurrentSound == mCurrentAnim[ mCurrentType ]->numSounds -1 &&
@@ -1055,7 +1055,7 @@ void EditorAnimationPage::soundIndexChanged() {
     
 
     if( mCurrentSound < mCurrentAnim[ mCurrentType ]->numSounds ) {
-        if( !mSoundWidget.isRecording() ) {    
+        if( inPageChange && !mSoundWidget.isRecording() ) {    
             mSoundWidget.setSoundUsage( 
                 mCurrentAnim[ mCurrentType ]->
                 soundAnim[ mCurrentSound ].sound );
@@ -1106,8 +1106,10 @@ void EditorAnimationPage::soundIndexChanged() {
             }
         }
     else {
-        mSoundWidget.setSoundUsage( blankSoundUsage );
-
+        if( inPageChange ) {
+            mSoundWidget.setSoundUsage( blankSoundUsage );
+            }
+        
         mSoundRepeatPerSecSlider.setVisible( false );
         mSoundRepeatPhaseSlider.setVisible( false );        
 
@@ -2022,7 +2024,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             countLiveUse( u );
             }
         
-        soundIndexChanged();
+        soundIndexChanged( false );
         }
     else if( inTarget == &mSoundAgeInField ) {
         float value = mSoundAgeInField.getFloat();
