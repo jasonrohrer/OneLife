@@ -153,6 +153,9 @@ void SoundWidget::setSoundUsage( SoundUsage inUsage ) {
     
     unCountLiveUse( mSoundUsage );
     clearSoundUsage( &mSoundUsage );
+
+
+    mCurSoundIndex = 0;
     
     mSoundUsage = copyUsage( inUsage );
     
