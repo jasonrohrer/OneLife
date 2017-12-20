@@ -222,7 +222,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         SimpleVector<SpriteAnimationRecord> mAllCopyBufferSlots;
         
         
-        void markAllCopyBufferSoundsNotLive();
+        void clearAllCopyBufferSounds();
 
         double computeFrameTime();
         
