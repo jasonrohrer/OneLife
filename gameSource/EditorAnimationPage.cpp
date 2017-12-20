@@ -1243,33 +1243,55 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mPasteSoundAnimButton ) {
         if( mAllCopyBufferSounds.size() > 0 ) {
-            // paste beyond end
-
-            if( mCurrentAnim[ mCurrentType ]->numSounds > 0 ) {
-                mCurrentSound++;
-                }
             
-            for( int i=0; i<mAllCopyBufferSounds.size(); i++ ) {
+            if( mCurrentSound > 0 ) {
                 
-                mCurrentAnim[ mCurrentType ]->numSounds++;
-                SoundAnimationRecord *old = mCurrentAnim[ mCurrentType ]->
-                    soundAnim;
+                // paste beyond end
+            
+                if( mCurrentAnim[ mCurrentType ]->numSounds > 0 ) {
+                    mCurrentSound++;
+                    }
                 
-                mCurrentAnim[ mCurrentType ]->soundAnim = 
-                    new SoundAnimationRecord[ 
-                        mCurrentAnim[ mCurrentType ]->numSounds ];
-                
-                memcpy( mCurrentAnim[ mCurrentType ]->soundAnim,
-                        old,
-                        sizeof( SoundAnimationRecord ) *
-                        mCurrentAnim[ mCurrentType ]->numSounds - 1 );
-                
-                delete [] old;
-                
-                mCurrentAnim[ mCurrentType ]->soundAnim[ 
-                    mCurrentAnim[ mCurrentType ]->numSounds - 1 ] =
+                for( int i=0; i<mAllCopyBufferSounds.size(); i++ ) {
                     
-                    copyRecord( mAllCopyBufferSounds.getElementDirect( i ) );
+                    mCurrentAnim[ mCurrentType ]->numSounds++;
+                    SoundAnimationRecord *old = mCurrentAnim[ mCurrentType ]->
+                        soundAnim;
+                    
+                    mCurrentAnim[ mCurrentType ]->soundAnim = 
+                        new SoundAnimationRecord[ 
+                            mCurrentAnim[ mCurrentType ]->numSounds ];
+                    
+                    memcpy( mCurrentAnim[ mCurrentType ]->soundAnim,
+                            old,
+                            sizeof( SoundAnimationRecord ) *
+                            mCurrentAnim[ mCurrentType ]->numSounds - 1 );
+                    
+                    delete [] old;
+                    
+                    mCurrentAnim[ mCurrentType ]->soundAnim[ 
+                        mCurrentAnim[ mCurrentType ]->numSounds - 1 ] =
+                        copyRecord( 
+                            mAllCopyBufferSounds.getElementDirect( i ) );
+                    }
+                }
+            else {
+                // replace
+
+                for( int i=0; 
+                     i < mCurrentAnim[ mCurrentType ]->numSounds; 
+                     i++ ) {
+                     freeRecord( 
+                         &( mCurrentAnim[ mCurrentType ]->soundAnim[i] ) );
+                     }    
+                delete [] mCurrentAnim[ mCurrentType ]->soundAnim;
+                mCurrentAnim[ mCurrentType ]->soundAnim =
+                     new SoundAnimationRecord[ mAllCopyBufferSounds.size() ];
+                for( int i=0; i < mAllCopyBufferSounds.size(); i++ ) {
+                    mCurrentAnim[ mCurrentType ]->soundAnim[i] =
+                        copyRecord( 
+                            mAllCopyBufferSounds.getElementDirect( i ) );
+                    }
                 }
             }
         else {
