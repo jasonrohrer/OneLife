@@ -2391,6 +2391,10 @@ char EditorScenePage::tryLoadScene( int inSceneID ) {
             delete [] lines;
 
             r = true;
+            mCurX = mZeroX;
+            mCurY = mZeroY;
+            mShiftX = 0;
+            mShiftY = 0;
             }
         }
     
