@@ -7948,7 +7948,10 @@ void toggleMultiplicativeBlend( char inMultiplicative ) {
     }
 
 
-void unCountLiveUse( int inID ) {
+void countLiveUse( SoundUsage inUsage ) {
+    }
+
+void unCountLiveUse( SoundUsage inUsage ) {
     }
 
 

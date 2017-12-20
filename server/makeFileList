@@ -26,6 +26,7 @@ map.cpp \
 ../gameSource/animationBank.cpp \
 ../gameSource/ageControl.cpp \
 ../gameSource/folderCache.cpp \
+../gameSource/SoundUsage.cpp \
 ../commonSource/fractalNoise.cpp \
 kissdb.cpp \
 lifeLog.cpp \
