@@ -70,9 +70,6 @@ static void customTrigger( int inTriggerNumber ) {
         sendDummySay( &firstBaby, "K" );
         }
     else if( inTriggerNumber == t++ ) {
-        sendDummySay( &firstBaby, "Y" );
-        }
-    else if( inTriggerNumber == t++ ) {
 
         GridPos deathPos = killPlayer( "test@test.com" );
         firstBaby.pos = deathPos;

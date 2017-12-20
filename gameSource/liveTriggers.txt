@@ -3,8 +3,6 @@ say "HELLO BABY!"
 server n
 say "PUT THIS ON."
 server n
-say "WANT TO NURSE?"
-server n
 say "LET'S GO BROWSING!"
 say "FOOD!"
 server n
