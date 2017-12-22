@@ -7516,25 +7516,19 @@ int main() {
                                 chunkPlayerUpdates.appendElementString( 
                                     updateLine );
                                 delete [] updateLine;
+                                
 
-                                if( otherPlayer->xs != otherPlayer->xd
-                                    ||
-                                    otherPlayer->ys != otherPlayer->yd ) {
-                            
-                                    // moving too
-                                    // send message telling nextPlayer
-                                    // about this move in progress
-
-                                    char *message =
-                                        getMovesMessage( false, NULL, 
-                                                         otherPlayer->id );
-                            
-                            
-                                    chunkPlayerMoves.appendElementString( 
-                                        message );
-                                    
-                                    delete [] message;
-                                    }
+                                // We don't need to tell player about 
+                                // moves in progress on this chunk.
+                                // We're receiving move messages from 
+                                // a radius of 32
+                                // but this chunk has a radius of 16
+                                // so we're hearing about player moves
+                                // before they're on our chunk.
+                                // Player moves have limited length,
+                                // so there's no chance of a long move
+                                // that started outside of our 32-radius
+                                // finishinging inside this new chunk.
                                 }
                             }
                         }
