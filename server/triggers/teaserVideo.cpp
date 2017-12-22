@@ -27,6 +27,7 @@ static void customInit() {
 
 
 
+static LiveDummySocket wolfDummy;
 static LiveDummySocket firstBaby;
 
 
@@ -47,6 +48,30 @@ static void customTrigger( int inTriggerNumber ) {
     
     if( inTriggerNumber == t++ ) {
         
+        GridPos startPos = { -16, -8 };
+        
+        
+        
+        wolfDummy = newDummyPlayer( "dummy3@test.com", 418, 0,
+                                    startPos,
+                                    0,
+                                    clothing );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // wolf runs past cammera
+        addToMove( 1, -1 );
+        addToMove( 2, -2 );
+        addToMove( 3, -3 );
+        addToMove( 4, -4 );
+        addToMove( 5, -5 );
+        addToMove( 6, -6 );
+        addToMove( 7, -7 );
+        addToMove( 8, -8 );
+        
+        sendDummyMove( &wolfDummy, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+
         GridPos startPos = { -10, -10 };
         
         

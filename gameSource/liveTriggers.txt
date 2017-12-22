@@ -1,4 +1,6 @@
 server n
+server n
+server n
 say "HELLO BABY!"
 server n
 say "PUT THIS ON."

@@ -4656,14 +4656,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                          ! o->isUseDummy );
                             }
                         else if( worldX == -20 && worldY == -10 &&
-                                 gameObjects.size() == 1 ) {
+                                 ( gameObjects.size() == 1 ||
+                                   gameObjects.size() == 2 ) ) {
                             baseDes = "PLAYER ONE";
                             LiveObject *o =  gameObjects.getElement( 0 );
                             arrowTipX = o->currentPos.x * CELL_D;
                             arrowTipY += 64;
                             }
                         else if( worldX == -10 && worldY == -10 &&
-                                 gameObjects.size() == 2 ) {
+                                 gameObjects.size() == 3 ) {
                             baseDes = "PLAYER TWO";
                             // point to parent location
                             // they pick up baby and keep walking
