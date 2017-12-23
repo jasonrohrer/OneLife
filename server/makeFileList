@@ -14,6 +14,11 @@ APP_NAME = OneLifeServer
 ROOT_PATH = ../..
 
 
+# use a different extension here so that we don't interfere with client's
+# generated .dep files, which use different target paths.
+DEP_EXT = dep2
+
+
 CUSTOM_LINUX_LINK_FLAGS =
 
 
