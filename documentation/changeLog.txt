@@ -6,6 +6,18 @@ http://onehouronelife.com/updateLog.php
 
 Version 42     ???
 
+--Fixed game playback issue with aysnchronous file reads.
+
+--Fixed the way that auto-generated code dependency files are handled.
+
+--Support for floor usage sounds that override footstep sounds when an object
+  is over a floor tile (wood floors can now have wooden footstep sounds that
+  override default footstep sounds).
+
+--Support for sounds that have multiple sub-sounds that are picked from at
+  random whenever the sound plays.  For example, footstep variation (so
+  footsteps aren't soo repetative sounding).
+
 
 
 
