@@ -1330,6 +1330,17 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             }
         
+        if( ! getObject( mCurrentObjectID )->person ) {
+            // make sure there's no age range set in pasted sound anim
+            // it may have been copied from a person object
+            for( int i=0; i<mCurrentAnim[ mCurrentType ]->numSounds; i++ ) {
+                mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].
+                    ageStart = -1;
+                mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].
+                    ageEnd = -1;
+                }
+            }
+
         soundIndexChanged();
         }
     else if( inTarget == &mCopyButton ) {

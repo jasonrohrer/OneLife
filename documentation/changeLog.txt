@@ -23,6 +23,9 @@ Version 42     ???
 --Fixed movement glitch when holding down mouse outside a completely enclosed
   area with no path out. 
 
+--Pasting animation sounds from person onto non-person now correctly clears
+  sound age range.
+
 
 
 Server Fixes:
