@@ -19,7 +19,9 @@ Version 42     ???
   footsteps aren't soo repetative sounding).
 
 --Fixed so that moving animation sounds played for moving objects.
- 
+
+--Fixed movement glitch when holding down mouse outside a completely enclosed
+  area with no path out. 
 
 
 

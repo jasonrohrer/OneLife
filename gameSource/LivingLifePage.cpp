@@ -12902,6 +12902,21 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         ourLiveObject->inMotion = true;
 
+
+        GridPos *oldPathToDest = NULL;
+        int oldPathLength = 0;
+        int oldCurrentPathStep = 0;
+        
+        if( ourLiveObject->pathToDest != NULL ) {
+            oldPathLength = ourLiveObject->pathLength;
+            oldPathToDest = new GridPos[ oldPathLength ];
+
+            memcpy( oldPathToDest, ourLiveObject->pathToDest,
+                    sizeof( GridPos ) * ourLiveObject->pathLength );
+            oldCurrentPathStep = ourLiveObject->currentPathStep;
+            }
+        
+
         computePathToDest( ourLiveObject );
 
         
@@ -12913,6 +12928,16 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( ourLiveObject->xd == oldXD && ourLiveObject->yd == oldYD ) {
                 // completely blocked in, no path at all toward dest
                 
+                if( oldPathToDest != NULL ) {
+                    // restore it
+                    ourLiveObject->pathToDest = oldPathToDest;
+                    ourLiveObject->pathLength = oldPathLength;
+                    ourLiveObject->currentPathStep = oldCurrentPathStep;
+                    oldPathToDest = NULL;
+                    }
+                
+                    
+
                 // ignore click
                 
                 if( nextActionMessageToSend != NULL ) {
@@ -12921,6 +12946,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     }
                 ourLiveObject->inMotion = false;
                 return;
+                }
+
+            if( oldPathToDest != NULL ) {
+                delete [] oldPathToDest;
+                oldPathToDest = NULL;
                 }
             
 
@@ -13001,6 +13031,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             }
         
+        
+        if( oldPathToDest != NULL ) {
+            delete [] oldPathToDest;
+            oldPathToDest = NULL;
+            }
+            
+
 
         // send move right away
         //Thread::staticSleep( 2000 );
