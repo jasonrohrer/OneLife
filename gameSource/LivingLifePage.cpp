@@ -2113,10 +2113,6 @@ void LivingLifePage::drawMapCell( int inMapI,
         
 
         if( !mapPullMode && !inHighlightOnly ) {
-            if( oID == 418 && curType == moving ) {
-                printf( "Playing anim sound for %d\n", oID );
-                }
-            
             handleAnimSound( oID, 0, mMapCurAnimType[ inMapI ], oldFrameCount, 
                              mMapAnimationFrameCount[ inMapI ],
                              pos.x / CELL_D,
@@ -3920,7 +3916,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     // draw paths and destinations under everything
     
     // debug overlay
-    if( false )
+    if( true )
     for( int i=0; i<gameObjects.size(); i++ ) {
         
         LiveObject *o = gameObjects.getElement( i );
