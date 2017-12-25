@@ -298,6 +298,7 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
         clearSoundUsage( &oldUsage );
 
         nextPrevVisible();
+        fireActionPerformed( this );
         }
     
     
