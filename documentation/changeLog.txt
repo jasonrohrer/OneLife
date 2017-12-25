@@ -18,6 +18,8 @@ Version 42     ???
   random whenever the sound plays.  For example, footstep variation (so
   footsteps aren't soo repetative sounding).
 
+--Fixed so that moving animation sounds played for moving objects.
+ 
 
 
 

@@ -1899,10 +1899,10 @@ void LivingLifePage::drawMapCell( int inMapI,
         
         objectHeight = getObjectHeight( oID );
         
+        int oldFrameCount = mMapAnimationFrameCount[ inMapI ];
 
         if( !mapPullMode ) {
             
-            int oldFrameCount = mMapAnimationFrameCount[ inMapI ];
             mMapAnimationFrameCount[ inMapI ] ++;
             mMapAnimationLastFrameCount[ inMapI ] ++;
             
@@ -1910,10 +1910,6 @@ void LivingLifePage::drawMapCell( int inMapI,
                 mMapAnimationFrozenRotFrameCount[ inMapI ] ++;
                 }
     
-            handleAnimSound( oID, 0, ground, oldFrameCount, 
-                             mMapAnimationFrameCount[ inMapI ],
-                             (double)inScreenX / CELL_D,
-                             (double)inScreenY / CELL_D );
             
             if( mMapLastAnimFade[ inMapI ] > 0 ) {
                 mMapLastAnimFade[ inMapI ] -= 0.05 * frameRateFactor;
@@ -2115,6 +2111,19 @@ void LivingLifePage::drawMapCell( int inMapI,
             highlight = false;
             }
         
+
+        if( !mapPullMode && !inHighlightOnly ) {
+            if( oID == 418 && curType == moving ) {
+                printf( "Playing anim sound for %d\n", oID );
+                }
+            
+            handleAnimSound( oID, 0, mMapCurAnimType[ inMapI ], oldFrameCount, 
+                             mMapAnimationFrameCount[ inMapI ],
+                             pos.x / CELL_D,
+                             pos.y / CELL_D );
+            }
+        
+
         
         int numPasses = 1;
         int startPass = 0;
