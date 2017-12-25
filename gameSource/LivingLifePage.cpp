@@ -3916,7 +3916,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     // draw paths and destinations under everything
     
     // debug overlay
-    if( true )
+    if( false )
     for( int i=0; i<gameObjects.size(); i++ ) {
         
         LiveObject *o = gameObjects.getElement( i );
