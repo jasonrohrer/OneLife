@@ -1700,11 +1700,21 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "useDistance=%d", 
                                       inUseDistance ) );
 
-        lines.push_back( autoSprintf( "sounds=%s,%s,%s:%s,%s",
-                                      printSoundUsage( inCreationSound ),
-                                      printSoundUsage( inUsingSound ),
-                                      printSoundUsage( inEatingSound ),
-                                      printSoundUsage( inDecaySound ) ) );
+        char *usageStrings[4] = 
+            { stringDuplicate( printSoundUsage( inCreationSound ) ),
+              stringDuplicate( printSoundUsage( inUsingSound ) ),
+              stringDuplicate( printSoundUsage( inEatingSound ) ),
+              stringDuplicate( printSoundUsage( inDecaySound ) ) };
+        
+        
+        lines.push_back( autoSprintf( "sounds=%s,%s,%s,%s",
+                                      usageStrings[0],
+                                      usageStrings[1],
+                                      usageStrings[2],
+                                      usageStrings[3] ) );
+        for( int i=0; i<4; i++ ) {
+            delete [] usageStrings[i];
+            }
 
         lines.push_back( autoSprintf( "creationSoundInitialOnly=%d", 
                                       (int)inCreationSoundInitialOnly ) );
