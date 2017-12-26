@@ -658,6 +658,11 @@ void stepSoundBank() {
 
 
 
+static char reverbDisabled = false;
+
+void disableReverb( char inDisable ) {
+    reverbDisabled = inDisable;
+    }
 
 
 
@@ -677,7 +682,7 @@ void playSound( int inID, double inVolumeTweak, double inStereoPosition,
 
             idMap[inID]->numStepsUnused = 0;
             
-            if( idMap[inID]->reverbSound == NULL ) {
+            if( reverbDisabled || idMap[inID]->reverbSound == NULL ) {
                 // play just sound, ignore mix param    
                 playSoundSprite( idMap[inID]->sound,
                                  soundEffectsLoudness * 

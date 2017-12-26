@@ -1066,6 +1066,10 @@ void drawFrame( char inUpdate ) {
                             // skip sound progress
                             initSoundBankFinish();
                             
+                            // turn reverb off in editor so that we can
+                            // hear raw sounds
+                            disableReverb( true );
+
                             loadingPhaseStartTime = Time::getCurrentTime();
 
                             char rebuilding;

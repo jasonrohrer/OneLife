@@ -68,6 +68,12 @@ void setSoundEffectsOff( char inOff );
 
 
 
+// reverb playing defaults to on
+// note that with new mixing method, even if inReverbMix is 0, reverb
+// plays at specified volume (inReverbMix controls dry sound level).
+void disableReverb( char inDisable );
+
+
 void playSound( int inID, double inVolumeTweak = 1.0,
                 double inStereoPosition  = 0.5, 
                 double inReverbMix = 0.0 );
