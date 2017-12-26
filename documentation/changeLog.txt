@@ -26,6 +26,8 @@ Version 42     ???
 --Pasting animation sounds from person onto non-person now correctly clears
   sound age range.
 
+--Sound reverbs no longer play in editor.  Better to hear raw sounds.
+
 
 
 Server Fixes:
