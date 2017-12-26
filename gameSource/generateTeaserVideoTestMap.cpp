@@ -234,22 +234,19 @@ int main( int inNumArgs, char **inArgs ) {
                                 1000,
                                 &numTrans, &numRemain );
             
-            char humanMade = false;
+            char humanMade = true;
             
             if( trans != NULL ) {    
                 for( int t=0; t<numTrans; t++ ) {
                     if( trans[t]->actor == -1 &&
                         trans[t]->autoDecaySeconds != 0 ) {
                         humanMade = false;
+                        break;
                         }
-                    else if( trans[t]->actor == -2 ) {
+                    if( trans[t]->actor == -2 ) {
                         // default transition
                         // doesn't count as making something
                         humanMade = false;
-                        }
-                    else {
-                        // found a valid transition to make it
-                        humanMade = true;
                         break;
                         }
                     }
@@ -348,73 +345,88 @@ int main( int inNumArgs, char **inArgs ) {
 
         // end of strata
 
-        // for each member of strata, if it is unused
+        // add all members of strata
+        SimpleVector<int> addedList;
         while( strataQueue.checkMinPriority() > 0 ) {
             int id = strataQueue.removeMin();
 
             if( ! objectIncluded[ id ] ) {
-                objectIncluded[ id ] = true;    
+                // only if not yet included
+                objectIncluded[ id ] = true;
                 orderedObjects.push_back( id );
-                
-                printf( "Walking tree from:  %s\n", 
+                addedList.push_back( id );
+
+                printf( "Adding strata object:  %s\n", 
                         getObject( id )->description );
+                }
+            }
+        
+        
 
-                // walk transition tree from this object and include
-                // other things that it makes using already-included objects
-                // (skip things that require not-yet-included ingredients)
-
-                // depth first search.  Next node to explore at end of list
-                SimpleVector<TransRecord*> exploreList;
-                    
-                exploreList.push_back_other( getAllUses( id ) );
+        for( int i=0; i<addedList.size(); i++ ) {
+            
+            int id = addedList.getElementDirect( i );
+            
+            printf( "Walking tree from:  %s\n", 
+                    getObject( id )->description );
+            
+            // walk transition tree from this object and include
+            // other things that it makes using already-included objects
+            // (skip things that require not-yet-included ingredients)
+            
+            // depth first search.  Next node to explore at end of list
+            SimpleVector<TransRecord*> exploreList;
+            
+            exploreList.push_back_other( getAllUses( id ) );
+            
+            
+            while( exploreList.size() > 0 ) {
+                TransRecord *r = exploreList.getLastElementDirect();
+                exploreList.deleteLastElement();
                 
-
-                while( exploreList.size() > 0 ) {
-                    TransRecord *r = exploreList.getLastElementDirect();
-                    exploreList.deleteLastElement();
-
-                    if( ( r->actor == 0 || r->actor == -1 || r->actor == -2 || 
-                          objectIncluded[ r->actor ] )
-                        &&
-                        ( r->target == 0 || r->target == -1 ||
-                          objectIncluded[ r->target ] ) ) {
+                if( ( r->actor == 0 || r->actor == -1 || r->actor == -2 || 
+                      objectIncluded[ r->actor ] )
+                    &&
+                    ( r->target == 0 || r->target == -1 ||
+                      objectIncluded[ r->target ] ) ) {
+                    
+                    if( r->newActor > 0 && 
+                        ! objectIncluded[ r->newActor ] ) {
                         
-                        if( r->newActor > 0 && 
-                            ! objectIncluded[ r->newActor ] ) {
-                            
-                            if( objectAllowed[ r->newActor ] ) {    
-                                objectIncluded[ r->newActor ] = true;
-                                orderedObjects.push_back( r->newActor );
-                                printf( "  Adding %s\n",
-                                        getObject( r->newActor )->
-                                        description );
-                                }
-                            // explore further into tree
-                            exploreList.push_back_other( 
-                                getAllUses( r->newActor ) );
+                        if( objectAllowed[ r->newActor ] ) {    
+                            objectIncluded[ r->newActor ] = true;
+                            orderedObjects.push_back( r->newActor );
+                            printf( "  Adding %s\n",
+                                    getObject( r->newActor )->
+                                    description );
                             }
-                        if( r->newTarget > 0 && 
-                            ! objectIncluded[ r->newTarget ] ) {
-                            
-                            if( objectAllowed[ r->newTarget ] ) {
-                                objectIncluded[ r->newTarget ] = true;
-                                orderedObjects.push_back( r->newTarget );
-                                printf( "  Adding %s\n",
-                                        getObject( r->newTarget )->
-                                        description );
-                                }
-                            
-                            exploreList.push_back_other( 
-                                getAllUses( r->newTarget ) );
+                        // explore further into tree
+                        exploreList.push_back_other( 
+                            getAllUses( r->newActor ) );
+                        }
+                    if( r->newTarget > 0 && 
+                        ! objectIncluded[ r->newTarget ] ) {
+                        
+                        if( objectAllowed[ r->newTarget ] ) {
+                            objectIncluded[ r->newTarget ] = true;
+                            orderedObjects.push_back( r->newTarget );
+                            printf( "  Adding %s\n",
+                                    getObject( r->newTarget )->
+                                    description );
                             }
+                        
+                        exploreList.push_back_other( 
+                            getAllUses( r->newTarget ) );
                         }
                     }
                 }
             }
-        
+    
         // start next strata
         lastP = queue.checkMinPriority();
         }
+    
+    printf( "\n\n%d objects will be displayed\n", orderedObjects.size() );
     
     int spacing = 1;
     int xMax = ( orderedObjects.size() - 1 ) * spacing + 10;
@@ -454,7 +466,10 @@ int main( int inNumArgs, char **inArgs ) {
             if( y == 1 && x > 10 && 
                 x % spacing == 0 ) {
                 
-                int objectIndex = x / spacing - 11;
+                // note that this skips first item by accident
+                // BUT, we want to be consistent with original draft of
+                // video that had 260 items shown
+                int objectIndex = x / spacing - 10;
                 
                 if( objectIndex >=0 && objectIndex < orderedObjects.size() ) {
                     id = orderedObjects.getElementDirect( objectIndex );
