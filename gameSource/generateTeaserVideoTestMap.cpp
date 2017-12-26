@@ -340,13 +340,11 @@ int main( int inNumArgs, char **inArgs ) {
                queue.checkMinPriority() > 0 ) {
             
             int id = queue.removeMin();
-            strataQueue.insert( id, sortRandom.getRandomBoundedInt(0,20000) );
+            strataQueue.insert( id, sortRandom.getRandomBoundedInt(1,20000) );
             }
 
         // end of strata
 
-        // add all members of strata
-        SimpleVector<int> addedList;
         while( strataQueue.checkMinPriority() > 0 ) {
             int id = strataQueue.removeMin();
 
@@ -354,19 +352,10 @@ int main( int inNumArgs, char **inArgs ) {
                 // only if not yet included
                 objectIncluded[ id ] = true;
                 orderedObjects.push_back( id );
-                addedList.push_back( id );
-
-                printf( "Adding strata object:  %s\n", 
-                        getObject( id )->description );
                 }
-            }
-        
-        
+            // but walk tree again from this spot regardless
+            // to look for stuff that can be made now
 
-        for( int i=0; i<addedList.size(); i++ ) {
-            
-            int id = addedList.getElementDirect( i );
-            
             printf( "Walking tree from:  %s\n", 
                     getObject( id )->description );
             
@@ -428,6 +417,12 @@ int main( int inNumArgs, char **inArgs ) {
     
     printf( "\n\n%d objects will be displayed\n", orderedObjects.size() );
     
+    for( int i=0; i<orderedObjects.size(); i++ ) {
+        printf( "%d. %s\n", i, 
+                getObject( orderedObjects.getElementDirect( i ) )->
+                description );
+        }
+
     int spacing = 1;
     int xMax = ( orderedObjects.size() - 1 ) * spacing + 10;
 
