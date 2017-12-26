@@ -70,6 +70,7 @@ double minSayGapInSeconds = 1.0;
 
 
 static double minFoodDecrementSeconds = 5.0;
+static int babyBirthFoodDecrement = 10;
 
 
 // keep a running sequence number to challenge each connecting client
@@ -2542,7 +2543,7 @@ void processLoggedInPlayer( Socket *inSock,
             if( parent->foodStore < min ) {
                 min = parent->foodStore;
                 }
-            parent->foodStore -= 10;
+            parent->foodStore -= babyBirthFoodDecrement;
             if( parent->foodStore < min ) {
                 parent->foodStore = min;
                 }
@@ -3216,6 +3217,9 @@ int main() {
 
     minFoodDecrementSeconds = 
         SettingsManager::getFloatSetting( "minFoodDecrementSeconds", 5.0f );
+
+    babyBirthFoodDecrement = 
+        SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
     
 
     if( clientPassword == NULL ) {
