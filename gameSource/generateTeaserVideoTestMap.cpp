@@ -207,9 +207,14 @@ int main( int inNumArgs, char **inArgs ) {
     SimpleVector<int> treeList;
 
     int berryBush = -1;
-
+    
+    int maxQueuedID = 0;
+    
     int numObjects;
     ObjectRecord **objects = getAllObjects( &numObjects );
+
+    char *objectAllowed = new char[ getMaxObjectID() + 1 ];
+    memset( objectAllowed, false, getMaxObjectID() + 1 );
 
     for( int i=0; i<numObjects; i++ ) {
 
@@ -229,19 +234,22 @@ int main( int inNumArgs, char **inArgs ) {
                                 1000,
                                 &numTrans, &numRemain );
             
-            char humanMade = true;
+            char humanMade = false;
             
             if( trans != NULL ) {    
                 for( int t=0; t<numTrans; t++ ) {
                     if( trans[t]->actor == -1 &&
                         trans[t]->autoDecaySeconds != 0 ) {
                         humanMade = false;
-                        break;
                         }
-                    if( trans[t]->actor == -2 ) {
+                    else if( trans[t]->actor == -2 ) {
                         // default transition
                         // doesn't count as making something
                         humanMade = false;
+                        }
+                    else {
+                        // found a valid transition to make it
+                        humanMade = true;
                         break;
                         }
                     }
@@ -282,6 +290,11 @@ int main( int inNumArgs, char **inArgs ) {
                 int d = getObjectDepth( o->id );
                 if( d != UNREACHABLE ) {
                     queue.insert( o->id, d );
+                    objectAllowed[ o->id ] = true;
+                    
+                    if( o->id > maxQueuedID ) {
+                        maxQueuedID = o->id;
+                        }
                     }
                 }
             }
@@ -312,23 +325,89 @@ int main( int inNumArgs, char **inArgs ) {
     delete [] objects;
     
     SimpleVector<int> orderedObjects;
+
+    char *objectIncluded = new char[ maxQueuedID + 1 ];
+    memset( objectIncluded, false, maxQueuedID + 1 );
     
+
     double lastP = queue.checkMinPriority();
+    
+    JenkinsRandomSource sortRandom( 200 );
     
     while( queue.checkMinPriority() > 0 ) {
         
-        // build queue for all objects with same priority, sorted by ID
+        // build queue for all objects with same depth, or next depth, 
+        // sorted by random number
         MinPriorityQueue<int> strataQueue;
         while( queue.checkMinPriority() == lastP && 
                queue.checkMinPriority() > 0 ) {
             
             int id = queue.removeMin();
-            strataQueue.insert( id, id );
+            strataQueue.insert( id, sortRandom.getRandomBoundedInt(0,20000) );
             }
 
         // end of strata
+
+        // for each member of strata, if it is unused
         while( strataQueue.checkMinPriority() > 0 ) {
-            orderedObjects.push_back( strataQueue.removeMin() );
+            int id = strataQueue.removeMin();
+
+            if( ! objectIncluded[ id ] ) {
+                objectIncluded[ id ] = true;    
+                orderedObjects.push_back( id );
+                
+                printf( "Walking tree from:  %s\n", 
+                        getObject( id )->description );
+
+                // walk transition tree from this object and include
+                // other things that it makes using already-included objects
+                // (skip things that require not-yet-included ingredients)
+
+                // depth first search.  Next node to explore at end of list
+                SimpleVector<TransRecord*> exploreList;
+                    
+                exploreList.push_back( getAllUses( id ) );
+                
+
+                while( exploreList.size() > 0 ) {
+                    TransRecord *r = exploreList.getLastElementDirect();
+                    exploreList.deleteLastElement();
+
+                    if( ( r->actor == 0 || r->actor == -1 || r->actor == -2 || 
+                          objectIncluded[ r->actor ] )
+                        &&
+                        ( r->target == 0 || r->target == -1 ||
+                          objectIncluded[ r->target ] ) ) {
+                        
+                        if( r->newActor > 0 && 
+                            ! objectIncluded[ r->newActor ] ) {
+                            
+                            if( objectAllowed[ r->newActor ] ) {    
+                                objectIncluded[ r->newActor ] = true;
+                                orderedObjects.push_back( r->newActor );
+                                printf( "  Adding %s\n",
+                                        getObject( r->newActor )->
+                                        description );
+                                }
+                            // explore further into tree
+                            exploreList.push_back( getAllUses( r->newActor ) );
+                            }
+                        if( r->newTarget > 0 && 
+                            ! objectIncluded[ r->newTarget ] ) {
+                            
+                            if( objectAllowed[ r->newTarget ] ) {
+                                objectIncluded[ r->newTarget ] = true;
+                                orderedObjects.push_back( r->newTarget );
+                                printf( "  Adding %s\n",
+                                        getObject( r->newTarget )->
+                                        description );
+                                }
+                            
+                            exploreList.push_back( getAllUses( r->newTarget ) );
+                            }
+                        }
+                    }
+                }
             }
         
         // start next strata
@@ -373,7 +452,7 @@ int main( int inNumArgs, char **inArgs ) {
             if( y == 1 && x > 10 && 
                 x % spacing == 0 ) {
                 
-                int objectIndex = x / spacing - 10;
+                int objectIndex = x / spacing - 11;
                 
                 if( objectIndex >=0 && objectIndex < orderedObjects.size() ) {
                     id = orderedObjects.getElementDirect( objectIndex );
