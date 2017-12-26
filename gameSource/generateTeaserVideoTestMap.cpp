@@ -366,7 +366,7 @@ int main( int inNumArgs, char **inArgs ) {
                 // depth first search.  Next node to explore at end of list
                 SimpleVector<TransRecord*> exploreList;
                     
-                exploreList.push_back( getAllUses( id ) );
+                exploreList.push_back_other( getAllUses( id ) );
                 
 
                 while( exploreList.size() > 0 ) {
@@ -390,7 +390,8 @@ int main( int inNumArgs, char **inArgs ) {
                                         description );
                                 }
                             // explore further into tree
-                            exploreList.push_back( getAllUses( r->newActor ) );
+                            exploreList.push_back_other( 
+                                getAllUses( r->newActor ) );
                             }
                         if( r->newTarget > 0 && 
                             ! objectIncluded[ r->newTarget ] ) {
@@ -403,7 +404,8 @@ int main( int inNumArgs, char **inArgs ) {
                                         description );
                                 }
                             
-                            exploreList.push_back( getAllUses( r->newTarget ) );
+                            exploreList.push_back_other( 
+                                getAllUses( r->newTarget ) );
                             }
                         }
                     }
