@@ -894,6 +894,20 @@ void deleteSoundFromBank( int inID ) {
             
         delete [] fileNameAIFF;
         delete soundFileAIFF;
+
+        File reverbFolder( NULL, "reverbCache" );
+        
+        char *cacheFileName = autoSprintf( "%d.aiff", inID );
+    
+        File *cacheFile = reverbFolder.getChildFile( cacheFileName );
+    
+        delete [] cacheFileName;
+        
+        if( cacheFile->exists() ) {
+            cacheFile->remove();
+            }
+
+        delete cacheFile;
         }
     
     
