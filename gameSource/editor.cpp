@@ -564,6 +564,8 @@ void freeFrameDrawer() {
     freeAnimationBank();
 
     freeSoundBank();
+
+    freeSoundUsagePrintBuffer();
     }
 
 
