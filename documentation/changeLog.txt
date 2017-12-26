@@ -28,6 +28,9 @@ Version 42     ???
 
 --Sound reverbs no longer play in editor.  Better to hear raw sounds.
 
+--Fixed client base move speed to compensate for new server 3.75 speed.
+
+
 
 
 Server Fixes:

@@ -195,7 +195,7 @@ static int getHomeDir( doublePair inCurrentPlayerPos,
 
 // base speed for animations that aren't speeded up or slowed down
 // when player moving at a different speed, anim speed is modified
-#define BASE_SPEED 4.0
+#define BASE_SPEED 3.75
 
 
 int numServerBytesRead = 0;
