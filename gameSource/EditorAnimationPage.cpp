@@ -2166,6 +2166,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         
         mCurrentAnim[ mCurrentType ] = 
                 mCurrentExtraAnim.getElementDirect( mCurrentExtraIndex );
+        soundIndexChanged();
         }
     else if( inTarget == &mNextExtraButton ) {
         
@@ -2191,6 +2192,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         
         mCurrentAnim[ mCurrentType ] = 
                 mCurrentExtraAnim.getElementDirect( mCurrentExtraIndex );
+        soundIndexChanged();
         }
     else if( inTarget == &mDelExtraButton ) {
         AnimationRecord *r = 
@@ -2218,6 +2220,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 mCurrentExtraAnim.getElementDirect( mCurrentExtraIndex );
         
         setNextExtraButtonColor();
+        soundIndexChanged();
         }
     else if( inTarget == &mTestSpeedSlider ) {
         
