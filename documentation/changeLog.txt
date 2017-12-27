@@ -30,6 +30,8 @@ Version 42     ???
 
 --Fixed client base move speed to compensate for new server 3.75 speed.
 
+--Fixed bug in sound Paste All in animation editor.
+
 
 
 

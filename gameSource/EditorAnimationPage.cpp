@@ -1287,8 +1287,13 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                          &( mCurrentAnim[ mCurrentType ]->soundAnim[i] ) );
                      }    
                 delete [] mCurrentAnim[ mCurrentType ]->soundAnim;
+
+                mCurrentAnim[ mCurrentType ]->numSounds = 
+                    mAllCopyBufferSounds.size();
+                
                 mCurrentAnim[ mCurrentType ]->soundAnim =
                      new SoundAnimationRecord[ mAllCopyBufferSounds.size() ];
+                
                 for( int i=0; i < mAllCopyBufferSounds.size(); i++ ) {
                     mCurrentAnim[ mCurrentType ]->soundAnim[i] =
                         copyRecord( 
