@@ -5,6 +5,14 @@ commit eb287a6754e3338869ae31a9292d45b0262b212a
 Author: Jason Rohrer <jasonrohrer@fastmail.fm>
 Date:   Wed Dec 13 19:13:59 2017 -0800
 
+
+OneLifeData7 commit:
+
+commit bceb7d2e2ece5f918d0c505b91f4c107f4582b00
+Author: Jason Rohrer <jasonrohrer@fastmail.fm>
+Date:   Tue Dec 12 16:11:23 2017 -080
+
+
 minorGems commit:
 
 commit 4323d4a78d134961e29dee8d8172f228eac12f95
@@ -18,6 +26,35 @@ ending.txt recorded game used for ending of video
 
 
 By saving recordings, we don't need to store actual frames, which are huge.
+
+
+
+For second take of video:
+
+OneLife:
+
+commit 4418eee69593cee8c78caf60eed01f4586bb0910
+Author: Jason Rohrer <jasonrohrer@fastmail.fm>
+Date:   Tue Dec 26 16:35:33 2017 -0800
+
+
+OneLifeData7:
+
+commit 772d141bba0bf07f9fd931322012fc4d876ca324
+Author: Jason Rohrer <jasonrohrer@fastmail.fm>
+Date:   Tue Dec 26 13:40:51 2017 -0800
+
+
+minorGems:
+
+commit 03b9f1fe68ffa3517a8f7a26fd34ea79016b880a
+Author: Jason Rohrer <jasonrohrer@fastmail.fm>
+Date:   Tue Dec 26 10:54:40 2017 -0800
+
+
+main2.txt recorded game used for bulk of video
+ending2.txt recorded game used for ending of video
+
 
 
 
