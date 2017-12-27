@@ -661,6 +661,17 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
         }
     
     
+    // copyRecord triggers counting a live use of sounds
+    // that is normally correct, but here, when stored in bank,
+    // these are not live
+    //
+    // uncount them
+    for( int i=0; i<inRecord->numSounds; i++ ) {
+        unCountLiveUse( inRecord->soundAnim[i].sound );
+        }
+
+    
+    
     if( ! inNoWriteToFile ) {
         
         // store on disk

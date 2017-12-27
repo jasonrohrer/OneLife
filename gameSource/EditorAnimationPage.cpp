@@ -652,10 +652,6 @@ void EditorAnimationPage::populateCurrentAnim() {
             }
         else {
             mCurrentAnim[i] = copyRecord( oldRecord );
-        
-            for( int s=0; s<mCurrentAnim[i]->numSounds; s++ ) {
-                countLiveUse( mCurrentAnim[i]->soundAnim[s].sound );
-                }
 
             adjustRecordList( &( mCurrentAnim[i]->spriteAnim ),
                               mCurrentAnim[i]->numSprites,
@@ -685,11 +681,6 @@ void EditorAnimationPage::populateCurrentAnim() {
 
         mCurrentAnim[extra] = mCurrentExtraAnim.getElementDirect( 
             mCurrentExtraAnim.size() - 1 );
-        
-        
-        for( int s=0; s<mCurrentAnim[extra]->numSounds; s++ ) {
-            countLiveUse( mCurrentAnim[extra]->soundAnim[s].sound );
-            }
 
         adjustRecordList( &( mCurrentAnim[extra]->spriteAnim ),
                           mCurrentAnim[extra]->numSprites,
