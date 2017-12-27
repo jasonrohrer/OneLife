@@ -130,7 +130,9 @@ EditorAnimationPage::EditorAnimationPage()
           mPrevSoundButton( smallFont, -210, -160, "<" ),
           mCopySoundAnimButton( smallFont, -85, -160, "Copy" ),
           mCopyAllSoundAnimButton( smallFont, -85, -160, "Copy All" ),
-          mPasteSoundAnimButton( smallFont, -155, -160, "Paste" ) {
+          mPasteSoundAnimButton( smallFont, -155, -160, "Paste" ),
+          mFullSoundCopyButton( smallFont, -300, -328, "Full Sound Copy" ),
+          mFullSoundPasteButton( smallFont, 130, -328, "Full Sound Paste" ) {
     
     
     for( int i=0; i<=extraB; i++ ) {
@@ -209,6 +211,16 @@ EditorAnimationPage::EditorAnimationPage()
     mCopyAllSoundAnimButton.setVisible( false );
     mPasteSoundAnimButton.setVisible( false );
 
+
+    addComponent( &mFullSoundCopyButton );
+    addComponent( &mFullSoundPasteButton );
+    
+    mFullSoundCopyButton.addActionListener( this );
+    mFullSoundPasteButton.addActionListener( this );
+    
+    mFullSoundCopyButton.setVisible( false );
+    mFullSoundPasteButton.setVisible( false );
+    
 
     addComponent( &mSoundRepeatPerSecSlider );
     addComponent( &mSoundRepeatPhaseSlider );
@@ -482,7 +494,16 @@ EditorAnimationPage::~EditorAnimationPage() {
     clearAllCopyBufferSounds();
     
     freeRecord( &mSoundAnimCopyBuffer );
-        
+    
+
+    for( int i=0; i<endAnimType; i++ ) {
+        for( int j=0; j<mFullSoundCopyBuffer[i].size(); j++ ) {
+            freeRecord( mFullSoundCopyBuffer[i].getElement(j) );
+            }
+        mFullSoundCopyBuffer[i].deleteAll();
+        }
+
+
     for( int i=0; i<NUM_ANIM_CHECKBOXES; i++ ) {
         delete mCheckboxes[i];
         }
@@ -1348,6 +1369,43 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
 
         soundIndexChanged();
         }
+    else if( inTarget == &mFullSoundCopyButton ) {
+        for( int i=0; i<endAnimType; i++ ) {
+            for( int j=0; j<mFullSoundCopyBuffer[i].size(); j++ ) {
+                freeRecord( mFullSoundCopyBuffer[i].getElement(j) );
+                }
+            mFullSoundCopyBuffer[i].deleteAll();
+            }
+        for( int i=0; i<endAnimType; i++ ) {
+            for( int j=0; j<mCurrentAnim[i]->numSounds; j++ ) {
+                mFullSoundCopyBuffer[i].push_back( 
+                    copyRecord( mCurrentAnim[i]->soundAnim[j] ) );
+                }
+            }
+        mFullSoundPasteButton.setVisible( true );
+        }
+    else if( inTarget == &mFullSoundPasteButton ) {
+        // replace
+
+        for( int i=0; i<endAnimType; i++ ) {
+            for( int j=0; j < mCurrentAnim[ i ]->numSounds; j++ ) {
+                freeRecord( &( mCurrentAnim[ i ]->soundAnim[j] ) );
+                }    
+            delete [] mCurrentAnim[ i ]->soundAnim;
+
+            int newNum = mFullSoundCopyBuffer[i].size();
+            mCurrentAnim[ i ]->numSounds = newNum;
+                
+            mCurrentAnim[ i ]->soundAnim = new SoundAnimationRecord[ newNum ];
+ 
+            for( int j=0; j < newNum; j++ ) {
+                mCurrentAnim[ i ]->soundAnim[j] =
+                        copyRecord( 
+                            mFullSoundCopyBuffer[i].getElementDirect( j ) );
+                }            
+            }    
+        soundIndexChanged();
+        }
     else if( inTarget == &mCopyButton ) {
         mCopyBuffer = *( getRecordForCurrentSlot() );
         mChainCopyBuffer.deleteAll();
@@ -1772,6 +1830,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 mSceneryID = newPickID;
                 }
             else {
+                mFullSoundCopyButton.setVisible( true );
+
                 int oldID = mCurrentObjectID;
                 
                 mWiggleSpriteOrSlot = -1;
