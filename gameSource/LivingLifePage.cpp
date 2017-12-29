@@ -834,6 +834,21 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
                               &( inObject->pathLength ),
                               &( inObject->pathToDest ),
                               &closestFound );
+        if( pathFound && inObject->pathToDest != NULL &&
+            inObject->pathLength > inObject->maxWaypointPathLength ) {
+            
+            // path through waypoint too long, use waypoint as dest
+            // instead
+            delete [] inObject->pathToDest;
+            pathFound = pathFind( pathFindingD, pathFindingD,
+                                  blockedMap, 
+                                  start, waypoint, 
+                                  &( inObject->pathLength ),
+                                  &( inObject->pathToDest ),
+                                  &closestFound );
+            inObject->xd = inObject->waypointX;
+            inObject->yd = inObject->waypointY;
+            }
         }
     else {
         pathFound = pathFind( pathFindingD, pathFindingD,
@@ -11002,6 +11017,8 @@ void LivingLifePage::step() {
                                                             mouseVector );
                                 
                                 o->useWaypoint = true;
+                                o->maxWaypointPathLength = 5;
+                                
                                 o->waypointX = lrint( worldMouseX / CELL_D );
                                 o->waypointY = lrint( worldMouseY / CELL_D );
 

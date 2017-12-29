@@ -157,6 +157,11 @@ typedef struct LiveObject {
         // path must pass through this point on its way to xd,yd
         char useWaypoint;
         int waypointX, waypointY;
+        // max path length to find that uses waypoint
+        // if waypoint-including path is longer than this
+        // a path stopping at the waypoint will be used instead
+        // and xd, yd will be repaced with waypoint
+        int maxWaypointPathLength;
         
 
         // last confirmed stationary position of this
