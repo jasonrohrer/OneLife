@@ -37,6 +37,13 @@ Version 42     ???
 --Holding mouse to keep moving now treats mouse release as one final click.
   You walk to where you finally release the mouse.
 
+--Fixed hold-to-move so that it works even when mouse is close to player.
+  It does this by automatically extending the chosen path in the same
+  direction.  This prevents a bunch of very short paths from being sent to the
+  server.
+
+--Fixed so that clicking on an unreachable object walks you as close as
+  possible to it.  Before, it would result in no motion at all.
 
 
 Server Fixes:

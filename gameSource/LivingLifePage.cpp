@@ -12835,8 +12835,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
             if( foundEmpty ) {
                 canExecute = true;
-                mustMove = true;
                 }
+            // always try to move as close as possible, even
+            // if we can't actually get close enough to execute action
+            mustMove = true;
             }
         
 
@@ -13060,6 +13062,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
             computePathToDest( ourLiveObject );
             
+            if( ourLiveObject->pathToDest == NULL &&
+                ourLiveObject->useWaypoint ) {
+                // waypoint itself may be blocked
+                // try again with no waypoint at all
+                ourLiveObject->useWaypoint = false;
+                computePathToDest( ourLiveObject );
+                }
+
             if( ourLiveObject->pathToDest == NULL ) {
                 // this happens when our curPos is slightly off of xd,yd
                 // but not a full cell away
