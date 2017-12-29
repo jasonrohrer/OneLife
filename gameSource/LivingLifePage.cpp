@@ -13220,7 +13220,20 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
 
-    if( mouseDownFrames >  
+
+    if( mFirstServerMessagesReceived != 3 || ! mDoneLoadingFirstObjectSet ) {
+        return;
+        }
+
+    if( playerActionPending ) {
+        // block further actions until update received to confirm last
+        // action
+        return;
+        }
+
+    if( getOurLiveObject()->inMotion 
+        &&
+        mouseDownFrames >  
         minMouseDownFrames / frameRateFactor ) {
         
         // treat the up as one final click
