@@ -13105,7 +13105,16 @@ void LivingLifePage::pointerDrag( float inX, float inY ) {
 void LivingLifePage::pointerUp( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
+
+    if( mouseDownFrames >  
+        minMouseDownFrames / frameRateFactor ) {
+        
+        // treat the up as one final click
+        pointerDown( inX, inY );
+        }
+
     mouseDown = false;
+
 
     // clear mouse over cell
     mPrevMouseOverCells.push_back( mCurMouseOverCell );

@@ -34,6 +34,9 @@ Version 42     ???
 
 --Animation editor can now copy/paste sounds from all animation types at once.
 
+--Holding mouse to keep moving now treats mouse release as one final click.
+  You walk to where you finally release the mouse.
+
 
 
 Server Fixes:
