@@ -92,7 +92,7 @@ static float lastMouseY = 0;
 
 
 // set to true to render for teaser video
-static char teaserVideo = true;
+static char teaserVideo = false;
 
 
 
@@ -821,14 +821,30 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
 
     GridPos closestFound;
     
-    char pathFound = 
-        pathFind( pathFindingD, pathFindingD,
-                  blockedMap, 
-                  start, end, 
-                  &( inObject->pathLength ),
-                  &( inObject->pathToDest ),
-                  &closestFound );
+    char pathFound = false;
     
+    if( inObject->useWaypoint ) {
+        GridPos waypoint = { inObject->waypointX, inObject->waypointY };
+        waypoint.x += pathOffsetX;
+        waypoint.y += pathOffsetY;
+        
+        pathFound = pathFind( pathFindingD, pathFindingD,
+                              blockedMap, 
+                              start, waypoint, end, 
+                              &( inObject->pathLength ),
+                              &( inObject->pathToDest ),
+                              &closestFound );
+        }
+    else {
+        pathFound = pathFind( pathFindingD, pathFindingD,
+                              blockedMap, 
+                              start, end, 
+                              &( inObject->pathLength ),
+                              &( inObject->pathToDest ),
+                              &closestFound );
+        }
+        
+
     if( pathFound && inObject->pathToDest != NULL ) {
         printf( "Path found in %f ms\n", 
                 1000 * ( game_getCurrentTime() - startTime ) );
@@ -3866,11 +3882,20 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
                         doublePair dir = normalize( sub( nextPos, curPos ) );
 
-
-                        curDir = 
-                            normalize( 
-                                add( curDir, 
-                                     mult( dir, turnFactor ) ) );
+                        
+                        if( dot( dir, curDir ) >= 0 ) {
+                            curDir = 
+                                normalize( 
+                                    add( curDir, 
+                                         mult( dir, turnFactor ) ) );
+                        
+                            }
+                        else {
+                            // path doubles back on itself
+                            // smooth turning never resolves here
+                            // just make a sharp point in path instead
+                            curDir = dir;
+                            }
                         
                         curPos = add( curPos,
                                       mult( curDir, 6 ) );
@@ -3950,6 +3975,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     mainFont->drawString( "P", 
                                           pos, alignCenter );
                     }
+
+                // draw waypoint
+                
+                setDrawColor( 0, 1, 1, 1 );
+                pos.x = o->waypointX * CELL_D;
+                pos.y = o->waypointY * CELL_D;
+                mainFont->drawString( "W", 
+                                      pos, alignCenter );
+                    
                 }
             else {
                 pos.x = o->closestDestIfPathFailedX * CELL_D;
@@ -8133,6 +8167,8 @@ void LivingLifePage::step() {
                 
                 o.holdingID = 0;
                 
+                o.useWaypoint = false;
+
                 o.pathToDest = NULL;
                 o.containedIDs = NULL;
                 o.subContainedIDs = NULL;
@@ -10844,10 +10880,22 @@ void LivingLifePage::step() {
                 }
             
             
+            if( dot( dir, o->currentMoveDirection ) >= 0 ) {
+                // a right angle turn or smaller
+
             
-            o->currentMoveDirection = 
-                normalize( add( o->currentMoveDirection, 
-                                mult( dir, turnFactor * frameRateFactor ) ) );
+                o->currentMoveDirection = 
+                    normalize( add( o->currentMoveDirection, 
+                                    mult( dir, 
+                                          turnFactor * frameRateFactor ) ) );
+                }
+            else {
+                // a double-back in the path
+                // don't tot smooth turn through this, because
+                // it doesn't resolve
+                // instead, just turn sharply
+                o->currentMoveDirection = dir;
+                }
             
             if( o->numFramesOnCurrentStep * o->currentSpeed  * frameRateFactor
                 > 2 ) {
@@ -10920,11 +10968,50 @@ void LivingLifePage::step() {
                         mouseDownFrames >  
                         minMouseDownFrames / frameRateFactor ) {
                         
-                        if( abs( delta.x ) > CELL_D * 2 
+                        double absX = abs( delta.x );
+                        double absY = abs( delta.y );
+                        
+
+                        if( absX > CELL_D * 1 
                             ||
-                            abs( delta.y ) > CELL_D * 1 ) {
+                            absY > CELL_D * 1 ) {
                             
-                            pointerDown( worldMouseX, worldMouseY );
+                            if( ( absX < CELL_D * 4 ||
+                                  absY < CELL_D * 4 ) 
+                                &&
+                                mouseDownFrames >  
+                                minMouseDownFrames / frameRateFactor ) {
+                                
+                                // they're holding mouse down very close
+                                // to to their character
+                                
+                                // throw mouse way out, further in the same
+                                // direction
+                                
+                                // we don't want to repeatedly find a bunch
+                                // of short-path moves when mouse
+                                // is held down
+                            
+                                doublePair mouseVector =
+                                    mult( 
+                                        normalize( 
+                                            sub( worldMouse, worldCurrent ) ),
+                                        CELL_D * 4 );
+                                
+                                doublePair fakeClick = add( worldCurrent,
+                                                            mouseVector );
+                                
+                                o->useWaypoint = true;
+                                o->waypointX = lrint( worldMouseX / CELL_D );
+                                o->waypointY = lrint( worldMouseY / CELL_D );
+
+                                pointerDown( fakeClick.x, fakeClick.y );
+                               
+                                o->useWaypoint = false;
+                                }
+                            else {
+                                pointerDown( worldMouseX, worldMouseY );
+                                }
                             }
                         }
                     }

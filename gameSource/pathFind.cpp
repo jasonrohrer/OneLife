@@ -539,3 +539,76 @@ char pathFind( int inMapH, int inMapW,
     
     return true;
     }
+
+
+
+
+char pathFind( int inMapH, int inMapW,
+               char *inBlockedMap, 
+               GridPos inStart, GridPos inWaypoint, GridPos inGoal, 
+               int *outFullPathLength,
+               GridPos **outFullPath,
+               // if not-NULL, set to closest reachable cooridinates to inGoal
+               // this will be inGoal if path find is successful, or closest
+               // possible if path finding fails
+               GridPos *outClosest ) {
+
+    
+    char firstFound = pathFind( inMapH, inMapW,
+                                inBlockedMap,
+                                inStart, inWaypoint,
+                                outFullPathLength,
+                                outFullPath,
+                                outClosest );
+    
+
+    if( ! firstFound ) {
+        return false;
+        }
+    
+
+    // else find second leg and append
+    int secondLength;
+    GridPos *secondPath;
+    GridPos secondClosest;
+    
+    char secondFound = pathFind( inMapH, inMapW,
+                                 inBlockedMap,
+                                 inWaypoint, inGoal,
+                                 &secondLength,
+                                 &secondPath,
+                                 &secondClosest );
+    
+    if( !secondFound ) {
+        if( outClosest != NULL ) {
+            *outClosest = secondClosest;
+            }
+        delete [] *outFullPath;
+        *outFullPath = NULL;
+        
+        return false;
+        }
+
+    // both legs found, combine
+
+    SimpleVector<GridPos> steps;
+    
+    for( int i=0; i< *outFullPathLength; i++ ) {
+        steps.push_back( (*outFullPath)[ i ] );
+        }
+
+    // don't repeat waypoint
+    for( int i=1; i<secondLength; i++ ) {
+        steps.push_back( secondPath[i] );
+        }
+    delete [] secondPath;
+    delete [] *outFullPath;
+    
+    *outFullPathLength = steps.size();
+    *outFullPath = steps.getElementArray();
+    
+    return true;
+    }
+
+    
+    

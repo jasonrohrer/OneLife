@@ -152,6 +152,13 @@ typedef struct LiveObject {
         int xd;
         int yd;
         
+        
+        // use a waypoint along the way during pathfinding.
+        // path must pass through this point on its way to xd,yd
+        char useWaypoint;
+        int waypointX, waypointY;
+        
+
         // last confirmed stationary position of this
         // object on the server (from the last player_update)
         int xServer;

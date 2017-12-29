@@ -20,3 +20,16 @@ char pathFind( int inMapH, int inMapW,
                // possible if path finding fails
                GridPos *outClosest = NULL );
 
+
+
+// find shortest path that also passes through inWaypoint
+char pathFind( int inMapH, int inMapW,
+               char *inBlockedMap, 
+               GridPos inStart, GridPos inWaypoint, GridPos inGoal, 
+               int *outFullPathLength,
+               GridPos **outFullPath,
+               // if not-NULL, set to closest reachable cooridinates to inGoal
+               // this will be inGoal if path find is successful, or closest
+               // possible if path finding fails
+               GridPos *outClosest = NULL );
+
