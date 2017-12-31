@@ -9,7 +9,7 @@ LINK_AGAINST_LIBJPEG = no
 LINK_AGAINST_LIBPNG = no
 
 APP_NAME = OneLife
-ROOT_PATH = ../..
+ROOT_PATH = ..
 
 
 

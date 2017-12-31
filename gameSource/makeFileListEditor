@@ -9,7 +9,7 @@ LINK_AGAINST_LIBJPEG = no
 LINK_AGAINST_LIBPNG = yes
 
 APP_NAME = EditOneLife
-ROOT_PATH = ../..
+ROOT_PATH = ..
 
 
 
