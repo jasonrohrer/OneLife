@@ -3645,7 +3645,7 @@ void shrinkContainer( int inX, int inY, int inNumNewSlots, int inSubCont ) {
                 for( int y = inY - r; y <= inY + r; y++ ) {
                     for( int x = inX - r; x <= inX + r; x++ ) {
                         
-                        if( getMapObject( x, y ) == 0 ) {
+                        if( getMapObjectRaw( x, y ) == 0 ) {
                             emptyX = x;
                             emptyY = y;
                             foundEmpty = true;
