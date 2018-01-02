@@ -53,6 +53,13 @@ int longestFamilyChain = 0;
 int over55Count = 0;
 
 
+// stats for currently-processing folder
+double folderTotalAge = 0;
+int folderTotalLives = 0;
+int folderLongestFamilyChain = 0;
+int folderOver55Count = 0;
+
+
 
 void addPlayerGame( char *inEmail, 
                     double inGameStartTime, double inGameEndTime ) {
@@ -162,9 +169,13 @@ void processLogFile( File *inFile ) {
                     }
                 currentLiving.push_back( l );
                 totalLives ++;
-
+                folderTotalLives ++;
+                
                 if( l.parentChainLength > longestFamilyChain ) {
                     longestFamilyChain = l.parentChainLength;
+                    }
+                if( l.parentChainLength > folderLongestFamilyChain ) {
+                    folderLongestFamilyChain = l.parentChainLength;
                     }
                 }
             else if( event == 'D' ) {
@@ -197,9 +208,11 @@ void processLogFile( File *inFile ) {
             
                 if( foundBirth ) {    
                     totalAge += yearsLived;
+                    folderTotalAge += yearsLived;
                     
                     if( age >= 55 ) {
                         over55Count++;
+                        folderOver55Count++;
                         }
                     }
                 else {
@@ -236,8 +249,8 @@ void saveNewCheckpoint( File *inCheckpointFile,
             
     if( f != NULL ) {
         fprintf( f, "%s %f %d %d %d", inLastScannedFileName,
-                 totalAge, totalLives, 
-                 longestFamilyChain, over55Count );
+                 folderTotalAge, folderTotalLives, 
+                 folderLongestFamilyChain, folderOver55Count );
         fclose( f );
         }
     delete [] fileName;
@@ -248,6 +261,11 @@ void saveNewCheckpoint( File *inCheckpointFile,
 // returns num files processed
 int processLifeLogFolder( File *inFolder ) {
 
+    folderTotalAge = 0;
+    folderTotalLives = 0;
+    folderLongestFamilyChain = 0;
+    folderOver55Count = 0;
+    
     File *checkpointFile = inFolder->getChildFile( checkpointFileName );
         
     char lastScannedFileName[200];
@@ -262,8 +280,16 @@ int processLifeLogFolder( File *inFolder ) {
             
         if( f != NULL ) {
             fscanf( f, "%199s %lf %d %d %d", lastScannedFileName,
-                    &totalAge, &totalLives, 
-                    &longestFamilyChain, &over55Count );
+                    &folderTotalAge, &folderTotalLives, 
+                    &folderLongestFamilyChain, &folderOver55Count );
+            
+            totalAge += folderTotalAge;
+            totalLives += folderTotalLives;
+            if( folderLongestFamilyChain > longestFamilyChain ) {
+                longestFamilyChain = folderLongestFamilyChain;
+                }
+            over55Count += folderOver55Count;
+            
             checkpointFound = true;
             fclose( f );
             }

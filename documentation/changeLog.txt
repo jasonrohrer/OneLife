@@ -61,6 +61,8 @@ Server Fixes:
   player movement when their move ends in a new chunk as the observing player
   moves along.
 
+--Fixed bug in life stats processing across multiple game servers.
+
 
 
 
