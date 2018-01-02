@@ -14,10 +14,8 @@
 #
 
 
-cd OneLife
 chmod u+x ./configure
 ./configure $@ || exit 1
-
 
 
 
@@ -30,32 +28,41 @@ make || exit 1
 
 
 
-cd ../..
+cd ..
 
 
 echo "Making directories"
-mkdir -p graphics
-mkdir -p otherSounds
-mkdir -p settings
-mkdir -p languages
-mkdir -p reverbCache
-mkdir -p groundTileCache
+mkdir -p dist
+mkdir -p dist/graphics
+mkdir -p dist/otherSounds
+mkdir -p dist/settings
+mkdir -p dist/languages
+mkdir -p dist/reverbCache
+mkdir -p dist/groundTileCache
 
 
+echo "Copying items from build into dist directory"
+cp gameSource/OneLife dist/OneLifeApp
+cp documentation/Readme.txt dist/.
+cp no_copyright.txt dist/.
+cp gameSource/graphics/* dist/graphics/.
+cp gameSource/otherSounds/* dist/otherSounds/.
+cp -u gameSource/settings/* dist/settings/.
+cp gameSource/languages/* dist/languages/.
+cp gameSource/language.txt dist/.
+cp gameSource/us_english_60.txt dist/.
+cp gameSource/reverbImpulseResponse.aiff dist/.
 
-
-echo "Copying items from build into directories"
-cp OneLife/gameSource/OneLife ./OneLifeApp
-cp OneLife/documentation/Readme.txt .
-cp OneLife/no_copyright.txt .
-cp OneLife/gameSource/graphics/* ./graphics
-cp OneLife/gameSource/otherSounds/* ./otherSounds
-cp -u OneLife/gameSource/settings/* ./settings
-cp OneLife/gameSource/languages/* ./languages
-cp OneLife/gameSource/language.txt ./
-cp OneLife/gameSource/us_english_60.txt ./
-cp OneLife/gameSource/reverbImpulseResponse.aiff ./
-
+echo "Linking resources into dist directory"
+ln -s ../OneLifeData7/animations dist/.
+ln -s ../OneLifeData7/categories dist/.
+ln -s ../OneLifeData7/ground dist/.
+ln -s ../OneLifeData7/music dist/.
+ln -s ../OneLifeData7/objects dist/.
+ln -s ../OneLifeData7/sounds dist/.
+ln -s ../OneLifeData7/sprites dist/.
+ln -s ../OneLifeData7/transitions dist/.
+ln -s ../OneLifeData7/dataVersionNumber.txt dist/.
 
 echo "Run OneLifeApp to play."
 

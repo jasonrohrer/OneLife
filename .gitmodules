@@ -1,0 +1,8 @@
+[submodule "minorGems"]
+	path = minorGems
+	url = https://github.com/jasonrohrer/minorGems.git
+	branch = master
+[submodule "OneLifeData7"]
+	path = OneLifeData7
+	url = https://github.com/jasonrohrer/OneLifeData7.git
+	branch = master

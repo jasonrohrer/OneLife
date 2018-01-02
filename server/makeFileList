@@ -11,7 +11,7 @@ LINK_AGAINST_LIBPNG = no
 LINK_HEADLESS = yes
 
 APP_NAME = OneLifeServer
-ROOT_PATH = ../..
+ROOT_PATH = ..
 
 
 # use a different extension here so that we don't interfere with client's
