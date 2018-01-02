@@ -487,10 +487,12 @@ static int computeMapBiomeIndex( int inX, int inY,
     for( int i=0; i<numBiomes; i++ ) {
         int biome = biomes[i];
         
-        double randVal = getXYFractal(  723 + inX + 263 * biome, 
-                                        1553 + inY + 187 * biome, 
+        setXYRandomSeed( biome * 263 + 723 );
+
+        double randVal = getXYFractal(  inX,
+                                        inY,
                                         0.55, 
-                                        1.5 + 0.16666 * numBiomes );
+                                        .5 + 0.16666 * numBiomes );
         
         if( randVal > maxValue ) {
             // a new first place
@@ -634,6 +636,7 @@ static int getBaseMap( int inX, int inY ) {
 
 
 
+    setXYRandomSeed( 5379 );
     
     // first step:  save rest of work if density tells us that
     // nothing is here anyway
@@ -710,9 +713,10 @@ static int getBaseMap( int inX, int inY ) {
 
         for( int i=0; i<numObjects; i++ ) {
             
+            setXYRandomSeed( 793 * i + 123 );
         
-            double randVal = getXYFractal(  123 + inX + 263 * i, 
-                                            753 + inY + 187 * i, 
+            double randVal = getXYFractal(  inX, 
+                                            inY, 
                                             0.3, 
                                             0.15 + 0.016666 * numObjects );
 
@@ -941,21 +945,25 @@ void outputBiomeFractals() {
         for( int b=0; b<numBiomes; b++ ) {
             int biome = biomes[ b ];
             
-            Image outIm( 200, 200, 4 );
+            setXYRandomSeed( biome * 263 + 723 );
+
+            int r = 100 * scale;
             
-            for( int y=-100; y<100; y++ ) {
-                for( int x=-100; x<100; x++ ) {
+            Image outIm( r * 2, r * 2, 4 );
+            
+            for( int y=-r; y<r; y++ ) {
+                for( int x=-r; x<r; x++ ) {
                     
-                    double v = getXYFractal(  723 + x + 263 * biome, 
-                                              1553 + y + 187 * biome, 
+                    double v = getXYFractal(  x, 
+                                              y, 
                                               0.55, 
                                               scale );
                     Color c( v, v, v, 1 );
 
-                    int imX = x + 100;
-                    int imY = y + 100;
+                    int imX = x + r;
+                    int imY = y + r;
                     
-                    outIm.setColor( imY * 200 + imX, c );
+                    outIm.setColor( imY * 2 * r  + imX, c );
                     }
                 }
             

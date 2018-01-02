@@ -74,6 +74,8 @@ Server Fixes:
   Example:  picking up a grave with a basket to make a basket of bones no
   longer makes the contents of the grave disappear.
 
+--Fixed map generation so that fractals are centered around 0,0 to make testing
+  scale factor easier.
 
 
 
