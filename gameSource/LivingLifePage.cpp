@@ -3262,6 +3262,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             GroundSpriteSet *s = NULL;
             
+            setDrawColor( 1, 1, 1, 1 );
+
             if( b >= 0 && b < groundSpritesArraySize ) {
                 s = groundSprites[ b ];
                 }
@@ -3271,16 +3273,26 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 }
             
             if( s == NULL ) {
+                
+                // use end image with random color
+                s = groundSprites[ groundSpritesArraySize - 1 ];
+                
+                // random draw color
+                setDrawColor( getXYRandom( b, b ),
+                              getXYRandom( b, b + 100 ),
+                              getXYRandom( b, b + 300 ), 1 );
+                /*
                 // find another
                 for( int i=0; i<groundSpritesArraySize && s == NULL; i++ ) {
                     s = groundSprites[ i ];
                     }
+                */
                 }
             
             
             if( s != NULL ) {
                 
-                setDrawColor( 1, 1, 1, 1 );
+                
                             
                 doublePair pos = { (double)screenX, (double)screenY };
                 
