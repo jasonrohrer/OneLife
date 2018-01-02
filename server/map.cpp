@@ -934,6 +934,53 @@ void outputMapImage() {
 
 
 
+
+void outputBiomeFractals() {
+    for( int scale = 1; scale <=4; scale *= 2 ) {
+        
+        for( int b=0; b<numBiomes; b++ ) {
+            int biome = biomes[ b ];
+            
+            Image outIm( 200, 200, 4 );
+            
+            for( int y=-100; y<100; y++ ) {
+                for( int x=-100; x<100; x++ ) {
+                    
+                    double v = getXYFractal(  723 + x + 263 * biome, 
+                                              1553 + y + 187 * biome, 
+                                              0.55, 
+                                              scale );
+                    Color c( v, v, v, 1 );
+
+                    int imX = x + 100;
+                    int imY = y + 100;
+                    
+                    outIm.setColor( imY * 200 + imX, c );
+                    }
+                }
+            
+            char *name = autoSprintf( "fractal_b%d_s%d.tga",
+                                      biome, scale );
+            
+            File tgaFile( NULL, name );
+            
+            FileOutputStream tgaStream( &tgaFile );
+    
+            TGAImageConverter converter;
+    
+            converter.formatImage( &outIm, &tgaStream );
+            printf( "Outputting file %s\n", name );
+            
+            delete [] name;
+            }
+        }       
+    }
+
+
+
+
+
+
 int getMapObjectRaw( int inX, int inY );
 int *getContainedRaw( int inX, int inY, int *outNumContained, 
                       int inSubCont = 0 );
@@ -1621,6 +1668,8 @@ void initMap() {
     // for debugging the map
     // printBiomeSamples();
     //outputMapImage();
+
+    //outputBiomeFractals();
     }
 
 
