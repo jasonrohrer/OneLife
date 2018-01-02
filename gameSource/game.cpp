@@ -1470,6 +1470,10 @@ void drawFrame( char inUpdate ) {
                     autoLogIn = 
                         SettingsManager::getIntSetting( "autoLogIn", 0 );
 
+                    if( userEmail == NULL || accountKey == NULL ) {
+                        autoLogIn = false;
+                        }
+
                     currentGamePage = existingAccountPage;
                     currentGamePage->base_makeActive( true );
                 }

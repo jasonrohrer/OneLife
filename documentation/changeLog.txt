@@ -45,6 +45,9 @@ Version 42     ???
 --Fixed so that clicking on an unreachable object walks you as close as
   possible to it.  Before, it would result in no motion at all.
 
+--Fixed autologin crash when email and account key not set.  Thanks tomberek.
+
+
 
 Server Fixes:
 
