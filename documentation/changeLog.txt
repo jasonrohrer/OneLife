@@ -69,6 +69,11 @@ Server Fixes:
 --Fixed so that all crontab scripts run with bash.  FoodStats update was
   broken otherwise.
 
+--Distroying a container now causes the contents to be scattered on the ground
+  around where the container used to be (they used to just disappear).
+  Example:  picking up a grave with a basket to make a basket of bones no
+  longer makes the contents of the grave disappear.
+
 
 
 

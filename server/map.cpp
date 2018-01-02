@@ -3623,6 +3623,60 @@ void shrinkContainer( int inX, int inY, int inNumNewSlots, int inSubCont ) {
     int oldNum = getNumContained( inX, inY, inSubCont );
     
     if( oldNum > inNumNewSlots ) {
+        
+        // first, scatter extra contents into empty nearby spots.
+        for( int i=inNumNewSlots; i<oldNum; i++ ) {
+            
+            int contID = getContained( inX, inY, i );
+
+            char subCont = false;
+            
+            if( contID < 0 ) {
+                contID *= -1;
+                subCont = true;
+                }
+            
+            int emptyX, emptyY;
+            char foundEmpty = false;
+
+            int r = 1;
+            
+            while( !foundEmpty && r < 3 ) {    
+                for( int y = inY - r; y <= inY + r; y++ ) {
+                    for( int x = inX - r; x <= inX + r; x++ ) {
+                        
+                        if( getMapObject( x, y ) == 0 ) {
+                            emptyX = x;
+                            emptyY = y;
+                            foundEmpty = true;
+                            break;
+                            }
+                        }
+                    if( foundEmpty ) {
+                        break;
+                        }
+                    }
+                r++;
+                }
+            
+            if( foundEmpty ) {
+                setMapObject( emptyX, emptyY, contID );
+                
+                if( subCont ) {
+                    int numSub = getNumContained( inX, inY, i + 1 );
+                    
+                    for( int s=0; s<numSub; s++ ) {
+                        addContained( emptyX, emptyY, 
+                                      getContained( inX, inY, s, i + 1 ),
+                                      getSlotEtaDecay( inX, inY, 
+                                                       s, i + 1 ) );
+                        }
+                    }
+                }
+            }
+        
+
+        // now clear old extra contents from original spot
         dbPut( inX, inY, NUM_CONT_SLOT, inNumNewSlots, inSubCont );
         
         if( inSubCont == 0 ) {    
