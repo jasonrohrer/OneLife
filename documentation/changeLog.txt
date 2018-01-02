@@ -63,6 +63,9 @@ Server Fixes:
 
 --Fixed bug in life stats processing across multiple game servers.
 
+--Fixed so that all crontab scripts run with bash.  FoodStats update was
+  broken otherwise.
+
 
 
 

@@ -1,3 +1,5 @@
+SHELL=/bin/bash
+
 0 8 * * * /home/jcr15/checkout/OneLifeWorking/scripts/generateObjectReport.sh
 0 0 * * * /home/jcr15/updateMetascores.sh
 0 9 * * * /home/jcr15/mainBackupPush.sh
