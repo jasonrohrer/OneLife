@@ -640,7 +640,7 @@ static int getBaseMap( int inX, int inY ) {
     
     // first step:  save rest of work if density tells us that
     // nothing is here anyway
-    double density = getXYFractal( inX, inY, 0.1, 1 );
+    double density = getXYFractal( inX, inY, 0.1, 0.25 );
     
     // correction
     density = sigmoid( density, 0.1 );

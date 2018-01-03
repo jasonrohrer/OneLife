@@ -82,6 +82,10 @@ Server Fixes:
   smaller, and you have to walk less far to find a biome boundary.  This makes
   the landscape generally more interesting.
 
+--Shrunk map density variation scale by a factor of 4.  The empty regions of
+  the map are now much smaller.
+
+
 
 
 
