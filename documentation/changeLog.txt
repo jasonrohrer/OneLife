@@ -85,6 +85,8 @@ Server Fixes:
 --Shrunk map density variation scale by a factor of 4.  The empty regions of
   the map are now much smaller.
 
+--Support for sped up and frozen map transition times for testing.
+
 
 
 
