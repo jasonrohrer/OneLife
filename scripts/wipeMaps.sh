@@ -55,7 +55,12 @@ echo ""
 rm ~/checkout/OneLife/server/biome.db 
 rm ~/checkout/OneLife/server/map.db 
 rm ~/checkout/OneLife/server/mapTime.db
+rm ~/checkout/OneLife/server/floor.db 
+rm ~/checkout/OneLife/server/floorTime.db
 rm ~/checkout/OneLife/server/eve.db
+
+# don't delete playerStats.db
+
 rm ~/checkout/OneLife/server/recentPlacements.txt
 rm ~/checkout/OneLife/server/eveRadius.txt
 
@@ -87,6 +92,7 @@ echo ""
 while read user server port
 do
   echo "  Starting update on $server"
+  ssh $user@$server 'cd ~/checkout/OneLife; git pull'
   ssh $user@$server '~/checkout/OneLife/scripts/remoteServerWipeMap.sh'
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
