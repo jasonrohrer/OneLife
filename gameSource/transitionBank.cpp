@@ -119,7 +119,7 @@ float initTransBankStep() {
                 int newActor = 0;
                 int newTarget = 0;
                 int autoDecaySeconds = 0;
-                char epochAutoDecay = false;
+                int epochAutoDecay = 0;
                 float actorMinUseFraction = 0.0f;
                 float targetMinUseFraction = 0.0f;
                 
@@ -137,8 +137,8 @@ float initTransBankStep() {
                         &move,
                         &desiredMoveDist );
                 
-                if( autoDecaySeconds == -1 ) {
-                    epochAutoDecay = true;
+                if( autoDecaySeconds < 0 ) {
+                    epochAutoDecay = -autoDecaySeconds;
                     }
 
                 TransRecord *r = new TransRecord;
@@ -1413,7 +1413,10 @@ void addTrans( int inActor, int inTarget,
         t->newActor = inNewActor;
         t->newTarget = inNewTarget;
         t->autoDecaySeconds = inAutoDecaySeconds;
-        t->epochAutoDecay = ( inAutoDecaySeconds == -1 );
+        t->epochAutoDecay = 0;
+        if( inAutoDecaySeconds < 0 ) {
+            t->epochAutoDecay = -inAutoDecaySeconds;
+            }
         
         t->lastUseActor = inLastUseActor;
         t->lastUseTarget = inLastUseTarget;
@@ -1484,7 +1487,10 @@ void addTrans( int inActor, int inTarget,
             t->newActor = inNewActor;
             t->newTarget = inNewTarget;
             t->autoDecaySeconds = inAutoDecaySeconds;
-            t->epochAutoDecay = ( inAutoDecaySeconds == -1 );
+            t->epochAutoDecay = 0;
+            if( t->autoDecaySeconds < 0 ) {
+                t->epochAutoDecay = -inAutoDecaySeconds;
+                }
 
             t->reverseUseActor = inReverseUseActor;
             t->reverseUseTarget = inReverseUseTarget;
@@ -1853,8 +1859,8 @@ void setTransitionEpoch( int inEpocSeconds ) {
     for( int i=0; i<records.size(); i++ ) {
         TransRecord *tr = records.getElementDirect(i);
 
-        if( tr->epochAutoDecay ) {
-            tr->autoDecaySeconds = inEpocSeconds;
+        if( tr->epochAutoDecay > 0 ) {
+            tr->autoDecaySeconds = tr->epochAutoDecay * inEpocSeconds;
             }
         }
     }

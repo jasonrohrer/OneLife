@@ -1140,11 +1140,24 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
     
 
     if( mAutoDecayTimeField.isVisible() && 
-        mAutoDecayTimeField.getInt() == -1 ) {
+        mAutoDecayTimeField.getInt() < 0 ) {
+        
+        int numEpocs = - mAutoDecayTimeField.getInt();
         
         doublePair pos = mAutoDecayTimeField.getPosition();
         pos.x += 38;
-        smallFont->drawString( "(epoch)", pos, alignLeft );
+
+        const char *plural = "";
+        
+        if( numEpocs != 1 ) {
+            plural = "s";
+            }
+        char *displayString = autoSprintf( "(%d epoc%s)",
+                                           numEpocs,
+                                           plural );
+
+        smallFont->drawString( displayString, pos, alignLeft );
+        delete [] displayString;
         }
     
     }

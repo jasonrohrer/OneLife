@@ -22,7 +22,8 @@ typedef struct TransRecord {
         int autoDecaySeconds;
         
         // flag that this decay time is epoch time
-        char epochAutoDecay;
+        // 0 of not epoch, or N for the number of epochs
+        int epochAutoDecay;
 
         // specially flagged last-use transitions
         char lastUseActor;

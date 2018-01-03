@@ -47,6 +47,9 @@ Version 42     ???
 
 --Fixed autologin crash when email and account key not set.  Thanks tomberek.
 
+--Editor and transition bank can now specify decays that are multiple epochs
+  long.
+
 
 
 Server Fixes:
