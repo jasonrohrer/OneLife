@@ -492,7 +492,7 @@ static int computeMapBiomeIndex( int inX, int inY,
         double randVal = getXYFractal(  inX,
                                         inY,
                                         0.55, 
-                                        1.5 + 0.16666 * numBiomes );
+                                        0.83332 + 0.08333 * numBiomes );
         
         if( randVal > maxValue ) {
             // a new first place

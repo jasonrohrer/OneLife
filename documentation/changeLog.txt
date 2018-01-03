@@ -77,6 +77,12 @@ Server Fixes:
 --Fixed map generation so that fractals are centered around 0,0 to make testing
   scale factor easier.
 
+--Shrunk map scale by a factor of 3 and cut map scale increase factor
+  associated with additional biomes in half.  Local biome areas are now
+  smaller, and you have to walk less far to find a biome boundary.  This makes
+  the landscape generally more interesting.
+
+
 
 
 Version 40     2017-December-1
