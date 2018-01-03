@@ -64,3 +64,4 @@ ln -s ../../OneLifeData7/transitions .
 
 
 echo 0 > settings/requireTicketServerCheck.ini
+echo 1 > settings/forceEveLocation.ini
