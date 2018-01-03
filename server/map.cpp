@@ -492,7 +492,7 @@ static int computeMapBiomeIndex( int inX, int inY,
         double randVal = getXYFractal(  inX,
                                         inY,
                                         0.55, 
-                                        .5 + 0.16666 * numBiomes );
+                                        1.5 + 0.16666 * numBiomes );
         
         if( randVal > maxValue ) {
             // a new first place
@@ -649,8 +649,10 @@ static int getBaseMap( int inX, int inY ) {
     density *= .4;
     // good for zoom in to map for teaser
     //density = .70;
-
-    if( getXYRandom( 287 + inX, 383 + inY ) < density ) {
+    
+    setXYRandomSeed( 9877 );
+    
+    if( getXYRandom( inX, inY ) < density ) {
 
 
 
@@ -682,7 +684,9 @@ static int getBaseMap( int inX, int inY ) {
         //printf( "Second place gap = %f, random(%d,%d)=%f\n", secondPlaceGap,
         //        inX, inY, getXYRandom( 2087 + inX, 793 + inY ) );
         
-        if( getXYRandom( 2087 + inX, 793 + inY ) > 
+        setXYRandomSeed( 348763 );
+        
+        if( getXYRandom( inX, inY ) > 
             .5 + secondPlaceReduction * secondPlaceGap ) {
         
             // note that lastCheckedBiome is NOT changed, so ground
@@ -746,7 +750,9 @@ static int getBaseMap( int inX, int inY ) {
         // pick one of our natural objects at random
 
         // pick value between 0 and total weight
-
+        
+        setXYRandomSeed( 4593873 );
+        
         double randValue = 
             totalChanceWeight[pickedBiome] * getXYRandom( inX, inY );
 
