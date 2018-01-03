@@ -5954,7 +5954,7 @@ void LivingLifePage::handleOurDeath() {
         mDeathReason = stringDuplicate( "" );
         }
     
-    int years = (int)floor( computeCurrentAge( getOurLiveObject() ) );
+    int years = fmin(60,(int)floor( computeCurrentAge( getOurLiveObject() ) ));
 
     char *ageString;
     
