@@ -13240,10 +13240,12 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
     if( playerActionPending ) {
         // block further actions until update received to confirm last
         // action
+        mouseDown = false;
         return;
         }
 
-    if( getOurLiveObject()->inMotion 
+    if( mouseDown && 
+        getOurLiveObject()->inMotion 
         &&
         mouseDownFrames >  
         minMouseDownFrames / frameRateFactor ) {
