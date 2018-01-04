@@ -2109,7 +2109,8 @@ void LivingLifePage::drawMapCell( int inMapI,
         char highlight = false;
         float highlightFade = 1.0f;
         
-        if( mCurMouseOverID != 0 &&
+        if( mCurMouseOverID > 0 &&
+            ! mCurMouseOverSelf &&
             mCurMouseOverSpot.y * mMapD + mCurMouseOverSpot.x == inMapI ) {
             
             if( mCurMouseOverBehind ) {
@@ -4412,7 +4413,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
     // finally, draw any highlighted our-placements
-    if( mCurMouseOverID != 0 && mCurMouseOverBehind ) {
+    if( mCurMouseOverID > 0 && ! mCurMouseOverSelf && mCurMouseOverBehind ) {
         int worldY = mCurMouseOverSpot.y + mMapOffsetY - mMapD / 2;
         
         int screenY = CELL_D * worldY;
@@ -5764,15 +5765,31 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                lastScreenViewCenter.y - 313 };
 
             char *des;
+            char *desToDelete = NULL;
             
             if( idToDescribe == -99 ) {
-                des = (char*)translate( "you" );
+                if( ourLiveObject->holdingID > 0 &&
+                    getObject( ourLiveObject->holdingID )->foodValue > 0 ) {
+                    
+                    des = autoSprintf( "%s %s",
+                                       translate( "eat" ),
+                                       getObject( ourLiveObject->holdingID )->
+                                       description );
+                    desToDelete = des;
+                    }
+                else {
+                    des = (char*)translate( "you" );
+                    }
                 }
             else {
                 des = getObject( idToDescribe )->description;
                 }
             
             char *stringUpper = stringToUpperCase( des );
+
+            if( desToDelete != NULL ) {
+                delete [] desToDelete;
+                }
 
             stripDescriptionComment( stringUpper );
             
@@ -6531,7 +6548,7 @@ void LivingLifePage::step() {
 
 
 
-    if( mCurMouseOverID != 0 ) {
+    if( mCurMouseOverID > 0 && ! mCurMouseOverSelf ) {
         mCurMouseOverFade += 0.2 * frameRateFactor;
         if( mCurMouseOverFade >= 1 ) {
             mCurMouseOverFade = 1.0;
@@ -11424,6 +11441,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     mCurMouseOverID = 0;
     mCurMouseOverFade = 0;
     mCurMouseOverBehind = false;
+    mCurMouseOverPerson = false;
+    mCurMouseOverSelf = false;
 
     mPrevMouseOverSpots.deleteAll();
     mPrevMouseOverSpotFades.deleteAll();
@@ -12002,7 +12021,9 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
 
 
 
-    if( mCurMouseOverID != 0 
+    if( mCurMouseOverID > 0 
+        && 
+        ! mCurMouseOverSelf
         &&
         ( mCurMouseOverID != destID
           ||
@@ -12031,6 +12052,8 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
     
     if( destID == 0 ) {
         if( p.hitSelf ) {
+            mCurMouseOverSelf = true;
+            
             // clear when mousing over bare parts of body
             // show YOU
             mCurMouseOverID = -99;
@@ -12057,6 +12080,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
     
 
     if( destID > 0 ) {
+        mCurMouseOverSelf = false;
         
         if( ( destID != mCurMouseOverID ||
               mCurMouseOverSpot.x != mapX ||
@@ -12102,6 +12126,14 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
     
     if( overNothing && mCurMouseOverID != 0 ) {
         mLastMouseOverID = mCurMouseOverID;
+        
+        if( mCurMouseOverSelf ) {
+            // don't keep YOU or EAT or clothing tips around after we mouse 
+            // outside of them
+            mLastMouseOverID = 0;
+            }
+        mCurMouseOverSelf = false;
+        
         mCurMouseOverID = 0;
         mCurMouseOverBehind = false;
         mLastMouseOverFade = 1.0f;

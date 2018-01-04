@@ -58,6 +58,7 @@ Version 42     ???
 
 --Mousing over clothing, or items contained in clothing, now changes tool tip.
 
+--Mousing over bare skin while holding edible now shows EAT tooltip.
 
 
 
