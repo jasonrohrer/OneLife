@@ -113,7 +113,7 @@ Server Fixes:
   standing still in that spot.
 
 --Fixed so that non-moving player is still killed by old age.  We check all
-  ages ever server step.  Age-death time is more accurate now, because server
+  ages every server step.  Age-death time is more accurate now, because server
   sleep is shortened if an age-related death is near.
 
 
