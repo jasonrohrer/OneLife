@@ -103,6 +103,8 @@ Server Fixes:
 
 --Support for sped up and frozen map transition times for testing.
 
+--Frame rate measuring and vsync detection/warning only happens on first run
+  now, with results saved to settings folder.
 
 
 
