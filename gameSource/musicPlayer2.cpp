@@ -253,6 +253,19 @@ void stepMusicPlayer() {
 
 static float *samplesL = NULL;
 static float *samplesR = NULL;
+static int hintedLengthInBytes = -1;
+
+void freeHintedBuffers() {
+    if( samplesL != NULL ) {
+        delete [] samplesL;
+        samplesL = NULL;
+        }
+    if( samplesR != NULL ) {
+        delete [] samplesR;
+        samplesR = NULL;
+        }
+    hintedLengthInBytes = -1;
+    }
 
 
 
@@ -265,16 +278,9 @@ void freeMusicPlayer() {
         oggData = NULL;
         }
     
-    
-    if( samplesL != NULL ) {
-        delete [] samplesL;
-        samplesL = NULL;
-        }
-    if( samplesR != NULL ) {
-        delete [] samplesR;
-        samplesR = NULL;
-        }
+    freeHintedBuffers();
     }
+
 
 
 
@@ -282,15 +288,7 @@ void hintBufferSize( int inLengthToFillInBytes ) {
     // 2 bytes for each channel of stereo sample
     int numSamples = inLengthToFillInBytes / 4;
 
-    if( samplesL != NULL ) {
-        delete [] samplesL;
-        samplesL = NULL;
-        }
-    if( samplesR != NULL ) {
-        delete [] samplesR;
-        samplesR = NULL;
-        }
-    
+    freeHintedBuffers();    
 
     samplesL = new float[ numSamples ];
     samplesR = new float[ numSamples ];
@@ -298,7 +296,8 @@ void hintBufferSize( int inLengthToFillInBytes ) {
     for( int i=0; i<numSamples; i++ ) {
         samplesL[i] = 0;
         samplesR[i] = 0;
-        }    
+        }
+    hintedLengthInBytes = inLengthToFillInBytes;
     }
 
 
@@ -358,8 +357,9 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
 
 
 
-    if( samplesL == NULL ) {
+    if( samplesL == NULL || inLengthToFillInBytes != hintedLengthInBytes ) {
         // never got hint
+        // or hinted wrong size
         hintBufferSize( inLengthToFillInBytes );
         }
 
