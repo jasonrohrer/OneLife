@@ -122,6 +122,8 @@ Server Fixes:
   ages every server step.  Age-death time is more accurate now, because server
   sleep is shortened if an age-related death is near.
 
+--Fixed crash when newly connected player errors before first PU message is
+  sent to them.
 
 
 

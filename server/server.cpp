@@ -7355,7 +7355,7 @@ int main() {
                 int numPlayers = players.size();
             
                 // must be last in message
-                char *playersLine;
+                char *playersLine = NULL;
                 
                 for( int i=0; i<numPlayers; i++ ) {
                 
@@ -7379,9 +7379,11 @@ int main() {
                         playersLine = messageLine;
                         }
                     }
-
-                messageBuffer.appendElementString( playersLine );
-                delete [] playersLine;
+                
+                if( playersLine != NULL ) {    
+                    messageBuffer.appendElementString( playersLine );
+                    delete [] playersLine;
+                    }
                 
                 messageBuffer.push_back( '#' );
             
