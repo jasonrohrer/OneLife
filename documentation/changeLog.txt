@@ -56,6 +56,8 @@ Version 42     ???
 --Mousing over items in a container now changes tool tip text (to show you what
   item will be removed on right-click).
 
+--Mousing over clothing, or items contained in clothing, now changes tool tip.
+
 
 
 

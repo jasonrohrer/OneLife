@@ -5762,8 +5762,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             doublePair pos = { lastScreenViewCenter.x, 
                                lastScreenViewCenter.y - 313 };
-            char *des = getObject( idToDescribe )->description;
 
+            char *des;
+            
+            if( idToDescribe == -99 ) {
+                des = (char*)translate( "you" );
+                }
+            else {
+                des = getObject( idToDescribe )->description;
+                }
+            
             char *stringUpper = stringToUpperCase( des );
 
             stripDescriptionComment( stringUpper );
@@ -12018,6 +12026,34 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         mPrevMouseOverSpotFades.push_back( mCurMouseOverFade );
         mPrevMouseOverSpotsBehind.push_back( mCurMouseOverBehind );
         }
+
+    char overNothing = true;
+    
+    if( destID == 0 ) {
+        if( p.hitSelf ) {
+            // clear when mousing over bare parts of body
+            // show YOU
+            mCurMouseOverID = -99;
+            
+            overNothing = false;
+            
+            LiveObject *ourLiveObject = getOurLiveObject();
+            
+            if( p.hitClothingIndex != -1 ) {
+                if( p.hitSlotIndex != -1 ) {
+                    mCurMouseOverID = 
+                        ourLiveObject->clothingContained[ p.hitClothingIndex ].
+                        getElementDirect( p.hitSlotIndex );
+                    }
+                else {
+                    ObjectRecord *c = 
+                        clothingByIndex( ourLiveObject->clothing, 
+                                         p.hitClothingIndex );
+                    mCurMouseOverID = c->id;
+                    }
+                }
+            }        
+        }
     
 
     if( destID > 0 ) {
@@ -12031,7 +12067,8 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             }
 
         mCurMouseOverID = destID;
-
+        overNothing = false;
+        
         if( p.hitSlotIndex != -1 ) {
             mCurMouseOverID = 
                 mMapContainedStacks[ mapY * mMapD + mapX ].
@@ -12061,7 +12098,9 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
                 }
             }
         }
-    else if( mCurMouseOverID != 0 ) {
+    
+    
+    if( overNothing && mCurMouseOverID != 0 ) {
         mLastMouseOverID = mCurMouseOverID;
         mCurMouseOverID = 0;
         mCurMouseOverBehind = false;

@@ -115,6 +115,7 @@ lastAtePermanent "ATE FROM"
 
 breastMilk "DRANK BREAST MILK"
 
+you "YOU"
 
 
 eatHint "MOUTH"
