@@ -63,6 +63,12 @@ Version 42     ???
 --Fixed so that invisible-when-worn parts of clothing don't get moused-over
   when clothing is worn.
 
+--Frame rate measuring and vsync detection/warning only happens on first run
+  now, with results saved to settings folder.
+
+--Display target frame rate and vsync mode on Settings screen, with button to
+  re-detect.
+
 
 
 Server Fixes:
@@ -102,12 +108,6 @@ Server Fixes:
   the map are now much smaller.
 
 --Support for sped up and frozen map transition times for testing.
-
---Frame rate measuring and vsync detection/warning only happens on first run
-  now, with results saved to settings folder.
-
---Display target frame rate and vsync mode on Settings screen, with button to
-  re-detect.
 
 
 
