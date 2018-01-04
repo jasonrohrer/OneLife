@@ -41,6 +41,7 @@ class SettingsPage : public GamePage, public ActionListener {
 
         TextButton mBackButton;
         TextButton mRestartButton;
+        TextButton mRedetectButton;
 
         CheckboxButton mFullscreenBox;
         

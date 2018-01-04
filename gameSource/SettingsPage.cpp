@@ -1,9 +1,11 @@
 #include "SettingsPage.h"
 
 
+#include "minorGems/game/game.h"
 #include "minorGems/game/Font.h"
 
 #include "minorGems/util/SettingsManager.h"
+#include "minorGems/util/stringUtils.h"
 
 #include "minorGems/game/game.h"
 #include "minorGems/system/Time.h"
@@ -22,6 +24,7 @@ extern float musicLoudness;
 SettingsPage::SettingsPage()
         : mBackButton( mainFont, 0, -250, translate( "backButton" ) ),
           mRestartButton( mainFont, 128, 128, translate( "restartButton" ) ),
+          mRedetectButton( mainFont, 153, 249, translate( "redetectButton" ) ),
           mFullscreenBox( 0, 128, 4 ),
           mMusicLoudnessSlider( mainFont, 0, 0, 4, 200, 30,
                                 0.0, 1.0, 
@@ -32,6 +35,7 @@ SettingsPage::SettingsPage()
     
     setButtonStyle( &mBackButton );
     setButtonStyle( &mRestartButton );
+    setButtonStyle( &mRedetectButton );
     
     addComponent( &mBackButton );
     mBackButton.addActionListener( this );
@@ -42,6 +46,10 @@ SettingsPage::SettingsPage()
     addComponent( &mRestartButton );
     mRestartButton.addActionListener( this );
     
+    addComponent( &mRedetectButton );
+    mRedetectButton.addActionListener( this );
+    
+
     mRestartButton.setVisible( false );
     
     mOldFullscreenSetting = 
@@ -84,7 +92,8 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
         
         mRestartButton.setVisible( mOldFullscreenSetting != newSetting );
         }
-    else if( inTarget == &mRestartButton ) {
+    else if( inTarget == &mRestartButton ||
+             inTarget == &mRedetectButton ) {
         // always re-measure frame rate after relaunch
         SettingsManager::setSetting( "targetFrameRate", -1 );
         SettingsManager::setSetting( "countingOnVsync", -1 );
@@ -144,6 +153,8 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
     }
 
 
+extern int targetFramesPerSecond;
+
 
 void SettingsPage::draw( doublePair inViewCenter, 
                          double inViewSize ) {
@@ -155,6 +166,34 @@ void SettingsPage::draw( doublePair inViewCenter,
     pos.y -= 2;
     
     mainFont->drawString( translate( "fullscreen" ), pos, alignRight );
+    
+    pos = mFullscreenBox.getPosition();
+    
+    pos.y += 96;
+    pos.x -= 16;
+    
+    if( getCountingOnVsync() ) {
+        mainFont->drawString( translate( "vsyncYes" ), pos, alignLeft );
+        }
+    else {
+        mainFont->drawString( translate( "vsyncNo" ), pos, alignLeft );
+        }
+    
+    pos.y += 44;
+
+    char *fpsString = autoSprintf( "%d", targetFramesPerSecond );
+    
+    mainFont->drawString( fpsString, pos, alignLeft );
+    delete [] fpsString;
+    
+
+    pos = mFullscreenBox.getPosition();
+    pos.x -= 30;
+
+    pos.y += 96;
+    mainFont->drawString( translate( "vsyncOn" ), pos, alignRight );
+    pos.y += 44;
+    mainFont->drawString( translate( "targetFPS" ), pos, alignRight );
     }
 
 

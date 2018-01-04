@@ -106,6 +106,9 @@ Server Fixes:
 --Frame rate measuring and vsync detection/warning only happens on first run
   now, with results saved to settings folder.
 
+--Display target frame rate and vsync mode on Settings screen, with button to
+  re-detect.
+
 
 
 

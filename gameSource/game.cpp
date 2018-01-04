@@ -189,7 +189,7 @@ int webRetrySeconds;
 
 double frameRateFactor = 1;
 int baseFramesPerSecond = 60;
-
+int targetFramesPerSecond = baseFramesPerSecond;
 
 char firstDrawFrameCalled = false;
 int firstServerMessagesReceived = 0;
@@ -437,6 +437,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
         
         numLoadingSteps /= frameRateFactor;
         }
+    
+    targetFramesPerSecond = inTargetFrameRate;
     
     
 

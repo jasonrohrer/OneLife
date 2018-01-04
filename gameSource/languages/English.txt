@@ -87,10 +87,15 @@ charLimit "5000 CHARACTER LIMIT REACHED"
 
 backButton "BACK"
 restartButton "RESTART"
-fullscreen "FULLSCREEN"
-musicLoudness "MUSIC LOUDNESS"
-soundLoudness "SOUND LOUDNESS"
+fullscreen "FULLSCREEN:"
+musicLoudness "MUSIC LOUDNESS:"
+soundLoudness "SOUND LOUDNESS:"
 
+targetFPS "TARGET FRAME RATE:"
+vsyncOn "USING VSYNC:"
+vsyncYes "YES"
+vsyncNo "NO"
+redetectButton "RE-DETECT"
 
 
 downloadingUpdate "DOWNLOADING UPDATE"
