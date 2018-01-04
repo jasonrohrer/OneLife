@@ -3325,6 +3325,8 @@ int main() {
         
         int numLive = players.size();
         
+        double secPerYear = 1.0 / getAgeRate();
+        
 
         // check for timeout for shortest player move or food decrement
         // so that we wake up from listening to socket to handle it
@@ -3413,6 +3415,20 @@ int main() {
                     }
                 }
             
+            // look at old age death to
+            double ageLeft = forceDeathAge - computeAge( nextPlayer );
+            
+            double ageSecondsLeft = ageLeft * secPerYear;
+            
+            if( ageSecondsLeft < minMoveTime ) {
+                minMoveTime = ageSecondsLeft;
+
+                if( minMoveTime < 0 ) {
+                    minMoveTime = 0;
+                    }
+                }
+            
+
             // as low as it can get, no need to check other players
             if( minMoveTime == 0 ) {
                 break;
