@@ -65,6 +65,13 @@ SettingsPage::SettingsPage()
 
 
 
+SettingsPage::~SettingsPage() {
+    clearSoundUsage( &mTestSound );
+    }
+
+
+
+
 void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mBackButton ) {
         setSignal( "back" );
@@ -174,13 +181,12 @@ void SettingsPage::makeActive( char inFresh ) {
 
             if( oID > 0 ) {
                 ObjectRecord *r = getObject( oID );
-                mTestSound = r->usingSound;
-
-                if( mTestSound.numSubSounds >= 1 ) {
+                if( r->usingSound.numSubSounds >= 1 ) {
+                    mTestSound = copyUsage( r->usingSound );
                     // constrain to only first subsound                    
                     mTestSound.numSubSounds = 1;
                     // play it at full volume
-                    mTestSound.volumes[1] = 1.0;
+                    mTestSound.volumes[0] = 1.0;
                     }
                 }
             tryCount ++;

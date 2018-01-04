@@ -16,6 +16,7 @@ class SettingsPage : public GamePage, public ActionListener {
     public:
         
         SettingsPage();
+        ~SettingsPage();
         
 
         virtual void draw( doublePair inViewCenter, 
