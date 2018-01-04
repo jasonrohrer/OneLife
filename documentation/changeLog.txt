@@ -109,6 +109,9 @@ Server Fixes:
 
 --Support for sped up and frozen map transition times for testing.
 
+--Can no longer close a vertically-oriented door on top of someone who is
+  standing still in that spot.
+
 
 
 

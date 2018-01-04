@@ -1418,18 +1418,8 @@ char *getHoldingString( LiveObject *inObject ) {
 
 
 
-
-// checks both grid of objects and live, non-moving player positions
-char isMapSpotEmpty( int inX, int inY, char inConsiderPlayers = true ) {
-    int target = getMapObject( inX, inY );
-    
-    if( target != 0 ) {
-        return false;
-        }
-    
-    if( !inConsiderPlayers ) {
-        return true;
-        }
+// only consider living, non-moving players
+char isMapSpotEmptyOfPlayers( int inX, int inY ) {
 
     int numLive = players.size();
     
@@ -1451,6 +1441,24 @@ char isMapSpotEmpty( int inX, int inY, char inConsiderPlayers = true ) {
         }
     
     return true;
+    }
+
+
+
+
+// checks both grid of objects and live, non-moving player positions
+char isMapSpotEmpty( int inX, int inY, char inConsiderPlayers = true ) {
+    int target = getMapObject( inX, inY );
+    
+    if( target != 0 ) {
+        return false;
+        }
+    
+    if( !inConsiderPlayers ) {
+        return true;
+        }
+    
+    return isMapSpotEmptyOfPlayers( inX, inY );
     }
 
 
@@ -4793,7 +4801,31 @@ int main() {
                                     // what we'd get out of this transition?
                                     ( r->newActor == 0 || 
                                       getObject( r->newActor )->minPickupAge <= 
-                                      computeAge( nextPlayer ) ) ) {
+                                      computeAge( nextPlayer ) ) 
+                                    &&
+                                    // does this create a blocking object?
+                                    // only consider vertical-blocking
+                                    // objects (like vertical walls and doors)
+                                    // because these look especially weird
+                                    // on top of a player
+                                    // We can detect these because they 
+                                    // also hug the floor
+                                    // Horizontal doors look fine when
+                                    // closed on player because of their
+                                    // vertical offset.
+                                    //
+                                    // if so, make sure there's not someone
+                                    // standing still there
+                                    ( r->newTarget == 0 ||
+                                      ! 
+                                      ( getObject( r->newTarget )->
+                                          blocksWalking
+                                        &&
+                                        getObject( r->newTarget )->
+                                          floorHugging )
+                                      ||
+                                      isMapSpotEmptyOfPlayers( m.x, 
+                                                               m.y ) ) ) {
                                     
                                     if( ! defaultTrans ) {    
                                         handleHoldingChange( nextPlayer,
