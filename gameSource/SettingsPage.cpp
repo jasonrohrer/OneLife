@@ -85,6 +85,10 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
         mRestartButton.setVisible( mOldFullscreenSetting != newSetting );
         }
     else if( inTarget == &mRestartButton ) {
+        // always re-measure frame rate after relaunch
+        SettingsManager::setSetting( "targetFrameRate", -1 );
+        SettingsManager::setSetting( "countingOnVsync", -1 );
+        
         char relaunched = relaunchGame();
         
         if( !relaunched ) {
