@@ -532,6 +532,10 @@ double getClosestObjectPart( ObjectRecord *inObject,
                              // array of vectors, one for each clothing slot
                              // can be NULL
                              SimpleVector<int> *inClothingContained,
+                             // true if inObject is currently being worn
+                             // controls visibility of worn/unworn layers
+                             // in clothing objects
+                             char inWorn,
                              double inAge,
                              int inPickedLayer,
                              char inFlip,

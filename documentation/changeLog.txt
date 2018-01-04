@@ -60,6 +60,9 @@ Version 42     ???
 
 --Mousing over bare skin while holding edible now shows EAT tooltip.
 
+--Fixed so that invisible-when-worn parts of clothing don't get moused-over
+  when clothing is worn.
+
 
 
 Server Fixes:

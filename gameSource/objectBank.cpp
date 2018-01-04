@@ -3068,6 +3068,7 @@ double getClosestObjectPart( ObjectRecord *inObject,
                              ClothingSet *inClothing,
                              SimpleVector<int> *inContained,
                              SimpleVector<int> *inClothingContained,
+                             char inWorn,
                              double inAge,
                              int inPickedLayer,
                              char inFlip,
@@ -3212,6 +3213,9 @@ double getClosestObjectPart( ObjectRecord *inObject,
                                                     NULL,
                                                     clothingCont,
                                                     NULL,
+                                                    // clothing is worn
+                                                    // on body currently
+                                                    true,
                                                     -1,
                                                     -1,
                                                     inFlip,
@@ -3284,6 +3288,23 @@ double getClosestObjectPart( ObjectRecord *inObject,
             // skip this transparent sprite
             continue;
             }
+
+        if( inObject->clothing != 'n' ) {
+            if( inObject->spriteInvisibleWhenWorn[i] != 0 ) {
+                
+                if( inWorn && inObject->spriteInvisibleWhenWorn[i] == 1 ) {
+                    // this layer invisible when worn
+                    continue;
+                    }
+                else if( ! inWorn && 
+                         inObject->spriteInvisibleWhenWorn[i] == 2 ) {
+                    
+                    // this layer invisible when NOT worn
+                    continue;
+                    }
+                }
+            }
+        
         
         if( inFlip ) {
             offset = rotate( offset, -2 * M_PI * inObject->spriteRot[i] );
@@ -3386,6 +3407,7 @@ double getClosestObjectPart( ObjectRecord *inObject,
                                       NULL,
                                       NULL,
                                       NULL,
+                                      false,
                                       -1,
                                       -1,
                                       inFlip,

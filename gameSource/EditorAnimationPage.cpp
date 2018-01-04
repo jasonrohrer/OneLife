@@ -3024,6 +3024,7 @@ int EditorAnimationPage::getClosestSpriteOrSlot( float inX, float inY ) {
                               NULL,
                               NULL,
                               NULL,
+                              false,
                               age,
                               -1,
                               mFlipDraw,
