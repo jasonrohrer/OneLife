@@ -8546,7 +8546,7 @@ void LivingLifePage::step() {
                             if( ourObj->pendingActionAnimationProgress != 0 &&
                                 ! ourObj->inMotion ) {
                                 
-                                addNewAnimPlayerOnly( existing, ground );
+                                addNewAnimPlayerOnly( existing, ground2 );
                                 }
                             }
                         

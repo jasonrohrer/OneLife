@@ -50,6 +50,10 @@ Version 42     ???
 --Editor and transition bank can now specify decays that are multiple epochs
   long.
 
+--Fixed glitch in arm position when non-handheld object used on another object
+  and no transition applies.
+
+
 
 
 Server Fixes:
