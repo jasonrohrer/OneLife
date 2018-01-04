@@ -1049,6 +1049,33 @@ static void startConnecting() {
 
 
 
+void showDiedPage() {
+    lastScreenViewCenter.x = 0;
+    lastScreenViewCenter.y = 0;
+    
+    setViewCenterPosition( lastScreenViewCenter.x, 
+                           lastScreenViewCenter.y );
+    
+    currentGamePage = extendedMessagePage;
+    
+    extendedMessagePage->setMessageKey( "youDied" );
+    
+    char *reason = livingLifePage->getDeathReason();
+    
+    if( reason == NULL ) {
+        extendedMessagePage->setSubMessage( "" );
+        }
+    else {
+        extendedMessagePage->setSubMessage( reason );
+        
+        delete [] reason;
+        }
+    
+    
+    currentGamePage->base_makeActive( true );
+    }
+
+    
 
 void drawFrame( char inUpdate ) {    
 
@@ -1107,6 +1134,13 @@ void drawFrame( char inUpdate ) {
                 }
             }
         
+        
+        // keep checking for this signal even if paused
+        if( currentGamePage == livingLifePage &&
+            livingLifePage->checkSignal( "died" ) ) {
+            showDiedPage();
+            }
+
 
         return;
         }
@@ -1653,30 +1687,7 @@ void drawFrame( char inUpdate ) {
                 currentGamePage->base_makeActive( true );
                 }
             else if( livingLifePage->checkSignal( "died" ) ) {
-                
-                lastScreenViewCenter.x = 0;
-                lastScreenViewCenter.y = 0;
-
-                setViewCenterPosition( lastScreenViewCenter.x, 
-                                       lastScreenViewCenter.y );
-                
-                currentGamePage = extendedMessagePage;
-                        
-                extendedMessagePage->setMessageKey( "youDied" );
-                
-                char *reason = livingLifePage->getDeathReason();
-                
-                if( reason == NULL ) {
-                    extendedMessagePage->setSubMessage( "" );
-                    }
-                else {
-                    extendedMessagePage->setSubMessage( reason );
-                    
-                    delete [] reason;
-                    }
-                
-
-                currentGamePage->base_makeActive( true );
+                showDiedPage();
                 }
             
             }

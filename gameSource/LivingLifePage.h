@@ -46,6 +46,8 @@ typedef struct LiveObject {
         double age;
         double ageRate;
         
+        char finalAgeSet;
+
         double lastAgeSetTime;
         
         int foodStore;

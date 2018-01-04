@@ -69,6 +69,12 @@ Version 42     ???
 --Display target frame rate and vsync mode on Settings screen, with button to
   re-detect.
 
+--Fixed so that player death handled instantly even when game is paused.  Fixed
+  so that final displayed age is age provided by server, not age updated with
+  local clock (so if player dies while machine is asleep and receives death
+  message later, proper death age will be displayed).  Also fixes problem with
+  59-year rounding issue.  Thanks tomberek.
+
 
 
 Server Fixes:

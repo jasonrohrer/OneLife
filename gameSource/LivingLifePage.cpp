@@ -365,8 +365,15 @@ static void removeDoubleBacksFromPath( GridPos **inPath, int *inLength ) {
 
 
 static double computeCurrentAge( LiveObject *inObj ) {
-    return inObj->age + 
-        inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
+    if( inObj->finalAgeSet ) {
+        return inObj->age;
+        }
+    else {
+        // update age using clock
+        return inObj->age + 
+            inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
+        }
+    
     }
 
 
@@ -8226,7 +8233,10 @@ void LivingLifePage::step() {
                 o.subContainedIDs = NULL;
                 
                 o.onFinalPathStep = false;
-
+                
+                o.age = 0;
+                o.finalAgeSet = false;
+                
                 // don't track these for other players
                 o.foodStore = 0;
                 o.foodCapacity = 0;                
@@ -9408,6 +9418,17 @@ void LivingLifePage::step() {
                 else if( o.id == ourID && 
                          strstr( lines[i], "X X" ) != NULL  ) {
                     // we died
+
+                    // get age after X X
+                    char *xxPos = strstr( lines[i], "X X" );
+                    
+                    LiveObject *ourLiveObject = getOurLiveObject();
+                    
+                    if( xxPos != NULL ) {
+                        sscanf( xxPos, "X X %lf", &( ourLiveObject->age ) );
+                        }
+                    ourLiveObject->finalAgeSet = true;
+                    
 
                     if( mDeathReason != NULL ) {
                         delete [] mDeathReason;
