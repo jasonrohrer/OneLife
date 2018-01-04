@@ -53,6 +53,9 @@ Version 42     ???
 --Fixed glitch in arm position when non-handheld object used on another object
   and no transition applies.
 
+--Mousing over items in a container now changes tool tip text (to show you what
+  item will be removed on right-click).
+
 
 
 

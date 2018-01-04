@@ -12031,6 +12031,14 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             }
 
         mCurMouseOverID = destID;
+
+        if( p.hitSlotIndex != -1 ) {
+            mCurMouseOverID = 
+                mMapContainedStacks[ mapY * mMapD + mapX ].
+                getElementDirect( p.hitSlotIndex );
+            }
+        
+        
         mCurMouseOverSpot.x = mapX;
         mCurMouseOverSpot.y = mapY;
         
