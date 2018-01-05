@@ -84,6 +84,7 @@ void freePlayerStats() {
         }
 
     for( int i=0; i<records.size(); i++ ) {
+        delete records.getElement(i)->request;
         delete [] records.getElement(i)->email;
         }
     records.deleteAll();
