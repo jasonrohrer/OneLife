@@ -239,10 +239,10 @@ int main( int inNumArgs, char **inArgs ) {
                 char *message = getNextMessage( &( connections[i] ) );
 
                 if( message != NULL ) {
-                    printf( "Client %d got message:\n%s\n\n", i, message );
+                    //printf( "Client %d got message:\n%s\n\n", i, message );
                     
                     if( strstr( message, "MC" ) == message ) {
-                        printf( "Client %d got first map chunk\n", i );
+                        //printf( "Client %d got first map chunk\n", i );
 
                         int sizeX, sizeY, x, y, binarySize, compSize;
                         sscanf( message, "MC\n%d %d %d %d\n%d %d\n", 
