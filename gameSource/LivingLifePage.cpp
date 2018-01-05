@@ -7320,10 +7320,9 @@ void LivingLifePage::step() {
     
             
             for( int i=0; i<compressedSize; i++ ) {
-                compressedChunk[i] = serverSocketBuffer.getElementDirect( 0 );
-                
-                serverSocketBuffer.deleteElement( 0 );
+                compressedChunk[i] = serverSocketBuffer.getElementDirect( i );
                 }
+            serverSocketBuffer.deleteStartElements( compressedSize );
 
             
             unsigned char *decompressedChunk =
