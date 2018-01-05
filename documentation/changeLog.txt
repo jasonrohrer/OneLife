@@ -77,6 +77,9 @@ Version 42     ???
 
 --Improved efficiency of message input buffers.
 
+--Fixed broken game state on next life when player dies while pending messages
+  are still in the queue.
+
 
 
 Server Fixes:

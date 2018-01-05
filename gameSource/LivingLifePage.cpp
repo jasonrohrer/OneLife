@@ -9418,6 +9418,9 @@ void LivingLifePage::step() {
                          strstr( lines[i], "X X" ) != NULL  ) {
                     // we died
 
+                    printf( "Got X X death message for our ID %d\n",
+                            ourID );
+
                     // get age after X X
                     char *xxPos = strstr( lines[i], "X X" );
                     
@@ -9629,6 +9632,9 @@ void LivingLifePage::step() {
                 
                 ourID = ourObject->id;
                 
+                printf( "Got first PLAYER_UPDATE message, our ID = %d\n",
+                        ourID );
+
                 ourObject->displayChar = 'A';
                 }
             
@@ -11555,6 +11561,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     mPageStartTime = game_getCurrentTime();
     
     setWaiting( true, false );
+
+    readyPendingReceivedMessages.deallocateStringElements();
 
     clearLiveObjects();
     mFirstServerMessagesReceived = 0;
