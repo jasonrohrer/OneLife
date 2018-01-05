@@ -611,12 +611,13 @@ char *getNextClientMessage( SimpleVector<char> *inBuffer ) {
     
     char *message = new char[ index + 1 ];
     
+    // all but terminal character
     for( int i=0; i<index; i++ ) {
-        message[i] = inBuffer->getElementDirect( 0 );
-        inBuffer->deleteElement( 0 );
+        message[i] = inBuffer->getElementDirect( i );
         }
-    // delete message terminal character
-    inBuffer->deleteElement( 0 );
+    
+    // delete from buffer, including terminal character
+    inBuffer->deleteStartElements( index + 1 );
     
     message[ index ] = '\0';
     
