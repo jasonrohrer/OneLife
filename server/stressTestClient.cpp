@@ -39,9 +39,15 @@ typedef struct Client {
 // NULL if no message read
 char *getNextMessage( Client *inC ) {
 
-    while( inC->skipCompressedData > 0 && inC->buffer.size() > 0 ) {
-        inC->buffer.deleteElement( 0 );
-        inC->skipCompressedData--;
+    if( inC->skipCompressedData > 0 && inC->buffer.size() > 0 ) {
+        int numToDelete = inC->skipCompressedData;
+        
+        if( numToDelete > inC->buffer.size() ) {
+            numToDelete = inC->buffer.size();
+            }
+        
+        inC->buffer.deleteStartElements( numToDelete );
+        inC->skipCompressedData -= numToDelete;
         }
     
 
@@ -108,12 +114,14 @@ char *getNextMessage( Client *inC ) {
 
     char *message = new char[ index + 1 ];
     
+    // all but terminal character
     for( int i=0; i<index; i++ ) {
-        message[i] = (char)( inC->buffer.getElementDirect( 0 ) );
-        inC->buffer.deleteElement( 0 );
+        message[i] = (char)( inC->buffer.getElementDirect( i ) );
         }
-    // delete message terminal character
-    inC->buffer.deleteElement( 0 );
+    
+    // delete from buffer, including terminal character
+    inC->buffer.deleteStartElements( index + 1 );
+
     
     message[ index ] = '\0';
     
@@ -186,7 +194,7 @@ int main( int inNumArgs, char **inArgs ) {
 
         char timeout =  false;
         connections[i].sock = 
-            SocketClient::connectToServer( &a, 10, &timeout );
+            SocketClient::connectToServer( &a, 5000, &timeout );
 
         if( timeout ) {
             printf( "Client %d timed out when trying to connect\n", i );
