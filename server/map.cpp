@@ -642,7 +642,7 @@ typedef struct BaseMapCacheRecord {
 
 // should be a power of 2
 // cache will contain squared number of records
-#define BASE_MAP_CACHE_SIZE 128
+#define BASE_MAP_CACHE_SIZE 256
 
 // if BASE_MAP_CACHE_SIZE is a power of 2, then this is the bit mask
 // of solid 1's that can limit an integer to that range

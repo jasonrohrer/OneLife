@@ -129,6 +129,10 @@ Server Fixes:
 
 --Improved efficiency of message input buffers.
 
+--Stress testing server revealed that fractal map algorithm was producing the
+  most CPU load.  Added caching of the fractal map (with a memory cost of 768 
+  KiB), reducing this load by 10x.  Now database queries are the primary load,
+  as they should be.
 
 
 
