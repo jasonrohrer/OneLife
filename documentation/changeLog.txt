@@ -134,6 +134,12 @@ Server Fixes:
   KiB), reducing this load by 10x.  Now database queries are the primary load,
   as they should be.
 
+--Fixed to close client connection if writing to their socket ever fails (for
+  example, if their write buffer is full).  Before, there was undefined
+  behavior client-side when partial protocol messages came through if the
+  server was under heave load and its write buffers were full.
+
+
 
 
 

@@ -1353,10 +1353,11 @@ int sendMapChunkMessage( LiveObject *inO,
         inO->lastSentMapX = xd;
         inO->lastSentMapY = yd;
         }
-    else if( numSent == -1 ) {
+    else {
         setDeathReason( inO, "disconnected" );
         
         inO->error = true;
+        inO->errorCauseString = "Socket write failed";
         }
     return numSent;
     }
@@ -4069,7 +4070,7 @@ int main() {
                 
                         delete [] mapChunkMessage;
 
-                        if( numSent == -1 ) {
+                        if( numSent != length ) {
                             setDeathReason( nextPlayer, "disconnected" );
 
                             nextPlayer->error = true;
@@ -7399,7 +7400,7 @@ int main() {
                 delete [] message;
                 
 
-                if( numSent == -1 ) {
+                if( numSent != messageLength ) {
                     setDeathReason( nextPlayer, "disconnected" );
 
                     nextPlayer->error = true;
@@ -7428,7 +7429,7 @@ int main() {
                     delete [] movesMessage;
                     
 
-                    if( numSent == -1 ) {
+                    if( numSent != messageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
 
                         nextPlayer->error = true;
@@ -7596,14 +7597,15 @@ int main() {
                         char *message = concatonate( "PU\n", temp );
                         delete [] temp;
 
-
+                        int messageLength = strlen( message );
+                        
                         int numSent = 
                             nextPlayer->sock->send( 
                                 (unsigned char*)message, 
-                                strlen( message ), 
+                                messageLength, 
                                 false, false );
 
-                        if( numSent == -1 ) {
+                        if( numSent != messageLength ) {
                             setDeathReason( nextPlayer, "disconnected" );
 
                             nextPlayer->error = true;
@@ -7618,13 +7620,15 @@ int main() {
                     if( chunkPlayerMoves.size() > 0 ) {
                         char *temp = chunkPlayerMoves.getElementString();
 
+                        int messageLength = strlen( temp );
+                        
                         int numSent = 
                             nextPlayer->sock->send( 
                                 (unsigned char*)temp, 
-                                strlen( temp ), 
+                                messageLength,
                                 false, false );
                         
-                        if( numSent == -1 ) {
+                        if( numSent != messageLength ) {
                             setDeathReason( nextPlayer, "disconnected" );
 
                             nextPlayer->error = true;
@@ -7674,7 +7678,7 @@ int main() {
                                 updateMessageLength, 
                                 false, false );
 
-                        if( numSent == -1 ) {
+                        if( numSent != updateMessageLength ) {
                             setDeathReason( nextPlayer, "disconnected" );
 
                             nextPlayer->error = true;
@@ -7709,7 +7713,7 @@ int main() {
                                 moveMessageLength, 
                                 false, false );
 
-                        if( numSent == -1 ) {
+                        if( numSent != moveMessageLength ) {
                             setDeathReason( nextPlayer, "disconnected" );
 
                             nextPlayer->error = true;
@@ -7741,7 +7745,7 @@ int main() {
                                 mapChangeMessageLength, 
                                 false, false );
                         
-                        if( numSent == -1 ) {
+                        if( numSent != mapChangeMessageLength ) {
                             setDeathReason( nextPlayer, "disconnected" );
 
                             nextPlayer->error = true;
@@ -7773,7 +7777,7 @@ int main() {
                                 speechMessageLength, 
                                 false, false );
                         
-                        if( numSent == -1 ) {
+                        if( numSent != speechMessageLength ) {
                             setDeathReason( nextPlayer, "disconnected" );
 
                             nextPlayer->error = true;
@@ -7792,7 +7796,7 @@ int main() {
                             deleteUpdateMessageLength, 
                             false, false );
                     
-                    if( numSent == -1 ) {
+                    if( numSent != deleteUpdateMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
 
                         nextPlayer->error = true;
@@ -7823,13 +7827,15 @@ int main() {
                         computeMoveSpeed( nextPlayer ),
                         nextPlayer->responsiblePlayerID );
                      
-                     int numSent = 
+                    int messageLength = strlen( foodMessage );
+                    
+                    int numSent = 
                          nextPlayer->sock->send( 
                              (unsigned char*)foodMessage, 
-                             strlen( foodMessage ), 
+                             messageLength,
                              false, false );
 
-                     if( numSent == -1 ) {
+                     if( numSent != messageLength ) {
                          setDeathReason( nextPlayer, "disconnected" );
 
                          nextPlayer->error = true;
