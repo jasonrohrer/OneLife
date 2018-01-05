@@ -31,6 +31,8 @@ typedef struct Client {
         int x, y;
 
         char moving;
+        char dead;
+        char disconnected;
         
     } Client;
 
@@ -73,14 +75,11 @@ char *getNextMessage( Client *inC ) {
                 }
 
             numRead = inC->sock->receive( buffer, nextReadSize, 0 );
-            for( int i=0; i<numRead; i++ ) {
-                printf( "%c", buffer[i] );
+            
+            if( numRead == -1 ) {
+                inC->disconnected = true;
                 }
-            printf( "\n\n" );
-            
-            printf( "Clinet %d read %d when skipping compressed bytes\n",
-                    inC->i, numRead );
-            
+
             if( numRead > 0 ) {
                 inC->skipCompressedData -= numRead;
                 }
@@ -97,11 +96,19 @@ char *getNextMessage( Client *inC ) {
     unsigned char buffer[512];
     
     int numRead = inC->sock->receive( buffer, 512, 0 );
+
+    if( numRead == -1 ) {
+        inC->disconnected = true;
+        }
     
     
     while( numRead > 0 ) {
         inC->buffer.appendArray( buffer, numRead );
         numRead = inC->sock->receive( buffer, 512, 0 );
+        
+        if( numRead == -1 ) {
+            inC->disconnected = true;
+            }
         }
 
     // find first terminal character #
@@ -146,11 +153,19 @@ void parsePlayerUpdateMessage( Client *inC, char *inMessageLine ) {
             // update pos
             
             if( inC->moving ) {
-                printf( "Client %d done moving\n", inC->i );
+                //printf( "Client %d done moving\n", inC->i );
                 }
-            sscanf( tokens->getElementDirect(14), "%d", &( inC->x ) );
-            sscanf( tokens->getElementDirect(15), "%d", &( inC->y ) );
-            inC->moving = false;
+            if( strcmp( tokens->getElementDirect(14), "X" ) == 0 ) {
+                // dead
+                inC->dead = true;
+                printf( "Client %d died with PU message:  %s\n",
+                        inC->i, inMessageLine );
+                }
+            else {
+                sscanf( tokens->getElementDirect(14), "%d", &( inC->x ) );
+                sscanf( tokens->getElementDirect(15), "%d", &( inC->y ) );
+                inC->moving = false;
+                }
             }
         }
     
@@ -188,6 +203,8 @@ int main( int inNumArgs, char **inArgs ) {
         connections[i].id = -1;
         connections[i].skipCompressedData = 0;
         connections[i].moving = false;
+        connections[i].dead = false;
+        connections[i].disconnected = false;
 
         HostAddress a( stringDuplicate( address ), port );
         
@@ -282,13 +299,30 @@ int main( int inNumArgs, char **inArgs ) {
                 }
             else {
                 // player is live
+                
+                if( connections[i].dead ) {
+                    printf( "Client %d died, closing connection\n", i );
+
+                    delete connections[i].sock;
+                    connections[i].sock = NULL;
+                    continue;
+                    }
+                if( connections[i].disconnected ) {
+                    printf( "Client %d lost connection\n", i );
+
+                    delete connections[i].sock;
+                    connections[i].sock = NULL;
+                    continue;
+                    }
+
+
                 if( !connections[i].moving ) {
                 
                     // make a move
 
                     connections[i].moving = true;
                 
-                    printf( "Client %d starting move\n", i );
+                    //printf( "Client %d starting move\n", i );
                     
 
                     int xDelt = 0;
@@ -353,6 +387,7 @@ int main( int inNumArgs, char **inArgs ) {
             delete connections[i].sock;
             }
         }
+    delete [] connections;
     
     return 1;
     }
