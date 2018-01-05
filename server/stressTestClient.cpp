@@ -10,10 +10,10 @@ JenkinsRandomSource randSource;
 
 void usage() {
     printf( "Usage:\n" );
-    printf( "stressTestClient server_address server_port num_clients\n\n" );
+    printf( "stressTestClient server_address server_port email_prefix num_clients\n\n" );
     
     printf( "Example:\n" );
-    printf( "stressTestClient onehouronelife.com 8005 100\n\n" );
+    printf( "stressTestClient onehouronelife.com 8005 dummy 100\n\n" );
     
     exit( 1 );
     }
@@ -181,7 +181,7 @@ void parsePlayerUpdateMessage( Client *inC, char *inMessageLine ) {
 
 int main( int inNumArgs, char **inArgs ) {
     
-    if( inNumArgs != 4 ) {
+    if( inNumArgs != 5 ) {
         usage();
         }
     
@@ -190,8 +190,10 @@ int main( int inNumArgs, char **inArgs ) {
     int port = 8005;
     sscanf( inArgs[2], "%d", &port );
     
+    char *emailPrefix = inArgs[3];
+
     int numClients = 1;
-    sscanf( inArgs[3], "%d", &numClients );
+    sscanf( inArgs[4], "%d", &numClients );
 
     
     Client *connections = new Client[ numClients ];
@@ -224,8 +226,11 @@ int main( int inNumArgs, char **inArgs ) {
         if( connections[i].sock != NULL ) {
             numConnected ++;
             
-            printf( "Client %d connected\n", i );
-            char *email = autoSprintf( "dummy_%d@dummy.com", i );
+            char *email = autoSprintf( "%s_%d@dummy.com", emailPrefix, i );
+
+            printf( "Client %d connected, logging in with email %s\n", i,
+                    email );
+
             
             char *message = autoSprintf( "LOGIN %s aaaa aaaa#",
                                          email );
