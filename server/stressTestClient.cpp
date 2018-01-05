@@ -149,7 +149,8 @@ void parsePlayerUpdateMessage( Client *inC, char *inMessageLine ) {
         if( inC->id == -1 ) {
             inC->id = id;
             }
-        else if( inC->id == id ) {
+        
+        if( inC->id == id ) {
             // update pos
             
             if( inC->moving ) {
@@ -285,7 +286,10 @@ int main( int inNumArgs, char **inArgs ) {
                             }
                     
                         printf( "Client %d got first player update, "
-                                "pid = %d\n", i, connections[i].id );
+                                "pid = %d, pos = %d,%d\n", i, 
+                                connections[i].id,
+                                connections[i].x, 
+                                connections[i].y );
 
 
                         
