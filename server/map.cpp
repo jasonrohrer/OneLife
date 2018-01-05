@@ -1676,8 +1676,12 @@ void initMap() {
                 }
 
             fclose( testMapFile );
+            testMapFile = NULL;
             }
         
+        if( testMapFile != NULL ) {
+            fclose( testMapFile );
+            }
         if( testMapStaleFile != NULL ) {
             fclose( testMapStaleFile );
             }
