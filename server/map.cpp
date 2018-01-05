@@ -630,10 +630,69 @@ static int lastCheckedBiome = -1;
 static int xLimit = 2147481977;
 static int yLimit = 2147481977;
 
-    
-    
 
 
+
+
+typedef struct BaseMapCacheRecord {
+        int x, y;
+        int id;
+    } BaseMapCacheRecord;
+
+
+// should be a power of 2
+// cache will contain squared number of records
+#define BASE_MAP_CACHE_SIZE 128
+
+// if BASE_MAP_CACHE_SIZE is a power of 2, then this is the bit mask
+// of solid 1's that can limit an integer to that range
+static int mapCacheBitMask = BASE_MAP_CACHE_SIZE - 1;
+
+BaseMapCacheRecord baseMapCache[ BASE_MAP_CACHE_SIZE ][ BASE_MAP_CACHE_SIZE ];
+
+static void mapCacheClear() {
+    for( int y=0; y<BASE_MAP_CACHE_SIZE; y++ ) {
+        for( int x=0; x<BASE_MAP_CACHE_SIZE; x++ ) {
+            baseMapCache[y][x].x = 0;
+            baseMapCache[y][x].y = 0;
+            baseMapCache[y][x].id = -1;
+            }
+        }
+    }
+
+
+
+static BaseMapCacheRecord *mapCacheRecordLookup( int inX, int inY ) {
+    // apply bitmask to x and y
+    return &( baseMapCache[ inY & mapCacheBitMask ][ inX & mapCacheBitMask ] ); 
+    }
+
+
+
+// returns -1 if not in cache
+static int mapCacheLookup( int inX, int inY ) {
+    BaseMapCacheRecord *r = mapCacheRecordLookup( inX, inY );
+    
+    if( r->x == inX && r->y == inY ) {
+        return r->id;
+        }
+
+    return -1;
+    }
+
+
+
+static void mapCacheInsert( int inX, int inY, int inID ) {
+    BaseMapCacheRecord *r = mapCacheRecordLookup( inX, inY );
+    
+    r->x = inX;
+    r->y = inY;
+    r->id = inID;
+    }
+
+    
+
+static int getBaseMapCallCount = 0;
 
 
 static int getBaseMap( int inX, int inY ) {
@@ -644,8 +703,13 @@ static int getBaseMap( int inX, int inY ) {
         return edgeObjectID;
         }
     
-
-
+    int cachedID = mapCacheLookup( inX, inY );
+    
+    if( cachedID != -1 ) {
+        return cachedID;
+        }
+    
+    getBaseMapCallCount ++;
 
     setXYRandomSeed( 5379 );
     
@@ -676,6 +740,7 @@ static int getBaseMap( int inX, int inY ) {
                                             &secondPlaceGap );
         
         if( pickedBiome == -1 ) {
+            mapCacheInsert( inX, inY, 0 );
             return 0;
             }
         
@@ -710,6 +775,7 @@ static int getBaseMap( int inX, int inY ) {
         int numObjects = naturalMapIDs[pickedBiome].size();
 
         if( numObjects == 0  ) {
+            mapCacheInsert( inX, inY, 0 );
             return 0;
             }
 
@@ -786,13 +852,17 @@ static int getBaseMap( int inX, int inY ) {
         totalChanceWeight[pickedBiome] = oldTotalChanceWeight;
 
         if( i >= 0 ) {
-            return naturalMapIDs[pickedBiome].getElementDirect( i );
+            int returnID = naturalMapIDs[pickedBiome].getElementDirect( i );
+            mapCacheInsert( inX, inY, returnID );
+            return returnID;
             }
         else {
+            mapCacheInsert( inX, inY, 0 );
             return 0;
             }
         }
     else {
+        mapCacheInsert( inX, inY, 0 );
         return 0;
         }
     
@@ -1100,7 +1170,8 @@ void printBiomeSamples() {
 
 
 void initMap() {
-
+    mapCacheClear();
+    
     edgeObjectID = SettingsManager::getIntSetting( "edgeObject", 0 );
     
     minEveCampRespawnAge = 
@@ -1717,6 +1788,8 @@ void freeAndNullString( char **inStringPointer ) {
 
 
 void freeMap() {
+    printf( "%d calls to getBaseMap\n", getBaseMapCallCount );
+    
     if( dbOpen ) {
         
         AppLog::infoF( "Cleaning up map database on server shutdown." );
