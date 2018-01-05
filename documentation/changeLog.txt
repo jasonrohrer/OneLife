@@ -75,6 +75,8 @@ Version 42     ???
   message later, proper death age will be displayed).  Also fixes problem with
   59-year rounding issue.  Thanks tomberek.
 
+--Improved efficiency of message input buffers.
+
 
 
 Server Fixes:

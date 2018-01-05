@@ -519,11 +519,10 @@ char *getNextServerMessage() {
     char *message = new char[ index + 1 ];
     
     for( int i=0; i<index; i++ ) {
-        message[i] = (char)( serverSocketBuffer.getElementDirect( 0 ) );
-        serverSocketBuffer.deleteElement( 0 );
+        message[i] = (char)( serverSocketBuffer.getElementDirect( i ) );
         }
-    // delete message terminal character
-    serverSocketBuffer.deleteElement( 0 );
+    // delete message and terminal character
+    serverSocketBuffer.deleteStartElements( index + 1 );
     
     message[ index ] = '\0';
 
