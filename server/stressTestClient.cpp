@@ -259,6 +259,15 @@ int main( int inNumArgs, char **inArgs ) {
         
             if( connections[i].id == -1 ) {
                 // still waiting for first PU
+
+                if( connections[i].disconnected ) {
+                    printf( "Client %d lost connection\n", i );
+
+                    delete connections[i].sock;
+                    connections[i].sock = NULL;
+                    continue;
+                    }
+
                 char *message = getNextMessage( &( connections[i] ) );
 
                 if( message != NULL ) {
