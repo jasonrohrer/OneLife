@@ -85,9 +85,9 @@ double getXYRandom( int inX, int inY ) {
 static double getXYRandomBN( double inX, double inY ) {
     
     int floorX = lrint( floor(inX) );
-    int ceilX = lrint( ceil(inX) );
+    int ceilX = floorX + 1;
     int floorY = lrint( floor(inY) );
-    int ceilY = lrint( ceil(inY) );
+    int ceilY = floorY + 1;
     
 
     double cornerA1 = xxTweakedHash2D( floorX, floorY );
