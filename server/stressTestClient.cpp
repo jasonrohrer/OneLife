@@ -3,6 +3,8 @@
 #include "minorGems/network/SocketClient.h"
 #include "minorGems/system/Thread.h"
 #include "minorGems/util/random/JenkinsRandomSource.h"
+#include "minorGems/formats/encodingUtils.h"
+
 
 JenkinsRandomSource randSource;
 
@@ -27,6 +29,10 @@ typedef struct Client {
         
         int skipCompressedData;
         
+        char pendingCMData;
+        int pendingCMCompressedSize;
+        int pendingCMDecompressedSize;
+
         int id;
         int x, y;
 
@@ -111,6 +117,51 @@ char *getNextMessage( Client *inC ) {
             }
         }
 
+
+    if( inC->pendingCMData ) {
+        if( inC->buffer.size() >= inC->pendingCMCompressedSize ) {
+            inC->pendingCMData = false;
+            
+            unsigned char *compressedData = 
+                new unsigned char[ inC->pendingCMCompressedSize ];
+            
+            for( int i=0; i<inC->pendingCMCompressedSize; i++ ) {
+                compressedData[i] = inC->buffer.getElementDirect( i );
+                }
+            inC->buffer.deleteStartElements( inC->pendingCMCompressedSize );
+            
+            unsigned char *decompressedMessage =
+                zipDecompress( compressedData, 
+                               inC->pendingCMCompressedSize,
+                               inC->pendingCMDecompressedSize );
+
+            delete [] compressedData;
+
+            if( decompressedMessage == NULL ) {
+                printf( "Decompressing CM message failed\n" );
+                return NULL;
+                }
+            else {
+                char *textMessage = 
+                    new char[ inC->pendingCMDecompressedSize + 1 ];
+                memcpy( textMessage, decompressedMessage,
+                       inC->pendingCMDecompressedSize );
+                textMessage[ inC->pendingCMDecompressedSize ] = '\0';
+                
+                delete [] decompressedMessage;
+                
+                return textMessage;
+                }
+            }
+        else {
+            // wait for more data to arrive
+            return NULL;
+            }
+        }
+
+
+
+
     // find first terminal character #
     int index = inC->buffer.getElementIndex( '#' );
         
@@ -132,6 +183,20 @@ char *getNextMessage( Client *inC ) {
     
     message[ index ] = '\0';
     
+    if( strstr( message, "CM" ) == message ) {
+        inC->pendingCMData = true;
+        
+        sscanf( message, "CM\n%d %d\n", 
+                &( inC->pendingCMDecompressedSize ), 
+                &( inC->pendingCMCompressedSize ) );
+
+
+        delete [] message;
+        
+        return NULL;
+        }
+    
+
     return message;
     }
 
@@ -205,6 +270,7 @@ int main( int inNumArgs, char **inArgs ) {
         connections[i].i = i;
         connections[i].id = -1;
         connections[i].skipCompressedData = 0;
+        connections[i].pendingCMData = false;
         connections[i].moving = false;
         connections[i].dead = false;
         connections[i].disconnected = false;
