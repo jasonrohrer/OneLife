@@ -146,6 +146,8 @@ Server Fixes:
   behavior client-side when partial protocol messages came through if the
   server was under heave load and its write buffers were full.
 
+--Fixed child race selection to not wrap around.
+
 
 
 

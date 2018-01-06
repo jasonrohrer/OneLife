@@ -2602,13 +2602,21 @@ void processLoggedInPlayer( Socket *inSock,
                         }
                     int childRaceIndex = parentRaceIndex + offset;
                     
+                    // don't wrap around
+                    // but push in other direction instead
                     if( childRaceIndex >= numRaces ) {
-                        childRaceIndex -= numRaces;
+                        childRaceIndex = numRaces - 2;
                         }
-                    else if( childRaceIndex < 0 ) {
-                        childRaceIndex += numRaces;
+                    if( childRaceIndex < 0 ) {
+                        childRaceIndex = 1;
                         }
                     
+                    // stay in bounds
+                    if( childRaceIndex >= numRaces ) {
+                        childRaceIndex = numRaces - 1;
+                        }
+                    
+
                     childRace = races[ childRaceIndex ];
                     }
                 
