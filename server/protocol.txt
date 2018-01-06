@@ -101,6 +101,8 @@ Each message from server is prefaced by a type tag.
 
 Possible types include:
 
+COMPRESSED_MESSAGE (CM)
+
 MAP_CHUNK  (MC)
 
 PLAYER_UPDATE  (PU)
@@ -142,6 +144,26 @@ carrots, for example.
 
 
 
+CM
+binary_raw_size binary_compressed_size 
+#
+COMPRESSED_DATA
+
+
+Any message type, except MC (MAP_CHUNK), can be packaged into a CM message.
+
+Usually, this behavior is reserved for very long messages (like the first PU
+sent to a client upon connection).
+
+After decompression, the text message is in the usual format, complete with
+terminatin # character.
+
+
+
+
+
+
+
 
 
 MC
@@ -156,8 +178,8 @@ Chunk includes a sizeX x sizeY number of ids (a square of the map).
 Square is positioned on map grid with upper left corner at x y
 binary_size is the number of binary bytes of map data that will follow the #
 
-BINARY_DATA is the raw binary data.  This involves run-length encoding and 
-a few other tricks to reduce it's size.  Check the code in map.cpp for details.
+BINARY_DATA is the raw binary data.  This involves zip compression.  
+Check the code in map.cpp for details.
 
 
 

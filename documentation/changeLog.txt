@@ -80,6 +80,10 @@ Version 42     ???
 --Fixed broken game state on next life when player dies while pending messages
   are still in the queue.
 
+--Added compression of all large message to protocol with new CM (compressed
+  message) wrapper message type.
+
+
 
 
 Server Fixes:

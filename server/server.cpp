@@ -24,6 +24,8 @@
 #include "minorGems/util/log/AppLog.h"
 #include "minorGems/util/log/FileLog.h"
 
+#include "minorGems/formats/encodingUtils.h"
+
 
 #include "map.h"
 #include "../gameSource/transitionBank.h"
@@ -3187,6 +3189,76 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
         }
                                     
     }
+
+
+
+static unsigned char *makeCompressedMessage( char *inMessage, int inLength,
+                                             int *outLength ) {
+    
+    int compressedSize;
+    unsigned char *compressedData =
+        zipCompress( (unsigned char*)inMessage, inLength, &compressedSize );
+
+
+
+    char *header = autoSprintf( "CM\n%d %d\n#", 
+                                inLength,
+                                compressedSize );
+    int headerLength = strlen( header );
+    int fullLength = headerLength + compressedSize;
+    
+    unsigned char *fullMessage = new unsigned char[ fullLength ];
+    
+    memcpy( fullMessage, (unsigned char*)header, headerLength );
+    
+    memcpy( &( fullMessage[ headerLength ] ), compressedData, compressedSize );
+
+    delete [] compressedData;
+    
+    *outLength = fullLength;
+    
+    delete [] header;
+    
+    return fullMessage;
+    }
+
+
+
+static int maxUncompressedSize = 256;
+
+
+static void sendMessageToPlayer( LiveObject *inPlayer, 
+                                 char *inMessage, int inLength ) {
+    
+    unsigned char *message = (unsigned char*)inMessage;
+    int len = inLength;
+    
+    char deleteMessage = false;
+
+    if( inLength > maxUncompressedSize ) {
+        message = makeCompressedMessage( inMessage, inLength, &len );
+        deleteMessage = true;
+        }
+
+    int numSent = 
+        inPlayer->sock->send( message, 
+                              len, 
+                              false, false );
+        
+    if( numSent != len ) {
+        setDeathReason( inPlayer, "disconnected" );
+        
+        inPlayer->error = true;
+        inPlayer->errorCauseString = "Socket write failed";
+        }
+
+    if( deleteMessage ) {
+        delete [] message;
+        }
+    }
+    
+
+
 
 
 
@@ -7249,44 +7321,77 @@ int main() {
         
         SimpleVector<ChangePosition> movesPos;        
 
-        char *moveMessage = getMovesMessage( true, &movesPos );
+        char *moveMessageText = getMovesMessage( true, &movesPos );
         
+        unsigned char *moveMessage = NULL;
         int moveMessageLength = 0;
         
-        if( moveMessage != NULL ) {
-            moveMessageLength = strlen( moveMessage );
+        if( moveMessageText != NULL ) {
+            moveMessage = (unsigned char*)moveMessageText;
+            moveMessageLength = strlen( moveMessageText );
+
+            if( moveMessageLength > maxUncompressedSize ) {
+                moveMessage = makeCompressedMessage( moveMessageText,
+                                                     moveMessageLength,
+                                                     &moveMessageLength );
+                delete [] moveMessageText;
+                }    
             }
         
                 
 
 
 
-        char *updateMessage = NULL;
+        unsigned char *updateMessage = NULL;
         int updateMessageLength = 0;
         
         if( newUpdates.size() > 0 ) {
             newUpdates.push_back( '#' );
             char *temp = newUpdates.getElementString();
 
-            updateMessage = concatonate( "PU\n", temp );
+            char *updateMessageText = concatonate( "PU\n", temp );
             delete [] temp;
 
-            updateMessageLength = strlen( updateMessage );
+            updateMessageLength = strlen( updateMessageText );
+
+            if( updateMessageLength < maxUncompressedSize ) {
+                updateMessage = (unsigned char*)updateMessageText;
+                }
+            else {
+                // compress for all players once here
+                updateMessage = makeCompressedMessage( 
+                    updateMessageText, 
+                    updateMessageLength, &updateMessageLength );
+                
+                delete [] updateMessageText;
+                }
             }
 
 
 
-        char *deleteUpdateMessage = NULL;
+        unsigned char *deleteUpdateMessage = NULL;
         int deleteUpdateMessageLength = 0;
         
         if( newDeleteUpdates.size() > 0 ) {
             newDeleteUpdates.push_back( '#' );
             char *temp = newDeleteUpdates.getElementString();
-
-            deleteUpdateMessage = concatonate( "PU\n", temp );
+            
+            char *deleteUpdateMessageText = concatonate( "PU\n", temp );
             delete [] temp;
 
-            deleteUpdateMessageLength = strlen( deleteUpdateMessage );
+            deleteUpdateMessageLength = strlen( deleteUpdateMessageText );
+
+            if( deleteUpdateMessageLength < maxUncompressedSize ) {
+                deleteUpdateMessage = (unsigned char*)deleteUpdateMessageText;
+                }
+            else {
+                // compress for all players once here
+                deleteUpdateMessage = makeCompressedMessage( 
+                    deleteUpdateMessageText, 
+                    deleteUpdateMessageLength, &deleteUpdateMessageLength );
+                
+                delete [] deleteUpdateMessageText;
+                }
             }
         
 
@@ -7299,32 +7404,58 @@ int main() {
 
         
         
-        char *mapChangeMessage = NULL;
+        unsigned char *mapChangeMessage = NULL;
         int mapChangeMessageLength = 0;
         
         if( mapChanges.size() > 0 ) {
             mapChanges.push_back( '#' );
             char *temp = mapChanges.getElementString();
 
-            mapChangeMessage = concatonate( "MX\n", temp );
+            char *mapChangeMessageText = concatonate( "MX\n", temp );
             delete [] temp;
 
-            mapChangeMessageLength = strlen( mapChangeMessage );
+            mapChangeMessageLength = strlen( mapChangeMessageText );
+            
+            if( mapChangeMessageLength < maxUncompressedSize ) {
+                mapChangeMessage = (unsigned char*)mapChangeMessageText;
+                }
+            else {
+                // compress for all players once here
+                mapChangeMessage = makeCompressedMessage( 
+                    mapChangeMessageText, 
+                    mapChangeMessageLength, &mapChangeMessageLength );
+                
+                delete [] mapChangeMessageText;
+                }
+
             }
         
 
 
-        char *speechMessage = NULL;
+        unsigned char *speechMessage = NULL;
         int speechMessageLength = 0;
         
         if( newSpeech.size() > 0 ) {
             newSpeech.push_back( '#' );
             char *temp = newSpeech.getElementString();
 
-            speechMessage = concatonate( "PS\n", temp );
+            char *speechMessageText = concatonate( "PS\n", temp );
             delete [] temp;
 
-            speechMessageLength = strlen( speechMessage );
+            speechMessageLength = strlen( speechMessageText );
+            
+            if( speechMessageLength < maxUncompressedSize ) {
+                speechMessage = (unsigned char*)speechMessageText;
+                }
+            else {
+                // compress for all players once here
+                speechMessage = makeCompressedMessage( 
+                    speechMessageText, 
+                    speechMessageLength, &speechMessageLength );
+                
+                delete [] speechMessageText;
+                }
+
             }
 
         
@@ -7390,56 +7521,22 @@ int main() {
                 messageBuffer.push_back( '#' );
             
                 char *message = messageBuffer.getElementString();
-                int messageLength = strlen( message );
 
-                numSent = 
-                    nextPlayer->sock->send( (unsigned char*)message, 
-                                            messageLength, 
-                                            false, false );
+
+                sendMessageToPlayer( nextPlayer, message, strlen( message ) );
                 
                 delete [] message;
                 
-
-                if( numSent != messageLength ) {
-                    setDeathReason( nextPlayer, "disconnected" );
-
-                    nextPlayer->error = true;
-                    nextPlayer->errorCauseString =
-                        "Socket write failed";
-                    }
-                else if( numSent != messageLength ) {
-                    // still not sent, try again later
-                    continue;
-                    }
-
-
 
                 char *movesMessage = getMovesMessage( false );
                 
                 if( movesMessage != NULL ) {
                     
                 
-                    messageLength = strlen( movesMessage );
-                    
-                    numSent = 
-                        nextPlayer->sock->send( (unsigned char*)movesMessage, 
-                                                messageLength, 
-                                            false, false );
-                    
+                    sendMessageToPlayer( nextPlayer, movesMessage, 
+                                         strlen( movesMessage ) );
+                
                     delete [] movesMessage;
-                    
-
-                    if( numSent != messageLength ) {
-                        setDeathReason( nextPlayer, "disconnected" );
-
-                        nextPlayer->error = true;
-                        nextPlayer->errorCauseString =
-                            "Socket write failed";
-                        }
-                    else if( numSent != messageLength ) {
-                        // still not sent, try again later
-                        continue;
-                        }
                     }
                 
                 nextPlayer->firstMessageSent = true;
@@ -7597,21 +7694,8 @@ int main() {
                         char *message = concatonate( "PU\n", temp );
                         delete [] temp;
 
-                        int messageLength = strlen( message );
-                        
-                        int numSent = 
-                            nextPlayer->sock->send( 
-                                (unsigned char*)message, 
-                                messageLength, 
-                                false, false );
-
-                        if( numSent != messageLength ) {
-                            setDeathReason( nextPlayer, "disconnected" );
-
-                            nextPlayer->error = true;
-                            nextPlayer->errorCauseString =
-                                "Socket write failed";
-                            }
+                        sendMessageToPlayer( nextPlayer, message, 
+                                             strlen( message ) );
                         
                         delete [] message;
                         }
@@ -7620,21 +7704,7 @@ int main() {
                     if( chunkPlayerMoves.size() > 0 ) {
                         char *temp = chunkPlayerMoves.getElementString();
 
-                        int messageLength = strlen( temp );
-                        
-                        int numSent = 
-                            nextPlayer->sock->send( 
-                                (unsigned char*)temp, 
-                                messageLength,
-                                false, false );
-                        
-                        if( numSent != messageLength ) {
-                            setDeathReason( nextPlayer, "disconnected" );
-
-                            nextPlayer->error = true;
-                            nextPlayer->errorCauseString =
-                                "Socket write failed";
-                            }
+                        sendMessageToPlayer( nextPlayer, temp, strlen( temp ) );
 
                         delete [] temp;
                         }
@@ -7674,7 +7744,7 @@ int main() {
                     if( minUpdateDist <= maxDist ) {
                         int numSent = 
                             nextPlayer->sock->send( 
-                                (unsigned char*)updateMessage, 
+                                updateMessage, 
                                 updateMessageLength, 
                                 false, false );
 
@@ -7709,7 +7779,7 @@ int main() {
                         
                         int numSent = 
                             nextPlayer->sock->send( 
-                                (unsigned char*)moveMessage, 
+                                moveMessage, 
                                 moveMessageLength, 
                                 false, false );
 
@@ -7741,7 +7811,7 @@ int main() {
                     if( minUpdateDist <= maxDist ) {
                         int numSent = 
                             nextPlayer->sock->send( 
-                                (unsigned char*)mapChangeMessage, 
+                                mapChangeMessage, 
                                 mapChangeMessageLength, 
                                 false, false );
                         
@@ -7773,7 +7843,7 @@ int main() {
                     if( minUpdateDist <= maxDist ) {
                         int numSent = 
                             nextPlayer->sock->send( 
-                                (unsigned char*)speechMessage, 
+                                speechMessage, 
                                 speechMessageLength, 
                                 false, false );
                         
@@ -7792,7 +7862,7 @@ int main() {
                 if( deleteUpdateMessage != NULL ) {
                     int numSent = 
                         nextPlayer->sock->send( 
-                            (unsigned char*)deleteUpdateMessage, 
+                            deleteUpdateMessage, 
                             deleteUpdateMessageLength, 
                             false, false );
                     

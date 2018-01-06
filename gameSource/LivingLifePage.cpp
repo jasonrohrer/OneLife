@@ -403,6 +403,7 @@ typedef enum messageType {
     PLAYER_MOVES_START,
     PLAYER_SAYS,
     FOOD_CHANGE,
+    COMPRESSED_MESSAGE,
     UNKNOWN
     } messageType;
 
@@ -436,6 +437,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "REJECTED" ) == 0 ) {
         returnValue = REJECTED;
+        }
+    else if( strcmp( copy, "CM" ) == 0 ) {
+        returnValue = COMPRESSED_MESSAGE;
         }
     else if( strcmp( copy, "MC" ) == 0 ) {
         returnValue = MAP_CHUNK;
@@ -476,6 +480,11 @@ doublePair getVectorFromCamera( int inMapX, int inMapY ) {
 char *pendingMapChunkMessage = NULL;
 int pendingCompressedChunkSize;
 
+char pendingCMData = false;
+int pendingCMCompressedSize = 0;
+int pendingCMDecompressedSize = 0;
+
+
 SimpleVector<char*> readyPendingReceivedMessages;
 
 
@@ -502,6 +511,46 @@ char *getNextServerMessage() {
         else {
             // wait for more data to arrive before saying this MC message
             // is ready
+            return NULL;
+            }
+        }
+    
+    if( pendingCMData ) {
+        if( serverSocketBuffer.size() >= pendingCMCompressedSize ) {
+            pendingCMData = false;
+            
+            unsigned char *compressedData = 
+                new unsigned char[ pendingCMCompressedSize ];
+            
+            for( int i=0; i<pendingCMCompressedSize; i++ ) {
+                compressedData[i] = serverSocketBuffer.getElementDirect( i );
+                }
+            serverSocketBuffer.deleteStartElements( pendingCMCompressedSize );
+            
+            unsigned char *decompressedMessage =
+                zipDecompress( compressedData, 
+                               pendingCMCompressedSize,
+                               pendingCMDecompressedSize );
+
+            delete [] compressedData;
+
+            if( decompressedMessage == NULL ) {
+                printf( "Decompressing CM message failed\n" );
+                return NULL;
+                }
+            else {
+                char *textMessage = new char[ pendingCMDecompressedSize + 1 ];
+                memcpy( textMessage, decompressedMessage,
+                       pendingCMDecompressedSize );
+                textMessage[ pendingCMDecompressedSize ] = '\0';
+                
+                delete [] decompressedMessage;
+                
+                return textMessage;
+                }
+            }
+        else {
+            // wait for more data to arrive
             return NULL;
             }
         }
@@ -536,6 +585,17 @@ char *getNextServerMessage() {
 
 
         return getNextServerMessage();
+        }
+    else if( getMessageType( message ) == COMPRESSED_MESSAGE ) {
+        pendingCMData = true;
+        
+        printf( "Got compressed message header:\n%s\n\n", message );
+
+        sscanf( message, "CM\n%d %d\n", 
+                &pendingCMDecompressedSize, &pendingCMCompressedSize );
+
+        delete [] message;
+        return NULL;
         }
     else {
         return message;
@@ -1487,6 +1547,12 @@ LivingLifePage::~LivingLifePage() {
 
     readyPendingReceivedMessages.deallocateStringElements();
     
+    if( pendingMapChunkMessage != NULL ) {
+        delete [] pendingMapChunkMessage;
+        pendingMapChunkMessage = NULL;
+        }
+    
+
     clearLiveObjects();
 
     mOldDesStrings.deallocateStringElements();
@@ -11562,6 +11628,13 @@ void LivingLifePage::makeActive( char inFresh ) {
     setWaiting( true, false );
 
     readyPendingReceivedMessages.deallocateStringElements();
+
+    if( pendingMapChunkMessage != NULL ) {
+        delete [] pendingMapChunkMessage;
+        pendingMapChunkMessage = NULL;
+        }
+    pendingCMData = false;
+    
 
     clearLiveObjects();
     mFirstServerMessagesReceived = 0;
