@@ -47,7 +47,7 @@ $handle = fopen( "remoteServerList.ini", "r" );
 if( $handle ) {
 
     if( $reportOnly ) {
-        echo "<br><br>Remote servers:<br>";
+        echo "Remote servers:<br><br>";
         }
     
     while( ( !$serverFound && $line = fgets( $handle ) ) !== false ) {
