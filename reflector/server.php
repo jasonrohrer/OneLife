@@ -16,25 +16,6 @@ include( "requiredVersion.php" );
 global $version;
 
 
-$mainServerAddress = "";
-$mainServerPort = -1;
-
-
-$handle = fopen( "mainServer.ini", "r" );
-if( $handle ) {
-    while( ( $line = fgets( $handle ) ) !== false ) {
-        // process the line read.
-        $parts = preg_split( "/\s+/", $line );
-
-        if( count( $parts ) >= 3 ) {
-            
-            $mainServerAddress = $parts[1];
-            $mainServerPort = $parts[2];
-            }
-        }
-
-    fclose( $handle );
-    } 
 
 
 
@@ -61,46 +42,30 @@ if( $action == "report" ) {
 
 $serverFound = false;
 
+$handle = fopen( "remoteServerList.ini", "r" );
 
-
-if( $mainServerAddress != "" && $mainServerPort != -1 ) {
+if( $handle ) {
 
     if( $reportOnly ) {
-        echo "Main server:<br>";
+        echo "<br><br>Remote servers:<br>";
         }
     
-    // connect to main server first and see if it has room
-    
-    $serverFound = tryServer( $mainServerAddress, $mainServerPort,
-                              $reportOnly );
-    }
-
-
-if( !$serverFound ) {
-
-    $handle = fopen( "remoteServerList.ini", "r" );
-    if( $handle ) {
-
-        if( $reportOnly ) {
-            echo "<br><br>Remote servers:<br>";
-            }
+    while( ( !$serverFound && $line = fgets( $handle ) ) !== false ) {
+        // process the line read.
+        $parts = preg_split( "/\s+/", $line );
         
-        while( ( !$serverFound && $line = fgets( $handle ) ) !== false ) {
-            // process the line read.
-            $parts = preg_split( "/\s+/", $line );
-
-            if( count( $parts ) >= 3 ) {
-                
-                $address = $parts[1];
-                $port = $parts[2];
-
-                $serverFound = tryServer( $address, $port, $reportOnly );
-                }
+        if( count( $parts ) >= 3 ) {
+            
+            $address = $parts[1];
+            $port = $parts[2];
+            
+            $serverFound = tryServer( $address, $port, $reportOnly );
             }
-        
-        fclose( $handle );
         }
+    
+    fclose( $handle );
     }
+
 
 
 if( !$serverFound && !$reportOnly ) {

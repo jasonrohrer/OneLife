@@ -150,6 +150,9 @@ Server Fixes:
 
 --Reflector now seeds random generator with player's email instead of IP.
 
+--Moved main server to separate Linode.  Reflector now handles all game servers
+  as remote servers.
+
 
 
 
