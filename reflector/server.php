@@ -38,14 +38,17 @@ if( $handle ) {
 
 
 
-$action = or_requestFilter( "action", "/[A-Z_]+/i" );
+$action = or_requestFilter( "action", "/[A-Z_]+/i", "" );
+$email = or_requestFilter( "email", "/[A-Z0-9._%+-]+@[A-Z0-9.-]+/i", "" );
 
+//$ip = $_SERVER[ 'REMOTE_ADDR' ];
 
-$ip = $_SERVER[ 'REMOTE_ADDR' ];
-
-// seed the random number generator with their IP address
+// seed the random number generator with their email adddress
 // repeat calls under the same conditions send them to the same server
-mt_srand( crc32( $ip ) );
+// this is better than using their IP address, because that can change
+// Want to send people back to the same server tomorrow if load conditions
+// are the same, even if their IP changes.
+mt_srand( crc32( $email ) );
 
 
 $reportOnly = false;

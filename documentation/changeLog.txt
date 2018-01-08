@@ -148,6 +148,7 @@ Server Fixes:
 
 --Fixed child race selection to not wrap around.
 
+--Reflector now seeds random generator with player's email instead of IP.
 
 
 
