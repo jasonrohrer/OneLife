@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 42     2018-January-8
+Version 42     ???
 
 --Fixed game playback issue with aysnchronous file reads.
 
@@ -83,6 +83,7 @@ Version 42     2018-January-8
 --Added compression of all large message to protocol with new CM (compressed
   message) wrapper message type.
 
+--Finally fixed the frozen baby after drop bug.
 
 
 

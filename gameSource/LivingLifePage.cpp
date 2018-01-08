@@ -9318,6 +9318,14 @@ void LivingLifePage::step() {
                         
                             existing->currentSpeed = 0;
                             existing->currentGridSpeed = 0;
+
+                            // clear an existing path, since they may no
+                            // longer be on it
+                            if( existing->pathToDest != NULL ) {
+                                delete [] existing->pathToDest;
+                                existing->pathToDest = NULL;
+                                }
+
                             if( ! existing->somePendingMessageIsMoreMovement ) {
                                 addNewAnim( existing, ground );
                                 }
@@ -9638,6 +9646,13 @@ void LivingLifePage::step() {
                 if( babyO != NULL && existing != NULL ) {
                     babyO->heldByAdultID = existing->id;
 
+                    if( babyO->pathToDest != NULL ) {
+                        // forget baby's old path
+                        // they are going to be set down elsewhere
+                        // far away from path
+                        delete [] babyO->pathToDest;
+                        babyO->pathToDest = NULL;
+                        }
                                     
                     existing->heldFrozenRotFrameCount =
                         babyO->frozenRotFrameCount;
