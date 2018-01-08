@@ -153,6 +153,8 @@ Server Fixes:
 --Moved main server to separate Linode.  Reflector now handles all game servers
   as remote servers.
 
+--Backup script now includes remote server lifeLogs and also foodLogs.
+
 
 
 

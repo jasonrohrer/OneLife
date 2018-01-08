@@ -15,8 +15,13 @@ gzip -f ~/backups/ol_ticket_$date.mysql
 mysqldump -u jcr15_olForumU --password=$passwordForums jcr15_olForums > ~/backups/ol_forums_$date.mysql
 gzip -f ~/backups/ol_forums_$date.mysql
 
+
 cd ~/checkout/OneLife/server/
-tar czf ~/backups/lifeLog_$date.tar.gz lifeLog
+# this bundles local lifelog and lifeLog_serverX folders together
+tar czf ~/backups/lifeLog_$date.tar.gz lifeLog lifeLog_*
+
+# this bundles local foodLog and foodLog_serverX folders together
+tar czf ~/backups/foodLog_$date.tar.gz foodLog foodLog_*
 
 cd ~
 
