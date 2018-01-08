@@ -10140,12 +10140,14 @@ void LivingLifePage::step() {
                                     
                                     // prev step
                                     int b = 
-                                        (int)floor( fractionPassed * 
-                                                    existing->pathLength );
+                                        (int)floor( 
+                                            fractionPassed * 
+                                            ( existing->pathLength - 1 ) );
                                     // next step
                                     int n =
-                                        (int)ceil( fractionPassed *
-                                                   existing->pathLength );
+                                        (int)ceil( 
+                                            fractionPassed *
+                                            ( existing->pathLength - 1 ) );
                                     
                                     if( n == b ) {
                                         if( n < existing->pathLength - 1 ) {

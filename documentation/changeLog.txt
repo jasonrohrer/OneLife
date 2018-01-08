@@ -85,6 +85,11 @@ Version 42     ???
 
 --Finally fixed the frozen baby after drop bug.
 
+--Fixed bug in mid-path-step calculation when in-progress move for another
+  player is almost done when we first learn about it.
+
+
+
 
 
 Server Fixes:
