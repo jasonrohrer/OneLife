@@ -5,13 +5,6 @@
 # shut them all down
 
 
-echo "" 
-echo "Shutting down local server, set server shutdownMode flag."
-echo ""
-
-echo -n "0" > ~/keepServerRunning.txt
-
-echo -n "1" > ~/checkout/OneLife/server/settings/shutdownMode.ini
 
 
 echo "" 
@@ -28,29 +21,12 @@ done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
 
-serverPID=`pgrep OneLifeServer`
-
-if [ -z $serverPID ]
-then
-	echo "Local server not running!"
-else
-
-	echo "" 
-	echo "Waiting for local server to exit"
-	echo ""
-
-        while kill -CONT $serverPID 1>/dev/null 2>&1; do sleep 1; done
-
-	echo "" 
-	echo "Local server has shutdown"
-	echo ""
-fi
 
 
 
 
 echo "" 
-echo "Re-compiling local server"
+echo "Re-compiling non-running local server code base as a sanity check"
 echo ""
 
 cd ~/checkout/minorGems
@@ -63,21 +39,6 @@ git pull
 make
 
 
-
-echo "" 
-echo "Re-launching local server"
-echo ""
-
-
-echo -n "0" > ~/checkout/OneLife/server/settings/shutdownMode.ini
-
-
-cd ~/checkout/OneLife/server/
-
-sh ./runHeadlessServerLinux.sh
-
-
-echo -n "1" > ~/keepServerRunning.txt
 
 
 

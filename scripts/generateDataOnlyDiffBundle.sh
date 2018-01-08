@@ -218,14 +218,6 @@ done <  <( grep "" ~/diffBundles/remoteServerList.ini )
 rm -r ~/checkout/diffWorking
 
 
-echo "" 
-echo "Shutting down local server, set server shutdownMode flag."
-echo ""
-
-
-echo -n "0" > ~/keepServerRunning.txt
-echo -n "1" > ~/checkout/OneLife/server/settings/shutdownMode.ini
-
 
 echo "" 
 echo "Shutting down remote servers, setting server shutdownMode flags."
@@ -250,24 +242,6 @@ echo -n "<?php \$version=$newVersion; ?>" > ~/www/reflector/requiredVersion.php
 
 
 
-
-serverPID=`pgrep OneLifeServer`
-
-if [ -z $serverPID ]
-then
-	echo "Server not running!"
-else
-
-	echo "" 
-	echo "Waiting for server to exit"
-	echo ""
-
-        while kill -CONT $serverPID 1>/dev/null 2>&1; do sleep 1; done
-
-	echo "" 
-	echo "Server has shutdown"
-	echo ""
-fi
 
 
 
@@ -313,7 +287,7 @@ git push origin $newTag
 
 
 echo "" 
-echo "Re-compiling server"
+echo "Re-compiling non-running local server code base as a sanity check"
 echo ""
 
 cd ~/checkout/OneLife/server
@@ -324,21 +298,6 @@ make
 
 
 
-echo "" 
-echo "Re-launching server"
-echo ""
-
-
-echo -n "0" > ~/checkout/OneLife/server/settings/shutdownMode.ini
-
-
-
-cd ~/checkout/OneLife/server/
-
-sh ./runHeadlessServerLinux.sh
-
-
-echo -n "1" > ~/keepServerRunning.txt
 
 
 

@@ -5,14 +5,6 @@
 # shut them all down
 
 
-echo "" 
-echo "Shutting down local server, set server shutdownMode flag."
-echo ""
-
-
-echo -n "0" > ~/keepServerRunning.txt
-
-echo -n "1" > ~/checkout/OneLife/server/settings/shutdownMode.ini
 
 
 echo "" 
@@ -28,57 +20,6 @@ do
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
-
-serverPID=`pgrep OneLifeServer`
-
-if [ -z $serverPID ]
-then
-	echo "Local server not running!"
-else
-
-	echo "" 
-	echo "Waiting for local server to exit"
-	echo ""
-
-        while kill -CONT $serverPID 1>/dev/null 2>&1; do sleep 1; done
-
-	echo "" 
-	echo "Local server has shutdown"
-	echo ""
-fi
-
-
-echo "" 
-echo "Deleting map and biome and mapTime db files and recent placements"
-echo ""
-
-rm ~/checkout/OneLife/server/biome.db 
-rm ~/checkout/OneLife/server/map.db 
-rm ~/checkout/OneLife/server/mapTime.db
-rm ~/checkout/OneLife/server/floor.db 
-rm ~/checkout/OneLife/server/floorTime.db
-rm ~/checkout/OneLife/server/eve.db
-
-# don't delete playerStats.db
-
-rm ~/checkout/OneLife/server/recentPlacements.txt
-rm ~/checkout/OneLife/server/eveRadius.txt
-
-
-
-echo "" 
-echo "Re-launching local server"
-echo ""
-
-
-echo -n "0" > ~/checkout/OneLife/server/settings/shutdownMode.ini
-
-
-cd ~/checkout/OneLife/server/
-
-sh ./runHeadlessServerLinux.sh
-
-echo -n "1" > ~/keepServerRunning.txt
 
 
 
