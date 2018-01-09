@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 44     ???
+
+--Sounds no longer play with slight random pitch variations.  This was causing 
+  an unpleasant phaser-ish sound quality.
+
+
+
 
 Version 42     2018-January-9
 

@@ -596,7 +596,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
     // 0 music headroom needed, because we fade sounds before playing music
     setVolumeScaling( 10, 0 );
-    setSoundSpriteRateRange( 0.95, 1.05 );
+    //setSoundSpriteRateRange( 0.95, 1.05 );
     setSoundSpriteVolumeRange( 0.60, 1.0 );
     
     char rebuilding;
