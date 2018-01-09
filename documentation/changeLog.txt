@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 42     ???
+Version 42     2018-January-9
 
 --Fixed game playback issue with aysnchronous file reads.
 
