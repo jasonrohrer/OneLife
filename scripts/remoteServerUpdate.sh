@@ -31,6 +31,7 @@ echo ""
 
 
 cd ~/checkout/OneLifeData7
+git checkout master
 git pull
 rm */cache.fcz
 
