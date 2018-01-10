@@ -19,12 +19,12 @@ function showPayLinks( $inSimple ) {
     ?>
  <center>
       <center><table border=0><tr><td> 
-<ul> 
+<font size=3><ul> 
       <li>Lifetime server account
       <li>All future updates
       <li>Full source code
       <li>Tech support included
-      </ul>
+      </ul></font>
 </td></tr></table>
 
       <font size=5>Available now for $20</font><br>
@@ -107,22 +107,23 @@ function showLogo( $inImageFile, $inText ) {
 <font size=5>What you get</font><br>
 
 <table border=0 width="100%" cellpadding=5><tr><td bgcolor="#222222">
-Immediately after your payment is processed, you will receive an email with an access link.  You will then be able to download all of the following DRM-free distributions:
+<font size=3>
+    Immediately after your payment is processed, you will receive an email with an access link.  You will then be able to download all of the following DRM-free distributions:
 <center>
 <table border=0><tr><td>
-<ul>
+<font size=3><ul>
 <li>Windows build</li>
 <li>MacOS build (10.5 and later Intel)</li>
 <li>GNU/Linux build (compiled on 32-bit Ubuntu 14.04)</li>
 <li>Full source code bundle (compile it yourself)</li>
-</ul>
+</ul></font>
 </td></tr></table>
 </center>
 The price also includes downloads of all future updates and a lifetime account on the main game server that I am running.<br>
 <br>
 The source bundle includes the editor and server software, allowing you to <b>set up and run your own server</b>.<br>
 <br>
-You can take a look at the <a href="requirements.php">system requirements</a>.
+You can take a look at the <a href="requirements.php">system requirements</a>.</font>
 </td></tr></table>
 <br>
 <br>
