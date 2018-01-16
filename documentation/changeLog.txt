@@ -8,6 +8,8 @@ Version 44     ???
 --Sounds no longer play with slight random pitch variations.  This was causing 
   an unpleasant phaser-ish sound quality.
 
+--Scene editor now allows automated time/age playing.
+
 
 
 

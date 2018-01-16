@@ -51,7 +51,8 @@ static doublePair cornerPos = { - 704, 360 };
 
 
 EditorScenePage::EditorScenePage()
-        : mAnimEditorButton( mainFont, 210, 260, "Anim" ),
+        : mPlayingTime( false ),
+          mAnimEditorButton( mainFont, 210, 260, "Anim" ),
           mSaveNewButton( smallFont, -300, 260, "Save New" ),
           mReplaceButton( smallFont, -500, 260, "Replace" ),
           mDeleteButton( smallFont, 500, 260, "Delete" ),
@@ -264,6 +265,7 @@ EditorScenePage::EditorScenePage()
     addKeyClassDescription( &mKeyLegend, "Bkspc", "Clear cell" );
     addKeyClassDescription( &mKeyLegend, "Hold d/D", "Set obj/person dest" );
     addKeyDescription( &mKeyLegend, 'o', "Set map origin" );
+    addKeyDescription( &mKeyLegend, 'p', "Play time" );
     addKeyDescription( &mKeyLegend, 'h', "Hide/show UI" );
 
     addKeyClassDescription( &mKeyLegendG, "R-Click", "Flood fill" );
@@ -425,6 +427,7 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
                     p->oID = id;
                     if( p->age == -1 ) {
                         p->age = 20;
+                        p->returnAge = p->age;
                         }
                     }
                 else {
@@ -543,6 +546,7 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mPersonAgeSlider ) {
         p->age = mPersonAgeSlider.getValue();
+        p->returnAge = p->age;
         }
     else if( inTarget == &mCellAnimRadioButtons ) {
         c->anim = 
@@ -1694,6 +1698,52 @@ void EditorScenePage::makeActive( char inFresh ) {
 
 
 
+void EditorScenePage::step() {
+
+
+    if( mPlayingTime ) {
+        
+        for( int y=0; y<mSceneH; y++ ) {
+            for( int x=0; x<mSceneW; x++ ) {
+                SceneCell *c = &( mPersonCells[y][x] );
+                
+                if( c->age != -1 ) {
+                    double rate = 0.05;
+
+                    double old = c->age;
+                    if( old > 20 && old < 40 ) {
+                        rate *= 2;
+                        }
+                    
+                    double newAge = old + rate * frameRateFactor;
+        
+                    if( newAge > 60 ) {
+                        newAge = 60;
+                        }
+                    c->age = newAge;
+                    }
+                if( c->heldAge != -1 ) {
+                    double rate = 0.05;
+
+                    double old = c->heldAge;
+                    if( old > 20 && old < 40 ) {
+                        rate *= 2;
+                        }
+                    
+                    double newAge = old + rate * frameRateFactor;
+        
+                    if( newAge > 60 ) {
+                        newAge = 60;
+                        }
+                    c->heldAge = newAge;
+                    }
+                }
+            }
+        }
+    }
+
+
+
 void EditorScenePage::keyDown( unsigned char inASCII ) {
     
     if( inASCII == 13 ) {
@@ -1728,6 +1778,22 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
     else if( inASCII == 'o' ) {
         mZeroX = mCurX;
         mZeroY = mCurY;
+        }
+    else if( inASCII == 'p' ) {
+        if( ! mPlayingTime ) {
+            
+            mPlayingTime = true;
+            }
+        else {
+            mPlayingTime = false;
+            for( int y=0; y<mSceneH; y++ ) {
+                for( int x=0; x<mSceneW; x++ ) {
+                    SceneCell *c = &( mPersonCells[y][x] );
+                    c->age = c->returnAge;
+                    c->heldAge = c->returnHeldAge;
+                    }
+                }
+            }
         }
     else if( inASCII == 'f' ) {
         c->flipH = ! c->flipH;
@@ -1803,6 +1869,7 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
                 // add their clothing too
                 p->heldClothing = mCopyBuffer.clothing;
                 p->heldAge = mCopyBuffer.age;
+                p->returnHeldAge = p->heldAge;
                 }
             }
         }
@@ -1854,6 +1921,9 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->heldID = -1;
     
     inCell->heldAge = -1;
+
+    inCell->returnAge = -1;
+    inCell->returnHeldAge = -1;
 
     inCell->clothing = getEmptyClothingSet();
     inCell->heldClothing = getEmptyClothingSet();
@@ -2263,9 +2333,11 @@ int scanCell( char **inLines, int inNextLine, SceneCell *inCell ) {
     inCell->flipH = (char)flip;
 
     sscanf( inLines[next], "age=%lf", &( inCell->age ) );
+    inCell->returnAge = inCell->age;
     next++;
 
     sscanf( inLines[next], "heldAge=%lf", &( inCell->heldAge ) );
+    inCell->returnHeldAge = inCell->heldAge;
     next++;
     
     
@@ -2312,6 +2384,8 @@ int scanCell( char **inLines, int inNextLine, SceneCell *inCell ) {
 
 
 char EditorScenePage::tryLoadScene( int inSceneID ) {
+    mPlayingTime = false;
+    
     File *f = getSceneFile( inSceneID );
     
     char r = false;

@@ -40,6 +40,8 @@ typedef struct SceneCell {
         double heldAge;
         ClothingSet heldClothing;
         
+        double returnAge;
+        double returnHeldAge;
 
         AnimType anim;
         
@@ -86,12 +88,15 @@ class EditorScenePage : public GamePage, public ActionListener {
         
         virtual void makeActive( char inFresh );
         
+        virtual void step();
+
         virtual void keyDown( unsigned char inASCII );
         virtual void keyUp( unsigned char inASCII );
         virtual void specialKeyDown( int inKeyCode );
         
         
     protected:
+        char mPlayingTime;
         
         TextButton mAnimEditorButton;
         
