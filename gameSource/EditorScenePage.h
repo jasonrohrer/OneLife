@@ -99,6 +99,7 @@ class EditorScenePage : public GamePage, public ActionListener {
         
     protected:
         char mPlayingTime;
+        char mRecordingFrames;
         
         TextButton mAnimEditorButton;
         

@@ -52,6 +52,7 @@ static doublePair cornerPos = { - 704, 360 };
 
 EditorScenePage::EditorScenePage()
         : mPlayingTime( false ),
+          mRecordingFrames( false ),
           mAnimEditorButton( mainFont, 210, 260, "Anim" ),
           mSaveNewButton( smallFont, -300, 260, "Save New" ),
           mReplaceButton( smallFont, -500, 260, "Replace" ),
@@ -266,6 +267,7 @@ EditorScenePage::EditorScenePage()
     addKeyClassDescription( &mKeyLegend, "Hold d/D", "Set obj/person dest" );
     addKeyDescription( &mKeyLegend, 'o', "Set map origin" );
     addKeyDescription( &mKeyLegend, 'p', "Play time" );
+    addKeyDescription( &mKeyLegend, 'r', "Record frames" );
     addKeyDescription( &mKeyLegend, 'h', "Hide/show UI" );
 
     addKeyClassDescription( &mKeyLegendG, "R-Click", "Flood fill" );
@@ -1798,6 +1800,7 @@ void EditorScenePage::step() {
 
 
 void EditorScenePage::keyDown( unsigned char inASCII ) {
+    char skipCheckVisible = false;
     
     if( inASCII == 13 ) {
         // enter
@@ -1833,6 +1836,7 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
         mZeroY = mCurY;
         }
     else if( inASCII == 'p' ) {
+        skipCheckVisible = true;
         if( ! mPlayingTime ) {
             
             mPlayingTime = true;
@@ -1846,6 +1850,17 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
                     c->heldAge = c->returnHeldAge;
                     }
                 }
+            }
+        }
+    else if( inASCII == 'r' ) {
+        skipCheckVisible = true;
+        if( ! mRecordingFrames ) {
+            startOutputAllFrames();
+            mRecordingFrames = true;
+            }
+        else {
+            stopOutputAllFrames();
+            mRecordingFrames = false;
             }
         }
     else if( inASCII == 'f' ) {
@@ -1939,8 +1954,11 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
         mBigDheld = true;
         }
     
-    checkVisible();
+    if( !skipCheckVisible ) {
+        checkVisible();
+        }
     }
+
 
 
 

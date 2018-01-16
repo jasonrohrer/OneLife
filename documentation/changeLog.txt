@@ -10,6 +10,8 @@ Version 44     ???
 
 --Scene editor now allows automated time/age playing.
 
+--Scene editor now allows starting and stopping of recording frames.
+
 
 
 
