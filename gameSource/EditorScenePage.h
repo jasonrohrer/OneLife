@@ -69,6 +69,8 @@ typedef struct SceneCell {
         
         double moveStartTime;
 
+        int graveID;
+
     } SceneCell;
 
 

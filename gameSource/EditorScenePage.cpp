@@ -1234,7 +1234,51 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
                         char used;
                     
-                        HoldingPos holdingPos = 
+                        HoldingPos holdingPos;
+                        
+                        ObjectRecord *obj = getObject( p->oID );
+        
+                        for( int i=0; i<obj->numSprites; i++ ) {
+                            markSpriteLive( obj->sprites[i] );
+                            }
+
+                        if( p->graveID != -1 ) {
+                            obj = getObject( p->graveID );
+        
+                            for( int i=0; i<obj->numSprites; i++ ) {
+                                markSpriteLive( obj->sprites[i] );
+                                }
+                            }
+                        
+
+
+                        if( p->age >= 60 &&
+                            p->graveID != -1 ) {
+                            
+                            holdingPos = 
+                            drawObjectAnim( p->graveID, 2, ground, 
+                                            thisFrameTime, 
+                                            0,
+                                            ground,
+                                            thisFrameTime,
+                                            frozenRotFrameTime,
+                                            &used,
+                                            frozenArmAnimType,
+                                            frozenArmAnimType,
+                                            personPos,
+                                            0,
+                                            false,
+                                            p->flipH,
+                                            p->age,
+                                            hideClosestArm,
+                                            hideAllLimbs,
+                                            false,
+                                            p->clothing,
+                                            NULL );
+                            }
+                        else {
+                            
+                            holdingPos =
                             drawObjectAnim( p->oID, 2, p->anim, 
                                             thisFrameTime, 
                                             0,
@@ -1254,7 +1298,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                             false,
                                             p->clothing,
                                             NULL );
-                    
+                            }
                     
                         if( heldObject != NULL ) {
                             
@@ -1685,6 +1729,15 @@ void EditorScenePage::makeActive( char inFresh ) {
     
     if( !inFresh ) {
         return;
+        }
+    
+    int grave = getRandomDeathMarker();
+
+    for( int y=0; y<mSceneH; y++ ) {
+        for( int x=0; x<mSceneW; x++ ) {
+            SceneCell *p = &( mPersonCells[y][x] );
+            p->graveID = grave;
+            }
         }
     
     TextField::unfocusAll();
