@@ -74,10 +74,10 @@ EditorScenePage::EditorScenePage()
                                    true, 2 ),                            
           mCellAnimFreezeSlider( smallFont, -450, -340, 2,
                                  300, 20,
-                                 -0.1, 2, "Cell Time" ),
+                                 -2, 2, "Cell Time" ),
           mPersonAnimFreezeSlider( smallFont, 50, -340, 2,
                                    300, 20,
-                                   -0.1, 2, "Person Time" ),
+                                   -2, 2, "Person Time" ),
           mCellSpriteVanishSlider( smallFont, -450, -300, 2,
                                    100, 20,
                                    0, 1, "Use" ),
@@ -1225,7 +1225,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         double thisFrameTime = p->frozenAnimTime;
                         
                         if( thisFrameTime < 0 ) {
-                            thisFrameTime = frameTime;
+                            thisFrameTime = frameTime + abs( thisFrameTime );
                             }
                         
                         double frozenRotFrameTime = thisFrameTime;
@@ -1405,7 +1405,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     double thisFrameTime = c->frozenAnimTime;
                         
                     if( thisFrameTime < 0 ) {
-                        thisFrameTime = frameTime;
+                        thisFrameTime = frameTime + abs( thisFrameTime );
                         }
 
                 
@@ -1741,6 +1741,7 @@ void EditorScenePage::makeActive( char inFresh ) {
             p->graveID = grave;
             }
         }
+    mEmptyCell.graveID = grave;
     
     TextField::unfocusAll();
     
@@ -2003,7 +2004,7 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->subContained.deleteAll();    
     
     inCell->anim = ground;
-    inCell->frozenAnimTime = -0.1;
+    inCell->frozenAnimTime = -2;
     inCell->numUsesRemaining = 1;
 
     inCell->xOffset = 0;
