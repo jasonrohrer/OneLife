@@ -7,3 +7,14 @@ convert -delay 1 -loop 0 *.tga -crop 350x350+500+220 -layers OptimizeTransparenc
 Making a ping-pong gif:
 
 convert -delay 1 -loop 0 *.tga -reverse *.tga -crop 350x350+500+220 -layers OptimizeTransparency -dither FloydSteinberg  myimage.gif
+
+
+
+
+Making sure it doesn't consume all RAM in the process:
+
+env MAGICK_TMPDIR=/home/jasonrohrer2/temp
+
+
+convert -limit memory 1024MiB -limit map 1024MiB -delay 1 -loop 0 *.tga -crop 350x350+500+220 -layers OptimizeTransparency -dither FloydSteinberg  myimage.gif
+
