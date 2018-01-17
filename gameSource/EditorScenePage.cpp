@@ -1334,6 +1334,9 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             if( heldObject->person ) {
                                 heldAge = p->heldAge;
                                 heldClothing = p->heldClothing;
+                                heldAnimType = held;
+                                heldFadeTargetType = held;
+                                heldFrozenRotFrameTime = 0;
                                 }
                             
                             int *contained = p->contained.getElementArray();

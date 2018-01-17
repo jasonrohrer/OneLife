@@ -12,6 +12,7 @@ Version 44     ???
 
 --Scene editor now allows starting and stopping of recording frames.
 
+--Fixed baby held animation in scene editor.
 
 
 
