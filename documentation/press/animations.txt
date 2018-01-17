@@ -1,0 +1,9 @@
+Making an animated gif with overlay optimizations from a crop of exported 
+frames:
+
+convert -delay 1 -loop 0 *.tga -crop 350x350+500+220 -layers OptimizeTransparency -dither FloydSteinberg  myimage.gif
+
+
+Making a ping-pong gif:
+
+convert -delay 1 -loop 0 *.tga -reverse *.tga -crop 350x350+500+220 -layers OptimizeTransparency -dither FloydSteinberg  myimage.gif
