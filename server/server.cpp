@@ -296,6 +296,38 @@ static LiveObject *getLiveObject( int inID ) {
 
 
 
+static double pickBirthCooldownSeconds() {
+    // Kumaraswamy distribution
+    // PDF:
+    // k(x,a,b) = a * b * x**( a - 1 ) * (1-x**a)**(b-1)
+    // CDF:
+    // kCDF(x,a,b) = 1 - (1-x**a)**b
+    // Invers CDF:
+    // kCDFInv(y,a,b) = ( 1 - (1-y)**(1.0/b) )**(1.0/a)
+
+    // For b=1, PDF curve starts at 0 and curves upward, for all a > 2
+    // good values seem to be a=1.5, b=1
+
+    // actually, make it more bell-curve like, with a=2, b=3
+
+    double a = 2;
+    double b = 3;
+    
+    // mean is around 2 minutes
+    
+
+    // uniform
+    double u = randSource.getRandomDouble();
+    
+    // feed into inverted CDF to sample a value from the distribution
+    double v = pow( 1 - pow( 1-u, (1/b) ), 1/a );
+    
+    // v is in [0..1], the value range of Kumaraswamy
+
+    // put max at 5 minutes
+    return v * 5 * 60;
+    }
+
 
 
 
@@ -3271,6 +3303,12 @@ static void sendMessageToPlayer( LiveObject *inPlayer,
 
 
 int main() {
+
+    printf( "Testing birth cooldowns\n" );
+    for( int i=0; i<200; i++ ) {
+        printf( "%f sec\n", pickBirthCooldownSeconds() );
+        }
+    
 
     nextID = 
         SettingsManager::getIntSetting( "nextPlayerID", 2 );
