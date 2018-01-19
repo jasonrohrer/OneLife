@@ -12355,6 +12355,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     LiveObject *ourLiveObject = getOurLiveObject();
 
+    if( ourLiveObject->heldByAdultID != -1 ) {
+        // click from a held baby
+        
+        // send dummy move message right away to make baby jump out of arms
+
+        // we don't need to use baby's true position here... they are
+        // in arms
+        char *moveMessage = autoSprintf( "MOVE %d %d 1 0#",
+                                         ourLiveObject->xd,
+                                         ourLiveObject->yd );
+        sendToServerSocket( moveMessage );
+        delete [] moveMessage;
+        return;
+        }
     
 
     // consider 3x4 area around click and test true object pixel

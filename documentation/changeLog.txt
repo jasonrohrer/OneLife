@@ -16,6 +16,8 @@ Version 44     ???
 
 --Fixed invisible baby bug.
 
+--Fixed baby bad pathfinding bug after jumping out of arms.
+
 
 
 
