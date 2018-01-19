@@ -16,6 +16,18 @@ Version 44     ???
 
 
 
+
+Server Fixes:
+
+--Bad mother limit now grows with population at 1/3 the old rate.
+
+--New child-spacing algorithm based on a randomly chosen birth cooldown time
+  for each mother.
+
+
+
+
+
 Version 42     2018-January-9
 
 --Fixed game playback issue with aysnchronous file reads.

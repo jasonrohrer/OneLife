@@ -64,9 +64,6 @@ int babyAge = 5;
 
 double forceDeathAge = 60;
 
-// if you have 2 living children, youngest has to be at least this old
-// before you can have another
-int minChildSpacingAge = 5;
 
 double minSayGapInSeconds = 1.0;
 
@@ -269,6 +266,11 @@ typedef struct LiveObject {
         // babies born to this player
         SimpleVector<timeSec_t> *babyBirthTimes;
         SimpleVector<int> *babyIDs;
+        
+        // wall clock time after which they can have another baby
+        // starts at 0 (start of time epoch) for non-mothers, as
+        // they can have their first baby right away.
+        timeSec_t birthCoolDown;
         
 
         timeSec_t lastRegionLookTime;
@@ -1510,7 +1512,7 @@ static void setFreshEtaDecayForHeld( LiveObject *inPlayer ) {
                     
     if( newDecayT != NULL ) {
         inPlayer->holdingEtaDecay = 
-            time(NULL) + newDecayT->autoDecaySeconds;
+            Time::timeSec() + newDecayT->autoDecaySeconds;
         }
     else {
         // no further decay
@@ -2354,7 +2356,7 @@ void processLoggedInPlayer( Socket *inSock,
     // lower the bad mother limit in low-population situations
     // so that babies aren't stuck with the same low-skill mother over and
     // over
-    int badMotherLimit = 1 + numPlayers;
+    int badMotherLimit = 1 + numPlayers / 3;
 
     if( badMotherLimit > 10 ) {
         badMotherLimit = 10;
@@ -2372,55 +2374,17 @@ void processLoggedInPlayer( Socket *inSock,
         if( isFertileAge( player ) ) {
             numOfAge ++;
             
-            // make sure this woman hasn't had too many babies in a row
+            // make sure this woman isn't on cooldown
+            // and that she's not a bad mother
             char canHaveBaby = true;
-            
-            int numPastBabies = player->babyBirthTimes->size();
-            timeSec_t currentTime = Time::timeSec();
-            
-            int minChildSpacingSeconds = 
-                lrint( minChildSpacingAge / getAgeRate() );
-            
-            if( numPastBabies >= 2 ) {
-                
-                int idA = 
-                    player->babyIDs->getElementDirect( numPastBabies - 1 );
 
-                int idB = 
-                    player->babyIDs->getElementDirect( numPastBabies - 2 );
-                
-                char aAlive = false;
-                char bAlive = false;
-                
-                for( int j=0; j<numPlayers; j++ ) {
-                    LiveObject *otherObj = players.getElement( j );
-                    
-                    if( otherObj->error ) {
-                        continue;
-                        }
-
-                    int id = otherObj->id;
-                    
-                    if( id == idA ) {
-                        aAlive = true;
-                        }
-                    else if( id == idB ) {
-                        bAlive = true;
-                        }
-                    }
-                
-                if( aAlive && bAlive ) {
-                    
-                    if( currentTime - player->babyBirthTimes->getElementDirect( 
-                            numPastBabies - 1 ) < minChildSpacingSeconds 
-                        ||
-                        currentTime - player->babyBirthTimes->getElementDirect( 
-                            numPastBabies - 2 ) < minChildSpacingSeconds ) {
-                        
-                        canHaveBaby = false;
-                        }
-                    }
+            
+            if( Time::timeSec() < player->birthCoolDown ) {    
+                canHaveBaby = false;
                 }
+
+            int numPastBabies = player->babyIDs->size();
+            
             if( canHaveBaby && numPastBabies >= badMotherLimit ) {
                 int numDead = 0;
                 
@@ -2450,9 +2414,7 @@ void processLoggedInPlayer( Socket *inSock,
                         }
                     }
                 
-                if( numDead > numPastBabies - 2 ) {
-                    // all but at most one dead
-                    
+                if( numDead >= badMotherLimit ) {
                     // this is a bad mother who lets all babies die
                     // don't give them more babies
                     canHaveBaby = false;
@@ -2601,9 +2563,14 @@ void processLoggedInPlayer( Socket *inSock,
             // only set race if the spawn-near player is our mother
             // otherwise, we are a new Eve spawning next to a baby
             
-            parent->babyBirthTimes->push_back( time( NULL ) );
+            timeSec_t curTime = Time::timeSec();
+            
+            parent->babyBirthTimes->push_back( curTime );
             parent->babyIDs->push_back( newObject.id );
-        
+            
+            // set cool-down time before this worman can have another baby
+            parent->birthCoolDown = pickBirthCooldownSeconds() + curTime;
+
             ObjectRecord *parentObject = getObject( parent->displayID );
 
             // pick race of child
@@ -2796,6 +2763,7 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.babyBirthTimes = new SimpleVector<timeSec_t>();
     newObject.babyIDs = new SimpleVector<int>();
     
+    newObject.birthCoolDown = 0;
                 
                 
                 
@@ -3303,12 +3271,6 @@ static void sendMessageToPlayer( LiveObject *inPlayer,
 
 
 int main() {
-
-    printf( "Testing birth cooldowns\n" );
-    for( int i=0; i<200; i++ ) {
-        printf( "%f sec\n", pickBirthCooldownSeconds() );
-        }
-    
 
     nextID = 
         SettingsManager::getIntSetting( "nextPlayerID", 2 );
@@ -6698,7 +6660,7 @@ int main() {
                                 
                                 if( newDecayT != NULL ) {
                                     nextPlayer->clothingEtaDecay[c] = 
-                                        time(NULL) + 
+                                        Time::timeSec() + 
                                         newDecayT->autoDecaySeconds;
                                     }
                                 else {
