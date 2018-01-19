@@ -592,8 +592,11 @@ void initTransBankFinish() {
 
                                     if( tr->autoDecaySeconds != 0 ) {
                                         // this use dummy auto-decays
-                                        // back to parent object
+                                        // back to previous use dummy
                                         newTransD.target = o->useDummyIDs[ u ];
+
+                                        newTransD.newTarget = 
+                                            o->useDummyIDs[ u + 1 ];
                                         }
                                     else {
                                         newTransD.target = o->useDummyIDs[ u ];

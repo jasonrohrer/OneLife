@@ -39,6 +39,10 @@ Server Fixes:
   server based on how well-fed they are.  Thus, a hungry woman can have a baby
   sometimes.  Thanks Jared J.
 
+--Fixed so that reverse use transition, that happen on a timer, can un-use
+  object step by step instead of all the way back to parent object (example:
+  berries on bush can grow back one berry at a time instead of all at once).
+
 
 
 
