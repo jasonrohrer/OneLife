@@ -1026,6 +1026,21 @@ char getFemale( LiveObject *inPlayer ) {
 
 
 
+char isFertileAge( LiveObject *inPlayer ) {
+    double age = computeAge( inPlayer );
+                    
+    char f = getFemale( inPlayer );
+                    
+    if( age >= 14 && age <= 40 && f ) {
+        return true;
+        }
+    else {
+        return false;
+        }
+    }
+
+
+
 
 int computeFoodCapacity( LiveObject *inPlayer ) {
     int ageInYears = lrint( computeAge( inPlayer ) );
@@ -1823,7 +1838,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
 
                     babyO->heldByOther = false;
 
-                    if( getFemale( inDroppingPlayer ) ) {    
+                    if( isFertileAge( inDroppingPlayer ) ) {    
                         // reset food decrement time
                         babyO->foodDecrementETASeconds =
                             Time::getCurrentTime() +
@@ -1867,7 +1882,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             
             babyO->heldByOther = false;
 
-            if( getFemale( inDroppingPlayer ) ) {    
+            if( isFertileAge( inDroppingPlayer ) ) {    
                 // reset food decrement time
                 babyO->foodDecrementETASeconds =
                     Time::getCurrentTime() +
@@ -2298,18 +2313,6 @@ static LiveObject *getHitPlayer( int inX, int inY,
 
     
 
-char isFertileAge( LiveObject *inPlayer ) {
-    double age = computeAge( inPlayer );
-                    
-    char f = getFemale( inPlayer );
-                    
-    if( age >= 14 && age <= 40 && f ) {
-        return true;
-        }
-    else {
-        return false;
-        }
-    }
 
         
 
@@ -5363,11 +5366,9 @@ int main() {
                                         //  update for the holding adult)
                                         }
                                     
-                                    // if adult female, baby auto-fed
-                                    if( getFemale( nextPlayer ) ) {
+                                    // if adult fertile female, baby auto-fed
+                                    if( isFertileAge( nextPlayer ) ) {
                                         
-                                        int oldStore = hitPlayer->foodStore;
-
                                         hitPlayer->foodStore = 
                                             computeFoodCapacity( hitPlayer );
                 
@@ -5381,18 +5382,11 @@ int main() {
                                             computeFoodDecrementTimeSeconds( 
                                                 hitPlayer );
 
-                                        int diff = 
-                                            hitPlayer->foodStore - oldStore;
+                                        int nurseCost = 
+                                            2 + 
+                                            floor( computeAge( hitPlayer ) );
                                         
-                                        if( diff < 1 ) {
-                                            // we MUST dock the mother at
-                                            // least 1 in exchange for
-                                            // resetting baby's food
-                                            // decrement time.
-                                            diff = 1;
-                                            }
-                                        
-                                        nextPlayer->foodStore -= diff;
+                                        nextPlayer->foodStore -= nurseCost;
                                         
                                         if( nextPlayer->foodStore < 0 ) {
                                             // catch mother death later
@@ -6857,31 +6851,28 @@ int main() {
                     Time::getCurrentTime() > 
                     nextPlayer->foodDecrementETASeconds ) {
                     
+                    // only if femail of fertile age
                     char heldByFemale = false;
-                    LiveObject *holdingFemale = NULL;
                     
                     if( nextPlayer->heldByOther ) {
                         LiveObject *adultO = getAdultHolding( nextPlayer );
                         
                         if( adultO != NULL &&
-                            getFemale( adultO ) ) {
+                            isFertileAge( adultO ) ) {
                     
                             heldByFemale = true;
-                            holdingFemale = adultO;
                             }
                         }
                     
                     
-                    LiveObject *decrementedPlayer;
+                    LiveObject *decrementedPlayer = NULL;
 
                     if( !heldByFemale ) {
                         nextPlayer->foodStore --;
                         decrementedPlayer = nextPlayer;
                         }
-                    else {
-                        holdingFemale->foodStore --;
-                        decrementedPlayer = holdingFemale;
-                        }
+                    // if held by fertile female, food for baby is free for
+                    // duration of holding
                     
                     // only update the time of the fed player
                     nextPlayer->foodDecrementETASeconds +=
@@ -6889,7 +6880,8 @@ int main() {
 
                     
 
-                    if( decrementedPlayer->foodStore <= 0 ) {
+                    if( decrementedPlayer != NULL &&
+                        decrementedPlayer->foodStore <= 0 ) {
                         // player has died
                         
                         // break the connection with them
@@ -6942,7 +6934,9 @@ int main() {
                         decrementedPlayer->foodStore = 0;
                         }
                     
-                    decrementedPlayer->foodUpdate = true;
+                    if( decrementedPlayer != NULL ) {
+                        decrementedPlayer->foodUpdate = true;
+                        }
                     }
                 
                 }

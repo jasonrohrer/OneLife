@@ -26,6 +26,13 @@ Server Fixes:
 
 --Babies born with 4 hunger bars instead of 2, but start out with only 2 full.
 
+--Only females of fertile age can nurse babies.
+
+--No more 1:1 food transfer from mother to baby when nursing.  Instead, there
+  is a one-time pick-up cost of (baby's age + 2), and keeping baby fed is free
+  after that, until baby is put back down.  Before, a nursing woman consumed
+  food twice as fast while holding a baby (feeding two people with one hunger
+  bar), which was too frantic.  
 
 
 
