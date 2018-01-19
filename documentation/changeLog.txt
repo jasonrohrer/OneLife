@@ -34,6 +34,10 @@ Server Fixes:
   food twice as fast while holding a baby (feeding two people with one hunger
   bar), which was too frantic.  
 
+--No longer giving baby to most well-fed eligible woman on server.  Instead,
+  picking a woman from a weighted distribution of all eligible women othe
+  server based on how well-fed they are.  Thus, a hungry woman can have a baby
+  sometimes.  Thanks Jared J.
 
 
 

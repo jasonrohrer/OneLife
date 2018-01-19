@@ -2522,29 +2522,33 @@ void processLoggedInPlayer( Socket *inSock,
         else {
             // baby
             
-            // pick the most well-fed mothers
-            int wellFedStore = 0;
+            // pick random mother from a weighted distribution based on 
+            // each mother's food supply
             
-            SimpleVector<LiveObject*> wellFedMothers;
-
+            int totalFoodStore = 0;
+            
             for( int i=0; i<parentChoices.size(); i++ ) {
                 LiveObject *p = parentChoices.getElementDirect( i );
 
-                if( p->foodStore > wellFedStore ) {
-                    wellFedMothers.deleteAll();
-                    wellFedStore = p->foodStore;
-                    }
-
-                if( p->foodStore == wellFedStore ) {
-                    wellFedMothers.push_back( p );
-                    }
+                totalFoodStore += p->foodStore;
                 }
+
+            double choice = 
+                randSource.getRandomBoundedDouble( 0, totalFoodStore );
             
-            int parentIndex = 
-                randSource.getRandomBoundedInt( 0,
-                                                wellFedMothers.size() - 1 );
             
-            parent = wellFedMothers.getElementDirect( parentIndex );
+            totalFoodStore = 0;
+            
+            for( int i=0; i<parentChoices.size(); i++ ) {
+                LiveObject *p = parentChoices.getElementDirect( i );
+
+                totalFoodStore += p->foodStore;
+                
+                if( totalFoodStore >= choice ) {
+                    parent = p;
+                    break;
+                    }                
+                }
             }
         
 
