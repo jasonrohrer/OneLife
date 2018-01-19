@@ -9653,6 +9653,7 @@ void LivingLifePage::step() {
                         delete [] babyO->pathToDest;
                         babyO->pathToDest = NULL;
                         }
+                    babyO->currentSpeed = 0;
                                     
                     existing->heldFrozenRotFrameCount =
                         babyO->frozenRotFrameCount;
