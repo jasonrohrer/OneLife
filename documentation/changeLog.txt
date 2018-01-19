@@ -24,6 +24,9 @@ Server Fixes:
 --New child-spacing algorithm based on a randomly chosen birth cooldown time
   for each mother.
 
+--Babies born with 4 hunger bars instead of 2, but start out with only 2 full.
+
+
 
 
 

@@ -1032,11 +1032,11 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
     
     if( ageInYears < 44 ) {
         
-        if( ageInYears > 18 ) {
-            ageInYears = 18;
+        if( ageInYears > 16 ) {
+            ageInYears = 16;
             }
         
-        return ageInYears + 2;
+        return ageInYears + 4;
         }
     else {
         // food capacity decreases as we near 60
@@ -2472,6 +2472,11 @@ void processLoggedInPlayer( Socket *inSock,
 
     // start full up to capacity with food
     newObject.foodStore = computeFoodCapacity( &newObject );
+
+    if( ! newObject.isEve ) {
+        // babies start out almost starving
+        newObject.foodStore = 2;
+        }
 
     newObject.heat = 0.5;
 
