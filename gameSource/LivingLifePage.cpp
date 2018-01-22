@@ -369,6 +369,23 @@ static double computeCurrentAge( LiveObject *inObj ) {
         return inObj->age;
         }
     else {
+        if( inObj->tempAgeOverrideSet ) {
+            double curTime = game_getCurrentTime();
+            
+            if( curTime - inObj->tempAgeOverrideSetTime < 5 ) {
+                // baby cries for 5 seconds each time they speak
+            
+                // update age using clock
+                return inObj->tempAgeOverride + 
+                    inObj->ageRate * 
+                    ( curTime - inObj->tempAgeOverrideSetTime );
+                }
+            else {
+                // temp override over
+                inObj->tempAgeOverrideSet = false;
+                }
+            }
+        
         // update age using clock
         return inObj->age + 
             inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
@@ -8356,6 +8373,9 @@ void LivingLifePage::step() {
                 o.age = 0;
                 o.finalAgeSet = false;
                 
+                o.tempAgeOverrideSet = false;
+                o.tempAgeOverride = 0;
+
                 // don't track these for other players
                 o.foodStore = 0;
                 o.foodCapacity = 0;                
@@ -9700,7 +9720,9 @@ void LivingLifePage::step() {
                 
                 if( babyO != NULL && existing != NULL ) {
                     babyO->heldByAdultID = existing->id;
-
+                    // stop crying when held
+                    babyO->tempAgeOverrideSet = false;
+                    
                     if( babyO->pathToDest != NULL ) {
                         // forget baby's old path
                         // they are going to be set down elsewhere
@@ -10401,6 +10423,16 @@ void LivingLifePage::step() {
                                 existing->speechFadeETATime = 
                                     game_getCurrentTime() + 3 +
                                     strlen( existing->currentSpeech ) / 5;
+
+                                if( existing->age < 1 && 
+                                    existing->heldByAdultID == -1 ) {
+                                    // make 0-y-old unheld baby revert to 
+                                    // crying age every time they speak
+                                    existing->tempAgeOverrideSet = true;
+                                    existing->tempAgeOverride = 0;
+                                    existing->tempAgeOverrideSetTime = 
+                                        game_getCurrentTime();
+                                    }
                                 }
                             
                             break;

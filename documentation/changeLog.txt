@@ -8,6 +8,7 @@ Version 47     ???
 --Auto-inherit closest on-screen home marker location when entering the world.
   Thus, babies can have a home, even though they aren't old enough to set one.
 
+--0-y-old babies now revert to crying every time they speak.
 
 
 

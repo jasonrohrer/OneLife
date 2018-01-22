@@ -50,6 +50,13 @@ typedef struct LiveObject {
 
         double lastAgeSetTime;
         
+        // roll back age temporarily to make baby revert to crying
+        // when baby speaks
+        char tempAgeOverrideSet;
+        double tempAgeOverride;
+        double tempAgeOverrideSetTime;
+        
+
         int foodStore;
         int foodCapacity;
         
