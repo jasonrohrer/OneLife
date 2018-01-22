@@ -7510,6 +7510,61 @@ void LivingLifePage::step() {
                 
                 tokens->deallocateStringElements();
                 delete tokens;
+                
+                if( !( mFirstServerMessagesReceived & 1 ) ) {
+                    // first map chunk just recieved
+                    
+                    char found = false;
+                    int closestX = 0;
+                    int closestY = 0;
+                    
+                    // only if marker starts on birth screen
+                    
+                    // use distance squared here, no need for sqrt
+                    double closestDist = 5 * 5;
+
+                    int mapCenterY = y + sizeY / 2;
+                    int mapCenterX = x + sizeX / 2;
+                    printf( "Map center = %d,%d\n", mapCenterX, mapCenterY );
+                    
+                    for( int mapY=0; mapY < mMapD; mapY++ ) {
+                        for( int mapX=0; mapX < mMapD; mapX++ ) {
+                        
+                            int i = mMapD * mapY + mapX;
+                            
+                            int id = mMap[ i ];
+                            
+                            if( id > 0 ) {
+                            
+                                // check for home marker
+                                if( getObject( id )->homeMarker ) {
+                                    int worldY = mapY + mMapOffsetY - mMapD / 2;
+                                    
+                                    int worldX = mapX + mMapOffsetX - mMapD / 2;
+
+                                    double dist = 
+                                        pow( worldY - mapCenterY, 2 )
+                                        +
+                                        pow( worldX - mapCenterX, 2 );
+                                    
+                                    if( dist < closestDist ) {
+                                        closestDist = dist;
+                                        closestX = worldX;
+                                        closestY = worldY;
+                                        found = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    
+                    if( found ) {
+                        printf( "Found starting home marker at %d,%d\n",
+                                closestX, closestY );
+                        addHomeLocation( closestX, closestY );
+                        }
+                    }
+                
 
                 mFirstServerMessagesReceived |= 1;
                 }
