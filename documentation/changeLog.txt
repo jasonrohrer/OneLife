@@ -8,6 +8,8 @@ Version 48     ????
 
 --Fixed log error message when downloading updates.
 
+--Fixed randomization of client choice of multiple download update mirrors.
+
 
 
 
