@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 48     ????
+
+--Fixed log error message when downloading updates.
+
+
+
+
 Version 47     2018-January-22
 
 --Auto-inherit closest on-screen home marker location when entering the world.
