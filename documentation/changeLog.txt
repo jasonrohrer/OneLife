@@ -13,6 +13,16 @@ Version 48     ????
 
 
 
+Server Fixes:
+
+--Old bad mother limit started at 2 and grew with population.  New limit 
+  started at 1 and grew with pop/3.  Fixed it to start at 2.
+
+
+
+
+
+
 Version 47     2018-January-22
 
 --Auto-inherit closest on-screen home marker location when entering the world.

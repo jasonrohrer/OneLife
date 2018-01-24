@@ -2359,7 +2359,7 @@ void processLoggedInPlayer( Socket *inSock,
     // lower the bad mother limit in low-population situations
     // so that babies aren't stuck with the same low-skill mother over and
     // over
-    int badMotherLimit = 1 + numPlayers / 3;
+    int badMotherLimit = 2 + numPlayers / 3;
 
     if( badMotherLimit > 10 ) {
         badMotherLimit = 10;
