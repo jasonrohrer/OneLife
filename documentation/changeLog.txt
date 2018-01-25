@@ -10,6 +10,9 @@ Version 48     ????
 
 --Fixed randomization of client choice of multiple download update mirrors.
 
+--Fixed crash in editor when loading an manipulating a transition with a
+  negative actor.
+
 
 
 

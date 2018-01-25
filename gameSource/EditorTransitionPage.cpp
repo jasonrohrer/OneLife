@@ -856,6 +856,10 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                 if( mCurrentTransition.target == -1 ) {
                     mCurrentTransition.target = 0;
                     }
+                if( mCurrentTransition.actor < 0 ) {
+                    // auto-decay and default transition have blank actor
+                    mCurrentTransition.actor = 0;
+                    }
 
                 // select the obj we were searching for when
                 // we jump to this transition... thus, we don't redo search
@@ -877,6 +881,10 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                 // -1 transition means blank target (eating)
                 if( mCurrentTransition.target == -1 ) {
                     mCurrentTransition.target = 0;
+                    }
+                if( mCurrentTransition.actor < 0 ) {
+                    // auto-decay and default transition have blank actor
+                    mCurrentTransition.actor = 0;
                     }
 
                 // select the obj we were searching for when
