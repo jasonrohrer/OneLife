@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 48     ????
+Version 48     2018-January-26
 
 --Fixed log error message when downloading updates.
 
@@ -22,6 +22,7 @@ Version 48     ????
 --Hint for eventual outcome now shown when holding a partially-used object
   (example:  eating a pie gives you a plate eventually).  Hints for partially
   used object in general were disabled by mistake before.
+
 
 
 
