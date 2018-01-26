@@ -270,7 +270,7 @@ void initTransBankFinish() {
 
                     // OR they may have already been generated
                     // (we go through listed parents for this object in order
-                    //  with previous earlier overriding later parents)
+                    //  with earlier overriding later parents)
 
                     if( tr->actor == parentID ) {
                         // check if an override trans exists for the object
@@ -281,7 +281,7 @@ void initTransBankFinish() {
                                                      tr->lastUseTarget );
                         
                         if( oTR != NULL ) {
-                            // skip this abstract terans
+                            // skip this abstract trans
                             continue;
                             }
                         }
@@ -294,7 +294,7 @@ void initTransBankFinish() {
                                                      tr->lastUseTarget );
                         
                         if( oTR != NULL ) {
-                            // skip this abstract terans
+                            // skip this abstract trans
                             continue;
                             }
                         }
