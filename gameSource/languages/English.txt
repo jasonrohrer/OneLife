@@ -133,6 +133,8 @@ eatHint "MOUTH"
 bareHandHint "BARE HAND"
 bareGroundHint "BARE GROUND"
 nothingHint "NOTHING"
+eventuallyHint "(EVENTUALLY)"
+
 
 noHint "NO INFORMATION" 
 

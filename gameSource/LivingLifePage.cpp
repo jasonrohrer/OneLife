@@ -6114,22 +6114,6 @@ static char isCategory( int inID ) {
     }
 
 
-static char isUseDummy( int inID ) {
-    if( inID <= 0 ) {
-        return false;
-        }
-    
-    ObjectRecord *o = getObject( inID );
-    
-    if( o == NULL ) {
-        return false;
-        }
-    if( o->isUseDummy ) {
-        return true;
-        }
-    return false;
-    }
-
 
 
 static char getTransHintable( TransRecord *inTrans ) {
@@ -6145,13 +6129,6 @@ static char getTransHintable( TransRecord *inTrans ) {
         if( isCategory( inTrans->target ) ) {
             return false;
             }
-        if( isUseDummy( inTrans->actor ) ) {
-            return false;
-            }
-        if( isUseDummy( inTrans->target ) ) {
-            return false;
-            }
-        
         return true;
         }
     else {
@@ -6366,6 +6343,9 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
         else {
             actorString = stringDuplicate( "" );
             }
+
+        
+        char eventually = false;
         
         
         char *targetString;
@@ -6380,6 +6360,30 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
             
             if( actorObj->foodValue ) {
                 targetString = stringDuplicate( translate( "eatHint" ) );
+                
+                if( result == 0 && 
+                    actor == newActor &&
+                    actorObj->numUses > 1 ) {
+                    // see if there's a last-use transition and give hint
+                    // about what it produces, in the end
+
+                    int lastDummy = 
+                        actorObj->useDummyIDs[ 0 ];
+                    
+                    TransRecord *lastUseTrans = getTrans( lastDummy, -1 );
+                    
+                    if( lastUseTrans != NULL ) {
+                        if( lastUseTrans->newActor > 0 ) {
+                            result = findMainObjectID( lastUseTrans->newActor );
+                            eventually = true;
+                            }
+                        else if( lastUseTrans->newTarget > 0 ) {
+                            result = 
+                                findMainObjectID( lastUseTrans->newTarget );
+                            eventually = true;
+                            }
+                        }    
+                    }
                 }
             else {
                 targetString = stringDuplicate( translate( "bareGroundHint" ) );
@@ -6402,6 +6406,13 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
         
         stripDescriptionComment( resultString );
         
+        if( eventually ) {
+            char *old = resultString;
+            resultString = autoSprintf( "%s %s", old, 
+                                        translate( "eventuallyHint" ) );
+            delete [] old;
+            }
+
         
         char *fullString =
             autoSprintf( "%s#%s#%s", actorString,

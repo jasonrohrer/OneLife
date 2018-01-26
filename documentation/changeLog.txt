@@ -19,6 +19,10 @@ Version 48     ????
   pond plays only water bowl creation sound, while dumping bowl back into pond
   plays pond using sound).
 
+--Hint for eventual outcome now shown when holding a partially-used object
+  (example:  eating a pie gives you a plate eventually).  Hints for partially
+  used object in general were disabled by mistake before.
+
 
 
 
