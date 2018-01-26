@@ -628,4 +628,7 @@ void setupSpriteUseVis( ObjectRecord *inObject, int inUsesRemaining,
 
 
 
+char bothSameUseParent( int inAObjectID, int inBObjectID );
+
+
 #endif

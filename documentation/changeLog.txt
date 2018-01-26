@@ -13,6 +13,12 @@ Version 48     ????
 --Fixed crash in editor when loading an manipulating a transition with a
   negative actor.
 
+--No longer playing using sound when a target object with no creation sound 
+  goes through a use-dummy transition.  Still playing the using sound if the
+  held tool changes with no creation sound (example:  bowl of water filled at
+  pond plays only water bowl creation sound, while dumping bowl back into pond
+  plays pond using sound).
+
 
 
 

@@ -8071,7 +8071,12 @@ void LivingLifePage::step() {
                                         // (if it will, it will be played
                                         //  below)
                                         ObjectRecord *obj = getObject( old );
-                                        if( obj->usingSound.numSubSounds 
+                                        
+                                        // don't play using sound
+                                        // if they are both use dummies
+                                        if( !bothSameUseParent( old, newID )
+                                            &&
+                                            obj->usingSound.numSubSounds 
                                             > 0 ) {    
                                             
                                             playSound( 

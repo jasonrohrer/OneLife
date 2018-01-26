@@ -4043,6 +4043,33 @@ void computeHeldDrawPos( HoldingPos inHoldingPos, doublePair inPos,
 
 
 
+char bothSameUseParent( int inAObjectID, int inBObjectID ) {
+    ObjectRecord *a = getObject( inAObjectID );
+    ObjectRecord *b = getObject( inBObjectID );
+    
+
+    if( a != NULL && b != NULL ) {
+        
+        if( a->isUseDummy && b->isUseDummy ) {
+            if( a->useDummyParent == b->useDummyParent ) {
+                return true;
+                }
+            }
+        if( ! a->isUseDummy && b->isUseDummy ) {
+            return ( b->useDummyParent == inAObjectID );
+            }
+        if( a->isUseDummy && ! b->isUseDummy ) {
+            return ( a->useDummyParent == inBObjectID );
+            }
+        }
+
+    return false;
+    }
+
+
+
+
+
 
 
 
