@@ -94,7 +94,7 @@ void playSound( SoundUsage inUsage,
 // true if started
 char startRecordingSound();
 
-// auto-trims sound and returns ID of new sound in bank
+// auto-trims and EQs sound and returns ID of new sound in bank
 // returns -1 if recording fails
 int stopRecordingSound();
 

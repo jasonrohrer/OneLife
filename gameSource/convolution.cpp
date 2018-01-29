@@ -173,59 +173,69 @@ static void fftConvolve( int inWindowSize,
     }
 
 
-static int savedNumWindowsB = 0;
-static int savedNumSamplesB = 0;
-static double **savedFFTBufferB =  NULL;
 
-static int savedWindowSize = 65536;
+static int defaultWindowSize = 65536;
 
 
-void endMultiConvolution() {
-    if( savedFFTBufferB != NULL ) {
-        for( int i=0; i<savedNumWindowsB; i++ ) {
-            delete [] savedFFTBufferB[i];
-            }
-        delete [] savedFFTBufferB;
-        savedFFTBufferB = NULL;
+
+void endMultiConvolution( MultiConvolution *inMulti ) {
+    if( inMulti->savedNumWindowsB == -1 ) {
+        return;
         }
+    
+    if( inMulti->savedFFTBufferB != NULL ) {
+        for( int i=0; i<inMulti->savedNumWindowsB; i++ ) {
+            delete [] inMulti->savedFFTBufferB[i];
+            }
+        delete [] inMulti->savedFFTBufferB;
+        inMulti->savedFFTBufferB = NULL;
+        }
+
+    inMulti->savedNumWindowsB = -1;
+    inMulti->savedNumSamplesB = -1;
     }
 
 
-void startMultiConvolution( double *inB, int inLengthB ) {
-    endMultiConvolution();
+
+MultiConvolution startMultiConvolution( double *inB, int inLengthB ) {
+    MultiConvolution m;
     
-    savedNumSamplesB = inLengthB;
-    savedNumWindowsB = lrint( ceil( inLengthB / (double)savedWindowSize ) );
+    m.savedWindowSize = defaultWindowSize;
+    m.savedNumSamplesB = inLengthB;
+    m.savedNumWindowsB = lrint( ceil( inLengthB / (double)m.savedWindowSize ) );
     
     double *paddedB = zeroPad( inB, inLengthB, 
-                               savedNumWindowsB * savedWindowSize );
+                               m.savedNumWindowsB * m.savedWindowSize );
     
-    savedFFTBufferB = new double*[ savedNumWindowsB ];
+    m.savedFFTBufferB = new double*[ m.savedNumWindowsB ];
 
-    for( int i=0; i<savedNumWindowsB; i++ ) {
-        savedFFTBufferB[i] = new double[ savedWindowSize * 2 ];
+    for( int i=0; i<m.savedNumWindowsB; i++ ) {
+        m.savedFFTBufferB[i] = new double[ m.savedWindowSize * 2 ];
         
-        int offsetB = i * savedWindowSize;
+        int offsetB = i * m.savedWindowSize;
             
         double *paddedBWindow = zeroPad( &( paddedB[offsetB] ),
-                                         savedWindowSize, savedWindowSize * 2 );
+                                         m.savedWindowSize, 
+                                         m.savedWindowSize * 2 );
         
-        realFFT( savedWindowSize * 2, paddedBWindow, savedFFTBufferB[i] );
+        realFFT( m.savedWindowSize * 2, paddedBWindow, m.savedFFTBufferB[i] );
         
         delete [] paddedBWindow;
         }
     delete [] paddedB;
+
+    return m;
     }
 
 
-void multiConvolve( double *inA, int inLengthA,
+void multiConvolve( MultiConvolution inMulti, double *inA, int inLengthA,
                     double *inDest ) {
     //double start = Time::getCurrentTime();
 
-    fftConvolve( savedWindowSize,
+    fftConvolve( inMulti.savedWindowSize,
                  inA, inLengthA,
-                 savedFFTBufferB, savedNumWindowsB,
-                 savedNumSamplesB,
+                 inMulti.savedFFTBufferB, inMulti.savedNumWindowsB,
+                 inMulti.savedNumSamplesB,
                  inDest );
     
     //printf( "Convolution of %dx%d took %.3f seconds\n",
@@ -239,18 +249,19 @@ static void fftConvolve( int inWindowSize,
                          double *inA, int inLengthA,
                          double *inB, int inLengthB,
                          double *inDest ) {
-    
-    int oldWindowSize = savedWindowSize;
-    savedWindowSize = inWindowSize;
-    
-    startMultiConvolution( inB, inLengthB );
 
     
-    multiConvolve( inA, inLengthA, inDest );
-
-    endMultiConvolution();
+    int oldWindowSize = defaultWindowSize;
+    defaultWindowSize = inWindowSize;
     
-    savedWindowSize = oldWindowSize;
+    MultiConvolution m = startMultiConvolution( inB, inLengthB );
+
+    
+    multiConvolve( m, inA, inLengthA, inDest );
+
+    endMultiConvolution( &m );
+    
+    defaultWindowSize = oldWindowSize;
     }
 
 

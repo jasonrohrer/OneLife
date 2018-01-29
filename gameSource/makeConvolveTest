@@ -1,1 +1,1 @@
-g++ -g -I../.. -o convolveTest convolveTest.cpp convolution.cpp fft.cpp ../../minorGems/sound/formats/aiff.cpp ../../minorGems/io/file/linux/PathLinux.cpp ../../minorGems/util/StringBufferOutputStream.cpp ../../minorGems/system/unix/TimeUnix.cpp
+g++ -Wall -g -I../.. -o convolveTest convolveTest.cpp convolution.cpp fft.cpp ../../minorGems/sound/formats/aiff.cpp ../../minorGems/io/file/linux/PathLinux.cpp ../../minorGems/util/StringBufferOutputStream.cpp ../../minorGems/system/unix/TimeUnix.cpp

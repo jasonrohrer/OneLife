@@ -177,8 +177,86 @@ static char printSteps = false;
 
 #include "convolution.h"
 
+
+MultiConvolution reverbConvolution = { -1, -1, NULL };
+MultiConvolution eqConvolution = { -1, -1, NULL };
+
+
+static int16_t *generateWetConvolve( MultiConvolution inMulti, int inNumSamples,
+                                     int16_t *inSamples, 
+                                     int *outNumWetSamples ) {
+
+    if( inMulti.savedNumSamplesB <= 0 ) {
+        // no covolution impulse response loaded
+        // can't convolve
+        // just return copy of dry samples
+        int numWetSamples = inNumSamples;
+        
+        int16_t *wet = new int16_t[ numWetSamples ];
+        
+        memcpy( wet, inSamples, numWetSamples * sizeof( int16_t ) );
+        *outNumWetSamples = numWetSamples;
+        
+        return wet;
+        }
+    
+
+    int numWetSamples = inNumSamples + inMulti.savedNumSamplesB;
+            
+    double *wetSampleFloats = new double[ numWetSamples ];
+    
+    for( int i=0; i<numWetSamples; i++ ) {
+        wetSampleFloats[i] = 0;
+        }
+            
+            
+
+    double *sampleFloats = new double[ inNumSamples ];
+    
+    for( int i=0; i<inNumSamples; i++ ) {
+        sampleFloats[i] = (double) inSamples[i] / 32768.0;
+        }
+    
+    // b data has been pre-generated with startMultiConvolution
+    multiConvolve( inMulti, sampleFloats, inNumSamples,
+                   wetSampleFloats );
+
+    delete [] sampleFloats;
+
+    double maxWet = 0;
+    double minWet = 0;
+            
+    for( int i=0; i<numWetSamples; i++ ) {
+        if( wetSampleFloats[ i ] > maxWet ) {
+            maxWet = wetSampleFloats[ i ];
+            }
+        else if( wetSampleFloats[ i ] < minWet ) {
+            minWet = wetSampleFloats[ i ];
+            }
+        }
+    double scale = maxWet;
+    if( -minWet > scale ) {
+        scale = -minWet;
+        }
+    double normalizeFactor = 1.0 / scale;
+            
+    int16_t *wetSamples = new int16_t[ numWetSamples ];
+    for( int i=0; i<numWetSamples; i++ ) {
+        wetSamples[i] = 
+            (int16_t)( 
+                lrint( 32767 * normalizeFactor * wetSampleFloats[i] ) );
+        }
+    delete [] wetSampleFloats;
+    
+    *outNumWetSamples = numWetSamples;
+    return wetSamples;
+    }
+
+                                     
+
+
+
 static void generateReverb( SoundRecord *inRecord,
-                            int inNumReverbSamples,
                             File *inReverbFolder ) {
     
     char *cacheFileName = autoSprintf( "%d.aiff", inRecord->id );
@@ -208,55 +286,13 @@ static void generateReverb( SoundRecord *inRecord,
         
         if( samples != NULL ) {
             
-            int numWetSamples = numSamples + inNumReverbSamples;
+            int numWetSamples;
             
-            double *wetSampleFloats = new double[ numWetSamples ];
-            
-            for( int i=0; i<numWetSamples; i++ ) {
-                wetSampleFloats[i] = 0;
-                }
-            
-            
-
-            double *sampleFloats = new double[ numSamples ];
-            
-            for( int i=0; i<numSamples; i++ ) {
-                sampleFloats[i] = (double) samples[i] / 32768.0;
-                }
-            
+            int16_t *wetSamples = generateWetConvolve( reverbConvolution,
+                                                       numSamples,
+                                                       samples,
+                                                       &numWetSamples );
             delete [] samples;
-            
-            // b data has been pre-generated with startMultiConvolution
-            multiConvolve( sampleFloats, numSamples,
-                           wetSampleFloats );
-
-            delete [] sampleFloats;
-
-            double maxWet = 0;
-            double minWet = 0;
-            
-            for( int i=0; i<numWetSamples; i++ ) {
-                if( wetSampleFloats[ i ] > maxWet ) {
-                    maxWet = wetSampleFloats[ i ];
-                    }
-                else if( wetSampleFloats[ i ] < minWet ) {
-                    minWet = wetSampleFloats[ i ];
-                    }
-                }
-            double scale = maxWet;
-            if( -minWet > scale ) {
-                scale = -minWet;
-                }
-            double normalizeFactor = 1.0 / scale;
-            
-            int16_t *wetSamples = new int16_t[ numWetSamples ];
-            for( int i=0; i<numWetSamples; i++ ) {
-                wetSamples[i] = 
-                    (int16_t)( 
-                        lrint( 32767 * normalizeFactor * wetSampleFloats[i] ) );
-                }
-            delete [] wetSampleFloats;
-            
 
             writeAiffFile( cacheFile, wetSamples, numWetSamples );
             
@@ -286,7 +322,6 @@ static SoundRecord *getSoundRecord( int inID ) {
 
 static SimpleVector<int> reverbsToRegenerate;
 static int nextReverbToRegenerate = 0;
-static int numReverbSamples;
 static File *reverbFolder;
 
 
@@ -374,6 +409,32 @@ int initSoundBankStart( char inPrintSteps ) {
 
 
 
+    
+    File eqFile( NULL, "eqImpulseResponse.aiff" );
+    
+    if( eqFile.exists() ) {
+        
+        int numEqSamples = 0;
+        int16_t *eqSamples = readAIFFFile( &eqFile, &numEqSamples );
+            
+        if( eqSamples != NULL ) {        
+            double *eqFloats = new double[ numEqSamples ];
+            
+            for( int j=0; j<numEqSamples; j++ ) {
+                eqFloats[j] = (double) eqSamples[j] / 32768.0;
+                }
+                
+            eqConvolution = startMultiConvolution( eqFloats, numEqSamples );
+                
+            delete [] eqFloats;
+            delete [] eqSamples;
+            }
+        }
+
+
+
+
+
     File reverbFile( NULL, "reverbImpulseResponse.aiff" );
     
     if( reverbFile.exists() ) {
@@ -386,6 +447,7 @@ int initSoundBankStart( char inPrintSteps ) {
     
         if( reverbFolder->exists() && reverbFolder->isDirectory() ) {
             
+            int numReverbSamples = 0;
             int16_t *reverbSamples = readAIFFFile( &reverbFile,
                                                    &numReverbSamples );
             
@@ -396,7 +458,8 @@ int initSoundBankStart( char inPrintSteps ) {
                     reverbFloats[j] = (double) reverbSamples[j] / 32768.0;
                     }
                 
-                startMultiConvolution( reverbFloats, numReverbSamples );
+                reverbConvolution = 
+                    startMultiConvolution( reverbFloats, numReverbSamples );
                 
                 delete [] reverbFloats;
                 
@@ -428,7 +491,7 @@ float initSoundBankStep() {
     
     int id = reverbsToRegenerate.getElementDirect( nextReverbToRegenerate );
     
-    generateReverb( getSoundRecord( id ), numReverbSamples, reverbFolder );
+    generateReverb( getSoundRecord( id ), reverbFolder );
 
     nextReverbToRegenerate++;
     
@@ -439,8 +502,8 @@ float initSoundBankStep() {
 
 
 void initSoundBankFinish() {
-    endMultiConvolution();
-
+    endMultiConvolution( &reverbConvolution );
+    
     delete reverbFolder;
     }
 
@@ -537,7 +600,8 @@ static void freeSoundRecord( int inID ) {
 
 
 void freeSoundBank() {
-    
+    endMultiConvolution( &eqConvolution );
+
     for( int i=0; i<mapSize; i++ ) {
         if( idMap[i] != NULL ) {
             
@@ -866,6 +930,7 @@ char markSoundUsageLive( SoundUsage inUsage ) {
 
 void deleteSoundFromBank( int inID ) {
     File soundsDir( NULL, "sounds" );
+    File soundsRawDir( NULL, "soundsRaw" );
 
     for( int i=0; i<loadingSounds.size(); i++ ) {
         SoundLoadingRecord *loadingR = loadingSounds.getElement( i );
@@ -888,13 +953,22 @@ void deleteSoundFromBank( int inID ) {
         char *fileNameAIFF = autoSprintf( printFormatAIFF, inID );
         File *soundFileAIFF = soundsDir.getChildFile( fileNameAIFF );
         
-        loadedSounds.deleteElementEqualTo( inID );
-        
         soundFileAIFF->remove();
-            
-        delete [] fileNameAIFF;
         delete soundFileAIFF;
+    
+        if( soundsRawDir.exists() && soundsRawDir.isDirectory() ) {    
+            File *soundRawFileAIFF = soundsRawDir.getChildFile( fileNameAIFF );
+            
+            soundRawFileAIFF->remove();
+            delete soundRawFileAIFF;
+            }
 
+        delete [] fileNameAIFF;
+
+
+        loadedSounds.deleteElementEqualTo( inID );
+
+        
         File reverbFolder( NULL, "reverbCache" );
         
         char *cacheFileName = autoSprintf( "%d.aiff", inID );
@@ -1026,12 +1100,18 @@ int stopRecordingSound() {
     
     // add it to file structure
     File soundsDir( NULL, "sounds" );
+    File soundsRawDir( NULL, "soundsRaw" );
             
     if( !soundsDir.exists() ) {
         soundsDir.makeDirectory();
         }
+
+    if( !soundsRawDir.exists() ) {
+        soundsRawDir.makeDirectory();
+        }
     
-    if( soundsDir.exists() && soundsDir.isDirectory() ) {
+    if( soundsDir.exists() && soundsDir.isDirectory() &&
+        soundsRawDir.exists() && soundsRawDir.isDirectory() ) {
                 
                 
         int nextSoundNumber = 1;
@@ -1058,15 +1138,41 @@ int stopRecordingSound() {
             
         newID = nextSoundNumber;
 
-        File *soundFile = soundsDir.getChildFile( fileNameAIFF );
+        File *rawSoundFile = soundsRawDir.getChildFile( fileNameAIFF );
         
-        delete [] fileNameAIFF;
+        
 
-        writeAiffFile( soundFile, &( samples[ finalStartPoint ] ),
+        writeAiffFile( rawSoundFile, &( samples[ finalStartPoint ] ),
                        finalNumSamples );
         
-        delete soundFile;
+        delete rawSoundFile;
 
+
+        // now apply EQ
+        
+        int numWet = 0;
+
+        int16_t *wetSamples = 
+            generateWetConvolve( eqConvolution, finalNumSamples,
+                                 &( samples[ finalStartPoint ] ), 
+                                 &numWet );
+        
+        File *eqSoundFile = soundsDir.getChildFile( fileNameAIFF );
+
+        writeAiffFile( eqSoundFile, wetSamples, numWet );
+        
+        delete eqSoundFile;
+
+        delete [] fileNameAIFF;
+        
+        
+        delete [] samples;
+        
+        samples = wetSamples;
+        finalStartPoint = 0;
+        finalNumSamples = numWet;
+
+            
 
         
         nextSoundNumber++;
