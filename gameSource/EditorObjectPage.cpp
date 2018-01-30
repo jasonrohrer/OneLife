@@ -3494,6 +3494,14 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         smallFont->drawString( rotString, pos, alignLeft );
         
         delete [] rotString;
+
+        if( mCurrentObject.spriteHFlip[ mPickedObjectLayer ] ) {
+            pos = mFlipHButton.getPosition();
+            
+            pos.x += 32;
+            
+            smallFont->drawString( "F", pos, alignLeft );
+            }
         }
     
 

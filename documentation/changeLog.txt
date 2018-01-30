@@ -11,6 +11,8 @@ Version 50     ???
   now shows proper hint list, even though touching the pond with most objects
   causes the pond to temporarily transition (goose jumps in).
 
+--Object editor shows F label when current sprite layer is flipped.
+
 
 
 Version 48     2018-January-26
