@@ -12708,7 +12708,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             if( tr == NULL ) {
                 // try defaul transition
-                tr = getTrans( -2, destID );
+                // tr = getTrans( -2, destID );
+                
+                // for now, DO NOT consider default transition
+                // no main transition for this held object applies
+                // so we should probably give a hint about what CAN apply
+                // to the target object.
+
+                // Default transitions are currently just used to make
+                // something react to the player (usually for animals getting
+                // startled), not to actually accomplish
+                // something
+
+                // so we should show hints about the target object BEFORE it
+                // went into its (temporary) reaction state. 
                 }
             
             if( tr == NULL || tr->newTarget == destID ) {

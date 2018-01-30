@@ -7,6 +7,9 @@ Version 50     ???
 
 --Added EQ to cut extreme low end and high end from recorded sound effects.
 
+--Fixed hint system's handling of default transitions.  For example, goose pond
+  now shows proper hint list, even though touching the pond with most objects
+  causes the pond to temporarily transition (goose jumps in).
 
 
 
