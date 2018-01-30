@@ -411,7 +411,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        0,
                        1,
                        zeroOffset,
-                       false,
+                       'n',
                        zeroOffset,
                        0,  // deadly distance
                        1,  // use distance
@@ -439,7 +439,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        spriteIsBody,
                        spriteIsBackFoot,
                        spriteIsFrontFoot,
-                       0,
+                       1,
                        spriteUseVanish,
                        spriteUseAppear );
             

@@ -15,6 +15,9 @@ Version 51     ???
 
 --Baking an object can now handle sprite flips properly.
 
+--Fixed default object values when trimming a large sprite.
+
+
 
 
 
