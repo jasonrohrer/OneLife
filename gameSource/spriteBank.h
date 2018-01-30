@@ -113,7 +113,8 @@ int bakeSprite( const char *inTag,
                 int inNumSprites,
                 int *inSpriteIDs,
                 // offset of each sprite center relative to center point
-                doublePair *inSpritePos );
+                doublePair *inSpritePos,
+                char *inSpriteHFlips );
 
 
                 

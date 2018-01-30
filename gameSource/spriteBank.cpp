@@ -916,7 +916,8 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
 int bakeSprite( const char *inTag,
                 int inNumSprites,
                 int *inSpriteIDs,
-                doublePair *inSpritePos ) {
+                doublePair *inSpritePos,
+                char *inSpriteHFlips ) {
     
     File spritesDir( NULL, "sprites" );
             
@@ -994,13 +995,26 @@ int bakeSprite( const char *inTag,
             for( int c=0; c<4; c++ ) {
                 chan[c] = image->getChannel( c );
                 }
+                
+            int xSign = 1;
             
+            
+            if( inSpriteHFlips[i] ) {
+                xSign = -1;
+                }
+                
+
             for( int y = 0; y<h; y++ ) {
                 int baseY = ( y - centerY ) - yOffsets[i] + baseCenterY;
                 
                 for( int x = 0; x<w; x++ ) {
-                    int baseX = ( x - centerX ) + xOffsets[i] + baseCenterX;
+                    int baseX = xSign * ( x - centerX ) + 
+                        xOffsets[i] + baseCenterX;
                     
+                    if( inSpriteHFlips[i] ) {
+                        baseX -= 1;
+                        }
+
                     int i = y * w + x;
                     
                     int baseI = baseY * baseW + baseX;

@@ -13,6 +13,9 @@ Version 51     ???
 
 --Object editor shows F label when current sprite layer is flipped.
 
+--Baking an object can now handle sprite flips properly.
+
+
 
 
 Version 48     2018-January-26

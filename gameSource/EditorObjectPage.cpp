@@ -1727,7 +1727,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         int newID = bakeSprite( tag,
                                 mCurrentObject.numSprites,
                                 mCurrentObject.sprites,
-                                mCurrentObject.spritePos );
+                                mCurrentObject.spritePos,
+                                mCurrentObject.spriteHFlip );
         
         spritePickable.usePickable( newID );
 
