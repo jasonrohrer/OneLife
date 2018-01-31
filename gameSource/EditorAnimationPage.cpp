@@ -394,6 +394,13 @@ EditorAnimationPage::EditorAnimationPage()
     mSliders[0] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 6, "X Osc" );
+
+    mXOffsetSlider = new ValueSlider( smallFont, x - 182, 
+                                      mSliders[0]->getPosition().y, 
+                                      2,
+                                      50, 20,
+                                      -128, 128, "Off" );
+
     mSliders[1] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 256, "X Amp" );
@@ -404,6 +411,13 @@ EditorAnimationPage::EditorAnimationPage()
     mSliders[3] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 6, "Y Osc" );
+
+    mYOffsetSlider = new ValueSlider( smallFont, x - 182, 
+                                      mSliders[3]->getPosition().y, 
+                                      2,
+                                      50, 20,
+                                      -128, 128, "Off" );
+
     mSliders[4] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 256, "Y Amp" );
@@ -468,6 +482,19 @@ EditorAnimationPage::EditorAnimationPage()
         mSliders[i]->addActionListener( this );
         mSliders[i]->setVisible( false );
         }
+    
+    addComponent( mXOffsetSlider );
+    addComponent( mYOffsetSlider );
+    
+    mXOffsetSlider->addActionListener( this );
+    mYOffsetSlider->addActionListener( this );
+    
+    mXOffsetSlider->setVisible( false );
+    mYOffsetSlider->setVisible( false );
+    
+
+
+
     mReverseRotationCheckbox.setVisible( false );
 
     addComponent( &mRandomStartPhaseCheckbox );
@@ -511,6 +538,9 @@ EditorAnimationPage::~EditorAnimationPage() {
         delete mSliders[i];
         }
     
+    delete mXOffsetSlider;
+    delete mYOffsetSlider;
+
     freeSprite( mCenterMarkSprite );
     freeSprite( mGroundSprite );
     }
@@ -856,6 +886,10 @@ void EditorAnimationPage::updateAnimFromSliders() {
         }
     
     
+    r->offset.x = mXOffsetSlider->getValue();
+    r->offset.y = mYOffsetSlider->getValue();
+    
+
     r->xOscPerSec = mSliders[0]->getValue();
     r->xAmp = mSliders[1]->getValue();
     r->xPhase = mSliders[2]->getValue();
@@ -923,6 +957,9 @@ void EditorAnimationPage::updateSlidersFromAnim() {
     for( int i=0; i<NUM_ANIM_SLIDERS; i++ ) {
         mSliders[i]->setVisible( true );
         }
+    mXOffsetSlider->setVisible( true );
+    mYOffsetSlider->setVisible( true );
+    
 
     if( ! isSprite ) {
         // last five sliders (rotation, rock) not available for slots
@@ -960,6 +997,10 @@ void EditorAnimationPage::updateSlidersFromAnim() {
         }
     
     
+    mXOffsetSlider->setValue( r->offset.x );
+    mYOffsetSlider->setValue( r->offset.y );
+    
+
     mSliders[0]->setValue( r->xOscPerSec );
     mSliders[1]->setValue( r->xAmp );
     mSliders[2]->setValue( r->xPhase );
@@ -2360,7 +2401,10 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 break;
                 }
             }
-        
+        if( inTarget == mXOffsetSlider ||
+            inTarget == mYOffsetSlider ) {
+            updateAnimFromSliders();
+            }        
         }
     
     }

@@ -40,6 +40,8 @@ const char *typeToName( AnimType inAnimType );
 
 
 typedef struct SpriteAnimationRecord {
+        doublePair offset;
+        
         double xOscPerSec;
         // in pixels
         double xAmp;

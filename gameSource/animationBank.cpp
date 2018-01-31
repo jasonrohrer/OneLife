@@ -305,7 +305,22 @@ float initAnimationBankStep() {
                     r->spriteAnim[j].fadeMax = 1;
 
                     r->spriteAnim[j].fadePhase = 0;
+
+                    r->spriteAnim[j].offset.x = 0;
+                    r->spriteAnim[j].offset.y = 0;
+
+                    if( strstr( lines[next], "offset" ) != NULL ) {
+                        sscanf( lines[next], 
+                                "offset=(%lf,%lf)",
+                                &( r->spriteAnim[j].offset.x ),
+                                &( r->spriteAnim[j].offset.y ) );
+                        next++;
+                        if( next >= numLines ) {
+                            break;
+                            }
+                        }
                     
+
                     sscanf( lines[next], 
                             "animParam="
                             "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
@@ -343,7 +358,23 @@ float initAnimationBankStep() {
 
                 for( int j=0; j< r->numSlots && next < numLines;
                      j++ ) {
-                                
+                    
+                    r->slotAnim[j].offset.x = 0;
+                    r->slotAnim[j].offset.y = 0;
+
+                    if( strstr( lines[next], "offset" ) != NULL ) {
+                        sscanf( lines[next], 
+                                "offset=(%lf,%lf)",
+                                &( r->slotAnim[j].offset.x ),
+                                &( r->slotAnim[j].offset.y ) );
+                        next++;
+                    
+                        if( next >= numLines ) {
+                            break;
+                            }
+                        }
+                    
+                    
                     sscanf( lines[next], 
                             "animParam="
                             "%lf %lf %lf %lf %lf %lf %lf %lf",
@@ -718,6 +749,12 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
             for( int j=0; j<inRecord->numSprites; j++ ) {
                 lines.push_back( 
                     autoSprintf( 
+                        "offset=(%lf,%lf)",
+                        inRecord->spriteAnim[j].offset.x,
+                        inRecord->spriteAnim[j].offset.y ) );
+                
+                lines.push_back( 
+                    autoSprintf( 
                         "animParam="
                         "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
                         "%lf %lf %lf %lf %lf "
@@ -750,6 +787,12 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
                         inRecord->spriteAnim[j].fadePhase ) );
                 }
             for( int j=0; j<inRecord->numSlots; j++ ) {
+                lines.push_back( 
+                    autoSprintf( 
+                        "offset=(%lf,%lf)",
+                        inRecord->slotAnim[j].offset.x,
+                        inRecord->slotAnim[j].offset.y ) );
+                
                 lines.push_back( 
                     autoSprintf( 
                         "animParam="
@@ -854,10 +897,12 @@ void clearAnimation( int inObjectID, AnimType inType ) {
 
 
 static double getOscOffset( double inFrameTime,
+                            double inOffset,
                             double inOscPerSec,
                             double inAmp,
                             double inPhase ) {
-    return inAmp * sin( ( inFrameTime * inOscPerSec + inPhase ) * 2 * M_PI );
+    return inOffset + 
+        inAmp * sin( ( inFrameTime * inOscPerSec + inPhase ) * 2 * M_PI );
     }
 
 
@@ -892,6 +937,11 @@ char isAnimFadeNeeded( int inObjectID,
     
     for( int i=0; i<obj->numSprites; i++ ) {
         
+        // offset at all, must fade
+        if( inCurR->spriteAnim[i].offset.x != 0 ) return true;
+        if( inCurR->spriteAnim[i].offset.y != 0 ) return true;
+        
+
         // if current is moving at all, must fade
 
         if( inCurR->spriteAnim[i].xOscPerSec > 0 ) return true;
@@ -950,6 +1000,10 @@ char isAnimFadeNeeded( int inObjectID,
     
     
     for( int i=0; i<obj->numSlots; i++ ) {
+        // offset at all, must fade
+        if( inCurR->slotAnim[i].offset.x != 0 ) return true;
+        if( inCurR->slotAnim[i].offset.y != 0 ) return true;
+
         // if current is moving at all, must fade
 
         if( inCurR->slotAnim[i].xOscPerSec > 0 ) return true;
@@ -997,6 +1051,9 @@ char isAnimEmpty( int inObjectID, AnimType inType ) {
     
     for( int i=0; i<obj->numSprites; i++ ) {
         
+        if( r->spriteAnim[i].offset.x != 0 ) return false;
+        if( r->spriteAnim[i].offset.y != 0 ) return false;
+        
         if( r->spriteAnim[i].xOscPerSec > 0 ) return false;
         
         if( r->spriteAnim[i].xAmp != 0 &&
@@ -1025,8 +1082,10 @@ char isAnimEmpty( int inObjectID, AnimType inType ) {
     
     
     for( int i=0; i<obj->numSlots; i++ ) {
-        // if current is moving at all, must fade
-
+                
+        if( r->slotAnim[i].offset.x != 0 ) return false;
+        if( r->slotAnim[i].offset.y != 0 ) return false;
+        
         if( r->slotAnim[i].xOscPerSec > 0 ) return false;
         
         if( r->slotAnim[i].xAmp != 0 &&
@@ -1472,6 +1531,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
             double sinVal = getOscOffset( 
                 spriteFrameTime,
+                0,
                 spriteAnim->spriteAnim[i].fadeOscPerSec,
                 1.0,
                 spriteAnim->spriteAnim[i].fadePhase + .25 );
@@ -1518,6 +1578,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 inAnimFade * 
                 getOscOffset( 
                     spriteFrameTime,
+                    spriteAnim->spriteAnim[i].offset.x,
                     spriteAnim->spriteAnim[i].xOscPerSec,
                     spriteAnim->spriteAnim[i].xAmp,
                     spriteAnim->spriteAnim[i].xPhase );
@@ -1526,12 +1587,14 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 inAnimFade *
                 getOscOffset( 
                     spriteFrameTime,
+                    spriteAnim->spriteAnim[i].offset.y,
                     spriteAnim->spriteAnim[i].yOscPerSec,
                     spriteAnim->spriteAnim[i].yAmp,
                     spriteAnim->spriteAnim[i].yPhase );
             
             double rock = inAnimFade * 
                 getOscOffset( spriteFrameTime,
+                              0,
                               spriteAnim->spriteAnim[i].rockOscPerSec,
                               spriteAnim->spriteAnim[i].rockAmp,
                               spriteAnim->spriteAnim[i].rockPhase );
@@ -1549,6 +1612,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 
                 double sinValB = getOscOffset( 
                     targetSpriteFrameTime,
+                    0,
                     spriteFadeTargetAnim->spriteAnim[i].fadeOscPerSec,
                     1.0,
                     spriteFadeTargetAnim->spriteAnim[i].fadePhase + .25 );
@@ -1597,6 +1661,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     targetWeight *
                     getOscOffset( 
                         targetSpriteFrameTime,
+                        spriteFadeTargetAnim->spriteAnim[i].offset.x,
                         spriteFadeTargetAnim->spriteAnim[i].xOscPerSec,
                         spriteFadeTargetAnim->spriteAnim[i].xAmp,
                         spriteFadeTargetAnim->spriteAnim[i].xPhase );
@@ -1605,6 +1670,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     targetWeight *
                     getOscOffset( 
                         targetSpriteFrameTime,
+                        spriteFadeTargetAnim->spriteAnim[i].offset.y,
                         spriteFadeTargetAnim->spriteAnim[i].yOscPerSec,
                         spriteFadeTargetAnim->spriteAnim[i].yAmp,
                         spriteFadeTargetAnim->spriteAnim[i].yPhase );
@@ -1613,6 +1679,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                      targetWeight *
                      getOscOffset( 
                          targetSpriteFrameTime,
+                         0,
                          spriteFadeTargetAnim->spriteAnim[i].rockOscPerSec,
                          spriteFadeTargetAnim->spriteAnim[i].rockAmp,
                          spriteFadeTargetAnim->spriteAnim[i].rockPhase );
@@ -2709,6 +2776,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     inAnimFade *
                     getOscOffset( 
                         slotFrameTime,
+                        inAnim->slotAnim[i].offset.x,
                         inAnim->slotAnim[i].xOscPerSec,
                         inAnim->slotAnim[i].xAmp,
                         inAnim->slotAnim[i].xPhase );
@@ -2717,6 +2785,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     inAnimFade * 
                     getOscOffset( 
                         slotFrameTime,
+                        inAnim->slotAnim[i].offset.y,
                         inAnim->slotAnim[i].yOscPerSec,
                         inAnim->slotAnim[i].yAmp,
                         inAnim->slotAnim[i].yPhase );
@@ -2728,6 +2797,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                         targetWeight *
                         getOscOffset( 
                             targetSlotFrameTime,
+                            inFadeTargetAnim->slotAnim[i].offset.x,
                             inFadeTargetAnim->slotAnim[i].xOscPerSec,
                             inFadeTargetAnim->slotAnim[i].xAmp,
                             inFadeTargetAnim->slotAnim[i].xPhase );
@@ -2736,6 +2806,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                         targetWeight *
                         getOscOffset( 
                             targetSlotFrameTime,
+                            inFadeTargetAnim->slotAnim[i].offset.y,
                             inFadeTargetAnim->slotAnim[i].yOscPerSec,
                             inFadeTargetAnim->slotAnim[i].yAmp,
                             inFadeTargetAnim->slotAnim[i].yPhase );
@@ -2816,6 +2887,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                                 inAnimFade *
                                 getOscOffset( 
                                     slotFrameTime,
+                                    subAnim->slotAnim[s].offset.x,
                                     subAnim->slotAnim[s].xOscPerSec,
                                     subAnim->slotAnim[s].xAmp,
                                     subAnim->slotAnim[s].xPhase );
@@ -2824,6 +2896,7 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                                 inAnimFade * 
                                 getOscOffset( 
                                     slotFrameTime,
+                                    subAnim->slotAnim[s].offset.y,
                                     subAnim->slotAnim[s].yOscPerSec,
                                     subAnim->slotAnim[s].yAmp,
                                     subAnim->slotAnim[s].yPhase );
@@ -2833,12 +2906,14 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                                 
                                 subPos.x += targetWeight * getOscOffset( 
                                     targetSlotFrameTime,
+                                    subFadeTargetAnim->slotAnim[s].offset.x,
                                     subFadeTargetAnim->slotAnim[s].xOscPerSec,
                                     subFadeTargetAnim->slotAnim[s].xAmp,
                                         subFadeTargetAnim->slotAnim[s].xPhase );
                     
                                 subPos.y += targetWeight * getOscOffset( 
                                     targetSlotFrameTime,
+                                    subFadeTargetAnim->slotAnim[s].offset.y,
                                     subFadeTargetAnim->slotAnim[s].yOscPerSec,
                                     subFadeTargetAnim->slotAnim[s].yAmp,
                                     subFadeTargetAnim->slotAnim[s].yPhase );
@@ -2965,6 +3040,9 @@ void freeRecord( SoundAnimationRecord *inRecord ) {
 
 
 void zeroRecord( SpriteAnimationRecord *inRecord ) {
+    inRecord->offset.x = 0;
+    inRecord->offset.y = 0;
+    
     inRecord->xOscPerSec = 0;
     inRecord->xAmp = 0;
     inRecord->xPhase = 0;

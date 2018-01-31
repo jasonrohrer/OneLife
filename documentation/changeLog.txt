@@ -17,6 +17,7 @@ Version 51     ???
 
 --Fixed default object values when trimming a large sprite.
 
+--Support for an extra x,y offset animation parameter per layer.
 
 
 

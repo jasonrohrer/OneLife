@@ -121,6 +121,10 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
         ValueSlider *mSliders[ NUM_ANIM_SLIDERS ];
         
+        ValueSlider *mXOffsetSlider;
+        ValueSlider *mYOffsetSlider;
+        
+
         CheckboxButton mReverseRotationCheckbox;
         
         CheckboxButton mRandomStartPhaseCheckbox;
