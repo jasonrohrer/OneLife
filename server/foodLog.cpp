@@ -203,15 +203,21 @@ void logEating( int inFoodID, int inFoodValue, double inEaterAge,
         stepLog( false );
         }
 
-
+    int idToLog = inFoodID;
     
-    eatFoodCounts[ inFoodID ] ++;
-    eatFoodValueCounts[ inFoodID ] += inFoodValue;
-    eaterAgeSums[ inFoodID ] += inEaterAge;
-    mapLocationSums[ inFoodID ].x += inMapX;
-    mapLocationSums[ inFoodID ].y += inMapY;
+    ObjectRecord *o = getObject( idToLog );
+                
+    if( o->isUseDummy ) {
+        idToLog = o->useDummyParent;
+        }
+    
+    eatFoodCounts[ idToLog ] ++;
+    eatFoodValueCounts[ idToLog ] += inFoodValue;
+    eaterAgeSums[ idToLog ] += inEaterAge;
+    mapLocationSums[ idToLog ].x += inMapX;
+    mapLocationSums[ idToLog ].y += inMapY;
 
-    if( inFoodID > maxSeenObjectID ) {
-        maxSeenObjectID = inFoodID;
+    if( idToLog > maxSeenObjectID ) {
+        maxSeenObjectID = idToLog;
         }
     }

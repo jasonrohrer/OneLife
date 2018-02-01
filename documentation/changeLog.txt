@@ -21,6 +21,13 @@ Version 51     ???
 
 
 
+Server Fixes:
+
+--Fixed so that multi-use food sources (bites of pie) make it into food log
+  properly.  Thanks Yvanhooe.
+
+
+
 
 Version 48     2018-January-26
 
