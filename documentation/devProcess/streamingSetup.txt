@@ -1,0 +1,17 @@
+
+
+To include mic input in HDMI audio output with loopback:
+
+pactl load-module module-loopback channels=1 latency_msec=1
+
+The see All Streams in Recording tab of PA Volume Control
+
+
+
+To remove loopback later:
+
+pactl unload-module module-loopback
+
+
+To send audio out to both HDMI, use paprefs and set up a virtual device that
+outputs to both.
