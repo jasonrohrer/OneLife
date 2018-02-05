@@ -1,8 +1,8 @@
 
 
-To include mic input in HDMI audio output with loopback:
+To include FocusRite mic input in HDMI audio output with loopback:
 
-pactl load-module module-loopback channels=1 latency_msec=1
+pactl load-module module-loopback channels=1 latency_msec=1 sink=alsa_output.pci-0000_01_00.1.hdmi-stereo-extra3
 
 The see All Streams in Recording tab of PA Volume Control
 
