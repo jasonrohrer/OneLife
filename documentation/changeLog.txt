@@ -21,6 +21,13 @@ Version 51     ???
 
 --Enabled 45-degree and zero buttons for vertical slot rotation in editor.
 
+--Fixed with a hack so that clothing that has a held animation that includes
+  rotation (which is applied when worn too) is more clickable (the click area
+  used to be based on its un-rotated location, which didn't match its visual
+  location).  The hack is not perfect and doesn't account for sprite parent
+  relationships or x/y animation offsets, but it can be improved later if
+  needed.
+
 
 
 

@@ -3126,6 +3126,13 @@ double getClosestObjectPart( ObjectRecord *inObject,
     char tunicChecked = false;
     char hatChecked = false;
     
+
+    AnimationRecord *a = NULL;
+    if( inWorn ) {
+        a = getAnimation( inObject->id, held );
+        }
+    
+
     for( int i=inObject->numSprites-1; i>=0; i-- ) {
 
         // first check for clothing that is above this part
@@ -3313,6 +3320,45 @@ double getClosestObjectPart( ObjectRecord *inObject,
             offset = rotate( offset, 2 * M_PI * inObject->spriteRot[i] );
             }
         
+
+        if( a != NULL ) {
+            // apply simplified version of animation
+            // a still snapshot at t=0 (only look at phases)
+            
+            // this also ignores parent relationships for now
+
+            // however, since this only applies for worn clothing, and trying
+            // to make worn clothing properly clickable when it has a held
+            // rotation, it will work most of the time, since most clothing
+            // has one sprite, and for multi-sprite clothing, this should
+            // at least capture the rotation of the largest sprite
+            if( a->numSprites > i && a->spriteAnim[i].rotPhase != 0 ) {
+                
+                doublePair rotCenter = a->spriteAnim[i].rotationCenterOffset;
+                
+                if( inFlip ) {
+                    rotCenter.x *= -1;
+                    }
+
+                doublePair tempOffset = 
+                    sub( offset, rotCenter );
+                
+                if( inFlip ) {
+                    tempOffset =
+                        rotate( tempOffset, 
+                                - a->spriteAnim[i].rotPhase * 2 * M_PI );
+                    }
+                else {
+                    tempOffset = 
+                        rotate( tempOffset,
+                                a->spriteAnim[i].rotPhase * 2 * M_PI );
+                    }
+                
+                offset = add( tempOffset, rotCenter );
+                }
+            }
+
+
         
         if( inObject->spriteHFlip[i] ) {
             offset.x *= -1;
@@ -3323,6 +3369,7 @@ double getClosestObjectPart( ObjectRecord *inObject,
 
         offset.x += sr->centerAnchorXOffset;
         offset.y -= sr->centerAnchorYOffset;
+        
 
         if( getSpriteHit( inObject->sprites[i], 
                           lrint( offset.x ),
