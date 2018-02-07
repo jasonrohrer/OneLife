@@ -19,6 +19,9 @@ Version 51     ???
 
 --Support for an extra x,y offset animation parameter per layer.
 
+--Enabled 45-degree and zero buttons for vertical slot rotation in editor.
+
+
 
 
 Server Fixes:

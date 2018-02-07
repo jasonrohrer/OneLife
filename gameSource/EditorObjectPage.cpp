@@ -1667,7 +1667,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mObjectPicker.unselectObject();
         }
     else if( inTarget == &mClearRotButton ) {
-        if( mPickedObjectLayer != -1 ) {
+        if( mDemoVertRot ) {
+            mCurrentObject.vertContainRotationOffset = 0;
+            }
+        else if( mPickedObjectLayer != -1 ) {
             
             double oldRot = mCurrentObject.spriteRot[ mPickedObjectLayer ];
             
@@ -1682,7 +1685,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mClearRotButton.setVisible( false );
         }
     else if( inTarget == &mRot45ForwardButton ) {
-        if( mPickedObjectLayer != -1 ) {
+        if( mDemoVertRot ) {
+            mCurrentObject.vertContainRotationOffset += 0.125;
+            }
+        else if( mPickedObjectLayer != -1 ) {
             double oldRot = mCurrentObject.spriteRot[ mPickedObjectLayer ];
 
             mCurrentObject.spriteRot[mPickedObjectLayer] = 
@@ -1696,7 +1702,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }
         }
     else if( inTarget == &mRot45BackwardButton ) {
-        if( mPickedObjectLayer != -1 ) {
+        if( mDemoVertRot ) {
+            mCurrentObject.vertContainRotationOffset -= 0.125;
+            }
+        else if( mPickedObjectLayer != -1 ) {
             double oldRot = mCurrentObject.spriteRot[ mPickedObjectLayer ];
 
             mCurrentObject.spriteRot[mPickedObjectLayer] = 
@@ -1990,6 +1999,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mDemoVertRotButton ) {
         if( mDemoVertRot ) {
             endVertRotDemo();
+            pickedLayerChanged();
             }
         else {
             mPickedSlot = -1;
@@ -1997,6 +2007,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             pickedLayerChanged();
             mDemoVertRot = true;
             mDemoVertRotButton.setFillColor( 0.5, 0.0, 0.0, 1 );
+            mRot45ForwardButton.setVisible( true );
+            mRot45BackwardButton.setVisible( true );
             }
         }
     else if( inTarget == &mHeldInHandCheckbox ) {
@@ -3909,7 +3921,15 @@ void EditorObjectPage::step() {
         mHoverFrameCount++;
         }
     
-    if( mPickedObjectLayer != -1 ) {
+    if( mDemoVertRot ) {
+        if( mCurrentObject.vertContainRotationOffset != 0 ) {
+            mClearRotButton.setVisible( true );
+            }
+        else {
+            mClearRotButton.setVisible( false );
+            }
+        }
+    else if( mPickedObjectLayer != -1 ) {
         
         if( mCurrentObject.spriteRot[mPickedObjectLayer] != 0 ) {
             mClearRotButton.setVisible( true );
