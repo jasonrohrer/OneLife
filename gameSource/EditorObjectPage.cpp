@@ -643,7 +643,9 @@ EditorObjectPage::EditorObjectPage()
     addKeyClassDescription( &mKeyLegend, "Pg Up/Down", "Layer order" );
     addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger jumps" );
     addKeyDescription( &mKeyLegend, 'r', "Rotate layer" );
+    addKeyDescription( &mKeyLegend, 'p', "Ignore parent links" );
     addKeyClassDescription( &mKeyLegend, "c/v", "Copy/paste color" );
+    addKeyClassDescription( &mKeyLegend, "C/V", "Copy/paste delta from saved" );
 
 
     addKeyClassDescription( &mKeyLegendB, "R-Click", "Layer parent" );
@@ -658,6 +660,10 @@ EditorObjectPage::EditorObjectPage()
     mColorClipboard.r = 1;
     mColorClipboard.g = 1;
     mColorClipboard.b = 1;
+    
+    mSaveDeltaPosClipboard.x = 0;
+    mSaveDeltaPosClipboard.y = 0;
+    mSaveDeltaRotClipboard = 0;
     }
 
 
@@ -1006,11 +1012,14 @@ char EditorObjectPage::anyClothingToggled() {
 
 
 
-static void recursiveRotate( ObjectRecord *inObject,
-                             int inRotatingParentIndex,
-                             doublePair inRotationCenter,
-                             double inRotationDelta ) {
-
+void EditorObjectPage::recursiveRotate( ObjectRecord *inObject,
+                                        int inRotatingParentIndex,
+                                        doublePair inRotationCenter,
+                                        double inRotationDelta ) {
+    if( mIgnoreParentLinkMode ) {
+        return;
+        }
+    
     // adjust children recursively
     for( int i=0; i<inObject->numSprites; i++ ) {
         if( inObject->spriteParent[i] == inRotatingParentIndex ) {
@@ -3734,7 +3743,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     doublePair legendPos = mImportEditorButton.getPosition();
     
     legendPos.x = -100;
-    legendPos.y += 20;
+    legendPos.y += 52;
     
     drawKeyLegend( &mKeyLegend, legendPos );
 
@@ -3977,6 +3986,7 @@ void EditorObjectPage::makeActive( char inFresh ) {
     mObjectPicker.redoSearch( false );
 
     mRotAdjustMode = false;
+    mIgnoreParentLinkMode = false;
     
     endVertRotDemo();
     }
@@ -4444,10 +4454,13 @@ void EditorObjectPage::pointerDown( float inX, float inY ) {
 
 
 
-static void recursiveMove( ObjectRecord *inObject,
-                           int inMovingParentIndex,
-                           doublePair inMoveDelta ) {
-
+void EditorObjectPage::recursiveMove( ObjectRecord *inObject,
+                                      int inMovingParentIndex,
+                                      doublePair inMoveDelta ) {
+    if( mIgnoreParentLinkMode ) {
+        return;
+        }
+    
     // adjust children recursively
     for( int i=0; i<inObject->numSprites; i++ ) {
         if( inObject->spriteParent[i] == inMovingParentIndex ) {
@@ -4595,6 +4608,10 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         return;
         }
     
+    if( inASCII == 'p' ) {
+        mIgnoreParentLinkMode = true;
+        }
+    
     if( mPickedObjectLayer != -1 && inASCII == 'r' ) {
         mRotAdjustMode = true;
         mLayerOldRot = mCurrentObject.spriteRot[ mPickedObjectLayer ];
@@ -4620,6 +4637,28 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
             pickedLayerChanged();
             }
         }
+    if( mPickedObjectLayer != -1 && inASCII == 'C' ) {
+        ObjectRecord *saved = getObject( mCurrentObject.id );
+        
+        if( saved != NULL && saved->numSprites > mPickedObjectLayer ) {
+            mSaveDeltaPosClipboard = 
+                sub( mCurrentObject.spritePos[ mPickedObjectLayer ],
+                     saved->spritePos[ mPickedObjectLayer ] );
+            
+            mSaveDeltaRotClipboard = 
+                mCurrentObject.spriteRot[ mPickedObjectLayer ] -
+                saved->spriteRot[ mPickedObjectLayer ];
+            }
+        }
+    if( mPickedObjectLayer != -1 && inASCII == 'V' ) {
+        mCurrentObject.spritePos[ mPickedObjectLayer ] = 
+            add( mCurrentObject.spritePos[ mPickedObjectLayer ],
+                 mSaveDeltaPosClipboard );
+        mCurrentObject.spriteRot[ mPickedObjectLayer ] += 
+            mSaveDeltaRotClipboard;
+        pickedLayerChanged();
+        }
+    
     if( mPickedObjectLayer != -1 && inASCII == 'd' ) {
         // duplicate layer
         
@@ -4975,6 +5014,10 @@ void EditorObjectPage::keyUp( unsigned char inASCII ) {
     
     if( mRotAdjustMode && inASCII == 'r' ) {
         mRotAdjustMode = false;
+        }
+
+    if( mIgnoreParentLinkMode && inASCII == 'p' ) {
+        mIgnoreParentLinkMode = false;
         }
     
     }

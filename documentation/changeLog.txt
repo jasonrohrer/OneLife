@@ -28,6 +28,8 @@ Version 51     ???
   relationships or x/y animation offsets, but it can be improved later if
   needed.
 
+--Added support in editor for object layer moves that ignore parent links and
+  copy/paste of difference from saved for a given layer.
 
 
 

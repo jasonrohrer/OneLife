@@ -280,9 +280,22 @@ class EditorObjectPage : public GamePage, public ActionListener {
         void drawSpriteLayers( doublePair inDrawOffset,
                                char inBehindSlots );
         
+        void recursiveRotate( ObjectRecord *inObject,
+                              int inRotatingParentIndex,
+                              doublePair inRotationCenter,
+                              double inRotationDelta );
+
+        void recursiveMove( ObjectRecord *inObject,
+                            int inMovingParentIndex,
+                            doublePair inMoveDelta );
+            
+
 
         FloatRGB mColorClipboard;
         doublePair mHeldOffsetClipboard;
+
+        doublePair mSaveDeltaPosClipboard;
+        double mSaveDeltaRotClipboard;
 
         int mHoverObjectLayer;
         int mHoverSlot;
@@ -298,6 +311,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         char mRotAdjustMode;
         float mRotStartMouseX;
         
+        char mIgnoreParentLinkMode;
+
         double mLayerOldRot;
 
 
