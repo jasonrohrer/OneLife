@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 51     ???
+Version 51     2018-February-8
 
 --Added EQ to cut extreme low end and high end from recorded sound effects.
 
