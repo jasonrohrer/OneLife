@@ -39,8 +39,8 @@ RemoveNotes:False
 OutlineNotes:True
 ShowMargins:False
 ShowLineNumbers:False
-Cursor/Line:206
-Cursor/Column:0
+Cursor/Line:202
+Cursor/Column:10
 String/MoreDialogue:(MORE)
 String/ContinuedPageEnd:(CONTINUED)
 String/ContinuedPageStart:CONTINUED:
@@ -372,34 +372,17 @@ Words:0
 >.A hovering bronze ROBOT stationed near the gate approaches
 >.Jason with an ION WEAPON raised.  With an audible CRACK, the
 >.tip of the weapon emits a purple spark, and Jason collapses
-..into a pile of HUMAN BONES.  The piano music stops abruptly.
+..into a pile of HUMAN BONES.
 ./CUT TO:
 ..GAME OVER SCREEN:
 ..  YOU DIED
-..  AGE:  45
+..  AGE:  40
 ..  CAUSE:  ATOMIC POWERED ROBOT
 ..  [GET REBORN?]
-./CUT TO:
-..WAITING SCREEN:
-..  WAITING TO BE BORN...
-./CUT TO:
-.\BIRD'S EYE VIEW
->.We see a white, snowy landscape.  A WOMAN in a fur parka
->.flies across the frame drving a primitive DOG SLED loaded
->.with red chunks of meat.  The dogs lunge against their
->.harnesses, charging through the snow.  As she crosses center
->.frame, a naked, screaming BABY pops into view in the snow. 
->.The woman continues racing her sled off screen, leaving the
-..helpless baby behind.
->.The baby stops crying for a moment and looks around
->.cluelessly.  The baby starts crying again and runs out of
-..frame in the direction of the woman and the dog sled.
 ./CUT TO:
 ..TITLE CARD:  
 ..  ONE HOUR
 ..  ONE LIFE
-..
-..
 ..TITLE CARD:
 ..  A GAME BY
 ..  JASON ROHRER
