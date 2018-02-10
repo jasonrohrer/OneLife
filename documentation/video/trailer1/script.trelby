@@ -39,8 +39,8 @@ RemoveNotes:False
 OutlineNotes:True
 ShowMargins:False
 ShowLineNumbers:False
-Cursor/Line:152
-Cursor/Column:0
+Cursor/Line:174
+Cursor/Column:4
 String/MoreDialogue:(MORE)
 String/ContinuedPageEnd:(CONTINUED)
 String/ContinuedPageStart:CONTINUED:
@@ -201,23 +201,23 @@ Words:0
 .:the game right now.
 .((rubs chin pensively)
 >:Well, actually, this is what my
->:modern home office looks like.  But
->:civilization inside the game hasn't
+>:modern home office looks like. 
+>:Civilization inside the game hasn't
 >:gotten quite this advanced yet. 
 .:Maybe someday, though.
-.((shakes off the thought)
+.((shakes off wistfulness)
 >:So anyway, this is a game about how
 >:we got to where we are, and what it
 >:would be like if we had to do that
 >:all over again.  You know, if we
->:were starting from scratch, like
->:naked in the wilderness with
-.:nothing but rocks and sticks.
+>:were starting from scratch, naked
+>:in the wilderness, with nothing but
+.:rocks and sticks.
 >.Jason points to a CLOCK on the wall.  The hands are spinning
 ..wildly.  The minute hand is a barely-visible blur.
 ._JASON
->:Wow, simulated time passes quickly
-.:in this game.
+>:Wow, simulated time does pass
+.:quickly in this game.
 >.Jason now points to a WALL CALENDAR, which mysteriously
 ..flips to the next month every five seconds.
 ._JASON
@@ -229,28 +229,29 @@ Words:0
 .((points to himself)
 >:I'm even aging myself right now as
 .:I talk to you.
->.Jason's hairline suddenly receede a bit, and he's clearly a
-..bit balder.
+>.Jason's hairline suddenly recedes more and he sprouts a
+..bushy mustache.
 ._JASON
 >:Sheesh!  Did you see that?  I just
 >:got older again!  We better get on
->:with the tour before I run out of
+>:with this tour before I run out of
 .:time.
 >.Jason opens the office DOOR in the south wall and heads east
-..out into the surrounding wilderness.
+..into the surrounding wilderness.
 ._Jason
 >:You see, all of this around us is
->:persistent on the server.  It
->:starts out full of totally
->:untouched wilderness, and it's up
->:to us, the players, to build a
-.:civilization here together.
+>:on a persistent server.  It starts
+>:out full of totally untouched
+>:wilderness, and it's up to us, the
+>:players, to rebuild civilization
+.:here together.
 >.Jason continues walking to the east through a grove of
 ..trees.
 ._JASON
->:But how do players get onto the
->:server in the first place?  Where
-.:do they come from?
+>:You might be wondering how players
+>:get onto the server in the first
+>:place.  Like, where do they come
+.:from?
 >.Jason hides himself behind a bush and peers out into a
 ..clearing.  FOOTSTEPS can be heard off camera to the east.
 ._JASON
@@ -261,16 +262,16 @@ Words:0
 ._Jason
 .((low voice)
 >:The first player to join the server
->:is Eve.  She's the root of the
+>:is Eve.  She's at the root of the
 >:game's family tree.  And the second
 >:player on the server should be here
-.:just about now--
+.:right about now--
 >.A screaming BABY pops into existence, naked, bald, and pink,
 ..next to EVE.
 ._JASON
 >:Yep, that's player two, Eve's first
 .:baby.
->.Eve picks up the baby.  The baby's tiny eyes open and it
+>.Eve picks up the baby.  The baby's tiny eyes open as it
 ..stops crying.
 ._JASON
 >:When you join the server as a baby,
@@ -287,8 +288,8 @@ Words:0
 >.Jason leaves the second clearing and continues walking east
 ..through a swamp.
 ._JASON
->:And your baby will be another
->:player, don't forget, who will be
+>:And your own babies will be other
+>:players, don't forget, who will be
 >:depending on you for their
 >:survival.  You're just one small
 .:link in in a very long chain.
@@ -297,9 +298,9 @@ Words:0
 >.Chopping wood into kindling.  Skinning a rabbit.  A fire
 ..burns in the center of the camp.
 ._Jason
->:What you accomplish in your
+>:What you accomplish in your brief
 >:lifetime will depend on the
-.:situation that you are born into.
+.:situation that you're born into.
 ..Jason picks up a STONE HATCHET from the camp.
 ._Jason
 >:In the beginning, you will be
@@ -311,46 +312,80 @@ Words:0
 ..wooded grove.
 ._Jason
 >:But furture generations can build
-.:on that foundation.
->.Jason continues walking east and an adobe house comes into
->.view.  Neatly-planted rows of carrots and wheat spread on
->.either side of the front door, with a path down the middle. 
->.An adobe oven burns inside the house, with an fur-clad old
+>:on the foundation that you help to
+.:create.
+>.Jason continues walking east and a lashed wooden hut comes
+>.into view.  Neatly-planted rows of carrots and wheat spread
+>.to each side of the front door, with a path down the middle. 
+>.An adobe oven burns inside the hut, with a fur-clad elderly
 >.man tending it.  Two fur-clad children open the front door
 ..and run out.
 ._Jason
->:Eventually, people can develop
+>:Eventually, players can develop
 >:technology that allows them to
 >:transform the environment in
 .:substantial ways.
->.Jason continues walking to the east, and a roaring FORGE
->.comes into view, with several steel tools scattered around
-..it.  Nearby, domesticated sheep graze in a fenced pasture.
+>.Jason continues walking to the east, into an adobe village,
+>.and a roaring forge comes into view, with several steel
+>.tools scattered around it.  Domesticated sheep graze in a
+..fenced pasture.
+._JASON
+>:In your brief lifetime, you'll have
+>:a chance to leave your own small
+>:mark on the world, and maybe create
+>:something that helps your children
+.:and grandchildren.
 >.A man and a woman, now clad in woven wool clothing, use
 >.steel axes to chop down several trees.  They load the wood
 ..into a wheeled hand cart.
-..Test.
 ._JASON
->:It took us four thousand years to
->:get from arrowheads to iPhones the
->:first time around, and that
->:happened across hundreds of loosely
->:coordinated human generations.  And
->:billions of people helped out along
->:the way.  Sitting where we are now,
->:we tend to take all of those steps
-.:for granted.
->.Jason puts the arrowhead and iPhone back and grabs a HAMMER
-..from the toolbox.
+>:But really, all of this is just the
+.:beginning.
+>.Jason now walks north where he crosses a PAVED ROAD. 
+>.Suddenly a gleaming red SPORTS CAR roars by with a smiling
+..driver inside.
 ._JASON
->:We can just hop in a car and drive
->:down to the store to buy a tool
-.:like a hammer for only a few bucks.
-.((waves the hammer)
->:But starting from scratch, with
->:rocks and sticks, how long would it
->:take to make a hammer?  We probably
->:wouldn't even get back to smelting
->:steel in the first lifetime. 
->:Remind me what iron ore looks like
-.:again?
+>:As players continue climbing up
+>:through the tech tree, I'll be
+>:trying to stay one step ahead of
+>:them by adding new stuff to the
+>:game every week.  I'm drawing
+>:everything by hand with pen and
+>:paper, so I can add new things
+.:pretty quickly.
+>.Jason heads down the paved road, which turns into a MAG-LEV
+>.LINE, and a sleek, aerodynamic TRANSPORT CAPSULE floats by. 
+..The passenger wears a black, wrap-around visor.
+._JASON
+>:So I hope you'll join me as this
+>:crazy game unfolds.  I may even
+>:spawn as your baby at some point,
+>:and it will be up to you to take
+.:care of me.
+>.Piano music swells as Jason walks up to the gates of a
+>.FUTURISTIC CITY with Jetson-esque towers on the corners of
+..the walls.
+._JASON
+>:As we rebuild civilizaiton
+>:together, who knows where we will
+.:end up?
+>.A hovering bronze ROBOT station near the gate approaches
+>.Jason with a futuristic BEAM WEAPON raised.  With an audible
+>.CRACK, the tip of the weapon emits a purple spark, and Jason
+..collapses into a pile of HUMAN BONES.
+./CUT TO:
+..GAME OVER SCREEN:
+..  YOU DIED
+..  AGE:  45
+..  CAUSE:  ATOMIC POWERED ROBOT
+./CUT TO:
+..TITLE CARD:  
+..  ONE HOUR
+..  ONE LIFE
+..TITLE CARD:
+..  A GAME BY
+..  JASON ROHRER
+..TITLE CARD:
+..  AVAILABLE NOW
+..TITLE CARD:
+..  ONEHOURONELIFE.COM
