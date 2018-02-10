@@ -39,8 +39,8 @@ RemoveNotes:False
 OutlineNotes:True
 ShowMargins:False
 ShowLineNumbers:False
-Cursor/Line:203
-Cursor/Column:11
+Cursor/Line:193
+Cursor/Column:29
 String/MoreDialogue:(MORE)
 String/ContinuedPageEnd:(CONTINUED)
 String/ContinuedPageStart:CONTINUED:
@@ -207,16 +207,16 @@ Words:0
 .:Maybe someday, though.
 .((shakes off wistfulness)
 >:So anyway, this is a game about how
->:we got to where we are, and what it
->:would be like if we had to do that
->:all over again.  You know, if we
->:were starting from scratch, naked
->:in the wilderness, with nothing but
-.:rocks and sticks.
+>:we got to where we are today, and
+>:about what it would be like if we
+>:had to do that all over again.  You
+>:know, if we were starting from
+>:scratch, naked in the wilderness,
+.:with nothing but rocks and sticks.
 >.Jason points to a CLOCK on the wall.  The hands are spinning
 ..wildly.  The minute hand is a barely-visible blur.
 ._JASON
->:Wow, simulated time does pass
+>:Wow, simulated time sure does pass
 .:quickly in this game.
 >.Jason now points to a WALL CALENDAR, which mysteriously
 ..flips to the next month every five seconds.
@@ -292,7 +292,7 @@ Words:0
 >:players, don't forget, who will be
 >:depending on you for their
 >:survival.  You're just one small
-.:link in in a very long chain.
+.:link in a very long chain.
 >.Jason walks into a PRIMITIVE CAMP.  Several fur-clad men and
 >.women of various ages, along with children, work together. 
 >.Chopping wood into kindling.  Skinning a rabbit.  A fire
@@ -323,7 +323,7 @@ Words:0
 ._Jason
 >:Eventually, players can develop
 >:technology that allows them to
->:transform the environment in
+>:transform their environment in
 .:substantial ways.
 >.Jason continues walking to the east, into an adobe village,
 >.and a roaring forge comes into view, with several steel
@@ -367,8 +367,8 @@ Words:0
 ..the walls.
 ._JASON
 >:As we rebuild civilizaiton
->:together, who knows where we will
-.:end up?
+>:together, who knows where we'll end
+.:up?
 >.A hovering bronze ROBOT stationed near the gate approaches
 >.Jason with an ION WEAPON raised.  With an audible CRACK, the
 >.tip of the weapon emits a purple spark, and Jason collapses
