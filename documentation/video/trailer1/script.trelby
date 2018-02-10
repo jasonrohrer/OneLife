@@ -39,8 +39,8 @@ RemoveNotes:False
 OutlineNotes:True
 ShowMargins:False
 ShowLineNumbers:False
-Cursor/Line:202
-Cursor/Column:10
+Cursor/Line:203
+Cursor/Column:11
 String/MoreDialogue:(MORE)
 String/ContinuedPageEnd:(CONTINUED)
 String/ContinuedPageStart:CONTINUED:
@@ -377,7 +377,7 @@ Words:0
 ..GAME OVER SCREEN:
 ..  YOU DIED
 ..  AGE:  40
-..  CAUSE:  ATOMIC POWERED ROBOT
+..  KILLED BY:  ATOMIC POWERED ROBOT
 ..  [GET REBORN?]
 ./CUT TO:
 ..TITLE CARD:  
