@@ -1570,8 +1570,15 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                  spriteAnim->spriteAnim[i].fadeMin ) *
                 ( 0.5 * hardVersion + 0.5 )
                 + spriteAnim->spriteAnim[i].fadeMin;
-
-            workingSpriteFade[i] = inAnimFade * fade;
+            
+            if( hardness == 1 ) {
+                // don't apply cross-fade to fades
+                workingSpriteFade[i] = fade;
+                }
+            else {
+                // crossfade the fades
+                workingSpriteFade[i] = inAnimFade * fade;
+                }
             
 
             spritePos.x += 
@@ -1653,8 +1660,20 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     ( 0.5 * hardVersionB + 0.5 )
                     + spriteFadeTargetAnim->spriteAnim[i].fadeMin;
 
-                workingSpriteFade[i] += targetWeight * fadeB;
-
+                // if target has fade that is fully hard, go
+                // right there with no smooth cross-fade transtion
+                if( hardnessB == 1 ) {
+                    // wait until we're half-way through fade to
+                    // execute the snap transition
+                    if( targetWeight > 0.5 ) {
+                        workingSpriteFade[i] = fadeB;
+                        }
+                    }
+                else {
+                    // crossfade the fades
+                    workingSpriteFade[i] += targetWeight * fadeB;
+                    }
+                
 
                 
                 spritePos.x += 

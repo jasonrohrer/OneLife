@@ -7,6 +7,9 @@ Version 53     ????
 
 --Fixed layer order changes in object editor to work with extra animations. 
 
+--Added support for sprite layers that pop into existence during animation
+  transitions.  If the fade for the layer is marked as fully hard, a visibility
+  pop will happen.  Otherwise, the visibility fades like it used to.
 
 
 
