@@ -3099,16 +3099,31 @@ void performLayerSwaps( int inObjectID,
             maxSwapIndex = r->indexB;
             }
         }
-    
-        
 
+    SimpleVector<AnimationRecord *> allAnims;
+    
     for( int i=0; i<endAnimType; i++ ) {
         AnimationRecord *oldAnim = getAnimation( inObjectID, (AnimType)i );
         
         if( oldAnim == NULL ) {
             continue;
             }
+        allAnims.push_back( oldAnim );
+        }
+    
+
+    for( int j=0; j<idExtraMap[inObjectID].size(); j++ ) {
+        AnimationRecord *oldAnim = idExtraMap[inObjectID].getElementDirect( j );
         
+        allAnims.push_back( oldAnim );
+        }
+    
+    
+    int extraIndex = 0;
+    
+    for( int i=0; i<allAnims.size(); i++ ) {
+        AnimationRecord *oldAnim = allAnims.getElementDirect( i );
+
         AnimationRecord *r = copyRecord( oldAnim );
         
         
@@ -3152,6 +3167,11 @@ void performLayerSwaps( int inObjectID,
         
         delete [] tempSpriteAnim;
 
+        
+        if( r->type == extra ) {
+            setExtraIndex( extraIndex );
+            extraIndex++;
+            }
         addAnimation( r );
         
         freeRecord( r );
