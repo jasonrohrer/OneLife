@@ -39,7 +39,7 @@ RemoveNotes:False
 OutlineNotes:True
 ShowMargins:False
 ShowLineNumbers:False
-Cursor/Line:183
+Cursor/Line:184
 Cursor/Column:2
 String/MoreDialogue:(MORE)
 String/ContinuedPageEnd:(CONTINUED)
@@ -227,7 +227,8 @@ Words/1:rohrer
 >:persistent server.  It starts out
 >:full untouched wilderness, and it's
 >:up to us, the players, to rebuild
-.:civilization here together.
+>:civilization from scratch here
+.:together.
 >.Jason continues walking to the east through a grove of
 ..trees.
 >.FOOTSTEPS can be heard off camera to the east.  Jason hides
@@ -284,8 +285,8 @@ Words/1:rohrer
 >.Jason walks out of the camp to the east and through another
 ..wooded grove.
 ._Jason
->:But furture generations can build
->:on the foundation that you help to
+>:But future generations can build on
+>:the foundation that you help to
 .:create.
 >.Jason continues walking east and a lashed wooden hut comes
 >.into view.  Neatly-planted rows of carrots and wheat spread
@@ -333,7 +334,7 @@ Words/1:rohrer
 >.FUTURISTIC CITY with Jetson-esque towers on the corners of
 ..the walls.
 ._JASON
->:As we rebuild civilizaiton
+>:As we rebuild civilization
 >:together, who knows where we'll end
 .:up?
 >.A hovering bronze ROBOT stationed near the gate approaches
