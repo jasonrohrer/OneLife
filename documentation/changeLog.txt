@@ -11,6 +11,7 @@ Version 53     ????
   transitions.  If the fade for the layer is marked as fully hard, a visibility
   pop will happen.  Otherwise, the visibility fades like it used to.
 
+--Import editor always shows crosshairs, even during select.
 
 
 Version 51     2018-February-8
