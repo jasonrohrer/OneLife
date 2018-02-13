@@ -39,8 +39,8 @@ RemoveNotes:False
 OutlineNotes:True
 ShowMargins:False
 ShowLineNumbers:False
-Cursor/Line:184
-Cursor/Column:2
+Cursor/Line:105
+Cursor/Column:35
 String/MoreDialogue:(MORE)
 String/ContinuedPageEnd:(CONTINUED)
 String/ContinuedPageStart:CONTINUED:
@@ -223,12 +223,12 @@ Words/1:rohrer
 >.Jason opens the office DOOR in the south wall and heads east
 ..into the surrounding wilderness.
 ._Jason
->:All of this around us is on a
+>:All of this around us exists on a
 >:persistent server.  It starts out
->:full untouched wilderness, and it's
->:up to us, the players, to rebuild
->:civilization from scratch here
-.:together.
+>:full of untouched wilderness, and
+>:it's up to us, the players, to
+>:rebuild civilization from scratch
+.:here together.
 >.Jason continues walking to the east through a grove of
 ..trees.
 >.FOOTSTEPS can be heard off camera to the east.  Jason hides
@@ -278,12 +278,15 @@ Words/1:rohrer
 >:What you accomplish in your brief
 >:lifetime will depend on the
 .:situation that you're born into.
-..Jason picks up a STONE HATCHET from the camp.
+>.As Jason leaves the camp, he finds a discarded wooden shaft
+>.and a sharp stone.  He attaches them together to make a
+>.STONE HATCHET. He gives the hatchet a swing, feeling its
+..heft.
 ._Jason
 >:At first, your contribution might
 .:be pretty basic.
->.Jason walks out of the camp to the east and through another
-..wooded grove.
+>.Jason walk east and through another wooded grove, carrying
+..the hatchet with him.
 ._Jason
 >:But future generations can build on
 >:the foundation that you help to
@@ -318,9 +321,7 @@ Words/1:rohrer
 >:through the tech tree, I'll be
 >:staying one step ahead of them by
 >:adding new stuff to the game every
->:week.  I'm drawing everything by
->:hand with pen and paper, so I can
-.:add new things pretty quickly.
+.:week.
 >.Jason heads east down the paved road, which turns into a
 >.MAG-LEV LINE, and a sleek, aerodynamic TRANSPORT CAPSULE
 ..floats by.  The passenger wears a black, wrap-around visor.
