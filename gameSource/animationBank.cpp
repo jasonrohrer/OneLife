@@ -3131,7 +3131,8 @@ void performLayerSwaps( int inObjectID,
         }
     
 
-    for( int j=0; j<idExtraMap[inObjectID].size(); j++ ) {
+    int numExtra = getNumExtraAnim( inObjectID );
+    for( int j=0; j<numExtra; j++ ) {
         AnimationRecord *oldAnim = idExtraMap[inObjectID].getElementDirect( j );
         
         allAnims.push_back( oldAnim );
