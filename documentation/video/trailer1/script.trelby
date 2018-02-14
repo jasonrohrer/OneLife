@@ -39,8 +39,8 @@ RemoveNotes:False
 OutlineNotes:True
 ShowMargins:False
 ShowLineNumbers:False
-Cursor/Line:105
-Cursor/Column:35
+Cursor/Line:171
+Cursor/Column:3
 String/MoreDialogue:(MORE)
 String/ContinuedPageEnd:(CONTINUED)
 String/ContinuedPageStart:CONTINUED:
@@ -209,8 +209,8 @@ Words/1:rohrer
 >:Well, actually, this is what my
 >:modern home office looks like. 
 >:Civilization inside the game hasn't
->:gotten quite this advanced yet. 
-.:Maybe someday, though.
+>:advanced quite this far yet.  Maybe
+.:someday, though.
 >.Jason's hairline suddenly recedes more and he sprouts a
 ..bushy mustache with an audible POP.
 ._JASON
@@ -219,7 +219,7 @@ Words/1:rohrer
 >:we live an entire lifetime, from
 >:birth to old age, in just one hour. 
 >:We'd better get on with this tour
-.:before I run out of time.
+.:before my time runs out.
 >.Jason opens the office DOOR in the south wall and heads east
 ..into the surrounding wilderness.
 ._Jason
@@ -228,7 +228,7 @@ Words/1:rohrer
 >:full of untouched wilderness, and
 >:it's up to us, the players, to
 >:rebuild civilization from scratch
-.:here together.
+.:together.
 >.Jason continues walking to the east through a grove of
 ..trees.
 >.FOOTSTEPS can be heard off camera to the east.  Jason hides
@@ -302,7 +302,7 @@ Words/1:rohrer
 >.tools scattered around it.  Domesticated sheep graze in a
 ..fenced pasture.
 ._JASON
->:You'll hopefully have a chance to
+>:Hopefully, you'll have a chance to
 >:leave your own small mark on the
 >:world before you die, and maybe
 >:create something that helps your
@@ -315,25 +315,27 @@ Words/1:rohrer
 .:beginning.
 >.Jason now walks north where he crosses a PAVED ROAD. 
 >.Suddenly a gleaming red SPORTS CAR roars by with a smiling
-..driver inside.
+>.DRIVER inside.  The driver honks as Jason scurries to
+..safety.
 ._JASON
 >:As players continue climbing up
 >:through the tech tree, I'll be
 >:staying one step ahead of them by
 >:adding new stuff to the game every
 .:week.
->.Jason heads east down the paved road, which turns into a
->.MAG-LEV LINE, and a sleek, aerodynamic TRANSPORT CAPSULE
-..floats by.  The passenger wears a black, wrap-around visor.
+>.Jason heads east down the paved road, which leads him under
+>.a raised MAG-LEV LINE, and a sleek, aerodynamic TRANSPORT
+>.CAPSULE floats by.  The passenger wears a black, wrap-around
+..visor.
 ._JASON
 >:So I hope you'll join me as this
 >:crazy game unfolds.  I may even
 >:spawn as your baby at some point,
 >:and it will be up to you to take
 .:care of me.
->.PIANO MUSIC swells as Jason walks up to the gates of a
->.FUTURISTIC CITY with Jetson-esque towers on the corners of
-..the walls.
+>.PIANO MUSIC swells as Jason follows the mag-lev line north
+>.to the gates of a FUTURISTIC CITY with Jetson-esque towers
+..on the corners of the walls.
 ._JASON
 >:As we rebuild civilization
 >:together, who knows where we'll end
@@ -347,6 +349,7 @@ Words/1:rohrer
 ..  YOU DIED
 ..  AGE:  40
 ..  KILLED BY:  ATOMIC POWERED ROBOT
+..GAME OVER SCREEN (CONT'D):
 ..  [GET REBORN?]
 ..Piano music continues.
 ./CUT TO:
