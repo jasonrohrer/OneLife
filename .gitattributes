@@ -10,5 +10,10 @@
 *.txt    text eol=lf
 
 
+# QCad DXF files are being saved with CRLF
+# leave them alone.
+*.dxf    binary
+
+
 # Note that source files and .ini files, etc. will be auto-converted to CRLF
 # line endings on Windows, but that doesn't seem to cause a problem, currently. 
