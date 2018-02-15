@@ -22,6 +22,9 @@ Version 53     ????
 --Support for forcing number of significant figures on value sliders, and using
   extra digits for animation pause times.
 
+--Added display of current sprite position in editor.
+
+
 
 
 

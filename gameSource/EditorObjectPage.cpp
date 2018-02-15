@@ -3734,8 +3734,17 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         pos.x = 0;
         pos.y = -106;
+
+        doublePair spritePos = mCurrentObject.spritePos[ mPickedObjectLayer ];
         
-        smallFont->drawString( tag, pos, alignCenter );
+        char *posString = autoSprintf( "  ( %.0f, %.0f )",
+                                       spritePos.x, spritePos.y );
+        
+        smallFont->drawString( tag, pos, alignRight );
+        
+        smallFont->drawString( posString, pos, alignLeft );
+        
+        delete [] posString;
         }
     
 
