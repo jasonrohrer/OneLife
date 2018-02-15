@@ -309,11 +309,24 @@ float initAnimationBankStep() {
                     r->spriteAnim[j].offset.x = 0;
                     r->spriteAnim[j].offset.y = 0;
 
+                    r->spriteAnim[j].startPauseSec = 0;
+
+
                     if( strstr( lines[next], "offset" ) != NULL ) {
                         sscanf( lines[next], 
                                 "offset=(%lf,%lf)",
                                 &( r->spriteAnim[j].offset.x ),
                                 &( r->spriteAnim[j].offset.y ) );
+                        next++;
+                        if( next >= numLines ) {
+                            break;
+                            }
+                        }
+                    
+                    if( strstr( lines[next], "startPause" ) != NULL ) {
+                        sscanf( lines[next], 
+                                "startPause=%lf",
+                                &( r->spriteAnim[j].startPauseSec ) );
                         next++;
                         if( next >= numLines ) {
                             break;
@@ -361,6 +374,9 @@ float initAnimationBankStep() {
                     
                     r->slotAnim[j].offset.x = 0;
                     r->slotAnim[j].offset.y = 0;
+                    
+                    r->slotAnim[j].startPauseSec = 0;
+                    
 
                     if( strstr( lines[next], "offset" ) != NULL ) {
                         sscanf( lines[next], 
@@ -374,6 +390,16 @@ float initAnimationBankStep() {
                             }
                         }
                     
+                    if( strstr( lines[next], "startPause" ) != NULL ) {
+                        sscanf( lines[next], 
+                                "startPause=%lf",
+                                &( r->slotAnim[j].startPauseSec ) );
+                        next++;
+                        if( next >= numLines ) {
+                            break;
+                            }
+                        }
+
                     
                     sscanf( lines[next], 
                             "animParam="
@@ -755,6 +781,11 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
                 
                 lines.push_back( 
                     autoSprintf( 
+                        "startPause=%lf",
+                        inRecord->spriteAnim[j].startPauseSec ) );
+                
+                lines.push_back( 
+                    autoSprintf( 
                         "animParam="
                         "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
                         "%lf %lf %lf %lf %lf "
@@ -792,6 +823,11 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
                         "offset=(%lf,%lf)",
                         inRecord->slotAnim[j].offset.x,
                         inRecord->slotAnim[j].offset.y ) );
+
+                lines.push_back( 
+                    autoSprintf( 
+                        "startPause=%lf",
+                        inRecord->slotAnim[j].startPauseSec ) );
                 
                 lines.push_back( 
                     autoSprintf( 
@@ -1348,18 +1384,25 @@ static double processFrameTimeWithPauses( AnimationRecord *inAnim,
         }
     
 
-    if( layerAnimation->pauseSec == 0 ) {
+    if( layerAnimation->pauseSec == 0 && layerAnimation->startPauseSec == 0 ) {
         return inFrameTime;
         }
     
 
     double dur = layerAnimation->durationSec;
     double pause = layerAnimation->pauseSec;
-            
+    double startPause = layerAnimation->startPauseSec;
+    
+    
+    if( inFrameTime < startPause ) {
+        // freeze time at 0, animation still in first pause
+        return 0;
+        }
+
 
     double blockTime = dur + pause;
     
-    double blockFraction = inFrameTime / blockTime;
+    double blockFraction = ( inFrameTime - startPause ) / blockTime;
             
     double numFullBlocksPassed = floor( blockFraction );
 
@@ -3079,7 +3122,8 @@ void zeroRecord( SpriteAnimationRecord *inRecord ) {
 
     inRecord->durationSec = 1;
     inRecord->pauseSec = 0;
-    
+    inRecord->startPauseSec = 0;
+
     inRecord->rotationCenterOffset.x = 0;
     inRecord->rotationCenterOffset.y = 0;
     

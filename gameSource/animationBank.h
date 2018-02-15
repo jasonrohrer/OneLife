@@ -67,6 +67,9 @@ typedef struct SpriteAnimationRecord {
         // ticking cogs, twitching animal noses, etc.
         double durationSec;
         double pauseSec;
+        // the first pause, before the first animation duration,
+        // for controling the phase of the duration-pause cycle
+        double startPauseSec;
         
 
         double fadeOscPerSec;

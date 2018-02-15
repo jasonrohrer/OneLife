@@ -30,7 +30,7 @@
 
 
 #define NUM_ANIM_CHECKBOXES 6
-#define NUM_ANIM_SLIDERS 18
+#define NUM_ANIM_SLIDERS 19
 
 
 

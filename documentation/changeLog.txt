@@ -13,6 +13,11 @@ Version 53     ????
 
 --Import editor always shows crosshairs, even during select.
 
+--Added control over phase of animation pauses with animation start pause time.
+  Now possible to make pistons that pump one at a time, down the line.
+
+
+
 
 Version 51     2018-February-8
 

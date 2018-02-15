@@ -388,7 +388,7 @@ EditorAnimationPage::EditorAnimationPage()
 
     boxY = 220;
     
-    double space = 28;
+    double space = 27;
     double x = -390;
     
     mSliders[0] = new ValueSlider( smallFont, x, boxY -= space, 2,
@@ -472,6 +472,10 @@ EditorAnimationPage::EditorAnimationPage()
     mSliders[17] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                     100, 20,
                                     0, 100, "Pause Sec" );
+
+    mSliders[18] = new ValueSlider( smallFont, x, boxY -= space, 2,
+                                    100, 20,
+                                    0, 100, "Start Pause Sec" );
 
 
 
@@ -918,6 +922,7 @@ void EditorAnimationPage::updateAnimFromSliders() {
 
     r->durationSec = mSliders[16]->getValue();
     r->pauseSec = mSliders[17]->getValue();
+    r->startPauseSec = mSliders[18]->getValue();
     }
 
 
@@ -1027,6 +1032,7 @@ void EditorAnimationPage::updateSlidersFromAnim() {
 
     mSliders[16]->setValue( r->durationSec );
     mSliders[17]->setValue( r->pauseSec );
+    mSliders[18]->setValue( r->startPauseSec );
     }
 
     
