@@ -25,8 +25,7 @@ ValueSlider::ValueSlider( Font *inDisplayFont,
           mHighValue( inHighValue ),
           mValue( inLowValue ),
           mBarBorder( inBorder ),
-          mPointerDown( false ),
-          mPointerJustLifted( false ) {
+          mPointerDown( false ) {
 
     addComponent( &mValueField );
     mValueField.addActionListener( this );
@@ -187,7 +186,6 @@ char ValueSlider::isInBar( float inX, float inY ) {
 void ValueSlider::pointerDown( float inX, float inY ) {
     if( isInBar( inX, inY ) ) {
         mPointerDown = true;
-        mPointerJustLifted = false;
         }
     
     pointerDrag( inX, inY );
@@ -196,14 +194,11 @@ void ValueSlider::pointerDown( float inX, float inY ) {
 
 
 void ValueSlider::pointerDrag( float inX, float inY ) {
-    if( ! isInBar( inX, inY ) ) {
+    if( ! mPointerDown ) {
         return;
         }
     
-    if( !mPointerDown && !mPointerJustLifted ) {
-        mPointerDown = true;
-        }
-
+    
     mValue = mLowValue + 
         (mHighValue - mLowValue ) * 
         ( inX - mBarStartX - mBarBorder ) / 
@@ -227,13 +222,11 @@ void ValueSlider::pointerDrag( float inX, float inY ) {
 void ValueSlider::pointerUp( float inX, float inY ) {
     char wasDown = mPointerDown;
     
-    mPointerDown = false;
-    mPointerJustLifted = true;
     pointerDrag( inX, inY );
+    
+    mPointerDown = false;
 
-    mPointerJustLifted = false;
-
-    if( ! isInBar( inX, inY ) && wasDown ) {
+    if( wasDown ) {
         // always fire action on release, even if release is off bar
         fireActionPerformed( this );
         }

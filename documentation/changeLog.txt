@@ -16,6 +16,9 @@ Version 53     ????
 --Added control over phase of animation pauses with animation start pause time.
   Now possible to make pistons that pump one at a time, down the line.
 
+--Fixed behavior of value sliders in editor when held mouse moves in and out of
+  slider bar.
+
 
 
 

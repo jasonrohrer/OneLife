@@ -76,7 +76,6 @@ class ValueSlider : public PageComponent, public ActionListenerList,
         double mBarStartX, mBarEndX, mBarStartY, mBarEndY;
 
         char mPointerDown;
-        char mPointerJustLifted;
     };
 
 
