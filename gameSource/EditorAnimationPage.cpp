@@ -469,15 +469,18 @@ EditorAnimationPage::EditorAnimationPage()
     mSliders[16] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                     100, 20,
                                     0, 100, "Duration Sec" );
+    mSliders[16]->forceDecimalDigits( 2 );
+    
     mSliders[17] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                     100, 20,
                                     0, 100, "Pause Sec" );
+    mSliders[17]->forceDecimalDigits( 2 );
 
     mSliders[18] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                     100, 20,
                                     0, 100, "Start Pause Sec" );
-
-
+    mSliders[18]->forceDecimalDigits( 2 );
+    
 
 
     for( int i=0; i<NUM_ANIM_SLIDERS; i++ ) {

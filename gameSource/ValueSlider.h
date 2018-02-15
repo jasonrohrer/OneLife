@@ -46,6 +46,11 @@ class ValueSlider : public PageComponent, public ActionListenerList,
         void toggleField( char inFieldVisible );
         
 
+        // usually automatic based on slider range
+        // but can be forced to control precision
+        void forceDecimalDigits( int inNumDigitsAfterDecimal );
+        
+
     protected:
         virtual void actionPerformed( GUIComponent *inTarget );
 
@@ -76,6 +81,9 @@ class ValueSlider : public PageComponent, public ActionListenerList,
         double mBarStartX, mBarEndX, mBarStartY, mBarEndY;
 
         char mPointerDown;
+
+        char mForceDecimalDigits;
+        int mDecimalDigits;
     };
 
 

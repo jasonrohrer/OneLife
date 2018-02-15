@@ -25,7 +25,9 @@ ValueSlider::ValueSlider( Font *inDisplayFont,
           mHighValue( inHighValue ),
           mValue( inLowValue ),
           mBarBorder( inBorder ),
-          mPointerDown( false ) {
+          mPointerDown( false ),
+          mForceDecimalDigits( false ),
+          mDecimalDigits( 0 ) {
 
     addComponent( &mValueField );
     mValueField.addActionListener( this );
@@ -97,6 +99,10 @@ void ValueSlider::setFieldFromValue() {
         numD = 2;
         }
     
+    if( mForceDecimalDigits ) {
+        numD = mDecimalDigits;
+        }
+
     mValueField.setFloat( mValue, numD );
     }
 
@@ -234,3 +240,8 @@ void ValueSlider::pointerUp( float inX, float inY ) {
 
 
  
+void ValueSlider::forceDecimalDigits( int inNumDigitsAfterDecimal ) {
+    mForceDecimalDigits = true;
+    mDecimalDigits = inNumDigitsAfterDecimal;
+    }
+

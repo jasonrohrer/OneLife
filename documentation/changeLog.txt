@@ -19,6 +19,9 @@ Version 53     ????
 --Fixed behavior of value sliders in editor when held mouse moves in and out of
   slider bar.
 
+--Support for forcing number of significant figures on value sliders, and using
+  extra digits for animation pause times.
+
 
 
 
