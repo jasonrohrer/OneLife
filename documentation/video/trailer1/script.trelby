@@ -39,8 +39,8 @@ RemoveNotes:False
 OutlineNotes:True
 ShowMargins:False
 ShowLineNumbers:False
-Cursor/Line:171
-Cursor/Column:3
+Cursor/Line:189
+Cursor/Column:2
 String/MoreDialogue:(MORE)
 String/ContinuedPageEnd:(CONTINUED)
 String/ContinuedPageStart:CONTINUED:
@@ -250,13 +250,14 @@ Words/1:rohrer
 >:Yep, that's player two, Eve's first
 .:baby.
 >.Eve picks up the baby.  The baby's tiny eyes open as it
-..stops crying.
+..stops crying.  Eve carries the baby off-screen.
 ._JASON
 >:When you join the server as a baby,
 .:you're truly helpless.
->.Jason now walks north into another clearing where several
->.fur-clad adults care for and feed babies and children of
-..various ages.
+>.Jason now walks north into the forest, and a crying, naked
+>.baby runs past him and disappears among the trees.  Jason
+>.enters another clearing where several fur-clad adults care
+..for and feed babies and children of various ages.
 ._Jason
 >:You depend on care from your
 >:parents to survive.  If they help
@@ -278,8 +279,8 @@ Words/1:rohrer
 >:What you accomplish in your brief
 >:lifetime will depend on the
 .:situation that you're born into.
->.As Jason leaves the camp, he finds a discarded wooden shaft
->.and a sharp stone.  He attaches them together to make a
+>.As Jason leaves the camp, he finds a discarded WOODEN SHAFT
+>.and a SHARP STONE.  He attaches them together to make a
 >.STONE HATCHET. He gives the hatchet a swing, feeling its
 ..heft.
 ._Jason
