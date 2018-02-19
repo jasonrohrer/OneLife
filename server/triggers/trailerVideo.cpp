@@ -31,6 +31,10 @@ static LiveDummySocket wolfDummy;
 static LiveDummySocket firstBaby;
 
 
+static LiveDummySocket carDriver;
+static LiveDummySocket transportDriver;
+
+
 
 
 
@@ -48,6 +52,75 @@ static void customTrigger( int inTriggerNumber ) {
 
     if( inTriggerNumber == t++ ) {
         forcePlayerAge( "test@test.com", 40 );
+
+        
+        GridPos startPos = { 13, -2 };
+
+        clothing.tunic = getObject( 585 );
+        carDriver = newDummyPlayer( "dummy2@test.com", 19, 20,
+                                    startPos,
+                                    630,
+                                    clothing );
+
+
+        clothing = getEmptyClothingSet();
+        
+        clothing.hat = getObject( 199 );
+        clothing.tunic = getObject( 201 );
+        clothing.bottom = getObject( 200 );
+        clothing.frontShoe = getObject( 203 );
+        clothing.backShoe = getObject( 203 );
+
+        startPos.x = 15;
+        startPos.y = -8;
+        transportDriver = newDummyPlayer( "dummy3@test.com", 19, 20,
+                                          startPos,
+                                          //0,
+                                          632,
+                                          clothing );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // car drives past
+        
+        addToMove( -1, 0 );
+        addToMove( -2, 0 );
+        addToMove( -3, 0 );
+        addToMove( -4, 0 );
+        addToMove( -5, 0 );
+        addToMove( -6, 0 );
+        addToMove( -7, 0 );
+        addToMove( -8, 0 );
+        addToMove( -9, 0 );
+        addToMove( -10, 0 );
+        addToMove( -11, 0 );
+        addToMove( -12, 0 );
+        
+        sendDummyMove( &carDriver, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // transport goes overhead
+        
+        addToMove( 0, 1 );
+        addToMove( 0, 2 );
+        addToMove( 0, 3 );
+        addToMove( 0, 4 );
+        addToMove( 0, 5 );
+        addToMove( 0, 6 );
+        addToMove( 0, 7 );
+        addToMove( 0, 8 );
+        addToMove( 0, 9 );
+        addToMove( 0, 10 );
+        addToMove( 0, 11 );
+        addToMove( 0, 12 );
+        addToMove( 0, 13 );
+        addToMove( 0, 14 );
+        addToMove( 0, 15 );
+        addToMove( 0, 16 );
+        addToMove( 0, 17 );
+        addToMove( 0, 18 );
+        addToMove( 0, 19 );
+        
+        sendDummyMove( &transportDriver, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         // robot switch to firing state
