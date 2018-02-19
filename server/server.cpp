@@ -261,6 +261,7 @@ typedef struct LiveObject {
         SimpleVector<timeSec_t> 
             clothingContainedEtaDecays[NUM_CLOTHING_PIECES];
 
+        char needsUpdate;
         char updateSent;
 
         // babies born to this player
@@ -942,6 +943,21 @@ GridPos killPlayer( const char *inEmail ) {
     
     GridPos noPos = { 0, 0 };
     return noPos;
+    }
+
+
+
+void forcePlayerAge( const char *inEmail, double inAge ) {
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( strcmp( o->email, inEmail ) == 0 ) {
+            double ageSec = inAge / getAgeRate();
+            
+            o->lifeStartTimeSeconds = Time::getCurrentTime() - ageSec;
+            o->needsUpdate = true;
+            }
+        }
     }
 
 
@@ -2770,6 +2786,7 @@ void processLoggedInPlayer( Socket *inSock,
     
     newObject.posForced = false;
 
+    newObject.needsUpdate = false;
     newObject.updateSent = false;
     
     newObject.babyBirthTimes = new SimpleVector<timeSec_t>();
@@ -6950,6 +6967,17 @@ int main() {
         
 
         
+        // check for any that have been individually flagged, but
+        // aren't on our list yet (updates caused by external triggers)
+        for( int i=0; i<players.size() ; i++ ) {
+            LiveObject *nextPlayer = players.getElement( i );
+            
+            if( nextPlayer->needsUpdate ) {
+                playerIndicesToSendUpdatesAbout.push_back( i );
+            
+                nextPlayer->needsUpdate = false;
+                }
+            }
         
 
         
