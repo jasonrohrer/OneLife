@@ -83,6 +83,7 @@ EditorAnimationPage::EditorAnimationPage()
 
           mReverseRotationCheckbox( 0, 0, 2 ),
           mRandomStartPhaseCheckbox( -80, 200, 2 ),
+          mForceZeroStartCheckbox( -80, 180, 2 ),
           mCurrentObjectID( -1 ),
           mCurrentSlotDemoID( -1 ),
           mFlipDraw( false ),
@@ -506,6 +507,9 @@ EditorAnimationPage::EditorAnimationPage()
 
     addComponent( &mRandomStartPhaseCheckbox );
     mRandomStartPhaseCheckbox.addActionListener( this );
+
+    addComponent( &mForceZeroStartCheckbox );
+    mForceZeroStartCheckbox.addActionListener( this );
     
     mClothingSet = getEmptyClothingSet();
     mNextShoeToFill = &( mClothingSet.backShoe );
@@ -636,7 +640,8 @@ static AnimationRecord *createRecordForObject( int inObjectID,
     r->type = inType;
         
     r->randomStartPhase = false;
-        
+    r->forceZeroStart = false;
+    
     r->numSounds = 0;
     r->soundAnim = new SoundAnimationRecord[ 0 ];
             
@@ -739,6 +744,9 @@ void EditorAnimationPage::populateCurrentAnim() {
     
     mRandomStartPhaseCheckbox.setToggled( 
         mCurrentAnim[ mCurrentType ]->randomStartPhase );
+    
+    mForceZeroStartCheckbox.setToggled( 
+        mCurrentAnim[ mCurrentType ]->forceZeroStart );
     
     mWiggleAnim = copyRecord( mCurrentAnim[0] );
 
@@ -2200,6 +2208,10 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mCurrentAnim[ mCurrentType ]->randomStartPhase =
             mRandomStartPhaseCheckbox.getToggled();
         }
+    else if( inTarget == &mForceZeroStartCheckbox ) {
+        mCurrentAnim[ mCurrentType ]->forceZeroStart =
+            mForceZeroStartCheckbox.getToggled();
+        }
     else if( inTarget == &mPrevExtraButton ) {
         mCurrentAnim[ extraB ] = 
             mCurrentExtraAnim.getElementDirect( mCurrentExtraIndex );
@@ -2820,6 +2832,11 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
         pos = mRandomStartPhaseCheckbox.getPosition();
         pos.x -= 10;
         smallFont->drawString( "Random Start Point", pos, alignRight );
+        }
+    if( !mHideUI && mForceZeroStartCheckbox.isVisible() ) {
+        pos = mForceZeroStartCheckbox.getPosition();
+        pos.x -= 10;
+        smallFont->drawString( "Force Zero Start", pos, alignRight );
         }
         
     

@@ -128,6 +128,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         CheckboxButton mReverseRotationCheckbox;
         
         CheckboxButton mRandomStartPhaseCheckbox;
+        CheckboxButton mForceZeroStartCheckbox;
 
         
         int mCurrentObjectID;

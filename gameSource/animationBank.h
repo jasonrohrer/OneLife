@@ -128,6 +128,13 @@ typedef struct AnimationRecord {
         // false means animation always starts at 0-point on timeline
         char randomStartPhase;
 
+        // this animation should always start back at frame 0 when
+        // we switch to it (as opposed to continuing where last animation
+        // left off)
+        // Used for timed reactions.
+        char forceZeroStart;
+        
+
         int numSounds;
         SoundAnimationRecord *soundAnim;
 

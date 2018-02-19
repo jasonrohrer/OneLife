@@ -220,6 +220,17 @@ float initAnimationBankStep() {
                 r->extraIndex = extraIndexRead;
                 r->randomStartPhase = randomStartPhaseRead;
                 next++;
+
+                
+                // optional force zero start
+                r->forceZeroStart = false;
+                if( strstr( lines[next], "forceZeroStart=" ) != NULL ) {
+                    int forceZeroStartRead = 0;
+                    sscanf( lines[next], "forceZeroStart=%d", 
+                            &forceZeroStartRead );
+                    r->forceZeroStart = forceZeroStartRead;
+                    next++;
+                    }
                 
                 
                 // optional sounds
@@ -750,6 +761,9 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
                                               extraIndex,
                                               inRecord->randomStartPhase ) );
                 }
+
+            lines.push_back( autoSprintf( "forceZeroStart=%d", 
+                                          inRecord->forceZeroStart ) );
             
             lines.push_back( 
                 autoSprintf( "numSounds=%d", inRecord->numSounds ) );
@@ -3040,7 +3054,8 @@ AnimationRecord *copyRecord( AnimationRecord *inRecord ) {
     newRecord->objectID = inRecord->objectID;
     newRecord->type = inRecord->type;
     newRecord->randomStartPhase = inRecord->randomStartPhase;
-    
+    newRecord->forceZeroStart = inRecord->forceZeroStart;
+
     newRecord->numSounds = inRecord->numSounds;
     newRecord->soundAnim = new SoundAnimationRecord[ newRecord->numSounds ];
     

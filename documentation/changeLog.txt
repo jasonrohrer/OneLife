@@ -24,6 +24,9 @@ Version 53     ????
 
 --Added display of current sprite position in editor.
 
+--Support for animations that always start at frame zero after transition,
+  instead of continuing from frame where previous object, pre-transition, left
+  off.
 
 
 

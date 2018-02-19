@@ -8168,9 +8168,24 @@ void LivingLifePage::step() {
                                     mMapAnimationFrameCount[mapI] = 0;
                                     mMapAnimationLastFrameCount[mapI] = 0;
                                     }
-                                // else, leave existing frame count alone,
-                                // since object has simply gone through a
-                                // transition
+                                else {
+                                    // else, leave existing frame count alone,
+                                    // since object has simply gone through a
+                                    // transition
+                                    
+                                    // UNLESS it is a force-zero-start 
+                                    // animation
+                                    AnimationRecord *newAnim =
+                                        getAnimation( mMap[mapI], ground );
+                                    
+                                    if( newAnim != NULL  && 
+                                        newAnim->forceZeroStart ) {
+                                        
+                                        mMapAnimationFrameCount[mapI] = 0;
+                                        mMapAnimationLastFrameCount[mapI] = 0;
+                                        }
+                                    }
+                                    
                                 
                                 mMapCurAnimType[mapI] = ground;
                                 mMapLastAnimType[mapI] = ground;
