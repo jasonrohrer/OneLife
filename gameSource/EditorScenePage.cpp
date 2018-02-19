@@ -1655,6 +1655,14 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     delete [] posStringX;
     delete [] posStringY;
 
+    if( c->oID > 0 ) {
+        doublePair pos = { -500, -300 };
+        
+        char *s = autoSprintf( "oID=%d", c->oID );
+        
+
+        drawOutlineString( s, pos, alignLeft );
+        }
 
     if( p->oID > 0 ) {
         

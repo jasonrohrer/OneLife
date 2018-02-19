@@ -28,6 +28,8 @@ Version 53     ????
   instead of continuing from frame where previous object, pre-transition, left
   off.
 
+--Scene editor now displays object ID of current cell.
+
 
 
 
