@@ -1,0 +1,26 @@
+server n
+server n
+server n
+say "HELLO BABY!"
+server n
+say "PUT THIS ON."
+server n
+say "LET'S GO BROWSING!"
+say "FOOD!"
+server n
+server n
+server n
+server n
+server n
+server n
+server n
+server n
+server n
+server n
+server n
+server n
+server n
+server n
+server n
+server n
+anim 1 60
