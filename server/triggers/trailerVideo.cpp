@@ -51,10 +51,18 @@ static void customTrigger( int inTriggerNumber ) {
         }
     else if( inTriggerNumber == t++ ) {
         // robot switch to firing state
-        setMapObject( 2, 0, 645 );
+        setMapObject( 14, 3, 648 );
         }
     else if( inTriggerNumber == t++ ) {
         GridPos deathPos = killPlayer( "test@test.com" );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // robot switch to greeting state
+        setMapObject( 14, 3, 649 );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // robot switch to leaving state
+        setMapObject( 14, 3, 650 );
         }
     else if( inTriggerNumber == t++ ) {
         
