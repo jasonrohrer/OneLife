@@ -54,7 +54,7 @@ static void customTrigger( int inTriggerNumber ) {
         forcePlayerAge( "test@test.com", 40 );
 
         
-        GridPos startPos = { 13, -2 };
+        GridPos startPos = { 17, -2 };
 
         clothing.tunic = getObject( 585 );
         carDriver = newDummyPlayer( "dummy2@test.com", 19, 20,
@@ -94,6 +94,11 @@ static void customTrigger( int inTriggerNumber ) {
         addToMove( -10, 0 );
         addToMove( -11, 0 );
         addToMove( -12, 0 );
+        addToMove( -13, 0 );
+        addToMove( -14, 0 );
+        addToMove( -15, 0 );
+        addToMove( -16, 0 );
+        addToMove( -17, 0 );
         
         sendDummyMove( &carDriver, finishMove() );
         }
