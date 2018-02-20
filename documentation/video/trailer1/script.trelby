@@ -39,8 +39,8 @@ RemoveNotes:False
 OutlineNotes:True
 ShowMargins:False
 ShowLineNumbers:False
-Cursor/Line:189
-Cursor/Column:2
+Cursor/Line:202
+Cursor/Column:0
 String/MoreDialogue:(MORE)
 String/ContinuedPageEnd:(CONTINUED)
 String/ContinuedPageStart:CONTINUED:
@@ -190,10 +190,10 @@ Words/1:rohrer
 ..seconds. 
 >.A CARTOON MAN putters around the office.  He is tall and
 ..gangly, slightly balding, and wears a t-shirt and shorts.
->.The man turns toward the camera with a start and waves one
-..of his spindly, pen-line arms in greeting.
+>.The man turns toward the camera and waves one of his
+..spindly, pen-line arms in greeting.
 ._MAN
-.:Oh, hello there!
+.:Hello there!
 ..The cartoon man points to himself.
 ._MAN
 .:I'm Jason Rohrer.
@@ -209,8 +209,8 @@ Words/1:rohrer
 >:Well, actually, this is what my
 >:modern home office looks like. 
 >:Civilization inside the game hasn't
->:advanced quite this far yet.  Maybe
-.:someday, though.
+>:gotten quite this advanced yet. 
+.:Maybe someday, though.
 >.Jason's hairline suddenly recedes more and he sprouts a
 ..bushy mustache with an audible POP.
 ._JASON
@@ -220,10 +220,11 @@ Words/1:rohrer
 >:birth to old age, in just one hour. 
 >:We'd better get on with this tour
 .:before my time runs out.
->.Jason opens the office DOOR in the south wall and heads east
-..into the surrounding wilderness.
+>.Jason grabs an olive drab BOONIE HAT from a hook and puts it
+>.on his head.  He opens the office DOOR in the south wall and
+..heads east into the surrounding wilderness.
 ._Jason
->:All of this around us exists on a
+>:Everything you see here exists on a
 >:persistent server.  It starts out
 >:full of untouched wilderness, and
 >:it's up to us, the players, to
@@ -286,8 +287,8 @@ Words/1:rohrer
 ._Jason
 >:At first, your contribution might
 .:be pretty basic.
->.Jason walk east and through another wooded grove, carrying
-..the hatchet with him.
+>.Jason walk east and through a grassy meadow, carrying the
+..hatchet with him.
 ._Jason
 >:But future generations can build on
 >:the foundation that you help to
@@ -346,22 +347,34 @@ Words/1:rohrer
 >.tip of the weapon emits a purple spark, and Jason collapses
 ..into a pile of HUMAN BONES.
 ./CUT TO:
-..GAME OVER SCREEN:
+.\GAME OVER SCREEN
 ..  YOU DIED
 ..  AGE:  40
 ..  KILLED BY:  ATOMIC POWERED ROBOT
-..GAME OVER SCREEN (CONT'D):
 ..  [GET REBORN?]
 ..Piano music continues.
 ./CUT TO:
-..TITLE CARD:  
+.\TITLE CARD  
 ..  ONE HOUR
 ..  ONE LIFE
-..TITLE CARD:
+.\TITLE CARD
 ..  A GAME
 ..  100% HANDMADE
 ..  BY JASON ROHRER
-..TITLE CARD:
+.\TITLE CARD
 ..  AVAILABLE NOW
-..TITLE CARD:
+.\TITLE CARD
 ..  ONEHOURONELIFE.COM
+./CUT TO:
+.\BIRD'S EYE VIEW
+>.Piano music fades as we see the robot still hovering near
+>.Jason's bones.  It tilts its head down mechanically as if to
+..address the bone pile.
+._Robot
+>:I am the Atomic Powered Robot. 
+>:Please give my best wishes to
+.:everybody.
+>.The robot hovers north through the city gates and out of
+..view.
+>.We linger quietly on the now-deserted gates of the
+..futuristic city and the pile of human bones. 
