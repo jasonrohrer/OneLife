@@ -27,7 +27,12 @@ static SimpleVector<PlayerMapping> playerMap;
     
 
 
-        
+typedef struct DelayedMessage {
+        double sendTime;
+        Socket *sock;
+        char *message;
+    } DelayedMessage;
+    
 
 
 typedef struct LiveDummySocket {
@@ -39,6 +44,7 @@ typedef struct LiveDummySocket {
 
 SimpleVector<Socket*> dummySockets;
 
+SimpleVector< DelayedMessage > delayedMessages;
     
 
 
@@ -46,7 +52,13 @@ SimpleVector<Socket*> dummySockets;
 
 void freeTriggers() {
     triggersEnabled = false;
-
+    
+    
+    for( int i=0; i<delayedMessages.size(); i++ ) {
+        delete [] delayedMessages.getElement( i )->message;
+        }
+    delayedMessages.deleteAll();
+    
     for( int i=0; i<dummySockets.size(); i++ ) {
         delete dummySockets.getElementDirect(i);
         }
@@ -219,6 +231,13 @@ void sendDummyMove( LiveDummySocket *inDummy,
     }
 
 
+static double delayTime = 0;
+
+void setNextActionDelay( double inDelay ) {
+    delayTime = inDelay;
+    }
+
+
 // offset is from current pos
 void sendDummyAction( LiveDummySocket *inDummy, 
                       const char *inAction, GridPos inOffset,
@@ -249,11 +268,19 @@ void sendDummyAction( LiveDummySocket *inDummy,
     delete [] oldMessage;
 
     
-    inDummy->sock->send( (unsigned char*)message, 
-                         strlen( message ), 
-                         false, false );
-    
-    delete [] message;
+    if( delayTime == 0 ) {
+        inDummy->sock->send( (unsigned char*)message, 
+                             strlen( message ), 
+                             false, false );
+        
+        delete [] message;
+        }
+    else {
+        DelayedMessage m = { Time::getCurrentTime() + delayTime,
+                             inDummy->sock, message };
+        delayedMessages.push_back( m );
+        delayTime = 0;
+        }
     }
 
 
@@ -345,6 +372,21 @@ void trigger( int inTriggerNumber ) {
 void stepTriggers() {
     if( !triggersEnabled ) {
         return;
+        }
+
+    double curTime = Time::getCurrentTime();
+    for( int i=0; i<delayedMessages.size(); i++ ) {
+        DelayedMessage *m = delayedMessages.getElement( i );
+        
+        if( m->sendTime >= curTime ) {
+            m->sock->send( (unsigned char*)m->message, 
+                           strlen( m->message ), 
+                           false, false );
+        
+            delete [] m->message;
+            delayedMessages.deleteElement( i );
+            i--;
+            }
         }
     
     for( int i=0; i<dummySockets.size(); i++ ) {

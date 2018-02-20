@@ -45,6 +45,15 @@ static LiveDummySocket kidA2;
 
 
 
+static LiveDummySocket manB1;
+static LiveDummySocket manB2;
+static LiveDummySocket womanB1;
+static LiveDummySocket womanB2;
+static LiveDummySocket kidB1;
+
+
+
+
 static LiveDummySocket carDriver;
 static LiveDummySocket transportDriver;
 
@@ -138,6 +147,50 @@ static void customTrigger( int inTriggerNumber ) {
                                startPos,
                                0,
                                clothing );
+
+
+        clothing = getEmptyClothingSet();
+        clothing.bottom = getObject( 200 );
+        
+        startPos.x = 40;
+        startPos.y = 1;
+        manB1 = newDummyPlayer( "manB1@test.com", 347, 28,
+                                startPos,
+                                292,
+                                clothing );
+
+        startPos.x = 47;
+        startPos.y = 3;
+        manB2 = newDummyPlayer( "manB2@test.com", 354, 57,
+                                startPos,
+                                0,
+                                clothing );
+        
+        startPos.x = 42;
+        startPos.y = 2;
+        kidB1 = newDummyPlayer( "kidB1@test.com", 352, 6,
+                                startPos,
+                                135,
+                                clothing );
+
+
+
+        clothing.tunic = getObject( 201 );
+        
+        startPos.x = 43;
+        startPos.y = -1;
+        womanB1 = newDummyPlayer( "womanB1@test.com", 353, 29,
+                                startPos,
+                                139,
+                                clothing );
+
+        startPos.x = 45;
+        startPos.y = 2;
+        womanB2 = newDummyPlayer( "womanB2@test.com", 351, 49,
+                                startPos,
+                                71,
+                                clothing );
+
         }
     else if( inTriggerNumber == t++ ) {
         // eve walks into clearing
@@ -208,7 +261,7 @@ static void customTrigger( int inTriggerNumber ) {
     else if( inTriggerNumber == t++ ) {
          // put on baby
         GridPos offset = { 1, 0 };
-        sendDummyAction( &momA, "UBABY", offset, true, 0 );
+        sendDummyAction( &momA, "UBABY", offset, true, -1 );
         }
     else if( inTriggerNumber == t++ ) {
         // pick berry
@@ -229,7 +282,71 @@ static void customTrigger( int inTriggerNumber ) {
     else if( inTriggerNumber == t++ ) {
         // feed berry
         GridPos offset = { 1, 0 };
-        sendDummyAction( &dadA, "UBABY", offset, true, 0 );
+        sendDummyAction( &dadA, "UBABY", offset, true, -1 );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // skin rabbit
+        GridPos offset = { 1, 0 };
+        sendDummyAction( &kidB1, "USE", offset );
+        }    
+    else if( inTriggerNumber == t++ ) {
+        // chop wood
+        GridPos offset = { -1, 0 };
+        sendDummyAction( &womanB2, "USE", offset );
+
+        // set down stone
+        setNextActionDelay( 0.5 );
+        offset.x = 0;
+        sendDummyAction( &kidB1, "DROP", offset, true, -1 );
+
+        // walk into scene
+        addToMove( -1, -1 );
+        addToMove( -2, -2 );
+        
+        sendDummyMove( &manB2, finishMove() );
+        }    
+    else if( inTriggerNumber == t++ ) {
+        // pick up skewer
+        GridPos offset = { -1, 0 };
+        sendDummyAction( &kidB1, "USE", offset );
+        }    
+    else if( inTriggerNumber == t++ ) {
+        // skewer rabbit
+        GridPos offset = { 1, 0 };
+        sendDummyAction( &kidB1, "USE", offset );
+
+        // drop hatchet
+        sendDummyAction( &womanB2, "DROP", offset, true, -1 );
+        }    
+    else if( inTriggerNumber == t++ ) {
+        // grab wood
+        GridPos offset = { -1, 0 };
+        sendDummyAction( &womanB2, "USE", offset );
+        
+        // grab sharp stone
+        offset.x = 0;
+        sendDummyAction( &manB2, "USE", offset );
+        }
+    else  if( inTriggerNumber == t++ ) {
+        // walk to fire
+        addToMove( -1, -1 );
+        addToMove( -2, -1 );
+        
+        sendDummyMove( &womanB2, finishMove() );
+
+        // use stone on wood
+        GridPos offset = { -1, 0 };
+        sendDummyAction( &manB2, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // feed fire
+        GridPos offset = { -1, 0 };
+        sendDummyAction( &womanB2, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // use stone on wood
+        GridPos offset = { -1, 0 };
+        sendDummyAction( &manB2, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         
