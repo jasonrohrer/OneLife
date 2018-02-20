@@ -30,6 +30,7 @@ Version 53     ????
 
 --Scene editor now displays object ID of current cell.
 
+--Fixed bug in animation speed for moving objects.
 
 
 

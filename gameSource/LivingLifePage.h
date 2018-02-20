@@ -306,10 +306,10 @@ typedef struct ExtraMapObject {
         double moveSpeed;
         doublePair moveOffset;
         
-        int animationFrameCount;
-        int animationLastFrameCount;
+        double animationFrameCount;
+        double animationLastFrameCount;
         
-        int animationFrozenRotFrameCount;
+        double animationFrozenRotFrameCount;
         
         AnimType curAnimType;
         AnimType lastAnimType;
@@ -407,10 +407,10 @@ class LivingLifePage : public GamePage {
 
         char *mMapCellDrawnFlags;
 
-        int *mMapAnimationFrameCount;
-        int *mMapAnimationLastFrameCount;
+        double *mMapAnimationFrameCount;
+        double *mMapAnimationLastFrameCount;
         
-        int *mMapAnimationFrozenRotFrameCount;
+        double *mMapAnimationFrozenRotFrameCount;
         
 
         int *mMapFloorAnimationFrameCount;

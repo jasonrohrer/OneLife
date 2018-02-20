@@ -1438,9 +1438,9 @@ LivingLifePage::LivingLifePage()
     mMapSubContainedStacks = 
         new SimpleVector< SimpleVector<int> >[ mMapD * mMapD ];
     
-    mMapAnimationFrameCount =  new int[ mMapD * mMapD ];
-    mMapAnimationLastFrameCount =  new int[ mMapD * mMapD ];
-    mMapAnimationFrozenRotFrameCount =  new int[ mMapD * mMapD ];
+    mMapAnimationFrameCount =  new double[ mMapD * mMapD ];
+    mMapAnimationLastFrameCount =  new double[ mMapD * mMapD ];
+    mMapAnimationFrozenRotFrameCount =  new double[ mMapD * mMapD ];
     
     mMapFloorAnimationFrameCount =  new int[ mMapD * mMapD ];
 
@@ -2019,17 +2019,28 @@ void LivingLifePage::drawMapCell( int inMapI,
         
         objectHeight = getObjectHeight( oID );
         
-        int oldFrameCount = mMapAnimationFrameCount[ inMapI ];
+        double oldFrameCount = mMapAnimationFrameCount[ inMapI ];
 
         if( !mapPullMode ) {
             
-            mMapAnimationFrameCount[ inMapI ] ++;
-            mMapAnimationLastFrameCount[ inMapI ] ++;
-            
             if( mMapCurAnimType[ inMapI ] == moving ) {
-                mMapAnimationFrozenRotFrameCount[ inMapI ] ++;
+                double animSpeed = 1.0;
+                ObjectRecord *movingObj = getObject( oID );
+            
+                if( movingObj->speedMult < 1.0 ) {
+                    // only slow anims down don't speed them up
+                    animSpeed *= movingObj->speedMult;
+                    }
+
+                mMapAnimationFrameCount[ inMapI ] += animSpeed;
+                mMapAnimationLastFrameCount[ inMapI ] += animSpeed;
+                mMapAnimationFrozenRotFrameCount[ inMapI ] += animSpeed;
                 }
-    
+            else {
+                mMapAnimationFrameCount[ inMapI ] ++;
+                mMapAnimationLastFrameCount[ inMapI ] ++;
+                }
+
             
             if( mMapLastAnimFade[ inMapI ] > 0 ) {
                 mMapLastAnimFade[ inMapI ] -= 0.05 * frameRateFactor;
@@ -7209,10 +7220,11 @@ void LivingLifePage::step() {
             int *newMapFloors = new int[ mMapD * mMapD ];
             
 
-            int *newMapAnimationFrameCount = new int[ mMapD * mMapD ];
-            int *newMapAnimationLastFrameCount = new int[ mMapD * mMapD ];
+            double *newMapAnimationFrameCount = new double[ mMapD * mMapD ];
+            double *newMapAnimationLastFrameCount = new double[ mMapD * mMapD ];
 
-            int *newMapAnimationFrozenRotFameCount = new int[ mMapD * mMapD ];
+            double *newMapAnimationFrozenRotFameCount = 
+                new double[ mMapD * mMapD ];
 
             int *newMapFloorAnimationFrameCount = new int[ mMapD * mMapD ];
         
@@ -7331,14 +7343,14 @@ void LivingLifePage::step() {
             memcpy( mMapFloors, newMapFloors, mMapD * mMapD * sizeof( int ) );
 
             memcpy( mMapAnimationFrameCount, newMapAnimationFrameCount, 
-                    mMapD * mMapD * sizeof( int ) );
+                    mMapD * mMapD * sizeof( double ) );
             memcpy( mMapAnimationLastFrameCount, 
                     newMapAnimationLastFrameCount, 
-                    mMapD * mMapD * sizeof( int ) );
+                    mMapD * mMapD * sizeof( double ) );
 
             memcpy( mMapAnimationFrozenRotFrameCount, 
                     newMapAnimationFrozenRotFameCount, 
-                    mMapD * mMapD * sizeof( int ) );
+                    mMapD * mMapD * sizeof( double ) );
 
             
             memcpy( mMapFloorAnimationFrameCount, 
@@ -8258,20 +8270,17 @@ void LivingLifePage::step() {
                                 mMapLastAnimType[mapI] = held;
                                 mMapLastAnimFade[mapI] = 1;
                                         
-                                mMapAnimationFrozenRotFrameCount
-                                    [mapI] =
-                                    lrint( 
-                                        responsiblePlayerObject->
-                                        heldFrozenRotFrameCount );
+                                mMapAnimationFrozenRotFrameCount[mapI] =
+                                    responsiblePlayerObject->
+                                    heldFrozenRotFrameCount;
                                         
                                         
                                 if( responsiblePlayerObject->
                                     lastHeldAnimFade == 0 ) {
                                             
                                     mMapAnimationLastFrameCount[mapI] =
-                                        lrint( 
-                                            responsiblePlayerObject->
-                                            heldAnimationFrameCount );
+                                        responsiblePlayerObject->
+                                        heldAnimationFrameCount;
                                             
                                     mMapLastAnimType[mapI] = 
                                         responsiblePlayerObject->curHeldAnim;
@@ -8283,17 +8292,15 @@ void LivingLifePage::step() {
                                         responsiblePlayerObject->curHeldAnim;
                                             
                                     mMapAnimationFrameCount[mapI] =
-                                        lrint( 
-                                            responsiblePlayerObject->
-                                            heldAnimationFrameCount );
+                                        responsiblePlayerObject->
+                                        heldAnimationFrameCount;
                                     
                                     mMapLastAnimType[mapI] =
                                         responsiblePlayerObject->lastHeldAnim;
                                     
                                     mMapAnimationLastFrameCount[mapI] =
-                                        lrint( 
-                                            responsiblePlayerObject->
-                                            lastHeldAnimationFrameCount );
+                                        responsiblePlayerObject->
+                                        lastHeldAnimationFrameCount;
                                     
                                     
                                     mMapLastAnimFade[mapI] =
