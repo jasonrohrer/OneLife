@@ -1,5 +1,11 @@
 anim 1 60
+anim 2 60
+anim 3 120
+anim 4 120
+anim 3 120
 server n
+anim 5 120
+
 server n
 server n
 server n
