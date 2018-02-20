@@ -18,7 +18,7 @@ static void customInit() {
         "test@test.com",
         433,
         39,
-        { 0, -0 },
+        { -2, 0 },
         0, clothing };
     
     playerMap.push_back( narrator );
