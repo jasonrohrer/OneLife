@@ -103,6 +103,12 @@ static void customTrigger( int inTriggerNumber ) {
         sendDummyMove( &carDriver, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
+        // horn honks
+        
+        // plays on decay of this place-holder object
+        setMapObject( 8, -3, 654 );
+        }
+    else if( inTriggerNumber == t++ ) {
         // transport goes overhead
         
         addToMove( 0, 1 );
