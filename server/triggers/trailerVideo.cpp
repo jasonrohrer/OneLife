@@ -36,6 +36,15 @@ static LiveDummySocket firstBaby;
 static LiveDummySocket lostBaby;
 
 
+static LiveDummySocket momA;
+static LiveDummySocket dadA;
+static LiveDummySocket grandpaA;
+static LiveDummySocket babyA;
+static LiveDummySocket kidA1;
+static LiveDummySocket kidA2;
+
+
+
 static LiveDummySocket carDriver;
 static LiveDummySocket transportDriver;
 
@@ -58,6 +67,9 @@ static void customTrigger( int inTriggerNumber ) {
     if( inTriggerNumber == t++ ) {
         forcePlayerAge( "test@test.com", 40 );
         
+
+        // use this opportunity to spawn all NPCs for video
+
         GridPos startPos = { 25, -3 };
         
         clothing.tunic = getObject( 201 );
@@ -75,6 +87,57 @@ static void customTrigger( int inTriggerNumber ) {
                               startPos,
                               0,
                               clothing );
+        
+        
+        clothing.tunic = getObject( 201 );
+        clothing.bottom = getObject( 200 );
+        
+        startPos.x = 24;
+        startPos.y = 4;
+        momA = newDummyPlayer( "momA@test.com", 350, 27,
+                               startPos,
+                               0,
+                               clothing );
+        startPos.x = 25;
+        clothing = getEmptyClothingSet();
+        babyA = newDummyPlayer( "babyA@test.com", 351, 1,
+                               startPos,
+                               0,
+                               clothing );
+
+
+        clothing.bottom = getObject( 200 );
+        
+        startPos.x = 26;
+        startPos.y = 5;
+        dadA = newDummyPlayer( "dadA@test.com", 355, 27,
+                               startPos,
+                               0,
+                               clothing );
+
+        startPos.x = 27;
+        startPos.y = 5;
+        kidA1 = newDummyPlayer( "kidA1@test.com", 353, 3,
+                                startPos,
+                                0,
+                                clothing );
+        startPos.x = 30;
+        startPos.y = 9;
+        kidA2 = newDummyPlayer( "kidA2@test.com", 350, 5,
+                                startPos,
+                                40,
+                                clothing );
+        
+        clothing.hat = getObject( 199 );
+        clothing.frontShoe = getObject( 203 );
+        clothing.backShoe = getObject( 203 );
+
+        startPos.x = 27;
+        startPos.y = 6;
+        grandpaA = newDummyPlayer( "grandpaA@test.com", 347, 55,
+                               startPos,
+                               0,
+                               clothing );
         }
     else if( inTriggerNumber == t++ ) {
         // eve walks into clearing
@@ -138,9 +201,40 @@ static void customTrigger( int inTriggerNumber ) {
         sendDummyMove( &lostBaby, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
+        // grab hat
+        GridPos offset = { 0, 1 };
+        sendDummyAction( &momA, "USE", offset );        
+        }
+    else if( inTriggerNumber == t++ ) {
+         // put on baby
+        GridPos offset = { 1, 0 };
+        sendDummyAction( &momA, "UBABY", offset, true, 0 );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // pick berry
+        GridPos offset = { -1, 0 };
+        sendDummyAction( &dadA, "USE", offset );
 
+        // kid comes walking in
+        addToMove( -1, -1 );
+        addToMove( -1, -2 );
+        addToMove( -1, -3 );
+        addToMove( -1, -4 );
+        addToMove( -2, -5 );
+        addToMove( -3, -5 );
+        addToMove( -4, -5 );
+        
+        sendDummyMove( &kidA2, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // feed berry
+        GridPos offset = { 1, 0 };
+        sendDummyAction( &dadA, "UBABY", offset, true, 0 );
+        }
+    else if( inTriggerNumber == t++ ) {
+        
         GridPos startPos = { 17, -2 };
-
+        
         clothing.tunic = getObject( 585 );
         carDriver = newDummyPlayer( "dummy2@test.com", 19, 20,
                                     startPos,
