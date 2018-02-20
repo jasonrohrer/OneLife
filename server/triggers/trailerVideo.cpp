@@ -33,6 +33,8 @@ static LiveDummySocket wolfDummy;
 static LiveDummySocket eve;
 static LiveDummySocket firstBaby;
 
+static LiveDummySocket lostBaby;
+
 
 static LiveDummySocket carDriver;
 static LiveDummySocket transportDriver;
@@ -56,12 +58,20 @@ static void customTrigger( int inTriggerNumber ) {
     if( inTriggerNumber == t++ ) {
         forcePlayerAge( "test@test.com", 40 );
         
-        GridPos startPos = { 22, -3 };
+        GridPos startPos = { 25, -3 };
         
         clothing.tunic = getObject( 201 );
         clothing.bottom = getObject( 200 );
         
         eve = newDummyPlayer( "dummy4@test.com", 19, 20,
+                              startPos,
+                              0,
+                              clothing );
+
+        startPos.x = 21;
+        startPos.y = 2;
+        clothing = getEmptyClothingSet();
+        lostBaby = newDummyPlayer( "lostBaby@test.com", 347, 1,
                               startPos,
                               0,
                               clothing );
@@ -72,6 +82,9 @@ static void customTrigger( int inTriggerNumber ) {
         addToMove( -2, 0 );
         addToMove( -3, 0 );
         addToMove( -4, 0 );
+        addToMove( -5, 0 );
+        addToMove( -6, 0 );
+        addToMove( -7, 0 );
         
         sendDummyMove( &eve, finishMove() );
         }
@@ -101,6 +114,28 @@ static void customTrigger( int inTriggerNumber ) {
         addToMove( 0, -8 );
         
         sendDummyMove( &eve, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // lost baby runs past
+        forcePlayerAge( "lostBaby@test.com", 0 );
+        addToMove( -1, 0 );
+        addToMove( -2, 0 );
+        addToMove( -3, 0 );
+        addToMove( -4, 0 );
+        addToMove( -5, 0 );
+        addToMove( -6, 0 );
+        addToMove( -7, 0 );
+        addToMove( -8, 0 );
+        addToMove( -9, 0 );
+        addToMove( -10, 0 );
+        addToMove( -11, 0 );
+        addToMove( -12, 0 );
+        addToMove( -13, 0 );
+        addToMove( -14, 0 );
+        addToMove( -15, 0 );
+        addToMove( -16, 0 );
+        
+        sendDummyMove( &lostBaby, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
 
