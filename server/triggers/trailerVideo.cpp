@@ -28,6 +28,9 @@ static void customInit() {
 
 
 static LiveDummySocket wolfDummy;
+
+
+static LiveDummySocket eve;
 static LiveDummySocket firstBaby;
 
 
@@ -52,8 +55,55 @@ static void customTrigger( int inTriggerNumber ) {
 
     if( inTriggerNumber == t++ ) {
         forcePlayerAge( "test@test.com", 40 );
-
         
+        GridPos startPos = { 22, -3 };
+        
+        clothing.tunic = getObject( 201 );
+        clothing.bottom = getObject( 200 );
+        
+        eve = newDummyPlayer( "dummy4@test.com", 19, 20,
+                              startPos,
+                              0,
+                              clothing );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // eve walks into clearing
+        addToMove( -1, 0 );
+        addToMove( -2, 0 );
+        addToMove( -3, 0 );
+        addToMove( -4, 0 );
+        
+        sendDummyMove( &eve, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // eve has baby
+        GridPos startPos = { 18, -3 };
+        
+        firstBaby = newDummyPlayer( "dummy5@test.com", 350, 0,
+                                    startPos,
+                                    0,
+                                    clothing );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // grab baby
+        GridPos offset = { 0, 0 };
+        sendDummyAction( &eve, "BABY", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // eve walks south with baby
+        addToMove( 0, -1 );
+        addToMove( 0, -2 );
+        addToMove( 0, -3 );
+        addToMove( 0, -4 );
+        addToMove( 0, -5 );
+        addToMove( 0, -6 );
+        addToMove( 0, -7 );
+        addToMove( 0, -8 );
+        
+        sendDummyMove( &eve, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+
         GridPos startPos = { 17, -2 };
 
         clothing.tunic = getObject( 585 );

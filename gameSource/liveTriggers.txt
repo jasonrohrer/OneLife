@@ -5,11 +5,15 @@ anim 4 120
 anim 3 120
 server n
 anim 5 120
+server n
+server n
+server n
+server n
+server n
+server n
+server n
+server n
+server n
+server n
+server n
 anim 6 120
-server n
-server n
-server n
-server n
-server n
-server n
-server n
