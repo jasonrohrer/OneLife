@@ -257,10 +257,11 @@ static void customTrigger( int inTriggerNumber ) {
         // grab hat
         GridPos offset = { 0, 1 };
         sendDummyAction( &momA, "USE", offset );        
-        }
-    else if( inTriggerNumber == t++ ) {
-         // put on baby
-        GridPos offset = { 1, 0 };
+
+        // put on baby
+        offset.x = 1;
+        offset.y = 0;
+        setNextActionDelay( 1.5 );
         sendDummyAction( &momA, "UBABY", offset, true, -1 );
         
         // pick berry
@@ -277,16 +278,34 @@ static void customTrigger( int inTriggerNumber ) {
         addToMove( -3, -5 );
         addToMove( -4, -5 );
         
+        setNextActionDelay( 2 );
         sendDummyMove( &kidA2, finishMove() );
-        }
-    else if( inTriggerNumber == t++ ) {
+   
         // feed berry
-        GridPos offset = { 1, 0 };
+        offset.x  = 1;
+        offset.y = 0;
+        setNextActionDelay( 1.75 );
         sendDummyAction( &dadA, "UBABY", offset, true, -1 );
 
         // pick up baby
-        setNextActionDelay( 0.25 );
+        setNextActionDelay( 2.25 );
+        offset.x  = 1;
+        offset.y = 0;
         sendDummyAction( &momA, "BABY", offset );
+
+        // walk away with baby
+        addToMove( 1, 0 );
+        addToMove( 2, 0 );
+        addToMove( 3, 0 );
+        addToMove( 4, 0 );
+        addToMove( 4, 1 );
+        addToMove( 4, 2 );
+        addToMove( 4, 3 );
+        addToMove( 4, 4 );
+        addToMove( 4, 5 );
+        
+        setNextActionDelay( 3 );
+        sendDummyMove( &momA, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         // skin rabbit

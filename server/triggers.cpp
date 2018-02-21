@@ -191,6 +191,14 @@ static LiveDummySocket newDummyPlayer( const char *inEmail,
 
 
 
+static double delayTime = 0;
+
+void setNextActionDelay( double inDelay ) {
+    delayTime = inDelay;
+    }
+
+
+
 void sendDummyMove( LiveDummySocket *inDummy, 
                     SimpleVector<GridPos> *inOffsets ) {
     
@@ -223,19 +231,23 @@ void sendDummyMove( LiveDummySocket *inDummy,
     
     delete [] oldMessage;
 
-    inDummy->sock->send( (unsigned char*)message, 
-                         strlen( message ), 
-                         false, false );
+    if( delayTime == 0 ) {
+        inDummy->sock->send( (unsigned char*)message, 
+                             strlen( message ), 
+                             false, false );
+        
+        delete [] message;
+        }
+     else {
+        DelayedMessage m = { Time::getCurrentTime() + delayTime,
+                             inDummy->sock, message };
+        delayedMessages.push_back( m );
+        delayTime = 0;
+        }
     
-    delete [] message;
     }
 
 
-static double delayTime = 0;
-
-void setNextActionDelay( double inDelay ) {
-    delayTime = inDelay;
-    }
 
 
 // offset is from current pos
