@@ -28,6 +28,7 @@ static void customInit() {
 
 
 static LiveDummySocket wolfDummy;
+static LiveDummySocket robotDummy;
 
 
 static LiveDummySocket eve;
@@ -288,6 +289,35 @@ static void customTrigger( int inTriggerNumber ) {
                                 startPos,
                                 334,
                                 clothing );
+
+
+
+
+        startPos.x = 114;
+        startPos.y = -2;
+        
+        clothing = getEmptyClothingSet();
+        clothing.tunic = getObject( 585 );
+        carDriver = newDummyPlayer( "dummy2@test.com", 19, 20,
+                                    startPos,
+                                    630,
+                                    clothing );
+
+
+        clothing = getEmptyClothingSet();
+        
+        clothing.hat = getObject( 199 );
+        clothing.tunic = getObject( 201 );
+        clothing.bottom = getObject( 200 );
+        clothing.frontShoe = getObject( 203 );
+        clothing.backShoe = getObject( 203 );
+
+        startPos.x = 116;
+        startPos.y = -11;
+        transportDriver = newDummyPlayer( "dummy3@test.com", 19, 20,
+                                          startPos,
+                                          632,
+                                          clothing );
 
         }
     else if( inTriggerNumber == t++ ) {
@@ -705,33 +735,6 @@ static void customTrigger( int inTriggerNumber ) {
         sendDummyMove( &manE1, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
-        
-        GridPos startPos = { 17, -2 };
-        
-        clothing.tunic = getObject( 585 );
-        carDriver = newDummyPlayer( "dummy2@test.com", 19, 20,
-                                    startPos,
-                                    630,
-                                    clothing );
-
-
-        clothing = getEmptyClothingSet();
-        
-        clothing.hat = getObject( 199 );
-        clothing.tunic = getObject( 201 );
-        clothing.bottom = getObject( 200 );
-        clothing.frontShoe = getObject( 203 );
-        clothing.backShoe = getObject( 203 );
-
-        startPos.x = 15;
-        startPos.y = -8;
-        transportDriver = newDummyPlayer( "dummy3@test.com", 19, 20,
-                                          startPos,
-                                          //0,
-                                          632,
-                                          clothing );
-        }
-    else if( inTriggerNumber == t++ ) {
         // car drives past
         
         addToMove( -1, 0 );
@@ -749,16 +752,29 @@ static void customTrigger( int inTriggerNumber ) {
         addToMove( -13, 0 );
         addToMove( -14, 0 );
         addToMove( -15, 0 );
-        addToMove( -16, 0 );
-        addToMove( -17, 0 );
-        
+        sendDummyMove( &carDriver, finishMove() );
+
+
+        addToMove( -1, 0 );
+        addToMove( -2, 0 );
+        addToMove( -3, 0 );
+        addToMove( -4, 0 );
+        addToMove( -5, 0 );
+        addToMove( -6, 0 );
+        addToMove( -7, 0 );
+        addToMove( -8, 0 );
+        addToMove( -9, 0 );
+        addToMove( -10, 0 );
+        addToMove( -11, 0 );
+        addToMove( -12, 0 );
+        setNextActionDelay( 2 );
         sendDummyMove( &carDriver, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         // horn honks
         
         // plays on decay of this place-holder object
-        setMapObject( 8, -3, 654 );
+        setMapObject( 102, -2, 654 );
         }
     else if( inTriggerNumber == t++ ) {
         // transport goes overhead
@@ -778,27 +794,58 @@ static void customTrigger( int inTriggerNumber ) {
         addToMove( 0, 13 );
         addToMove( 0, 14 );
         addToMove( 0, 15 );
-        addToMove( 0, 16 );
-        addToMove( 0, 17 );
-        addToMove( 0, 18 );
-        addToMove( 0, 19 );
-        
+        sendDummyMove( &transportDriver, finishMove() );
+
+
+        addToMove( 0, 1 );
+        addToMove( 0, 2 );
+        addToMove( 0, 3 );
+        addToMove( 0, 4 );
+        addToMove( 0, 5 );
+        addToMove( 0, 6 );
+        addToMove( 0, 7 );
+        addToMove( 0, 8 );
+        addToMove( 0, 9 );
+        addToMove( 0, 10 );
+        setNextActionDelay( 4 );
         sendDummyMove( &transportDriver, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         // robot switch to firing state
-        setMapObject( 14, 3, 648 );
+        setMapObject( 115, 8, 648 );
         }
     else if( inTriggerNumber == t++ ) {
         GridPos deathPos = killPlayer( "test@test.com" );
         }
     else if( inTriggerNumber == t++ ) {
         // robot switch to greeting state
-        setMapObject( 14, 3, 649 );
+        setMapObject( 115, 8, 649 );
         }
     else if( inTriggerNumber == t++ ) {
         // robot switch to leaving state
-        setMapObject( 14, 3, 650 );
+        setMapObject( 115, 8, 0 );
+
+        GridPos startPos = { 115, 8 };
+        
+        
+        
+        robotDummy = newDummyPlayer( "robotDummy@test.com", 650, 0,
+                                    startPos,
+                                    0,
+                                    clothing );
+        
+        // robot runs north
+        addToMove( 0, 1 );
+        addToMove( 0, 2 );
+        addToMove( 0, 3 );
+        addToMove( 0, 4 );
+        addToMove( 0, 5 );
+        addToMove( 0, 6 );
+        addToMove( 0, 7 );
+        addToMove( 0, 8 );
+        addToMove( 0, 9 );
+
+        sendDummyMove( &robotDummy, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         
