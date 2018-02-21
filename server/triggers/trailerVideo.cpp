@@ -52,6 +52,11 @@ static LiveDummySocket womanB2;
 static LiveDummySocket kidB1;
 
 
+static LiveDummySocket manC1;
+static LiveDummySocket kidC1;
+static LiveDummySocket kidC2;
+
+
 
 
 static LiveDummySocket carDriver;
@@ -190,6 +195,35 @@ static void customTrigger( int inTriggerNumber ) {
                                 startPos,
                                 71,
                                 clothing );
+
+
+        
+        clothing = getEmptyClothingSet();
+        clothing.bottom = getObject( 200 );
+        
+        startPos.x = 59;
+        startPos.y = -5;
+        kidC1 = newDummyPlayer( "kidC1@test.com", 19, 5,
+                                startPos,
+                                0,
+                                clothing );
+
+        startPos.x = 59;
+        startPos.y = -4;
+        kidC2 = newDummyPlayer( "kidC2@test.com", 354, 8,
+                                startPos,
+                                277,
+                                clothing );
+        
+        
+        clothing.hat = getObject( 199 );
+        startPos.x = 56;
+        startPos.y = -5;
+        manC1 = newDummyPlayer( "manC1@test.com", 355, 56,
+                                startPos,
+                                248,
+                                clothing );
+        
 
         }
     else if( inTriggerNumber == t++ ) {
@@ -409,6 +443,87 @@ static void customTrigger( int inTriggerNumber ) {
         addToMove( 7, 4 );
         setNextActionDelay( 4 );
         sendDummyMove( &manB1, finishMove() );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // light oven
+        GridPos offset = { -1, 0 };
+        sendDummyAction( &manC1, "USE", offset );
+        
+        // set down firebrand
+        setNextActionDelay( 2 );
+        offset.x = 0;
+        sendDummyAction( &manC1, "DROP", offset, true, -1 );
+
+        // walk to door
+        addToMove( 1, -1 );
+        addToMove( 2, -2 );
+        setNextActionDelay( 3 );
+        sendDummyMove( &manC1, finishMove() );
+        
+        // close door
+        offset.y = 0;
+        setNextActionDelay( 4.5 );
+        sendDummyAction( &manC1, "USE", offset );
+        
+        
+        // walk to pie
+        addToMove( -1, 1 );
+        setNextActionDelay( 5 );
+        sendDummyMove( &manC1, finishMove() );
+        
+        // grab pie
+        offset.x = -1;
+        setNextActionDelay( 6.5 );
+        sendDummyAction( &manC1, "USE", offset );
+        
+        
+
+
+        
+        // walk to door
+        addToMove( -1, -1 );
+        setNextActionDelay( .25 );
+        sendDummyMove( &kidC1, finishMove() );
+        
+        
+        // open door
+        offset.x = 0;
+        offset.y = -1;
+        setNextActionDelay( 1 );
+        sendDummyAction( &kidC1, "USE", offset );
+        
+        // run out
+
+        addToMove( 0, -1 );
+        addToMove( 0, -2 );
+        addToMove( 0, -3 );
+        addToMove( 0, -4 );
+        addToMove( 0, -5 );
+        addToMove( 0, -6 );
+        addToMove( 0, -7 );
+        addToMove( 0, -8 );
+        addToMove( 0, -9 );
+        addToMove( 0, -10 );
+        setNextActionDelay( 1.75 );
+        sendDummyMove( &kidC1, finishMove() );
+        
+
+        // follow out
+        addToMove( 0, -1 );
+        addToMove( -1, -2 );
+        addToMove( -1, -3 );
+        addToMove( -1, -4 );
+        addToMove( -1, -5 );
+        addToMove( -1, -6 );
+        addToMove( -1, -7 );
+        addToMove( -1, -8 );
+        addToMove( -1, -9 );
+        addToMove( -1, -10 );
+        addToMove( -1, -11 );
+        addToMove( -1, -12 );
+        setNextActionDelay( 1.5 );
+        sendDummyMove( &kidC2, finishMove() );
+
         }
     else if( inTriggerNumber == t++ ) {
         
