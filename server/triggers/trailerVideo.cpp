@@ -564,18 +564,18 @@ static void customTrigger( int inTriggerNumber ) {
         
         // close door
         offset.y = 0;
-        setNextActionDelay( 4.5 );
+        setNextActionDelay( 4 );
         sendDummyAction( &manC1, "USE", offset );
         
         
         // walk to pie
         addToMove( -1, 1 );
-        setNextActionDelay( 5 );
+        setNextActionDelay( 4.5 );
         sendDummyMove( &manC1, finishMove() );
         
         // grab pie
         offset.x = -1;
-        setNextActionDelay( 6 );
+        setNextActionDelay( 5.5 );
         sendDummyAction( &manC1, "USE", offset );
         
         
@@ -689,6 +689,41 @@ static void customTrigger( int inTriggerNumber ) {
         GridPos offset = { 1, 0 };
         sendDummyAction( &womanE1, "USE", offset );
 
+        // put ax in cart
+        offset.x = 0;
+        offset.y = 1;
+        setNextActionDelay( 1.5 );
+        sendDummyAction( &womanE1, "DROP", offset, true, -1 );
+
+        // grab wood
+        offset.y = 0;
+        offset.x = 1;
+        setNextActionDelay( 2.25 );
+        sendDummyAction( &womanE1, "USE", offset );
+
+        // put wood in cart
+        offset.x = 0;
+        offset.y = 1;
+        setNextActionDelay( 3.25 );
+        sendDummyAction( &womanE1, "DROP", offset, true, -1 );
+        
+        // walk to south
+        addToMove( 0, -1 );
+        addToMove( 0, -2 );
+        addToMove( 0, -3 );
+        addToMove( 0, -4 );
+        addToMove( 0, -5 );
+        addToMove( 0, -6 );
+        addToMove( 0, -7 );
+        addToMove( 0, -8 );
+        addToMove( 0, -9 );
+
+        setNextActionDelay( 4 );
+        sendDummyMove( &womanE1, finishMove() );
+
+
+
+
         // chop
         setNextActionDelay( 0.25 );
         sendDummyAction( &manE1, "USE", offset );
@@ -698,13 +733,6 @@ static void customTrigger( int inTriggerNumber ) {
         setNextActionDelay( 1 );
         sendDummyAction( &manE1, "DROP", offset, true, -1 );
 
-        // put ax in cart
-        offset.x = 0;
-        offset.y = 1;
-        setNextActionDelay( 1.5 );
-        sendDummyAction( &womanE1, "DROP", offset, true, -1 );
-        
-        
         // grab wood
         offset.y = 0;
         offset.x = 1;
@@ -807,7 +835,7 @@ static void customTrigger( int inTriggerNumber ) {
         addToMove( 0, 8 );
         addToMove( 0, 9 );
         addToMove( 0, 10 );
-        setNextActionDelay( 4 );
+        setNextActionDelay( 3 );
         sendDummyMove( &transportDriver, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {

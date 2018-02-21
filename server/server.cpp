@@ -3589,16 +3589,11 @@ int main() {
             // sleep a tiny amount of time to avoid cpu spin
             pollTimeout = 0.01;
             }
-        
-        double triggerTime = getShortestTriggerDelay();
-        
-        if( triggerTime != -1 && 
-            triggerTime < pollTimeout ) {
-            pollTimeout = triggerTime;
 
-            if( pollTimeout < 0 ) {
-                pollTimeout = 0;
-                }
+
+        if( areTriggersEnabled() ) {
+            // need to handle trigger timing
+            pollTimeout = 0.01;
             }
 
         // we thus use zero CPU as long as no messages or new connections
