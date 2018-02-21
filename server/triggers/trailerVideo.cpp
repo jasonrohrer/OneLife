@@ -310,79 +310,105 @@ static void customTrigger( int inTriggerNumber ) {
         // skin rabbit
         GridPos offset = { 1, 0 };
         sendDummyAction( &kidB1, "USE", offset );
-        }    
-    else if( inTriggerNumber == t++ ) {
-        // chop wood
-        GridPos offset = { -1, 0 };
-        sendDummyAction( &womanB2, "USE", offset );
-
+        
         // set down stone
-        setNextActionDelay( 0.5 );
+        setNextActionDelay( .75 );
         offset.x = 0;
         sendDummyAction( &kidB1, "DROP", offset, true, -1 );
 
-        // walk into scene
-        addToMove( -1, -1 );
-        addToMove( -2, -2 );
-        
-        sendDummyMove( &manB2, finishMove() );
-        }    
-    else if( inTriggerNumber == t++ ) {
         // pick up rabbit fur
-        GridPos offset = { 1, 0 };
+        setNextActionDelay( 1.5 );
+        offset.x = 1;
         sendDummyAction( &kidB1, "USE", offset );
+        
+        // pick drop fur
+        setNextActionDelay( 2.25 );
+        offset.x = 0;
+        offset.y = 1;
+        sendDummyAction( &kidB1, "DROP", offset, true, -1 );
+
+        // pick up skewer
+        setNextActionDelay( 3 );
+        offset.x = -1;
+        offset.y = 0;
+        sendDummyAction( &kidB1, "USE", offset );
+        
+        // skewer rabbit
+        setNextActionDelay( 3.75 );
+        offset.x = 1;
+        offset.y = 0;
+        sendDummyAction( &kidB1, "USE", offset );
+        
+
+
+
+        // chop wood
+        offset.x = -1;
+        offset.y = 0;
+        setNextActionDelay( 0.25 );
+        sendDummyAction( &womanB2, "USE", offset );
+        
 
         // drop hatchet
-        setNextActionDelay( 0.25 );
+        offset.x = 0;
+        offset.y = 0;
+        setNextActionDelay( 1 );
         sendDummyAction( &womanB2, "DROP", offset, true, -1 );
-        }
-    else if( inTriggerNumber == t++ ) {
-        // pick drop fur
-        GridPos offset = { 0, 1 };
-        sendDummyAction( &kidB1, "DROP", offset, true, -1 );
+        
 
         // grab wood
         offset.x = -1;
         offset.y = 0;
-        setNextActionDelay( 0.5 );
+        setNextActionDelay( 1.75 );
         sendDummyAction( &womanB2, "USE", offset );
-        }    
-    else if( inTriggerNumber == t++ ) {
-        // pick up skewer
-        GridPos offset = { -1, 0 };
-        sendDummyAction( &kidB1, "USE", offset );
+
         
-        // grab sharp stone
-        setNextActionDelay( 0.25 );
-        offset.x = 0;
-        sendDummyAction( &manB2, "USE", offset );
-        }
-    else  if( inTriggerNumber == t++ ) {
         // walk to fire
         addToMove( -1, -1 );
         addToMove( -2, -1 );
-        
+        setNextActionDelay( 2.5 );
         sendDummyMove( &womanB2, finishMove() );
+        
+        // feed fire
+        offset.x = -1;
+        offset.y = 0;
+        setNextActionDelay( 3.5 );
+        sendDummyAction( &womanB2, "USE", offset );
 
-        // skewer rabbit
-        setNextActionDelay( 0.25 );
-        GridPos offset = { 1, 0 };
-        sendDummyAction( &kidB1, "USE", offset );
+        
+        // walk into scene
+        addToMove( -1, -1 );
+        addToMove( -2, -2 );
+        setNextActionDelay( .5 );
+        sendDummyMove( &manB2, finishMove() );
+
+        // grab sharp stone
+        setNextActionDelay( 1.5 );
+        offset.x = 0;
+        offset.y = 0;
+        sendDummyAction( &manB2, "USE", offset );
         
 
         // use stone on wood
-        setNextActionDelay( 0.5 );
+        setNextActionDelay( 2.25 );
         offset.x = -1;
         sendDummyAction( &manB2, "USE", offset );
-        }
-    else if( inTriggerNumber == t++ ) {
-        // feed fire
-        GridPos offset = { -1, 0 };
-        sendDummyAction( &womanB2, "USE", offset );
         
-        // use stone on wood
-        setNextActionDelay( 0.5 );
+
+        // use stone on wood again
+        setNextActionDelay( 3 );
         sendDummyAction( &manB2, "USE", offset );
+
+
+        addToMove( 1, 0 );
+        addToMove( 2, 1 );
+        addToMove( 3, 1 );
+        addToMove( 4, 1 );
+        addToMove( 5, 2 );
+        addToMove( 6, 3 );
+        addToMove( 7, 4 );
+        setNextActionDelay( 4 );
+        sendDummyMove( &manB1, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         
