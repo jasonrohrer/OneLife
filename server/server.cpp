@@ -3590,6 +3590,17 @@ int main() {
             pollTimeout = 0.01;
             }
         
+        double triggerTime = getShortestTriggerDelay();
+        
+        if( triggerTime != -1 && 
+            triggerTime < pollTimeout ) {
+            pollTimeout = triggerTime;
+
+            if( pollTimeout < 0 ) {
+                pollTimeout = 0;
+                }
+            }
+
         // we thus use zero CPU as long as no messages or new connections
         // come in, and only wake up when some timed action needs to be
         // handled

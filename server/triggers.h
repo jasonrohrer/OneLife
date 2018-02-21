@@ -33,3 +33,8 @@ ClothingSet getTriggerPlayerClothing( const char *inPlayerEmail );
 void trigger( int inTriggerNumber );
 
 void stepTriggers();
+
+
+// amount of time that it's safe to wait before calling stepTriggers()
+// returns -1.0 if there are no pending triggers
+double getShortestTriggerDelay();

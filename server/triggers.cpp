@@ -378,7 +378,7 @@ void stepTriggers() {
     for( int i=0; i<delayedMessages.size(); i++ ) {
         DelayedMessage *m = delayedMessages.getElement( i );
         
-        if( m->sendTime >= curTime ) {
+        if( m->sendTime <= curTime ) {
             m->sock->send( (unsigned char*)m->message, 
                            strlen( m->message ), 
                            false, false );
@@ -403,6 +403,30 @@ void stepTriggers() {
             }
         }
     
+    }
+
+
+
+double getShortestTriggerDelay() {
+    if( delayedMessages.size() == 0 ) {
+        return -1;
+        }
+    double curTime = Time::getCurrentTime();
+    
+    double minTime = 9999999;
+    
+
+    for( int i=0; i<delayedMessages.size(); i++ ) {
+        DelayedMessage *m = delayedMessages.getElement( i );
+        
+        double t = curTime - m->sendTime;
+        
+        if( t < minTime ) {
+            minTime = t;
+            }
+        }
+
+    return minTime;
     }
 
 

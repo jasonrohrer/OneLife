@@ -262,10 +262,10 @@ static void customTrigger( int inTriggerNumber ) {
          // put on baby
         GridPos offset = { 1, 0 };
         sendDummyAction( &momA, "UBABY", offset, true, -1 );
-        }
-    else if( inTriggerNumber == t++ ) {
+        
         // pick berry
-        GridPos offset = { -1, 0 };
+        setNextActionDelay( 0.5 );
+        offset.x = -1;
         sendDummyAction( &dadA, "USE", offset );
 
         // kid comes walking in
@@ -283,6 +283,10 @@ static void customTrigger( int inTriggerNumber ) {
         // feed berry
         GridPos offset = { 1, 0 };
         sendDummyAction( &dadA, "UBABY", offset, true, -1 );
+
+        // pick up baby
+        setNextActionDelay( 0.25 );
+        sendDummyAction( &momA, "BABY", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // skin rabbit
@@ -306,24 +310,32 @@ static void customTrigger( int inTriggerNumber ) {
         sendDummyMove( &manB2, finishMove() );
         }    
     else if( inTriggerNumber == t++ ) {
-        // pick up skewer
-        GridPos offset = { -1, 0 };
-        sendDummyAction( &kidB1, "USE", offset );
-        }    
-    else if( inTriggerNumber == t++ ) {
-        // skewer rabbit
+        // pick up rabbit fur
         GridPos offset = { 1, 0 };
         sendDummyAction( &kidB1, "USE", offset );
 
         // drop hatchet
+        setNextActionDelay( 0.25 );
         sendDummyAction( &womanB2, "DROP", offset, true, -1 );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // pick drop fur
+        GridPos offset = { 0, 1 };
+        sendDummyAction( &kidB1, "DROP", offset, true, -1 );
+
+        // grab wood
+        offset.x = -1;
+        offset.y = 0;
+        setNextActionDelay( 0.5 );
+        sendDummyAction( &womanB2, "USE", offset );
         }    
     else if( inTriggerNumber == t++ ) {
-        // grab wood
+        // pick up skewer
         GridPos offset = { -1, 0 };
-        sendDummyAction( &womanB2, "USE", offset );
+        sendDummyAction( &kidB1, "USE", offset );
         
         // grab sharp stone
+        setNextActionDelay( 0.25 );
         offset.x = 0;
         sendDummyAction( &manB2, "USE", offset );
         }
@@ -334,18 +346,24 @@ static void customTrigger( int inTriggerNumber ) {
         
         sendDummyMove( &womanB2, finishMove() );
 
+        // skewer rabbit
+        setNextActionDelay( 0.25 );
+        GridPos offset = { 1, 0 };
+        sendDummyAction( &kidB1, "USE", offset );
+        
+
         // use stone on wood
-        GridPos offset = { -1, 0 };
+        setNextActionDelay( 0.5 );
+        offset.x = -1;
         sendDummyAction( &manB2, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
         // feed fire
         GridPos offset = { -1, 0 };
         sendDummyAction( &womanB2, "USE", offset );
-        }
-    else if( inTriggerNumber == t++ ) {
+        
         // use stone on wood
-        GridPos offset = { -1, 0 };
+        setNextActionDelay( 0.5 );
         sendDummyAction( &manB2, "USE", offset );
         }
     else if( inTriggerNumber == t++ ) {
