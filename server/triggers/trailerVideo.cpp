@@ -57,6 +57,16 @@ static LiveDummySocket kidC1;
 static LiveDummySocket kidC2;
 
 
+static LiveDummySocket manD1;
+static LiveDummySocket manD2;
+static LiveDummySocket womanD1;
+static LiveDummySocket womanD2;
+
+
+static LiveDummySocket manE1;
+static LiveDummySocket womanE1;
+
+
 
 
 static LiveDummySocket carDriver;
@@ -224,6 +234,60 @@ static void customTrigger( int inTriggerNumber ) {
                                 248,
                                 clothing );
         
+
+        clothing.hat = getObject( 199 );
+        clothing.tunic = getObject( 585 );
+        startPos.x = 75;
+        startPos.y = -7;
+        manD1 = newDummyPlayer( "manD1@test.com", 352, 20,
+                                startPos,
+                                583,
+                                clothing );
+
+        clothing.hat = NULL;
+        clothing.tunic = getObject( 201 );
+        startPos.x = 78;
+        startPos.y = -7;
+        manD2 = newDummyPlayer( "manD2@test.com", 347, 32,
+                                startPos,
+                                560,
+                                clothing );
+
+
+        startPos.x = 69;
+        startPos.y = -8;
+        womanD1 = newDummyPlayer( "womanD1@test.com", 350, 13.5,
+                                  startPos,
+                                  441,
+                                  clothing );
+        
+        startPos.x = 81;
+        startPos.y = -7;
+        womanD2 = newDummyPlayer( "womanD2@test.com", 351, 20,
+                                  startPos,
+                                  67,
+                                  clothing );
+
+        
+
+        clothing.hat = getObject( 584 );
+        clothing.tunic = getObject( 585 );
+        clothing.frontShoe = getObject( 586 );
+        clothing.backShoe = getObject( 586 );
+
+        startPos.x = 91;
+        startPos.y = -8;
+        manE1 = newDummyPlayer( "manE1@test.com", 355, 37.5,
+                                startPos,
+                                334,
+                                clothing );
+
+        startPos.x = 93;
+        startPos.y = -8;
+        womanE1 = newDummyPlayer( "womanE1@test.com", 19, 23,
+                                startPos,
+                                334,
+                                clothing );
 
         }
     else if( inTriggerNumber == t++ ) {
@@ -481,7 +545,7 @@ static void customTrigger( int inTriggerNumber ) {
         
         // grab pie
         offset.x = -1;
-        setNextActionDelay( 6.5 );
+        setNextActionDelay( 6 );
         sendDummyAction( &manC1, "USE", offset );
         
         
@@ -532,6 +596,113 @@ static void customTrigger( int inTriggerNumber ) {
         setNextActionDelay( 1.5 );
         sendDummyMove( &kidC2, finishMove() );
 
+        }
+    else if( inTriggerNumber == t++ ) {
+        // hit metal repeatedly
+        GridPos offset = { 1, 0 };
+        sendDummyAction( &womanD1, "USE", offset );
+        
+        offset.x = -1;
+        setNextActionDelay( 0.75 );
+        sendDummyAction( &womanD1, "USE", offset );
+
+        setNextActionDelay( 1.25 );
+        sendDummyAction( &womanD1, "USE", offset );
+
+        setNextActionDelay( 2 );
+        sendDummyAction( &womanD1, "USE", offset );
+
+        
+        // kntit
+        setNextActionDelay( 1.25 );
+        sendDummyAction( &manD1, "USE", offset );
+
+
+
+        // butcher
+        setNextActionDelay( 1.75 );
+        sendDummyAction( &manD2, "USE", offset );
+
+
+        // drop knife
+        setNextActionDelay( 2.5 );
+        offset.x = 0;
+        sendDummyAction( &manD2, "DROP", offset, true, -1 );
+        
+        
+        // grab meat
+        offset.x = -1;
+        setNextActionDelay( 3 );
+        sendDummyAction( &manD2, "USE", offset );
+        
+        // cook
+        offset.y = 1;
+        offset.x = 0;
+        setNextActionDelay( 3.75 );
+        sendDummyAction( &manD2, "USE", offset );
+
+
+        // walk to fence
+        addToMove( 1, -1 );
+        setNextActionDelay( 3 );
+        sendDummyMove( &womanD2, finishMove() );
+
+
+        // close fence
+        offset.y = 0;
+        offset.x = 0;
+        setNextActionDelay( 3.75 );
+        sendDummyAction( &womanD2, "USE", offset );
+        }
+    else if( inTriggerNumber == t++ ) {
+        // chop tree
+        GridPos offset = { 1, 0 };
+        sendDummyAction( &womanE1, "USE", offset );
+
+        // chop
+        setNextActionDelay( 0.25 );
+        sendDummyAction( &manE1, "USE", offset );
+        
+        // put ax in cart
+        offset.x = -1;
+        setNextActionDelay( 1 );
+        sendDummyAction( &manE1, "DROP", offset, true, -1 );
+
+        // put ax in cart
+        offset.x = 0;
+        offset.y = 1;
+        setNextActionDelay( 1.5 );
+        sendDummyAction( &womanE1, "DROP", offset, true, -1 );
+        
+        
+        // grab wood
+        offset.y = 0;
+        offset.x = 1;
+        setNextActionDelay( 1.75 );
+        sendDummyAction( &manE1, "USE", offset );
+        
+        // put wood in cart
+        offset.x = -1;
+        setNextActionDelay( 2.5 );
+        sendDummyAction( &manE1, "DROP", offset, true, -1 );
+        
+        // grab cart
+        setNextActionDelay( 3 );
+        sendDummyAction( &manE1, "USE", offset );
+
+
+        // walk to village
+        addToMove( -1, -1 );
+        addToMove( -2, -1 );
+        addToMove( -3, -1 );
+        addToMove( -4, -1 );
+        addToMove( -5, -1 );
+        addToMove( -6, -1 );
+        addToMove( -7, -1 );
+        addToMove( -8, -1 );
+        addToMove( -9, -1 );
+        setNextActionDelay( 3.5 );
+        sendDummyMove( &manE1, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         
