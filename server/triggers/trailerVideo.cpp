@@ -443,6 +443,14 @@ static void customTrigger( int inTriggerNumber ) {
         addToMove( 7, 4 );
         setNextActionDelay( 4 );
         sendDummyMove( &manB1, finishMove() );
+
+
+        
+        addToMove( 0, 1 );
+        addToMove( 0, 2 );
+        addToMove( 0, 3 );
+        setNextActionDelay( 4.5 );
+        sendDummyMove( &womanB1, finishMove() );
         }
     else if( inTriggerNumber == t++ ) {
         // light oven
