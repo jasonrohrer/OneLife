@@ -261,7 +261,7 @@ static void customTrigger( int inTriggerNumber ) {
         // put on baby
         offset.x = 1;
         offset.y = 0;
-        setNextActionDelay( 1.5 );
+        setNextActionDelay( 1.0 );
         sendDummyAction( &momA, "UBABY", offset, true, -1 );
         
         // pick berry
@@ -278,13 +278,12 @@ static void customTrigger( int inTriggerNumber ) {
         addToMove( -3, -5 );
         addToMove( -4, -5 );
         
-        setNextActionDelay( 2 );
         sendDummyMove( &kidA2, finishMove() );
    
         // feed berry
         offset.x  = 1;
         offset.y = 0;
-        setNextActionDelay( 1.75 );
+        setNextActionDelay( 1.5 );
         sendDummyAction( &dadA, "UBABY", offset, true, -1 );
 
         // pick up baby
