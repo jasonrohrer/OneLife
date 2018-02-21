@@ -39,8 +39,8 @@ RemoveNotes:False
 OutlineNotes:True
 ShowMargins:False
 ShowLineNumbers:False
-Cursor/Line:202
-Cursor/Column:0
+Cursor/Line:190
+Cursor/Column:2
 String/MoreDialogue:(MORE)
 String/ContinuedPageEnd:(CONTINUED)
 String/ContinuedPageStart:CONTINUED:
@@ -206,11 +206,11 @@ Words/1:rohrer
 >:Yep, this is it!  We're live inside
 .:the game right now.
 .((rubs chin pensively)
->:Well, actually, this is what my
->:modern home office looks like. 
->:Civilization inside the game hasn't
->:gotten quite this advanced yet. 
-.:Maybe someday, though.
+>:Actually, this is my modern home
+>:office.  Civilization in the rest
+>:of the game hasn't gotten quite
+>:this advanced yet.  Maybe someday,
+.:though.
 >.Jason's hairline suddenly recedes more and he sprouts a
 ..bushy mustache with an audible POP.
 ._JASON
@@ -262,8 +262,9 @@ Words/1:rohrer
 ._Jason
 >:You depend on care from your
 >:parents to survive.  If they help
->:you into adulthood, you may have
-.:babies of your own someday.
+>:you into adulthood, you may get a
+>:chance to have babies of your own
+.:someday.
 >.Jason leaves the second clearing and continues walking east
 ..through a swamp.
 ._JASON
