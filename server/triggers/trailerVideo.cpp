@@ -92,6 +92,10 @@ static void customTrigger( int inTriggerNumber ) {
     if( inTriggerNumber == t++ ) {
         forcePlayerAge( "test@test.com", 40 );
         
+        // audible pop
+        // plays on decay of this place-holder object
+        setMapObject( 2, -1, 657 );
+        
 
         // use this opportunity to spawn all NPCs for video
 
