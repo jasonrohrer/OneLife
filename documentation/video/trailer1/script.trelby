@@ -39,8 +39,8 @@ RemoveNotes:False
 OutlineNotes:True
 ShowMargins:False
 ShowLineNumbers:False
-Cursor/Line:190
-Cursor/Column:2
+Cursor/Line:61
+Cursor/Column:28
 String/MoreDialogue:(MORE)
 String/ContinuedPageEnd:(CONTINUED)
 String/ContinuedPageStart:CONTINUED:
@@ -236,7 +236,7 @@ Words/1:rohrer
 ..himself behind a bush and peers out into a clearing.
 ._JASON
 .((whispering)
-.:Shhh.  There she is now!
+.:Shhh.  I think she's coming!
 >.A WOMAN, clad in primitive furs, walks out into the
 ..clearing. 
 ._Jason
