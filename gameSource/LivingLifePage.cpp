@@ -3935,7 +3935,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             || ourLiveObject->currentPos.y != ourLiveObject->yd ) {
             
             if( ourLiveObject->pathToDest != NULL &&
-                ourLiveObject->shouldDrawPathMarks ) {
+                ourLiveObject->shouldDrawPathMarks &&
+                mShowHighlights ) {
                 // highlight path
 
                 JenkinsRandomSource pathRand( 340930281 );
