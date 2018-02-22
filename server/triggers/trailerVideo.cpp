@@ -257,7 +257,7 @@ static void customTrigger( int inTriggerNumber ) {
 
         startPos.x = 69;
         startPos.y = -8;
-        womanD1 = newDummyPlayer( "womanD1@test.com", 350, 13.5,
+        womanD1 = newDummyPlayer( "womanD1@test.com", 350, 12.5,
                                   startPos,
                                   441,
                                   clothing );
