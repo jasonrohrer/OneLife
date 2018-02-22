@@ -725,6 +725,8 @@ static void customTrigger( int inTriggerNumber ) {
 
 
         // chop
+        offset.y = 0;
+        offset.x = 1;
         setNextActionDelay( 0.25 );
         sendDummyAction( &manE1, "USE", offset );
         

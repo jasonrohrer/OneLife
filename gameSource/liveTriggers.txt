@@ -10,6 +10,7 @@ server n
 server n
 server n
 server n
+anim 3 120
 server n
 server n
 anim 3 120
@@ -22,6 +23,7 @@ anim 7 120
 server n
 server n
 server n
+anim 7 120
 server n
 server n
 server n
