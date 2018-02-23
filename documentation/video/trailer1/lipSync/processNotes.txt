@@ -26,7 +26,8 @@
 
 8.  Copy recoded game file into playback folder.
 
-9.  Set outputFrames setting and blendOutputPairs and blendOutputFrameFraction.
+9.  Set blendOutputPairs and blendOutputFrameFraction setting.  No need to set 
+    outputFrames setting (frame output starts automatically due to 7.)
 
 9b.  Run and disable onscreen display during playback.  Frames output.
 
