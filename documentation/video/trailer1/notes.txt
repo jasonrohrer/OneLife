@@ -1,0 +1,31 @@
+Frames generated using client from OneLife commit:
+
+commit 08cfc705a753500983cb26a1dc10e1840a4b93f5
+Author: Jason Rohrer <jasonrohrer@fastmail.fm>
+Date:   Thu Feb 22 19:25:18 2018 -0800
+
+
+
+OneLifeData7_trailer1 commit:
+
+commit cee464b60e55b76b534f721a999f7b740f2a5816
+Author: Jason Rohrer <jasonrohrer@fastmail.fm>
+Date:   Thu Feb 22 22:17:58 2018 -0800
+
+
+minorGems commit:
+
+commit c8778e21e608b064370216f5be24fafe50842322
+Author: Jason Rohrer <jasonrohrer@fastmail.fm>
+Date:   Tue Jan 23 11:51:28 2018 -0800
+
+
+
+First trailer frame is frame00509.tga
+
+(I made a mistake and left frames from a previous run in the folder when
+exporting the frames).
+
+Lightworks archived project expects 509 to be the first frame.
+
+
