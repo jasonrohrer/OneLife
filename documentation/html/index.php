@@ -8,19 +8,19 @@
 
 <table border=0 width=100%>
 <tr>
-<td><img src=portraitLeft.png border=0 width=197 height=414></td>
+<td><img src=portraitLeft.jpg border=0 width=197 height=414></td>
 <td>
 <center><?php include( "lifeStats.php" ); ?></center>
 
 
 
-<img src=logo558x305_border.png border=0 width=558 height=305>
+<img src=logo558x305_border.jpg border=0 width=558 height=305>
 
 <br>
 <center>a multiplayer survival game of parenting<br>and civilization building by <a href=http://hcsoftware.sf.net/jason-rohrer>Jason Rohrer</a></center>
 
 </td>
-<td><img src=portraitRight.png border=0 width=196 height=418></td>
+<td><img src=portraitRight.jpg border=0 width=196 height=418></td>
 
 </tr>
 </table>
@@ -47,13 +47,13 @@ if( $rs_reviewCount > 0 ) {
 
 <br>
 <br>
-<center><img src=lifeLine.png border=0 width=712 height=222></center>
+<center><img src=lifeLine.jpg border=0 width=712 height=222></center>
 
 <table border=0><tr><td align=justify>
 <font size=5>This game is about playing one small part </font>in a much larger story.  You only live an hour, but time and space in this game is infinite.  You can only do so much in one lifetime, but the tech tree in this game will take hundreds of generations to fully explore.  This game is also about family trees.  Having a mother who takes care of you as a baby, and hopefully taking care of a baby yourself later in life.  And your mother is another player.  And your baby is another player.  Building something to use in your lifetime, but inevitably realizing that, in the end, what you build is not for YOU, but for your children and all the countless others that will come after you.  Proudly using your grandfather's ax, and then passing it on to your own grandchild as the end of your life nears.  And looking at each life as a unique story.  I was this kid born in this situation, but I eventually grew up.  I built a bakery near the wheat fields.  Over time, I watched my grandparents and parents grow old and die.  I had some kids of my own along the way, but they are grown now... and look at my character now!  She's an old woman.  What a life passed by in this little hour of mine.  After I die, this life will be over and gone forever.  I can be born again, but I can never live this unique story again.  Everything's changing.  I'll be born as a different person in a different place and different time, with another unique story to experience in the next hour...
 </td></tr></table>
 
-<center><img src=arrowLine.png border=0 width=712 height=219></center>
+<center><img src=arrowLine.jpg border=0 width=712 height=219></center>
 
      
 <br>

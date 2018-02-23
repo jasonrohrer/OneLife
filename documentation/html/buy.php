@@ -61,19 +61,19 @@ function showLogo( $inImageFile, $inText ) {
 
 <table border=0 width=100%>
 <tr>
-<td><img src=portraitLeft.png border=0 width=197 height=414></td>
+<td><img src=portraitLeft.jpg border=0 width=197 height=414></td>
 <td>
 <center><?php include( "lifeStats.php" ); ?></center>
 
 
 
-<img src=logo558x305_border.png border=0 width=558 height=305>
+<img src=logo558x305_border.jpg border=0 width=558 height=305>
 
 <br>
 <center>a multiplayer survival game of parenting<br>and civilization building by <a href=http://hcsoftware.sf.net/jason-rohrer>Jason Rohrer</a></center>
 
 </td>
-<td><img src=portraitRight.png border=0 width=196 height=418></td>
+<td><img src=portraitRight.jpg border=0 width=196 height=418></td>
 
 </tr>
 </table>
