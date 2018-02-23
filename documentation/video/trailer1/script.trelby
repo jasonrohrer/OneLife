@@ -39,8 +39,8 @@ RemoveNotes:False
 OutlineNotes:True
 ShowMargins:False
 ShowLineNumbers:False
-Cursor/Line:61
-Cursor/Column:28
+Cursor/Line:58
+Cursor/Column:5
 String/MoreDialogue:(MORE)
 String/ContinuedPageEnd:(CONTINUED)
 String/ContinuedPageStart:CONTINUED:
@@ -214,14 +214,15 @@ Words/1:rohrer
 >.Jason's hairline suddenly recedes more and he sprouts a
 ..bushy mustache with an audible POP.
 ._JASON
->:Oh man, I just got older again!  A
->:whole year passes every minute, and
->:we live an entire lifetime, from
->:birth to old age, in just one hour. 
->:We'd better get on with this tour
-.:before my time runs out.
+>:Did you see that?  I just got older
+>:again.  A whole year passes every
+>:minute, and we live an entire
+>:lifetime, from birth to old age, in
+>:just one hour.  We'd better get on
+>:with this tour before my time runs
+.:out.
 >.Jason grabs an olive drab BOONIE HAT from a hook and puts it
->.on his head.  He opens the office DOOR in the south wall and
+>.on his head.  He opens the office door in the south wall and
 ..heads east into the surrounding wilderness.
 ._Jason
 >:Everything you see here exists on a
@@ -235,12 +236,10 @@ Words/1:rohrer
 >.FOOTSTEPS can be heard off camera to the east.  Jason hides
 ..himself behind a bush and peers out into a clearing.
 ._JASON
-.((whispering)
-.:Shhh.  I think she's coming!
+.:I think she's coming!
 >.A WOMAN, clad in primitive furs, walks out into the
 ..clearing. 
 ._Jason
-.((low voice)
 >:That's Eve, the first player to
 >:join the server.  And the second
 >:player should be joining right
@@ -294,16 +293,16 @@ Words/1:rohrer
 >:But future generations can build on
 >:the foundation that you help to
 .:create.
->.Jason continues walking east and a lashed wooden hut comes
+>.Jason continues walking east and a lashed WOODEN HUT comes
 >.into view.  Neatly-planted rows of carrots and wheat spread
 >.to each side of the front door, with a path down the middle. 
 >.An adobe oven burns inside the hut, with a fur-clad elderly
 >.man tending it.  Two fur-clad children open the front door
 ..and run out.
->.Jason continues walking to the east, into an adobe village,
->.and a roaring forge comes into view, with several steel
->.tools scattered around it.  Domesticated sheep graze in a
-..fenced pasture.
+>.Jason continues walking to the east, into a busy ADOBE
+>.VILLAGE, and a roaring forge comes into view, with several
+>.steel tools scattered around it.  Domesticated sheep graze
+..in a fenced pasture.
 ._JASON
 >:Hopefully, you'll have a chance to
 >:leave your own small mark on the
@@ -316,10 +315,10 @@ Words/1:rohrer
 ._JASON
 >:But really, all of this is just the
 .:beginning.
->.Jason now walks north where he crosses a PAVED ROAD. 
->.Suddenly a gleaming red SPORTS CAR roars by with a smiling
->.DRIVER inside.  The driver honks as Jason scurries to
-..safety.
+>.PIANO MUSIC swells as Jason walks north to where he crosses
+>.a PAVED ROAD.  Suddenly a gleaming red SPORTS CAR roars by
+>.with a smiling DRIVER inside.  The driver honks as Jason
+..scurries to safety.
 ._JASON
 >:As players continue climbing up
 >:through the tech tree, I'll be
@@ -336,9 +335,9 @@ Words/1:rohrer
 >:spawn as your baby at some point,
 >:and it will be up to you to take
 .:care of me.
->.PIANO MUSIC swells as Jason follows the mag-lev line north
->.to the gates of a FUTURISTIC CITY with Jetson-esque towers
-..on the corners of the walls.
+>.Jason follows the mag-lev line north to the gates of a
+>.FUTURISTIC CITY with Jetson-esque towers on the corners of
+..the walls.
 ._JASON
 >:As we rebuild civilization
 >:together, who knows where we'll end
@@ -350,16 +349,16 @@ Words/1:rohrer
 ./CUT TO:
 .\GAME OVER SCREEN
 ..  YOU DIED
-..  AGE:  40
-..  KILLED BY:  ATOMIC POWERED ROBOT
-..  [GET REBORN?]
+..  AGE:  40 YEARS
+..  CAUSE:  KILLED BY ATOMIC POWERED ROBOT
+..  [QUIT]    [GET REBORN]
 ..Piano music continues.
 ./CUT TO:
 .\TITLE CARD  
 ..  ONE HOUR
 ..  ONE LIFE
 .\TITLE CARD
-..  A GAME
+..  A NEW GAME
 ..  100% HANDMADE
 ..  BY JASON ROHRER
 .\TITLE CARD
