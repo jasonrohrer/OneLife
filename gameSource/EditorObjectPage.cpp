@@ -2639,7 +2639,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mPickedObjectLayer = -1;
             mPickedSlot = -1;
 
-            if( !mCurrentObject.containable && mCurrentObject.numSlots > 0 ) {
+            if( mCurrentObject.numSlots > 0 ) {
                 mDemoSlots = false;
                 mSlotsDemoObject = -1;
                 mDemoSlotsButton.setVisible( true );
