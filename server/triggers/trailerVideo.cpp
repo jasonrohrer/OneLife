@@ -849,7 +849,7 @@ static void customTrigger( int inTriggerNumber ) {
         setMapObject( 115, 8, 648 );
         }
     else if( inTriggerNumber == t++ ) {
-        GridPos deathPos = killPlayer( "test@test.com" );
+        killPlayer( "test@test.com" );
         }
     else if( inTriggerNumber == t++ ) {
         // robot switch to greeting state
