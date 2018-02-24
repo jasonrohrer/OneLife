@@ -39,6 +39,7 @@
 #include "triggers.h"
 #include "playerStats.h"
 #include "serverCalls.h"
+#include "failureLog.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -548,6 +549,7 @@ void quitCleanup() {
     freeLifeLog();
     
     freeFoodLog();
+    freeFailureLog();
     
     freeTriggers();
 
@@ -3404,6 +3406,7 @@ int main() {
 
 
     initFoodLog();
+    initFailureLog();
     
     initTriggers();
 
@@ -3430,6 +3433,7 @@ int main() {
         checkBackup();
 
         stepFoodLog();
+        stepFailureLog();
         
         stepPlayerStats();
         
@@ -4927,6 +4931,14 @@ int main() {
                                             defaultTrans = true;
                                             }
                                         }
+                                    
+                                    if( r == NULL && 
+                                        nextPlayer->holdingID > 0 ) {
+                                        
+                                        logTransitionFailure( 
+                                            nextPlayer->holdingID,
+                                            target );
+                                        }
                                     }
                                 
                                 if( r != NULL &&
@@ -5196,6 +5208,13 @@ int main() {
                                         getTrans( nextPlayer->holdingID,
                                                   floorID );
                                 
+                                    if( r == NULL ) {
+                                        logTransitionFailure( 
+                                            nextPlayer->holdingID,
+                                            floorID );
+                                        }
+                                        
+
                                     if( r != NULL && 
                                         // make sure we're not too young
                                         // to hold result of on-floor

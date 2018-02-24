@@ -3,6 +3,7 @@
 
 
 #include "minorGems/util/stringUtils.h"
+#include "minorGems/util/SimpleVector.h"
 #include "minorGems/io/file/File.h"
 #include "minorGems/io/file/Directory.h"
 
@@ -29,14 +30,14 @@ static FILE *openCurrentLogFile() {
     
     strftime( fileName, 99, "%Y_%m%B_%d_%A.txt", timeStruct );
 
-    File logDir( NULL, "foodLog" );
+    File logDir( NULL, "failureLog" );
     
     if( ! logDir.exists() ) {
         Directory::makeDirectory( &logDir );
         }
 
     if( ! logDir.isDirectory() ) {
-        AppLog::error( "Non-directory foodLog is in the way" );
+        AppLog::error( "Non-directory failureLog is in the way" );
         return NULL;
         }
 
@@ -65,30 +66,31 @@ static FILE *openCurrentLogFile() {
 
 static int maxObjectID;
 
-// per id
-int *eatFoodCounts;
-int *eatFoodValueCounts;
-double *eaterAgeSums;
-doublePair *mapLocationSums;
+
+typedef struct FailureRecord {
+    int actorID;
+    int targetID;
+    int failureCount;
+    } FailureRecord;
+
+
+// one vector per target id
+static SimpleVector<FailureRecord> *failureLists;
 
 static int maxSeenObjectID;
 
 
 static void clearTallies() {
     for( int i=0; i<=maxObjectID; i++ ) {
-        eatFoodCounts[i] = 0;
-        eatFoodValueCounts[i] = 0;
-        eaterAgeSums[i] = 0.0;
-        mapLocationSums[i].x = 0.0;
-        mapLocationSums[i].y = 0.0;
+        failureLists[i].deleteAll();
         }
     maxSeenObjectID = 0;
     }
 
 
 
-void initFoodLog() {
-    AppLog::info( "foodLog starting up" );
+void initFailureLog() {
+    AppLog::info( "failureLog starting up" );
     
     time_t t = time( NULL );
     struct tm *timeStruct = localtime( &t );
@@ -102,10 +104,7 @@ void initFoodLog() {
     
     maxObjectID = getMaxObjectID();
     
-    eatFoodCounts = new int[ maxObjectID + 1 ];
-    eatFoodValueCounts = new int[ maxObjectID + 1 ];
-    eaterAgeSums = new double[ maxObjectID + 1 ];
-    mapLocationSums = new doublePair[ maxObjectID + 1 ];
+    failureLists = new SimpleVector<FailureRecord>[ maxObjectID + 1 ];
     
     clearTallies();
     }
@@ -131,23 +130,21 @@ static void stepLog( char inForceOutput ) {
 
         for( int i=0; i<=maxSeenObjectID; i++ ) {
             
-            if( eatFoodCounts[i] > 0 ) {
+            if( failureLists[i].size() > 0 ) {
                 
-                fprintf( 
-                    logFile, 
-                    "id=%d count=%d value=%d av_age=%f "
-                    "av_mapX=%d av_mapY=%d\n",
-                    i, eatFoodCounts[i], eatFoodValueCounts[i],
-                    eaterAgeSums[i] / eatFoodCounts[i],
-                    (int)lrint( mapLocationSums[i].x / eatFoodCounts[i] ),
-                    (int)lrint( mapLocationSums[i].y / eatFoodCounts[i] ) );
+                for( int j=0; j<failureLists[i].size(); j++ ) {
+                    
+                    FailureRecord *r = failureLists[i].getElement( j );
+                    
+                    fprintf( 
+                        logFile, 
+                        "%d + %d  count=%d\n",
+                        r->actorID,
+                        r->targetID,
+                        r->failureCount );
+                    }
                 
-                
-                eatFoodCounts[i] = 0;
-                eatFoodValueCounts[i] = 0;
-                eaterAgeSums[i] = 0.0;
-                mapLocationSums[i].x = 0.0;
-                mapLocationSums[i].y = 0.0;
+                failureLists[i].deleteAll();
                 }
             }
         
@@ -171,7 +168,7 @@ static void stepLog( char inForceOutput ) {
 
 
 
-void freeFoodLog() {
+void freeFailureLog() {
     
     if( logFile != NULL ) {
         // final output
@@ -179,15 +176,12 @@ void freeFoodLog() {
         
         fclose( logFile );
         }
-    delete [] eatFoodCounts;
-    delete [] eatFoodValueCounts;
-    delete [] eaterAgeSums;
-    delete [] mapLocationSums;
+    delete [] failureLists;
     }
 
 
 
-void stepFoodLog() {
+void stepFailureLog() {
     if( logFile != NULL ) {
         stepLog( false );
         }
@@ -196,28 +190,44 @@ void stepFoodLog() {
 
 
 
-void logEating( int inFoodID, int inFoodValue, double inEaterAge,
-                int inMapX, int inMapY ) {
-    
+void logTransitionFailure( int inActorID, int inTargetID ) {
     if( logFile != NULL ) {
         stepLog( false );
         }
 
-    int idToLog = inFoodID;
-    
-    ObjectRecord *o = getObject( idToLog );
+    if( inActorID > 0 && inTargetID > 0 && inTargetID <= maxObjectID ) {
+        
+
+        ObjectRecord *a = getObject( inActorID );
                 
-    if( o->isUseDummy ) {
-        idToLog = o->useDummyParent;
-        }
-    
-    eatFoodCounts[ idToLog ] ++;
-    eatFoodValueCounts[ idToLog ] += inFoodValue;
-    eaterAgeSums[ idToLog ] += inEaterAge;
-    mapLocationSums[ idToLog ].x += inMapX;
-    mapLocationSums[ idToLog ].y += inMapY;
+        if( a->isUseDummy ) {
+            inActorID = a->useDummyParent;
+            }
 
-    if( idToLog > maxSeenObjectID ) {
-        maxSeenObjectID = idToLog;
+        ObjectRecord *t = getObject( inTargetID );
+                
+        if( t->isUseDummy ) {
+            inTargetID = t->useDummyParent;
+            }
+    
+        if( inTargetID > maxSeenObjectID ) {
+            maxSeenObjectID = inTargetID;
+            }
+
+        char found = false;
+        for( int i=0; i<failureLists[inTargetID].size(); i++ ) {
+            FailureRecord *rt = failureLists[inTargetID].getElement( i );
+            
+            if( rt->actorID == inActorID && rt->targetID == inTargetID ) {
+                rt->failureCount ++;
+                found = true;
+                break;
+                }
+            }
+        if( ! found ) {
+            // add new record
+            FailureRecord r = { inActorID, inTargetID, 1 };
+            failureLists[inTargetID].push_back( r );
+            }    
         }
     }
