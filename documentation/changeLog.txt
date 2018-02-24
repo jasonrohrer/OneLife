@@ -42,6 +42,9 @@ Server Fixes:
 
 --Added transition failure log.
 
+--Fixed server scripts that loop over remote servers with ssh in the loop
+  (ssh was breaking the loop's file read operation, ssh -n fixes it).
+
 
 
 

@@ -232,7 +232,7 @@ echo ""
 while read user server port
 do
   echo "  Shutting down $server"
-  ssh $user@$server '~/checkout/OneLife/scripts/remoteServerShutdown.sh'
+  ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerShutdown.sh'
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
@@ -313,7 +313,7 @@ echo ""
 while read user server port
 do
   echo "  Starting update on $server"
-  ssh $user@$server '~/checkout/OneLife/scripts/remoteServerUpdate.sh'
+  ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerUpdate.sh'
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
