@@ -36,6 +36,13 @@ Version 53     ????
 
 
 
+Server Fixes:
+
+--Added transition failure log.
+
+
+
+
 
 Version 51     2018-February-8
 

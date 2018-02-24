@@ -23,6 +23,9 @@ tar czf ~/backups/lifeLog_$date.tar.gz lifeLog lifeLog_*
 # this bundles local foodLog and foodLog_serverX folders together
 tar czf ~/backups/foodLog_$date.tar.gz foodLog foodLog_*
 
+# this bundles local failureLog and failureLog_serverX folders together
+tar czf ~/backups/failureLog_$date.tar.gz failureLog failureLog_*
+
 cd ~
 
 # delete backup files older than two weeks
