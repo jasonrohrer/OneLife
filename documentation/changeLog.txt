@@ -32,6 +32,9 @@ Version 53     ????
 
 --Fixed bug in animation speed for moving objects.
 
+--Fixed quit confirmation box to no longer be titled with PAUSED.
+
+
 
 
 Version 51     2018-February-8

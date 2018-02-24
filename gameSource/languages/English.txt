@@ -170,7 +170,7 @@ reborn "GET REBORN"
 
 
 
-pauseMessage1 "PAUSED"
+pauseMessage1 "REALLY QUIT?"
 
 pauseMessage2 "PRESS [ENTER] TO RESUME"
 
