@@ -1,0 +1,19 @@
+
+
+apt-get install git-core fcgiwrap
+
+
+
+# add to nginx /etc/nginx/sites-enabled/default
+
+location ~ /git(/.*) {
+                 # fcgiwrap is set up to listen on this host:port
+                 fastcgi_pass  unix:/var/run/fcgiwrap.socket;
+                 include       fastcgi_params;
+                 fastcgi_param SCRIPT_FILENAME     /usr/lib/git-core/git-http-b\
+ackend;
+                 # export all repositories under GIT_PROJECT_ROOT
+                 fastcgi_param GIT_HTTP_EXPORT_ALL "";
+                 fastcgi_param GIT_PROJECT_ROOT    /home/jcr15/gitMirrors;
+                 fastcgi_param PATH_INFO           $1;
+                 }
