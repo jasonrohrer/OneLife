@@ -6126,6 +6126,22 @@ static char isCategory( int inID ) {
     }
 
 
+static char isFood( int inID ) {
+    if( inID <= 0 ) {
+        return false;
+        }
+    
+    ObjectRecord *o = getObject( inID );
+    
+    if( o->foodValue > 0 ) {
+        return true;
+        }
+    else {
+        return false;
+        }
+    }
+
+
 
 
 static char getTransHintable( TransRecord *inTrans ) {
@@ -6141,6 +6157,13 @@ static char getTransHintable( TransRecord *inTrans ) {
         if( isCategory( inTrans->target ) ) {
             return false;
             }
+        
+        if( inTrans->target == -1 && inTrans->newTarget == 0 &&
+            ! isFood( inTrans->actor ) ) {
+            // generic one-time-use transition
+            return false;
+            }
+
         return true;
         }
     else {

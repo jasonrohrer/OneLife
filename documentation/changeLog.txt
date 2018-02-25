@@ -36,6 +36,9 @@ Version 53     ????
 
 --Fixed editor so that containable containers have slot demo button visible.
 
+--Fixed bug in hint system that was showing hints for generic one-time-use
+  transtions as bare ground tranitions.
+
 
 
 Server Fixes:
