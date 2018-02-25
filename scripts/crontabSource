@@ -13,3 +13,6 @@ SHELL=/bin/bash
 
 
 */5 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/updateReviewHTML.sh
+
+
+*/5 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/updateGitMirrors.sh
