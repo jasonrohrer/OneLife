@@ -101,6 +101,22 @@ echo ""
 
 
 
+# any argument means automation
+if [ $# -ne 1 ]
+then
+	echo ""
+	echo ""
+	echo "Most recent code version $lastTaggedCodeVersion"
+	echo "Most recent data version $lastTaggedDataVersion"
+	echo ""
+	echo "About to post and tag data with $newVersion"
+	echo ""
+	echo -n "Hit [ENTER] when ready: "
+	read
+fi
+
+
+
 cd ~/checkout/OneLifeData7Latest
 
 
