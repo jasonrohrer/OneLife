@@ -9,11 +9,6 @@ echo "You must run this as root from onehouronelife.com"
 echo ""
 
 
-echo -n "Enter IP address of remote server: "
-
-read address
-
-
 echo -n "Enter subdomain to use for remote server: "
 
 read subdomain
@@ -21,7 +16,7 @@ read subdomain
 
 echo ""
 
-echo "Manually configure Linode DNS A record for $subdomain.onehouronelife.com to pointing to $address"
+echo "Manually configure Linode DNS A record for $subdomain.onehouronelife.com to pointing to the new server's IP address"
 
 echo -n "Hit [ENTER] when ready: "
 read
@@ -40,7 +35,7 @@ cd ~/checkout/OneLifeWorking
 git pull
 cd scripts
 
-scp -o StrictHostKeychecking=no linodeBackupServerRootSetup.sh root@$address:
+scp -o StrictHostKeychecking=no linodeBackupServerRootSetup.sh root@$subdomain.onehouronelife.com:
 
 
 EOSU
@@ -51,7 +46,7 @@ echo ""
 echo "Connecting to remote host to run setup script there"
 echo ""
 
-ssh -o StrictHostKeychecking=no root@$address "./linodeBackupServerRootSetup.sh"
+ssh -o StrictHostKeychecking=no root@$subdomain.onehouronelife.com "./linodeBackupServerRootSetup.sh"
 
 
 echo ""
