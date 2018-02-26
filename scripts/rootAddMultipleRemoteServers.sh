@@ -1,7 +1,7 @@
 if [ $# -ne 1 ]
 then
 	echo "Usage:"
-	echo "rootAddMultipleDownloadServers.sh  list_file"
+	echo "rootAddMultipleRemoteServers.sh  list_file"
 	echo ""
     echo "list_file contains one subdomain name per line, like:"
     echo "download3"
@@ -9,7 +9,7 @@ then
 	echo "download5"
 	echo ""
 	echo "Example:"
-	echo "rootAddMultipleDownloadServers.sh list.txt"
+	echo "rootAddMultipleRemoteServers.sh list.txt"
 	echo ""
 	
 	exit 1
@@ -27,7 +27,7 @@ echo ""
 
 # feed file through grep to add newlines at the end of each line
 # otherwise, read skips the last line if it doesn't end with newline
-echo "About to run Download Server setup for these subdomains:"
+echo "About to run Remote Server setup for these subdomains:"
 echo ""
 
 num=1
@@ -47,5 +47,5 @@ read
 while read subdomain
 do
     # don't interrupt our reading of input lines if sub-script reads input
-	./rootAddNewDownloadServer.sh $subdomain $rootPass </dev/null
+	./rootAddNewRemoteServer.sh $subdomain $rootPass </dev/null
 done <  <( grep "" $1 )
