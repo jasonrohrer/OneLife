@@ -121,7 +121,7 @@ function showLogo( $inImageFile, $inText ) {
 </center>
 The price also includes downloads of all future updates and a lifetime account on the main game server that I am running.<br>
 <br>
-The source bundle includes the editor and server software, allowing you to <b>set up and run your own server</b>.<br>
+The source bundle includes the editor and server software, allowing you to set up and run your own server or even leverage the engine to make your own game.  See OneLife/documentation in the source bundle for instructions.<br>
 <br>
 You can take a look at the <a href="requirements.php">system requirements</a>.</font>
 </td></tr></table>

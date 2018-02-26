@@ -1,0 +1,124 @@
+These notes describe the steps needed to compile and run your own server or
+editor for One Hour One Life.
+
+
+NOTE:  Neither of these aspects of the game are quite ready for public 
+       consumption.  That's why I'm not currently shipping binary versions
+       of these for Windows, Linux, or Mac.
+       I likely will release binary versions that "everyone" can easily
+       use someday, but right now, this is not a high priority.
+       So, if you're reading this and ready to proceed, I'm assuming that
+       you're ready to work with unreleased software.
+       (It's not THAT bad.  I use this software every day.  It's just not
+        that easy to get it set up and running.)
+
+
+ALSO:  This document doesn't currently explain how to USE the editor.
+       It's pretty complicated.  Play around with it, and see what you can 
+       figure out.  Probably the best way to understand how it works is
+       to watch me use the editor here:
+
+	   Summary:
+	   https://www.youtube.com/watch?v=27cztry-gJQ
+       
+	   Full stream:
+	   https://www.youtube.com/watch?v=WbQsZ5rQ2gg
+
+
+
+The editor requires the dev package of libpng installed.  On Ubuntu, this is:
+
+sudo apt-get install libpng12-dev
+
+
+Assuming that you have OneLife_Live_UnixSource installed and updated:
+
+
+
+==========================
+= Editor                 =
+==========================
+
+Build the editor thus:
+
+cd OneLife/gameSource
+./makeEditor.sh
+cp EditOneLife ../..
+cd ../..
+
+
+Edit settings/editorImportPath.ini to specify where your scanner saves PNG 
+files.  These are used to import sprites.  Even if you're not using a scanner
+or hand-drawn art, you can save your art files into this location to import
+them.  The editor auto-trims/feathers anything with a white background.
+
+Note that the editor can merge multiple layers into each sprite.  A color 
+layer, which will be opaque and must have black outlines, and a line layer,
+which is monochrome and transparent over the color layer.  The color layer
+is imported with the Sprite Import button, while line layers are imported
+with the Line Import button.  Both import from the same PNG file location.
+
+Also, there can be multiple Line layers which get overlayed, but only one
+opaque color layer.
+
+
+Run the editor with:
+
+./EditOneLife
+
+
+Note that the editor looks for data folders (sprites, objects, etc.) in its
+current working directory.  The steps listed above install the editor
+so that it will edit the game's actual data.  If you want to edit your own
+data, starting from scratch, give it empty folders (sprites, objects, etc.)
+instead of those symlinks to the OneLifeData7 data.
+
+
+
+
+==========================
+= Server                 =
+==========================
+
+
+Build the editor thus:
+
+cd OneLife/server
+./configure
+make
+ln -s ../../OneLifeDa7/objects .
+ln -s ../../OneLifeDa7/transitions .
+ln -s ../../OneLifeDa7/categories .
+
+
+Note that this makes links to the game's real data.  If you want to use your own
+custom data, make links to your own folder instead (see above instructions 
+for the editor.)
+
+The server doesn't need sprites or animations or several of the other data
+folders.
+
+In terms of settings, there are a bunch in the settings folder.
+
+You probably at least want to disable requireTicketServerCheck and maybe
+enable the client password instead.  Your client can then set the password
+in its settings folder.
+
+Or you can run your own ticketServer to have full-blown per-user accounts, 
+which is beyond the scope of this document.  Details can be found in this
+guide for running Castle Doctrine servers:
+
+http://sf.net/p/hcsoftware/CastleDoctrine/ci/default/tree/server/HowToInstall.txt
+
+
+Run your server thus:
+
+./OneLifeServer
+
+
+To connect, in your client settings folder, set useCustomServer and 
+customServerAddress
+
+
+By using a client password and a custom server address, it's possible to run
+a private server for your friends.
