@@ -9,18 +9,32 @@ echo "You must run this as root from onehouronelife.com"
 echo ""
 
 
-echo -n "Enter subdomain to use for remote server: "
+if [ $# -ne 2 ]
+then
+	echo -n "Enter subdomain to use for remote server: "
 
-read subdomain
+	read subdomain
+
+	echo ""
+
+	echo -n "Enter root password to use for remote server: "
+
+	read rootPass
+
+	echo ""
 
 
-echo ""
+	echo "Manually configure Linode DNS A record for $subdomain.onehouronelife.com to pointing to the new server's IP address."
 
-echo "Manually configure Linode DNS A record for $subdomain.onehouronelife.com to pointing to the new server's IP address."
+	echo ""
+	
+	echo -n "Hit [ENTER] when ready: "
+	read
 
-echo -n "Hit [ENTER] when ready: "
-read
-
+else
+	subdomain=$1
+	rootPass=$2
+fi
 
 
 
@@ -34,7 +48,7 @@ cd ~/checkout/OneLifeWorking
 git pull
 cd scripts
 
-scp -o StrictHostKeychecking=no linodeDownloadServerRootSetup.sh root@$subdomain.onehouronelife.com:
+sshpass -p "$rootPass" scp -o StrictHostKeychecking=no linodeDownloadServerRootSetup.sh root@$subdomain.onehouronelife.com:
 
 
 EOSU
@@ -45,7 +59,7 @@ echo ""
 echo "Connecting to remote host to run setup script there"
 echo ""
 
-ssh -o StrictHostKeychecking=no root@$subdomain.onehouronelife.com "./linodeDownloadServerRootSetup.sh"
+sshpass -p "$rootPass" ssh -o StrictHostKeychecking=no root@$subdomain.onehouronelife.com "./linodeDownloadServerRootSetup.sh"
 
 
 echo ""
