@@ -46,5 +46,6 @@ read
 
 while read subdomain
 do
-	./rootAddNewDownloadServer.sh $subdomain $rootPass
+    # don't interrupt our reading of input lines if sub-script reads input
+	./rootAddNewDownloadServer.sh $subdomain $rootPass </dev/null
 done <  <( grep "" $1 )
