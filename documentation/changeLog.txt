@@ -10,7 +10,7 @@ Server Fixes:
 
 --Baby birth cost now 0 (was 10).
 
---Plus 1 food bonus on all food eaten (everything provides 1 more food).
+--Plus 2 food bonus on all food eaten (everything provides 2 more food).
 
 --Several server settings are now reloaded each time a new player joins instead
   of only at server restart.
