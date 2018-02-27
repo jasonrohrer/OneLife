@@ -16,7 +16,7 @@ fi
 
 echo
 echo "Make sure to git pull both minorGems and OneLife"
-echo "Also pull OneLifeData7, but then run:   git checkout OneLife_v25"
+echo "Also pull OneLifeData7, but then run:   git checkout OneLife_v20"
 echo
 echo -n "Press ENTER when done."
 
