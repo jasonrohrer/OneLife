@@ -29,7 +29,10 @@ TextField::TextField( Font *inDisplayFont,
                       const char *inAllowedChars,
                       const char *inForbiddenChars )
         : PageComponent( inX, inY ),
-          mActive( true ), mFont( inDisplayFont ), 
+          mActive( true ), 
+          mContentsHidden( false ),
+          mHiddenSprite( loadSprite( "hiddenFieldTexture.tga", false ) ),
+          mFont( inDisplayFont ), 
           mCharsWide( inCharsWide ),
           mMaxLength( -1 ),
           mFireOnAnyChange( false ),
@@ -135,7 +138,18 @@ TextField::~TextField() {
     if( mDrawnText != NULL ) {
         delete [] mDrawnText;
         }
+
+    if( mHiddenSprite != NULL ) {
+        freeSprite( mHiddenSprite );
+        }
     }
+
+
+
+void TextField::setContentsHidden( char inHidden ) {
+    mContentsHidden = inHidden;
+    }
+
 
 
 
@@ -298,6 +312,22 @@ void TextField::draw() {
     
     setDrawColor( 1, 1, 1, 1 );
 
+    if( mContentsHidden && mHiddenSprite != NULL ) {
+        startAddingToStencil( false, true );
+
+        drawRect( rectStartX, rectStartY,
+                  rectEndX, rectEndY );
+        startDrawingThroughStencil();
+        
+        doublePair pos = { 0, 0 };
+        
+        drawSprite( mHiddenSprite, pos );
+        
+        stopStencil();
+        }
+    
+
+
     
     if( mLabelText != NULL ) {
         TextAlignment a = alignRight;
@@ -330,6 +360,11 @@ void TextField::draw() {
         mFont->drawString( mLabelText, labelPos, a );
         }
     
+    
+    if( mContentsHidden ) {
+        return;
+        }
+
 
     doublePair textPos = { - mWide/2 + mBorderWide, 0 };
 
@@ -546,40 +581,47 @@ void TextField::pointerUp( float inX, float inY ) {
         inY > - mHigh / 2 &&
         inY < + mHigh / 2 ) {
 
+        char wasHidden = mContentsHidden;
+
         focus();
 
-        
-        int bestCursorDrawPosition = mCursorDrawPosition;
-        double bestDistance = mWide * 2;
-        
-        int drawnTextLength = strlen( mDrawnText );
-        
-        // find gap between drawn letters that is closest to clicked x
-
-        for( int i=0; i<=drawnTextLength; i++ ) {
-            
-            char *textCopy = stringDuplicate( mDrawnText );
-            
-            textCopy[i] = '\0';
-
-            double thisGapX = 
-                mDrawnTextX + 
-                mFont->measureString( textCopy ) +
-                mFont->getCharSpacing() / 2;
-            
-            delete [] textCopy;
-            
-            double thisDistance = fabs( thisGapX - inX );
-            
-            if( thisDistance < bestDistance ) {
-                bestCursorDrawPosition = i;
-                bestDistance = thisDistance;
-                }
+        if( wasHidden ) {
+            // don't adjust cursor from where it was
             }
-        
-        int cursorDelta = bestCursorDrawPosition - mCursorDrawPosition;
-        
-        mCursorPosition += cursorDelta;
+        else {
+            
+            int bestCursorDrawPosition = mCursorDrawPosition;
+            double bestDistance = mWide * 2;
+            
+            int drawnTextLength = strlen( mDrawnText );
+            
+            // find gap between drawn letters that is closest to clicked x
+            
+            for( int i=0; i<=drawnTextLength; i++ ) {
+                
+                char *textCopy = stringDuplicate( mDrawnText );
+                
+                textCopy[i] = '\0';
+                
+                double thisGapX = 
+                    mDrawnTextX + 
+                    mFont->measureString( textCopy ) +
+                    mFont->getCharSpacing() / 2;
+                
+                delete [] textCopy;
+                
+                double thisDistance = fabs( thisGapX - inX );
+                
+                if( thisDistance < bestDistance ) {
+                    bestCursorDrawPosition = i;
+                    bestDistance = thisDistance;
+                    }
+                }
+            
+            int cursorDelta = bestCursorDrawPosition - mCursorDrawPosition;
+            
+            mCursorPosition += cursorDelta;
+            }
         }
     }
 
@@ -1075,6 +1117,8 @@ void TextField::focus() {
 
     mFocused = true;
     sFocusedTextField = this;
+
+    mContentsHidden = false;
     }
 
 

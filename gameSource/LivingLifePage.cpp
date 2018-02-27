@@ -7172,6 +7172,8 @@ void LivingLifePage::step() {
         else if( type == ACCEPTED ) {
             // logged in successfully, wait for next message
             
+            SettingsManager::setSetting( "loginSuccess", 1 );
+
             delete [] message;
             return;
             }

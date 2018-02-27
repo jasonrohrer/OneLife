@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 55     ????
+
+--Hiding email and account key after first successful login (to protect privacy
+  of streamers).
+
+
+
+
 Version 53     2018-February-25
 
 --Fixed layer order changes in object editor to work with extra animations. 

@@ -30,6 +30,10 @@ class TextField : public PageComponent, public ActionListenerList {
 
         virtual ~TextField();
 
+        // automatically becomes non-hidden when focused
+        void setContentsHidden( char inHidden );
+        
+
         // copied internally
         void setText( const char *inText );
         
@@ -153,7 +157,11 @@ class TextField : public PageComponent, public ActionListenerList {
         
     protected:
         char mActive;
+        char mContentsHidden;
         
+        SpriteHandle mHiddenSprite;
+        
+
         Font *mFont;
         int mCharsWide;
         

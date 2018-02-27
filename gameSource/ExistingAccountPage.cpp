@@ -133,7 +133,19 @@ void ExistingAccountPage::showReviewButton( char inShow ) {
 
 
 void ExistingAccountPage::makeActive( char inFresh ) {
-    mEmailField.focus();
+    int pastSuccess = SettingsManager::getIntSetting( "loginSuccess", 0 );
+
+    if( ! pastSuccess ) {    
+        mEmailField.focus();
+        }
+    else {
+        mEmailField.unfocus();
+        mKeyField.unfocus();
+        
+        mEmailField.setContentsHidden( true );
+        mKeyField.setContentsHidden( true );
+        }
+    
     mPasteButton.setVisible( false );
     mAtSignButton.setVisible( true );
 
