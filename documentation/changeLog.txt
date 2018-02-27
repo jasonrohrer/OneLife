@@ -3,6 +3,21 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes:
+
+--Nursing cost now 1 instead of (was 2 + floor(babyAge) ).
+
+--Baby birth cost now 0 (was 10).
+
+--Plus 1 food bonus on all food eaten (everything provides 1 more food).
+
+--Several server settings are now reloaded each time a new player joins instead
+  of only at server restart.
+
+
+
+
 Version 58     2018-February-26
 
 --Hiding email and account key after first successful login (to protect privacy

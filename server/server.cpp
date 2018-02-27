@@ -70,7 +70,12 @@ double minSayGapInSeconds = 1.0;
 
 
 static double minFoodDecrementSeconds = 5.0;
+static double maxFoodDecrementSeconds = 20;
 static int babyBirthFoodDecrement = 10;
+
+// bonus applied to all foods
+// makes whole server a bit easier (or harder, if negative)
+static int eatBonus = 0;
 
 
 // keep a running sequence number to challenge each connecting client
@@ -964,18 +969,17 @@ void forcePlayerAge( const char *inEmail, double inAge ) {
 
 
 
-int foodDecrementTimeSeconds = 20;
 
 
 double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
-    double value = foodDecrementTimeSeconds * 2 * inPlayer->heat;
+    double value = maxFoodDecrementSeconds * 2 * inPlayer->heat;
     
-    if( value > foodDecrementTimeSeconds ) {
+    if( value > maxFoodDecrementSeconds ) {
         // also reduce if too hot (above 0.5 heat)
         
-        double extra = value - foodDecrementTimeSeconds;
+        double extra = value - maxFoodDecrementSeconds;
 
-        value = foodDecrementTimeSeconds - extra;
+        value = maxFoodDecrementSeconds - extra;
         }
     
     // all player temp effects push us up above min
@@ -2338,6 +2342,24 @@ static LiveObject *getHitPlayer( int inX, int inY,
 void processLoggedInPlayer( Socket *inSock,
                             SimpleVector<char> *inSockBuffer,
                             char *inEmail ) {
+    
+    // reload these settings every time someone new connects
+    // thus, they can be changed without restarting the server
+    minFoodDecrementSeconds = 
+        SettingsManager::getFloatSetting( "minFoodDecrementSeconds", 5.0f );
+    
+    maxFoodDecrementSeconds = 
+        SettingsManager::getFloatSetting( "maxFoodDecrementSeconds", 20 );
+
+    babyBirthFoodDecrement = 
+        SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
+
+
+    eatBonus = 
+        SettingsManager::getIntSetting( "eatBonus", 0 );
+
+
+
     numConnections ++;
                 
     LiveObject newObject;
@@ -3336,11 +3358,19 @@ int main() {
     clientPassword = 
         SettingsManager::getStringSetting( "clientPassword" );
 
+
     minFoodDecrementSeconds = 
         SettingsManager::getFloatSetting( "minFoodDecrementSeconds", 5.0f );
 
+    maxFoodDecrementSeconds = 
+        SettingsManager::getFloatSetting( "maxFoodDecrementSeconds", 20 );
+
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
+
+
+    eatBonus = 
+        SettingsManager::getIntSetting( "eatBonus", 0 );
     
 
     if( clientPassword == NULL ) {
@@ -5109,6 +5139,8 @@ int main() {
                                                targetObj->foodValue,
                                                computeAge( nextPlayer ),
                                                m.x, m.y );
+                                    
+                                    nextPlayer->foodStore += eatBonus;
 
                                     int cap =
                                         computeFoodCapacity( nextPlayer );
@@ -5428,9 +5460,12 @@ int main() {
                                             computeFoodDecrementTimeSeconds( 
                                                 hitPlayer );
 
-                                        int nurseCost = 
-                                            2 + 
-                                            floor( computeAge( hitPlayer ) );
+                                        // fixed cost to pick up baby
+                                        // this still encourages baby-parent
+                                        // communication so as not
+                                        // to get the most mileage out of 
+                                        // food
+                                        int nurseCost = 1;
                                         
                                         nextPlayer->foodStore -= nurseCost;
                                         
@@ -5566,6 +5601,8 @@ int main() {
                                                obj->foodValue,
                                                computeAge( targetPlayer ),
                                                m.x, m.y );
+                                    
+                                    targetPlayer->foodStore += eatBonus;
 
                                     int cap =
                                         computeFoodCapacity( targetPlayer );
