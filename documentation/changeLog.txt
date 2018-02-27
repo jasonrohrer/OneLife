@@ -17,6 +17,7 @@ Server Fixes:
 
 --Added script for cloning live settings to all servers from git repo.
 
+--Food bonus up to 3 for now.
 
 
 
