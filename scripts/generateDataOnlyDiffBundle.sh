@@ -214,12 +214,11 @@ while read user server
 do
   echo ""
   echo "Sending $dbzFileName to $server"
-  # don't let scp read from stdin or it will break our while read loop
-  scp ~/diffBundles/$dbzFileName $user@$server:downloads/ < /dev/null
+  scp ~/diffBundles/$dbzFileName $user@$server:downloads/
 
   echo "Adding url for $server to mirror list for this .dbz"
 
-  echo "http://$server/downloads/$dbzFileName" > ~/diffBundles/${newVersion}_inc_all_urls.txt
+  echo "http://$server/downloads/$dbzFileName" >> ~/diffBundles/${newVersion}_inc_all_urls.txt
 
 done <  <( grep "" ~/diffBundles/remoteServerList.ini )
 

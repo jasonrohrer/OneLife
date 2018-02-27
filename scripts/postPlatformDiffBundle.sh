@@ -116,10 +116,8 @@ for platform in linux mac win; do
 	while read user server
 	do
 		echo ""
-	 	echo "Sending $dbzFileName to $server"
-        
-        # don't let scp read from stdin or it will break our while read loop
-		scp $dbzFilePath $user@$server:downloads/ < /dev/null
+		echo "Sending $dbzFileName to $server"
+		scp $dbzFilePath $user@$server:downloads/
 		
 		echo "Adding url for $server to mirror list for this .dbz"
 		

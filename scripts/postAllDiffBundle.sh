@@ -66,13 +66,11 @@ for platform in all; do
 	do
 		echo ""
 		echo "Sending $dbzFileName to $server"
-		
-        # don't let scp read from stdin or it will break our while read loop
-		scp $dbzFilePath $user@$server:downloads/ < /dev/null
+		scp $dbzFilePath $user@$server:downloads/
 		
 		echo "Adding url for $server to mirror list for this .dbz"
 		
-		echo "http://$server/downloads/$dbzFileName" > $urlFilePath
+		echo "http://$server/downloads/$dbzFileName" >> $urlFilePath
 		
 	done <  <( grep "" ~/diffBundles/remoteServerList.ini )
 	
