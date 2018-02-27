@@ -116,8 +116,10 @@ for platform in linux mac win; do
 	while read user server
 	do
 		echo ""
-		echo "Sending $dbzFileName to $server"
-		scp $dbzFilePath $user@$server:downloads/
+	 	echo "Sending $dbzFileName to $server"
+        
+        # don't let scp read from stdin or it will break our while read loop
+		scp $dbzFilePath $user@$server:downloads/ < /dev/null
 		
 		echo "Adding url for $server to mirror list for this .dbz"
 		
@@ -159,7 +161,8 @@ git push --tags
 
 
 echo ""
-echo "Telling reflector about latest version."
+echo "Telling update server and reflector about latest version."
 
+echo -n "$newVersion" > ~/diffBundles/latest.txt
 
 echo -n "<?php \$version=$newVersion; ?>" > ~/www/reflector/requiredVersion.php

@@ -214,7 +214,8 @@ while read user server
 do
   echo ""
   echo "Sending $dbzFileName to $server"
-  scp ~/diffBundles/$dbzFileName $user@$server:downloads/
+  # don't let scp read from stdin or it will break our while read loop
+  scp ~/diffBundles/$dbzFileName $user@$server:downloads/ < /dev/null
 
   echo "Adding url for $server to mirror list for this .dbz"
 
@@ -255,8 +256,11 @@ done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
 # now that servers are no longer accepting new connections, tell reflector
-# that an upgrade is available
+# and update server that an upgrade is available
+echo -n "$newVersion" > ~/diffBundles/latest.txt
+
 echo -n "<?php \$version=$newVersion; ?>" > ~/www/reflector/requiredVersion.php
+
 
 
 
