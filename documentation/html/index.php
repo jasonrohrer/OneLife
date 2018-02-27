@@ -3,6 +3,59 @@
 <?php include( "reviewPages/reviewCount.php" ); ?>
 
 
+<?php
+function showPayLinks( $inSimple ) {
+    $referrer = "";
+    
+    if( isset( $_SERVER['HTTP_REFERER'] ) ) {
+        // pass it through without a regex filter
+        // because we can't control its safety in the end anyway
+        // (user can just edit URL sent to FastSpring).
+        $referrer = urlencode( $_SERVER['HTTP_REFERER'] );
+        }
+    
+    
+
+    ?>
+ <center>
+      <center><table border=0><tr><td> 
+<font size=3><ul> 
+      <li>Lifetime server account
+      <li>All future updates
+      <li>Full source code
+      <li>Tech support included
+      </ul></font>
+</td></tr></table>
+
+      <font size=5>Available now for $20</font><br>
+      <!--<font size=4 color=#ff0000>(25% off final price during launch week)</font><br><br>-->
+      
+      <a href="https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=<?php echo $referrer;?>">
+      <img src="fs_cards.png" width=280 height=45 border=0><?php
+      if( !$inSimple ) {
+
+          echo "<br>";
+          
+          echo "<img src=\"fs_button05.png\" width=210 height=60 border=0>";
+          }
+?>
+      </a>
+      </center>
+<?php
+    }
+
+function showLogo( $inImageFile, $inText ) {
+
+    echo "<table border=0><tr><td align=center>
+          <img src=\"$inImageFile\"><br>
+          <font size=1>$inText</font>
+          </td></tr></table>";
+    }
+
+?>
+
+
+
 <center>
 
 
@@ -43,9 +96,34 @@ if( $rs_reviewCount > 0 ) {
 <br>
 <br>
 
-<center><iframe title="YouTube video player" width="640" height="390" src="http://www.youtube.com/embed/riqu2eszsIg?rel=0" frameborder="0" allowfullscreen></iframe></center>
+<center><iframe title="YouTube video player" width="640" height="390" src="http://www.youtube.com/embed/mT4JktcVQuE?rel=0" frameborder="0" allowfullscreen></iframe></center>
 
 <br>
+
+    
+ <center>
+<table border=0><tr>
+<td><?php showLogo( "noDRM.png", "No DRM" ); ?></td>
+<td><?php showLogo( "noTie.png", "No middle-person" ); ?></td>
+<td><?php showLogo( "crossPlatform.png", "Cross-platform" ); ?></td>
+<td><?php showLogo( "openSource.png", "Open Source" ); ?></td>
+</tr></table>                                  
+</center>
+
+<center>
+<table border=0 cellpadding=2><tr><td bgcolor="#222222">
+<table border=0 cellpadding=5><tr><td bgcolor="#000000">
+<center> 
+
+<?php
+   showPayLinks( false );
+?>
+
+</td></tr></table>
+</td></tr></table>
+</center>
+
+    
 <br>
 <center><img src=lifeLine.jpg border=0 width=712 height=222></center>
 
@@ -68,11 +146,8 @@ if( $rs_reviewCount > 0 ) {
      </td></tr></table>
 <br>
 <br>
-     
 
-<br>
-<br>
-
+<!--
 <form action="http://northcountrynotes.org/releaseList/server.php" 
       method="post">
 <input type="hidden" name="action" value="subscribe">
@@ -82,7 +157,45 @@ Sign up for release announcement emails: <input type="text" name="email" value="
 (A few brief emails a year, at most.)
 </form>
 <br>
+-->
 
+<center><iframe title="YouTube video player" width="640" height="390" src="http://www.youtube.com/embed/riqu2eszsIg?rel=0" frameborder="0" allowfullscreen></iframe></center>
+    
+<br><br>
+    
+<table border=0 width="640" cellpadding=10 cellspacing=0><tr>
+    <td bgcolor="404040">
+    <font size=5>What you get</font>
+    </td></tr>
+    <tr>
+    <td bgcolor="#202020">
+<font size=3>
+    Immediately after your payment is processed, you will receive an email with an access link.  You will then be able to download all of the following DRM-free distributions:
+<center>
+<table border=0><tr><td>
+<font size=3><ul>
+<li>Windows build</li>
+<li>MacOS build (10.5 and later Intel)</li>
+<li>GNU/Linux build (compiled on 32-bit Ubuntu 14.04)</li>
+<li>Full source code bundle (compile it yourself)</li>
+</ul></font>
+</td></tr></table>
+</center>
+The price also includes downloads of all future updates and a lifetime account on the main game server that I am running.<br>
+<br>
+The source bundle includes the editor and server software, allowing you to set up and run your own server or even leverage the engine to make your own game.  See OneLife/documentation in the source bundle for instructions.<br>
+<br>
+You can take a look at the <a href="requirements.php">system requirements</a>.</font>
+</td></tr></table>
+<br>
+<br>
+
+     
+
+<br>
+<br>
+
+     
 </center>
 
      
