@@ -16,6 +16,7 @@ fi
 
 echo
 echo "Make sure to git pull both minorGems and OneLife"
+echo "Also pull OneLifeData7, but then run:   git checkout OneLife_v25"
 echo
 echo -n "Press ENTER when done."
 
@@ -47,6 +48,12 @@ cd windows
 
 
 scp $2_inc_win.dbz jcr15@onehouronelife.com:diffBundles/ 
+
+
+echo "Done."
+echo "Don't forget to run  'git checkout master'   in OneLifeData7."
+echo
+echo -n "Press ENTER when done."
 
 
 

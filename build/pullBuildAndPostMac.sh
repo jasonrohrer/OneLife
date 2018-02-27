@@ -23,8 +23,11 @@ cd game/diffBundle
 ./diffBundleCompile
 
 
+cd ../../../OneLifeData7
+git checkout OneLife_v25
 
-cd ../../../OneLife
+
+cd ../OneLife
 git pull
 
 
@@ -46,4 +49,6 @@ scp $2_inc_mac.dbz jcr15@onehouronelife.com:diffBundles/
 
 
 
+cd ../../../OneLifeData7
+git checkout master
 
