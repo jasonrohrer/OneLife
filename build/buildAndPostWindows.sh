@@ -50,10 +50,10 @@ cd windows
 scp $2_inc_win.dbz jcr15@onehouronelife.com:diffBundles/ 
 
 
+echo
+echo
 echo "Done."
 echo "Don't forget to run  'git checkout master'   in OneLifeData7."
-echo
-echo -n "Press ENTER when done."
 
 
 
