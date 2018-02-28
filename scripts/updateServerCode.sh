@@ -2,24 +2,8 @@
 # to the latest binary server code.  Does NOT update game data for the servers.
 
 
-# shut them all down
-
-
-
-
-echo "" 
-echo "Shutting down remote servers, setting server shutdownMode flags."
-echo ""
-
-# feed file through grep to add newlines at the end of each line
-# otherwise, read skips the last line if it doesn't end with newline
-while read user server port
-do
-  echo "  Shutting down $server"
-  ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerShutdown.sh'
-done <  <( grep "" ~/www/reflector/remoteServerList.ini )
-
-
+# shuts down each server and rebuilds them, one by one, allowing
+# players to continue playing on the other servers in the mean time
 
 
 
@@ -47,9 +31,13 @@ echo "Triggering remote server rebuilds."
 echo ""
 
 
-# contiue with remote server rebuilds
+# feed file through grep to add newlines at the end of each line
+# otherwise, read skips the last line if it doesn't end with newline
 while read user server port
 do
+  echo "  Shutting down $server"
+  ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerShutdown.sh'
+
   echo "  Starting update on $server"
   ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerCodeUpdate.sh'
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )

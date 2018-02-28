@@ -28,6 +28,10 @@ Server Fixes:
 --Fixed a server crash when a moving object moves away just as a user action
   happens.
 
+--Changed server update script to shut down servers one at a time so that
+  people can keep playing during the update.
+
+
 
 
 Version 58     2018-February-26
