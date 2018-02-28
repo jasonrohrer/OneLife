@@ -3,6 +3,12 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 59     2018-February-27
+
+--Fixed a crash when holding a baby and you get fed by someone else, and a few
+  other situations when holding a baby.
+
+
 
 Server Fixes:
 

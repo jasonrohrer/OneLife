@@ -8860,7 +8860,7 @@ void LivingLifePage::step() {
                             
                             //existing->lastAnim = ground;
                             //existing->lastAnimFade = 0;
-                            if( oldHeld != 0 ) {
+                            if( oldHeld > 0 ) {
                                 if( o.id == ourID ) {
                                     addNewAnimPlayerOnly( existing, ground );
                                     }
@@ -8921,19 +8921,21 @@ void LivingLifePage::step() {
                                         addNewAnimPlayerOnly( 
                                             existing, eating );
                                         }
-                                    
-                                    ObjectRecord *oldHeldObj =
-                                        getObject( oldHeld );
+                                    if( oldHeld > 0 ) {
                                         
-                                    if( oldHeldObj->eatingSound.numSubSounds
-                                        > 0 ) {
+                                        ObjectRecord *oldHeldObj =
+                                            getObject( oldHeld );
                                         
-                                        playSound( 
-                                            oldHeldObj->eatingSound,
-                                            getVectorFromCamera( 
-                                                existing->currentPos.x, 
-                                                existing->currentPos.y ) );
-                                        otherSoundPlayed = true;
+                                        if( oldHeldObj->eatingSound.numSubSounds
+                                            > 0 ) {
+                                        
+                                            playSound( 
+                                                oldHeldObj->eatingSound,
+                                                getVectorFromCamera( 
+                                                    existing->currentPos.x, 
+                                                    existing->currentPos.y ) );
+                                            otherSoundPlayed = true;
+                                            }
                                         }
                                     }
                                 else {
@@ -9176,7 +9178,7 @@ void LivingLifePage::step() {
                                         
                                         int testAncestor = oldHeld;
                                         
-                                        if( oldHeld == 0 &&
+                                        if( oldHeld <= 0 &&
                                             heldTransitionSourceID > 0 ) {
                                             
                                             testAncestor = 
@@ -9184,7 +9186,7 @@ void LivingLifePage::step() {
                                             }
                                         
 
-                                        if( testAncestor != 0 ) {
+                                        if( testAncestor > 0 ) {
                                             // new held object is result
                                             // of a transtion
                                             // (otherwise, it has been
@@ -9316,6 +9318,7 @@ void LivingLifePage::step() {
 
                         
                         if( existing->holdingID >= 0 &&
+                            oldHeld >= 0 &&
                             oldHeld != existing->holdingID &&
                             ! heldOriginValid &&
                             heldTransitionSourceID > 0 &&
