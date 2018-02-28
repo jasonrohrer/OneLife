@@ -19,6 +19,9 @@ Server Fixes:
 
 --Food bonus up to 3 for now.
 
+--Fixed a server crash when a moving object moves away just as a user action
+  happens.
+
 
 
 Version 58     2018-February-26

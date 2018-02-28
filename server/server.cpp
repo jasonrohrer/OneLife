@@ -2915,11 +2915,11 @@ static char directLineBlocked( GridPos inSource, GridPos inDest ) {
 
 
 // returns true if added
-static char addHeldToContainer( LiveObject *inPlayer, 
+static char addHeldToContainer( LiveObject *inPlayer,
+                                int inTargetID,
                                 int inContX, int inContY ) {
     
-    int target = getMapObject( inContX, inContY );
-
+    int target = inTargetID;
         
     int targetSlots = 
         getNumContainerSlots( target );
@@ -5117,7 +5117,7 @@ int main() {
                                     // target container
                                     
                                     transApplied = addHeldToContainer(
-                                        nextPlayer, m.x, m.y );
+                                        nextPlayer, target, m.x, m.y );
                                     }
                                 
 
@@ -5985,6 +5985,7 @@ int main() {
                                         
                                         if( addHeldToContainer( 
                                                 nextPlayer,
+                                                target,
                                                 m.x, m.y ) ) {
                                             // handled
                                             }
