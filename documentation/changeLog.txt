@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 60    ???
+
+--Fixed cannot-move-after-speaking bug on Mac by making E-click
+  right-mouse-click alternative off by default (there's now a settings file).
+
+
+
+
 Server Fixes:
 
 --Added commas to big numbers in homepage life stats.

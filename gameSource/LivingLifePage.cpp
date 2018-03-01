@@ -1281,6 +1281,7 @@ LivingLifePage::LivingLifePage()
           mMapD( MAP_D ),
           mMapOffsetX( 0 ),
           mMapOffsetY( 0 ),
+          mEKeyEnabled( false ),
           mEKeyDown( false ),
           mGuiPanelSprite( loadSprite( "guiPanel.tga", false ) ),
           mNotePaperSprite( loadSprite( "notePaper.tga", false ) ),
@@ -1502,7 +1503,10 @@ LivingLifePage::LivingLifePage()
 
     mShowHighlights = 
         SettingsManager::getIntSetting( "showMouseOverHighlights", 1 );
-    
+
+    mEKeyEnabled = 
+        SettingsManager::getIntSetting( "eKeyForRightClick", 0 );
+
 
     if( teaserVideo ) {
         mTeaserArrowLongSprite = loadWhiteSprite( "teaserArrowLong.tga" );
@@ -12477,7 +12481,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     char modClick = false;
     
-    if( mEKeyDown || isLastMouseButtonRight() ) {
+    if( ( mEKeyDown && mEKeyEnabled ) || isLastMouseButtonRight() ) {
         modClick = true;
         }
     

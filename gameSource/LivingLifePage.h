@@ -459,6 +459,7 @@ class LivingLifePage : public GamePage {
         int mMapOffsetY;
 
 
+        char mEKeyEnabled;
         char mEKeyDown;
         
 
