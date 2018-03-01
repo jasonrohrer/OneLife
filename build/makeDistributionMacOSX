@@ -39,14 +39,14 @@ echo "0" > settings/fullscreen.ini
 cd ../..
 
 
-cp -r macOSX/OneLife.app mac/OneLife_$1/OneLife.app
-cp ../gameSource/OneLife mac/OneLife_$1/OneLife.app/Contents/MacOS
+cp -r macOSX/OneLife.app mac/OneLife_$1/OneLife_$1.app
+cp ../gameSource/OneLife mac/OneLife_$1/OneLife_$1.app/Contents/MacOS
 
-rm -r mac/OneLife_$1/OneLife.app/Contents/MacOS/empty.txt
-rm -r mac/OneLife_$1/OneLife.app/Contents/Frameworks/empty.txt
+rm -r mac/OneLife_$1/OneLife_$1.app/Contents/MacOS/empty.txt
+rm -r mac/OneLife_$1/OneLife_$1.app/Contents/Frameworks/empty.txt
 
 # install SDL framework
-cp -r $3 mac/OneLife_$1/OneLife.app/Contents/Frameworks/
+cp -r $3 mac/OneLife_$1/OneLife_$1.app/Contents/Frameworks/
 
 cd mac
 
