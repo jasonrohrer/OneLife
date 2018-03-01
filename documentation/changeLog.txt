@@ -12,6 +12,9 @@ Version 60    ???
   work-around at first start-up (because System Events stops running on
   certain recent versions of MacOS).
 
+--Changed Mac App bundle name to include version number as a work-around for
+  failed updates on the Mac.
+
 
 
 Server Fixes:

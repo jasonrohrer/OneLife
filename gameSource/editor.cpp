@@ -1,4 +1,4 @@
-int versionNumber = 26;
+int versionNumber = 59;
 
 
 
@@ -188,6 +188,12 @@ const char *getWindowTitle() {
 const char *getAppName() {
     return "EditOneLife";
     }
+
+
+int getAppVersion() {
+    return versionNumber;
+    }
+
 
 const char *getLinuxAppName() {
     // no dir-name conflict here because we're using all caps for app name
