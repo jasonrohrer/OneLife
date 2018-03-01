@@ -348,6 +348,31 @@ int processLifeLogFolder( File *inFolder ) {
 
 
 
+void printCommaInt( FILE *inFile, int inInt ) {
+
+    int billions = inInt / 1000000000;
+    inInt -= billions;
+    
+    int millions = inInt / 1000000;
+    inInt -= millions;
+    
+    int thousands = inInt / 1000;
+    inInt -= thousands;
+    
+    if( billions > 0 ) {
+        fprintf( inFile, "%d,", billions );
+        }
+    if( millions > 0 ) {
+        fprintf( inFile, "%d,", millions );
+        }
+    if( thousands > 0 ) {
+        fprintf( inFile, "%d,", thousands );
+        }
+
+    fprintf( inFile, "%d", inInt );
+    }
+
+
 
 int main( int inNumArgs, char **inArgs ) {
 
@@ -401,12 +426,17 @@ int main( int inNumArgs, char **inArgs ) {
 
         if( outFile != NULL ) {
             
-            fprintf( outFile, 
-                     "%d lives lived for a total of %0.2f hours<br>\n"
-                     "%d people lived past age fifty-five<br>\n"
-                     "%d generations in longest family line",
-                     totalLives, totalAge / 60, over55Count,
-                     longestFamilyChain );
+            printCommaInt( outFile, totalLives );
+            fprintf( outFile, " lives lived for a total of " );
+
+            printCommaInt( outFile, lrint( floor( totalAge / 60 ) ) );
+            fprintf( outFile, " hours<br>\n" );
+
+            printCommaInt( outFile, over55Count );
+            fprintf( outFile, " people lived past age fifty-five<br>\n" );
+            
+            printCommaInt( outFile, longestFamilyChain );
+            fprintf( outFile, " generations in longest family line" );
             
             fclose( outFile );
             }
