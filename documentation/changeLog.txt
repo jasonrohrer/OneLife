@@ -8,6 +8,9 @@ Version 60    ???
 --Fixed cannot-move-after-speaking bug on Mac by making E-click
   right-mouse-click alternative off by default (there's now a settings file).
 
+--Replaced AppleScript System Events with Finder for MacOS find-the-folder
+  work-around at first start-up (because System Events stops running on
+  certain recent versions of MacOS).
 
 
 
