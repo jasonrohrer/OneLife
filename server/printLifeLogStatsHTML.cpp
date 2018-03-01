@@ -350,14 +350,19 @@ int processLifeLogFolder( File *inFolder ) {
 
 void printCommaInt( FILE *inFile, int inInt ) {
 
-    int billions = inInt / 1000000000;
-    inInt -= billions;
+    int thou = 1000;
+    int mil = thou * thou;
+    int bil = mil * thou;
     
-    int millions = inInt / 1000000;
-    inInt -= millions;
+
+    int billions = inInt / bil;
+    inInt -= billions * bil;
     
-    int thousands = inInt / 1000;
-    inInt -= thousands;
+    int millions = inInt / mil;
+    inInt -= millions * mil;
+    
+    int thousands = inInt / thou;
+    inInt -= thousands * thou;
     
     if( billions > 0 ) {
         fprintf( inFile, "%d,", billions );
