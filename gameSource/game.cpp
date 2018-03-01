@@ -1,4 +1,7 @@
-int versionNumber = 59;
+int versionNumber = 60;
+
+
+// NOTE that OneLife doesn't use account hmacs
 
 // retain an older version number here if server is compatible
 // with older client versions.

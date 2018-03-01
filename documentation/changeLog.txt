@@ -3,7 +3,8 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 60    ???
+
+Version 60    2018-February-28
 
 --Fixed cannot-move-after-speaking bug on Mac by making E-click
   right-mouse-click alternative off by default (there's now a settings file).
@@ -14,6 +15,7 @@ Version 60    ???
 
 --Changed Mac App bundle name to include version number as a work-around for
   failed updates on the Mac.
+
 
 
 
