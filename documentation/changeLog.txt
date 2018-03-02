@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes:
+
+--Now support emails that use the + character.
+
+--URL encoding fixed so that 0-9 and ~ are not encoded characters.
+
+
 
 Version 60    2018-February-28
 

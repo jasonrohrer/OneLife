@@ -8,6 +8,7 @@
 #include "minorGems/util/SimpleVector.h"
 
 #include "minorGems/network/web/WebRequest.h"
+#include "minorGems/network/web/URLUtils.h"
 
 #include "minorGems/crypto/hashes/sha1.h"
 
@@ -144,11 +145,15 @@ void recordPlayerLifeStats( char *inEmail, int inNumSecondsLived ) {
         
         WebRequest *request;
         
+        char *encodedEmail = URLUtils::urlEncode( inEmail );
+
         char *url = autoSprintf( 
             "%s?action=get_sequence_number"
             "&email=%s",
             statsServerURL,
-            inEmail );
+            encodedEmail );
+        
+        delete [] encodedEmail;
         
         request = new WebRequest( "GET", url, NULL );
         printf( "Starting new web request for %s\n", url );
@@ -206,7 +211,8 @@ void stepPlayerStats() {
                     
                     delete [] seqString;
                     
-
+                    char *encodedEmail = URLUtils::urlEncode( r->email );
+                    
                     char *url = autoSprintf( 
                         "%s?action=log_game"
                         "&email=%s"
@@ -214,11 +220,12 @@ void stepPlayerStats() {
                         "&sequence_number=%d"
                         "&hash_value=%s",
                         statsServerURL,
-                        r->email,
+                        encodedEmail,
                         r->numGameSeconds,
                         r->sequenceNumber,
                         hash );
                     
+                    delete [] encodedEmail;
                     delete [] hash;
 
                     r->request = new WebRequest( "GET", url, NULL );

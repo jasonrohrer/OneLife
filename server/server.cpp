@@ -13,6 +13,7 @@
 #include "minorGems/network/SocketServer.h"
 #include "minorGems/network/SocketPoll.h"
 #include "minorGems/network/web/WebRequest.h"
+#include "minorGems/network/web/URLUtils.h"
 
 #include "minorGems/crypto/hashes/sha1.h"
 
@@ -3926,6 +3927,9 @@ int main() {
                             if( requireTicketServerCheck &&
                                 ! nextConnection->error ) {
                                 
+                                char *encodedEmail =
+                                    URLUtils::urlEncode( 
+                                        nextConnection->email );
 
                                 char *url = autoSprintf( 
                                     "%s?action=check_ticket_hash"
@@ -3933,9 +3937,11 @@ int main() {
                                     "&hash_value=%s"
                                     "&string_to_hash=%lu",
                                     ticketServerURL,
-                                    nextConnection->email,
+                                    encodedEmail,
                                     keyHash,
                                     nextConnection->sequenceNumber );
+
+                                delete [] encodedEmail;
 
                                 nextConnection->ticketServerRequest =
                                     new WebRequest( "GET", url, NULL );
