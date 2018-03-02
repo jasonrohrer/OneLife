@@ -14,6 +14,10 @@
 # leave them alone.
 *.dxf    binary
 
+# some windows-specific files
+icon.rc                         binary
+makeWindowsExtractor_template   binary
+
 
 # Note that source files and .ini files, etc. will be auto-converted to CRLF
 # line endings on Windows, but that doesn't seem to cause a problem, currently. 
