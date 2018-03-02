@@ -87,7 +87,7 @@ done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
 echo "" 
-echo "Triggering EVEN remote server code updates and restart."
+echo "Triggering ODD remote server code updates and restart."
 echo ""
 
 # feed file through grep to add newlines at the end of each line
