@@ -3,6 +3,23 @@
 
 # Copies latest version from git repository.
 
+
+
+echo "NOTE:"
+echo "This script is only for replicating server settings that have NOT yet"
+echo "been commited in git."
+echo "Most of the time, you DO NOT want to do this, because those customized"
+echo "settings files will block git pull operations in the future."
+echo ""
+echo "Usually, you'll just want to run ./remoteServerGitPull.sh instead"
+echo "to get all remote servers updated to the settings files in git."
+echo ""
+echo "If you really want to do this..."
+echo -n "Hit [ENTER] when ready: "
+read
+
+
+
 git pull
 
 
