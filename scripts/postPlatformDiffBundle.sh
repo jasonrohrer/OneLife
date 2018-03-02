@@ -1,16 +1,35 @@
 
 
-if [ $# -ne 1 ]
+if [ $# -lt 1 ]
 then
 	echo "Usage:"
-	echo "postPlatformDiffBundle.sh  version_number"
+	echo "postPlatformDiffBundle.sh  version_number [servers_too]"
+	echo ""
+	echo "servers_too is an optional parameter.  Set to 1 to interleave"
+	echo "server updates with binary bundle updates (for protocol changes)."
 	echo ""
 	echo "Example:"
 	echo "postPlatformDiffBundle.sh 18"
 	echo ""
+	echo "Example:"
+	echo "postPlatformDiffBundle.sh 18 1"
+	echo ""
 	
 	exit 1
 fi
+
+
+
+serversToo=0
+
+
+if [ $# -gt 1 ]
+then
+	serversToo=1
+fi
+
+echo "ServersToo = $serversToo"
+read
 
 
 newVersion=$1
@@ -158,9 +177,23 @@ git push --tags
 
 
 
+if [ $serversToo -gt 0 ]
+then
+	~/checkout/OneLifeWorking/scripts/updateServerCodeStep1.sh
+fi
+
+
+
 echo ""
 echo "Telling update server and reflector about latest version."
 
 echo -n "$newVersion" > ~/diffBundles/latest.txt
 
 echo -n "<?php \$version=$newVersion; ?>" > ~/www/reflector/requiredVersion.php
+
+
+
+if [ $serversToo -gt 0 ]
+then
+	~/checkout/OneLifeWorking/scripts/updateServerCodeStep2.sh
+fi
