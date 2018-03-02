@@ -1,0 +1,6 @@
+
+CREATE DATABASE jcr15_olBulkEmail;
+
+CREATE USER 'jcr15_olBulkU'@'localhost' IDENTIFIED BY 'password';
+
+GRANT ALL PRIVILEGES ON jcr15_olBulkEmail.* To 'jcr15_olBulkU'@'localhost';
