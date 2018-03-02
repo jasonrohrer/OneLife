@@ -86,9 +86,9 @@ Build the editor thus:
 cd OneLife/server
 ./configure
 make
-ln -s ../../OneLifeDa7/objects .
-ln -s ../../OneLifeDa7/transitions .
-ln -s ../../OneLifeDa7/categories .
+ln -s ../../OneLifeData7/objects .
+ln -s ../../OneLifeData7/transitions .
+ln -s ../../OneLifeData7/categories .
 
 
 Note that this makes links to the game's real data.  If you want to use your own
