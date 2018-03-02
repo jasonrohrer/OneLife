@@ -16,6 +16,10 @@ Server Fixes:
 
 --URL encoding fixed so that 0-9 and ~ are not encoded characters.
 
+--Server update scripts now interleave updates in batches of servers, even 
+  first, then odd.  This keeps half the servers online throughout most of the
+  update process.
+
 
 
 Version 60    2018-February-28

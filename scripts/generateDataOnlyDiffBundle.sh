@@ -237,28 +237,10 @@ rm -r ~/checkout/diffWorking
 
 
 
-echo "" 
-echo "Shutting down remote servers, setting server shutdownMode flags."
-echo ""
-
-
-
-# feed file through grep to add newlines at the end of each line
-# otherwise, read skips the last line if it doesn't end with newline
-while read user server port
-do
-  echo "  Shutting down $server"
-  ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerShutdown.sh'
-done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
 
 
-# now that servers are no longer accepting new connections, tell reflector
-# and update server that an upgrade is available
-echo -n "$newVersion" > ~/diffBundles/latest.txt
-
-echo -n "<?php \$version=$newVersion; ?>" > ~/www/reflector/requiredVersion.php
 
 
 
@@ -319,25 +301,6 @@ make
 
 
 
-
-
-
-
-echo "" 
-echo "Triggering remote server updates and restarts."
-echo ""
-
-
-# contiue with remote server restarts
-while read user server port
-do
-  echo "  Starting update on $server"
-  ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerUpdate.sh'
-done <  <( grep "" ~/www/reflector/remoteServerList.ini )
-
-
-
-
 echo "" 
 echo "Posting to website Update log."
 echo ""
@@ -351,3 +314,159 @@ echo "Generating object report for website."
 echo ""
 
 ~/checkout/OneLifeWorking/scripts/generateObjectReport.sh
+
+
+
+
+
+
+echo "" 
+echo "Shutting down EVEN remote servers, setting server shutdownMode flags."
+echo ""
+
+
+
+# feed file through grep to add newlines at the end of each line
+# otherwise, read skips the last line if it doesn't end with newline
+i=1
+while read user server port
+do
+	if [ $((i % 2)) -eq 0 ];
+	then
+		echo "  Shutting down $server"
+		ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerShutdown.sh'
+	fi
+	i=$((i + 1))
+done <  <( grep "" ~/www/reflector/remoteServerList.ini )
+
+
+
+
+
+
+
+echo "" 
+echo "Triggering EVEN remote server updates."
+echo ""
+
+
+# this will wait for even servers to finish shutting down
+i=1
+while read user server port
+do
+	if [ $((i % 2)) -eq 0 ];
+	then
+		echo "  Starting update on $server"
+		ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerUpdate.sh'
+	fi
+	i=$((i + 1))
+done <  <( grep "" ~/www/reflector/remoteServerList.ini )
+
+
+
+
+
+
+echo "" 
+echo "Shutting down ODD remote servers, setting server shutdownMode flags."
+echo ""
+
+
+
+# feed file through grep to add newlines at the end of each line
+# otherwise, read skips the last line if it doesn't end with newline
+i=1
+while read user server port
+do
+	if [ $((i % 2)) -eq 1 ];
+	then
+		echo "  Shutting down $server"
+		ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerShutdown.sh'
+	fi
+	i=$((i + 1))
+done <  <( grep "" ~/www/reflector/remoteServerList.ini )
+
+
+
+
+
+echo "" 
+echo "Setting required version number to $newVersion for all future connections."
+echo ""
+
+
+
+# now that servers are no longer accepting new connections, tell reflector
+# and update server that an upgrade is available
+echo -n "$newVersion" > ~/diffBundles/latest.txt
+
+echo -n "<?php \$version=$newVersion; ?>" > ~/www/reflector/requiredVersion.php
+
+
+
+
+echo "" 
+echo "Triggering EVEN remote server startups."
+echo ""
+
+i=1
+while read user server port
+do
+	if [ $((i % 2)) -eq 0 ];
+	then
+		echo "  Triggering server startup on $server"
+		ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerStartup.sh'
+	fi
+	i=$((i + 1))
+done <  <( grep "" ~/www/reflector/remoteServerList.ini )
+
+
+
+
+
+echo "" 
+echo "Triggering ODD remote server updates."
+echo ""
+
+
+# this will wait for ODD servers to finish shutting down
+i=1
+while read user server port
+do
+	if [ $((i % 2)) -eq 1 ];
+	then
+		echo "  Starting update on $server"
+		ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerUpdate.sh'
+	fi
+	i=$((i + 1))
+done <  <( grep "" ~/www/reflector/remoteServerList.ini )
+
+
+
+echo "" 
+echo "Triggering ODD remote server startups."
+echo ""
+
+i=1
+while read user server port
+do
+	if [ $((i % 2)) -eq 1 ];
+	then
+		echo "  Triggering server startup on $server"
+		ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerStartup.sh'
+	fi
+	i=$((i + 1))
+done <  <( grep "" ~/www/reflector/remoteServerList.ini )
+
+
+
+
+echo "" 
+echo "Entire update process is done."
+echo ""
+
+
+
+
+
+
