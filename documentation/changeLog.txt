@@ -20,6 +20,9 @@ Server Fixes:
   first, then odd.  This keeps half the servers online throughout most of the
   update process.
 
+--Chasing animals now attempt exact distance to closest target instead of
+  overshooting.
+
 
 
 Version 60    2018-February-28

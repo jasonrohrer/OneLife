@@ -2384,6 +2384,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 
                 TransRecord *destTrans = NULL;
                 
+                int desiredMoveDist = t->desiredMoveDist;
 
                 if( t->move < 3 ) {
                     
@@ -2396,6 +2397,12 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     if( dist <= 7 &&
                         ( p.x != 0 || p.y != 0 ) ) {
                         
+                        if( t->move == 1 && dist <= desiredMoveDist ) {
+                            // chase.  Try to land exactly on them
+                            // if they're close enough to do it in one move
+                            desiredMoveDist = lrint( dist );
+                            }
+
                         dir.x = p.x - inX;
                         dir.y = p.y - inY;
                         dir = normalize( dir );
@@ -2479,7 +2486,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 // now we have the dir we want to go in    
 
 
-                int tryDist = t->desiredMoveDist;
+                int tryDist = desiredMoveDist;
                 
                 if( tryDist < 1 ) {
                     tryDist = 1;
