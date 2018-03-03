@@ -3,9 +3,16 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 61    ????
+Version 62    ????
 
 --Improved display of error message if game folder is read-only.
+
+
+
+
+Source Fixes:
+
+--Fixed to flush caches after data update in live source distribution.
 
 
 
