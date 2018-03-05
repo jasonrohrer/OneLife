@@ -14,6 +14,9 @@ Version 62    ????
 --Fixed double-sound play when use-dummy object with using sound transitions
   into something else (example:  shallow well into deep well).
 
+--Fixed so that floor hugging code only duplicates botttom layer of neighboring
+  floor (so that bear skin rug isn't duplicated oddly against a wall).
+
 
 
 Source Fixes:

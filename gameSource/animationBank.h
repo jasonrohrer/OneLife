@@ -231,6 +231,11 @@ char isAnimEmpty( int inObjectID, AnimType inType );
 // the next drawObjectAnim call
 void setAnimLayerFades( float *inFades );
 
+// sets max index of layers to draw on next draw call
+// (can be used to draw lower layers only)
+// Defaults to -1 and resets to -1 after every call (draw all layers)
+void setAnimLayerCutoff( int inCutoff );
+    
 
 
 // packed version of all object animation call parameters

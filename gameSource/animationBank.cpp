@@ -493,6 +493,15 @@ void setAnimLayerFades( float *inFades ) {
 
 
 
+static int animLayerCutoff = -1;
+
+void setAnimLayerCutoff( int inCutoff ) {
+    animLayerCutoff = inCutoff;
+    }
+
+
+
+
 void freeAnimationBank() {
 
     if( mouthShapes != NULL ) {
@@ -1304,6 +1313,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
     
 
     if( r == NULL ) {
+        setObjectDrawLayerCutoff( animLayerCutoff );
+        animLayerCutoff = -1;
         return drawObject( getObject( inObjectID ), inDrawBehindSlots,
                            inPos, inRot, inWorn, 
                            inFlipH, inAge, 
@@ -1474,6 +1485,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
     
     if( obj->numSprites > MAX_WORKING_SPRITES ) {
         // cannot animate objects with this many sprites
+        
+        setObjectDrawLayerCutoff( animLayerCutoff );
+        animLayerCutoff = -1;
+
         drawObject( obj, inDrawBehindSlots,
                     inPos, inRot, inWorn, inFlipH, inAge, 
                     inHideClosestArm, inHideAllLimbs, inHeldNotInPlaceYet,
@@ -1949,7 +1964,16 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
     // now that their individual animations have been computed
     // walk through and follow parent chains to compute compound animations
     // for each one before drawing
-    for( int i=0; i<obj->numSprites; i++ ) {
+
+    int limit = obj->numSprites;
+    
+    if( animLayerCutoff > -1 && animLayerCutoff < limit ) {
+        limit = animLayerCutoff;
+        }
+    animLayerCutoff = -1;
+    
+
+    for( int i=0; i<limit; i++ ) {
         
         if( obj->spriteSkipDrawing[i] ) {
             continue;
@@ -2676,6 +2700,9 @@ void drawObjectAnim( int inObjectID, AnimType inType, double inFrameTime,
     AnimationRecord *r = getAnimation( inObjectID, inType );
  
     if( r == NULL ) {
+        setObjectDrawLayerCutoff( animLayerCutoff );
+        animLayerCutoff = -1;
+
         drawObject( getObject( inObjectID ), inPos, inRot, inWorn, 
                     inFlipH, inAge, inHideClosestArm, inHideAllLimbs, 
                     inHeldNotInPlaceYet, inClothing,

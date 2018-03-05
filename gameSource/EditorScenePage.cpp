@@ -1084,6 +1084,12 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                 if( p > 0 ) {
                     startDrawingThroughStencil();
                     }
+                
+                if( p > 0 ) {
+                    // floor hugging pass
+                    // only draw bottom layer of floor
+                    setAnimLayerCutoff( 1 );
+                    }
 
                 char used;
                 

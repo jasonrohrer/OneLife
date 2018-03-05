@@ -427,6 +427,13 @@ typedef struct HoldingPos {
     } HoldingPos;
 
 
+// sets max index of layers to draw on next draw call
+// (can be used to draw lower layers only)
+// Defaults to -1 and resets to -1 after every call (draw all layers)
+void setObjectDrawLayerCutoff( int inCutoff );
+
+
+
 // inAge -1 for no age modifier
 //
 // note that inScale, which is only used by the object picker, to draw objects

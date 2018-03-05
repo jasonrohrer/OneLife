@@ -3633,6 +3633,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 double timeVal = frameRateFactor * 
                     mMapFloorAnimationFrameCount[ mapI ] / 60.0;
                 
+
+                if( p > 0 ) {
+                    // floor hugging pass
+                    // only draw bottom layer of floor
+                    setAnimLayerCutoff( 1 );
+                    }
+                
+                
                 char used;
                 drawObjectAnim( oID, 2, 
                                 ground, timeVal,

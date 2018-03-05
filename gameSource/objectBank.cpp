@@ -2110,6 +2110,14 @@ static char logicalXOR( char inA, char inB ) {
 
 
 
+static int objectLayerCutoff = -1;
+
+void setObjectDrawLayerCutoff( int inCutoff ) {
+    objectLayerCutoff = inCutoff;
+    }
+
+
+
 HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                        doublePair inPos,
                        double inRot, char inWorn, char inFlipH, double inAge,
@@ -2172,7 +2180,15 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
     double frontShoeRot = 0;
     
     
-    for( int i=0; i<inObject->numSprites; i++ ) {
+    int limit = inObject->numSprites;
+    
+    if( objectLayerCutoff > -1 && objectLayerCutoff < limit ) {
+        limit = objectLayerCutoff;
+        }
+    objectLayerCutoff = -1;
+    
+
+    for( int i=0; i<limit; i++ ) {
         if( inObject->spriteSkipDrawing != NULL &&
             inObject->spriteSkipDrawing[i] ) {
             continue;
