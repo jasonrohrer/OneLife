@@ -114,6 +114,7 @@ class Button : public PageComponent, public ActionListenerList {
         char mActive;
 
         char mHover;
+        char mPressStartedHere;
         char mDragOver;
 
         double mWide, mHigh, mPixWidth;

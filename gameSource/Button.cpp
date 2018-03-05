@@ -108,6 +108,7 @@ double Button::getHeight() {
 
 void Button::clearState() {
     mHover = false;
+    mPressStartedHere = false;
     mDragOver = false;
     }
 
@@ -235,17 +236,20 @@ void Button::pointerMove( float inX, float inY ) {
 
 
 void Button::pointerDown( float inX, float inY ) {
-    pointerDrag( inX, inY );
+    if( isInside( inX, inY ) ) {
+        mPressStartedHere = true;
+        pointerDrag( inX, inY );
+        }
     }
 
 
 
 void Button::pointerDrag( float inX, float inY ) {
-    if( isInside( inX, inY ) ) {
-        mDragOver = true;
+    if( mPressStartedHere && isInside( inX, inY ) ) {
         if( mMouseOverTip != NULL ) {
             setToolTip( mMouseOverTip );
             }
+        mDragOver = true;
         }
     else {
         if( mDragOver ) {
@@ -260,12 +264,13 @@ void Button::pointerDrag( float inX, float inY ) {
 
 
 void Button::pointerUp( float inX, float inY ) {
-    mDragOver = false;
-    if( isInside( inX, inY ) ) {
+    if( mPressStartedHere && isInside( inX, inY ) ) {
         mHover = true;
         setToolTip( "" );
         fireActionPerformed( this );
         }
+    mPressStartedHere = false;
+    mDragOver = false;
     }        
 
 
