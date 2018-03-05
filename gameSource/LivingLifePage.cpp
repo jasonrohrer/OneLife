@@ -9364,18 +9364,30 @@ void LivingLifePage::step() {
                                 
                                 // what about "using" sound
                                 // of the target of our transition?
-                                            
-                                ObjectRecord *targetObject = 
-                                    getObject( heldTransitionSourceID );
                                 
-                                if( targetObject->usingSound.numSubSounds 
-                                    > 0 ) {
+                                char creationWillPlay = false;
+                                
+                                if( tr->newTarget > 0 && tr->target > 0 &&
+                                    shouldCreationSoundPlay( tr->target,
+                                                             tr->newTarget ) ) {
+                                    creationWillPlay = true;
+                                    }
+                                
+
+                                if( !creationWillPlay ) {
                                     
-                                    playSound( 
-                                        targetObject->usingSound,
-                                        getVectorFromCamera(
-                                            existing->currentPos.x, 
-                                            existing->currentPos.y ) );
+                                    ObjectRecord *targetObject = 
+                                        getObject( heldTransitionSourceID );
+                                    
+                                    if( targetObject->usingSound.numSubSounds 
+                                        > 0 ) {
+                                        
+                                        playSound( 
+                                            targetObject->usingSound,
+                                            getVectorFromCamera(
+                                                existing->currentPos.x, 
+                                                existing->currentPos.y ) );
+                                        }
                                     }
                                 }
                             }

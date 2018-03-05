@@ -11,6 +11,9 @@ Version 62    ????
 
 --Fixed Editor pickers not to register clicks for presses that start elsewhere.
 
+--Fixed double-sound play when use-dummy object with using sound transitions
+  into something else (example:  shallow well into deep well).
+
 
 
 Source Fixes:
