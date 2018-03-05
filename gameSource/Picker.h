@@ -50,7 +50,10 @@ class Picker : public PageComponent, ActionListener,
     protected:
         virtual void draw();
 
+        virtual void pointerDown( float inX, float inY );
         virtual void pointerUp( float inX, float inY );
+
+        char mPressStartedHere;
 
         
         Pickable *mPickable;

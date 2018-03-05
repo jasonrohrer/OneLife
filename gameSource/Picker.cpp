@@ -24,6 +24,7 @@ extern Font *smallFont;
 
 Picker::Picker( Pickable *inPickable, double inX, double inY )
         : PageComponent( inX, inY ),
+          mPressStartedHere( false ),
           mPickable( inPickable ),
           mSkip( 0 ),
           mResults( NULL ),
@@ -444,12 +445,24 @@ void Picker::draw() {
     
     }
 
+
+
+void Picker::pointerDown( float inX, float inY ) {
+    if( inX > -80 && inX < 80 &&
+        inY < 75 && inY > -245 ) {
+        mPressStartedHere = true;
+        }
+    }
+
         
 
 void Picker::pointerUp( float inX, float inY ) {
-    if( inX > -80 && inX < 80 &&
+    if( mPressStartedHere &&
+        inX > -80 && inX < 80 &&
         inY < 75 && inY > -245 ) {
         
+        mPressStartedHere = false;
+
         inY -= 40;
         
         inY *= -1;
@@ -515,6 +528,7 @@ void Picker::pointerUp( float inX, float inY ) {
             }
         
         }
+    mPressStartedHere = false;
     }
 
 

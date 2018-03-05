@@ -9,6 +9,8 @@ Version 62    ????
 
 --Buttons no longer clicked if we drag into them (if press starts elsewhere).
 
+--Fixed Editor pickers not to register clicks for presses that start elsewhere.
+
 
 
 Source Fixes:
