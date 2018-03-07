@@ -75,7 +75,9 @@ float initGroundSpritesStep() {
         int i = nextStep;
 
         int b = allBiomes.getElementDirect( i );
-    
+        
+        int cacheFileNumber = b;
+        
         char *fileName;
         
         char isUnknownBiome = false;
@@ -86,7 +88,10 @@ float initGroundSpritesStep() {
             
             // stick it at end
             b = groundSpritesArraySize - 1;
+        
+            cacheFileNumber = 99999;
             
+    
             isUnknownBiome = true;
             }
         else {
@@ -158,7 +163,7 @@ float initGroundSpritesStep() {
                         char *cacheFileName = 
                             autoSprintf( 
                                 "groundTileCache/biome_%d_x%d_y%d.tga",
-                                b, tx, ty );
+                                cacheFileNumber, tx, ty );
 
                         groundSprites[b]->tiles[ty][tx] = 
                             loadSpriteBase( cacheFileName, false );
@@ -166,7 +171,7 @@ float initGroundSpritesStep() {
                         char *squareCacheFileName = 
                             autoSprintf( 
                                 "groundTileCache/biome_%d_x%d_y%d_square.tga",
-                                b, tx, ty );
+                                cacheFileNumber, tx, ty );
 
                         groundSprites[b]->squareTiles[ty][tx] = 
                             loadSpriteBase( squareCacheFileName, false );
@@ -207,7 +212,7 @@ float initGroundSpritesStep() {
 
                                 char *cacheFileName = autoSprintf( 
                                   "groundTileCache/biome_%d_x%d_y%d_square.tga",
-                                  b, tx, ty );
+                                  cacheFileNumber, tx, ty );
 
                                 if( printSteps ) {    
                                     printf( "Cache file %s does not exist, "
@@ -233,7 +238,7 @@ float initGroundSpritesStep() {
                                 char *cacheFileName = 
                                     autoSprintf( 
                                         "groundTileCache/biome_%d_x%d_y%d.tga",
-                                        b, tx, ty );
+                                        cacheFileNumber, tx, ty );
 
                                 if( printSteps ) {    
                                     printf( "Cache file %s does not exist, "

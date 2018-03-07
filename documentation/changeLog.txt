@@ -17,6 +17,10 @@ Version 62    ????
 --Fixed so that floor hugging code only duplicates botttom layer of neighboring
   floor (so that bear skin rug isn't duplicated oddly against a wall).
 
+--Fixed ground tile cache to put unknown tile at 99999 instead of numbering
+  them after the last known biome (when future biomes added, the old numbering
+  causes collisions).
+
 
 
 Source Fixes:
