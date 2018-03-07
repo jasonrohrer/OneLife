@@ -41,6 +41,9 @@ Server Fixes:
 
 --Max players per server 60 instead of 200 just to be safe.  Saw some lag.
 
+--Reflector report now shows totals at bottom.
+
+
 
 
 Version 60    2018-February-28

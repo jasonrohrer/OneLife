@@ -44,6 +44,10 @@ $serverFound = false;
 
 $handle = fopen( "remoteServerList.ini", "r" );
 
+$totalPlayers = 0;
+$totalCap = 0;
+
+
 if( $handle ) {
 
     if( $reportOnly ) {
@@ -66,6 +70,12 @@ if( $handle ) {
     fclose( $handle );
     }
 
+if( $reportOnly ) {
+    echo "---------------------------<br><br>";
+    echo "Total :::  $totalPlayers / $totalCap<br><br>";
+    }
+
+
 
 
 if( !$serverFound && !$reportOnly ) {
@@ -87,6 +97,7 @@ function tryServer( $inAddress, $inPort, $inReportOnly ) {
 
     global $version, $startSpreadingFraction, $tooFullFraction,
         $stopSpreadingFraction, $updateServerURL;
+    global $totalPlayers, $totalCap;
     
     $serverGood = false;
 
@@ -98,7 +109,7 @@ function tryServer( $inAddress, $inPort, $inReportOnly ) {
         // error
 
         if( $inReportOnly ) {
-            echo "|--> $inAddress : $inPort ::: OFFLINE<br>";
+            echo "|--> $inAddress : $inPort ::: OFFLINE<br><br>";
             }
         
         return false;
@@ -129,6 +140,8 @@ function tryServer( $inAddress, $inPort, $inReportOnly ) {
                 if( $inReportOnly ) {
                     echo "|--> $inAddress : $inPort ::: ".
                         "$current / $max<br><br>";
+                    $totalPlayers += $current;
+                    $totalCap += $max;
                     }
                 
                 if( $current / $max > $tooFullFraction ) {
