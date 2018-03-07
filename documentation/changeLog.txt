@@ -47,6 +47,8 @@ Server Fixes:
 
 --Reflector report now shows totals at bottom.
 
+--Improved the compile notes with more details.
+
 
 
 
