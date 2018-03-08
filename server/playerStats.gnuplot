@@ -45,4 +45,4 @@ set style fill solid noborder
 set size 1, .8
 
 
-plot "playerStatsTrimmed.dat" using ($1 - ( 8 * 3600 ) ):($2) with lines fillcolor rgb "#000000"
+plot "playerStatsTrimmed.dat" using ($1 - ( 8 * 3600 ) ):($2) with filledcurves y1=0 fillcolor rgb "#000000"
