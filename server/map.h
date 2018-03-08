@@ -186,4 +186,7 @@ void restretchMapContainedDecays( int inX, int inY,
 
 
 
+int getMapBiome( int inX, int inY );
+
+
 #endif

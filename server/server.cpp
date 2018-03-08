@@ -7067,7 +7067,7 @@ int main() {
                 nextPlayer->heatMap[i] = 0;
                 }
 
-            int heatOutputGrid[ HEAT_MAP_D * HEAT_MAP_D ];
+            float heatOutputGrid[ HEAT_MAP_D * HEAT_MAP_D ];
             float rGrid[ HEAT_MAP_D * HEAT_MAP_D ];
 
             for( int y=0; y<HEAT_MAP_D; y++ ) {
@@ -7077,16 +7077,21 @@ int main() {
                     
                     int mapX = nextPlayer->xs + x - HEAT_MAP_D / 2;
                     
+                    int j = y * HEAT_MAP_D + x;
+                    heatOutputGrid[j] = 0;
+                    rGrid[j] = 0;
+                    
+                    heatOutputGrid[j] +=
+                        getBiomeHeatValue( getMapBiome( mapX, mapY ) );
+
 
                     ObjectRecord *o = getObject( getMapObject( mapX, mapY ) );
                     
-                    int j = y * HEAT_MAP_D + x;
                     
-                    heatOutputGrid[j] = 0;
-                    rGrid[j] = 0;
+                    
 
                     if( o != NULL ) {
-                        heatOutputGrid[j] = o->heatValue;
+                        heatOutputGrid[j] += o->heatValue;
                         if( o->permanent ) {
                             // loose objects sitting on ground don't
                             // contribute to r-value (like dropped clothing)
@@ -7115,7 +7120,7 @@ int main() {
 
                                     ObjectRecord *cO = getObject( cID );
                                     heatOutputGrid[j] += 
-                                        lrint( cO->heatValue * oRFactor );
+                                        cO->heatValue * oRFactor;
                                     
                                     if( hasSub ) {
                                         double cRFactor = 1 - cO->rValue;
@@ -7130,9 +7135,9 @@ int main() {
                                                     getObject( sub[s] );
                                                 
                                                 heatOutputGrid[j] += 
-                                                    lrint( sO->heatValue * 
-                                                           cRFactor * 
-                                                           oRFactor );
+                                                    sO->heatValue * 
+                                                    cRFactor * 
+                                                    oRFactor;
                                                 }
                                             delete [] sub;
                                             }
@@ -7232,7 +7237,7 @@ int main() {
                     ObjectRecord *contO = getObject( cID );
                     
                     heatOutputGrid[ playerMapIndex ] += 
-                        lrint( contO->heatValue * heldRFactor );
+                        contO->heatValue * heldRFactor;
                     
 
                     if( hasSub ) {
@@ -7247,8 +7252,8 @@ int main() {
                                        getElementDirect( s ) );
                             
                             heatOutputGrid[ playerMapIndex ] += 
-                                lrint( subO->heatValue * 
-                                       contRFactor * heldRFactor );
+                                subO->heatValue * 
+                                contRFactor * heldRFactor;
                             }
                         }
                     }

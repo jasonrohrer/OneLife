@@ -3206,6 +3206,12 @@ char isMapObjectInTransit( int inX, int inY ) {
 
 
 
+int getMapBiome( int inX, int inY ) {
+    return biomes[getMapBiomeIndex( inX, inY )];
+    }
+
+
+
 
 // returns properly formatted chunk message for chunk centered
 // around x,y

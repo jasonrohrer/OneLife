@@ -597,6 +597,9 @@ char *getBiomesString( ObjectRecord *inObject );
 void getAllBiomes( SimpleVector<int> *inVectorToFill );
 
 
+float getBiomeHeatValue( int inBiome );
+
+
 
 // offset of object pixel center from 0,0
 // Note that this is computed as the center of centers, 

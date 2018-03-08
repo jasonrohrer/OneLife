@@ -59,6 +59,9 @@ Server Fixes:
   slightly more efficient, and it also allows for more heat build-up, given
   that the heat system no longer has memory.
 
+--Support for biomes with positive or negative heat values.
+
+
 
 
 
