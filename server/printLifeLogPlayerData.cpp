@@ -21,7 +21,9 @@ void usage() {
 
 
 // used to keep track of hours passing
-double startTime = 0;
+double startTime = 1262304000;
+double maxTime = startTime;
+
 int hoursPassed = 0;
     
 SimpleVector<char *> uniqueEmails;
@@ -30,6 +32,7 @@ SimpleVector<char *> uniqueEmails;
 typedef struct HourRecord {
         double time;
         int uniquePlayers;
+        SimpleVector<char *> uniqueEmails;
     } HourRecord;
     
 
@@ -40,19 +43,46 @@ SimpleVector<HourRecord> hourRecords;
 
 
 // destroyed internally
-void addEmail( char *inEmail ) {
+void addEmail( char *inEmail, SimpleVector<char*> *inUniqueEmails ) {
     for( int i=0; i<uniqueEmails.size(); i++ ) {
-        if( strcmp( inEmail, uniqueEmails.getElementDirect( i ) ) == 0 ) {
+        if( strcmp( inEmail, inUniqueEmails->getElementDirect( i ) ) == 0 ) {
             delete [] inEmail;
             return;
             }
         }
-    uniqueEmails.push_back( inEmail );
+    inUniqueEmails->push_back( inEmail );
+    }
+
+
+void addHourRecord( double inTime, SimpleVector<char*> *inUniqueEmails ) {
+    for( int i=0; i<hourRecords.size(); i++ ) {
+        if( hourRecords.getElementDirect( i ).time == inTime ) {        
+            HourRecord *r = hourRecords.getElement( i );
+            
+            for( int j=0; j<inUniqueEmails->size(); j++ ) {
+                addEmail( inUniqueEmails->getElementDirect( i ),
+                          &( r->uniqueEmails ) );
+                }
+            inUniqueEmails->deleteAll();
+            return;
+            }
+        }
+    HourRecord r;
+    
+    hourRecords.push_back( r );
+    
+    HourRecord *rPointer = hourRecords.getElement( hourRecords.size() - 1 );
+    
+    rPointer->time = inTime;
+    rPointer->uniqueEmails.push_back_other( inUniqueEmails );
+    
+    inUniqueEmails->deleteAll();
     }
 
 
 
 void processLogFile( File *inFile ) {
+    hoursPassed = 0;
     
     char *path = inFile->getFullFileName();
 
@@ -89,8 +119,8 @@ void processLogFile( File *inFile ) {
                         &time, &id, email, &gender, 
                         &locX, &locY, parent, &pop, &parentChain );
                 
-                if( startTime == 0 ) {
-                    startTime = time;
+                if( time > maxTime ) {
+                    maxTime = time;
                     }
                 
                 int deltaTime = time - startTime;
@@ -98,18 +128,14 @@ void processLogFile( File *inFile ) {
                 char *lowerEmail = stringToLowerCase( email );
                 
                 
-                addEmail( lowerEmail );
+                addEmail( lowerEmail, &uniqueEmails );
                 
                 if( deltaTime / 3600 > hoursPassed ) {
                     hoursPassed = lrint( floor( deltaTime / 3600 ) );
                     
                     double hourTime = hoursPassed * 3600 + startTime;
                     
-                    HourRecord r = { hourTime, uniqueEmails.size() };
-                    
-                    hourRecords.push_back( r );
-                    
-                    uniqueEmails.deallocateStringElements();
+                    addHourRecord( hourTime, &uniqueEmails );
                     }
                 }
             else if( event == 'D' ) {
@@ -245,12 +271,32 @@ int main( int inNumArgs, char **inArgs ) {
         
 
         if( outFile != NULL ) {
+
+            int numRecords = hourRecords.size();
             
-            for( int i=0; i<hourRecords.size(); i++ ) {
-                HourRecord r = hourRecords.getElementDirect( i );
+            for( int j=0; j<numRecords; j++ ) {
+                
+                int minI = -1;
+                double minTime = maxTime + 1;
+                
+                for( int i=0; i<hourRecords.size(); i++ ) {
+                    HourRecord *r = hourRecords.getElement( i );
+                    
+                    if( r->time < minTime ) {
+                        minTime = r->time;
+                        minI = i;
+                        }
+                    }
+                
+                HourRecord *r = hourRecords.getElement( minI );
+
+                
 
                 fprintf( outFile, "%.0f %d\n",
-                         r.time, r.uniquePlayers );
+                         r->time, r->uniqueEmails.size() );
+                r->uniqueEmails.deallocateStringElements();
+
+                hourRecords.deleteElement( minI );
                 }
             
             fclose( outFile );
