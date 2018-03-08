@@ -49,6 +49,8 @@ Server Fixes:
 
 --Improved the compile notes with more details.
 
+--Launch is over.  No more Mr. Nice Guy.  Eating bonus dropping to 2 (was 3).
+
 
 
 
