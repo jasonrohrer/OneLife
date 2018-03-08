@@ -1,0 +1,1 @@
+g++ -g -o printLifeLogPlayerData -I../.. printLifeLogPlayerData.cpp ../../minorGems/io/file/linux/PathLinux.cpp ../../minorGems/util/stringUtils.cpp
