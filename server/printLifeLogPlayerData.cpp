@@ -123,14 +123,14 @@ void processLogFile( File *inFile ) {
                     maxTime = time;
                     }
                 
-                int deltaTime = time - startTime;
+                double deltaTime = time - startTime;
                 
                 char *lowerEmail = stringToLowerCase( email );
                 
                 
                 addEmail( lowerEmail, &uniqueEmails );
-                
-                if( deltaTime / 3600 > hoursPassed ) {
+
+                if( floor( deltaTime / 3600 ) > hoursPassed ) {
                     hoursPassed = lrint( floor( deltaTime / 3600 ) );
                     
                     double hourTime = hoursPassed * 3600 + startTime;
@@ -139,6 +139,9 @@ void processLogFile( File *inFile ) {
                     }
                 }
             else if( event == 'D' ) {
+                fscanf( f, "%lf %d %999s age=%lf %c (%d,%d) %999s pop=%d\n",
+                        &time, &id, email, &age, &gender, &locX, &locY, 
+                        deathReason, &pop );            
                 }
             else {
                 scannedLine = false;
