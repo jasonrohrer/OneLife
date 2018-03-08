@@ -44,7 +44,7 @@ SimpleVector<HourRecord> hourRecords;
 
 // destroyed internally
 void addEmail( char *inEmail, SimpleVector<char*> *inUniqueEmails ) {
-    for( int i=0; i<uniqueEmails.size(); i++ ) {
+    for( int i=0; i< inUniqueEmails->size(); i++ ) {
         if( strcmp( inEmail, inUniqueEmails->getElementDirect( i ) ) == 0 ) {
             delete [] inEmail;
             return;
