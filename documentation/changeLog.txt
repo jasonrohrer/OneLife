@@ -51,6 +51,14 @@ Server Fixes:
 
 --Launch is over.  No more Mr. Nice Guy.  Eating bonus dropping to 2 (was 3).
 
+--Thermal model improved.  Heat around you is computed from scratch each time
+  you stop moving, instead of building up incrementally with memory of previous
+  heat maps from previous moves.  This fixes the "walking back and forth on a
+  floor" heat explosion bug.  The heat map around a player was reduced from
+  16x16 to 10x10, and the simulation is run for 2x more cycles.  This is
+  slightly more efficient, and it also allows for more heat build-up, given
+  that the heat system no longer has memory.
+
 
 
 

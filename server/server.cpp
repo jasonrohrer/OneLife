@@ -52,7 +52,7 @@ static JenkinsRandomSource randSource;
 #include "../gameSource/GridPos.h"
 
 
-#define HEAT_MAP_D 16
+#define HEAT_MAP_D 10
 
 float targetHeat = 10;
 
@@ -7061,19 +7061,12 @@ int main() {
 
             // recompute heat map
             
-            // assume instant decay of heat off edge (infinite heat sink
-            // outside of our window).  Otherwise, we achieve stasis
-            // if entire map filled with same value
             
-            for( int y=0; y<HEAT_MAP_D; y++ ) {
-                nextPlayer->heatMap[ y * HEAT_MAP_D ] = 0;
-                nextPlayer->heatMap[ y * HEAT_MAP_D + HEAT_MAP_D - 1 ] = 0;
+            // what if we recompute it from scratch every time?
+            for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
+                nextPlayer->heatMap[i] = 0;
                 }
-            for( int x=0; x<HEAT_MAP_D; x++ ) {
-                nextPlayer->heatMap[ x ] = 0;
-                nextPlayer->heatMap[ (HEAT_MAP_D - 1) * HEAT_MAP_D + x ] = 0;
-                }
-            
+
             int heatOutputGrid[ HEAT_MAP_D * HEAT_MAP_D ];
             float rGrid[ HEAT_MAP_D * HEAT_MAP_D ];
 
@@ -7290,7 +7283,7 @@ int main() {
             
             //double startTime = Time::getCurrentTime();
             
-            int numCycles = 4;
+            int numCycles = 8;
             
             int numNeighbors = 8;
             int ndx[8] = { 0, 1,  0, -1,  1,  1, -1, -1 };
@@ -7305,7 +7298,7 @@ int main() {
             double totalNWeight = 20;
             
             
-
+            //double startTime = Time::getCurrentTime();
 
             for( int c=0; c<numCycles; c++ ) {
                 
@@ -7342,7 +7335,7 @@ int main() {
                         nextPlayer->heatMap[j] += heatOutputGrid[j];
                         }
                     }
-                }
+                } 
             
             //printf( "Computing %d cycles took %f ms\n",
             //        numCycles, 
