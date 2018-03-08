@@ -60,7 +60,7 @@ void addHourRecord( double inTime, SimpleVector<char*> *inUniqueEmails ) {
             HourRecord *r = hourRecords.getElement( i );
             
             for( int j=0; j<inUniqueEmails->size(); j++ ) {
-                addEmail( inUniqueEmails->getElementDirect( i ),
+                addEmail( inUniqueEmails->getElementDirect( j ),
                           &( r->uniqueEmails ) );
                 }
             inUniqueEmails->deleteAll();
