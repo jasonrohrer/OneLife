@@ -89,30 +89,27 @@ void processLogFile( File *inFile ) {
                         &time, &id, email, &gender, 
                         &locX, &locY, parent, &pop, &parentChain );
                 
-                if( email != NULL ) {
+                if( startTime == 0 ) {
+                    startTime = time;
+                    }
+                
+                int deltaTime = time - startTime;
+                
+                char *lowerEmail = stringToLowerCase( email );
+                
+                
+                addEmail( lowerEmail );
+                
+                if( deltaTime / 3600 > hoursPassed ) {
+                    hoursPassed = lrint( floor( deltaTime / 3600 ) );
                     
-                    if( startTime == 0 ) {
-                        startTime = time;
-                        }
+                    double hourTime = hoursPassed * 3600 + startTime;
                     
-                    int deltaTime = time - startTime;
+                    HourRecord r = { hourTime, uniqueEmails.size() };
                     
-                    char *lowerEmail = stringToLowerCase( email );
+                    hourRecords.push_back( r );
                     
-                    
-                    addEmail( lowerEmail );
-                    
-                    if( deltaTime / 3600 > hoursPassed ) {
-                        hoursPassed = lrint( floor( deltaTime / 3600 ) );
-                        
-                        double hourTime = hoursPassed * 3600 + startTime;
-                        
-                        HourRecord r = { hourTime, uniqueEmails.size() };
-                        
-                        hourRecords.push_back( r );
-                        
-                        uniqueEmails.deallocateStringElements();
-                        }
+                    uniqueEmails.deallocateStringElements();
                     }
                 }
             else if( event == 'D' ) {
