@@ -61,6 +61,8 @@ Server Fixes:
 
 --Support for biomes with positive or negative heat values.
 
+--Max players down to 40 per server until I fix lag.
+
 
 
 
