@@ -320,7 +320,14 @@ void printTable( const char *inName, File *inObjectDir, FILE *inFile,
         fprintf( inFile, "<tr><td>(no data)</td></tr>\n" );
         }
     
-    for( int i=0; i<inRecList->size(); i++ ) {
+    int limit = inRecList->size();
+    
+    // only show top 100
+    if( limit > 100 ) {
+        limit = 100;
+        }
+    
+    for( int i=0; i<limit; i++ ) {
         
         FailureRec *r = inRecList->getElement( i );
 
