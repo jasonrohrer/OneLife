@@ -63,6 +63,8 @@ Server Fixes:
 
 --Max players down to 40 per server until I fix lag.
 
+--Mr. Nice Guy is back.  Eating bonus back to 3.
+
 
 
 
