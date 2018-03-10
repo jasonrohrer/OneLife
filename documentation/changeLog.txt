@@ -18,6 +18,8 @@ Server Fixes:
 
 --With the server load fixes, seems safe to push population cap up to 60.
 
+--Back down to 40.
+
 
 
 
