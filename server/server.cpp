@@ -171,8 +171,9 @@ typedef struct LiveObject {
         
         char pathTruncated;
 
-        int lastSentMapX;
-        int lastSentMapY;
+        char firstMapSent;
+        int lastSentMapX[2];
+        int lastSentMapY[2];
         
         double moveTotalSeconds;
         double moveStartTime;
@@ -1424,8 +1425,25 @@ int sendMapChunkMessage( LiveObject *inO,
 
     if( numSent == messageLength ) {
         // sent correctly
-        inO->lastSentMapX = xd;
-        inO->lastSentMapY = yd;
+        
+        if( ! inO->firstMapSent ) {
+            // init both prev chunks
+            inO->lastSentMapX[0] = xd;
+            inO->lastSentMapY[0] = yd;
+            
+            inO->lastSentMapX[1] = xd;
+            inO->lastSentMapY[1] = yd;
+            
+            inO->firstMapSent = true;
+            }
+        else {
+            // prev chunk pushed back
+            inO->lastSentMapX[1] = inO->lastSentMapX[0];
+            inO->lastSentMapY[1] = inO->lastSentMapY[0];
+            
+            inO->lastSentMapX[0] = xd;
+            inO->lastSentMapY[0] = yd;
+            }    
         }
     else {
         setDeathReason( inO, "disconnected" );
@@ -2775,8 +2793,13 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.pathLength = 0;
     newObject.pathToDest = NULL;
     newObject.pathTruncated = 0;
-    newObject.lastSentMapX = 0;
-    newObject.lastSentMapY = 0;
+    
+    newObject.firstMapSent = false;
+    newObject.lastSentMapX[0] = 0;
+    newObject.lastSentMapY[0] = 0;
+    newObject.lastSentMapX[1] = 0;
+    newObject.lastSentMapY[1] = 0;
+    
     newObject.moveStartTime = Time::getCurrentTime();
     newObject.moveTotalSeconds = 0;
     newObject.facingOverride = 0;
@@ -7662,11 +7685,16 @@ int main() {
                     }
 
 
-                if( abs( playerXD - nextPlayer->lastSentMapX ) > 7
-                    ||
-                    abs( playerYD - nextPlayer->lastSentMapY ) > 8 ) {
+                if( ( abs( playerXD - nextPlayer->lastSentMapX[0] ) > 7
+                      ||
+                      abs( playerYD - nextPlayer->lastSentMapY[0] ) > 8 )
+                    &&
+                    ( abs( playerXD - nextPlayer->lastSentMapX[1] ) > 7
+                      ||
+                      abs( playerYD - nextPlayer->lastSentMapY[1] ) > 8 ) ) {
                 
-                    // moving out of bounds of chunk, send update
+                    // moving out of bounds of previous two sent chunks, 
+                    // send update
                     
                     
                     sendMapChunkMessage( nextPlayer,

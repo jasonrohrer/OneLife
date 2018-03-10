@@ -69,6 +69,14 @@ Server Fixes:
 
 --Mr. Nice Guy is back.  Eating bonus back to 3.
 
+--Server, assuming that client is operating with a buffer that is big enough to
+  hold at least the last two map chunks received, only sends a new map chunk to
+  the client when the client walks far away from both of the last two map
+  chunks sent.  On a test map with a lot of containers, this resulted in a 23%
+  reduction in dbGet calls server-side when player walks back and forth twice
+  in an area.
+
+
 
 
 
