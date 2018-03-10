@@ -83,6 +83,9 @@ Server Fixes:
   computing player's thermal map.  This was consuming substantial server
   resources.
 
+--Reflector now uses read timeout with each server to avoid hanging
+  indefinitely if a server answers but does not send data.
+
 
 
 

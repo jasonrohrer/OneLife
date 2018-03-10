@@ -115,7 +115,8 @@ function tryServer( $inAddress, $inPort, $inReportOnly ) {
         return false;
         }
     else {
-
+        stream_set_timeout( $fp, 3 );
+        
         $lineCount = 0;
 
         $accepting = false;
