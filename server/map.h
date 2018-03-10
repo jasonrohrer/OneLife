@@ -51,12 +51,12 @@ void mapEveDeath( char *inEmail, double inAge );
 
 
 
-int getMaxChunkDimension();
 
 
-// returns properly formatted chunk message for chunk centered
-// around x,y
-unsigned char *getChunkMessage( int inCenterX, int inCenterY,
+// returns properly formatted chunk message for chunk in rectangle shape
+// with bottom-left corner at x,y
+unsigned char *getChunkMessage( int inStartX, int inStartY, 
+                                int inWidth, int inHeight,
                                 int *outMessageLength );
 
 

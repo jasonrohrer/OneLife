@@ -69,15 +69,15 @@ Server Fixes:
 
 --Mr. Nice Guy is back.  Eating bonus back to 3.
 
---Server, assuming that client is operating with a buffer that is big enough to
-  hold at least the last two map chunks received, only sends a new map chunk to
-  the client when the client walks far away from both of the last two map
-  chunks sent.  On a test map with a lot of containers, this resulted in a 23%
-  reduction in dbGet calls server-side when player walks back and forth twice
-  in an area.
-
 --Fixed so that carried-baby speech is delivered correctly after long parent
   walks.
+
+--Implemented map chunk overlap detection.  When sending a new map chunk to the
+  client, we avoid re-sending (or looking up) the tiles that overlap with the
+  previous chunk that we sent that client.  This results in a 46% reduction in
+  dbGet calls, a 65% performance increase for the map chunk lookup code, and a
+  53% reduction in map message size, when walking back and forth on a
+  container-filled test map.
 
 
 

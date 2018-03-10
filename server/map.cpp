@@ -93,8 +93,7 @@ static float minEveCampRespawnAge = 60.0;
 
 
 
-static int chunkDimensionX = 32;
-static int chunkDimensionY = 30;
+
 
 
 // what object is placed on edge of map
@@ -271,15 +270,6 @@ typedef struct TestMapRecord {
 
 #include "../commonSource/fractalNoise.h"
 
-
-
-
-
-
-
-int getMaxChunkDimension() {
-    return chunkDimensionX;
-    }
 
 
 
@@ -3215,10 +3205,11 @@ int getMapBiome( int inX, int inY ) {
 
 // returns properly formatted chunk message for chunk centered
 // around x,y
-unsigned char *getChunkMessage( int inCenterX, int inCenterY,
+unsigned char *getChunkMessage( int inStartX, int inStartY, 
+                                int inWidth, int inHeight,
                                 int *outMessageLength ) {
     
-    int chunkCells = chunkDimensionX * chunkDimensionY;
+    int chunkCells = inWidth * inHeight;
     
     int *chunk = new int[chunkCells];
 
@@ -3232,28 +3223,19 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
     int ***subContainedStacks = new int**[chunkCells];
     
 
-    // 0,0 is center of map
-    
-    int halfChunkX = chunkDimensionX /2;
-    int halfChunkY = chunkDimensionY /2;
-    
-
-    int startY = inCenterY - halfChunkY;
-    int startX = inCenterX - halfChunkX;
-    
-    int endY = startY + chunkDimensionY;
-    int endX = startX + chunkDimensionX;
+    int endY = inStartY + inHeight;
+    int endX = inStartX + inWidth;
 
     
     
-    for( int y=startY; y<endY; y++ ) {
-        int chunkY = y - startY;
+    for( int y=inStartY; y<endY; y++ ) {
+        int chunkY = y - inStartY;
         
 
-        for( int x=startX; x<endX; x++ ) {
-            int chunkX = x - startX;
+        for( int x=inStartX; x<endX; x++ ) {
+            int chunkX = x - inStartX;
             
-            int cI = chunkY * chunkDimensionX + chunkX;
+            int cI = chunkY * inWidth + chunkX;
             
             lastCheckedBiome = -1;
             
@@ -3383,8 +3365,8 @@ unsigned char *getChunkMessage( int inCenterX, int inCenterY,
 
 
     char *header = autoSprintf( "MC\n%d %d %d %d\n%d %d\n#", 
-                                chunkDimensionX, chunkDimensionY,
-                                startX, startY, chunkDataBuffer.size(),
+                                inWidth, inHeight,
+                                inStartX, inStartY, chunkDataBuffer.size(),
                                 compressedSize );
     
     SimpleVector<unsigned char> buffer;

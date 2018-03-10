@@ -172,8 +172,8 @@ typedef struct LiveObject {
         char pathTruncated;
 
         char firstMapSent;
-        int lastSentMapX[2];
-        int lastSentMapY[2];
+        int lastSentMapX;
+        int lastSentMapY;
         
         double moveTotalSeconds;
         double moveStartTime;
@@ -1391,16 +1391,29 @@ GridPos getClosestPlayerPos( int inX, int inY ) {
 
 
 
+static int chunkDimensionX = 32;
+static int chunkDimensionY = 30;
+
+
+static int getMaxChunkDimension() {
+    return chunkDimensionX;
+    }
+
+
+
+
 // sets lastSentMap in inO if chunk goes through
 // returns result of send, auto-marks error in inO
 int sendMapChunkMessage( LiveObject *inO, 
                          char inDestOverride = false,
                          int inDestOverrideX = 0, 
-                         int inDestOverrideY = 0) {
-    int messageLength;
+                         int inDestOverrideY = 0 ) {
+    
+    
+    int messageLength = 0;
 
     int xd = inO->xd;
-    int yd= inO->yd;
+    int yd = inO->yd;
     
     if( inDestOverride ) {
         xd = inDestOverrideX;
@@ -1408,42 +1421,129 @@ int sendMapChunkMessage( LiveObject *inO,
         }
     
     
-    unsigned char *mapChunkMessage = getChunkMessage( xd,
-                                                      yd, 
-                                                      &messageLength );
-                
-                
+    int halfW = chunkDimensionX / 2;
+    int halfH = chunkDimensionY / 2;
+    
+    int fullStartX = xd - halfW;
+    int fullStartY = yd - halfH;
+    
+    int numSent = 0;
 
+    
+    if( ! inO->firstMapSent ) {
+        // send full rect centered on x,y
+        
+        inO->firstMapSent = true;
+        
+        unsigned char *mapChunkMessage = getChunkMessage( fullStartX,
+                                                          fullStartY,
+                                                          chunkDimensionX,
+                                                          chunkDimensionY,
+                                                          &messageLength );
                 
-    int numSent = 
-        inO->sock->send( mapChunkMessage, 
-                         messageLength, 
-                         false, false );
+        numSent += 
+            inO->sock->send( mapChunkMessage, 
+                             messageLength, 
+                             false, false );
                 
-    delete [] mapChunkMessage;
+        delete [] mapChunkMessage;
+        }
+    else {
+        
+        // our closest previous chunk center
+        int lastX = inO->lastSentMapX;
+        int lastY = inO->lastSentMapY;
+
+
+        // split next chunk into two bars by subtracting last chunk
+        
+        int horBarStartX = fullStartX;
+        int horBarStartY = fullStartY;
+        int horBarW = chunkDimensionX;
+        int horBarH = chunkDimensionY;
+        
+        if( yd > lastY ) {
+            // remove bottom of bar
+            horBarStartY = lastY + halfH;
+            horBarH = yd - lastY;
+            }
+        else {
+            // remove top of bar
+            horBarH = lastY - yd;
+            }
+        
+
+        int vertBarStartX = fullStartX;
+        int vertBarStartY = fullStartY;
+        int vertBarW = chunkDimensionX;
+        int vertBarH = chunkDimensionY;
+        
+        if( xd > lastX ) {
+            // remove left part of bar
+            vertBarStartX = lastX + halfW;
+            vertBarW = xd - lastX;
+            }
+        else {
+            // remove right part of bar
+            vertBarW = lastX - xd;
+            }
+        
+        // now trim vert bar where it intersects with hor bar
+        if( yd > lastY ) {
+            // remove top of vert bar
+            vertBarH -= horBarH;
+            }
+        else {
+            // remove bottom of vert bar
+            vertBarStartY = horBarStartY + horBarH;
+            vertBarH -= horBarH;
+            }
+        
+        printf( "\n\n **** Hor w/h = %d/%d, vert w/h = %d/%d\n\n\n",
+                horBarW, horBarH, vertBarW, vertBarH );
+        
+        // only send if non-zero width and height
+        if( horBarW > 0 && horBarH > 0 ) {
+            int len;
+            unsigned char *mapChunkMessage = getChunkMessage( horBarStartX,
+                                                              horBarStartY,
+                                                              horBarW,
+                                                              horBarH,
+                                                              &len );
+            messageLength += len;
+            
+            numSent += 
+                inO->sock->send( mapChunkMessage, 
+                                 len, 
+                                 false, false );
+            
+            delete [] mapChunkMessage;
+            }
+        if( vertBarW > 0 && vertBarH > 0 ) {
+            int len;
+            unsigned char *mapChunkMessage = getChunkMessage( vertBarStartX,
+                                                              vertBarStartY,
+                                                              vertBarW,
+                                                              vertBarH,
+                                                              &len );
+            messageLength += len;
+            
+            numSent += 
+                inO->sock->send( mapChunkMessage, 
+                                 len, 
+                                 false, false );
+            
+            delete [] mapChunkMessage;
+            }
+        }
+    
+    
                 
 
     if( numSent == messageLength ) {
         // sent correctly
-        
-        if( ! inO->firstMapSent ) {
-            // init both prev chunks
-            inO->lastSentMapX[0] = xd;
-            inO->lastSentMapY[0] = yd;
-            
-            inO->lastSentMapX[1] = xd;
-            inO->lastSentMapY[1] = yd;
-            
-            inO->firstMapSent = true;
-            }
-        else {
-            // prev chunk pushed back
-            inO->lastSentMapX[1] = inO->lastSentMapX[0];
-            inO->lastSentMapY[1] = inO->lastSentMapY[0];
-            
-            inO->lastSentMapX[0] = xd;
-            inO->lastSentMapY[0] = yd;
-            }    
+        inO->lastSentMapX = xd;
+        inO->lastSentMapY = yd;
         }
     else {
         setDeathReason( inO, "disconnected" );
@@ -2793,13 +2893,9 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.pathLength = 0;
     newObject.pathToDest = NULL;
     newObject.pathTruncated = 0;
-    
     newObject.firstMapSent = false;
-    newObject.lastSentMapX[0] = 0;
-    newObject.lastSentMapY[0] = 0;
-    newObject.lastSentMapX[1] = 0;
-    newObject.lastSentMapY[1] = 0;
-    
+    newObject.lastSentMapX = 0;
+    newObject.lastSentMapY = 0;
     newObject.moveStartTime = Time::getCurrentTime();
     newObject.moveTotalSeconds = 0;
     newObject.facingOverride = 0;
@@ -4239,7 +4335,11 @@ int main() {
                     if( allow ) {
                         int length;
                         unsigned char *mapChunkMessage = 
-                            getChunkMessage( m.x, m.y, &length );
+                            getChunkMessage( m.x - chunkDimensionX / 2, 
+                                             m.y - chunkDimensionY / 2,
+                                             chunkDimensionX,
+                                             chunkDimensionY, 
+                                             &length );
                         
                         int numSent = 
                             nextPlayer->sock->send( mapChunkMessage, 
@@ -7696,16 +7796,11 @@ int main() {
                     }
 
 
-                if( ( abs( playerXD - nextPlayer->lastSentMapX[0] ) > 7
-                      ||
-                      abs( playerYD - nextPlayer->lastSentMapY[0] ) > 8 )
-                    &&
-                    ( abs( playerXD - nextPlayer->lastSentMapX[1] ) > 7
-                      ||
-                      abs( playerYD - nextPlayer->lastSentMapY[1] ) > 8 ) ) {
+                if( abs( playerXD - nextPlayer->lastSentMapX ) > 7
+                    ||
+                    abs( playerYD - nextPlayer->lastSentMapY ) > 8 ) {
                 
-                    // moving out of bounds of previous two sent chunks, 
-                    // send update
+                    // moving out of bounds of chunk, send update
                     
                     
                     sendMapChunkMessage( nextPlayer,
