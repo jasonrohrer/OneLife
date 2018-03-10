@@ -6,7 +6,10 @@ http://onehouronelife.com/updateLog.php
 
 Version 65    ????
 
---Fixed a crash if held baby does not exist anymore, perhaps due to disconnect.
+--Fixed a crash if held baby disconnects while we're walking with it.
+
+--Fixed a few uninitialized values found with Valgrind.
+
 
 
 

@@ -6050,6 +6050,45 @@ void playPendingReceivedMessagesRegardingOthers( LiveObject *inPlayer ) {
 
 
 
+void dropPendingReceivedMessagesRegardingID( LiveObject *inPlayer,
+                                             int inIDToDrop ) {
+    for( int i=0; i<inPlayer->pendingReceivedMessages.size(); i++ ) {
+        char *message = inPlayer->pendingReceivedMessages.getElementDirect( i );
+        char match = false;
+        
+        if( strstr( message, "PU" ) == message ) {
+            // only keep PU's not about this player
+            
+            int messageID = -1;
+            
+            sscanf( message, "PU\n%d", &messageID );
+            
+            if( messageID == inIDToDrop ) {
+                match = true;
+                }
+            }
+        else if( strstr( message, "PM" ) == message ) {
+            // only keep PM's not about this player
+            
+            int messageID = -1;
+            
+            sscanf( message, "PM\n%d", &messageID );
+            
+            if( messageID == inIDToDrop ) {
+                match = true;
+                }
+            }
+        
+        if( match ) {
+            delete [] message;
+            inPlayer->pendingReceivedMessages.deleteElement( i );
+            i--;
+            }
+        }
+    }
+
+
+
 void LivingLifePage::applyReceiveOffset( int *inX, int *inY ) {
     if( mMapGlobalOffsetSet ) {
         *inX -= mMapGlobalOffset.x;
@@ -9633,6 +9672,7 @@ void LivingLifePage::step() {
                         o.heldObjectRot = 0;
 
                         o.currentSpeed = 0;
+                        o.numFramesOnCurrentStep = 0;
                         o.currentGridSpeed = 0;
                         
                         o.moveTotalTime = 0;
@@ -9783,7 +9823,18 @@ void LivingLifePage::step() {
                                     }
                                 }
                             
-
+                            // drop any pending messages about them
+                            // we don't want these to play back later
+                            for( int j=0; j<gameObjects.size(); j++ ) {
+                                LiveObject *otherObject = 
+                                    gameObjects.getElement( j );
+                                
+                                dropPendingReceivedMessagesRegardingID(
+                                    otherObject, o.id );
+                                }
+                            
+                            // play any pending messages that are
+                            // waiting for them to finish their move
                             playPendingReceivedMessagesRegardingOthers( 
                                 nextObject );
 
@@ -9882,6 +9933,15 @@ void LivingLifePage::step() {
                             push_back( held );
                         }
                     }
+                if( existing != NULL && babyO == NULL ) {
+                    // existing is holding a baby that does not exist
+                    // this can happen when playing back pending PU messages
+                    // when we're holding a baby that dies when we're walking
+                    
+                    // holding nothing now instead
+                    existing->holdingID = 0;
+                    }
+                
                 }
             
 
