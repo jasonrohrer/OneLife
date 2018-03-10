@@ -76,7 +76,8 @@ Server Fixes:
   reduction in dbGet calls server-side when player walks back and forth twice
   in an area.
 
-
+--Fixed so that carried-baby speech is delivered correctly after long parent
+  walks.
 
 
 

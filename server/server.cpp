@@ -4736,9 +4736,20 @@ int main() {
                         
                         delete [] m.saidText;
 
-
+                        
                         ChangePosition p = { nextPlayer->xd, nextPlayer->yd, 
                                              false };
+                        
+                        // if held, speech happens where held
+                        if( nextPlayer->heldByOther ) {
+                            LiveObject *holdingPlayer = 
+                                getLiveObject( nextPlayer->heldByOtherID );
+                
+                            p.x = holdingPlayer->xd;
+                            p.y = holdingPlayer->yd;
+                            }
+
+
                         newSpeechPos.push_back( p );
                         }
                     else if( m.type == KILL ) {
