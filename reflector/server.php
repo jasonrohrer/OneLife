@@ -127,6 +127,16 @@ function tryServer( $inAddress, $inPort, $inReportOnly ) {
         while( !feof( $fp ) && $lineCount < 2 ) {
             $line = fgets( $fp, 128 );
 
+            $info = stream_get_meta_data( $fp );
+
+            if( $info[ 'timed_out' ] ) {
+                if( $inReportOnly ) {
+                    echo "|--> $inAddress : $inPort ::: OFFLINE<br><br>";
+                    }
+                
+                return false;
+                }
+            
             if( $lineCount == 0 && strstr( $line, "SN" ) ) {
                 // accepting connections
                 $accepting = true;
