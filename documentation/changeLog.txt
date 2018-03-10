@@ -3,7 +3,8 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 62    ????
+
+Version 64    2018-March-9
 
 --Improved display of error message if game folder is read-only.
 
