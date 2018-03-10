@@ -7368,8 +7368,8 @@ void LivingLifePage::step() {
                     newMapTileFlips[i] = mMapTileFlips[oI];
                     
 
-                    newMapContainedStacks[i] = mMapContainedStacks[i];
-                    newMapSubContainedStacks[i] = mMapSubContainedStacks[i];
+                    newMapContainedStacks[i] = mMapContainedStacks[oI];
+                    newMapSubContainedStacks[i] = mMapSubContainedStacks[oI];
 
                     newMapPlayerPlacedFlags[i] = 
                         mMapPlayerPlacedFlags[oI];

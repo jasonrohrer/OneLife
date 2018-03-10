@@ -21,6 +21,10 @@ Version 62    ????
   them after the last known biome (when future biomes added, the old numbering
   causes collisions).
 
+--Fixed bug in copying old chunk contained and subcontained over when a new
+  map chunk is received by client.
+
+
 
 
 Source Fixes:
