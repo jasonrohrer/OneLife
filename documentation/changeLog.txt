@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes:
+
+--With the server load fixes, seems safe to push population cap up to 60.
+
+
+
+
+
 Version 64    2018-March-9
 
 --Improved display of error message if game folder is read-only.
