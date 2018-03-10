@@ -3941,6 +3941,15 @@ int main() {
                             i--;
                             }
                         }
+                    else {
+                        AppLog::errorF( 
+                            "Unexpected result from ticket server, "
+                            "client rejected:  %s", webResult );
+                        nextConnection->error = true;
+                        nextConnection->errorCauseString =
+                            "Client key check failed "
+                            "(bad ticketServer response)";
+                        }
                     delete [] webResult;
                     }
                 }

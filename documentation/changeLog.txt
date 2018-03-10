@@ -87,6 +87,9 @@ Server Fixes:
 --Reflector now uses read timeout with each server to avoid hanging
   indefinitely if a server answers but does not send data.
 
+--Server now handles unexpected responses from ticket server (like 504 Gateway
+  errors) without keeping a new connection in the loop forever.
+
 
 
 
