@@ -79,6 +79,10 @@ Server Fixes:
   53% reduction in map message size, when walking back and forth on a
   container-filled test map.
 
+--Server now skips check for heat-producing contained items around player when
+  computing player's thermal map.  This was consuming substantial server
+  resources.
+
 
 
 

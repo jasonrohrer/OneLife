@@ -7233,7 +7233,12 @@ int main() {
                             }
 
 
-                        if( o->numSlots > 0 ) {
+                        // skip checking for heat-producing contained items
+                        // for now.  Consumes too many server-side resources
+                        // can still check for heat produced by stuff in
+                        // held container (below).
+                        
+                        if( false && o->numSlots > 0 ) {
                             // contained can produce heat shielded by container
                             // r value
                             double oRFactor = 1 - o->rValue;
