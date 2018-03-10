@@ -2861,7 +2861,9 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
           
         heldObjectDrawPos = mult( heldObjectDrawPos, CELL_D );
         
-        if( ! heldObject->rideable ) {
+        if( heldObject == NULL || 
+            ! heldObject->rideable ) {
+            
             holdPos = heldObjectDrawPos;
             }
 
@@ -9769,6 +9771,19 @@ void LivingLifePage::step() {
                         
                         if( nextObject->id == o.id ) {
                             
+                            if( nextObject->heldByAdultID > 0 ) {
+                                // baby died while held, tell
+                                // parent to drop them
+                                LiveObject *parent = getGameObject(
+                                    nextObject->heldByAdultID );
+                                
+                                if( parent != NULL &&
+                                    parent->holdingID == - o.id ) {
+                                    parent->holdingID = 0;
+                                    }
+                                }
+                            
+
                             playPendingReceivedMessagesRegardingOthers( 
                                 nextObject );
 

@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 65    ????
+
+--Fixed a crash if held baby does not exist anymore, perhaps due to disconnect.
+
+
+
+
 Server Fixes:
 
 --With the server load fixes, seems safe to push population cap up to 60.
