@@ -29,6 +29,8 @@ then
 fi
 
 echo "ServersToo = $serversToo"
+
+echo -n "Hit [ENTER] when ready: "
 read
 
 
