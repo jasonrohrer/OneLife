@@ -40,6 +40,14 @@ The included "pullAndBuildLatest" script should pull from git and build the game
     ./pullAndBuildLatest
 </code></pre>
 
+<br>
+     
+After that, you can run the game like this:
+
+<pre><code>    ./OneLifeApp
+</code></pre>
+
+     
 
 </td></tr></table>
 <br>
