@@ -10145,9 +10145,32 @@ void LivingLifePage::step() {
 
                                 existing->xd = o.xd;
                                 existing->yd = o.yd;
+                                
+                                if( existing->id != ourID ) {
+                                    // look at how far we think object is
+                                    // from start of path
+                                    
+                                    // we may be getting a move for
+                                    // an object that has been off-chunk
+                                    // for a while and is now moving on-chunk
+
+                                    doublePair start;
+                                    start.x = existing->pathToDest[ 0 ].x;
+                                    start.y = existing->pathToDest[ 0 ].y;
+                                    
+                                    if( distance( start, 
+                                                  existing->currentPos ) >
+                                        5 ) {
+                                        
+                                        // 5 is too far
+
+                                        // jump right to start of new path
+                                        existing->currentPos = start;
+                                        }
+                                    }
+                                
                                 }
                             
-
 
 
                             if( existing->id != ourID ) {
