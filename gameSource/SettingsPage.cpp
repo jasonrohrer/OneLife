@@ -185,6 +185,14 @@ void SettingsPage::draw( doublePair inViewCenter,
     
     mainFont->drawString( fpsString, pos, alignLeft );
     delete [] fpsString;
+
+
+    pos.y += 44;
+
+    char *currentFPSString = autoSprintf( "%.2f", getRecentFrameRate() );
+    
+    mainFont->drawString( currentFPSString, pos, alignLeft );
+    delete [] currentFPSString;
     
 
     pos = mFullscreenBox.getPosition();
@@ -194,6 +202,8 @@ void SettingsPage::draw( doublePair inViewCenter,
     mainFont->drawString( translate( "vsyncOn" ), pos, alignRight );
     pos.y += 44;
     mainFont->drawString( translate( "targetFPS" ), pos, alignRight );
+    pos.y += 44;
+    mainFont->drawString( translate( "currentFPS" ), pos, alignRight );
     }
 
 

@@ -60,6 +60,14 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         TextButton mSettingsButton;
         TextButton mReviewButton;
         
+        TextButton mRedetectButton;
+
+
+        double mPageActiveStartTime;
+        int mFramesCounted;
+        char mFPSMeasureDone;
+
+
         void switchFields();
         
         void processLogin( char inStore );

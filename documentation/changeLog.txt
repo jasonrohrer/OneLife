@@ -10,6 +10,7 @@ Version 65    ????
 
 --Fixed a few uninitialized values found with Valgrind.
 
+--Detecting when vsync settings have changed.
 
 
 

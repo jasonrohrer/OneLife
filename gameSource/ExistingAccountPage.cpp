@@ -46,7 +46,11 @@ ExistingAccountPage::ExistingAccountPage()
           mSettingsButton( mainFont, -400, -120, 
                            translate( "settingsButton" ) ),
           mReviewButton( mainFont, -400, -200, 
-                         translate( "postReviewButton" ) ) {
+                         translate( "postReviewButton" ) ),
+          mRedetectButton( mainFont, 0, 220, translate( "redetectButton" ) ),
+          mPageActiveStartTime( 0 ),
+          mFramesCounted( 0 ),
+          mFPSMeasureDone( false ) {
     
     
     // center this in free space
@@ -71,7 +75,8 @@ ExistingAccountPage::ExistingAccountPage()
     setButtonStyle( &mReviewButton );
     setButtonStyle( &mAtSignButton );
     setButtonStyle( &mPasteButton );
-
+    setButtonStyle( &mRedetectButton );
+    
     mFields[0] = &mEmailField;
     mFields[1] = &mKeyField;
 
@@ -85,6 +90,7 @@ ExistingAccountPage::ExistingAccountPage()
     addComponent( &mPasteButton );
     addComponent( &mEmailField );
     addComponent( &mKeyField );
+    addComponent( &mRedetectButton );
     
     mLoginButton.addActionListener( this );
     mLoginNoSaveButton.addActionListener( this );
@@ -95,6 +101,10 @@ ExistingAccountPage::ExistingAccountPage()
     
     mAtSignButton.addActionListener( this );
     mPasteButton.addActionListener( this );
+
+    mRedetectButton.addActionListener( this );
+    
+    mRedetectButton.setVisible( false );
     
     mAtSignButton.setMouseOverTip( translate( "atSignTip" ) );
 
@@ -133,6 +143,13 @@ void ExistingAccountPage::showReviewButton( char inShow ) {
 
 
 void ExistingAccountPage::makeActive( char inFresh ) {
+
+    mFramesCounted = 0;
+    mPageActiveStartTime = game_getCurrentTime();    
+    mFPSMeasureDone = false;
+    
+    mLoginButton.setVisible( false );
+    
     int pastSuccess = SettingsManager::getIntSetting( "loginSuccess", 0 );
 
     if( ! pastSuccess ) {    
@@ -147,7 +164,7 @@ void ExistingAccountPage::makeActive( char inFresh ) {
         }
     
     mPasteButton.setVisible( false );
-    mAtSignButton.setVisible( true );
+    mAtSignButton.setVisible( false );
 
 
     int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
@@ -213,6 +230,21 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         mKeyField.setText( clipboardText );
     
         delete [] clipboardText;
+        }
+    else if( inTarget == &mRedetectButton ) {
+        SettingsManager::setSetting( "targetFrameRate", -1 );
+        SettingsManager::setSetting( "countingOnVsync", -1 );
+        
+        char relaunched = relaunchGame();
+        
+        if( !relaunched ) {
+            printf( "Relaunch failed\n" );
+            setSignal( "relaunchFailed" );
+            }
+        else {
+            printf( "Relaunched... but did not exit?\n" );
+            setSignal( "relaunchFailed" );
+            }
         }
     
     }
@@ -296,6 +328,49 @@ void ExistingAccountPage::processLogin( char inStore ) {
 
 void ExistingAccountPage::draw( doublePair inViewCenter, 
                                 double inViewSize ) {
+    
+    
+    if( !mFPSMeasureDone ) {
+        mFramesCounted ++;
+        double timePassed = game_getCurrentTime() - mPageActiveStartTime;
+        
+        if( timePassed > 1 ) {
+            double fps = mFramesCounted / timePassed;
+            int targetFPS = 
+                SettingsManager::getIntSetting( "targetFrameRate", -1 );
+            char fpsFailed = true;
+            
+            if( targetFPS != -1 ) {
+                
+                double diff = fabs( fps - targetFPS );
+                
+                if( diff / targetFPS > 0.1 ) {
+                    // more than 10% off
+
+                    fpsFailed = true;
+                    }
+                else {
+                    // close enough
+                    fpsFailed = false;
+                    }
+                }
+
+            if( !fpsFailed ) {
+                mLoginButton.setVisible( true );
+                }
+            else {
+                // show error message
+
+                setStatus( "fpsErrorLogin", true );
+                setStatusPositiion( true );
+                mRedetectButton.setVisible( true );
+                }
+            
+
+            mFPSMeasureDone = true;
+            }
+        }
+    
 
     setDrawColor( 1, 1, 1, 1 );
     

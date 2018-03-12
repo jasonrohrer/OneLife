@@ -11,6 +11,9 @@ vsyncWarning3 "GRAPHICS CARD CONTROL PANEL CAN FIX THIS"
 vsyncContinueMessage "PRESS Y TO CONTINUE WITHOUT VSYNC OR ESC TO QUIT"
 
 
+fpsErrorLogin "ERROR:  FPS MISMATCH DETECTED.  VSYNC CHANGED?"
+
+
 
 loading "LOADING"
 
@@ -91,6 +94,7 @@ fullscreen "FULLSCREEN:"
 musicLoudness "MUSIC LOUDNESS:"
 soundLoudness "SOUND LOUDNESS:"
 
+currentFPS "CURRENT FRAME RATE:"
 targetFPS "TARGET FRAME RATE:"
 vsyncOn "USING VSYNC:"
 vsyncYes "YES"

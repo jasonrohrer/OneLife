@@ -1564,6 +1564,13 @@ void drawFrame( char inUpdate ) {
                 
                 startConnecting();
                 }
+            else if( autoUpdatePage->checkSignal( "relaunchFailed" ) ) {
+                currentGamePage = finalMessagePage;
+                        
+                finalMessagePage->setMessageKey( "manualRestartMessage" );
+                                
+                currentGamePage->base_makeActive( true );
+                }
             }
         else if( currentGamePage == getServerAddressPage ) {
             if( getServerAddressPage->isResponseReady() ) {
