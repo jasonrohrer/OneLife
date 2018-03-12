@@ -21,6 +21,11 @@ Server Fixes:
 
 --Back down to 40.
 
+--Server wasn't setting responsible player for container-remove action, causing
+  container to appear emptied before responsible player finished walking there.
+
+
+
 
 
 

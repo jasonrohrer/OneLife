@@ -3224,12 +3224,15 @@ static char removeFromContainerToHold( LiveObject *inPlayer,
                 
                     }
                 
-                                    
+                
+                setResponsiblePlayer( - inPlayer->id );
+                
                 inPlayer->holdingID =
                     removeContained( 
                         inContX, inContY, inSlotNumber,
                         &( inPlayer->holdingEtaDecay ) );
                         
+                setResponsiblePlayer( -1 );
 
                 if( inPlayer->holdingID < 0 ) {
                     // sub-contained
