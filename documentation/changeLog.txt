@@ -31,6 +31,7 @@ Server Fixes:
 --Temporarily rolled back partial-map-chunk server load fix while I fix the
   client/server map sync bug.
 
+--Server log.txt getting big.  Changed to make backup and rotate every 3 days.
 
 
 
