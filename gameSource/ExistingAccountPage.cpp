@@ -152,7 +152,15 @@ void ExistingAccountPage::makeActive( char inFresh ) {
     
     int pastSuccess = SettingsManager::getIntSetting( "loginSuccess", 0 );
 
-    if( ! pastSuccess ) {    
+    char *emailText = mEmailField.getText();
+    char *keyText = mKeyField.getText();
+
+    // don't hide field contents unless there is something to hide
+    if( ! pastSuccess || 
+        ( strcmp( emailText, "" ) == 0 
+          &&
+          strcmp( keyText, "" ) == 0 ) ) {
+
         mEmailField.focus();
         }
     else {
@@ -162,6 +170,10 @@ void ExistingAccountPage::makeActive( char inFresh ) {
         mEmailField.setContentsHidden( true );
         mKeyField.setContentsHidden( true );
         }
+    
+    delete [] emailText;
+    delete [] keyText;
+
     
     mPasteButton.setVisible( false );
     mAtSignButton.setVisible( false );

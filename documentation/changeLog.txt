@@ -22,6 +22,8 @@ Version 65    ????
 --Client handles negative, zero, or tiny move ETAs without computing negative,
   infinite, or huge move speeds.  This is the source of the map desync bugs.
 
+--After temp login, blank fields are show to avoid confusion.
+
 
 
 
