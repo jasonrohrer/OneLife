@@ -1434,9 +1434,8 @@ int sendMapChunkMessage( LiveObject *inO,
     int numSent = 0;
 
     
-    // temporarily roll-back sending of partial chunks
-    // while we fix desync issues
-    if( ! inO->firstMapSent || true ) {
+
+    if( ! inO->firstMapSent ) {
         // send full rect centered on x,y
         
         inO->firstMapSent = true;
