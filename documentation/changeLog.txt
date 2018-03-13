@@ -16,6 +16,8 @@ Version 65    ????
   center of chunk when they were last seen on one side of map chunk but appear
   later on other side.
 
+--Fixed math of path length measuring for partial paths (length is
+  currentPathStep + 1, not currentPathStep).
 
 
 

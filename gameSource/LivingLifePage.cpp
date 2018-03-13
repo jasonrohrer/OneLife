@@ -723,7 +723,7 @@ void updateMoveSpeed( LiveObject *inObject ) {
     double etaSec = inObject->moveEtaTime - game_getCurrentTime();
     
     double moveLeft = measurePathLength( inObject, inObject->pathLength ) -
-        measurePathLength( inObject, inObject->currentPathStep );
+        measurePathLength( inObject, inObject->currentPathStep + 1 );
     
 
     // count number of turns, which we execute faster than we should
@@ -10505,7 +10505,7 @@ void LivingLifePage::step() {
                                     double oldFractionPassed =
                                         measurePathLength( 
                                             existing,
-                                            existing->currentPathStep )
+                                            existing->currentPathStep + 1 )
                                         /
                                         measurePathLength( 
                                             existing, 
