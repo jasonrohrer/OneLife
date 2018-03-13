@@ -8948,8 +8948,25 @@ void LivingLifePage::step() {
                                 otherSoundPlayed = true;
                                 }
                             }
-                        
 
+                        
+                        if( justAte && o.id == ourID ) {
+                            // we just heard from server that we
+                            // finished eating
+                            // play sound now
+                            ObjectRecord *ateObj =
+                                getObject( justAteID );
+                            if( ateObj->eatingSound.numSubSounds > 0 ) {
+                                playSound( 
+                                    ateObj->eatingSound,
+                                    getVectorFromCamera( 
+                                        existing->currentPos.x, 
+                                        existing->currentPos.y ) );
+                                otherSoundPlayed = true;
+                                }
+                            }
+                        
+                        
                         if( existing->holdingID == 0 ) {
                                                         
                             // don't reset these when dropping something
@@ -11676,7 +11693,9 @@ void LivingLifePage::step() {
             
 
             if( nextActionEating ) {
-                if( ourLiveObject->holdingID > 0 ) {
+                // don't play eating sound here until 
+                // we hear from server that we actually ate    
+                if( false && ourLiveObject->holdingID > 0 ) {
                     ObjectRecord *held = getObject( ourLiveObject->holdingID );
                     
                     if( held->eatingSound.numSubSounds > 0 ) {

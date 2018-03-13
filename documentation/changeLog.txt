@@ -24,6 +24,9 @@ Version 65    ????
 
 --After temp login, blank fields are show to avoid confusion.
 
+--Fixed so that our own eating sound isn't played until we hear from server
+  that we actually ate.
+
 
 
 
