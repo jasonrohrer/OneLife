@@ -755,6 +755,18 @@ void updateMoveSpeed( LiveObject *inObject ) {
 
     etaSec += turnTimeBoost;
     
+    if( etaSec < 0.1 ) {
+        // less than 1/10 of a second
+        // this includes 0 values and negative values
+        // we DO NOT want infinite or negative move speeds
+
+        printf( "updateMoveSpeed sees etaSec of %f, too low, "
+                "upping to 0.1 sec\n", etaSec );
+        
+        etaSec = 0.1;
+        }
+    
+
     double speedPerSec = moveLeft / etaSec;
 
 

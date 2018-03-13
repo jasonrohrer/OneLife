@@ -19,6 +19,10 @@ Version 65    ????
 --Fixed math of path length measuring for partial paths (length is
   currentPathStep + 1, not currentPathStep).
 
+--Client handles negative, zero, or tiny move ETAs without computing negative,
+  infinite, or huge move speeds.  This is the source of the map desync bugs.
+
+
 
 
 Server Fixes:
@@ -39,6 +43,8 @@ Server Fixes:
 
 --Server now gives current mid-path possition in first playerUpdate for moving
   players instead of starting them at their start location along their paths.
+
+--Server should never send negative values for move time remaining.
 
 
 

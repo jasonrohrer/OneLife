@@ -1237,7 +1237,11 @@ char *getMovesMessage( char inNewMovesOnly,
             double deltaSec = Time::getCurrentTime() - o->moveStartTime;
             
             double etaSec = o->moveTotalSeconds - deltaSec;
-                
+            
+            if( etaSec < 0 ) {
+                etaSec = 0;
+                }
+
             if( inNewMovesOnly ) {
                 o->newMove = false;
                 }
