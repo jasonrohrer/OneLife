@@ -14,3 +14,6 @@ sh ./runHeadlessServerLinux.sh
 
 echo "    Setting keepServerRunning flag"
 echo -n "1" > ~/keepServerRunning.txt
+
+
+echo "    Done re-launching server"
