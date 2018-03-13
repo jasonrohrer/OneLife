@@ -33,6 +33,7 @@ Server Fixes:
 
 --Server log.txt getting big.  Changed to make backup and rotate every 3 days.
 
+--Saved serverOut.txt getting big, added a log rotator.
 
 
 
