@@ -54,7 +54,13 @@ void AutoUpdatePage::step() {
     if( result == -1 ) {
         clearUpdate();
         
-        setSignal( "failed" );
+        if( wasUpdateWriteError() ) {
+            setSignal( "writeError" );
+            }
+        else {    
+            setSignal( "failed" );
+            }
+        
         return;
         }
     

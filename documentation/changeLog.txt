@@ -27,6 +27,9 @@ Version 65    ????
 --Fixed so that our own eating sound isn't played until we hear from server
   that we actually ate.
 
+--Update process now detects write permission errors, rolls back, and displays
+  an error message.
+
 
 
 

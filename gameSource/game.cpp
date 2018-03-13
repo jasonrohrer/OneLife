@@ -1,4 +1,4 @@
-int versionNumber = 64;
+int versionNumber = 58;
 
 
 // NOTE that OneLife doesn't use account hmacs
@@ -1643,6 +1643,14 @@ void drawFrame( char inUpdate ) {
                 currentGamePage = finalMessagePage;
                         
                 finalMessagePage->setMessageKey( "upgradeMessage" );
+                        
+                currentGamePage->base_makeActive( true );
+                }
+            else if( autoUpdatePage->checkSignal( "writeError" ) ) {
+                currentGamePage = finalMessagePage;
+                
+                finalMessagePage->setMessageKey( 
+                    "updateWritePermissionMessage" );
                         
                 currentGamePage->base_makeActive( true );
                 }
