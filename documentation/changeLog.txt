@@ -32,6 +32,8 @@ Version 65    ????
 
 --Game no longer pauses when minimized (clearing paused screen was annoying).
 
+--Fullscreen uses borderless window by default (change with borderless.ini in
+  settings folder).
 
 
 
