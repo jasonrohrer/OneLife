@@ -5999,6 +5999,9 @@ char nearEndOfMovement( LiveObject *inPlayer ) {
 
 
 void playPendingReceivedMessages( LiveObject *inPlayer ) {
+    printf( "Playing %d pending received messages for %d\n", 
+            inPlayer->pendingReceivedMessages.size(), inPlayer->id );
+    
     for( int i=0; i<inPlayer->pendingReceivedMessages.size(); i++ ) {
         readyPendingReceivedMessages.push_back( 
             inPlayer->pendingReceivedMessages.getElementDirect( i ) );
@@ -6009,6 +6012,10 @@ void playPendingReceivedMessages( LiveObject *inPlayer ) {
 
 
 void playPendingReceivedMessagesRegardingOthers( LiveObject *inPlayer ) {
+    printf( "Playing %d pending received messages for %d "
+            "    (skipping those that don't affect other players or map)\n", 
+            inPlayer->pendingReceivedMessages.size(), inPlayer->id );
+
     for( int i=0; i<inPlayer->pendingReceivedMessages.size(); i++ ) {
         char *message = inPlayer->pendingReceivedMessages.getElementDirect( i );
         
@@ -7770,7 +7777,13 @@ void LivingLifePage::step() {
                             if( rObj != NULL && 
                                 rObj->pendingReceivedMessages.size() > 0 ) {
                                 
-                                printf( "Holding MX message until later\n" );
+
+                                printf( "Holding MX message caused by "
+                                    "%d until later, "
+                                    "%d other messages pending for them\n",
+                                    rID,
+                                    rObj->pendingReceivedMessages.size() );
+                                
                                 rObj->pendingReceivedMessages.push_back(
                                     autoSprintf( "MX\n%s\n#",
                                                  lines[i] ) );
@@ -8721,7 +8734,12 @@ void LivingLifePage::step() {
                         
 
                         // defer it until they're done moving
-                        printf( "Holding PU message until later\n" );
+                        printf( "Holding PU message for "
+                                "%d until later, "
+                                "%d other messages pending for them\n",
+                                existing->id,
+                                existing->pendingReceivedMessages.size() );
+                                
                         existing->pendingReceivedMessages.push_back(
                             autoSprintf( "PU\n%s\n#",
                                          lines[i] ) );
@@ -8737,8 +8755,17 @@ void LivingLifePage::step() {
                         // Thus, an update about us should be played later also
                         // whenever the adult's messages are played back
                         
-                        printf( "Holding PU message until later\n" );
-                        getLiveObject( existing->heldByAdultID )->
+                        LiveObject *holdingPlayer = 
+                            getLiveObject( existing->heldByAdultID );
+
+                        printf( "Holding PU message for baby %d held by %d "
+                                "until later, "
+                                "%d other messages pending for them\n",
+                                existing->id,
+                                existing->heldByAdultID,
+                                holdingPlayer->pendingReceivedMessages.size() );
+
+                        holdingPlayer->
                             pendingReceivedMessages.push_back(
                                 autoSprintf( "PU\n%s\n#",
                                              lines[i] ) );
@@ -8754,11 +8781,19 @@ void LivingLifePage::step() {
                         // with pending messages that will play
                         // after the walk.  Defer this message too
 
-                        printf( "Holding PU message until later\n" );
-                        getLiveObject( responsiblePlayerID )->
-                            pendingReceivedMessages.push_back(
-                                autoSprintf( "PU\n%s\n#",
-                                             lines[i] ) );
+                        LiveObject *rO = 
+                            getLiveObject( responsiblePlayerID );
+                        
+                        printf( "Holding PU message for %d caused by %d "
+                                "until later, "
+                                "%d other messages pending for them\n",
+                                existing->id,
+                                responsiblePlayerID,
+                                rO->pendingReceivedMessages.size() );
+
+                        rO->pendingReceivedMessages.push_back(
+                            autoSprintf( "PU\n%s\n#",
+                                         lines[i] ) );
                         }         
                     else if( existing != NULL ) {
                         int oldHeld = existing->holdingID;
@@ -10060,7 +10095,13 @@ void LivingLifePage::step() {
                                 // we've got older messages pending
                                 // make this pending too
                                 
-                                printf( "Holding PM message until later\n" );
+                                printf( 
+                                    "Holding PM message for %d "
+                                    "until later, "
+                                    "%d other messages pending for them\n",
+                                    existing->id,
+                                    existing->pendingReceivedMessages.size() );
+
                                 existing->pendingReceivedMessages.push_back(
                                     autoSprintf( "PM\n%s\n#",
                                                  lines[i] ) );
@@ -10667,10 +10708,14 @@ void LivingLifePage::step() {
                     
                     // defer this food update too
                     
-                    printf( "Holding FX message until later\n" );
-                    getLiveObject( responsiblePlayerID )->
-                        pendingReceivedMessages.push_back(
-                            stringDuplicate( message ) );
+                    LiveObject *rO = getLiveObject( responsiblePlayerID );
+                    
+                    printf( "Holding FX message caused by %d until later, "
+                            "%d other messages pending for them\n",
+                            responsiblePlayerID,
+                            rO->pendingReceivedMessages.size() );
+                    rO->pendingReceivedMessages.push_back(
+                        stringDuplicate( message ) );
                     }
                 else {
                     char foodIncreased = false;
