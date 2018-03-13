@@ -9952,7 +9952,18 @@ void LivingLifePage::step() {
                         babyO->pathToDest = NULL;
                         }
                     babyO->currentSpeed = 0;
-                                    
+                    babyO->inMotion = false;
+                    
+                    if( babyO->id == ourID ) {
+                        if( nextActionMessageToSend != NULL ) {
+                            // forget pending action, we've been interrupted
+                            delete [] nextActionMessageToSend;
+                            nextActionMessageToSend = NULL;
+                            }
+                        playerActionPending = false;
+                        }
+                    
+
                     existing->heldFrozenRotFrameCount =
                         babyO->frozenRotFrameCount;
                                     

@@ -35,6 +35,8 @@ Version 65    ????
 --Fullscreen borderless mode available (change with borderless.ini in
   settings folder---be careful, it's experimental).
 
+--Fixed the baby-bouncing-forever bug, finally.
+
 
 
 
