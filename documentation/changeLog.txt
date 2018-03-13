@@ -35,6 +35,9 @@ Server Fixes:
 
 --Saved serverOut.txt getting big, added a log rotator.
 
+--Server now gives current mid-path possition in first playerUpdate for moving
+  players instead of starting them at their start location along their paths.
+
 
 
 

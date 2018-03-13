@@ -2276,7 +2276,9 @@ static int objectRecordToID( ObjectRecord *inRecord ) {
 
 
 // inDelete true to send X X for position
-static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
+// inPartial gets update line for player's current possition mid-path
+static char *getUpdateLine( LiveObject *inPlayer, char inDelete,
+                            char inPartial = false ) {
 
     char *holdingString = getHoldingString( inPlayer );
     
@@ -2294,11 +2296,25 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete ) {
         posString = stringDuplicate( "0 0 X X" );
         }
     else {
+        int x, y;
+
+        if( doneMoving || ! inPartial ) {
+            x = inPlayer->xs;
+            y = inPlayer->ys;
+            }
+        else {
+            // mid-move, and partial position requested
+            GridPos p = computePartialMoveSpot( inPlayer );
+            
+            x = p.x;
+            y = p.y;
+            }
+        
         posString = autoSprintf( "%d %d %d %d",          
                                  doneMoving,
                                  inPlayer->posForced,
-                                 inPlayer->xs, 
-                                 inPlayer->ys );
+                                 x, 
+                                 y );
         }
     
     SimpleVector<char> clothingListBuffer;
@@ -7757,8 +7773,9 @@ int main() {
                         continue;
                         }
 
-
-                    char *messageLine = getUpdateLine( o, false );
+                    
+                    // true mid-move positions for first message
+                    char *messageLine = getUpdateLine( o, false, true );
                     
                     // skip sending info about errored players in
                     // first message
