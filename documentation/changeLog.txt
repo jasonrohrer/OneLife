@@ -30,6 +30,9 @@ Version 65    ????
 --Update process now detects write permission errors, rolls back, and displays
   an error message.
 
+--Game no longer pauses when minimized (clearing paused screen was annoying).
+
+
 
 
 
