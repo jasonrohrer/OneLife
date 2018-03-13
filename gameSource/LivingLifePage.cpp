@@ -10189,24 +10189,35 @@ void LivingLifePage::step() {
                                 
                                 if( existing->id != ourID ) {
                                     // look at how far we think object is
-                                    // from start of path
+                                    // from current fractional position
+                                    // along path
+
+                                    int b = 
+                                        (int)floor( 
+                                            fractionPassed * 
+                                            ( existing->pathLength - 1 ) );
                                     
+                                    if( b >= existing->pathLength ) {
+                                        b = existing->pathLength - 1;
+                                        }
+
                                     // we may be getting a move for
                                     // an object that has been off-chunk
                                     // for a while and is now moving on-chunk
 
-                                    doublePair start;
-                                    start.x = existing->pathToDest[ 0 ].x;
-                                    start.y = existing->pathToDest[ 0 ].y;
+                                    doublePair curr;
+                                    curr.x = existing->pathToDest[ b ].x;
+                                    curr.y = existing->pathToDest[ b ].y;
                                     
-                                    if( distance( start, 
+                                    if( distance( curr, 
                                                   existing->currentPos ) >
                                         5 ) {
                                         
                                         // 5 is too far
 
-                                        // jump right to start of new path
-                                        existing->currentPos = start;
+                                        // jump right to current loc
+                                        // on new path
+                                        existing->currentPos = curr;
                                         }
                                     }
                                 
