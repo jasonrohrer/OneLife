@@ -1,0 +1,15 @@
+./makeWrite
+
+rm -r OneLife_v58
+
+tar xzf OneLife_v58_Linux.tar.gz
+
+cp OneLife OneLife_v58/OneLifeApp
+cp English.txt OneLife_v58/languages/
+
+echo 1 > OneLife_v58/settings/countingOnVsync.ini
+echo 0 > OneLife_v58/settings/fullscreen.ini
+echo 60 > OneLife_v58/settings/targetFrameRate.ini
+
+
+./makeReadOnly

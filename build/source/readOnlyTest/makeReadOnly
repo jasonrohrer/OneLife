@@ -1,0 +1,2 @@
+chmod -R a-w OneLife_v58/
+chmod a+w OneLife_v58/
