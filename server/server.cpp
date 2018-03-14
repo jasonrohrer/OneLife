@@ -2477,9 +2477,16 @@ static LiveObject *getHitPlayer( int inX, int inY,
     }
 
     
+static void writeNextPlayerID() {
+    File nextPlayerIDFile( getEnvDBPath(), "nextPlayerID.txt" );
+    nextPlayerIDFile.writeToFile( nextID );
+    }
 
 
-        
+static void writeNextSequenceNumber() {
+    File nextSequenceNumberFile( getEnvDBPath(), "nextSequenceNumber.txt" );
+    nextSequenceNumberFile.writeToFile( nextSequenceNumber );
+    }
 
 
 void processLoggedInPlayer( Socket *inSock,
@@ -2511,9 +2518,7 @@ void processLoggedInPlayer( Socket *inSock,
     
     newObject.id = nextID;
     nextID++;
-
-    SettingsManager::setSetting( "nextPlayerID",
-                                 (int)nextID );
+    writeNextPlayerID();
 
 
     newObject.responsiblePlayerID = -1;
@@ -3485,12 +3490,13 @@ static void sendMessageToPlayer( LiveObject *inPlayer,
 
 
 int main() {
-
     readEnv();
 
-    nextID = 
-        SettingsManager::getIntSetting( "nextPlayerID", 2 );
+    File nextPlayerIDFile( getEnvDBPath(), "nextPlayerID.txt" );
+    nextID = nextPlayerIDFile.readFileIntContents(2);
 
+    File nextSequenceNumberFile( getEnvDBPath(), "nextSequenceNumber.txt" );
+    nextSequenceNumber = nextSequenceNumberFile.readFileIntContents(1);
 
     // make backup and delete old backup every three days
     File logFile( getEnvLogPath(), "log.txt" );
@@ -3520,10 +3526,6 @@ int main() {
     initBackup();
     
     initPlayerStats();
-    
-
-    nextSequenceNumber = 
-        SettingsManager::getIntSetting( "sequenceNumber", 1 );
 
     requireClientPassword =
         SettingsManager::getIntSetting( "requireClientPassword", 1 );
@@ -3834,9 +3836,7 @@ int main() {
                 newConnection.sequenceNumber = nextSequenceNumber;
                 
                 nextSequenceNumber ++;
-                
-                SettingsManager::setSetting( "sequenceNumber",
-                                             (int)nextSequenceNumber );
+                writeNextSequenceNumber();
                 
                 char *message;
                 
@@ -8409,4 +8409,3 @@ void startOutputAllFrames() {
 
 void stopOutputAllFrames() {
     }
-
