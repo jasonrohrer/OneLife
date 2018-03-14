@@ -63,6 +63,10 @@ Server Fixes:
 
 --Partial-map-chunk sending turned back on, given other fixes.
 
+--Right-click to now puts held at top of container's stack and grabs bottom
+  item.  Useful for cycling through what's in a container.
+
+
 
 
 

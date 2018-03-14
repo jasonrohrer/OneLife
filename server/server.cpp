@@ -3055,10 +3055,19 @@ static char directLineBlocked( GridPos inSource, GridPos inDest ) {
 
 
 
+char removeFromContainerToHold( LiveObject *inPlayer, 
+                                int inContX, int inContY,
+                                int inSlotNumber );
+
+
+
+// swap indicates that we want to put the held item at the bottom
+// of the container and take the top one
 // returns true if added
 static char addHeldToContainer( LiveObject *inPlayer,
                                 int inTargetID,
-                                int inContX, int inContY ) {
+                                int inContX, int inContY,
+                                char inSwap = false ) {
     
     int target = inTargetID;
         
@@ -3151,6 +3160,11 @@ static char addHeldToContainer( LiveObject *inPlayer,
         inPlayer->heldOriginY = 0;
         inPlayer->heldTransitionSourceID = -1;
         
+        if( inSwap && getNumContained( inContX, inContY ) > 1 ) {
+            // take what's on bottom of container
+            removeFromContainerToHold( inPlayer, inContX, inContY, 0 );
+            }
+
         return true;
         }
 
@@ -3160,9 +3174,9 @@ static char addHeldToContainer( LiveObject *inPlayer,
 
 
 // returns true if succeeded
-static char removeFromContainerToHold( LiveObject *inPlayer, 
-                                       int inContX, int inContY,
-                                       int inSlotNumber ) {
+char removeFromContainerToHold( LiveObject *inPlayer, 
+                                int inContX, int inContY,
+                                int inSlotNumber ) {
     inPlayer->heldOriginValid = 0;
     inPlayer->heldOriginX = 0;
     inPlayer->heldOriginY = 0;                        
@@ -6156,10 +6170,13 @@ int main() {
                                         int targetSlots =
                                             getNumContainerSlots( target );
                                         
+                                        // DROP indicates they 
+                                        // right-clicked on container
+                                        // so use swap mode
                                         if( addHeldToContainer( 
                                                 nextPlayer,
                                                 target,
-                                                m.x, m.y ) ) {
+                                                m.x, m.y, true ) ) {
                                             // handled
                                             }
                                         else if( targetSlots == 0 &&
