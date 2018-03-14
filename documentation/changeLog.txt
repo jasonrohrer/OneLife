@@ -12,6 +12,14 @@ Version 66    ???
 
 
 
+Server Fixes:
+
+--Added work-around for basket-full-of-zeros bug that causes a client crash. 
+  Not sure how a container could ever have 0-IDs in it.  Code is in place to
+  clean this up whenever the server encounters it in the future (and not send it
+  on to the client).
+
+
 
 Version 65    2018-March-13
 

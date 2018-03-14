@@ -2241,16 +2241,33 @@ int *getContainedRaw( int inX, int inY, int *outNumContained,
    
     int *contained = new int[ num ];
 
+    int trueNum = 0;
+    
     for( int i=0; i<num; i++ ) {
         int result = dbGet( inX, inY, FIRST_CONT_SLOT + i, inSubCont );
-        if( result != -1 ) {
-            contained[i] = result;
+        if( result == -1 ) {
+            result = 0;
             }
-        else {
-            contained[i] = 0;
-            }
+        if( result != 0 ) {
+            contained[trueNum] = result;
+            trueNum++;
+            }        
         }
-    return contained;
+    
+    *outNumContained = trueNum;
+
+    if( trueNum < num ) {
+        // fix filled count permanently in DB
+        dbPut( inX, inY, NUM_CONT_SLOT, trueNum, inSubCont );
+        }
+
+    if( trueNum > 0 ) {
+        return contained;
+        }
+    else {
+        delete [] contained;
+        return NULL;
+        }
     }
 
 
