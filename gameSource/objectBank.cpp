@@ -1650,12 +1650,11 @@ int addObject( const char *inDescription,
     if( ! inNoWriteToFile && !objectsDir.exists() ) {
         objectsDir.makeDirectory();
         }
+
+
+    int nextObjectNumber = 1;
     
-    if( ! inNoWriteToFile && 
-        objectsDir.exists() && objectsDir.isDirectory() ) {
-                
-                
-        int nextObjectNumber = 1;
+    if( objectsDir.exists() && objectsDir.isDirectory() ) {
                 
         File *nextNumberFile = 
             objectsDir.getChildFile( "nextObjectNumber.txt" );
@@ -1674,7 +1673,18 @@ int addObject( const char *inDescription,
         
         if( newID == -1 ) {
             newID = nextObjectNumber;
+
+            if( newID < maxID + 1 ) {
+                newID = maxID + 1;
+                }
             }
+
+        delete nextNumberFile;
+        }
+    
+
+    if( ! inNoWriteToFile && 
+        objectsDir.exists() && objectsDir.isDirectory() ) {
         
         char *fileName = autoSprintf( "%d.txt", newID );
 
@@ -1889,6 +1899,9 @@ int addObject( const char *inDescription,
         
         char *nextNumberString = autoSprintf( "%d", nextObjectNumber );
         
+        File *nextNumberFile = 
+            objectsDir.getChildFile( "nextObjectNumber.txt" );
+
         nextNumberFile->writeToFile( nextNumberString );
         
         delete [] nextNumberString;

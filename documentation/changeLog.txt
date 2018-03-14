@@ -3,6 +3,15 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 66    ???
+
+--Pushed address space of temporary useDummy objects up to start at value
+  in nextObjectNumber.txt to deal with case of largest-ID object getting
+  removed.  useDummy IDs used to be based on maxID in bank, which would shrink
+  when largest-ID object is removed.
+
+
+
 
 Version 65    2018-March-13
 
