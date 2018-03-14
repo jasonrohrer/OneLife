@@ -3,6 +3,7 @@
 
 #include "map.h"
 #include "playerStats.h"
+#include "env.h"
 
 
 
@@ -34,8 +35,8 @@ static FILE *openCurrentLogFile() {
     
     strftime( fileName, 99, "%Y_%m%B_%d_%A.txt", timeStruct );
 
-    File logDir( NULL, "lifeLog" );
-    
+    File logDir( getEnvLogPath(), "lifeLog" );
+
     if( ! logDir.exists() ) {
         Directory::makeDirectory( &logDir );
         }

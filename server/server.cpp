@@ -27,6 +27,8 @@
 
 #include "minorGems/formats/encodingUtils.h"
 
+#include "minorGems/io/file/File.h"
+
 
 #include "map.h"
 #include "../gameSource/transitionBank.h"
@@ -34,6 +36,7 @@
 #include "../gameSource/animationBank.h"
 #include "../gameSource/categoryBank.h"
 
+#include "env.h"
 #include "lifeLog.h"
 #include "foodLog.h"
 #include "backup.h"
@@ -3483,12 +3486,19 @@ static void sendMessageToPlayer( LiveObject *inPlayer,
 
 int main() {
 
+    readEnv();
+
     nextID = 
         SettingsManager::getIntSetting( "nextPlayerID", 2 );
 
 
     // make backup and delete old backup every three days
-    AppLog::setLog( new FileLog( "log.txt", 259200 ) );
+    File logFile( getEnvLogPath(), "log.txt" );
+    char *logFileName = logFile.getFullFileName();
+    printf( "Outputting to %s\n", logFileName );
+    
+    AppLog::setLog( new FileLog( logFileName, 259200 ) );
+    delete [] logFileName;
 
     AppLog::setLoggingLevel( Log::DETAIL_LEVEL );
     AppLog::printAllMessages( true );
@@ -3497,6 +3507,14 @@ int main() {
     AppLog::info( "Server starting up" );
 
     printf( "\n" );
+    
+    Path *settingsPath = getEnvSettingsPath();
+    if (settingsPath != NULL) {
+        char *settingsPathName = settingsPath->getPathStringTerminated();
+        SettingsManager::setDirectoryName(settingsPathName);
+        
+        delete [] settingsPathName;
+        }
     
     initLifeLog();
     initBackup();

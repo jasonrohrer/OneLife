@@ -2,6 +2,7 @@
 
 #include "kissdb.h"
 #include "dbCommon.h"
+#include "env.h"
 
 #include "minorGems/util/log/AppLog.h"
 #include "minorGems/util/SettingsManager.h"
@@ -9,6 +10,8 @@
 
 #include "minorGems/network/web/WebRequest.h"
 #include "minorGems/network/web/URLUtils.h"
+
+#include "minorGems/io/file/File.h"
 
 #include "minorGems/crypto/hashes/sha1.h"
 
@@ -37,14 +40,19 @@ static SimpleVector<StatRecord> records;
 
 
 void initPlayerStats() {
-    int error = KISSDB_open( &db, 
-                             "playerStats.db", 
+    File playerStatsDBFile( getEnvDBPath(), "playerStats.db" );
+    const char *playerStatsDBFileName = playerStatsDBFile.getFullFileName();
+  
+    int error = KISSDB_open( &db,
+                             playerStatsDBFileName,
                              KISSDB_OPEN_MODE_RWCREAT,
                              80000,
                              50, // first 50 characters of email address
                                  // append spaces to the end if needed 
                              8   // two ints,  num_lives, total_seconds
                              );
+                             
+    delete [] playerStatsDBFileName;
     
     if( error ) {
         AppLog::errorF( "Error %d opening eve KissDB", error );

@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 
+#include "env.h"
 
 #include "minorGems/util/stringUtils.h"
 #include "minorGems/util/SimpleVector.h"
@@ -30,8 +31,8 @@ static FILE *openCurrentLogFile() {
     
     strftime( fileName, 99, "%Y_%m%B_%d_%A.txt", timeStruct );
 
-    File logDir( NULL, "failureLog" );
-    
+    File logDir( getEnvLogPath(), "failureLog" );
+
     if( ! logDir.exists() ) {
         Directory::makeDirectory( &logDir );
         }

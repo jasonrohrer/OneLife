@@ -1,4 +1,5 @@
 #include "backup.h"
+#include "env.h"
 
 
 
@@ -45,7 +46,7 @@ void backupDBFile( const char *inFileNamePrefix, char *inTimeFileNamePart,
                    File *inBackupFolder ) {
     char *fileName = autoSprintf( "%s.db", inFileNamePrefix );
     
-    File dbFile( NULL, fileName );
+    File dbFile( getEnvDBPath(), fileName );
 
     delete [] fileName;
 
@@ -112,7 +113,7 @@ void checkBackup() {
                                  timeStruct.tm_min,
                                  timeStruct.tm_sec );
 
-                File backupFolder( NULL, "backups" );
+                File backupFolder( getEnvDBPath(), "backups" );
                 
                 if( ! backupFolder.exists() ) {
                     Directory::makeDirectory( &backupFolder );

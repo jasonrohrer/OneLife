@@ -21,6 +21,8 @@
 
 #include "dbCommon.h"
 
+#include "env.h"
+
 
 #include <stdarg.h>
 #include <math.h>
@@ -1200,12 +1202,14 @@ void initMap() {
         }
     
             
+    File mapDBFile( getEnvDBPath(), "map.db" );
+    const char *mapDBFileName = mapDBFile.getFullFileName();
 
     // note that the various decay ETA slots in map.db 
     // are define but unused, because we store times separately
     // in mapTime.db
-    int error = KISSDB_open( &db, 
-                             "map.db", 
+    int error = KISSDB_open( &db,
+                             mapDBFileName,
                              KISSDB_OPEN_MODE_RWCREAT,
                              80000,
                              16, // four 32-bit ints, xysb
@@ -1228,6 +1232,8 @@ void initMap() {
                              4 // one int, object ID at x,y in slot (s-3)
                                // OR contained count if s=2
                              );
+                             
+    delete [] mapDBFileName;
     
     if( error ) {
         AppLog::errorF( "Error %d opening map KissDB", error );
@@ -1236,13 +1242,14 @@ void initMap() {
     
     dbOpen = true;
 
-
+    File mapTimeDBFile( getEnvDBPath(), "mapTime.db" );
+    const char *mapTimeDBFileName = mapTimeDBFile.getFullFileName();
 
     // this DB uses the same slot numbers as the map.db
     // however, only times are stored here, because they require 8 bytes
     // so, slot 0 and 2 are never used, for example
-    error = KISSDB_open( &timeDB, 
-                         "mapTime.db", 
+    error = KISSDB_open( &timeDB,
+                         mapTimeDBFileName,
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
                          16, // four 32-bit ints, xysb
@@ -1277,10 +1284,11 @@ void initMap() {
 
 
 
+    File biomeDBFile( getEnvDBPath(), "biome.db" );
+    const char *biomeDBFileName = biomeDBFile.getFullFileName();
 
-
-    error = KISSDB_open( &biomeDB, 
-                         "biome.db", 
+    error = KISSDB_open( &biomeDB,
+                         biomeDBFileName,
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
                          8, // two 32-bit ints, xy
@@ -1291,6 +1299,8 @@ void initMap() {
                          //    multiplied by 1,000,000)
                          );
     
+    delete [] biomeDBFileName;
+    
     if( error ) {
         AppLog::errorF( "Error %d opening biome KissDB", error );
         return;
@@ -1300,15 +1310,18 @@ void initMap() {
 
 
 
+    File floorDBFile( getEnvDBPath(), "floor.db" );
+    const char *floorDBFileName = floorDBFile.getFullFileName();
 
-
-    error = KISSDB_open( &floorDB, 
-                         "floor.db", 
+    error = KISSDB_open( &floorDB,
+                         floorDBFileName,
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
                          8, // two 32-bit ints, xy
                          4 // one int, the floor object ID at x,y 
                          );
+                         
+    delete [] floorDBFileName;
     
     if( error ) {
         AppLog::errorF( "Error %d opening floor KissDB", error );
@@ -1317,10 +1330,11 @@ void initMap() {
     
     floorDBOpen = true;
 
+    File floorTimeDBFile( getEnvDBPath(), "floorTime.db" );
+    const char *floorTimeDBFileName = floorTimeDBFile.getFullFileName();
 
-
-    error = KISSDB_open( &floorTimeDB, 
-                         "floorTime.db", 
+    error = KISSDB_open( &floorTimeDB,
+                         floorTimeDBFileName,
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
                          8, // two 32-bit ints, xy
@@ -1328,6 +1342,8 @@ void initMap() {
                            // in whatever binary format and byte order
                            // "double" on the server platform uses
                          );
+    
+    delete [] floorTimeDBFileName;
     
     if( error ) {
         AppLog::errorF( "Error %d opening floor time KissDB", error );
@@ -1339,16 +1355,19 @@ void initMap() {
 
 
 
+    File eveDBFile( getEnvDBPath(), "eve.db" );
+    const char *eveDBFileName = eveDBFile.getFullFileName();
 
-
-    error = KISSDB_open( &eveDB, 
-                         "eve.db", 
+    error = KISSDB_open( &eveDB,
+                         eveDBFileName,
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
                          50, // first 50 characters of email address
                              // append spaces to the end if needed 
                          12 // three ints,  x_center, y_center, radius
                          );
+                         
+    delete [] eveDBFileName;
     
     if( error ) {
         AppLog::errorF( "Error %d opening eve KissDB", error );

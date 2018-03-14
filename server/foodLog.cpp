@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 
+#include "env.h"
 
 #include "minorGems/util/stringUtils.h"
 #include "minorGems/io/file/File.h"
@@ -29,8 +30,8 @@ static FILE *openCurrentLogFile() {
     
     strftime( fileName, 99, "%Y_%m%B_%d_%A.txt", timeStruct );
 
-    File logDir( NULL, "foodLog" );
-    
+    File logDir( getEnvLogPath(), "foodLog" );
+
     if( ! logDir.exists() ) {
         Directory::makeDirectory( &logDir );
         }
