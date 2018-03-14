@@ -1785,6 +1785,11 @@ void freeMap() {
         AppLog::infoF( "Cleaning up map database on server shutdown." );
         
         // iterate through DB and look for useDummy objects
+        // replace them with unused version object
+        // useDummy objects aren't real objects in objectBank,
+        // and their IDs may change in the future, so they're
+        // not safe to store in the map between server runs.
+        
         KISSDB_Iterator dbi;
     
     
