@@ -1075,17 +1075,22 @@ int *getContainedRaw( int inX, int inY, int *outNumContained,
 
 
 void writeRecentPlacements() {
-    FILE *placeFile = fopen( "recentPlacements.txt", "w" );
-    if( placeFile != NULL ) {
+    File placeFile( getEnvDBPath(), "recentPlacements.txt" );
+    char *fullPath = placeFile.getFullFileName();
+
+    FILE *output = fopen( fullPath, "w" );
+    if( output != NULL ) {
         for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
-            fprintf( placeFile, "%d,%d %d\n", recentPlacements[i].pos.x,
+            fprintf( output, "%d,%d %d\n", recentPlacements[i].pos.x,
                      recentPlacements[i].pos.y,
                      recentPlacements[i].depth );
             }
-        fprintf( placeFile, "nextPlacementIndex=%d\n", nextPlacementIndex );
+        fprintf( output, "nextPlacementIndex=%d\n", nextPlacementIndex );
         
-        fclose( placeFile );
+        fclose( output );
         }
+
+    delete [] fullPath;
     }
 
 
