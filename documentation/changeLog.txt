@@ -10,6 +10,9 @@ Version 66    ???
   removed.  useDummy IDs used to be based on maxID in bank, which would shrink
   when largest-ID object is removed.
 
+--Got pick-up sound playing correctly when a container swap happens.
+
+
 
 
 Server Fixes:

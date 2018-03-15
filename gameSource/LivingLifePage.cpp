@@ -6594,6 +6594,36 @@ static char shouldCreationSoundPlay( int inOldID, int inNewID ) {
     }
 
 
+static char checkIfHeldContChanged( LiveObject *inOld, LiveObject *inNew ) {    
+                    
+    if( inOld->numContained != inNew->numContained ) {
+        return true;
+        }
+    else {
+        for( int c=0; c<inOld->numContained; c++ ) {
+            if( inOld->containedIDs[c] != 
+                inNew->containedIDs[c] ) {
+                return true;
+                }
+            if( inOld->subContainedIDs[c].size() != 
+                inNew->subContainedIDs[c].size() ) {
+                return true;
+                }
+            for( int s=0; s<inOld->subContainedIDs[c].size();
+                 s++ ) {
+                if( inOld->subContainedIDs[c].
+                    getElementDirect( s ) !=
+                    inNew->subContainedIDs[c].
+                    getElementDirect( s ) ) {
+                    return true;
+                    }
+                }
+            }
+        }
+    return false;
+    }
+
+
 
         
 void LivingLifePage::step() {
@@ -8809,6 +8839,15 @@ void LivingLifePage::step() {
                         }         
                     else if( existing != NULL ) {
                         int oldHeld = existing->holdingID;
+                        int heldContChanged = false;
+                        
+                        if( oldHeld > 0 &&
+                            oldHeld == existing->holdingID ) {
+                            
+                            heldContChanged =
+                                checkIfHeldContChanged( &o, existing );
+                            }
+                        
                         
                         existing->lastHoldingID = oldHeld;
                         existing->holdingID = o.holdingID;
@@ -9020,7 +9059,8 @@ void LivingLifePage::step() {
                                     }
                                 }
                             }
-                        else if( oldHeld != existing->holdingID ) {
+                        else if( oldHeld != existing->holdingID ||
+                                 heldContChanged ) {
                             // holding something new
                             
                             // what we're holding has gone through
@@ -9290,6 +9330,7 @@ void LivingLifePage::step() {
                                     
                                     if( ! otherSoundPlayed &&
                                         ! clothingChanged &&
+                                        heldTransitionSourceID > 0 &&
                                         heldObj->creationSound.numSubSounds 
                                         > 0 ) {
                                         
@@ -9382,7 +9423,10 @@ void LivingLifePage::step() {
                                             }
                                         }
                                     
-                                    if( oldHeld == 0 ) {
+                                    if( oldHeld == 0 ||
+                                        heldContChanged || 
+                                        ( ! creationSoundPlayed &&
+                                          ! clothingSoundPlayed ) ) {
                                         // we're holding something new
 
                                         existing->lastHeldAnim = held;
