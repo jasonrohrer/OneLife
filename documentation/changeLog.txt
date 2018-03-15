@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 66    ???
+Version 66    2018-March-14
 
 --Pushed address space of temporary useDummy objects up to start at value
   in nextObjectNumber.txt to deal with case of largest-ID object getting
