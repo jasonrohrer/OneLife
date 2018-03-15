@@ -343,11 +343,15 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
     
     
     if( !mFPSMeasureDone ) {
-        mFramesCounted ++;
         double timePassed = game_getCurrentTime() - mPageActiveStartTime;
+        double settleTime = 0.1;
+
+        if ( timePassed > settleTime ) {
+            mFramesCounted ++;
+            }
         
-        if( timePassed > 1 ) {
-            double fps = mFramesCounted / timePassed;
+        if( timePassed > 1 + settleTime ) {
+            double fps = mFramesCounted / (timePassed - settleTime);
             int targetFPS = 
                 SettingsManager::getIntSetting( "targetFrameRate", -1 );
             char fpsFailed = true;
