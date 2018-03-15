@@ -5043,7 +5043,7 @@ int main() {
                                     if( r != NULL ) {
                                         
                                         nextPlayer->holdingID = r->newActor;
-                                        nextPlayer->heldTransitionSourceID = -1;
+                                        nextPlayer->heldTransitionSourceID = 0;
                                         
                                         if( oldHolding != 
                                             nextPlayer->holdingID ) {

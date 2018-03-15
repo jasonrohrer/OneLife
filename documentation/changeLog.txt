@@ -27,6 +27,7 @@ Server Fixes:
   different from what you're holding.  If all items in the container are
   identical to what you're holding, it acts like a normal container add action.
 
+--Server sets 0 for heldTransitionSourceID as a result of killing.
 
 
 
