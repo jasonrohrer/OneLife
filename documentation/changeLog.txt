@@ -3,6 +3,15 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes:
+
+--Fixed bad PU message sent by server, causing client crash, if player spawns
+  on top of something deadly and dies immediately.  I think this only caused a
+  crash in solo-player servers, but might also have screwed other stuff up in
+  multi-player servers.  https://github.com/jasonrohrer/OneLife/issues/12
+
+
+
 Version 66    2018-March-14
 
 --Pushed address space of temporary useDummy objects up to start at value

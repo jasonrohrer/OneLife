@@ -7845,7 +7845,7 @@ int main() {
                 
                     LiveObject *o = players.getElement( i );
                 
-                    if( o->error ) {
+                    if( o != nextPlayer && o->error ) {
                         continue;
                         }
 
