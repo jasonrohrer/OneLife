@@ -3159,10 +3159,66 @@ static char addHeldToContainer( LiveObject *inPlayer,
         inPlayer->heldOriginX = 0;
         inPlayer->heldOriginY = 0;
         inPlayer->heldTransitionSourceID = -1;
+
+        int numInNow = getNumContained( inContX, inContY );
         
-        if( inSwap && getNumContained( inContX, inContY ) > 1 ) {
-            // take what's on bottom of container
-            removeFromContainerToHold( inPlayer, inContX, inContY, 0 );
+        if( inSwap &&  numInNow > 1 ) {
+            // take what's on bottom of container, but only if it's different
+            // from what's in our hand
+
+            // if we find a same object on bottom, keep going up until
+            // we find a non-same one to swap
+            for( int botInd = 0; botInd < numInNow - 1; botInd ++ ) {
+                
+                char same = false;
+
+                int bottomItem = 
+                    getContained( inContX, inContY, botInd, 0 );
+            
+                if( bottomItem == idToAdd ) {
+                    if( bottomItem > 0 ) {
+                        // not sub conts
+                        same = true;
+                        }
+                    else {
+                        // they must contain same stuff to be same
+                        int bottomNum = getNumContained( inContX, inContY,
+                                                         botInd + 1 );
+                        int topNum =  getNumContained( inContX, inContY,
+                                                       numInNow );
+                    
+                        if( bottomNum != topNum ) {
+                            same = true;
+                            }
+                        else {
+                            for( int b=0; b<bottomNum; b++ ) {
+                                int subB = getContained( inContX, inContY,
+                                                         b, botInd );
+                                int subT = getContained( inContX, inContY,
+                                                         b, numInNow );
+                                
+                                if( subB != subT ) {
+                                    same = false;
+                                    break;
+                                    }
+                                }
+                            same = true;
+                            }
+                        }
+                    }
+            
+
+                if( ! same ) {
+                    // found one to swap
+                    removeFromContainerToHold( inPlayer, inContX, inContY, 
+                                               botInd );
+                    break;
+                    }
+                }
+            // if we didn't remove one, it means whole container is full
+            // of identical items.
+            // the swap action doesn't work, so we just let it
+            // behave like an add action instead.
             }
 
         return true;

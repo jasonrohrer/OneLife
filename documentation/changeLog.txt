@@ -19,6 +19,12 @@ Server Fixes:
   clean this up whenever the server encounters it in the future (and not send it
   on to the client).
 
+--Improved behavior of container swap action (right click while holding
+  something).  It now swaps with the bottom-most item in the container that is
+  different from what you're holding.  If all items in the container are
+  identical to what you're holding, it acts like a normal container add action.
+
+
 
 
 Version 65    2018-March-13
