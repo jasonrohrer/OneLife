@@ -7,6 +7,10 @@
 *.orig
 Makefile*
 
+callgrind.out*
+leak.out*
+core*
+
 gameSource/OneLife
 gameSource/testUser/*
 gameSource/testUser2/*
