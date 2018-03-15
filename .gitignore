@@ -2,10 +2,25 @@
 
 *.o
 *.dep
+*.dep2
 *~
 *.orig
+Makefile*
 
+gameSource/OneLife
 gameSource/testUser/*
 gameSource/testUser2/*
 gameSource/recordedGames/*
 gameSource/screenShots/*
+
+server/OneLifeServer
+server/log.txt
+server/recentPlacements.txt
+server/*.db
+server/backups/
+server/failureLog/
+server/foodLog/
+server/lifeLog/
+server/categories
+server/objects
+server/transitions
