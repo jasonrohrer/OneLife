@@ -5828,7 +5828,9 @@ int main() {
                                 ObjectRecord *obj = 
                                     getObject( nextPlayer->holdingID );
                                 
-                                if( obj->foodValue > 0 ) {
+                                int cap =
+                                    computeFoodCapacity( targetPlayer );
+                                if( obj->foodValue > 0 && targetPlayer->foodStore < cap) {
                                     targetPlayer->justAte = true;
                                     targetPlayer->justAteID = 
                                         nextPlayer->holdingID;
@@ -5847,8 +5849,6 @@ int main() {
                                     
                                     targetPlayer->foodStore += eatBonus;
 
-                                    int cap =
-                                        computeFoodCapacity( targetPlayer );
                                     
                                     if( targetPlayer->foodStore > cap ) {
                                         targetPlayer->foodStore = cap;
