@@ -351,7 +351,7 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
             }
         
         if( timePassed > 1 + settleTime ) {
-            double fps = mFramesCounted / (timePassed - settleTime);
+            double fps = mFramesCounted / ( timePassed - settleTime );
             int targetFPS = 
                 SettingsManager::getIntSetting( "targetFrameRate", -1 );
             char fpsFailed = true;
