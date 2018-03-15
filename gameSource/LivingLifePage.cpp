@@ -9330,7 +9330,7 @@ void LivingLifePage::step() {
                                     
                                     if( ! otherSoundPlayed &&
                                         ! clothingChanged &&
-                                        heldTransitionSourceID > 0 &&
+                                        heldTransitionSourceID >= 0 &&
                                         heldObj->creationSound.numSubSounds 
                                         > 0 ) {
                                         
@@ -9423,9 +9423,27 @@ void LivingLifePage::step() {
                                             }
                                         }
                                     
+                                    char autoDecay = false;
+                                    
+                                    if( oldHeld > 0 && 
+                                        existing->holdingID > 0 ) {
+                                        TransRecord *dR =
+                                            getTrans( -1, oldHeld );
+                                        
+                                        if( dR != NULL &&
+                                            dR->newActor == 0 &&
+                                            dR->newTarget == 
+                                            existing->holdingID ) {
+                                            
+                                            autoDecay = true;
+                                            }
+                                        }
+                                    
+                                    
                                     if( oldHeld == 0 ||
                                         heldContChanged || 
-                                        ( ! creationSoundPlayed &&
+                                        ( !autoDecay && 
+                                          ! creationSoundPlayed &&
                                           ! clothingSoundPlayed ) ) {
                                         // we're holding something new
 

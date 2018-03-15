@@ -12,6 +12,8 @@ Version 66    ???
 
 --Got pick-up sound playing correctly when a container swap happens.
 
+--Client plays held object creation sound when heldTransitionSourceID is 0
+  (for scream sound when a bloody knife is created after killing).
 
 
 
