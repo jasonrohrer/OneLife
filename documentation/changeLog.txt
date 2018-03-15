@@ -5,7 +5,8 @@ http://onehouronelife.com/updateLog.php
 
 Version 67    ???
 
---Fixed login FPS checking to wait 0.1 seconds for things to settle after load.   https://github.com/jasonrohrer/OneLife/pull/14
+--Fixed login FPS checking to wait 0.1 seconds for things to settle after load.
+  https://github.com/jasonrohrer/OneLife/pull/14
 
 
 
@@ -15,6 +16,8 @@ Server Fixes:
   on top of something deadly and dies immediately.  I think this only caused a
   crash in solo-player servers, but might also have screwed other stuff up in
   multi-player servers.  https://github.com/jasonrohrer/OneLife/issues/12
+
+--Can no longer eat when full.  https://github.com/jasonrohrer/OneLife/pull/11
 
 
 
