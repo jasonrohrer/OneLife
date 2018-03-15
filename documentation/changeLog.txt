@@ -31,6 +31,9 @@ Server Fixes:
 
 --Server sets 0 for heldTransitionSourceID as a result of killing.
 
+--Reflector full threshold reduced from 95% to 90% to reduce chance of SERVER
+  FULL errors when a player is assigned a server by the reflector.
+
 
 
 Version 65    2018-March-13

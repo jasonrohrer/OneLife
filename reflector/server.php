@@ -1,7 +1,7 @@
 <?php
 
 
-$tooFullFraction = .95;
+$tooFullFraction = .90;
 
 $startSpreadingFraction = .50;
 
