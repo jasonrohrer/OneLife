@@ -9296,7 +9296,7 @@ void LivingLifePage::step() {
                                             }
                                         }
                                     else if( oldHeld > 0 &&
-                                             heldTransitionSourceID != -1 ) {
+                                             heldTransitionSourceID > 0 ) {
                                         
                                         TransRecord *t = 
                                             getTrans( oldHeld,

@@ -8,6 +8,9 @@ Version 67    ???
 --Fixed login FPS checking to wait 0.1 seconds for things to settle after load.
   https://github.com/jasonrohrer/OneLife/pull/14
 
+--Fixed so that murder weapon creation sound plays even if something is left
+  in grave by murder transition.
+
 
 
 Server Fixes:
