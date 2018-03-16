@@ -148,6 +148,38 @@ ofHint "OF"
 tabHint "[TAB]"
 
 
+mother "MOTHER"
+son "SON"
+daughter "DAUGHTER"
+grand "GRAND"
+great "GREAT "
+
+brother "BROTHER"
+sister "SISTER"
+
+aunt "AUNT"
+uncle "UNCLE"
+
+niece "NIECE"
+nephew "NEPHEW"
+
+cousin "COUSIN"
+
+first "FIRST"
+second "SECOND"
+third "THIRD"
+fourth "FOURTH"
+fifth "FIFTH"
+sixth "SIXTH"
+th "TH"
+
+removed "REMOVED"
+once "ONCE"
+twice "TWICE"
+thrice "THRICE"
+times "TIMES"
+
+
 youDied "YOU DIED"
 
 deathAgeOne "AGE:  1 YEAR"
