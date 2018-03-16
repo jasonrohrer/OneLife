@@ -262,6 +262,7 @@ typedef struct PointerHitRecord {
         char hitSelf;
     
         char hitOtherPerson;
+        int hitOtherPersonID;
         
         int hitClothingIndex;
 

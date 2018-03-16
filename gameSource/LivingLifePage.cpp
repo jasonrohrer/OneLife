@@ -6097,7 +6097,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             doublePair pos = { lastScreenViewCenter.x, 
                                lastScreenViewCenter.y - 313 };
 
-            char *des;
+            char *des = NULL;
             char *desToDelete = NULL;
             
             if( idToDescribe == -99 ) {
@@ -6112,6 +6112,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 else {
                     des = (char*)translate( "you" );
+                    }
+                }
+            else if( idToDescribe < 0 ) {
+                LiveObject *otherObj = getLiveObject( -idToDescribe );
+                
+                if( otherObj != NULL ) {
+                    des = otherObj->relationName;
+                    }
+                if( des == NULL ) {
+                    des = (char*)translate( "unrelated" );
                     }
                 }
             else {
@@ -11096,9 +11106,6 @@ void LivingLifePage::step() {
                         
                         other->relationName = getRelationName( ourObject,
                                                                other );
-                        if( other->relationName != NULL ) {
-                            printf( "Relation = %s\n", other->relationName );
-                            }
                         }
                     }
                 }
@@ -12730,6 +12737,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                             }
                         else {
                             p->hitOtherPerson = true;
+                            p->hitOtherPersonID = o->id;
                             }
                         if( cl != -1 ) {
                             p->hitClothingIndex = cl;
@@ -12948,7 +12956,12 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
                     mCurMouseOverID = c->id;
                     }
                 }
-            }        
+            }
+        if( p.hitOtherPerson ) {
+            // store negative in place so that we can show their relation
+            // string
+            mCurMouseOverID = - p.hitOtherPersonID;
+            }
         }
     
 

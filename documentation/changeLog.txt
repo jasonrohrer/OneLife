@@ -25,6 +25,8 @@ Version 67    ???
 --Fixed hint result to prefer showing actor or target that becomes deeper (we
   don't want to see empty bucket as the result of pooring water on a wall).
 
+--Mousing over a person shows their relationship to you, if any.
+
 
 
 Server Fixes:
