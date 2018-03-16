@@ -263,7 +263,9 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
                     break;
                     }
                 }
-            
+            if( ourMatchIndex != -1 ) {
+                break;
+                }
             }
         
         if( ourMatchIndex == -1 ) {
@@ -353,6 +355,7 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
                 break;
                 }
             }
+        buffer.appendElementString( " " );
         }
     
     buffer.appendElementString( main );
