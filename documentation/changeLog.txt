@@ -11,6 +11,8 @@ Version 67    ???
 --Fixed so that murder weapon creation sound plays even if something is left
   in grave by murder transition.
 
+--Fixed object bank bug that wasn't saving slotVert setting correctly.
+
 
 
 Server Fixes:

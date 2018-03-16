@@ -2023,6 +2023,7 @@ int addObject( const char *inDescription,
     r->slotParent = new int[ inNumSlots ];
     
     memcpy( r->slotPos, inSlotPos, inNumSlots * sizeof( doublePair ) );
+    memcpy( r->slotVert, inSlotVert, inNumSlots * sizeof( char ) );
     memcpy( r->slotParent, inSlotParent, inNumSlots * sizeof( int ) );
     
     r->slotTimeStretch = inSlotTimeStretch;
