@@ -13,6 +13,8 @@ Version 67    ???
 
 --Fixed object bank bug that wasn't saving slotVert setting correctly.
 
+--Fixed sound played when swapping one container with another.
+
 
 
 Server Fixes:
@@ -31,6 +33,8 @@ Server Fixes:
   is successful (bloody knife on hit vs regular knife on miss).  Permanent
   objects, if held, cannot be dropped.  Thus, a murder weapon can become
   undroppable for a period of time post-murder.
+
+--Can now swap one container with another on right click.
 
 
 

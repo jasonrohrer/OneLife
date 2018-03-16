@@ -6266,6 +6266,10 @@ int main() {
                                 else if( nextPlayer->holdingID > 0 ) {
                                     // non-baby drop
                                     
+                                    ObjectRecord *droppedObj
+                                        = getObject( 
+                                            nextPlayer->holdingID );
+                                    
                                     int target = getMapObject( m.x, m.y );
                             
                                     if( target != 0 ) {
@@ -6274,18 +6278,36 @@ int main() {
                                             getObject( target );
                                         
                                         int targetSlots =
-                                            getNumContainerSlots( target );
+                                            targetObj->numSlots;
                                         
+                                        int targetSlotSize = 0;
+                                        
+                                        if( targetSlots > 0 ) {
+                                            targetSlotSize =
+                                                targetObj->slotSize;
+                                            }
+                                        
+                                        char canGoIn = false;
+                                        
+                                        if( droppedObj->containable &&
+                                            targetSlotSize >=
+                                            droppedObj->containSize ) {
+                                            canGoIn = true;
+                                            }
+                                        
+                                        
+
                                         // DROP indicates they 
                                         // right-clicked on container
                                         // so use swap mode
-                                        if( addHeldToContainer( 
+                                        if( canGoIn && 
+                                            addHeldToContainer( 
                                                 nextPlayer,
                                                 target,
                                                 m.x, m.y, true ) ) {
                                             // handled
                                             }
-                                        else if( targetSlots == 0 &&
+                                        else if( ! canGoIn &&
                                                  ! targetObj->permanent 
                                                  &&
                                                  targetObj->minPickupAge <=
@@ -6334,9 +6356,7 @@ int main() {
 
                                         // only allow drop if what we're
                                         // dropping is non-blocking
-                                        ObjectRecord *droppedObj
-                                            = getObject( 
-                                                nextPlayer->holdingID );
+                                        
                                         
                                         if( ! droppedObj->blocksWalking ) {
                                             

@@ -8075,13 +8075,24 @@ void LivingLifePage::step() {
                             }
                         
 
+                        LiveObject *responsiblePlayerObject = NULL;
+                        
+                        if( responsiblePlayerID > 0 ) {
+                            responsiblePlayerObject = 
+                                getGameObject( responsiblePlayerID );
+                            }
+
                         if( old > 0 &&
                             old == newID &&
                             mMapContainedStacks[mapI].size() > 
                             oldContainedCount &&
-                            responsiblePlayerID > 0 ) {
+                            responsiblePlayerObject != NULL &&
+                            responsiblePlayerObject->holdingID == 0 ) {
                             
-
+                            // target is changed container and
+                            // responsible player's hands now empty
+                            
+                            
                             // first, try and play the "using"
                             // sound for the container
                             char soundPlayed = false;
@@ -8098,9 +8109,7 @@ void LivingLifePage::step() {
                             if( ! soundPlayed ) {
                                 // no container using sound defined
                                 
-                                LiveObject *responsiblePlayerObject = 
-                                    getGameObject( responsiblePlayerID );
-                            
+                                
                                 // play player's using sound
                             
                                 SoundUsage s = getObject( 
