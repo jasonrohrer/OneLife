@@ -69,6 +69,8 @@ double forceDeathAge = 60;
 
 double minSayGapInSeconds = 1.0;
 
+int maxLineageTracked = 20;
+
 
 static double minFoodDecrementSeconds = 5.0;
 static double maxFoodDecrementSeconds = 20;
@@ -131,6 +133,8 @@ typedef struct LiveObject {
         
         // 0 for Eve
         int parentChainLength;
+
+        SimpleVector<int> *lineage;
         
 
         // time that this life started (for computing age)
@@ -516,7 +520,7 @@ void quitCleanup() {
         LiveObject *nextPlayer = players.getElement(i);
         delete nextPlayer->sock;
         delete nextPlayer->sockBuffer;
-
+        delete nextPlayer->lineage;
         
         if( nextPlayer->email != NULL  ) {
             delete [] nextPlayer->email;
@@ -2911,7 +2915,8 @@ void processLoggedInPlayer( Socket *inSock,
             }
         }
     
-
+    
+    newObject.lineage = new SimpleVector<int>();
     
     newObject.pathLength = 0;
     newObject.pathToDest = NULL;
@@ -2977,6 +2982,18 @@ void processLoggedInPlayer( Socket *inSock,
         parentEmail = parent->email;
 
         newObject.parentChainLength = parent->parentChainLength + 1;
+
+        // mother
+        newObject.lineage->push_back( parentID );
+        
+        for( int i=0; 
+             i < parent->lineage->size() && 
+                 i < maxLineageTracked - 1;
+             i++ ) {
+            
+            newObject.lineage->push_back( 
+                parent->lineage->getElementDirect( i ) );
+            }
         }
     
     // parent pointer possibly no longer valid after push_back, which
@@ -4300,6 +4317,8 @@ int main() {
         // we compose the full update message below
         SimpleVector<int> playerIndicesToSendUpdatesAbout;
         
+        SimpleVector<int> playerIndicesToSendLineageAbout;
+
         // accumulated text of update lines
         SimpleVector<char> newUpdates;
         SimpleVector<ChangePosition> newUpdatesPos;
@@ -6492,6 +6511,7 @@ int main() {
                 
 
                 playerIndicesToSendUpdatesAbout.push_back( i );
+                playerIndicesToSendLineageAbout.push_back( i );
                 
                 nextPlayer->isNew = false;
                 
@@ -7883,6 +7903,60 @@ int main() {
 
             }
 
+
+        unsigned char *lineageMessage = NULL;
+        int lineageMessageLength = 0;
+        
+        if( playerIndicesToSendLineageAbout.size() > 0 ) {
+            SimpleVector<char> linWorking;
+            linWorking.appendElementString( "LI\n" );
+            
+            int numAdded = 0;
+            for( int i=0; i<playerIndicesToSendLineageAbout.size(); i++ ) {
+                LiveObject *nextPlayer = players.getElement( 
+                    playerIndicesToSendLineageAbout.getElementDirect( i ) );
+
+                if( nextPlayer->error ) {
+                    continue;
+                    }
+
+                char *pID = autoSprintf( "%d", nextPlayer->id );
+                linWorking.appendElementString( pID );
+                delete [] pID;
+                numAdded++;
+                for( int j=0; j<nextPlayer->lineage->size(); j++ ) {
+                    char *mID = 
+                        autoSprintf( 
+                            " %d",
+                            nextPlayer->lineage->getElementDirect( j ) );
+                    linWorking.appendElementString( mID );
+                    delete [] mID;
+                    }        
+                linWorking.push_back( '\n' );
+                }
+            
+            linWorking.push_back( '#' );
+            
+            if( numAdded > 0 ) {
+
+                char *lineageMessageText = linWorking.getElementString();
+                
+                lineageMessageLength = strlen( lineageMessageText );
+                
+                if( lineageMessageLength < maxUncompressedSize ) {
+                    lineageMessage = (unsigned char*)lineageMessageText;
+                    }
+                else {
+                    // compress for all players once here
+                    lineageMessage = makeCompressedMessage( 
+                        lineageMessageText, 
+                        lineageMessageLength, &lineageMessageLength );
+                    
+                    delete [] lineageMessageText;
+                    }
+                }
+            }
+        
         
         // send moves and updates to clients
         
@@ -7963,6 +8037,49 @@ int main() {
                                          strlen( movesMessage ) );
                 
                     delete [] movesMessage;
+                    }
+
+                // send lineage for everyone alive
+                
+                
+                SimpleVector<char> linWorking;
+                linWorking.appendElementString( "LI\n" );
+
+                int numAdded = 0;
+                
+                for( int i=0; i<numPlayers; i++ ) {
+                
+                    LiveObject *o = players.getElement( i );
+                
+                    if( o->error ) {
+                        continue;
+                        }
+
+                    char *pID = autoSprintf( "%d", o->id );
+                    linWorking.appendElementString( pID );
+                    delete [] pID;
+                    numAdded++;
+                    for( int j=0; j<o->lineage->size(); j++ ) {
+                        char *mID = 
+                            autoSprintf( 
+                                " %d",
+                                o->lineage->getElementDirect( j ) );
+                        linWorking.appendElementString( mID );
+                        delete [] mID;
+                        }        
+                    linWorking.push_back( '\n' );
+                    }
+                
+                linWorking.push_back( '#' );
+            
+                if( numAdded > 0 ) {
+                    char *linMessage = linWorking.getElementString();
+
+
+                    sendMessageToPlayer( nextPlayer, linMessage, 
+                                         strlen( linMessage ) );
+                
+                    delete [] linMessage;
                     }
                 
                 nextPlayer->firstMessageSent = true;
@@ -8300,6 +8417,23 @@ int main() {
                             "Socket write failed";
                         }
                     }
+
+                // EVERYONE gets lineage info for new babies
+                if( lineageMessage != NULL ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            lineageMessage, 
+                            lineageMessageLength, 
+                            false, false );
+                    
+                    if( numSent != lineageMessageLength ) {
+                        setDeathReason( nextPlayer, "disconnected" );
+
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Socket write failed";
+                        }
+                    }
                 
 
 
@@ -8363,6 +8497,9 @@ int main() {
         if( deleteUpdateMessage != NULL ) {
             delete [] deleteUpdateMessage;
             }
+        if( lineageMessage != NULL ) {
+            delete [] lineageMessage;
+            }
 
         
         // handle closing any that have an error
@@ -8381,6 +8518,7 @@ int main() {
                 
                 delete nextPlayer->sock;
                 delete nextPlayer->sockBuffer;
+                delete nextPlayer->lineage;
                 
                 if( nextPlayer->containedIDs != NULL ) {
                     delete [] nextPlayer->containedIDs;

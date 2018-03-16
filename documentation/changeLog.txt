@@ -46,6 +46,9 @@ Server Fixes:
 
 --Can now swap one container with another on right click.
 
+--Server support for LI lineage message about all players alive when you are
+  born and about new babies that are born.
+
 
 
 

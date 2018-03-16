@@ -115,6 +115,8 @@ MAP_CHANGE (MX)
 
 FOOD_CHANGE (FX)
 
+LINEAGE (LN)
+
 
 
 Client can expect to receive these at any time, and in any order.
@@ -371,6 +373,29 @@ before what was just eaten.  Amount that what was eaten filled us up is
 move_speed is floating point speed in grid square widths per second.
 
 responsible_id is id of player that fed you if you're a baby, or -1
+
+
+
+
+
+LN
+p_id mother_id grandmother_id great_grandmother_id ... eve_id
+p_id mother_id grandmother_id great_grandmother_id ... eve_id
+p_id mother_id grandmother_id great_grandmother_id ... eve_id
+...
+p_id mother_id grandmother_id great_grandmother_id ... eve_id
+#
+
+
+Describes lineage of player p_id.
+
+Each line has a variable number of fields, depending on how long the lineage
+back to Eve is.
+
+Also, if lineages get very long (like hundreds of links), the server may
+cut them off beyond some point.
+
+This message describes known lineages.
 
 
 
