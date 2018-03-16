@@ -193,6 +193,205 @@ static int getHomeDir( doublePair inCurrentPlayerPos,
 
 
 
+char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
+    SimpleVector<int> ourLin = inOurObject->lineage;
+    SimpleVector<int> theirLin = inTheirObject->lineage;
+    
+    int ourID = inOurObject->id;
+    int theirID = inTheirObject->id;
+
+    char theyMale = getObject( inTheirObject->displayID )->male;
+    
+
+    if( ourLin.size() == 0 && theirLin.size() == 0 ) {
+        // both eve, no relation
+        return NULL;
+        }
+
+    const char *main = "";
+    char grand = false;
+    int numGreats = 0;
+    int cousinNum = 0;
+    int cousinRemovedNum = 0;
+    
+    char found = false;
+
+    for( int i=0; i<theirLin.size(); i++ ) {
+        if( theirLin.getElementDirect( i ) == ourID ) {
+            found = true;
+            
+            if( theyMale ) {
+                main = translate( "son" );
+                }
+            else {
+                main = translate( "daughter" );
+                }
+            if( i > 0  ) {
+                grand = true;
+                }
+            numGreats = i - 1;
+            }
+        }
+
+    if( ! found ) {
+        for( int i=0; i<ourLin.size(); i++ ) {
+            if( ourLin.getElementDirect( i ) == theirID ) {
+                found = true;
+                main = translate( "mother" );
+                if( i > 0  ) {
+                    grand = true;
+                    }
+                numGreats = i - 1;
+                }
+            }
+        }
+    
+    if( ! found ) {
+        // not a direct descendent or ancestor
+
+        // look for shared relation
+        int ourMatchIndex = -1;
+        int theirMatchIndex = -1;
+        
+        for( int i=0; i<ourLin.size(); i++ ) {
+            for( int j=0; j<theirLin.size(); j++ ) {
+                
+                if( ourLin.getElementDirect( i ) == 
+                    theirLin.getElementDirect( j ) ) {
+                    ourMatchIndex = i;
+                    theirMatchIndex = j;
+                    break;
+                    }
+                }
+            
+            }
+        
+        if( ourMatchIndex == -1 ) {
+            return NULL;
+            }
+        
+        found = true;
+
+        if( theirMatchIndex == 0 && ourMatchIndex == 0 ) {
+            if( theyMale ) {
+                main = translate( "brother" );
+                }
+            else {
+                main = translate( "sister" );
+                }
+            }
+        else if( theirMatchIndex == 0 ) {
+            if( theyMale ) {
+                main = translate( "uncle" );
+                }
+            else {
+                main = translate( "aunt" );
+                }
+            numGreats = ourMatchIndex - 1;
+            }
+        else if( ourMatchIndex == 0 ) {
+            if( theyMale ) {
+                main = translate( "nephew" );
+                }
+            else {
+                main = translate( "niece" );
+                }
+            numGreats = theirMatchIndex - 1;
+            }
+        else {
+            // cousin of some kind
+            
+            main = translate( "cousin" );
+            
+            // shallowest determines cousin number
+            // diff determines removed number
+            if( ourMatchIndex <= theirMatchIndex ) {
+                cousinNum = ourMatchIndex;
+                cousinRemovedNum = theirMatchIndex - ourMatchIndex;
+                }
+            else {
+                cousinNum = theirMatchIndex;
+                cousinRemovedNum = ourMatchIndex - theirMatchIndex;
+                }
+            }
+        }
+
+
+    SimpleVector<char> buffer;
+    
+    for( int i=0; i<numGreats; i++ ) {
+        buffer.appendElementString( translate( "great" ) );
+        }
+    if( grand ) {
+        buffer.appendElementString( translate( "grand" ) );
+        }
+    
+    if( cousinNum > 0 ) {
+        switch( cousinNum ) {
+            case 1:
+                buffer.appendElementString( translate( "first" ) );
+                break;
+            case 2:
+                buffer.appendElementString( translate( "second" ) );
+                break;
+            case 3:
+                buffer.appendElementString( translate( "third" ) );
+                break;
+            case 4:
+                buffer.appendElementString( translate( "fourth" ) );
+                break;
+            case 5:
+                buffer.appendElementString( translate( "fifth" ) );
+                break;
+            case 6:
+                buffer.appendElementString( translate( "sixth" ) );
+                break;
+            default: {
+                char *num = autoSprintf( "%d%s", cousinNum, translate( "th" ) );
+                buffer.appendElementString( num );
+                delete [] num;
+                break;
+                }
+            }
+        }
+    
+    buffer.appendElementString( main );
+    
+    if( cousinRemovedNum > 0 ) {
+        buffer.appendElementString( " " );
+        
+        switch( cousinRemovedNum ) {
+            case 1:
+                buffer.appendElementString( translate( "once" ) );
+                break;
+            case 2:
+                buffer.appendElementString( translate( "twice" ) );
+                break;
+            case 3:
+                buffer.appendElementString( translate( "thrice" ) );
+                break;
+            default: {
+                char *num = autoSprintf( "%d %s", cousinRemovedNum, 
+                                         translate( "times" ) );
+                buffer.appendElementString( num );
+                delete [] num;
+                break;
+                }
+            }
+        buffer.appendElementString( " " );
+        buffer.appendElementString( translate( "removed" ) );
+        }
+
+    return buffer.getElementString();
+    }
+
+
+
+
+
+
+
+
 // base speed for animations that aren't speeded up or slowed down
 // when player moving at a different speed, anim speed is modified
 #define BASE_SPEED 3.75
@@ -420,6 +619,7 @@ typedef enum messageType {
     PLAYER_MOVES_START,
     PLAYER_SAYS,
     FOOD_CHANGE,
+    LINEAGE,
     COMPRESSED_MESSAGE,
     UNKNOWN
     } messageType;
@@ -475,6 +675,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "FX" ) == 0 ) {
         returnValue = FOOD_CHANGE;
+        }
+    else if( strcmp( copy, "LN" ) == 0 ) {
+        returnValue = LINEAGE;
         }
     
     delete [] copy;
@@ -8564,6 +8767,9 @@ void LivingLifePage::step() {
                 o.age = 0;
                 o.finalAgeSet = false;
                 
+                o.relationName = NULL;
+
+
                 o.tempAgeOverrideSet = false;
                 o.tempAgeOverride = 0;
 
@@ -9998,6 +10204,10 @@ void LivingLifePage::step() {
                             if( nextObject->currentSpeech != NULL ) {
                                 delete [] nextObject->currentSpeech;
                                 }
+                            
+                            if( nextObject->relationName != NULL ) {
+                                delete [] nextObject->relationName;
+                                }
 
                             delete nextObject->futureAnimStack;
                             delete nextObject->futureHeldAnimStack;
@@ -10807,6 +11017,88 @@ void LivingLifePage::step() {
                 delete [] lines[i];
                 }
             delete [] lines;
+            }
+        else if( type == LINEAGE ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+
+                int id;
+                int numRead = sscanf( lines[i], "%d ",
+                                      &( id ) );
+
+                if( numRead == 1 ) {
+                    for( int j=0; j<gameObjects.size(); j++ ) {
+                        if( gameObjects.getElement(j)->id == id ) {
+                            
+                            LiveObject *existing = gameObjects.getElement(j);
+                            
+                            existing->lineage.deleteAll();
+
+                            char *firstSpace = strstr( lines[i], " " );
+        
+                            if( firstSpace != NULL ) {
+
+                                char *linStart = &( firstSpace[1] );
+                                
+                                SimpleVector<char *> *tokens = 
+                                    tokenizeString( linStart );
+
+                                for( int t=0; t<tokens->size(); t++ ) {
+                                    char *tok = tokens->getElementDirect( t );
+                                    
+                                    int mID = 0;
+                                    sscanf( tok, "%d", &mID );
+                                    
+                                    if( mID != 0 ) {
+                                        existing->lineage.push_back( mID );
+                                        }
+                                    }
+                                
+
+                                
+                                tokens->deallocateStringElements();
+                                delete tokens;
+                                }
+                            
+                            break;
+                            }
+                        }
+                    
+                    }
+                
+                delete [] lines[i];
+                }
+            delete [] lines;
+
+            // after a LINEAGE message, we should have lineage for all
+            // players
+            
+            // now process each one and generate relation string
+            LiveObject *ourObject = getOurLiveObject();
+            
+            for( int j=0; j<gameObjects.size(); j++ ) {
+                if( gameObjects.getElement(j)->id != ourID ) {
+                            
+                    LiveObject *other = gameObjects.getElement(j);
+                 
+                    if( other->relationName == NULL ) {
+                        
+                        other->relationName = getRelationName( ourObject,
+                                                               other );
+                        if( other->relationName != NULL ) {
+                            printf( "Relation = %s\n", other->relationName );
+                            }
+                        }
+                    }
+                }
             }
         else if( type == FOOD_CHANGE ) {
             
