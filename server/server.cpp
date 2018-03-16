@@ -221,6 +221,8 @@ typedef struct LiveObject {
         char error;
         const char *errorCauseString;
 
+        int customGraveID;
+        
         char *deathReason;
 
         char deleteSent;
@@ -2942,7 +2944,7 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.error = false;
     newObject.errorCauseString = "";
     
-
+    newObject.customGraveID = -1;
     newObject.deathReason = NULL;
     
     newObject.deleteSent = false;
@@ -4998,8 +5000,11 @@ int main() {
                                     // is anyone there?
                                     LiveObject *hitPlayer = 
                                         getHitPlayer( m.x, m.y );
+                                    
+                                    char someoneHit = false;
 
                                     if( hitPlayer != NULL ) {
+                                        someoneHit = true;
                                         // break the connection with 
                                         // them
                                         setDeathReason( hitPlayer, 
@@ -5036,13 +5041,43 @@ int main() {
                                         getTrans( nextPlayer->holdingID, 
                                                   0 );
 
+                                    TransRecord *rHit = NULL;
+                                    
+                                    if( someoneHit ) {
+                                        // last use on target specifies
+                                        // grave and weapon change on hit
+                                        // non-last use (r above) specifies
+                                        // what projectile ends up in grave
+                                        // or on ground
+                                        rHit = 
+                                            getTrans( nextPlayer->holdingID, 
+                                                      0, false, true );
+                                        
+                                        if( rHit != NULL &&
+                                            rHit->newTarget > 0 ) {
+                                            hitPlayer->customGraveID = 
+                                                rHit->newTarget;
+                                            }
+                                        }
+                                    
+
                                     int oldHolding = nextPlayer->holdingID;
                                     timeSec_t oldEtaDecay = 
                                         nextPlayer->holdingEtaDecay;
 
-                                    if( r != NULL ) {
-                                        
+                                    if( rHit != NULL ) {
+                                        // if hit trans exist
+                                        // leave bloody knife or
+                                        // whatever in hand
+                                        nextPlayer->holdingID = rHit->newActor;
+                                        }
+                                    else if( r != NULL ) {
                                         nextPlayer->holdingID = r->newActor;
+                                        }
+
+
+                                    if( r != NULL || rHit != NULL ) {
+                                        
                                         nextPlayer->heldTransitionSourceID = 0;
                                         
                                         if( oldHolding != 
@@ -5051,6 +5086,10 @@ int main() {
                                             setFreshEtaDecayForHeld( 
                                                 nextPlayer );
                                             }
+                                        }
+                                    
+
+                                    if( r != NULL ) {
                                     
                                         if( hitPlayer != NULL &&
                                             r->newTarget != 0 ) {
@@ -6165,12 +6204,21 @@ int main() {
                         // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
 
-                        if( isGridAdjacent( m.x, m.y,
-                                            nextPlayer->xd, 
-                                            nextPlayer->yd ) 
-                            ||
-                            ( m.x == nextPlayer->xd &&
-                              m.y == nextPlayer->yd ) ) {
+                        char canDrop = true;
+                        
+                        if( nextPlayer->holdingID > 0 &&
+                            getObject( nextPlayer->holdingID )->permanent ) {
+                            canDrop = false;
+                            }
+
+                        if( canDrop 
+                            &&
+                            ( isGridAdjacent( m.x, m.y,
+                                              nextPlayer->xd, 
+                                              nextPlayer->yd ) 
+                              ||
+                              ( m.x == nextPlayer->xd &&
+                                m.y == nextPlayer->yd )  ) ) {
                             
                             nextPlayer->actionAttempt = 1;
                             nextPlayer->actionTarget.x = m.x;
@@ -6597,6 +6645,10 @@ int main() {
                 if( isMapSpotEmpty( dropPos.x, dropPos.y, false ) ) {
                     int deathID = getRandomDeathMarker();
                     
+                    if( nextPlayer->customGraveID > 0 ) {
+                        deathID = nextPlayer->customGraveID;
+                        }
+
                     if( deathID > 0 ) {
                         
                         setResponsiblePlayer( - nextPlayer->id );

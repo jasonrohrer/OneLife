@@ -22,6 +22,15 @@ Server Fixes:
 
 --Can no longer eat when full.  https://github.com/jasonrohrer/OneLife/pull/11
 
+--Murder weapon changes:  last use transition target can specify a custom grave
+  marker for murder victim (separate from what is left on ground or in grave if
+  attack misses, which is specified by non-last-use transtion), and this can
+  also specify a special state that the murder weapon goes into if the attack
+  is successful (bloody knife on hit vs regular knife on miss).  Permanent
+  objects, if held, cannot be dropped.  Thus, a murder weapon can become
+  undroppable for a period of time post-murder.
+
+
 
 
 Version 66    2018-March-14
