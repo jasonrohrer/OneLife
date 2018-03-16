@@ -4033,7 +4033,8 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID ) {
         
         char spriteHFlip = subO->spriteHFlip[s];
 
-        FloatRGB spriteColor = subO->spriteColor[s];
+        // ignore sprite color for now
+        //FloatRGB spriteColor = subO->spriteColor[s];
 
         char found = false;
         
@@ -4042,8 +4043,9 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID ) {
                 equal( sub( superO->spritePos[ ss ],
                             spriteSuperZeroPos ), spritePosRel ) &&
                 superO->spriteRot[ ss ] == spriteRot &&
-                superO->spriteHFlip[ ss ] == spriteHFlip &&
-                equal( superO->spriteColor[ ss ], spriteColor ) ) {
+                superO->spriteHFlip[ ss ] == spriteHFlip 
+                /* &&
+                   equal( superO->spriteColor[ ss ], spriteColor ) */ ) {
                 
 
                 found = true;

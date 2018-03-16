@@ -15,6 +15,16 @@ Version 67    ???
 
 --Fixed sound played when swapping one container with another.
 
+--Fixed so that there's no generic pickup sound played when what you're holding
+  changes as the result of a player-caused transition that results in an
+  on-the-ground creation sound.
+
+--Fixed so that isSpriteSubset doesn't consider color (damp adobe wall is
+  subset of adobe wall).
+
+--Fixed hint result to prefer showing actor or target that becomes deeper (we
+  don't want to see empty bucket as the result of pooring water on a wall).
+
 
 
 Server Fixes:

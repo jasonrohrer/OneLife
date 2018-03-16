@@ -6417,9 +6417,19 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
                 result = newActor;
                 }
             else {
-                // the deeper object is more important
-                if( getObjectDepth( newActor ) > getObjectDepth( newTarget ) ) {
-                
+                // if the trans takes one of the elements to a deeper
+                // state, that's more important, starting with actor
+                if( getObjectDepth( newActor ) > getObjectDepth( actor ) ) {
+                    result = newActor;
+                    }
+                else if( getObjectDepth( newTarget ) > 
+                         getObjectDepth( target ) ) {
+                    result = newTarget;
+                    }
+                // else neither actor or target becomes deeper
+                // which result is deeper?
+                else if( getObjectDepth( newActor ) > 
+                         getObjectDepth( newTarget ) ) {
                     result = newActor;
                     }
                 else {
@@ -9464,8 +9474,9 @@ void LivingLifePage::step() {
                                         existing->lastHeldAnimFade = 0;
                                             
                                         
-                                        if( !creationSoundPlayed &&
-                                            !clothingSoundPlayed ) {
+                                        if( ! otherSoundPlayed && 
+                                            ! creationSoundPlayed &&
+                                            ! clothingSoundPlayed ) {
                                             // play generic pickup sound
 
                                             ObjectRecord *existingObj = 
