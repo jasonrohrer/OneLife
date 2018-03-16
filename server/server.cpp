@@ -7909,7 +7909,7 @@ int main() {
         
         if( playerIndicesToSendLineageAbout.size() > 0 ) {
             SimpleVector<char> linWorking;
-            linWorking.appendElementString( "LI\n" );
+            linWorking.appendElementString( "LN\n" );
             
             int numAdded = 0;
             for( int i=0; i<playerIndicesToSendLineageAbout.size(); i++ ) {
@@ -8043,7 +8043,7 @@ int main() {
                 
                 
                 SimpleVector<char> linWorking;
-                linWorking.appendElementString( "LI\n" );
+                linWorking.appendElementString( "LN\n" );
 
                 int numAdded = 0;
                 
