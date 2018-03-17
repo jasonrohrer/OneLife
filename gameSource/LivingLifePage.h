@@ -467,7 +467,12 @@ class LivingLifePage : public GamePage {
 
         char mEKeyEnabled;
         char mEKeyDown;
-        
+        char mUpKeyDown;
+        char mDownKeyDown;
+        char mLeftKeyDown;
+        char mRightKeyDown;
+        char mMoveKeyDown;
+        char stopingMovement;
 
         SpriteHandle mGuiPanelSprite;
         

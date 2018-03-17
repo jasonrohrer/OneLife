@@ -1,5 +1,3 @@
-
-
 *.o
 *.dep
 *.dep2
@@ -11,7 +9,12 @@ callgrind.out*
 leak.out*
 core*
 
+.idea/*
+cmake-build-debug/*
+
 gameSource/OneLife
+gameSource/icon.ico
+gameSource/icon.rc
 gameSource/testUser/*
 gameSource/testUser2/*
 gameSource/recordedGames/*

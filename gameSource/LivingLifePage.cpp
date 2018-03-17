@@ -83,6 +83,15 @@ static int mouseDownFrames = 0;
 
 static int minMouseDownFrames = 30;
 
+static char upKey = 'w';
+static char downKey = 's';
+static char leftKey = 'a';
+static char rightKey = 'd';
+static char moveKey = ' ';
+
+static clock_t lastMovement = clock();
+static clock_t now = clock();
+static short lastMovementCombination = 0;
 
 static int screenCenterPlayerOffsetX, screenCenterPlayerOffsetY;
 
@@ -94,15 +103,14 @@ static float lastMouseY = 0;
 // set to true to render for teaser video
 static char teaserVideo = false;
 
-
-
-
-
 // most recent home at end
 static SimpleVector<GridPos> homePosStack;
 
+// returns signum, maybe should be in some utils, possible duplicate
+template <typename T> int sign(T val) {
+    return (T(0) < val) - (val < T(0));
+}
 
-// returns pointer to record, NOT destroyed by caller, or NULL if 
 // home unknown
 static  GridPos *getHomeLocation() {
     int num = homePosStack.size();
@@ -1482,6 +1490,12 @@ LivingLifePage::LivingLifePage()
           mMapOffsetY( 0 ),
           mEKeyEnabled( false ),
           mEKeyDown( false ),
+          mUpKeyDown( false ),
+          mDownKeyDown( false ),
+          mLeftKeyDown( false ),
+          mRightKeyDown( false ),
+          mMoveKeyDown( false ),
+          stopingMovement( true ),
           mGuiPanelSprite( loadSprite( "guiPanel.tga", false ) ),
           mNotePaperSprite( loadSprite( "notePaper.tga", false ) ),
           mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
@@ -1705,6 +1719,40 @@ LivingLifePage::LivingLifePage()
 
     mEKeyEnabled = 
         SettingsManager::getIntSetting( "eKeyForRightClick", 0 );
+
+    char *moveKeyMapping =
+            SettingsManager::getStringSetting( "upLeftDownRightKeys" );
+
+    if( moveKeyMapping != NULL ) {
+        char *temp = stringToLowerCase( moveKeyMapping );
+        delete [] moveKeyMapping;
+        moveKeyMapping = temp;
+
+        if( strlen( moveKeyMapping ) == 4 &&
+            strcmp( moveKeyMapping, "wasd" ) != 0 ) {
+
+            upKey = moveKeyMapping[0];
+            leftKey = moveKeyMapping[1];
+            downKey = moveKeyMapping[2];
+            rightKey = moveKeyMapping[3];
+        }
+        delete [] moveKeyMapping;
+    }
+
+    char *actionKeyMapping =
+            SettingsManager::getStringSetting( "actionKeys" );
+
+    if( actionKeyMapping != NULL ) {
+        char *temp = stringToLowerCase( actionKeyMapping );
+        delete [] actionKeyMapping;
+        actionKeyMapping = temp;
+
+        if( strlen( actionKeyMapping ) == 1 &&
+            strcmp( actionKeyMapping, " " ) != 0 ) {
+            moveKey = actionKeyMapping[0];
+        }
+        delete [] actionKeyMapping;
+    }
 
 
     if( teaserVideo ) {
@@ -6367,7 +6415,13 @@ void LivingLifePage::handleOurDeath() {
     
     delete [] ageString;
     delete [] partialReason;
-    
+
+    mUpKeyDown = false;
+    mDownKeyDown = false;
+    mLeftKeyDown = false;
+    mRightKeyDown = false;
+    mMoveKeyDown = false;
+    stopingMovement = false;
 
     setSignal( "died" );
     instantStopMusic();
@@ -11559,7 +11613,39 @@ void LivingLifePage::step() {
 
         }
     
-    
+    // MOVING WITH WSAD
+
+    if (ourLiveObject != NULL) {
+        int xD = 0;
+        int yD = 0;
+        if (mUpKeyDown)
+            yD = 5.4;
+        if (mDownKeyDown)
+            yD = -5.4;
+        if (mLeftKeyDown)
+            xD = -5.4;
+        if (mRightKeyDown)
+            xD = 5.4;
+        now = clock();
+        float delta = float(now - lastMovement) / CLOCKS_PER_SEC;
+        if ((xD != 0 || yD != 0) && (delta > 0.015)) {
+            short currentMovementCombination = sign(xD) * 10 + sign(yD);
+            if (currentMovementCombination != lastMovementCombination) {
+                mouseDown = true;
+                stopingMovement = true;
+                mouseDownFrames = 10;
+                pointerDown((ourLiveObject->currentPos.x + xD) * CELL_D,
+                            (ourLiveObject->currentPos.y + yD) * CELL_D);
+                mouseDown = false;
+                stopingMovement = false;
+                lastMovement = now;
+                lastMovementCombination = currentMovementCombination;
+            } else {
+                lastMovementCombination = 0;
+            }
+        }
+    }
+
     // update all positions for moving objects
     if( !mapPullMode )
     for( int i=0; i<gameObjects.size(); i++ ) {
@@ -11862,7 +11948,6 @@ void LivingLifePage::step() {
 
                 if( o->id == ourID && mouseDown ) {
                     float worldMouseX, worldMouseY;
-                    
                     screenToWorld( lastScreenMouseX,
                                    lastScreenMouseY,
                                    &worldMouseX,
@@ -12296,6 +12381,11 @@ void LivingLifePage::step() {
 void LivingLifePage::makeActive( char inFresh ) {
     // unhold E key
     mEKeyDown = false;
+    mUpKeyDown = false;
+    mDownKeyDown = false;
+    mLeftKeyDown = false;
+    mRightKeyDown = false;
+    mMoveKeyDown = false;
     mouseDown = false;
     
     screenCenterPlayerOffsetX = 0;
@@ -13085,7 +13175,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     char modClick = false;
     
-    if( ( mEKeyDown && mEKeyEnabled ) || isLastMouseButtonRight() ) {
+    if((( mEKeyDown && mEKeyEnabled ) || isLastMouseButtonRight()) && !stopingMovement) {
         modClick = true;
         }
     
@@ -13095,6 +13185,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     // this is for long-distance player motion, and we don't want
     // this to result in an action by accident if they mouse over
     // something actionable along the way
+    if (mMoveKeyDown) {
+        mouseDown = true;
+        stopingMovement = true;
+    }
     char mouseAlreadyDown = mouseDown;
     
     mouseDown = true;
@@ -13166,6 +13260,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         p.hitOurPlacement = false;
         p.hitAnObject = false;
         p.hitOtherPerson = false;
+        p.closestCellX = lrintf( ( inX ) / CELL_D );
+        p.closestCellY = lrintf( ( inY ) / CELL_D );
         }
     
     // clear mouse over cell
@@ -14388,6 +14484,28 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 }
             break;
         }
+        if (inASCII == upKey){
+            if (! mSayField.isFocused()) {
+                mUpKeyDown = true;
+            }
+        } else if (inASCII == downKey){
+                if (! mSayField.isFocused()) {
+                    mDownKeyDown = true;
+                }
+        } else if (inASCII == leftKey){
+
+            if (! mSayField.isFocused()) {
+                    mLeftKeyDown = true;
+                }
+        } else if (inASCII == rightKey){
+                if (! mSayField.isFocused()) {
+                    mRightKeyDown = true;
+                }
+        } else if (inASCII == moveKey){
+            if (! mSayField.isFocused()) {
+                mMoveKeyDown = true;
+            }
+        }
     }
 
 
@@ -14511,9 +14629,63 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
         case 'E':
             mEKeyDown = false;
             break;
-        }
-
     }
+
+    LiveObject *ourLiveObject = getOurLiveObject();
+    stopingMovement = false;
+    int xD = 0;
+    int yD = 0;
+
+    if (inASCII == upKey){
+        if (! mSayField.isFocused()) {
+            stopingMovement = true;
+            mUpKeyDown = false;
+            if (!mDownKeyDown) {
+                yD = 1.49;
+                xD = -0.49;
+            }
+        }
+    } else if (inASCII == downKey){
+        if (! mSayField.isFocused()) {
+            stopingMovement = true;
+            mDownKeyDown = false;
+            if (!mUpKeyDown) {
+                yD = -1.49;
+                xD = 0.49;
+            }
+        }
+    } else if (inASCII == leftKey){
+        if (! mSayField.isFocused()) {
+            stopingMovement = true;
+            mLeftKeyDown = false;
+            if (!mRightKeyDown) {
+                xD = -1.49;
+                yD = 0.49;
+            }
+        }
+    } else if (inASCII == rightKey){
+        if (! mSayField.isFocused()) {
+            stopingMovement = true;
+            mRightKeyDown = false;
+            if (!mLeftKeyDown) {
+                xD = 1.49;
+                yD = 0.49;
+            }
+        }
+    } else if (inASCII == moveKey){
+        if (! mSayField.isFocused()) {
+            mouseDown = false;
+            mMoveKeyDown = false;
+            stopingMovement = false;
+        }
+    }
+    if (stopingMovement && ourLiveObject != NULL){
+        mouseDown = true;
+        pointerDown((ourLiveObject->currentPos.x + xD ) * CELL_D, (ourLiveObject->currentPos.y + yD ) * CELL_D);
+        mouseDown = false;
+    }
+    stopingMovement = false;
+}
 
         
 

@@ -13,6 +13,7 @@
 # QCad DXF files are being saved with CRLF
 # leave them alone.
 *.dxf    binary
+*.bat    binary
 
 # some windows-specific files
 icon.rc                         binary
