@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 67    ???
+Version 68    2018-March-16
 
 --Fixed login FPS checking to wait 0.1 seconds for things to settle after load.
   https://github.com/jasonrohrer/OneLife/pull/14
