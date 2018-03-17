@@ -329,31 +329,22 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
         }
     
     if( cousinNum > 0 ) {
-        switch( cousinNum ) {
-            case 1:
-                buffer.appendElementString( translate( "first" ) );
-                break;
-            case 2:
-                buffer.appendElementString( translate( "second" ) );
-                break;
-            case 3:
-                buffer.appendElementString( translate( "third" ) );
-                break;
-            case 4:
-                buffer.appendElementString( translate( "fourth" ) );
-                break;
-            case 5:
-                buffer.appendElementString( translate( "fifth" ) );
-                break;
-            case 6:
-                buffer.appendElementString( translate( "sixth" ) );
-                break;
-            default: {
-                char *num = autoSprintf( "%d%s", cousinNum, translate( "th" ) );
-                buffer.appendElementString( num );
-                delete [] num;
-                break;
-                }
+        int remainingCousinNum = cousinNum;
+
+        if( cousinNum >= 30 ) {
+            buffer.appendElementString( translate( "distant" ) );
+            remainingCousinNum = 0;
+            }
+        
+        if( cousinNum > 20 && cousinNum < 30 ) {
+            buffer.appendElementString( translate( "twenty" ) );
+            remainingCousinNum = cousinNum - 20;
+            }
+
+        if( remainingCousinNum > 0  ) {
+            char *numth = autoSprintf( "%dth", remainingCousinNum );
+            buffer.appendElementString( translate( numth ) );
+            delete [] numth;
             }
         buffer.appendElementString( " " );
         }
@@ -363,23 +354,13 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
     if( cousinRemovedNum > 0 ) {
         buffer.appendElementString( " " );
         
-        switch( cousinRemovedNum ) {
-            case 1:
-                buffer.appendElementString( translate( "once" ) );
-                break;
-            case 2:
-                buffer.appendElementString( translate( "twice" ) );
-                break;
-            case 3:
-                buffer.appendElementString( translate( "thrice" ) );
-                break;
-            default: {
-                char *num = autoSprintf( "%d %s", cousinRemovedNum, 
-                                         translate( "times" ) );
-                buffer.appendElementString( num );
-                delete [] num;
-                break;
-                }
+        if( cousinRemovedNum > 9 ) {
+            buffer.appendElementString( translate( "manyTimes" ) );
+            }
+        else {
+            char *numTimes = autoSprintf( "%dTimes", cousinRemovedNum );
+            buffer.appendElementString( translate( numTimes ) );
+            delete [] numTimes;
             }
         buffer.appendElementString( " " );
         buffer.appendElementString( translate( "removed" ) );
@@ -11104,6 +11085,23 @@ void LivingLifePage::step() {
                  
                     if( other->relationName == NULL ) {
                         
+                        /*
+                        // test
+                        ourObject->lineage.deleteAll();
+                        other->lineage.deleteAll();
+                        
+                        int cousinNum = 25;
+                        int removeNum = 5;
+                        
+                        for( int i=0; i<=cousinNum; i++ ) {    
+                            ourObject->lineage.push_back( i );
+                            }
+
+                        for( int i=0; i<=cousinNum - removeNum; i++ ) {    
+                            other->lineage.push_back( 100 + i );
+                            }
+                        other->lineage.push_back( cousinNum );
+                        */
                         other->relationName = getRelationName( ourObject,
                                                                other );
                         }
