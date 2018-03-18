@@ -349,7 +349,8 @@ int processLifeLogFolder( File *inFolder ) {
 
 
 void printCommaInt( FILE *inFile, int inInt ) {
-
+    int origInt = inInt;
+    
     int thou = 1000;
     int mil = thou * thou;
     int bil = mil * thou;
@@ -368,13 +369,29 @@ void printCommaInt( FILE *inFile, int inInt ) {
         fprintf( inFile, "%d,", billions );
         }
     if( millions > 0 ) {
-        fprintf( inFile, "%d,", millions );
+        if( origInt > 999999999 ) {
+            fprintf( inFile, "%03d,", millions );
+            }
+        else {
+            fprintf( inFile, "%d,", millions );
+            }
         }
     if( thousands > 0 ) {
-        fprintf( inFile, "%d,", thousands );
+        if( origInt > 999999 ) {
+            fprintf( inFile, "%03d,", thousands );
+            }
+        else {
+            fprintf( inFile, "%d,", thousands );
+            }
         }
+    
 
-    fprintf( inFile, "%d", inInt );
+    if( origInt > 999 ) {
+        fprintf( inFile, "%03d", inInt );
+        }
+    else {
+        fprintf( inFile, "%d", inInt );
+        }
     }
 
 

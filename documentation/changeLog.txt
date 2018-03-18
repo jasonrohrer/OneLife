@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes:
+
+--Fixed comma int printing in stats at top of home page.
+
+
+
+
 Version 68    2018-March-16
 
 --Fixed login FPS checking to wait 0.1 seconds for things to settle after load.
