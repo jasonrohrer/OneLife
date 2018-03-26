@@ -175,6 +175,9 @@ static CustomRandomSource randSource( randSeed );
 #define NUM_CONT_SLOT 2
 #define FIRST_CONT_SLOT 3
 
+#define NO_DECAY_SLOT -1
+
+
 // decay slots for contained items start after container slots
 
 
@@ -1294,6 +1297,13 @@ void initMap() {
                                  // s=... remaining contained objects
                                  // Then decay ETA for each slot, in order,
                                  //   after that.
+                                 // s = -1
+                                 //  is a special flag slot set to 0 if NONE
+                                 //  of the contained items have ETA decay
+                                 //  or 1 if some of the contained items might 
+                                 //  have ETA decay.
+                                 //  (this saves us from having to check each
+                                 //   one)
                              // If a contained object id is negative,
                              // that indicates that it sub-contains
                              // other objects in its corresponding b slot
@@ -2365,8 +2375,36 @@ int *getContainedRaw( int inX, int inY, int *outNumContained,
 
 
 
+// returns true if no contained items will decay
+char getSlotItemsNoDecay( int inX, int inY, int inSubCont ) {
+    int result = dbGet( inX, inY, NO_DECAY_SLOT, inSubCont );
+    
+    if( result != -1 ) {
+        // found
+        return ( result == 0 );
+        }
+    else {
+        // default, some may decay
+        return false;
+        }
+    }
+
+
+void setSlotItemsNoDecay( int inX, int inY, int inSubCont, char inNoDecay ) {
+    int val = 1;
+    if( inNoDecay ) {
+        val = 0;
+        }
+    dbPut( inX, inY, NO_DECAY_SLOT, val, inSubCont );
+    }
+
+
+
+
 int *getContained( int inX, int inY, int *outNumContained, int inSubCont ) {
-    checkDecayContained( inX, inY, inSubCont );
+    if( ! getSlotItemsNoDecay( inX, inY, inSubCont ) ) {
+        checkDecayContained( inX, inY, inSubCont );
+        }
     int *result = getContainedRaw( inX, inY, outNumContained, inSubCont );
     
     // look at these slots if they are subject to live decay
@@ -2391,7 +2429,9 @@ int *getContained( int inX, int inY, int *outNumContained, int inSubCont ) {
 
 int *getContainedNoLook( int inX, int inY, int *outNumContained, 
                          int inSubCont = 0 ) {
-    checkDecayContained( inX, inY, inSubCont );
+    if( ! getSlotItemsNoDecay( inX, inY, inSubCont ) ) {
+        checkDecayContained( inX, inY, inSubCont );
+        }
     return getContainedRaw( inX, inY, outNumContained, inSubCont );
     }
 
@@ -3628,6 +3668,8 @@ void setSlotEtaDecay( int inX, int inY, int inSlot,
     dbTimePut( inX, inY, getContainerDecaySlot( inX, inY, inSlot, inSubCont ),
                inAbsoluteTimeInSeconds, inSubCont );
     if( inAbsoluteTimeInSeconds != 0 ) {
+        setSlotItemsNoDecay( inX, inY, inSubCont, false );
+
         trackETA( inX, inY, inSlot + 1, inAbsoluteTimeInSeconds,
                   inSubCont );
         }
@@ -3729,6 +3771,7 @@ void setContained( int inX, int inY, int inNumContained, int *inContained,
 
 void setContainedEtaDecay( int inX, int inY, int inNumContained, 
                            timeSec_t *inContainedEtaDecay, int inSubCont ) {
+    char someDecay = false;
     for( int i=0; i<inNumContained; i++ ) {
         dbTimePut( inX, inY, 
                    getContainerDecaySlot( inX, inY, i, inSubCont,
@@ -3736,9 +3779,11 @@ void setContainedEtaDecay( int inX, int inY, int inNumContained,
                    inContainedEtaDecay[i], inSubCont );
         
         if( inContainedEtaDecay[i] != 0 ) {
+            someDecay = true;
             trackETA( inX, inY, i + 1, inContainedEtaDecay[i], inSubCont );
             }
         }
+    setSlotItemsNoDecay( inX, inY, inSubCont, !someDecay );
     }
 
 
@@ -4215,7 +4260,9 @@ void stepMap( SimpleVector<char> *inMapChanges,
             checkDecayObject( r.x, r.y, oldID );
             }
         else {
-            checkDecayContained( r.x, r.y, r.subCont );
+            if( ! getSlotItemsNoDecay( r.x, r.y, r.subCont ) ) {
+                checkDecayContained( r.x, r.y, r.subCont );
+                }
             }
         
         

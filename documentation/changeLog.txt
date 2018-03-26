@@ -17,8 +17,10 @@ Server Fixes:
 
 --Added hash table RAM caching of object database.
 
---Elimiated repeated calls to getTrans for same id in checkDecayContained.
+--Eliminated repeated calls to getTrans for same id in checkDecayContained.
 
+--Eliminated expensive calls to checkDecayContained by tracking which cells on
+  map have no decaying contained items.
 
 
 
