@@ -15,6 +15,10 @@ Server Fixes:
 
 --Fixed comma int printing in stats at top of home page.
 
+--Added hash table RAM caching of object database.
+
+--Elimiated repeated calls to getTrans for same id in checkDecayContained.
+
 
 
 

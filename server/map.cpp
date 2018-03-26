@@ -1159,7 +1159,83 @@ void printBiomeSamples() {
 
 
 
+
+// optimization:
+// cache dbGet results in RAM
+
+// 2.6 MB of RAM for this.
+#define DB_CACHE_SIZE 131072
+
+typedef struct DBCacheRecord {
+        int x, y, slot, subCont;
+        int value;
+    } DBCacheRecord;
+    
+static DBCacheRecord dbCache[ DB_CACHE_SIZE ];
+
+
+#define CACHE_PRIME_A 776509273
+#define CACHE_PRIME_B 904124281
+#define CACHE_PRIME_C 528383237
+#define CACHE_PRIME_D 148497157
+
+static int computeDBCacheHash( int inKeyA, int inKeyB, 
+                               int inKeyC, int inKeyD ) {
+    
+    int hashKey = ( inKeyA * CACHE_PRIME_A + 
+                    inKeyB * CACHE_PRIME_B + 
+                    inKeyC * CACHE_PRIME_C +
+                    inKeyD * CACHE_PRIME_D ) % DB_CACHE_SIZE;
+    if( hashKey < 0 ) {
+        hashKey += DB_CACHE_SIZE;
+        }
+    return hashKey;
+    }
+
+
+
+static void initDBCache() {
+    DBCacheRecord blankRecord = { 0, 0, 0, 0, -2 };
+    for( int i=0; i<DB_CACHE_SIZE; i++ ) {
+        dbCache[i] = blankRecord;
+        }
+    }
+
+    
+
+
+// returns -2 on miss
+static int dbGetCached( int inX, int inY, int inSlot, int inSubCont ) {
+    DBCacheRecord r =
+        dbCache[ computeDBCacheHash( inX, inY, inSlot, inSubCont ) ];
+
+    if( r.x == inX && r.y == inY && 
+        r.slot == inSlot && r.subCont == inSubCont &&
+        r.value != -2 ) {
+        return r.value;
+        }
+    else {
+        return -2;
+        }
+    }
+
+
+
+static void dbPutCached( int inX, int inY, int inSlot, int inSubCont, 
+                        int inValue ) {
+    DBCacheRecord r = { inX, inY, inSlot, inSubCont, inValue };
+    
+    dbCache[ computeDBCacheHash( inX, inY, inSlot, inSubCont ) ] = r;
+    }
+
+
+
+
+
+
 void initMap() {
+    initDBCache();
+    
     mapCacheClear();
     
     edgeObjectID = SettingsManager::getIntSetting( "edgeObject", 0 );
@@ -1948,6 +2024,13 @@ void freeMap() {
 
 // returns -1 if not found
 static int dbGet( int inX, int inY, int inSlot, int inSubCont = 0 ) {
+    
+    int cachedVal = dbGetCached( inX, inY, inSlot, inSubCont );
+    if( cachedVal != -2 ) {
+        return cachedVal;
+        }
+    
+
     unsigned char key[16];
     unsigned char value[4];
 
@@ -1956,13 +2039,21 @@ static int dbGet( int inX, int inY, int inSlot, int inSubCont = 0 ) {
     
     int result = KISSDB_get( &db, key, value );
     
+    
+    
+    int returnVal;
+    
     if( result == 0 ) {
         // found
-        return valueToInt( value );
+        returnVal = valueToInt( value );
         }
     else {
-        return -1;
+        returnVal = -1;
         }
+
+    dbPutCached( inX, inY, inSlot, inSubCont, returnVal );
+    
+    return returnVal;
     }
 
 
@@ -2068,6 +2159,8 @@ static void dbPut( int inX, int inY, int inSlot, int inValue,
             
     
     KISSDB_put( &db, key, value );
+
+    dbPutCached( inX, inY, inSlot, inSubCont, inValue );
     }
 
 
@@ -2914,10 +3007,23 @@ void checkDecayContained( int inX, int inY, int inSubCont ) {
     
         
     char change = false;
+
+    // track last ID we saw with no decay, so we don't have to keep
+    // looking it up over and over.
+    int lastIDWithNoDecay = 0;
+    
     
     for( int i=0; i<numContained; i++ ) {
         int oldID = contained[i];
         
+        if( oldID == lastIDWithNoDecay ) {
+            // same ID we've already seen before
+            newContained.push_back( oldID );
+            newDecayEta.push_back( 0 );
+            continue;
+            }
+        
+
         char isSubCont = false;
         
         if( oldID < 0 ) {
@@ -2933,6 +3039,8 @@ void checkDecayContained( int inX, int inY, int inSubCont ) {
             if( isSubCont ) {
                 oldID *= -1;
                 }
+            lastIDWithNoDecay = oldID;
+            
             newContained.push_back( oldID );
             newDecayEta.push_back( 0 );
             continue;
