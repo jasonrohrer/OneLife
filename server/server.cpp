@@ -1510,8 +1510,6 @@ int sendMapChunkMessage( LiveObject *inO,
             vertBarH -= horBarH;
             }
         
-        printf( "\n\n **** Hor w/h = %d/%d, vert w/h = %d/%d\n\n\n",
-                horBarW, horBarH, vertBarW, vertBarH );
         
         // only send if non-zero width and height
         if( horBarW > 0 && horBarH > 0 ) {
