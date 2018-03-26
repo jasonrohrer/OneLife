@@ -261,7 +261,7 @@ EditorScenePage::EditorScenePage()
     addKeyClassDescription( &mKeyLegend, "f/F", "Flip obj/person" );
     addKeyClassDescription( &mKeyLegend, "c/C", "Copy obj/person" );
     addKeyClassDescription( &mKeyLegend, "x/X", "Cut obj/person" );
-    addKeyDescription( &mKeyLegend, 'v', "Paste" );
+    addKeyClassDescription( &mKeyLegend, "v/V", "Paste/Fill" );
     addKeyClassDescription( &mKeyLegend, "i/I", "Insert contained/held" );
     addKeyClassDescription( &mKeyLegend, "Bkspc", "Clear cell" );
     addKeyClassDescription( &mKeyLegend, "Hold d/D", "Set obj/person dest" );
@@ -1908,7 +1908,7 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
         mCopyBuffer = *p;
         *p = mEmptyCell;
         }
-    else if( inASCII == 'v' || inASCII == 'V' ) {
+    else if( inASCII == 'v' ) {
         // paste
         if( mCopyBuffer.oID > 0 &&
             getObject( mCopyBuffer.oID )->person ) {
@@ -1918,6 +1918,25 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
             *c = mCopyBuffer;
             }
         restartAllMoves();
+        }
+    else if( inASCII == 'V' ) {
+        if( mCopyBuffer.oID > 0 &&
+            getObject( mCopyBuffer.oID )->person ) {
+            // do nothing, don't paste people
+            }
+        else {
+            for( int dy=-4; dy<4; dy++ ) {
+                int y = mCurY + dy;
+                if( y >= 0 && y < mSceneH ) {
+                    for( int dx=-6; dx<6; dx++ ) {
+                        int x = mCurX + dx;
+                        if( x >= 0 && x < mSceneW ) {
+                            mCells[ y ][ x ] = mCopyBuffer;
+                            }
+                        }
+                    }
+                }
+            }
         }
     else if( inASCII == 'i' ) {
         // insert into container
