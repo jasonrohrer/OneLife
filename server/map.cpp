@@ -347,7 +347,8 @@ timeSec_t valueToTime( unsigned char *inValue ) {
 
 
 
-
+timeSec_t dbLookTimeGet( int inX, int inY );
+void dbLookTimePut( int inX, int inY, timeSec_t inTime );
 
 
 
@@ -399,6 +400,8 @@ static void biomeDBPut( int inX, int inY, int inValue, int inSecondPlace,
             
     
     KISSDB_put( &biomeDB, key, value );
+
+    dbLookTimePut( inX, inY, MAP_TIMESEC );
     }
     
 
@@ -1242,6 +1245,156 @@ static void dbPutCached( int inX, int inY, int inSlot, int inSubCont,
 
 
 
+char lookTimeDBEmpty = false;
+
+
+// version of open call that checks whether look time exists in lookTimeDB
+// for each record in opened DB, and clears any entries that are not
+// rebuilding file storage for DB in the process
+// lookTimeDB MUST be open before calling this
+//
+// If lookTimeDBEmpty, this call just opens the target DB normally without
+// shrinking it.
+//
+// Can handle max key and value size of 16 and 12 bytes
+// Assumes that first 8 bytes of key are xy as 32-bit ints
+int KISSDB_open_timeShrunk(
+	KISSDB *db,
+	const char *path,
+	int mode,
+	unsigned long hash_table_size,
+	unsigned long key_size,
+	unsigned long value_size) {
+
+    File dbFile( NULL, path );
+    
+    if( ! dbFile.exists() || lookTimeDBEmpty ) {
+
+        if( lookTimeDBEmpty ) {
+            AppLog::infoF( "No lookTimes present, not cleaning %s", path );
+            }
+        
+        return KISSDB_open( db, 
+                            path, 
+                            mode,
+                            hash_table_size,
+                            key_size,
+                            value_size );
+        }
+    
+    char *dbTempName = autoSprintf( "%s.temp", path );
+    File dbTempFile( NULL, dbTempName );
+    
+    if( dbTempFile.exists() ) {
+        dbTempFile.remove();
+        }
+    
+    if( dbTempFile.exists() ) {
+        AppLog::errorF( "Failed to remove temp DB file %s", dbTempName );
+
+        delete [] dbTempName;
+
+        return KISSDB_open( db, 
+                            path, 
+                            mode,
+                            hash_table_size,
+                            key_size,
+                            value_size );
+        }
+    
+    KISSDB oldDB;
+    
+    int error = KISSDB_open( &oldDB, 
+                             path, 
+                             mode,
+                             hash_table_size,
+                             key_size,
+                             value_size );
+    if( error ) {
+        AppLog::errorF( "Failed to open DB file %s in KISSDB_open_timeShrunk",
+                        path );
+        delete [] dbTempName;
+
+        return error;
+        }
+
+    KISSDB tempDB;
+    
+    error = KISSDB_open( &tempDB, 
+                         dbTempName, 
+                         mode,
+                         hash_table_size,
+                         key_size,
+                         value_size );
+    if( error ) {
+        AppLog::errorF( "Failed to open DB file %s in KISSDB_open_timeShrunk",
+                        dbTempName );
+        delete [] dbTempName;
+        KISSDB_close( &oldDB );
+        return error;
+        }
+
+
+    
+
+    
+    KISSDB_Iterator dbi;
+    
+    
+    KISSDB_Iterator_init( &oldDB, &dbi );
+    
+    // key and value size that are big enough to handle all of our DB
+    unsigned char key[16];
+    
+    unsigned char value[12];
+    
+    int total = 0;
+    int stale = 0;
+
+    while( KISSDB_Iterator_next( &dbi, key, value ) > 0 ) {
+        total++;
+
+        int x = valueToInt( key );
+        int y = valueToInt( &( key[4] ) );
+
+        if( dbLookTimeGet( x, y ) > 0 ) {
+            // keep
+            // insert it in temp
+            KISSDB_put( &tempDB, key, value );
+            }
+        else {
+            // stale
+            // ignore
+            stale++;
+            }
+        }
+    
+    AppLog::infoF( "Cleaned %d / %d stale map cells from %s", stale, total,
+                   path );
+
+    printf( "\n" );
+    
+    
+    KISSDB_close( &tempDB );
+    KISSDB_close( &oldDB );
+
+    dbTempFile.copy( &dbFile );
+    dbTempFile.remove();
+
+    delete [] dbTempName;
+
+    // now open new, shrunk file
+    return KISSDB_open( db, 
+                        path, 
+                        mode,
+                        hash_table_size,
+                        key_size,
+                        value_size );
+    }
+
+
+
+
 
 void initMap() {
     initDBCache();
@@ -1297,6 +1450,10 @@ void initMap() {
     File lookTimeDBFile( NULL, lookTimeDBName );
     
     lookTimeDBExists = lookTimeDBFile.exists();
+
+    if( ! lookTimeDBExists ) {
+        lookTimeDBEmpty = true;
+        }
 
     KISSDB lookTimeDB_old;
 
@@ -1387,6 +1544,10 @@ void initMap() {
 
         printf( "\n" );
 
+        if( total == 0 ) {
+            lookTimeDBEmpty = true;
+            }
+
         KISSDB_close( &lookTimeDB_temp );
         KISSDB_close( &lookTimeDB_old );
 
@@ -1420,7 +1581,7 @@ void initMap() {
     // note that the various decay ETA slots in map.db 
     // are define but unused, because we store times separately
     // in mapTime.db
-    error = KISSDB_open( &db, 
+    error = KISSDB_open_timeShrunk( &db, 
                          "map.db", 
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
@@ -1464,7 +1625,7 @@ void initMap() {
     // this DB uses the same slot numbers as the map.db
     // however, only times are stored here, because they require 8 bytes
     // so, slot 0 and 2 are never used, for example
-    error = KISSDB_open( &timeDB, 
+    error = KISSDB_open_timeShrunk( &timeDB, 
                          "mapTime.db", 
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
@@ -1502,7 +1663,7 @@ void initMap() {
 
 
 
-    error = KISSDB_open( &biomeDB, 
+    error = KISSDB_open_timeShrunk( &biomeDB, 
                          "biome.db", 
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
@@ -1525,7 +1686,7 @@ void initMap() {
 
 
 
-    error = KISSDB_open( &floorDB, 
+    error = KISSDB_open_timeShrunk( &floorDB, 
                          "floor.db", 
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
@@ -1542,7 +1703,7 @@ void initMap() {
 
 
 
-    error = KISSDB_open( &floorTimeDB, 
+    error = KISSDB_open_timeShrunk( &floorTimeDB, 
                          "floorTime.db", 
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
@@ -2274,7 +2435,7 @@ static timeSec_t dbFloorTimeGet( int inX, int inY ) {
 
 
 // returns 0 if not found
-static timeSec_t dbLookTimeGet( int inX, int inY ) {
+timeSec_t dbLookTimeGet( int inX, int inY ) {
     unsigned char key[8];
     unsigned char value[8];
 
@@ -2333,6 +2494,7 @@ static void dbPut( int inX, int inY, int inSlot, int inValue,
     KISSDB_put( &db, key, value );
 
     dbPutCached( inX, inY, inSlot, inSubCont, inValue );
+    dbLookTimePut( inX, inY, MAP_TIMESEC );
     }
 
 
@@ -2389,6 +2551,7 @@ static void dbFloorPut( int inX, int inY, int inValue ) {
             
     
     KISSDB_put( &floorDB, key, value );
+    dbLookTimePut( inX, inY, MAP_TIMESEC );
     }
 
 
@@ -2409,7 +2572,7 @@ static void dbFloorTimePut( int inX, int inY, timeSec_t inTime ) {
 
 
 
-static void dbLookTimePut( int inX, int inY, timeSec_t inTime ) {
+void dbLookTimePut( int inX, int inY, timeSec_t inTime ) {
     unsigned char key[8];
     unsigned char value[8];
     

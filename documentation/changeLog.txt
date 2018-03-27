@@ -22,6 +22,11 @@ Server Fixes:
 --Eliminated expensive calls to checkDecayContained by tracking which cells on
   map have no decaying contained items.
 
+--Fixed map file bloat by culling map of cells that haven't been looked at in
+  24 hours and re-inserting remaining cells whenever a server restarts.
+  Culled cells go back to their natural, procedurally-generated state.
+
+
 
 
 Version 68    2018-March-16
