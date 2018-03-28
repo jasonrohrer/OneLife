@@ -9813,10 +9813,33 @@ void LivingLifePage::step() {
                         
                         existing->lastSpeed = o.lastSpeed;
                         
+                        char babyDropped = false;
                         
-                        
-
                         if( existing->heldByAdultID != -1 ) {
+                            // getting an update about a held baby
+                            // this usually means a drop
+                            // but verify that adult isn't holding us anymore
+                            // (sometimes, update can be from a clothing change
+                            //  initiated by another adult right before
+                            //  we got picked up, or a clothing decay while
+                            //  held)
+                            
+                            // we will ALWAYS get message about the change
+                            // to what their holding before the update
+                            // to the baby that has been dropped
+                            
+                            babyDropped = true;
+                            
+                            LiveObject *holdingO = 
+                                getLiveObject( existing->heldByAdultID );
+                            if( holdingO != NULL &&
+                                holdingO->holdingID == - existing->id ) {
+                                // they're still holding us
+                                babyDropped = false;
+                                }
+                            }
+                        
+                        if( babyDropped ) {
                             // got an update for a player that's being held
                             // this means they've been dropped
                             printf( "Baby dropped\n" );
@@ -13131,6 +13154,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
 
     if( playerActionPending ) {
+        printf( "Skipping click, action pending\n" );
+        
         // block further actions until update received to confirm last
         // action
         return;

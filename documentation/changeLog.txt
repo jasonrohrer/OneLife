@@ -10,6 +10,11 @@ Version 69    ???
 
 --Fixed an invisible-self-as-baby bug when baby-self set down during map load.
 
+--Fixed another baby bouncing-forever bug (if baby's clothing state changes
+  while held, this causes a PU message about the baby, which the client was
+  interpreting as a baby-drop, even though the server saw the baby as still
+  held).
+
 
 
 
