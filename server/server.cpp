@@ -3689,6 +3689,12 @@ int main() {
     
     AppLog::infoF( "Listening for connection on port %d", port );
 
+    // if we received one the last time we looped, don't sleep when
+    // polling for socket being ready, because there could be more data
+    // waiting in the buffer for a given socket
+    char someClientMessageReceived = false;
+    
+
     while( !quit ) {
         
         checkBackup();
@@ -3859,6 +3865,12 @@ int main() {
         if( areTriggersEnabled() ) {
             // need to handle trigger timing
             pollTimeout = 0.01;
+            }
+
+        if( someClientMessageReceived ) {
+            // don't wait at all
+            // we need to check for next message right away
+            pollTimeout = 0;
             }
 
         // we thus use zero CPU as long as no messages or new connections
@@ -4305,6 +4317,8 @@ int main() {
         
     
         
+    
+        someClientMessageReceived = false;
 
         numLive = players.size();
         
@@ -4405,6 +4419,8 @@ int main() {
             char *message = getNextClientMessage( nextPlayer->sockBuffer );
             
             if( message != NULL ) {
+                someClientMessageReceived = true;
+                
                 AppLog::infoF( "Got client message from %d: %s",
                                nextPlayer->id, message );
                 

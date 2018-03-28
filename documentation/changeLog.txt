@@ -33,6 +33,11 @@ Server Fixes:
   24 hours and re-inserting remaining cells whenever a server restarts.
   Culled cells go back to their natural, procedurally-generated state.
 
+--Server was setting timeout when polling for socket activity even when more
+  buffered messages were potentially available, allowing messages to pile up.
+  Fixed so that we don't sleep at all when polling sockets if we received at
+  least one client message in the last loop.
+
 
 
 
