@@ -45,8 +45,6 @@ Server Fixes:
   Fixed so that we don't sleep at all when polling sockets if we received at
   least one client message in the last loop.
 
---Increased serverOut.txt buffering from 20MB to 400MB.
-
 
 
 
