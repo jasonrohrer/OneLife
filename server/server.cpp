@@ -761,7 +761,7 @@ ClientMessage parseMessage( char *inMessage ) {
         SimpleVector<char *> *tokens =
             tokenizeString( inMessage );
         
-        // require an odd number greater than 5
+        // require an odd number at least 5
         if( tokens->size() < 5 || tokens->size() % 2 != 1 ) {
             tokens->deallocateStringElements();
             delete tokens;
