@@ -226,7 +226,8 @@ typedef struct LiveObject {
 
         char pendingAction;
         float pendingActionAnimationProgress;
-
+        double pendingActionAnimationStartTime;
+        
         
         // NULL if no active speech
         char *currentSpeech;

@@ -7379,6 +7379,50 @@ void LivingLifePage::step() {
             }
         }
 
+
+    if( playerActionPending && 
+        ourObject != NULL && 
+        game_getCurrentTime() - 
+        ourObject->pendingActionAnimationStartTime > 4 ) {
+        
+        // been bouncing for four seconds with no answer from server
+        
+        printf( "Been waiting for response to our action request "
+                "from server for > 4 seconds, giving up\n" );
+
+        // end it
+        ourObject->pendingActionAnimationProgress = 0;
+        ourObject->pendingAction = false;
+                                
+        playerActionPending = false;
+        playerActionTargetNotAdjacent = false;
+
+        if( nextActionMessageToSend != NULL ) {
+            delete [] nextActionMessageToSend;
+            nextActionMessageToSend = NULL;
+            }
+        
+        int goodX = ourObject->xServer;
+        int goodY = ourObject->yServer;
+
+        printf( "   Jumping back to last-known server position of %d,%d\n",
+                goodX, goodY );
+
+        // jump to wherever server said we were before
+        ourObject->inMotion = false;
+                        
+        ourObject->moveTotalTime = 0;
+        ourObject->currentSpeed = 0;
+        ourObject->currentGridSpeed = 0;
+        
+
+        ourObject->currentPos.x = goodX;
+        ourObject->currentPos.y = goodY;
+        
+        ourObject->xd = goodX;
+        ourObject->yd = goodY;
+        }
+    
             
 
     char *message = getNextServerMessage();
@@ -12102,6 +12146,9 @@ void LivingLifePage::step() {
             // matter how fast the server responds
             ourLiveObject->pendingActionAnimationProgress = 
                 0.025 * frameRateFactor;
+
+            ourLiveObject->pendingActionAnimationStartTime = 
+                game_getCurrentTime();
             
             if( nextActionEating ) {
                 addNewAnim( ourLiveObject, eating );

@@ -15,6 +15,13 @@ Version 69    ???
   interpreting as a baby-drop, even though the server saw the baby as still
   held).
 
+--Some bouncing-forever bugs seem to be caused by server missing or ignoring
+  one of our MOVE messages, meaning that it never tells us we arrived, so our
+  next action is pending forever.  I'm still working on figuring out what's
+  going wrong in the server MOVE handling code.  In the mean time, I've added
+  a work-around client-side that detects >4 seconds of bouncing and jumps back
+  to the last known server position.
+
 
 
 
