@@ -27,6 +27,8 @@
 
 #include "minorGems/formats/encodingUtils.h"
 
+#include "minorGems/io/file/File.h"
+
 
 #include "map.h"
 #include "../gameSource/transitionBank.h"
@@ -693,6 +695,7 @@ typedef enum messageType {
     SAY,
     MAP,
     TRIGGER,
+    BUG,
     UNKNOWN
     } messageType;
 
@@ -704,7 +707,7 @@ typedef struct ClientMessage {
         int x, y, c, i;
         
         int trigger;
-        
+        int bug;
 
         // some messages have extra positions attached
         int numExtraPos;
@@ -715,6 +718,9 @@ typedef struct ClientMessage {
         // null if type not SAY
         char *saidText;
         
+        // null if type not BUG
+        char *bugText;
+
     } ClientMessage;
 
 
@@ -734,10 +740,20 @@ ClientMessage parseMessage( char *inMessage ) {
     m.numExtraPos = 0;
     m.extraPos = NULL;
     m.saidText = NULL;
+    m.bugText = NULL;
     // don't require # terminator here
 
     int numRead = sscanf( inMessage, 
                           "%99s %d %d", nameBuffer, &( m.x ), &( m.y ) );
+
+    
+    if( numRead >= 2 &&
+        strcmp( nameBuffer, "BUG" ) == 0 ) {
+        m.type = BUG;
+        m.bug = m.x;
+        m.bugText = stringDuplicate( inMessage );
+        return m;
+        }
 
 
     if( numRead != 3 ) {
@@ -4441,8 +4457,43 @@ int main() {
                 //Thread::staticSleep( 
                 //    testRandSource.getRandomBoundedInt( 0, 450 ) );
                 
-                
-                if( m.type == MAP ) {
+                if( m.type == BUG ) {
+                    int allow = 
+                        SettingsManager::getIntSetting( "allowBugReports", 0 );
+
+                    if( allow ) {
+                        char *bugName = 
+                            autoSprintf( "bug_%d_%d_%f",
+                                         m.bug,
+                                         nextPlayer->id,
+                                         Time::getCurrentTime() );
+                        char *bugInfoName = autoSprintf( "%s_info.txt",
+                                                         bugName );
+                        char *bugOutName = autoSprintf( "%s_out.txt",
+                                                        bugName );
+                        FILE *bugInfo = fopen( bugInfoName, "w" );
+                        if( bugInfo != NULL ) {
+                            fprintf( bugInfo, 
+                                     "Bug report from player %d\n"
+                                     "Bug text:  %s\n", 
+                                     nextPlayer->id,
+                                     m.bugText );
+                            fclose( bugInfo );
+                            
+                            File outFile( NULL, "serverOut.txt" );
+                            if( outFile.exists() ) {
+                                fflush( stdout );
+                                File outCopyFile( NULL, bugOutName );
+                                
+                                outFile.copy( &outCopyFile );
+                                }
+                            }
+                        delete [] bugName;
+                        delete [] bugInfoName;
+                        delete [] bugOutName;
+                        }
+                    }
+                else if( m.type == MAP ) {
                     
                     int allow = 
                         SettingsManager::getIntSetting( "allowMapRequests", 0 );
@@ -4972,7 +5023,6 @@ int main() {
                         
                         delete [] line;
                         
-                        delete [] m.saidText;
 
                         
                         ChangePosition p = { nextPlayer->xd, nextPlayer->yd, 
@@ -6502,7 +6552,14 @@ int main() {
                     if( m.numExtraPos > 0 ) {
                         delete [] m.extraPos;
                         }
-                    }                
+
+                    if( m.saidText != NULL ) {
+                        delete [] m.saidText;
+                        }
+                    if( m.bugText != NULL ) {
+                        delete [] m.bugText;
+                        }
+                    }
                 }
             }
 

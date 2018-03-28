@@ -392,6 +392,21 @@ static char hideGuiPanel = false;
 
 
 
+
+static char *lastMessageSentToServer = NULL;
+
+
+// destroyed internally if not NULL
+static void replaceLastMessageSent( char *inNewMessage ) {
+    if( lastMessageSentToServer != NULL ) {
+        delete [] lastMessageSentToServer;
+        }
+    lastMessageSentToServer = inNewMessage;
+    }
+
+
+
+
 SimpleVector<unsigned char> serverSocketBuffer;
 
 
@@ -426,6 +441,8 @@ void LivingLifePage::sendToServerSocket( char *inMessage ) {
     
     printf( "Sending message to server: %s\n", inMessage );
     
+    replaceLastMessageSent( stringDuplicate( inMessage ) );    
+
     int len = strlen( inMessage );
     
     int numSent = sendToSocket( mServerSocket, (unsigned char*)inMessage, len );
@@ -1822,8 +1839,16 @@ LivingLifePage::~LivingLifePage() {
 
     delete [] mMapPlayerPlacedFlags;
 
-    delete [] nextActionMessageToSend;
+    if( nextActionMessageToSend != NULL ) {
+        delete [] nextActionMessageToSend;
+        nextActionMessageToSend = NULL;
+        }
 
+    if( lastMessageSentToServer != NULL ) {
+        delete [] lastMessageSentToServer;
+        lastMessageSentToServer = NULL;
+        }
+    
     if( mHungerSound != NULL ) {    
         freeSoundSprite( mHungerSound );
         }
@@ -6833,6 +6858,42 @@ static char checkIfHeldContChanged( LiveObject *inOld, LiveObject *inNew ) {
 
 
 
+
+void LivingLifePage::sendBugReport( int inBugNumber ) {
+    char *bugString = stringDuplicate( "" );
+
+    if( lastMessageSentToServer != NULL ) {
+        char *temp = bugString;
+        bugString = autoSprintf( "%s   Just sent: [%s]",
+                                 temp, lastMessageSentToServer );
+        delete [] temp;
+        }
+    if( nextActionMessageToSend != NULL ) {
+        char *temp = bugString;
+        bugString = autoSprintf( "%s   Waiting to send: [%s]",
+                                 temp, nextActionMessageToSend );
+        delete [] temp;
+        }
+    
+    // clear # terminators from message
+    char *spot = strstr( bugString, "#" );
+    
+    while( spot != NULL ) {
+        spot[0] = ' ';
+        spot = strstr( bugString, "#" );
+        }
+    
+    
+    char *bugMessage = autoSprintf( "BUG %d %s#", inBugNumber, bugString );
+    
+    delete [] bugString;
+
+    sendToServerSocket( bugMessage );
+    delete [] bugMessage;
+    }
+    
+
+
         
 void LivingLifePage::step() {
     if( mouseDown ) {
@@ -7389,6 +7450,8 @@ void LivingLifePage::step() {
         
         printf( "Been waiting for response to our action request "
                 "from server for > 4 seconds, giving up\n" );
+
+        sendBugReport( 1 );
 
         // end it
         ourObject->pendingActionAnimationProgress = 0;
@@ -14354,6 +14417,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
     registerTriggerKeyCommand( inASCII, this );
     
     switch( inASCII ) {
+        /*
         case 'b':
             blackBorder = true;
             whiteBorder = false;
@@ -14362,6 +14426,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             blackBorder = false;
             whiteBorder = true;
             break;
+        */
         /*
         case 'a':
             drawAdd = ! drawAdd;

@@ -513,3 +513,14 @@ Sends trigger trigger_number to server.
 Example:
 
 TRIGGER 5#
+
+
+
+
+BUG v arbitrary_text#
+
+Reports that a bug with number v occurred, and provides text about that bug.
+
+Example:
+
+BUG 4 MOVE -144 960 -1 -1 -2 -1#

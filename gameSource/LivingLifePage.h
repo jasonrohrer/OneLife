@@ -374,6 +374,9 @@ class LivingLifePage : public GamePage {
         // handles error detection, total byte counting, etc.
         void sendToServerSocket( char *inMessage );
         
+        void sendBugReport( int inBugNumber );
+
+
     protected:
 
         int mServerSocket;

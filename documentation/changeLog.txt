@@ -22,6 +22,8 @@ Version 69    ???
   a work-around client-side that detects >4 seconds of bouncing and jumps back
   to the last known server position.
 
+--Client using BUG protocol to report 4-second bouncing.
+
 
 
 
@@ -44,6 +46,9 @@ Server Fixes:
   buffered messages were potentially available, allowing messages to pile up.
   Fixed so that we don't sleep at all when polling sockets if we received at
   least one client message in the last loop.
+
+--Support for BUG protocol to allow client to report bugs and trigger log
+  snapshots.
 
 
 
