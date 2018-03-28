@@ -3166,6 +3166,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                 babyO->holdingFlip = inObj->holdingFlip;
                 
                 // save world hold pos for smooth set-down of baby
+                babyO->lastHeldByRawPosSet = true;
                 babyO->lastHeldByRawPos = worldHoldPos;
 
                 returnPack =
@@ -9830,10 +9831,27 @@ void LivingLifePage::step() {
                             existing->xd = o.xd;
                             existing->yd = o.yd;
                             
-                            existing->heldByDropOffset =
-                                sub( existing->lastHeldByRawPos,
-                                     existing->currentPos );
-
+                            if( existing->lastHeldByRawPosSet ) {    
+                                existing->heldByDropOffset =
+                                    sub( existing->lastHeldByRawPos,
+                                         existing->currentPos );
+                                if( length( existing->heldByDropOffset ) > 3 ) {
+                                    // too far to fly during drop
+                                    // snap instead
+                                    existing->heldByDropOffset.x = 0;
+                                    existing->heldByDropOffset.y = 0;
+                                    }
+                                }
+                            else {
+                                // held pos not known
+                                // maybe this holding parent has never
+                                // been drawn on the screen
+                                // (can happen if they drop us during map load)
+                                existing->heldByDropOffset.x = 0;
+                                existing->heldByDropOffset.y = 0;
+                                }
+                            
+                            existing->lastHeldByRawPosSet = false;
                             
                             
                             LiveObject *adultO = 
@@ -10005,6 +10023,8 @@ void LivingLifePage::step() {
                         o.inMotion = false;
                         
                         o.holdingFlip = false;
+                        
+                        o.lastHeldByRawPosSet = false;
 
                         o.pendingAction = false;
                         o.pendingActionAnimationProgress = 0;
@@ -12117,6 +12137,8 @@ void LivingLifePage::step() {
                 isLiveObjectSetFullyLoaded( &mFirstObjectSetLoadingProgress );
             
             if( mDoneLoadingFirstObjectSet ) {
+                printf( "First map load done\n" );
+                
                 restartMusic( computeCurrentAge( ourLiveObject ),
                               ourLiveObject->ageRate );
                 setSoundLoudness( 1.0 );

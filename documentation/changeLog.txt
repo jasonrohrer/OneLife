@@ -8,6 +8,8 @@ Version 69    ???
 --Scene editor now has 'V' fill function for repeating objects (useful to make
   stress-test maps).
 
+--Fixed an invisible-self-as-baby bug when baby-self set down during map load.
+
 
 
 

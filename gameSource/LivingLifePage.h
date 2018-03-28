@@ -78,6 +78,7 @@ typedef struct LiveObject {
         doublePair heldByDropOffset;
 
         // the actual world pos we were last held at
+        char lastHeldByRawPosSet;
         doublePair lastHeldByRawPos;
         
         
