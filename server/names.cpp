@@ -61,7 +61,7 @@ void initNames() {
 
     printf( "Testing names with 1000 lookups\n" );
     double startTime = Time::getCurrentTime();
-    for( int i = 0; i<10; i++ ) {
+    for( int i = 0; i<1; i++ ) {
         const char *first = findCloseFirstName( "RO" );
         const char *last = findCloseLastName( "RO" );
         printf( "First: %s, Last: %s\n", first, last );
@@ -151,6 +151,7 @@ const char *findCloseName( char *inString, SimpleVector<char*> *inNameList ) {
 
     while( jumpSize > 0 && lastDiff != 0 ) {
         char *testString = inNameList->getElementDirect( offset );
+        printf( "Considering %s at offset %d/%d\n", testString, offset, limit );
         
         lastDiff = prefixCompare( tempString, testString );
         
