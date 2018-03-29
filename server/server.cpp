@@ -2348,7 +2348,8 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete,
     int doneMoving = 0;
     
     if( inPlayer->xs == inPlayer->xd &&
-        inPlayer->ys == inPlayer->yd ) {
+        inPlayer->ys == inPlayer->yd &&
+        ! inPlayer->heldByOther ) {
         doneMoving = 1;
         }
     

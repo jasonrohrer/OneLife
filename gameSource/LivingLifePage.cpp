@@ -9948,28 +9948,8 @@ void LivingLifePage::step() {
                         
                         char babyDropped = false;
                         
-                        if( existing->heldByAdultID != -1 ) {
-                            // getting an update about a held baby
-                            // this usually means a drop
-                            // but verify that adult isn't holding us anymore
-                            // (sometimes, update can be from a clothing change
-                            //  initiated by another adult right before
-                            //  we got picked up, or a clothing decay while
-                            //  held)
-                            
-                            // we will ALWAYS get message about the change
-                            // to what their holding before the update
-                            // to the baby that has been dropped
-                            
+                        if( done_moving && existing->heldByAdultID != -1 ) {
                             babyDropped = true;
-                            
-                            LiveObject *holdingO = 
-                                getLiveObject( existing->heldByAdultID );
-                            if( holdingO != NULL &&
-                                holdingO->holdingID == - existing->id ) {
-                                // they're still holding us
-                                babyDropped = false;
-                                }
                             }
                         
                         if( babyDropped ) {

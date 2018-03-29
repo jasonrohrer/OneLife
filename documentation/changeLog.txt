@@ -28,6 +28,10 @@ Version 69    ???
 
 --Now showing YOUR in front of relation names.
 
+--Client and server now differentiate between baby-drop PU messages and other
+  PU messages about a held baby with done_moving field (only done_moving if
+  baby no longer held).
+
 
 
 
