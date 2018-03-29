@@ -43,6 +43,7 @@
 #include "playerStats.h"
 #include "serverCalls.h"
 #include "failureLog.h"
+#include "names.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -561,6 +562,8 @@ void quitCleanup() {
 
     freePlayerStats();
 
+    freeNames();
+    
     freeLifeLog();
     
     freeFoodLog();
@@ -3587,6 +3590,8 @@ int main() {
 
     printf( "\n" );
     
+    initNames();
+
     initLifeLog();
     initBackup();
     
