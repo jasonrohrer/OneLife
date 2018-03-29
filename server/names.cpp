@@ -7,11 +7,7 @@
 #include "minorGems/util/random/JenkinsRandomSource.h"
 
 #include <stdio.h>
-//#include <assert.h>
 
-
-//static SimpleVector<char*> firstNames;
-//static SimpleVector<char*> lastNames;
 
 static char *firstNames = NULL;
 static char *lastNames = NULL;
@@ -23,42 +19,20 @@ static int lastNamesLen;
 
 
 
-#include <malloc.h>
-
-int lastAllocCount = 0;
-
-int getAllocTotal() {
-    struct mallinfo mi = mallinfo();
-    int tot = mi.hblkhd + mi.uordblks;
-    //printf( "malloc sees %d blocks\n", tot );
-    return tot;
-    }
-
-
-int getAllocDelta() {
-    int total = getAllocTotal();
-    
-    int delta = total - lastAllocCount;
-    
-    lastAllocCount = total;
-    
-    return delta;
-    }
 
 
 
-static JenkinsRandomSource randSource;
 
 static const char *defaultName = "";
+
+
 
 
 static char *readNameFile( const char *inFileName, int *outLen ) {
     
     File nameFile( NULL, inFileName );
 
-    //getAllocDelta();
     char *contents = nameFile.readFileContents();
-    //printf( "Reading consumed %d bytes\n", getAllocDelta() );
 
     if( contents == NULL ) {
         AppLog::errorF( "Failed to open name file %s for reading", inFileName );
@@ -69,8 +43,7 @@ static char *readNameFile( const char *inFileName, int *outLen ) {
     delete [] temp;
     
     int len = strlen( contents );
-    printf( "Read length %d file\n", len );
-    
+
     for( int i=0; i<len; i++ ) {
         if( contents[i] == '\n' ) {
             contents[i] = '\0';
@@ -82,40 +55,17 @@ static char *readNameFile( const char *inFileName, int *outLen ) {
     }
 
 
-void initNames() {
-    getAllocDelta();
-    double startTime = Time::getCurrentTime();
-    
+
+
+void initNames() {    
     firstNames = readNameFile( "firstNames.txt", &firstNamesLen  );
-    //printf( "   first names consumed %d bytes\n", getAllocDelta() );
-    
     lastNames = readNameFile( "lastNames.txt", &lastNamesLen );
-    //printf( "   last names consumed %d bytes\n", getAllocDelta() );
-    printf( "Name init took %f sec\n", Time::getCurrentTime() - startTime );
-
-    printf( "   and consumed %d bytes\n", getAllocDelta() );
-
-    printf( "Testing names with 100000 lookups\n" );
-    startTime = Time::getCurrentTime();
-    for( int i = 0; i<100000; i++ ) {
-    //for( int i = 0; i<1; i++ ) {
-        const char *first = findCloseFirstName( "ZYRZ" );
-        //printf( "\n" );
-        
-        const char *last = findCloseLastName( "AAAAAA" );
-        //printf( "First: %s, Last: %s\n", first, last );
-        }
-    
-    printf( "Lookups took %f sec (%d bytes)\n", 
-            Time::getCurrentTime() - startTime, getAllocDelta() );
     }
 
 
 
 
 void freeNames() {
-    //firstNames.deallocateStringElements();
-    //lastNames.deallocateStringElements();
     if( firstNames != NULL ) {
         delete [] firstNames;
         firstNames = NULL;
@@ -149,6 +99,8 @@ int sharedPrefixLength( const char *inA, const char *inB ) {
     }
 
 
+
+
 // walk backward to find start of next name
 int getNameOffsetBack( char *inNameList, int inListLen, int inOffset ) {
     while( inOffset > 0 && inNameList[ inOffset ] != '\0' ) {
@@ -162,6 +114,8 @@ int getNameOffsetBack( char *inNameList, int inListLen, int inOffset ) {
         return inOffset + 1;
         }
     }
+
+
 
 int getNameOffsetForward( char *inNameList, int inListLen, int inOffset ) {
     int limit = inListLen - 1;
@@ -195,9 +149,8 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
     offset = getNameOffsetForward( inNameList, inListLen, offset );
     
     int lastDiff = 1;
-    
-    char print = false;
-    
+
+
     int hitStartCount = 0;
     int hitEndCount = 0;
     
@@ -206,10 +159,6 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
         char *testString = &( inNameList[ offset ] );
         int prevDiff = lastDiff;
         lastDiff = strcmp( tempString, testString );
-        
-        if( print )printf( "Jumping %d and "
-                           "considering %s at offset %d/%d (diff=%d)\n", 
-                           jumpSize, testString, offset, limit, lastDiff );
         
         
         if( getSign( lastDiff ) != getSign( prevDiff ) ) {
@@ -223,10 +172,13 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
             break;
             }
 
+
         if( lastDiff > 0 ) {
             // further down
             offset += jumpSize;
+
             if( offset >= limit ) {
+                // walked off end
                 offset = limit - 2;
                 offset = getNameOffsetBack( inNameList, inListLen, offset );
                 hitEndCount++;
@@ -242,7 +194,9 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
         else if( lastDiff < 0 ) {
             // further up
             offset -= jumpSize;
+
             if( offset < 0 ) {
+                // walked off start
                 offset = 0;
                 hitStartCount++;
                 if( hitStartCount > 1 ) {
@@ -257,7 +211,13 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
         }
     
     
+
     if( lastDiff != 0 && hitEndCount == 0 && hitStartCount == 0 ) {
+
+        // no exact match
+        // step backward until we find names that are before
+        // and after us alphabetically
+        
         int step = 1;
         if( lastDiff < 0 ) {
             step = -1;
@@ -286,9 +246,6 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
             
             char *testString = &( inNameList[offset] );
             nextDiff = strcmp( tempString, testString );
-            if( print )printf( "Stepping %d and "
-                               "considering %s at offset %d/%d (diff=%d)\n", 
-                               step, testString, offset, limit, nextDiff );
             }
         
         
@@ -315,14 +272,6 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
             int prevSim = sharedPrefixLength( tempString, 
                                               &( inNameList[prevOffset] ) );
             
-            if( print )
-            printf( "No match found, nearby strings %s (s=%d) and %s (s=%d)\n",
-                    &( inNameList[crossOffset] ),
-                    crossSim,
-                    &( inNameList[ prevOffset] ),
-                    prevSim );
-
-            
             if( crossSim > prevSim ) {
                 offset = crossOffset;
                 }
@@ -332,9 +281,7 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
             else {
                 // share same prefix
                 // return shorter one
-                if( print ) 
-                    printf( "Shared prefix length same, returning shorter\n" );
-                
+
                 if( strlen( &( inNameList[prevOffset] ) ) 
                     <
                     strlen( &( inNameList[crossOffset] ) ) ) {
