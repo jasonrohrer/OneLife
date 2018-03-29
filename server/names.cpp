@@ -13,8 +13,8 @@
 //static SimpleVector<char*> firstNames;
 //static SimpleVector<char*> lastNames;
 
-static char *firstNames;
-static char *lastNames;
+static char *firstNames = NULL;
+static char *lastNames = NULL;
 
 // total length of arrays
 static int firstNamesLen;
@@ -49,7 +49,7 @@ int getAllocDelta() {
 
 static JenkinsRandomSource randSource;
 
-//static const char *defaultName = "";
+static const char *defaultName = "";
 
 
 static char *readNameFile( const char *inFileName, int *outLen ) {
@@ -99,10 +99,10 @@ void initNames() {
     startTime = Time::getCurrentTime();
     for( int i = 0; i<100000; i++ ) {
     //for( int i = 0; i<1; i++ ) {
-        const char *first = findCloseFirstName( "FUCKHEAD" );
+        const char *first = findCloseFirstName( "ZYRZ" );
         //printf( "\n" );
         
-        const char *last = findCloseLastName( "ASSHOLE" );
+        const char *last = findCloseLastName( "AAAAAA" );
         //printf( "First: %s, Last: %s\n", first, last );
         }
     
@@ -116,6 +116,14 @@ void initNames() {
 void freeNames() {
     //firstNames.deallocateStringElements();
     //lastNames.deallocateStringElements();
+    if( firstNames != NULL ) {
+        delete [] firstNames;
+        firstNames = NULL;
+        }
+    if( lastNames != NULL ) {
+        delete [] lastNames;
+        lastNames = NULL;
+        }
     }
 
 
@@ -174,6 +182,10 @@ int getNameOffsetForward( char *inNameList, int inListLen, int inOffset ) {
 
 
 const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
+    if( inNameList == NULL ) {
+        return defaultName;
+        }
+    
     char *tempString = stringToUpperCase( inString );
     
     int limit = inListLen;
@@ -186,6 +198,8 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
     
     char print = false;
     
+    int hitStartCount = 0;
+    int hitEndCount = 0;
     
 
     while( lastDiff != 0 ) {
@@ -213,11 +227,16 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
             // further down
             offset += jumpSize;
             if( offset >= limit ) {
-                offset = limit - 1;
+                offset = limit - 2;
                 offset = getNameOffsetBack( inNameList, inListLen, offset );
+                hitEndCount++;
+                if( hitEndCount > 1 ) {
+                    break;
+                    }
                 }
             else {
                 offset = getNameOffsetForward( inNameList, inListLen, offset );
+                hitEndCount = 0;
                 }
             }
         else if( lastDiff < 0 ) {
@@ -225,15 +244,20 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
             offset -= jumpSize;
             if( offset < 0 ) {
                 offset = 0;
+                hitStartCount++;
+                if( hitStartCount > 1 ) {
+                    break;
+                    }
                 }
             else {
+                hitStartCount = 0;
                 offset = getNameOffsetBack( inNameList, inListLen, offset );
                 }
             }
         }
     
     
-    if( lastDiff != 0 ) {
+    if( lastDiff != 0 && hitEndCount == 0 && hitStartCount == 0 ) {
         int step = 1;
         if( lastDiff < 0 ) {
             step = -1;
