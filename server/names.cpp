@@ -47,9 +47,29 @@ static void readNameFile( const char *inFileName,
         }
     }
 
+#include <malloc.h>
 
+int lastAllocCount = 0;
+
+int getAllocTotal() {
+    struct mallinfo mi = mallinfo();
+    return mi.uordblks;
+    }
+
+
+int getAllocDelta() {
+    int total = getAllocTotal();
+    
+    int delta = total - lastAllocCount;
+    
+    lastAllocCount = total;
+    
+    return delta;
+    }
 
 void initNames() {
+    getAllocDelta();
+    double startTime = Time::getCurrentTime();
     firstNameTree = new StringTree( false );
     lastNameTree = new StringTree( false );
     
@@ -58,15 +78,24 @@ void initNames() {
     
     readNameFile( "lastNames.txt", 
                   &lastNames, &lastNamesLen, lastNameTree );
+    printf( "Name init took %f sec\n", Time::getCurrentTime() - startTime );
 
-    printf( "Testing names with 1000 lookups\n" );
-    double startTime = Time::getCurrentTime();
-    for( int i = 0; i<1; i++ ) {
+    int bytes = getAllocDelta();
+    printf( "   and consumed %d bytes\n", bytes );
+
+    printf( "Testing names with 100000 lookups\n" );
+    startTime = Time::getCurrentTime();
+    for( int i = 0; i<100000; i++ ) {
+    //for( int i = 0; i<1; i++ ) {
         const char *first = findCloseFirstName( "RO" );
+        //printf( "\n" );
+        
         const char *last = findCloseLastName( "RO" );
-        printf( "First: %s, Last: %s\n", first, last );
+        //printf( "First: %s, Last: %s\n", first, last );
         }
-    printf( "Lookups took %f sec\n", Time::getCurrentTime() - startTime );
+    
+    printf( "Lookups took %f sec (%d bytes)\n", 
+            Time::getCurrentTime() - startTime, getAllocDelta() );
     }
 
 
@@ -82,59 +111,12 @@ void freeNames() {
 
 
 
-// returns 0 if A is identical to B
-// returns alphabetical distance for first character difference
-// postive if A is further down in the alphabet than B
-// negative if A is further up than B
-// Prefixes come alphabetically before longer strings, with the END
-// of the string occurring before A alphabetically.
-//
-// Compare APPLE with APPLE returns 0
-// Compare A with APPLE returns -16
-// Compare DOG with APPLE returns 3
-// Compare APE with DOGMA returns -3
-// Compare APE with APPLE returns -11
 
-// FIXME:
-// APE should be closer to APPLE than A
-int prefixCompare( const char *inA, const char *inB ) {
-    
-    int i = 0;
-    while( inA[i] != '\0' &&
-           inB[i] != '\0' ) {
-        
-        int diff = inA[i] - inB[i];
-        
-        if( diff > 0 ) {
-            return diff;
-            }
-        else if( diff < 0 ) {
-            return diff;
-            }
-        i++;
-        }
-
-    // walked off end with equal prefix
-    if( inB[i] != '\0' ) {
-        return -( ( inB[i] - 'A' ) + 1 );
-        }
-    if( inA[i] != '\0' ) {
-        return ( inA[i] - 'A' ) + 1;
-        }
-    
-    // equal and same length
-    return 0;
+static int getSign( int inX ) {
+    // found here: https://stackoverflow.com/a/1903975/744011
+    return (inX > 0) - (inX < 0);
     }
 
-/*
-void testPrefixCompare() {
-    assert( prefixCompare( "APPLE", "APPLE" ) == 0 );
-    assert( prefixCompare( "A", "APPLE" ) == -16 );
-    assert( prefixCompare( "DOG", "APPLE" ) == 3 );
-    assert( prefixCompare( "APE", "DOGMA" ) == -3 );
-    assert( prefixCompare( "APE", "APPLE" ) == -11 );
-    }
-*/
 
 
 const char *findCloseName( char *inString, SimpleVector<char*> *inNameList ) {
@@ -149,14 +131,19 @@ const char *findCloseName( char *inString, SimpleVector<char*> *inNameList ) {
     
     
 
-    while( jumpSize > 0 && lastDiff != 0 ) {
+    while( jumpSize > 1 && lastDiff != 0 ) {
         char *testString = inNameList->getElementDirect( offset );
-        printf( "Considering %s at offset %d/%d\n", testString, offset, limit );
+        lastDiff = strcmp( tempString, testString );
         
-        lastDiff = prefixCompare( tempString, testString );
+        if( false)printf( "Jumping %d and "
+                          "considering %s at offset %d/%d (diff=%d)\n", 
+                          jumpSize, testString, offset, limit, lastDiff );
+        
         
         jumpSize /= 2;
-        
+        if( jumpSize == 0 ) {
+            jumpSize = 1;
+            }
         if( lastDiff > 0 ) {
             // further down
             offset += jumpSize;
@@ -173,6 +160,38 @@ const char *findCloseName( char *inString, SimpleVector<char*> *inNameList ) {
             }
         }
     
+    if( lastDiff != 0 ) {
+        int step = 1;
+        if( lastDiff < 0 ) {
+            step = -1;
+            }
+        int nextDiff = lastDiff;
+        int lastSign = getSign( lastDiff );
+        while( getSign( nextDiff ) == lastSign ) {
+            
+            offset += step;
+            
+            if( offset <= 0 ) {
+                offset = 0;
+                break;
+                }
+            if( offset >= limit ) {
+                offset = limit - 1;
+                break;
+                }
+
+            char *testString = inNameList->getElementDirect( offset );
+            nextDiff = strcmp( tempString, testString );
+            if( false )printf( "Stepping %d and "
+                               "considering %s at offset %d/%d (diff=%d)\n", 
+                               step, testString, offset, limit, nextDiff );
+            }
+        }
+    
+
+    
+    delete [] tempString;
+
     if( lastDiff == 0 ) {
         // exact hit
         return inNameList->getElementDirect( offset );
