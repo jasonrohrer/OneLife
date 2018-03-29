@@ -52,6 +52,8 @@ typedef struct LiveObject {
         
         SimpleVector<int> lineage;
         
+        char *name;
+
         char *relationName;
         
 

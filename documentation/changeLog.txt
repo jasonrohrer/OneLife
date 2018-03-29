@@ -24,6 +24,10 @@ Version 69    ???
 
 --Client using BUG protocol to report 4-second bouncing.
 
+--Client support for NM names message and displaying names.
+
+--Now showing YOUR in front of relation names.
+
 
 
 

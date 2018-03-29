@@ -321,6 +321,9 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
 
     SimpleVector<char> buffer;
     
+    buffer.appendElementString( translate( "your" ) );
+    buffer.appendElementString( " " );
+
     for( int i=0; i<numGreats; i++ ) {
         buffer.appendElementString( translate( "great" ) );
         }
@@ -621,6 +624,7 @@ typedef enum messageType {
     PLAYER_SAYS,
     FOOD_CHANGE,
     LINEAGE,
+    NAMES,
     COMPRESSED_MESSAGE,
     UNKNOWN
     } messageType;
@@ -679,6 +683,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "LN" ) == 0 ) {
         returnValue = LINEAGE;
+        }
+    else if( strcmp( copy, "NM" ) == 0 ) {
+        returnValue = NAMES;
         }
     
     delete [] copy;
@@ -1762,6 +1769,14 @@ void LivingLifePage::clearLiveObjects() {
 
         if( nextObject->currentSpeech != NULL ) {
             delete [] nextObject->currentSpeech;
+            }
+
+        if( nextObject->relationName != NULL ) {
+            delete [] nextObject->relationName;
+            }
+
+        if( nextObject->name != NULL ) {
+            delete [] nextObject->name;
             }
 
         delete nextObject->futureAnimStack;
@@ -6119,6 +6134,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 else {
                     des = (char*)translate( "you" );
+                    if( ourLiveObject->name != NULL ) {
+                        des = autoSprintf( "%s - %s", des, 
+                                           ourLiveObject->name );
+                        desToDelete = des;
+                        }
                     }
                 }
             else if( idToDescribe < 0 ) {
@@ -6129,6 +6149,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 if( des == NULL ) {
                     des = (char*)translate( "unrelated" );
+                    }
+                if( otherObj->name != NULL ) {
+                    des = autoSprintf( "%s - %s",
+                                       otherObj->name, des );
+                    desToDelete = des;
                     }
                 }
             else {
@@ -8869,6 +8894,7 @@ void LivingLifePage::step() {
                 o.age = 0;
                 o.finalAgeSet = false;
                 
+                o.name = NULL;
                 o.relationName = NULL;
 
 
@@ -10353,6 +10379,10 @@ void LivingLifePage::step() {
                                 delete [] nextObject->relationName;
                                 }
 
+                            if( nextObject->name != NULL ) {
+                                delete [] nextObject->name;
+                                }
+
                             delete nextObject->futureAnimStack;
                             delete nextObject->futureHeldAnimStack;
 
@@ -11257,6 +11287,51 @@ void LivingLifePage::step() {
                         }
                     }
                 }
+            }
+        else if( type == NAMES ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+
+                int id;
+                int numRead = sscanf( lines[i], "%d ",
+                                      &( id ) );
+
+                if( numRead == 1 ) {
+                    for( int j=0; j<gameObjects.size(); j++ ) {
+                        if( gameObjects.getElement(j)->id == id ) {
+                            
+                            LiveObject *existing = gameObjects.getElement(j);
+                            
+                            if( existing->name != NULL ) {
+                                delete [] existing->name;
+                                }
+                            
+                            char *firstSpace = strstr( lines[i], " " );
+        
+                            if( firstSpace != NULL ) {
+
+                                char *nameStart = &( firstSpace[1] );
+                                
+                                existing->name = stringDuplicate( nameStart );
+                                }
+                            
+                            break;
+                            }
+                        }
+                    
+                    }
+                
+                delete [] lines[i];
+                }
+            delete [] lines;
             }
         else if( type == FOOD_CHANGE ) {
             
