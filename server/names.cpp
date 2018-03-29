@@ -49,7 +49,7 @@ int getAllocDelta() {
 
 static JenkinsRandomSource randSource;
 
-static const char *defaultName = "";
+//static const char *defaultName = "";
 
 
 static char *readNameFile( const char *inFileName, int *outLen ) {
@@ -98,7 +98,7 @@ void initNames() {
     printf( "Testing names with 100000 lookups\n" );
     startTime = Time::getCurrentTime();
     for( int i = 0; i<100000; i++ ) {
-        //for( int i = 0; i<1; i++ ) {
+    //for( int i = 0; i<1; i++ ) {
         const char *first = findCloseFirstName( "FUCKHEAD" );
         //printf( "\n" );
         
@@ -141,31 +141,70 @@ int sharedPrefixLength( const char *inA, const char *inB ) {
     }
 
 
+// walk backward to find start of next name
+int getNameOffsetBack( char *inNameList, int inListLen, int inOffset ) {
+    while( inOffset > 0 && inNameList[ inOffset ] != '\0' ) {
+        inOffset --;
+        }
+    if( inOffset == 0 ) {
+        return 0;
+        }
+    else {
+        // walked forward off of \0
+        return inOffset + 1;
+        }
+    }
+
+int getNameOffsetForward( char *inNameList, int inListLen, int inOffset ) {
+    int limit = inListLen - 1;
+    while( inOffset < limit && inNameList[ inOffset ] != '\0' ) {
+        inOffset ++;
+        }
+    if( inOffset == limit ) {
+        return getNameOffsetBack( inNameList, inListLen, limit - 1 );
+        }
+    else {
+        // walked forward off of \0
+        return inOffset + 1;
+        }
+    }
 
 
-const char *findCloseName( char *inString, SimpleVector<char*> *inNameList ) {
+
+
+
+const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
     char *tempString = stringToUpperCase( inString );
     
-    int limit = inNameList->size();
+    int limit = inListLen;
 
     int jumpSize = limit / 2;
     int offset = jumpSize;
-    int lastDiff = 256;
+    offset = getNameOffsetForward( inNameList, inListLen, offset );
+    
+    int lastDiff = 1;
     
     char print = false;
     
     
 
     while( lastDiff != 0 ) {
-        char *testString = inNameList->getElementDirect( offset );
+        char *testString = &( inNameList[ offset ] );
+        int prevDiff = lastDiff;
         lastDiff = strcmp( tempString, testString );
         
         if( print )printf( "Jumping %d and "
-                          "considering %s at offset %d/%d (diff=%d)\n", 
-                          jumpSize, testString, offset, limit, lastDiff );
+                           "considering %s at offset %d/%d (diff=%d)\n", 
+                           jumpSize, testString, offset, limit, lastDiff );
         
         
-        jumpSize /= 2;
+        if( getSign( lastDiff ) != getSign( prevDiff ) ) {
+            // overshot
+            // smaller jump in opposite direction
+            jumpSize /= 2;
+            }
+        
+
         if( jumpSize == 0 ) {
             break;
             }
@@ -175,6 +214,10 @@ const char *findCloseName( char *inString, SimpleVector<char*> *inNameList ) {
             offset += jumpSize;
             if( offset >= limit ) {
                 offset = limit - 1;
+                offset = getNameOffsetBack( inNameList, inListLen, offset );
+                }
+            else {
+                offset = getNameOffsetForward( inNameList, inListLen, offset );
                 }
             }
         else if( lastDiff < 0 ) {
@@ -183,8 +226,12 @@ const char *findCloseName( char *inString, SimpleVector<char*> *inNameList ) {
             if( offset < 0 ) {
                 offset = 0;
                 }
+            else {
+                offset = getNameOffsetBack( inNameList, inListLen, offset );
+                }
             }
         }
+    
     
     if( lastDiff != 0 ) {
         int step = 1;
@@ -195,7 +242,7 @@ const char *findCloseName( char *inString, SimpleVector<char*> *inNameList ) {
         int lastSign = getSign( lastDiff );
         while( getSign( nextDiff ) == lastSign ) {
             
-            offset += step;
+            offset += 2 * step;
             
             if( offset <= 0 ) {
                 offset = 0;
@@ -206,12 +253,20 @@ const char *findCloseName( char *inString, SimpleVector<char*> *inNameList ) {
                 break;
                 }
 
-            char *testString = inNameList->getElementDirect( offset );
+            if( step < 0 ) {
+                offset = getNameOffsetBack( inNameList, inListLen, offset );
+                }
+            else {
+                offset = getNameOffsetForward( inNameList, inListLen, offset );
+                }
+            
+            char *testString = &( inNameList[offset] );
             nextDiff = strcmp( tempString, testString );
             if( print )printf( "Stepping %d and "
                                "considering %s at offset %d/%d (diff=%d)\n", 
                                step, testString, offset, limit, nextDiff );
             }
+        
         
         if( nextDiff != 0 ) {
             // string does not exist
@@ -219,23 +274,31 @@ const char *findCloseName( char *inString, SimpleVector<char*> *inNameList ) {
             // use one with longest shared prefix
 
             int crossOffset = offset;
-            int prevOffset = offset - step;
+            int prevOffset = offset - 2 * step;
             
+            if( step < 0 ) {
+                prevOffset = 
+                    getNameOffsetForward( inNameList, inListLen, prevOffset );
+                }
+            else {
+                prevOffset = 
+                    getNameOffsetBack( inNameList, inListLen, prevOffset );
+                }
+            
+
             int crossSim = sharedPrefixLength( tempString, 
-                                               inNameList->getElementDirect( 
-                                                   crossOffset ) );
+                                               &( inNameList[crossOffset ] ) );
             int prevSim = sharedPrefixLength( tempString, 
-                                               inNameList->getElementDirect( 
-                                                   prevOffset ) );
+                                              &( inNameList[prevOffset] ) );
             
             if( print )
             printf( "No match found, nearby strings %s (s=%d) and %s (s=%d)\n",
-                    inNameList->getElementDirect( crossOffset ),
+                    &( inNameList[crossOffset] ),
                     crossSim,
-                    inNameList->getElementDirect( prevOffset ),
+                    &( inNameList[ prevOffset] ),
                     prevSim );
 
-
+            
             if( crossSim > prevSim ) {
                 offset = crossOffset;
                 }
@@ -248,36 +311,35 @@ const char *findCloseName( char *inString, SimpleVector<char*> *inNameList ) {
                 if( print ) 
                     printf( "Shared prefix length same, returning shorter\n" );
                 
-                if( strlen( inNameList->getElementDirect( prevOffset ) ) <
-                    strlen( inNameList->getElementDirect( crossOffset ) ) ) {
+                if( strlen( &( inNameList[prevOffset] ) ) 
+                    <
+                    strlen( &( inNameList[crossOffset] ) ) ) {
                     offset = prevOffset;
                     }
                 else {
                     offset = crossOffset;
                     }
-                    
+                
                 }
-            
             }
-            
         }
     
 
     
     delete [] tempString;
-
-    return inNameList->getElementDirect( offset );
+    
+    return &( inNameList[offset] );
     }
 
 
 
 // results destroyed internally when freeNames called
 const char *findCloseFirstName( char *inString ) {
-    //return findCloseName( inString, &firstNames );
+    return findCloseName( inString, firstNames, firstNamesLen );
     }
 
 
 
 const char *findCloseLastName( char *inString ) {
-    //return findCloseName( inString, &lastNames );
+    return findCloseName( inString, lastNames, lastNamesLen );
     }
