@@ -2167,6 +2167,7 @@ void freeMap() {
     
     if( lookTimeDBOpen ) {
         KISSDB_close( &lookTimeDB );
+        lookTimeDBOpen = false;
         }
 
 
@@ -2573,6 +2574,8 @@ static void dbFloorTimePut( int inX, int inY, timeSec_t inTime ) {
 
 
 void dbLookTimePut( int inX, int inY, timeSec_t inTime ) {
+    if( !lookTimeDBOpen ) return;
+    
     unsigned char key[8];
     unsigned char value[8];
     

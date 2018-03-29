@@ -55,6 +55,8 @@ Server Fixes:
 
 --Eve say limit never below 30 characters to allow saying long family names.
 
+--Fixed crash on server exit caused by lookTime db being closed first.
+
 
 
 
