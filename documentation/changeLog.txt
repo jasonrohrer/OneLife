@@ -32,6 +32,10 @@ Version 69    ???
   PU messages about a held baby with done_moving field (only done_moving if
   baby no longer held).
 
+--Fixed glitches in animation when dropping a baby.  On dropping player's
+  client, the doing animation would run forever.  On witnessing players'
+  clients, the doing animation wouldn't be triggered.
+
 
 
 

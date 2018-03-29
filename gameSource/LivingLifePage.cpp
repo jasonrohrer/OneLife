@@ -9369,7 +9369,7 @@ void LivingLifePage::step() {
                             
                             //existing->lastAnim = ground;
                             //existing->lastAnimFade = 0;
-                            if( oldHeld > 0 ) {
+                            if( oldHeld != 0 ) {
                                 if( o.id == ourID ) {
                                     addNewAnimPlayerOnly( existing, ground );
                                     }
