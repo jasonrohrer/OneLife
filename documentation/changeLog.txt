@@ -65,6 +65,9 @@ Server Fixes:
 
 --Fixed crash on server exit caused by lookTime db being closed first.
 
+--Fixed mistaken sending of additional PU updates for a player after death if
+  what they're holding or wearing decays.
+
 
 
 

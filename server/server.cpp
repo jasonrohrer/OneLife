@@ -7072,7 +7072,8 @@ int main() {
                         &playerIndicesToSendUpdatesAbout );
                     }
                 }
-            else {
+            else if( ! nextPlayer->error ) {
+                // other update checks for living players
                 
                 if( nextPlayer->holdingEtaDecay != 0 &&
                     nextPlayer->holdingEtaDecay < curTime ) {
@@ -7471,9 +7472,8 @@ int main() {
                 // if so, send an update
                 
 
-                if( ! nextPlayer->error &&
-                    ( nextPlayer->xd != nextPlayer->xs ||
-                      nextPlayer->yd != nextPlayer->ys ) ) {
+                if( nextPlayer->xd != nextPlayer->xs ||
+                    nextPlayer->yd != nextPlayer->ys ) {
                 
                     
                     if( Time::getCurrentTime() - nextPlayer->moveStartTime
@@ -7501,8 +7501,7 @@ int main() {
                     }
                 
                 // check if we need to decrement their food
-                if( ! nextPlayer->error &&
-                    Time::getCurrentTime() > 
+                if( Time::getCurrentTime() > 
                     nextPlayer->foodDecrementETASeconds ) {
                     
                     // only if femail of fertile age
