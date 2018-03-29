@@ -3,38 +3,25 @@
 #include "minorGems/util/StringTree.h"
 #include "minorGems/util/stringUtils.h"
 #include "minorGems/util/log/AppLog.h"
+#include "minorGems/io/file/File.h"
 #include "minorGems/util/random/JenkinsRandomSource.h"
 
 #include <stdio.h>
 //#include <assert.h>
 
 
-static SimpleVector<char*> firstNames;
-static SimpleVector<char*> lastNames;
+//static SimpleVector<char*> firstNames;
+//static SimpleVector<char*> lastNames;
+
+static char *firstNames;
+static char *lastNames;
+
+// total length of arrays
+static int firstNamesLen;
+static int lastNamesLen;
 
 
-static JenkinsRandomSource randSource;
 
-static const char *defaultName = "";
-
-
-static void readNameFile( const char *inFileName, 
-                          SimpleVector<char*> *inNameList ) {
-    
-    FILE *nameFile = fopen( inFileName, "r" );
-    
-    if( nameFile == NULL ) {
-        AppLog::errorF( "Failed to open name file %s for reading", inFileName );
-        return;
-        }
-    char buffer[100];
-    
-    while( fscanf( nameFile, "%99s", buffer ) == 1 ) {
-        // read another name
-        char *name = stringToUpperCase( buffer );
-        inNameList->push_back( name );
-        }
-    }
 
 #include <malloc.h>
 
@@ -42,7 +29,9 @@ int lastAllocCount = 0;
 
 int getAllocTotal() {
     struct mallinfo mi = mallinfo();
-    return mi.uordblks;
+    int tot = mi.hblkhd + mi.uordblks;
+    //printf( "malloc sees %d blocks\n", tot );
+    return tot;
     }
 
 
@@ -56,17 +45,55 @@ int getAllocDelta() {
     return delta;
     }
 
+
+
+static JenkinsRandomSource randSource;
+
+static const char *defaultName = "";
+
+
+static char *readNameFile( const char *inFileName, int *outLen ) {
+    
+    File nameFile( NULL, inFileName );
+
+    //getAllocDelta();
+    char *contents = nameFile.readFileContents();
+    //printf( "Reading consumed %d bytes\n", getAllocDelta() );
+
+    if( contents == NULL ) {
+        AppLog::errorF( "Failed to open name file %s for reading", inFileName );
+        return NULL;
+        }
+    char *temp = contents;
+    contents = stringToUpperCase( temp );
+    delete [] temp;
+    
+    int len = strlen( contents );
+    printf( "Read length %d file\n", len );
+    
+    for( int i=0; i<len; i++ ) {
+        if( contents[i] == '\n' ) {
+            contents[i] = '\0';
+            }
+        }
+    *outLen = len;
+    
+    return contents;
+    }
+
+
 void initNames() {
     getAllocDelta();
     double startTime = Time::getCurrentTime();
     
-    readNameFile( "firstNames.txt", &firstNames );
+    firstNames = readNameFile( "firstNames.txt", &firstNamesLen  );
+    //printf( "   first names consumed %d bytes\n", getAllocDelta() );
     
-    readNameFile( "lastNames.txt", &lastNames );
+    lastNames = readNameFile( "lastNames.txt", &lastNamesLen );
+    //printf( "   last names consumed %d bytes\n", getAllocDelta() );
     printf( "Name init took %f sec\n", Time::getCurrentTime() - startTime );
 
-    int bytes = getAllocDelta();
-    printf( "   and consumed %d bytes\n", bytes );
+    printf( "   and consumed %d bytes\n", getAllocDelta() );
 
     printf( "Testing names with 100000 lookups\n" );
     startTime = Time::getCurrentTime();
@@ -87,8 +114,8 @@ void initNames() {
 
 
 void freeNames() {
-    firstNames.deallocateStringElements();
-    lastNames.deallocateStringElements();
+    //firstNames.deallocateStringElements();
+    //lastNames.deallocateStringElements();
     }
 
 
@@ -246,11 +273,11 @@ const char *findCloseName( char *inString, SimpleVector<char*> *inNameList ) {
 
 // results destroyed internally when freeNames called
 const char *findCloseFirstName( char *inString ) {
-    return findCloseName( inString, &firstNames );
+    //return findCloseName( inString, &firstNames );
     }
 
 
 
 const char *findCloseLastName( char *inString ) {
-    return findCloseName( inString, &lastNames );
+    //return findCloseName( inString, &lastNames );
     }
