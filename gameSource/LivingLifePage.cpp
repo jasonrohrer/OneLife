@@ -11511,6 +11511,11 @@ void LivingLifePage::step() {
 
         int sayCap = (int)( floor( age ) + 1 );
         
+        if( ourLiveObject->lineage.size() == 0  && sayCap < 30 ) {
+            // eve has a larger say limit
+            sayCap = 30;
+            }
+
         mSayField.setMaxLength( sayCap );
 
 

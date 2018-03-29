@@ -53,6 +53,8 @@ Server Fixes:
 --Support for baby and family naming phrases in SAY messages, and reporting
   names to client with NM messages.
 
+--Eve say limit never below 30 characters to allow saying long family names.
+
 
 
 
