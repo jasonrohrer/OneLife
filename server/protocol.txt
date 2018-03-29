@@ -117,6 +117,8 @@ FOOD_CHANGE (FX)
 
 LINEAGE (LN)
 
+NAME (NM)
+
 
 
 Client can expect to receive these at any time, and in any order.
@@ -396,6 +398,23 @@ Also, if lineages get very long (like hundreds of links), the server may
 cut them off beyond some point.
 
 This message describes known lineages.
+
+
+
+
+
+NM
+p_id first_name last_name
+p_id first_name last_name
+p_id first_name last_name
+...
+p_id first_name last_name
+#
+
+
+Gives name of player p_id.
+
+last_name may be ommitted.
 
 
 

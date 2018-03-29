@@ -15,6 +15,7 @@
 #include "minorGems/system/Time.h"
 
 static FILE *logFile;
+static FILE *nameLogFile;
 
 static int currentYear;
 static int currentDay;
@@ -26,13 +27,11 @@ static int deadYoungEveCount = 0;
 extern double forceDeathAge;
 
 
-static FILE *openCurrentLogFile() {
+static void openCurrentLogFiles() {
     time_t t = time( NULL );
     struct tm *timeStruct = localtime( &t );
     
     char fileName[100];
-    
-    strftime( fileName, 99, "%Y_%m%B_%d_%A.txt", timeStruct );
 
     File logDir( NULL, "lifeLog" );
     
@@ -42,27 +41,48 @@ static FILE *openCurrentLogFile() {
 
     if( ! logDir.isDirectory() ) {
         AppLog::error( "Non-directory lifeLog is in the way" );
-        return NULL;
+        return;
         }
 
+    strftime( fileName, 99, "%Y_%m%B_%d_%A.txt", timeStruct );
+    
     File *newFile = logDir.getChildFile( fileName );
     
     char *newFileName = newFile->getFullFileName();
     
-    FILE *file = fopen( newFileName, "a" );
+    logFile = fopen( newFileName, "a" );
+
+    delete newFile;
     
-    if( file == NULL ) {
+    if( logFile == NULL ) {
+        delete [] newFileName;
+        AppLog::errorF( "Failed to open log file %s", newFileName );
+        return;
+        }
+
+    delete [] newFileName;
+
+
+    strftime( fileName, 99, "%Y_%m%B_%d_%A_names.txt", timeStruct );
+    
+    newFile = logDir.getChildFile( fileName );
+    
+    newFileName = newFile->getFullFileName();
+    
+    nameLogFile = fopen( newFileName, "a" );
+    
+    delete newFile;
+
+    if( nameLogFile == NULL ) {
         AppLog::errorF( "Failed to open log file %s", newFileName );
         }
     else {
+        // only set these if BOTH opened successfully
         currentYear = timeStruct->tm_year;
         currentDay = timeStruct->tm_yday;
         }
     
-    delete newFile;
     delete [] newFileName;
-    
-    return file;
     }
 
 
@@ -77,7 +97,7 @@ void initLifeLog() {
     currentDay = timeStruct->tm_yday;
     
 
-    logFile = openCurrentLogFile();
+    openCurrentLogFiles();
     }
 
 
@@ -85,6 +105,9 @@ void initLifeLog() {
 void freeLifeLog() {
     if( logFile != NULL ) {
         fclose( logFile );
+        }
+    if( nameLogFile != NULL ) {
+        fclose( nameLogFile );
         }
     }
 
@@ -99,9 +122,14 @@ static void stepLog() {
 
         if( logFile != NULL ) {
             fclose( logFile );
+            logFile = NULL;
+            }
+        if( nameLogFile != NULL ) {
+            fclose( nameLogFile );
+            nameLogFile = NULL;
             }
         
-        logFile = openCurrentLogFile();
+        openCurrentLogFiles();
         }    
     }
 
@@ -225,4 +253,14 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
         }
     }
 
+
+
+
+void logName( int inPlayerID, char *inName ) {
+    if( nameLogFile != NULL ) {
+        fprintf( nameLogFile, "%d %s\n", inPlayerID, inName );
+        }
+    }
+
+    
 

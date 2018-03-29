@@ -50,6 +50,9 @@ Server Fixes:
 --Support for BUG protocol to allow client to report bugs and trigger log
   snapshots.
 
+--Support for baby and family naming phrases in SAY messages, and reporting
+  names to client with NM messages.
+
 
 
 
