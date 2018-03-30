@@ -379,9 +379,16 @@ class LivingLifePage : public GamePage {
         void sendBugReport( int inBugNumber );
 
 
+        int getRequiredVersion() {
+            return mRequiredVersion;
+            }
+
+
     protected:
 
         int mServerSocket;
+        
+        int mRequiredVersion;
 
         int mFirstServerMessagesReceived;
         

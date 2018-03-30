@@ -41,5 +41,7 @@ git pull
 make
 
 
+git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt
+
 
 

@@ -45,6 +45,8 @@
 #define MAP_D 64
 #define MAP_NUM_CELLS 4096
 
+extern int versionNumber;
+
 extern double frameRateFactor;
 
 extern Font *mainFont;
@@ -7554,12 +7556,22 @@ void LivingLifePage::step() {
             // we don't use these for anything in client
             int currentPlayers = 0;
             int maxPlayers = 0;
-
+            mRequiredVersion = versionNumber;
+            
             sscanf( message, 
                     "SN\n"
                     "%d/%d\n"
-                    "%d\n", &currentPlayers, &maxPlayers, &number );
+                    "%d\n"
+                    "%d\n", &currentPlayers, &maxPlayers, &number, 
+                    &mRequiredVersion );
             
+
+            if( mRequiredVersion != versionNumber ) {
+                setSignal( "versionMismatch" );
+                delete [] message;
+                return;
+                }
+
             char *pureKey = getPureAccountKey();
             
             char *password = 

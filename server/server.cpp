@@ -94,6 +94,10 @@ static int requireTicketServerCheck = 1;
 static char *clientPassword = NULL;
 static char *ticketServerURL = NULL;
 
+// larger of dataVersionNumber.txt or serverCodeVersionNumber.txt
+static int versionNumber = 1;
+
+
 static double childSameRaceLikelihood = 0.9;
 static int familySpan = 2;
 
@@ -3664,6 +3668,25 @@ char *isFamilyNamingSay( char *inSaidString ) {
 
 
 
+int readIntFromFile( const char *inFileName, int inDefaultValue ) {
+    FILE *f = fopen( inFileName, "r" );
+    
+    if( f == NULL ) {
+        return inDefaultValue;
+        }
+    
+    int val = inDefaultValue;
+    
+    fscanf( f, "%d", &val );
+
+    fclose( f );
+
+    return val;
+    }
+
+
+
+
 
 
 int main() {
@@ -3683,12 +3706,7 @@ int main() {
 
     printf( "\n" );
     
-    initNames();
-
-    initLifeLog();
-    initBackup();
     
-    initPlayerStats();
     
 
     nextSequenceNumber = 
@@ -3702,6 +3720,22 @@ int main() {
     
     clientPassword = 
         SettingsManager::getStringSetting( "clientPassword" );
+
+
+    int dataVer = readIntFromFile( "dataVersionNumber.txt", 1 );
+    int codVer = readIntFromFile( "serverCodeVersionNumber.txt", 1 );
+    
+    versionNumber = dataVer;
+    if( codVer > versionNumber ) {
+        versionNumber = codVer;
+        }
+    
+    printf( "\n" );
+    AppLog::infoF( "Server using version number %d", versionNumber );
+
+    printf( "\n" );
+    
+
 
 
     minFoodDecrementSeconds = 
@@ -3756,6 +3790,14 @@ int main() {
 
     signal( SIGTSTP, intHandler );
 #endif
+
+    initNames();
+
+    initLifeLog();
+    initBackup();
+    
+    initPlayerStats();
+
 
     char rebuilding;
 
@@ -4063,9 +4105,11 @@ int main() {
                 else {
                     message = autoSprintf( "SN\n"
                                            "%d/%d\n"
+                                           "%lu\n"
                                            "%lu\n#",
                                            currentPlayers, maxPlayers,
-                                           newConnection.sequenceNumber );
+                                           newConnection.sequenceNumber,
+                                           versionNumber );
                     newConnection.shutdownMode = false;
                     }
 

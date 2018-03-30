@@ -116,6 +116,8 @@ manualRestartMessage "RESTART GAME TO APPLY UPDATE"
 
 loginFailed "LOGIN FAILED"
 
+versionMismatch "VERSION MISMATCH:  CLIENT %d -- SERVER %d"
+
 serverShutdown "SERVER HAS BEEN SHUT DOWN"
 
 serverFull "SERVER IS FULL"

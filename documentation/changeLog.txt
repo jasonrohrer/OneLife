@@ -3,6 +3,16 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 71    ???
+
+--Server now reports its version number in its first SN number, and client
+  displays error on version mismatch.
+
+
+
+
+
+
 Version 70    2018-March-16
 
 --Fixed a crash when setting down a baby just as someone feeds you.

@@ -89,6 +89,26 @@ make
 ln -s ../../OneLifeData7/objects .
 ln -s ../../OneLifeData7/transitions .
 ln -s ../../OneLifeData7/categories .
+ln -s ../../OneLifeData7/dataVersionNumber.txt .
+
+
+
+
+Run this to find the latest version:
+
+git tag
+
+The version names are in the form OneLife_vN, where N is the number.  Suppose
+you see OneLife_v69 as the latest.  Do this:
+
+echo "69" > serverCodeVersionNumber.txt
+
+
+
+If you want to write a bash script to do this for you, try this:
+
+git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt
+
 
 
 Note that this makes links to the game's real data.  If you want to use your own
@@ -97,6 +117,34 @@ for the editor.)
 
 The server doesn't need sprites or animations or several of the other data
 folders.
+
+
+
+Also note that if you are making your own custom data, you probably want to 
+pick your own dataVersionNumber.txt that is NOT in the same numerical space as
+the main game's numbers.
+
+These still must be integer numbers, as the server is handling them as numbers.
+If the number on the server does not match the number on the client, a version
+mismatch error will be displayed on the client.
+
+For example, if the current main game data is 67, and the latest main game
+code number is 70, then the server will report 70 as the version number to
+the client (it reports which ever number is bigger).
+
+If you want to use your own custom data, picking a high version number for
+it should work, such as 90664.  I will likely never ship 90,000 revisions of
+the main game, and by picking a unique number suffix like 664, you will avoid
+collisions with other data mods.
+
+Thus, the server will still be using code version 70, but data version 90664,
+so it will report 90664 to the client.  The client will fail to connect unless
+it has your mod installed with that dataVersionNumber.
+
+
+
+
+
 
 In terms of settings, there are a bunch in the settings folder.
 
