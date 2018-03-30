@@ -321,6 +321,7 @@ void SoundWidget::draw() {
         // re-enable record button the step after stop is clicked to
         // avoid repeat click
         mRecordButton.setVisible( true );
+        updatePasteButton();
         }
 
     if( mPlayRandButton.isVisible() ) {

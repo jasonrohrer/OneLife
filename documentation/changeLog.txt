@@ -12,6 +12,9 @@ Version 71    ???
   but user is clicking after death, when server socket has already been closed.
   Now clicks immediately after death are prevented client-side.
 
+--Fixed editor bug where sound paste button not visible after recording.
+
+
 
 
 
