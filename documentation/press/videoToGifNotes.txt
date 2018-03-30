@@ -1,0 +1,7 @@
+To make an optimized 480x270 10 FPS gif from a 1280x720 30 FPS video,
+don't forget the color fuzz factor.
+ 
+
+ffmpeg -i Edit2\(1\).mp4 -vf scale=480:-1:flags=lanczos,fps=10 frames/ffout%03d.png
+
+convert -loop 0 -delay 10 -layers Optimize -fuzz "5%" frames/ffout*.png output.gif
