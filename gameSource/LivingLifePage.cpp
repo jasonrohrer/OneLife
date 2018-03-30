@@ -13084,6 +13084,11 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
 
+    if( mServerSocket == -1 ) {
+        // dead
+        return;
+        }
+
     if( mFirstServerMessagesReceived != 3 || ! mDoneLoadingFirstObjectSet ) {
         return;
         }
@@ -13311,6 +13316,11 @@ char LivingLifePage::getCellBlocksWalking( int inMapX, int inMapY ) {
 void LivingLifePage::pointerDown( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
+
+    if( mServerSocket == -1 ) {
+        // dead
+        return;
+        }
 
     char modClick = false;
     
@@ -14454,6 +14464,11 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
     lastMouseY = inY;
 
 
+    if( mServerSocket == -1 ) {
+        // dead
+        return;
+        }
+
     if( mFirstServerMessagesReceived != 3 || ! mDoneLoadingFirstObjectSet ) {
         return;
         }
@@ -14489,6 +14504,12 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
 void LivingLifePage::keyDown( unsigned char inASCII ) {
     
     registerTriggerKeyCommand( inASCII, this );
+
+
+    if( mServerSocket == -1 ) {
+        // dead
+        return;
+        }
     
     switch( inASCII ) {
         /*
@@ -14626,6 +14647,12 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
 
 
 void LivingLifePage::specialKeyDown( int inKeyCode ) {
+    
+    if( mServerSocket == -1 ) {
+        // dead
+        return;
+        }
+
     if( inKeyCode == MG_KEY_UP ||
         inKeyCode == MG_KEY_DOWN ) {
         if( ! mSayField.isFocused() && inKeyCode == MG_KEY_UP ) {

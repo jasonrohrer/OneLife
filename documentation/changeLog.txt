@@ -8,6 +8,10 @@ Version 71    ???
 --Server now reports its version number in its first SN number, and client
   displays error on version mismatch.
 
+--Fixed incorrect CONNECTION LOST message in client when death reason known
+  but user is clicking after death, when server socket has already been closed.
+  Now clicks immediately after death are prevented client-side.
+
 
 
 
