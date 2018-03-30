@@ -7,6 +7,8 @@ Version 70    2018-March-16
 
 --Fixed a crash when setting down a baby just as someone feeds you.
 
+--Fixed a crash when mousing over someone as they die.
+
 
 
 

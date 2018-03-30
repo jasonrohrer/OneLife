@@ -6150,7 +6150,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 if( des == NULL ) {
                     des = (char*)translate( "unrelated" );
                     }
-                if( otherObj->name != NULL ) {
+                if( otherObj != NULL && otherObj->name != NULL ) {
                     des = autoSprintf( "%s - %s",
                                        otherObj->name, des );
                     desToDelete = des;
