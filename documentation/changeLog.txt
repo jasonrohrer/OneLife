@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 69    ???
+Version 69    2018-March-16
 
 --Scene editor now has 'V' fill function for repeating objects (useful to make
   stress-test maps).
