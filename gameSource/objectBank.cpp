@@ -3427,6 +3427,20 @@ double getClosestObjectPart( ObjectRecord *inObject,
                     rotCenter.x *= -1;
                     }
 
+                if( inObject->spriteRot[i] != 0 ) {
+                    if( inFlip ) {
+                        rotCenter = 
+                            rotate( rotCenter, 
+                                    -2 * M_PI * inObject->spriteRot[i] );
+                        }
+                    else {
+                        rotCenter = 
+                            rotate( rotCenter, 
+                                    2 * M_PI * inObject->spriteRot[i] );
+                        }
+                    }
+                
+
                 doublePair tempOffset = 
                     sub( offset, rotCenter );
                 

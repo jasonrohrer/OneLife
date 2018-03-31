@@ -3,6 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
 Version 71    ???
 
 --Server now reports its version number in its first SN number, and client
@@ -13,6 +14,11 @@ Version 71    ???
   Now clicks immediately after death are prevented client-side.
 
 --Fixed editor bug where sound paste button not visible after recording.
+
+--Fixed bug in clothing click detection if clothing contains rotated sprites
+  that are further roted by the worn (held) animation along with custom
+  rotation offsets (example:  seal skin coat).
+
 
 
 
