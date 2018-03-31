@@ -1990,6 +1990,9 @@ void initMap() {
                     delete [] newSubArray;
                     delete [] newSubDecayArray;
                     }
+                else {
+                    clearAllContained( x, y, c + 1 );
+                    }
                 }
             
 

@@ -28,6 +28,12 @@ Server Fixes:
   example, adding a full cart to a horse keeps what was contained in the cart
   in the new horse-drawn cart.
 
+--Fixed server crash (and possible client crash) caused by improper clearing of
+  removed sub-contained objects (post-data-update) if entire sub-container
+  needed to be cleared out (if it contained nothing by now-removed objects).
+  Someone had a basket in a cart containing nothing by domestic carrot seed
+  heads.
+
 
 
 
