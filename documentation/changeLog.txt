@@ -16,6 +16,11 @@ Version 71    ???
 
 
 
+Server Fixes:
+
+--Containment can transfer from actor to target through a transition.  For
+  example, adding a full cart to a horse keeps what was contained in the cart
+  in the new horse-drawn cart.
 
 
 

@@ -456,7 +456,83 @@ void clearPlayerHeldContained( LiveObject *inPlayer ) {
     inPlayer->subContainedEtaDecays = NULL;
     }
     
+
+
+
+void transferHeldContainedToMap( LiveObject *inPlayer, int inX, int inY ) {
+    if( inPlayer->numContained != 0 ) {
+        timeSec_t curTime = Time::timeSec();
+        float stretch = 
+            getObject( inPlayer->holdingID )->slotTimeStretch;
+        
+        for( int c=0;
+             c < inPlayer->numContained;
+             c++ ) {
             
+            // undo decay stretch before adding
+            // (stretch applied by adding)
+            if( stretch != 1.0 &&
+                inPlayer->containedEtaDecays[c] != 0 ) {
+                
+                timeSec_t offset = 
+                    inPlayer->containedEtaDecays[c] - curTime;
+                
+                offset = offset * stretch;
+                
+                inPlayer->containedEtaDecays[c] =
+                    curTime + offset;
+                }
+
+            addContained( 
+                inX, inY,
+                inPlayer->containedIDs[c],
+                inPlayer->containedEtaDecays[c] );
+
+            int numSub = inPlayer->subContainedIDs[c].size();
+            if( numSub > 0 ) {
+
+                int container = inPlayer->containedIDs[c];
+                
+                if( container < 0 ) {
+                    container *= -1;
+                    }
+                
+                float subStretch = getObject( container )->slotTimeStretch;
+                    
+                
+                int *subIDs = 
+                    inPlayer->subContainedIDs[c].getElementArray();
+                timeSec_t *subDecays = 
+                    inPlayer->subContainedEtaDecays[c].
+                    getElementArray();
+                
+                for( int s=0; s < numSub; s++ ) {
+                    
+                    // undo decay stretch before adding
+                    // (stretch applied by adding)
+                    if( subStretch != 1.0 &&
+                        subDecays[s] != 0 ) {
+                
+                        timeSec_t offset = subDecays[s] - curTime;
+                        
+                        offset = offset * subStretch;
+                        
+                        subDecays[s] = curTime + offset;
+                        }
+
+                    addContained( inX, inY,
+                                  subIDs[s], subDecays[s],
+                                  c + 1 );
+                    }
+                delete [] subIDs;
+                delete [] subDecays;
+                }
+            }
+
+        clearPlayerHeldContained( inPlayer );
+        }
+    }
+
 
 
 
@@ -2117,78 +2193,9 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     
     setMapObject( targetX, targetY, inDroppingPlayer->holdingID );
     setEtaDecay( targetX, targetY, inDroppingPlayer->holdingEtaDecay );
+
+    transferHeldContainedToMap( inDroppingPlayer, targetX, targetY );
     
-    if( inDroppingPlayer->numContained != 0 ) {
-        timeSec_t curTime = Time::timeSec();
-        float stretch = 
-            getObject( inDroppingPlayer->holdingID )->slotTimeStretch;
-        
-        for( int c=0;
-             c < inDroppingPlayer->numContained;
-             c++ ) {
-            
-            // undo decay stretch before adding
-            // (stretch applied by adding)
-            if( stretch != 1.0 &&
-                inDroppingPlayer->containedEtaDecays[c] != 0 ) {
-                
-                timeSec_t offset = 
-                    inDroppingPlayer->containedEtaDecays[c] - curTime;
-                
-                offset = offset * stretch;
-                
-                inDroppingPlayer->containedEtaDecays[c] =
-                    curTime + offset;
-                }
-
-            addContained( 
-                targetX, targetY,
-                inDroppingPlayer->containedIDs[c],
-                inDroppingPlayer->containedEtaDecays[c] );
-
-            int numSub = inDroppingPlayer->subContainedIDs[c].size();
-            if( numSub > 0 ) {
-
-                int container = inDroppingPlayer->containedIDs[c];
-                
-                if( container < 0 ) {
-                    container *= -1;
-                    }
-                
-                float subStretch = getObject( container )->slotTimeStretch;
-                    
-                
-                int *subIDs = 
-                    inDroppingPlayer->subContainedIDs[c].getElementArray();
-                timeSec_t *subDecays = 
-                    inDroppingPlayer->subContainedEtaDecays[c].
-                    getElementArray();
-                
-                for( int s=0; s < numSub; s++ ) {
-                    
-                    // undo decay stretch before adding
-                    // (stretch applied by adding)
-                    if( subStretch != 1.0 &&
-                        subDecays[s] != 0 ) {
-                
-                        timeSec_t offset = subDecays[s] - curTime;
-                        
-                        offset = offset * subStretch;
-                        
-                        subDecays[s] = curTime + offset;
-                        }
-
-                    addContained( targetX, targetY,
-                                  subIDs[s], subDecays[s],
-                                  c + 1 );
-                    }
-                delete [] subIDs;
-                delete [] subDecays;
-                }
-            }
-
-        clearPlayerHeldContained( inDroppingPlayer );
-        }
                                 
 
     setResponsiblePlayer( -1 );
@@ -5505,11 +5512,47 @@ int main() {
                                 TransRecord *r = NULL;
                                 char defaultTrans = false;
                                 
-                                if( nextPlayer->holdingID >= 0 &&
-                                    // if what we're holding contains
+                                char heldCanBeUsed = false;
+                                char containmentTransfer = false;
+                                if( // if what we're holding contains
                                     // stuff, block it from being
                                     // used as a tool
                                     nextPlayer->numContained == 0 ) {
+                                    heldCanBeUsed = true;
+                                    }
+                                else if( nextPlayer->holdingID > 0 ) {
+                                    // see if result of trans
+                                    // would preserve containment
+
+                                    r = getTrans( nextPlayer->holdingID,
+                                                  target );
+
+
+                                    ObjectRecord *heldObj = getObject( 
+                                        nextPlayer->holdingID );
+                                    
+                                    if( r != NULL && r->newActor == 0 &&
+                                        r->newTarget > 0 ) {
+                                        ObjectRecord *newTargetObj =
+                                            getObject( r->newTarget );
+                                        
+                                        if( targetObj->numSlots == 0
+                                            && newTargetObj->numSlots >=
+                                            heldObj->numSlots
+                                            &&
+                                            newTargetObj->slotSize >=
+                                            heldObj->slotSize ) {
+                                            
+                                            containmentTransfer = true;
+                                            heldCanBeUsed = true;
+                                            }
+                                        }
+                                    r = NULL;
+                                    }
+                                
+
+                                if( nextPlayer->holdingID >= 0 &&
+                                    heldCanBeUsed ) {
                                     // negative holding is ID of baby
                                     // which can't be used
                                     // (and no bare hand action available)
@@ -5539,7 +5582,20 @@ int main() {
                                         }
                                     }
                                 
-                                if( r != NULL &&
+                                if( r != NULL && containmentTransfer ) {
+                                    // special case contained items
+                                    // moving from actor into new target
+                                    // (and hand left empty)
+                                    setResponsiblePlayer( - nextPlayer->id );
+                                    setMapObject( m.x, m.y, r->newTarget );
+                                    setResponsiblePlayer( -1 );
+                                    
+                                    transferHeldContainedToMap( nextPlayer,
+                                                                m.x, m.y );
+                                    handleHoldingChange( nextPlayer,
+                                                         r->newActor );
+                                    }
+                                else if( r != NULL &&
                                     // are we old enough to handle
                                     // what we'd get out of this transition?
                                     ( r->newActor == 0 || 
@@ -5587,17 +5643,54 @@ int main() {
 
 
                                     // has target shrunken as a container?
+                                    int oldSlots = 
+                                        getNumContainerSlots( target );
                                     int newSlots = 
                                         getNumContainerSlots( r->newTarget );
- 
-                                    shrinkContainer( m.x, m.y, newSlots );
                                     
-                                    if( newSlots > 0 ) {    
-                                        restretchMapContainedDecays( 
-                                            m.x, m.y,
-                                            target,
-                                            r->newTarget );
+                                    if( oldSlots > 0 &&
+                                        newSlots == 0 && 
+                                        r->actor == 0 &&
+                                        r->newActor > 0
+                                        &&
+                                        getNumContainerSlots( r->newActor ) ==
+                                        oldSlots &&
+                                        getObject( r->newActor )->slotSize >=
+                                        targetObj->slotSize ) {
+                                        
+                                        // bare-hand action that results
+                                        // in something new in hand
+                                        // with same number of slots 
+                                        // as target
+                                        // keep what was contained
+
+                                        FullMapContained f =
+                                            getFullMapContained( m.x, m.y );
+
+                                        setContained( nextPlayer, f );
+                                    
+                                        clearAllContained( m.x, m.y );
+                                        
+                                        restretchDecays( 
+                                            nextPlayer->numContained,
+                                            nextPlayer->containedEtaDecays,
+                                            target, r->newActor );
                                         }
+                                    else {
+                                        // target on ground changed
+                                        // and we don't have the same
+                                        // number of slots in a new held obj
+                                        
+                                        shrinkContainer( m.x, m.y, newSlots );
+                                    
+                                        if( newSlots > 0 ) {    
+                                            restretchMapContainedDecays( 
+                                                m.x, m.y,
+                                                target,
+                                                r->newTarget );
+                                            }
+                                        }
+                                    
                                     
                                     timeSec_t oldEtaDecay = 
                                         getEtaDecay( m.x, m.y );
@@ -5911,30 +6004,58 @@ int main() {
                                     
                                     if( canPlace ) {
 
-                                        handleHoldingChange( nextPlayer,
-                                                             r->newActor );
-                                        
-                                        setResponsiblePlayer( 
-                                            - nextPlayer->id );
-                                        
-                                        if( r->newTarget > 0 
-                                            && getObject( r->newTarget )->
-                                               floor ) {
+                                        if( nextPlayer->numContained > 0 &&
+                                            r->newActor == 0 &&
+                                            r->newTarget > 0 &&
+                                            getObject( r->newTarget )->numSlots 
+                                            >= nextPlayer->numContained &&
+                                            getObject( r->newTarget )->slotSize
+                                            >= obj->slotSize ) {
 
-                                            setMapFloor( m.x, m.y, 
-                                                         r->newTarget );
-                                            }
-                                        else {    
+                                            // use on bare ground with full
+                                            // container that leaves
+                                            // hand empty
+                                            
+                                            // and there's room in newTarget
+
+                                            setResponsiblePlayer( 
+                                                - nextPlayer->id );
                                             setMapObject( m.x, m.y, 
                                                           r->newTarget );
+                                            setResponsiblePlayer( -1 );
+                                    
+                                            transferHeldContainedToMap( 
+                                                nextPlayer, m.x, m.y );
+                                            
+                                            handleHoldingChange( nextPlayer,
+                                                                 r->newActor );
                                             }
+                                        else {
+                                            handleHoldingChange( nextPlayer,
+                                                                 r->newActor );
                                         
-                                        setResponsiblePlayer( -1 );
-                                        
-                                        handleMapChangeToPaths( 
-                                            m.x, m.y,
-                                            getObject( r->newTarget ),
-                                            &playerIndicesToSendUpdatesAbout );
+                                            setResponsiblePlayer( 
+                                                - nextPlayer->id );
+                                            
+                                            if( r->newTarget > 0 
+                                                && getObject( r->newTarget )->
+                                                floor ) {
+                                                
+                                                setMapFloor( m.x, m.y, 
+                                                             r->newTarget );
+                                                }
+                                            else {    
+                                                setMapObject( m.x, m.y, 
+                                                              r->newTarget );
+                                                }
+                                            
+                                            setResponsiblePlayer( -1 );
+                                            
+                                            handleMapChangeToPaths( 
+                                             m.x, m.y,
+                                             getObject( r->newTarget ),
+                                             &playerIndicesToSendUpdatesAbout );
+                                            }
                                         }
                                     }
                                 }
