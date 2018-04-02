@@ -19,6 +19,10 @@ Version 71    ???
   that are further roted by the worn (held) animation along with custom
   rotation offsets (example:  seal skin coat).
 
+--A lot of client BUG reports seem to be due to simple networking lag.  Maybe
+  some clients really are seeing server responses that take more than 4
+  seconds.  Updating BUG threshold to 10 seconds.
+
 
 
 

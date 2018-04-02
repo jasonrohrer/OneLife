@@ -7471,12 +7471,12 @@ void LivingLifePage::step() {
     if( playerActionPending && 
         ourObject != NULL && 
         game_getCurrentTime() - 
-        ourObject->pendingActionAnimationStartTime > 4 ) {
+        ourObject->pendingActionAnimationStartTime > 10 ) {
         
         // been bouncing for four seconds with no answer from server
         
         printf( "Been waiting for response to our action request "
-                "from server for > 4 seconds, giving up\n" );
+                "from server for > 10 seconds, giving up\n" );
 
         sendBugReport( 1 );
 
