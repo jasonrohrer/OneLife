@@ -23,6 +23,10 @@ Version 71    ???
   some clients really are seeing server responses that take more than 4
   seconds.  Updating BUG threshold to 10 seconds.
 
+--Mac fullscreen mode fixed (using borderless window AND hiding menu/dock).
+  Thanks Chard.
+
+
 
 
 
