@@ -1247,6 +1247,10 @@ static void dbPutCached( int inX, int inY, int inSlot, int inSubCont,
 
 char lookTimeDBEmpty = false;
 
+// if lookTimeDBEmpty, then we init all map cell look times to NOW
+int cellsLookedAtToInit = 0;
+
+
 
 // version of open call that checks whether look time exists in lookTimeDB
 // for each record in opened DB, and clears any entries that are not
@@ -1274,12 +1278,37 @@ int KISSDB_open_timeShrunk(
             AppLog::infoF( "No lookTimes present, not cleaning %s", path );
             }
         
-        return KISSDB_open( db, 
-                            path, 
-                            mode,
-                            hash_table_size,
-                            key_size,
-                            value_size );
+        int error = KISSDB_open( db, 
+                                 path, 
+                                 mode,
+                                 hash_table_size,
+                                 key_size,
+                                 value_size );
+
+        if( ! error ) {
+            // add look time for cells in this DB to present
+            // essentially resetting all look times to NOW
+            
+            KISSDB_Iterator dbi;
+    
+    
+            KISSDB_Iterator_init( db, &dbi );
+    
+            // key and value size that are big enough to handle all of our DB
+            unsigned char key[16];
+    
+            unsigned char value[12];
+    
+            while( KISSDB_Iterator_next( &dbi, key, value ) > 0 ) {
+                int x = valueToInt( key );
+                int y = valueToInt( &( key[4] ) );
+
+                cellsLookedAtToInit++;
+                
+                dbLookTimePut( x, y, MAP_TIMESEC );
+                }
+            }
+        return error;
         }
     
     char *dbTempName = autoSprintf( "%s.temp", path );
@@ -1741,6 +1770,11 @@ void initMap() {
     
     eveDBOpen = true;
 
+
+    if( lookTimeDBEmpty && cellsLookedAtToInit > 0 ) {
+        printf( "Since lookTime db was empty, we initialized look times "
+                "for %d cells to now.\n\n", cellsLookedAtToInit );
+        }
 
     
 

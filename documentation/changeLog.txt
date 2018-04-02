@@ -34,6 +34,14 @@ Server Fixes:
   Someone had a basket in a cart containing nothing by domestic carrot seed
   heads.
 
+--Forgot to include lookTime.db in server backups.
+
+--Fixed initialization of look times if lookTimes.db empty.  All map cells are
+  set to have look times of NOW.  This prevents them from being cleared if the
+  server restarts again in less than 24 hours.
+
+--Fixed a memory leak in naming phrases init.
+
 
 
 

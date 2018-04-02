@@ -3632,6 +3632,7 @@ void readNameGivingPhrases( const char *inSettingsName,
     
     int numParts;
     char **parts = split( cont, "\n", &numParts );
+    delete [] cont;
     
     for( int i=0; i<numParts; i++ ) {
         if( strcmp( parts[i], "" ) != 0 ) {
