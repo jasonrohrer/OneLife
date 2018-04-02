@@ -229,6 +229,8 @@ reasonOldAge "CAUSE:  OLD AGE"
 
 reasonUnknown "CAUSE:  UNKNOWN"
 
+reasonApocalypse "CAUSE:  THE APOCALYPSE"
+
 
 okay "OK"
 quit "QUIT"

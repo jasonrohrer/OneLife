@@ -627,6 +627,7 @@ typedef enum messageType {
     FOOD_CHANGE,
     LINEAGE,
     NAMES,
+    APOCALYPSE,
     COMPRESSED_MESSAGE,
     UNKNOWN
     } messageType;
@@ -688,6 +689,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "NM" ) == 0 ) {
         returnValue = NAMES;
+        }
+    else if( strcmp( copy, "AP" ) == 0 ) {
+        returnValue = APOCALYPSE;
         }
     
     delete [] copy;
@@ -1411,6 +1415,11 @@ char mapPullModeFinalImage = false;
 
 Image *mapPullTotalImage = NULL;
 int numScreensWritten = 0;
+
+
+static int apocalypseInProgress = false;
+static double apocalypseDisplayProgress = 0;
+static double apocalypseDisplaySeconds = 6;
 
 
 static Image *expandToPowersOfTwoWhite( Image *inImage ) {
@@ -5485,7 +5494,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
 
-
+    if( apocalypseInProgress ) {
+        toggleAdditiveBlend( true );
+        
+        setDrawColor( 1, 1, 1, apocalypseDisplayProgress );
+        
+        drawRect( lastScreenViewCenter, 640, 360 );
+        
+        toggleAdditiveBlend( false );
+        }
+    
     
     if( hideGuiPanel ) {
         // skip gui
@@ -6923,6 +6941,11 @@ void LivingLifePage::sendBugReport( int inBugNumber ) {
 
         
 void LivingLifePage::step() {
+    if( apocalypseInProgress ) {
+        double stepSize = frameRateFactor / ( apocalypseDisplaySeconds * 60.0 );
+        apocalypseDisplayProgress += stepSize;
+        }
+    
     if( mouseDown ) {
         mouseDownFrames++;
         }
@@ -7638,6 +7661,10 @@ void LivingLifePage::step() {
             
             delete [] message;
             return;
+            }
+        else if( type == APOCALYPSE ) {
+            apocalypseDisplayProgress = 0;
+            apocalypseInProgress = true;
             }
         else if( type == MAP_CHUNK ) {
             
@@ -10244,7 +10271,12 @@ void LivingLifePage::step() {
                         
                         sscanf( reasonPos, "reason_%99s", reasonString );
                         
-                        if( strcmp( reasonString, "nursing_hunger" ) == 0 ) {
+                        if( apocalypseInProgress ) {
+                            mDeathReason = stringDuplicate( 
+                                translate( "reasonApocalypse" ) );
+                            }
+                        else if( strcmp( reasonString, "nursing_hunger" ) == 
+                                 0 ) {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonNursingHunger" ) );
                             }
@@ -12561,6 +12593,8 @@ void LivingLifePage::makeActive( char inFresh ) {
         return;
         }
     
+    apocalypseInProgress = false;
+
     clearMap();
     
     mMapExtraMovingObjects.deleteAll();

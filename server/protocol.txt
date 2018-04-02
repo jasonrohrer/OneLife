@@ -119,6 +119,8 @@ LINEAGE (LN)
 
 NAME (NM)
 
+APOCALYPSE (AP)
+
 
 
 Client can expect to receive these at any time, and in any order.
@@ -415,6 +417,16 @@ p_id first_name last_name
 Gives name of player p_id.
 
 last_name may be ommitted.
+
+
+
+
+
+
+AP#
+
+Inidicates that an apocalypse is pending (and death is coming).  Gives client
+time to show a visual effect before death-by-apocalypse happens.
 
 
 

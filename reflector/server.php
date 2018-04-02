@@ -34,9 +34,76 @@ mt_srand( crc32( $email ) );
 
 $reportOnly = false;
 
+
+
+function getLastApocalypse() {
+    $val = 0;
+
+    $handle = fopen( "lastApocalypse.txt", "r" );
+
+    if( $handle ) {
+        $val = trim( fgets( $handle ) );
+
+        fclose( $handle );
+        }
+
+    return $val;
+    }
+
+
+
+
 if( $action == "report" ) {
     $reportOnly = true;
     }
+else if( $action == "check_apocalypse" ) {
+
+    $val = getLastApocalypse();
+    
+    echo "$val\nOK";
+    
+    exit( 0 );
+    }
+else  if( $action == "trigger_apocalypse" ) {
+    include( "sharedSecret.php" );
+
+    global $sharedSecret;
+
+    
+    $id = or_requestFilter( "id", "/[0-9]+/", "-1" );
+
+    if( $id == -1 || $id <= getLastApocalypse() ) {
+        echo "DENIED";
+        exit( 0 );
+        }
+
+
+    $id_hash = or_requestFilter( "id_hash", "/[A-F0-9]+/i", "" );
+
+    $id_hash = strtoupper( $id_hash );
+
+    $computedHashValue =
+        strtoupper( or_hmac_sha1( $sharedSecret, $id ) );
+
+    if( $id_hash != $computedHashValue ) {
+        echo "Correct = $computedHashValue";
+        echo "DENIED";
+        exit( 0 );
+        }
+
+    $name = or_requestFilter( "name", "/[A-Z ]+/i", "UNKNOWN" );
+
+    $name = str_replace( " ", "_", $name );
+
+    $time = time();
+    
+    file_put_contents( "lastApocalypse.txt", "$id" );
+    file_put_contents( "apocalypseLog.txt", "$id $time $name\n", FILE_APPEND );
+    echo "OK";
+    
+    exit( 0 );
+    }
+
 
 
 
@@ -258,6 +325,11 @@ function or_requestFilter( $inRequestVariable, $inRegex, $inDefault = "" ) {
     return $matches[0];
     }
 
+
+function or_hmac_sha1( $inKey, $inData ) {
+    return hash_hmac( "sha1", 
+                      $inData, $inKey );
+    } 
 
 
 ?>
