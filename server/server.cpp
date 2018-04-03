@@ -74,6 +74,16 @@ double minSayGapInSeconds = 1.0;
 
 int maxLineageTracked = 20;
 
+char apocalypseTriggered = false;
+GridPos apocalypseLocation = { 0, 0 };
+int lastApocalypseNumber = 0;
+double apocalypseStartTime = 0;
+char apocalypseStarted = false;
+
+WebRequest *apocalypseRequest = NULL;
+
+
+
 
 static double minFoodDecrementSeconds = 5.0;
 static double maxFoodDecrementSeconds = 20;
@@ -3694,6 +3704,165 @@ int readIntFromFile( const char *inFileName, int inDefaultValue ) {
 
 
 
+void apocalypseStep() {
+    
+    if( apocalypseTriggered ) {
+            
+        if( !apocalypseStarted ) {
+            
+            lastApocalypseNumber++;
+            
+            
+            if( apocalypseRequest == NULL ) {
+                char *reflectorURL = 
+                    SettingsManager::getStringSetting( "reflectorURL" );
+                
+                char *reflectorSharedSecret = 
+                    SettingsManager::
+                    getStringSetting( "reflectorSharedSecret" );
+                
+                if( reflectorURL != NULL && 
+                    reflectorSharedSecret != NULL ) {
+                    
+                    int closestPlayerIndex = -1;
+                    double closestDist = 999999999;
+                    
+                    for( int i=0; i<players.size(); i++ ) {
+                        LiveObject *nextPlayer = players.getElement( i );
+                        if( !nextPlayer->error ) {
+                            
+                            double dist = 
+                                abs( nextPlayer->xd - apocalypseLocation.x ) +
+                                abs( nextPlayer->yd - apocalypseLocation.y );
+                            if( dist < closestDist ) {
+                                closestPlayerIndex = i;
+                                closestDist = dist;
+                                }
+                            }
+                        
+                        }
+                    char *name = NULL;
+                    if( closestPlayerIndex != -1 ) {
+                        name = 
+                            players.getElement( closestPlayerIndex )->
+                            name;
+                        }
+                    
+                    if( name == NULL ) {
+                        name = stringDuplicate( "UNKNOWN" );
+                        }
+                    
+                    char *idString = autoSprintf( "%d", lastApocalypseNumber );
+                    
+                    char *hash = hmac_sha1( reflectorSharedSecret, idString );
+
+                    delete [] idString;
+
+                    char *url = autoSprintf( 
+                        "%s?action=trigger_apocalypse"
+                        "&id=%d&id_hash=%s&name=%s",
+                        reflectorURL, lastApocalypseNumber, hash, name );
+
+                    delete [] hash;
+                    delete [] name;
+                    
+                    apocalypseRequest =
+                        new WebRequest( "GET", url, NULL );
+                                
+                    delete [] url;
+                    }
+                    
+                if( reflectorURL != NULL ) {
+                    delete [] reflectorURL;
+                    }
+                if( reflectorSharedSecret != NULL ) {
+                    delete [] reflectorSharedSecret;
+                    }
+                }
+
+
+            // send all players the AP message
+            const char *message = "AP#";
+            int messageLength = strlen( message );
+            
+            for( int i=0; i<players.size(); i++ ) {
+                LiveObject *nextPlayer = players.getElement( i );
+                if( !nextPlayer->error ) {
+                    
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            (unsigned char*)message, 
+                            messageLength,
+                            false, false );
+                    
+                    if( numSent != messageLength ) {
+                        setDeathReason( nextPlayer, "disconnected" );
+                        
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Socket write failed";
+                        }
+                    }
+                }
+            
+            apocalypseStartTime = Time::getCurrentTime();
+            apocalypseStarted = true;
+            }
+
+        if( apocalypseRequest != NULL ) {
+            
+            int result = apocalypseRequest->step();
+                
+
+            if( result == -1 ) {
+                AppLog::info( "Apocalypse:  Request to reflector failed." );
+                }
+            else if( result == 1 ) {
+                // done, have result
+
+                char *webResult = 
+                    apocalypseRequest->getResult();
+                
+                if( strstr( webResult, "OK" ) == NULL ) {
+                    
+                    AppLog::infoF( 
+                        "Apocalypse:  Bad response from reflector:  %s.",
+                        webResult );
+                    }
+                delete [] webResult;
+                }
+            
+            if( result != 0 ) {
+                delete apocalypseRequest;
+                apocalypseRequest = NULL;
+                }
+            }
+
+        if( apocalypseRequest == NULL &&
+            Time::getCurrentTime() - apocalypseStartTime >= 7 ) {
+            
+            for( int i=0; i<players.size(); i++ ) {
+                LiveObject *nextPlayer = players.getElement( i );
+                
+                if( ! nextPlayer->error ) {
+                    nextPlayer->error = true;
+                    setDeathReason( nextPlayer, "apocalypse" );
+                    }
+                }
+
+            if( players.size() == 0 ) {
+                // apocalypse over
+
+                // FIXME:
+                // clear map
+
+                apocalypseStarted = false;
+                apocalypseTriggered = false;
+                }
+            }
+        }
+    }
+
 
 
 
@@ -3868,6 +4037,9 @@ int main() {
 
     while( !quit ) {
         
+        
+        apocalypseStep();
+
         checkBackup();
 
         stepFoodLog();
@@ -4084,7 +4256,8 @@ int main() {
                 int currentPlayers = players.size() + newConnections.size();
                     
 
-                if( SettingsManager::getIntSetting( "shutdownMode", 0 ) ) {
+                if( apocalypseTriggered ||
+                    SettingsManager::getIntSetting( "shutdownMode", 0 ) ) {
                         
                     AppLog::info( "We are in shutdown mode, "
                                   "deflecting new connection" );         

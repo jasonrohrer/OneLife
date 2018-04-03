@@ -58,7 +58,7 @@ OK
 id is a unique ID number for the apocalypse.  Must be greater than any previous
 apocalypse IDs.
 
-uid_hash is computed with:
+id_hash is computed with:
 HMAC_SHA1( sharedSecret, id )
 
 sharedSecret is a secret shared between official servers and the reflector.

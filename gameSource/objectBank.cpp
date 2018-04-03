@@ -720,6 +720,16 @@ float initObjectBankStep() {
                 r->spriteSkipDrawing = new char[ r->numSprites ];
                 memset( r->spriteSkipDrawing, false, r->numSprites );
                 
+                r->apocalypseTrigger = false;
+                if( r->description[0] == 'T' &&
+                    r->description[1] == 'h' &&
+                    strstr( r->description, "The Apocalypse" ) == 
+                    r->description ) {
+                    
+                    r->apocalypseTrigger = true;
+                    }
+
+
 
                 for( int i=0; i< r->numSprites; i++ ) {
                     sscanf( lines[next], "spriteID=%d", 
@@ -1491,6 +1501,18 @@ char isContainable( int inID ) {
         }
     }
 
+
+char isApocalypseTrigger( int inID ) {
+    ObjectRecord *r = getObject( inID );
+    
+    if( r == NULL ) {
+        return false;
+        }
+    else {
+        return r->apocalypseTrigger;
+        }
+    }
+
     
 
 
@@ -2060,6 +2082,14 @@ int addObject( const char *inDescription,
     r->cachedHeight = newHeight;
     
     r->spriteSkipDrawing = new char[ inNumSprites ];
+
+    r->apocalypseTrigger = false;
+    if( r->description[0] == 'T' &&
+        r->description[1] == 'h' &&
+        strstr( r->description, "The Apocalypse" ) == r->description ) {
+        r->apocalypseTrigger = true;
+        }
+    
     
     memset( r->spriteSkipDrawing, false, inNumSprites );
     

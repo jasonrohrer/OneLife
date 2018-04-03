@@ -265,6 +265,8 @@ typedef struct ObjectRecord {
         // used to avoid recomputing height repeatedly at client/server runtime
         int cachedHeight;
         
+        char apocalypseTrigger;
+
     } ObjectRecord;
 
 
@@ -476,6 +478,9 @@ char isSoundUsedByObject( int inSoundID );
 int getNumContainerSlots( int inID );
 
 char isContainable( int inID );
+
+char isApocalypseTrigger( int inID );
+
 
 
 
