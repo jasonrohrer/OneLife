@@ -35,6 +35,7 @@ echo ""
 rm ~/checkout/OneLife/server/biome.db 
 rm ~/checkout/OneLife/server/map.db
 rm ~/checkout/OneLife/server/mapTime.db
+rm ~/checkout/OneLife/server/lookTime.db
 rm ~/checkout/OneLife/server/floor.db 
 rm ~/checkout/OneLife/server/floorTime.db
 rm ~/checkout/OneLife/server/eve.db
