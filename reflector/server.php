@@ -86,7 +86,6 @@ else  if( $action == "trigger_apocalypse" ) {
         strtoupper( or_hmac_sha1( $sharedSecret, $id ) );
 
     if( $id_hash != $computedHashValue ) {
-        echo "Correct = $computedHashValue";
         echo "DENIED";
         exit( 0 );
         }
@@ -98,6 +97,13 @@ else  if( $action == "trigger_apocalypse" ) {
     $time = time();
     
     file_put_contents( "lastApocalypse.txt", "$id" );
+
+    $s = "s";
+    if( $id == 1 ) {
+        $s = "";
+        }
+    file_put_contents( "apocalypseStats.php", "$id apocalpse$s" );
+    
     file_put_contents( "apocalypseLog.txt", "$id $time $name\n", FILE_APPEND );
     echo "OK";
     
