@@ -34,6 +34,12 @@ void initMap();
 void freeMap();
 
 
+// can only be called before initMap or after freeMap
+// deletes the underlying .db files for the map 
+void wipeMapFiles();
+
+
+
 // make Eve placement radius bigger
 void doubleEveRadius();
 

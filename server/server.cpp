@@ -3853,8 +3853,13 @@ void apocalypseStep() {
             if( players.size() == 0 ) {
                 // apocalypse over
 
-                // FIXME:
                 // clear map
+                freeMap();
+                
+                wipeMapFiles();
+                
+                initMap();
+
 
                 apocalypseStarted = false;
                 apocalypseTriggered = false;

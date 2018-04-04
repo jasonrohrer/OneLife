@@ -2371,7 +2371,44 @@ void freeMap() {
     delete [] naturalMapIDs;
     delete [] naturalMapChances;
     delete [] totalChanceWeight;
+
+    
+    allNaturalMapIDs.deleteAll();
+
+    liveDecayQueue.clear();
+    liveDecayRecordPresentHashTable.clear();
+    liveDecayRecordLastLookTimeHashTable.clear();
+    liveMovementEtaTimes.clear();
+
+    liveMovements.clear();
+    
+    mapChangePosSinceLastStep.deleteAll();
     }
+
+
+
+
+static deleteFileByName( const char *inFileName ) {
+    File f( NULL, inFileName );
+    
+    if( f.exists() ) {
+        f.remove();
+        }
+    }
+
+
+
+void wipeMapFiles() {
+    deleteFileByName( "biome.db" );
+    deleteFileByName( "eve.db" );
+    deleteFileByName( "floor.db" );
+    deleteFileByName( "floorTime.db" );
+    deleteFileByName( "lookTime.db" );
+    deleteFileByName( "map.db" );
+    deleteFileByName( "mapTime.db" );
+    deleteFileByName( "playerStats.db" );
+    }
+
 
 
 
