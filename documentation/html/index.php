@@ -63,7 +63,9 @@ function showLogo( $inImageFile, $inText ) {
 <tr>
 <td><img src=portraitLeft.jpg border=0 width=197 height=414></td>
 <td>
-<center><?php include( "lifeStats.php" ); ?></center>
+<center><?php include( "lifeStats.php" ); ?><br>
+<?php include( "../reflector/apocalypseStats.php" ); ?>
+</center>
 
 
 
