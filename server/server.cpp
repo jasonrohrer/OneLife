@@ -74,12 +74,16 @@ double minSayGapInSeconds = 1.0;
 
 int maxLineageTracked = 20;
 
+int apocalypsePossible = 0;
 char apocalypseTriggered = false;
+char apocalypseRemote = false;
 GridPos apocalypseLocation = { 0, 0 };
 int lastApocalypseNumber = 0;
 double apocalypseStartTime = 0;
 char apocalypseStarted = false;
 
+double remoteApocalypseCheckInterval = 30;
+double lastRemoteApocalypseCheckTime = 0;
 WebRequest *apocalypseRequest = NULL;
 
 
@@ -103,6 +107,7 @@ static int requireClientPassword = 1;
 static int requireTicketServerCheck = 1;
 static char *clientPassword = NULL;
 static char *ticketServerURL = NULL;
+static char *reflectorURL = NULL;
 
 // larger of dataVersionNumber.txt or serverCodeVersionNumber.txt
 static int versionNumber = 1;
@@ -695,12 +700,22 @@ void quitCleanup() {
         ticketServerURL = NULL;
         }
 
+    if( reflectorURL != NULL ) {
+        delete [] reflectorURL;
+        reflectorURL = NULL;
+        }
+
     nameGivingPhrases.deallocateStringElements();
     familyNameGivingPhrases.deallocateStringElements();
     
     if( eveName != NULL ) {
         delete [] eveName;
         eveName = NULL;
+        }
+
+    if( apocalypseRequest != NULL ) {
+        delete apocalypseRequest;
+        apocalypseRequest = NULL;
         }
     }
 
@@ -3706,24 +3721,94 @@ int readIntFromFile( const char *inFileName, int inDefaultValue ) {
 
 void apocalypseStep() {
     
-    if( apocalypseTriggered ) {
+    double curTime = Time::getCurrentTime();
+
+    if( !apocalypseTriggered ) {
+        
+        if( apocalypseRequest == NULL &&
+            curTime - lastRemoteApocalypseCheckTime > 
+            remoteApocalypseCheckInterval ) {
+            printf( "Checking for remote apocalypse\n" );
             
+            lastRemoteApocalypseCheckTime = curTime;
+            
+            char *url = autoSprintf( "%s?action=check_apocalypse", 
+                                     reflectorURL );
+        
+            apocalypseRequest =
+                new WebRequest( "GET", url, NULL );
+            
+            delete [] url;
+            }
+        else if( apocalypseRequest != NULL ) {
+            int result = apocalypseRequest->step();
+
+            if( result == -1 ) {
+                AppLog::info( 
+                    "Apocalypse check:  Request to reflector failed." );
+                }
+            else if( result == 1 ) {
+                // done, have result
+
+                char *webResult = 
+                    apocalypseRequest->getResult();
+                
+                if( strstr( webResult, "OK" ) == NULL ) {
+                    AppLog::infoF( 
+                        "Apocalypse check:  Bad response from reflector:  %s.",
+                        webResult );
+                    }
+                else {
+                    int newApocalypseNumber = lastApocalypseNumber;
+                    
+                    sscanf( webResult, "%d\n", &newApocalypseNumber );
+                
+                    if( newApocalypseNumber > lastApocalypseNumber ) {
+                        lastApocalypseNumber = newApocalypseNumber;
+                        apocalypseTriggered = true;
+                        apocalypseRemote = true;
+                        AppLog::infoF( 
+                            "Apocalypse check:  New remote apocalypse:  %d.",
+                            lastApocalypseNumber );
+                        SettingsManager::setSetting( "lastApocalypseNumber",
+                                                     lastApocalypseNumber );
+                        }
+                    }
+                    
+                delete [] webResult;
+                }
+            
+            if( result != 0 ) {
+                delete apocalypseRequest;
+                apocalypseRequest = NULL;
+                }
+            }
+        }
+        
+
+
+    if( apocalypseTriggered ) {
+
         if( !apocalypseStarted ) {
             
-            lastApocalypseNumber++;
-            
-            
-            if( apocalypseRequest == NULL ) {
-                char *reflectorURL = 
-                    SettingsManager::getStringSetting( "reflectorURL" );
+            if( !apocalypseRemote && 
+                apocalypseRequest == NULL && reflectorURL != NULL ) {
+                
                 
                 char *reflectorSharedSecret = 
                     SettingsManager::
                     getStringSetting( "reflectorSharedSecret" );
                 
-                if( reflectorURL != NULL && 
-                    reflectorSharedSecret != NULL ) {
-                    
+                if( reflectorSharedSecret != NULL ) {
+                    lastApocalypseNumber++;
+
+                    AppLog::infoF( 
+                        "Apocalypse trigger:  New local apocalypse:  %d.",
+                        lastApocalypseNumber );
+
+                    SettingsManager::setSetting( "lastApocalypseNumber",
+                                                 lastApocalypseNumber );
+
                     int closestPlayerIndex = -1;
                     double closestDist = 999999999;
                     
@@ -3766,23 +3851,19 @@ void apocalypseStep() {
                     delete [] hash;
                     delete [] name;
                     
+                    printf( "Starting new web request for %s\n", url );
+                    
                     apocalypseRequest =
                         new WebRequest( "GET", url, NULL );
                                 
                     delete [] url;
-                    }
-                    
-                if( reflectorURL != NULL ) {
-                    delete [] reflectorURL;
-                    }
-                if( reflectorSharedSecret != NULL ) {
                     delete [] reflectorSharedSecret;
                     }
                 }
 
 
             // send all players the AP message
-            const char *message = "AP#";
+            const char *message = "AP\n#";
             int messageLength = strlen( message );
             
             for( int i=0; i<players.size(); i++ ) {
@@ -3815,18 +3896,21 @@ void apocalypseStep() {
                 
 
             if( result == -1 ) {
-                AppLog::info( "Apocalypse:  Request to reflector failed." );
+                AppLog::info( 
+                    "Apocalypse trigger:  Request to reflector failed." );
                 }
             else if( result == 1 ) {
                 // done, have result
 
                 char *webResult = 
                     apocalypseRequest->getResult();
+                printf( "Apocalypse trigger:  "
+                        "Got web result:  '%s'\n", webResult );
                 
                 if( strstr( webResult, "OK" ) == NULL ) {
-                    
                     AppLog::infoF( 
-                        "Apocalypse:  Bad response from reflector:  %s.",
+                        "Apocalypse trigger:  "
+                        "Bad response from reflector:  %s.",
                         webResult );
                     }
                 delete [] webResult;
@@ -3861,8 +3945,10 @@ void apocalypseStep() {
                 initMap();
 
 
+                lastRemoteApocalypseCheckTime = curTime;
                 apocalypseStarted = false;
                 apocalypseTriggered = false;
+                apocalypseRemote = false;
                 }
             }
         }
@@ -3946,6 +4032,15 @@ int main() {
     if( ticketServerURL == NULL ) {
         requireTicketServerCheck = 0;
         }
+
+    
+    reflectorURL = SettingsManager::getStringSetting( "reflectorURL" );
+
+    apocalypsePossible = 
+        SettingsManager::getIntSetting( "apocalypsePossible", 0 );
+
+    lastApocalypseNumber = 
+        SettingsManager::getIntSetting( "lastApocalypseNumber", 0 );
 
 
     childSameRaceLikelihood =

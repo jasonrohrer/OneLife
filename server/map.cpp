@@ -92,6 +92,7 @@ static int campRadius = 20;
 static float minEveCampRespawnAge = 60.0;
 
 
+extern int apocalypsePossible;
 extern char apocalypseTriggered;
 extern GridPos apocalypseLocation;
 
@@ -2388,7 +2389,7 @@ void freeMap() {
 
 
 
-static deleteFileByName( const char *inFileName ) {
+static void deleteFileByName( const char *inFileName ) {
     File f( NULL, inFileName );
     
     if( f.exists() ) {
@@ -2563,7 +2564,7 @@ static void dbPut( int inX, int inY, int inSlot, int inValue,
     
     
 
-    if( inValue > 0 && inSlot == 0 && inSubCont == 0 ) {
+    if( apocalypsePossible && inValue > 0 && inSlot == 0 && inSubCont == 0 ) {
         // a primary tile put
         // check if this triggers the apocalypse
         if( isApocalypseTrigger( inValue ) ) {

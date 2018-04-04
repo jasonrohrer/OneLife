@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 71    ???
+Version 72    ???
 
 --Server now reports its version number in its first SN number, and client
   displays error on version mismatch.
@@ -26,6 +26,8 @@ Version 71    ???
 --Mac fullscreen mode fixed (using borderless window AND hiding menu/dock).
   Thanks Chard.
 
+--Support in client and server for The Apocalypse, and propagation of
+  apocalypse wave through all official servers via the reflector.
 
 
 

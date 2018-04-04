@@ -423,7 +423,8 @@ last_name may be ommitted.
 
 
 
-AP#
+AP
+#
 
 Inidicates that an apocalypse is pending (and death is coming).  Gives client
 time to show a visual effect before death-by-apocalypse happens.

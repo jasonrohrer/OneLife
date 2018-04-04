@@ -726,6 +726,9 @@ float initObjectBankStep() {
                     strstr( r->description, "The Apocalypse" ) == 
                     r->description ) {
                     
+                    printf( "Object id %d (%s) seen as an apocalypse trigger\n",
+                            r->id, r->description );
+
                     r->apocalypseTrigger = true;
                     }
 
@@ -2087,6 +2090,10 @@ int addObject( const char *inDescription,
     if( r->description[0] == 'T' &&
         r->description[1] == 'h' &&
         strstr( r->description, "The Apocalypse" ) == r->description ) {
+        
+        printf( "Object id %d (%s) seen as an apocalypse trigger\n",
+                r->id, r->description );
+
         r->apocalypseTrigger = true;
         }
     
