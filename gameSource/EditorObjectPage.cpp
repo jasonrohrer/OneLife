@@ -59,7 +59,7 @@ EditorObjectPage::EditorObjectPage()
           mBiomeField( smallFont, -55, -220, 8, false, "Biomes",
                        "0123456789,", NULL ),
           mMapChanceField( smallFont, 
-                           -250,  64, 4,
+                           -250,  64, 6,
                            false,
                            "MapP", "0123456789.", NULL ),
           mHeatValueField( smallFont, 
@@ -2462,7 +2462,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 
             mDescriptionField.setText( pickedRecord->description );
 
-            mMapChanceField.setFloat( pickedRecord->mapChance, 2 );
+            mMapChanceField.setFloat( pickedRecord->mapChance, 4 );
             
             char *biomeText = getBiomesString( pickedRecord );
             
