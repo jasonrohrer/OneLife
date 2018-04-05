@@ -9,6 +9,13 @@ Version 73
 
 
 
+Server Fixes:
+
+--Bug reporting back on in server.
+
+
+
+
 
 Version 72    2018-April-5
 
@@ -41,6 +48,7 @@ Version 72    2018-April-5
 
 --Fixed so that speech isn't drawn off top of the screen for a character that
   is nearby.
+
 
 
 
