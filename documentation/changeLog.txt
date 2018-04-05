@@ -52,6 +52,8 @@ Server Fixes:
 
 --Fixed a memory leak in naming phrases init.
 
+--Removed duplicates from firstNames list (thanks Chard).
+
 
 
 
