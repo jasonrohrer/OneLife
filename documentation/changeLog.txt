@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 72    ???
+Version 72    2018-April-5
 
 --Server now reports its version number in its first SN number, and client
   displays error on version mismatch.
