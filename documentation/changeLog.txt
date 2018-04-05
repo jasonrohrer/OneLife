@@ -33,6 +33,9 @@ Version 72    ???
   idleness to make sure a NAT or other router doesn't drop the connection if
   idle.
 
+--Fixed so that speech isn't drawn off top of the screen for a character that
+  is nearby.
+
 
 
 Server Fixes:

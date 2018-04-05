@@ -2118,6 +2118,10 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     
     double firstLineY =  inPos.y + ( lines->size() - 1 ) * lineSpacing;
     
+    if( firstLineY > lastScreenViewCenter.y + 330 ) {
+        firstLineY = lastScreenViewCenter.y + 330;
+        }
+
 
     setDrawColor( 1, 1, 1, inFade );
 
