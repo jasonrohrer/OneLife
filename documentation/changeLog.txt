@@ -29,6 +29,9 @@ Version 72    ???
 --Support in client and server for The Apocalypse, and propagation of
   apocalypse wave through all official servers via the reflector.
 
+--Client now sends server KA keep-alive message every 15 seconds of player
+  idleness to make sure a NAT or other router doesn't drop the connection if
+  idle.
 
 
 

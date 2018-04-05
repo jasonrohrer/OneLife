@@ -795,6 +795,19 @@ char *getNextClientMessage( SimpleVector<char> *inBuffer ) {
         return NULL;
         }
     
+    if( index > 1 && 
+        inBuffer->getElementDirect( 0 ) == 'K' &&
+        inBuffer->getElementDirect( 1 ) == 'A' ) {
+        
+        // a KA (keep alive) message
+        // short-cicuit the processing here
+        
+        inBuffer->deleteStartElements( index + 1 );
+        return NULL;
+        }
+    
+        
+
     char *message = new char[ index + 1 ];
     
     // all but terminal character

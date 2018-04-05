@@ -442,7 +442,12 @@ static char readServerSocketFull( int inServerSocket ) {
 
 
 
+static double timeLastMessageSent = 0;
+
+
+
 void LivingLifePage::sendToServerSocket( char *inMessage ) {
+    timeLastMessageSent = game_getCurrentTime();
     
     printf( "Sending message to server: %s\n", inMessage );
     
@@ -7536,7 +7541,14 @@ void LivingLifePage::step() {
         ourObject->yd = goodY;
         }
     
-            
+    
+    if( game_getCurrentTime() - timeLastMessageSent > 15 ) {
+        // more than 15 seconds without client making a move
+        // send KA to keep connection open
+        sendToServerSocket( (char*)"KA 0 0#" );
+        }
+    
+
 
     char *message = getNextServerMessage();
 
