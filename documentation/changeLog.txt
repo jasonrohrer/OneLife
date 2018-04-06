@@ -20,6 +20,12 @@ Server Fixes:
 --Fixed so that server checks apocalypsePermitted setting live, when about to
   trigger an apocalypse.
 
+--After a family line dies out, next Eve is spawned in a random direction 2000
+  tiles away.  After a server restart, the next three Eves are spawned around
+  the last Eve location before restart, and then the random-2000 jumping starts
+  for the fourth and subsequent Eves.
+
+
 
 
 

@@ -86,6 +86,14 @@ static int nextPlacementIndex = 0;
 static int eveRadiusStart = 2;
 static int eveRadius = eveRadiusStart;
 
+
+
+GridPos eveLocation = { 0,0 };
+static int eveLocationUsage = 0;
+static int maxEveLocationUsage = 3;
+                            
+
+
 // what human-placed stuff, together, counts as a camp
 static int campRadius = 20;
 
@@ -1470,6 +1478,14 @@ void initMap() {
         fscanf( eveRadFile, "%d", &eveRadius );
 
         fclose( eveRadFile );
+        }
+
+    FILE *eveLocFile = fopen( "lastEveLocation.txt", "r" );
+    if( eveLocFile != NULL ) {
+        
+        fscanf( eveLocFile, "%d,%d", &( eveLocation.x ), &( eveLocation.y ) );
+
+        fclose( eveLocFile );
         }
 
 
@@ -4909,17 +4925,42 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
         }
     else {
         // player has never been an Eve that survived to old age before
-    
-        // use global most-recent camp, but expand the radius greatly
-        // to put them in a random clear location
+        
 
-        currentEveRadius += 100;
+        // New method:
         
+        if( eveLocationUsage < maxEveLocationUsage ) {
+            eveLocationUsage++;
+            }
+        else {
+            // post-startup eve location has been used too many times
+            // jump away in random direction
+
+            int jump = SettingsManager::getIntSetting( "nextEveJump", 2000 );
+            
+            doublePair delta = { (double)jump, 0 };
+            delta = rotate( delta,
+                            randSource.getRandomBoundedDouble( 0, 2 * M_PI ) );
+            
+
+            eveLocation.x += lrint( delta.x );
+            eveLocation.y += lrint( delta.y );
+            File eveLocFile( NULL, "lastEveLocation.txt" );
+            char *locString = 
+                autoSprintf( "%d,%d", eveLocation.x, eveLocation.y );
+            eveLocFile.writeToFile( locString );
+            delete [] locString;
+            }
+
+        ave.x = eveLocation.x;
+        ave.y = eveLocation.y;
+
+        
+        
+
+        // put Eve in radius 50 around this location
         forceEveToBorder = true;
-        
-        int num;
-        
-        ave = computeRecentCampAve( &num );
+        currentEveRadius = 50;
         }
     
 
