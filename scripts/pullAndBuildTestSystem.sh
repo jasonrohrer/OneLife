@@ -18,13 +18,13 @@ fi
 
 
 cd minorGems
-git pull
+git pull --tags
 
 cd ../OneLife
-git pull
+git pull --tags
 
 cd ../OneLifeData7
-git pull
+git pull --tags
 
 rm */cache.fcz
 

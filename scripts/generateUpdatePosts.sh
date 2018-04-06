@@ -29,7 +29,7 @@ echo "Updating OneLifeData7Latest"
 echo ""
 
 cd ~/checkout/OneLifeData7Latest
-git pull
+git pull --tags
 
 
 newerVersion="D"

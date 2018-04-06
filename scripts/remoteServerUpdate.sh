@@ -32,7 +32,7 @@ echo ""
 
 cd ~/checkout/OneLifeData7
 git checkout master
-git pull
+git pull --tags
 rm */cache.fcz
 
 
@@ -41,11 +41,11 @@ echo "Re-compiling server"
 echo ""
 
 cd ~/checkout/minorGems
-git pull
+git pull --tags
 
 
 cd ~/checkout/OneLife/server
-git pull
+git pull --tags
 
 ./configure 1
 make

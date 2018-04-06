@@ -17,19 +17,19 @@ fi
 
 
 cd minorGems
-git fetch
+git fetch --tags
 latestTaggedVersion=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags | sed -e 's/OneLife_v//'`
 git checkout -q OneLife_v$latestTaggedVersion
 
 
 cd ../OneLife
-git fetch
+git fetch --tags
 latestTaggedVersionA=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags | sed -e 's/OneLife_v//'`
 git checkout -q OneLife_v$latestTaggedVersionA
 
 
 cd ../OneLifeData7
-git fetch
+git fetch --tags
 latestTaggedVersionB=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags | sed -e 's/OneLife_v//'`
 git checkout -q OneLife_v$latestTaggedVersionB
 
