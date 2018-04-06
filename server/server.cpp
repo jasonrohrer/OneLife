@@ -3803,7 +3803,15 @@ void apocalypseStep() {
     if( apocalypseTriggered ) {
 
         if( !apocalypseStarted ) {
-            
+            apocalypsePossible = 
+                SettingsManager::getIntSetting( "apocalypsePossible", 0 );
+
+            if( !apocalypsePossible ) {
+                // settings change since we last looked at it
+                apocalypseTriggered = false;
+                return;
+                }
+
             if( !apocalypseRemote && 
                 apocalypseRequest == NULL && reflectorURL != NULL ) {
                 
