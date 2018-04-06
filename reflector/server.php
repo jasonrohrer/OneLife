@@ -102,7 +102,7 @@ else  if( $action == "trigger_apocalypse" ) {
     if( $id == 1 ) {
         $s = "";
         }
-    file_put_contents( "apocalypseStats.php", "$id apocalpse$s" );
+    file_put_contents( "apocalypseStats.php", "$id apocalypse$s" );
     
     file_put_contents( "apocalypseLog.txt", "$id $time $name\n", FILE_APPEND );
     echo "OK";
