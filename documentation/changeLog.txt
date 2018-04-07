@@ -28,6 +28,8 @@ Server Fixes:
   the last Eve location before restart, and then the random-2000 jumping starts
   for the fourth and subsequent Eves.
 
+--Held baby was killed if dangerous animal walked over its last ground
+  position.  Fixed.
 
 
 

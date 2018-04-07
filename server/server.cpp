@@ -4840,7 +4840,8 @@ int main() {
             int curOverID = getMapObject( curPos.x, curPos.y );
             
 
-            if( curOverID != 0 && 
+            if( ! nextPlayer->heldByOther &&
+                curOverID != 0 && 
                 ! isMapObjectInTransit( curPos.x, curPos.y ) ) {
                 
                 ObjectRecord *curOverObj = getObject( curOverID );
