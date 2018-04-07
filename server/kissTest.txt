@@ -1,0 +1,109 @@
+Testing one million entries:
+
+table size 80,000
+
+
+Opening DB used 0 bytes
+Inserted 1000000
+Inserts used 12161024 bytes
+Found 1000000
+Finding 0 bytes
+
+real	0m13.168s
+user	0m3.044s
+sys	0m10.104s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 24160180 Apr  7 15:28 test.db
+
+
+
+
+table size 160,000
+
+Opening DB used 0 bytes
+Inserted 1000000
+Inserts used 14082048 bytes
+Found 1000000
+Finding 0 bytes
+
+real	0m10.507s
+user	0m2.384s
+sys	0m8.108s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 26080116 Apr  7 15:31 test.db
+
+
+
+
+table size 320,000
+
+Opening DB used 0 bytes
+Inserted 1000000
+Inserts used 17924096 bytes
+Found 1000000
+Finding 0 bytes
+
+real	0m8.787s
+user	0m1.804s
+sys	0m6.972s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 29920084 Apr  7 15:32 test.db
+
+
+
+
+table size 640,000
+
+Opening DB used 0 bytes
+Inserted 1000000
+Inserts used 20484096 bytes
+Found 1000000
+Finding 0 bytes
+
+real	0m8.178s
+user	0m1.492s
+sys	0m6.676s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 32480060 Apr  7 15:35 test.db
+
+
+
+
+
+
+Second test:
+
+
+table size 80,000
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB used 0 bytes, took -0.000000 sec
+Inserted 1000000
+Inserts used 12161024 bytes, took 11.984000 sec
+Random lookup for 1000000
+Random look used 0 bytes, took 10.092000 sec
+Iterated 1000000
+Iterating used 0 bytes, took 1.098000 sec
+
+real	0m23.178s
+user	0m5.560s
+sys	0m17.604s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 24160180 Apr  7 15:45 test.db
+
+
+
+
+
+table size 640,000
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB used 0 bytes, took -0.000000 sec
+Inserted 1000000
+Inserts used 20484096 bytes, took 7.252000 sec
+Random lookup for 1000000
+Random look used 0 bytes, took 2.314000 sec
+Iterated 1000000
+Iterating used 0 bytes, took 1.282000 sec
+
+real	0m10.852s
+user	0m2.372s
+sys	0m7.880s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 32480060 Apr  7 15:46 test.db
