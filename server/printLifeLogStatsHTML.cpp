@@ -304,42 +304,62 @@ int processLifeLogFolder( File *inFolder ) {
         
     int numFiles;
 
-    File **logs = inFolder->getChildFilesSorted( &numFiles );
-        
+    File **allFiles = inFolder->getChildFilesSorted( &numFiles );
+
+    // filter to have only log files
+    SimpleVector<File*> logs;
+
     for( int i=0; i<numFiles; i++ ) {
 
-        char *name = logs[i]->getFileName();
+        char *name = allFiles[i]->getFileName();
             
-        if( strcmp( name, checkpointFileName ) != 0 ) {
+        if( strcmp( name, checkpointFileName ) != 0 &&
+            strstr( name, "_names" ) == NULL ) {
+            // the checkpoint file or a _names log.
+            logs.push_back( allFiles[i] );
+            }
+        else {
+            delete allFiles[i];
+            }
+        delete [] name;
+        }
+
+    delete [] allFiles;
+    
+    numFiles = logs.size();
+    
+    for( int i=0; i<numFiles; i++ ) {
+        File *logFile = logs.getElementDirect( i );
+        
+        char *name = logFile->getFileName();
             
-            if( ! checkpointFound ||
-                checkpointReached ) {
+            
+        if( ! checkpointFound ||
+            checkpointReached ) {
                     
-                processLogFile( logs[i] );
+            processLogFile( logFile );
                     
-                if( i < numFiles - 2 ) {
-                    // very last file is saved checkpoint file
-                    // second to last may still be getting filled by server
-                    saveNewCheckpoint( checkpointFile, name );
-                    }
-                    
-                numFilesProcessed++;
+            if( i < numFiles - 1 ) {
+                // last file may still be getting filled by server
+                saveNewCheckpoint( checkpointFile, name );
                 }
-            else if( checkpointFound && ! checkpointReached ) {
                     
-                if( strcmp( name, lastScannedFileName ) == 0 ) {
-                    // this is where we got on last scan
-                    checkpointReached = true;
-                    }
+            numFilesProcessed++;
+            }
+        else if( checkpointFound && ! checkpointReached ) {
+                    
+            if( strcmp( name, lastScannedFileName ) == 0 ) {
+                // this is where we got on last scan
+                checkpointReached = true;
                 }
-            }       
+            }
+               
         
         delete [] name;
 
-        delete logs[i];
+        delete logFile;
         }
-    delete [] logs;
-
+    
 
     delete checkpointFile;
 

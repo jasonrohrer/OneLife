@@ -31,6 +31,8 @@ Server Fixes:
 --Held baby was killed if dangerous animal walked over its last ground
   position.  Fixed.
 
+--Fixed website stats generation.
+
 
 
 
