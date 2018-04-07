@@ -7,6 +7,9 @@ Version 73    ???
 
 --Fixed editor to allow smaller map chances.
 
+--Fixed editor to NOT apply < 1.0 speed multiplier on ground animations, to
+  match client behavior.  Thanks TyrantNomad.
+
 
 
 Server Fixes:
