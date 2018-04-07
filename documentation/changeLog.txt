@@ -33,6 +33,8 @@ Server Fixes:
 
 --Fixed website stats generation.
 
+--Bug reporting back off.  I think it may be causing a CPU vicious cycle.
+
 
 
 
