@@ -35,6 +35,12 @@ Server Fixes:
 
 --Bug reporting back off.  I think it may be causing a CPU vicious cycle.
 
+--Disabled biome database to memorize proc-genned biome map.  This helped
+  preserve seen map areas when a new biome was added, but it consumed gobs of
+  RAM and CPU resources as players and Eve spreading explores huge areas of
+  wilderness.  New biomes aren't added that often, and it's okay for them to
+  shift under existing villages for now.  No longer saving look time for every
+  single map cell that is seen, only for modified cells. 
 
 
 

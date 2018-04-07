@@ -622,8 +622,14 @@ static int getMapBiomeIndex( int inX, int inY,
             secondPlaceBiome = biomes[ secondPlace ];
             }
         
+        // skip saving proc-genned biomes for now
+        // huge RAM impact as players explore distant areas of map
+        
+        // we still check the biomeDB above for loading test maps
+        /*
         biomeDBPut( inX, inY, biomes[pickedBiome], 
                     secondPlaceBiome, secondPlaceGap );
+        */
         }
     
     
@@ -3784,8 +3790,6 @@ int getMapObject( int inX, int inY ) {
         // we're tracking decay for this cell
         *oldLookTime = curTime;
         }
-
-    dbLookTimePut( inX, inY, curTime );
 
     // apply any decay that should have happened by now
     return checkDecayObject( inX, inY, getMapObjectRaw( inX, inY ) );
