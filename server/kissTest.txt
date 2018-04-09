@@ -221,3 +221,118 @@ user	0m6.240s
 sys	0m21.680s
 -rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 25120012 Apr  9 13:52 test.db
 
+
+
+
+
+
+Linode:
+
+KISSDB
+
+Local epoch time  = 0
+GMT epoch time  = 0
+Opening DB (table size 640000) used 0 bytes, took 0.000000 sec
+Inserted 1000000
+Inserts used 20484096 bytes, took 7.601000 sec
+Random lookup for 20 batchs of 100000 (2000000/2000000 hits)
+Random look used 0 bytes, took 4.997000 sec
+Checksum = 1994291180
+Random lookup for non-existing 20 batchs of 100000 (0/2000000 hits)
+Random look/miss used 0 bytes, took 7.541000 sec
+Iterated 1000000
+Iterating used 0 bytes, took 1.542000 sec
+
+real	0m21.685s
+user	0m6.807s
+sys	0m14.701s
+-rw-rw-r-- 1 jcr15 jcr15 32480060 Apr  9 21:11 test.db
+
+
+
+STACKDB
+
+Local epoch time  = 0
+GMT epoch time  = 0
+Opening DB (table size 640000) used 0 bytes, took 0.019000 sec
+Inserted 1000000
+Inserts used 0 bytes, took 8.830000 sec
+Random lookup for 20 batchs of 100000 (2000000/2000000 hits)
+Random look used 0 bytes, took 9.800000 sec
+Checksum = 1994291180
+Random lookup for non-existing 20 batchs of 100000 (0/2000000 hits)
+Random look/miss used 0 bytes, took 12.457000 sec
+Iterated 1000000
+Iterating used 0 bytes, took 2.766000 sec
+
+real	0m33.874s
+user	0m8.734s
+sys	0m24.870s
+-rw-rw-r-- 1 jcr15 jcr15 25120012 Apr  9 21:12 test.db
+
+
+
+
+
+
+Better test of stack improvement:
+Repeatedly looking up the same small batch (from top of stack)
+
+local:
+
+Kiss:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took -0.000000 sec
+Inserted 1000000
+Inserts used 12161024 bytes, took 12.511000 sec
+Random lookup for 500 batchs of 3000 (1500000/1500000 hits)
+Random look used 0 bytes, took 15.154000 sec
+Checksum = 1504239000
+Iterated 1000000
+Iterating used 0 bytes, took 1.121000 sec
+
+real	0m28.789s
+user	0m6.656s
+sys	0m22.096s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 24160180 Apr  9 14:17 test.db
+
+
+Stack:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took 0.008000 sec
+Inserted 1000000
+Inserts used 0 bytes, took 11.867000 sec
+Random lookup for 500 batchs of 3000 (1500000/1500000 hits)
+Random look used 0 bytes, took 4.561000 sec
+Checksum = 1504239000
+Iterated 1000000
+Iterating used 0 bytes, took 2.084000 sec
+
+real	0m18.523s
+user	0m4.212s
+sys	0m14.308s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 20640012 Apr  9 14:18 test.db
+
+
+
+Improve, one less seek on get:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took 0.006000 sec
+Inserted 1000000
+Inserts used 0 bytes, took 12.643000 sec
+Random lookup for 500 batchs of 3000 (1500000/1500000 hits)
+Random look used 0 bytes, took 4.323000 sec
+Checksum = 1504239000
+Iterated 1000000
+Iterating used 0 bytes, took 2.154000 sec
+
+real	0m19.129s
+user	0m4.420s
+sys	0m14.708s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 20640012 Apr  9 14:42 test.db

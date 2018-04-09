@@ -36,7 +36,6 @@ int STACKDB_open(
     unsigned int inValueSize ) {
 
     inDB->keyBuffer = NULL;
-    inDB->valueBuffer = NULL;
     
     inDB->file = fopen( inPath, "w+b" );
     
@@ -48,7 +47,6 @@ int STACKDB_open(
     inDB->valueSize = inValueSize;
     
     inDB->keyBuffer = new uint8_t[ inDB->keySize ];
-    inDB->valueBuffer = new uint8_t[ inDB->valueSize ];
     
 
     if( fseeko( inDB->file, 0, SEEK_END ) ) {
@@ -196,12 +194,7 @@ void STACKDB_close( STACKDB *inDB ) {
     if( inDB->keyBuffer != NULL ) {
         delete [] inDB->keyBuffer;
         inDB->keyBuffer = NULL;
-        }
-    
-    if( inDB->valueBuffer != NULL ) {
-        delete [] inDB->valueBuffer;
-        inDB->valueBuffer = NULL;
-        }
+        }    
 
     if( inDB->file != NULL ) {
         fclose( inDB->file );
@@ -226,13 +219,15 @@ char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
 
 
 // if key found, moves key to top of hash stack
-// upon return, file pos is at start of value in file
+// upon return
 // inDB->lastHashBinLoc is set with the file pos of the hash bin.
+// inDB->lastValueLoc is set with the file pos of the value.
 // 
 // returns -1 on error
 //          0 if found
 //          1 if not found
-static int fseekToValue( STACKDB *inDB, const void *inKey ) {
+static int findValue( STACKDB *inDB, const void *inKey, 
+                      void *outValue = NULL ) {
 
     uint64_t hash = 
         STACKDB_hash( inKey, inDB->keySize )
@@ -309,7 +304,17 @@ static int fseekToValue( STACKDB *inDB, const void *inKey ) {
         }
     
     
-    thisRecordValueLoc64 = ftello( inDB->file );
+    inDB->lastValueLoc = ftello( inDB->file );
+
+    if( outValue != NULL ) {
+        
+        numRead = fread( outValue, inDB->valueSize, 1, inDB->file );
+    
+        if( numRead != 1 ) {
+            return -1;
+            }
+        }
+
     
 
     int numWritten;
@@ -344,9 +349,6 @@ static int fseekToValue( STACKDB *inDB, const void *inKey ) {
             }
         }
     
-    
-    fseeko( inDB->file, thisRecordValueLoc64, SEEK_SET );
-    
     return 0;
     }
 
@@ -354,14 +356,7 @@ static int fseekToValue( STACKDB *inDB, const void *inKey ) {
 
 
 int STACKDB_get( STACKDB *inDB, const void *inKey, void *outValue ) {
-    int result = fseekToValue( inDB, inKey );
-    
-    if( result == 0 ) {
-        int numRead = fread( outValue, inDB->valueSize, 1, inDB->file );
-        if( numRead != 1 ) {
-            return -1;
-            }
-        }
+    int result = findValue( inDB, inKey, outValue );
 
     return result;
     }
@@ -371,7 +366,7 @@ int STACKDB_get( STACKDB *inDB, const void *inKey, void *outValue ) {
 
 
 int STACKDB_put( STACKDB *inDB, const void *inKey, const void *inValue ) {
-    int result = fseekToValue( inDB, inKey );
+    int result = findValue( inDB, inKey, NULL );
     
     int numWritten;
 
@@ -379,6 +374,7 @@ int STACKDB_put( STACKDB *inDB, const void *inKey, const void *inValue ) {
         return -1;
         }
     if( result == 0 ) {
+        fseeko( inDB->file, inDB->lastValueLoc, SEEK_SET );
         numWritten = fwrite( inValue, inDB->valueSize, 1, inDB->file );
         if( numWritten != 1 ) {
             return -1;

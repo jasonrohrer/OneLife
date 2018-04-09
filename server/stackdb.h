@@ -10,8 +10,8 @@ typedef struct {
         unsigned int valueSize;
         FILE *file;
         uint64_t lastHashBinLoc;
+        uint64_t lastValueLoc;
         uint8_t *keyBuffer;
-        uint8_t *valueBuffer;
     } STACKDB;
 
     

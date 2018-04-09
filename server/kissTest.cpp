@@ -10,6 +10,7 @@
 #include "minorGems/util/random/CustomRandomSource.h"
 
 
+/*
 #define DB KISSDB
 #define DB_open KISSDB_open
 #define DB_close KISSDB_close
@@ -18,9 +19,9 @@
 #define DB_Iterator  KISSDB_Iterator
 #define DB_Iterator_init  KISSDB_Iterator_init
 #define DB_Iterator_next  KISSDB_Iterator_next
+*/
 
 
-/*
 #define DB STACKDB
 #define DB_open STACKDB_open
 #define DB_close STACKDB_close
@@ -29,7 +30,6 @@
 #define DB_Iterator  STACKDB_Iterator
 #define DB_Iterator_init  STACKDB_Iterator_init
 #define DB_Iterator_next  STACKDB_Iterator_next
-*/
 
 
 CustomRandomSource randSource( 0 );
@@ -69,7 +69,7 @@ int main() {
     
     DB db;
 
-    int tableSize = 640000;
+    int tableSize = 80000;
     
     int error = DB_open( &db, 
                              "test.db", 
@@ -119,8 +119,8 @@ int main() {
 
     startTime = Time::getCurrentTime();
 
-    int lookupCount = insertCount / 10;
-    int numRuns = 20;
+    int lookupCount = 3000;
+    int numRuns = 500;
     int numLooks = 0;
     int numHits = 0;
     
