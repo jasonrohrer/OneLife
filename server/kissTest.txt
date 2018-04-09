@@ -336,3 +336,63 @@ real	0m19.129s
 user	0m4.420s
 sys	0m14.708s
 -rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 20640012 Apr  9 14:42 test.db
+
+
+
+
+
+Testing lookup of last inserted:
+
+
+stack:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took 0.008000 sec
+Inserted 1000000
+Inserts used 0 bytes, took 12.108000 sec
+Random lookup for 500 batchs of 3000 (1500000/1500000 hits)
+Random look used 0 bytes, took 4.389000 sec
+Checksum = 1501547000
+Last-inserted lookup for 500 batchs of 2500 (1250000/1250000 hits)
+Last-inserted lookup used 0 bytes, took 2.247000 sec
+Checksum = 2436250000
+Iterated 1000000
+Iterating used 0 bytes, took 2.168000 sec
+
+real	0m20.922s
+user	0m5.080s
+sys	0m15.840s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 20640012 Apr  9 15:01 test.db
+
+
+
+
+kiss:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took -0.000000 sec
+Inserted 1000000
+Inserts used 12161024 bytes, took 12.146000 sec
+Random lookup for 500 batchs of 3000 (1500000/1500000 hits)
+Random look used 0 bytes, took 15.171000 sec
+Checksum = 1501547000
+Last-inserted lookup for 500 batchs of 2500 (1250000/1250000 hits)
+Last-inserted lookup used 0 bytes, took 12.852000 sec
+Checksum = 2436250000
+Iterated 1000000
+Iterating used 0 bytes, took 1.096000 sec
+
+real	0m41.270s
+user	0m10.660s
+sys	0m30.596s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 24160180 Apr  9 15:02 test.db
+
+
+
+
+What about even more table loading?
+
+
+

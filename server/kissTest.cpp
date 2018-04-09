@@ -10,7 +10,7 @@
 #include "minorGems/util/random/CustomRandomSource.h"
 
 
-/*
+
 #define DB KISSDB
 #define DB_open KISSDB_open
 #define DB_close KISSDB_close
@@ -19,9 +19,9 @@
 #define DB_Iterator  KISSDB_Iterator
 #define DB_Iterator_init  KISSDB_Iterator_init
 #define DB_Iterator_next  KISSDB_Iterator_next
-*/
 
 
+/*
 #define DB STACKDB
 #define DB_open STACKDB_open
 #define DB_close STACKDB_close
@@ -30,7 +30,7 @@
 #define DB_Iterator  STACKDB_Iterator
 #define DB_Iterator_init  STACKDB_Iterator_init
 #define DB_Iterator_next  STACKDB_Iterator_next
-
+*/
 
 CustomRandomSource randSource( 0 );
 
@@ -127,7 +127,7 @@ int main() {
     unsigned int checksum = 0;
 
     for( int r=0; r<numRuns; r++ ) {
-        CustomRandomSource runSource( 0 );
+        CustomRandomSource runSource( 44493 );
 
         for( int i=0; i<lookupCount; i++ ) {
             int x = runSource.getRandomBoundedInt( 0, num-1 );
@@ -151,11 +151,46 @@ int main() {
             Time::getCurrentTime() - startTime );
 
     printf( "Checksum = %u\n", checksum );
+
+
+
+
+
+    startTime = Time::getCurrentTime();
     
 
+    numLooks = 0;
+    numHits = 0;
+    checksum = 0;
+    
+    int endNum = 50;
+
+    for( int r=0; r<numRuns; r++ ) {
+        for( int x=num-endNum; x<num; x++ ) {
+            for( int y=num-endNum; y<num; y++ ) {
+                intPairToKey( x, y, key );
+                int result = DB_get( &db, key, value );
+                numLooks ++;
+                if( result == 0 ) {
+                    int v = valueToInt( value );
+                    checksum += v;
+                    numHits++;
+                    }
+                }
+            }
+        }
+    
+    printf( "Last-inserted lookup for %d batchs of %d (%d/%d hits)\n", 
+            numRuns, endNum * endNum, numHits, numLooks );
+
+    printf( "Last-inserted lookup used %d bytes, took %f sec\n", 
+            getMallocDelta(),
+            Time::getCurrentTime() - startTime );
+
+    printf( "Checksum = %u\n", checksum );
 
 
-
+    /*
     startTime = Time::getCurrentTime();
     numLooks = 0;
     numHits = 0;
@@ -183,7 +218,7 @@ int main() {
 
     printf( "Random look/miss used %d bytes, took %f sec\n", getMallocDelta(),
             Time::getCurrentTime() - startTime );
-
+    */
     
 
     
