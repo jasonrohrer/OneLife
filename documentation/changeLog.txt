@@ -42,6 +42,11 @@ Server Fixes:
   shift under existing villages for now.  No longer saving look time for every
   single map cell that is seen, only for modified cells. 
 
+--Switched to a stack implementation of a hash table database to improve
+  performance on the most recent items.  Thus, performance won't degrade as
+  much as more and more areas of the map are explored.
+
+
 
 
 Version 72    2018-April-5

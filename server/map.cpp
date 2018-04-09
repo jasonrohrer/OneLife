@@ -18,6 +18,34 @@
 #include "minorGems/formats/encodingUtils.h"
 
 #include "kissdb.h"
+#include "stackdb.h"
+
+
+/*
+#define DB KISSDB
+#define DB_open KISSDB_open
+#define DB_close KISSDB_close
+#define DB_get KISSDB_get
+#define DB_put KISSDB_put
+#define DB_Iterator  KISSDB_Iterator
+#define DB_Iterator_init  KISSDB_Iterator_init
+#define DB_Iterator_next  KISSDB_Iterator_next
+*/
+
+
+#define DB STACKDB
+#define DB_open STACKDB_open
+#define DB_close STACKDB_close
+#define DB_get STACKDB_get
+#define DB_put STACKDB_put
+#define DB_Iterator  STACKDB_Iterator
+#define DB_Iterator_init  STACKDB_Iterator_init
+#define DB_Iterator_next  STACKDB_Iterator_next
+
+
+
+
+
 
 #include "dbCommon.h"
 
@@ -153,32 +181,32 @@ static int getBiomeIndex( int inBiome ) {
 
 
 // tracking when a given map cell was last seen
-static KISSDB lookTimeDB;
+static DB lookTimeDB;
 static char lookTimeDBOpen = false;
 
 
 
-static KISSDB db;
+static DB db;
 static char dbOpen = false;
 
 
-static KISSDB timeDB;
+static DB timeDB;
 static char timeDBOpen = false;
 
 
-static KISSDB biomeDB;
+static DB biomeDB;
 static char biomeDBOpen = false;
 
 
-static KISSDB floorDB;
+static DB floorDB;
 static char floorDBOpen = false;
 
-static KISSDB floorTimeDB;
+static DB floorTimeDB;
 static char floorTimeDBOpen = false;
 
 
 // per-player memory of where they should spawn as eve
-static KISSDB eveDB;
+static DB eveDB;
 static char eveDBOpen = false;
 
 
@@ -376,7 +404,7 @@ static int biomeDBGet( int inX, int inY,
     // look for changes to default in database
     intPairToKey( inX, inY, key );
     
-    int result = KISSDB_get( &biomeDB, key, value );
+    int result = DB_get( &biomeDB, key, value );
     
     if( result == 0 ) {
         // found
@@ -412,7 +440,7 @@ static void biomeDBPut( int inX, int inY, int inValue, int inSecondPlace,
                 &( value[8] ) );
             
     
-    KISSDB_put( &biomeDB, key, value );
+    DB_put( &biomeDB, key, value );
 
     dbLookTimePut( inX, inY, MAP_TIMESEC );
     }
@@ -429,7 +457,7 @@ static int eveDBGet( char *inEmail, int *outX, int *outY, int *outRadius ) {
 
     emailToKey( inEmail, key );
     
-    int result = KISSDB_get( &eveDB, key, value );
+    int result = DB_get( &eveDB, key, value );
     
     if( result == 0 ) {
         // found
@@ -458,7 +486,7 @@ static void eveDBPut( char *inEmail, int inX, int inY, int inRadius ) {
     intToValue( inRadius, &( value[8] ) );
             
     
-    KISSDB_put( &eveDB, key, value );
+    DB_put( &eveDB, key, value );
     }
 
 
@@ -1281,8 +1309,8 @@ int cellsLookedAtToInit = 0;
 //
 // Can handle max key and value size of 16 and 12 bytes
 // Assumes that first 8 bytes of key are xy as 32-bit ints
-int KISSDB_open_timeShrunk(
-	KISSDB *db,
+int DB_open_timeShrunk(
+	DB *db,
 	const char *path,
 	int mode,
 	unsigned long hash_table_size,
@@ -1297,7 +1325,7 @@ int KISSDB_open_timeShrunk(
             AppLog::infoF( "No lookTimes present, not cleaning %s", path );
             }
         
-        int error = KISSDB_open( db, 
+        int error = DB_open( db, 
                                  path, 
                                  mode,
                                  hash_table_size,
@@ -1308,17 +1336,17 @@ int KISSDB_open_timeShrunk(
             // add look time for cells in this DB to present
             // essentially resetting all look times to NOW
             
-            KISSDB_Iterator dbi;
+            DB_Iterator dbi;
     
     
-            KISSDB_Iterator_init( db, &dbi );
+            DB_Iterator_init( db, &dbi );
     
             // key and value size that are big enough to handle all of our DB
             unsigned char key[16];
     
             unsigned char value[12];
     
-            while( KISSDB_Iterator_next( &dbi, key, value ) > 0 ) {
+            while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
                 int x = valueToInt( key );
                 int y = valueToInt( &( key[4] ) );
 
@@ -1342,7 +1370,7 @@ int KISSDB_open_timeShrunk(
 
         delete [] dbTempName;
 
-        return KISSDB_open( db, 
+        return DB_open( db, 
                             path, 
                             mode,
                             hash_table_size,
@@ -1350,35 +1378,35 @@ int KISSDB_open_timeShrunk(
                             value_size );
         }
     
-    KISSDB oldDB;
+    DB oldDB;
     
-    int error = KISSDB_open( &oldDB, 
+    int error = DB_open( &oldDB, 
                              path, 
                              mode,
                              hash_table_size,
                              key_size,
                              value_size );
     if( error ) {
-        AppLog::errorF( "Failed to open DB file %s in KISSDB_open_timeShrunk",
+        AppLog::errorF( "Failed to open DB file %s in DB_open_timeShrunk",
                         path );
         delete [] dbTempName;
 
         return error;
         }
 
-    KISSDB tempDB;
+    DB tempDB;
     
-    error = KISSDB_open( &tempDB, 
+    error = DB_open( &tempDB, 
                          dbTempName, 
                          mode,
                          hash_table_size,
                          key_size,
                          value_size );
     if( error ) {
-        AppLog::errorF( "Failed to open DB file %s in KISSDB_open_timeShrunk",
+        AppLog::errorF( "Failed to open DB file %s in DB_open_timeShrunk",
                         dbTempName );
         delete [] dbTempName;
-        KISSDB_close( &oldDB );
+        DB_close( &oldDB );
         return error;
         }
 
@@ -1386,10 +1414,10 @@ int KISSDB_open_timeShrunk(
     
 
     
-    KISSDB_Iterator dbi;
+    DB_Iterator dbi;
     
     
-    KISSDB_Iterator_init( &oldDB, &dbi );
+    DB_Iterator_init( &oldDB, &dbi );
     
     // key and value size that are big enough to handle all of our DB
     unsigned char key[16];
@@ -1399,7 +1427,7 @@ int KISSDB_open_timeShrunk(
     int total = 0;
     int stale = 0;
 
-    while( KISSDB_Iterator_next( &dbi, key, value ) > 0 ) {
+    while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
         total++;
 
         int x = valueToInt( key );
@@ -1408,7 +1436,7 @@ int KISSDB_open_timeShrunk(
         if( dbLookTimeGet( x, y ) > 0 ) {
             // keep
             // insert it in temp
-            KISSDB_put( &tempDB, key, value );
+            DB_put( &tempDB, key, value );
             }
         else {
             // stale
@@ -1423,8 +1451,8 @@ int KISSDB_open_timeShrunk(
     printf( "\n" );
     
     
-    KISSDB_close( &tempDB );
-    KISSDB_close( &oldDB );
+    DB_close( &tempDB );
+    DB_close( &oldDB );
 
     dbTempFile.copy( &dbFile );
     dbTempFile.remove();
@@ -1432,7 +1460,7 @@ int KISSDB_open_timeShrunk(
     delete [] dbTempName;
 
     // now open new, shrunk file
-    return KISSDB_open( db, 
+    return DB_open( db, 
                         path, 
                         mode,
                         hash_table_size,
@@ -1511,9 +1539,9 @@ void initMap() {
         lookTimeDBEmpty = true;
         }
 
-    KISSDB lookTimeDB_old;
+    DB lookTimeDB_old;
 
-    int error = KISSDB_open( &lookTimeDB_old, 
+    int error = DB_open( &lookTimeDB_old, 
                              lookTimeDBName, 
                              KISSDB_OPEN_MODE_RWCREAT,
                              80000,
@@ -1539,7 +1567,7 @@ void initMap() {
         AppLog::info( "\nCleaning stale look times from map..." );
 
 
-        static KISSDB lookTimeDB_temp;
+        static DB lookTimeDB_temp;
         
         const char *lookTimeDBName_temp = "lookTime_temp.db";
 
@@ -1550,7 +1578,7 @@ void initMap() {
             }
         
 
-        error = KISSDB_open( &lookTimeDB_temp, 
+        error = DB_open( &lookTimeDB_temp, 
                              lookTimeDBName_temp, 
                              KISSDB_OPEN_MODE_RWCREAT,
                              80000,
@@ -1565,10 +1593,10 @@ void initMap() {
             return;
             }
         
-        KISSDB_Iterator dbi;
+        DB_Iterator dbi;
         
         
-        KISSDB_Iterator_init( &lookTimeDB_old, &dbi );
+        DB_Iterator_init( &lookTimeDB_old, &dbi );
         
     
         timeSec_t curTime = MAP_TIMESEC;
@@ -1579,7 +1607,7 @@ void initMap() {
         int total = 0;
         int stale = 0;
 
-        while( KISSDB_Iterator_next( &dbi, key, value ) > 0 ) {
+        while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
             total++;
 
             timeSec_t t = valueToTime( value );
@@ -1592,7 +1620,7 @@ void initMap() {
             else {
                 // non-stale
                 // insert it in temp
-                KISSDB_put( &lookTimeDB_temp, key, value );
+                DB_put( &lookTimeDB_temp, key, value );
                 }
             }
         
@@ -1604,19 +1632,19 @@ void initMap() {
             lookTimeDBEmpty = true;
             }
 
-        KISSDB_close( &lookTimeDB_temp );
-        KISSDB_close( &lookTimeDB_old );
+        DB_close( &lookTimeDB_temp );
+        DB_close( &lookTimeDB_old );
 
         tempDBFile.copy( &lookTimeDBFile );
         tempDBFile.remove();
         }
     else {
-        KISSDB_close( &lookTimeDB_old );
+        DB_close( &lookTimeDB_old );
         }
     
 
 
-    error = KISSDB_open( &lookTimeDB, 
+    error = DB_open( &lookTimeDB, 
                          lookTimeDBName, 
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
@@ -1637,7 +1665,7 @@ void initMap() {
     // note that the various decay ETA slots in map.db 
     // are define but unused, because we store times separately
     // in mapTime.db
-    error = KISSDB_open_timeShrunk( &db, 
+    error = DB_open_timeShrunk( &db, 
                          "map.db", 
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
@@ -1681,7 +1709,7 @@ void initMap() {
     // this DB uses the same slot numbers as the map.db
     // however, only times are stored here, because they require 8 bytes
     // so, slot 0 and 2 are never used, for example
-    error = KISSDB_open_timeShrunk( &timeDB, 
+    error = DB_open_timeShrunk( &timeDB, 
                          "mapTime.db", 
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
@@ -1719,7 +1747,7 @@ void initMap() {
 
 
 
-    error = KISSDB_open_timeShrunk( &biomeDB, 
+    error = DB_open_timeShrunk( &biomeDB, 
                          "biome.db", 
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
@@ -1742,7 +1770,7 @@ void initMap() {
 
 
 
-    error = KISSDB_open_timeShrunk( &floorDB, 
+    error = DB_open_timeShrunk( &floorDB, 
                          "floor.db", 
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
@@ -1759,7 +1787,7 @@ void initMap() {
 
 
 
-    error = KISSDB_open_timeShrunk( &floorTimeDB, 
+    error = DB_open_timeShrunk( &floorTimeDB, 
                          "floorTime.db", 
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
@@ -1781,7 +1809,7 @@ void initMap() {
 
 
 
-    error = KISSDB_open( &eveDB, 
+    error = DB_open( &eveDB, 
                          "eve.db", 
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
@@ -1880,10 +1908,10 @@ void initMap() {
     AppLog::info( "\nCleaning map of objects that have been removed..." );
     
 
-    KISSDB_Iterator dbi;
+    DB_Iterator dbi;
     
     
-    KISSDB_Iterator_init( &db, &dbi );
+    DB_Iterator_init( &db, &dbi );
     
     unsigned char key[16];
     
@@ -1904,7 +1932,7 @@ void initMap() {
     int totalNumContained = 0;
     int numContainedCleared = 0;
     
-    while( KISSDB_Iterator_next( &dbi, key, value ) > 0 ) {
+    while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
         
         int s = valueToInt( &( key[8] ) );
         int b = valueToInt( &( key[12] ) );
@@ -2230,7 +2258,7 @@ void freeMap() {
 
     
     if( lookTimeDBOpen ) {
-        KISSDB_close( &lookTimeDB );
+        DB_close( &lookTimeDB );
         lookTimeDBOpen = false;
         }
 
@@ -2245,10 +2273,10 @@ void freeMap() {
         // and their IDs may change in the future, so they're
         // not safe to store in the map between server runs.
         
-        KISSDB_Iterator dbi;
+        DB_Iterator dbi;
     
     
-        KISSDB_Iterator_init( &db, &dbi );
+        DB_Iterator_init( &db, &dbi );
     
         unsigned char key[16];
     
@@ -2268,7 +2296,7 @@ void freeMap() {
         SimpleVector<int> bContToCheck;
         
         
-        while( KISSDB_Iterator_next( &dbi, key, value ) > 0 ) {
+        while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
         
             int s = valueToInt( &( key[8] ) );
             int b = valueToInt( &( key[12] ) );
@@ -2361,29 +2389,29 @@ void freeMap() {
 
         printf( "\n" );
         
-        KISSDB_close( &db );
+        DB_close( &db );
         }
 
     if( timeDBOpen ) {
-        KISSDB_close( &timeDB );
+        DB_close( &timeDB );
         }
 
     if( biomeDBOpen ) {
-        KISSDB_close( &biomeDB );
+        DB_close( &biomeDB );
         }
 
 
     if( floorDBOpen ) {
-        KISSDB_close( &floorDB );
+        DB_close( &floorDB );
         }
 
     if( floorTimeDBOpen ) {
-        KISSDB_close( &floorTimeDB );
+        DB_close( &floorTimeDB );
         }
 
 
     if( eveDBOpen ) {
-        KISSDB_close( &eveDB );
+        DB_close( &eveDB );
         }
     
     writeEveRadius();
@@ -2453,7 +2481,7 @@ static int dbGet( int inX, int inY, int inSlot, int inSubCont = 0 ) {
     // look for changes to default in database
     intQuadToKey( inX, inY, inSlot, inSubCont, key );
     
-    int result = KISSDB_get( &db, key, value );
+    int result = DB_get( &db, key, value );
     
     
     
@@ -2483,7 +2511,7 @@ static timeSec_t dbTimeGet( int inX, int inY, int inSlot, int inSubCont = 0 ) {
     // look for changes to default in database
     intQuadToKey( inX, inY, inSlot, inSubCont, key );
     
-    int result = KISSDB_get( &timeDB, key, value );
+    int result = DB_get( &timeDB, key, value );
     
     if( result == 0 ) {
         // found
@@ -2503,7 +2531,7 @@ static int dbFloorGet( int inX, int inY ) {
     // look for changes to default in database
     intPairToKey( inX, inY, key );
     
-    int result = KISSDB_get( &floorDB, key, value );
+    int result = DB_get( &floorDB, key, value );
     
     if( result == 0 ) {
         // found
@@ -2523,7 +2551,7 @@ static timeSec_t dbFloorTimeGet( int inX, int inY ) {
 
     intPairToKey( inX, inY, key );
     
-    int result = KISSDB_get( &floorTimeDB, key, value );
+    int result = DB_get( &floorTimeDB, key, value );
     
     if( result == 0 ) {
         // found
@@ -2543,7 +2571,7 @@ timeSec_t dbLookTimeGet( int inX, int inY ) {
 
     intPairToKey( inX, inY, key );
     
-    int result = KISSDB_get( &lookTimeDB, key, value );
+    int result = DB_get( &lookTimeDB, key, value );
     
     if( result == 0 ) {
         // found
@@ -2605,7 +2633,7 @@ static void dbPut( int inX, int inY, int inSlot, int inValue,
     intToValue( inValue, value );
             
     
-    KISSDB_put( &db, key, value );
+    DB_put( &db, key, value );
 
     dbPutCached( inX, inY, inSlot, inSubCont, inValue );
     dbLookTimePut( inX, inY, MAP_TIMESEC );
@@ -2627,7 +2655,7 @@ static void dbTimePut( int inX, int inY, int inSlot, timeSec_t inTime,
     timeToValue( inTime, value );
             
     
-    KISSDB_put( &timeDB, key, value );
+    DB_put( &timeDB, key, value );
     }
 
 
@@ -2664,7 +2692,7 @@ static void dbFloorPut( int inX, int inY, int inValue ) {
     intToValue( inValue, value );
             
     
-    KISSDB_put( &floorDB, key, value );
+    DB_put( &floorDB, key, value );
     dbLookTimePut( inX, inY, MAP_TIMESEC );
     }
 
@@ -2681,7 +2709,7 @@ static void dbFloorTimePut( int inX, int inY, timeSec_t inTime ) {
     timeToValue( inTime, value );
             
     
-    KISSDB_put( &floorTimeDB, key, value );
+    DB_put( &floorTimeDB, key, value );
     }
 
 
@@ -2697,7 +2725,7 @@ void dbLookTimePut( int inX, int inY, timeSec_t inTime ) {
     timeToValue( inTime, value );
             
     
-    KISSDB_put( &lookTimeDB, key, value );
+    DB_put( &lookTimeDB, key, value );
     }
 
 
