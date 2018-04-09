@@ -157,3 +157,28 @@ real	1m26.754s
 user	0m19.992s
 sys	1m6.712s
 -rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 24160180 Apr  9 13:43 test.db
+
+
+
+
+
+
+StackDB:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took 0.008000 sec
+Inserted 1000000
+Inserts used 0 bytes, took 11.385000 sec
+Random lookup for 20 batchs of 100000 (2000000/2000000 hits)
+Random look used 0 bytes, took 18.516000 sec
+Checksum = 1994291180
+Random lookup for non-existing 20 batchs of 100000 (0/2000000 hits)
+Random look/miss used 0 bytes, took 57.458000 sec
+Iterated 1000000
+Iterating used 0 bytes, took 2.030000 sec
+
+real	1m29.400s
+user	0m19.100s
+sys	1m10.260s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 20640012 Apr  9 13:46 test.db

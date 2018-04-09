@@ -9,6 +9,7 @@
 
 #include "minorGems/util/random/CustomRandomSource.h"
 
+/*
 #define DB KISSDB
 #define DB_open KISSDB_open
 #define DB_close KISSDB_close
@@ -17,6 +18,17 @@
 #define DB_Iterator  KISSDB_Iterator
 #define DB_Iterator_init  KISSDB_Iterator_init
 #define DB_Iterator_next  KISSDB_Iterator_next
+*/
+
+
+#define DB STACKDB
+#define DB_open STACKDB_open
+#define DB_close STACKDB_close
+#define DB_get STACKDB_get
+#define DB_put STACKDB_put
+#define DB_Iterator  STACKDB_Iterator
+#define DB_Iterator_init  STACKDB_Iterator_init
+#define DB_Iterator_next  STACKDB_Iterator_next
 
 
 
