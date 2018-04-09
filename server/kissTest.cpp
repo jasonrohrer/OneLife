@@ -1,12 +1,24 @@
 
 
 #include "kissdb.h"
+#include "stackdb.h"
 #include "dbCommon.h"
 #include "minorGems/system/Time.h"
 
 #include <malloc.h>
 
 #include "minorGems/util/random/CustomRandomSource.h"
+
+#define DB KISSDB
+#define DB_open KISSDB_open
+#define DB_close KISSDB_close
+#define DB_get KISSDB_get
+#define DB_put KISSDB_put
+#define DB_Iterator  KISSDB_Iterator
+#define DB_Iterator_init  KISSDB_Iterator_init
+#define DB_Iterator_next  KISSDB_Iterator_next
+
+
 
 CustomRandomSource randSource( 0 );
 
@@ -43,16 +55,21 @@ int main() {
     
     double startTime = Time::getCurrentTime();
     
-    KISSDB db;
-    int error = KISSDB_open( &db, 
+    DB db;
+
+    int tableSize = 80000;
+    
+    int error = DB_open( &db, 
                              "test.db", 
                              KISSDB_OPEN_MODE_RWCREAT,
-                             80000,
+                             tableSize,
                              8, // two ints,  x_center, y_center
                              4 // one int
                              );
 
-    printf( "Opening DB used %d bytes, took %f sec\n", getMallocDelta(),
+    printf( "Opening DB (table size %d) used %d bytes, took %f sec\n", 
+            tableSize,
+            getMallocDelta(),
             Time::getCurrentTime() - startTime );
 
     if( error ) {
@@ -79,7 +96,7 @@ int main() {
             
             //printf( "Inserting %d,%d\n", x, y );
             
-            KISSDB_put( &db, key, value );
+            DB_put( &db, key, value );
             }
         }
     printf( "Inserted %d\n", insertCount );
@@ -104,7 +121,7 @@ int main() {
             int x = runSource.getRandomBoundedInt( 0, num-1 );
             int y = runSource.getRandomBoundedInt( 0, num-1 );
             intPairToKey( x, y, key );
-            int result = KISSDB_get( &db, key, value );
+            int result = DB_get( &db, key, value );
             numLooks ++;
             if( result == 0 ) {
                 int v = valueToInt( value );
@@ -139,8 +156,8 @@ int main() {
             int x = runSource.getRandomBoundedInt( num + 10, num + num );
             int y = runSource.getRandomBoundedInt( 0, num-1 );
             intPairToKey( x, y, key );
-            KISSDB_get( &db, key, value );
-            int result = KISSDB_get( &db, key, value );
+            DB_get( &db, key, value );
+            int result = DB_get( &db, key, value );
             numLooks ++;
             if( result == 0 ) {
                 numHits++;
@@ -158,15 +175,15 @@ int main() {
     
 
     
-    KISSDB_Iterator dbi;
+    DB_Iterator dbi;
 
     startTime = Time::getCurrentTime();
 
-    KISSDB_Iterator_init( &db, &dbi );
+    DB_Iterator_init( &db, &dbi );
     
     
     int count = 0;
-    while( KISSDB_Iterator_next( &dbi, key, value ) > 0 ) {
+    while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
         count++;
         }
     printf( "Iterated %d\n", count );
@@ -175,7 +192,7 @@ int main() {
             Time::getCurrentTime() - startTime );
 
 
-    KISSDB_close( &db );
+    DB_close( &db );
 
     return 0;
     }

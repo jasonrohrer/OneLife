@@ -131,3 +131,29 @@ real	1m45.631s
 user	0m30.887s
 sys	1m14.363s
 -rw-rw-r-- 1 jcr15 jcr15 24160180 Apr  9 18:10 test.db
+
+
+
+
+
+Local compare:
+
+KissDB:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took 0.000000 sec
+Inserted 1000000
+Inserts used 12161024 bytes, took 12.390000 sec
+Random lookup for 20 batchs of 100000 (2000000/2000000 hits)
+Random look used 0 bytes, took 20.542000 sec
+Checksum = 1994291180
+Random lookup for non-existing 20 batchs of 100000 (0/2000000 hits)
+Random look/miss used 0 bytes, took 52.701000 sec
+Iterated 1000000
+Iterating used 0 bytes, took 1.118000 sec
+
+real	1m26.754s
+user	0m19.992s
+sys	1m6.712s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 24160180 Apr  9 13:43 test.db

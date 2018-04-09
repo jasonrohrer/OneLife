@@ -1,5 +1,5 @@
 rm test.db 
-g++ -I../.. -o kissTest kissTest.cpp kissdb.cpp dbCommon.cpp ../../minorGems/system/unix/TimeUnix.cpp
+g++ -I../.. -o kissTest kissTest.cpp kissdb.cpp stackdb.cpp dbCommon.cpp ../../minorGems/system/unix/TimeUnix.cpp
 
 time ./kissTest
 
