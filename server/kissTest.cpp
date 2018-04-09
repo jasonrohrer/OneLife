@@ -95,6 +95,8 @@ int main() {
     int numLooks = 0;
     int numHits = 0;
     
+    unsigned int checksum = 0;
+
     for( int r=0; r<numRuns; r++ ) {
         CustomRandomSource runSource( 0 );
 
@@ -105,6 +107,8 @@ int main() {
             int result = KISSDB_get( &db, key, value );
             numLooks ++;
             if( result == 0 ) {
+                int v = valueToInt( value );
+                checksum += v;
                 numHits++;
                 }
             }
@@ -117,6 +121,8 @@ int main() {
     printf( "Random look used %d bytes, took %f sec\n", getMallocDelta(),
             Time::getCurrentTime() - startTime );
 
+    printf( "Checksum = %u\n", checksum );
+    
 
 
 
