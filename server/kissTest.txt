@@ -159,6 +159,25 @@ sys	1m6.712s
 -rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 24160180 Apr  9 13:43 test.db
 
 
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 640000) used 0 bytes, took -0.000000 sec
+Inserted 1000000
+Inserts used 20484096 bytes, took 6.930000 sec
+Random lookup for 20 batchs of 100000 (2000000/2000000 hits)
+Random look used 0 bytes, took 4.908000 sec
+Checksum = 1994291180
+Random lookup for non-existing 20 batchs of 100000 (0/2000000 hits)
+Random look/miss used 0 bytes, took 6.153000 sec
+Iterated 1000000
+Iterating used 0 bytes, took 1.372000 sec
+
+real	0m19.366s
+user	0m4.952s
+sys	0m14.396s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 32480060 Apr  9 13:54 test.db
+
+
 
 
 
@@ -182,3 +201,23 @@ real	1m29.400s
 user	0m19.100s
 sys	1m10.260s
 -rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 20640012 Apr  9 13:46 test.db
+
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 640000) used 0 bytes, took 0.036000 sec
+Inserted 1000000
+Inserts used 0 bytes, took 7.316000 sec
+Random lookup for 20 batchs of 100000 (2000000/2000000 hits)
+Random look used 0 bytes, took 9.238000 sec
+Checksum = 1994291180
+Random lookup for non-existing 20 batchs of 100000 (0/2000000 hits)
+Random look/miss used 0 bytes, took 9.964000 sec
+Iterated 1000000
+Iterating used 0 bytes, took 2.179000 sec
+
+real	0m28.736s
+user	0m6.240s
+sys	0m21.680s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 25120012 Apr  9 13:52 test.db
+
