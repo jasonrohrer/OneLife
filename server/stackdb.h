@@ -28,6 +28,8 @@ typedef struct {
  *
  * @param db Database struct
  * @param path Path to file
+ * @param inMode is ignored, and always opened in RW-create mode
+ *   (left for compatibility with KISSDB api)
  * @param hash_table_size Size of hash table in 64-bit entries (must be >0)
  * @param key_size Size of keys in bytes
  * @param value_size Size of values in bytes
@@ -36,6 +38,7 @@ typedef struct {
 int STACKDB_open(
     STACKDB *inDB,
     const char *inPath,
+    int inMode,
     unsigned int inHashTableSize,
     unsigned int inKeySize,
     unsigned int inValueSize );

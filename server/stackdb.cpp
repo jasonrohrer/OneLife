@@ -30,6 +30,7 @@ static uint64_t STACKDB_hash( const void *inB, unsigned int inLen ) {
 int STACKDB_open(
     STACKDB *inDB,
     const char *inPath,
+    int inMode,
     unsigned int inHashTableSize,
     unsigned int inKeySize,
     unsigned int inValueSize ) {
