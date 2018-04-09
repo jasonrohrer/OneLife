@@ -107,3 +107,27 @@ real	0m10.852s
 user	0m2.372s
 sys	0m7.880s
 -rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 32480060 Apr  7 15:46 test.db
+
+
+
+
+On linode:
+
+80,000 table size:
+
+Local epoch time  = 0
+GMT epoch time  = 0
+Opening DB used 0 bytes, took 0.000000 sec
+Inserted 1000000
+Inserts used 12161024 bytes, took 16.013000 sec
+Random lookup for 20 batchs of 100000 (2000000/2000000 hits)
+Random look used 0 bytes, took 22.512000 sec
+Random lookup for non-existing 20 batchs of 100000 (0/2000000 hits)
+Random look/miss used 0 bytes, took 65.777000 sec
+Iterated 1000000
+Iterating used 0 bytes, took 1.326000 sec
+
+real	1m45.631s
+user	0m30.887s
+sys	1m14.363s
+-rw-rw-r-- 1 jcr15 jcr15 24160180 Apr  9 18:10 test.db
