@@ -394,5 +394,49 @@ sys	0m30.596s
 
 What about even more table loading?
 
+1.9M entries:
 
 
+Kiss:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took -0.000000 sec
+Inserted 1960000
+Inserts used 18563072 bytes, took 35.082000 sec
+Random lookup for 500 batchs of 3000 (1500000/1500000 hits)
+Random look used 0 bytes, took 28.584000 sec
+Checksum = 2102759000
+Last-inserted lookup for 500 batchs of 2500 (1250000/1250000 hits)
+Last-inserted lookup used 0 bytes, took 26.862000 sec
+Checksum = 3436250000
+Iterated 1960000
+Iterating used 0 bytes, took 2.165000 sec
+
+real	1m32.697s
+user	0m24.172s
+sys	1m8.484s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 42080260 Apr  9 15:05 test.db
+
+
+
+Stack:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took 0.007000 sec
+Inserted 1960000
+Inserts used 0 bytes, took 33.557000 sec
+Random lookup for 500 batchs of 3000 (1500000/1500000 hits)
+Random look used 0 bytes, took 4.359000 sec
+Checksum = 2102759000
+Last-inserted lookup for 500 batchs of 2500 (1250000/1250000 hits)
+Last-inserted lookup used 0 bytes, took 2.260000 sec
+Checksum = 3436250000
+Iterated 1960000
+Iterating used 0 bytes, took 4.235000 sec
+
+real	0m44.421s
+user	0m10.728s
+sys	0m33.688s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 39840012 Apr  9 15:11 test.db
