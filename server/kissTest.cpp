@@ -47,7 +47,7 @@ int main() {
     int error = KISSDB_open( &db, 
                              "test.db", 
                              KISSDB_OPEN_MODE_RWCREAT,
-                             640000,
+                             80000,
                              8, // two ints,  x_center, y_center
                              4 // one int
                              );
@@ -90,17 +90,65 @@ int main() {
 
     startTime = Time::getCurrentTime();
 
-    for( int i=0; i<insertCount; i++ ) {
-        int x = randSource.getRandomBoundedInt( 0, num );
-        int y = randSource.getRandomBoundedInt( 0, num );
-        intPairToKey( x, y, key );
-        KISSDB_get( &db, key, value );
-        }
+    int lookupCount = insertCount / 10;
+    int numRuns = 20;
+    int numLooks = 0;
+    int numHits = 0;
+    
+    for( int r=0; r<numRuns; r++ ) {
+        CustomRandomSource runSource( 0 );
 
-    printf( "Random lookup for %d\n", insertCount );
+        for( int i=0; i<lookupCount; i++ ) {
+            int x = runSource.getRandomBoundedInt( 0, num-1 );
+            int y = runSource.getRandomBoundedInt( 0, num-1 );
+            intPairToKey( x, y, key );
+            int result = KISSDB_get( &db, key, value );
+            numLooks ++;
+            if( result == 0 ) {
+                numHits++;
+                }
+            }
+        }
+    
+
+    printf( "Random lookup for %d batchs of %d (%d/%d hits)\n", 
+            numRuns, lookupCount, numHits, numLooks );
 
     printf( "Random look used %d bytes, took %f sec\n", getMallocDelta(),
             Time::getCurrentTime() - startTime );
+
+
+
+
+
+    startTime = Time::getCurrentTime();
+    numLooks = 0;
+    numHits = 0;
+
+    for( int r=0; r<numRuns; r++ ) {
+        CustomRandomSource runSource( 0 );
+
+        for( int i=0; i<lookupCount; i++ ) {
+            // these don't exist
+            int x = runSource.getRandomBoundedInt( num + 10, num + num );
+            int y = runSource.getRandomBoundedInt( 0, num-1 );
+            intPairToKey( x, y, key );
+            KISSDB_get( &db, key, value );
+            int result = KISSDB_get( &db, key, value );
+            numLooks ++;
+            if( result == 0 ) {
+                numHits++;
+                }
+            }
+        }
+    
+
+    printf( "Random lookup for non-existing %d batchs of %d (%d/%d hits)\n", 
+            numRuns, lookupCount, numHits, numLooks );
+
+    printf( "Random look/miss used %d bytes, took %f sec\n", getMallocDelta(),
+            Time::getCurrentTime() - startTime );
+
     
 
     
