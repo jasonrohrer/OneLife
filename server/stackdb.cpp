@@ -264,8 +264,6 @@ static int findValue( STACKDB *inDB, const void *inKey,
     uint64_t thisRecordStart64 = 0;
     uint64_t nextRecodrStart64 = 0;
     
-    uint64_t thisRecordValueLoc64 = 0;
-    
 
     char keyFound = false;
 
