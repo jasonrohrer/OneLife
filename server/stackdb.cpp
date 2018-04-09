@@ -37,7 +37,12 @@ int STACKDB_open(
 
     inDB->keyBuffer = NULL;
     
-    inDB->file = fopen( inPath, "w+b" );
+    inDB->file = fopen( inPath, "r+b" );
+    
+    if( inDB->file == NULL ) {
+        // doesn't exist yet
+        inDB->file = fopen( inPath, "w+b" );
+        }
     
     if( inDB->file == NULL ) {
         return 1;

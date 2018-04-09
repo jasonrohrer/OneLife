@@ -36,6 +36,7 @@ int main() {
     unsigned char key[8];
     unsigned char val[4];
     
+    //if( false )
     for( int i=0; i<100; i++ ) {
         
         intPairToKey( i, i, key );
