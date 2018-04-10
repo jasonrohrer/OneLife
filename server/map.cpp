@@ -27,6 +27,8 @@
 #define DB_close KISSDB_close
 #define DB_get KISSDB_get
 #define DB_put KISSDB_put
+// no distinction between insert and replace in KISSS
+#define DB_put_new KISSDB_put
 #define DB_Iterator  KISSDB_Iterator
 #define DB_Iterator_init  KISSDB_Iterator_init
 #define DB_Iterator_next  KISSDB_Iterator_next
@@ -38,6 +40,8 @@
 #define DB_close STACKDB_close
 #define DB_get STACKDB_get
 #define DB_put STACKDB_put
+// stack DB has faster insert
+#define DB_put_new STACKDB_put_new
 #define DB_Iterator  STACKDB_Iterator
 #define DB_Iterator_init  STACKDB_Iterator_init
 #define DB_Iterator_next  STACKDB_Iterator_next
@@ -1436,7 +1440,7 @@ int DB_open_timeShrunk(
         if( dbLookTimeGet( x, y ) > 0 ) {
             // keep
             // insert it in temp
-            DB_put( &tempDB, key, value );
+            DB_put_new( &tempDB, key, value );
             }
         else {
             // stale
@@ -1620,7 +1624,7 @@ void initMap() {
             else {
                 // non-stale
                 // insert it in temp
-                DB_put( &lookTimeDB_temp, key, value );
+                DB_put_new( &lookTimeDB_temp, key, value );
                 }
             }
         
@@ -1812,7 +1816,10 @@ void initMap() {
     error = DB_open( &eveDB, 
                          "eve.db", 
                          KISSDB_OPEN_MODE_RWCREAT,
-                         80000,
+                         // this can be a lot smaller than other DBs
+                         // it's not performance-critical, and the keys are
+                         // much longer, so stackdb will waste disk space
+                         5000,
                          50, // first 50 characters of email address
                              // append spaces to the end if needed 
                          12 // three ints,  x_center, y_center, radius

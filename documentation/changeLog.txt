@@ -57,6 +57,11 @@ Server Fixes:
   at startup, and we make up for it with the dramtically faster insertion
   performance of the stack.
 
+--Server now makes use of high-performance STACKDB_put_new when rebuilding
+  databases during the map cull after restart.  Shrank table in eve location
+  database to save disk space given long email key.
+
+
 
 
 
