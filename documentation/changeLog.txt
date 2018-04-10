@@ -10,6 +10,13 @@ Version 73    ???
 --Fixed editor to NOT apply < 1.0 speed multiplier on ground animations, to
   match client behavior.  Thanks TyrantNomad.
 
+--Fixed update process to NOT rewrite a lingering .bak file that failed to be
+  deleted.  On Windows, we must move our EXE out of the way, but on a
+  multi-part update, this results in trying to move it to the .bak file
+  multiple times, with later moves failing.
+
+--Fixed postUpdate process to remove any lingering .bak files.
+
 
 
 Server Fixes:

@@ -419,7 +419,11 @@ void freeDrawString() {
 void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                       const char *inCustomRecordedGameData,
                       char inPlayingBack ) {
-    
+
+    // it's always safe to call this, just in case we're launching post-update
+    postUpdate();
+        
+
     instructionsSprite = loadWhiteSprite( "instructions.tga" );
     
     
