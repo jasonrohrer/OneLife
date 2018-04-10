@@ -239,7 +239,8 @@ inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
 //          0 if found
 //          1 if not found
 static int findValue( STACKDB *inDB, const void *inKey, 
-                      char inRecordMiss, void *outValue ) {
+                      char inRecordMiss, void *outValue,
+                      char inNewForSure ) {
 
     uint64_t hash = 
         STACKDB_hash( inKey, inDB->keySize )
@@ -248,6 +249,13 @@ static int findValue( STACKDB *inDB, const void *inKey,
   
     inDB->lastHashBinLoc = 
         STACKDB_HEADER_SIZE + hash * inDB->hashBinSize;
+
+
+    if( inNewForSure ) {
+        inDB->lastWasQuickMiss = false;
+        return 1;
+        }
+    
 
     fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
 
@@ -409,7 +417,7 @@ static int findValue( STACKDB *inDB, const void *inKey,
 
 
 int STACKDB_get( STACKDB *inDB, const void *inKey, void *outValue ) {
-    int result = findValue( inDB, inKey, true, outValue );
+    int result = findValue( inDB, inKey, true, outValue, false );
 
     return result;
     }
@@ -418,10 +426,12 @@ int STACKDB_get( STACKDB *inDB, const void *inKey, void *outValue ) {
 
 
 
-int STACKDB_put( STACKDB *inDB, const void *inKey, const void *inValue ) {
+static int STACKDB_put_internal( STACKDB *inDB, 
+                                 const void *inKey, const void *inValue,
+                                 char inNew ) {
     // don't spend time recording miss
     // we're inserting, so miss will be overwritten anyway
-    int result = findValue( inDB, inKey, false, NULL );
+    int result = findValue( inDB, inKey, false, NULL, inNew );
     
     int numWritten;
 
@@ -509,6 +519,20 @@ int STACKDB_put( STACKDB *inDB, const void *inKey, const void *inValue ) {
 
     return 0;
     }
+
+
+
+
+int STACKDB_put( STACKDB *inDB, const void *inKey, const void *inValue ) {
+    return STACKDB_put_internal( inDB, inKey, inValue, false );
+    }
+
+
+
+int STACKDB_put_new( STACKDB *inDB, const void *inKey, const void *inValue ) {
+    return STACKDB_put_internal( inDB, inKey, inValue, true );
+    }
+
 
 
 

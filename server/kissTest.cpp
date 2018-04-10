@@ -17,20 +17,25 @@
 #define DB_close KISSDB_close
 #define DB_get KISSDB_get
 #define DB_put KISSDB_put
+// kiss makes no distiction between new put and regular put
+#define DB_put_new KISSDB_put
 #define DB_Iterator  KISSDB_Iterator
 #define DB_Iterator_init  KISSDB_Iterator_init
 #define DB_Iterator_next  KISSDB_Iterator_next
 */
 
+/**/
 #define DB STACKDB
 #define DB_open STACKDB_open
 #define DB_close STACKDB_close
 #define DB_get STACKDB_get
 #define DB_put STACKDB_put
+// stack db has a faster put_new
+#define DB_put_new STACKDB_put_new
 #define DB_Iterator  STACKDB_Iterator
 #define DB_Iterator_init  STACKDB_Iterator_init
 #define DB_Iterator_next  STACKDB_Iterator_next
-
+/**/
 
 CustomRandomSource randSource( 0 );
 
@@ -108,7 +113,7 @@ int main() {
             
             //printf( "Inserting %d,%d\n", x, y );
             
-            DB_put( &db, key, value );
+            DB_put_new( &db, key, value );
             }
         }
     printf( "Inserted %d\n", insertCount );

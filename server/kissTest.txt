@@ -703,3 +703,70 @@ real	0m52.725s
 user	0m11.928s
 sys	0m40.596s
 -rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 41327912 Apr 10 10:56 test.db
+
+
+
+
+
+Realized that in some cases, like db-remake, we are putting nothing but new,
+never-seen, never-missed keys into the DB.
+
+Stack DB can take advantage of this by sticking them at the top of the 
+stack without checking.
+
+added a put_new function for this purpose.
+
+
+
+Kiss:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took 0.001000 sec
+Inserted 1999396
+Inserts used 19202048 bytes, took 35.306000 sec
+Random lookup for 500 batchs of 3000 (1500000/1500000 hits)
+Random look used 0 bytes, took 28.968000 sec
+Checksum = 2123813000
+Last-inserted lookup for 500 batchs of 2500 (1250000/1250000 hits)
+Last-inserted lookup used 0 bytes, took 27.841000 sec
+Checksum = 3471250000
+Random lookup for non-existing 500 batchs of 3000 (0/1500000 hits)
+Random look/miss used 0 bytes, took 56.124000 sec
+Inserts for previously non-existing 500 batchs of 3000
+Inserts after miss used 638976 bytes, took 63.583000 sec
+Iterated 2002395, checksum 2833656880
+Iterating used 0 bytes, took 2.195000 sec
+
+real	3m34.022s
+user	0m50.672s
+sys	2m43.156s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 43869016 Apr 10 11:50 test.db
+
+
+
+
+Stack:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took 0.010000 sec
+Inserted 1999396
+Inserts used 0 bytes, took 11.771000 sec
+Random lookup for 500 batchs of 3000 (1500000/1500000 hits)
+Random look used 0 bytes, took 4.607000 sec
+Checksum = 2123813000
+Last-inserted lookup for 500 batchs of 2500 (1250000/1250000 hits)
+Last-inserted lookup used 0 bytes, took 2.275000 sec
+Checksum = 3471250000
+Random lookup for non-existing 500 batchs of 3000 (0/1500000 hits)
+Random look/miss used 0 bytes, took 3.802000 sec
+Inserts for previously non-existing 500 batchs of 3000
+Inserts after miss used 0 bytes, took 5.393000 sec
+Iterated 2002395, checksum 2833656880
+Iterating used 0 bytes, took 2.974000 sec
+
+real	0m30.835s
+user	0m7.104s
+sys	0m23.696s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 41327912 Apr 10 11:55 test.db

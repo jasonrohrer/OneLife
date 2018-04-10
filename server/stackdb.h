@@ -79,6 +79,16 @@ int STACKDB_get( STACKDB *inDB, const void *inKey, void *outValue );
  */
 int STACKDB_put( STACKDB *inDB, const void *inKey, const void *inValue );
 
+
+
+// version of put where caller guarantees that inKey does not exist
+// in database yet (nor has been gotten from DB as a miss previously)
+//
+// Insertion operation is much faster if we don't need to find an existing
+// record for inKey.
+int STACKDB_put_new( STACKDB *inDB, const void *inKey, const void *inValue );
+
+
 /**
  * Cursor used for iterating over all entries in database
  */
