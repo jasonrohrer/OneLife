@@ -56,7 +56,7 @@ int lastMallocCheck = 0;
 int getMallocDelta() {
     struct mallinfo m = mallinfo();
     
-    int current = m.hblkhd + m.usmblks;
+    int current = m.hblkhd + m.uordblks;
 
     int d = current - lastMallocCheck;
     
