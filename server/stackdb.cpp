@@ -22,8 +22,12 @@ static uint64_t STACKDB_hash( const void *inB, unsigned int inLen ) {
     }
 
 
+
+const char *magicString = "Sdb";
+
+// Sdb magic characters plus
 // three 32-bit ints
-#define STACKDB_HEADER_SIZE 12
+#define STACKDB_HEADER_SIZE 15
 
 
 
@@ -76,7 +80,19 @@ int STACKDB_open(
     
         fseeko( inDB->file, 0, SEEK_SET );
         
+        
+
         int numWritten;
+        
+        numWritten = fwrite( magicString, strlen( magicString ), 
+                             1, inDB->file );
+        if( numWritten != 1 ) {
+            fclose( inDB->file );
+            inDB->file = NULL;
+            return 1;
+            }
+
+
         uint32_t val32;
 
         val32 = inHashTableSize;
@@ -126,6 +142,28 @@ int STACKDB_open(
         fseeko( inDB->file, 0, SEEK_SET );
         
         int numRead;
+        
+        char magicBuffer[ 4 ];
+        
+        numRead = fread( magicBuffer, 3, 1, inDB->file );
+
+        if( numRead != 1 ) {
+            fclose( inDB->file );
+            inDB->file = NULL;
+            return 1;
+            }
+
+        magicBuffer[3] = '\0';
+        
+        if( strcmp( magicBuffer, magicString ) != 0 ) {
+            printf( "Stackdb magic string '%s' not found at start of  "
+                    "file header\n", magicString );
+            fclose( inDB->file );
+            inDB->file = NULL;
+            return 1;
+            }
+        
+
         uint32_t val32;
 
         numRead = fread( &val32, sizeof(uint32_t), 1, inDB->file );

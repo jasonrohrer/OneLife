@@ -43,9 +43,9 @@ int main( int inNumArgs, char **inArgs ) {
                              0,
                              0 );
     if( error ) {
-        printf( "Failed to open kissdb file %s\n\n",
+        printf( "dbConvert Failed to open kissdb file %s\n",
                 oldFileName );
-        usage();
+        exit( 1 );
         }
     
     int keySize = db.key_size;
@@ -68,9 +68,10 @@ int main( int inNumArgs, char **inArgs ) {
                           keySize,
                           valueSize );
     if( error ) {
-        printf( "Failed to open temp stackdb file %s\n\n", tempFileName );
+        printf( "dbConvert: Failed to open temp stackdb file %s\n", 
+                tempFileName );
         KISSDB_close( &db );
-        usage();
+        exit( 1 );
         }
 
     // insert all keys from old to new
@@ -92,7 +93,7 @@ int main( int inNumArgs, char **inArgs ) {
     STACKDB_close( &dbNew );
         
     if( rename ( tempFileName, oldFileName ) != 0 ) {
-        printf( "Failed to move temp file %s to "
+        printf( "dbConvert: Failed to move temp file %s to "
                 "overwrite old kissdb file %s\n",
                 tempFileName, oldFileName );
         }
