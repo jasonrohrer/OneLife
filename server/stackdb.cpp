@@ -124,7 +124,6 @@ int STACKDB_open(
             }
         
         // now write empty hash table
-        uint64_t val64 = 0;
         int binSize = inDB->hashBinSize;
         memset( inDB->hashBinBuffer, 0, binSize );
 
