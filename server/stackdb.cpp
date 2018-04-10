@@ -35,7 +35,7 @@ int STACKDB_open(
     unsigned int inKeySize,
     unsigned int inValueSize ) {
 
-    inDB->keyBuffer = NULL;
+    inDB->hashBinBuffer = NULL;
     
     inDB->file = fopen( inPath, "r+b" );
     
@@ -51,7 +51,9 @@ int STACKDB_open(
     inDB->keySize = inKeySize;
     inDB->valueSize = inValueSize;
     
-    inDB->keyBuffer = new uint8_t[ inDB->keySize ];
+    inDB->hashBinSize = inDB->keySize + sizeof( uint64_t );
+    
+    inDB->hashBinBuffer = new uint8_t[ inDB->hashBinSize ];
     
 
     if( fseeko( inDB->file, 0, SEEK_END ) ) {
@@ -61,8 +63,10 @@ int STACKDB_open(
         }
 
 
-    unsigned int tableSizeBytes = sizeof( uint64_t ) * inHashTableSize;
+    unsigned int tableSizeBytes = 
+        ( inKeySize + sizeof( uint64_t ) ) * inHashTableSize;
 
+    
     if( ftello( inDB->file ) < STACKDB_HEADER_SIZE ) {
         // file that doesn't even contain the header
 
@@ -105,13 +109,17 @@ int STACKDB_open(
         
         // now write empty hash table
         uint64_t val64 = 0;
-        
-        for( unsigned int i=0; i<inHashTableSize; i++ ) {
-            fwrite( &val64, sizeof(uint64_t), 1, inDB->file );
-            }
+        int binSize = inDB->hashBinSize;
+        memset( inDB->hashBinBuffer, 0, binSize );
 
-        // pos at start of hash table
-        fseeko( inDB->file, STACKDB_HEADER_SIZE, SEEK_SET );
+        for( unsigned int i=0; i<inHashTableSize; i++ ) {
+            numWritten = fwrite( inDB->hashBinBuffer, binSize, 1, inDB->file );
+            if( numWritten != 1 ) {
+                fclose( inDB->file );
+                inDB->file = NULL;
+                return 1;
+                }
+            }
         }
     else {
         // read header
@@ -184,9 +192,6 @@ int STACKDB_open(
             inDB->file = NULL;
             return 1;
             }
-        
-        // pos at start of hash table
-        fseeko( inDB->file, STACKDB_HEADER_SIZE, SEEK_SET );
         }
     
     return 0;
@@ -196,9 +201,9 @@ int STACKDB_open(
 
 
 void STACKDB_close( STACKDB *inDB ) {
-    if( inDB->keyBuffer != NULL ) {
-        delete [] inDB->keyBuffer;
-        inDB->keyBuffer = NULL;
+    if( inDB->hashBinBuffer != NULL ) {
+        delete [] inDB->hashBinBuffer;
+        inDB->hashBinBuffer = NULL;
         }    
 
     if( inDB->file != NULL ) {
@@ -240,20 +245,41 @@ static int findValue( STACKDB *inDB, const void *inKey,
         (uint64_t)inDB->hashTableSize;
   
     inDB->lastHashBinLoc = 
-        STACKDB_HEADER_SIZE + hash * sizeof( uint64_t );
+        STACKDB_HEADER_SIZE + hash * inDB->hashBinSize;
 
     fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
 
+    int numRead = fread( inDB->hashBinBuffer, inDB->keySize, 1, inDB->file );
+    
+    if( numRead != 1 ) {
+        return -1;
+        }
+    
+    if( keyComp( inDB->keySize, inDB->hashBinBuffer, inKey ) ) {
+        // key is marked at top of bin stack as known-missing for this bin
+        return 1;
+        }
+
+
     uint64_t val64 = 0;
     
-    int numRead = fread( &val64, sizeof(uint64_t), 1, inDB->file );
+    numRead = fread( &val64, sizeof(uint64_t), 1, inDB->file );
     
     if( numRead != 1 ) {
         return -1;
         }
     
     if( val64 == 0 ) {
-        // not found
+        // empty bin
+
+        // remeber that this key was a miss
+        fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
+        int numWritten = fwrite( inKey, inDB->keySize, 1, inDB->file );
+        
+        if( numWritten != 1 ) {
+            return -1;
+            }
+
         return 1;
         }
     
@@ -276,12 +302,12 @@ static int findValue( STACKDB *inDB, const void *inKey,
 
         thisRecordStart64 = val64;
         
-        numRead = fread( inDB->keyBuffer, inDB->keySize, 1, inDB->file );
+        numRead = fread( inDB->hashBinBuffer, inDB->keySize, 1, inDB->file );
         if( numRead != 1 ) {
             return -1;
             }
         
-        if( keyComp( inDB->keySize, inDB->keyBuffer, inKey ) ) {
+        if( keyComp( inDB->keySize, inDB->hashBinBuffer, inKey ) ) {
             keyFound = true;
             }
         else {
@@ -303,6 +329,18 @@ static int findValue( STACKDB *inDB, const void *inKey,
 
         if( val64 == 0 && ! keyFound ) {
             // reached end of stack
+            
+            
+            // remeber that this key was a miss
+            // we don't need to walk to the bottom of the stack
+            // next time we look for it
+            fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
+            int numWritten = fwrite( inKey, inDB->keySize, 1, inDB->file );
+        
+            if( numWritten != 1 ) {
+                return -1;
+                }
+
             return 1;
             }
         }
@@ -338,7 +376,8 @@ static int findValue( STACKDB *inDB, const void *inKey,
             }
         
         // add direct pointer to this record in hash table
-        fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
+        // pointer to top of stack comes after recently-missed key in hash bin
+        fseeko( inDB->file, inDB->lastHashBinLoc + inDB->keySize, SEEK_SET );
         numWritten = fwrite( &thisRecordStart64, 
                              sizeof(uint64_t), 1, inDB->file );
         if( numWritten != 1 ) {
@@ -390,9 +429,31 @@ int STACKDB_put( STACKDB *inDB, const void *inKey, const void *inValue ) {
         
         fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
 
+        // clear missed key from top of stack if it is our key
+        // after put, we will no longer miss
+        int numRead = fread( inDB->hashBinBuffer, 
+                             inDB->keySize, 1, inDB->file );
+    
+        if( numRead != 1 ) {
+            return -1;
+            }
+        
+        if( keyComp( inDB->keySize, inDB->hashBinBuffer, inKey ) ) {
+            // matches
+            fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
+            // overwrite with 0
+            memset( inDB->hashBinBuffer, 0, inDB->keySize );
+            int numWritten = fwrite( inDB->hashBinBuffer, inDB->keySize,
+                                     1, inDB->file );
+            if( numWritten != 1 ) {
+                return -1;
+                }
+            }
+
+
         uint64_t val64 = 0;
     
-        int numRead = fread( &val64, sizeof(uint64_t), 1, inDB->file );
+        numRead = fread( &val64, sizeof(uint64_t), 1, inDB->file );
         
         if( numRead != 1 ) {
             return -1;
@@ -423,7 +484,7 @@ int STACKDB_put( STACKDB *inDB, const void *inKey, const void *inValue ) {
 
 
         // now update hash table to point to new head
-        fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
+        fseeko( inDB->file, inDB->lastHashBinLoc + inDB->keySize, SEEK_SET );
 
         numWritten = fwrite( &recordLoc64, sizeof( uint64_t ), 1, inDB->file );
         if( numWritten != 1 ) {
@@ -457,10 +518,14 @@ int STACKDB_Iterator_next( STACKDB_Iterator *inDBi,
     
     int numRead;
 
+    int binSize = inDBi->db->hashBinSize;
+    int keySize = inDBi->db->keySize;
+
     while( !foundFullBin && inDBi->hashBin < inDBi->db->hashTableSize ) {
 
+        // skip right to file pointer (ignore key in bin)
         fseeko( f, 
-                STACKDB_HEADER_SIZE + inDBi->hashBin * sizeof( uint64_t ), 
+                STACKDB_HEADER_SIZE + inDBi->hashBin * binSize + keySize, 
                 SEEK_SET );
         
         numRead = fread( &val64, sizeof( uint64_t ), 1, f );

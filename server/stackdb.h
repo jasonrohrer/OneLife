@@ -11,7 +11,11 @@ typedef struct {
         FILE *file;
         uint64_t lastHashBinLoc;
         uint64_t lastValueLoc;
-        uint8_t *keyBuffer;
+        
+        // each hash bin contains the most recently missed key for
+        // that bin and a 64-bit file location for the top of the stack
+        unsigned int hashBinSize;
+        uint8_t *hashBinBuffer;
     } STACKDB;
 
     

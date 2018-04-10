@@ -11,6 +11,7 @@
 
 
 
+/*
 #define DB KISSDB
 #define DB_open KISSDB_open
 #define DB_close KISSDB_close
@@ -19,9 +20,8 @@
 #define DB_Iterator  KISSDB_Iterator
 #define DB_Iterator_init  KISSDB_Iterator_init
 #define DB_Iterator_next  KISSDB_Iterator_next
+*/
 
-
-/*
 #define DB STACKDB
 #define DB_open STACKDB_open
 #define DB_close STACKDB_close
@@ -30,7 +30,7 @@
 #define DB_Iterator  STACKDB_Iterator
 #define DB_Iterator_init  STACKDB_Iterator_init
 #define DB_Iterator_next  STACKDB_Iterator_next
-*/
+
 
 CustomRandomSource randSource( 0 );
 
@@ -92,7 +92,7 @@ int main() {
 
     startTime = Time::getCurrentTime();
 
-    int num = 1000;
+    int num = 1414;
     
     unsigned char key[8];
     unsigned char value[4];
