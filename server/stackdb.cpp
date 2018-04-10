@@ -568,6 +568,9 @@ int STACKDB_Iterator_next( STACKDB_Iterator *inDBi,
 
     
     fseeko( f, inDBi->nextRecordLoc, SEEK_SET );
+
+    // tried combining these into one fread with memcpy to 
+    // distribute values after fread, but it doesn't change performance.
     
     numRead = fread( outKey, keySize, 1, f );
     if( numRead != 1 ) {
