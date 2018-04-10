@@ -190,7 +190,7 @@ int main() {
     printf( "Checksum = %u\n", checksum );
 
 
-    /*
+    
     startTime = Time::getCurrentTime();
     numLooks = 0;
     numHits = 0;
@@ -218,7 +218,7 @@ int main() {
 
     printf( "Random look/miss used %d bytes, took %f sec\n", getMallocDelta(),
             Time::getCurrentTime() - startTime );
-    */
+    
     
 
     
