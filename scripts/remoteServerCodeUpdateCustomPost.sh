@@ -4,6 +4,5 @@
 
 cd ~/checkout/OneLife/server
 
-rm lookTime.db
-rm biome.db
-
+./makeDBConvert
+./convertDBs.sh
