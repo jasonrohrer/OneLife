@@ -52,7 +52,10 @@ Server Fixes:
   a whole range of operations on test data.  StackDB also uses 6% less disk
   space for this test data, and 13,000x less RAM (plus, RAM usage is constant
   regardless of data size, where kissDB RAM usage grows over time as data
-  grows).
+  grows).  The only place where stackDB is slightly slower is iterating through
+  all database items, but this only happens when rebuilding a database to cull
+  at startup, and we make up for it with the dramtically faster insertion
+  performance of the stack.
 
 
 
