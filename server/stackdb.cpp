@@ -209,7 +209,7 @@ void STACKDB_close( STACKDB *inDB ) {
 
 
 
-char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
+inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
     uint8_t *a = (uint8_t*)inKeyA;
     uint8_t *b = (uint8_t*)inKeyB;
     
@@ -262,7 +262,7 @@ static int findValue( STACKDB *inDB, const void *inKey,
     uint64_t lastRecordPointerLoc64 = 0;
     uint64_t thisRecordPointerLoc64 = 0;
     uint64_t thisRecordStart64 = 0;
-    uint64_t nextRecodrStart64 = 0;
+    uint64_t nextRecordStart64 = 0;
     
 
     char keyFound = false;
@@ -287,10 +287,11 @@ static int findValue( STACKDB *inDB, const void *inKey,
         else {
             stackPos++;
             }
-
         
+        // compute it ourself instead of ftell
+        // thisRecordPointerLoc64 = ftello( inDB->file );
+        thisRecordPointerLoc64 = thisRecordStart64 + inDB->keySize;        
         
-        thisRecordPointerLoc64 = ftello( inDB->file );
 
         numRead = fread( &val64, sizeof(uint64_t), 1, inDB->file );
         
@@ -298,7 +299,7 @@ static int findValue( STACKDB *inDB, const void *inKey,
             return -1;
             }
         
-        nextRecodrStart64 = val64;
+        nextRecordStart64 = val64;
 
         if( val64 == 0 && ! keyFound ) {
             // reached end of stack
@@ -330,7 +331,7 @@ static int findValue( STACKDB *inDB, const void *inKey,
             fseeko( inDB->file, lastRecordPointerLoc64, SEEK_SET );
             
             numWritten = 
-                fwrite( &nextRecodrStart64, sizeof(uint64_t), 1, inDB->file );
+                fwrite( &nextRecordStart64, sizeof(uint64_t), 1, inDB->file );
             if( numWritten != 1 ) {
                 return -1;
                 }
