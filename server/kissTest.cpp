@@ -254,10 +254,13 @@ int main() {
     
     
     int count = 0;
+    checksum = 0;
     while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
         count++;
+        int v = valueToInt( value );
+        checksum += v;
         }
-    printf( "Iterated %d\n", count );
+    printf( "Iterated %d, checksum %u\n", count, checksum );
 
     printf( "Iterating used %d bytes, took %f sec\n", getMallocDelta(),
             Time::getCurrentTime() - startTime );

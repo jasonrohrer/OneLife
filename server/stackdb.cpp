@@ -535,32 +535,33 @@ int STACKDB_Iterator_next( STACKDB_Iterator *inDBi,
     int binSize = inDBi->db->hashBinSize;
     int keySize = inDBi->db->keySize;
 
-    while( !foundFullBin && inDBi->hashBin < inDBi->db->hashTableSize ) {
-
-        // skip right to file pointer (ignore key in bin)
-        fseeko( f, 
-                STACKDB_HEADER_SIZE + inDBi->hashBin * binSize + keySize, 
-                SEEK_SET );
-        
-        numRead = fread( &val64, sizeof( uint64_t ), 1, f );
-        if( numRead != 1 ) {
-            return -1;
-            }
-        if( val64 != 0 ) {
-            foundFullBin = true;
-            }
-        else {
-            inDBi->hashBin ++;
-            }
-        }
-    
-    
-    if( inDBi->hashBin >= inDBi->db->hashTableSize ) {
-        return 0;
-        }
-
 
     if( inDBi->nextRecordLoc == 0 ) {
+        
+        while( !foundFullBin && inDBi->hashBin < inDBi->db->hashTableSize ) {
+
+            // skip right to file pointer (ignore key in bin)
+            fseeko( f, 
+                    STACKDB_HEADER_SIZE + inDBi->hashBin * binSize + keySize, 
+                    SEEK_SET );
+            
+            numRead = fread( &val64, sizeof( uint64_t ), 1, f );
+            if( numRead != 1 ) {
+                return -1;
+                }
+            if( val64 != 0 ) {
+                foundFullBin = true;
+                }
+            else {
+                inDBi->hashBin ++;
+                }
+            }
+    
+    
+        if( inDBi->hashBin >= inDBi->db->hashTableSize ) {
+            return 0;
+            }
+        
         // jump to first record in this hash bin
         inDBi->nextRecordLoc = val64;
         }
@@ -568,7 +569,7 @@ int STACKDB_Iterator_next( STACKDB_Iterator *inDBi,
     
     fseeko( f, inDBi->nextRecordLoc, SEEK_SET );
     
-    numRead = fread( outKey, inDBi->db->keySize, 1, f );
+    numRead = fread( outKey, keySize, 1, f );
     if( numRead != 1 ) {
         return -1;
         }

@@ -671,3 +671,35 @@ real	0m51.866s
 user	0m12.464s
 sys	0m39.320s
 -rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 41327912 Apr 10 10:45 test.db
+
+
+
+
+
+Speeding up iterator
+
+
+Stack:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took 0.007000 sec
+Inserted 1999396
+Inserts used 0 bytes, took 33.214000 sec
+Random lookup for 500 batchs of 3000 (1500000/1500000 hits)
+Random look used 0 bytes, took 4.680000 sec
+Checksum = 2123813000
+Last-inserted lookup for 500 batchs of 2500 (1250000/1250000 hits)
+Last-inserted lookup used 0 bytes, took 2.320000 sec
+Checksum = 3471250000
+Random lookup for non-existing 500 batchs of 3000 (0/1500000 hits)
+Random look/miss used 0 bytes, took 4.032000 sec
+Inserts for previously non-existing 500 batchs of 3000
+Inserts after miss used 0 bytes, took 5.471000 sec
+Iterated 2002395, checksum 2833656880
+Iterating used 0 bytes, took 2.998000 sec
+
+real	0m52.725s
+user	0m11.928s
+sys	0m40.596s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 41327912 Apr 10 10:56 test.db
