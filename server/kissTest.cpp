@@ -203,7 +203,6 @@ int main() {
             int x = runSource.getRandomBoundedInt( num + 10, num + num );
             int y = runSource.getRandomBoundedInt( 0, num-1 );
             intPairToKey( x, y, key );
-            DB_get( &db, key, value );
             int result = DB_get( &db, key, value );
             numLooks ++;
             if( result == 0 ) {
@@ -220,6 +219,31 @@ int main() {
             Time::getCurrentTime() - startTime );
     
     
+
+    startTime = Time::getCurrentTime();
+
+    for( int r=0; r<numRuns; r++ ) {
+        CustomRandomSource runSource( 0 );
+
+        for( int i=0; i<lookupCount; i++ ) {
+            // these don't exist
+            int x = runSource.getRandomBoundedInt( num + 10, num + num );
+            int y = runSource.getRandomBoundedInt( 0, num-1 );
+            intPairToKey( x, y, key );
+            intToValue( x + y, value );
+            DB_put( &db, key, value );
+            }
+        }
+    
+
+    printf( "Inserts for previously non-existing %d batchs of %d\n", 
+            numRuns, lookupCount);
+
+    printf( "Inserts after miss used %d bytes, took %f sec\n", getMallocDelta(),
+            Time::getCurrentTime() - startTime );
+    
+
+
 
     
     DB_Iterator dbi;

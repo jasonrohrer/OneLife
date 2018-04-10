@@ -613,3 +613,61 @@ real	0m50.266s
 user	0m10.632s
 sys	0m38.856s
 -rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 41267932 Apr 10 10:32 test.db
+
+
+
+
+Added new test of insert after repeated misses.
+
+Also, fixed test with double-get in non-existing lookup test.
+
+Kiss:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took 0.000000 sec
+Inserted 1999396
+Inserts used 19202048 bytes, took 35.414000 sec
+Random lookup for 500 batchs of 3000 (1500000/1500000 hits)
+Random look used 0 bytes, took 29.366000 sec
+Checksum = 2123813000
+Last-inserted lookup for 500 batchs of 2500 (1250000/1250000 hits)
+Last-inserted lookup used 0 bytes, took 28.297000 sec
+Checksum = 3471250000
+Random lookup for non-existing 500 batchs of 3000 (0/1500000 hits)
+Random look/miss used 0 bytes, took 57.144000 sec
+Inserts for previously non-existing 500 batchs of 3000
+Inserts after miss used 638976 bytes, took 64.249000 sec
+Iterated 2002395
+Iterating used 0 bytes, took 2.205000 sec
+
+real	3m36.678s
+user	0m52.532s
+sys	2m43.876s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 43869016 Apr 10 10:42 test.db
+
+
+Stack:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took 0.009000 sec
+Inserted 1999396
+Inserts used 0 bytes, took 32.181000 sec
+Random lookup for 500 batchs of 3000 (1500000/1500000 hits)
+Random look used 0 bytes, took 4.575000 sec
+Checksum = 2123813000
+Last-inserted lookup for 500 batchs of 2500 (1250000/1250000 hits)
+Last-inserted lookup used 0 bytes, took 2.038000 sec
+Checksum = 3471250000
+Random lookup for non-existing 500 batchs of 3000 (0/1500000 hits)
+Random look/miss used 0 bytes, took 3.667000 sec
+Inserts for previously non-existing 500 batchs of 3000
+Inserts after miss used 0 bytes, took 5.287000 sec
+Iterated 2002395
+Iterating used 0 bytes, took 4.106000 sec
+
+real	0m51.866s
+user	0m12.464s
+sys	0m39.320s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 41327912 Apr 10 10:45 test.db
