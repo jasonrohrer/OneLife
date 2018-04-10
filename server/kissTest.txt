@@ -551,3 +551,65 @@ real	0m58.572s
 user	0m12.504s
 sys	0m46.016s
 -rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 41267932 Apr 10 10:12 test.db
+
+
+
+
+
+Trying to improve insert times by NOT updating miss field on put.
+
+Stack:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took 0.009000 sec
+Inserted 1999396
+Inserts used 0 bytes, took 33.350000 sec
+Random lookup for 500 batchs of 3000 (1500000/1500000 hits)
+Random look used 0 bytes, took 4.648000 sec
+Checksum = 2123813000
+Last-inserted lookup for 500 batchs of 2500 (1250000/1250000 hits)
+Last-inserted lookup used 0 bytes, took 2.382000 sec
+Checksum = 3471250000
+Random lookup for non-existing 500 batchs of 3000 (0/1500000 hits)
+Random look/miss used 0 bytes, took 4.356000 sec
+Iterated 1999396
+Iterating used 0 bytes, took 4.407000 sec
+
+real	0m49.154s
+user	0m11.220s
+sys	0m37.908s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 41267932 Apr 10 10:28 test.db
+
+
+
+
+
+Further improvement of miss efficiency.  If we put something that has recently
+missed, and we have a quick miss, we don't need to check that the miss field
+matches (we already know, because we had a quick miss).
+
+Though this doesn't show up in this test:
+
+Stack:
+
+Local epoch time  = 28800
+GMT epoch time  = 0
+Opening DB (table size 80000) used 0 bytes, took 0.010000 sec
+Inserted 1999396
+Inserts used 0 bytes, took 33.729000 sec
+Random lookup for 500 batchs of 3000 (1500000/1500000 hits)
+Random look used 0 bytes, took 5.457000 sec
+Checksum = 2123813000
+Last-inserted lookup for 500 batchs of 2500 (1250000/1250000 hits)
+Last-inserted lookup used 0 bytes, took 2.319000 sec
+Checksum = 3471250000
+Random lookup for non-existing 500 batchs of 3000 (0/1500000 hits)
+Random look/miss used 0 bytes, took 4.379000 sec
+Iterated 1999396
+Iterating used 0 bytes, took 4.370000 sec
+
+real	0m50.266s
+user	0m10.632s
+sys	0m38.856s
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 41267932 Apr 10 10:32 test.db

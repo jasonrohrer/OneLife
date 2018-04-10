@@ -12,6 +12,8 @@ typedef struct {
         uint64_t lastHashBinLoc;
         uint64_t lastValueLoc;
         
+        char lastWasQuickMiss;
+        
         // each hash bin contains the most recently missed key for
         // that bin and a 64-bit file location for the top of the stack
         unsigned int hashBinSize;

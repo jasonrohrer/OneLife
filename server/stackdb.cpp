@@ -232,12 +232,14 @@ inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
 // upon return
 // inDB->lastHashBinLoc is set with the file pos of the hash bin.
 // inDB->lastValueLoc is set with the file pos of the value.
+// inDB->lastWasQuickMiss is set to true if not found and we encountered
+//                        the miss at the top of the stack
 // 
 // returns -1 on error
 //          0 if found
 //          1 if not found
 static int findValue( STACKDB *inDB, const void *inKey, 
-                      void *outValue = NULL ) {
+                      char inRecordMiss, void *outValue ) {
 
     uint64_t hash = 
         STACKDB_hash( inKey, inDB->keySize )
@@ -257,7 +259,11 @@ static int findValue( STACKDB *inDB, const void *inKey,
     
     if( keyComp( inDB->keySize, inDB->hashBinBuffer, inKey ) ) {
         // key is marked at top of bin stack as known-missing for this bin
+        inDB->lastWasQuickMiss = true;
         return 1;
+        }
+    else {
+        inDB->lastWasQuickMiss = false;
         }
 
 
@@ -272,14 +278,16 @@ static int findValue( STACKDB *inDB, const void *inKey,
     if( val64 == 0 ) {
         // empty bin
 
-        // remeber that this key was a miss
-        fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
-        int numWritten = fwrite( inKey, inDB->keySize, 1, inDB->file );
-        
-        if( numWritten != 1 ) {
-            return -1;
+        if( inRecordMiss ) {
+            // remeber that this key was a miss
+            fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
+            int numWritten = fwrite( inKey, inDB->keySize, 1, inDB->file );
+            
+            if( numWritten != 1 ) {
+                return -1;
+                }
             }
-
+        
         return 1;
         }
     
@@ -331,16 +339,18 @@ static int findValue( STACKDB *inDB, const void *inKey,
             // reached end of stack
             
             
-            // remeber that this key was a miss
-            // we don't need to walk to the bottom of the stack
-            // next time we look for it
-            fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
-            int numWritten = fwrite( inKey, inDB->keySize, 1, inDB->file );
-        
-            if( numWritten != 1 ) {
-                return -1;
+            if( inRecordMiss ) {    
+                // remeber that this key was a miss
+                // we don't need to walk to the bottom of the stack
+                // next time we look for it
+                fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
+                int numWritten = fwrite( inKey, inDB->keySize, 1, inDB->file );
+                
+                if( numWritten != 1 ) {
+                    return -1;
+                    }
                 }
-
+            
             return 1;
             }
         }
@@ -399,7 +409,7 @@ static int findValue( STACKDB *inDB, const void *inKey,
 
 
 int STACKDB_get( STACKDB *inDB, const void *inKey, void *outValue ) {
-    int result = findValue( inDB, inKey, outValue );
+    int result = findValue( inDB, inKey, true, outValue );
 
     return result;
     }
@@ -409,7 +419,9 @@ int STACKDB_get( STACKDB *inDB, const void *inKey, void *outValue ) {
 
 
 int STACKDB_put( STACKDB *inDB, const void *inKey, const void *inValue ) {
-    int result = findValue( inDB, inKey, NULL );
+    // don't spend time recording miss
+    // we're inserting, so miss will be overwritten anyway
+    int result = findValue( inDB, inKey, false, NULL );
     
     int numWritten;
 
@@ -417,6 +429,8 @@ int STACKDB_put( STACKDB *inDB, const void *inKey, const void *inValue ) {
         return -1;
         }
     if( result == 0 ) {
+        // hit
+        // replace value
         fseeko( inDB->file, inDB->lastValueLoc, SEEK_SET );
         numWritten = fwrite( inValue, inDB->valueSize, 1, inDB->file );
         if( numWritten != 1 ) {
@@ -426,34 +440,34 @@ int STACKDB_put( STACKDB *inDB, const void *inKey, const void *inValue ) {
     else if( result == 1 ) {
         // does not exist yet
         // insert at top of stack
-        
-        fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
 
-        // clear missed key from top of stack if it is our key
-        // after put, we will no longer miss
-        int numRead = fread( inDB->hashBinBuffer, 
-                             inDB->keySize, 1, inDB->file );
-    
-        if( numRead != 1 ) {
-            return -1;
-            }
-        
-        if( keyComp( inDB->keySize, inDB->hashBinBuffer, inKey ) ) {
-            // matches
-            fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
+        if( inDB->lastWasQuickMiss ) {
+            // top of stack miss record matches our key
+
             // overwrite with 0
+            fseeko( inDB->file, inDB->lastHashBinLoc, SEEK_SET );
+            
             memset( inDB->hashBinBuffer, 0, inDB->keySize );
+            
             int numWritten = fwrite( inDB->hashBinBuffer, inDB->keySize,
                                      1, inDB->file );
+            
             if( numWritten != 1 ) {
                 return -1;
                 }
             }
-
+        else {
+            // no matching miss field to clear at top of stack
+            
+            // jump straight to file pointer
+            fseeko( inDB->file, 
+                    inDB->lastHashBinLoc + inDB->keySize, SEEK_SET );
+            }
+        
 
         uint64_t val64 = 0;
     
-        numRead = fread( &val64, sizeof(uint64_t), 1, inDB->file );
+        int numRead = fread( &val64, sizeof(uint64_t), 1, inDB->file );
         
         if( numRead != 1 ) {
             return -1;
