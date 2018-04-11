@@ -1527,6 +1527,7 @@ LivingLifePage::LivingLifePage()
           mEKeyEnabled( false ),
           mEKeyDown( false ),
           mGuiPanelSprite( loadSprite( "guiPanel.tga", false ) ),
+          mGuiBloodSprite( loadSprite( "guiBlood.tga", false ) ),
           mNotePaperSprite( loadSprite( "notePaper.tga", false ) ),
           mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
           mCellBorderSprite( loadWhiteSprite( "cellBorder.tga" ) ),
@@ -1893,6 +1894,7 @@ LivingLifePage::~LivingLifePage() {
         }
 
     freeSprite( mGuiPanelSprite );
+    freeSprite( mGuiBloodSprite );
     
     freeSprite( mFloorSplitSprite );
     
@@ -5956,6 +5958,17 @@ void LivingLifePage::draw( doublePair inViewCenter,
     doublePair panelPos = lastScreenViewCenter;
     panelPos.y -= 242 + 32 + 16 + 6;
     drawSprite( mGuiPanelSprite, panelPos );
+
+    if( ourLiveObject != NULL &&
+        ourLiveObject->dying ) {
+        toggleMultiplicativeBlend( true );
+        doublePair bloodPos = panelPos;
+        bloodPos.y -= 32;
+        bloodPos.x -= 32;
+        drawSprite( mGuiBloodSprite, bloodPos );
+        toggleMultiplicativeBlend( false );
+        }
+    
 
 
     if( ourLiveObject != NULL ) {

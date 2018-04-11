@@ -486,6 +486,7 @@ class LivingLifePage : public GamePage {
         
 
         SpriteHandle mGuiPanelSprite;
+        SpriteHandle mGuiBloodSprite;
         
 
         SpriteHandle mHungerBoxSprites[ NUM_HUNGER_BOX_SPRITES ];

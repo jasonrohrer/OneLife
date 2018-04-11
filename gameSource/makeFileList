@@ -83,6 +83,7 @@ graphics/ground_t1.tga \
 graphics/ground_t2.tga \
 graphics/ground_t3.tga \
 graphics/guiPanel.tga \
+graphics/guiBlood.tga \
 graphics/tempArrows.tga \
 graphics/tempArrowsErased.tga \
 graphics/notePaper.tga \

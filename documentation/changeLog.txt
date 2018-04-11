@@ -17,7 +17,8 @@ Version 73    ???
 
 --Fixed postUpdate process to remove any lingering .bak files.
 
---Client displays red speech for staggering murder victims before death.
+--Client displays red speech for staggering murder victims before death, and
+  shows bloody GUI overlay to victim.
 
 
 
