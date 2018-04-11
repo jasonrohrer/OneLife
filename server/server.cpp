@@ -9207,6 +9207,28 @@ int main() {
                 // for players in the new chunk
                 
                 
+
+                // EVERYONE gets info about dying players
+
+                // do this first, so that PU messages about what they 
+                // are holding post-wound come later                
+                if( dyingMessage != NULL ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            dyingMessage, 
+                            dyingMessageLength, 
+                            false, false );
+                    
+                    if( numSent != dyingMessageLength ) {
+                        setDeathReason( nextPlayer, "disconnected" );
+
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Socket write failed";
+                        }
+                    }
+
+
                 
 
                 double maxDist = 32;
@@ -9403,22 +9425,6 @@ int main() {
                         }
                     }
 
-                // EVERYONE gets info about dying players
-                if( dyingMessage != NULL ) {
-                    int numSent = 
-                        nextPlayer->sock->send( 
-                            dyingMessage, 
-                            dyingMessageLength, 
-                            false, false );
-                    
-                    if( numSent != dyingMessageLength ) {
-                        setDeathReason( nextPlayer, "disconnected" );
-
-                        nextPlayer->error = true;
-                        nextPlayer->errorCauseString =
-                            "Socket write failed";
-                        }
-                    }
                 
 
 

@@ -633,6 +633,7 @@ typedef enum messageType {
     LINEAGE,
     NAMES,
     APOCALYPSE,
+    DYING,
     COMPRESSED_MESSAGE,
     UNKNOWN
     } messageType;
@@ -697,6 +698,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "AP" ) == 0 ) {
         returnValue = APOCALYPSE;
+        }
+    else if( strcmp( copy, "DY" ) == 0 ) {
+        returnValue = DYING;
         }
     
     delete [] copy;
@@ -2100,6 +2104,7 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
                                                 const char *inString,
                                                 double inFade,
                                                 double inMaxWidth,
+                                                LiveObject *inSpeaker,
                                                 int inForceMinChalkBlots ) {
     
     char *stringUpper = stringToUpperCase( inString );
@@ -2123,8 +2128,13 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         }
 
 
-    setDrawColor( 1, 1, 1, inFade );
-
+    if( inSpeaker->dying ) {
+        setDrawColor( .65, 0, 0, inFade );
+        }
+    else {
+        setDrawColor( 1, 1, 1, inFade );
+        }
+    
     // with a fixed seed
     JenkinsRandomSource blotRandSource( 0 );
         
@@ -2164,9 +2174,13 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
             }
         }
     
+    if( inSpeaker->dying ) {
+        setDrawColor( 1, 1, 1, inFade );
+        }
+    else {
+        setDrawColor( 0, 0, 0, inFade );
+        }
     
-    setDrawColor( 0, 0, 0, inFade );
-
     for( int i=0; i<lines->size(); i++ ) {
         char *line = lines->getElementDirect( i );
         
@@ -4868,7 +4882,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         
         drawChalkBackgroundString( speechPos, o->currentSpeech, 
-                                   o->speechFade, widthLimit );
+                                   o->speechFade, widthLimit,
+                                   o );
         }
     
 
@@ -8949,6 +8964,8 @@ void LivingLifePage::step() {
                 o.age = 0;
                 o.finalAgeSet = false;
                 
+                o.dying = false;
+                
                 o.name = NULL;
                 o.relationName = NULL;
 
@@ -9874,7 +9891,11 @@ void LivingLifePage::step() {
                                                 getObject( 
                                                     existing->displayID );
                                 
-                                            if( existingObj->
+                                            // skip this if they are dying
+                                            // because they may have picked
+                                            // up a wound
+                                            if( !existing->dying &&
+                                                existingObj->
                                                 usingSound.numSubSounds > 0 ) {
                                     
                                                 playSound( 
@@ -11371,6 +11392,37 @@ void LivingLifePage::step() {
                     
                     }
                 
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
+        else if( type == DYING ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+
+                int id;
+                int numRead = sscanf( lines[i], "%d ",
+                                      &( id ) );
+
+                if( numRead == 1 ) {
+                    for( int j=0; j<gameObjects.size(); j++ ) {
+                        if( gameObjects.getElement(j)->id == id ) {
+                            
+                            LiveObject *existing = gameObjects.getElement(j);
+                            
+                            existing->dying = true;
+                            break;
+                            }
+                        }
+                    }
                 delete [] lines[i];
                 }
             delete [] lines;
