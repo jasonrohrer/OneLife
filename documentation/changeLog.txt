@@ -3,6 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
 Version 73    ???
 
 --Fixed editor to allow smaller map chances.
@@ -74,6 +75,8 @@ Server Fixes:
 --Added 20 seconds of 'stagger around' time after you are murdered.  Server
   sends clients a DY message to indicate that a player has entered this state.
 
+--Optimization:  Valgrind profiler found 40% of CPU on a live 20-player server
+  spent on computeMapBiomeIndex.  Caching this in a RAM-based hash table.
 
 
 

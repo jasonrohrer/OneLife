@@ -297,6 +297,9 @@ static MinPriorityQueue<MovementRecord> liveMovements;
 static SimpleVector<ChangePosition> mapChangePosSinceLastStep;
 
 
+static char anyBiomesInDB = false;
+
+
 
 
 // if true, rest of natural map is blank
@@ -444,6 +447,7 @@ static void biomeDBPut( int inX, int inY, int inValue, int inSecondPlace,
                 &( value[8] ) );
             
     
+    anyBiomesInDB = true;
     DB_put( &biomeDB, key, value );
 
     dbLookTimePut( inX, inY, MAP_TIMESEC );
@@ -531,16 +535,115 @@ double sigmoid( double inInput, double inKnee ) {
 
 
 
+
+
+
+// optimization:
+// cache biomeIndex results in RAM
+
+// 3.1 MB of RAM for this.
+#define BIOME_CACHE_SIZE 131072
+
+typedef struct BiomeCacheRecord {
+        int x, y;
+        int biome, secondPlace;
+        double secondPlaceGap;
+    } BiomeCacheRecord;
+    
+static BiomeCacheRecord biomeCache[ BIOME_CACHE_SIZE ];
+
+
+#define CACHE_PRIME_A 776509273
+#define CACHE_PRIME_B 904124281
+#define CACHE_PRIME_C 528383237
+#define CACHE_PRIME_D 148497157
+
+static int computeBiomeCacheHash( int inKeyA, int inKeyB ) {
+    
+    int hashKey = ( inKeyA * CACHE_PRIME_A + 
+                    inKeyB * CACHE_PRIME_B ) % BIOME_CACHE_SIZE;
+    if( hashKey < 0 ) {
+        hashKey += BIOME_CACHE_SIZE;
+        }
+    return hashKey;
+    }
+
+
+
+static void initBiomeCache() {
+    BiomeCacheRecord blankRecord = { 0, 0, -2, 0, 0 };
+    for( int i=0; i<BIOME_CACHE_SIZE; i++ ) {
+        biomeCache[i] = blankRecord;
+        }
+    }
+
+    
+
+
+// returns -2 on miss
+static int biomeGetCached( int inX, int inY, 
+                           int *outSecondPlaceIndex,
+                           double *outSecondPlaceGap ) {
+    BiomeCacheRecord r =
+        biomeCache[ computeBiomeCacheHash( inX, inY ) ];
+
+    if( r.x == inX && r.y == inY ) {
+        *outSecondPlaceIndex = r.secondPlace;
+        *outSecondPlaceGap = r.secondPlaceGap;
+        
+        return r.biome;
+        }
+    else {
+        return -2;
+        }
+    }
+
+
+
+static void biomePutCached( int inX, int inY, int inBiome, int inSecondPlace,
+                            double inSecondPlaceGap ) {
+    BiomeCacheRecord r = { inX, inY, inBiome, inSecondPlace, inSecondPlaceGap };
+    
+    biomeCache[ computeBiomeCacheHash( inX, inY ) ] = r;
+    }
+
+
+
+
+
+
+
+
+
 static int computeMapBiomeIndex( int inX, int inY, 
                                  int *outSecondPlaceIndex = NULL,
                                  double *outSecondPlaceGap = NULL ) {
-    int pickedBiome = -1;
-        
-    double maxValue = -DBL_MAX;
         
     int secondPlace = -1;
     
     double secondPlaceGap = 0;
+
+
+    int pickedBiome = biomeGetCached( inX, inY, &secondPlace, &secondPlaceGap );
+        
+    if( pickedBiome != -2 ) {
+        // hit cached
+
+        if( outSecondPlaceIndex != NULL ) {
+            *outSecondPlaceIndex = secondPlace;
+            }
+        if( outSecondPlaceGap != NULL ) {
+            *outSecondPlaceGap = secondPlaceGap;
+            }
+    
+        return pickedBiome;
+        }
+
+    // else cache miss
+    pickedBiome = -1;
+
+
+    double maxValue = -DBL_MAX;
 
     
     for( int i=0; i<numBiomes; i++ ) {
@@ -571,8 +674,9 @@ static int computeMapBiomeIndex( int inX, int inY,
             }
         }
     
-
-
+    biomePutCached( inX, inY, pickedBiome, secondPlace, secondPlaceGap );
+    
+    
     if( outSecondPlaceIndex != NULL ) {
         *outSecondPlaceIndex = secondPlace;
         }
@@ -592,9 +696,17 @@ static int getMapBiomeIndex( int inX, int inY,
     
     int secondPlaceBiome = -1;
     
-    int dbBiome = biomeDBGet( inX, inY,
+    int dbBiome = -1;
+    
+    if( anyBiomesInDB ) {
+        // don't bother with this call unless biome DB has
+        // something in it
+        dbBiome = biomeDBGet( inX, inY,
                               &secondPlaceBiome,
                               outSecondPlaceGap );
+        }
+    
+
     if( dbBiome != -1 ) {
 
         int index = getBiomeIndex( dbBiome );
@@ -1478,7 +1590,8 @@ int DB_open_timeShrunk(
 
 void initMap() {
     initDBCache();
-    
+    initBiomeCache();
+
     mapCacheClear();
     
     edgeObjectID = SettingsManager::getIntSetting( "edgeObject", 0 );
@@ -1772,6 +1885,19 @@ void initMap() {
 
 
 
+    // see if any biomes are listed in DB
+    // if not, we don't even need to check it when generating map
+    DB_Iterator biomeDBi;
+    DB_Iterator_init( &biomeDB, &biomeDBi );
+    
+    unsigned char *biomeKey[8];
+    unsigned char *biomeValue[12];
+    
+    if( DB_Iterator_next( &biomeDBi, biomeKey, biomeValue ) ) {
+        // only check for the first one
+        anyBiomesInDB = true;
+        }
+    
 
 
     error = DB_open_timeShrunk( &floorDB, 
