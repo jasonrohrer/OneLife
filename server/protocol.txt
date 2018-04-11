@@ -121,6 +121,7 @@ NAME (NM)
 
 APOCALYPSE (AP)
 
+DYING (DY)
 
 
 Client can expect to receive these at any time, and in any order.
@@ -426,8 +427,20 @@ last_name may be ommitted.
 AP
 #
 
-Inidicates that an apocalypse is pending (and death is coming).  Gives client
+Indicates that an apocalypse is pending (and death is coming).  Gives client
 time to show a visual effect before death-by-apocalypse happens.
+
+
+
+DY
+p_id
+p_id
+p_id
+...
+p_id
+#
+
+Indicates that the listed players have been mortally wounded and will die soon.
 
 
 

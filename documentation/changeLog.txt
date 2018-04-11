@@ -68,6 +68,8 @@ Server Fixes:
   databases during the map cull after restart.  Shrank table in eve location
   database to save disk space given long email key.
 
+--Added 20 seconds of "stagger around" time after you are murdered.  Server
+  sends clients a DY message to indicate that a player has entered this state.
 
 
 

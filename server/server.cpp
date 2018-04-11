@@ -256,8 +256,15 @@ typedef struct LiveObject {
 
         char isNew;
         char firstMessageSent;
+        
+        char dying;
+        // wall clock time when they will be dead
+        double dyingETA;
+
         char error;
         const char *errorCauseString;
+        
+        
 
         int customGraveID;
         
@@ -3052,6 +3059,10 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.sockBuffer = inSockBuffer;
     newObject.isNew = true;
     newObject.firstMessageSent = false;
+    
+    newObject.dying = false;
+    newObject.dyingETA = 0;
+    
     newObject.error = false;
     newObject.errorCauseString = "";
     
@@ -4800,6 +4811,8 @@ int main() {
 
         SimpleVector<int> playerIndicesToSendNamesAbout;
 
+        SimpleVector<int> playerIndicesToSendDyingAbout;
+
         // accumulated text of update lines
         SimpleVector<char> newUpdates;
         SimpleVector<ChangePosition> newUpdatesPos;
@@ -5600,7 +5613,19 @@ int main() {
                                                         "killed",
                                                         nextPlayer->holdingID );
 
-                                        hitPlayer->error = true;
+                                        int staggerTime = 
+                                            SettingsManager::getIntSetting(
+                                                "deathStaggerTime", 20 );
+
+                                        hitPlayer->dying = true;
+                                        hitPlayer->dyingETA = 
+                                            Time::getCurrentTime() + 
+                                            staggerTime;
+                                        playerIndicesToSendDyingAbout.
+                                            push_back( 
+                                                getLiveObjectIndex( 
+                                                    hitPlayer->id ) );
+                                        
                                         hitPlayer->errorCauseString =
                                             "Player killed by other player";
                                         
@@ -7196,6 +7221,13 @@ int main() {
             
             double curTime = Time::getCurrentTime();
             
+            if( nextPlayer->dying && ! nextPlayer->error &&
+                curTime >= nextPlayer->dyingETA ) {
+                // finally died
+                nextPlayer->error = true;
+                }
+            
+
                 
             if( nextPlayer->isNew ) {
                 // their first position is an update
@@ -8694,6 +8726,53 @@ int main() {
                     }
                 }
             }
+
+
+
+        unsigned char *dyingMessage = NULL;
+        int dyingMessageLength = 0;
+        
+        if( playerIndicesToSendDyingAbout.size() > 0 ) {
+            SimpleVector<char> dyingWorking;
+            dyingWorking.appendElementString( "DY\n" );
+            
+            int numAdded = 0;
+            for( int i=0; i<playerIndicesToSendDyingAbout.size(); i++ ) {
+                LiveObject *nextPlayer = players.getElement( 
+                    playerIndicesToSendDyingAbout.getElementDirect( i ) );
+
+                if( nextPlayer->error ) {
+                    continue;
+                    }
+
+                char *line = autoSprintf( "%d\n", nextPlayer->id );
+
+                numAdded++;
+                dyingWorking.appendElementString( line );
+                delete [] line;
+                }
+            
+            dyingWorking.push_back( '#' );
+            
+            if( numAdded > 0 ) {
+
+                char *dyingMessageText = dyingWorking.getElementString();
+                
+                dyingMessageLength = strlen( dyingMessageText );
+                
+                if( dyingMessageLength < maxUncompressedSize ) {
+                    dyingMessage = (unsigned char*)dyingMessageText;
+                    }
+                else {
+                    // compress for all players once here
+                    dyingMessage = makeCompressedMessage( 
+                        dyingMessageText, 
+                        dyingMessageLength, &dyingMessageLength );
+                    
+                    delete [] dyingMessageText;
+                    }
+                }
+            }
         
         
         // send moves and updates to clients
@@ -8856,6 +8935,43 @@ int main() {
                                          strlen( namesMessage ) );
                 
                     delete [] namesMessage;
+                    }
+
+
+
+
+                // send dying for everyone who is dying
+                
+                SimpleVector<char> dyingWorking;
+                dyingWorking.appendElementString( "DY\n" );
+
+                numAdded = 0;
+                
+                for( int i=0; i<numPlayers; i++ ) {
+                
+                    LiveObject *o = players.getElement( i );
+                
+                    if( o->error || ! o->dying ) {
+                        continue;
+                        }
+
+                    char *line = autoSprintf( "%d\n", o->id );
+                    dyingWorking.appendElementString( line );
+                    delete [] line;
+                    
+                    numAdded++;
+                    }
+                
+                dyingWorking.push_back( '#' );
+            
+                if( numAdded > 0 ) {
+                    char *dyingMessage = dyingWorking.getElementString();
+
+
+                    sendMessageToPlayer( nextPlayer, dyingMessage, 
+                                         strlen( dyingMessage ) );
+                
+                    delete [] dyingMessage;
                     }
 
                 
@@ -9228,6 +9344,23 @@ int main() {
                             "Socket write failed";
                         }
                     }
+
+                // EVERYONE gets info about dying players
+                if( dyingMessage != NULL ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            dyingMessage, 
+                            dyingMessageLength, 
+                            false, false );
+                    
+                    if( numSent != dyingMessageLength ) {
+                        setDeathReason( nextPlayer, "disconnected" );
+
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Socket write failed";
+                        }
+                    }
                 
 
 
@@ -9296,6 +9429,9 @@ int main() {
             }
         if( namesMessage != NULL ) {
             delete [] namesMessage;
+            }
+        if( dyingMessage != NULL ) {
+            delete [] dyingMessage;
             }
 
         
