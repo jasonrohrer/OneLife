@@ -251,6 +251,10 @@ typedef struct LiveObject {
         int embeddedWeaponID;
         timeSec_t embeddedWeaponEtaDecay;
         
+        // and what original weapon killed them?
+        int murderSourceID;
+
+
         Socket *sock;
         SimpleVector<char> *sockBuffer;
 
@@ -3055,6 +3059,7 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.subContainedEtaDecays = NULL;
     newObject.embeddedWeaponID = 0;
     newObject.embeddedWeaponEtaDecay = 0;
+    newObject.murderSourceID = 0;
     newObject.sock = inSock;
     newObject.sockBuffer = inSockBuffer;
     newObject.isNew = true;
@@ -5608,7 +5613,12 @@ int main() {
                                     if( hitPlayer != NULL ) {
                                         someoneHit = true;
                                         // break the connection with 
-                                        // them
+                                        // them, eventually
+                                        // let them stagger a bit first
+
+                                        hitPlayer->murderSourceID =
+                                            nextPlayer->holdingID;
+                                        
                                         setDeathReason( hitPlayer, 
                                                         "killed",
                                                         nextPlayer->holdingID );
@@ -5672,6 +5682,29 @@ int main() {
                                             hitPlayer->customGraveID = 
                                                 rHit->newTarget;
                                             }
+
+                                        // last use on actor specifies
+                                        // what is left in victim's hand
+                                        TransRecord *woundHit = 
+                                            getTrans( nextPlayer->holdingID, 
+                                                      0, true, false );
+                                        
+                                        if( woundHit != NULL &&
+                                            woundHit->newTarget > 0 ) {
+                                            
+                                            if( hitPlayer->holdingID != 0 ) {
+                                                handleDrop( 
+                                                    m.x, m.y, 
+                                                    hitPlayer,
+                                             &playerIndicesToSendUpdatesAbout );
+                                                }
+                                            hitPlayer->holdingID = 
+                                                woundHit->newTarget;
+                                            playerIndicesToSendUpdatesAbout.
+                                                push_back( 
+                                                    getLiveObjectIndex( 
+                                                        hitPlayer->id ) );
+                                            }   
                                         }
                                     
 
@@ -7555,14 +7588,39 @@ int main() {
                         }  
                     }
                 if( nextPlayer->holdingID != 0 ) {
-                                        
-                    // drop what they were holding
-                    // this will almost always involve a throw
-                    // (death marker, at least, will be in the way)
-                    handleDrop( 
-                        dropPos.x, dropPos.y, 
-                        nextPlayer,
-                        &playerIndicesToSendUpdatesAbout );
+
+                    char doNotDrop = false;
+                    
+                    if( nextPlayer->murderSourceID > 0 ) {
+                        
+                        TransRecord *woundHit = 
+                            getTrans( nextPlayer->murderSourceID, 
+                                      0, true, false );
+                        
+                        if( woundHit != NULL &&
+                            woundHit->newTarget > 0 ) {
+                            
+                            if( nextPlayer->holdingID == woundHit->newTarget ) {
+                                // they are simply holding their wound object
+                                // don't drop this on the ground
+                                doNotDrop = true;
+                                }
+                            }
+                        }
+                    
+                    if( ! doNotDrop ) {
+                        // drop what they were holding
+                        // this will almost always involve a throw
+                        // (death marker, at least, will be in the way)
+                        handleDrop( 
+                            dropPos.x, dropPos.y, 
+                            nextPlayer,
+                            &playerIndicesToSendUpdatesAbout );
+                        }
+                    else {
+                        // just clear what they were holding
+                        nextPlayer->holdingID = 0;
+                        }
                     }
                 }
             else if( ! nextPlayer->error ) {
