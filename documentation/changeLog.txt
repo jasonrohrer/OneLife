@@ -78,6 +78,12 @@ Server Fixes:
 --Optimization:  Valgrind profiler found 40% of CPU on a live 20-player server
   spent on computeMapBiomeIndex.  Caching this in a RAM-based hash table.
 
+--Fixed so that if we're holding something permanent that can only be dropped
+  with a use-on-bare-ground action, we drop the result of that use-on-bare-
+  ground action when we die (instead of leaving permanent version of the held
+  object on the ground after death).
+
+
 
 
 

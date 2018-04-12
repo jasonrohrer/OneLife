@@ -7610,6 +7610,33 @@ int main() {
                     
                     if( ! doNotDrop ) {
                         // drop what they were holding
+
+                        if( nextPlayer->holdingID > 0 &&
+                            getObject( nextPlayer->holdingID )->permanent ) {
+                            // what they are holding is stuck in their
+                            // hand
+
+                            // see if a use-on-bare-ground drop 
+                            // action applies (example:  dismounting
+                            // a horse)
+                            
+                            // note that if use on bare ground
+                            // also has a new actor, that will be lost
+                            // in this process.
+                            // (example:  holding a roped lamb when dying,
+                            //            lamb is dropped, rope is lost)
+
+                            TransRecord *bareTrans =
+                                getTrans( nextPlayer->holdingID, -1 );
+                            
+                            if( bareTrans != NULL &&
+                                bareTrans->newTarget > 0 ) {
+                                
+                                nextPlayer->holdingID = 
+                                    bareTrans->newTarget;
+                                }
+                            }
+
                         // this will almost always involve a throw
                         // (death marker, at least, will be in the way)
                         handleDrop( 
