@@ -1,5 +1,6 @@
 #include "map.h"
 #include "HashTable.h"
+#include "monument.h"
 
 // cell pixel dimension on client
 #define CELL_D 128
@@ -2756,6 +2757,16 @@ static void dbPut( int inX, int inY, int inSlot, int inValue,
             apocalypseLocation.y = inY;
             }
         }
+    else if( inValue > 0 && inSlot == 0 && inSubCont == 0  ) {
+        
+        int status = getMonumentStatus( inValue );
+        
+        if( status > 0 ) {
+            monumentAction( inX, inY, inValue, currentResponsiblePlayer, 
+                            status );
+            }
+        }
+    
     
 
     unsigned char key[16];

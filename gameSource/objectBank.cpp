@@ -732,6 +732,26 @@ float initObjectBankStep() {
                     r->apocalypseTrigger = true;
                     }
 
+                r->monumentStep = false;
+                r->monumentDone = false;
+                r->monumentCall = false;
+                
+                if( strstr( r->description, "monument" ) != NULL ) {
+                    // some kind of monument state
+                    if( strstr( r->description, "monumentStep" ) != NULL ) {
+                        r->monumentStep = true;
+                        }
+                    else if( strstr( r->description, 
+                                     "monumentDone" ) != NULL ) {
+                        r->monumentDone = true;
+                        }
+                    else if( strstr( r->description, 
+                                     "monumentCall" ) != NULL ) {
+                        r->monumentCall = true;
+                        }
+                    }
+                
+                
 
 
                 for( int i=0; i< r->numSprites; i++ ) {
@@ -1516,6 +1536,29 @@ char isApocalypseTrigger( int inID ) {
         }
     }
 
+
+
+int getMonumentStatus( int inID ) {
+    ObjectRecord *r = getObject( inID );
+    
+    if( r == NULL ) {
+        return 0;
+        }
+    else {
+        if( r->monumentStep ) {
+            return 1;
+            }
+        if( r->monumentDone ) {
+            return 2;
+            }
+        if( r->monumentCall ) {
+            return 3;
+            }
+        return 0;
+        }
+    }
+
+
     
 
 
@@ -2097,6 +2140,27 @@ int addObject( const char *inDescription,
         r->apocalypseTrigger = true;
         }
     
+    r->monumentStep = false;
+    r->monumentDone = false;
+    r->monumentCall = false;
+                
+    if( strstr( r->description, "monument" ) != NULL ) {
+        // some kind of monument state
+        if( strstr( r->description, "monumentStep" ) != NULL ) {
+            r->monumentStep = true;
+            }
+        else if( strstr( r->description, 
+                         "monumentDone" ) != NULL ) {
+            r->monumentDone = true;
+            }
+        else if( strstr( r->description, 
+                         "monumentCall" ) != NULL ) {
+            r->monumentCall = true;
+            }
+        }
+
+
+
     
     memset( r->spriteSkipDrawing, false, inNumSprites );
     

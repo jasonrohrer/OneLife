@@ -123,6 +123,9 @@ APOCALYPSE (AP)
 
 DYING (DY)
 
+MONUMENT_CALL (MN)
+
+
 
 Client can expect to receive these at any time, and in any order.
 
@@ -441,6 +444,20 @@ p_id
 #
 
 Indicates that the listed players have been mortally wounded and will die soon.
+
+
+
+
+
+
+
+MN
+x y o_id
+#
+
+Indicates that a monument call has happened at location x,y with the creation
+of object o_id.
+
 
 
 

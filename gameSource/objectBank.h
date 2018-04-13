@@ -267,6 +267,10 @@ typedef struct ObjectRecord {
         
         char apocalypseTrigger;
 
+        char monumentStep;
+        char monumentDone;
+        char monumentCall;
+
     } ObjectRecord;
 
 
@@ -480,6 +484,14 @@ int getNumContainerSlots( int inID );
 char isContainable( int inID );
 
 char isApocalypseTrigger( int inID );
+
+
+// 0 for nothing
+// 1 for monumentStep
+// 2 for monumentDone
+// 3 for monumentCall
+int getMonumentStatus( int inID );
+
 
 
 

@@ -42,7 +42,8 @@ triggers.cpp \
 dbCommon.cpp \
 playerStats.cpp \
 failureLog.cpp \
-names.cpp\
+names.cpp \
+monument.cpp \
 
 
 GAME_GRAPHICS = \
