@@ -43,6 +43,10 @@ typedef struct SpriteRecord {
 
         int numStepsUnused;
 
+        
+        char remappable;
+        char remapTarget;
+
     } SpriteRecord;
 
 
@@ -123,6 +127,14 @@ void deleteSpriteFromBank( int inID );
 
 
 char getSpriteHit( int inID, int inXCenterOffset, int inYCenterOffset );
+
+
+
+// for randomly remapping sprites to other sprites
+void setRemapSeed( int inSeed );
+
+void setRemapFraction( double inFraction );
+
 
 
 #endif
