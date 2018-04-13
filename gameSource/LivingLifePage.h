@@ -720,7 +720,11 @@ class LivingLifePage : public GamePage {
         char *mDeathReason;
         
 
-
+        double mRemapDelay;
+        double mRemapPeak;
+        double mRemapDirection;
+        double mCurrentRemapFraction;
+        
         
 
         ExtraMapObject copyFromMap( int inMapI );

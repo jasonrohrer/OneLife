@@ -24,6 +24,10 @@ Version 73    ???
 --Fixed three bugs in copying map animation data when a new chunk arrives
   (thanks Christoffer Baar).
 
+--Added support for sprite remapping.
+
+
+
 
 
 Server Fixes:

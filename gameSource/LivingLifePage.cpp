@@ -1430,6 +1430,9 @@ static int apocalypseInProgress = false;
 static double apocalypseDisplayProgress = 0;
 static double apocalypseDisplaySeconds = 6;
 
+static double remapPeakSeconds = 60;
+static double remapDelaySeconds = 30;
+
 
 static Image *expandToPowersOfTwoWhite( Image *inImage ) {
     
@@ -6983,6 +6986,32 @@ void LivingLifePage::step() {
         apocalypseDisplayProgress += stepSize;
         }
     
+    if( mRemapPeak > 0 ) {
+        if( mRemapDelay < 1 ) {
+            double stepSize = 
+                frameRateFactor / ( remapDelaySeconds * 60.0 );
+            mRemapDelay += stepSize;
+            }
+        else {
+
+            double stepSize = 
+                mRemapDirection * frameRateFactor / ( remapPeakSeconds * 60.0 );
+        
+            mCurrentRemapFraction += stepSize;
+            
+            if( stepSize > 0 && mCurrentRemapFraction >= mRemapPeak ) {
+                mCurrentRemapFraction = mRemapPeak;
+                mRemapDirection *= -1;
+                }
+            if( stepSize < 0 && mCurrentRemapFraction <= 0 ) {
+                mCurrentRemapFraction = 0;
+                mRemapPeak = 0;
+                }
+            setRemapFraction( mCurrentRemapFraction );
+            }
+        }
+    
+
     if( mouseDown ) {
         mouseDownFrames++;
         }
@@ -9440,6 +9469,25 @@ void LivingLifePage::step() {
                                         existing->currentPos.x, 
                                         existing->currentPos.y ) );
                                 otherSoundPlayed = true;
+                                }
+                            if( strstr( ateObj->description, "remapStart" )
+                                != NULL ) {
+                                
+                                if( mRemapPeak == 0 ) {
+                                    // reseed
+                                    setRemapSeed( 
+                                        randSource.getRandomBoundedInt( 
+                                            0,
+                                            10000000 ) );
+                                    mRemapDelay = 0;
+                                    }
+                                        
+                                // closer to max peak
+                                // zeno's paradox style
+                                mRemapPeak += 0.5 * ( 1 - mRemapPeak );
+                                
+                                // back toward peak
+                                mRemapDirection = 1.0;
                                 }
                             }
                         
@@ -12673,6 +12721,11 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    mRemapDelay = 0;
+    mRemapPeak = 0;
+    mRemapDirection = 1.0;
+    mCurrentRemapFraction = 0;
     
     apocalypseInProgress = false;
 
