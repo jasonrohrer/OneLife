@@ -7828,7 +7828,7 @@ void LivingLifePage::step() {
                 
 
                 newMapCurAnimType[i] = ground;
-                newMapLastAnimFade[i] = ground;
+                newMapLastAnimType[i] = ground;
                 newMapLastAnimFade[i] = 0;
                 newMapDropOffsets[i].x = 0;
                 newMapDropOffsets[i].y = 0;
@@ -7869,7 +7869,7 @@ void LivingLifePage::step() {
                         mMapFloorAnimationFrameCount[oI];
                     
                     newMapCurAnimType[i] = mMapCurAnimType[oI];
-                    newMapLastAnimFade[i] = mMapLastAnimFade[oI];
+                    newMapLastAnimType[i] = mMapLastAnimType[oI];
                     newMapLastAnimFade[i] = mMapLastAnimFade[oI];
                     newMapDropOffsets[i] = mMapDropOffsets[oI];
                     newMapDropRot[i] = mMapDropRot[oI];
@@ -7911,7 +7911,7 @@ void LivingLifePage::step() {
             
             memcpy( mMapCurAnimType, newMapCurAnimType, 
                     mMapD * mMapD * sizeof( AnimType ) );
-            memcpy( mMapLastAnimFade, newMapLastAnimFade,
+            memcpy( mMapLastAnimType, newMapLastAnimType,
                     mMapD * mMapD * sizeof( AnimType ) );
             memcpy( mMapLastAnimFade, newMapLastAnimFade,
                     mMapD * mMapD * sizeof( double ) );

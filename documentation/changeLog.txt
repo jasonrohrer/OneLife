@@ -21,6 +21,9 @@ Version 73    ???
 --Client displays red speech for staggering murder victims before death, and
   shows bloody GUI overlay to victim.
 
+--Fixed three bugs in copying map animation data when a new chunk arrives
+  (thanks Christoffer Baar).
+
 
 
 Server Fixes:
