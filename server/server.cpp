@@ -363,6 +363,15 @@ static LiveObject *getLiveObject( int inID ) {
     }
 
 
+char *getPlayerName( int inID ) {
+    LiveObject *o = getLiveObject( inID );
+    if( o != NULL ) {
+        return o->name;
+        }
+    return NULL;
+    }
+
+
 
 
 static double pickBirthCooldownSeconds() {

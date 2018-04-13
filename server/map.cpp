@@ -2762,7 +2762,11 @@ static void dbPut( int inX, int inY, int inSlot, int inValue,
         int status = getMonumentStatus( inValue );
         
         if( status > 0 ) {
-            monumentAction( inX, inY, inValue, currentResponsiblePlayer, 
+            int player = currentResponsiblePlayer;
+            if( player < 0 ) {
+                player = -player;
+                }
+            monumentAction( inX, inY, inValue, player, 
                             status );
             }
         }
