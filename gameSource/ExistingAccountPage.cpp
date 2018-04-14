@@ -150,6 +150,14 @@ void ExistingAccountPage::makeActive( char inFresh ) {
     
     mLoginButton.setVisible( false );
     
+    int skipFPSMeasure = SettingsManager::getIntSetting( "skipFPSMeasure", 0 );
+    
+    if( skipFPSMeasure ) {
+        mFPSMeasureDone = true;
+        mLoginButton.setVisible( true );
+        }
+
+
     int pastSuccess = SettingsManager::getIntSetting( "loginSuccess", 0 );
 
     char *emailText = mEmailField.getText();

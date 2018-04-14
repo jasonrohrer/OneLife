@@ -4,6 +4,23 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 76    ???
+
+--Added skipFPSMeasure.ini setting that can be used to disable FPS check on
+  login screen.
+
+
+
+Server Fixes:
+
+--Wound object no longer dropped if player wounded more than once.
+
+--Fixed so that deathETA not reset if player wounded a second time, also
+  blocked their death being logged twice.
+
+
+
+
 Version 74    2018-April-13
 
 --Fixed editor to allow smaller map chances.
