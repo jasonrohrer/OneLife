@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 73    ???
+Version 74    2018-April-13
 
 --Fixed editor to allow smaller map chances.
 
