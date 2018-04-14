@@ -260,7 +260,8 @@ typedef struct LiveObject {
         
         // and what original weapon killed them?
         int murderSourceID;
-
+        char holdingWound;
+        
 
         Socket *sock;
         SimpleVector<char> *sockBuffer;
@@ -2031,6 +2032,37 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     
     int oldHoldingID = inDroppingPlayer->holdingID;
     
+
+    if( oldHoldingID > 0 &&
+        getObject( oldHoldingID )->permanent ) {
+        // what they are holding is stuck in their
+        // hand
+
+        // see if a use-on-bare-ground drop 
+        // action applies (example:  dismounting
+        // a horse)
+                            
+        // note that if use on bare ground
+        // also has a new actor, that will be lost
+        // in this process.
+        // (example:  holding a roped lamb when dying,
+        //            lamb is dropped, rope is lost)
+
+        TransRecord *bareTrans =
+            getTrans( oldHoldingID, -1 );
+                            
+        if( bareTrans != NULL &&
+            bareTrans->newTarget > 0 ) {
+                            
+            oldHoldingID = bareTrans->newTarget;
+            
+            inDroppingPlayer->holdingID = 
+                bareTrans->newTarget;
+
+            setFreshEtaDecayForHeld( inDroppingPlayer );
+            }
+        }
+
     int targetX = inX;
     int targetY = inY;
 
@@ -3076,6 +3108,8 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.embeddedWeaponID = 0;
     newObject.embeddedWeaponEtaDecay = 0;
     newObject.murderSourceID = 0;
+    newObject.holdingWound = false;
+    
     newObject.sock = inSock;
     newObject.sockBuffer = inSockBuffer;
     newObject.isNew = true;
@@ -5677,35 +5711,39 @@ int main() {
                                                         "killed",
                                                         nextPlayer->holdingID );
 
-                                        int staggerTime = 
-                                            SettingsManager::getIntSetting(
-                                                "deathStaggerTime", 20 );
+                                        // if not already dying
+                                        if( ! hitPlayer->dying ) {
+                                            int staggerTime = 
+                                                SettingsManager::getIntSetting(
+                                                    "deathStaggerTime", 20 );
 
-                                        hitPlayer->dying = true;
-                                        hitPlayer->dyingETA = 
-                                            Time::getCurrentTime() + 
-                                            staggerTime;
-                                        playerIndicesToSendDyingAbout.
-                                            push_back( 
-                                                getLiveObjectIndex( 
-                                                    hitPlayer->id ) );
+                                            hitPlayer->dying = true;
+                                            hitPlayer->dyingETA = 
+                                                Time::getCurrentTime() + 
+                                                staggerTime;
+                                            playerIndicesToSendDyingAbout.
+                                                push_back( 
+                                                    getLiveObjectIndex( 
+                                                        hitPlayer->id ) );
                                         
-                                        hitPlayer->errorCauseString =
-                                            "Player killed by other player";
+                                            hitPlayer->errorCauseString =
+                                                "Player killed by other player";
                                         
-                                        logDeath( hitPlayer->id,
-                                                  hitPlayer->email,
-                                                  hitPlayer->isEve,
-                                                  computeAge( hitPlayer ),
-                                                  getSecondsPlayed( hitPlayer ),
-                                                  ! getFemale( hitPlayer ),
-                                                  m.x, m.y,
-                                                  players.size() - 1,
-                                                  false,
-                                                  nextPlayer->id,
-                                                  nextPlayer->email );
-                                        
-                                        hitPlayer->deathLogged = true;
+                                            logDeath( hitPlayer->id,
+                                                      hitPlayer->email,
+                                                      hitPlayer->isEve,
+                                                      computeAge( hitPlayer ),
+                                                      getSecondsPlayed( 
+                                                          hitPlayer ),
+                                                      ! getFemale( hitPlayer ),
+                                                      m.x, m.y,
+                                                      players.size() - 1,
+                                                      false,
+                                                      nextPlayer->id,
+                                                      nextPlayer->email );
+                                            
+                                            hitPlayer->deathLogged = true;
+                                            }
                                         }
                                     
                                     
@@ -5746,7 +5784,9 @@ int main() {
                                         if( woundHit != NULL &&
                                             woundHit->newTarget > 0 ) {
                                             
-                                            if( hitPlayer->holdingID != 0 ) {
+                                            // don't drop their wound
+                                            if( hitPlayer->holdingID != 0 &&
+                                                ! hitPlayer->holdingWound ) {
                                                 handleDrop( 
                                                     m.x, m.y, 
                                                     hitPlayer,
@@ -5754,6 +5794,8 @@ int main() {
                                                 }
                                             hitPlayer->holdingID = 
                                                 woundHit->newTarget;
+                                            hitPlayer->holdingWound = true;
+                                            
                                             playerIndicesToSendUpdatesAbout.
                                                 push_back( 
                                                     getLiveObjectIndex( 
@@ -6520,9 +6562,41 @@ int main() {
                                     // holding
 
                                     if( hitPlayer->holdingID != 0 ) {
-                                        handleDrop( 
-                                            m.x, m.y, hitPlayer,
-                                            &playerIndicesToSendUpdatesAbout );
+
+                                        if( hitPlayer->holdingWound &&
+                                            hitPlayer->embeddedWeaponID > 0 ) {
+                                            
+                                            // switch from wound to
+                                            // holding embedded weapon
+                                            // have them drop it when
+                                            // picked up
+                                            hitPlayer->holdingID = 
+                                                hitPlayer->
+                                                embeddedWeaponID;
+                                            hitPlayer->holdingEtaDecay =
+                                                hitPlayer->
+                                                embeddedWeaponEtaDecay;
+                                            
+                                            hitPlayer->embeddedWeaponID = 0;
+                                            hitPlayer->embeddedWeaponEtaDecay
+                                                = 0;
+                                            hitPlayer->holdingWound = false;
+                                            }
+                                        else if( hitPlayer->holdingWound &&
+                                                 hitPlayer->embeddedWeaponID 
+                                                 == 0 ) {
+                                            // holding wound only
+                                            // disappears
+                                            hitPlayer->holdingID = 0;
+                                            hitPlayer->holdingEtaDecay = 0;
+                                            }
+                                        
+
+                                        if( hitPlayer->holdingID > 0 ) {
+                                            handleDrop( 
+                                                m.x, m.y, hitPlayer,
+                                             &playerIndicesToSendUpdatesAbout );
+                                            }
                                         }
                                     
                                     if( hitPlayer->xd != hitPlayer->xs
@@ -7511,7 +7585,7 @@ int main() {
                         int roomLeft = deathObject->numSlots;
                         
                         if( roomLeft >= 1 ) {
-                            // room for weapon remant
+                            // room for weapon remnant
                             if( nextPlayer->embeddedWeaponID != 0 ) {
                                 addContained( 
                                     dropPos.x, dropPos.y,
@@ -7664,32 +7738,6 @@ int main() {
                     
                     if( ! doNotDrop ) {
                         // drop what they were holding
-
-                        if( nextPlayer->holdingID > 0 &&
-                            getObject( nextPlayer->holdingID )->permanent ) {
-                            // what they are holding is stuck in their
-                            // hand
-
-                            // see if a use-on-bare-ground drop 
-                            // action applies (example:  dismounting
-                            // a horse)
-                            
-                            // note that if use on bare ground
-                            // also has a new actor, that will be lost
-                            // in this process.
-                            // (example:  holding a roped lamb when dying,
-                            //            lamb is dropped, rope is lost)
-
-                            TransRecord *bareTrans =
-                                getTrans( nextPlayer->holdingID, -1 );
-                            
-                            if( bareTrans != NULL &&
-                                bareTrans->newTarget > 0 ) {
-                                
-                                nextPlayer->holdingID = 
-                                    bareTrans->newTarget;
-                                }
-                            }
 
                         // this will almost always involve a throw
                         // (death marker, at least, will be in the way)
