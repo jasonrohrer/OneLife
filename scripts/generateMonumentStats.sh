@@ -14,19 +14,17 @@ do
   echo "Using rsync to sync all monument logs from $server"
   echo ""
 
-  if [ ! -d "~/checkout/OneLife/server/monumentLogs_$server" ]
-  then
-	  echo "Making local directory monumentLogs_$server"
-	  mkdir ~/checkout/OneLife/server/monumentLog_$server
-  fi
-
-  rsync -avz -e ssh --progress $user@$server:checkout/OneLife/server/monumentLogs/*.txt ~/checkout/OneLife/server/monumentLogs_$server
+  dirName="~/checkout/OneLife/server/monumentLogs_${server}/"
+  mkdir -p  $dirName
+  
+  rsync -avz -e ssh --progress $user@$server:checkout/OneLife/server/monumentLogs/*.txt $dirName
 
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
+cd ~/checkout/OneLife/server/
 
-numDone=`ls -l monumentLogs*/*done* | grep -c done`
+numDone=`ls -l monumentLogs*/ | grep -c done`
 
 monumentWord="monuments"
 
