@@ -26,6 +26,9 @@ cd ~/checkout/OneLife/server/
 
 numDone=`ls -l monumentLogs*/ | grep -c done`
 
+numInProgress=`ls -l monumentLogs*/ | grep -c -v done`
+
+
 monumentWord="monuments"
 
 if [ "$numDone" -eq "1" ]; then
@@ -33,4 +36,4 @@ if [ "$numDone" -eq "1" ]; then
 fi
 
 
-echo "$numDone $monumentWord" > /home/jcr15/public_html/monumentStats.php
+echo "$numDone $monumentWord completed, $numInProgress in progress" > /home/jcr15/public_html/monumentStats.php
