@@ -60,6 +60,10 @@ void finalizeMonumentLogFile( int inX, int inY ) {
     char *pathNew = getMonumentLogFilePath( inX, inY, extra );
 
     rename( pathOld, pathNew );
+
+    delete [] pathOld;
+    delete [] pathNew;
+    delete [] extra;
     }
 
 
