@@ -26,12 +26,12 @@ done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
 
-$numDone=`ls -l monumentLogs*/*done* | grep -c done`
+numDone=`ls -l monumentLogs*/*done* | grep -c done`
 
-$monumentWord="monuments"
+monumentWord="monuments"
 
 if [ "$numDone" -eq "1" ]; then
-	$monumentWord="monument";
+	monumentWord="monument";
 fi
 
 
