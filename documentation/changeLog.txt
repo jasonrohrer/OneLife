@@ -26,6 +26,7 @@ Version 73    ???
 
 --Added support for sprite remapping.
 
+--Support for monument call.
 
 
 
@@ -90,6 +91,7 @@ Server Fixes:
   ground action when we die (instead of leaving permanent version of the held
   object on the ground after death).
 
+--Support for monument logging and monument call to client.
 
 
 
