@@ -2714,6 +2714,10 @@ void processLoggedInPlayer( Socket *inSock,
         badMotherLimit = 10;
         }
     
+    // with new birth cooldowns, we don't need bad mother limit anymore
+    // try making it a non-factor
+    badMotherLimit = 9999999;
+    
     
 
     for( int i=0; i<numPlayers; i++ ) {

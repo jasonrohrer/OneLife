@@ -18,6 +18,9 @@ Server Fixes:
 --Fixed so that deathETA not reset if player wounded a second time, also
   blocked their death being logged twice.
 
+--Turned off badMotherLimit.  With birth cooldown, it really isn't needed, and
+  a mother can be punished by suicidal babies and become infertile.
+
 
 
 
