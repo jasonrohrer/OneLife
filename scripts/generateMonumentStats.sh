@@ -14,7 +14,7 @@ do
   echo "Using rsync to sync all monument logs from $server"
   echo ""
 
-  dirName="~/checkout/OneLife/server/monumentLogs_${server}/"
+  dirName=~/checkout/OneLife/server/monumentLogs_$server
   mkdir -p  $dirName
   
   rsync -avz -e ssh --progress $user@$server:checkout/OneLife/server/monumentLogs/*.txt $dirName
