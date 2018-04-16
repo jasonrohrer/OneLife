@@ -21,6 +21,8 @@ Server Fixes:
 --Turned off badMotherLimit.  With birth cooldown, it really isn't needed, and
   a mother can be punished by suicidal babies and become infertile.
 
+--Fixed occurence of ~ for home directory inside quotes in various BASH scripts.
+
 
 
 
