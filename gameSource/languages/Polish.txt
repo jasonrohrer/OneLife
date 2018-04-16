@@ -245,7 +245,7 @@ pauseMessage1 "NA PEWNO WYJŚĆ?"
 pauseMessage2 "WCIŚNIJ [ENTER] ABY KONTYNUOWAĆ GRĘ"
 
 
-pauseMessage3 "WSIŚNIJ [%] ABY WYJŚĆ"
+pauseMessage3 "WCIŚNIJ [%] ABY WYJŚĆ"
 pauseMessage3b "NIE MOŻESZ TEARZ WYJŚĆ"
 
 pauseMessage4 "-"
