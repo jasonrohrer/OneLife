@@ -38,6 +38,15 @@ char *nameFromLine( char *inLine ) {
     SimpleVector<char*> *tok = tokenizeString( inLine );
     
     SimpleVector<char*> nameTok;
+
+    if( tok->size() < 5 ) {
+        tok->deallocateStringElements();
+
+        delete tok;
+
+        return stringDuplicate( "Nameless" );
+        }
+    
     
     if( hasTime && tok->size() == 8 
         ||
@@ -92,8 +101,18 @@ void processLogFile( File *inFile, FILE *outHTMLFile ) {
     int numLines;
     
     char **lines = split( cont, "\n", &numLines );
+
+    int numLinesToUse = numLines - 1;
     
-    char *monName = lines[numLines-1];
+    
+    char *monName = lines[numLinesToUse];
+
+    if( strlen( monName ) < 2 ) {
+        // can be blank line at end
+        numLinesToUse --;
+        monName = lines[numLinesToUse];
+        }
+    
     
     char *poundLoc = strstr( monName, "#" );
     
@@ -107,7 +126,7 @@ void processLogFile( File *inFile, FILE *outHTMLFile ) {
     fprintf( outHTMLFile, "<tr><td>\n" );
     fprintf( outHTMLFile, "\n" );
 
-    fprintf( outHTMLFile, "%s<br>\n", monName );
+    fprintf( outHTMLFile, "<font size=5><u>%s</u></font><br>\n", monName );
     
 
     // assume same epoch
@@ -116,21 +135,34 @@ void processLogFile( File *inFile, FILE *outHTMLFile ) {
 
     char timeString[100];
 
-    strftime( timeString, 99, "%A, %m %d, %T %Z", timeStruct );
+    strftime( timeString, 99, "%A, %B %d, %T %Z", timeStruct );
     
     fprintf( outHTMLFile, "%s", timeString );
     
     fprintf( outHTMLFile, "<br>\n" );
 
-    fprintf( outHTMLFile, "Location: (%d, %d)<br>\n", x, y );
-    fprintf( outHTMLFile, "Contributors:<br>\n" );
+    fprintf( outHTMLFile, "Location: (%d, %d)<br><br>\n", x, y );
+    fprintf( outHTMLFile, "<b><u>Contributors:</u></b><br>\n" );
 
+    char *prevName = stringDuplicate( "" );
+    
     for( int i=0; i<numLines-1; i++ ) {
         char *contribName = nameFromLine( lines[i] );
-        
-        fprintf( outHTMLFile, "%s<br>\n", contribName );
+
+        if( strcmp( prevName, contribName ) != 0 ) {
+            fprintf( outHTMLFile, "%s<br>\n", contribName );
+            delete [] prevName;
+            prevName = stringDuplicate( contribName );
+            }
         delete [] contribName;
         }
+    delete prevName;
+    
+
+    fprintf( outHTMLFile, "<br>\n" );
+    fprintf( outHTMLFile, "<br>\n" );
+    fprintf( outHTMLFile, "<br>\n" );
+    fprintf( outHTMLFile, "<br>\n" );
 
     fprintf( outHTMLFile, "</td><tr>\n" );
     fprintf( outHTMLFile, "\n" );
@@ -155,8 +187,19 @@ void processMonumentLogsFolder( File *inFolder, File *inHTMLFolder ) {
 
     FILE *outHTMLFile = NULL;
 
+    char someDoneFiles = false;
 
-    if( numFiles > 0 ) {
+    for( int i=0; i<numFiles && !someDoneFiles; i++ ) {
+        char *name = logs[i]->getFileName();
+        
+        if( strstr( name, "_done_" ) != NULL ) {
+            someDoneFiles = true;
+            }
+        delete [] name;
+        }
+    
+
+    if( someDoneFiles ) {
         
         char serverName[200];
         char *name = inFolder->getFileName();
@@ -193,6 +236,9 @@ void processMonumentLogsFolder( File *inFolder, File *inHTMLFolder ) {
         }
     
     if( outHTMLFile == NULL ) {
+        for( int i=0; i<numFiles; i++ ) {
+            delete logs[i];
+            }
         return;
         }
 
@@ -205,7 +251,7 @@ void processMonumentLogsFolder( File *inFolder, File *inHTMLFolder ) {
         char *name = logs[i]->getFileName();
         
         if( strstr( name, "_done_" ) != NULL ) {
-
+            
             int x, y;
             double timeStamp;
             
@@ -222,6 +268,7 @@ void processMonumentLogsFolder( File *inFolder, File *inHTMLFolder ) {
 
     while( q.size() > 0 ) {
         File *f = q.removeMin();
+        
         processLogFile( f, outHTMLFile );
         }
     
@@ -300,12 +347,13 @@ int main( int inNumArgs, char **inArgs ) {
         FILE *indexF = fopen( indexFilePath, "w" );
         
         fprintf( indexF, "<?php include( \"../header.php\" ); ?>\n" );
-        fprintf( indexF, "<center><table><tr><td>\n" );
+        fprintf( indexF, "<center><table><tr><td><br>\n" );
+        fprintf( indexF, "<font size=5>Monument Lists:</font><br><br>\n" );
 
         for( int i=0; i<htmlFileNames.size(); i++ ) {
             char *htmlName = htmlFileNames.getElementDirect( i );
             
-            char *humanName = stringDuplicate( humanName );
+            char *humanName = stringDuplicate( htmlName );
             
             char *phpLoc = strstr( humanName, ".php" );
             if( phpLoc != NULL ) {
@@ -320,7 +368,7 @@ int main( int inNumArgs, char **inArgs ) {
             delete [] htmlName;
             }
 
-        fprintf( indexF, "</td></tr></table></center>\n" );
+        fprintf( indexF, "<br><br><br></td></tr></table></center>\n" );
         fprintf( indexF, "<?php include( \"../footer.php\" ); ?>\n" );
         
         fclose( indexF );
