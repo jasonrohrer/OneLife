@@ -39,15 +39,15 @@ char *nameFromLine( char *inLine ) {
     
     SimpleVector<char*> nameTok;
     
-    if( hasTime && tok.size() == 8 
+    if( hasTime && tok->size() == 8 
         ||
-        ! hasTime && tok.size() == 7 ) {
+        ! hasTime && tok->size() == 7 ) {
         
-        nameTok.push_back( tok.getElementDirect( 5 ) );
-        nameTok.push_back( tok.getElementDirect( 6 ) );
+        nameTok.push_back( tok->getElementDirect( 5 ) );
+        nameTok.push_back( tok->getElementDirect( 6 ) );
         }
     else {
-        nameTok.push_back( tok.getElementDirect( 5 ) );
+        nameTok.push_back( tok->getElementDirect( 5 ) );
         }
     
     SimpleVector<char> formatedNameChar;
@@ -118,7 +118,7 @@ void processLogFile( File *inFile, FILE *outHTMLFile ) {
 
     strftime( timeString, 99, "%A, %m %d, %T %Z", timeStruct );
     
-    fprintf( outHTMLFile, timeString );
+    fprintf( outHTMLFile, "%s", timeString );
     
     fprintf( outHTMLFile, "<br>\n" );
 
@@ -148,7 +148,7 @@ void processLogFile( File *inFile, FILE *outHTMLFile ) {
 SimpleVector<char*> htmlFileNames;
 
 
-void processMonumentLogsFolder( File *inFolder ) {
+void processMonumentLogsFolder( File *inFolder, File *inHTMLFolder ) {
     int numFiles;
     
     File **logs = inFolder->getChildFiles( &numFiles );
@@ -173,7 +173,7 @@ void processMonumentLogsFolder( File *inFolder ) {
             htmlFileName = stringDuplicate( "main.php" );
             }
         
-        File *htmlFile = htmlFile.getChildFile( htmlFileName );
+        File *htmlFile = inHTMLFolder->getChildFile( htmlFileName );
         
 
         char *path = htmlFile->getFullFileName();
@@ -182,8 +182,8 @@ void processMonumentLogsFolder( File *inFolder ) {
         if( outHTMLFile != NULL ) {
             htmlFileNames.push_back( htmlFileName );
             
-            fprint( outHTMLFile, "<?php include( \"../header.php\" ); ?>\n" );
-            fprint( outHTMLFile, "<center><table>\n" );
+            fprintf( outHTMLFile, "<?php include( \"../header.php\" ); ?>\n" );
+            fprintf( outHTMLFile, "<center><table>\n" );
             }
         else {
             delete [] htmlFileName;
@@ -209,7 +209,7 @@ void processMonumentLogsFolder( File *inFolder ) {
             int x, y;
             double timeStamp;
             
-            int numRead = sscanf( name, "%x_%y_done_%lf.txt",
+            int numRead = sscanf( name, "%d_%d_done_%lf.txt",
                                   &x, &y, &timeStamp );
             
             if( numRead == 3 ) {
@@ -232,8 +232,8 @@ void processMonumentLogsFolder( File *inFolder ) {
     
 
     if( outHTMLFile != NULL ) {
-        fprint( outHTMLFile, "</table></center>\n" );
-        fprint( outHTMLFile, "<?php include( \"../footer.php\" ); ?>\n" );
+        fprintf( outHTMLFile, "</table></center>\n" );
+        fprintf( outHTMLFile, "<?php include( \"../footer.php\" ); ?>\n" );
         fclose( outHTMLFile );
         }
     delete [] logs;
@@ -280,7 +280,8 @@ int main( int inNumArgs, char **inArgs ) {
                 
                 if( strstr( name, "monumentLogs" ) == name ) {
                     // file name starts with monumentLogs
-                    processMonumentLogsFolder( childFiles[i] );
+                    processMonumentLogsFolder( childFiles[i],
+                                               &htmlDir );
                     }
                 delete [] name;
                 }
@@ -290,7 +291,7 @@ int main( int inNumArgs, char **inArgs ) {
         delete [] childFiles;
 
 
-        File *indexFile = htmlDir.getChildFiles( "index.php" );
+        File *indexFile = htmlDir.getChildFile( "index.php" );
         
         char *indexFilePath = indexFile->getFullFileName();
         
@@ -298,8 +299,8 @@ int main( int inNumArgs, char **inArgs ) {
         
         FILE *indexF = fopen( indexFilePath, "w" );
         
-        fprint( outHTMLFile, "<?php include( \"../header.php\" ); ?>\n" );
-        fprint( outHTMLFile, "<center><table><tr><td>\n" );
+        fprintf( indexF, "<?php include( \"../header.php\" ); ?>\n" );
+        fprintf( indexF, "<center><table><tr><td>\n" );
 
         for( int i=0; i<htmlFileNames.size(); i++ ) {
             char *htmlName = htmlFileNames.getElementDirect( i );
@@ -311,15 +312,18 @@ int main( int inNumArgs, char **inArgs ) {
                 phpLoc[0] = '\0';
                 }
             
-            fprintf( outHTMLFile, "
+            fprintf( indexF, "<a href=%s>%s</a><br><br>\n",
+                     htmlName, humanName );
             
 
             delete [] humanName;
             delete [] htmlName;
             }
 
-        fprint( outHTMLFile, "</td></tr></table></center>\n" );
-        fprint( outHTMLFile, "<?php include( \"../footer.php\" ); ?>\n" );
+        fprintf( indexF, "</td></tr></table></center>\n" );
+        fprintf( indexF, "<?php include( \"../footer.php\" ); ?>\n" );
+        
+        fclose( indexF );
         }
     else {
         usage();
