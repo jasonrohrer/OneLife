@@ -34,6 +34,10 @@ Server Fixes:
 
 --Added timestamp per monument step in monument logs.
 
+--Changed monument tracking to only log monuments when second layer is built,
+  and cleared old monument logs containing only one line.
+
+--Main server backup script backs up monument logs.
 
 
 
