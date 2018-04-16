@@ -234,7 +234,7 @@ void processMonumentLogsFolder( File *inFolder, File *inHTMLFolder ) {
             htmlFileNames.push_back( htmlFileName );
             
             fprintf( outHTMLFile, "<?php include( \"../header.php\" ); ?>\n" );
-            fprintf( outHTMLFile, "<center><table>\n" );
+            fprintf( outHTMLFile, "<center><table><br><br>\n" );
             }
         else {
             delete [] htmlFileName;
