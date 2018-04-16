@@ -6,7 +6,6 @@ git pull
 
 ./makePrintMonumentHTML
 
-./printMonumentHTML ~/checkout/OneLife/server/ ~/www/monuments/
 
 
 
@@ -22,6 +21,11 @@ do
   rsync -avz -e ssh --progress $user@$server:checkout/OneLife/server/monumentLogs/*.txt $dirName
 
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
+
+
+
+./printMonumentHTML ~/checkout/OneLife/server/ ~/www/monuments/
+
 
 
 cd ~/checkout/OneLife/server/
