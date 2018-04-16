@@ -218,7 +218,7 @@ if( $rs_reviewCount > 0 ) {
 ?>
 
 
-<td>
+<td valign=top>
 <font size=6 id="reviews">Recent Reviews:</font><br><br>
 <?php
 include( "reviewPages/recentReviews.html" );
@@ -230,7 +230,7 @@ include( "reviewPages/recentReviews.html" );
 if( $rs_reviewCount > 16 ) {
 ?>
 <td width=80></td>    
-<td>
+<td valign=top>
 <font size=6>Top Playtime Reviews:</font><br><br>
 <?php
 include( "reviewPages/playtimeReviews.html" );
