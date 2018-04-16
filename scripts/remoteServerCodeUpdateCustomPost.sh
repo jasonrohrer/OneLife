@@ -2,7 +2,3 @@
 
 # stuff we want to do only one time, like clear certain database
 
-cd ~/checkout/OneLife/server
-
-./makeDBConvert
-./convertDBs.sh
