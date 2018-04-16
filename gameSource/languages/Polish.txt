@@ -1,0 +1,276 @@
+writeFailed "BŁĄD:  FOLDER Z GRĄ JEST W TRYBIE TYLKO OD ODCZYTU"
+
+
+measuringFPS "MIERZENIE MAKSYMALNYCH FPS"
+
+vsyncWarning "OSTRZEŻENIE: SYNCHRONIZACJA PIONOWA WYŁĄCZONA"
+vsyncWarning2 "(PRAWDOPODOBNIE BĘDZIE TO MIEĆ NEGATYWNY WPŁYW NA WRAŻENIA WIZUALNE)"
+
+vsyncWarning3 "MOŻESZ SPRÓBOWAĆ NAPRAWIĆ TO W PANELU STEROWANIA KARTY GRAFICZNEJ"
+
+vsyncContinueMessage "WCIŚNIJ Y ABY KONTYNUOWAĆ Z WYŁĄCZONĄ SYNCHRONIZACJĄ PIONOWĄ LUB WCIŚNIJ ESC ABY WYJŚĆ"
+
+
+fpsErrorLogin "BŁĄD:  WYKRYTO NIESTABILNE FPS.  CZY ZMIENIŁY SIĘ USTAWIENIA SYNCHRONIZACJI PIONOWEJ?"
+
+
+
+loading "ŁADOWANIE"
+
+sprites "GRAFIKI"
+objects "OBIEKTY"
+transitions "TŁUMACZENIA"
+animations "ANIMACJE"
+categories "KATEGORIE"
+
+groundTextures "TEKSTURY PODŁOŻA"
+
+
+spritesRebuild "GRAFIKI##(PRZEBUDOWYWANIE CACHE)"
+objectsRebuild "OBIEKTY##(PRZEBUDOWYWANIE CACHE)"
+transitionsRebuild "TŁUMACZENIA##(PRZEBUDOWYWANIE CACHE)"
+animationsRebuild "ANIMACJE##(PRZEBUDOWYWANIE CACHE)"
+categoriesRebuild "KATEGORIE##(PRZEBUDOWYWANIE CACHE)"
+
+
+
+
+email "EMAIL"
+atSignTip "WSTAW ZNAK '@' (INTL KEYBOARDS)"
+
+
+loginButton "ZALOGUJ"
+loginNoSaveButton "TYMCZASOWO ZALOGUJ"
+settingsButton "USTAWIENIA"
+postReviewButton "NAPISZ RECENZJĘ"
+updateReviewButton "ZAKTUALIZUJ RECENZJĘ"
+
+reviewText "TEKST RECENZJI"
+reviewName "PODPIS"
+
+recommend "POLEĆ"
+recommendYes "TAK"
+recommendNo "NIE"
+
+postButton "OPUBLIKUJ"
+postReviewTip "OPUBLIKUJ NA ONEHOURONELIFE.COM"
+
+updateButton "ZAKTUALIZUJ"
+updateReviewTip "ZAKTUALIZUJ NA ONEHOURONELIFE.COM"
+
+removeButton "USUŃ"
+removeReviewTip "USUŃ Z ONEHOURONELIFE.COM"
+
+
+copyReviewTip "SKOPIUJ TEKST RECENZJI DO SCHOWKA"
+copySelectionTip "SKOPIUJ ZAZNACZONY TEKST DO SCHOWKA"
+
+spellCheck "SPRAWDŹ PISOWNIĘ"
+
+requestDenied "PRÓBA OPUBLIKOWANIA ODRZUCONA"
+
+reviewPosted "RECENZJA ZOSTAŁA OPUBLIKOWANA"
+reviewUpdated "RECENZJA ZOSTAŁA ZAKTUALIZOWANA"
+reviewRemoved "RECENZJA ZOSTAŁA USUNIĘTA"
+
+
+
+saveTip "ZALOGUJ I ZAPISZ DANE LOGOWANIA LOKALNIE"
+noSaveTip "NIE ZAPISUJ DANYCH LOGOWANIA LOKALNIE"
+
+
+accountKey "KLUCZ"
+paste "WKLEJ"
+copy "KOPIUJ"
+clear "WYCZYŚĆ"
+
+charLimit "LIMIT 5000 ZNAKÓW OSIĄGNIĘTY"
+
+
+
+backButton "POWRÓT"
+restartButton "RESTART"
+fullscreen "PEŁNY EKRAN:"
+musicLoudness "GŁOŚNOŚĆ MUZYKI:"
+soundLoudness "GŁOŚNOŚĆ DŹWIĘKÓW:"
+
+currentFPS "AKTUALNA LICZBA KLATEK:"
+targetFPS "DOCELOWA LICZBA KLATEK:"
+vsyncOn "SYNCHRONIZACJA PIONOWA:"
+vsyncYes "TAK"
+vsyncNo "NIE"
+redetectButton "WYKRYJ PONOWNIE"
+
+
+downloadingUpdate "POBIERANIE AKTUALIZACJI"
+applyingUpdate "INSTALOWANIE AKTUALIZACJI"
+
+serverShutdownMessage "SERWERY ZOSTANĄ NIEBAWEM##WYŁĄCZONE Z PRZYCZYN TECHINCZNYCH.##PROSZĘ SPRÓBOWAĆ PÓŹNIEJ."
+
+upgradeMessage "PROSZĘ POBIERZ##NAJNOWSZĄ WERSJĘ"
+
+updateWritePermissionMessage "NIEUDANA AKTUALIZACJA:##PRZENIEŚ FOLDER Z GRĄ W MIEJSCE##GDZIE NIE BĘDZIE W TRYBIE 'TYLKO DO ODCZYTU'."
+
+manualRestartMessage "URUCHOM GRĘ PONOWNIE, ABY DOKOŃCZYĆ AKTUALIZACJĘ"
+
+
+loginFailed "BŁĄD ŁADOWANIA"
+
+versionMismatch "NIEPASUJĄCE WERSJE:  KLIENT %d -- SERWER %d"
+
+serverShutdown "SERWER JEST WYŁĄCZONY"
+
+serverFull "SERWER JEST PEŁEN"
+
+
+waitingBirth "OCZEKIWANIE NA NARODZINY"
+
+loadingMap "ŁADOWANIE MAPY"
+
+
+lastAte "ZJEDZONO"
+lastAtePermanent "ATE FROM"
+
+breastMilk "NAKARMIONO CIĘ PIERSIĄ"
+
+you "TY"
+eat "JEDZ"
+
+
+eatHint "USTA"
+bareHandHint "GOŁA RĘKA"
+bareGroundHint "GOŁA ZIEMIA"
+nothingHint "NIC"
+eventuallyHint "(OSTATECZNIE)"
+
+
+noHint "BRAK INFORMACJI" 
+
+ofHint "Z"
+tabHint "[TAB]"
+
+
+your "TWÓJ/TWOJA"
+
+mother "MATKA"
+son "SYN"
+daughter "CÓRKA"
+grand "BABCIA"
+great "PRA-"
+
+brother "BRAT"
+sister "SIOSTRA"
+
+aunt "CIOCIA"
+uncle "WUJEK"
+
+niece "SIOSTRZENICA"
+nephew "SIOSTRZENIEC"
+
+cousin "KUZYN/KUZYNKA"
+
+1th "PIERWSZY"
+2th "DRUGI"
+3th "TRZECI"
+4th "CZWARTY"
+5th "PIĄTY"
+6th "SZÓSTY"
+7th "SIÓDMY"
+8th "ÓSMY"
+9th "DZIEWIĄTY"
+10th "DZIESIĄTY"
+11th "JEDENASTY"
+12th "DWUNASTY"
+13th "TRZYNASTY"
+14th "CZTERNASTY"
+15th "PIĘTNASTY"
+16th "SZESNASTY"
+17th "SIEDEMNASTY"
+18th "OSIEMNASTY"
+19th "DZIEWIĘTNASTY"
+20th "DWUDZIESTY"
+twenty "DWUDZIESTY "
+
+distant "odległy"
+
+removed "USUNIĘTO"
+1Times "RAZ"
+2Times "DWUKROTNIE"
+3Times "TRZYKROTNIE"
+4Times "CZTEROKROTNIE"
+5Times "PIĘCIOKROTNIE"
+6Times "SZEŚCIOKROTNIE"
+7Times "SIEDMIOKROTNIE"
+8Times "OŚMIOKROTNIE"
+9Times "DZIEWIĘCIOKROTNIE"
+manyTimes "WIELOKROTNIE"
+
+
+unrelated "NIESPOKREWNIONY"
+
+
+
+youDied "NIE ŻYJESZ"
+
+deathAgeOne "WIEK:  1 ROK"
+deathAge "WIEK:  %d LAT"
+
+reasonDisconnected "PRZYCZYNA:  UTRACONO POŁĄCZENIE"
+
+reasonHunger "PRZYCZYNA:  ZAGŁODZENIE"
+
+reasonNursingHunger "PRZYCZYNA:  NURSING STARVATION"
+
+reasonKilled "PRZYCZYNA:  ZABITY PRZEZ "
+
+reasonKilledUnknown "PRZYCZYNA:  ZABICIE NIEZNANĄ BRONIĄ"
+
+reasonOldAge "PRZYCZYNA:  PODESZŁY WIEK"
+
+reasonUnknown "PRZYCZYNA:  NIEZNANA"
+
+reasonApocalypse "PRZYCZYNA:  APOKALIPSA"
+
+
+okay "OK"
+quit "WYJDŹ"
+
+reborn "PONOWNE NARODZENIE SIĘ"
+
+
+
+
+pauseMessage1 "NA PEWNO WYJŚĆ?"
+
+pauseMessage2 "WCIŚNIJ [ENTER] ABY KONTYNUOWAĆ GRĘ"
+
+
+pauseMessage3 "WCIŚNIJ [%] ABY WYJŚĆ"
+pauseMessage3b "NIE MOŻESZ TERAZ WYJŚĆ"
+
+pauseMessage4 "-"
+
+
+
+quitMessage "WCIŚNIJ [ESC] ABY WYJŚĆ"
+
+
+
+playbackTag           "PLAYBACK %:"
+playbackToggleMessage "(WCIŚNIJ [%] ABY UKRYĆ)"
+playbackEndMessage    "(WCIŚNIJ [ESC] ABY ZAKOŃCZYĆ)"
+
+
+enterDemoCode  "Wprowadź kod demo:"
+checkingCode  "Sprawdzanie uprawnień do demo na serwerze..."
+
+
+
+responseWarning "NIE MOŻNA POŁĄCZYĆ DO SERWERA.##NASTĘPNA PRÓBA: %d"
+
+
+err_webRequest   "BŁĄD:  ZAPYTANIE SIECIOWE NIE POWIODŁO SIĘ."
+err_codeFailed  "Ten klucz demo został odrzucony przez serwer."
+err_serverVerifyFailed  "Odpowiedź od serwera##nie mogła zostać zweryfikowana."
+
+err_badServerResponse  "BŁĄD:  NIEOCZEKIWANA##ODPOWIEDŹ SERWERA"
