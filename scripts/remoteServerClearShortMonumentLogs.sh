@@ -1,4 +1,7 @@
 
+# exit on first error
+set -e
+
 
 cd ~/checkout/OneLife/server/
 
