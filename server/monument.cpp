@@ -92,8 +92,9 @@ void monumentAction( int inX, int inY, int inObjectID, int inPlayerID,
                 name = "NAMELESS";
                 }
             
-            fprintf( f, "%d: %d %d %d %d %s\n", 
-                     inAction, inX, inY, inObjectID, inPlayerID, name );
+            fprintf( f, "%d: %d %d %d %d %s time_%.f\n", 
+                     inAction, inX, inY, inObjectID, inPlayerID, name,
+                     Time::getCurrentTime() );
             
             if( inAction == 2 ) {
                 // monument done

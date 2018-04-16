@@ -32,6 +32,8 @@ Server Fixes:
   has been saved, server looks for tallest, most-recenly-built monument
   location and uses that for the new Eve location.
 
+--Added timestamp per monument step in monument logs.
+
 
 
 
