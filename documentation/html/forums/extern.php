@@ -545,3 +545,5 @@ else if ($action == 'stats')
 
 // If we end up here, the script was called with some wacky parameters
 exit($lang_common['Bad request']);
+
+?>
