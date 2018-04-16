@@ -17,7 +17,7 @@ void usage() {
     
     printf( "Example:\n" );
     printf( "printMonumentHTML "
-            "~/checkout/OneFailure/server "
+            "~/checkout/OneLife/server "
             "~/www/monuments\n\n" );
     
     exit( 1 );
