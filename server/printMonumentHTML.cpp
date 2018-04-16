@@ -102,6 +102,8 @@ void processLogFile( File *inFile, FILE *outHTMLFile ) {
     
     char **lines = split( cont, "\n", &numLines );
 
+    delete [] cont;
+    
     int numLinesToUse = numLines - 1;
     
     
@@ -156,7 +158,7 @@ void processLogFile( File *inFile, FILE *outHTMLFile ) {
             }
         delete [] contribName;
         }
-    delete prevName;
+    delete [] prevName;
     
 
     fprintf( outHTMLFile, "<br>\n" );
@@ -206,7 +208,10 @@ void processMonumentLogsFolder( File *inFolder, File *inHTMLFolder ) {
         
         int numRead = sscanf( name, "monumentLogs_%199s",
                               serverName );
-                    
+
+        delete [] name;
+        
+        
         char *htmlFileName = NULL;
 
         if( numRead == 1 ) {
@@ -220,6 +225,9 @@ void processMonumentLogsFolder( File *inFolder, File *inHTMLFolder ) {
         
 
         char *path = htmlFile->getFullFileName();
+
+        delete htmlFile;
+        
         outHTMLFile = fopen( path, "w" );
 
         if( outHTMLFile != NULL ) {
@@ -239,6 +247,7 @@ void processMonumentLogsFolder( File *inFolder, File *inHTMLFolder ) {
         for( int i=0; i<numFiles; i++ ) {
             delete logs[i];
             }
+        delete [] logs;
         return;
         }
 
@@ -276,6 +285,7 @@ void processMonumentLogsFolder( File *inFolder, File *inHTMLFolder ) {
     for( int i=0; i<numFiles; i++ ) {
         delete logs[i];
         }
+    delete [] logs;
     
 
     if( outHTMLFile != NULL ) {
@@ -283,7 +293,6 @@ void processMonumentLogsFolder( File *inFolder, File *inHTMLFolder ) {
         fprintf( outHTMLFile, "<?php include( \"../footer.php\" ); ?>\n" );
         fclose( outHTMLFile );
         }
-    delete [] logs;
     }
 
 
@@ -345,6 +354,8 @@ int main( int inNumArgs, char **inArgs ) {
         delete indexFile;
         
         FILE *indexF = fopen( indexFilePath, "w" );
+
+        delete [] indexFilePath;
         
         fprintf( indexF, "<?php include( \"../header.php\" ); ?>\n" );
         fprintf( indexF, "<center><table><tr><td><br>\n" );
