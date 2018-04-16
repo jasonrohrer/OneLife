@@ -4,7 +4,9 @@ cd checkout/OneLifeWorking/server
 git pull
 
 
-sh makePrintLifeLogStatsHTML
+./makePrintMonumentHTML
+
+./printMonumentHTML ~/checkout/OneLife/server/ ~/www/monuments/
 
 
 
@@ -36,4 +38,4 @@ if [ "$numDone" -eq "1" ]; then
 fi
 
 
-echo "$numDone $monumentWord completed, $numInProgress in progress" > /home/jcr15/public_html/monumentStats.php
+echo "<a href=monuments>$numDone $monumentWord completed</a>, $numInProgress in progress" > /home/jcr15/public_html/monumentStats.php
