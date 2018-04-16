@@ -1,6 +1,10 @@
 
 
-cd ~/checkout/OneLife/server/monumentLogs
+cd ~/checkout/OneLife/server/
+
+cp -r monumentLogs monumentLogs.bak
+
+cd monumentLogs
 
 # clear those with less than two lines
 # method found here:  
