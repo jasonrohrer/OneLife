@@ -1587,6 +1587,18 @@ int DB_open_timeShrunk(
 
 
 
+int countNewlines( char *inString ) {
+    int len = strlen( inString );
+    int num = 0;
+    for( int i=0; i<len; i++ ) {
+        if( inString[i] == '\n' ) {
+            num++;
+            }
+        }
+    return num;
+    }
+
+
 
 
 void initMap() {
@@ -1638,8 +1650,87 @@ void initMap() {
         fscanf( eveLocFile, "%d,%d", &( eveLocation.x ), &( eveLocation.y ) );
 
         fclose( eveLocFile );
+
+        printf( "Loading lastEveLocation %d,%d\n", 
+                eveLocation.x, eveLocation.y );
         }
 
+    // override if shutdownLongLineagePos exists
+    FILE *lineagePosFile = fopen( "shutdownLongLineagePos.txt", "r" );
+    if( lineagePosFile != NULL ) {
+        
+        fscanf( lineagePosFile, "%d,%d", 
+                &( eveLocation.x ), &( eveLocation.y ) );
+
+        fclose( lineagePosFile );
+
+        printf( "Overriding eveLocation with shutdownLongLineagePos %d,%d\n", 
+                eveLocation.x, eveLocation.y );
+        }
+    else {
+        printf( "No shutdownLongLineagePos.txt file exists\n" );
+        
+        // look for longest monument log file
+        // that has been touched in last 24 hours
+        // (ignore spots that may have been culled)
+        File f( NULL, "monumentLogs" );
+        if( f.exists() && f.isDirectory() ) {
+            int numChildFiles;
+            File **childFiles = f.getChildFiles( &numChildFiles );
+            
+            timeSec_t longTime = 0;
+            int longLen = 0;
+            int longX = 0;
+            int longY = 0;
+            
+            timeSec_t curTime = Time::timeSec();
+
+            int secInDay = 3600 * 24 * 1000;
+            
+            for( int i=0; i<numChildFiles; i++ ) {
+                timeSec_t modTime = childFiles[i]->getModificationTime();
+                
+                if( curTime - modTime < secInDay ) {
+                    char *cont = childFiles[i]->readFileContents();
+                    
+                    int numNewlines = countNewlines( cont );
+                    
+                    delete [] cont;
+                    
+                    if( numNewlines > longLen ||
+                        ( numNewlines == longLen && modTime > longTime ) ) {
+                        
+                        char *name = childFiles[i]->getFileName();
+                        
+                        int x, y;
+                        int numRead = sscanf( name, "%d_%d_",
+                                              &x, &y );
+
+                        delete [] name;
+                        
+                        if( numRead == 2 ) {
+                            longTime = modTime;
+                            longLen = numNewlines;
+                            longX = x;
+                            longY = y;
+                            }
+                        }
+                    }
+                delete childFiles[i];
+                }
+            delete [] childFiles;
+
+            if( longLen > 0 ) {
+                eveLocation.x = longX;
+                eveLocation.y = longY;
+                
+                printf( "Overriding eveLocation with "
+                        "tallest recent monument location %d,%d\n", 
+                        eveLocation.x, eveLocation.y );
+                }
+            }
+        }
+    
 
 
 

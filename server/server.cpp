@@ -1212,6 +1212,23 @@ static void setDeathReason( LiveObject *inPlayer, const char *inTag,
 
 
 
+int longestShutdownLine = -1;
+
+void handleShutdownDeath( LiveObject *inPlayer,
+                          int inX, int inY ) {
+    if( inPlayer->parentChainLength > longestShutdownLine ) {
+        longestShutdownLine = inPlayer->parentChainLength;
+        
+        FILE *f = fopen( "shutdownLongLineagePos.txt", "w" );
+        if( f != NULL ) {
+            fprintf( f, "%d,%d", inX, inY );
+            fclose( f );
+            }
+        }
+    }
+
+
+
 double computeAge( LiveObject *inPlayer ) {
     double deltaSeconds = 
         Time::getCurrentTime() - inPlayer->lifeStartTimeSeconds;
@@ -4265,6 +4282,8 @@ int main() {
 
     while( !quit ) {
         
+        int shutdownMode = SettingsManager::getIntSetting( "shutdownMode", 0 );
+        
         
         apocalypseStep();
         monumentStep();
@@ -4485,8 +4504,7 @@ int main() {
                 int currentPlayers = players.size() + newConnections.size();
                     
 
-                if( apocalypseTriggered ||
-                    SettingsManager::getIntSetting( "shutdownMode", 0 ) ) {
+                if( apocalypseTriggered || shutdownMode ) {
                         
                     AppLog::info( "We are in shutdown mode, "
                                   "deflecting new connection" );         
@@ -5746,6 +5764,11 @@ int main() {
                                                       nextPlayer->id,
                                                       nextPlayer->email );
                                             
+                                            if( shutdownMode ) {
+                                                handleShutdownDeath( 
+                                                    hitPlayer, m.x, m.y );
+                                                }
+
                                             hitPlayer->deathLogged = true;
                                             }
                                         }
@@ -7489,7 +7512,11 @@ int main() {
                               dropPos.x, dropPos.y,
                               players.size() - 1,
                               disconnect );
-                                        
+                    
+                    if( shutdownMode ) {
+                        handleShutdownDeath( nextPlayer, dropPos.x, dropPos.y );
+                        }
+                    
                     nextPlayer->deathLogged = true;
                     }
                 
@@ -8263,7 +8290,12 @@ int main() {
                                   deathPos.x, deathPos.y,
                                   players.size() - 1,
                                   false );
-                                        
+                        
+                        if( shutdownMode ) {
+                            handleShutdownDeath( decrementedPlayer,
+                                                 deathPos.x, deathPos.y );
+                            }
+                                            
                         decrementedPlayer->deathLogged = true;
                                         
 
@@ -9692,7 +9724,7 @@ int main() {
 
 
         if( players.size() == 0 && newConnections.size() == 0 ) {
-            if( SettingsManager::getIntSetting( "shutdownMode", 0 ) ) {
+            if( shutdownMode ) {
                 AppLog::info( "No live players or connections in shutdown " 
                               " mode, auto-quitting." );
                 quit = true;

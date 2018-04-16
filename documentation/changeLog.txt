@@ -23,6 +23,16 @@ Server Fixes:
 
 --Fixed occurence of ~ for home directory inside quotes in various BASH scripts.
 
+--Instead of using last Eve location before shutdown as new Eve location on
+  next server startup, server remembers death location of longest lineage
+  person who died during the shutdown process and uses that as the new Eve
+  location on next startup.  That location is still used for the next three
+  Eves post-startup, to give people three chances to get the pre-shutdown
+  civilization up and running.  As a fall-back, if no shutdown death location
+  has been saved, server looks for tallest, most-recenly-built monument
+  location and uses that for the new Eve location.
+
+
 
 
 
