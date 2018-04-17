@@ -52,6 +52,7 @@ typedef struct LiveObject {
         
         SimpleVector<int> lineage;
         
+        char outOfRange;
         char dying;
         
         char *name;

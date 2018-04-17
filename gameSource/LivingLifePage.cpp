@@ -662,6 +662,7 @@ typedef enum messageType {
     MAP_CHANGE,
     PLAYER_UPDATE,
     PLAYER_MOVES_START,
+    PLAYER_OUT_OF_RANGE,
     PLAYER_SAYS,
     FOOD_CHANGE,
     LINEAGE,
@@ -718,6 +719,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "PM" ) == 0 ) {
         returnValue = PLAYER_MOVES_START;
+        }
+    else if( strcmp( copy, "PO" ) == 0 ) {
+        returnValue = PLAYER_OUT_OF_RANGE;
         }
     else if( strcmp( copy, "PS" ) == 0 ) {
         returnValue = PLAYER_SAYS;
@@ -2786,7 +2790,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
     returnPack.inObjectID = -1;
 
 
-    if( inObj->hide ) {
+    if( inObj->hide || inObj->outOfRange ) {
         return returnPack;
         }
 
@@ -9092,6 +9096,7 @@ void LivingLifePage::step() {
                 o.age = 0;
                 o.finalAgeSet = false;
                 
+                o.outOfRange = false;
                 o.dying = false;
                 
                 o.name = NULL;
@@ -9401,6 +9406,23 @@ void LivingLifePage::step() {
                                 checkIfHeldContChanged( &o, existing );
                             }
                         
+                        
+                        // receiving a PU means they aren't out of
+                        // range anymore
+                        if( existing->outOfRange ) {
+                            // was out of range before
+                            // this update is forced
+                            existing->currentPos.x = o.xd;
+                            existing->currentPos.y = o.yd;
+                            
+                            existing->currentSpeed = 0;
+                            existing->currentGridSpeed = 0;
+                            
+                            existing->xd = o.xd;
+                            existing->yd = o.yd;
+                            }
+                        existing->outOfRange = false;
+
                         
                         existing->lastHoldingID = oldHeld;
                         existing->holdingID = o.holdingID;
@@ -10831,6 +10853,9 @@ void LivingLifePage::step() {
                             // that means nothing else is pending yet
                             existing->somePendingMessageIsMoreMovement = false;
                                 
+                            // receiving a PM means they aren't out of
+                            // range anymore
+                            existing->outOfRange = false;
                             
 
 
@@ -11566,6 +11591,37 @@ void LivingLifePage::step() {
                             LiveObject *existing = gameObjects.getElement(j);
                             
                             existing->dying = true;
+                            break;
+                            }
+                        }
+                    }
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
+        else if( type == PLAYER_OUT_OF_RANGE ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+
+                int id;
+                int numRead = sscanf( lines[i], "%d ",
+                                      &( id ) );
+
+                if( numRead == 1 ) {
+                    for( int j=0; j<gameObjects.size(); j++ ) {
+                        if( gameObjects.getElement(j)->id == id ) {
+                            
+                            LiveObject *existing = gameObjects.getElement(j);
+                            
+                            existing->outOfRange = true;
                             break;
                             }
                         }
@@ -13154,6 +13210,12 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
             for( int i=gameObjects.size()-1; i>=0 && ! p->hit; i-- ) {
         
                 LiveObject *o = gameObjects.getElement( i );
+
+                if( o->outOfRange ) {
+                    // out of range, but this was their last known position
+                    // don't draw now
+                    continue;
+                    }
                 
                 if( o->heldByAdultID != -1 ) {
                     // held by someone else, don't draw now

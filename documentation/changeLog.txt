@@ -24,7 +24,8 @@ Version 77    ???
 
 --Fixed several bugs in TextArea code that could lead to crashes on Review page.
 
-
+--Fixed zombie player that could be discovered radius of 32 if a player walked
+  out of range and then you walked over to their last-known spot later. 
 
 
 

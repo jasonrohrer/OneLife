@@ -4931,6 +4931,7 @@ int main() {
         // accumulated text of update lines
         SimpleVector<char> newUpdates;
         SimpleVector<ChangePosition> newUpdatesPos;
+        SimpleVector<int> newUpdatePlayerIDs;
 
 
         // separate accumulated text of updates for player deletes
@@ -8699,6 +8700,8 @@ int main() {
             nextPlayer->posForced = false;
 
             newUpdates.appendElementString( updateLine );
+            newUpdatePlayerIDs.push_back( nextPlayer->id );
+            
             ChangePosition p = { nextPlayer->xs, nextPlayer->ys, false };
             newUpdatesPos.push_back( p );
 
@@ -8758,6 +8761,44 @@ int main() {
             }
 
 
+
+
+        unsigned char *outOfRangeMessage = NULL;
+        int outOfRangeMessageLength = 0;
+        
+        if( newUpdatePlayerIDs.size() > 0 ) {
+            SimpleVector<char> messageChars;
+            
+            messageChars.appendElementString( "PO\n" );
+            
+            for( int i=0; i<newUpdatePlayerIDs.size(); i++ ) {
+                char buffer[20];
+                sprintf( buffer, "%d\n",
+                         newUpdatePlayerIDs.getElementDirect( i ) );
+                
+                messageChars.appendElementString( buffer );
+                }
+            messageChars.push_back( '#' );
+
+            char *outOfRangeMessageText = messageChars.getElementString();
+
+            outOfRangeMessageLength = strlen( outOfRangeMessageText );
+
+            if( outOfRangeMessageLength < maxUncompressedSize ) {
+                outOfRangeMessage = (unsigned char*)outOfRangeMessageText;
+                }
+            else {
+                // compress for all players once here
+                outOfRangeMessage = makeCompressedMessage( 
+                    outOfRangeMessageText, 
+                    outOfRangeMessageLength, &outOfRangeMessageLength );
+                
+                delete [] outOfRangeMessageText;
+                }
+            }
+        
+
+        
 
         unsigned char *deleteUpdateMessage = NULL;
         int deleteUpdateMessageLength = 0;
@@ -9437,7 +9478,23 @@ int main() {
                                 "Socket write failed";
                             }
                         }
-                    
+                    else if( outOfRangeMessage != NULL ) {
+                        // everyone in the PU is out of range
+                        // send short PO instead
+                        int numSent = 
+                            nextPlayer->sock->send( 
+                                outOfRangeMessage, 
+                                outOfRangeMessageLength, 
+                                false, false );
+
+                        if( numSent != outOfRangeMessageLength ) {
+                            setDeathReason( nextPlayer, "disconnected" );
+
+                            nextPlayer->error = true;
+                            nextPlayer->errorCauseString =
+                                "Socket write failed";
+                            }
+                        }
                     }
                 if( moveMessage != NULL ) {
                     
@@ -9453,6 +9510,9 @@ int main() {
                     
                         if( d < minUpdateDist ) {
                             minUpdateDist = d;
+                            if( minUpdateDist <= maxDist ) {
+                                break;
+                                }
                             }
                         }
 
@@ -9643,6 +9703,9 @@ int main() {
             }
         if( updateMessage != NULL ) {
             delete [] updateMessage;
+            }
+        if( outOfRangeMessage != NULL ) {
+            delete [] outOfRangeMessage;
             }
         if( mapChangeMessage != NULL ) {
             delete [] mapChangeMessage;

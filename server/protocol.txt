@@ -109,6 +109,8 @@ PLAYER_UPDATE  (PU)
 
 PLAYER_MOVES_START (PM)
 
+PLAYER_OUT_OF_RANGE (PO)
+
 PLAYER_SAYS (PS)
 
 MAP_CHANGE (MX)
@@ -308,6 +310,25 @@ point)
 A PLAYER_UPDATE will be sent with done_moving set to 1 when these players 
 reach their destination.
 Until that has happened, client must assume player is still in transit.
+
+
+
+
+
+PO
+p_id
+p_id
+p_id
+...
+p_id
+#
+
+A list of player IDs that are out of range for this player.  We avoid sending
+a full PU message about these players, but we need to let the client know that
+they have moved out of range.
+
+
+
 
 
 
