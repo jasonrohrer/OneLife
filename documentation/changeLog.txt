@@ -67,6 +67,14 @@ Server Fixes:
 
 --Mr. Still-Pretty-Nice-Guy.  Eating bonus 2, down from 3.
 
+--Animals now stay in their spawning biome if moving radomly or fleeing.  Can
+  still leave their biome in chase or fixed cardinal direction moves.
+  Rattlesnakes stay in the desert, pengins stay in the snow.  Except for the
+  rare borderlands rattlesnake or penguin who spawns off the edge.  They will
+  also stay in their biome forever (a swamp penguin will always stay in the
+  swamp if it spawns there).  But in general, you can travel in non-desert
+  areas without much snake danger. 
+
 
 
 

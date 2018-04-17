@@ -3252,6 +3252,9 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 
                 int desiredMoveDist = t->desiredMoveDist;
 
+                char stayInBiome = false;
+                
+
                 if( t->move < 3 ) {
                     
                     GridPos p = getClosestPlayerPos( inX, inY );
@@ -3287,6 +3290,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         }
                     if( t->move == 2 ) {
                         // flee
+                        stayInBiome = true;
                         dir = mult( dir, -1 );
                         }
                     }
@@ -3318,6 +3322,8 @@ int checkDecayObject( int inX, int inY, int inID ) {
 
                 if( dir.x == 0 && dir.y == 0 ) {
                     // random instead
+                    
+                    stayInBiome = true;
                     
                     dir.x = 1;
                     dir.y = 0;
@@ -3413,6 +3419,23 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     tryRadius = 1;
                     }
                 
+                
+                int curBiome = -1;
+                if( stayInBiome ) {
+                    curBiome = getMapBiome( inX, inY );
+                    
+                    if( newX != inX || newY != inY ) {
+                        int newBiome = getMapBiome( newX, newY );
+                        
+                        if( newBiome != curBiome ) {
+                            // block move
+                            newX = inX;
+                            newY = inY;
+                            }
+                        }
+                    }
+                
+
 
                 if( newX == inX && newY == inY &&
                     t->move <= 3 ) {
@@ -3461,6 +3484,14 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                                 if( i >= tryDist && oID == 0 ) {
                                     // found a spot for it to move
+                                    
+                                    if( stayInBiome &&
+                                        curBiome !=
+                                        getMapBiome( testX, testY ) ) {
+                                        
+                                        continue;
+                                        }
+
                                     possibleX[ numPossibleDirs ] = testX;
                                     possibleY[ numPossibleDirs ] = testY;
                                     numPossibleDirs++;
