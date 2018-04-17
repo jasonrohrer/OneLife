@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 77    ???
+Version 77    2018-April-17
 
 --Added skipFPSMeasure.ini setting that can be used to disable FPS check on
   login screen.
