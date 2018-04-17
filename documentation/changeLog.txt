@@ -18,6 +18,13 @@ Version 76    ???
 
 --On version mismatch, a button to disable custom server is shown.
 
+--Client now counts any later server version as a mismatch, but allows earlier
+  server versions if that version matches our client data version (to allow
+  client binary updates to fix bugs without restarting the servers).
+
+
+
+
 
 
 

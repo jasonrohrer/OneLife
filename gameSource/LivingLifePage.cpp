@@ -46,6 +46,7 @@
 #define MAP_NUM_CELLS 4096
 
 extern int versionNumber;
+extern int dataVersionNumber;
 
 extern double frameRateFactor;
 
@@ -7699,7 +7700,16 @@ void LivingLifePage::step() {
                     &mRequiredVersion );
             
 
-            if( mRequiredVersion != versionNumber ) {
+            if( mRequiredVersion > versionNumber ||
+                ( mRequiredVersion < versionNumber &&
+                  mRequiredVersion != dataVersionNumber ) ) {
+                
+                // if server is using a newer version than us, we must upgrade
+                // our client
+                
+                // if server is using an older version, check that
+                // their version matches our data version at least
+
                 setSignal( "versionMismatch" );
                 delete [] message;
                 return;
