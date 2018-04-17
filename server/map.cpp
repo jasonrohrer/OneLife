@@ -5199,9 +5199,11 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
         
 
         // New method:
+        GridPos eveLocToUse = eveLocation;
         
         if( eveLocationUsage < maxEveLocationUsage ) {
             eveLocationUsage++;
+            // keep using same location
             }
         else {
             // post-startup eve location has been used too many times
@@ -5213,18 +5215,22 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
             delta = rotate( delta,
                             randSource.getRandomBoundedDouble( 0, 2 * M_PI ) );
             
-
-            eveLocation.x += lrint( delta.x );
-            eveLocation.y += lrint( delta.y );
+            // but don't update the post-startup location
+            // keep jumping away from startup-location as center of
+            // a circle
+            eveLocToUse.x += lrint( delta.x );
+            eveLocToUse.y += lrint( delta.y );
+            
+            // but do save it as a possible post-startup location for next time
             File eveLocFile( NULL, "lastEveLocation.txt" );
             char *locString = 
-                autoSprintf( "%d,%d", eveLocation.x, eveLocation.y );
+                autoSprintf( "%d,%d", eveLocToUse.x, eveLocToUse.y );
             eveLocFile.writeToFile( locString );
             delete [] locString;
             }
 
-        ave.x = eveLocation.x;
-        ave.y = eveLocation.y;
+        ave.x = eveLocToUse.x;
+        ave.y = eveLocToUse.y;
 
         
         

@@ -43,6 +43,11 @@ Server Fixes:
 
 --Fixed redundant if statement in transition bank (thanks UncleGus).
 
+--Eves are now spread in a circle around the server-startup-Eve-origin point
+  with a radius of 1000.  They won't keep random-walking further and further
+  away.
+
+
 
 
 
