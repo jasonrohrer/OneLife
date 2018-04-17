@@ -65,6 +65,8 @@ Server Fixes:
   with a radius of 1000.  They won't keep random-walking further and further
   away.
 
+--Mr. Still-Pretty-Nice-Guy.  Eating bonus 2, down from 3.
+
 
 
 
