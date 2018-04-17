@@ -7313,7 +7313,7 @@ void LivingLifePage::step() {
                 }
             }
         else {
-            int speed = 4;
+            int speed = frameRateFactor * 4;
 
             if( d < 8 ) {
                 speed = lrint( frameRateFactor * d / 2 );
@@ -7375,7 +7375,7 @@ void LivingLifePage::step() {
                 }
             }
         else {
-            int speed = 4;
+            int speed = frameRateFactor * 4;
 
             if( d < 8 ) {
                 speed = lrint( frameRateFactor * d / 2 );
@@ -7494,7 +7494,7 @@ void LivingLifePage::step() {
                     }
                 }
             else {
-                int speed = 4;
+                int speed = frameRateFactor * 4;
                 
                 if( d < 8 ) {
                     speed = lrint( frameRateFactor * d / 2 );
@@ -7562,7 +7562,7 @@ void LivingLifePage::step() {
                     }
                 }
             else {
-                int speed = 4;
+                int speed = frameRateFactor * 4;
                 
                 if( d < 8 ) {
                     speed = lrint( frameRateFactor * d / 2 );

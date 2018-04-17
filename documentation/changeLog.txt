@@ -13,6 +13,9 @@ Version 76    ???
   away, so that it can play when monumentCall is triggered.  People weren't
   actually hearing it from far away.  Oops.
 
+--Fixed speed calculation for various paper slide-in animations when target
+  frame rate not 60.
+
 
 
 
