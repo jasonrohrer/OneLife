@@ -41,6 +41,8 @@ Server Fixes:
 
 --Monument reports for website.
 
+--Fixed redundant if statement in transition bank (thanks UncleGus).
+
 
 
 
