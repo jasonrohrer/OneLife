@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 76    ???
+Version 77    ???
 
 --Added skipFPSMeasure.ini setting that can be used to disable FPS check on
   login screen.
@@ -22,6 +22,7 @@ Version 76    ???
   server versions if that version matches our client data version (to allow
   client binary updates to fix bugs without restarting the servers).
 
+--Fixed several bugs in TextArea code that could lead to crashes on Review page.
 
 
 

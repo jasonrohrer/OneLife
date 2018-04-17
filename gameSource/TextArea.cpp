@@ -857,6 +857,10 @@ void TextArea::draw() {
                         cursorPos --;
                         remainingLength --;
                         
+                        if( remainingLength < 0 ) {
+                            remainingLength = 0;
+                            }
+                        
                         line[ remainingLength ] = '\0';
                         }
                     
@@ -1441,6 +1445,12 @@ int TextArea::getClickHitCursorIndex( float inX, float inY ) {
         lineHit >= mMaxLinesShown ) {
         return -1;
         }
+
+    if( mLastVisibleLine == 0 &&
+        strlen( mLineStrings.getElementDirect( 0 ) ) == 0 ) {
+        // empty text area
+        return -1;
+        }
     
     lineHit += mFirstVisibleLine;
     
@@ -1631,6 +1641,8 @@ void TextArea::pointerUp( float inX, float inY ) {
         mRecomputeCursorPositions = true;
         }
     else {
+        mSelectionStart = -1;
+        mSelectionEnd = -1;
         
         int newCursor = getClickHitCursorIndex( inX, inY );
         

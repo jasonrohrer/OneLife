@@ -41,6 +41,7 @@ TextField::TextField( Font *inDisplayFont,
           mLabelText( NULL ),
           mAllowedChars( NULL ), mForbiddenChars( NULL ),
           mFocused( false ), mText( new char[1] ),
+          mTextLen( 0 ),
           mCursorPosition( 0 ),
           mIgnoreArrowKeys( false ),
           mDrawnText( NULL ),
@@ -879,7 +880,7 @@ void TextField::keyUp( unsigned char inASCII ) {
 
 
 void TextField::deleteHit() {
-    if( mCursorPosition > 0 ) {
+    if( mCursorPosition > 0 || isAnythingSelected() ) {
         mCursorFlashSteps = 0;
     
         int newCursorPos = mCursorPosition - 1;
@@ -914,6 +915,10 @@ void TextField::deleteHit() {
                 newCursorPos --;
                 }
             }
+        
+        // section cleared no matter what when delete is hit
+        mSelectionStart = -1;
+        mSelectionEnd = -1;
 
 
         char *oldText = mText;
