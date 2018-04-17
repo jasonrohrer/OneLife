@@ -9,6 +9,11 @@ Version 76    ???
 --Added skipFPSMeasure.ini setting that can be used to disable FPS check on
   login screen.
 
+--Fixed so that monumentCall sound is always loaded, even if monument is far
+  away, so that it can play when monumentCall is triggered.  People weren't
+  actually hearing it from far away.  Oops.
+
+
 
 
 Server Fixes:

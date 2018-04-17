@@ -42,6 +42,10 @@ static SimpleVector<int> personObjectIDs;
 // track female people
 static SimpleVector<int> femalePersonObjectIDs;
 
+// track monument calls
+static SimpleVector<int> monumentCallObjectIDs;
+
+
 
 // anything above race 100 is put in bin for race 100
 #define MAX_RACE 100
@@ -748,6 +752,7 @@ float initObjectBankStep() {
                     else if( strstr( r->description, 
                                      "monumentCall" ) != NULL ) {
                         r->monumentCall = true;
+                        monumentCallObjectIDs.push_back( r->id );
                         }
                     }
                 
@@ -1295,6 +1300,7 @@ static void freeObjectRecord( int inID ) {
 
             personObjectIDs.deleteElementEqualTo( inID );
             femalePersonObjectIDs.deleteElementEqualTo( inID );
+            monumentCallObjectIDs.deleteElementEqualTo( inID );
             
             
             if( race <= MAX_RACE ) {
@@ -1364,6 +1370,7 @@ void freeObjectBank() {
 
     personObjectIDs.deleteAll();
     femalePersonObjectIDs.deleteAll();
+    monumentCallObjectIDs.deleteAll();
     
     for( int i=0; i<= MAX_RACE; i++ ) {
         racePersonObjectIDs[i].deleteAll();
@@ -1557,6 +1564,12 @@ int getMonumentStatus( int inID ) {
         return 0;
         }
     }
+
+
+SimpleVector<int> *getMonumentCallObjects() {
+    return &monumentCallObjectIDs;
+    }
+
 
 
     
@@ -2143,7 +2156,9 @@ int addObject( const char *inDescription,
     r->monumentStep = false;
     r->monumentDone = false;
     r->monumentCall = false;
-                
+
+    monumentCallObjectIDs.deleteElementEqualTo( newID );
+    
     if( strstr( r->description, "monument" ) != NULL ) {
         // some kind of monument state
         if( strstr( r->description, "monumentStep" ) != NULL ) {
@@ -2156,6 +2171,7 @@ int addObject( const char *inDescription,
         else if( strstr( r->description, 
                          "monumentCall" ) != NULL ) {
             r->monumentCall = true;
+            monumentCallObjectIDs.push_back( newID );
             }
         }
 
@@ -2246,6 +2262,13 @@ int addObject( const char *inDescription,
         }
     
     delete [] lower;
+    
+    personObjectIDs.deleteElementEqualTo( newID );
+    femalePersonObjectIDs.deleteElementEqualTo( newID );
+
+    for( int i=0; i<=MAX_RACE; i++ ) {
+        racePersonObjectIDs[ i ].deleteElementEqualTo( newID );
+        }
     
     if( r->person && ! r->personNoSpawn ) {    
         personObjectIDs.push_back( newID );

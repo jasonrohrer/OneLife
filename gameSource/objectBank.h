@@ -493,6 +493,9 @@ char isApocalypseTrigger( int inID );
 int getMonumentStatus( int inID );
 
 
+// return vector NOT destroyed by caller
+SimpleVector<int> *getMonumentCallObjects();
+
 
 
 
