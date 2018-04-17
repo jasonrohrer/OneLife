@@ -16,6 +16,8 @@ Version 76    ???
 --Fixed speed calculation for various paper slide-in animations when target
   frame rate not 60.
 
+--On version mismatch, a button to disable custom server is shown.
+
 
 
 

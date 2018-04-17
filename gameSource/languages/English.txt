@@ -117,6 +117,8 @@ manualRestartMessage "RESTART GAME TO APPLY UPDATE"
 loginFailed "LOGIN FAILED"
 
 versionMismatch "VERSION MISMATCH:  CLIENT %d -- SERVER %d"
+disableCustomServer "DISABLE CUSTOM SERVER"
+
 
 serverShutdown "SERVER HAS BEEN SHUT DOWN"
 

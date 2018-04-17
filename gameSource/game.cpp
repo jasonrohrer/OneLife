@@ -1696,6 +1696,11 @@ void drawFrame( char inUpdate ) {
                                              livingLifePage->
                                              getRequiredVersion() );
 
+                if( SettingsManager::getIntSetting( "useCustomServer", 0 ) ) {
+                    existingAccountPage->showDisableCustomServerButton( true );
+                    }
+                
+
                 existingAccountPage->setStatusDirect( message, true );
                 
                 delete [] message;
