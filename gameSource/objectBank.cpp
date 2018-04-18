@@ -1214,7 +1214,7 @@ void setupSpriteUseVis( ObjectRecord *inObject, int inUsesRemaining,
 
         // now handle appearing sprites
         int numInvisSpritesLeft = 
-            ( d * (numAppearingSprites) ) / numUses;
+            lrint( ( d * (numAppearingSprites) ) / (double)numUses );
                         
         /*
         // testing... do we need to do this?

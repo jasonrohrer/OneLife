@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 78    ???
+
+--Fixed spread of appearing use sprites by rounding instead of flooring.  If
+  there was only one sprite, it would appear at 7/8 uses.  Now it appears at
+  4/8 uses.
+  
+
+
 Version 77    2018-April-17
 
 --Added skipFPSMeasure.ini setting that can be used to disable FPS check on
