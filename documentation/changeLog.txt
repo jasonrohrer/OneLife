@@ -20,6 +20,7 @@ Server Fixes:
 
 --Fixed to handle dropping of contained objects when held container shrinks.
 
+--Force drop when non-permanent held object decays into a permanent.
 
 
   

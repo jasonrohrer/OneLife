@@ -7901,6 +7901,24 @@ int main() {
                             }
                     
                         
+                        ObjectRecord *newObj = getObject( newID );
+                        ObjectRecord *oldObj = getObject( oldID );
+                        
+                        
+                        if( newObj != NULL && newObj->permanent &&
+                            oldObj != NULL && ! oldObj->permanent ) {
+                            // object decayed into a permanent
+                            // force drop
+                             GridPos dropPos = 
+                                computePartialMoveSpot( nextPlayer );
+                            
+                             handleDrop( 
+                                    dropPos.x, dropPos.y, 
+                                    nextPlayer,
+                                    &playerIndicesToSendUpdatesAbout );
+                            }
+                        
+
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         }
                     else {
