@@ -4701,7 +4701,7 @@ void shrinkContainer( int inX, int inY, int inNumNewSlots, int inSubCont ) {
         // first, scatter extra contents into empty nearby spots.
         for( int i=inNumNewSlots; i<oldNum; i++ ) {
             
-            int contID = getContained( inX, inY, i );
+            int contID = getContained( inX, inY, i, inSubCont );
 
             char subCont = false;
             
