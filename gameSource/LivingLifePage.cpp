@@ -9924,8 +9924,7 @@ void LivingLifePage::step() {
                                         }
                                     
                                     
-                                    if( ! otherSoundPlayed &&
-                                        ! clothingChanged &&
+                                    if( ! clothingChanged &&
                                         heldTransitionSourceID >= 0 &&
                                         heldObj->creationSound.numSubSounds 
                                         > 0 ) {

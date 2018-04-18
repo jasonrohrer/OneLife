@@ -9,6 +9,12 @@ Version 78    ???
 --Fixed spread of appearing use sprites by rounding instead of flooring.  If
   there was only one sprite, it would appear at 7/8 uses.  Now it appears at
   4/8 uses.
+
+--Allow creation sound to play for held item when it changes even if the
+  on-ground target object changes too (example:  tool breaking when chopping
+  wood).
+
+
   
 
 
