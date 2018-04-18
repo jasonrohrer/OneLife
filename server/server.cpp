@@ -2041,6 +2041,138 @@ void handleMapChangeToPaths(
 
 
 
+// returns true if found
+char findDropSpot( int inX, int inY, int inSourceX, int inSourceY, 
+                   GridPos *outSpot ) {
+    char found = false;
+    int foundX = inX;
+    int foundY = inY;
+    
+    // change direction of throw
+    // to match direction of 
+    // drop action
+    int xDir = inX - inSourceX;
+    int yDir = inY - inSourceY;
+                                    
+        
+    if( xDir == 0 && yDir == 0 ) {
+        xDir = 1;
+        }
+    
+    // cap to magnitude
+    // death drops can be non-adjacent
+    if( xDir > 1 ) {
+        xDir = 1;
+        }
+    if( xDir < -1 ) {
+        xDir = -1;
+        }
+    
+    if( yDir > 1 ) {
+        yDir = 1;
+        }
+    if( yDir < -1 ) {
+        yDir = -1;
+        }
+        
+
+    // check in y dir first at each
+    // expanded radius?
+    char yFirst = false;
+        
+    if( yDir != 0 ) {
+        yFirst = true;
+        }
+        
+    for( int d=1; d<10 && !found; d++ ) {
+            
+        char doneY0 = false;
+            
+        for( int yD = -d; yD<=d && !found; 
+             yD++ ) {
+                
+            if( ! doneY0 ) {
+                yD = 0;
+                }
+                
+            if( yDir != 0 ) {
+                yD *= yDir;
+                }
+                
+            char doneX0 = false;
+                
+            for( int xD = -d; 
+                 xD<=d && !found; 
+                 xD++ ) {
+                    
+                if( ! doneX0 ) {
+                    xD = 0;
+                    }
+                    
+                if( xDir != 0 ) {
+                    xD *= xDir;
+                    }
+                    
+                    
+                if( yD == 0 && xD == 0 ) {
+                    if( ! doneX0 ) {
+                        doneX0 = true;
+                            
+                        // back up in loop
+                        xD = -d - 1;
+                        }
+                    continue;
+                    }
+                                                
+                int x = 
+                    inSourceX + xD;
+                int y = 
+                    inSourceY + yD;
+                                                
+                if( yFirst ) {
+                    // swap them
+                    // to reverse order
+                    // of expansion
+                    x = 
+                        inSourceX + yD;
+                    y =
+                        inSourceY + xD;
+                    }
+                                                
+
+
+                if( 
+                    isMapSpotEmpty( x, y ) ) {
+                                                    
+                    found = true;
+                    foundX = x;
+                    foundY = y;
+                    }
+                                                    
+                if( ! doneX0 ) {
+                    doneX0 = true;
+                                                        
+                    // back up in loop
+                    xD = -d - 1;
+                    }
+                }
+                                                
+            if( ! doneY0 ) {
+                doneY0 = true;
+                                                
+                // back up in loop
+                yD = -d - 1;
+                }
+            }
+        }
+
+    outSpot->x = foundX;
+    outSpot->y = foundY;
+    return found;
+    }
+
+
+
 // drops an object held by a player at target x,y location
 // doesn't check for adjacency (so works for thrown drops too)
 // if target spot blocked, will search for empty spot to throw object into
@@ -2098,122 +2230,17 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
         // search for another
         // throw held into nearest empty spot
                                     
-        char found = false;
-        int foundX, foundY;
         
-        // change direction of throw
-        // to match direction of 
-        // drop action
-        int xDir = inX - inDroppingPlayer->xd;
-        int yDir = inY - inDroppingPlayer->yd;
-                                    
+        GridPos spot;
         
-        // cap to magnitude
-        // death drops can be non-adjacent
-        if( xDir > 1 ) {
-            xDir = 1;
-            }
-        if( xDir < -1 ) {
-            xDir = -1;
-            }
-
-        if( yDir > 1 ) {
-            yDir = 1;
-            }
-        if( yDir < -1 ) {
-            yDir = -1;
-            }
+        char found = findDropSpot( inX, inY, 
+                                   inDroppingPlayer->xd, inDroppingPlayer->yd,
+                                   &spot );
         
-
-        // check in y dir first at each
-        // expanded radius?
-        char yFirst = false;
-        
-        if( yDir != 0 ) {
-            yFirst = true;
-            }
-        
-        for( int d=1; d<10 && !found; d++ ) {
-            
-            char doneY0 = false;
-            
-            for( int yD = -d; yD<=d && !found; 
-                 yD++ ) {
-                
-                if( ! doneY0 ) {
-                    yD = 0;
-                    }
-                
-                if( yDir != 0 ) {
-                    yD *= yDir;
-                    }
-                
-                char doneX0 = false;
-                
-                for( int xD = -d; 
-                     xD<=d && !found; 
-                     xD++ ) {
-                    
-                    if( ! doneX0 ) {
-                        xD = 0;
-                        }
-                    
-                    if( xDir != 0 ) {
-                        xD *= xDir;
-                        }
-                    
-                    
-                    if( yD == 0 && xD == 0 ) {
-                        if( ! doneX0 ) {
-                            doneX0 = true;
-                            
-                            // back up in loop
-                            xD = -d - 1;
-                            }
-                        continue;
-                        }
-                                                
-                    int x = 
-                        inDroppingPlayer->xd + xD;
-                    int y = 
-                        inDroppingPlayer->yd + yD;
-                                                
-                    if( yFirst ) {
-                        // swap them
-                        // to reverse order
-                        // of expansion
-                        x = 
-                            inDroppingPlayer->xd + yD;
-                        y =
-                            inDroppingPlayer->yd + xD;
-                        }
-                                                
+        int foundX = spot.x;
+        int foundY = spot.y;
 
 
-                    if( 
-                        isMapSpotEmpty( x, y ) ) {
-                                                    
-                        found = true;
-                        foundX = x;
-                        foundY = y;
-                        }
-                                                    
-                    if( ! doneX0 ) {
-                        doneX0 = true;
-                                                        
-                        // back up in loop
-                        xD = -d - 1;
-                        }
-                    }
-                                                
-                if( ! doneY0 ) {
-                    doneY0 = true;
-                                                
-                    // back up in loop
-                    yD = -d - 1;
-                    }
-                }
-            }
 
         if( found ) {
             targetX = foundX;
@@ -7811,6 +7838,57 @@ int main() {
                         if( newSlots < oldSlots ) {
                             // new container can hold less
                             // truncate
+                            
+                            GridPos dropPos = 
+                                computePartialMoveSpot( nextPlayer );
+                            
+                            // offset to counter-act offsets built into
+                            // drop code
+                            dropPos.x += 1;
+                            dropPos.y += 1;
+
+                            char found = false;
+                            GridPos spot;
+                            
+                            if( getMapObject( dropPos.x, dropPos.y ) == 0 ) {
+                                spot = dropPos;
+                                found = true;
+                                }
+                            else {
+                                found = findDropSpot( 
+                                    dropPos.x, dropPos.y,
+                                    dropPos.x, dropPos.y,
+                                    &spot );
+                                }
+                            
+                            
+                            if( found ) {
+                                
+                                // throw it on map temporarily
+                                handleDrop( 
+                                    spot.x, spot.y, 
+                                    nextPlayer,
+                                    &playerIndicesToSendUpdatesAbout );
+                                
+                                
+                                // shrink contianer on map
+                                shrinkContainer( spot.x, spot.y, 
+                                                 newSlots );
+
+                                // pick it back up
+                                nextPlayer->holdingEtaDecay = 
+                                    getEtaDecay( spot.x, spot.y );
+                                    
+                                FullMapContained f =
+                                    getFullMapContained( spot.x, spot.y );
+
+                                nextPlayer->holdingID = newID;
+                                setContained( nextPlayer, f );
+                                
+                                clearAllContained( spot.x, spot.y );
+                                setMapObject( spot.x, spot.y, 0 );
+                                }
+                            
                             nextPlayer->numContained = newSlots;
                             }
                     

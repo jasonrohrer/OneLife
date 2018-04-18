@@ -15,6 +15,13 @@ Version 78    ???
   wood).
 
 
+
+Server Fixes:
+
+--Fixed to handle dropping of contained objects when held container shrinks.
+
+
+
   
 
 
