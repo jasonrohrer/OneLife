@@ -720,6 +720,37 @@ void initTransBankFinish() {
                                     newTrans.newTarget =
                                         newTargetObj->useDummyIDs[ usesLeft ];
                                     }
+                                else if( tr->actor >= 0 && 
+                                         tr->newActor > 0 ) {
+                                    
+                                    char actorUseDummy = false;
+                                    int actorNumUses = 1;
+                                    if( tr->actor > 0 ) {
+                                        ObjectRecord *actorObj =
+                                            getObject( tr->actor );
+                                        
+                                        actorUseDummy = actorObj->isUseDummy;
+                                        actorNumUses = actorObj->numUses;
+                                        }
+                                    
+                                    ObjectRecord *newActorObj =
+                                        getObject( tr->newActor );
+                                    
+                                    if( ! actorUseDummy &&
+                                        ! newActorObj->isUseDummy &&
+                                        actorNumUses == 1 &&
+                                        newActorObj->numUses == o->numUses ) {
+                                        // propagate used status to new actor
+                                    
+                                        int usesLeft = 
+                                            (int)( useFraction * 
+                                                   newActorObj->numUses );
+                                    
+                                        newTrans.newActor =
+                                            newActorObj->useDummyIDs[ 
+                                                usesLeft ];
+                                        }
+                                    }
                                 
                                 transToAdd.push_back( newTrans );
                                 }

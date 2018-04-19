@@ -27,6 +27,10 @@ Server Fixes:
 --If numUses of actor and newTarget matches, and newActor doesn't have uses,
   then the used status of the actor is preserved in the newTarget.
 
+--If numUses of target and newActor matches, and actor doesn't have uses, then
+  the used status of the target is preserved in the newActor.
+
+
   
 
 
