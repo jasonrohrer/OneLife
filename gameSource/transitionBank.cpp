@@ -661,7 +661,30 @@ void initTransBankFinish() {
                                     newTrans.newActor =
                                         newActorObj->useDummyIDs[ usesLeft ];
                                     }
-                                
+                                else if( tr->newTarget > 0 &&
+                                         tr->target > 0 &&
+                                         tr->target != tr->newTarget ) {
+                                    
+                                    ObjectRecord *targetObj =
+                                        getObject( tr->target );
+                                    ObjectRecord *newTargetObj =
+                                        getObject( tr->newTarget );
+                                    
+                                    if( ! targetObj->isUseDummy &&
+                                        ! newTargetObj->isUseDummy &&
+                                        targetObj->numUses == 1 &&
+                                        newTargetObj->numUses == o->numUses ) {
+                                        // propagate used status to new target
+                                    
+                                        int usesLeft = 
+                                            (int)( useFraction * 
+                                                   newTargetObj->numUses );
+                                    
+                                        newTrans.newTarget =
+                                            newTargetObj->useDummyIDs[ 
+                                                usesLeft ];
+                                        }
+                                    }
                                 
                                 transToAdd.push_back( newTrans );
                                 }

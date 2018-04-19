@@ -24,6 +24,8 @@ Server Fixes:
 
 --Fixed bug in decaying, shrinking sub container.
 
+--If numUses of actor and newTarget matches, and newActor doesn't have uses,
+  then the used status of the actor is preserved in the newTarget.
 
   
 
