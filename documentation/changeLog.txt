@@ -28,8 +28,11 @@ Server Fixes:
   then the used status of the actor is preserved in the newTarget.
 
 --If numUses of target and newActor matches, and actor doesn't have uses, then
-  the used status of the target is preserved in the newActor.
+  the used status of the target is preserved in the newActor and decremented
+  (counts as a use of the actor).
 
+--Substitution of last-use of actor when used target produces an over-used
+  newActor.
 
   
 

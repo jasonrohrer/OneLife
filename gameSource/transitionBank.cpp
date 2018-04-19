@@ -456,8 +456,12 @@ void initTransBankFinish() {
                 
         int numGenerated = 0;
         int numRemoved = 0;
+        
 
-
+        SimpleVector<TransRecord*> transToDelete;
+        SimpleVector<TransRecord> transToAdd;
+        
+        
         int numObjects;
         
         ObjectRecord **objects = getAllObjects( &numObjects );
@@ -478,8 +482,7 @@ void initTransBankFinish() {
                     numTrans = objTransOrig->size();
                     }
                 
-                SimpleVector<TransRecord*> transToDelete;
-                SimpleVector<TransRecord> transToAdd;
+                
                 
                 // can't rely on indexing in Orig, because it
                 // will change as we add trans
@@ -745,10 +748,54 @@ void initTransBankFinish() {
                                         int usesLeft = 
                                             (int)( useFraction * 
                                                    newActorObj->numUses );
-                                    
-                                        newTrans.newActor =
-                                            newActorObj->useDummyIDs[ 
-                                                usesLeft ];
+                                        
+                                        // decrement (count as a use)
+
+                                        usesLeft--;
+                                        
+                                        if( usesLeft < 0 ) {
+                                            // substitute last-use
+                                            // transition in place
+                                            TransRecord *lastUseTR =
+                                                getTrans( tr->newActor,
+                                                          -1, true );
+
+                                            if( lastUseTR != NULL ) {
+                                                newTrans.newActor =
+                                                    lastUseTR->newActor;
+                                                }
+                                            else {
+                                                usesLeft = 0;
+                                                }
+                                            }
+
+                                        if( usesLeft >= 0 ) {
+                                            newTrans.newActor =
+                                                newActorObj->useDummyIDs[ 
+                                                    usesLeft ];
+
+                                            if( u == o->numUses - 2 ) {
+                                                // do this once in here
+                                                // so we don't need to 
+                                                // replicate all the 
+                                                // case-detection logic
+                                                // outside the loop
+
+                                                // we need to enter into
+                                                // the use dummies of
+                                                // newActor
+                                                
+                                                TransRecord startRecord =
+                                                    *tr;
+                                                startRecord.newActor =
+                                                    newActorObj->useDummyIDs[ 
+                                                        o->numUses - 2 ];
+                                                
+                                                transToDelete.push_back( tr );
+                                                transToAdd.push_back( 
+                                                    startRecord );
+                                                }
+                                            }
                                         }
                                     }
                                 
@@ -797,41 +844,41 @@ void initTransBankFinish() {
                         transToAdd.push_back( newTrans );
                         }
                     }
-
-                
-
-                for( int t=0; t<transToDelete.size(); t++ ) {
-                    TransRecord *tr = transToDelete.getElementDirect( t );
-                    
-                    deleteTransFromBank( tr->actor, tr->target,
-                                         tr->lastUseActor,
-                                         tr->lastUseTarget,
-                                         true );
-                    numRemoved++;
-                    }
-                
-                for( int t=0; t<transToAdd.size(); t++ ) {
-                    TransRecord *newTrans = transToAdd.getElement( t );
-                    
-                    addTrans( newTrans->actor,
-                              newTrans->target,
-                              newTrans->newActor,
-                              newTrans->newTarget,
-                              newTrans->lastUseActor,
-                              newTrans->lastUseTarget,
-                              newTrans->reverseUseActor,
-                              newTrans->reverseUseTarget,
-                              newTrans->autoDecaySeconds,
-                              newTrans->actorMinUseFraction,
-                              newTrans->targetMinUseFraction,
-                              newTrans->move,
-                              newTrans->desiredMoveDist,
-                              true );
-                    numGenerated++;
-                    }
-                
                 }
             }
+        
+                
+                
+        for( int t=0; t<transToDelete.size(); t++ ) {
+            TransRecord *tr = transToDelete.getElementDirect( t );
+                    
+            deleteTransFromBank( tr->actor, tr->target,
+                                 tr->lastUseActor,
+                                 tr->lastUseTarget,
+                                 true );
+            numRemoved++;
+            }
+                
+        for( int t=0; t<transToAdd.size(); t++ ) {
+            TransRecord *newTrans = transToAdd.getElement( t );
+                    
+            addTrans( newTrans->actor,
+                      newTrans->target,
+                      newTrans->newActor,
+                      newTrans->newTarget,
+                      newTrans->lastUseActor,
+                      newTrans->lastUseTarget,
+                      newTrans->reverseUseActor,
+                      newTrans->reverseUseTarget,
+                      newTrans->autoDecaySeconds,
+                      newTrans->actorMinUseFraction,
+                      newTrans->targetMinUseFraction,
+                      newTrans->move,
+                      newTrans->desiredMoveDist,
+                      true );
+            numGenerated++;
+            }
+        
         
         delete [] objects;
 
