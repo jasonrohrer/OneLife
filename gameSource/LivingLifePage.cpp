@@ -78,6 +78,7 @@ extern float musicLoudness;
 
 
 static JenkinsRandomSource randSource( 340403 );
+static JenkinsRandomSource remapRandSource( 340403 );
 
 
 static int lastScreenMouseX, lastScreenMouseY;
@@ -9584,7 +9585,7 @@ void LivingLifePage::step() {
                                 if( mRemapPeak == 0 ) {
                                     // reseed
                                     setRemapSeed( 
-                                        randSource.getRandomBoundedInt( 
+                                        remapRandSource.getRandomBoundedInt( 
                                             0,
                                             10000000 ) );
                                     mRemapDelay = 0;
@@ -10729,6 +10730,8 @@ void LivingLifePage::step() {
                 
                 ourID = ourObject->id;
                 
+                remapRandSource.reseed( ourID );
+
                 printf( "Got first PLAYER_UPDATE message, our ID = %d\n",
                         ourID );
 

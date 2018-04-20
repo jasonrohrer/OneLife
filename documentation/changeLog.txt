@@ -18,6 +18,7 @@ Version 78    ???
   changes (example:  dumping water into goose pond).  This was broken in v66
   with the fix to sound for swapping contained items (thanks Uncle Gus).
 
+--Fixed remap random source to seed with playerID.
 
 
 
