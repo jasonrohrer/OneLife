@@ -2946,28 +2946,32 @@ void processLoggedInPlayer( Socket *inSock,
             // baby
             
             // pick random mother from a weighted distribution based on 
-            // each mother's food supply
+            // each mother's temperature
             
-            int totalFoodStore = 0;
+            
+            // 0.5 temp is worth .5 weight
+            // 1.0 temp and 0 are worth 0 weight
+            
+            double totalTemp = 0;
             
             for( int i=0; i<parentChoices.size(); i++ ) {
                 LiveObject *p = parentChoices.getElementDirect( i );
 
-                totalFoodStore += p->foodStore;
+                totalTemp += 0.5 - abs( p->heat - 0.5 );
                 }
 
             double choice = 
-                randSource.getRandomBoundedDouble( 0, totalFoodStore );
+                randSource.getRandomBoundedDouble( 0, totalTemp );
             
             
-            totalFoodStore = 0;
+            totalTemp = 0;
             
             for( int i=0; i<parentChoices.size(); i++ ) {
                 LiveObject *p = parentChoices.getElementDirect( i );
 
-                totalFoodStore += p->foodStore;
+                totalTemp += 0.5 - abs( p->heat - 0.5 );
                 
-                if( totalFoodStore >= choice ) {
+                if( totalTemp >= choice ) {
                     parent = p;
                     break;
                     }                

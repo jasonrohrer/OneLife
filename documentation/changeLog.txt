@@ -50,6 +50,10 @@ Server Fixes:
 --Easier to kill a moving player.  Spots before and after them on their
   current path are considered as valid targets.
 
+--New baby distribution algorithm.  Possible mothers are weighted by how close
+  they are to ideal temperature instead of how full their food bars are.
+
+
   
 
 
