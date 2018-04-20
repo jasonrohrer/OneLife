@@ -46,6 +46,10 @@ Server Fixes:
   rounding errors in use transfer.
 
 --Can no longer feed other people remap-trigger foods.
+
+--Easier to kill a moving player.  Spots before and after them on their
+  current path are considered as valid targets.
+
   
 
 

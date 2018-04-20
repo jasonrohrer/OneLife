@@ -719,7 +719,6 @@ void initTransBankFinish() {
                                         newTrans.newActor =
                                             newActorObj->useDummyIDs[ 
                                                 usesLeft ];
-                                        printTrans( &newTrans );
                                         }
                                     }
                                 else if( tr->newTarget > 0 &&

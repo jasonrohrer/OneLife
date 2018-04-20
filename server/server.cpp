@@ -2618,7 +2618,8 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete,
 
 
 
-static LiveObject *getHitPlayer( int inX, int inY, 
+static LiveObject *getHitPlayer( int inX, int inY,
+                                 char inCountMidPath = false,
                                  int inMaxAge = -1,
                                  int inMinAge = -1,
                                  int *outHitIndex = NULL ) {
@@ -2679,6 +2680,31 @@ static LiveObject *getHitPlayer( int inX, int inY,
                     *outHitIndex = j;
                     }
                 break;
+                }
+            else if( inCountMidPath ) {
+                
+                int c = computePartialMovePathStep( otherPlayer );
+
+                // consider path step before and after current location
+                for( int i=-1; i<=1; i++ ) {
+                    int testC = c + i;
+                    
+                    if( testC >= 0 && testC < otherPlayer->pathLength ) {
+                        cPos = otherPlayer->pathToDest[testC];
+                 
+                        if( equal( cPos, targetPos ) ) {
+                            // hit
+                            hitPlayer = otherPlayer;
+                            if( outHitIndex != NULL ) {
+                                *outHitIndex = j;
+                                }
+                            break;
+                            }
+                        }
+                    }
+                if( hitPlayer != NULL ) {
+                    break;
+                    }
                 }
             }
         }
@@ -5744,7 +5770,7 @@ int main() {
                                     
                                     // is anyone there?
                                     LiveObject *hitPlayer = 
-                                        getHitPlayer( m.x, m.y );
+                                        getHitPlayer( m.x, m.y, true );
                                     
                                     char someoneHit = false;
 
@@ -6598,7 +6624,7 @@ int main() {
 
                                 // is anyone there?
                                 LiveObject *hitPlayer = 
-                                    getHitPlayer( m.x, m.y, 5 );
+                                    getHitPlayer( m.x, m.y, false, 5 );
                                 
                                 if( hitPlayer != NULL &&
                                     !hitPlayer->heldByOther &&
@@ -6771,7 +6797,8 @@ int main() {
                                 // try click on baby
                                 int hitIndex;
                                 LiveObject *hitPlayer = 
-                                    getHitPlayer( m.x, m.y, 5, -1, &hitIndex );
+                                    getHitPlayer( m.x, m.y, 
+                                                  false, 5, -1, &hitIndex );
                                 
                                 if( hitPlayer != NULL && holdingDrugs ) {
                                     // can't even feed baby drugs
@@ -6783,7 +6810,7 @@ int main() {
                                     hitPlayer == nextPlayer ) {
                                     // try click on elderly
                                     hitPlayer = 
-                                        getHitPlayer( m.x, m.y, -1, 
+                                        getHitPlayer( m.x, m.y, false, -1, 
                                                       55, &hitIndex );
                                     }
                                 
@@ -6795,7 +6822,7 @@ int main() {
                                     // feeding action 
                                     // try click on everyone
                                     hitPlayer = 
-                                        getHitPlayer( m.x, m.y, -1, -1, 
+                                        getHitPlayer( m.x, m.y, false, -1, -1, 
                                                       &hitIndex );
                                     }
                                 
