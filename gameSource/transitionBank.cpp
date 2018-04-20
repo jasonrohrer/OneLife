@@ -656,13 +656,71 @@ void initTransBankFinish() {
                                     newActorObj->numUses > 1 ) {
                                     
                                     // propagate used status to new actor
-                                    
                                     int usesLeft = 
-                                        (int)( useFraction * 
+                                        lrint( useFraction * 
                                                newActorObj->numUses );
+
+                                    // if num uses in actor and new actor align
+                                    // AND newActor has a last-use trans
+                                    // defined, then count this as a use
+                                    // Checking that newActor has a last
+                                    // use prevents double-decrement
+                                    // (example:  shovel picks up dung,
+                                    //  no use decrement, but then shovel
+                                    //  drops dung triggering one use decrement)
+                                    if( newActorObj->numUses == o->numUses &&
+                                        getTrans( tr->newActor, -1, true ) !=
+                                        NULL ) {
+                                        
+                                        // decrement (count as a use)
+
+                                        usesLeft--;
+                                        
+                                        if( usesLeft < 0 ) {
+                                            // substitute last-use
+                                            // transition in place
+                                            TransRecord *lastUseTR =
+                                                getTrans( tr->newActor,
+                                                          -1, true );
+
+                                            if( lastUseTR != NULL ) {
+                                                newTrans.newActor =
+                                                    lastUseTR->newActor;
+                                                }
+                                            else {
+                                                usesLeft = 0;
+                                                }
+                                            }
+
+                                        if( u == o->numUses - 2 ) {
+                                            // do this once in here
+                                            // so we don't need to 
+                                            // replicate all the 
+                                            // case-detection logic
+                                            // outside the loop
+
+                                            // we need to enter into
+                                            // the use dummies of
+                                            // newActor
+                                                
+                                            TransRecord startRecord =
+                                                *tr;
+                                            startRecord.newActor =
+                                                newActorObj->useDummyIDs[ 
+                                                    o->numUses - 2 ];
+                                                
+                                            transToDelete.push_back( tr );
+                                            transToAdd.push_back( 
+                                                startRecord );
+                                            }
+                                        }
                                     
-                                    newTrans.newActor =
-                                        newActorObj->useDummyIDs[ usesLeft ];
+                                    if( usesLeft >= 0 ) {
+                                        newTrans.newActor =
+                                            newActorObj->useDummyIDs[ 
+                                                usesLeft ];
+                                        printTrans( &newTrans );
+                                        }
                                     }
                                 else if( tr->newTarget > 0 &&
                                          tr->target > 0 &&
@@ -680,7 +738,7 @@ void initTransBankFinish() {
                                         // propagate used status to new target
                                     
                                         int usesLeft = 
-                                            (int)( useFraction * 
+                                            lrint( useFraction * 
                                                    newTargetObj->numUses );
                                     
                                         newTrans.newTarget =
@@ -717,7 +775,7 @@ void initTransBankFinish() {
                                     // propagate used status to new target
                                     
                                     int usesLeft = 
-                                        (int)( useFraction * 
+                                        lrint( useFraction * 
                                                newTargetObj->numUses );
                                     
                                     newTrans.newTarget =
@@ -746,7 +804,7 @@ void initTransBankFinish() {
                                         // propagate used status to new actor
                                     
                                         int usesLeft = 
-                                            (int)( useFraction * 
+                                            lrint( useFraction * 
                                                    newActorObj->numUses );
                                         
                                         // decrement (count as a use)

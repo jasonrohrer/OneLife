@@ -40,7 +40,11 @@ Server Fixes:
 --Substitution of last-use of actor when used target produces an over-used
   newActor.
 
+--Uses left can be decremente if actor and new actor have the same number of
+  uses (example:  dumping shovel of dung uses shovel once).  Fixed some
+  rounding errors in use transfer.
   
+
 
 
 Version 77    2018-April-17
