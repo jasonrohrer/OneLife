@@ -44,6 +44,8 @@ Server Fixes:
 --Uses left can be decremente if actor and new actor have the same number of
   uses (example:  dumping shovel of dung uses shovel once).  Fixed some
   rounding errors in use transfer.
+
+--Can no longer feed other people remap-trigger foods.
   
 
 

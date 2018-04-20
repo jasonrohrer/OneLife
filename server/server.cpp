@@ -6718,6 +6718,7 @@ int main() {
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
                         char holdingFood = false;
+                        char holdingDrugs = false;
                         
                         if( nextPlayer->holdingID > 0 ) {
                             ObjectRecord *obj = 
@@ -6725,6 +6726,14 @@ int main() {
                             
                             if( obj->foodValue > 0 ) {
                                 holdingFood = true;
+
+                                if( strstr( obj->description, "remapStart" )
+                                    != NULL ) {
+                                    // don't count drugs as food to 
+                                    // feed other people
+                                    holdingFood = false;
+                                    holdingDrugs = true;
+                                    }
                                 }
                             }
                         
@@ -6764,6 +6773,12 @@ int main() {
                                 LiveObject *hitPlayer = 
                                     getHitPlayer( m.x, m.y, 5, -1, &hitIndex );
                                 
+                                if( hitPlayer != NULL && holdingDrugs ) {
+                                    // can't even feed baby drugs
+                                    // too confusing
+                                    hitPlayer = NULL;
+                                    }
+
                                 if( hitPlayer == NULL ||
                                     hitPlayer == nextPlayer ) {
                                     // try click on elderly
