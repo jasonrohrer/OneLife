@@ -10037,7 +10037,8 @@ void LivingLifePage::step() {
                                     
                                     if( oldHeld == 0 ||
                                         heldContChanged || 
-                                        ( !autoDecay && 
+                                        ( heldTransitionSourceID == -1 &&
+                                          !autoDecay && 
                                           ! creationSoundPlayed &&
                                           ! clothingSoundPlayed ) ) {
                                         // we're holding something new

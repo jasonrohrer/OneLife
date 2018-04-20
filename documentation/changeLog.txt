@@ -14,6 +14,12 @@ Version 78    ???
   on-ground target object changes too (example:  tool breaking when chopping
   wood).
 
+--Fixed so that usingSound will play correctly when an on-the-ground object
+  changes (example:  dumping water into goose pond).  This was broken in v66
+  with the fix to sound for swapping contained items (thanks Uncle Gus).
+
+
+
 
 
 Server Fixes:
