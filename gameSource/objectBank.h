@@ -271,6 +271,15 @@ typedef struct ObjectRecord {
         char monumentDone;
         char monumentCall;
 
+        
+        
+        // NULL unless we are auto-populating variable objects
+        // then contains ( N ) ids for auto-generated variable dummy objects
+        // with dummy_1 at index 0, dummy_2 at index 1, etc.
+        int numVariableDummyIDs;
+        int *variableDummyIDs;
+
+
     } ObjectRecord;
 
 
@@ -327,8 +336,12 @@ void enableObjectSearch( char inEnable );
 //
 // if inAutoGenerateUsedObjects is true, (n-1) dummy objects are generated
 // for each object that has n uses.  These are not saved to disk
+//
+// Same for variable objects that contain the string $N in their discription
+// (objects 1 - N are generated)
 int initObjectBankStart( char *outRebuildingCache, 
-                         char inAutoGenerateUsedObjects = false );
+                         char inAutoGenerateUsedObjects = false,
+                         char inAutoGenerateVariableObjects = false );
 
 // returns progress... ready for Finish when progress == 1.0
 float initObjectBankStep();

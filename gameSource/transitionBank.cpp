@@ -55,16 +55,19 @@ static int maxID;
 static char autoGenerateCategoryTransitions = false;
 static char autoGenerateUsedObjectTransitions = false;
 static char autoGenerateGenericUseTransitions = false;
+static char autoGenerateVariableTransitions = false;
 
 
 int initTransBankStart( char *outRebuildingCache,
                         char inAutoGenerateCategoryTransitions,
                         char inAutoGenerateUsedObjectTransitions,
-                        char inAutoGenerateGenericUseTransitions ) {
+                        char inAutoGenerateGenericUseTransitions,
+                        char inAutoGenerateVariableTransitions ) {
     
     autoGenerateCategoryTransitions = inAutoGenerateCategoryTransitions;
     autoGenerateUsedObjectTransitions = inAutoGenerateUsedObjectTransitions;
     autoGenerateGenericUseTransitions = inAutoGenerateGenericUseTransitions;
+    autoGenerateVariableTransitions = inAutoGenerateVariableTransitions;
     
     maxID = 0;
 
@@ -481,23 +484,10 @@ void initTransBankFinish() {
                 if( objTransOrig != NULL ) {
                     numTrans = objTransOrig->size();
                     }
-                
-                
-                
-                // can't rely on indexing in Orig, because it
-                // will change as we add trans
-                // copy them all first
-                SimpleVector<TransRecord> obTransCopy;
-                
+
 
                 for( int t=0; t<numTrans; t++ ) {
                     TransRecord *tr = objTransOrig->getElementDirect( t );
-                    obTransCopy.push_back( *tr );
-                    }
-                
-                
-                for( int t=0; t<numTrans; t++ ) {
-                    TransRecord *tr = obTransCopy.getElement( t );
                     
                     TransRecord newTrans = *tr;
                     newTrans.lastUseActor = false;
@@ -946,6 +936,162 @@ void initTransBankFinish() {
         numRecords = records.size();
         }
     
+    
+    
+
+
+    if( autoGenerateVariableTransitions ) {
+        
+        SimpleVector<TransRecord> transToAdd;
+
+        for( int i=0; i<records.size(); i++ ) {
+            TransRecord *t = records.getElementDirect( i );
+            
+            ObjectRecord *actor = NULL;
+            ObjectRecord *target = NULL;
+            ObjectRecord *newActor = NULL;
+            ObjectRecord *newTarget = NULL;
+            
+            if( t->actor > 0 ) {
+                actor = getObject( t->actor );
+                }
+            if( t->target > 0 ) {
+                target = getObject( t->target );
+                }
+            if( t->newActor > 0 ) {
+                newActor = getObject( t->newActor );
+                }
+            if( t->newTarget > 0 ) {
+                newTarget = getObject( t->newTarget );
+                }
+            
+            ObjectRecord *leadObject = NULL;
+            ObjectRecord *followObject = NULL;
+            
+            if( actor != NULL && actor->numVariableDummyIDs > 0 ) {
+                leadObject = actor;
+                }
+            else if( target != NULL && target->numVariableDummyIDs > 0 ) {
+                leadObject = target;
+                }
+            if( newTarget != NULL && newTarget->numVariableDummyIDs > 0 ) {
+                followObject = newTarget;
+                }
+            else if( newActor != NULL && newActor->numVariableDummyIDs > 0 ) {
+                followObject = newActor;
+                }
+            
+            if( leadObject != NULL && leadObject != followObject ) {
+                int num = leadObject->numVariableDummyIDs;
+                
+                for( int k=0; k<num; k++ ) {
+                    TransRecord newTrans = *t;
+
+                    if( actor != NULL && actor->numVariableDummyIDs == num ) {
+                        newTrans.actor = actor->variableDummyIDs[k];
+                        }
+
+                    if( target != NULL && target->numVariableDummyIDs == num ) {
+                        newTrans.target = target->variableDummyIDs[k];
+                        }
+
+                    if( newActor != NULL && 
+                        newActor->numVariableDummyIDs == num ) {
+                        
+                        newTrans.newActor = newActor->variableDummyIDs[k];
+                        }
+
+                    if( newTarget != NULL && 
+                        newTarget->numVariableDummyIDs == num ) {
+                        
+                        newTrans.newTarget = newTarget->variableDummyIDs[k];
+                        }
+                    transToAdd.push_back( newTrans );
+                    }
+                }
+            else if( leadObject == NULL && followObject != NULL ) {
+                // mapping some other object to variable
+                // a single in-point into variable objects
+                
+                // this will actually replace the transition when we re-add
+                // it below
+
+                TransRecord newTrans = *t;
+                
+                if( actor != NULL && actor->numVariableDummyIDs > 0 ) {
+                    newTrans.actor = actor->variableDummyIDs[0];
+                    }
+                if( target != NULL && target->numVariableDummyIDs > 0 ) {
+                    newTrans.target = target->variableDummyIDs[0];
+                    }
+                if( newActor != NULL && newActor->numVariableDummyIDs > 0 ) {
+                    newTrans.newActor = newActor->variableDummyIDs[0];
+                    }
+                if( newTarget != NULL && newTarget->numVariableDummyIDs > 0 ) {
+                    newTrans.newTarget = newTarget->variableDummyIDs[0];
+                    }
+                
+                transToAdd.push_back( newTrans );
+                }
+            else if( leadObject != NULL && leadObject == followObject ) {
+                // map through subsequent variable objects
+                int num = leadObject->numVariableDummyIDs;
+                                
+                for( int k=0; k<num-1; k++ ) {
+                    TransRecord newTrans = *t;
+
+                    if( actor != NULL && actor->numVariableDummyIDs == num ) {
+                        newTrans.actor = actor->variableDummyIDs[k];
+                        }
+                    
+                    if( target != NULL && target->numVariableDummyIDs == num ) {
+                        newTrans.target = target->variableDummyIDs[k];
+                        }
+
+                    if( newActor != NULL && 
+                        newActor->numVariableDummyIDs == num ) {
+                        
+                        newTrans.newActor = newActor->variableDummyIDs[k+1];
+                        }
+
+                    if( newTarget != NULL && 
+                        newTarget->numVariableDummyIDs == num ) {
+                        
+                        newTrans.newTarget = newTarget->variableDummyIDs[k+1];
+                        }
+                    transToAdd.push_back( newTrans );
+                    }
+                }
+            }
+        
+        int numGenerated = 0;
+        
+        for( int t=0; t<transToAdd.size(); t++ ) {
+            TransRecord *newTrans = transToAdd.getElement( t );
+                    
+            addTrans( newTrans->actor,
+                      newTrans->target,
+                      newTrans->newActor,
+                      newTrans->newTarget,
+                      newTrans->lastUseActor,
+                      newTrans->lastUseTarget,
+                      newTrans->reverseUseActor,
+                      newTrans->reverseUseTarget,
+                      newTrans->autoDecaySeconds,
+                      newTrans->actorMinUseFraction,
+                      newTrans->targetMinUseFraction,
+                      newTrans->move,
+                      newTrans->desiredMoveDist,
+                      true );
+            numGenerated++;
+            }
+        
+        printf( "Auto-generated %d transitions based on variable objects.\n", 
+                numGenerated );
+        }
+
+
+
 
     regenerateDepthMap();
     regenerateHumanMadeMap();

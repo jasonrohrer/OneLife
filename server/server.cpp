@@ -4285,7 +4285,7 @@ int main() {
     initAnimationBankFinish();
 
 
-    initObjectBankStart( &rebuilding, true );
+    initObjectBankStart( &rebuilding, true, true );
     while( initObjectBankStep() < 1.0 );
     initObjectBankFinish();
 
@@ -4296,7 +4296,7 @@ int main() {
 
 
     // auto-generate category-based transitions
-    initTransBankStart( &rebuilding, true, true, true );
+    initTransBankStart( &rebuilding, true, true, true, true );
     while( initTransBankStep() < 1.0 );
     initTransBankFinish();
     

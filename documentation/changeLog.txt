@@ -20,6 +20,11 @@ Version 78    ???
 
 --Fixed remap random source to seed with playerID.
 
+--Auto-generation of variable objects triggered by $N in description, which
+  generates N versions of that object and its transitions automatically.
+  Example:  Key $10 generates 10 types of keys and Locked Door $10 generates
+  matching doors.
+ 
 
 
 

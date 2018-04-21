@@ -76,7 +76,8 @@ typedef struct TransRecord {
 int initTransBankStart( char *outRebuildingCache,
                         char inAutoGenerateCategoryTransitions = false,
                         char inAutoGenerateUsedObjectTransitions = false,
-                        char inAutoGenerateGenericUseTransitions = false );
+                        char inAutoGenerateGenericUseTransitions = false,
+                        char inAutoGenerateVariableTransitions = false );
 
 float initTransBankStep();
 void initTransBankFinish();
