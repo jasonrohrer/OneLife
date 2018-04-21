@@ -1601,6 +1601,216 @@ int countNewlines( char *inString ) {
 
 
 
+
+
+// returns num set after
+int cleanMap() {
+    AppLog::info( "\nCleaning map of objects that have been removed and "
+                  "variable objects..." );
+
+    DB_Iterator dbi;
+    
+    
+    DB_Iterator_init( &db, &dbi );
+    
+    unsigned char key[16];
+    
+    unsigned char value[4];
+
+
+    // keep list of x,y coordinates in map that need clearing
+    SimpleVector<int> xToClear;
+    SimpleVector<int> yToClear;
+
+    // container slots that need clearing
+    SimpleVector<int> xContToCheck;
+    SimpleVector<int> yContToCheck;
+    
+    
+    int totalSetCount = 0;
+    int numClearedCount = 0;
+    int totalNumContained = 0;
+    int numContainedCleared = 0;
+    
+    while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
+        
+        int s = valueToInt( &( key[8] ) );
+        int b = valueToInt( &( key[12] ) );
+       
+        if( s == 0 ) {
+            int id = valueToInt( value );
+            
+            if( id > 0 ) {
+                totalSetCount++;
+                
+                ObjectRecord *o = getObject( id );
+                
+                if( o == NULL || o->isVariableDummy ) {
+                    // id doesn't exist anymore or is variable dummy
+                    
+                    numClearedCount++;
+                    
+                    int x = valueToInt( key );
+                    int y = valueToInt( &( key[4] ) );
+                    
+                    xToClear.push_back( x );
+                    yToClear.push_back( y );
+                    }
+                }
+            }
+        if( s == 2 && b == 0 ) {
+            int numSlots = valueToInt( value );
+            if( numSlots > 0 ) {
+                totalNumContained += numSlots;
+                
+                int x = valueToInt( key );
+                int y = valueToInt( &( key[4] ) );
+                xContToCheck.push_back( x );
+                yContToCheck.push_back( y );
+                }
+            }
+        }
+    
+
+    for( int i=0; i<xToClear.size(); i++ ) {
+        int x = xToClear.getElementDirect( i );
+        int y = yToClear.getElementDirect( i );
+        
+        clearAllContained( x, y );
+        setMapObject( x, y, 0 );
+        }
+
+    for( int i=0; i<xContToCheck.size(); i++ ) {
+        int x = xContToCheck.getElementDirect( i );
+        int y = yContToCheck.getElementDirect( i );
+        
+        if( getMapObjectRaw( x, y ) != 0 ) {
+            int numCont;
+            int *cont = getContainedRaw( x, y, &numCont );
+            timeSec_t *decay = getContainedEtaDecay( x, y, &numCont );
+            
+            SimpleVector<int> newCont;
+            SimpleVector<timeSec_t> newDecay;
+
+            SimpleVector< SimpleVector<int> > newSubCont;
+            SimpleVector< SimpleVector<timeSec_t> > newSubContDecay;
+            
+            for( int c=0; c<numCont; c++ ) {
+                
+                SimpleVector<int> subCont;
+                SimpleVector<timeSec_t> subContDecay;
+                
+
+                char thisKept = false;
+                
+                if( cont[c] < 0 ) {
+                    
+                    ObjectRecord *o = getObject( - cont[c] );
+                    
+                    if( o != NULL && ! o->isVariableDummy ) {
+                        
+                        thisKept = true;
+                        
+                        newCont.push_back( cont[c] );
+                        newDecay.push_back( decay[c] );
+                        
+                        int numSub;
+                        
+                        int *contSub = 
+                            getContainedRaw( x, y, &numSub, c + 1 );
+                        timeSec_t *decaySub = 
+                            getContainedEtaDecay( x, y, &numSub, c + 1 );
+
+                        for( int s=0; s<numSub; s++ ) {
+                            
+                            if( getObject( contSub[s] ) != NULL ) {
+                                subCont.push_back( contSub[s] );
+                                subContDecay.push_back( decaySub[s] );
+                                }
+                            }
+                        
+                        if( contSub != NULL ) {
+                            delete [] contSub;
+                            }
+                        if( decaySub != NULL ) {
+                            delete [] decaySub;
+                            }
+                        numContainedCleared += numSub - subCont.size();
+                        }
+                    }
+                else {
+                    ObjectRecord *o = getObject( cont[c] );
+                    if( o != NULL && ! o->isVariableDummy ) {
+                        
+                        thisKept = true;
+                        newCont.push_back( cont[c] );
+                        newDecay.push_back( decay[c] );
+                        }
+                    }
+
+                if( thisKept ) {        
+                    newSubCont.push_back( subCont );
+                    newSubContDecay.push_back( subContDecay );
+                    }
+                }
+            
+
+
+            delete [] cont;
+            delete [] decay;
+            
+            numContainedCleared +=
+                ( numCont - newCont.size() );
+
+            int *newContArray = newCont.getElementArray();
+            timeSec_t *newDecayArray = newDecay.getElementArray();
+            
+            setContained( x, y, newCont.size(), newContArray );
+            setContainedEtaDecay( x, y, newDecay.size(), newDecayArray );
+            
+            for( int c=0; c<newCont.size(); c++ ) {
+                int numSub =
+                    newSubCont.getElementDirect( c ).size();
+                
+                if( numSub > 0 ) {
+                    int *newSubArray = 
+                        newSubCont.getElementDirect( c ).getElementArray();
+                    timeSec_t *newSubDecayArray = 
+                        newSubContDecay.getElementDirect( c ).getElementArray();
+                    
+                    setContained( x, y, numSub, newSubArray, c + 1 );
+
+                    setContainedEtaDecay( x, y, numSub, newSubDecayArray,
+                                          c + 1 );
+                    
+                    delete [] newSubArray;
+                    delete [] newSubDecayArray;
+                    }
+                else {
+                    clearAllContained( x, y, c + 1 );
+                    }
+                }
+            
+
+            delete [] newContArray;
+            delete [] newDecayArray;
+            }
+        }
+    
+
+    AppLog::infoF( "...%d map cells were set, and %d needed to be cleared.",
+                   totalSetCount, numClearedCount );
+    AppLog::infoF( 
+        "...%d contained objects present, and %d needed to be cleared.",
+        totalNumContained, numContainedCleared );
+
+    printf( "\n" );
+    return totalSetCount;
+    }
+
+
+
+
 void initMap() {
     initDBCache();
     initBiomeCache();
@@ -2127,202 +2337,9 @@ void initMap() {
         }
     
     delete [] allObjects;
-    
 
 
-    AppLog::info( "\nCleaning map of objects that have been removed..." );
-    
-
-    DB_Iterator dbi;
-    
-    
-    DB_Iterator_init( &db, &dbi );
-    
-    unsigned char key[16];
-    
-    unsigned char value[4];
-
-
-    // keep list of x,y coordinates in map that need clearing
-    SimpleVector<int> xToClear;
-    SimpleVector<int> yToClear;
-
-    // container slots that need clearing
-    SimpleVector<int> xContToCheck;
-    SimpleVector<int> yContToCheck;
-    
-    
-    int totalSetCount = 0;
-    int numClearedCount = 0;
-    int totalNumContained = 0;
-    int numContainedCleared = 0;
-    
-    while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
-        
-        int s = valueToInt( &( key[8] ) );
-        int b = valueToInt( &( key[12] ) );
-       
-        if( s == 0 ) {
-            int id = valueToInt( value );
-            
-            if( id > 0 ) {
-                totalSetCount++;
-                
-                if( getObject( id ) == NULL ) {
-                    // id doesn't exist anymore
-                    
-                    numClearedCount++;
-                    
-                    int x = valueToInt( key );
-                    int y = valueToInt( &( key[4] ) );
-                    
-                    xToClear.push_back( x );
-                    yToClear.push_back( y );
-                    }
-                }
-            }
-        if( s == 2 && b == 0 ) {
-            int numSlots = valueToInt( value );
-            if( numSlots > 0 ) {
-                totalNumContained += numSlots;
-                
-                int x = valueToInt( key );
-                int y = valueToInt( &( key[4] ) );
-                xContToCheck.push_back( x );
-                yContToCheck.push_back( y );
-                }
-            }
-        }
-    
-
-    for( int i=0; i<xToClear.size(); i++ ) {
-        int x = xToClear.getElementDirect( i );
-        int y = yToClear.getElementDirect( i );
-        
-        clearAllContained( x, y );
-        setMapObject( x, y, 0 );
-        }
-
-    for( int i=0; i<xContToCheck.size(); i++ ) {
-        int x = xContToCheck.getElementDirect( i );
-        int y = yContToCheck.getElementDirect( i );
-        
-        if( getMapObjectRaw( x, y ) != 0 ) {
-            int numCont;
-            int *cont = getContainedRaw( x, y, &numCont );
-            timeSec_t *decay = getContainedEtaDecay( x, y, &numCont );
-            
-            SimpleVector<int> newCont;
-            SimpleVector<timeSec_t> newDecay;
-
-            SimpleVector< SimpleVector<int> > newSubCont;
-            SimpleVector< SimpleVector<timeSec_t> > newSubContDecay;
-            
-            for( int c=0; c<numCont; c++ ) {
-                
-                SimpleVector<int> subCont;
-                SimpleVector<timeSec_t> subContDecay;
-                
-
-                char thisKept = false;
-                
-                if( cont[c] < 0 ) {
-
-                    if( getObject( -  cont[c] ) != NULL ) {
-                        thisKept = true;
-                        
-                        newCont.push_back( cont[c] );
-                        newDecay.push_back( decay[c] );
-                        
-                        int numSub;
-                        
-                        int *contSub = 
-                            getContainedRaw( x, y, &numSub, c + 1 );
-                        timeSec_t *decaySub = 
-                            getContainedEtaDecay( x, y, &numSub, c + 1 );
-
-                        for( int s=0; s<numSub; s++ ) {
-                            
-                            if( getObject( contSub[s] ) != NULL ) {
-                                subCont.push_back( contSub[s] );
-                                subContDecay.push_back( decaySub[s] );
-                                }
-                            }
-                        
-                        if( contSub != NULL ) {
-                            delete [] contSub;
-                            }
-                        if( decaySub != NULL ) {
-                            delete [] decaySub;
-                            }
-                        numContainedCleared += numSub - subCont.size();
-                        }
-                    }
-                else {
-                    if( getObject( cont[c] ) != NULL ) {
-                        thisKept = true;
-                        newCont.push_back( cont[c] );
-                        newDecay.push_back( decay[c] );
-                        }
-                    }
-
-                if( thisKept ) {        
-                    newSubCont.push_back( subCont );
-                    newSubContDecay.push_back( subContDecay );
-                    }
-                }
-            
-
-
-            delete [] cont;
-            delete [] decay;
-            
-            numContainedCleared +=
-                ( numCont - newCont.size() );
-
-            int *newContArray = newCont.getElementArray();
-            timeSec_t *newDecayArray = newDecay.getElementArray();
-            
-            setContained( x, y, newCont.size(), newContArray );
-            setContainedEtaDecay( x, y, newDecay.size(), newDecayArray );
-            
-            for( int c=0; c<newCont.size(); c++ ) {
-                int numSub =
-                    newSubCont.getElementDirect( c ).size();
-                
-                if( numSub > 0 ) {
-                    int *newSubArray = 
-                        newSubCont.getElementDirect( c ).getElementArray();
-                    timeSec_t *newSubDecayArray = 
-                        newSubContDecay.getElementDirect( c ).getElementArray();
-                    
-                    setContained( x, y, numSub, newSubArray, c + 1 );
-
-                    setContainedEtaDecay( x, y, numSub, newSubDecayArray,
-                                          c + 1 );
-                    
-                    delete [] newSubArray;
-                    delete [] newSubDecayArray;
-                    }
-                else {
-                    clearAllContained( x, y, c + 1 );
-                    }
-                }
-            
-
-            delete [] newContArray;
-            delete [] newDecayArray;
-            }
-        }
-    
-
-    AppLog::infoF( "...%d map cells were set, and %d needed to be cleared.",
-                   totalSetCount, numClearedCount );
-    AppLog::infoF( 
-        "...%d contained objects present, and %d needed to be cleared.",
-        totalNumContained, numContainedCleared );
-
-    printf( "\n" );
+    int totalSetCount = cleanMap();
     
     
     if( totalSetCount == 0 ) {
@@ -2613,6 +2630,10 @@ void freeMap() {
             numContChanged );
 
         printf( "\n" );
+
+        AppLog::info( "Now running normal map clean..." );
+        cleanMap();
+
         
         DB_close( &db );
         }

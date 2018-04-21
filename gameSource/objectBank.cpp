@@ -762,7 +762,7 @@ float initObjectBankStep() {
                 
                 r->numVariableDummyIDs = 0;
                 r->variableDummyIDs = NULL;
-                
+                r->isVariableDummy = false;
 
 
                 for( int i=0; i< r->numSprites; i++ ) {
@@ -1115,9 +1115,7 @@ void initObjectBankFinish() {
                         
                         ObjectRecord *dummyO = getObject( dummyID );
 
-                        // variable objects never occur naturally
-                        dummyO->mapChance = 0;
-                        
+                        dummyO->isVariableDummy = true;
 
                         // copy anims too
                         for( int t=0; t<endAnimType; t++ ) {
@@ -2285,7 +2283,7 @@ int addObject( const char *inDescription,
     
     r->numVariableDummyIDs = 0;
     r->variableDummyIDs = NULL;
-
+    r->isVariableDummy = false;
 
     
     memset( r->spriteSkipDrawing, false, inNumSprites );

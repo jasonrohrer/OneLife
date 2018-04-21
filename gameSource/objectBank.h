@@ -278,6 +278,8 @@ typedef struct ObjectRecord {
         // with dummy_1 at index 0, dummy_2 at index 1, etc.
         int numVariableDummyIDs;
         int *variableDummyIDs;
+        
+        char isVariableDummy;
 
 
     } ObjectRecord;
