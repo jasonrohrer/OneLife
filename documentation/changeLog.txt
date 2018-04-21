@@ -3,9 +3,18 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
 Version 81    ???
 
 --Fixed scene editor to allow replacement of shoes.
+
+
+
+
+Server Fixes:
+
+--Fixed server crash when worn clothing decays down to nothing.
+
 
 
 

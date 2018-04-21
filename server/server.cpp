@@ -8202,8 +8202,14 @@ int main() {
                             
                             float oldStretch = 
                                 cObj->slotTimeStretch;
-                            float newStretch = 
-                                newCObj->slotTimeStretch;
+                            float newStretch;
+                            
+                            if( newCObj != NULL ) {
+                                newStretch = newCObj->slotTimeStretch;
+                                }
+                            else {
+                                newStretch = oldStretch;
+                                }
                             
                             if( oldStretch != newStretch ) {
                                 timeSec_t curTime = Time::timeSec();
