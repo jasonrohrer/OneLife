@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 78    ???
+Version 78    2018-April-20
 
 --Fixed spread of appearing use sprites by rounding instead of flooring.  If
   there was only one sprite, it would appear at 7/8 uses.  Now it appears at
