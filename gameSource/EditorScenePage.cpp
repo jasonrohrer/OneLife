@@ -399,7 +399,13 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
                                 }
                             else if( p->clothing.frontShoe == NULL ) {
                                 p->clothing.frontShoe = o;
-                                }                            
+                                }
+                            else {
+                                // both already present, replace back
+                                // empty front
+                                p->clothing.backShoe = o;
+                                p->clothing.frontShoe = NULL;
+                                }
                             break;
                             }
                         case 'h':
