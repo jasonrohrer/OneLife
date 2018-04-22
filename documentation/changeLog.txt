@@ -20,6 +20,8 @@ Server Fixes:
 --Fixed getRandomDeathMarker so that it's actually random and doesn't walk
   through the full object list each call (thanks TyrantNomad).
 
+--Fixed memory leak when held contained items decay to leave an empty container.
+
 
 
 

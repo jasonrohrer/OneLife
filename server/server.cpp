@@ -8125,16 +8125,24 @@ int main() {
                         delete [] nextPlayer->subContainedEtaDecays;
                         
                         nextPlayer->numContained = newContained.size();
+
+                        if( nextPlayer->numContained == 0 ) {
+                            nextPlayer->containedIDs = NULL;
+                            nextPlayer->containedEtaDecays = NULL;
+                            nextPlayer->subContainedIDs = NULL;
+                            nextPlayer->subContainedEtaDecays = NULL;
+                            }
+                        else {
+                            nextPlayer->containedIDs = 
+                                newContained.getElementArray();
+                            nextPlayer->containedEtaDecays = 
+                                newContainedETA.getElementArray();
                         
-                        nextPlayer->containedIDs = 
-                            newContained.getElementArray();
-                        nextPlayer->containedEtaDecays = 
-                            newContainedETA.getElementArray();
-                        
-                        nextPlayer->subContainedIDs =
-                            newSubContained.getElementArray();
-                        nextPlayer->subContainedEtaDecays =
-                            newSubContainedETA.getElementArray();
+                            nextPlayer->subContainedIDs =
+                                newSubContained.getElementArray();
+                            nextPlayer->subContainedEtaDecays =
+                                newSubContainedETA.getElementArray();
+                            }
                         }
                     }
                 
