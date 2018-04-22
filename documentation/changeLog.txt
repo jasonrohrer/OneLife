@@ -22,6 +22,8 @@ Server Fixes:
 
 --Fixed memory leak when held contained items decay to leave an empty container.
 
+--Fixed server crash when a held container decays to have fewer slots, but the
+  container wasn't full.
 
 
 

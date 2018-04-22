@@ -7876,9 +7876,8 @@ int main() {
                         nextPlayer->holdingID = newID;
                         nextPlayer->heldTransitionSourceID = -1;
                     
-                        int oldSlots = 
-                            getNumContainerSlots( oldID );
-
+                        int oldSlots = nextPlayer->numContained;
+                        
                         int newSlots = getNumContainerSlots( newID );
                     
                         if( newSlots < oldSlots ) {
@@ -7934,8 +7933,14 @@ int main() {
                                 clearAllContained( spot.x, spot.y );
                                 setMapObject( spot.x, spot.y, 0 );
                                 }
-                            
-                            nextPlayer->numContained = newSlots;
+                            else {
+                                // no spot to throw it
+                                // cannot leverage map's container-shrinking
+                                // just truncate held container directly
+                                
+                                // truncated contained items will be lost
+                                nextPlayer->numContained = newSlots;
+                                }
                             }
                     
                         setFreshEtaDecayForHeld( nextPlayer );
@@ -8037,14 +8042,17 @@ int main() {
                         SimpleVector<timeSec_t> dVec;
 
                         if( newID != 0 ) {
+                            int oldSlots = subCont.size();
                             
                             int newSlots = getObject( newID )->numSlots;
                             
                             if( newID != oldID
                                 &&
-                                newSlots < getObject( oldID )->numSlots ) {
+                                newSlots < oldSlots ) {
                                 
                                 // shrink sub-contained
+                                // this involves items getting lost
+                                // but that's okay for now.
                                 subCont.shrink( newSlots );
                                 subContDecay.shrink( newSlots );
                                 }
@@ -8192,7 +8200,7 @@ int main() {
                                                 c, newCObj );
                             
                             int oldSlots = 
-                                getNumContainerSlots( oldID );
+                                nextPlayer->clothingContained[c].size();
 
                             int newSlots = getNumContainerSlots( newID );
                     
