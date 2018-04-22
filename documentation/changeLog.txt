@@ -25,6 +25,12 @@ Server Fixes:
 --Fixed server crash when a held container decays to have fewer slots, but the
   container wasn't full.
 
+--If a held object changes into something that would decay in the same time to
+  the same target, the decay ETA is preserved (example:  filling backpack with
+  soil does not reset decay time to tattered backpack, because both regular and
+  soil-filled backpack decay to tattered in the same time).
+
+
 
 
 

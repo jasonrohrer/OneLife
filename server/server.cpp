@@ -3702,7 +3702,28 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
     nextPlayer->holdingID = inNewHeldID;
     
     if( oldHolding != nextPlayer->holdingID ) {
-        setFreshEtaDecayForHeld( nextPlayer );
+        
+        char kept = false;
+
+        // keep old decay timeer going...
+        // if they both decay to the same thing in the same time
+        if( oldHolding > 0 && nextPlayer->holdingID > 0 ) {
+            
+            TransRecord *oldDecayT = getTrans( -1, oldHolding );
+            TransRecord *newDecayT = getTrans( -1, inPlayer->holdingID );
+            
+            if( oldDecayT != NULL && newDecayT != NULL ) {
+                if( oldDecayT->autoDecaySeconds == newDecayT->autoDecaySeconds
+                    && 
+                    oldDecayT->newTarget == newDecayT->newTarget ) {
+                    
+                    kept = true;
+                    }
+                }
+            }
+        if( !kept ) {
+            setFreshEtaDecayForHeld( nextPlayer );
+            }
         }
     
     nextPlayer->heldOriginValid = 0;
