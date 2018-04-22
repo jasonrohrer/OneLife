@@ -10,7 +10,9 @@ echo -n "0" > ~/checkout/OneLife/server/settings/shutdownMode.ini
 cd ~/checkout/OneLife/server/
 
 echo "    Running runHeadlessServerLinux"
-sh ./runHeadlessServerLinux.sh
+
+# use login shell to ensure that cores are dumped properly
+bash -l ./runHeadlessServerLinux.sh
 
 echo "    Setting keepServerRunning flag"
 echo -n "1" > ~/keepServerRunning.txt

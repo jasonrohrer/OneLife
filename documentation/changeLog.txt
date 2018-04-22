@@ -15,6 +15,8 @@ Server Fixes:
 
 --Fixed server crash when worn clothing decays down to nothing.
 
+--Fixed server launch script to use login shell.  Core dumps for crashes.
+
 
 
 
