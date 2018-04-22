@@ -45,6 +45,9 @@ static SimpleVector<int> femalePersonObjectIDs;
 // track monument calls
 static SimpleVector<int> monumentCallObjectIDs;
 
+// track death markers
+static SimpleVector<int> deathMarkerObjectIDs;
+
 
 
 // anything above race 100 is put in bin for race 100
@@ -482,7 +485,11 @@ float initObjectBankStep() {
                         &( deathMarkerRead ) );
                     
                 r->deathMarker = deathMarkerRead;
-                            
+                
+                if( r->deathMarker ) {
+                    deathMarkerObjectIDs.push_back( r->id );
+                    }
+
                 next++;
 
 
@@ -1403,7 +1410,7 @@ static void freeObjectRecord( int inID ) {
             personObjectIDs.deleteElementEqualTo( inID );
             femalePersonObjectIDs.deleteElementEqualTo( inID );
             monumentCallObjectIDs.deleteElementEqualTo( inID );
-            
+            deathMarkerObjectIDs.deathMarkerObjectIDs( inID );
             
             if( race <= MAX_RACE ) {
                 racePersonObjectIDs[ race ].deleteElementEqualTo( inID );
@@ -1477,6 +1484,7 @@ void freeObjectBank() {
     personObjectIDs.deleteAll();
     femalePersonObjectIDs.deleteAll();
     monumentCallObjectIDs.deleteAll();
+    deathMarkerObjectIDs.deleteAll();
     
     for( int i=0; i<= MAX_RACE; i++ ) {
         racePersonObjectIDs[i].deleteAll();
@@ -2186,6 +2194,13 @@ int addObject( const char *inDescription,
     r->race = inRace;
     r->male = inMale;
     r->deathMarker = inDeathMarker;
+    
+    deathMarkerObjectIDs.deleteElementEqualTo( newID );
+    
+    if( r->deathMarker ) {
+        deathMarkerObjectIDs.push_back( newID );
+        }
+
     r->homeMarker = inHomeMarker;
     r->floor = inFloor;
     r->floorHugging = inFloorHugging;
@@ -3156,15 +3171,14 @@ int getPrevPersonObject( int inCurrentPersonObjectID ) {
 
 int getRandomDeathMarker() {
 
-
-    for( int i=0; i<mapSize; i++ ) {
-        if( idMap[i] != NULL ) {
-            if( idMap[i]->deathMarker ) {
-                return i;
-                }
-            }
+    if( deathMarkerObjectIDs.size() == 0 ) {
+        return -1;
         }
-    return 0;
+    
+        
+    return deathMarkerObjectIDs.getElementDirect( 
+        randSource.getRandomBoundedInt( 0, 
+                                        deathMarkerObjectIDs.size() - 1  ) );
     }
 
 

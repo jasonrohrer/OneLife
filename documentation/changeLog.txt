@@ -17,6 +17,10 @@ Server Fixes:
 
 --Fixed server launch script to use login shell.  Core dumps for crashes.
 
+--Fixed getRandomDeathMarker so that it's actually random and doesn't walk
+  through the full object list each call (thanks TyrantNomad).
+
+
 
 
 
