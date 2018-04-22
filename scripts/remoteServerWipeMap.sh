@@ -58,7 +58,7 @@ echo -n "0" > ~/checkout/OneLife/server/settings/shutdownMode.ini
 
 cd ~/checkout/OneLife/server/
 
-sh ./runHeadlessServerLinux.sh
+bash -l ./runHeadlessServerLinux.sh
 
 echo -n "1" > ~/keepServerRunning.txt
 

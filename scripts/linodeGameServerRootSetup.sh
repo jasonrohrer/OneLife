@@ -126,7 +126,7 @@ git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/
 
 make
 
-./runHeadlessServerLinux.sh
+bash -l ./runHeadlessServerLinux.sh
 
 echo -n "1" > ~/keepServerRunning.txt
 
