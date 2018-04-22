@@ -1410,7 +1410,7 @@ static void freeObjectRecord( int inID ) {
             personObjectIDs.deleteElementEqualTo( inID );
             femalePersonObjectIDs.deleteElementEqualTo( inID );
             monumentCallObjectIDs.deleteElementEqualTo( inID );
-            deathMarkerObjectIDs.deathMarkerObjectIDs( inID );
+            deathMarkerObjectIDs.deleteElementEqualTo( inID );
             
             if( race <= MAX_RACE ) {
                 racePersonObjectIDs[ race ].deleteElementEqualTo( inID );
