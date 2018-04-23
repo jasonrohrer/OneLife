@@ -256,7 +256,7 @@ include( "reviewPages/playtimeReviewsPositive.html" );
 <table border=0 cellspacing=0>
 
 <tr><td align=center>
-<font size=6 id="reviews">Negative Reviews:</font></td></tr>
+<font size=6>Negative Reviews:</font></td></tr>
 
   <tr>
 
