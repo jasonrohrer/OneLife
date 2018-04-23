@@ -215,7 +215,7 @@ You can take a look at the <a href="requirements.php">system requirements</a>.</
 
 <table border=0 cellspacing=0>
 
-<tr><td align=center>
+<tr><td align=center colspan=3>
 <font size=6 id="reviews">Positive Reviews:</font></td></tr>
 
   <tr>
@@ -255,7 +255,7 @@ include( "reviewPages/playtimeReviewsPositive.html" );
 
 <table border=0 cellspacing=0>
 
-<tr><td align=center>
+<tr><td align=center colspan=3>
 <font size=6>Negative Reviews:</font></td></tr>
 
   <tr>
