@@ -124,7 +124,12 @@ static int eveRadius = eveRadiusStart;
 GridPos eveLocation = { 0,0 };
 static int eveLocationUsage = 0;
 static int maxEveLocationUsage = 3;
-                            
+
+// eves are placed along an Archimedean spiral
+// we track the angle of the last Eve to compute the position on
+// the spiral of the next Eve
+static double eveAngle = 2 * M_PI;
+
 
 
 // what human-placed stuff, together, counts as a camp
@@ -1895,7 +1900,7 @@ void initMap() {
             
             timeSec_t curTime = Time::timeSec();
 
-            int secInDay = 3600 * 24 * 1000;
+            int secInDay = 3600 * 24;
             
             for( int i=0; i<numChildFiles; i++ ) {
                 timeSec_t modTime = childFiles[i]->getModificationTime();
@@ -5259,17 +5264,24 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
             }
         else {
             // post-startup eve location has been used too many times
-            // jump away in random direction
+            // place eves on spiral instead
 
             int jump = SettingsManager::getIntSetting( "nextEveJump", 2000 );
             
-            doublePair delta = { (double)jump, 0 };
-            delta = rotate( delta,
-                            randSource.getRandomBoundedDouble( 0, 2 * M_PI ) );
+            // advance eve angle along spiral
+            // approximate recursive form
+            eveAngle = eveAngle + ( 2 * M_PI ) / eveAngle;
+            
+            // exact formula for radius along spiral from angle
+            double radius = ( jump * eveAngle ) / ( 2 * M_PI );
+            
+
+
+            doublePair delta = { radius, 0 };
+            delta = rotate( delta, eveAngle );
             
             // but don't update the post-startup location
-            // keep jumping away from startup-location as center of
-            // a circle
+            // keep jumping away from startup-location as center of spiral
             eveLocToUse.x += lrint( delta.x );
             eveLocToUse.y += lrint( delta.y );
             

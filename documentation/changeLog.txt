@@ -30,6 +30,8 @@ Server Fixes:
   soil does not reset decay time to tattered backpack, because both regular and
   soil-filled backpack decay to tattered in the same time).
 
+--New sprial Eve placement algorithm.
+
 
 
 
