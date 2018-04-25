@@ -158,6 +158,8 @@ float initTransBankStep() {
                 r->move = move;
                 r->desiredMoveDist = desiredMoveDist;
 
+                r->actorFixed = false;
+                r->targetFixed = false;
 
                 r->reverseUseActor = false;
                 if( reverseUseActorFlag == 1 ) {
@@ -335,6 +337,8 @@ void initTransBankFinish() {
                               tr->targetMinUseFraction, 
                               tr->move,
                               tr->desiredMoveDist,
+                              false,
+                              false,
                               true );
                     }
                 }
@@ -351,7 +355,11 @@ void initTransBankFinish() {
 
 
 
-
+    
+    // run twice
+    // this generates both sides of transitions that have two generic uses
+    // occurring
+    for( int r=0; r<2; r++ )
     if( autoGenerateGenericUseTransitions ) {
         
         int numGenerics = 0;
@@ -442,19 +450,26 @@ void initTransBankFinish() {
                       tr.targetMinUseFraction,
                       tr.move,
                       tr.desiredMoveDist,
+                      false,
+                      false,
                       true );
             }
         
 
-        printf( "Auto-modified %d transitions based generic use transitions "
+        printf( "Run %d:  "
+                "Auto-modified %d transitions based generic use transitions "
                 "and auto-added %d last use generic transitions "
                 "(%d objects had generic use transitions defined).\n", 
-                numChanged, numAdded, numGenerics );
+                r, numChanged, numAdded, numGenerics );
         }
     
 
 
     
+    // run twice
+    // this generates both sides of transitions that have two used objects
+    // occurring
+    for( int r=0; r<2; r++ )
     if( autoGenerateUsedObjectTransitions ) {
                 
         int numGenerated = 0;
@@ -497,28 +512,36 @@ void initTransBankFinish() {
                     newTrans.actorMinUseFraction = 0.0f;
                     newTrans.targetMinUseFraction = 0.0f;
                     
+                    newTrans.actorFixed = true;
+                    newTrans.targetFixed = true;
 
-                    if( tr->lastUseActor 
+                    if( tr->actor == oID 
                         &&
-                        tr->actor == oID ) {
+                        tr->lastUseActor 
+                        &&
+                        ! tr->actorFixed ) {
                             
                         if( ! tr->reverseUseActor ) {    
                             newTrans.actor = 
                                 o->useDummyIDs[0]; 
                             }
+                        newTrans.actorFixed = true;
                         
                         transToAdd.push_back( newTrans );
                         
                         transToDelete.push_back( tr );
                         }
-                    else if( tr->lastUseTarget 
+                    else if( tr->target == oID
+                             && 
+                             tr->lastUseTarget
                              &&
-                             tr->target == oID ) {
+                             ! tr->targetFixed ) {
                             
                         if( ! tr->reverseUseTarget ) {
                             newTrans.target = 
                                 o->useDummyIDs[0];
                             }
+                        newTrans.targetFixed = true;
                         
                         transToAdd.push_back( newTrans );
                         
@@ -625,8 +648,11 @@ void initTransBankFinish() {
                             transToAdd.push_back( newTrans );
                             }
                         }
-                    else if( tr->actor == oID && 
-                             tr->actorMinUseFraction < 1.0f ) {
+                    else if( tr->actor == oID &&
+                             ! tr->actorFixed &&
+                             tr->actorMinUseFraction < 1.0f &&
+                             ( tr->newActor == 0 ||
+                               ! getObject( tr->newActor )->isUseDummy ) ) {
                         
                         ObjectRecord *newActorObj = NULL;
                         
@@ -741,7 +767,10 @@ void initTransBankFinish() {
                             }
                         }
                     else if( tr->target == oID && 
-                             tr->targetMinUseFraction < 1.0f ) {
+                             ! tr->targetFixed &&
+                             tr->targetMinUseFraction < 1.0f &&
+                             ( tr->newTarget == 0 ||
+                               ! getObject( tr->newTarget )->isUseDummy )  ) {
                         
                         ObjectRecord *newTargetObj = NULL;
                         
@@ -922,6 +951,8 @@ void initTransBankFinish() {
                       newTrans->targetMinUseFraction,
                       newTrans->move,
                       newTrans->desiredMoveDist,
+                      newTrans->actorFixed,
+                      newTrans->targetFixed,
                       true );
             numGenerated++;
             }
@@ -929,9 +960,10 @@ void initTransBankFinish() {
         
         delete [] objects;
 
-        printf( "Auto-generated %d transitions based on used objects, "
+        printf( "Run %d:  "
+                "Auto-generated %d transitions based on used objects, "
                 "removing %d transitions in the process\n", 
-                numGenerated, numRemoved );
+                r, numGenerated, numRemoved );
         
         numRecords = records.size();
         }
@@ -1082,6 +1114,8 @@ void initTransBankFinish() {
                       newTrans->targetMinUseFraction,
                       newTrans->move,
                       newTrans->desiredMoveDist,
+                      false,
+                      false,
                       true );
             numGenerated++;
             }
@@ -1656,6 +1690,8 @@ void addTrans( int inActor, int inTarget,
                float inTargetMinUseFraction,
                int inMove,
                int inDesiredMoveDist,
+               char inActorFixed,
+               char inTargetFixed,
                char inNoWriteToFile ) {
     
     // exapand id-indexed maps if a bigger ID is being added    
@@ -1732,6 +1768,10 @@ void addTrans( int inActor, int inTarget,
         t->move = inMove;
         t->desiredMoveDist = inMove;
         
+        t->actorFixed = inActorFixed;
+        t->targetFixed = inTargetFixed;
+        
+
         records.push_back( t );
 
         if( inActor > 0 ) {

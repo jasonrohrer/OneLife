@@ -32,6 +32,8 @@ Server Fixes:
 
 --New sprial Eve placement algorithm.
 
+--Fixed generation of transitions that contain two useCount objects by
+  iterating through list twice to generate all possible combinations.
 
 
 
