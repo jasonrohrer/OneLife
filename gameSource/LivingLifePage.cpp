@@ -8781,7 +8781,7 @@ void LivingLifePage::step() {
                                         //  below)
                                         ObjectRecord *obj = getObject( old );
                                         
-                                        // don't play using sound
+                                        // don't play using sound unless
                                         // if they are both use dummies
                                         if( !bothSameUseParent( old, newID )
                                             &&
