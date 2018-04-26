@@ -867,6 +867,8 @@ void initTransBankFinish() {
                                                     newActorObj->useDummyIDs[ 
                                                         o->numUses - 2 ];
                                                 
+                                                startRecord.targetFixed = true;
+                                                
                                                 transToDelete.push_back( tr );
                                                 transToAdd.push_back( 
                                                     startRecord );
