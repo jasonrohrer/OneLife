@@ -202,6 +202,13 @@ float initTransBankStep() {
 
 
 
+typedef struct TransIDPair {
+        int fromID;
+        int toID;
+    } TransIDPair;
+    
+
+
 void initTransBankFinish() {
     
     freeFolderCache( cache );
@@ -465,10 +472,228 @@ void initTransBankFinish() {
     
 
 
+
+    if( autoGenerateUsedObjectTransitions ) {
+        // new attempt:
+        // process transitions not objects
+
+        int numGenerated = 0;
+        
+        SimpleVector<TransRecord*> transToDelete;
+        SimpleVector<TransRecord> transToAdd;
+    
+        for( int i=0; i<records.size(); i++ ) {
+            TransRecord *tr = records.getElementDirect( i );
+            ObjectRecord *actor = NULL;
+            ObjectRecord *target = NULL;
+            ObjectRecord *newActor = NULL;
+            ObjectRecord *newTarget = NULL;
+            
+            if( tr->actor > 0 ) {
+                actor = getObject( tr->actor );
+                }
+            if( tr->target > 0 ) {
+                target = getObject( tr->target );
+                }
+            if( tr->newActor > 0 ) {
+                newActor = getObject( tr->newActor );
+                }
+            if( tr->newTarget > 0 ) {
+                newTarget = getObject( tr->newTarget );
+                }
+
+            TransRecord newTrans = *tr;
+            newTrans.lastUseActor = false;
+            newTrans.lastUseTarget = false;
+            newTrans.reverseUseActor = false;
+            newTrans.reverseUseTarget = false;
+            newTrans.actorMinUseFraction = 0.0f;
+            newTrans.targetMinUseFraction = 0.0f;
+            
+            if( ! tr->lastUseTarget && ! tr->lastUseActor ) {
+
+                char actorDecrement = false;
+                SimpleVector<TransIDPair> actorSteps;
+
+                if( actor != NULL && newActor != NULL 
+                    &&
+                    actor->numUses > 1 &&
+                    actor->numUses == newActor->numUses ) {
+                    
+                    actorDecrement = true;
+                    
+                    int dir = -1;
+                    if( tr->reverseUseActor ) {
+                        dir = 1;
+                        }
+                    for( int u=0; u<actor->numUses; u++ ) {
+                        TransIDPair tp = { -1, -1 };
+                        int uTo = u + dir;
+                        
+                        if( u < actor->numUses - 1 ) {
+                            tp.fromID = actor->useDummyIDs[u];
+                            }
+                        else if( dir == -1 ) {
+                            tp.fromID = actor->id;
+                            }
+
+                        if( uTo < actor->numUses - 1 &&
+                            uTo >= 0 ) {
+                            tp.toID = newActor->useDummyIDs[uTo];
+                            }
+                        else if( uTo < 0 ) {
+                            }
+                        else if( uTo >= actor->numUses - 1 ) {
+                            tp.toID = newActor->id;
+                            }
+                        
+                        if( tp.fromID != -1 && tp.toID != -1 ) {
+                            actorSteps.push_back( tp );
+                            }
+                        }
+                    }
+                else {
+                    // default, one step
+                    TransIDPair tp = { tr->actor, tr->newActor };
+                    actorSteps.push_back( tp );
+                    }
+                
+                char targetDecrement = false;
+                SimpleVector<TransIDPair> targetSteps;
+
+                if( target != NULL && newTarget != NULL 
+                    &&
+                    target->numUses > 1 &&
+                    target->numUses == newTarget->numUses ) {
+                    
+                    targetDecrement = true;
+                    
+                    int dir = -1;
+                    if( tr->reverseUseTarget ) {
+                        dir = 1;
+                        }
+                    for( int u=0; u<target->numUses; u++ ) {
+                        TransIDPair tp = { -1, -1 };
+                        int uTo = u + dir;
+                        
+                        if( u < target->numUses - 1 ) {
+                            tp.fromID = target->useDummyIDs[u];
+                            }
+                        else if( dir == -1 ) {
+                            tp.fromID = target->id;
+                            }
+
+                        if( uTo < target->numUses - 1 &&
+                            uTo >= 0 ) {
+                            tp.toID = newTarget->useDummyIDs[uTo];
+                            }
+                        else if( uTo < 0 ) {
+                            }
+                        else if( uTo >= target->numUses - 1 ) {
+                            tp.toID = newTarget->id;
+                            }
+                        
+                        if( tp.fromID != -1 && tp.toID != -1 ) {
+                            targetSteps.push_back( tp );
+                            }
+                        }
+                    }
+                else {
+                    // default, one step
+                    TransIDPair tp = { tr->target, tr->newTarget };
+                    targetSteps.push_back( tp );
+                    }
+                
+                if( actorDecrement || targetDecrement ) {
+                    
+                    for( int as=0; as < actorSteps.size(); as++ ) {
+                        TransIDPair ap = actorSteps.getElementDirect( as );
+                        
+                        for( int ts=0; ts < targetSteps.size(); ts++ ) {
+                            TransIDPair tp = targetSteps.getElementDirect( ts );
+                            
+                            newTrans.actor = ap.fromID;
+                            newTrans.newActor = ap.toID;
+                            
+                            newTrans.target = tp.fromID;
+                            newTrans.newTarget = tp.toID;
+                            
+                            transToAdd.push_back( newTrans );
+                            }
+                        }
+                    }
+                else {
+                    // consider cross pass-through
+                    
+                    if( target != NULL && newActor != NULL 
+                        &&
+                        target->numUses > 1 &&
+                        target->numUses == newActor->numUses ) {
+                        // use preservation between target and new actor
+                        
+                        // generate one for each use dummy
+                        for( int u=0; u<target->numUses-1; u++ ) {
+                            newTrans.target = target->useDummyIDs[u];
+                            newTrans.newActor = newActor->useDummyIDs[u];
+                            
+                            transToAdd.push_back( newTrans );
+                            }
+                        }
+                    if( actor != NULL && newTarget != NULL 
+                        &&
+                        actor->numUses > 1 &&
+                        actor->numUses == newTarget->numUses ) {
+                        // use preservation between actor and new target
+                        
+                        // generate one for each use dummy
+                        for( int u=0; u<actor->numUses-1; u++ ) {
+                            newTrans.actor = actor->useDummyIDs[u];
+                            newTrans.newTarget = newTarget->useDummyIDs[u];
+                            
+                            transToAdd.push_back( newTrans );
+                            }
+                        }
+                    }
+                
+                
+                }
+            }
+        
+        for( int t=0; t<transToAdd.size(); t++ ) {
+            TransRecord *newTrans = transToAdd.getElement( t );
+                    
+            addTrans( newTrans->actor,
+                      newTrans->target,
+                      newTrans->newActor,
+                      newTrans->newTarget,
+                      newTrans->lastUseActor,
+                      newTrans->lastUseTarget,
+                      newTrans->reverseUseActor,
+                      newTrans->reverseUseTarget,
+                      newTrans->autoDecaySeconds,
+                      newTrans->actorMinUseFraction,
+                      newTrans->targetMinUseFraction,
+                      newTrans->move,
+                      newTrans->desiredMoveDist,
+                      newTrans->actorFixed,
+                      newTrans->targetFixed,
+                      true );
+            numGenerated++;
+            }
+
+        printf( "Auto-generated %d transitions based on used objects.\n", 
+                numGenerated );
+        }
+    
+
+
+
+
     
     // run twice
     // this generates both sides of transitions that have two used objects
     // occurring
+    if( false )
     for( int r=0; r<2; r++ )
     if( autoGenerateUsedObjectTransitions ) {
                 
