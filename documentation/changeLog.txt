@@ -8,6 +8,8 @@ Version 81    ???
 
 --Fixed scene editor to allow replacement of shoes.
 
+--Fixed so that empty slots don't capture mouse-over.
+
 
 
 

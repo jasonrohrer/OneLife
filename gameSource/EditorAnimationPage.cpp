@@ -3114,7 +3114,9 @@ int EditorAnimationPage::getClosestSpriteOrSlot( float inX, float inY ) {
                               mousePos.x, mousePos.y,
                               &pickedSprite,
                               &pickedClothing,
-                              &pickedSlot );
+                              &pickedSlot,
+                              true,
+                              true );
 
         
 

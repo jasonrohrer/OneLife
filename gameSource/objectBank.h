@@ -588,7 +588,8 @@ double getClosestObjectPart( ObjectRecord *inObject,
                              int *outSlot,
                              // whether sprites marked as multiplicative
                              // blend-mode should be considered clickable
-                             char inConsiderTransparent = true );
+                             char inConsiderTransparent = true,
+                             char inConsiderEmptySlots = false );
 
 
 char isSpriteVisibleAtAge( ObjectRecord *inObject,

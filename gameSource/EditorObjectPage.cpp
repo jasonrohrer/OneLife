@@ -4176,7 +4176,8 @@ double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
                                                 mPickedObjectLayer,
                                                 false,
                                                 pos.x, pos.y,
-                                                outSprite, &cl, outSlot );
+                                                outSprite, &cl, outSlot,
+                                                true, true );
         
 
 

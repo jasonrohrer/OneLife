@@ -3409,7 +3409,8 @@ double getClosestObjectPart( ObjectRecord *inObject,
                              int *outSprite,
                              int *outClothing,
                              int *outSlot,
-                             char inConsiderTransparent ) {
+                             char inConsiderTransparent,
+                             char inConsiderEmptySlots ) {
     
     doublePair pos = { inXCenterOffset, inYCenterOffset };
     
@@ -3814,7 +3815,7 @@ double getClosestObjectPart( ObjectRecord *inObject,
                     break;
                     }
                 }
-            else {
+            else if( inConsiderEmptySlots ) {
                 
                 double dist = distance( pos, inObject->slotPos[i] );
             
