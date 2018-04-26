@@ -35,6 +35,8 @@ Server Fixes:
 --Fixed generation of transitions that contain two useCount objects by
   iterating through list twice to generate all possible combinations.
 
+--Slot size and containable size now specified as a float instead of an int.
+  We can have things smaller than slot size 1 now (for signs).
 
 
 
