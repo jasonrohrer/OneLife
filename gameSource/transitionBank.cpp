@@ -670,17 +670,17 @@ void initTransBankFinish() {
                         actor->numUses > 1 ) {
                         
                         if( ! tr->reverseUseActor ) {
-                            shouldAdd = true;
                             newTrans.actor = actor->useDummyIDs[0];
                             }
+                        shouldAdd = true;
                         }
                     if( tr->lastUseTarget && 
                         target != NULL && target->numUses > 1 ) {
                     
                         if( ! tr->reverseUseTarget ) {
                             newTrans.target = target->useDummyIDs[0];
-                            shouldAdd = true;
                             }
+                        shouldAdd = true;
                         }
                     if( shouldAdd ) {
                         transToAdd.push_back( newTrans );
