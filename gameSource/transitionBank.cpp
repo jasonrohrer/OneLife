@@ -643,7 +643,7 @@ void initTransBankFinish() {
                             }
                         processed = true;
                         }
-                    if( actor != NULL && newTarget != NULL 
+                    else if( actor != NULL && newTarget != NULL 
                         &&
                         actor->numUses > 1 &&
                         actor->numUses == newTarget->numUses ) {
@@ -653,6 +653,34 @@ void initTransBankFinish() {
                         for( int u=0; u<actor->numUses-1; u++ ) {
                             newTrans.actor = actor->useDummyIDs[u];
                             newTrans.newTarget = newTarget->useDummyIDs[u];
+                            
+                            transToAdd.push_back( newTrans );
+                            }
+                        processed = true;
+                        }
+                    // consider target straight pass through
+                    // we preserve fraction of uses remaining
+                    // (partially-picked carrot row seeds into that
+                    //  many carrot flowers)
+                    else if( target != NULL && newTarget != NULL &&
+                             target->numUses > 1 && newTarget->numUses > 1 ) {
+                        
+                        // generate one for each use dummy
+                        for( int u=0; u<target->numUses-1; u++ ) {
+                            newTrans.target = target->useDummyIDs[u];
+
+                            float useFraction = 
+                                (float)( u ) / (float)( target->numUses );
+                            // propagate used status to new target
+                            int usesLeft = 
+                                lrint( useFraction * newTarget->numUses );
+
+                            if( usesLeft > newTarget->numUses - 2 ) {
+                                usesLeft = newTarget->numUses - 2;
+                                }
+                            
+                            newTrans.newTarget = 
+                                newTarget->useDummyIDs[usesLeft];
                             
                             transToAdd.push_back( newTrans );
                             }
