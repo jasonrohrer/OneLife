@@ -696,6 +696,63 @@ void initTransBankFinish() {
                     newTrans.newTarget = newTarget->useDummyIDs[0];
                     transToAdd.push_back( newTrans );
                     }
+                else {
+                    // consider trans that simply apply to
+                    // all use dummies without using them further
+                    // Example:  extracting a bowl full of berries
+                    //           from a bush that is > 0.5 full, and bush
+                    //           becomes empty.
+                    
+                    SimpleVector<int> actorDummies;
+                    SimpleVector<int> targetDummies;
+                    
+                    if( actor != NULL && actor->numUses > 1 ) {
+                        
+                        for( int u=0; u<actor->numUses-2; u++ ) {
+                            float useFraction = 
+                                (float)( u+1 ) / (float)( actor->numUses );
+                            
+                            if( useFraction >= tr->actorMinUseFraction ) {
+                                actorDummies.push_back( actor->useDummyIDs[u] );
+                                }
+                            }
+                        }
+                    else {
+                        // default one
+                        actorDummies.push_back( tr->actor );
+                        }
+
+                    if( target != NULL && target->numUses > 1 ) {
+                        
+                        for( int u=0; u<target->numUses-1; u++ ) {
+                            float useFraction = 
+                                (float)( u+1 ) / (float)( target->numUses );
+                            
+                            if( useFraction >= tr->targetMinUseFraction ) {
+                                targetDummies.push_back( 
+                                    target->useDummyIDs[u] );
+                                }
+                            }
+                        }
+                    else {
+                        // default one
+                        targetDummies.push_back( tr->target );
+                        }
+
+                    if( actorDummies.size() > 1 || targetDummies.size() > 1 ) {
+                        for( int ad=0; ad<actorDummies.size(); ad++ ) {
+                            newTrans.actor = 
+                                actorDummies.getElementDirect( ad );
+                            for( int td=0; td<targetDummies.size(); td++ ) {
+                                newTrans.target = 
+                                    targetDummies.getElementDirect( td );
+                                transToAdd.push_back( newTrans );
+                                printf( "Adding trans: " );
+                                printTrans( &newTrans );
+                                }
+                            }
+                        }
+                    }
                 }
             }
         
