@@ -342,7 +342,7 @@ float initObjectBankStep() {
                 r->containSize = 1;
                 r->vertContainRotationOffset = 0;
                 
-                sscanf( lines[next], "containSize=%d,vertSlotRot=%lf", 
+                sscanf( lines[next], "containSize=%f,vertSlotRot=%lf", 
                         &( r->containSize ),
                         &( r->vertContainRotationOffset ) );
                             
@@ -663,7 +663,7 @@ float initObjectBankStep() {
                 next++;
 
                 r->slotSize = 1;
-                sscanf( lines[next], "slotSize=%d", 
+                sscanf( lines[next], "slotSize=%f", 
                         &( r->slotSize ) );
                             
                 next++;
@@ -1772,7 +1772,7 @@ ObjectRecord **searchObjects( const char *inSearch,
 
 int addObject( const char *inDescription,
                char inContainable,
-               int inContainSize,
+               float inContainSize,
                double inVertContainRotationOffset,
                char inPermanent,
                int inMinPickupAge,
@@ -1805,7 +1805,7 @@ int addObject( const char *inDescription,
                SoundUsage inEatingSound,
                SoundUsage inDecaySound,
                char inCreationSoundInitialOnly,
-               int inNumSlots, int inSlotSize, doublePair *inSlotPos,
+               int inNumSlots, float inSlotSize, doublePair *inSlotPos,
                char *inSlotVert,
                int *inSlotParent,
                float inSlotTimeStretch,
@@ -1893,8 +1893,8 @@ int addObject( const char *inDescription,
         lines.push_back( stringDuplicate( inDescription ) );
 
         lines.push_back( autoSprintf( "containable=%d", (int)inContainable ) );
-        lines.push_back( autoSprintf( "containSize=%d,vertSlotRot=%f", 
-                                      (int)inContainSize,
+        lines.push_back( autoSprintf( "containSize=%f,vertSlotRot=%f", 
+                                      inContainSize,
                                       inVertContainRotationOffset ) );
         lines.push_back( autoSprintf( "permanent=%d,minPickupAge=%d", 
                                       (int)inPermanent,
@@ -1983,7 +1983,7 @@ int addObject( const char *inDescription,
         
         lines.push_back( autoSprintf( "numSlots=%d#timeStretch=%f", 
                                       inNumSlots, inSlotTimeStretch ) );
-        lines.push_back( autoSprintf( "slotSize=%d", inSlotSize ) );
+        lines.push_back( autoSprintf( "slotSize=%f", inSlotSize ) );
 
         for( int i=0; i<inNumSlots; i++ ) {
             lines.push_back( autoSprintf( "slotPos=%f,%f,vert=%d,parent=%d", 

@@ -3351,10 +3351,10 @@ static char addHeldToContainer( LiveObject *inPlayer,
         }
     
 
-    int slotSize =
+    float slotSize =
         targetObj->slotSize;
     
-    int containSize =
+    float containSize =
         getObject( 
             inPlayer->holdingID )->
         containSize;
@@ -3633,10 +3633,10 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
             inPlayer->
             clothingContained[inC].size();
                                         
-        int slotSize =
+        float slotSize =
             cObj->slotSize;
                                         
-        int containSize =
+        float containSize =
             getObject( inPlayer->holdingID )->
             containSize;
     
@@ -7291,7 +7291,7 @@ int main() {
                                         int targetSlots =
                                             targetObj->numSlots;
                                         
-                                        int targetSlotSize = 0;
+                                        float targetSlotSize = 0;
                                         
                                         if( targetSlots > 0 ) {
                                             targetSlotSize =

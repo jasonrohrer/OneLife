@@ -29,7 +29,7 @@ typedef struct ObjectRecord {
         // can it go into a container
         char containable;
         // how big of a slot is needed to contain it
-        int containSize;
+        float containSize;
 
         // by default, when placed in a vertical container slot,
         // objects rotate 90 deg clockwise
@@ -169,7 +169,7 @@ typedef struct ObjectRecord {
         int numSlots;
         
         // how big of a containable can fit in each slot?
-        int slotSize;
+        float slotSize;
         
         doublePair *slotPos;
 
@@ -380,7 +380,7 @@ ObjectRecord **searchObjects( const char *inSearch,
 
 int addObject( const char *inDescription,
                char inContainable,
-               int inContainSize,
+               float inContainSize,
                double inVertContainRotationOffset,
                char inPermanent,
                int inMinPickupAge,
@@ -413,7 +413,7 @@ int addObject( const char *inDescription,
                SoundUsage inEatingSound,
                SoundUsage inDecaySound,
                char inCreationSoundInitialOnly,
-               int inNumSlots, int inSlotSize, doublePair *inSlotPos,
+               int inNumSlots, float inSlotSize, doublePair *inSlotPos,
                char *inSlotVert,
                int *inSlotParent,
                float inSlotTimeStretch,

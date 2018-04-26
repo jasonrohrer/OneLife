@@ -81,11 +81,11 @@ EditorObjectPage::EditorObjectPage()
           mContainSizeField( smallFont, 
                              250,  -120, 4,
                              false,
-                             "Contain Size", "0123456789", NULL ),
+                             "Contain Size", "0123456789.", NULL ),
           mSlotSizeField( smallFont, 
                           -280,  -230, 4,
                           false,
-                          "Slot Size", "0123456789", NULL ),
+                          "Slot Size", "0123456789.", NULL ),
           mSlotTimeStretchField( smallFont, 
                                  -155,  -110, 4,
                                  false,
@@ -511,8 +511,8 @@ EditorObjectPage::EditorObjectPage()
     mFoodValueField.setText( "0" );
     mSpeedMultField.setText( "1.00" );
 
-    mContainSizeField.setInt( 1 );
-    mSlotSizeField.setInt( 1 );
+    mContainSizeField.setFloat( 1, 2 );
+    mSlotSizeField.setFloat( 1, 2 );
     mSlotTimeStretchField.setText( "1.0" );
 
     mDeadlyDistanceField.setInt( 0 );
@@ -1313,7 +1313,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         int newID =
         addObject( text,
                    mCheckboxes[0]->getToggled(),
-                   mContainSizeField.getInt(),
+                   mContainSizeField.getFloat(),
                    mCurrentObject.vertContainRotationOffset,
                    mCheckboxes[1]->getToggled(),
                    mMinPickupAgeField.getFloat(),
@@ -1348,7 +1348,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mDecaySoundWidget.getSoundUsage(),
                    creationSoundInitialOnly,
                    mCurrentObject.numSlots,
-                   mSlotSizeField.getInt(),
+                   mSlotSizeField.getFloat(),
                    mCurrentObject.slotPos,
                    mCurrentObject.slotVert,
                    mCurrentObject.slotParent,
@@ -1436,7 +1436,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         addObject( text,
                    mCheckboxes[0]->getToggled(),
-                   mContainSizeField.getInt(),
+                   mContainSizeField.getFloat(),
                    mCurrentObject.vertContainRotationOffset,
                    mCheckboxes[1]->getToggled(),
                    mMinPickupAgeField.getFloat(),
@@ -1471,7 +1471,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mDecaySoundWidget.getSoundUsage(),
                    creationSoundInitialOnly,
                    mCurrentObject.numSlots,
-                   mSlotSizeField.getInt(), 
+                   mSlotSizeField.getFloat(), 
                    mCurrentObject.slotPos,
                    mCurrentObject.slotVert,
                    mCurrentObject.slotParent,
@@ -1544,8 +1544,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mFoodValueField.setText( "0" );
         mSpeedMultField.setText( "1.00" );
 
-        mContainSizeField.setInt( 1 );
-        mSlotSizeField.setInt( 1 );
+        mContainSizeField.setFloat( 1, 2 );
+        mSlotSizeField.setFloat( 1, 2 );
         mSlotTimeStretchField.setText( "1.0" );
         
         mContainSizeField.setVisible( false );
@@ -1844,7 +1844,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 mDemoSlotsButton.setVisible( false );
                 mClearSlotsDemoButton.setVisible( false );
                 
-                mSlotSizeField.setInt( 1 );
+                mSlotSizeField.setFloat( 1, 2 );
                 mSlotSizeField.setVisible( false );
                 
                 mSlotTimeStretchField.setText( "1.0" );
@@ -2478,8 +2478,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mSpeedMultField.setFloat( pickedRecord->speedMult, 2 );
 
-            mContainSizeField.setInt( pickedRecord->containSize );
-            mSlotSizeField.setInt( pickedRecord->slotSize );
+            mContainSizeField.setFloat( pickedRecord->containSize, 2 );
+            mSlotSizeField.setFloat( pickedRecord->slotSize, 2 );
             mSlotTimeStretchField.setFloat( pickedRecord->slotTimeStretch,
                                             -1, true );
             
@@ -2792,7 +2792,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mFloorCheckbox.setVisible( false );
             
             if( ! pickedRecord->containable ) {
-                mContainSizeField.setInt( 1 );
+                mContainSizeField.setFloat( 1, 2 );
                 mContainSizeField.setVisible( false );
                 
                 if( ! mCheckboxes[2]->getToggled() ) {
@@ -2804,7 +2804,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             
             if( pickedRecord->numSlots == 0 ) {
-                mSlotSizeField.setInt( 1 );
+                mSlotSizeField.setFloat( 1, 2 );
                 mSlotSizeField.setVisible( false );
                 
                 mSlotTimeStretchField.setText( "1.0" );
@@ -2841,7 +2841,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             }
         else {
-            mContainSizeField.setInt( 1 );
+            mContainSizeField.setFloat( 1, 2 );
             mContainSizeField.setVisible( false );
             mFloorCheckbox.setVisible( true );
             mCurrentObject.vertContainRotationOffset = 0;
@@ -2859,7 +2859,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mSetHeldPosButton.setVisible( false );
             mMinPickupAgeField.setVisible( false );
             
-            mContainSizeField.setInt( 1 );
+            mContainSizeField.setFloat( 1, 2 );
             mContainSizeField.setVisible( false );
             mCheckboxes[0]->setToggled( false );
             hideVertRotButtons();
@@ -2868,7 +2868,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mCurrentObject.vertContainRotationOffset = 0;
             
-            mSlotSizeField.setInt( 1 );
+            mSlotSizeField.setFloat( 1, 2 );
             mSlotSizeField.setVisible( false );
             mSlotTimeStretchField.setText( "1.0" );
             mSlotTimeStretchField.setVisible( false );
