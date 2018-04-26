@@ -510,6 +510,8 @@ void initTransBankFinish() {
             newTrans.actorMinUseFraction = 0.0f;
             newTrans.targetMinUseFraction = 0.0f;
             
+            char processed = false;
+            
             if( ! tr->lastUseTarget && ! tr->lastUseActor ) {
 
                 char actorDecrement = false;
@@ -621,6 +623,7 @@ void initTransBankFinish() {
                             transToAdd.push_back( newTrans );
                             }
                         }
+                    processed = true;
                     }
                 else {
                     // consider cross pass-through
@@ -638,6 +641,7 @@ void initTransBankFinish() {
                             
                             transToAdd.push_back( newTrans );
                             }
+                        processed = true;
                         }
                     if( actor != NULL && newTarget != NULL 
                         &&
@@ -652,10 +656,46 @@ void initTransBankFinish() {
                             
                             transToAdd.push_back( newTrans );
                             }
+                        processed = true;
+                        }
+                    }    
+                }
+            
+            
+            if( ! processed ) {
+                if( tr->lastUseActor || tr->lastUseTarget ) {
+                    char shouldAdd = false;
+                
+                    if( tr->lastUseActor && actor != NULL && 
+                        actor->numUses > 1 ) {
+                        
+                        if( ! tr->reverseUseActor ) {
+                            shouldAdd = true;
+                            newTrans.actor = actor->useDummyIDs[0];
+                            }
+                        }
+                    if( tr->lastUseTarget && 
+                        target != NULL && target->numUses > 1 ) {
+                    
+                        if( ! tr->reverseUseTarget ) {
+                            newTrans.target = target->useDummyIDs[0];
+                            shouldAdd = true;
+                            }
+                        }
+                    if( shouldAdd ) {
+                        transToAdd.push_back( newTrans );
                         }
                     }
-                
-                
+                else if( tr->reverseUseActor && 
+                         newActor != NULL && newActor->numUses > 1 ) {
+                    newTrans.newActor = newActor->useDummyIDs[0];
+                    transToAdd.push_back( newTrans );
+                    }
+                else if( tr->reverseUseTarget && 
+                         newTarget != NULL && newTarget->numUses > 1 ) {
+                    newTrans.newTarget = newTarget->useDummyIDs[0];
+                    transToAdd.push_back( newTrans );
+                    }
                 }
             }
         
