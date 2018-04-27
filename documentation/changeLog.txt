@@ -43,6 +43,10 @@ Server Fixes:
 --Fixed generation of reverse-use transitions (fixes last stone in stone pile
   and empty berry bush regrowing).
 
+--Fixed so that shrinking clothing container (like backpack) results in items
+  falling on the ground instead of disappearing.
+
+
 
 
 

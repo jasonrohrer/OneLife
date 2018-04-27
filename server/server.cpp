@@ -8228,6 +8228,61 @@ int main() {
                             if( newSlots < oldSlots ) {
                                 // new container can hold less
                                 // truncate
+                                
+                                // drop extras onto map
+                                timeSec_t curTime = Time::timeSec();
+                                float stretch = cObj->slotTimeStretch;
+                                
+                                GridPos dropPos = 
+                                    computePartialMoveSpot( nextPlayer );
+                            
+                                // offset to counter-act offsets built into
+                                // drop code
+                                dropPos.x += 1;
+                                dropPos.y += 1;
+
+                                for( int s=newSlots; s<oldSlots; s++ ) {
+                                    
+                                    char found = false;
+                                    GridPos spot;
+                                
+                                    if( getMapObject( dropPos.x, 
+                                                      dropPos.y ) == 0 ) {
+                                        spot = dropPos;
+                                        found = true;
+                                        }
+                                    else {
+                                        found = findDropSpot( 
+                                            dropPos.x, dropPos.y,
+                                            dropPos.x, dropPos.y,
+                                            &spot );
+                                        }
+                            
+                            
+                                    if( found ) {
+                                        setMapObject( 
+                                            spot.x, spot.y,
+                                            nextPlayer->
+                                            clothingContained[c].
+                                            getElementDirect( s ) );
+                                        
+                                        timeSec_t eta =
+                                            nextPlayer->
+                                            clothingContainedEtaDecays[c].
+                                            getElementDirect( s );
+                                        
+                                        if( stretch != 1.0 ) {
+                                            timeSec_t offset = 
+                                                eta - curTime;
+                    
+                                            offset = offset / stretch;
+                                            eta = curTime + offset;
+                                            }
+                                        
+                                        setEtaDecay( spot.x, spot.y, eta );
+                                        }
+                                    }
+
                                 nextPlayer->
                                     clothingContained[c].
                                     shrink( newSlots );
