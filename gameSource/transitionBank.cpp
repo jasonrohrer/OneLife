@@ -773,8 +773,22 @@ void initTransBankFinish() {
                         
                         if( target != NULL && target->numUses > 1 ) {
                             // applies to every use dummy of target
+                            
+                            char mapNewTarget = false;
+                            if( newTarget != NULL && 
+                                target->numUses == newTarget->numUses ) {
+                                mapNewTarget = true;
+                                }
+
                             for( int u=0; u<target->numUses-1; u++ ) {
                                 newTrans.target = target->useDummyIDs[u];
+                                
+                                if( mapNewTarget ) {
+                                    // pass through
+                                    newTrans.newTarget = 
+                                        newTarget->useDummyIDs[u];
+                                    }
+                                
                                 transToAdd.push_back( newTrans );
                                 }
                             }
@@ -797,8 +811,22 @@ void initTransBankFinish() {
                         
                         if( actor != NULL && actor->numUses > 1 ) {
                             // applies to every use dummy of actor
+                            
+                            char mapNewActor = false;
+                            if( newActor != NULL && 
+                                actor->numUses == newActor->numUses ) {
+                                mapNewActor = true;
+                                }
+                            
                             for( int u=0; u<actor->numUses-1; u++ ) {
                                 newTrans.actor = actor->useDummyIDs[u];
+
+                                if( mapNewActor ) {
+                                    // pass through
+                                    newTrans.newActor = 
+                                        newActor->useDummyIDs[u];
+                                    }
+
                                 transToAdd.push_back( newTrans );
                                 }
                             }
@@ -810,8 +838,22 @@ void initTransBankFinish() {
                     transToAdd.push_back( newTrans );
                     if( target != NULL && target->numUses > 1 ) {
                         // applies to every use dummy of target
+
+                        char mapNewTarget = false;
+                        if( newTarget != NULL && 
+                            target->numUses == newTarget->numUses ) {
+                            mapNewTarget = true;
+                            }
+                        
                         for( int u=0; u<target->numUses-1; u++ ) {
                             newTrans.target = target->useDummyIDs[u];
+                            
+                            if( mapNewTarget ) {
+                                // pass through
+                                newTrans.newTarget = 
+                                    newTarget->useDummyIDs[u];
+                                }
+                            
                             transToAdd.push_back( newTrans );
                             }
                         }
@@ -822,8 +864,22 @@ void initTransBankFinish() {
                     transToAdd.push_back( newTrans );
                     if( actor != NULL && actor->numUses > 1 ) {
                         // applies to every use dummy of actor
+
+                        char mapNewActor = false;
+                        if( newActor != NULL && 
+                            actor->numUses == newActor->numUses ) {
+                            mapNewActor = true;
+                            }
+                            
                         for( int u=0; u<actor->numUses-1; u++ ) {
                             newTrans.actor = actor->useDummyIDs[u];
+
+                            if( mapNewActor ) {
+                                // pass through
+                                newTrans.newActor = 
+                                    newActor->useDummyIDs[u];
+                                }
+
                             transToAdd.push_back( newTrans );
                             }
                         }

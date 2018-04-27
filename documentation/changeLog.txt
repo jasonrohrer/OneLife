@@ -52,6 +52,8 @@ Server Fixes:
   of 4 times in the worst case.  This allows for tools that have 100s of uses,
   on average, without straining the underlying implementation.
 
+--Fixed mapping of uses through target when actor experiences last use, and
+  through actor when target experiences last use.
 
 
 
