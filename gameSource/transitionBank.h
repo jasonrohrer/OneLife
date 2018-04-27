@@ -55,14 +55,6 @@ typedef struct TransRecord {
 
         // for things that move longer distances per move
         int desiredMoveDist;
-
-        
-        // true if this is a generated transition that has already
-        // fixed actor or target
-        // in this case, do not replace with use dummies in later
-        // iterations
-        char actorFixed;
-        char targetFixed;
         
     } TransRecord;
 
@@ -175,8 +167,6 @@ void addTrans( int inActor, int inTarget,
                float inTargetMinUseFraction,
                int inMove,
                int inDesiredMoveDist,
-               char inActorFixed = false,
-               char inTargetFixed = false,
                char inNoWriteToFile = false );
 
 
