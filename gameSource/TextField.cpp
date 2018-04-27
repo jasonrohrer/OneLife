@@ -307,6 +307,8 @@ void TextField::draw() {
 
     double rectEndX = mWide / 2 - pixWidth;
     double rectEndY = mHigh / 2 - pixWidth;
+
+    double middleWidth = mWide - 2 * pixWidth;
     
     drawRect( rectStartX, rectStartY,
               rectEndX, rectEndY );
@@ -493,13 +495,19 @@ void TextField::draw() {
         }
     
 
+    double shadeWidth = 4 * mCharWidth;
+    
+    if( shadeWidth > middleWidth / 2 ) {
+        shadeWidth = middleWidth / 2;
+        }
+
     if( tooLongFront ) {
         // draw shaded overlay over left of string
         
         double verts[] = { rectStartX, rectStartY,
                            rectStartX, rectEndY,
-                           rectStartX + 4 * mCharWidth, rectEndY,
-                           rectStartX + 4 * mCharWidth, rectStartY };
+                           rectStartX + shadeWidth, rectEndY,
+                           rectStartX + shadeWidth, rectStartY };
         float vertColors[] = { 0.25, 0.25, 0.25, 1,
                                0.25, 0.25, 0.25, 1,
                                0.25, 0.25, 0.25, 0,
@@ -510,8 +518,8 @@ void TextField::draw() {
     if( tooLongBack ) {
         // draw shaded overlay over right of string
         
-        double verts[] = { rectEndX - 4 * mCharWidth, rectStartY,
-                           rectEndX - 4 * mCharWidth, rectEndY,
+        double verts[] = { rectEndX - shadeWidth, rectStartY,
+                           rectEndX - shadeWidth, rectEndY,
                            rectEndX, rectEndY,
                            rectEndX, rectStartY };
         float vertColors[] = { 0.25, 0.25, 0.25, 0,
@@ -1229,7 +1237,7 @@ void TextField::setFloat( float inF, int inDigitsAfterDecimal,
         formatString = stringDuplicate( "%f" );
         }
     else {
-        formatString = autoSprintf( "%%.%df\n", inDigitsAfterDecimal );
+        formatString = autoSprintf( "%%.%df", inDigitsAfterDecimal );
         }
 
     char *text = autoSprintf( formatString, inF );
