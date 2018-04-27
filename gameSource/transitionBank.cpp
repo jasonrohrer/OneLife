@@ -722,11 +722,18 @@ void initTransBankFinish() {
             if( ! processed ) {
                 if( tr->lastUseActor || tr->lastUseTarget ) {
                                     
-                    if( tr->lastUseActor && actor != NULL && 
-                        actor->numUses > 1 ) {
+                    if( tr->lastUseActor && 
+                        ( ( ! tr->reverseUseActor && actor != NULL && 
+                            actor->numUses > 1 ) 
+                          ||
+                          ( tr->reverseUseActor && newActor != NULL && 
+                            newActor->numUses > 1 ) ) ) {
                         
                         if( ! tr->reverseUseActor ) {
                             newTrans.actor = actor->useDummyIDs[0];
+                            }
+                        else {
+                            newTrans.newActor = newActor->useDummyIDs[0];
                             }
                         
                         transToAdd.push_back( newTrans );
@@ -740,10 +747,17 @@ void initTransBankFinish() {
                             }
                         }
                     if( tr->lastUseTarget && 
-                        target != NULL && target->numUses > 1 ) {
-                    
+                        ( ( ! tr->reverseUseTarget && target != NULL && 
+                            target->numUses > 1 ) 
+                          ||
+                          ( tr->reverseUseTarget && newTarget != NULL && 
+                            newTarget->numUses > 1 ) ) ) {
+                            
                         if( ! tr->reverseUseTarget ) {
                             newTrans.target = target->useDummyIDs[0];
+                            }
+                        else {
+                            newTrans.newTarget = newTarget->useDummyIDs[0];
                             }
 
                         transToAdd.push_back( newTrans );

@@ -40,7 +40,8 @@ Server Fixes:
 --Slot size and containable size now specified as a float instead of an int.
   We can have things smaller than slot size 1 now (for signs).
 
---Fixed generation of reverse-use transitions (fixes last stone in stone pile).
+--Fixed generation of reverse-use transitions (fixes last stone in stone pile
+  and empty berry bush regrowing).
 
 
 
