@@ -3225,7 +3225,7 @@ timeSec_t *getContainedEtaDecay( int inX, int inY, int *outNumContained,
 
 
 int checkDecayObject( int inX, int inY, int inID ) {
-    TransRecord *t = getTrans( -1, inID );
+    TransRecord *t = getPTrans( -1, inID );
 
     if( t == NULL ) {
         // no auto-decay for this object
@@ -3410,12 +3410,12 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         TransRecord *trans = NULL;
                         
                         if( oID > 0 ) {
-                            trans = getTrans( inID, oID );
+                            trans = getPTrans( inID, oID );
                             
                             if( trans == NULL ) {
                                 // does trans exist for newID applied to
                                 // destination?
-                                trans = getTrans( newID, oID );
+                                trans = getPTrans( newID, oID );
                                 }
                             }
                         
@@ -3571,11 +3571,11 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                     if( destTrans == NULL || destTrans->newActor == 0 ) {
                         // try bare ground trans
-                        destTrans = getTrans( inID, -1 );
+                        destTrans = getPTrans( inID, -1 );
 
                         if( destTrans == NULL ) {
                             // another attempt at bare ground transition
-                            destTrans = getTrans( movingObjID, -1 );
+                            destTrans = getPTrans( movingObjID, -1 );
                             }
                         
                         if( destTrans != NULL &&
@@ -3850,7 +3850,7 @@ void checkDecayContained( int inX, int inY, int inSubCont ) {
             oldID *= -1;
             }
     
-        TransRecord *t = getTrans( -1, oldID );
+        TransRecord *t = getPTrans( -1, oldID );
 
         if( t == NULL ) {
             // no auto-decay for this object
@@ -4890,7 +4890,7 @@ int getMapFloor( int inX, int inY ) {
         return 0;
         }
     
-    TransRecord *t = getTrans( -1, id );
+    TransRecord *t = getPTrans( -1, id );
 
     if( t == NULL ) {
         // no auto-decay for this floor

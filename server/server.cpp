@@ -2198,7 +2198,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
         //            lamb is dropped, rope is lost)
 
         TransRecord *bareTrans =
-            getTrans( oldHoldingID, -1 );
+            getPTrans( oldHoldingID, -1 );
                             
         if( bareTrans != NULL &&
             bareTrans->newTarget > 0 ) {
@@ -5065,7 +5065,7 @@ int main() {
 
                     // generic on-person
                     TransRecord *r = 
-                        getTrans( curOverID, 0 );
+                        getPTrans( curOverID, 0 );
 
                     if( r != NULL ) {
                         setMapObject( curPos.x, curPos.y, r->newActor );
@@ -5860,7 +5860,7 @@ int main() {
 
                                     // 0 is generic "on person" target
                                     TransRecord *r = 
-                                        getTrans( nextPlayer->holdingID, 
+                                        getPTrans( nextPlayer->holdingID, 
                                                   0 );
 
                                     TransRecord *rHit = NULL;
@@ -5872,7 +5872,7 @@ int main() {
                                         // what projectile ends up in grave
                                         // or on ground
                                         rHit = 
-                                            getTrans( nextPlayer->holdingID, 
+                                            getPTrans( nextPlayer->holdingID, 
                                                       0, false, true );
                                         
                                         if( rHit != NULL &&
@@ -5884,7 +5884,7 @@ int main() {
                                         // last use on actor specifies
                                         // what is left in victim's hand
                                         TransRecord *woundHit = 
-                                            getTrans( nextPlayer->holdingID, 
+                                            getPTrans( nextPlayer->holdingID, 
                                                       0, true, false );
                                         
                                         if( woundHit != NULL &&
@@ -6080,7 +6080,7 @@ int main() {
                                     // see if result of trans
                                     // would preserve containment
 
-                                    r = getTrans( nextPlayer->holdingID,
+                                    r = getPTrans( nextPlayer->holdingID,
                                                   target );
 
 
@@ -6112,7 +6112,7 @@ int main() {
                                     // negative holding is ID of baby
                                     // which can't be used
                                     // (and no bare hand action available)
-                                    r = getTrans( nextPlayer->holdingID,
+                                    r = getPTrans( nextPlayer->holdingID,
                                                   target );
                                     
                                     transApplied = true;
@@ -6122,7 +6122,7 @@ int main() {
                                           targetObj->permanent ) ) {
                                         
                                         // search for default 
-                                        r = getTrans( -2, target );
+                                        r = getPTrans( -2, target );
                                         
                                         if( r != NULL ) {
                                             defaultTrans = true;
@@ -6454,7 +6454,7 @@ int main() {
                                 if( floorID > 0 ) {
                                     
                                     TransRecord *r = 
-                                        getTrans( nextPlayer->holdingID,
+                                        getPTrans( nextPlayer->holdingID,
                                                   floorID );
                                 
                                     if( r == NULL ) {
@@ -6526,7 +6526,7 @@ int main() {
                                     // (not a food transition, since food
                                     //   value is 0)
                                     TransRecord *r = 
-                                        getTrans( nextPlayer->holdingID, 
+                                        getPTrans( nextPlayer->holdingID, 
                                                   -1 );
 
 
@@ -6912,7 +6912,7 @@ int main() {
                                     
                                     // get eat transtion
                                     TransRecord *r = 
-                                        getTrans( nextPlayer->holdingID, 
+                                        getPTrans( nextPlayer->holdingID, 
                                                   -1 );
 
                                     
@@ -7848,7 +7848,7 @@ int main() {
                     if( nextPlayer->murderSourceID > 0 ) {
                         
                         TransRecord *woundHit = 
-                            getTrans( nextPlayer->murderSourceID, 
+                            getPTrans( nextPlayer->murderSourceID, 
                                       0, true, false );
                         
                         if( woundHit != NULL &&
@@ -7888,7 +7888,7 @@ int main() {
 
                     int oldID = nextPlayer->holdingID;
                 
-                    TransRecord *t = getTrans( -1, oldID );
+                    TransRecord *t = getPTrans( -1, oldID );
 
                     if( t != NULL ) {
 
@@ -8029,7 +8029,7 @@ int main() {
                             
                             change = true;
                             
-                            TransRecord *t = getTrans( -1, oldID );
+                            TransRecord *t = getPTrans( -1, oldID );
 
                             newDecay = 0;
 
@@ -8094,7 +8094,7 @@ int main() {
                             
                                 change = true;
                             
-                                TransRecord *t = getTrans( -1, oldSubID );
+                                TransRecord *t = getPTrans( -1, oldSubID );
 
                                 newSubDecay = 0;
 
@@ -8191,7 +8191,7 @@ int main() {
 
                         int oldID = cObj->id;
                 
-                        TransRecord *t = getTrans( -1, oldID );
+                        TransRecord *t = getPTrans( -1, oldID );
 
                         if( t != NULL ) {
 
@@ -8370,7 +8370,7 @@ int main() {
                                 
                                 change = true;
                             
-                                TransRecord *t = getTrans( -1, oldID );
+                                TransRecord *t = getPTrans( -1, oldID );
                                 
                                 newDecay = 0;
 

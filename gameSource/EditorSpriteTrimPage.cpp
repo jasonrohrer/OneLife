@@ -440,6 +440,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        spriteIsBackFoot,
                        spriteIsFrontFoot,
                        1,
+                       1.0f,
                        spriteUseVanish,
                        spriteUseAppear );
             

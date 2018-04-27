@@ -236,6 +236,10 @@ typedef struct ObjectRecord {
         // something different happens
         int numUses;
 
+        // chance that using this object will make the use count
+        // decrement.  1.0 means it always decrements.
+        float useChance;
+        
         // flags for sprites that vanish with additional
         // use of this object
         // (example:  berries getting picked)
@@ -433,6 +437,7 @@ int addObject( const char *inDescription,
                char *inSpriteIsBackFoot,
                char *inSpriteIsFrontFoot,
                int inNumUses,
+               float inUseChance,
                char *inSpriteUseVanish,
                char *inSpriteUseAppear,
                char inNoWriteToFile = false,

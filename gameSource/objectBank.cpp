@@ -722,6 +722,8 @@ float initObjectBankStep() {
                 
                 
                 r->numUses = 1;
+                r->useChance = 1.0f;
+                
                 r->spriteUseVanish = new char[ r->numSprites ];
                 r->spriteUseAppear = new char[ r->numSprites ];
                 r->useDummyIDs = NULL;
@@ -862,8 +864,9 @@ float initObjectBankStep() {
                 if( next < numLines ) {
                     // info about num uses and vanish/appear sprites
                     
-                    sscanf( lines[next], "numUses=%d", 
-                            &( r->numUses ) );
+                    sscanf( lines[next], "numUses=%d,%f", 
+                            &( r->numUses ),
+                            &( r->useChance ) );
                             
                     next++;
                     
@@ -1565,6 +1568,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->spriteIsBackFoot,
                         inObject->spriteIsFrontFoot,
                         inObject->numUses,
+                        inObject->useChance,
                         inObject->spriteUseVanish,
                         inObject->spriteUseAppear,
                         inNoWriteToFile,
@@ -1825,6 +1829,7 @@ int addObject( const char *inDescription,
                char *inSpriteIsBackFoot,
                char *inSpriteIsFrontFoot,
                int inNumUses,
+               float inUseChance,
                char *inSpriteUseVanish,
                char *inSpriteUseAppear,
                char inNoWriteToFile,
@@ -2047,8 +2052,8 @@ int addObject( const char *inDescription,
                                           inNumSprites ) );
         
         
-        lines.push_back( autoSprintf( "numUses=%d",
-                                      inNumUses ) );
+        lines.push_back( autoSprintf( "numUses=%d,%f",
+                                      inNumUses, inUseChance ) );
         
         lines.push_back(
             boolArrayToSparseCommaString( "useVanishIndex",
@@ -2253,6 +2258,7 @@ int addObject( const char *inDescription,
     r->spriteIsFrontFoot = new char[ inNumSprites ];
 
     r->numUses = inNumUses;
+    r->useChance = inUseChance;
     r->spriteUseVanish = new char[ inNumSprites ];
     r->spriteUseAppear = new char[ inNumSprites ];
     

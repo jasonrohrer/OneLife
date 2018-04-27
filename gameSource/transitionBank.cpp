@@ -158,6 +158,11 @@ float initTransBankStep() {
                 r->move = move;
                 r->desiredMoveDist = desiredMoveDist;
 
+                r->actorChangeChance = 1.0f;
+                r->targetChangeChance = 1.0f;
+                r->newActorNoChange = -1;
+                r->newTargetNoChange = -1;
+                
                 r->reverseUseActor = false;
                 if( reverseUseActorFlag == 1 ) {
                     r->reverseUseActor = true;
@@ -202,6 +207,7 @@ float initTransBankStep() {
 typedef struct TransIDPair {
         int fromID;
         int toID;
+        int noChangeID;
     } TransIDPair;
     
 
@@ -341,6 +347,10 @@ void initTransBankFinish() {
                               tr->targetMinUseFraction, 
                               tr->move,
                               tr->desiredMoveDist,
+                              1.0f,
+                              1.0f,
+                              -1,
+                              -1,
                               true );
                     }
                 }
@@ -452,6 +462,10 @@ void initTransBankFinish() {
                       tr.targetMinUseFraction,
                       tr.move,
                       tr.desiredMoveDist,
+                      1.0f,
+                      1.0f,
+                      -1,
+                      -1,
                       true );
             }
         
@@ -483,11 +497,16 @@ void initTransBankFinish() {
             ObjectRecord *newActor = NULL;
             ObjectRecord *newTarget = NULL;
             
+            float actorUseChance = 1.0f;
+            float targetUseChance = 1.0f;
+            
             if( tr->actor > 0 ) {
                 actor = getObject( tr->actor );
+                actorUseChance = actor->useChance;
                 }
             if( tr->target > 0 ) {
                 target = getObject( tr->target );
+                targetUseChance = target->useChance;
                 }
             if( tr->newActor > 0 ) {
                 newActor = getObject( tr->newActor );
@@ -536,11 +555,18 @@ void initTransBankFinish() {
                         if( uTo < actor->numUses - 1 &&
                             uTo >= 0 ) {
                             tp.toID = newActor->useDummyIDs[uTo];
+                            if( u < actor->numUses - 1 ) {
+                                tp.noChangeID = newActor->useDummyIDs[u];
+                                }
+                            else {
+                                tp.noChangeID = newActor->id;
+                                }
                             }
                         else if( uTo < 0 ) {
                             }
                         else if( uTo >= actor->numUses - 1 ) {
                             tp.toID = newActor->id;
+                            tp.noChangeID = newActor->id;
                             }
                         
                         if( tp.fromID != -1 && tp.toID != -1 ) {
@@ -552,7 +578,7 @@ void initTransBankFinish() {
                     // default, no decrement
                     
                     // at least one
-                    TransIDPair tp = { tr->actor, tr->newActor };
+                    TransIDPair tp = { tr->actor, tr->newActor, tr->newActor };
                     actorSteps.push_back( tp );
 
                     if( actor != NULL && actor->numUses > 1 ) {
@@ -592,11 +618,18 @@ void initTransBankFinish() {
                         if( uTo < target->numUses - 1 &&
                             uTo >= 0 ) {
                             tp.toID = newTarget->useDummyIDs[uTo];
+                            if( u < target->numUses - 1 ) {
+                                tp.noChangeID = newTarget->useDummyIDs[u];
+                                }
+                            else {
+                                tp.noChangeID = newTarget->id;
+                                }
                             }
                         else if( uTo < 0 ) {
                             }
                         else if( uTo >= target->numUses - 1 ) {
                             tp.toID = newTarget->id;
+                            tp.noChangeID = newTarget->id;
                             }
                         
                         if( tp.fromID != -1 && tp.toID != -1 ) {
@@ -607,7 +640,8 @@ void initTransBankFinish() {
                 else {
                     // default
                     // at least one
-                    TransIDPair tp = { tr->target, tr->newTarget };
+                    TransIDPair tp = { tr->target, tr->newTarget, 
+                                       tr->newTarget };
                     targetSteps.push_back( tp );
                     
                     if( target != NULL && target->numUses > 1 ) {
@@ -634,6 +668,12 @@ void initTransBankFinish() {
                             newTrans.target = tp.fromID;
                             newTrans.newTarget = tp.toID;
                             
+                            newTrans.actorChangeChance = actorUseChance;
+                            newTrans.targetChangeChance = targetUseChance;
+                            
+                            newTrans.newActorNoChange = ap.noChangeID;
+                            newTrans.newTargetNoChange = tp.noChangeID;
+
                             transToAdd.push_back( newTrans );
                             }
                         }
@@ -872,6 +912,10 @@ void initTransBankFinish() {
                       newTrans->targetMinUseFraction,
                       newTrans->move,
                       newTrans->desiredMoveDist,
+                      newTrans->actorChangeChance,
+                      newTrans->targetChangeChance,
+                      newTrans->newActorNoChange,
+                      newTrans->newTargetNoChange,
                       true );
             numGenerated++;
             }
@@ -1027,6 +1071,10 @@ void initTransBankFinish() {
                       newTrans->targetMinUseFraction,
                       newTrans->move,
                       newTrans->desiredMoveDist,
+                      1.0f,
+                      1.0f,
+                      -1,
+                      -1,
                       true );
             numGenerated++;
             }
@@ -1376,6 +1424,61 @@ TransRecord *getTrans( int inActor, int inTarget, char inLastUseActor,
 
 
 
+#define NUM_CHANCE_RECORDS 100
+static int nextChanceRecord;
+static TransRecord chanceRecords[NUM_CHANCE_RECORDS];
+
+static int randSeed = 124567;
+
+#include "minorGems/util/random/CustomRandomSource.h"
+static CustomRandomSource randSource( randSeed );
+
+
+TransRecord *getPTrans( int inActor, int inTarget, 
+                        char inLastUseActor,
+                        char inLastUseTarget ) {
+
+    TransRecord *r = getTrans( inActor, inTarget, 
+                               inLastUseActor, inLastUseTarget );
+    
+    if( r == NULL ) {
+        return r;
+        }
+    
+    if( r->actorChangeChance == 1.0f && r->targetChangeChance == 1.0f ) {
+        return r;
+        }
+    
+    TransRecord *rStatic = &( chanceRecords[ nextChanceRecord ] );
+    
+    nextChanceRecord++;
+    if( nextChanceRecord >= NUM_CHANCE_RECORDS ) {
+        nextChanceRecord = 0;
+        }
+    
+    *rStatic = *r;
+    
+    if( r->actorChangeChance != 1.0f ) {
+        if( randSource.getRandomBoundedDouble( 0, 1.0 ) >
+            r->actorChangeChance ) {
+            // no change to actor
+            rStatic->newActor = rStatic->newActorNoChange;
+            }
+        }
+    if( r->targetChangeChance != 1.0f ) {
+        if( randSource.getRandomBoundedDouble( 0, 1.0 ) >
+            r->targetChangeChance ) {
+            // no change to target
+            rStatic->newTarget = rStatic->newTargetNoChange;
+            }
+        }
+    
+    return rStatic;
+    }
+
+
+
+
 TransRecord *getTransProducing( int inNewActor, int inNewTarget ) {
     int mapIndex = inNewTarget;
     
@@ -1601,6 +1704,10 @@ void addTrans( int inActor, int inTarget,
                float inTargetMinUseFraction,
                int inMove,
                int inDesiredMoveDist,
+               float inActorChangeChance,
+               float inTargetChangeChance,
+               int inNewActorNoChange,
+               int inNewTargetNoChange,
                char inNoWriteToFile ) {
     
     // exapand id-indexed maps if a bigger ID is being added    
@@ -1677,6 +1784,12 @@ void addTrans( int inActor, int inTarget,
         t->move = inMove;
         t->desiredMoveDist = inMove;
         
+        t->actorChangeChance = inActorChangeChance;
+        t->targetChangeChance = inTargetChangeChance;
+
+        t->newActorNoChange = inNewActorNoChange;
+        t->newTargetNoChange = inNewTargetNoChange;
+        
 
         records.push_back( t );
 
@@ -1714,7 +1827,11 @@ void addTrans( int inActor, int inTarget,
             t->reverseUseActor == inReverseUseActor &&
             t->reverseUseTarget == inReverseUseTarget &&
             t->move == inMove &&
-            t->desiredMoveDist == inDesiredMoveDist ) {
+            t->desiredMoveDist == inDesiredMoveDist &&
+            t->actorChangeChance == inActorChangeChance &&
+            t->targetChangeChance == inTargetChangeChance &&
+            t->newActorNoChange == inNewActorNoChange &&
+            t->newTargetNoChange == inNewTargetNoChange ) {
             
             // no change to produces map either... 
 
@@ -1749,6 +1866,12 @@ void addTrans( int inActor, int inTarget,
             t->move = inMove;
             t->desiredMoveDist = inDesiredMoveDist;
             
+            t->actorChangeChance = inActorChangeChance;
+            t->targetChangeChance = inTargetChangeChance;
+
+            t->newActorNoChange = inNewActorNoChange;
+            t->newTargetNoChange = inNewTargetNoChange;
+
             if( inNewActor != 0 ) {
                 producesMap[inNewActor].push_back( t );
                 }
@@ -1802,6 +1925,10 @@ void addTrans( int inActor, int inTarget,
             if( inReverseUseTarget ) {
                 reverseUseTargetFlag = 1;
                 }
+
+            
+            // don't save change chance to file
+            // it's only for auto-generated transitions
 
             char *fileContents = autoSprintf( "%d %d %d %f %f %d %d %d %d", 
                                               inNewActor, inNewTarget,

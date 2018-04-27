@@ -46,6 +46,12 @@ Server Fixes:
 --Fixed so that shrinking clothing container (like backpack) results in items
   falling on the ground instead of disappearing.
 
+--Support for useChance in objects that have multiple uses.  This is the chance
+  that using the object will take it to its next use state.  A tool that has 4
+  uses, and 0.1 useChance, will be used 40 times on average, but a bare minimum
+  of 4 times in the worst case.  This allows for tools that have 100s of uses,
+  on average, without straining the underlying implementation.
+
 
 
 
