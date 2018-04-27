@@ -478,6 +478,7 @@ void initTransBankFinish() {
         // process transitions not objects
 
         int numGenerated = 0;
+        int numRemoved = 0;
         
         SimpleVector<TransRecord*> transToDelete;
         SimpleVector<TransRecord> transToAdd;
@@ -643,6 +644,14 @@ void initTransBankFinish() {
                             transToAdd.push_back( newTrans );
                             }
                         }
+                    
+                    if( ( actorDecrement && tr->reverseUseActor )
+                        ||
+                        ( targetDecrement && tr->reverseUseTarget ) ) {
+                        // transition replaced
+                        transToDelete.push_back( tr );
+                        }
+                    
                     processed = true;
                     }
                 else {
@@ -829,7 +838,17 @@ void initTransBankFinish() {
                     }
                 }
             }
-        
+
+        for( int t=0; t<transToDelete.size(); t++ ) {
+            TransRecord *tr = transToDelete.getElementDirect( t );
+                    
+            deleteTransFromBank( tr->actor, tr->target,
+                                 tr->lastUseActor,
+                                 tr->lastUseTarget,
+                                 true );
+            numRemoved++;
+            }
+
         for( int t=0; t<transToAdd.size(); t++ ) {
             TransRecord *newTrans = transToAdd.getElement( t );
                     
@@ -852,8 +871,9 @@ void initTransBankFinish() {
             numGenerated++;
             }
 
-        printf( "Auto-generated %d transitions based on used objects.\n", 
-                numGenerated );
+        printf( "Auto-generated %d transitions based on used objects, "
+                "%d removed in the process.\n", 
+                numGenerated, numRemoved );
         }
     
 
