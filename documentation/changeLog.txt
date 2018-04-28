@@ -55,6 +55,9 @@ Server Fixes:
 --Fixed mapping of uses through target when actor experiences last use, and
   through actor when target experiences last use.
 
+--Fixed incorrect handling of last reverse use transitions.  Fixed variable
+  transitions to work with new tool use system.
+
 
 
 

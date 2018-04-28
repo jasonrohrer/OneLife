@@ -756,17 +756,11 @@ void initTransBankFinish() {
                 if( tr->lastUseActor || tr->lastUseTarget ) {
                                     
                     if( tr->lastUseActor && 
-                        ( ( ! tr->reverseUseActor && actor != NULL && 
-                            actor->numUses > 1 ) 
-                          ||
-                          ( tr->reverseUseActor && newActor != NULL && 
-                            newActor->numUses > 1 ) ) ) {
+                        actor != NULL && 
+                        actor->numUses > 1 ) {
                         
                         if( ! tr->reverseUseActor ) {
                             newTrans.actor = actor->useDummyIDs[0];
-                            }
-                        else {
-                            newTrans.newActor = newActor->useDummyIDs[0];
                             }
                         
                         transToAdd.push_back( newTrans );
@@ -794,17 +788,11 @@ void initTransBankFinish() {
                             }
                         }
                     if( tr->lastUseTarget && 
-                        ( ( ! tr->reverseUseTarget && target != NULL && 
-                            target->numUses > 1 ) 
-                          ||
-                          ( tr->reverseUseTarget && newTarget != NULL && 
-                            newTarget->numUses > 1 ) ) ) {
+                        target != NULL && 
+                        target->numUses > 1 ) {
                             
                         if( ! tr->reverseUseTarget ) {
                             newTrans.target = target->useDummyIDs[0];
-                            }
-                        else {
-                            newTrans.newTarget = newTarget->useDummyIDs[0];
                             }
 
                         transToAdd.push_back( newTrans );
@@ -1127,10 +1115,10 @@ void initTransBankFinish() {
                       newTrans->targetMinUseFraction,
                       newTrans->move,
                       newTrans->desiredMoveDist,
-                      1.0f,
-                      1.0f,
-                      -1,
-                      -1,
+                      newTrans->actorChangeChance,
+                      newTrans->targetChangeChance,
+                      newTrans->newActorNoChange,
+                      newTrans->newTargetNoChange,
                       true );
             numGenerated++;
             }
