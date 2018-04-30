@@ -63,6 +63,10 @@ Server Fixes:
 --No need for constant PO messages about all out-of-range players.  Instead,
   only send POs for players that are between 32 and 64 away.
 
+--Support for noUse flag on transitions for actor and target, indicating that
+  this target shouldn't cause use count to decrement (example:  picking feather
+  from pond shouldn't cause pond to drain).
+
 
 
 

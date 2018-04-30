@@ -82,6 +82,8 @@ EditorTransitionPage::EditorTransitionPage()
           mLastUseTargetCheckbox( 130, 75, 2 ),
           mReverseUseActorCheckbox( -330, -75, 2 ),
           mReverseUseTargetCheckbox( 130, -75, 2 ),
+          mNoUseActorCheckbox( -330, -95, 2 ),
+          mNoUseTargetCheckbox( 130, -95, 2 ),
           mMovementButtons( smallFont, 240, 40,
                             NUM_MOVE_BUTTONS, moveButtonNames, true, 2 ),
           mDesiredMoveDistField( smallFont,
@@ -131,6 +133,14 @@ EditorTransitionPage::EditorTransitionPage()
 
     addComponent( &mReverseUseTargetCheckbox );
     mReverseUseTargetCheckbox.addActionListener( this );
+
+
+    addComponent( &mNoUseActorCheckbox );
+    mNoUseActorCheckbox.addActionListener( this );
+
+    addComponent( &mNoUseTargetCheckbox );
+    mNoUseTargetCheckbox.addActionListener( this );
+
 
     addComponent( &mMovementButtons );
     mMovementButtons.addActionListener( this );
@@ -205,6 +215,10 @@ EditorTransitionPage::EditorTransitionPage()
     mCurrentTransition.lastUseTarget = false;
     mCurrentTransition.reverseUseActor = false;
     mCurrentTransition.reverseUseTarget = false;
+    
+    mCurrentTransition.noUseActor = false;
+    mCurrentTransition.noUseTarget = false;
+    
     mCurrentTransition.actorMinUseFraction = 0;
     mCurrentTransition.targetMinUseFraction = 0;
     
@@ -355,6 +369,9 @@ void EditorTransitionPage::checkIfSaveVisible() {
     
     mReverseUseActorCheckbox.setToggled( mCurrentTransition.reverseUseActor );
     mReverseUseTargetCheckbox.setToggled( mCurrentTransition.reverseUseTarget );
+
+    mNoUseActorCheckbox.setToggled( mCurrentTransition.noUseActor );
+    mNoUseTargetCheckbox.setToggled( mCurrentTransition.noUseTarget );
 
     mActorMinUseFractionField.setFloat( 
         mCurrentTransition.actorMinUseFraction, -1, true );
@@ -611,6 +628,8 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                   mCurrentTransition.lastUseTarget,
                   mCurrentTransition.reverseUseActor,
                   mCurrentTransition.reverseUseTarget,
+                  mCurrentTransition.noUseActor,
+                  mCurrentTransition.noUseTarget,
                   decayTime,
                   mActorMinUseFractionField.getFloat(),
                   mTargetMinUseFractionField.getFloat(),
@@ -712,6 +731,14 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mReverseUseTargetCheckbox ) {
         mCurrentTransition.reverseUseTarget = 
             mReverseUseTargetCheckbox.getToggled();
+        }
+    else if( inTarget == &mNoUseActorCheckbox ) {
+        mCurrentTransition.noUseActor = 
+            mNoUseActorCheckbox.getToggled();
+        }
+    else if( inTarget == &mNoUseTargetCheckbox ) {
+        mCurrentTransition.noUseTarget = 
+            mNoUseTargetCheckbox.getToggled();
         }
     else if( inTarget == &mMovementButtons ) {
         mCurrentTransition.move = mMovementButtons.getSelectedItem();
@@ -1144,6 +1171,18 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         doublePair pos = mReverseUseTargetCheckbox.getPosition();
         pos.x += checkboxSep;
         smallFont->drawString( "Reverse Use", pos, alignLeft );
+        }
+
+    if( mNoUseActorCheckbox.isVisible() ) {
+        doublePair pos = mNoUseActorCheckbox.getPosition();
+        pos.x -= checkboxSep;
+        smallFont->drawString( "No Use", pos, alignRight );
+        }
+
+    if( mNoUseTargetCheckbox.isVisible() ) {
+        doublePair pos = mNoUseTargetCheckbox.getPosition();
+        pos.x += checkboxSep;
+        smallFont->drawString( "No Use", pos, alignLeft );
         }
     
 

@@ -128,17 +128,21 @@ float initTransBankStep() {
                 
                 int reverseUseActorFlag = 0;
                 int reverseUseTargetFlag = 0;
-
+                int noUseActorFlag = 0;
+                int noUseTargetFlag = 0;
+                
                 int move = 0;
                 int desiredMoveDist = 1;
                 
-                sscanf( contents, "%d %d %d %f %f %d %d %d %d", 
+                sscanf( contents, "%d %d %d %f %f %d %d %d %d %d %d", 
                         &newActor, &newTarget, &autoDecaySeconds,
                         &actorMinUseFraction, &targetMinUseFraction,
                         &reverseUseActorFlag,
                         &reverseUseTargetFlag,
                         &move,
-                        &desiredMoveDist );
+                        &desiredMoveDist,
+                        &noUseActorFlag,
+                        &noUseTargetFlag );
                 
                 if( autoDecaySeconds < 0 ) {
                     epochAutoDecay = -autoDecaySeconds;
@@ -171,6 +175,17 @@ float initTransBankStep() {
                 r->reverseUseTarget = false;
                 if( reverseUseTargetFlag == 1 ) {
                     r->reverseUseTarget = true;
+                    }
+
+
+                r->noUseActor = false;
+                if( noUseActorFlag == 1 ) {
+                    r->noUseActor = true;
+                    }
+
+                r->noUseTarget = false;
+                if( noUseTargetFlag == 1 ) {
+                    r->noUseTarget = true;
                     }
                 
                 r->actorMinUseFraction = actorMinUseFraction;
@@ -342,6 +357,8 @@ void initTransBankFinish() {
                               tr->lastUseTarget,
                               tr->reverseUseActor,
                               tr->reverseUseTarget,
+                              tr->noUseActor,
+                              tr->noUseTarget,
                               tr->autoDecaySeconds,
                               tr->actorMinUseFraction,
                               tr->targetMinUseFraction, 
@@ -457,6 +474,8 @@ void initTransBankFinish() {
                       tr.lastUseTarget,
                       tr.reverseUseActor,
                       tr.reverseUseTarget,
+                      tr.noUseActor,
+                      tr.noUseTarget,
                       tr.autoDecaySeconds,
                       tr.actorMinUseFraction,
                       tr.targetMinUseFraction,
@@ -502,11 +521,15 @@ void initTransBankFinish() {
             
             if( tr->actor > 0 ) {
                 actor = getObject( tr->actor );
-                actorUseChance = actor->useChance;
+                if( ! tr->noUseActor ) {
+                    actorUseChance = actor->useChance;
+                    }
                 }
             if( tr->target > 0 ) {
                 target = getObject( tr->target );
-                targetUseChance = target->useChance;
+                if( ! tr->noUseTarget ) {
+                    targetUseChance = target->useChance;
+                    }
                 }
             if( tr->newActor > 0 ) {
                 newActor = getObject( tr->newActor );
@@ -520,6 +543,8 @@ void initTransBankFinish() {
             newTrans.lastUseTarget = false;
             newTrans.reverseUseActor = false;
             newTrans.reverseUseTarget = false;
+            newTrans.noUseActor = false;
+            newTrans.noUseTarget = false;
             newTrans.actorMinUseFraction = 0.0f;
             newTrans.targetMinUseFraction = 0.0f;
             
@@ -541,6 +566,10 @@ void initTransBankFinish() {
                     if( tr->reverseUseActor ) {
                         dir = 1;
                         }
+                    if( tr->noUseActor ) {
+                        dir = 0;
+                        }
+
                     for( int u=0; u<actor->numUses; u++ ) {
                         TransIDPair tp = { -1, -1 };
                         int uTo = u + dir;
@@ -604,6 +633,10 @@ void initTransBankFinish() {
                     if( tr->reverseUseTarget ) {
                         dir = 1;
                         }
+                    if( tr->noUseTarget ) {
+                        dir = 0;
+                        }
+                    
                     for( int u=0; u<target->numUses; u++ ) {
                         TransIDPair tp = { -1, -1 };
                         int uTo = u + dir;
@@ -951,6 +984,8 @@ void initTransBankFinish() {
                       newTrans->lastUseTarget,
                       newTrans->reverseUseActor,
                       newTrans->reverseUseTarget,
+                      newTrans->noUseActor,
+                      newTrans->noUseTarget,
                       newTrans->autoDecaySeconds,
                       newTrans->actorMinUseFraction,
                       newTrans->targetMinUseFraction,
@@ -1110,6 +1145,8 @@ void initTransBankFinish() {
                       newTrans->lastUseTarget,
                       newTrans->reverseUseActor,
                       newTrans->reverseUseTarget,
+                      newTrans->noUseActor,
+                      newTrans->noUseTarget,
                       newTrans->autoDecaySeconds,
                       newTrans->actorMinUseFraction,
                       newTrans->targetMinUseFraction,
@@ -1743,6 +1780,8 @@ void addTrans( int inActor, int inTarget,
                char inLastUseTarget,
                char inReverseUseActor,
                char inReverseUseTarget,
+               char inNoUseActor,
+               char inNoUseTarget,
                int inAutoDecaySeconds,
                float inActorMinUseFraction,
                float inTargetMinUseFraction,
@@ -1821,6 +1860,9 @@ void addTrans( int inActor, int inTarget,
 
         t->reverseUseActor = inReverseUseActor;
         t->reverseUseTarget = inReverseUseTarget;
+
+        t->noUseActor = inNoUseActor;
+        t->noUseTarget = inNoUseTarget;
         
         t->actorMinUseFraction = inActorMinUseFraction;
         t->targetMinUseFraction = inTargetMinUseFraction;
@@ -1870,6 +1912,8 @@ void addTrans( int inActor, int inTarget,
             t->targetMinUseFraction == inTargetMinUseFraction &&
             t->reverseUseActor == inReverseUseActor &&
             t->reverseUseTarget == inReverseUseTarget &&
+            t->noUseActor == inNoUseActor &&
+            t->noUseTarget == inNoUseTarget &&
             t->move == inMove &&
             t->desiredMoveDist == inDesiredMoveDist &&
             t->actorChangeChance == inActorChangeChance &&
@@ -1903,6 +1947,9 @@ void addTrans( int inActor, int inTarget,
 
             t->reverseUseActor = inReverseUseActor;
             t->reverseUseTarget = inReverseUseTarget;
+
+            t->noUseActor = inNoUseActor;
+            t->noUseTarget = inNoUseTarget;
             
             t->actorMinUseFraction = inActorMinUseFraction;
             t->targetMinUseFraction = inTargetMinUseFraction;
@@ -1970,11 +2017,22 @@ void addTrans( int inActor, int inTarget,
                 reverseUseTargetFlag = 1;
                 }
 
+            int noUseActorFlag = 0;
+            int noUseTargetFlag = 0;
+            
+            if( inNoUseActor ) {
+                noUseActorFlag = 1;
+                }
+            if( inNoUseTarget ) {
+                noUseTargetFlag = 1;
+                }
+
             
             // don't save change chance to file
             // it's only for auto-generated transitions
 
-            char *fileContents = autoSprintf( "%d %d %d %f %f %d %d %d %d", 
+            char *fileContents = autoSprintf( "%d %d %d %f %f %d %d "
+                                              "%d %d %d %d", 
                                               inNewActor, inNewTarget,
                                               inAutoDecaySeconds,
                                               inActorMinUseFraction,
@@ -1982,7 +2040,9 @@ void addTrans( int inActor, int inTarget,
                                               reverseUseActorFlag,
                                               reverseUseTargetFlag,
                                               inMove,
-                                              inDesiredMoveDist );
+                                              inDesiredMoveDist,
+                                              noUseActorFlag,
+                                              noUseTargetFlag );
 
         
             File *cacheFile = transDir.getChildFile( "cache.fcz" );
@@ -2215,6 +2275,12 @@ void printTrans( TransRecord *inTrans ) {
         }
     if( inTrans->reverseUseTarget ) {
         printf( " (reverseUseTarget)" );
+        }
+    if( inTrans->noUseActor ) {
+        printf( " (noUseActor)" );
+        }
+    if( inTrans->noUseTarget ) {
+        printf( " (noUseTarget)" );
         }
     if( inTrans->move > 0 ) {
         const char *moveName = "none";
