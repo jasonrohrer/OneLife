@@ -9677,11 +9677,11 @@ int main() {
                 
 
                 double maxDist = 32;
-
+                double maxDist2 = maxDist * 2;
 
                 if( updateMessage != NULL ) {
 
-                    double minUpdateDist = 64;
+                    double minUpdateDist = maxDist2 * 2;
                     
                     for( int u=0; u<newUpdatesPos.size(); u++ ) {
                         ChangePosition *p = newUpdatesPos.getElement( u );
@@ -9717,8 +9717,11 @@ int main() {
                                 "Socket write failed";
                             }
                         }
-                    else if( outOfRangeMessage != NULL ) {
+                    else if( minUpdateDist <= maxDist2 && 
+                             outOfRangeMessage != NULL ) {
                         // everyone in the PU is out of range
+                        // but some of them are in middle range 
+                        
                         // send short PO instead
                         int numSent = 
                             nextPlayer->sock->send( 

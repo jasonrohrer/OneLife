@@ -60,6 +60,10 @@ Server Fixes:
 
 --Fixed server crash when held container decays down to nothing.
 
+--No need for constant PO messages about all out-of-range players.  Instead,
+  only send POs for players that are between 32 and 64 away.
+
+
 
 
 
