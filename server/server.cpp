@@ -7893,9 +7893,6 @@ int main() {
                     if( t != NULL ) {
 
                         int newID = t->newTarget;
-
-                        nextPlayer->holdingID = newID;
-                        nextPlayer->heldTransitionSourceID = -1;
                     
                         int oldSlots = nextPlayer->numContained;
                         
@@ -7948,7 +7945,6 @@ int main() {
                                 FullMapContained f =
                                     getFullMapContained( spot.x, spot.y );
 
-                                nextPlayer->holdingID = newID;
                                 setContained( nextPlayer, f );
                                 
                                 clearAllContained( spot.x, spot.y );
@@ -7963,6 +7959,9 @@ int main() {
                                 nextPlayer->numContained = newSlots;
                                 }
                             }
+                        
+                        nextPlayer->holdingID = newID;
+                        nextPlayer->heldTransitionSourceID = -1;
                     
                         setFreshEtaDecayForHeld( nextPlayer );
                     

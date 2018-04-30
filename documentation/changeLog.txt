@@ -58,6 +58,9 @@ Server Fixes:
 --Fixed incorrect handling of last reverse use transitions.  Fixed variable
   transitions to work with new tool use system.
 
+--Fixed server crash when held container decays down to nothing.
+
+
 
 
 
