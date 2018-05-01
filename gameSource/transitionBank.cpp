@@ -340,35 +340,94 @@ void initTransBankFinish() {
                     // plug object in to replace parent
                     if( actor == parentID ) {
                         actor = oID;
+                        if( newActor == parentID ) {
+                            newActor = oID;
+                            }
+                        // don't write to disk
+                        addTrans( actor, target, newActor, newTarget,
+                                  tr->lastUseActor,
+                                  tr->lastUseTarget,
+                                  tr->reverseUseActor,
+                                  tr->reverseUseTarget,
+                                  tr->noUseActor,
+                                  tr->noUseTarget,
+                                  tr->autoDecaySeconds,
+                                  tr->actorMinUseFraction,
+                                  tr->targetMinUseFraction, 
+                                  tr->move,
+                                  tr->desiredMoveDist,
+                                  tr->actorChangeChance,
+                                  tr->targetChangeChance,
+                                  tr->newActorNoChange,
+                                  tr->newTargetNoChange,
+                                  true );
                         }
+
+                    actor = tr->actor;
+                    target = tr->target;
+                    newActor = tr->newActor;
+                    newTarget = tr->newTarget;
+                    
                     if( target == parentID ) {
                         target = oID;
+                        if( newTarget == parentID ) {
+                            newTarget = oID;
+                            }
+                        
+                        // don't write to disk
+                        addTrans( actor, target, newActor, newTarget,
+                                  tr->lastUseActor,
+                                  tr->lastUseTarget,
+                                  tr->reverseUseActor,
+                                  tr->reverseUseTarget,
+                                  tr->noUseActor,
+                                  tr->noUseTarget,
+                                  tr->autoDecaySeconds,
+                                  tr->actorMinUseFraction,
+                                  tr->targetMinUseFraction, 
+                                  tr->move,
+                                  tr->desiredMoveDist,
+                                  tr->actorChangeChance,
+                                  tr->targetChangeChance,
+                                  tr->newActorNoChange,
+                                  tr->newTargetNoChange,
+                                  true );
                         }
-                    if( newActor == parentID ) {
-                        newActor = oID;
-                        }
-                    if( newTarget == parentID ) {
-                        newTarget = oID;
-                        }
+
+                    actor = tr->actor;
+                    target = tr->target;
+                    newActor = tr->newActor;
+                    newTarget = tr->newTarget;
                     
-                    // don't write to disk
-                    addTrans( actor, target, newActor, newTarget,
-                              tr->lastUseActor,
-                              tr->lastUseTarget,
-                              tr->reverseUseActor,
-                              tr->reverseUseTarget,
-                              tr->noUseActor,
-                              tr->noUseTarget,
-                              tr->autoDecaySeconds,
-                              tr->actorMinUseFraction,
-                              tr->targetMinUseFraction, 
-                              tr->move,
-                              tr->desiredMoveDist,
-                              1.0f,
-                              1.0f,
-                              -1,
-                              -1,
-                              true );
+                    if( actor == tr->actor && target == parentID ) {
+                        actor = oID;
+                        if( newActor == parentID ) {
+                            newActor = oID;
+                            }
+                        target = oID;
+                        if( newTarget == parentID ) {
+                            newTarget = oID;
+                            }
+                        
+                        // don't write to disk
+                        addTrans( actor, target, newActor, newTarget,
+                                  tr->lastUseActor,
+                                  tr->lastUseTarget,
+                                  tr->reverseUseActor,
+                                  tr->reverseUseTarget,
+                                  tr->noUseActor,
+                                  tr->noUseTarget,
+                                  tr->autoDecaySeconds,
+                                  tr->actorMinUseFraction,
+                                  tr->targetMinUseFraction, 
+                                  tr->move,
+                                  tr->desiredMoveDist,
+                                  tr->actorChangeChance,
+                                  tr->targetChangeChance,
+                                  tr->newActorNoChange,
+                                  tr->newTargetNoChange,
+                                  true );
+                        }
                     }
                 }
             }
@@ -380,7 +439,6 @@ void initTransBankFinish() {
         
         numRecords = records.size();
         }
-    
 
 
 
@@ -481,10 +539,10 @@ void initTransBankFinish() {
                       tr.targetMinUseFraction,
                       tr.move,
                       tr.desiredMoveDist,
-                      1.0f,
-                      1.0f,
-                      -1,
-                      -1,
+                      tr.actorChangeChance,
+                      tr.targetChangeChance,
+                      tr.newActorNoChange,
+                      tr.newTargetNoChange,
                       true );
             }
         

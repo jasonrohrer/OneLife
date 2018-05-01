@@ -67,6 +67,10 @@ Server Fixes:
   this target shouldn't cause use count to decrement (example:  picking feather
   from pond shouldn't cause pond to drain).
 
+--Fixed transitions where actor and target are same category so that any pair
+  of objects from that category work on eachother.  Also fixed to preserve
+  actor/target use chance through category transitions and generic use
+  transitions.  Fixes jasonrohrer/OneLifeData7#7 
 
 
 
