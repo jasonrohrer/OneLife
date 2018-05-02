@@ -7481,6 +7481,23 @@ void LivingLifePage::step() {
             mHintExtraOffset[ i ].x = - longestLine;
             }
         }
+    else if( ourObject != NULL && mNextHintObjectID != 0 &&
+             getNumHints( mNextHintObjectID ) == 0 ) {
+        // holding something with no hints, hide last sheet
+        int newLiveSheetIndex = 0;
+        
+        if( mLiveHintSheetIndex != -1 ) {
+            mHintTargetOffset[mLiveHintSheetIndex] = mHintHideOffset[0];
+            
+            newLiveSheetIndex = 
+                (mLiveHintSheetIndex + 1 ) % NUM_HINT_SHEETS;
+            
+            }
+        
+        mLiveHintSheetIndex = newLiveSheetIndex;
+        
+        mCurrentHintObjectID = mNextHintObjectID;
+        }
     
 
 

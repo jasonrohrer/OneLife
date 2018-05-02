@@ -10,6 +10,8 @@ Version 81    ???
 
 --Fixed so that empty slots don't capture mouse-over.
 
+--Fixed stuck hint sheet from last object when you pick up an object that has
+  no transitions.
 
 
 
