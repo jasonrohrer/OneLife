@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 81    ???
+Version 90    2018-May-3 
 
 --Fixed scene editor to allow replacement of shoes.
 
@@ -12,6 +12,7 @@ Version 81    ???
 
 --Fixed stuck hint sheet from last object when you pick up an object that has
   no transitions.
+
 
 
 
