@@ -76,6 +76,8 @@ Server Fixes:
 
 --Support for containers with locked slots (nothing can be added or removed).
 
+--Server log.txt backup cycle two days instead of three.  Logs were too big.
+
 
 
 

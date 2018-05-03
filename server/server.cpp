@@ -4192,8 +4192,8 @@ int main() {
         SettingsManager::getIntSetting( "nextPlayerID", 2 );
 
 
-    // make backup and delete old backup every three days
-    AppLog::setLog( new FileLog( "log.txt", 259200 ) );
+    // make backup and delete old backup every two days
+    AppLog::setLog( new FileLog( "log.txt", 172800 ) );
 
     AppLog::setLoggingLevel( Log::DETAIL_LEVEL );
     AppLog::printAllMessages( true );
