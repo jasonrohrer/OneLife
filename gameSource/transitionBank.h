@@ -33,7 +33,11 @@ typedef struct TransRecord {
         char reverseUseActor;
         char reverseUseTarget;
         
-
+        // this transition does not decrement numUses of actor or target
+        char noUseActor;
+        char noUseTarget;
+        
+        
         // defaults to 0, which means that any transition on thje main
         // object with numUses can apply to generated useDummy objects
         // Higher values specify a cut-off point when the object becomes
@@ -181,6 +185,8 @@ void addTrans( int inActor, int inTarget,
                char inLastUseTarget,
                char inReverseUseActor,
                char inReverseUseTarget,
+               char inNoUseActor,
+               char inNoUseTarget,
                int inAutoDecaySeconds,
                float inActorMinUseFraction,
                float inTargetMinUseFraction,

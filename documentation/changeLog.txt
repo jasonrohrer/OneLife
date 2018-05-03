@@ -10,6 +10,8 @@ Version 81    ???
 
 --Fixed so that empty slots don't capture mouse-over.
 
+--Fixed stuck hint sheet from last object when you pick up an object that has
+  no transitions.
 
 
 
@@ -57,6 +59,21 @@ Server Fixes:
 
 --Fixed incorrect handling of last reverse use transitions.  Fixed variable
   transitions to work with new tool use system.
+
+--Fixed server crash when held container decays down to nothing.
+
+--No need for constant PO messages about all out-of-range players.  Instead,
+  only send POs for players that are between 32 and 64 away.
+
+--Support for noUse flag on transitions for actor and target, indicating that
+  this target shouldn't cause use count to decrement (example:  picking feather
+  from pond shouldn't cause pond to drain).
+
+--Fixed transitions where actor and target are same category so that any pair
+  of objects from that category work on eachother.  Also fixed to preserve
+  actor/target use chance through category transitions and generic use
+  transitions.  Fixes jasonrohrer/OneLifeData7#7 
+
 
 
 
