@@ -99,7 +99,7 @@ git clone https://github.com/jasonrohrer/minorGems.git
 
 cd $dataName
 
-lastTaggedDataVersion=\`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags | sed -e 's/OneLife_v//'\`
+lastTaggedDataVersion=\`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//'\`
 
 
 echo "" 
@@ -119,7 +119,7 @@ ln -s ../../$dataName/transitions .
 ln -s ../../$dataName/categories .
 ln -s ../../$dataName/dataVersionNumber.txt .
 
-git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt
+git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt
 
 
 ./configure 1

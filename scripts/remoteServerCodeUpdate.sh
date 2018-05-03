@@ -41,7 +41,7 @@ git pull --tags
 make
 
 
-git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt
+git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt
 
 
 ~/checkout/OneLife/scripts/remoteServerCodeUpdateCustomPost.sh

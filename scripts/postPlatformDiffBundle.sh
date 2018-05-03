@@ -43,7 +43,7 @@ newVersion=$1
 cd ~/checkout/OneLifeWorking
 git pull --tags
 
-lastOneLifeVersion=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags | sed -e 's/OneLife_v//'`
+lastOneLifeVersion=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//'`
 
 
 echo "" 
@@ -54,7 +54,7 @@ echo ""
 cd ~/checkout/minorGems
 git pull --tags
 
-lastMGVersion=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags | sed -e 's/OneLife_v//'`
+lastMGVersion=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//'`
 
 
 echo "" 
