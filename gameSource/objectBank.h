@@ -189,6 +189,9 @@ typedef struct ObjectRecord {
         // must be larger than 0.0001
         float slotTimeStretch;
         
+        // true if nothing can be added/removed from container
+        char slotsLocked;
+        
 
         int numSprites;
         
@@ -421,6 +424,7 @@ int addObject( const char *inDescription,
                char *inSlotVert,
                int *inSlotParent,
                float inSlotTimeStretch,
+               char inSlotsLocked,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
                double *inSpriteRot,

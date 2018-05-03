@@ -3349,7 +3349,9 @@ static char addHeldToContainer( LiveObject *inPlayer,
     if( isGrave( target ) ) {
         return false;
         }
-    
+    if( targetObj->slotsLocked ) {
+        return false;
+        }
 
     float slotSize =
         targetObj->slotSize;
@@ -3533,6 +3535,10 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                             
         if( target != 0 ) {
                             
+            if( target > 0 && getObject( target )->slotsLocked ) {
+                return false;
+                }
+
             int numIn = 
                 getNumContained( inContX, inContY );
                                 

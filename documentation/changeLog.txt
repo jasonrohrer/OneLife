@@ -74,6 +74,7 @@ Server Fixes:
   actor/target use chance through category transitions and generic use
   transitions.  Fixes jasonrohrer/OneLifeData7#7 
 
+--Support for containers with locked slots (nothing can be added or removed).
 
 
 

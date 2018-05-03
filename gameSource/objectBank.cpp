@@ -668,6 +668,21 @@ float initObjectBankStep() {
                             
                 next++;
 
+                r->slotsLocked = 0;
+                if( strstr( lines[next], 
+                            "slotsLocked=" ) != NULL ) {
+                    // flag present
+                    
+                    int flagRead = 0;                            
+                    sscanf( lines[next], "slotsLocked=%d", 
+                            &( flagRead ) );
+                    
+                    r->slotsLocked = flagRead;
+                            
+                    next++;
+                    }
+                
+                
                 r->slotPos = new doublePair[ r->numSlots ];
                 r->slotVert = new char[ r->numSlots ];
                 r->slotParent = new int[ r->numSlots ];
@@ -1551,6 +1566,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->slotVert,
                         inObject->slotParent,
                         inObject->slotTimeStretch,
+                        inObject->slotsLocked,
                         inObject->numSprites, 
                         inObject->sprites, 
                         inObject->spritePos,
@@ -1813,6 +1829,7 @@ int addObject( const char *inDescription,
                char *inSlotVert,
                int *inSlotParent,
                float inSlotTimeStretch,
+               char inSlotsLocked,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
                double *inSpriteRot,
@@ -1989,6 +2006,7 @@ int addObject( const char *inDescription,
         lines.push_back( autoSprintf( "numSlots=%d#timeStretch=%f", 
                                       inNumSlots, inSlotTimeStretch ) );
         lines.push_back( autoSprintf( "slotSize=%f", inSlotSize ) );
+        lines.push_back( autoSprintf( "slotsLocked=%d", (int)inSlotsLocked ) );
 
         for( int i=0; i<inNumSlots; i++ ) {
             lines.push_back( autoSprintf( "slotPos=%f,%f,vert=%d,parent=%d", 
@@ -2234,7 +2252,7 @@ int addObject( const char *inDescription,
     memcpy( r->slotParent, inSlotParent, inNumSlots * sizeof( int ) );
     
     r->slotTimeStretch = inSlotTimeStretch;
-    
+    r->slotsLocked = inSlotsLocked;
 
     r->numSprites = inNumSprites;
     
