@@ -80,8 +80,21 @@ instead of those symlinks to the OneLifeData7 data.
 = Server                 =
 ==========================
 
+Note that the live servers sometimes run even more recent code than the latest
+tagged client version, which is what is checked out by OneLife_Live_UnixSource.
 
-Build the editor thus:
+To update to the latest live server code on your server, which is optional,
+do this:
+
+cd OneLife
+git pull --tags
+git checkout OneLife_liveServer
+cd ..
+
+
+
+
+Build the server thus:
 
 cd OneLife/server
 ./configure
