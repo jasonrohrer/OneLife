@@ -178,6 +178,8 @@ typedef struct LiveObject {
 
         char isEve;        
 
+        GridPos birthPos;
+
         int parentID;
 
         // 0 for Eve
@@ -909,7 +911,7 @@ static int pathDeltaMax = 16;
 
 
 // if extraPos present in result, destroyed by caller
-ClientMessage parseMessage( char *inMessage ) {
+ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     
     char nameBuffer[100];
     
@@ -1096,6 +1098,15 @@ ClientMessage parseMessage( char *inMessage ) {
         m.type = UNKNOWN;
         }
     
+    // incoming client messages are relative to birth pos
+    m.x += inPlayer->birthPos.x;
+    m.y += inPlayer->birthPos.y;
+
+    for( int i=0; i<m.numExtraPos; i++ ) {
+        m.extraPos[i].x += inPlayer->birthPos.x;
+        m.extraPos[i].y += inPlayer->birthPos.y;
+        }
+
     return m;
     }
 
@@ -1435,22 +1446,88 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
 
 
 
-    
-    
-// returns NULL if there are no matching moves
-char *getMovesMessage( char inNewMovesOnly, 
-                       SimpleVector<ChangePosition> *inChangeVector = NULL,
-                       int inOneIDOnly = -1 ) {
-    
-    SimpleVector<char> messageBuffer;
+typedef struct MoveRecord {
+    char *formatString;
+    int absoluteX, absoluteY;
+    } MoveRecord;
 
-    messageBuffer.appendElementString( "PM\n" );
 
+
+// formatString in returned record destroyed by caller
+MoveRecord getMoveRecord( LiveObject *inPlayer,
+                          char inNewMovesOnly,
+                          SimpleVector<ChangePosition> *inChangeVector = 
+                          NULL ) {
+
+    MoveRecord r;
+    
+    // p_id xs ys xd yd fraction_done eta_sec
+    
+    double deltaSec = Time::getCurrentTime() - inPlayer->moveStartTime;
+    
+    double etaSec = inPlayer->moveTotalSeconds - deltaSec;
+    
+    if( etaSec < 0 ) {
+        etaSec = 0;
+        }
+
+    
+    r.absoluteX = inPlayer->xs;
+    r.absoluteY = inPlayer->ys;
+            
+            
+    SimpleVector<char> messageLineBuffer;
+    
+    // start is absolute
+    char *startString = autoSprintf( "%d %%d %%d %.3f %.3f %d", 
+                                     inPlayer->id, 
+                                     inPlayer->moveTotalSeconds, etaSec,
+                                     inPlayer->pathTruncated );
+    // mark that this has been sent
+    inPlayer->pathTruncated = false;
+
+    if( inNewMovesOnly ) {
+        inPlayer->newMove = false;
+        }
+
+            
+    messageLineBuffer.appendElementString( startString );
+    delete [] startString;
+            
+    for( int p=0; p<inPlayer->pathLength; p++ ) {
+                // rest are relative to start
+        char *stepString = autoSprintf( " %d %d", 
+                                        inPlayer->pathToDest[p].x
+                                        - inPlayer->xs,
+                                        inPlayer->pathToDest[p].y
+                                        - inPlayer->ys );
+        
+        messageLineBuffer.appendElementString( stepString );
+        delete [] stepString;
+        }
+    
+    messageLineBuffer.appendElementString( "\n" );
+    
+    r.formatString = messageLineBuffer.getElementString();    
+    
+    if( inChangeVector != NULL ) {
+        ChangePosition p = { inPlayer->xd, inPlayer->yd, false };
+        inChangeVector->push_back( p );
+        }
+
+    return r;
+    }
+
+
+
+SimpleVector<MoveRecord> getMoveRecords( 
+    char inNewMovesOnly,
+    SimpleVector<ChangePosition> *inChangeVector = NULL ) {
+    
+    SimpleVector<MoveRecord> v;
+    
     int numPlayers = players.size();
                 
-    
-    int numLines = 0;
-
     for( int i=0; i<numPlayers; i++ ) {
                 
         LiveObject *o = players.getElement( i );                
@@ -1461,70 +1538,42 @@ char *getMovesMessage( char inNewMovesOnly,
 
         if( ( o->xd != o->xs || o->yd != o->ys )
             &&
-            ( o->newMove || !inNewMovesOnly ) 
-            && ( inOneIDOnly == -1 || inOneIDOnly == o->id ) ) {
-
+            ( o->newMove || !inNewMovesOnly ) ) {
+            
  
-            // p_id xs ys xd yd fraction_done eta_sec
+            MoveRecord r = getMoveRecord( o, inNewMovesOnly, inChangeVector );
             
-            double deltaSec = Time::getCurrentTime() - o->moveStartTime;
-            
-            double etaSec = o->moveTotalSeconds - deltaSec;
-            
-            if( etaSec < 0 ) {
-                etaSec = 0;
-                }
-
-            if( inNewMovesOnly ) {
-                o->newMove = false;
-                }
-            
-            
-            
-            SimpleVector<char> messageLineBuffer;
-        
-            // start is absolute
-            char *startString = autoSprintf( "%d %d %d %.3f %.3f %d", 
-                                             o->id, 
-                                             o->xs, o->ys, 
-                                             o->moveTotalSeconds, etaSec,
-                                             o->pathTruncated );
-            // mark that this has been sent
-            o->pathTruncated = false;
-            
-            messageLineBuffer.appendElementString( startString );
-            delete [] startString;
-            
-            for( int p=0; p<o->pathLength; p++ ) {
-                // rest are relative to start
-                char *stepString = autoSprintf( " %d %d", 
-                                                o->pathToDest[p].x
-                                                - o->xs,
-                                                o->pathToDest[p].y
-                                                - o->ys );
-                
-                messageLineBuffer.appendElementString( stepString );
-                delete [] stepString;
-                }
-        
-            messageLineBuffer.appendElementString( "\n" );
-
-            char *messageLine = messageLineBuffer.getElementString();
-                                    
-            messageBuffer.appendElementString( messageLine );
-            delete [] messageLine;
-            
-            if( inChangeVector != NULL ) {
-                ChangePosition p = { o->xd, o->yd, false };
-                inChangeVector->push_back( p );
-                }
-
-            numLines ++;
-            
+            v.push_back( r );
             }
         }
+
+    return v;
+    }
+
+
+
+char *getMovesMessageFromList( SimpleVector<MoveRecord> *inMoves,
+                               GridPos inRelativeToPos ) {
+
+    int numLines = 0;
     
+    SimpleVector<char> messageBuffer;
+
+    messageBuffer.appendElementString( "PM\n" );
+
+    for( int i=0; i<inMoves->size(); i++ ) {
+        MoveRecord r = inMoves->getElementDirect(i);
         
+        char *line = autoSprintf( r.formatString, 
+                                  r.absoluteX - inRelativeToPos.x,
+                                  r.absoluteY - inRelativeToPos.y );
+        
+        messageBuffer.appendElementString( line );
+        delete [] line;
+        
+        numLines ++;
+        }
+    
     if( numLines > 0 ) {
         
         messageBuffer.push_back( '#' );
@@ -1535,7 +1584,28 @@ char *getMovesMessage( char inNewMovesOnly,
         }
     
     return NULL;
+    }
+
     
+    
+    
+// returns NULL if there are no matching moves
+// positions in moves relative to inRelativeToPos
+char *getMovesMessage( char inNewMovesOnly,
+                       GridPos inRelativeToPos,
+                       SimpleVector<ChangePosition> *inChangeVector = NULL ) {
+    
+    
+    SimpleVector<MoveRecord> v = getMoveRecords( inNewMovesOnly, 
+                                                 inChangeVector );
+    
+    char *message = getMovesMessageFromList( &v, inRelativeToPos );
+    
+    for( int i=0; i<v.size(); i++ ) {
+        delete [] v.getElement(i)->formatString;
+        }
+    
+    return message;
     }
 
 
@@ -1677,6 +1747,7 @@ int sendMapChunkMessage( LiveObject *inO,
                                                           fullStartY,
                                                           chunkDimensionX,
                                                           chunkDimensionY,
+                                                          inO->birthPos,
                                                           &messageLength );
                 
         numSent += 
@@ -1745,6 +1816,7 @@ int sendMapChunkMessage( LiveObject *inO,
                                                               horBarStartY,
                                                               horBarW,
                                                               horBarH,
+                                                              inO->birthPos,
                                                               &len );
             messageLength += len;
             
@@ -1761,6 +1833,7 @@ int sendMapChunkMessage( LiveObject *inO,
                                                               vertBarStartY,
                                                               vertBarW,
                                                               vertBarH,
+                                                              inO->birthPos,
                                                               &len );
             messageLength += len;
             
@@ -2500,7 +2573,9 @@ static int objectRecordToID( ObjectRecord *inRecord ) {
 
 // inDelete true to send X X for position
 // inPartial gets update line for player's current possition mid-path
-static char *getUpdateLine( LiveObject *inPlayer, char inDelete,
+// positions in update line will be relative to inRelativeToPos
+static char *getUpdateLine( LiveObject *inPlayer, GridPos inRelativeToPos,
+                            char inDelete,
                             char inPartial = false ) {
 
     char *holdingString = getHoldingString( inPlayer );
@@ -2537,8 +2612,8 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete,
         posString = autoSprintf( "%d %d %d %d",          
                                  doneMoving,
                                  inPlayer->posForced,
-                                 x, 
-                                 y );
+                                 x - inRelativeToPos.x, 
+                                 y - inRelativeToPos.y );
         }
     
     SimpleVector<char> clothingListBuffer;
@@ -2590,12 +2665,12 @@ static char *getUpdateLine( LiveObject *inPlayer, char inDelete,
         inPlayer->displayID,
         inPlayer->facingOverride,
         inPlayer->actionAttempt,
-        inPlayer->actionTarget.x,
-        inPlayer->actionTarget.y,
+        inPlayer->actionTarget.x - inRelativeToPos.x,
+        inPlayer->actionTarget.y - inRelativeToPos.y,
         holdingString,
         inPlayer->heldOriginValid,
-        inPlayer->heldOriginX,
-        inPlayer->heldOriginY,
+        inPlayer->heldOriginX - inRelativeToPos.x,
+        inPlayer->heldOriginY - inRelativeToPos.y,
         inPlayer->heldTransitionSourceID,
         inPlayer->heat,
         posString,
@@ -3253,6 +3328,16 @@ void processLoggedInPlayer( Socket *inSock,
                 parent->lineage->getElementDirect( i ) );
             }
         }
+
+    newObject.birthPos.x = newObject.xd;
+    newObject.birthPos.y = newObject.yd;
+    
+    newObject.heldOriginX = newObject.xd;
+    newObject.heldOriginY = newObject.yd;
+    
+    newObject.actionTarget = newObject.birthPos;
+    
+
     
     // parent pointer possibly no longer valid after push_back, which
     // can resize the vector
@@ -4159,22 +4244,29 @@ void apocalypseStep() {
 
 void monumentStep() {
     if( monumentCallPending ) {
+        
         // send to all players
-        char *message = autoSprintf( "MN\n%d %d %d\n#", 
-                                     monumentCallX, monumentCallY,
-                                     monumentCallID );
-        int messageLength = strlen( message );
-            
         for( int i=0; i<players.size(); i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
             if( !nextPlayer->error ) {
                 
+                char *message = autoSprintf( "MN\n%d %d %d\n#", 
+                                             monumentCallX -
+                                             nextPlayer->birthPos.x, 
+                                             monumentCallY -
+                                             nextPlayer->birthPos.y,
+                                             monumentCallID );
+                int messageLength = strlen( message );
+
+
                 int numSent = 
                     nextPlayer->sock->send( 
                         (unsigned char*)message, 
                         messageLength,
                         false, false );
-                    
+                
+                delete [] message;
+
                 if( numSent != messageLength ) {
                     setDeathReason( nextPlayer, "disconnected" );
                     
@@ -4184,8 +4276,6 @@ void monumentStep() {
                     }
                 }
             }
-
-        delete [] message;
 
         monumentCallPending = false;
         }
@@ -5028,19 +5118,19 @@ int main() {
 
         SimpleVector<int> playerIndicesToSendDyingAbout;
 
-        // accumulated text of update lines
-        SimpleVector<char> newUpdates;
+        // shallow copies of player objects that need update sent about them
+        SimpleVector<LiveObject> newUpdates;
         SimpleVector<ChangePosition> newUpdatesPos;
         SimpleVector<int> newUpdatePlayerIDs;
 
 
-        // separate accumulated text of updates for player deletes
+        // separate shallow copies for updates due to player deletes
         // these are global, so they're not tagged with positions for
         // spatial filtering
-        SimpleVector<char> newDeleteUpdates;
+        SimpleVector<LiveObject> newDeleteUpdates;
         
 
-        SimpleVector<char> mapChanges;
+        SimpleVector<MapChangeRecord> mapChanges;
         SimpleVector<ChangePosition> mapChangesPos;
         
         SimpleVector<char> newSpeech;
@@ -5123,7 +5213,7 @@ int main() {
                 AppLog::infoF( "Got client message from %d: %s",
                                nextPlayer->id, message );
                 
-                ClientMessage m = parseMessage( message );
+                ClientMessage m = parseMessage( nextPlayer, message );
                 
                 delete [] message;
                 
@@ -5210,7 +5300,8 @@ int main() {
                             getChunkMessage( m.x - chunkDimensionX / 2, 
                                              m.y - chunkDimensionY / 2,
                                              chunkDimensionX,
-                                             chunkDimensionY, 
+                                             chunkDimensionY,
+                                             nextPlayer->birthPos,
                                              &length );
                         
                         int numSent = 
@@ -7575,12 +7666,23 @@ int main() {
                                           &playerIndicesToSendUpdatesAbout );
                     }
                 
-                char *updateLine = getUpdateLine( nextPlayer, true );
+                // shallow copy
+                newDeleteUpdates.push_back( *nextPlayer );                
+                // deep copy this one thing
+                if( nextPlayer->deathReason != NULL ) {
+                    newDeleteUpdates.getElement( 
+                        newDeleteUpdates.size() - 1 )->deathReason = 
+                        stringDuplicate( nextPlayer->deathReason );
+                    }
 
-                newDeleteUpdates.appendElementString( updateLine );
-                
-                delete [] updateLine;
-                
+                // get update message for actual player object here
+                // the get function sets various things in player object
+                char *line = getUpdateLine( nextPlayer,
+                                            nextPlayer->birthPos,
+                                            true );
+                delete [] line;
+
+
                 nextPlayer->isNew = false;
                 
                 nextPlayer->deleteSent = true;
@@ -8968,18 +9070,23 @@ int main() {
                 }
 
             
-            char *updateLine = getUpdateLine( nextPlayer, false );
-
-            
-            nextPlayer->posForced = false;
-
-            newUpdates.appendElementString( updateLine );
+            // push shallow copy
+            newUpdates.push_back( *nextPlayer );
             newUpdatePlayerIDs.push_back( nextPlayer->id );
+
+            // get update line for actually player object here
+            // just to set final changes to the object
+            char *line = getUpdateLine( nextPlayer, 
+                                        nextPlayer->birthPos,
+                                        false );
+            delete [] line;
+            
+
+            nextPlayer->posForced = false;
             
             ChangePosition p = { nextPlayer->xs, nextPlayer->ys, false };
             newUpdatesPos.push_back( p );
 
-            delete [] updateLine;
 
             nextPlayer->updateSent = true;
             }
@@ -8988,51 +9095,13 @@ int main() {
         
         SimpleVector<ChangePosition> movesPos;        
 
-        char *moveMessageText = getMovesMessage( true, &movesPos );
+        SimpleVector<MoveRecord> moveList = getMoveRecords( true, &movesPos );
         
-        unsigned char *moveMessage = NULL;
-        int moveMessageLength = 0;
-        
-        if( moveMessageText != NULL ) {
-            moveMessage = (unsigned char*)moveMessageText;
-            moveMessageLength = strlen( moveMessageText );
-
-            if( moveMessageLength > maxUncompressedSize ) {
-                moveMessage = makeCompressedMessage( moveMessageText,
-                                                     moveMessageLength,
-                                                     &moveMessageLength );
-                delete [] moveMessageText;
-                }    
-            }
         
                 
 
 
 
-        unsigned char *updateMessage = NULL;
-        int updateMessageLength = 0;
-        
-        if( newUpdates.size() > 0 ) {
-            newUpdates.push_back( '#' );
-            char *temp = newUpdates.getElementString();
-
-            char *updateMessageText = concatonate( "PU\n", temp );
-            delete [] temp;
-
-            updateMessageLength = strlen( updateMessageText );
-
-            if( updateMessageLength < maxUncompressedSize ) {
-                updateMessage = (unsigned char*)updateMessageText;
-                }
-            else {
-                // compress for all players once here
-                updateMessage = makeCompressedMessage( 
-                    updateMessageText, 
-                    updateMessageLength, &updateMessageLength );
-                
-                delete [] updateMessageText;
-                }
-            }
 
 
 
@@ -9074,30 +9143,6 @@ int main() {
 
         
 
-        unsigned char *deleteUpdateMessage = NULL;
-        int deleteUpdateMessageLength = 0;
-        
-        if( newDeleteUpdates.size() > 0 ) {
-            newDeleteUpdates.push_back( '#' );
-            char *temp = newDeleteUpdates.getElementString();
-            
-            char *deleteUpdateMessageText = concatonate( "PU\n", temp );
-            delete [] temp;
-
-            deleteUpdateMessageLength = strlen( deleteUpdateMessageText );
-
-            if( deleteUpdateMessageLength < maxUncompressedSize ) {
-                deleteUpdateMessage = (unsigned char*)deleteUpdateMessageText;
-                }
-            else {
-                // compress for all players once here
-                deleteUpdateMessage = makeCompressedMessage( 
-                    deleteUpdateMessageText, 
-                    deleteUpdateMessageLength, &deleteUpdateMessageLength );
-                
-                delete [] deleteUpdateMessageText;
-                }
-            }
         
 
         
@@ -9107,33 +9152,6 @@ int main() {
         stepMap( &mapChanges, &mapChangesPos );
         
 
-        
-        
-        unsigned char *mapChangeMessage = NULL;
-        int mapChangeMessageLength = 0;
-        
-        if( mapChanges.size() > 0 ) {
-            mapChanges.push_back( '#' );
-            char *temp = mapChanges.getElementString();
-
-            char *mapChangeMessageText = concatonate( "MX\n", temp );
-            delete [] temp;
-
-            mapChangeMessageLength = strlen( mapChangeMessageText );
-            
-            if( mapChangeMessageLength < maxUncompressedSize ) {
-                mapChangeMessage = (unsigned char*)mapChangeMessageText;
-                }
-            else {
-                // compress for all players once here
-                mapChangeMessage = makeCompressedMessage( 
-                    mapChangeMessageText, 
-                    mapChangeMessageLength, &mapChangeMessageLength );
-                
-                delete [] mapChangeMessageText;
-                }
-
-            }
         
 
 
@@ -9354,7 +9372,10 @@ int main() {
 
                     
                     // true mid-move positions for first message
-                    char *messageLine = getUpdateLine( o, false, true );
+                    // all relative to new player's birth pos
+                    char *messageLine = getUpdateLine( o, 
+                                                       nextPlayer->birthPos,
+                                                       false, true );
                     
                     // skip sending info about errored players in
                     // first message
@@ -9383,7 +9404,8 @@ int main() {
                 delete [] message;
                 
 
-                char *movesMessage = getMovesMessage( false );
+                char *movesMessage = getMovesMessage( false, 
+                                                      nextPlayer->birthPos );
                 
                 if( movesMessage != NULL ) {
                     
@@ -9583,7 +9605,8 @@ int main() {
                                         // is close enough
                                         // send update about baby
                                         char *updateLine = 
-                                            getUpdateLine( otherPlayer, 
+                                            getUpdateLine( otherPlayer,
+                                                           nextPlayer->birthPos,
                                                            false ); 
                                     
                                         chunkPlayerUpdates.
@@ -9638,7 +9661,9 @@ int main() {
                                 // and what they're holding
 
                                 char *updateLine = 
-                                    getUpdateLine( otherPlayer, false ); 
+                                    getUpdateLine( otherPlayer, 
+                                                   nextPlayer->birthPos,
+                                                   false ); 
                                     
                                 chunkPlayerUpdates.appendElementString( 
                                     updateLine );
@@ -9714,7 +9739,7 @@ int main() {
                 double maxDist = 32;
                 double maxDist2 = maxDist * 2;
 
-                if( updateMessage != NULL ) {
+                if( newUpdates.size() > 0 ) {
 
                     double minUpdateDist = maxDist2 * 2;
                     
@@ -9738,18 +9763,78 @@ int main() {
                         }
 
                     if( minUpdateDist <= maxDist ) {
-                        int numSent = 
-                            nextPlayer->sock->send( 
-                                updateMessage, 
-                                updateMessageLength, 
-                                false, false );
+                        // some updates close enough
 
-                        if( numSent != updateMessageLength ) {
-                            setDeathReason( nextPlayer, "disconnected" );
+                        // compose PU mesage for this player
+                        
+                        unsigned char *updateMessage = NULL;
+                        int updateMessageLength = 0;
+                        SimpleVector<char> updateChars;
+                        
+                        for( int u=0; u<newUpdates.size(); u++ ) {
+                            ChangePosition *p = newUpdatesPos.getElement( u );
+                        
+                            double d = intDist( p->x, p->y, 
+                                                playerXD, playerYD );
+                            
+                            if( d > maxDist ) {
+                                // skip this one, too far away
+                                continue;
+                                }
+                            
+                            // make copy, because getUpdateLine will modify
+                            LiveObject tempObject = 
+                                newUpdates.getElementDirect( u );
+                            
+                            char *line =
+                                getUpdateLine( &tempObject,
+                                               nextPlayer->birthPos,
+                                               false );
+                            updateChars.appendElementString( line );
+                            delete [] line;
+                            }
+                        
 
-                            nextPlayer->error = true;
-                            nextPlayer->errorCauseString =
-                                "Socket write failed";
+                        if( updateChars.size() > 0 ) {
+                            updateChars.push_back( '#' );
+                            char *temp = updateChars.getElementString();
+
+                            char *updateMessageText = 
+                                concatonate( "PU\n", temp );
+                            delete [] temp;
+                            
+                            updateMessageLength = strlen( updateMessageText );
+
+                            if( updateMessageLength < maxUncompressedSize ) {
+                                updateMessage = 
+                                    (unsigned char*)updateMessageText;
+                                }
+                            else {
+                                updateMessage = makeCompressedMessage( 
+                                    updateMessageText, 
+                                    updateMessageLength, &updateMessageLength );
+                
+                                delete [] updateMessageText;
+                                }
+                            }
+
+                        if( updateMessage != NULL ) {
+                            
+                            int numSent = 
+                                nextPlayer->sock->send( 
+                                    updateMessage, 
+                                    updateMessageLength, 
+                                    false, false );
+                            
+                            delete [] updateMessage;
+                            
+                            if( numSent != updateMessageLength ) {
+                                setDeathReason( nextPlayer, "disconnected" );
+                                
+                                nextPlayer->error = true;
+                                nextPlayer->errorCauseString =
+                                    "Socket write failed";
+                                }
                             }
                         }
                     else if( minUpdateDist <= maxDist2 && 
@@ -9773,7 +9858,11 @@ int main() {
                             }
                         }
                     }
-                if( moveMessage != NULL ) {
+
+
+
+
+                if( moveList.size() > 0 ) {
                     
                     double minUpdateDist = 64;
                     
@@ -9795,22 +9884,66 @@ int main() {
 
                     if( minUpdateDist <= maxDist ) {
                         
-                        int numSent = 
-                            nextPlayer->sock->send( 
-                                moveMessage, 
-                                moveMessageLength, 
-                                false, false );
+                        SimpleVector<MoveRecord> closeMoves;
+                        
+                        for( int u=0; u<movesPos.size(); u++ ) {
+                            ChangePosition *p = movesPos.getElement( u );
+                            
+                            // move messages are never global
+                            
+                            double d = intDist( p->x, p->y, 
+                                                playerXD, playerYD );
+                    
+                            if( d > maxDist ) {
+                                continue;
+                                }
+                            closeMoves.push_back( 
+                                moveList.getElementDirect( u ) );
+                            }
+                        
+                        if( closeMoves.size() > 0 ) {
+                            
+                            char *moveMessageText = getMovesMessageFromList( 
+                                &closeMoves, nextPlayer->birthPos );
+                        
+                            unsigned char *moveMessage = NULL;
+                            int moveMessageLength = 0;
+        
+                            if( moveMessageText != NULL ) {
+                                moveMessage = (unsigned char*)moveMessageText;
+                                moveMessageLength = strlen( moveMessageText );
 
-                        if( numSent != moveMessageLength ) {
-                            setDeathReason( nextPlayer, "disconnected" );
+                                if( moveMessageLength > maxUncompressedSize ) {
+                                    moveMessage = makeCompressedMessage( 
+                                        moveMessageText,
+                                        moveMessageLength,
+                                        &moveMessageLength );
+                                    delete [] moveMessageText;
+                                    }    
+                                }
 
-                            nextPlayer->error = true;
-                            nextPlayer->errorCauseString =
-                                "Socket write failed";
+                            int numSent = 
+                                nextPlayer->sock->send( 
+                                    moveMessage, 
+                                    moveMessageLength, 
+                                    false, false );
+                            
+                            delete [] moveMessage;
+                            
+                            if( numSent != moveMessageLength ) {
+                                setDeathReason( nextPlayer, "disconnected" );
+                                
+                                nextPlayer->error = true;
+                                nextPlayer->errorCauseString =
+                                    "Socket write failed";
+                                }
                             }
                         }
                     }
-                if( mapChangeMessage != NULL ) {
+
+
+                
+                if( mapChanges.size() > 0 ) {
                     double minUpdateDist = 64;
                     
                     for( int u=0; u<mapChangesPos.size(); u++ ) {
@@ -9827,18 +9960,84 @@ int main() {
                         }
 
                     if( minUpdateDist <= maxDist ) {
-                        int numSent = 
-                            nextPlayer->sock->send( 
-                                mapChangeMessage, 
-                                mapChangeMessageLength, 
-                                false, false );
-                        
-                        if( numSent != mapChangeMessageLength ) {
-                            setDeathReason( nextPlayer, "disconnected" );
+                        // at least one thing in map change list is close
+                        // enough to this player
 
-                            nextPlayer->error = true;
-                            nextPlayer->errorCauseString =
-                                "Socket write failed";
+                        // format custom map change message for this player
+                        
+                        
+                        unsigned char *mapChangeMessage = NULL;
+                        int mapChangeMessageLength = 0;
+                        SimpleVector<char> mapChangeChars;
+
+                        for( int u=0; u<mapChanges.size(); u++ ) {
+                            ChangePosition *p = mapChangesPos.getElement( u );
+                        
+                            double d = intDist( p->x, p->y, 
+                                                playerXD, playerYD );
+                            
+                            if( d > maxDist ) {
+                                // skip this one, too far away
+                                continue;
+                                }
+                            MapChangeRecord *r = 
+                                mapChanges.getElement( u );
+                            
+                            char *lineString =
+                                getMapChangeLineString( 
+                                    r,
+                                    nextPlayer->birthPos.x,
+                                    nextPlayer->birthPos.y );
+                            
+                            mapChangeChars.appendElementString( lineString );
+                            delete [] lineString;
+                            }
+                        
+                        
+                        if( mapChangeChars.size() > 0 ) {
+                            mapChangeChars.push_back( '#' );
+                            char *temp = mapChangeChars.getElementString();
+
+                            char *mapChangeMessageText = 
+                                concatonate( "MX\n", temp );
+                            delete [] temp;
+
+                            mapChangeMessageLength = 
+                                strlen( mapChangeMessageText );
+            
+                            if( mapChangeMessageLength < 
+                                maxUncompressedSize ) {
+                                mapChangeMessage = 
+                                    (unsigned char*)mapChangeMessageText;
+                                }
+                            else {
+                                mapChangeMessage = makeCompressedMessage( 
+                                    mapChangeMessageText, 
+                                    mapChangeMessageLength, 
+                                    &mapChangeMessageLength );
+                
+                                delete [] mapChangeMessageText;
+                                }
+                            }
+
+                        
+                        if( mapChangeMessage != NULL ) {
+
+                            int numSent = 
+                                nextPlayer->sock->send( 
+                                    mapChangeMessage, 
+                                    mapChangeMessageLength, 
+                                    false, false );
+                            
+                            delete [] mapChangeMessage;
+
+                            if( numSent != mapChangeMessageLength ) {
+                                setDeathReason( nextPlayer, "disconnected" );
+                                
+                                nextPlayer->error = true;
+                                nextPlayer->errorCauseString =
+                                    "Socket write failed";
+                                }
                             }
                         }
                     }
@@ -9877,12 +10076,63 @@ int main() {
                 
 
                 // EVERYONE gets updates about deleted players
+
+                unsigned char *deleteUpdateMessage = NULL;
+                int deleteUpdateMessageLength = 0;
+        
+                SimpleVector<char> deleteUpdateChars;
+                
+                for( int u=0; u<newDeleteUpdates.size(); u++ ) {    
+                    // make copy, because getUpdateLine will modify
+                    LiveObject tempObject = 
+                        newDeleteUpdates.getElementDirect( u );
+                    
+                    char *line = getUpdateLine( 
+                        &tempObject,
+                        nextPlayer->birthPos,
+                        true );
+                    
+                    deleteUpdateChars.appendElementString( line );
+                    
+                    delete [] line;
+                    }
+                
+
+                if( deleteUpdateChars.size() > 0 ) {
+                    deleteUpdateChars.push_back( '#' );
+                    char *temp = deleteUpdateChars.getElementString();
+                    
+                    char *deleteUpdateMessageText = concatonate( "PU\n", temp );
+                    delete [] temp;
+                    
+                    deleteUpdateMessageLength = 
+                        strlen( deleteUpdateMessageText );
+
+                    if( deleteUpdateMessageLength < maxUncompressedSize ) {
+                        deleteUpdateMessage = 
+                            (unsigned char*)deleteUpdateMessageText;
+                        }
+                    else {
+                        // compress for all players once here
+                        deleteUpdateMessage = makeCompressedMessage( 
+                            deleteUpdateMessageText, 
+                            deleteUpdateMessageLength, 
+                            &deleteUpdateMessageLength );
+                
+                        delete [] deleteUpdateMessageText;
+                        }
+                    }
+
+
+
                 if( deleteUpdateMessage != NULL ) {
                     int numSent = 
                         nextPlayer->sock->send( 
                             deleteUpdateMessage, 
                             deleteUpdateMessageLength, 
                             false, false );
+                    
+                    delete [] deleteUpdateMessage;
                     
                     if( numSent != deleteUpdateMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
@@ -9975,23 +10225,31 @@ int main() {
                 }
             }
 
-        if( moveMessage != NULL ) {
-            delete [] moveMessage;
+
+        for( int u=0; u<moveList.size(); u++ ) {
+            MoveRecord *r = moveList.getElement( u );
+            delete [] r->formatString;
             }
-        if( updateMessage != NULL ) {
-            delete [] updateMessage;
-            }
+
+
         if( outOfRangeMessage != NULL ) {
             delete [] outOfRangeMessage;
             }
-        if( mapChangeMessage != NULL ) {
-            delete [] mapChangeMessage;
+
+        for( int u=0; u<mapChanges.size(); u++ ) {
+            MapChangeRecord *r = mapChanges.getElement( u );
+            delete [] r->formatString;
             }
+        
+        for( int u=0; u<newDeleteUpdates.size(); u++ ) {
+            LiveObject *o = newDeleteUpdates.getElement( u );
+            if( o->deathReason != NULL ) {
+                delete [] o->deathReason;
+                }
+            }
+
         if( speechMessage != NULL ) {
             delete [] speechMessage;
-            }
-        if( deleteUpdateMessage != NULL ) {
-            delete [] deleteUpdateMessage;
             }
         if( lineageMessage != NULL ) {
             delete [] lineageMessage;

@@ -4187,6 +4187,7 @@ int getMapBiome( int inX, int inY ) {
 // around x,y
 unsigned char *getChunkMessage( int inStartX, int inStartY, 
                                 int inWidth, int inHeight,
+                                GridPos inRelativeToPos,
                                 int *outMessageLength ) {
     
     int chunkCells = inWidth * inHeight;
@@ -4346,7 +4347,9 @@ unsigned char *getChunkMessage( int inStartX, int inStartY,
 
     char *header = autoSprintf( "MC\n%d %d %d %d\n%d %d\n#", 
                                 inWidth, inHeight,
-                                inStartX, inStartY, chunkDataBuffer.size(),
+                                inStartX - inRelativeToPos.x, 
+                                inStartY - inRelativeToPos.y, 
+                                chunkDataBuffer.size(),
                                 compressedSize );
     
     SimpleVector<unsigned char> buffer;
@@ -4823,13 +4826,18 @@ void shrinkContainer( int inX, int inY, int inNumNewSlots, int inSubCont ) {
 
 
 
-char *getMapChangeLineString( ChangePosition inPos ) {
-    
+MapChangeRecord getMapChangeRecord( ChangePosition inPos ) {
 
+    MapChangeRecord r;
+    r.absoluteX = inPos.x;
+    r.absoluteY = inPos.y;
+    r.oldCoordsUsed = false;
+
+    // compose format string
     SimpleVector<char> buffer;
     
 
-    char *header = autoSprintf( "%d %d %d ", inPos.x, inPos.y,
+    char *header = autoSprintf( "%%d %%d %d ",
                                 getMapFloor( inPos.x, inPos.y ) );
     
     buffer.appendElementString( header );
@@ -4897,8 +4905,12 @@ char *getMapChangeLineString( ChangePosition inPos ) {
 
     
     if( inPos.speed > 0 ) {
-        char *moveString = autoSprintf( " %d %d %f", 
-                                        inPos.oldX, inPos.oldY, inPos.speed );
+        r.absoluteOldX = inPos.oldX;
+        r.absoluteOldY = inPos.oldY;
+        r.oldCoordsUsed = true;
+
+        char *moveString = autoSprintf( " %%d %%d %f", 
+                                        inPos.speed );
         
         buffer.appendElementString( moveString );
     
@@ -4907,7 +4919,47 @@ char *getMapChangeLineString( ChangePosition inPos ) {
 
     buffer.appendElementString( "\n" );
 
-    return buffer.getElementString();
+    r.formatString = buffer.getElementString();
+
+    return r;
+    }
+
+
+
+
+
+char *getMapChangeLineString( ChangePosition inPos ) {
+    MapChangeRecord r = getMapChangeRecord( inPos );
+
+    char *lineString = getMapChangeLineString( &r, 0, 0 );
+    
+    delete [] r.formatString;
+    
+    return lineString;
+    }
+
+
+
+
+char *getMapChangeLineString( MapChangeRecord *inRecord,
+                              int inRelativeToX, int inRelativeToY ) {
+    
+    char *lineString;
+    
+    if( inRecord->oldCoordsUsed ) {
+        lineString = autoSprintf( inRecord->formatString, 
+                                  inRecord->absoluteX - inRelativeToX, 
+                                  inRecord->absoluteY - inRelativeToY,
+                                  inRecord->absoluteOldX - inRelativeToX, 
+                                  inRecord->absoluteOldY - inRelativeToY );
+        }
+    else {
+        lineString = autoSprintf( inRecord->formatString, 
+                                  inRecord->absoluteX - inRelativeToX, 
+                                  inRecord->absoluteY - inRelativeToY );
+        }
+    
+    return lineString;
     }
 
 
@@ -5010,7 +5062,7 @@ int getNextDecayDelta() {
 
 
 
-void stepMap( SimpleVector<char> *inMapChanges, 
+void stepMap( SimpleVector<MapChangeRecord> *inMapChanges, 
               SimpleVector<ChangePosition> *inChangePosList ) {
     
     timeSec_t curTime = MAP_TIMESEC;
@@ -5106,9 +5158,8 @@ void stepMap( SimpleVector<char> *inMapChanges,
         
         inChangePosList->push_back( p );
         
-        char *changeString = getMapChangeLineString( p );
-        inMapChanges->appendElementString( changeString );
-        delete [] changeString;
+        MapChangeRecord changeRecord = getMapChangeRecord( p );
+        inMapChanges->push_back( changeRecord );
         }
 
     
