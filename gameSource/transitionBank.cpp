@@ -701,8 +701,14 @@ void initTransBankFinish() {
                     if( actor != NULL && actor->numUses > 1 ) {
                         // apply to all actor dummies
                         for( int u=0; u<actor->numUses-1; u++ ) {
-                            tp.fromID = actor->useDummyIDs[u];
-                            actorSteps.push_back( tp );
+                            float useFraction = 
+                                (float)( u+1 ) / (float)( actor->numUses );
+                            
+                            if( useFraction >= tr->actorMinUseFraction ) {
+
+                                tp.fromID = actor->useDummyIDs[u];
+                                actorSteps.push_back( tp );
+                                }
                             }
                         }
                     }
@@ -768,8 +774,13 @@ void initTransBankFinish() {
                     if( target != NULL && target->numUses > 1 ) {
                         // apply to all target dummies
                         for( int u=0; u<target->numUses-1; u++ ) {
-                            tp.fromID = target->useDummyIDs[u];
-                            targetSteps.push_back( tp );
+                            float useFraction = 
+                                (float)( u+1 ) / (float)( target->numUses );
+                            
+                            if( useFraction >= tr->targetMinUseFraction ) {
+                                tp.fromID = target->useDummyIDs[u];
+                                targetSteps.push_back( tp );
+                                }
                             }
                         }
 
@@ -896,15 +907,21 @@ void initTransBankFinish() {
                                 }
 
                             for( int u=0; u<target->numUses-1; u++ ) {
-                                newTrans.target = target->useDummyIDs[u];
+                                float useFraction = 
+                                    (float)( u+1 ) / (float)( target->numUses );
+                            
+                                if( useFraction >= tr->targetMinUseFraction ) {
+
+                                    newTrans.target = target->useDummyIDs[u];
                                 
-                                if( mapNewTarget ) {
-                                    // pass through
-                                    newTrans.newTarget = 
-                                        newTarget->useDummyIDs[u];
+                                    if( mapNewTarget ) {
+                                        // pass through
+                                        newTrans.newTarget = 
+                                            newTarget->useDummyIDs[u];
+                                        }
+                                    
+                                    transToAdd.push_back( newTrans );
                                     }
-                                
-                                transToAdd.push_back( newTrans );
                                 }
                             }
                         }
@@ -928,15 +945,21 @@ void initTransBankFinish() {
                                 }
                             
                             for( int u=0; u<actor->numUses-1; u++ ) {
-                                newTrans.actor = actor->useDummyIDs[u];
+                                float useFraction = 
+                                    (float)( u+1 ) / (float)( actor->numUses );
+                            
+                                if( useFraction >= tr->actorMinUseFraction ) {
 
-                                if( mapNewActor ) {
-                                    // pass through
-                                    newTrans.newActor = 
-                                        newActor->useDummyIDs[u];
+                                    newTrans.actor = actor->useDummyIDs[u];
+
+                                    if( mapNewActor ) {
+                                        // pass through
+                                        newTrans.newActor = 
+                                            newActor->useDummyIDs[u];
+                                        }
+                                    
+                                    transToAdd.push_back( newTrans );
                                     }
-
-                                transToAdd.push_back( newTrans );
                                 }
                             }
                         }
@@ -955,15 +978,20 @@ void initTransBankFinish() {
                             }
                         
                         for( int u=0; u<target->numUses-1; u++ ) {
-                            newTrans.target = target->useDummyIDs[u];
+                            float useFraction = 
+                                (float)( u+1 ) / (float)( target->numUses );
                             
-                            if( mapNewTarget ) {
-                                // pass through
-                                newTrans.newTarget = 
-                                    newTarget->useDummyIDs[u];
+                            if( useFraction >= tr->targetMinUseFraction ) {
+                                newTrans.target = target->useDummyIDs[u];
+                            
+                                if( mapNewTarget ) {
+                                    // pass through
+                                    newTrans.newTarget = 
+                                        newTarget->useDummyIDs[u];
+                                    }
+                                
+                                transToAdd.push_back( newTrans );
                                 }
-                            
-                            transToAdd.push_back( newTrans );
                             }
                         }
                     }
@@ -981,15 +1009,20 @@ void initTransBankFinish() {
                             }
                             
                         for( int u=0; u<actor->numUses-1; u++ ) {
-                            newTrans.actor = actor->useDummyIDs[u];
-
-                            if( mapNewActor ) {
-                                // pass through
-                                newTrans.newActor = 
-                                    newActor->useDummyIDs[u];
+                            float useFraction = 
+                                (float)( u+1 ) / (float)( actor->numUses );
+                            
+                            if( useFraction >= tr->actorMinUseFraction ) {
+                                newTrans.actor = actor->useDummyIDs[u];
+                                
+                                if( mapNewActor ) {
+                                    // pass through
+                                    newTrans.newActor = 
+                                        newActor->useDummyIDs[u];
+                                    }
+                                
+                                transToAdd.push_back( newTrans );
                                 }
-
-                            transToAdd.push_back( newTrans );
                             }
                         }
                     }

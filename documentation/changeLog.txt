@@ -33,6 +33,9 @@ Server Fixes:
   the above fix to lookTimes live).  I.e., if it was added to the map in the
   last week, it will not be culled in the next server restart.
 
+--Fixed generation of transitions with a minUseFractions (a well can only be
+  built from a full stone pile, for example).
+
 
 
 
