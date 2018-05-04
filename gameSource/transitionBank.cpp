@@ -399,7 +399,7 @@ void initTransBankFinish() {
                     newActor = tr->newActor;
                     newTarget = tr->newTarget;
                     
-                    if( actor == tr->actor && target == parentID ) {
+                    if( actor == parentID && target == parentID ) {
                         actor = oID;
                         if( newActor == parentID ) {
                             newActor = oID;
@@ -512,6 +512,36 @@ void initTransBankFinish() {
                             else {
                                 // replace in-place with generic use result
                                 tr->newActor = genericTrans->newActor;
+                                
+                                numChanged ++;
+                                }
+                            }
+                        else if( tr->target == oID && tr->newTarget == oID ) {
+                            
+                            // self-to-self target
+
+                            // note that Generic Use transitions are
+                            // always defined with actor and newActor
+                            
+                            // even though they can apply in situations
+                            // where a target is experiencing generic use
+
+                            if( lastUseActor ) {
+                                // add a new one
+
+                                TransRecord newTrans = *tr;
+                                
+                                newTrans.lastUseTarget = true;
+
+                                newTrans.newTarget = genericTrans->newActor;
+                                
+                                transToAdd.push_back( newTrans );
+
+                                numAdded++;
+                                }
+                            else {
+                                // replace in-place with generic use result
+                                tr->newTarget = genericTrans->newActor;
                                 
                                 numChanged ++;
                                 }

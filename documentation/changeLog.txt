@@ -3,6 +3,11 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes:
+
+--Whoops, forgot to commit/push changes to transition bank.  Bug city on live
+  servers.
+
 
 Version 90    2018-May-3 
 
