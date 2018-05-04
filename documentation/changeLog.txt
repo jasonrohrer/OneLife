@@ -40,7 +40,9 @@ Server Fixes:
 
 --On server shutdown, variable objects (keys and locks) now revert to their
   parent form instead of being cleared.  All keys open all locks after server
-  restart.
+  restart.  Combined with new transitions that allow door locks to be removed
+  and turned back into lock blanks, this allows all doors to be re-keyed after
+  a server reset, meaning that new family lines are not locked out.
 
 
 
