@@ -44,6 +44,9 @@ Server Fixes:
   and turned back into lock blanks, this allows all doors to be re-keyed after
   a server reset, meaning that new family lines are not locked out.
 
+--Server now adjusts all client-sent coordinates relative to player's birth
+  position in world.  No more absolute coordinates.
+
 
 
 

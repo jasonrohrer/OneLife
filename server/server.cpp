@@ -2571,12 +2571,50 @@ static int objectRecordToID( ObjectRecord *inRecord ) {
     }
 
 
-// inDelete true to send X X for position
-// inPartial gets update line for player's current possition mid-path
-// positions in update line will be relative to inRelativeToPos
-static char *getUpdateLine( LiveObject *inPlayer, GridPos inRelativeToPos,
-                            char inDelete,
-                            char inPartial = false ) {
+
+typedef struct UpdateRecord{
+        char *formatString;
+        char posUsed;
+        int absolutePosX, absolutePosY;
+        GridPos absoluteActionTarget;
+        int absoluteHeldOriginX, absoluteHeldOriginY;
+    } UpdateRecord;
+
+
+
+static char *getUpdateLineFromRecord( 
+    UpdateRecord *inRecord, GridPos inRelativeToPos ) {
+    
+    if( inRecord->posUsed ) {
+        return autoSprintf( inRecord->formatString,
+                            inRecord->absoluteActionTarget.x 
+                            - inRelativeToPos.x,
+                            inRecord->absoluteActionTarget.y 
+                            - inRelativeToPos.y,
+                            inRecord->absoluteHeldOriginX - inRelativeToPos.x, 
+                            inRecord->absoluteHeldOriginY - inRelativeToPos.y,
+                            inRecord->absolutePosX - inRelativeToPos.x, 
+                            inRecord->absolutePosY - inRelativeToPos.y );
+        }
+    else {
+        return autoSprintf( inRecord->formatString,
+                            inRecord->absoluteActionTarget.x 
+                            - inRelativeToPos.x,
+                            inRecord->absoluteActionTarget.y 
+                            - inRelativeToPos.y,
+                            inRecord->absoluteHeldOriginX - inRelativeToPos.x, 
+                            inRecord->absoluteHeldOriginY - inRelativeToPos.y );
+        }
+    }
+
+
+
+
+
+static UpdateRecord getUpdateRecord( 
+    LiveObject *inPlayer,
+    char inDelete,
+    char inPartial = false ) {
 
     char *holdingString = getHoldingString( inPlayer );
     
@@ -2588,14 +2626,18 @@ static char *getUpdateLine( LiveObject *inPlayer, GridPos inRelativeToPos,
         doneMoving = 1;
         }
     
+    UpdateRecord r;
         
 
     char *posString;
     if( inDelete ) {
         posString = stringDuplicate( "0 0 X X" );
+        r.posUsed = false;
         }
     else {
         int x, y;
+
+        r.posUsed = true;
 
         if( doneMoving || ! inPartial ) {
             x = inPlayer->xs;
@@ -2609,11 +2651,11 @@ static char *getUpdateLine( LiveObject *inPlayer, GridPos inRelativeToPos,
             y = p.y;
             }
         
-        posString = autoSprintf( "%d %d %d %d",          
+        posString = autoSprintf( "%d %d %%d %%d",          
                                  doneMoving,
-                                 inPlayer->posForced,
-                                 x - inRelativeToPos.x, 
-                                 y - inRelativeToPos.y );
+                                 inPlayer->posForced );
+        r.absolutePosX = x;
+        r.absolutePosY = y;
         }
     
     SimpleVector<char> clothingListBuffer;
@@ -2658,19 +2700,19 @@ static char *getUpdateLine( LiveObject *inPlayer, GridPos inRelativeToPos,
         }
     
 
-    char *updateLine = autoSprintf( 
-        "%d %d %d %d %d %d %s %d %d %d %d "
+    r.formatString = autoSprintf( 
+        "%d %d %d %d %%d %%d %s %d %%d %%d %d "
         "%.2f %s %.2f %.2f %.2f %s %d %d %d%s\n",
         inPlayer->id,
         inPlayer->displayID,
         inPlayer->facingOverride,
         inPlayer->actionAttempt,
-        inPlayer->actionTarget.x - inRelativeToPos.x,
-        inPlayer->actionTarget.y - inRelativeToPos.y,
+        //inPlayer->actionTarget.x - inRelativeToPos.x,
+        //inPlayer->actionTarget.y - inRelativeToPos.y,
         holdingString,
         inPlayer->heldOriginValid,
-        inPlayer->heldOriginX - inRelativeToPos.x,
-        inPlayer->heldOriginY - inRelativeToPos.y,
+        //inPlayer->heldOriginX - inRelativeToPos.x,
+        //inPlayer->heldOriginY - inRelativeToPos.y,
         inPlayer->heldTransitionSourceID,
         inPlayer->heat,
         posString,
@@ -2683,6 +2725,11 @@ static char *getUpdateLine( LiveObject *inPlayer, GridPos inRelativeToPos,
         inPlayer->responsiblePlayerID,
         deathReason );
     
+    r.absoluteActionTarget = inPlayer->actionTarget;
+    r.absoluteHeldOriginX = inPlayer->heldOriginX;
+    r.absoluteHeldOriginY = inPlayer->heldOriginY;
+    
+
     inPlayer->justAte = false;
     inPlayer->justAteID = 0;
     
@@ -2696,8 +2743,27 @@ static char *getUpdateLine( LiveObject *inPlayer, GridPos inRelativeToPos,
     delete [] posString;
     delete [] clothingList;
     
-    return updateLine;
+    return r;
     }
+
+
+
+// inDelete true to send X X for position
+// inPartial gets update line for player's current possition mid-path
+// positions in update line will be relative to inRelativeToPos
+static char *getUpdateLine( LiveObject *inPlayer, GridPos inRelativeToPos,
+                            char inDelete,
+                            char inPartial = false ) {
+    
+    UpdateRecord r = getUpdateRecord( inPlayer, inDelete, inPartial );
+    
+    char *line = getUpdateLineFromRecord( &r, inRelativeToPos );
+
+    delete [] r.formatString;
+    
+    return line;
+    }
+
 
 
 
@@ -5118,16 +5184,15 @@ int main() {
 
         SimpleVector<int> playerIndicesToSendDyingAbout;
 
-        // shallow copies of player objects that need update sent about them
-        SimpleVector<LiveObject> newUpdates;
+
+        SimpleVector<UpdateRecord> newUpdates;
         SimpleVector<ChangePosition> newUpdatesPos;
         SimpleVector<int> newUpdatePlayerIDs;
 
 
-        // separate shallow copies for updates due to player deletes
         // these are global, so they're not tagged with positions for
         // spatial filtering
-        SimpleVector<LiveObject> newDeleteUpdates;
+        SimpleVector<UpdateRecord> newDeleteUpdates;
         
 
         SimpleVector<MapChangeRecord> mapChanges;
@@ -7666,22 +7731,10 @@ int main() {
                                           &playerIndicesToSendUpdatesAbout );
                     }
                 
-                // shallow copy
-                newDeleteUpdates.push_back( *nextPlayer );                
-                // deep copy this one thing
-                if( nextPlayer->deathReason != NULL ) {
-                    newDeleteUpdates.getElement( 
-                        newDeleteUpdates.size() - 1 )->deathReason = 
-                        stringDuplicate( nextPlayer->deathReason );
-                    }
 
-                // get update message for actual player object here
-                // the get function sets various things in player object
-                char *line = getUpdateLine( nextPlayer,
-                                            nextPlayer->birthPos,
-                                            true );
-                delete [] line;
-
+                newDeleteUpdates.push_back( 
+                    getUpdateRecord( nextPlayer, true ) );                
+                
 
                 nextPlayer->isNew = false;
                 
@@ -9070,16 +9123,9 @@ int main() {
                 }
 
             
-            // push shallow copy
-            newUpdates.push_back( *nextPlayer );
+            newUpdates.push_back( getUpdateRecord( nextPlayer, false ) );
+            
             newUpdatePlayerIDs.push_back( nextPlayer->id );
-
-            // get update line for actually player object here
-            // just to set final changes to the object
-            char *line = getUpdateLine( nextPlayer, 
-                                        nextPlayer->birthPos,
-                                        false );
-            delete [] line;
             
 
             nextPlayer->posForced = false;
@@ -9777,19 +9823,16 @@ int main() {
                             double d = intDist( p->x, p->y, 
                                                 playerXD, playerYD );
                             
-                            if( d > maxDist ) {
+                            if( ! p->global && d > maxDist ) {
                                 // skip this one, too far away
                                 continue;
                                 }
                             
-                            // make copy, because getUpdateLine will modify
-                            LiveObject tempObject = 
-                                newUpdates.getElementDirect( u );
-                            
                             char *line =
-                                getUpdateLine( &tempObject,
-                                               nextPlayer->birthPos,
-                                               false );
+                                getUpdateLineFromRecord( 
+                                    newUpdates.getElement( u ),
+                                    nextPlayer->birthPos );
+                            
                             updateChars.appendElementString( line );
                             delete [] line;
                             }
@@ -10082,15 +10125,11 @@ int main() {
         
                 SimpleVector<char> deleteUpdateChars;
                 
-                for( int u=0; u<newDeleteUpdates.size(); u++ ) {    
-                    // make copy, because getUpdateLine will modify
-                    LiveObject tempObject = 
-                        newDeleteUpdates.getElementDirect( u );
+                for( int u=0; u<newDeleteUpdates.size(); u++ ) {
                     
-                    char *line = getUpdateLine( 
-                        &tempObject,
-                        nextPlayer->birthPos,
-                        true );
+                    char *line = getUpdateLineFromRecord(
+                        newDeleteUpdates.getElement( u ),
+                        nextPlayer->birthPos );
                     
                     deleteUpdateChars.appendElementString( line );
                     
@@ -10240,14 +10279,18 @@ int main() {
             MapChangeRecord *r = mapChanges.getElement( u );
             delete [] r->formatString;
             }
+
+        for( int u=0; u<newUpdates.size(); u++ ) {
+            UpdateRecord *r = newUpdates.getElement( u );
+            delete [] r->formatString;
+            }
         
         for( int u=0; u<newDeleteUpdates.size(); u++ ) {
-            LiveObject *o = newDeleteUpdates.getElement( u );
-            if( o->deathReason != NULL ) {
-                delete [] o->deathReason;
-                }
+            UpdateRecord *r = newDeleteUpdates.getElement( u );
+            delete [] r->formatString;
             }
 
+        
         if( speechMessage != NULL ) {
             delete [] speechMessage;
             }
