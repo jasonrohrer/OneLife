@@ -1610,8 +1610,7 @@ int countNewlines( char *inString ) {
 
 // returns num set after
 int cleanMap() {
-    AppLog::info( "\nCleaning map of objects that have been removed and "
-                  "variable objects..." );
+    AppLog::info( "\nCleaning map of objects that have been removed..." );
 
     DB_Iterator dbi;
     
@@ -1650,8 +1649,8 @@ int cleanMap() {
                 
                 ObjectRecord *o = getObject( id );
                 
-                if( o == NULL || o->isVariableDummy ) {
-                    // id doesn't exist anymore or is variable dummy
+                if( o == NULL ) {
+                    // id doesn't exist anymore
                     
                     numClearedCount++;
                     
@@ -1712,7 +1711,7 @@ int cleanMap() {
                     
                     ObjectRecord *o = getObject( - cont[c] );
                     
-                    if( o != NULL && ! o->isVariableDummy ) {
+                    if( o != NULL ) {
                         
                         thisKept = true;
                         
@@ -1745,7 +1744,7 @@ int cleanMap() {
                     }
                 else {
                     ObjectRecord *o = getObject( cont[c] );
-                    if( o != NULL && ! o->isVariableDummy ) {
+                    if( o != NULL ) {
                         
                         thisKept = true;
                         newCont.push_back( cont[c] );
@@ -2556,13 +2555,23 @@ void freeMap() {
                     ObjectRecord *mapO = getObject( id );
                     
                     
-                    if( mapO != NULL && mapO->isUseDummy ) {
-                        int x = valueToInt( key );
-                        int y = valueToInt( &( key[4] ) );
+                    if( mapO != NULL ) {
+                        if( mapO->isUseDummy ) {
+                            int x = valueToInt( key );
+                            int y = valueToInt( &( key[4] ) );
                     
-                        xToPlace.push_back( x );
-                        yToPlace.push_back( y );
-                        idToPlace.push_back( mapO->useDummyParent );
+                            xToPlace.push_back( x );
+                            yToPlace.push_back( y );
+                            idToPlace.push_back( mapO->useDummyParent );
+                            }
+                        else if( mapO->isVariableDummy ) {
+                            int x = valueToInt( key );
+                            int y = valueToInt( &( key[4] ) );
+                            
+                            xToPlace.push_back( x );
+                            yToPlace.push_back( y );
+                            idToPlace.push_back( mapO->variableDummyParent );
+                            }
                         }
                     }
                 }
@@ -2610,9 +2619,15 @@ void freeMap() {
                     
                     ObjectRecord *contObj = getObject( cont[c] );
                     
-                    if( contObj != NULL && contObj->isUseDummy ) {
-                        cont[c] = contObj->useDummyParent;
-                        numContChanged ++;
+                    if( contObj != NULL ) {
+                        if( contObj->isUseDummy ) {
+                            cont[c] = contObj->useDummyParent;
+                            numContChanged ++;
+                            }
+                        else if( contObj->isVariableDummy ) {
+                            cont[c] = contObj->variableDummyParent;
+                            numContChanged ++;
+                            }
                         }
                    
                     if( subCont ) {
@@ -2626,11 +2641,12 @@ void freeMap() {
             }
 
 
-        AppLog::infoF( "...%d useDummy objects present that were changed "
-                       "back into their unused parent.",
-                       xToPlace.size() );
+        AppLog::infoF(
+            "...%d useDummy/variable objects present that were changed "
+            "back into their unused parent.",
+            xToPlace.size() );
         AppLog::infoF( 
-            "...%d contained useDummy objects present and changed "
+            "...%d contained useDummy/variable objects present and changed "
             "back to usused parent.",
             numContChanged );
 

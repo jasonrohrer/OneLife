@@ -38,6 +38,10 @@ Server Fixes:
 
 --Server filters SAY messages according to allowed character list.
 
+--On server shutdown, variable objects (keys and locks) now revert to their
+  parent form instead of being cleared.  All keys open all locks after server
+  restart.
+
 
 
 

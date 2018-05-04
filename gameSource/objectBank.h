@@ -287,7 +287,7 @@ typedef struct ObjectRecord {
         int *variableDummyIDs;
         
         char isVariableDummy;
-
+        int variableDummyParent;
 
     } ObjectRecord;
 

@@ -787,7 +787,8 @@ float initObjectBankStep() {
                 r->numVariableDummyIDs = 0;
                 r->variableDummyIDs = NULL;
                 r->isVariableDummy = false;
-
+                r->variableDummyParent = 0;
+                
 
                 for( int i=0; i< r->numSprites; i++ ) {
                     sscanf( lines[next], "spriteID=%d", 
@@ -1141,7 +1142,8 @@ void initObjectBankFinish() {
                         ObjectRecord *dummyO = getObject( dummyID );
 
                         dummyO->isVariableDummy = true;
-
+                        dummyO->variableDummyParent = mainID;
+                        
                         // copy anims too
                         for( int t=0; t<endAnimType; t++ ) {
                             AnimationRecord *a = getAnimation( mainID,
@@ -2323,7 +2325,7 @@ int addObject( const char *inDescription,
     r->numVariableDummyIDs = 0;
     r->variableDummyIDs = NULL;
     r->isVariableDummy = false;
-
+    r->variableDummyParent = 0;
     
     memset( r->spriteSkipDrawing, false, inNumSprites );
     
