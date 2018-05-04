@@ -4,6 +4,17 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 92    ???
+
+--Fixed some transition hints.  New transition system leaves some lastUse
+  transtions in place that aren't used by server.  Client shouldn't show these
+  as redundant hints.  Client was showing NOTHING as result in case where actor
+  was used up and target stayed the same (adding stone to a pile).  Now shows
+  same target as result instead of NOTHING.
+
+
+
+
 Server Fixes:
 
 --Whoops, forgot to commit/push changes to transition bank.  Bug city on live

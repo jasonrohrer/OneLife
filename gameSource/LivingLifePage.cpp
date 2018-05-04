@@ -6569,6 +6569,13 @@ static char isFood( int inID ) {
 
 static char getTransHintable( TransRecord *inTrans ) {
 
+    if( inTrans->lastUseActor ) {
+        return false;
+        }
+    if( inTrans->lastUseTarget ) {
+        return false;
+        }
+    
     if( inTrans->actor >= 0 && 
         ( inTrans->target > 0 || inTrans->target == -1 ) &&
         ( inTrans->newActor > 0 || inTrans->newTarget > 0 ) ) {
@@ -6797,6 +6804,10 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
             newActor > 0 ) {
             
             result = newActor;
+            }
+        else if( newTarget > 0 ) {
+            // don't show NOTHING as a result
+            result = newTarget;
             }
         
         char *actorString;
