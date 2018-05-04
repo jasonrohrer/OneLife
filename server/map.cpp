@@ -2722,6 +2722,11 @@ static int dbGet( int inX, int inY, int inSlot, int inSubCont = 0 ) {
     
     int cachedVal = dbGetCached( inX, inY, inSlot, inSubCont );
     if( cachedVal != -2 ) {
+        
+        if( cachedVal > 0 ) {
+            dbLookTimePut( inX, inY, MAP_TIMESEC );
+            }
+        
         return cachedVal;
         }
     
@@ -2747,6 +2752,10 @@ static int dbGet( int inX, int inY, int inSlot, int inSubCont = 0 ) {
         }
 
     dbPutCached( inX, inY, inSlot, inSubCont, returnVal );
+
+    if( returnVal > 0 ) {
+        dbLookTimePut( inX, inY, MAP_TIMESEC );
+        }
     
     return returnVal;
     }
@@ -2786,7 +2795,13 @@ static int dbFloorGet( int inX, int inY ) {
     
     if( result == 0 ) {
         // found
-        return valueToInt( value );
+        int returnVal = valueToInt( value );
+        
+        if( returnVal > 0 ) {
+            dbLookTimePut( inX, inY, MAP_TIMESEC );
+            }
+        
+        return returnVal;
         }
     else {
         return -1;

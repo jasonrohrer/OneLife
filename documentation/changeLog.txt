@@ -3,10 +3,21 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
 Server Fixes:
 
 --Whoops, forgot to commit/push changes to transition bank.  Bug city on live
   servers.
+
+--Back to registering lookTime whenever non-zero map or floor values are gotten
+  from database, instead of just registering lookTimes on map changes.  Only
+  looking on map change was an optimization that was necessary with the old
+  database engine, but hopefully the new engine can handle it.  Also, we are no
+  longer tracking look times for bare ground, so that should help a lot too.
+  This will prevent walls and other untouched but seen-in-the-last-24-hours
+  objects from disappeariing on server restart.
+
+
 
 
 Version 90    2018-May-3 
