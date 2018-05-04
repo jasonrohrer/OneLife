@@ -131,6 +131,14 @@ static SimpleVector<char*> familyNameGivingPhrases;
 static char *eveName = NULL;
 
 
+// maps extended ascii codes to true/false for characters allowed in SAY
+// messages
+static char allowedSayCharMap[256];
+
+static const char *allowedSayChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! ";
+
+
+
 
 // for incoming socket connections that are still in the login process
 typedef struct FreshConnection {
@@ -4188,6 +4196,14 @@ void monumentStep() {
 
 int main() {
 
+    memset( allowedSayCharMap, false, 256 );
+    
+    int numAllowed = strlen( allowedSayChars );
+    for( int i=0; i<numAllowed; i++ ) {
+        allowedSayCharMap[ (int)( allowedSayChars[i] ) ] = true;
+        }
+    
+
     nextID = 
         SettingsManager::getIntSetting( "nextPlayerID", 2 );
 
@@ -5679,6 +5695,19 @@ int main() {
                             // truncate
                             m.saidText[ sayLimit ] = '\0';
                             }
+
+                        int len = strlen( m.saidText );
+                        
+                        // replace not-allowed characters with spaces
+                        for( int c=0; c<len; c++ ) {
+                            if( ! allowedSayCharMap[ 
+                                    (int)( m.saidText[c] ) ] ) {
+                                
+                                m.saidText[c] = ' ';
+                                }
+                            }
+                        
+
                         
                         if( nextPlayer->isEve && nextPlayer->name == NULL ) {
                             char *name = isFamilyNamingSay( m.saidText );
