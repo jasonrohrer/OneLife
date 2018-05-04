@@ -17,6 +17,11 @@ Server Fixes:
   This will prevent walls and other untouched but seen-in-the-last-24-hours
   objects from disappeariing on server restart.
 
+--Temporarily pushed no-look cull time on server restart up to 1 week to work
+  around the lookTime issue in the next restart (which will be needed to make
+  the above fix to lookTimes live).  I.e., if it was added to the map in the
+  last week, it will not be culled in the next server restart.
+
 
 
 
