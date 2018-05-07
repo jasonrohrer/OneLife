@@ -44,6 +44,7 @@
 #include "serverCalls.h"
 #include "failureLog.h"
 #include "names.h"
+#include "lineageLimit.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -187,6 +188,10 @@ typedef struct LiveObject {
 
         SimpleVector<int> *lineage;
         
+        // id of Eve that started this line
+        int lineageEveID;
+        
+
 
         // time that this life started (for computing age)
         // not actual creation time (can be adjusted to tweak starting age,
@@ -710,6 +715,9 @@ void quitCleanup() {
         }
     players.deleteAll();
 
+
+    freeLineageLimit();
+    
     freePlayerStats();
 
     freeNames();
@@ -2939,6 +2947,8 @@ void processLoggedInPlayer( Socket *inSock,
     badMotherLimit = 9999999;
     
     
+    primeLineageTest( numPlayers );
+    
 
     for( int i=0; i<numPlayers; i++ ) {
         LiveObject *player = players.getElement( i );
@@ -2958,6 +2968,12 @@ void processLoggedInPlayer( Socket *inSock,
             if( Time::timeSec() < player->birthCoolDown ) {    
                 canHaveBaby = false;
                 }
+            
+            if( ! isLinePermitted( newObject.email, player->lineageEveID ) ) {
+                // this line forbidden for new player
+                continue;
+                }
+            
 
             int numPastBabies = player->babyIDs->size();
             
@@ -3010,6 +3026,7 @@ void processLoggedInPlayer( Socket *inSock,
         // she starts almost full grown
 
         newObject.isEve = true;
+        newObject.lineageEveID = newObject.id;
         
         newObject.lifeStartTimeSeconds -= 14 * ( 1.0 / getAgeRate() );
 
@@ -3382,6 +3399,8 @@ void processLoggedInPlayer( Socket *inSock,
         newObject.parentID = parent->id;
         parentEmail = parent->email;
 
+        newObject.lineageEveID = parent->lineageEveID;
+
         newObject.parentChainLength = parent->parentChainLength + 1;
 
         // mother
@@ -3395,6 +3414,8 @@ void processLoggedInPlayer( Socket *inSock,
             newObject.lineage->push_back( 
                 parent->lineage->getElementDirect( i ) );
             }
+
+        recordLineage( newObject.email, newObject.lineageEveID );
         }
 
     newObject.birthPos.x = newObject.xd;
@@ -4478,6 +4499,8 @@ int main() {
     
     initPlayerStats();
 
+    initLineageLimit();
+    
 
     char rebuilding;
 

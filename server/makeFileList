@@ -44,6 +44,8 @@ playerStats.cpp \
 failureLog.cpp \
 names.cpp \
 monument.cpp \
+lineageLimit.cpp \
+
 
 
 GAME_GRAPHICS = \

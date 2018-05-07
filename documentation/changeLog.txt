@@ -56,6 +56,10 @@ Server Fixes:
   not be sent, causing the following lineage message for that new baby to be
   ignored by client (leading to NO RELATION for some actually-related babies).
 
+--Added same-lineage-birth blocking for a time that is based on the size of the
+  server population.  Below 10 players, there is no same-lineage blocking.
+  From 11 to 50 players, it rises linearly up to the full cooldown time, which
+  is currently 3 hours, and may increase in the future.
 
 
 
