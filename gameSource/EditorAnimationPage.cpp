@@ -3266,6 +3266,10 @@ void EditorAnimationPage::keyDown( unsigned char inASCII ) {
 
 
 void EditorAnimationPage::specialKeyDown( int inKeyCode ) {
+    if( TextField::isAnyFocused() ) {
+        return;
+        }
+
     int offset = 1;
     
     if( isCommandKeyDown() ) {

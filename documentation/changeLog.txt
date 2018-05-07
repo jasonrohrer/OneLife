@@ -14,6 +14,9 @@ Version 92    ???
 
 --Added display of current slot position in object editor.
 
+--Fixed so that arrow keys in text field do not change rotation anchor in
+  animation editor.
+
 
 
 
