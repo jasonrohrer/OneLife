@@ -12,6 +12,8 @@ Version 92    ???
   was used up and target stayed the same (adding stone to a pile).  Now shows
   same target as result instead of NOTHING.
 
+--Added display of current slot position in object editor.
+
 
 
 

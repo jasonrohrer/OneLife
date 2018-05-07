@@ -3797,6 +3797,24 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         delete [] posString;
         }
+    else if( mPickedSlot != -1 ) {
+        char *tag = autoSprintf( "Slot %d", mPickedSlot + 1 );
+        pos.x = 0;
+        pos.y = -106;
+
+        doublePair slotPos = mCurrentObject.slotPos[ mPickedSlot ];
+        
+        char *posString = autoSprintf( "  ( %.0f, %.0f )",
+                                       slotPos.x, slotPos.y );
+        
+        smallFont->drawString( tag, pos, alignRight );
+        
+        delete [] tag;
+        
+        smallFont->drawString( posString, pos, alignLeft );
+        
+        delete [] posString;
+        }
     
 
 
