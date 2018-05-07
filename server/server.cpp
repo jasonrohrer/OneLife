@@ -340,7 +340,8 @@ typedef struct LiveObject {
 
         char needsUpdate;
         char updateSent;
-
+        char updateGlobal;
+        
         // babies born to this player
         SimpleVector<timeSec_t> *babyBirthTimes;
         SimpleVector<int> *babyIDs;
@@ -3359,6 +3360,7 @@ void processLoggedInPlayer( Socket *inSock,
 
     newObject.needsUpdate = false;
     newObject.updateSent = false;
+    newObject.updateGlobal = false;
     
     newObject.babyBirthTimes = new SimpleVector<timeSec_t>();
     newObject.babyIDs = new SimpleVector<int>();
@@ -7713,8 +7715,7 @@ int main() {
                 nextPlayer->isNew = false;
                 
                 // force this PU to be sent to everyone
-                ChangePosition p = { 0, 0, true };
-                newUpdatesPos.push_back( p );
+                nextPlayer->updateGlobal = true;
                 }
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
                 
@@ -9129,12 +9130,15 @@ int main() {
             
 
             nextPlayer->posForced = false;
-            
-            ChangePosition p = { nextPlayer->xs, nextPlayer->ys, false };
+
+
+            ChangePosition p = { nextPlayer->xs, nextPlayer->ys, 
+                                 nextPlayer->updateGlobal };
             newUpdatesPos.push_back( p );
 
 
             nextPlayer->updateSent = true;
+            nextPlayer->updateGlobal = false;
             }
         
 

@@ -47,6 +47,10 @@ Server Fixes:
 --Server now adjusts all client-sent coordinates relative to player's birth
   position in world.  No more absolute coordinates.
 
+--Fixed bug that caused some initial new-baby PLAYER_UPDATE (PU) messages to
+  not be sent, causing the following lineage message for that new baby to be
+  ignored by client (leading to NO RELATION for some actually-related babies).
+
 
 
 
