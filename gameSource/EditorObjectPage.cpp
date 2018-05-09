@@ -3370,7 +3370,6 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             doublePair bodyPos = mCurrentObject.spritePos[ bodyIndex ];
             
             
-            printf( "Head index = %d\n", headIndex );
             if( headIndex != -1 ) {
                 framePos = add( add( mCurrentObject.spritePos[ headIndex ],
                                      getAgeHeadOffset( age, headPos,
