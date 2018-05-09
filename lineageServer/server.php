@@ -1179,7 +1179,7 @@ function ls_getSiblings( $inFromID ) {
     $parentID = ls_getParentID( $inFromID );
 
     if( $parentID == -1 ) {
-        return array();
+        return array( $inFromID );
         }
 
     return ls_getAllChildren( $parentID );
@@ -1245,17 +1245,17 @@ function ls_displayPerson( $inID, $inRelID, $inNoLink ) {
             }
 
         
-        echo "<br>$name<br>";
-        echo "$age $yearWord<br>";
+        echo "<br>\n$name<br>\n";
+        echo "$age $yearWord<br>\n";
         $relName = ls_getRelName( $inID, $inRelID );
-        echo "$relName";
+        echo "$relName\n";
         }
     
     }
 
 
 
-function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID ) {
+function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID, $inNoLinkID ) {
 
 
     $full = array();
@@ -1266,13 +1266,13 @@ function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID ) {
 
         $before = array();
         for( $i=0; $i<$half; $i++ ) {
-            if( $inGenArray != $inCenterID )
+            if( $inGenArray[$i] != $inCenterID )
                 $before[] = $inGenArray[$i];
             }
 
         $after = array();
         for( $i=$half; $i<$count; $i++ ) {
-            if( $inGenArray != $inCenterID )
+            if( $inGenArray[$i] != $inCenterID )
                 $after[] = $inGenArray[$i];
             }
         
@@ -1286,11 +1286,23 @@ function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID ) {
         $full = $inGenArray;
         }
     
-    echo "<table border=0 cellpadding=20><tr>";
-    $count = count( $full ); 
+    echo "<table border=0 cellpadding=20><tr>\n";
+    $count = count( $full );
+
+    
+    
     for( $i=0; $i<$count; $i++ ) {
-        ls_displayPerson( $full[$i], $inRelID, $full[$i]==$inRelID );
+        $bgColorString = "";
+        if( $full[$i] == $inCenterID ) {
+            $bgColorString = "bgcolor=#333333";
+            }
+        
+        echo "<td valign=top align=center $bgColorString>\n";
+        
+        ls_displayPerson( $full[$i], $inRelID, $full[$i]==$inNoLinkID );
+        echo "</td>\n";
         }
+    echo "</tr></table>\n";
     }
 
 
@@ -1345,19 +1357,48 @@ function ls_characterPage() {
         $rel_id = $id;
         }
 
+    //echo "ID = $id and relID = $rel_id<br>";
+    
+    global $header, $footer;
 
+    eval( $header );
+
+    echo "<center>\n";
+
+    
     $prevGen = ls_getPrevGen( $id );
     // parent in center
-    ls_displayGenRow( $prevGen, ls_getParentLifeID( $id ), $rel_id );
+    ls_displayGenRow( $prevGen, ls_getParentLifeID( $id ), $rel_id, -1 );
+
+    //echo "This gen<br>";
     
     $sibs = ls_getSiblings( $id );
     // target in center
-    ls_displayGenRow( $sibs, $id, $rel_id );
+    ls_displayGenRow( $sibs, $id, $rel_id, -1 );
 
+    
     $nextGen = ls_getNextGen( $id );
     // no one needs to be in center of next gen
-    ls_displayGenRow( $nextGen, -1, $rel_id );
+    // everyone in next gen has a link
+    ls_displayGenRow( $nextGen, -1, $rel_id, -1 );
+
+    echo "</center>\n";
+
+    eval( $footer );    
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
