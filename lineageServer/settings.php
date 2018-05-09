@@ -113,5 +113,8 @@ $header = "include( \"../noBotsHeader.php\" );";
 $footer = "include( \"../noCounterFooter.php\" );";
 
 
+$facesWebPath = "faces";
+
+
 
 ?>

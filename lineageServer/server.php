@@ -31,6 +31,17 @@ header('Pragma: no-cache');
 error_reporting( E_ALL );
 
 
+// for stack trace of errors
+/*
+set_error_handler(function($severity, $message, $file, $line) {
+    if (error_reporting() & $severity) {
+        throw new ErrorException($message, 0, $severity, $file, $line);
+    }
+});
+*/
+
+
+
 
 // page layout for web-based setup
 $setup_header = "
@@ -137,6 +148,12 @@ else if( $action == "show_detail" ) {
     }
 else if( $action == "logout" ) {
     ls_logout();
+    }
+else if( $action == "front_page" ) {
+    ls_frontPage();
+    }
+else if( $action == "character_page" ) {
+    ls_characterPage();
     }
 else if( $action == "ls_setup" ) {
     global $setup_header, $setup_footer;
@@ -821,6 +838,66 @@ function ls_getLifeID( $inServerID, $inPlayerID ) {
     }
 
 
+function ls_getPlayerID( $inLifeID ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT player_id FROM $tableNamePrefix"."lives ".
+        "WHERE id = '$inLifeID';";
+    $result = ls_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows < 1 ) {
+        return -1;
+        }
+
+    return ls_mysqli_result( $result, 0, "player_id" );
+    }
+
+
+
+// gets life_id of one child
+function ls_getOneChild( $inParentID ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT id FROM $tableNamePrefix"."lives ".
+        "WHERE parent_id = '$inParentID';";
+    $result = ls_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows < 1 ) {
+        return -1;
+        }
+
+    return ls_mysqli_result( $result, 0, "id" );
+    }
+
+
+
+// gets life_id of one child
+function ls_getAllChildren( $inParentID ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT id FROM $tableNamePrefix"."lives ".
+        "WHERE parent_id = '$inParentID';";
+    $result = ls_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows < 1 ) {
+        return array();
+        }
+
+    $children = array();
+    
+    for( $i=0; $i<$numRows; $i++ ) {
+        $children[$i] = ls_mysqli_result( $result, $i, "id" );
+        }
+    return $children;
+    }
+
+
 
 function ls_logLife() {
     global $tableNamePrefix, $sharedGameServerSecret;
@@ -844,6 +921,9 @@ function ls_logLife() {
     $display_id = ls_requestFilter( "display_id", "/[0-9]+/i", "0" );
 
     $name = ls_requestFilter( "name", "/[A-Z ]+/i", "" );
+
+    $name = ucwords( strtolower( $name ) );
+    
     
     $sequence_number = ls_requestFilter( "sequence_number", "/[0-9]+/i", "0" );
 
@@ -933,6 +1013,352 @@ function ls_logLife() {
     
     echo "OK";
     }
+
+
+
+
+function ls_getFaceURLForAge( $inAge, $inDisplayID ) {
+    $faceAges = array( 0, 4, 14, 30 );
+
+    $faceAge = 0;
+    if( $inAge > 2 && $inAge < 10 ) {
+        $faceAge = 4;
+        }
+    else if( $inAge >= 10 && $inAge < 20 ) {
+        $faceAge = 14;
+        }
+    else if( $inAge >= 20 ) {
+        $faceAge = 30;
+        }
+    global $facesWebPath;
+    
+    return "$facesWebPath/face_".
+        $inDisplayID."_".$faceAge.".png";
+    }
+
+
+
+
+function ls_frontPage() {
+
+    $emailFilter =
+        ls_requestFilter( "filter", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+
+    $nameFilter = ls_requestFilter( "filter", "/[A-Z ]+/i", "" );
+
+
+    $filterClause = "";
+    $filter = "";
+    
+    if( $emailFilter != "" ) {
+        $filterClause = " WHERE users.email LIKE '%$emailFilter%' ";
+        $filter = $emailFilter;
+        }
+    else if( $nameFilter != "" ) {
+        $filterClause = " WHERE lives.name LIKE '%$nameFilter%' ";
+        $filter = $nameFilter;
+        }
+
+    global $tableNamePrefix, $usersPerPage;
+
+
+    $query = "SELECT lives.id, display_id, name, ".
+        "age, generation, death_time ".
+        "FROM $tableNamePrefix"."lives as lives ".
+        "INNER JOIN $tableNamePrefix"."users as users ".
+        "ON lives.user_id = users.id  $filterClause".
+        "ORDER BY death_time DESC ".
+        "LIMIT $usersPerPage;";
+    $result = ls_queryDatabase( $query );
+    
+    $numRows = mysqli_num_rows( $result );
+
+    global $header, $footer;
+
+    eval( $header );
+
+    echo "<center>";
+
+    // form for searching
+?>
+            <FORM ACTION="server.php" METHOD="post">
+    <INPUT TYPE="hidden" NAME="action" VALUE="front_page">
+             Email or Character Name:
+    <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="filter"
+             VALUE="<?php echo $filter;?>">
+    <INPUT TYPE="Submit" VALUE="Filter">
+    </FORM>
+  
+<?php
+
+    
+    echo "<table border=0 cellpadding=20>";
+
+    
+    
+    for( $i=0; $i<$numRows; $i++ ) {
+
+        $id = ls_mysqli_result( $result, $i, "id" );
+        $display_id = ls_mysqli_result( $result, $i, "display_id" );
+        $name = ls_mysqli_result( $result, $i, "name" );
+        $age = ls_mysqli_result( $result, $i, "age" );
+        $generation = ls_mysqli_result( $result, $i, "generation" );
+        $death_time = ls_mysqli_result( $result, $i, "death_time" );
+
+        $deathAgo = ls_secondsToAgeSummary( strtotime( "now" ) -
+                                            strtotime( $death_time ) );
+        
+        if( $generation == -1 ) {
+            $generation = ls_getGeneration( $id );
+            }
+        if( $generation == -1 ) {
+            $generation = "?";
+            }
+        $age = floor( $age );
+
+        $yearWord = "years";
+        if( $age == 1 ) {
+            $yearWord = "year";
+            }
+        
+        
+        
+        echo "<tr>";
+
+        $charLinkA =
+            "<a href='server.php?action=character_page&id=$id'>";
+        
+        $faceURL = ls_getFaceURLForAge( $age, $display_id );
+        
+        echo "<td>".
+            "$charLinkA<img src='$faceURL' ".
+            "width=100 height=98 border=0></a></td>";
+
+        echo "<td>$name</td>";
+        echo "<td>$age $yearWord</td>";
+        echo "<td>Generation: $generation</td>";
+        echo "<td>Died $deathAgo ago</td>";
+
+        echo "</tr>";
+        }
+
+    echo "</table></center>";
+    
+    
+    eval( $footer );
+    }
+
+
+
+function ls_getRelName( $inFromID, $inToID ) {
+    if( $inFromID == $inToID ) {
+        return "";
+        }
+    
+    return "No Relation";
+    }
+
+
+
+// returns array of previous generation
+function ls_getPrevGen( $inFromID ) {
+    $parentID = ls_getParentLifeID( $inFromID );
+
+    if( $parentID != -1 ) {
+        return ls_getSiblings( $parentID );
+        }
+    else {
+        return array();
+        }
+    }
+
+
+
+// returns array of siblings
+function ls_getSiblings( $inFromID ) {
+    $parentID = ls_getParentID( $inFromID );
+
+    if( $parentID == -1 ) {
+        return array();
+        }
+
+    return ls_getAllChildren( $parentID );
+    }
+
+
+
+// returns array of next generation
+function ls_getNextGen( $inFromID ) {
+    $playerID = ls_getPlayerID( $inFromID );
+
+    return ls_getAllChildren( $playerID );
+    }
+
+
+
+
+function ls_displayPerson( $inID, $inRelID, $inNoLink ) {
+
+    global $tableNamePrefix;
+
+    $query = "SELECT id, display_id, name, ".
+        "age, generation, death_time ".
+        "FROM $tableNamePrefix"."lives WHERE id=$inID;";
+    
+    $result = ls_queryDatabase( $query );
+    
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows == 1 ) {
+
+        $id = ls_mysqli_result( $result, 0, "id" );
+        $display_id = ls_mysqli_result( $result, 0, "display_id" );
+        $name = ls_mysqli_result( $result, 0, "name" );
+        $age = ls_mysqli_result( $result, 0, "age" );
+        $generation = ls_mysqli_result( $result, 0, "generation" );
+        $death_time = ls_mysqli_result( $result, 0, "death_time" );
+
+        $deathAgo = ls_secondsToAgeSummary( strtotime( "now" ) -
+                                            strtotime( $death_time ) );
+
+
+        $age = floor( $age );
+        
+        
+        $faceURL = ls_getFaceURLForAge( $age, $display_id );
+
+        if( ! $inNoLink ) {
+            echo "<a href='server.php?action=character_page&".
+                "id=$id&rel_id=$inRelID'>";
+            }
+        
+        echo "<img src='$faceURL' ".
+            "width=100 height=98 border=0>";
+
+        if( ! $inNoLink ) {
+            echo "</a>";
+            }
+
+        $yearWord = "years";
+        if( $age == 1 ) {
+            $yearWord = "year";
+            }
+
+        
+        echo "<br>$name<br>";
+        echo "$age $yearWord<br>";
+        $relName = ls_getRelName( $inID, $inRelID );
+        echo "$relName";
+        }
+    
+    }
+
+
+
+function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID ) {
+
+
+    $full = array();
+    
+    if( in_array( $inCenterID, $inGenArray ) ) {
+        $count = count( $inGenArray ); 
+        $half = $count / 2;
+
+        $before = array();
+        for( $i=0; $i<$half; $i++ ) {
+            if( $inGenArray != $inCenterID )
+                $before[] = $inGenArray[$i];
+            }
+
+        $after = array();
+        for( $i=$half; $i<$count; $i++ ) {
+            if( $inGenArray != $inCenterID )
+                $after[] = $inGenArray[$i];
+            }
+        
+        $full = array();
+        $full = array_merge( $full, $before );
+
+        $full[] = $inCenterID;
+        $full = array_merge( $full, $after );
+        }
+    else {
+        $full = $inGenArray;
+        }
+    
+    echo "<table border=0 cellpadding=20><tr>";
+    $count = count( $full ); 
+    for( $i=0; $i<$count; $i++ ) {
+        ls_displayPerson( $full[$i], $inRelID, $full[$i]==$inRelID );
+        }
+    }
+
+
+
+function ls_getParentLifeID( $inID ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT server_id, parent_id ".
+        "FROM $tableNamePrefix"."lives WHERE id=$inID;";
+    
+    $result = ls_queryDatabase( $query );
+    
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows == 0 ) {
+        return -1;
+        }
+
+    return ls_getLifeID( ls_mysqli_result( $result, 0, "server_id" ),
+                         ls_mysqli_result( $result, 0, "parent_id" ) );
+    }
+
+
+
+function ls_getParentID( $inID ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT parent_id ".
+        "FROM $tableNamePrefix"."lives WHERE id=$inID;";
+    
+    $result = ls_queryDatabase( $query );
+    
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows == 0 ) {
+        return -1;
+        }
+
+    return ls_mysqli_result( $result, 0, "parent_id" );
+    }
+
+
+
+
+function ls_characterPage() {
+
+    $id = ls_requestFilter( "id", "/[0-9]+/i", "0" );
+
+    $rel_id = ls_requestFilter( "rel_id", "/[0-9]+/i", "0" );
+
+    if( $rel_id == 0 ) {
+        $rel_id = $id;
+        }
+
+
+    $prevGen = ls_getPrevGen( $id );
+    // parent in center
+    ls_displayGenRow( $prevGen, ls_getParentLifeID( $id ), $rel_id );
+    
+    $sibs = ls_getSiblings( $id );
+    // target in center
+    ls_displayGenRow( $sibs, $id, $rel_id );
+
+    $nextGen = ls_getNextGen( $id );
+    // no one needs to be in center of next gen
+    ls_displayGenRow( $nextGen, -1, $rel_id );
+    }
+
 
 
 
