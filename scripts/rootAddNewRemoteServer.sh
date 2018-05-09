@@ -114,6 +114,8 @@ scp -o StrictHostKeychecking=no ~/checkout/OneLife/server/settings/statsServerSh
 
 ssh -o StrictHostKeychecking=no jcr13@$subdomain.onehouronelife.com '~/checkout/OneLife/scripts/remoteServerCodeUpdate.sh'
 
+ssh -o StrictHostKeychecking=no jcr13@$subdomain.onehouronelife.com 'echo $subdomain > ~/checkout/OneLife/server/serverID.ini'
+
 ssh -o StrictHostKeychecking=no jcr13@$subdomain.onehouronelife.com '~/checkout/OneLife/scripts/remoteServerStartup.sh'
 
 EOSU2
