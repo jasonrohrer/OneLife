@@ -41,6 +41,7 @@ backup.cpp \
 triggers.cpp \
 dbCommon.cpp \
 playerStats.cpp \
+lineageLog.cpp \
 failureLog.cpp \
 names.cpp \
 monument.cpp \

@@ -41,6 +41,7 @@
 #include "backup.h"
 #include "triggers.h"
 #include "playerStats.h"
+#include "lineageLog.h"
 #include "serverCalls.h"
 #include "failureLog.h"
 #include "names.h"
@@ -719,7 +720,8 @@ void quitCleanup() {
     freeLineageLimit();
     
     freePlayerStats();
-
+    freeLineageLog();
+    
     freeNames();
     
     freeLifeLog();
@@ -4498,7 +4500,8 @@ int main() {
     initBackup();
     
     initPlayerStats();
-
+    initLineageLog();
+    
     initLineageLimit();
     
 
@@ -4575,6 +4578,7 @@ int main() {
         stepFailureLog();
         
         stepPlayerStats();
+        stepLineageLog();
         
         
         int numLive = players.size();
@@ -6048,6 +6052,9 @@ int main() {
                                         
                                             logDeath( hitPlayer->id,
                                                       hitPlayer->email,
+                                                      hitPlayer->parentID,
+                                                      hitPlayer->displayID,
+                                                      hitPlayer->name,
                                                       hitPlayer->isEve,
                                                       computeAge( hitPlayer ),
                                                       getSecondsPlayed( 
@@ -7814,6 +7821,9 @@ int main() {
                     
                     logDeath( nextPlayer->id,
                               nextPlayer->email,
+                              nextPlayer->parentID,
+                              nextPlayer->displayID,
+                              nextPlayer->name,
                               nextPlayer->isEve,
                               computeAge( nextPlayer ),
                               getSecondsPlayed( nextPlayer ),
@@ -8737,6 +8747,9 @@ int main() {
                         
                         logDeath( decrementedPlayer->id,
                                   decrementedPlayer->email,
+                                  decrementedPlayer->parentID,
+                                  decrementedPlayer->displayID,
+                                  decrementedPlayer->name,
                                   decrementedPlayer->isEve,
                                   computeAge( decrementedPlayer ),
                                   getSecondsPlayed( decrementedPlayer ),

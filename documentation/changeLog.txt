@@ -64,6 +64,8 @@ Server Fixes:
   From 11 to 50 players, it rises linearly up to the full cooldown time, which
   is currently 3 hours, and may increase in the future.
 
+--Server now sends lineage info to lineageServer upon player death.
+
 
 
 Version 90    2018-May-3 

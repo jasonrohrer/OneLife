@@ -3,6 +3,7 @@
 
 #include "map.h"
 #include "playerStats.h"
+#include "lineageLog.h"
 
 
 
@@ -179,6 +180,9 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
 
 // killer email NULL if died of natural causes
 void logDeath( int inPlayerID, char *inPlayerEmail,
+               int inParentID,
+               int inDisplayID,
+               char *inName,
                char inEve,
                double inAge,
                int inSecPlayed,
@@ -190,6 +194,11 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
     
     recordPlayerLifeStats( inPlayerEmail, inSecPlayed );
     
+    recordPlayerLineage( inPlayerEmail, inAge,
+                         inPlayerID, inParentID, inDisplayID,
+                         inKillerID,
+                         inName );
+
     if( inEve ) {
         
         mapEveDeath( inPlayerEmail, inAge );

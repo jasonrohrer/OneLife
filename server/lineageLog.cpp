@@ -1,0 +1,232 @@
+#include "lineageLog.h"
+
+
+#include "minorGems/util/log/AppLog.h"
+#include "minorGems/util/SettingsManager.h"
+#include "minorGems/util/SimpleVector.h"
+
+#include "minorGems/network/web/WebRequest.h"
+#include "minorGems/network/web/URLUtils.h"
+
+#include "minorGems/crypto/hashes/sha1.h"
+
+
+
+
+static char useLineageServer = false;
+
+static char *lineageServerURL = NULL;
+static char *lineageServerSharedSecret = NULL;
+
+static char *serverID = NULL;
+
+
+typedef struct LineageRecord {
+        char *email;
+        double age;
+        int playerID, parentID, displayID;
+        int killerID;
+        char *name;
+        
+        WebRequest *request;
+        // -1 until first request gets it
+        int sequenceNumber;
+    } LineageRecord;
+
+
+static SimpleVector<LineageRecord> records;
+
+
+
+void initLineageLog() {
+
+    useLineageServer = 
+        SettingsManager::getIntSetting( "useLineageServer", 0 );    
+    
+    lineageServerURL = 
+        SettingsManager::
+        getStringSetting( "lineageServerURL", 
+                          "http://localhost/jcr13/reviewServer/server.php" );
+    
+    lineageServerSharedSecret = 
+        SettingsManager::getStringSetting( "lineageServerSharedSecret", 
+                                           "secret_phrase" );
+
+    serverID = SettingsManager::getStringSetting( "serverID", "testServer" );
+    }
+
+
+
+void freeLineageLog() {
+
+    if( lineageServerURL != NULL ) {
+        delete [] lineageServerURL;
+        lineageServerURL = NULL;
+        }
+    
+    if( lineageServerSharedSecret != NULL ) {
+        delete [] lineageServerSharedSecret;
+        lineageServerSharedSecret = NULL;
+        }
+
+    if( serverID != NULL ) {
+        delete [] serverID;
+        serverID = NULL;
+        }
+
+    for( int i=0; i<records.size(); i++ ) {
+        delete records.getElement(i)->request;
+        delete [] records.getElement(i)->email;
+        delete [] records.getElement(i)->name;
+        }
+    records.deleteAll();
+    }
+
+
+
+        
+
+
+void recordPlayerLineage( char *inEmail, double inAge,
+                          int inPlayerID, int inParentID,
+                          int inDisplayID, int inKillerID,
+                          const char *inName ) {
+
+    if( useLineageServer ) {
+
+        if( inName == NULL ) {
+            inName = "NAMELESS";
+            }
+        
+        
+        WebRequest *request;
+        
+        char *encodedEmail = URLUtils::urlEncode( inEmail );
+
+        char *url = autoSprintf( 
+            "%s?action=get_sequence_number"
+            "&email=%s",
+            lineageServerURL,
+            encodedEmail );
+        
+        delete [] encodedEmail;
+        
+        request = new WebRequest( "GET", url, NULL );
+        printf( "Starting new web request for %s\n", url );
+        
+        delete [] url;
+
+        LineageRecord r = { stringDuplicate( inEmail ), inAge, 
+                            inPlayerID, inParentID, inDisplayID,
+                            inKillerID,
+                            stringDuplicate( inName ), 
+                            request, -1 };
+        records.push_back( r );
+        }
+    }
+
+
+
+void stepLineageLog() {
+    if( ! useLineageServer ) {
+        return;
+        }
+    
+    for( int i=0; i<records.size(); i++ ) {
+        LineageRecord *r = records.getElement( i );
+        
+        int result = r->request->step();
+            
+        char recordDone = false;
+
+        if( result == -1 ) {
+            AppLog::info( "Request to lineage server failed." );
+            recordDone = true;
+            }
+        else if( result == 1 ) {
+            // done, have result
+
+            char *webResult = r->request->getResult();
+            
+            if( r->sequenceNumber == -1 ) {
+                // still waiting for sequence number response
+
+                int numRead = sscanf( webResult, "%d", &( r->sequenceNumber ) );
+
+                if( numRead != 1 ) {
+                    AppLog::info( "Failed to read sequence number "
+                                  "from lineage server response." );
+                    recordDone = true;
+                    }
+                else {
+                    delete r->request;
+                    
+                    // start lineage-posting request
+
+                    char *seqString = autoSprintf( "%d", r->sequenceNumber );
+                    
+                    char *hash = hmac_sha1( lineageServerSharedSecret,
+                                            seqString );
+                    
+                    delete [] seqString;
+                    
+                    char *encodedEmail = URLUtils::urlEncode( r->email );
+                    char *encodedName = URLUtils::urlEncode( r->name );
+                    
+
+                    char *url = autoSprintf( 
+                        "%s?action=log_life"
+                        "&server=%s"
+                        "&email=%s"
+                        "&age=%f"
+                        "&player_id=%d"
+                        "&parent_id=%d"
+                        "&display_id=%d"
+                        "&killer_id=%d"
+                        "&name=%s"
+                        "&sequence_number=%d"
+                        "&hash_value=%s",
+                        lineageServerURL,
+                        serverID,
+                        encodedEmail,
+                        r->age,
+                        r->playerID,
+                        r->parentID,
+                        r->displayID,
+                        r->killerID,
+                        encodedName,
+                        r->sequenceNumber,
+                        hash );
+                    
+                    delete [] encodedEmail;
+                    delete [] encodedName;
+                    delete [] hash;
+
+                    r->request = new WebRequest( "GET", url, NULL );
+                    printf( "Starting new web request for %s\n", url );
+                    
+                    delete [] url;
+                    }
+                }
+            else {
+                
+                if( strstr( webResult, "DENIED" ) != NULL ) {
+                    AppLog::info( 
+                        "Server log_life request rejected by lineage server" );
+                    }
+                recordDone = true;
+                }
+            
+            delete [] webResult;
+            }
+
+        if( recordDone ) {
+            delete r->request;
+            delete [] r->email;
+            
+            records.deleteElement( i );
+            i--;
+            }
+        }
+    }
+

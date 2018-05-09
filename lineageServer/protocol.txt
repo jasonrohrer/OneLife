@@ -24,6 +24,7 @@ server.php
 &age=[float]
 &player_id=[int]
 &parent_id=[int]
+&killer_id=[int]
 &display_id=[int]
 &name=[string]
 &sequence_number=[int]
@@ -49,6 +50,7 @@ request will be rejected.
 
 
 display_id  is the object ID of the player character.
-parent_id   is 0 for Eve
+parent_id   is -1 for Eve
+killer_id   is -1 if player not murdered
 
 name must be URL-encoded (Maybe+Like+This)

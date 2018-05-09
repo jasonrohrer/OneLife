@@ -240,7 +240,8 @@ function ls_setupDatabase() {
         $query =
             "CREATE TABLE $tableName(" .
             "id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT," .
-            "server VARCHAR(254) NOT NULL );";
+            "server VARCHAR(254) NOT NULL, ".
+            "UNIQUE KEY( server ) );";
 
         $result = ls_queryDatabase( $query );
 
@@ -285,14 +286,20 @@ function ls_setupDatabase() {
             "user_id INT UNSIGNED NOT NULL," .
             // ID of player on server
             "player_id INT UNSIGNED NOT NULL," .
-            // ID of parent life in lives table
+            // ID of parent on server
             // -1 if this player is Eve
-            "parent_life_id INT UNSIGNED NOT NULL," .
+            "parent_id INT NOT NULL," .
+            // ID of player's killer on server
+            // -1 if this player was not murdered
+            "killer_id INT NOT NULL," .
             // object ID when player displayed in client
-            "dispaly_id INT UNSIGNED NOT NULL," .
+            "display_id INT UNSIGNED NOT NULL," .
             // age at time of death in years
             "age FLOAT UNSIGNED NOT NULL,".
-            "name VARCHAR(254) NOT NULL );";
+            "name VARCHAR(254) NOT NULL,".
+            // -1 if not set yet
+            // 0 for Eve
+            "generation INT NOT NULL );";
 
         $result = ls_queryDatabase( $query );
 
@@ -588,19 +595,36 @@ function ls_showDetail( $checkPassword = true ) {
 
     if( $life_count > 0 ) {
 
-        $query = "SELECT death_time, age FROM $tableNamePrefix"."lives ".
+        $query = "SELECT id, server_id, death_time, age, generation ".
+            "FROM $tableNamePrefix"."lives ".
             "WHERE user_id = '$id' ORDER BY death_time DESC;";
         $result = ls_queryDatabase( $query );
 
         $numRows = mysqli_num_rows( $result );
 
-        echo "<table border=1>";
-        echo "<tr><td><b>Date</b></td><td><b>Age</b></td></tr>";
+        echo "<table border=1 cellpadding=10>";
+        echo "<tr><td><b>Date</b></td><td><b>Age</b></td>".
+            "<td><b>Server</b></td>".
+            "<td><b>Generation</b></td>".
+            "</tr>";
         
         for( $i=0; $i<$numRows; $i++ ) {
+            $id = ls_mysqli_result( $result, $i, "id" );
             $death_time = ls_mysqli_result( $result, $i, "death_time" );
             $age = ls_mysqli_result( $result, $i, "age" );
-            echo "<tr><td>$death_time</td><td>$age</td></tr>";
+            $server_id = ls_mysqli_result( $result, $i, "server_id" );
+            $generation = ls_mysqli_result( $result, $i, "generation" );
+
+            $serverName = ls_getServerName( $server_id );
+
+            if( $generation == -1 ) {
+                $generation = ls_getGeneration( $id );
+                }
+            
+            echo "<tr><td>$death_time</td><td>$age</td>".
+                "<td>$serverName</td>".
+                "<td>$generation</td>".
+                "</tr>";
             }
         
         echo "</table>";
@@ -666,8 +690,8 @@ function ls_getServerID( $inServer ) {
 
     if( $numRows < 1 ) {
         $query = "INSERT INTO $tableNamePrefix". "servers SET " .
-            "server = '$server' ".
-            "ON DUPLICATE KEY SET server = '$server' ;";
+            "server = '$inServer' ".
+            "ON DUPLICATE KEY UPDATE server = '$inServer' ;";
         ls_queryDatabase( $query );
 
         // select ID again after insert
@@ -678,6 +702,86 @@ function ls_getServerID( $inServer ) {
 
     return ls_mysqli_result( $result, 0, "id" );
     }
+
+
+
+function ls_getServerName( $inServerID ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT server FROM $tableNamePrefix"."servers ".
+        "WHERE id = '$inServerID';";
+    $result = ls_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows < 1 ) {
+        return "unknown";
+        }
+
+    return ls_mysqli_result( $result, 0, "server" );
+    }
+
+
+
+
+
+function ls_getGeneration( $inLifeID ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT server_id, generation, parent_id ".
+        "FROM $tableNamePrefix"."lives ".
+        "WHERE id = '$inLifeID';";
+
+    $result = ls_queryDatabase( $query );
+
+    $generation = ls_mysqli_result( $result, 0, "generation" );
+    
+    if( $generation == -1 ) {
+
+        // compute it, if we can
+
+        $server_id = ls_mysqli_result( $result, 0, "server_id" );
+        $parent_id = ls_mysqli_result( $result, 0, "parent_id" );
+
+        $tempGen = 0;
+        
+        while( $parent_id != -1 ) {
+            $tempGen++;
+
+            $parent_life_id = ls_getLifeID( $server_id, $parent_id );
+            
+            if( $parent_life_id == -1 ) {
+                // parent hasn't died yet
+                break;
+                }
+            
+            $query = "SELECT generation, parent_id ".
+                "FROM $tableNamePrefix"."lives ".
+                "WHERE id = '$parent_life_id';";
+
+            $result = ls_queryDatabase( $query );
+
+            $parent_id = ls_mysqli_result( $result, 0, "parent_id" );
+            $parentGen = ls_mysqli_result( $result, 0, "generation" );
+
+            if( $parentGen != -1 ) {
+                $generation = $parentGen + $tempGen;
+                }
+            }
+
+        if( $generation != -1 ) {
+            // found it
+            // save it
+
+            $query = "UPDATE $tableNamePrefix"."lives SET ".
+                "generation = '$generation' WHERE id = '$inLifeID';";
+            ls_queryDatabase( $query );
+            }
+        }
+
+    return $generation;
+    }
+
 
 
 
@@ -735,7 +839,8 @@ function ls_logLife() {
     $age = ls_requestFilter( "age", "/[0-9.]+/i", "0" );
 
     $player_id = ls_requestFilter( "player_id", "/[0-9]+/i", "0" );
-    $parent_id = ls_requestFilter( "parent_id", "/[0-9]+/i", "0" );
+    $parent_id = ls_requestFilter( "parent_id", "/[0-9\-]+/i", "-1" );
+    $killer_id = ls_requestFilter( "killer_id", "/[0-9\-]+/i", "-1" );
     $display_id = ls_requestFilter( "display_id", "/[0-9]+/i", "0" );
 
     $name = ls_requestFilter( "name", "/[A-Z ]+/i", "" );
@@ -781,7 +886,7 @@ function ls_logLife() {
             "email = '$email', ".
             "sequence_number = 1, ".
             "life_count = 1 ".
-            "ON DUPLICATE KEY SET sequence_number = sequence_number + 1, ".
+            "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1, ".
             "life_count = life_count + 1;";
         }
     else {
@@ -797,25 +902,31 @@ function ls_logLife() {
     ls_queryDatabase( $query );
 
     // now log life details
-
+    
     $server_id = ls_getServerID( $server );
     $user_id = ls_getUserID( $email );
 
-    $parent_life_id = -1;
-    if( $parent_id > 0 ) {
-        // not Eve
-        ls_getLifeID( $server_id, $parent_id );
+    // unknown until we are asked to compute it the first time
+    $generation = -1;
+    
+    if( $parent_id == -1 ) {
+        // Eve
+        // we know it
+        $generation = 1;
         }
+    
     
     $query = "INSERT INTO $tableNamePrefix". "lives SET " .
         "death_time = CURRENT_TIMESTAMP, ".
         "server_id = '$server_id', ".
         "user_id = '$user_id', ".
         "player_id = '$player_id', ".
-        "parent_life_id = '$parent_life_id', ".
+        "parent_id = '$parent_id', ".
+        "killer_id = '$killer_id', ".
         "display_id = '$display_id', ".
         "age = '$age', ".
-        "name = '$name';";
+        "name = '$name', ".
+        "generation = '$generation';";
     
     ls_queryDatabase( $query );
     
