@@ -17,6 +17,9 @@ Version 92    ???
 --Fixed so that arrow keys in text field do not change rotation anchor in
   animation editor.
 
+--Editor saving face portaits throughout life for use in family tree viewer.
+
+
 
 
 
