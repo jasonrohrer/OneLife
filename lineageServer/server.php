@@ -416,7 +416,7 @@ function ls_showData( $checkPassword = true ) {
     $search = ls_requestFilter( "search", "/[A-Z0-9_@. \-]+/i" );
 
     $order_by = ls_requestFilter( "order_by", "/[A-Z_]+/i",
-                                  "last_game_date" );
+                                  "id" );
     
     $keywordClause = "";
     $searchDisplay = "";
@@ -595,7 +595,7 @@ function ls_showDetail( $checkPassword = true ) {
         $numRows = mysqli_num_rows( $result );
 
         echo "<table border=1>";
-        echo "<tr><td><b>Date</b></td><td><b>Age</b></td></tr>"
+        echo "<tr><td><b>Date</b></td><td><b>Age</b></td></tr>";
         
         for( $i=0; $i<$numRows; $i++ ) {
             $death_time = ls_mysqli_result( $result, $i, "death_time" );
@@ -780,8 +780,8 @@ function ls_logLife() {
         $query = "INSERT INTO $tableNamePrefix". "users SET " .
             "email = '$email', ".
             "sequence_number = 1, ".
-            "life_count = 1 "
-            "ON DUPLICATE KEY SET sequence_number = sequence_number + 1, "
+            "life_count = 1 ".
+            "ON DUPLICATE KEY SET sequence_number = sequence_number + 1, ".
             "life_count = life_count + 1;";
         }
     else {
