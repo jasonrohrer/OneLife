@@ -178,6 +178,8 @@ typedef struct LiveObject {
         
         char *name;
 
+        char *lastSay;
+
         char isEve;        
 
         GridPos birthPos;
@@ -679,6 +681,10 @@ void quitCleanup() {
 
         if( nextPlayer->name != NULL ) {
             delete [] nextPlayer->name;
+            }
+
+        if( nextPlayer->lastSay != NULL ) {
+            delete [] nextPlayer->lastSay;
             }
         
         if( nextPlayer->email != NULL  ) {
@@ -3329,7 +3335,8 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.lineage = new SimpleVector<int>();
     
     newObject.name = NULL;
-    
+    newObject.lastSay = NULL;
+
     newObject.pathLength = 0;
     newObject.pathToDest = NULL;
     newObject.pathTruncated = 0;
@@ -5947,7 +5954,12 @@ int main() {
                             }
                         
                         
-
+                        if( nextPlayer->lastSay != NULL ) {
+                            delete [] nextPlayer->lastSay;
+                            nextPlayer->lastSay = NULL;
+                            }
+                        nextPlayer->lastSay = stringDuplicate( m.saidText );
+                        
                         
                         char *line = autoSprintf( "%d %s\n", nextPlayer->id,
                                                   m.saidText );
@@ -6055,6 +6067,7 @@ int main() {
                                                       hitPlayer->parentID,
                                                       hitPlayer->displayID,
                                                       hitPlayer->name,
+                                                      hitPlayer->lastSay,
                                                       hitPlayer->isEve,
                                                       computeAge( hitPlayer ),
                                                       getSecondsPlayed( 
@@ -7824,6 +7837,7 @@ int main() {
                               nextPlayer->parentID,
                               nextPlayer->displayID,
                               nextPlayer->name,
+                              nextPlayer->lastSay,
                               nextPlayer->isEve,
                               computeAge( nextPlayer ),
                               getSecondsPlayed( nextPlayer ),
@@ -8750,6 +8764,7 @@ int main() {
                                   decrementedPlayer->parentID,
                                   decrementedPlayer->displayID,
                                   decrementedPlayer->name,
+                                  decrementedPlayer->lastSay,
                                   decrementedPlayer->isEve,
                                   computeAge( decrementedPlayer ),
                                   getSecondsPlayed( decrementedPlayer ),
@@ -10365,6 +10380,10 @@ int main() {
                 
                 if( nextPlayer->name != NULL ) {
                     delete [] nextPlayer->name;
+                    }
+
+                if( nextPlayer->lastSay != NULL ) {
+                    delete [] nextPlayer->lastSay;
                     }
                 
                 if( nextPlayer->containedIDs != NULL ) {

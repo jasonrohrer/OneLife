@@ -27,6 +27,7 @@ typedef struct LineageRecord {
         int playerID, parentID, displayID;
         int killerID;
         char *name;
+        char *lastSay;
         char male;
         
         WebRequest *request;
@@ -79,6 +80,7 @@ void freeLineageLog() {
         delete records.getElement(i)->request;
         delete [] records.getElement(i)->email;
         delete [] records.getElement(i)->name;
+        delete [] records.getElement(i)->lastSay;
         }
     records.deleteAll();
     }
@@ -92,12 +94,16 @@ void recordPlayerLineage( char *inEmail, double inAge,
                           int inPlayerID, int inParentID,
                           int inDisplayID, int inKillerID,
                           const char *inName,
+                          const char *inLastSay,
                           char inMale ) {
 
     if( useLineageServer ) {
 
         if( inName == NULL ) {
             inName = "NAMELESS";
+            }
+        if( inLastSay == NULL ) {
+            inLastSay = "";
             }
         
         
@@ -122,6 +128,7 @@ void recordPlayerLineage( char *inEmail, double inAge,
                             inPlayerID, inParentID, inDisplayID,
                             inKillerID,
                             stringDuplicate( inName ),
+                            stringDuplicate( inLastSay ),
                             inMale,
                             request, -1 };
         records.push_back( r );
@@ -175,6 +182,7 @@ void stepLineageLog() {
                     
                     char *encodedEmail = URLUtils::urlEncode( r->email );
                     char *encodedName = URLUtils::urlEncode( r->name );
+                    char *encodedLastSay = URLUtils::urlEncode( r->lastSay );
                     
                     int maleInt = 0;
                     if( r->male ) {
@@ -191,6 +199,7 @@ void stepLineageLog() {
                         "&display_id=%d"
                         "&killer_id=%d"
                         "&name=%s"
+                        "&last_words=%s"
                         "&male=%d"
                         "&sequence_number=%d"
                         "&hash_value=%s",
@@ -203,12 +212,14 @@ void stepLineageLog() {
                         r->displayID,
                         r->killerID,
                         encodedName,
+                        encodedLastSay,
                         maleInt,
                         r->sequenceNumber,
                         hash );
                     
                     delete [] encodedEmail;
                     delete [] encodedName;
+                    delete [] encodedLastSay;
                     delete [] hash;
 
                     r->request = new WebRequest( "GET", url, NULL );
@@ -232,6 +243,8 @@ void stepLineageLog() {
         if( recordDone ) {
             delete r->request;
             delete [] r->email;
+            delete [] r->name;
+            delete [] r->lastSay;
             
             records.deleteElement( i );
             i--;

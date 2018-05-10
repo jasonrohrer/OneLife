@@ -320,6 +320,7 @@ function ls_setupDatabase() {
             "name VARCHAR(254) NOT NULL,".
             // 1 if male
             "male TINYINT UNSIGNED NOT NULL,".
+            "last_words VARCHAR(63) NOT NULL,".
             // -1 if not set yet
             // 0 for Eve
             "generation INT NOT NULL );";
@@ -618,7 +619,8 @@ function ls_showDetail( $checkPassword = true ) {
 
     if( $life_count > 0 ) {
 
-        $query = "SELECT id, server_id, death_time, age, name, generation ".
+        $query = "SELECT id, server_id, death_time, age, name, last_words,".
+            "generation ".
             "FROM $tableNamePrefix"."lives ".
             "WHERE user_id = '$id' ORDER BY death_time DESC;";
         $result = ls_queryDatabase( $query );
@@ -631,6 +633,7 @@ function ls_showDetail( $checkPassword = true ) {
             "<td><b>Name</b></td>".
             "<td><b>Server</b></td>".
             "<td><b>Generation</b></td>".
+            "<td><b>Last Words</b></td>".
             "</tr>";
         
         for( $i=0; $i<$numRows; $i++ ) {
@@ -638,6 +641,7 @@ function ls_showDetail( $checkPassword = true ) {
             $death_time = ls_mysqli_result( $result, $i, "death_time" );
             $age = ls_mysqli_result( $result, $i, "age" );
             $name = ls_mysqli_result( $result, $i, "name" );
+            $last_words = ls_mysqli_result( $result, $i, "last_words" );
             $server_id = ls_mysqli_result( $result, $i, "server_id" );
             $generation = ls_mysqli_result( $result, $i, "generation" );
 
@@ -654,6 +658,7 @@ function ls_showDetail( $checkPassword = true ) {
                 "<td>$name</td>".
                 "<td>$serverName</td>".
                 "<td>$generation</td>".
+                "<td>$last_words</td>".
                 "</tr>";
             }
         
@@ -1000,7 +1005,24 @@ function ls_logLife() {
     $display_id = ls_requestFilter( "display_id", "/[0-9]+/i", "0" );
 
     $name = ls_requestFilter( "name", "/[A-Z ]+/i", "" );
+    $last_words = ls_requestFilter(
+        "last_words", "/[ABCDEFGHIJKLMNOPQRSTUVWXYZ.\-,'?! ]+/i", "" );
 
+    // force sentence capitalization and spaces after end punctuation
+    // found here:
+    // https://stackoverflow.com/questions/5383471/
+    //         how-to-capitalize-first-letter-of-first-word-in-a-sentence
+    $last_words =
+        preg_replace_callback( '/([.!?])\s*(\w)/',
+                               function ($matches) {
+                                   return strtoupper( $matches[1] .
+                                                      '  ' .
+                                                      $matches[2] );
+                                   },
+                               ucfirst( strtolower( $last_words ) ) );
+    
+
+    
     $name = ucwords( strtolower( $name ) );
     
     $male = ls_requestFilter( "male", "/[01]/", "0" );
@@ -1087,6 +1109,7 @@ function ls_logLife() {
         "age = '$age', ".
         "name = '$name', ".
         "male = '$male', ".
+        "last_words = '$last_words', ".
         "generation = '$generation';";
     
     ls_queryDatabase( $query );
@@ -1523,12 +1546,12 @@ function ls_getNextGen( $inFromID ) {
 
 
 
-function ls_displayPerson( $inID, $inRelID, $inNoLink ) {
+function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
 
     global $tableNamePrefix;
 
     $query = "SELECT id, display_id, name, ".
-        "age, generation, death_time ".
+        "age, last_words, generation, death_time ".
         "FROM $tableNamePrefix"."lives WHERE id=$inID;";
     
     $result = ls_queryDatabase( $query );
@@ -1540,6 +1563,7 @@ function ls_displayPerson( $inID, $inRelID, $inNoLink ) {
         $id = ls_mysqli_result( $result, 0, "id" );
         $display_id = ls_mysqli_result( $result, 0, "display_id" );
         $name = ls_mysqli_result( $result, 0, "name" );
+        $last_words = ls_mysqli_result( $result, 0, "last_words" );
         $age = ls_mysqli_result( $result, 0, "age" );
         $generation = ls_mysqli_result( $result, 0, "generation" );
         $death_time = ls_mysqli_result( $result, 0, "death_time" );
@@ -1553,18 +1577,14 @@ function ls_displayPerson( $inID, $inRelID, $inNoLink ) {
         
         $faceURL = ls_getFaceURLForAge( $age, $display_id );
 
-        if( ! $inNoLink ) {
-            echo "<a href='server.php?action=character_page&".
-                "id=$id&rel_id=$inRelID'>";
-            }
+        echo "<a href='server.php?action=character_page&".
+            "id=$id&rel_id=$inRelID'>";
         
         echo "<img src='$faceURL' ".
             "width=100 height=98 border=0>";
 
-        if( ! $inNoLink ) {
-            echo "</a>";
-            }
-
+        echo "</a>";
+        
         $yearWord = "years";
         if( $age == 1 ) {
             $yearWord = "year";
@@ -1578,13 +1598,32 @@ function ls_displayPerson( $inID, $inRelID, $inNoLink ) {
             }
         echo "$age $yearWord old<br>\n";
         echo "$deathAgo ago\n";
+
+        if( ! $inFullWords ) {
+            if( strlen( $last_words ) > 18 ) {
+                $last_words = trim( substr( $last_words, 0, 16 ) );
+                $lastChar = substr( $last_words, -1 );
+                
+                if( $lastChar != '.' &&
+                    $lastChar != '!' &&
+                    $lastChar != '?' ) {
+                    
+                    $last_words = $last_words . "...";
+                    }
+                }
+            }
+        
+        if( $last_words != "" ) {
+            echo "<br>\n";
+            echo "Final words: \"$last_words\"\n";
+            }
         }
     
     }
 
 
 
-function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID, $inNoLinkID ) {
+function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID, $inFullWords ) {
 
 
     $full = $inGenArray;
@@ -1602,7 +1641,9 @@ function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID, $inNoLinkID ) {
         
         echo "<td valign=top align=center $bgColorString>\n";
         
-        ls_displayPerson( $full[$i], $inRelID, $full[$i]==$inNoLinkID );
+        ls_displayPerson( $full[$i], $inRelID,
+                          $inFullWords &&
+                          ( $full[$i] == $inCenterID ) );
         echo "</td>\n";
         }
     echo "</tr></table>\n";
@@ -1671,19 +1712,18 @@ function ls_characterPage() {
     
     $prevGen = ls_getPrevGen( $id );
     // parent in center
-    ls_displayGenRow( $prevGen, ls_getParentLifeID( $id ), $rel_id, -1 );
+    ls_displayGenRow( $prevGen, ls_getParentLifeID( $id ), $rel_id, false );
 
     //echo "This gen<br>";
     
     $sibs = ls_getSiblings( $id );
-    // target in center
-    ls_displayGenRow( $sibs, $id, $rel_id, -1 );
+    // target in center and display full words for target
+    ls_displayGenRow( $sibs, $id, $rel_id, true );
 
     
     $nextGen = ls_getNextGen( $id );
     // no one needs to be in center of next gen
-    // everyone in next gen has a link
-    ls_displayGenRow( $nextGen, -1, $rel_id, -1 );
+    ls_displayGenRow( $nextGen, -1, $rel_id, false );
 
     echo "</center>\n";
 

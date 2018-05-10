@@ -28,6 +28,7 @@ server.php
 &display_id=[int]
 &name=[string]
 $male=[0 or 1]
+&last_words=[string]
 &sequence_number=[int]
 &hash_value=[hash value]
 
@@ -54,4 +55,4 @@ display_id  is the object ID of the player character.
 parent_id   is -1 for Eve
 killer_id   is -1 if player not murdered
 
-name must be URL-encoded (Maybe+Like+This)
+name and last_words must be URL-encoded (Maybe+Like+This)
