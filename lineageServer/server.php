@@ -1628,16 +1628,29 @@ function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID, $inFullWords ) {
 
     $full = $inGenArray;
 
-    echo "<table border=0 cellpadding=20><tr>\n";
+
     $count = count( $full );
+
+    if( $count > 0 ) {
+        $gen = ls_getGeneration( $full[0] );
+
+        echo "<center><font size=5>Generation $gen:</font></center>\n";
+        }
+    
+    
+    echo "<table border=0 cellpadding=20><tr>\n";
 
     
     
     for( $i=0; $i<$count; $i++ ) {
         $bgColorString = "";
         if( $full[$i] == $inCenterID ) {
-            $bgColorString = "bgcolor=#333333";
+            $bgColorString = "bgcolor=#444444";
             }
+        else {
+            $bgColorString = "bgcolor=#222222";
+            }
+        
         
         echo "<td valign=top align=center $bgColorString>\n";
         
