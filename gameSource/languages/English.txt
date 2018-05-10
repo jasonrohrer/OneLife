@@ -163,6 +163,12 @@ great "GREAT "
 brother "BROTHER"
 sister "SISTER"
 
+little "LITTLE"
+big "BIG"
+twin "TWIN"
+identical "IDENTICAL"
+
+
 aunt "AUNT"
 uncle "UNCLE"
 

@@ -19,6 +19,8 @@ Version 92    ???
 
 --Editor saving face portaits throughout life for use in family tree viewer.
 
+--Client now displays Big and Little words for siblings, and also detects twin
+  status (including identical).
 
 
 

@@ -283,6 +283,11 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
             }
         }
     
+    char big = false;
+    char little = false;
+    char twin = false;
+    char identical = false;
+
     if( ! found ) {
         // not a direct descendent or ancestor
 
@@ -317,6 +322,21 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
                 }
             else {
                 main = translate( "sister" );
+                }
+            
+            if( inOurObject->age < inTheirObject->age - 0.1 ) {
+                big = true;
+                }
+            else if( inOurObject->age > inTheirObject->age + 0.1 ) {
+                little = true;
+                }
+            else {
+                // close enough together in age
+                twin = true;
+                
+                if( inOurObject->displayID == inTheirObject->displayID ) {
+                    identical = true;
+                    }
                 }
             }
         else if( theirMatchIndex == 0 ) {
@@ -388,6 +408,25 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
             }
         buffer.appendElementString( " " );
         }
+
+    if( little ) {
+        buffer.appendElementString( translate( "little" ) );
+        buffer.appendElementString( " " );
+        }
+    else if( big ) {
+        buffer.appendElementString( translate( "big" ) );
+        buffer.appendElementString( " " );
+        }
+    else if( twin ) {
+        if( identical ) {
+            buffer.appendElementString( translate( "identical" ) );
+            buffer.appendElementString( " " );
+            }
+        
+        buffer.appendElementString( translate( "twin" ) );
+        buffer.appendElementString( " " );
+        }
+    
     
     buffer.appendElementString( main );
     
