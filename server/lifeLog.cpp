@@ -197,7 +197,8 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
     recordPlayerLineage( inPlayerEmail, inAge,
                          inPlayerID, inParentID, inDisplayID,
                          inKillerID,
-                         inName );
+                         inName,
+                         inIsMale );
 
     if( inEve ) {
         

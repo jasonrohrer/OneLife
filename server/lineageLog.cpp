@@ -27,6 +27,7 @@ typedef struct LineageRecord {
         int playerID, parentID, displayID;
         int killerID;
         char *name;
+        char male;
         
         WebRequest *request;
         // -1 until first request gets it
@@ -90,7 +91,8 @@ void freeLineageLog() {
 void recordPlayerLineage( char *inEmail, double inAge,
                           int inPlayerID, int inParentID,
                           int inDisplayID, int inKillerID,
-                          const char *inName ) {
+                          const char *inName,
+                          char inMale ) {
 
     if( useLineageServer ) {
 
@@ -119,7 +121,8 @@ void recordPlayerLineage( char *inEmail, double inAge,
         LineageRecord r = { stringDuplicate( inEmail ), inAge, 
                             inPlayerID, inParentID, inDisplayID,
                             inKillerID,
-                            stringDuplicate( inName ), 
+                            stringDuplicate( inName ),
+                            inMale,
                             request, -1 };
         records.push_back( r );
         }
@@ -173,7 +176,11 @@ void stepLineageLog() {
                     char *encodedEmail = URLUtils::urlEncode( r->email );
                     char *encodedName = URLUtils::urlEncode( r->name );
                     
-
+                    int maleInt = 0;
+                    if( r->male ) {
+                        maleInt = 1;
+                        }
+                    
                     char *url = autoSprintf( 
                         "%s?action=log_life"
                         "&server=%s"
@@ -184,6 +191,7 @@ void stepLineageLog() {
                         "&display_id=%d"
                         "&killer_id=%d"
                         "&name=%s"
+                        "&male=%d"
                         "&sequence_number=%d"
                         "&hash_value=%s",
                         lineageServerURL,
@@ -195,6 +203,7 @@ void stepLineageLog() {
                         r->displayID,
                         r->killerID,
                         encodedName,
+                        maleInt,
                         r->sequenceNumber,
                         hash );
                     

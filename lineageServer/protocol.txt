@@ -27,6 +27,7 @@ server.php
 &killer_id=[int]
 &display_id=[int]
 &name=[string]
+$male=[0 or 1]
 &sequence_number=[int]
 &hash_value=[hash value]
 

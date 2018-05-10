@@ -299,13 +299,17 @@ function ls_setupDatabase() {
             "id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT," .
             "death_time DATETIME NOT NULL, ".
             "server_id INT UNSIGNED NOT NULL," .
+            "INDEX( server_id )," .
             // ID of player in users table
             "user_id INT UNSIGNED NOT NULL," .
+            "INDEX( user_id )," .
             // ID of player on server
             "player_id INT UNSIGNED NOT NULL," .
+            "INDEX( player_id )," .
             // ID of parent on server
             // -1 if this player is Eve
             "parent_id INT NOT NULL," .
+            "INDEX( parent_id )," .
             // ID of player's killer on server
             // -1 if this player was not murdered
             "killer_id INT NOT NULL," .
@@ -314,6 +318,8 @@ function ls_setupDatabase() {
             // age at time of death in years
             "age FLOAT UNSIGNED NOT NULL,".
             "name VARCHAR(254) NOT NULL,".
+            // 1 if male
+            "male TINYINT UNSIGNED NOT NULL,".
             // -1 if not set yet
             // 0 for Eve
             "generation INT NOT NULL );";
@@ -612,7 +618,7 @@ function ls_showDetail( $checkPassword = true ) {
 
     if( $life_count > 0 ) {
 
-        $query = "SELECT id, server_id, death_time, age, generation ".
+        $query = "SELECT id, server_id, death_time, age, name, generation ".
             "FROM $tableNamePrefix"."lives ".
             "WHERE user_id = '$id' ORDER BY death_time DESC;";
         $result = ls_queryDatabase( $query );
@@ -620,7 +626,9 @@ function ls_showDetail( $checkPassword = true ) {
         $numRows = mysqli_num_rows( $result );
 
         echo "<table border=1 cellpadding=10>";
-        echo "<tr><td><b>Date</b></td><td><b>Age</b></td>".
+        echo "<tr><td><b>Date</b></td>".
+            "<td><b>Age</b></td>".
+            "<td><b>Name</b></td>".
             "<td><b>Server</b></td>".
             "<td><b>Generation</b></td>".
             "</tr>";
@@ -629,6 +637,7 @@ function ls_showDetail( $checkPassword = true ) {
             $id = ls_mysqli_result( $result, $i, "id" );
             $death_time = ls_mysqli_result( $result, $i, "death_time" );
             $age = ls_mysqli_result( $result, $i, "age" );
+            $name = ls_mysqli_result( $result, $i, "name" );
             $server_id = ls_mysqli_result( $result, $i, "server_id" );
             $generation = ls_mysqli_result( $result, $i, "generation" );
 
@@ -638,7 +647,11 @@ function ls_showDetail( $checkPassword = true ) {
                 $generation = ls_getGeneration( $id );
                 }
             
-            echo "<tr><td>$death_time</td><td>$age</td>".
+            echo "<tr><td>".
+                "<a href='server.php?action=character_page&".
+                "id=$id'>$death_time</a></td>".
+                "<td>$age</td>".
+                "<td>$name</td>".
                 "<td>$serverName</td>".
                 "<td>$generation</td>".
                 "</tr>";
@@ -856,6 +869,24 @@ function ls_getPlayerID( $inLifeID ) {
 
 
 
+function ls_getMale( $inLifeID ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT male FROM $tableNamePrefix"."lives ".
+        "WHERE id = '$inLifeID';";
+    $result = ls_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows < 1 ) {
+        return 0;
+        }
+
+    return ls_mysqli_result( $result, 0, "male" );
+    }
+
+
+
 // gets life_id of one child
 function ls_getOneChild( $inParentID ) {
     global $tableNamePrefix;
@@ -875,12 +906,60 @@ function ls_getOneChild( $inParentID ) {
 
 
 
+function ls_getBirthSecAgo( $inLifeID ) {
+    global $tableNamePrefix;
+
+    $query = "SELECT death_time, age FROM $tableNamePrefix"."lives ".
+        "WHERE id = '$inLifeID';";
+    
+    $result = ls_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows < 1 ) {
+        return 0;
+        }
+
+    $deathAgoSec =
+        strtotime( "now" ) -
+        strtotime( ls_mysqli_result( $result, 0, "death_time" ) );
+
+    $birthAgoSec = $deathAgoSec + ls_mysqli_result( $result, 0, "age" ) * 60;
+    
+    return $birthAgoSec;
+    }
+
+
+
+
+function ls_getDisplayID( $inLifeID ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT display_id FROM $tableNamePrefix"."lives ".
+        "WHERE id = '$inLifeID';";
+    
+    $result = ls_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows < 1 ) {
+        return 0;
+        }
+    return ls_mysqli_result( $result, 0, "display_id" );
+    }
+
+
+
 // gets life_id of one child
 function ls_getAllChildren( $inParentID ) {
     global $tableNamePrefix;
-    
+
+    // order by birth time
     $query = "SELECT id FROM $tableNamePrefix"."lives ".
-        "WHERE parent_id = '$inParentID';";
+        "WHERE parent_id = '$inParentID' ".
+        "ORDER BY DATE_SUB( ".
+        "  death_time, INTERVAL floor( age * 60 ) SECOND ) ASC;";
+    
     $result = ls_queryDatabase( $query );
 
     $numRows = mysqli_num_rows( $result );
@@ -924,6 +1003,7 @@ function ls_logLife() {
 
     $name = ucwords( strtolower( $name ) );
     
+    $male = ls_requestFilter( "male", "/[01]/", "0" );
     
     $sequence_number = ls_requestFilter( "sequence_number", "/[0-9]+/i", "0" );
 
@@ -1006,6 +1086,7 @@ function ls_logLife() {
         "display_id = '$display_id', ".
         "age = '$age', ".
         "name = '$name', ".
+        "male = '$male', ".
         "generation = '$generation';";
     
     ls_queryDatabase( $query );
@@ -1135,7 +1216,7 @@ function ls_frontPage() {
             "width=100 height=98 border=0></a></td>";
 
         echo "<td>$name</td>";
-        echo "<td>$age $yearWord</td>";
+        echo "<td>$age $yearWord old</td>";
         echo "<td>Generation: $generation</td>";
         echo "<td>Died $deathAgo ago</td>";
 
@@ -1150,10 +1231,194 @@ function ls_frontPage() {
 
 
 
+// gets array from $inFromID up to Eve
+function ls_getLineage( $inFromID ) {
+    $line = array();
+
+    $parentID = $inFromID;
+    
+    while( $parentID != -1 ) {
+        $line[] = $parentID;
+        $parentID = ls_getParentLifeID( $parentID );
+        }
+    
+    return $line;
+    }
+
+
+
+// from is the person that we're taking the point of view of
+// to is the person that we're trying to find the relationship name of
 function ls_getRelName( $inFromID, $inToID ) {
     if( $inFromID == $inToID ) {
         return "";
         }
+
+    $male = ls_getMale( $inToID );
+
+
+    
+    $fromLine = ls_getLineage( $inFromID );
+    
+    $parIndex = array_search( $inToID, $fromLine );
+
+    if( $parIndex != FALSE ) {
+        $rootWord = "Mother";
+        if( $male ) {
+            $rootWord = "Father";
+            }
+        if( $parIndex > 1 ) {
+            $rootWord = "Grand" . strtolower( $rootWord );
+            }
+        $numGreats = $parIndex - 2;
+        for( $i=0; $i<$numGreats; $i++ ) {
+            $rootWord = "Great " . $rootWord;
+            }
+        return $rootWord;
+        }
+
+
+    
+    $toLine = ls_getLineage( $inToID );
+    
+    $parIndex = array_search( $inFromID, $toLine );
+
+    if( $parIndex != FALSE ) {
+        $rootWord = "Daughter";
+        if( $male ) {
+            $rootWord = "Son";
+            }
+        if( $parIndex > 1 ) {
+            $rootWord = "Grand" . strtolower( $rootWord );
+            }
+        $numGreats = $parIndex - 2;
+        for( $i=0; $i<$numGreats; $i++ ) {
+            $rootWord = "Great " . $rootWord;
+            }
+        return $rootWord;
+        }
+
+    // not direct descendents
+
+    // walk up and find shared ancestor
+
+    $sharedFromIndex = -1;
+
+    $sharedToIndex = -1;
+
+    $fromLineLen = count( $fromLine );
+    $toLineLen = count( $toLine );
+
+    for( $f=1; $f<$fromLineLen; $f++ ) {
+        $fromAncestor = $fromLine[$f];
+        
+        for( $t=1; $t<$toLineLen; $t++ ) {
+
+            if( $fromAncestor == $toLine[$t] ) {
+
+                $sharedFromIndex = $f;
+                $sharedToIndex = $t;
+                break;
+                }
+            }
+
+        if( $sharedFromIndex != -1 ) {
+            break;
+            }
+        }
+
+    if( $sharedFromIndex != -1 ) {
+        // some relationship
+
+        if( $sharedFromIndex == 1 && $sharedToIndex == 1 ) {
+            // sibs
+            $rootWord = "Sister";
+            
+            if( $male ) {
+                $rootWord = "Brother";
+                }
+            $fromBirthTime = ls_getBirthSecAgo( $inFromID );
+            $toBirthTime = ls_getBirthSecAgo( $inToID );
+
+            if( $fromBirthTime < $toBirthTime - 10 ) {
+                $rootWord = "Big $rootWord";
+                }
+            else if( $fromBirthTime > $toBirthTime + 10 ) {
+                $rootWord = "Little $rootWord";
+                }
+            else {
+                // close in age
+                $rootWord = "Twin $rootWord";
+
+                if( ls_getDisplayID( $inFromID ) ==
+                    ls_getDisplayID( $inToID ) ) {
+                    $rootWord = "Identical $rootWord";
+                    }
+                }
+            return $rootWord;
+            }
+
+        if( $sharedToIndex == 1 ) {
+            $rootWord = "Aunt";
+            if( $male ) {
+                $rootWord = "Uncle";
+                }
+            
+            $numGreats = $sharedFromIndex - 2;
+            for( $i=0; $i<$numGreats; $i++ ) {
+                $rootWord = "Great " . $rootWord;
+                }
+            return $rootWord;
+            }    
+
+        if( $sharedFromIndex == 1 ) {
+            $rootWord = "Niece";
+            if( $male ) {
+                $rootWord = "Nephew";
+                }
+            
+            $numGreats = $sharedToIndex - 2;
+            for( $i=0; $i<$numGreats; $i++ ) {
+                $rootWord = "Great " . $rootWord;
+                }
+            return $rootWord;
+            }    
+
+        // some kind of cousin
+
+        // shallowest determines cousin number
+        // diff determines removed number
+        $cousinNumber = $sharedToIndex;
+        if( $sharedFromIndex < $cousinNumber ) {
+            $cousinNumber = $sharedFromIndex;
+            }
+
+        $onesDigit = $cousinNumber % 10;
+
+        $numSuffix = "th";
+        if( $onesDigit == 1 ) {
+            $numSuffix = "st";
+            }
+        else if( $onesDigit == 2 ) {
+            $numSuffix = "nd";
+            }
+        else if( $onesDigit == 3 ) {
+            $numSuffix = "rd";
+            }
+
+        $cousinName = $cousinNumber . $numSuffix . " Cousin";
+
+        $numRemoved = abs( $sharedFromIndex - $sharedToIndex );
+
+        if( $numRemoved > 0 ) {
+            $cousinName = $cousinName . " " . $numRemoved . "x Removed";
+            }
+        
+        return $cousinName;
+        }
+    
+    
+
     
     return "No Relation";
     }
@@ -1246,9 +1511,12 @@ function ls_displayPerson( $inID, $inRelID, $inNoLink ) {
 
         
         echo "<br>\n$name<br>\n";
-        echo "$age $yearWord<br>\n";
-        $relName = ls_getRelName( $inID, $inRelID );
-        echo "$relName\n";
+        $relName = ls_getRelName( $inRelID, $inID );
+        if( $relName != "" ) {
+            echo "$relName<br>\n";
+            }
+        echo "$age $yearWord old<br>\n";
+        echo "$deathAgo ago\n";
         }
     
     }
@@ -1258,34 +1526,8 @@ function ls_displayPerson( $inID, $inRelID, $inNoLink ) {
 function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID, $inNoLinkID ) {
 
 
-    $full = array();
-    
-    if( in_array( $inCenterID, $inGenArray ) ) {
-        $count = count( $inGenArray ); 
-        $half = $count / 2;
+    $full = $inGenArray;
 
-        $before = array();
-        for( $i=0; $i<$half; $i++ ) {
-            if( $inGenArray[$i] != $inCenterID )
-                $before[] = $inGenArray[$i];
-            }
-
-        $after = array();
-        for( $i=$half; $i<$count; $i++ ) {
-            if( $inGenArray[$i] != $inCenterID )
-                $after[] = $inGenArray[$i];
-            }
-        
-        $full = array();
-        $full = array_merge( $full, $before );
-
-        $full[] = $inCenterID;
-        $full = array_merge( $full, $after );
-        }
-    else {
-        $full = $inGenArray;
-        }
-    
     echo "<table border=0 cellpadding=20><tr>\n";
     $count = count( $full );
 
