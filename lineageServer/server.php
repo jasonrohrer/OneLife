@@ -1247,6 +1247,65 @@ function ls_getLineage( $inFromID ) {
 
 
 
+
+function ls_getCousinNumberWord( $inCousinNumber ) {
+    switch( $inCousinNumber ) {
+        case 1:
+            return "First";
+        case 2:
+            return "Second";
+        case 3:
+            return "Third";
+        case 4:
+            return "Fourth";
+        case 5:
+            return "Fifth";
+        case 6:
+            return "Sixth";
+        case 7:
+            return "Seventh";
+        case 8:
+            return "Eigth";
+        case 9:
+            return "Ninth";
+        case 10:
+            return "Tenth";
+        }
+    
+    // else use short form
+    
+    $onesDigit = $inCousinNumber % 10;
+
+    $numSuffix = "th";
+    if( $onesDigit == 1 ) {
+        $numSuffix = "st";
+        }
+    else if( $onesDigit == 2 ) {
+            $numSuffix = "nd";
+        }
+    else if( $onesDigit == 3 ) {
+        $numSuffix = "rd";
+        }
+    
+    return $inCousinNumber . $numSuffix;
+    }
+
+
+function ls_getCousinRemovedWord( $inRemovedSteps ) {
+    switch( $inRemovedSteps ) {
+        case 1:
+            return "Once";
+        case 2:
+            return "Twice";
+        case 3:
+            return "Thrice";
+        }
+    return $inRemovedSteps . "x";
+    }
+
+
+
+
 // from is the person that we're taking the point of view of
 // to is the person that we're trying to find the relationship name of
 function ls_getRelName( $inFromID, $inToID ) {
@@ -1392,6 +1451,7 @@ function ls_getRelName( $inFromID, $inToID ) {
         if( $sharedFromIndex < $cousinNumber ) {
             $cousinNumber = $sharedFromIndex;
             }
+        $cousinNumber -= 1;
 
         $onesDigit = $cousinNumber % 10;
 
@@ -1406,12 +1466,13 @@ function ls_getRelName( $inFromID, $inToID ) {
             $numSuffix = "rd";
             }
 
-        $cousinName = $cousinNumber . $numSuffix . " Cousin";
+        $cousinName = ls_getCousinNumberWord( $cousinNumber ) . " Cousin";
 
         $numRemoved = abs( $sharedFromIndex - $sharedToIndex );
 
         if( $numRemoved > 0 ) {
-            $cousinName = $cousinName . " " . $numRemoved . "x Removed";
+            $cousinName = $cousinName . "<br>(" .
+                ls_getCousinRemovedWord( $numRemoved ) . " Removed)";
             }
         
         return $cousinName;
