@@ -22,6 +22,10 @@ Version 92    ???
 --Client now displays Big and Little words for siblings, and also detects twin
   status (including identical).
 
+--Client shows A,B,C,...AA, AB,... labels for varible objects and ? label for
+  base object (like for locks after restart).
+
+
 
 
 
@@ -75,6 +79,8 @@ Server Fixes:
 --Support for categories in cross-transitions (where actor ends up on ground as
   newTarget or target ends up in hand as newActor).
 
+--Server now hides ID of locked objects from the client by replacing it with
+  the parent ID for that variable object.
 
 
 

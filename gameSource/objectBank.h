@@ -289,6 +289,8 @@ typedef struct ObjectRecord {
         char isVariableDummy;
         int variableDummyParent;
 
+        char isVariableHidden;
+
     } ObjectRecord;
 
 
@@ -684,6 +686,12 @@ void setupSpriteUseVis( ObjectRecord *inObject, int inUsesRemaining,
 
 
 char bothSameUseParent( int inAObjectID, int inBObjectID );
+
+
+
+// processes object ID for client consumption
+// hiding hidden variable object ids behind parent ID
+int hideIDForClient( int inObjectID );
 
 
 #endif

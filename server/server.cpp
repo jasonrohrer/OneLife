@@ -1898,15 +1898,19 @@ double intDist( int inXA, int inYA, int inXB, int inYB ) {
 
 
 char *getHoldingString( LiveObject *inObject ) {
+    
+    int holdingID = hideIDForClient( inObject->holdingID );    
+
+
     if( inObject->numContained == 0 ) {
-        return autoSprintf( "%d", inObject->holdingID );
+        return autoSprintf( "%d", holdingID );
         }
 
     
     SimpleVector<char> buffer;
     
 
-    char *idString = autoSprintf( "%d", inObject->holdingID );
+    char *idString = autoSprintf( "%d", holdingID );
     
     buffer.appendElementString( idString );
     
@@ -1916,8 +1920,9 @@ char *getHoldingString( LiveObject *inObject ) {
     if( inObject->numContained > 0 ) {
         for( int i=0; i<inObject->numContained; i++ ) {
             
-            char *idString = autoSprintf( ",%d", 
-                                          abs( inObject->containedIDs[i] ) );
+            char *idString = autoSprintf( 
+                ",%d", 
+                hideIDForClient( abs( inObject->containedIDs[i] ) ) );
     
             buffer.appendElementString( idString );
     
@@ -1928,7 +1933,9 @@ char *getHoldingString( LiveObject *inObject ) {
                     
                     idString = autoSprintf( 
                         ":%d", 
-                        inObject->subContainedIDs[i].getElementDirect( s ) );
+                        hideIDForClient( 
+                            inObject->subContainedIDs[i].
+                            getElementDirect( s ) ) );
     
                     buffer.appendElementString( idString );
                 

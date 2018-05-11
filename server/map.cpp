@@ -4286,15 +4286,17 @@ unsigned char *getChunkMessage( int inStartX, int inStartY,
         
 
         char *cell = autoSprintf( "%d:%d:%d", chunkBiomes[i],
-                                  chunkFloors[i], chunk[i] );
+                                  hideIDForClient( chunkFloors[i] ), 
+                                  hideIDForClient( chunk[i] ) );
         
         chunkDataBuffer.appendArray( (unsigned char*)cell, strlen(cell) );
         delete [] cell;
 
         if( containedStacks[i] != NULL ) {
             for( int c=0; c<containedStackSizes[i]; c++ ) {
-                char *containedString = autoSprintf( ",%d", 
-                                                     containedStacks[i][c] );
+                char *containedString = 
+                    autoSprintf( ",%d", 
+                                 hideIDForClient( containedStacks[i][c] ) );
         
                 chunkDataBuffer.appendArray( (unsigned char*)containedString, 
                                              strlen( containedString ) );
@@ -4306,7 +4308,8 @@ unsigned char *getChunkMessage( int inStartX, int inStartY,
                         
                         char *subContainedString = 
                             autoSprintf( ":%d", 
-                                         subContainedStacks[i][c][s] );
+                                         hideIDForClient( 
+                                             subContainedStacks[i][c][s] ) );
         
                         chunkDataBuffer.appendArray( 
                             (unsigned char*)subContainedString, 
@@ -4837,16 +4840,19 @@ MapChangeRecord getMapChangeRecord( ChangePosition inPos ) {
     SimpleVector<char> buffer;
     
 
-    char *header = autoSprintf( "%%d %%d %d ",
-                                getMapFloor( inPos.x, inPos.y ) );
+    char *header = autoSprintf( "%%d %%d %d ", 
+                                hideIDForClient( 
+                                    getMapFloor( inPos.x, inPos.y ) ) );
     
     buffer.appendElementString( header );
     
     delete [] header;
     
 
-    char *idString = autoSprintf( "%d", getMapObjectNoLook( inPos.x,
-                                                            inPos.y ) );
+    char *idString = autoSprintf( "%d", 
+                                  hideIDForClient( 
+                                      getMapObjectNoLook( 
+                                          inPos.x, inPos.y ) ) );
     
     buffer.appendElementString( idString );
     
@@ -4866,7 +4872,7 @@ MapChangeRecord getMapChangeRecord( ChangePosition inPos ) {
             
             }
         
-        char *idString = autoSprintf( ",%d", contained[i] );
+        char *idString = autoSprintf( ",%d", hideIDForClient( contained[i] ) );
         
         buffer.appendElementString( idString );
         
@@ -4879,7 +4885,9 @@ MapChangeRecord getMapChangeRecord( ChangePosition inPos ) {
                                                     &numSubContained,
                                                     i + 1 );
             for( int s=0; s<numSubContained; s++ ) {
-                idString = autoSprintf( ":%d", subContained[s] );
+
+                idString = autoSprintf( ":%d", 
+                                        hideIDForClient( subContained[s] ) );
         
                 buffer.appendElementString( idString );
         
