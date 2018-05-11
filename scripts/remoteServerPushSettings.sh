@@ -15,11 +15,11 @@ read
 while read user server port
 do
   echo "  Running pushing settings to $server"
-  scp -n ~/checkout/OneLife/server/settings/statsServerSharedSecret.ini ~/checkout/OneLife/server/settings/statsServerURL.ini ~/checkout/OneLife/server/settings/useStatsServer.ini ~/checkout/OneLife/server/settings/lineageServerSharedSecret.ini ~/checkout/OneLife/server/settings/lineageServerURL.ini ~/checkout/OneLife/server/settings/useLineageServer.ini ~/checkout/OneLife/server/settings/reflectorSharedSecret.ini $user@$server:checkout/OneLife/server/settings/
+  scp ~/checkout/OneLife/server/settings/statsServerSharedSecret.ini ~/checkout/OneLife/server/settings/statsServerURL.ini ~/checkout/OneLife/server/settings/useStatsServer.ini ~/checkout/OneLife/server/settings/lineageServerSharedSecret.ini ~/checkout/OneLife/server/settings/lineageServerURL.ini ~/checkout/OneLife/server/settings/useLineageServer.ini ~/checkout/OneLife/server/settings/reflectorSharedSecret.ini $user@$server:checkout/OneLife/server/settings/
 
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
 echo "" 
-echo "Done running git pull on all servers."
+echo "Done pushing settings to all servers."
 echo ""
