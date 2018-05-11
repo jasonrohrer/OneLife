@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 92    ???
+Version 95    2018-May-11
 
 --Fixed some transition hints.  New transition system leaves some lastUse
   transtions in place that aren't used by server.  Client shouldn't show these

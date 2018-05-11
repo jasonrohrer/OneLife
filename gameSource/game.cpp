@@ -1,4 +1,4 @@
-int versionNumber = 90;
+int versionNumber = 95;
 int dataVersionNumber = 0;
 
 // NOTE that OneLife doesn't use account hmacs
