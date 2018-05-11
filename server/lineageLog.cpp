@@ -16,7 +16,6 @@
 static char useLineageServer = false;
 
 static char *lineageServerURL = NULL;
-static char *lineageServerSharedSecret = NULL;
 
 static char *serverID = NULL;
 
@@ -50,9 +49,6 @@ void initLineageLog() {
         getStringSetting( "lineageServerURL", 
                           "http://localhost/jcr13/reviewServer/server.php" );
     
-    lineageServerSharedSecret = 
-        SettingsManager::getStringSetting( "lineageServerSharedSecret", 
-                                           "secret_phrase" );
 
     serverID = SettingsManager::getStringSetting( "serverID", "testServer" );
     }
@@ -66,10 +62,6 @@ void freeLineageLog() {
         lineageServerURL = NULL;
         }
     
-    if( lineageServerSharedSecret != NULL ) {
-        delete [] lineageServerSharedSecret;
-        lineageServerSharedSecret = NULL;
-        }
 
     if( serverID != NULL ) {
         delete [] serverID;
@@ -175,9 +167,17 @@ void stepLineageLog() {
 
                     char *seqString = autoSprintf( "%d", r->sequenceNumber );
                     
+                    char *lineageServerSharedSecret = 
+                        SettingsManager::getStringSetting( 
+                            "lineageServerSharedSecret", 
+                            "secret_phrase" );
+
+
                     char *hash = hmac_sha1( lineageServerSharedSecret,
                                             seqString );
                     
+                    delete [] lineageServerSharedSecret;
+
                     delete [] seqString;
                     
                     char *encodedEmail = URLUtils::urlEncode( r->email );
