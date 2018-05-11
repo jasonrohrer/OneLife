@@ -936,6 +936,29 @@ function ls_getBirthSecAgo( $inLifeID ) {
 
 
 
+function ls_getDeathSecAgo( $inLifeID ) {
+    global $tableNamePrefix;
+
+    $query = "SELECT death_time FROM $tableNamePrefix"."lives ".
+        "WHERE id = '$inLifeID';";
+    
+    $result = ls_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows < 1 ) {
+        return 0;
+        }
+
+    $deathAgoSec =
+        strtotime( "now" ) -
+        strtotime( ls_mysqli_result( $result, 0, "death_time" ) );
+  
+    return $deathAgoSec;
+    }
+
+
+
 
 function ls_getDisplayID( $inLifeID ) {
     global $tableNamePrefix;
@@ -1251,14 +1274,22 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
         $generation = ls_mysqli_result( $result, $i, "generation" );
         $death_time = ls_mysqli_result( $result, $i, "death_time" );
 
-        $deathAgo = ls_secondsToAgeSummary( strtotime( "now" ) -
-                                            strtotime( $death_time ) );
+
+        $deathAgoSec = strtotime( "now" ) -
+            strtotime( $death_time );
+        
+        $deathAgo = ls_secondsToAgeSummary( $deathAgoSec );
         
         if( $generation == -1 ) {
             $generation = ls_getGeneration( $id );
             }
         if( $generation == -1 ) {
-            $generation = "Mother still living";
+            if( $deathAgoSec >= 3600 ) {
+                $generation = "Ancestor unknown";
+                }
+            else {
+                $generation = "Mother still living";
+                }
             }
         else {
             $generation = "Generation: $generation";
@@ -1691,7 +1722,12 @@ function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID, $inFullWords ) {
         $genString;
 
         if( $gen == -1 ) {
-            $genString = "Generation ? (Mother still living):";
+            if( ls_getDeathSecAgo( $full[0] ) >= 3600 ) {
+                $genString = "Generation ? (Ancestor unknown):";
+                }
+            else {
+                $genString = "Generation ? (Mother still living):";
+                }
             }
         else {
             $genString = "Generation $gen:";
