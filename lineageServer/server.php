@@ -1413,6 +1413,14 @@ function ls_getRelName( $inFromID, $inToID ) {
             }
         }
 
+    if( $sharedFromIndex == -1 && $sharedToIndex == -1 &&
+        ls_getParentID( $inFromID ) == ls_getParentID( $inToID ) ) {
+        // same parent, but parent not dead yet
+        $sharedFromIndex = 1;
+        $sharedToIndex = 1;
+        }
+    
+    
     if( $sharedFromIndex != -1 ) {
         // some relationship
 
