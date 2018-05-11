@@ -1255,6 +1255,21 @@ function ls_frontPage() {
 
 
 
+function ls_getGrayPercent( $inDeathAgoSec ) {
+    // full gray in 7 hours, starting after 2 hours
+    $grayPercent = floor( 20 * ( ( $inDeathAgoSec - 2 * 3600 ) / 3600 ) );
+    
+    if( $grayPercent > 100 ) {
+        $grayPercent = 100;
+        }
+    else if( $grayPercent < 0 ) {
+        $grayPercent = 0;
+        }
+    return $grayPercent;
+    }
+
+
+
 function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
     global $tableNamePrefix;
 
@@ -1317,11 +1332,14 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
         
         $faceURL = ls_getFaceURLForAge( $age, $display_id );
 
+        $grayPercent = ls_getGrayPercent( $deathAgoSec );
+        
         echo "<td></td>";
         
         echo "<td>".
             "$charLinkA<img src='$faceURL' ".
-            "width=100 height=98 border=0></a></td>";
+            "width=100 height=98 border=0 ".
+            "style='-webkit-filter:sepia($grayPercent%);'></a></td>";
 
         echo "<td>$name</td>";
         echo "<td>$age $yearWord old</td>";
@@ -1659,8 +1677,12 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
         $generation = ls_mysqli_result( $result, 0, "generation" );
         $death_time = ls_mysqli_result( $result, 0, "death_time" );
 
-        $deathAgo = ls_secondsToAgeSummary( strtotime( "now" ) -
-                                            strtotime( $death_time ) );
+
+
+        $deathAgoSec = strtotime( "now" ) -
+            strtotime( $death_time );
+        
+        $deathAgo = ls_secondsToAgeSummary( $deathAgoSec );
 
 
         $age = floor( $age );
@@ -1670,9 +1692,12 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
 
         echo "<a href='server.php?action=character_page&".
             "id=$id&rel_id=$inRelID'>";
+
+        $grayPercent = ls_getGrayPercent( $deathAgoSec );
         
         echo "<img src='$faceURL' ".
-            "width=100 height=98 border=0>";
+            "width=100 height=98 border=0 ".
+            "style='-webkit-filter:sepia($grayPercent%);'>";
 
         echo "</a>";
         
