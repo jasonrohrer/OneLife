@@ -72,6 +72,9 @@ Server Fixes:
   Thus, trips to a monument can be trans-generational (parent can die along
   the way and baby can continue).
 
+--Support for categories in cross-transitions (where actor ends up on ground as
+  newTarget or target ends up in hand as newActor).
+
 
 
 

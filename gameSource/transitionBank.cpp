@@ -343,6 +343,12 @@ void initTransBankFinish() {
                         if( newActor == parentID ) {
                             newActor = oID;
                             }
+                        else if( newTarget == parentID ) {
+                            // cross-case
+                            // actor left on ground in place of target
+                            newTarget = oID;
+                            }
+                        
                         // don't write to disk
                         addTrans( actor, target, newActor, newTarget,
                                   tr->lastUseActor,
@@ -372,6 +378,11 @@ void initTransBankFinish() {
                         target = oID;
                         if( newTarget == parentID ) {
                             newTarget = oID;
+                            }
+                        else if( newActor == parentID ) {
+                            // cross-case
+                            // target ends up in hand
+                            newActor = oID;
                             }
                         
                         // don't write to disk
