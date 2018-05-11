@@ -1216,8 +1216,12 @@ function ls_frontPage() {
             $generation = ls_getGeneration( $id );
             }
         if( $generation == -1 ) {
-            $generation = "?";
+            $generation = "Mother still living";
             }
+        else {
+            $generation = "Generation: $generation";
+            }
+        
         $age = floor( $age );
 
         $yearWord = "years";
@@ -1240,7 +1244,7 @@ function ls_frontPage() {
 
         echo "<td>$name</td>";
         echo "<td>$age $yearWord old</td>";
-        echo "<td>Generation: $generation</td>";
+        echo "<td>$generation</td>";
         echo "<td>Died $deathAgo ago</td>";
 
         echo "</tr>";
@@ -1634,7 +1638,16 @@ function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID, $inFullWords ) {
     if( $count > 0 ) {
         $gen = ls_getGeneration( $full[0] );
 
-        echo "<center><font size=5>Generation $gen:</font></center>\n";
+        $genString;
+
+        if( $gen == -1 ) {
+            $genString = "Generation ? (Mother still living):";
+            }
+        else {
+            $genString = "Generation $gen:";
+            }
+        
+        echo "<center><font size=5>$genString</font></center>\n";
         }
     
     
