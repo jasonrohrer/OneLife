@@ -362,6 +362,11 @@ typedef struct LiveObject {
 
         timeSec_t lastRegionLookTime;
         
+        char monumentPosSet;
+        GridPos lastMonumentPos;
+        int lastMonumentID;
+        char monumentPosSent;
+        
     } LiveObject;
 
 
@@ -3392,8 +3397,10 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.babyIDs = new SimpleVector<int>();
     
     newObject.birthCoolDown = 0;
-                
-                
+    
+    newObject.monumentPosSet = false;
+    newObject.monumentPosSent = true;
+    
                 
     for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
         newObject.heatMap[i] = 0;
@@ -3414,6 +3421,15 @@ void processLoggedInPlayer( Socket *inSock,
 
         // mother
         newObject.lineage->push_back( newObject.parentID );
+
+        // inherit last heard monument, if any, from parent
+        newObject.monumentPosSet = parent->monumentPosSet;
+        newObject.lastMonumentPos = parent->lastMonumentPos;
+        newObject.lastMonumentID = parent->lastMonumentID;
+        if( newObject.monumentPosSet ) {
+            newObject.monumentPosSent = false;
+            }
+        
         
         for( int i=0; 
              i < parent->lineage->size() && 
@@ -4347,6 +4363,13 @@ void monumentStep() {
         for( int i=0; i<players.size(); i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
             if( !nextPlayer->error ) {
+                
+                // remember it to tell babies about it
+                nextPlayer->monumentPosSet = true;
+                nextPlayer->lastMonumentPos.x = monumentCallX;
+                nextPlayer->lastMonumentPos.y = monumentCallY;
+                nextPlayer->lastMonumentID = monumentCallID;
+                nextPlayer->monumentPosSent = true;
                 
                 char *message = autoSprintf( "MN\n%d %d %d\n#", 
                                              monumentCallX -
@@ -9641,6 +9664,34 @@ int main() {
             else {
                 // this player has first message, ready for updates/moves
                 
+
+                if( nextPlayer->monumentPosSet && 
+                    ! nextPlayer->monumentPosSent &&
+                    computeAge( nextPlayer ) > 0.5 ) {
+                    
+                    // they learned about a monument from their mother
+                    
+                    // wait until they are half a year old to tell them
+                    // so they have a chance to load the sound first
+                    
+                    char *monMessage = 
+                        autoSprintf( "MN\n%d %d %d\n#", 
+                                     nextPlayer->lastMonumentPos.x -
+                                     nextPlayer->birthPos.x, 
+                                     nextPlayer->lastMonumentPos.y -
+                                     nextPlayer->birthPos.y,
+                                     nextPlayer->lastMonumentID );
+                    
+                    sendMessageToPlayer( nextPlayer, monMessage, 
+                                         strlen( monMessage ) );
+                    
+                    nextPlayer->monumentPosSent = true;
+                    
+                    delete [] monMessage;
+                    }
+
+                
+
                 int playerXD = nextPlayer->xd;
                 int playerYD = nextPlayer->yd;
                 

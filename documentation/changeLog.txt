@@ -68,6 +68,12 @@ Server Fixes:
 
 --Server now sends lineage info to lineageServer upon player death.
 
+--Baby inherits the last-heard monument call from parent at 0.5 years old.
+  Thus, trips to a monument can be trans-generational (parent can die along
+  the way and baby can continue).
+
+
+
 
 
 Version 90    2018-May-3 
