@@ -36,7 +36,7 @@
 #define NUM_CLOTHING_CHECKBOXES 5
 
 // baby, toddler, teen, adult
-#define NUM_FACES_STEPS 4
+#define NUM_FACES_STEPS 6
 
 
 
@@ -256,6 +256,10 @@ class EditorObjectPage : public GamePage, public ActionListener {
         SpriteHandle mFaceFrameMaskSprite;
         SpriteHandle mFaceFrameBackgroundSprite;
         
+        Image *mFaceFrameImage;
+        Image *mFaceFrameMaskImage;
+        
+
 
         int mPickedObjectLayer;
         int mPickedSlot;

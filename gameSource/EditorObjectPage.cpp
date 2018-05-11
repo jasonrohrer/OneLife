@@ -21,7 +21,7 @@
 
 
 
-static double faceStepAges[NUM_FACES_STEPS] = { 0.5, 4, 14, 30 };
+static double faceStepAges[NUM_FACES_STEPS] = { 0.4, 4, 14, 30, 40, 55 };
 
 
 
@@ -213,7 +213,9 @@ EditorObjectPage::EditorObjectPage()
           mFaceFrameSprite( loadSprite( "faceFrame.tga" ) ),
           mFaceFrameMaskSprite( loadSprite( "faceFrameMask.tga" ) ),
           mFaceFrameBackgroundSprite( 
-              loadSprite( "faceFrameBackground.tga" ) ) {
+              loadSprite( "faceFrameBackground.tga" ) ),
+          mFaceFrameImage( readTGAFile( "faceFrame.tga" ) ),
+          mFaceFrameMaskImage( readTGAFile( "faceFrameMask.tga" ) ) {
 
 
     mDragging = false;
@@ -736,6 +738,9 @@ EditorObjectPage::~EditorObjectPage() {
     freeSprite( mFaceFrameMaskSprite );
     freeSprite( mFaceFrameBackgroundSprite );
     
+    delete mFaceFrameImage;
+    delete mFaceFrameMaskImage;
+
 
     for( int i=0; i<NUM_OBJECT_CHECKBOXES; i++ ) {
         delete mCheckboxes[i];
@@ -3632,8 +3637,58 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         setDrawColor( 1, 1, 1, 1 );
         drawSprite( mFaceFrameSprite, framePos );
 
+        int w = 100;
+        int h = 98;
+        
         Image *im = getScreenRegion( framePos.x - 51, framePos.y - 49,
-                                   100, 98 );
+                                   w, h );
+        
+        
+        Image *transImage = im->generateAlphaChannel();
+
+        delete im;
+        
+        double *a = transImage->getChannel( 3 );
+        
+        int numPixels = w * h;
+        for( int i=0; i<numPixels; i++ ) {
+            a[i] = 0;
+            }
+        
+        int fW = mFaceFrameImage->getWidth();
+        int fH = mFaceFrameImage->getHeight();
+        
+        double *fA = mFaceFrameImage->getChannel( 3 );
+
+
+        int fmW = mFaceFrameMaskImage->getWidth();
+        int fmH = mFaceFrameMaskImage->getHeight();
+        
+        double *fmA = mFaceFrameMaskImage->getChannel( 3 );
+
+        for( int y=0; y<h; y++ ) {
+            int cY = y - 49;
+            int fY = cY + fH/2;
+            int fmY = cY + fmH/2;
+
+            for( int x=0; x<w; x++ ) {
+                int i = y * w + x;
+
+                int cX = x - 51;
+
+                int fX = cX + fW/2;                
+                int fI = fY * fW + fX;
+
+                int fmX = cX + fmW/2;
+                int fmI = fmY * fmW + fmX;
+
+                a[i] = fA[ fI ];
+                if( fmA[ fmI ] > a[i] ) {
+                    a[i] = fmA[ fmI ];
+                    }
+                }
+            }
+        
         
         
         char *name = autoSprintf( "faces/face_%d_%d.png",
@@ -3645,10 +3700,10 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         File outFile( NULL, name );
         FileOutputStream outStream( &outFile );
         
-        pngConv.formatImage( im, &outStream );
+        pngConv.formatImage( transImage, &outStream );
 
         delete [] name;
-        delete im;
+        delete transImage;
         
 
         mFacesStep++;
