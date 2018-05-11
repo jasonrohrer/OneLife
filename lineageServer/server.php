@@ -1151,7 +1151,7 @@ function ls_frontPage() {
     $nameFilter = ls_requestFilter( "filter", "/[A-Z ]+/i", "" );
 
 
-    $filterClause = "";
+    $filterClause = " WHERE 1 ";
     $filter = "";
     
     if( $emailFilter != "" ) {
@@ -1163,19 +1163,7 @@ function ls_frontPage() {
         $filter = $nameFilter;
         }
 
-    global $tableNamePrefix, $usersPerPage;
-
-
-    $query = "SELECT lives.id, display_id, name, ".
-        "age, generation, death_time ".
-        "FROM $tableNamePrefix"."lives as lives ".
-        "INNER JOIN $tableNamePrefix"."users as users ".
-        "ON lives.user_id = users.id  $filterClause".
-        "ORDER BY death_time DESC ".
-        "LIMIT $usersPerPage;";
-    $result = ls_queryDatabase( $query );
     
-    $numRows = mysqli_num_rows( $result );
 
     global $header, $footer;
 
@@ -1198,6 +1186,60 @@ function ls_frontPage() {
     
     echo "<table border=0 cellpadding=20>";
 
+    global $usersPerPage;
+
+    $numPerList = floor( $usersPerPage / 4 );
+
+    echo "<tr><td colspan=6>".
+        "<font size=5>Recent Elder Deaths:</font></td></tr>\n";
+
+    ls_printFrontPageRows( "$filterClause AND age >= 50", "death_time DESC",
+                           $numPerList );
+
+ 
+    echo "<tr><td colspan=6><font size=5>Long Lines:</font></td></tr>\n";
+    
+    ls_printFrontPageRows( $filterClause, "generation DESC, death_time DESC",
+                           $numPerList );
+
+    
+    echo "<tr><td colspan=6>".
+        "<font size=5>Recent Adult Deaths:</font></td></tr>\n";
+
+    ls_printFrontPageRows( "$filterClause AND age >= 20 AND age < 50",
+                           "death_time DESC",
+                           $numPerList );
+
+
+    echo "<tr><td colspan=6>".
+        "<font size=5>Recent Youth Deaths:</font></td></tr>\n";
+    
+    ls_printFrontPageRows( "$filterClause AND age < 20", "death_time DESC",
+                           $numPerList );
+
+    
+    echo "</table></center>";
+    
+    
+    eval( $footer );
+    }
+
+
+
+function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
+    global $tableNamePrefix;
+
+
+    $query = "SELECT lives.id, display_id, name, ".
+        "age, generation, death_time ".
+        "FROM $tableNamePrefix"."lives as lives ".
+        "INNER JOIN $tableNamePrefix"."users as users ".
+        "ON lives.user_id = users.id  $inFilterClause ".
+        "ORDER BY $inOrderBy ".
+        "LIMIT $inNumRows;";
+    $result = ls_queryDatabase( $query );
+    
+    $numRows = mysqli_num_rows( $result );
     
     
     for( $i=0; $i<$numRows; $i++ ) {
@@ -1237,6 +1279,8 @@ function ls_frontPage() {
             "<a href='server.php?action=character_page&id=$id'>";
         
         $faceURL = ls_getFaceURLForAge( $age, $display_id );
+
+        echo "<td></td>";
         
         echo "<td>".
             "$charLinkA<img src='$faceURL' ".
@@ -1250,11 +1294,9 @@ function ls_frontPage() {
         echo "</tr>";
         }
 
-    echo "</table></center>";
-    
-    
-    eval( $footer );
     }
+
+
 
 
 
