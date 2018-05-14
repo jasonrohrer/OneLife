@@ -1450,8 +1450,18 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
 
 
 
+// cache in each run
+$lineageCache = array();
+
 // gets array from $inFromID up to Eve, or limited by $inLimit steps
 function ls_getLineage( $inFromID, $inLimit ) {
+    global $lineageCache;
+
+    if( in_array( $inFromID, $lineageCache ) ) {
+        return $lineageCache[ $inFromID ];
+        }
+    
+
     $line = array();
 
     $parentID = $inFromID;
@@ -1463,6 +1473,12 @@ function ls_getLineage( $inFromID, $inLimit ) {
         $parentID = ls_getParentLifeID( $parentID );
         $steps++;
         }
+
+    if( $inLimit > 10 ) {
+        // store long ones to re-use later
+        $lineageCache[ $inFromID ] = $line;
+        }
+    
     
     return $line;
     }
