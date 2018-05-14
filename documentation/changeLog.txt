@@ -11,6 +11,8 @@ Server Fixes:
 
 --Added Daily and Weekly long lines to family tree browser.
 
+--Family tree view now shows most ancient ancestor at top.
+
 
 
 

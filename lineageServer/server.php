@@ -1876,6 +1876,25 @@ function ls_characterPage() {
 
     echo "<center>\n";
 
+
+    $parent = ls_getParentLifeID( $id );
+    $ancestor = $parent;
+    $nextAncestor = $ancestor;
+
+    while( $nextAncestor != -1 ) {
+        $ancestor = $nextAncestor;
+        $nextAncestor = ls_getParentLifeID( $nextAncestor );
+        }
+
+    if( $ancestor != -1 && $ancestor != $parent ) {
+        $ancientGen = ls_getSiblings( $ancestor );
+        // ancestor in center
+        ls_displayGenRow( $ancientGen, ls_getParentLifeID( $ancestor ),
+                          $rel_id, false );
+
+        echo "<font size=5>...</font>\n";
+        }
+    
     
     $prevGen = ls_getPrevGen( $id );
     // parent in center
