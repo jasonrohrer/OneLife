@@ -13,6 +13,11 @@ Server Fixes:
 
 --Family tree view now shows most ancient ancestor at top.
 
+--More efficient relation computation for shallow relations in deep trees.
+  Cut-off of 100 generations when computing relations in deep trees (beyond
+  that, people become Distant Relatives) because it was getting too slow to
+  compute.
+
 
 
 

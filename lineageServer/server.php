@@ -1450,15 +1450,18 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
 
 
 
-// gets array from $inFromID up to Eve
-function ls_getLineage( $inFromID ) {
+// gets array from $inFromID up to Eve, or limited by $inLimit steps
+function ls_getLineage( $inFromID, $inLimit ) {
     $line = array();
 
     $parentID = $inFromID;
+
+    $steps = 0;
     
-    while( $parentID != -1 ) {
+    while( $parentID != -1 && $steps < $inLimit ) {
         $line[] = $parentID;
         $parentID = ls_getParentLifeID( $parentID );
+        $steps++;
         }
     
     return $line;
@@ -1527,7 +1530,7 @@ function ls_getCousinRemovedWord( $inRemovedSteps ) {
 
 // from is the person that we're taking the point of view of
 // to is the person that we're trying to find the relationship name of
-function ls_getRelName( $inFromID, $inToID ) {
+function ls_getRelName( $inFromID, $inToID, $inLimit ) {
     if( $inFromID == $inToID ) {
         return "";
         }
@@ -1536,7 +1539,7 @@ function ls_getRelName( $inFromID, $inToID ) {
 
 
     
-    $fromLine = ls_getLineage( $inFromID );
+    $fromLine = ls_getLineage( $inFromID, $inLimit );
     
     $parIndex = array_search( $inToID, $fromLine );
 
@@ -1557,7 +1560,7 @@ function ls_getRelName( $inFromID, $inToID ) {
 
 
     
-    $toLine = ls_getLineage( $inToID );
+    $toLine = ls_getLineage( $inToID, $inLimit );
     
     $parIndex = array_search( $inFromID, $toLine );
 
@@ -1803,7 +1806,22 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
 
         
         echo "<br>\n$name<br>\n";
-        $relName = ls_getRelName( $inRelID, $inID );
+
+        // most common case requires only a few steps
+        // don't walk all the way up unless we have to
+        $relName = ls_getRelName( $inRelID, $inID, 3 );
+
+        if( $relName == "" ) {
+            // allow more steps, but still don't walk all the way to
+            // the top of deep trees
+            $relName = ls_getRelName( $inRelID, $inID, 100 );
+
+            if( $relName == "" ) {
+                $relName = "Distant Relative";
+                }
+            }
+        
+
         if( $relName != "" ) {
             echo "$relName<br>\n";
             }
