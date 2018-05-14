@@ -1132,7 +1132,8 @@ function ls_logLife() {
         "age = '$age', ".
         "name = '$name', ".
         "male = '$male', ".
-        "last_words = '$last_words', ".
+        // double-quotes, because ' is an allowed character
+        "last_words = \"$last_words\", ".
         "generation = '$generation';";
     
     ls_queryDatabase( $query );

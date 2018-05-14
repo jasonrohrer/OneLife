@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes:
+
+--Fixed bug in lineage server that caused death to not get logged if last words
+  contained a single quote mark.
+
+
+
+
 Version 95    2018-May-11
 
 --Fixed some transition hints.  New transition system leaves some lastUse
