@@ -1226,12 +1226,15 @@ function ls_frontPage() {
     ls_printFrontPageRows( "$filterClause AND age >= 50", "death_time DESC",
                            $numPerList );
 
- 
-    echo "<tr><td colspan=6><font size=5>Long Lines:</font></td></tr>\n";
-    
-    ls_printFrontPageRows( $filterClause, "generation DESC, death_time DESC",
-                           $numPerList );
 
+    echo "<tr><td colspan=6><font size=5>Today's Long Lines:".
+        "</font></td></tr>\n";
+    
+    ls_printFrontPageRows(
+        "$filterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 DAY )",
+        "generation DESC, death_time DESC",
+        $numPerList );
+    
     
     echo "<tr><td colspan=6>".
         "<font size=5>Recent Adult Deaths:</font></td></tr>\n";
@@ -1247,6 +1250,26 @@ function ls_frontPage() {
     ls_printFrontPageRows( "$filterClause AND age < 20", "death_time DESC",
                            $numPerList );
 
+
+    
+    echo "<tr><td colspan=6><font size=5>This Week's Long Lines:".
+        "</font></td></tr>\n";
+    
+    ls_printFrontPageRows(
+        "$filterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 WEEK )",
+        "generation DESC, death_time DESC",
+        $numPerList );
+
+    
+
+    echo "<tr><td colspan=6><font size=5>All-Time Long Lines:".
+        "</font></td></tr>\n";
+    
+    ls_printFrontPageRows( $filterClause, "generation DESC, death_time DESC",
+                           $numPerList );
+
+
+    
     
     echo "</table></center>";
     

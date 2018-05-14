@@ -9,6 +9,8 @@ Server Fixes:
 --Fixed bug in lineage server that caused death to not get logged if last words
   contained a single quote mark.
 
+--Added Daily and Weekly long lines to family tree browser.
+
 
 
 
