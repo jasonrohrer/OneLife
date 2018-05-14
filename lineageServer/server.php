@@ -1811,12 +1811,12 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
         // don't walk all the way up unless we have to
         $relName = ls_getRelName( $inRelID, $inID, 3 );
 
-        if( $relName == "" ) {
+        if( $relName == "No Relation" ) {
             // allow more steps, but still don't walk all the way to
             // the top of deep trees
             $relName = ls_getRelName( $inRelID, $inID, 100 );
 
-            if( $relName == "" ) {
+            if( $relName == "No Relation" ) {
                 $relName = "Distant Relative";
                 }
             }
