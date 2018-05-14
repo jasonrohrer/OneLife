@@ -1,0 +1,11 @@
+// Add eve_life_id column
+
+ALTER TABLE lineageServer_lives ADD eve_life_id INT NOT NULL AFTER generation;
+
+UPDATE lineageServer_lives SET eve_life_id = -1;
+
+UPDATE lineageServer_lives SET eve_life_id = 0 where parent_id = -1;
+
+
+
+

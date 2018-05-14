@@ -323,7 +323,11 @@ function ls_setupDatabase() {
             "last_words VARCHAR(63) NOT NULL,".
             // -1 if not set yet
             // 0 for Eve
-            "generation INT NOT NULL );";
+            "generation INT NOT NULL,".
+            // -1 if not set yet
+            // 0 for Eve
+            // the Eve of this family line
+            "eve_life_id INT NOT NULL );";
 
         $result = ls_queryDatabase( $query );
 
@@ -820,6 +824,70 @@ function ls_getGeneration( $inLifeID ) {
 
 
 
+function ls_getEveID( $inLifeID ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT server_id, eve_life_id, parent_id ".
+        "FROM $tableNamePrefix"."lives ".
+        "WHERE id = '$inLifeID';";
+
+    $result = ls_queryDatabase( $query );
+
+    $eve_life_id = ls_mysqli_result( $result, 0, "eve_life_id" );
+    
+    if( $eve_life_id == -1 ) {
+
+        // compute it, if we can
+
+        $server_id = ls_mysqli_result( $result, 0, "server_id" );
+        $parent_id = ls_mysqli_result( $result, 0, "parent_id" );
+
+        
+        while( $parent_id != -1 ) {
+
+            $parent_life_id = ls_getLifeID( $server_id, $parent_id );
+            
+            if( $parent_life_id == -1 ) {
+                // parent hasn't died yet
+                break;
+                }
+            
+            $query = "SELECT id, eve_life_id, parent_id ".
+                "FROM $tableNamePrefix"."lives ".
+                "WHERE id = '$parent_life_id';";
+
+            $result = ls_queryDatabase( $query );
+
+            $parent_id = ls_mysqli_result( $result, 0, "parent_id" );
+            $eve_life_id = ls_mysqli_result( $result, 0, "eve_life_id" );
+
+            if( $eve_life_id == 0 || $parent_id == -1 ) {
+                // reached Eve
+                $eve_life_id = ls_mysqli_result( $result, 0, "id" );
+                break;
+                }
+            if( $eve_life_id > 0 ) {
+                // found an ancestor who is already marked with Eve
+                break;
+                }
+            }
+
+        if( $eve_life_id != -1 ) {
+            // found it
+            // save it
+
+            $query = "UPDATE $tableNamePrefix"."lives SET ".
+                "eve_life_id = '$eve_life_id' WHERE id = '$inLifeID';";
+            ls_queryDatabase( $query );
+            }
+        }
+
+    return $eve_life_id;
+    }
+
+
+
+
 // cannot be called if record doesn't exist yet
 function ls_getUserID( $inEmail ) {
     global $tableNamePrefix;
@@ -1113,11 +1181,13 @@ function ls_logLife() {
 
     // unknown until we are asked to compute it the first time
     $generation = -1;
+    $eve_life_id = -1;
     
     if( $parent_id == -1 ) {
         // Eve
         // we know it
         $generation = 1;
+        $eve_life_id = 0;
         }
     
     
@@ -1134,8 +1204,9 @@ function ls_logLife() {
         "male = '$male', ".
         // double-quotes, because ' is an allowed character
         "last_words = \"$last_words\", ".
-        "generation = '$generation';";
-    
+        "generation = '$generation'," .
+        "eve_life_id = '$eve_life_id';";
+
     ls_queryDatabase( $query );
     
     
@@ -1878,15 +1949,9 @@ function ls_characterPage() {
 
 
     $parent = ls_getParentLifeID( $id );
-    $ancestor = $parent;
-    $nextAncestor = $ancestor;
+    $ancestor = ls_getEveID( $id );
 
-    while( $nextAncestor != -1 ) {
-        $ancestor = $nextAncestor;
-        $nextAncestor = ls_getParentLifeID( $nextAncestor );
-        }
-
-    if( $ancestor != -1 && $ancestor != $parent ) {
+    if( $ancestor > 0 && $ancestor != $parent ) {
         $ancientGen = ls_getSiblings( $ancestor );
         // ancestor in center
         ls_displayGenRow( $ancientGen, ls_getParentLifeID( $ancestor ),
