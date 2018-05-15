@@ -180,10 +180,6 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
 
 // killer email NULL if died of natural causes
 void logDeath( int inPlayerID, char *inPlayerEmail,
-               int inParentID,
-               int inDisplayID,
-               char *inName,
-               char *inLastSay,
                char inEve,
                double inAge,
                int inSecPlayed,
@@ -195,13 +191,6 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
     
     recordPlayerLifeStats( inPlayerEmail, inSecPlayed );
     
-    recordPlayerLineage( inPlayerEmail, inAge,
-                         inPlayerID, inParentID, inDisplayID,
-                         inKillerID,
-                         inName,
-                         inLastSay,
-                         inIsMale );
-
     if( inEve ) {
         
         mapEveDeath( inPlayerEmail, inAge );

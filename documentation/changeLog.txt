@@ -18,7 +18,14 @@ Server Fixes:
   that, people become Distant Relatives) because it was getting too slow to
   compute.
 
---Fixed family tree to show '1 second" instead of '1 seconds'.
+--Fixed family tree to show '1 second' instead of '1 seconds'.
+
+--Fixed so that murdered person's last words shown correctly in family tree,
+  and so that a murdered person who starves to death before dying isn't logged
+  twice.
+
+--Server now sends non-human death-source ID to lineage server (snake, etc).
+
 
 
 

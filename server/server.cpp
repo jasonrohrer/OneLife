@@ -279,6 +279,9 @@ typedef struct LiveObject {
         // and what original weapon killed them?
         int murderSourceID;
         char holdingWound;
+
+        // or if they were killed by a non-person, what was it?
+        int deathSourceID;
         
 
         Socket *sock;
@@ -3376,6 +3379,9 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.murderSourceID = 0;
     newObject.holdingWound = false;
     
+    newObject.deathSourceID = 0;
+    
+
     newObject.sock = inSock;
     newObject.sockBuffer = inSockBuffer;
     newObject.isNew = true;
@@ -5301,7 +5307,9 @@ int main() {
                     setDeathReason( nextPlayer, 
                                     "killed",
                                     curOverID );
-
+                    
+                    nextPlayer->deathSourceID = curOverID;
+                    
                     nextPlayer->error = true;
                     nextPlayer->errorCauseString =
                         "Player killed by permanent object";
@@ -6094,10 +6102,6 @@ int main() {
                                         
                                             logDeath( hitPlayer->id,
                                                       hitPlayer->email,
-                                                      hitPlayer->parentID,
-                                                      hitPlayer->displayID,
-                                                      hitPlayer->name,
-                                                      hitPlayer->lastSay,
                                                       hitPlayer->isEve,
                                                       computeAge( hitPlayer ),
                                                       getSecondsPlayed( 
@@ -7852,10 +7856,33 @@ int main() {
                     dropPos = 
                         computePartialMoveSpot( nextPlayer );
                     }
+                
+                // report to lineage server once here
+                double age = computeAge( nextPlayer );
+                
+                int killerID = -1;
+                if( nextPlayer->murderSourceID > 0 ) {
+                    killerID = nextPlayer->murderSourceID;
+                    }
+                else if( nextPlayer->deathSourceID > 0 ) {
+                    // include as negative of ID
+                    killerID = - nextPlayer->deathSourceID;
+                    }
+                
+                
+                char male = ! getFemale( nextPlayer );
+                
+                recordPlayerLineage( nextPlayer->email, 
+                                     age,
+                                     nextPlayer->id,
+                                     nextPlayer->parentID,
+                                     nextPlayer->displayID,
+                                     killerID,
+                                     nextPlayer->name,
+                                     nextPlayer->lastSay,
+                                     male );
 
                 if( ! nextPlayer->deathLogged ) {
-                    double age = computeAge( nextPlayer );
-                    
                     char disconnect = true;
                     
                     if( age >= forceDeathAge ) {
@@ -7864,14 +7891,10 @@ int main() {
                     
                     logDeath( nextPlayer->id,
                               nextPlayer->email,
-                              nextPlayer->parentID,
-                              nextPlayer->displayID,
-                              nextPlayer->name,
-                              nextPlayer->lastSay,
                               nextPlayer->isEve,
-                              computeAge( nextPlayer ),
+                              age,
                               getSecondsPlayed( nextPlayer ),
-                              ! getFemale( nextPlayer ),
+                              male,
                               dropPos.x, dropPos.y,
                               players.size() - 1,
                               disconnect );
@@ -8789,19 +8812,17 @@ int main() {
                                 computePartialMoveSpot( decrementedPlayer );
                             }
                         
-                        logDeath( decrementedPlayer->id,
-                                  decrementedPlayer->email,
-                                  decrementedPlayer->parentID,
-                                  decrementedPlayer->displayID,
-                                  decrementedPlayer->name,
-                                  decrementedPlayer->lastSay,
-                                  decrementedPlayer->isEve,
-                                  computeAge( decrementedPlayer ),
-                                  getSecondsPlayed( decrementedPlayer ),
-                                  ! getFemale( decrementedPlayer ),
-                                  deathPos.x, deathPos.y,
-                                  players.size() - 1,
-                                  false );
+                        if( ! decrementedPlayer->deathLogged ) {    
+                            logDeath( decrementedPlayer->id,
+                                      decrementedPlayer->email,
+                                      decrementedPlayer->isEve,
+                                      computeAge( decrementedPlayer ),
+                                      getSecondsPlayed( decrementedPlayer ),
+                                      ! getFemale( decrementedPlayer ),
+                                      deathPos.x, deathPos.y,
+                                      players.size() - 1,
+                                      false );
+                            }
                         
                         if( shutdownMode ) {
                             handleShutdownDeath( decrementedPlayer,
