@@ -2075,6 +2075,9 @@ function ls_closeDatabase() {
  */
 function ls_secondsToTimeSummary( $inSeconds ) {
     if( $inSeconds < 120 ) {
+        if( $inSeconds == 1 ) {
+            return "$inSeconds second";
+            }
         return "$inSeconds seconds";
         }
     else if( $inSeconds < 3600 ) {
@@ -2099,6 +2102,9 @@ function ls_secondsToTimeSummary( $inSeconds ) {
  */
 function ls_secondsToAgeSummary( $inSeconds ) {
     if( $inSeconds < 120 ) {
+        if( $inSeconds == 1 ) {
+            return "$inSeconds second";
+            }
         return "$inSeconds seconds";
         }
     else if( $inSeconds < 3600 * 2 ) {

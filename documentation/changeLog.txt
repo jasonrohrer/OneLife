@@ -18,6 +18,8 @@ Server Fixes:
   that, people become Distant Relatives) because it was getting too slow to
   compute.
 
+--Fixed family tree to show '1 second" instead of '1 seconds'.
+
 
 
 
