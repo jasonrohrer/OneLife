@@ -8,4 +8,9 @@ UPDATE lineageServer_lives SET eve_life_id = 0 where parent_id = -1;
 
 
 
+ALTER TABLE lineageServer_lives ADD death_cause VARCHAR(254) NOT NULL AFTER killer_id;
+
+UPDATE lineageServer_lives SET death_cause = "";
+
+
 

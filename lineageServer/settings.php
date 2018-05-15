@@ -116,5 +116,9 @@ $footer = "include( \"../noCounterFooter.php\" );";
 $facesWebPath = "faces";
 
 
+// path in filesystem to object folder
+$objectsPath = "objects";
+
+
 
 ?>

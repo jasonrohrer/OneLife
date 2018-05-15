@@ -280,6 +280,9 @@ typedef struct LiveObject {
         int murderSourceID;
         char holdingWound;
 
+        // who killed them?
+        int murderPerpID;
+        
         // or if they were killed by a non-person, what was it?
         int deathSourceID;
         
@@ -3379,6 +3382,7 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.murderSourceID = 0;
     newObject.holdingWound = false;
     
+    newObject.murderPerpID = 0;
     newObject.deathSourceID = 0;
     
 
@@ -6078,6 +6082,10 @@ int main() {
                                         hitPlayer->murderSourceID =
                                             nextPlayer->holdingID;
                                         
+                                        hitPlayer->murderPerpID =
+                                            nextPlayer->id;
+                                        
+
                                         setDeathReason( hitPlayer, 
                                                         "killed",
                                                         nextPlayer->holdingID );
@@ -7861,8 +7869,8 @@ int main() {
                 double age = computeAge( nextPlayer );
                 
                 int killerID = -1;
-                if( nextPlayer->murderSourceID > 0 ) {
-                    killerID = nextPlayer->murderSourceID;
+                if( nextPlayer->murderPerpID > 0 ) {
+                    killerID = nextPlayer->murderPerpID;
                     }
                 else if( nextPlayer->deathSourceID > 0 ) {
                     // include as negative of ID

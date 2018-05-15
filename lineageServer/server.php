@@ -312,7 +312,14 @@ function ls_setupDatabase() {
             "INDEX( parent_id )," .
             // ID of player's killer on server
             // -1 if this player was not murdered
+            // -ID if player killed by a non-human object (like a snake)
             "killer_id INT NOT NULL," .
+            // string describing death, if not murder
+            // Starved
+            // Old Age
+            // Killed by Snake
+            // etc.
+            "death_cause VARCHAR(254) NOT NULL,".
             // object ID when player displayed in client
             "display_id INT UNSIGNED NOT NULL," .
             // age at time of death in years
@@ -1198,6 +1205,8 @@ function ls_logLife() {
         "player_id = '$player_id', ".
         "parent_id = '$parent_id', ".
         "killer_id = '$killer_id', ".
+        // generate this later, as-needed
+        "death_cause = '', ".
         "display_id = '$display_id', ".
         "age = '$age', ".
         "name = '$name', ".
@@ -1774,7 +1783,7 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
     global $tableNamePrefix;
 
     $query = "SELECT id, display_id, name, ".
-        "age, last_words, generation, death_time ".
+        "age, last_words, generation, death_time, death_cause ".
         "FROM $tableNamePrefix"."lives WHERE id=$inID;";
     
     $result = ls_queryDatabase( $query );
@@ -1790,6 +1799,7 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
         $age = ls_mysqli_result( $result, 0, "age" );
         $generation = ls_mysqli_result( $result, 0, "generation" );
         $death_time = ls_mysqli_result( $result, 0, "death_time" );
+        $death_cause = ls_mysqli_result( $result, 0, "death_cause" );
 
 
 
@@ -1857,6 +1867,19 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
                     }
                 }
             }
+
+        $deathHTML = $deathCause;
+
+        if( $deathHTML == "" ) {
+            $deathHTML = ls_getDeathHTML( $inID );
+            }
+
+        if( $deathHTML != "" ) {
+            echo "<br>\n";
+            echo "$deathHTML\n";
+            }
+
+            
         
         if( $last_words != "" ) {
             echo "<br>\n";
@@ -1920,6 +1943,105 @@ function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID, $inFullWords ) {
         }
     echo "</tr></table>\n";
     }
+
+
+
+
+function ls_getDeathHTML( $inID ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT age, killer_id, death_cause ".
+        "FROM $tableNamePrefix"."lives WHERE id=$inID;";
+    
+    $result = ls_queryDatabase( $query );
+    
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows == 0 ) {
+        return "";
+        }
+
+    $death_cause = ls_mysqli_result( $result, 0, "death_cause" );
+
+    if( $death_cause != "" ) {
+        return $death_cause;
+        }
+
+
+    $killer_id = ls_mysqli_result( $result, 0, "killer_id" );
+    $age = ls_mysqli_result( $result, 0, "age" );
+    
+    
+    if( $killer_id > 0 ) {
+        $query = "SELECT id, name ".
+            "FROM $tableNamePrefix"."lives WHERE player_id=$killer_id;";
+        
+        $result = ls_queryDatabase( $query );
+        
+        $numRows = mysqli_num_rows( $result );
+        
+        if( $numRows == 0 ) {
+            return "Murdered";
+            }
+
+        $id = ls_mysqli_result( $result, 0, "id" );
+        $name = ls_mysqli_result( $result, 0, "name" );        
+
+        return "Killed by <a href='server.php?action=character_page&".
+            "id=$id'>$name</a>";
+        }
+    else if( $killer_id <= -1 ) {
+
+        $deathString = "";
+        
+        if( $killer_id == -1 ) {
+            if( $age >= 60 ) {
+                $deathString = "Died of Old Age";
+                }
+            else {
+                $deathString = "Starved";
+                }
+            }
+        else {
+            global $objectsPath;
+
+            $objID = - $killer_id;
+
+            $fileName = $objectsPath . "/" . $objID . ".txt";
+
+            if( file_exists( $fileName ) ) {
+
+                $fh = fopen( $fileName, 'r');
+                $line = fgets( $fh );
+                if( $line != FALSE ) {
+                    // second line is description
+                    $line = fgets( $fh );
+                    if( $line != FALSE ) {
+                        $commentPos = strpos( $line, "#" );
+                        if( $commentPos != FALSE ) {
+                            $line = substr( $line, 0, $commentPos );
+                            }
+
+                        $deathString = "Killed by $line";
+                        }
+                    }
+                
+                fclose( $fh );
+                }
+            }
+        if( $deathString != "" ) {
+            // save it
+            
+            $query = "UPDATE $tableNamePrefix"."lives ".
+                "SET death_cause='$deathString' ".
+                "WHERE id=$inID;";
+            ls_queryDatabase( $query );
+            }
+        
+        return $deathString;
+        }
+    }
+
 
 
 

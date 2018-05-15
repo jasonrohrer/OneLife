@@ -12,3 +12,5 @@ cd ~/checkout/OneLifeData7
 git pull
 
 rsync faces/*.png ~/public_html/faces/
+
+rsync objects/*.txt ~/public_html/objects/
