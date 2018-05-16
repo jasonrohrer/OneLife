@@ -155,6 +155,9 @@ else if( $action == "front_page" ) {
 else if( $action == "character_page" ) {
     ls_characterPage();
     }
+else if( $action == "character_dump" ) {
+    ls_characterDump();
+    }
 else if( $action == "ls_setup" ) {
     global $setup_header, $setup_footer;
     echo $setup_header; 
@@ -2318,6 +2321,71 @@ function ls_characterPage() {
     eval( $footer );    
     }
 
+
+
+
+
+function ls_characterDump() {
+    global $tableNamePrefix;
+    
+    $id = ls_requestFilter( "id", "/[0-9]+/i", "0" );
+
+
+    if( $id > 0 ) {
+        $query = "SELECT * FROM $tableNamePrefix"."lives ".
+            "WHERE id = $id;";
+
+        $result = ls_queryDatabase( $query );
+
+        $numRows = mysqli_num_rows( $result );
+
+        if( $numRows == 1 ) {
+
+            $death_time = ls_mysqli_result( $result, 0, "death_time" );
+            $server_id = ls_mysqli_result( $result, 0, "server_id" );
+
+            $parent_id = ls_mysqli_result( $result, 0, "parent_id" );
+
+            $parentLifeID = -1;
+
+            if( $parent_id != -1 ) {
+                $parentLifeID = ls_getLifeID( $server_id, $parent_id );
+                }
+
+            $killer_id = ls_mysqli_result( $result, 0, "killer_id" );
+
+            $killerLifeID = -1;
+
+            if( $killer_id > 0 ) {
+                $killerLifeID = ls_getLifeID( $server_id, $killer_id );
+                }
+            
+            $death_cause = ls_mysqli_result( $result, 0, "death_cause" );
+
+            $display_id = ls_mysqli_result( $result, 0, "display_id" );
+
+            $name = ls_mysqli_result( $result, 0, "name" );
+
+            $age = ls_mysqli_result( $result, 0, "age" );
+            $last_words = ls_mysqli_result( $result, 0, "last_words" );
+            
+            $male = ls_mysqli_result( $result, 0, "male" );
+
+            $serverName = ls_getServerName( $server_id );
+
+            echo "death_time = $death_time\n";
+            echo "server_name = $serverName\n";
+            echo "parent_id = $parentLifeID\n";
+            echo "killer_id = $killerLifeID\n";
+            echo "death_cause = $death_cause\n";
+            echo "display_id = $display_id\n";
+            echo "name = $name\n";
+            echo "age = $age\n";
+            echo "last_words = $last_words\n";
+            echo "male = $male";
+            }        
+        }    
+    }
 
 
 

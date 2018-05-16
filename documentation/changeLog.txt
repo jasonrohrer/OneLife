@@ -31,6 +31,8 @@ Server Fixes:
 --Lineage server tracks and displays deepest descendant generation at bottom
   of family tree display.
 
+--Added character_dump api call to lineage server.
+
 
 
 
