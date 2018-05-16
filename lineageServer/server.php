@@ -334,7 +334,11 @@ function ls_setupDatabase() {
             // -1 if not set yet
             // 0 for Eve
             // the Eve of this family line
-            "eve_life_id INT NOT NULL );";
+            "eve_life_id INT NOT NULL,".
+            // both -1 if not set
+            // 0 if set and empty
+            "deepest_descendant_generation INT NOT NULL,".
+            "deepest_descendant_life_id INT NOT NULL );";
 
         $result = ls_queryDatabase( $query );
 
@@ -1213,13 +1217,96 @@ function ls_logLife() {
         "male = '$male', ".
         // double-quotes, because ' is an allowed character
         "last_words = \"$last_words\", ".
-        "generation = '$generation'," .
-        "eve_life_id = '$eve_life_id';";
+        "generation = '$generation', " .
+        "eve_life_id = '$eve_life_id', ".
+        "deepest_descendant_generation = -1, ".
+        "deepest_descendant_life_id = -1;";
 
     ls_queryDatabase( $query );
+
+    $life_id = ls_getLifeID( $server_id, $player_id );
+    $deepestInfo = ls_computeDeepestGeneration( $life_id );
+
+
+    $deepest_descendant_generation = $deepestInfo[0];
+    $deepest_descendant_life_id = $deepestInfo[1];
+
+    if( $deepest_descendant_generation <= 0 ) {
+
+        $deepest_descendant_generation = ls_getGeneration( $life_id );
+        $deepest_descendant_life_id = $life_id;
+        }
+    
+    
+    if( $deepest_descendant_generation > 0 ) {
+        // have generation info for this person
+
+        // walk up and set deepest generation for all ancestors
+
+        $parentLifeID = ls_getParentLifeID( $life_id );
+
+        if( $parentLifeID != -1 ) {
+            ls_setDeepestGenerationUp( $parentLifeID,
+                                       $deepest_descendant_generation,
+                                       $deepest_descendant_life_id );
+            }
+        }
     
     
     echo "OK";
+    }
+
+
+
+
+function ls_setDeepestGenerationUp( $inID,
+                                    $in_deepest_descendant_generation,
+                                    $in_deepest_descendant_life_id ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT parent_id, deepest_descendant_generation, ".
+        "deepest_descendant_life_id ".
+        "FROM $tableNamePrefix"."lives WHERE id=$inID;";
+    
+    $result = ls_queryDatabase( $query );
+    
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows == 0 ) {
+        return;
+        }
+
+    $deepest_descendant_generation =
+        ls_mysqli_result( $result, 0, "deepest_descendant_generation" );
+
+    $deepest_descendant_life_id =
+        ls_mysqli_result( $result, 0, "deepest_descendant_life_id" );
+
+    if( $in_deepest_descendant_generation > $deepest_descendant_generation ) {
+        // even deeper than last known
+
+        // set it
+
+        $query = "UPDATE $tableNamePrefix"."lives ".
+            "SET ".
+            "deepest_descendant_generation = ".
+            "  $in_deepest_descendant_generation, ".
+            "deepest_descendant_life_id = ".
+            "  $in_deepest_descendant_life_id ".
+            "WHERE id = $inID;";
+        
+        ls_queryDatabase( $query );
+
+        // propagate it up
+        $parentLifeID = ls_getParentLifeID( $inID );
+
+        if( $parentLifeID != -1 ) {
+            ls_setDeepestGenerationUp( $parentLifeID,
+                                       $in_deepest_descendant_generation,
+                                       $in_deepest_descendant_life_id );
+            }
+        }
+    
     }
 
 
@@ -2044,6 +2131,70 @@ function ls_getDeathHTML( $inID ) {
 
 
 
+// walks down tree
+// returns array  of
+// { deepest_descendant_generation, deepest_descendant_life_id }
+function ls_computeDeepestGeneration( $inID ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT deepest_descendant_generation, ".
+        "deepest_descendant_life_id ".
+        "FROM $tableNamePrefix"."lives WHERE id=$inID;";
+    
+    $result = ls_queryDatabase( $query );
+    
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows == 0 ) {
+        return array( -1, -1 );
+        }
+
+    $deepest_descendant_generation =
+        ls_mysqli_result( $result, 0, "deepest_descendant_generation" );
+
+    $deepest_descendant_life_id =
+        ls_mysqli_result( $result, 0, "deepest_descendant_life_id" );
+
+    if( $deepest_descendant_generation == -1 ) {
+
+        $deepest_descendant_generation = 0;
+        $deepest_descendant_life_id = 0;
+        
+        $nextGen = ls_getNextGen( $inID );
+
+        $numNext = count( $nextGen );
+
+        
+        if( $numNext > 0 ) {
+            $deepest_descendant_generation = ls_getGeneration( $nextGen[0] );
+            $deepest_descendant_life_id = $nextGen[0];
+            }
+        
+        for( $i=0; $i<$numNext; $i++ ) {
+            $next = $nextGen[$i];
+
+            $nextDeep = ls_computeDeepestGeneration( $next );
+
+            if( $nextDeep[0] > $deepest_descendant_generation ) {
+                $deepest_descendant_generation = $nextDeep[0];
+                $deepest_descendant_life_id = $nextDeep[1];
+                }
+            }
+
+        $query = "UPDATE $tableNamePrefix"."lives ".
+            "SET ".
+            "deepest_descendant_generation = $deepest_descendant_generation, ".
+            "deepest_descendant_life_id = $deepest_descendant_life_id ".
+            "WHERE id = $inID;";
+        
+        ls_queryDatabase( $query );  
+        }
+    
+    return array( $deepest_descendant_generation, $deepest_descendant_life_id );
+    }
+
+
+
 
 function ls_getParentLifeID( $inID ) {
     global $tableNamePrefix;
@@ -2059,8 +2210,14 @@ function ls_getParentLifeID( $inID ) {
         return -1;
         }
 
+    $parent_id = ls_mysqli_result( $result, 0, "parent_id" );
+
+    if( $parent_id == -1 ) {
+        return -1;
+        }
+    
     return ls_getLifeID( ls_mysqli_result( $result, 0, "server_id" ),
-                         ls_mysqli_result( $result, 0, "parent_id" ) );
+                         $parent_id );
     }
 
 
@@ -2132,6 +2289,30 @@ function ls_characterPage() {
     // no one needs to be in center of next gen
     ls_displayGenRow( $nextGen, -1, $rel_id, false );
 
+
+    if( count( $nextGen ) > 0 ) {
+        $gen = ls_getGeneration( $nextGen[0] );
+    
+        $deepestGenInfo = ls_computeDeepestGeneration( $id );
+        
+        $deepest_descendant_generation = $deepestGenInfo[0];
+        $deepest_descendant_life_id = $deepestGenInfo[1];
+        
+        if( $deepest_descendant_generation > 0 &&
+            $deepest_descendant_generation > $gen ) {
+
+            if( $deepest_descendant_generation > $gen + 1 ) {    
+                echo "<font size=5>...</font>\n";
+                }
+            
+            $deep_sibs = ls_getSiblings( $deepest_descendant_life_id );
+            // target in center and display full words for target
+            ls_displayGenRow( $deep_sibs, -1, $rel_id, false );
+            }
+        }
+    
+
+    
     echo "</center>\n";
 
     eval( $footer );    

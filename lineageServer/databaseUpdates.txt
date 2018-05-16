@@ -8,9 +8,22 @@ UPDATE lineageServer_lives SET eve_life_id = 0 where parent_id = -1;
 
 
 
+// add death_cause string
+
 ALTER TABLE lineageServer_lives ADD death_cause VARCHAR(254) NOT NULL AFTER killer_id;
 
 UPDATE lineageServer_lives SET death_cause = "";
 
 
 
+
+
+// added deepest descendant info
+
+
+
+ALTER TABLE lineageServer_lives ADD deepest_descendant_generation INT NOT NULL AFTER eve_life_id;
+
+ALTER TABLE lineageServer_lives ADD deepest_descendant_life_id INT NOT NULL AFTER deepest_descendant_generation;
+
+UPDATE lineageServer_lives set deepest_descendant_generation = -1, deepest_descendant_life_id = -1;

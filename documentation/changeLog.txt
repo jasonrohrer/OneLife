@@ -28,6 +28,9 @@ Server Fixes:
 
 --Lineage server displays a variety of death reasons.
 
+--Lineage server tracks and displays deepest descendant generation at bottom
+  of family tree display.
+
 
 
 
