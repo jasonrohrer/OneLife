@@ -2245,6 +2245,25 @@ function ls_getParentID( $inID ) {
 
 
 
+function ls_getLifeExists( $inID ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT id ".
+        "FROM $tableNamePrefix"."lives WHERE id=$inID;";
+    
+    $result = ls_queryDatabase( $query );
+    
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows == 0 ) {
+        return false;
+        }
+    return true;
+    }
+
+
+
+
 function ls_characterPage() {
 
     $id = ls_requestFilter( "id", "/[0-9]+/i", "0" );
@@ -2255,6 +2274,10 @@ function ls_characterPage() {
         $rel_id = $id;
         }
 
+
+    
+    
+    
     //echo "ID = $id and relID = $rel_id<br>";
     
     global $header, $footer;
@@ -2263,7 +2286,16 @@ function ls_characterPage() {
 
     echo "<center>\n";
 
+    if( ! ls_getLifeExists( $id )
+        ||
+        ( $rel_id != $id && ! ls_getLifeExists( $rel_id ) ) ) {
 
+        echo "Not found";
+        echo "</center>\n";
+        eval( $footer );
+        return;
+        }
+    
     $parent = ls_getParentLifeID( $id );
     $ancestor = ls_getEveID( $id );
 
