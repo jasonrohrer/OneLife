@@ -9506,7 +9506,8 @@ int main() {
         
         // send moves and updates to clients
         
-        int numPlayersReceivingPlayerUpdate = 0;
+        
+        SimpleVector<int> playersReceivingPlayerUpdate;
         
 
         for( int i=0; i<numLive; i++ ) {
@@ -10028,7 +10029,8 @@ int main() {
                             }
 
                         if( updateMessage != NULL ) {
-                            numPlayersReceivingPlayerUpdate ++;
+                            playersReceivingPlayerUpdate.push_back( 
+                                nextPlayer->id );
                             
                             int numSent = 
                                 nextPlayer->sock->send( 
@@ -10487,9 +10489,25 @@ int main() {
 
         if( newUpdates.size() > 0 ) {
             
-            AppLog::infoF( "%d/%d players were sent part of a %d-line PU",
-                           numPlayersReceivingPlayerUpdate,
-                           numLive, newUpdates.size() );
+            SimpleVector<char> playerList;
+            
+            for( int i=0; i<playersReceivingPlayerUpdate.size(); i++ ) {
+                char *playerString = 
+                    autoSprintf( 
+                        "%d, ",
+                        playersReceivingPlayerUpdate.getElementDirect( i ) );
+                playerList.appendElementString( playerString );
+                delete [] playerString;
+                }
+            
+            char *playerListString = playerList.getElementString();
+
+            AppLog::infoF( "%d/%d players were sent part of a %d-line PU: %s",
+                           playersReceivingPlayerUpdate.size(),
+                           numLive, newUpdates.size(),
+                           playerListString );
+            
+            delete [] playerListString;
             }
         
 
