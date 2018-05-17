@@ -35,6 +35,13 @@ Server Fixes:
 
 --Fixed lineage server behavior on IDs that don't exist.
 
+--Turned on bug reporting again, trying to catch bouncing lag bug.
+
+--Fixed bug in out-of-range player PO message.
+
+--Added extra server logging about player update messages to catch bouncing
+  lag bug.
+
 
 
 
