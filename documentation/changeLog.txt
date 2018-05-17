@@ -44,6 +44,9 @@ Server Fixes:
 
 --Clicking on killer's name shows their relationship to you in family tree.
 
+--Family tree Email search now only matches exact email addresses, to thwart
+  brute-force email harvesting through trial and error.  Thanks Brian R.
+
 
 
 

@@ -1355,7 +1355,7 @@ function ls_frontPage() {
     $filter = "";
     
     if( $emailFilter != "" ) {
-        $filterClause = " WHERE users.email LIKE '%$emailFilter%' ";
+        $filterClause = " WHERE users.email = '$emailFilter' ";
         $filter = $emailFilter;
         }
     else if( $nameFilter != "" ) {
