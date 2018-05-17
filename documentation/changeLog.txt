@@ -42,6 +42,8 @@ Server Fixes:
 --Added extra server logging about player update messages to catch bouncing
   lag bug.
 
+--Clicking on killer's name shows their relationship to you in family tree.
+
 
 
 

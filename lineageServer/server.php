@@ -1961,7 +1961,7 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
         $deathHTML = $deathCause;
 
         if( $deathHTML == "" ) {
-            $deathHTML = ls_getDeathHTML( $inID );
+            $deathHTML = ls_getDeathHTML( $inID, $inRelID );
             }
 
         if( $deathHTML != "" ) {
@@ -2037,7 +2037,7 @@ function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID, $inFullWords ) {
 
 
 
-function ls_getDeathHTML( $inID ) {
+function ls_getDeathHTML( $inID, $inRelID ) {
     global $tableNamePrefix;
     
     $query = "SELECT age, killer_id, death_cause ".
@@ -2078,7 +2078,7 @@ function ls_getDeathHTML( $inID ) {
         $name = ls_mysqli_result( $result, 0, "name" );        
 
         return "Killed by <a href='server.php?action=character_page&".
-            "id=$id'>$name</a>";
+            "id=$id&rel_id=$inRelID'>$name</a>";
         }
     else if( $killer_id <= -1 ) {
 
