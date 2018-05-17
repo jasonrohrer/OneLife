@@ -44,3 +44,9 @@ echo ""
 
 # delete backup files older than two weeks
 find ~/backups/$server -mtime +14 -delete
+
+
+
+
+# delete backup files in main older than two weeks
+find ~/backups/main -mtime +14 -delete
