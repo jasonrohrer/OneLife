@@ -30,6 +30,12 @@ done <  <( grep "" ~/remoteServerList.ini )
 user=jcr13
 server=lineage.onehouronelife.com
 
+
+echo ""
+echo "Using rsync to sync all backups from $server"
+echo ""
+
+
 if [ ! -f ~/backups/$server ]
 then
     mkdir ~/backups/$server
