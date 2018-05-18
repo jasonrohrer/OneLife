@@ -127,6 +127,8 @@ DYING (DY)
 
 MONUMENT_CALL (MN)
 
+GRAVE (GV)
+
 
 
 Client can expect to receive these at any time, and in any order.
@@ -479,6 +481,16 @@ x y o_id
 Indicates that a monument call has happened at location x,y with the creation
 of object o_id.
 
+
+
+
+
+GV
+x y p_id
+#
+
+
+Grave at x y belogs to player p_id.
 
 
 

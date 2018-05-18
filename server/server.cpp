@@ -381,6 +381,15 @@ SimpleVector<LiveObject> players;
 
 
 
+
+typedef struct GraveInfo {
+        GridPos pos;
+        int playerID;
+    } GraveInfo;
+
+
+
+
 static LiveObject *getLiveObject( int inID ) {
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *o = players.getElement( i );
@@ -5260,6 +5269,8 @@ int main() {
 
         SimpleVector<int> playerIndicesToSendDyingAbout;
 
+        SimpleVector<GraveInfo> newGraves;
+
 
         SimpleVector<UpdateRecord> newUpdates;
         SimpleVector<ChangePosition> newUpdatesPos;
@@ -8005,6 +8016,10 @@ int main() {
                                       deathID );
                         setResponsiblePlayer( -1 );
                         
+                        GraveInfo graveInfo = { dropPos, nextPlayer->id };
+                        newGraves.push_back( graveInfo );
+                        
+
                         ObjectRecord *deathObject = getObject( deathID );
                         
                         int roomLeft = deathObject->numSlots;
@@ -9742,7 +9757,30 @@ int main() {
                     
                     delete [] monMessage;
                     }
+                
 
+                // everyone gets all grave messages
+                if( newGraves.size() > 0 ) {
+                    
+                    // compose GV messages for this player
+                    
+                    for( int u=0; u<newGraves.size(); u++ ) {
+                        GraveInfo *g = newGraves.getElement( u );
+                        
+                        char *graveMessage = 
+                            autoSprintf( "GV\n%d %d %d\n#", 
+                                         g->pos.x -
+                                         nextPlayer->birthPos.x, 
+                                         g->pos.y -
+                                         nextPlayer->birthPos.y,
+                                         g->playerID );
+                        
+                        sendMessageToPlayer( nextPlayer, graveMessage,
+                                             strlen( graveMessage ) );
+                        delete [] graveMessage;
+                        }
+                    }
+                
                 
 
                 int playerXD = nextPlayer->xd;

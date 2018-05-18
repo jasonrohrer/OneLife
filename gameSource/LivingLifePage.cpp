@@ -710,6 +710,7 @@ typedef enum messageType {
     APOCALYPSE,
     DYING,
     MONUMENT_CALL,
+    GRAVE,
     COMPRESSED_MESSAGE,
     UNKNOWN
     } messageType;
@@ -783,6 +784,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "MN" ) == 0 ) {
         returnValue = MONUMENT_CALL;
+        }
+    else if( strcmp( copy, "GV" ) == 0 ) {
+        returnValue = GRAVE;
         }
     
     delete [] copy;
@@ -2045,6 +2049,11 @@ LivingLifePage::~LivingLifePage() {
     if( mDeathReason != NULL ) {
         delete [] mDeathReason;
         }
+
+    for( int i=0; i<mGraveInfo.size(); i++ ) {
+        delete [] mGraveInfo.getElement(i)->relationName;
+        }
+    mGraveInfo.deleteAll();
     }
 
 
@@ -6306,6 +6315,30 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 }
             else {
                 des = getObject( idToDescribe )->description;
+
+                if( strstr( des, "origGrave" ) != NULL ) {
+                    
+                    for( int g=0; g<mGraveInfo.size(); g++ ) {
+                        GraveInfo *gI = mGraveInfo.getElement( g );
+                        
+                        if( gI->worldPos.x == mCurMouseOverWorld.x &&
+                            gI->worldPos.y == mCurMouseOverWorld.y ) {
+                            
+                            char *desNoComment = stringDuplicate( des );
+                            stripDescriptionComment( desNoComment );
+
+                            // a grave we know about
+                            des = autoSprintf( "%s %s %s",
+                                               desNoComment, translate( "of" ),
+                                               gI->relationName );
+                            delete [] desNoComment;
+                            
+                            desToDelete = des;
+
+                            break;
+                            }    
+                        }
+                    }
                 }
             
             char *stringUpper = stringToUpperCase( des );
@@ -7900,6 +7933,50 @@ void LivingLifePage::step() {
                             playSound( monObj->creationSound, realVector );
                             }
                         }
+                    }
+                }            
+            }
+        else if( type == GRAVE ) {
+            int posX, posY, playerID;
+            
+            int numRead = sscanf( message, "GV\n%d %d %d",
+                                  &posX, &posY, &playerID );
+            if( numRead == 3 ) {
+                applyReceiveOffset( &posX, &posY );
+
+                doublePair pos;
+                pos.x = posX;
+                pos.y = posY;
+                
+                LiveObject *gravePerson = getLiveObject( playerID );
+                
+                if( gravePerson != NULL && 
+                    ( gravePerson->relationName || 
+                      gravePerson->name != NULL ) ) {
+                    
+                    GraveInfo g;
+                    g.worldPos.x = pos.x;
+                    g.worldPos.y = pos.y;
+
+                    char *des = gravePerson->relationName;
+                    char *desToDelete = NULL;
+                    
+                    if( des == NULL ) {
+                        des = (char*)translate( "unrelated" );
+                        }
+                    if( gravePerson->name != NULL ) {
+                        des = autoSprintf( "%s - %s",
+                                           gravePerson->name, des );
+                        desToDelete = des;
+                        }
+
+                    g.relationName = stringDuplicate( des );
+                    
+                    if( desToDelete != NULL ) {
+                        delete [] desToDelete;
+                        }
+                    
+                    mGraveInfo.push_back( g );
                     }
                 }            
             }
@@ -12940,6 +13017,12 @@ void LivingLifePage::makeActive( char inFresh ) {
         return;
         }
 
+    for( int i=0; i<mGraveInfo.size(); i++ ) {
+        delete [] mGraveInfo.getElement(i)->relationName;
+        }
+    mGraveInfo.deleteAll();
+
+
     mRemapDelay = 0;
     mRemapPeak = 0;
     mRemapDirection = 1.0;
@@ -13612,6 +13695,9 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         
         mCurMouseOverSpot.x = mapX;
         mCurMouseOverSpot.y = mapY;
+
+        mCurMouseOverWorld.x = clickDestX;
+        mCurMouseOverWorld.y = clickDestY;
         
         mCurMouseOverBehind = p.hitOurPlacementBehind;
         

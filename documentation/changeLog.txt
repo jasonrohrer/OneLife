@@ -13,6 +13,9 @@ Version 95    ???
 --Fixed bugs in wall hugging code for floors that was screwing up multi-layer
   floors that used multiplicative blending (ancient floors).
 
+--Undisturbed grave now marked with known person's name.
+
+
 
 
 

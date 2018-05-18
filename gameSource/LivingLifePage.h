@@ -255,6 +255,13 @@ typedef struct LiveObject {
 
 
 
+typedef struct GraveInfo {
+        GridPos worldPos;
+        char *relationName;
+    } GraveInfo;
+        
+
+
 
 
 
@@ -636,6 +643,9 @@ class LivingLifePage : public GamePage {
         
         GridPos mCurMouseOverSpot;
         char mCurMouseOverBehind;
+
+        GridPos mCurMouseOverWorld;
+
         
         char mCurMouseOverPerson;
         char mCurMouseOverSelf;
@@ -743,7 +753,9 @@ class LivingLifePage : public GamePage {
                               AnimType inType,
                               int inOldFrameCount, int inNewFrameCount,
                               double inPosX, double inPosY );
+        
 
+        SimpleVector<GraveInfo> mGraveInfo;
         
     };
 
