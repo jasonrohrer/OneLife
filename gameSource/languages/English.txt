@@ -153,6 +153,7 @@ tabHint "[TAB]"
 
 
 your "YOUR"
+of "OF"
 
 mother "MOTHER"
 son "SON"
