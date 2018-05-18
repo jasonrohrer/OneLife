@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 95    ???
+Version 97    2018-May-18
 
 --Adding missing case to used object transition generation.  Thank Fernando GBR.
 
@@ -13,7 +13,7 @@ Version 95    ???
 --Fixed bugs in wall hugging code for floors that was screwing up multi-layer
   floors that used multiplicative blending (ancient floors).
 
---Undisturbed grave now marked with known person's name.
+--Undisturbed grave now marked with known person's name and relationship.
 
 
 
