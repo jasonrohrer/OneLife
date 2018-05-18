@@ -3967,6 +3967,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 oID = passIDs[p];
             
                 if( p > 0 ) {    
+                    setDrawColor( 1, 1, 1, 1 );
                     startAddingToStencil( false, true );
                     }
                 
@@ -3999,8 +4000,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                 if( p > 0 ) {
                     // floor hugging pass
-                    // only draw bottom layer of floor
-                    setAnimLayerCutoff( 1 );
+                    
+                    int numLayers = getObject( oID )->numSprites;
+                    
+                    if( numLayers > 1 ) {    
+                        // draw all but top layer of floor
+                        setAnimLayerCutoff( numLayers - 1 );
+                        }
                     }
                 
                 

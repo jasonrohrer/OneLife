@@ -8,6 +8,10 @@ Version 95    ???
 
 --Adding missing case to used object transition generation.  Thank Fernando GBR.
 
+--Fixed bug in the way time values were recorded in recordedGames.
+
+--Fixed bugs in wall hugging code for floors that was screwing up multi-layer
+  floors that used multiplicative blending (ancient floors).
 
 
 
