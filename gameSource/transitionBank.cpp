@@ -704,21 +704,32 @@ void initTransBankFinish() {
                     }
                 else {
                     // default, no decrement
-                    
-                    // at least one
-                    TransIDPair tp = { tr->actor, tr->newActor, tr->newActor };
-                    actorSteps.push_back( tp );
+                 
+                    if( actor != NULL &&
+                        tr->reverseUseActor && 
+                        newActor != NULL && newActor->numUses > 1 ) {
 
-                    if( actor != NULL && actor->numUses > 1 ) {
-                        // apply to all actor dummies
-                        for( int u=0; u<actor->numUses-1; u++ ) {
-                            float useFraction = 
-                                (float)( u+1 ) / (float)( actor->numUses );
+                        TransIDPair tp = { actor->id, 
+                                           newActor->useDummyIDs[0] };
+                        actorSteps.push_back( tp );
+                        }
+                    else {
+                        // at least one
+                        TransIDPair tp = 
+                            { tr->actor, tr->newActor, tr->newActor };
+                        actorSteps.push_back( tp );
+                        
+                        if( actor != NULL && actor->numUses > 1 ) {
+                            // apply to all actor dummies
+                            for( int u=0; u<actor->numUses-1; u++ ) {
+                                float useFraction = 
+                                    (float)( u+1 ) / (float)( actor->numUses );
                             
-                            if( useFraction >= tr->actorMinUseFraction ) {
-
-                                tp.fromID = actor->useDummyIDs[u];
-                                actorSteps.push_back( tp );
+                                if( useFraction >= tr->actorMinUseFraction ) {
+                                    
+                                    tp.fromID = actor->useDummyIDs[u];
+                                    actorSteps.push_back( tp );
+                                    }
                                 }
                             }
                         }
@@ -777,24 +788,34 @@ void initTransBankFinish() {
                     }
                 else {
                     // default
-                    // at least one
-                    TransIDPair tp = { tr->target, tr->newTarget, 
-                                       tr->newTarget };
-                    targetSteps.push_back( tp );
-                    
-                    if( target != NULL && target->numUses > 1 ) {
-                        // apply to all target dummies
-                        for( int u=0; u<target->numUses-1; u++ ) {
-                            float useFraction = 
-                                (float)( u+1 ) / (float)( target->numUses );
-                            
-                            if( useFraction >= tr->targetMinUseFraction ) {
-                                tp.fromID = target->useDummyIDs[u];
-                                targetSteps.push_back( tp );
+
+                    if( target != NULL &&
+                        tr->reverseUseTarget && 
+                        newTarget != NULL && newTarget->numUses > 1 ) {
+
+                        TransIDPair tp = { target->id, 
+                                           newTarget->useDummyIDs[0] };
+                        targetSteps.push_back( tp );
+                        }
+                    else {
+                        // at least one
+                        TransIDPair tp = { tr->target, tr->newTarget, 
+                                           tr->newTarget };
+                        targetSteps.push_back( tp );
+                        
+                        if( target != NULL && target->numUses > 1 ) {
+                            // apply to all target dummies
+                            for( int u=0; u<target->numUses-1; u++ ) {
+                                float useFraction = 
+                                    (float)( u+1 ) / (float)( target->numUses );
+                                
+                                if( useFraction >= tr->targetMinUseFraction ) {
+                                    tp.fromID = target->useDummyIDs[u];
+                                    targetSteps.push_back( tp );
+                                    }
                                 }
                             }
                         }
-
                     }
                 
                 if( actorDecrement || targetDecrement ) {

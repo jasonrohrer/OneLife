@@ -4,6 +4,15 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 95    ???
+
+--Adding missing case to used object transition generation.  Thank Fernando GBR.
+
+
+
+
+
+
 Server Fixes:
 
 --Fixed bug in lineage server that caused death to not get logged if last words
