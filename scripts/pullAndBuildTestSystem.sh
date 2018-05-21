@@ -51,6 +51,7 @@ ln -s ../../OneLifeData7/scenes .
 ln -s ../../OneLifeData7/sounds .
 ln -s ../../OneLifeData7/sprites .
 ln -s ../../OneLifeData7/transitions .
+ln -s ../../OneLifeData7/dataVersionNumber.txt .
 
 
 cd ../server
