@@ -711,6 +711,7 @@ typedef enum messageType {
     DYING,
     MONUMENT_CALL,
     GRAVE,
+    GRAVE_MOVE,
     COMPRESSED_MESSAGE,
     UNKNOWN
     } messageType;
@@ -787,6 +788,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "GV" ) == 0 ) {
         returnValue = GRAVE;
+        }
+    else if( strcmp( copy, "GM" ) == 0 ) {
+        returnValue = GRAVE_MOVE;
         }
     
     delete [] copy;
@@ -7943,10 +7947,6 @@ void LivingLifePage::step() {
                                   &posX, &posY, &playerID );
             if( numRead == 3 ) {
                 applyReceiveOffset( &posX, &posY );
-
-                doublePair pos;
-                pos.x = posX;
-                pos.y = posY;
                 
                 LiveObject *gravePerson = getLiveObject( playerID );
                 
@@ -7955,8 +7955,8 @@ void LivingLifePage::step() {
                       gravePerson->name != NULL ) ) {
                     
                     GraveInfo g;
-                    g.worldPos.x = pos.x;
-                    g.worldPos.y = pos.y;
+                    g.worldPos.x = posX;
+                    g.worldPos.y = posY;
 
                     char *des = gravePerson->relationName;
                     char *desToDelete = NULL;
@@ -7977,6 +7977,28 @@ void LivingLifePage::step() {
                         }
                     
                     mGraveInfo.push_back( g );
+                    }
+                }            
+            }
+        else if( type == GRAVE_MOVE ) {
+            int posX, posY, posXNew, posYNew;
+            
+            int numRead = sscanf( message, "GM\n%d %d %d %d",
+                                  &posX, &posY, &posXNew, &posYNew );
+            if( numRead == 4 ) {
+                applyReceiveOffset( &posX, &posY );
+                applyReceiveOffset( &posXNew, &posYNew );
+
+
+                for( int i=0; i<mGraveInfo.size(); i++ ) {
+                    GraveInfo *g = mGraveInfo.getElement( i );
+                    
+                    if( g->worldPos.x == posX &&
+                        g->worldPos.y == posY ) {
+                        
+                        g->worldPos.x = posXNew;
+                        g->worldPos.y = posYNew;
+                        }    
                     }
                 }            
             }

@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 99    ???
+
+--Label for a grave of a known person now moves with bone pile.
+
+
+
+
 Version 97    2018-May-18
 
 --Adding missing case to used object transition generation.  Thank Fernando GBR.

@@ -129,6 +129,8 @@ MONUMENT_CALL (MN)
 
 GRAVE (GV)
 
+GRAVE_MOVE (GM)
+
 
 
 Client can expect to receive these at any time, and in any order.
@@ -490,7 +492,17 @@ x y p_id
 #
 
 
-Grave at x y belogs to player p_id.
+Grave at x y belongs to player p_id.
+
+
+
+
+GM
+xs ys xd yd
+#
+
+
+Grave at xs,ys moved to xd,yd.
 
 
 
