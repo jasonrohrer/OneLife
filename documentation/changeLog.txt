@@ -8,6 +8,8 @@ Version 99    ???
 
 --Label for a grave of a known person now moves with bone pile.
 
+--Fixed editor use chance and sim GUI elements disappearing with object picker
+  cleared.
 
 
 

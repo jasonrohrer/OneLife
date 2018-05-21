@@ -2445,9 +2445,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         mSimUseSlider.setVisible( false );
         mSimUseCheckbox.setToggled( false );
-        mSimUseCheckbox.setVisible( false );
         
-        mUseChanceField.setVisible( false );
         
         
         char rightClick;
