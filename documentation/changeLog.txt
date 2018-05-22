@@ -14,6 +14,9 @@ Version 99    ???
 --Fixed so that non-permanent objects on ground are drawn in front of permanent
   objects.  Thus, hand cart handle sticks out in front of well.
 
+--Fixed so that walls drawn in front of other tiles in row, improving overlaps
+  for trees, carts, and other overhanging objects.
+
 
 
 
