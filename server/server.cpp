@@ -10200,7 +10200,8 @@ int main() {
                                 char buffer[20];
                                 sprintf( 
                                     buffer, "%d\n",
-                                    newUpdatePlayerIDs.getElementDirect( i ) );
+                                    middleDistancePlayerIDs.
+                                    getElementDirect( i ) );
                                 
                                 messageChars.appendElementString( buffer );
                                 }

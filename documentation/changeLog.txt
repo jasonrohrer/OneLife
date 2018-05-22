@@ -24,6 +24,9 @@ Server Fixes:
 --Fixed bugs in lineage server triggered by playerIDs that are the same between
   servers.
 
+--Fixed player invisibility bug.  Thanks Yuyu.
+
+
 
 
 
