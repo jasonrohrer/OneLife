@@ -820,6 +820,14 @@ int pendingCMDecompressedSize = 0;
 
 SimpleVector<char*> readyPendingReceivedMessages;
 
+static double lastServerMessageReceiveTime = 0;
+
+// while player action pending, measure largest gap between sequential 
+// server messages
+// This is an approximation of our outtage time.
+static double largestPendingMessageTimeGap = 0;
+
+
 
 // NULL if there's no full message available
 char *getNextServerMessage() {
@@ -897,6 +905,20 @@ char *getNextServerMessage() {
     if( index == -1 ) {
         return NULL;
         }
+
+    // terminal character means message arrived
+
+    double curTime = game_getCurrentTime();
+    
+    double gap = curTime - lastServerMessageReceiveTime;
+    
+    if( gap > largestPendingMessageTimeGap ) {
+        largestPendingMessageTimeGap = gap;
+        }
+
+    lastServerMessageReceiveTime = curTime;
+
+
     
     char *message = new char[ index + 1 ];
     
@@ -7773,15 +7795,25 @@ void LivingLifePage::step() {
         }
 
 
+    double curTime = game_getCurrentTime();
+
     if( playerActionPending && 
         ourObject != NULL && 
-        game_getCurrentTime() - 
-        ourObject->pendingActionAnimationStartTime > 10 ) {
+        curTime - lastServerMessageReceiveTime < 1 &&
+        curTime - ourObject->pendingActionAnimationStartTime > 
+        10 + largestPendingMessageTimeGap ) {
         
-        // been bouncing for four seconds with no answer from server
-        
+        // been bouncing for ten seconds with no answer from server
+        // in the mean time, we have seen other messages arrive from server
+        // (so any network outage is over)
+
         printf( "Been waiting for response to our action request "
-                "from server for > 10 seconds, giving up\n" );
+                "from server for %.2f seconds, and last server message "
+                "received %.2f sec ago, saw a message time gap along the way "
+                "of %.2f, giving up\n",
+                curTime - ourObject->pendingActionAnimationStartTime,
+                curTime - lastServerMessageReceiveTime,
+                largestPendingMessageTimeGap );
 
         sendBugReport( 1 );
 
@@ -12820,6 +12852,11 @@ void LivingLifePage::step() {
             playerActionPending = true;
             ourLiveObject->pendingAction = true;
             
+            // start measuring again to detect network outages 
+            // during this pending action
+            largestPendingMessageTimeGap = 0;
+            
+
             // start on first frame to force at least one cycle no
             // matter how fast the server responds
             ourLiveObject->pendingActionAnimationProgress = 

@@ -17,6 +17,9 @@ Version 99    ???
 --Fixed so that walls drawn in front of other tiles in row, improving overlaps
   for trees, carts, and other overhanging objects.
 
+--Client detects largest message time gaps between server messages to prevent
+  it from sending BUG report messages to server during true network outages.
+
 
 
 
