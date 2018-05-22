@@ -19,7 +19,7 @@ Server Fixes:
 
 --Bug reports off again until better client-side differentiation in place.
 
-
+--log.txt backed up and cleared every 24 hours instead of 48 to save disk space.
 
 
 
