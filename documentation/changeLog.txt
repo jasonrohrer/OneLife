@@ -11,6 +11,9 @@ Version 99    ???
 --Fixed editor use chance and sim GUI elements disappearing with object picker
   cleared.
 
+--Fixed so that non-permanent objects on ground are drawn in front of permanent
+  objects.  Thus, hand cart handle sticks out in front of well.
+
 
 
 

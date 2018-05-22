@@ -4880,6 +4880,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
         // now draw non-behind-marked map objects in this row
         // OVER the player objects in this row (so that pick up and set down
         // looks correct, and so players are behind all same-row objects)
+        
+
+        // first permanent objects
         for( int x=xStart; x<=xEnd; x++ ) {
             int mapI = y * mMapD + x;
             
@@ -4890,14 +4893,44 @@ void LivingLifePage::draw( doublePair inViewCenter,
             int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
 
 
-            if( mMap[ mapI ] > 0 && 
-                ! getObject( mMap[ mapI ] )->drawBehindPlayer &&
-                mMapMoveSpeeds[ mapI ] == 0 ) {
+            if( mMap[ mapI ] > 0 ) {
+                ObjectRecord *o = getObject( mMap[ mapI ] );
                 
-                drawMapCell( mapI, screenX, screenY );
-                cellDrawn[ mapI ] = true;
+                if( ! o->drawBehindPlayer &&
+                    o->permanent &&
+                    mMapMoveSpeeds[ mapI ] == 0 ) {
+                
+                    drawMapCell( mapI, screenX, screenY );
+                    cellDrawn[ mapI ] = true;
+                    }
                 }
             }
+
+
+        // then non-permanent objects
+        for( int x=xStart; x<=xEnd; x++ ) {
+            int mapI = y * mMapD + x;
+            
+            if( cellDrawn[ mapI ] ) {
+                continue;
+                }
+            
+            int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
+
+
+            if( mMap[ mapI ] > 0 ) {
+                ObjectRecord *o = getObject( mMap[ mapI ] );
+                
+                if( ! o->drawBehindPlayer &&
+                    ! o->permanent &&
+                    mMapMoveSpeeds[ mapI ] == 0 ) {
+                
+                    drawMapCell( mapI, screenX, screenY );
+                    cellDrawn[ mapI ] = true;
+                    }
+                }
+            }
+        
 
         // now draw held flying objects on top of objects in this row
         for( int i=0; i<heldToDrawOnTop.size(); i++ ) {
