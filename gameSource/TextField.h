@@ -74,6 +74,11 @@ class TextField : public PageComponent, public ActionListenerList {
         // (default to having an effect)
         void setIgnoreArrowKeys( char inIgnore );
         
+        // controls whether mouse has any effect on this field
+        // if true, then mouse clicks do not control focus or cursor
+        void setIgnoreMouse( char inIgnore );
+        
+        
         
         // index in string of character that cursor is in front of
         int getCursorPosition();
@@ -194,6 +199,7 @@ class TextField : public PageComponent, public ActionListenerList {
         int mCursorPosition;
         
         char mIgnoreArrowKeys;
+        char mIgnoreMouse;
         
         
         char *mDrawnText;

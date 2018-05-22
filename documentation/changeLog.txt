@@ -20,6 +20,8 @@ Version 99    ???
 --Client detects largest message time gaps between server messages to prevent
   it from sending BUG report messages to server during true network outages.
 
+--Fixed wayward chat sheet pop-up.  Thanks Yuyu.
+
 
 
 

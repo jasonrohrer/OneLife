@@ -44,6 +44,7 @@ TextField::TextField( Font *inDisplayFont,
           mTextLen( 0 ),
           mCursorPosition( 0 ),
           mIgnoreArrowKeys( false ),
+          mIgnoreMouse( false ),
           mDrawnText( NULL ),
           mCursorDrawPosition( 0 ),
           mHoldDeleteSteps( -1 ), mFirstDeleteRepeatDone( false ),
@@ -585,6 +586,10 @@ void TextField::draw() {
 
 
 void TextField::pointerUp( float inX, float inY ) {
+    if( mIgnoreMouse ) {
+        return;
+        }
+    
     if( inX > - mWide / 2 &&
         inX < + mWide / 2 &&
         inY > - mHigh / 2 &&
@@ -779,6 +784,12 @@ void TextField::cursorReset() {
 
 void TextField::setIgnoreArrowKeys( char inIgnore ) {
     mIgnoreArrowKeys = inIgnore;
+    }
+
+
+
+void TextField::setIgnoreMouse( char inIgnore ) {
+    mIgnoreMouse = inIgnore;
     }
 
 

@@ -1667,7 +1667,9 @@ LivingLifePage::LivingLifePage()
     // we're not showing a cursor on note paper, so arrow key behavior
     // is confusing.
     mSayField.setIgnoreArrowKeys( true );
-
+    // drawn under world at (0,1000), don't allow click to focus
+    mSayField.setIgnoreMouse( true );
+    
     initLiveTriggers();
 
     for( int i=0; i<4; i++ ) {
