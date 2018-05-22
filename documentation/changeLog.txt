@@ -13,6 +13,17 @@ Version 99    ???
 
 
 
+
+
+Server Fixes:
+
+--Bug reports off again until better client-side differentiation in place.
+
+
+
+
+
+
 Version 97    2018-May-18
 
 --Adding missing case to used object transition generation.  Thank Fernando GBR.
