@@ -938,21 +938,6 @@ function ls_getLifeID( $inServerID, $inPlayerID ) {
     }
 
 
-function ls_getPlayerID( $inLifeID ) {
-    global $tableNamePrefix;
-    
-    $query = "SELECT player_id FROM $tableNamePrefix"."lives ".
-        "WHERE id = '$inLifeID';";
-    $result = ls_queryDatabase( $query );
-
-    $numRows = mysqli_num_rows( $result );
-
-    if( $numRows < 1 ) {
-        return -1;
-        }
-
-    return ls_mysqli_result( $result, 0, "player_id" );
-    }
 
 
 
@@ -974,22 +959,6 @@ function ls_getMale( $inLifeID ) {
 
 
 
-// gets life_id of one child
-function ls_getOneChild( $inParentID ) {
-    global $tableNamePrefix;
-    
-    $query = "SELECT id FROM $tableNamePrefix"."lives ".
-        "WHERE parent_id = '$inParentID';";
-    $result = ls_queryDatabase( $query );
-
-    $numRows = mysqli_num_rows( $result );
-
-    if( $numRows < 1 ) {
-        return -1;
-        }
-
-    return ls_mysqli_result( $result, 0, "id" );
-    }
 
 
 
@@ -1061,12 +1030,12 @@ function ls_getDisplayID( $inLifeID ) {
 
 
 // gets life_id of one child
-function ls_getAllChildren( $inParentID ) {
+function ls_getAllChildren( $inServerID, $inParentID ) {
     global $tableNamePrefix;
 
     // order by birth time
     $query = "SELECT id FROM $tableNamePrefix"."lives ".
-        "WHERE parent_id = '$inParentID' ".
+        "WHERE server_id = '$inServerID' AND parent_id = '$inParentID' ".
         "ORDER BY DATE_SUB( ".
         "  death_time, INTERVAL floor( age * 60 ) SECOND ) ASC;";
     
@@ -1724,7 +1693,10 @@ function ls_getRelName( $inFromID, $inToID, $inLimit ) {
         }
 
     if( $sharedFromIndex == -1 && $sharedToIndex == -1 &&
-        ls_getParentID( $inFromID ) == ls_getParentID( $inToID ) ) {
+        ls_getParentID( $inFromID ) == ls_getParentID( $inToID )&&
+        ls_getServerIDForLife( $inFromID ) ==
+        ls_getServerIDForLife( $inToID ) ) {
+
         // same parent, but parent not dead yet
         $sharedFromIndex = 1;
         $sharedToIndex = 1;
@@ -1848,21 +1820,37 @@ function ls_getPrevGen( $inFromID ) {
 // returns array of siblings
 function ls_getSiblings( $inFromID ) {
     $parentID = ls_getParentID( $inFromID );
+    $serverID = ls_getServerIDForLife( $inFromID );
 
     if( $parentID == -1 ) {
         return array( $inFromID );
         }
 
-    return ls_getAllChildren( $parentID );
+    return ls_getAllChildren( $serverID, $parentID );
     }
 
 
 
 // returns array of next generation
 function ls_getNextGen( $inFromID ) {
-    $playerID = ls_getPlayerID( $inFromID );
 
-    return ls_getAllChildren( $playerID );
+    global $tableNamePrefix;
+    
+    $query = "SELECT server_id, player_id FROM $tableNamePrefix"."lives ".
+        "WHERE id = '$inFromID';";
+    $result = ls_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows < 1 ) {
+        return array();
+        }
+
+    $server_id = ls_mysqli_result( $result, 0, "server_id" );
+    $player_id = ls_mysqli_result( $result, 0, "player_id" );
+    
+
+    return ls_getAllChildren( $server_id, $player_id );
     }
 
 
@@ -2040,7 +2028,7 @@ function ls_displayGenRow( $inGenArray, $inCenterID, $inRelID, $inFullWords ) {
 function ls_getDeathHTML( $inID, $inRelID ) {
     global $tableNamePrefix;
     
-    $query = "SELECT age, killer_id, death_cause ".
+    $query = "SELECT age, killer_id, server_id, death_cause ".
         "FROM $tableNamePrefix"."lives WHERE id=$inID;";
     
     $result = ls_queryDatabase( $query );
@@ -2059,12 +2047,14 @@ function ls_getDeathHTML( $inID, $inRelID ) {
 
 
     $killer_id = ls_mysqli_result( $result, 0, "killer_id" );
+    $server_id = ls_mysqli_result( $result, 0, "server_id" );
     $age = ls_mysqli_result( $result, 0, "age" );
     
     
     if( $killer_id > 0 ) {
         $query = "SELECT id, name ".
-            "FROM $tableNamePrefix"."lives WHERE player_id=$killer_id;";
+            "FROM $tableNamePrefix"."lives WHERE player_id=$killer_id ".
+            "AND server_id=$server_id;";
         
         $result = ls_queryDatabase( $query );
         
@@ -2240,6 +2230,25 @@ function ls_getParentID( $inID ) {
         }
 
     return ls_mysqli_result( $result, 0, "parent_id" );
+    }
+
+
+
+function ls_getServerIDForLife( $inLifeID ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT server_id ".
+        "FROM $tableNamePrefix"."lives WHERE id=$inLifeID;";
+    
+    $result = ls_queryDatabase( $query );
+    
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows == 0 ) {
+        return -1;
+        }
+
+    return ls_mysqli_result( $result, 0, "server_id" );
     }
 
 

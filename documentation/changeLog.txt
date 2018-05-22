@@ -21,6 +21,9 @@ Server Fixes:
 
 --log.txt backed up and cleared every 24 hours instead of 48 to save disk space.
 
+--Fixed bugs in lineage server triggered by playerIDs that are the same between
+  servers.
+
 
 
 
