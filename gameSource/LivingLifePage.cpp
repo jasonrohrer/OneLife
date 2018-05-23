@@ -99,6 +99,9 @@ static float lastMouseY = 0;
 static char teaserVideo = false;
 
 
+static char showBugMessage = false;
+static const char *bugEmail = "jason" "rohrer" "@" "fastmail.fm";
+
 
 
 
@@ -6511,6 +6514,36 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
 
         
+        if( showBugMessage ) {
+            
+            setDrawColor( 1, 1, 1, 0.5 );
+            
+            drawRect( lastScreenViewCenter, 612, 252 );
+
+
+            setDrawColor( 1, 1, 1, 0.5 );
+            
+            
+            setDrawColor( 0.2, 0.2, 0.2, 0.85  );
+            
+            drawRect( lastScreenViewCenter, 600, 240 );
+            
+            setDrawColor( 1, 1, 1, 1 );
+
+            doublePair messagePos = lastScreenViewCenter;
+
+            messagePos.y += 200;
+
+            drawMessage( "bugMessage1", messagePos );
+
+            messagePos = lastScreenViewCenter;
+
+
+            drawMessage( bugEmail, messagePos );
+            
+            messagePos.y -= 200;
+            drawMessage( "bugMessage2", messagePos );
+            }
         }
     
     }
@@ -7198,6 +7231,18 @@ void LivingLifePage::sendBugReport( int inBugNumber ) {
 
     sendToServerSocket( bugMessage );
     delete [] bugMessage;
+
+    FILE *f = fopen( "stdout.txt", "r" );
+
+    if( f != NULL ) {
+        // stdout.txt exists
+        
+        printf( "Bug report sent, telling user to email stdout.txt to us.\n" );
+        
+        fclose( f );
+        
+        showBugMessage = true;
+        }
     }
     
 
@@ -13683,6 +13728,10 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
 
+    if( showBugMessage ) {
+        return;
+        }
+
     if( mServerSocket == -1 ) {
         // dead
         return;
@@ -13919,6 +13968,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
 
+    if( showBugMessage ) {
+        return;
+        }
+    
     if( mServerSocket == -1 ) {
         // dead
         return;
@@ -15058,6 +15111,10 @@ void LivingLifePage::pointerDrag( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
+    
+    if( showBugMessage ) {
+        return;
+        }
     }
 
 
@@ -15065,6 +15122,10 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
 
+    if( showBugMessage ) {
+        return;
+        }
+    
 
     if( mServerSocket == -1 ) {
         // dead
@@ -15112,6 +15173,14 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         // dead
         return;
         }
+
+    if( showBugMessage ) {
+        if( inASCII == '%' ) {
+            showBugMessage = false;
+            }
+        return;
+        }
+
     
     switch( inASCII ) {
         /*
@@ -15249,6 +15318,9 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
 
 
 void LivingLifePage::specialKeyDown( int inKeyCode ) {
+    if( showBugMessage ) {
+        return;
+        }
     
     if( mServerSocket == -1 ) {
         // dead

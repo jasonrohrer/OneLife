@@ -22,6 +22,8 @@ Version 99    ???
 
 --Fixed wayward chat sheet pop-up.  Thanks Yuyu.
 
+--Client now informs player when BUG report sent to server, and asks them to
+  email stdout.txt, if stdout.txt exists.
 
 
 
