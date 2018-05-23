@@ -39,6 +39,8 @@ Server Fixes:
 
 --Fixed player invisibility bug.  Thanks Yuyu.
 
+--Fixed various edge cases in random family member picking code.
+
 
 
 

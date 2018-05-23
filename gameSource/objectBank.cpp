@@ -1023,6 +1023,53 @@ void initObjectBankFinish() {
                         
     rebuildRaceList();
 
+
+    
+    // print report on baby distribution per mother
+    // testing family code
+    if( false )
+    for( int i=0; i<femalePersonObjectIDs.size(); i++ ) {
+
+        int id = femalePersonObjectIDs.getElementDirect( i );
+        ObjectRecord *motherObject = getObject( id );
+        int numPeople = personObjectIDs.size();
+        int *hitCounts = new int[ numPeople ];
+
+        int maleCount = 0;
+        
+        memset( hitCounts, 0, sizeof( int ) * numPeople );
+    
+        int trials = 1000;
+
+        for( int j=0; j<trials; j++ ) {
+            int childID = getRandomFamilyMember( motherObject->race, id, 2 );
+            
+            ObjectRecord *childO = getObject( childID );
+            
+            int index = personObjectIDs.getElementIndex( childID );
+            
+            hitCounts[ index ] ++;
+
+            if( childO->male ) {
+                maleCount++;
+                }
+            }
+
+        printf( "Mother id %d had %d/%d males and these hits:\n",
+                id, maleCount, trials );
+        
+        for( int j=0; j<personObjectIDs.size(); j++ ) {
+            printf( "%d:  %d\n",
+                    personObjectIDs.getElementDirect( j ),
+                    hitCounts[j] );
+            }
+        printf( "\n\n" );
+        }
+    
+
+
+
+
     printf( "Loaded %d objects from objects folder\n", numRecords );
 
 
@@ -3186,6 +3233,11 @@ int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
     if( racePersonObjectIDs[ inRace ].size() == 0 ) {
         return -1;
         }
+
+    if( racePersonObjectIDs[ inRace ].size() == 1 ) {
+        // no choice in this race
+        return racePersonObjectIDs[ inRace ].getElementDirect( 0 );
+        }
     
     int motherIndex = 
         racePersonObjectIDs[ inRace ].getElementIndex( inMotherID );
@@ -3194,8 +3246,20 @@ int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
         return getRandomPersonObjectOfRace( inRace );
         }
     
+    if( racePersonObjectIDs[ inRace ].size() == 2 ) {
+        // no choice, return non-mother
+        int nonMotherIndex = 0;
+        if( motherIndex == 0 ) {
+            nonMotherIndex = 1;
+            }
+        return racePersonObjectIDs[ inRace ].getElementDirect( nonMotherIndex );
+        }
+    
 
     // never have offset 0, so we can't ever have ourself as a baby
+    if( inFamilySpan < 1 ) {
+        inFamilySpan = 1;
+        }
     int offset = randSource.getRandomBoundedInt( 1, inFamilySpan );
     
     if( randSource.getRandomBoolean() ) {
@@ -3203,13 +3267,38 @@ int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
         }
     
     int familyIndex = motherIndex + offset;
+
+    int indexOver = false;
     
     while( familyIndex >= racePersonObjectIDs[ inRace ].size() ) {
         familyIndex -= racePersonObjectIDs[ inRace ].size();
+        indexOver = true;
         }
     while( familyIndex < 0  ) {
         familyIndex += racePersonObjectIDs[ inRace ].size();
         }
+    
+    
+    if( familyIndex == motherIndex ) {
+        // wrapped back around to mother
+        if( ! indexOver ) {
+            // wrapped below 0, keep going down
+            familyIndex --;
+            }
+        else if( indexOver ) {
+            // wrapped above top, keep going up
+            familyIndex ++;
+            }
+
+        // watch for more wrap-around after avoiding mother index
+        if( familyIndex >= racePersonObjectIDs[ inRace ].size() ) {
+            familyIndex -= racePersonObjectIDs[ inRace ].size();
+            }
+        else if( familyIndex < 0 ) {
+            familyIndex += racePersonObjectIDs[ inRace ].size();
+            }
+        }
+
     
     return racePersonObjectIDs[ inRace ].getElementDirect( familyIndex );
     }
