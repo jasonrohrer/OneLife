@@ -25,6 +25,9 @@ Version 99    ???
 --Client now informs player when BUG report sent to server, and asks them to
   email stdout.txt, if stdout.txt exists.
 
+--Face portrait output in editor fixed to clear picked layer first (or else
+  picked layer appears in every age portrait).
+
 
 
 

@@ -1436,6 +1436,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mSaveFaces = true;
             mFacesStep = 0;
             mFacesOrigAge = mPersonAgeSlider.getValue();
+            // clear so that this layer doesn't appear in each face picture
+            mPickedObjectLayer = -1;
             }
         else {
             actionPerformed( &mClearObjectButton );
@@ -1581,6 +1583,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mSaveFaces = true;
             mFacesStep = 0;
             mFacesOrigAge = mPersonAgeSlider.getValue();
+            // clear so that this layer doesn't appear in each face picture
+            mPickedObjectLayer = -1;
             }
         else {
             actionPerformed( &mClearObjectButton );
