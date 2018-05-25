@@ -42,8 +42,9 @@ char parentUnpickable( int inID ) {
 char childUnpickable( int inID ) {
     CategoryRecord *catR = getCategory( inID );
     
-    if( catR != NULL && catR->objectIDSet.size() > 0 ) {
-        // already a parent, can't be a child
+    if( catR != NULL && ! catR->isPattern && catR->objectIDSet.size() > 0 ) {
+        // already a parent, can't be a child, unless it's a pattern category
+        // as a parent
         return true;
         }
     return false;
@@ -55,7 +56,7 @@ EditorCategoryPage::EditorCategoryPage()
         : mObjectParentPicker( &objectPickableParent, -410, 90 ),
           mObjectChildPicker( &objectPickableChild, +410, 90 ),
           mTransEditorButton( mainFont, 0, 260, "Transitions" ),
-          mIsPatternCheckbox( -100, 180, 2 ) {
+          mIsPatternCheckbox( 170, 0, 2 ) {
     
     mObjectChildPicker.addFilter( &childUnpickable );
     mObjectParentPicker.addFilter( &parentUnpickable );
@@ -159,7 +160,8 @@ void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
 
 
 
-static void drawObjectList( SimpleVector<int> *inList,
+static void drawObjectList( char inCategories, 
+                            SimpleVector<int> *inList,
                             int inSelectionIndex = -1 ) {
 
     int num = inList->size();
@@ -236,7 +238,15 @@ static void drawObjectList( SimpleVector<int> *inList,
 
         smallFont->drawString( getObject( objID )->description, 
                                textPos, alignLeft );
-
+        
+        if( inCategories && getCategory( objID )->isPattern ) {
+            
+            textPos.x -= 20;
+            
+            smallFont->drawString( "Pat", 
+                                   textPos, alignRight );
+            }
+        
         pos.y -= spacing;
         }
     }
@@ -295,7 +305,7 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
             cats.push_back( getCategoryForObject( mCurrentObject, i ) );
             }
     
-        drawObjectList( &cats, mSelectionIndex );
+        drawObjectList( true, &cats, mSelectionIndex );
         }
     else if( mCurrentCategory != -1 ) {
         CategoryRecord *cat = getCategory( mCurrentCategory );
@@ -309,7 +319,7 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
                 }
 
             
-            drawObjectList( &( cat->objectIDSet ), mSelectionIndex );
+            drawObjectList( false, &( cat->objectIDSet ), mSelectionIndex );
             }
         else {
             mIsPatternCheckbox.setToggled( false );
