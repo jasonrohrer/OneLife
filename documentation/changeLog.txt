@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 100   ??
+Version 100   2018-May-25
 
 --Support for marking categories as patterns.
 
@@ -17,6 +17,7 @@ Version 100   ??
   game and are just abstract placeholders to be filled in by member objects,
   pattern categories have a real object as their parent (example:  pink rose
   seed, with children red and white rose seeds).
+
 
 
 
