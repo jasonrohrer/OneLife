@@ -6744,7 +6744,7 @@ static char isCategory( int inID ) {
     if( c == NULL ) {
         return false;
         }
-    if( c->objectIDSet.size() > 0 ) {
+    if( ! c->isPattern && c->objectIDSet.size() > 0 ) {
         return true;
         }
     return false;
