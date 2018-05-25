@@ -282,6 +282,14 @@ void initTransBankFinish() {
             for( int c=0; c<numCats; c++ ) {
                 
                 int parentID = getCategoryForObject( oID, c );
+
+                CategoryRecord *parentCat = getCategory( parentID );
+                
+                if( parentCat->isPattern ) {
+                    // generate pattern transitions later
+                    continue;
+                    }
+                
                 
                 SimpleVector<TransRecord*> *parentTrans = 
                     getAllUses( parentID );
@@ -446,6 +454,87 @@ void initTransBankFinish() {
         delete [] objects;
 
         printf( "Auto-generated %d transitions based on categories\n", 
+                records.size() - numRecords );
+        
+        numRecords = records.size();
+
+
+
+        for( int i=0; i<numRecords; i++ ) {
+            TransRecord *tr = records.getElementDirect( i );
+
+            int transIDs[4] = { tr->actor, tr->target, 
+                                tr->newActor, tr->newTarget };
+            
+            CategoryRecord *transCats[4];
+            
+            int patternSize = -1;
+            int numPatternsInTrans = 0;
+            
+            for( int n=0; n<4; n++ ) {
+                
+                if( transIDs[n] > 0 ) {
+                    transCats[n] = getCategory( transIDs[n] );
+                    if( transCats[n] != NULL ) {
+                        if( ! transCats[n]->isPattern ) {
+                            transCats[n] = NULL;
+                            }
+                        if( transCats[n] != NULL && patternSize != -1 &&
+                            transCats[n]->objectIDSet.size() != patternSize ) {
+                            // doesn't match what's already set
+                            transCats[n] = NULL;
+                            }
+                        else if( transCats[n] != NULL && patternSize == -1 ) {
+                            // set it
+                            patternSize = transCats[n]->objectIDSet.size();
+                            }
+                        if( transCats[n] != NULL ) {
+                            numPatternsInTrans++;
+                            }
+                        }
+                    }
+                }
+            
+            if( numPatternsInTrans > 1 ) {
+                
+                for( int p=0; p<patternSize; p++ ) {
+                    int newTransIDs[4] = { tr->actor, tr->target, 
+                                           tr->newActor, tr->newTarget };
+                    
+                    for( int n=0; n<4; n++ ) {
+                        if( transCats[n] != NULL ) {
+                            newTransIDs[n] = 
+                                transCats[n]->objectIDSet.getElementDirect( p );
+                            }
+                        }
+
+                    addTrans( newTransIDs[0],
+                              newTransIDs[1],
+                              newTransIDs[2],
+                              newTransIDs[3],
+                              tr->lastUseActor,
+                              tr->lastUseTarget,
+                              tr->reverseUseActor,
+                              tr->reverseUseTarget,
+                              tr->noUseActor,
+                              tr->noUseTarget,
+                              tr->autoDecaySeconds,
+                              tr->actorMinUseFraction,
+                              tr->targetMinUseFraction, 
+                              tr->move,
+                              tr->desiredMoveDist,
+                              tr->actorChangeChance,
+                              tr->targetChangeChance,
+                              tr->newActorNoChange,
+                              tr->newTargetNoChange,
+                              true );
+                    }
+                }
+            }
+        
+
+        
+        printf( "Auto-generated %d transitions based on pattern categories\n", 
                 records.size() - numRecords );
         
         numRecords = records.size();
