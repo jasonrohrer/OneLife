@@ -54,7 +54,8 @@ char childUnpickable( int inID ) {
 EditorCategoryPage::EditorCategoryPage()
         : mObjectParentPicker( &objectPickableParent, -410, 90 ),
           mObjectChildPicker( &objectPickableChild, +410, 90 ),
-          mTransEditorButton( mainFont, 0, 260, "Transitions" ) {
+          mTransEditorButton( mainFont, 0, 260, "Transitions" ),
+          mIsPatternCheckbox( -100, 180, 2 ) {
     
     mObjectChildPicker.addFilter( &childUnpickable );
     mObjectParentPicker.addFilter( &parentUnpickable );
@@ -63,12 +64,17 @@ EditorCategoryPage::EditorCategoryPage()
     addComponent( &mObjectChildPicker );
     addComponent( &mObjectParentPicker );
     addComponent( &mTransEditorButton );
-
+    addComponent( &mIsPatternCheckbox );
+    
 
     mObjectChildPicker.addActionListener( this );
     mObjectParentPicker.addActionListener( this );
     
     mTransEditorButton.addActionListener( this );
+    
+    mIsPatternCheckbox.addActionListener( this );
+    
+    mIsPatternCheckbox.setVisible( false );
     
 
     mCurrentObject = -1;
@@ -118,6 +124,7 @@ void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
                 addCategoryToObject( obj, mCurrentCategory );
                 }
             }
+        updateCheckbox();
         }
     else if( inTarget == &mObjectParentPicker ) {
         int parentID = mObjectParentPicker.getSelectedObject();
@@ -136,10 +143,18 @@ void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentCategory = parentID;
             mSelectionIndex = 0;
             }
+        updateCheckbox();
         }
     else if( inTarget == &mTransEditorButton ) {
         setSignal( "transEditor" );
         }    
+    else if( inTarget == &mIsPatternCheckbox ) {
+        char set = mIsPatternCheckbox.getToggled();
+        
+        if( mCurrentCategory != -1 ) {
+            setCategoryIsPattern( mCurrentCategory, set );
+            }
+        }
     }
 
 
@@ -286,7 +301,19 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
         CategoryRecord *cat = getCategory( mCurrentCategory );
         
         if( cat != NULL ) {
+            
+            if( mIsPatternCheckbox.isVisible() ) {
+                pos = mIsPatternCheckbox.getPosition();
+                pos.x -= 12;
+                smallFont->drawString( "Pattern", pos, alignRight );
+                }
+
+            
             drawObjectList( &( cat->objectIDSet ), mSelectionIndex );
+            }
+        else {
+            mIsPatternCheckbox.setToggled( false );
+            mIsPatternCheckbox.setVisible( false );
             }
         }
     
@@ -295,6 +322,37 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
 
 
 void EditorCategoryPage::step() {
+    }
+
+
+
+void EditorCategoryPage::updateCheckbox() {
+    char vis = false;
+    
+    if( mCurrentCategory != -1 ) {
+        CategoryRecord *cat = getCategory( mCurrentCategory );
+        
+        if( cat != NULL ) {
+            
+            if( cat->objectIDSet.size() > 0 ) {
+                mIsPatternCheckbox.setVisible( true );
+                mIsPatternCheckbox.setToggled( cat->isPattern );
+                vis = true;
+                }
+            else {
+                // category still exists, but it's not saved on 
+                // disk if empty
+                // hide checkbox to avoid implying that pattern
+                // status is saved for an empty category
+                vis = false;
+                }
+            }
+        }
+
+    if( vis == false ) {
+        mIsPatternCheckbox.setVisible( false );
+        mIsPatternCheckbox.setToggled( false );
+        }
     }
 
 
@@ -374,6 +432,7 @@ void EditorCategoryPage::keyDown( unsigned char inASCII ) {
                 }
             }
         
+        updateCheckbox();
         }
     
     }

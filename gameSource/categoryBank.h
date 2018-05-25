@@ -8,6 +8,13 @@ typedef struct CategoryRecord {
         // object ID of parent object
         int parentID;
         
+        // true if this category is a pattern
+        // means parendID is a real gameplay object, and that we add
+        // extra transitions only if another pattern matches for
+        // other elements of a transition
+        char isPattern;
+        
+        
         // child objects that are in this category
         // none of these should themselves be parent objects
         SimpleVector<int> objectIDSet;
@@ -47,6 +54,11 @@ ReverseCategoryRecord *getReverseCategory( int inChildID );
 void addCategoryToObject( int inObjectID, int inParentID );
 
 void removeCategoryFromObject( int inObjectID, int inParentID );
+
+
+void setCategoryIsPattern( int inParentID, char inIsPattern );
+
+
 
 void removeObjectFromAllCategories( int inObjectID );
 

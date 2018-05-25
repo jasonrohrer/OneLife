@@ -93,7 +93,14 @@ float initCategoryBankStep() {
                     }
                 
                 next++;
-                            
+                
+                r->isPattern = false;
+                if( strstr( lines[next], "pattern" ) != NULL ) {
+                    r->isPattern = true;
+                    next++;
+                    }
+                
+
                 int numObjects = 0;
                 sscanf( lines[next], "numObjects=%d", 
                         &( numObjects ) );
@@ -302,6 +309,10 @@ void saveCategoryToDisk( int inParentID ) {
         SimpleVector<char*> lines;
         
         lines.push_back( autoSprintf( "parentID=%d", inParentID ) );
+
+        if( r->isPattern ) {
+            lines.push_back( stringDuplicate( "pattern" ) );
+            }
         
         // start with 0 objects in a new category
         lines.push_back( autoSprintf( "numObjects=%d", 
@@ -381,6 +392,7 @@ static void addCategory( int inParentID ) {
     CategoryRecord *r = new CategoryRecord;
     
     r->parentID = inParentID;
+    r->isPattern = false;
     
     idMap[ inParentID ] = r;
     
@@ -479,6 +491,19 @@ void addCategoryToObject( int inObjectID, int inParentID ) {
         }
     
     }
+
+
+
+
+void setCategoryIsPattern( int inParentID, char inIsPattern ) {
+    CategoryRecord *r = getCategory( inParentID );
+    
+    if( r != NULL ) {
+        r->isPattern = inIsPattern;
+        saveCategoryToDisk( inParentID );
+        }
+    }
+
 
 
 

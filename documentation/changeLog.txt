@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 100   ??
+
+--Support for marking categories as patterns.
+
+
+
+
 Version 99    2018-May-24
 
 --Label for a grave of a known person now moves with bone pile.
