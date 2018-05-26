@@ -1419,7 +1419,8 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         }
                     if( ( b == 3 && ! o->floorHugging ) 
                         ||
-                        ( b != 3 && o->floorHugging ) ) {
+                        ( b != 3 && o->floorHugging 
+                          && ! o->drawBehindPlayer) ) {
                         continue;
                         }
                     
