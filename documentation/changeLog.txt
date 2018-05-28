@@ -3,9 +3,19 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+
 Version 102   ???
 
 --Fixed scene editor to display behind floor hugging objects correctly.
+
+
+
+
+Server Fixes:
+
+--Fixed one source of bouncing-forever bug where baby move arrives in same
+  server step as parent's pick-up action.  Thanks Lynne C.
 
 
 

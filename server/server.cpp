@@ -2445,7 +2445,15 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             babyO->ys = targetY;
             
             babyO->heldByOther = false;
-
+            
+            // force baby pos
+            // baby can wriggle out of arms in same server step that it was
+            // picked up.  In that case, the clients will never get the
+            // message that the baby was picked up.  The baby client could
+            // be in the middle of a client-side move, and we need to force
+            // them back to their true position.
+            babyO->posForced = true;
+            
             if( isFertileAge( inDroppingPlayer ) ) {    
                 // reset food decrement time
                 babyO->foodDecrementETASeconds =
