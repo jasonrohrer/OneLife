@@ -9,6 +9,11 @@ Version 102   ???
 
 --Fixed scene editor to display behind floor hugging objects correctly.
 
+--Fixed bug in client sending multiple jump-out-of-arms move messages due to
+  rapid clickly by held-baby-player, resulting in the server registering false
+  moves after the jump-out-of-arms, and a bouncing-forever bug as a result.
+  Thanks Gabriel G.
+
 
 
 

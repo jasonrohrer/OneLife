@@ -9435,6 +9435,9 @@ void LivingLifePage::step() {
                 o.heldByDropOffset.x = 0;
                 o.heldByDropOffset.y = 0;
                 
+                o.jumpOutOfArmsSent = false;
+                
+
                 o.ridingOffset.x = 0;
                 o.ridingOffset.y = 0;
 
@@ -10954,6 +10957,8 @@ void LivingLifePage::step() {
                 
                 if( babyO != NULL && existing != NULL ) {
                     babyO->heldByAdultID = existing->id;
+                    babyO->jumpOutOfArmsSent = false;
+                    
                     // stop crying when held
                     babyO->tempAgeOverrideSet = false;
                     
@@ -14015,16 +14020,22 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     if( ourLiveObject->heldByAdultID != -1 ) {
         // click from a held baby
-        
-        // send dummy move message right away to make baby jump out of arms
 
-        // we don't need to use baby's true position here... they are
-        // in arms
-        char *moveMessage = autoSprintf( "MOVE %d %d 1 0#",
-                                         ourLiveObject->xd,
-                                         ourLiveObject->yd );
-        sendToServerSocket( moveMessage );
-        delete [] moveMessage;
+        // only send once, even on multiple clicks
+        if( ! ourLiveObject->jumpOutOfArmsSent ) {    
+            // send dummy move message right away to make baby jump out of arms
+            
+            // we don't need to use baby's true position here... they are
+            // in arms
+            char *moveMessage = autoSprintf( "MOVE %d %d 1 0#",
+                                             ourLiveObject->xd,
+                                             ourLiveObject->yd );
+            sendToServerSocket( moveMessage );
+            delete [] moveMessage;
+            
+            ourLiveObject->jumpOutOfArmsSent = true;
+            }
+        
         return;
         }
     

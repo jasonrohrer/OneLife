@@ -86,6 +86,12 @@ typedef struct LiveObject {
         char lastHeldByRawPosSet;
         doublePair lastHeldByRawPos;
         
+        // track this so that we only send one jump message even if
+        // the player clicks more than once before the server registers the
+        // jump
+        char jumpOutOfArmsSent;
+        
+
         
         // usually 0, but used to slide into and out of riding position
         doublePair ridingOffset;
