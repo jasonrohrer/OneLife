@@ -16,6 +16,8 @@ Version 102   ???
 
 --Fixed overlap of food bar with gui in object editor.
 
+--Widget for Using Sound visible for all objects in object editor.
+
 
 
 
