@@ -3316,11 +3316,11 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
     // draw overlay to show foot-cross-over point
 
-    doublePair footRecPos = { 0, -96 };
+    doublePair footRecPos = { 0, -80 };
     
     setDrawColor( 0, 0, 0, 0.1 );
     
-    drawRect( footRecPos, 192, 32 );
+    drawRect( footRecPos, 192, 16 );
     
 
     

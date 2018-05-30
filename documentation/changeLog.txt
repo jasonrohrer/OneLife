@@ -14,6 +14,8 @@ Version 102   ???
   moves after the jump-out-of-arms, and a bouncing-forever bug as a result.
   Thanks Gabriel G.
 
+--Fixed overlap of food bar with gui in object editor.
+
 
 
 
