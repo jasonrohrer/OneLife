@@ -12079,6 +12079,8 @@ void LivingLifePage::step() {
                         char *strUpper = stringToUpperCase(
                             lastAteObj->description );
 
+                        stripDescriptionComment( strUpper );
+
                         const char *key = "lastAte";
                         
                         if( lastAteObj->permanent ) {

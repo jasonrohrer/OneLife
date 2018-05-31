@@ -21,6 +21,9 @@ Version 102   ???
 --Fixed sound sound-doubling issues (dumping water into empty pond, grabbing
   second-to-last stone from stone pile).
 
+--Fixed so that comment (after # text) is hidden from eaten food description.
+
+
 
 
 
