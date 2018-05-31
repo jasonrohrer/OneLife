@@ -109,6 +109,8 @@ PLAYER_UPDATE  (PU)
 
 PLAYER_MOVES_START (PM)
 
+PLAYER_OUT_OF_RANGE (PO)
+
 PLAYER_SAYS (PS)
 
 MAP_CHANGE (MX)
@@ -116,6 +118,18 @@ MAP_CHANGE (MX)
 FOOD_CHANGE (FX)
 
 LINEAGE (LN)
+
+NAME (NM)
+
+APOCALYPSE (AP)
+
+DYING (DY)
+
+MONUMENT_CALL (MN)
+
+GRAVE (GV)
+
+GRAVE_MOVE (GM)
 
 
 
@@ -304,6 +318,25 @@ Until that has happened, client must assume player is still in transit.
 
 
 
+
+PO
+p_id
+p_id
+p_id
+...
+p_id
+#
+
+A list of player IDs that are out of range for this player.  We avoid sending
+a full PU message about these players, but we need to let the client know that
+they have moved out of range.
+
+
+
+
+
+
+
 PS
 p_id text
 p_id text
@@ -401,6 +434,80 @@ This message describes known lineages.
 
 
 
+NM
+p_id first_name last_name
+p_id first_name last_name
+p_id first_name last_name
+...
+p_id first_name last_name
+#
+
+
+Gives name of player p_id.
+
+last_name may be ommitted.
+
+
+
+
+
+
+AP
+#
+
+Indicates that an apocalypse is pending (and death is coming).  Gives client
+time to show a visual effect before death-by-apocalypse happens.
+
+
+
+DY
+p_id
+p_id
+p_id
+...
+p_id
+#
+
+Indicates that the listed players have been mortally wounded and will die soon.
+
+
+
+
+
+
+
+MN
+x y o_id
+#
+
+Indicates that a monument call has happened at location x,y with the creation
+of object o_id.
+
+
+
+
+
+GV
+x y p_id
+#
+
+
+Grave at x y belongs to player p_id.
+
+
+
+
+GM
+xs ys xd yd
+#
+
+
+Grave at xs,ys moved to xd,yd.
+
+
+
+
+
 First message sent upon client new connection to server:
 
 A map chunk message for where the player is standing, followed by 
@@ -411,6 +518,7 @@ a full player update message for ALL players on entire server.
 
 Clients send moves in the following format:
 
+KA x y#
 USE x y#
 BABY x y#
 SELF x y i#
@@ -420,6 +528,12 @@ SREMV x y c i#
 DROP x y c#
 KILL x y#
 
+
+KA   is a keep-alive message used to keep the connection alive when the client
+     is idle and not sending any other messages (NATs and other routers can
+     close a connection if too long passes without outbound packets).
+     The x y parameters to KA are currently ignored and can be 0, but must
+     be present.
 
 DROP is for setting held object down on empty grid square OR
 	 for adding something to a container
@@ -513,3 +627,14 @@ Sends trigger trigger_number to server.
 Example:
 
 TRIGGER 5#
+
+
+
+
+BUG v arbitrary_text#
+
+Reports that a bug with number v occurred, and provides text about that bug.
+
+Example:
+
+BUG 4 MOVE -144 960 -1 -1 -2 -1#

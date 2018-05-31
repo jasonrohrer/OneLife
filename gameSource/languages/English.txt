@@ -116,6 +116,10 @@ manualRestartMessage "RESTART GAME TO APPLY UPDATE"
 
 loginFailed "LOGIN FAILED"
 
+versionMismatch "VERSION MISMATCH:  CLIENT %d -- SERVER %d"
+disableCustomServer "DISABLE CUSTOM SERVER"
+
+
 serverShutdown "SERVER HAS BEEN SHUT DOWN"
 
 serverFull "SERVER IS FULL"
@@ -148,6 +152,9 @@ ofHint "OF"
 tabHint "[TAB]"
 
 
+your "YOUR"
+of "OF"
+
 mother "MOTHER"
 son "SON"
 daughter "DAUGHTER"
@@ -156,6 +163,12 @@ great "GREAT "
 
 brother "BROTHER"
 sister "SISTER"
+
+little "LITTLE"
+big "BIG"
+twin "TWIN"
+identical "IDENTICAL"
+
 
 aunt "AUNT"
 uncle "UNCLE"
@@ -225,11 +238,21 @@ reasonOldAge "CAUSE:  OLD AGE"
 
 reasonUnknown "CAUSE:  UNKNOWN"
 
+reasonApocalypse "CAUSE:  THE APOCALYPSE"
+
 
 okay "OK"
 quit "QUIT"
 
 reborn "GET REBORN"
+
+
+
+bugMessage1 "WILD BUG APPEARED!####AFTER THIS LIFE IS OVER,##PLEASE QUIT AND EMAIL YOUR STDOUT.TXT TO:"
+
+
+bugMessage2 "PRESS [%] TO CONTINUE PLAYING"
+
 
 
 

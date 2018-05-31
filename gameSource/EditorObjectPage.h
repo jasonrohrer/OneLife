@@ -35,6 +35,10 @@
 
 #define NUM_CLOTHING_CHECKBOXES 5
 
+// baby, toddler, teen, adult
+#define NUM_FACES_STEPS 6
+
+
 
 
 class EditorObjectPage : public GamePage, public ActionListener {
@@ -87,6 +91,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         TextField mSlotSizeField;
         
         TextField mSlotTimeStretchField;
+        CheckboxButton mSlotsLockedCheckbox;
+        
 
         TextField mDeadlyDistanceField;
         TextField mUseDistanceField;
@@ -164,6 +170,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         
         TextField mNumUsesField;
+        TextField mUseChanceField;
         CheckboxButton mUseVanishCheckbox;
         CheckboxButton mUseAppearCheckbox;
         
@@ -214,6 +221,11 @@ class EditorObjectPage : public GamePage, public ActionListener {
         char mPrintRequested;
         char mSavePrintOnly;
         
+        
+        char mSaveFaces;
+        int mFacesStep;
+        double mFacesOrigAge;
+
 
         ObjectRecord mCurrentObject;
         
@@ -239,6 +251,15 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
 
         SpriteHandle mSlotPlaceholderSprite;
+
+        SpriteHandle mFaceFrameSprite;
+        SpriteHandle mFaceFrameMaskSprite;
+        SpriteHandle mFaceFrameBackgroundSprite;
+        
+        Image *mFaceFrameImage;
+        Image *mFaceFrameMaskImage;
+        
+
 
         int mPickedObjectLayer;
         int mPickedSlot;

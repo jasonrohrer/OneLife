@@ -45,6 +45,9 @@
 #define MAP_D 64
 #define MAP_NUM_CELLS 4096
 
+extern int versionNumber;
+extern int dataVersionNumber;
+
 extern double frameRateFactor;
 
 extern Font *mainFont;
@@ -75,6 +78,7 @@ extern float musicLoudness;
 
 
 static JenkinsRandomSource randSource( 340403 );
+static JenkinsRandomSource remapRandSource( 340403 );
 
 
 static int lastScreenMouseX, lastScreenMouseY;
@@ -103,8 +107,19 @@ static float lastMouseY = 0;
 // set to true to render for teaser video
 static char teaserVideo = false;
 
+static char showBugMessage = false;
+static const char *bugEmail = "jason" "rohrer" "@" "fastmail.fm";
+
 // most recent home at end
-static SimpleVector<GridPos> homePosStack;
+
+typedef struct {
+        GridPos pos;
+        char ancient;
+    } HomePos;
+
+    
+
+static SimpleVector<HomePos> homePosStack;
 
 // returns signum, maybe should be in some utils, possible duplicate
 template <typename T> int sign(T val) {
@@ -115,7 +130,7 @@ template <typename T> int sign(T val) {
 static  GridPos *getHomeLocation() {
     int num = homePosStack.size();
     if( num > 0 ) {
-        return homePosStack.getElement( num - 1 );
+        return &( homePosStack.getElement( num - 1 )->pos );
         }
     else {
         return NULL;
@@ -126,7 +141,7 @@ static  GridPos *getHomeLocation() {
 
 static void removeHomeLocation( int inX, int inY ) {
     for( int i=0; i<homePosStack.size(); i++ ) {
-        GridPos p = homePosStack.getElementDirect( i );
+        GridPos p = homePosStack.getElementDirect( i ).pos;
         
         if( p.x == inX && p.y == inY ) {
             homePosStack.deleteElement( i );
@@ -140,7 +155,32 @@ static void removeHomeLocation( int inX, int inY ) {
 static void addHomeLocation( int inX, int inY ) {
     removeHomeLocation( inX, inY );
     GridPos newPos = { inX, inY };
-    homePosStack.push_back( newPos );
+    HomePos p;
+    p.pos = newPos;
+    p.ancient = false;
+    
+    homePosStack.push_back( p );
+    }
+
+
+static void addAncientHomeLocation( int inX, int inY ) {
+    removeHomeLocation( inX, inY );
+
+    // remove all ancient pos
+    // there can be only one ancient
+    for( int i=0; i<homePosStack.size(); i++ ) {
+        if( homePosStack.getElementDirect( i ).ancient ) {
+            homePosStack.deleteElement( i );
+            i--;
+            }
+        }
+
+    GridPos newPos = { inX, inY };
+    HomePos p;
+    p.pos = newPos;
+    p.ancient = true;
+    
+    homePosStack.push_front( p );
     }
 
 
@@ -254,6 +294,11 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
             }
         }
     
+    char big = false;
+    char little = false;
+    char twin = false;
+    char identical = false;
+
     if( ! found ) {
         // not a direct descendent or ancestor
 
@@ -288,6 +333,21 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
                 }
             else {
                 main = translate( "sister" );
+                }
+            
+            if( inOurObject->age < inTheirObject->age - 0.1 ) {
+                big = true;
+                }
+            else if( inOurObject->age > inTheirObject->age + 0.1 ) {
+                little = true;
+                }
+            else {
+                // close enough together in age
+                twin = true;
+                
+                if( inOurObject->displayID == inTheirObject->displayID ) {
+                    identical = true;
+                    }
                 }
             }
         else if( theirMatchIndex == 0 ) {
@@ -329,6 +389,9 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
 
     SimpleVector<char> buffer;
     
+    buffer.appendElementString( translate( "your" ) );
+    buffer.appendElementString( " " );
+
     for( int i=0; i<numGreats; i++ ) {
         buffer.appendElementString( translate( "great" ) );
         }
@@ -356,6 +419,25 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
             }
         buffer.appendElementString( " " );
         }
+
+    if( little ) {
+        buffer.appendElementString( translate( "little" ) );
+        buffer.appendElementString( " " );
+        }
+    else if( big ) {
+        buffer.appendElementString( translate( "big" ) );
+        buffer.appendElementString( " " );
+        }
+    else if( twin ) {
+        if( identical ) {
+            buffer.appendElementString( translate( "identical" ) );
+            buffer.appendElementString( " " );
+            }
+        
+        buffer.appendElementString( translate( "twin" ) );
+        buffer.appendElementString( " " );
+        }
+    
     
     buffer.appendElementString( main );
     
@@ -400,6 +482,21 @@ static char hideGuiPanel = false;
 
 
 
+
+static char *lastMessageSentToServer = NULL;
+
+
+// destroyed internally if not NULL
+static void replaceLastMessageSent( char *inNewMessage ) {
+    if( lastMessageSentToServer != NULL ) {
+        delete [] lastMessageSentToServer;
+        }
+    lastMessageSentToServer = inNewMessage;
+    }
+
+
+
+
 SimpleVector<unsigned char> serverSocketBuffer;
 
 
@@ -430,10 +527,17 @@ static char readServerSocketFull( int inServerSocket ) {
 
 
 
+static double timeLastMessageSent = 0;
+
+
+
 void LivingLifePage::sendToServerSocket( char *inMessage ) {
+    timeLastMessageSent = game_getCurrentTime();
     
     printf( "Sending message to server: %s\n", inMessage );
     
+    replaceLastMessageSent( stringDuplicate( inMessage ) );    
+
     int len = strlen( inMessage );
     
     int numSent = sendToSocket( mServerSocket, (unsigned char*)inMessage, len );
@@ -609,9 +713,16 @@ typedef enum messageType {
     MAP_CHANGE,
     PLAYER_UPDATE,
     PLAYER_MOVES_START,
+    PLAYER_OUT_OF_RANGE,
     PLAYER_SAYS,
     FOOD_CHANGE,
     LINEAGE,
+    NAMES,
+    APOCALYPSE,
+    DYING,
+    MONUMENT_CALL,
+    GRAVE,
+    GRAVE_MOVE,
     COMPRESSED_MESSAGE,
     UNKNOWN
     } messageType;
@@ -662,6 +773,9 @@ messageType getMessageType( char *inMessage ) {
     else if( strcmp( copy, "PM" ) == 0 ) {
         returnValue = PLAYER_MOVES_START;
         }
+    else if( strcmp( copy, "PO" ) == 0 ) {
+        returnValue = PLAYER_OUT_OF_RANGE;
+        }
     else if( strcmp( copy, "PS" ) == 0 ) {
         returnValue = PLAYER_SAYS;
         }
@@ -670,6 +784,24 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "LN" ) == 0 ) {
         returnValue = LINEAGE;
+        }
+    else if( strcmp( copy, "NM" ) == 0 ) {
+        returnValue = NAMES;
+        }
+    else if( strcmp( copy, "AP" ) == 0 ) {
+        returnValue = APOCALYPSE;
+        }
+    else if( strcmp( copy, "DY" ) == 0 ) {
+        returnValue = DYING;
+        }
+    else if( strcmp( copy, "MN" ) == 0 ) {
+        returnValue = MONUMENT_CALL;
+        }
+    else if( strcmp( copy, "GV" ) == 0 ) {
+        returnValue = GRAVE;
+        }
+    else if( strcmp( copy, "GM" ) == 0 ) {
+        returnValue = GRAVE_MOVE;
         }
     
     delete [] copy;
@@ -698,6 +830,14 @@ int pendingCMDecompressedSize = 0;
 
 
 SimpleVector<char*> readyPendingReceivedMessages;
+
+static double lastServerMessageReceiveTime = 0;
+
+// while player action pending, measure largest gap between sequential 
+// server messages
+// This is an approximation of our outtage time.
+static double largestPendingMessageTimeGap = 0;
+
 
 
 // NULL if there's no full message available
@@ -776,6 +916,20 @@ char *getNextServerMessage() {
     if( index == -1 ) {
         return NULL;
         }
+
+    // terminal character means message arrived
+
+    double curTime = game_getCurrentTime();
+    
+    double gap = curTime - lastServerMessageReceiveTime;
+    
+    if( gap > largestPendingMessageTimeGap ) {
+        largestPendingMessageTimeGap = gap;
+        }
+
+    lastServerMessageReceiveTime = curTime;
+
+
     
     char *message = new char[ index + 1 ];
     
@@ -1395,6 +1549,14 @@ Image *mapPullTotalImage = NULL;
 int numScreensWritten = 0;
 
 
+static int apocalypseInProgress = false;
+static double apocalypseDisplayProgress = 0;
+static double apocalypseDisplaySeconds = 6;
+
+static double remapPeakSeconds = 60;
+static double remapDelaySeconds = 30;
+
+
 static Image *expandToPowersOfTwoWhite( Image *inImage ) {
     
     int w = 1;
@@ -1497,6 +1659,7 @@ LivingLifePage::LivingLifePage()
           mMoveKeyDown( false ),
           stopingMovement( true ),
           mGuiPanelSprite( loadSprite( "guiPanel.tga", false ) ),
+          mGuiBloodSprite( loadSprite( "guiBlood.tga", false ) ),
           mNotePaperSprite( loadSprite( "notePaper.tga", false ) ),
           mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
           mCellBorderSprite( loadWhiteSprite( "cellBorder.tga" ) ),
@@ -1521,7 +1684,9 @@ LivingLifePage::LivingLifePage()
     // we're not showing a cursor on note paper, so arrow key behavior
     // is confusing.
     mSayField.setIgnoreArrowKeys( true );
-
+    // drawn under world at (0,1000), don't allow click to focus
+    mSayField.setIgnoreMouse( true );
+    
     initLiveTriggers();
 
     for( int i=0; i<4; i++ ) {
@@ -1795,6 +1960,14 @@ void LivingLifePage::clearLiveObjects() {
             delete [] nextObject->currentSpeech;
             }
 
+        if( nextObject->relationName != NULL ) {
+            delete [] nextObject->relationName;
+            }
+
+        if( nextObject->name != NULL ) {
+            delete [] nextObject->name;
+            }
+
         delete nextObject->futureAnimStack;
         delete nextObject->futureHeldAnimStack;
         }
@@ -1870,8 +2043,16 @@ LivingLifePage::~LivingLifePage() {
 
     delete [] mMapPlayerPlacedFlags;
 
-    delete [] nextActionMessageToSend;
+    if( nextActionMessageToSend != NULL ) {
+        delete [] nextActionMessageToSend;
+        nextActionMessageToSend = NULL;
+        }
 
+    if( lastMessageSentToServer != NULL ) {
+        delete [] lastMessageSentToServer;
+        lastMessageSentToServer = NULL;
+        }
+    
     if( mHungerSound != NULL ) {    
         freeSoundSprite( mHungerSound );
         }
@@ -1881,6 +2062,7 @@ LivingLifePage::~LivingLifePage() {
         }
 
     freeSprite( mGuiPanelSprite );
+    freeSprite( mGuiBloodSprite );
     
     freeSprite( mFloorSplitSprite );
     
@@ -1946,6 +2128,11 @@ LivingLifePage::~LivingLifePage() {
     if( mDeathReason != NULL ) {
         delete [] mDeathReason;
         }
+
+    for( int i=0; i<mGraveInfo.size(); i++ ) {
+        delete [] mGraveInfo.getElement(i)->relationName;
+        }
+    mGraveInfo.deleteAll();
     }
 
 
@@ -2092,6 +2279,7 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
                                                 const char *inString,
                                                 double inFade,
                                                 double inMaxWidth,
+                                                LiveObject *inSpeaker,
                                                 int inForceMinChalkBlots ) {
     
     char *stringUpper = stringToUpperCase( inString );
@@ -2110,9 +2298,18 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     
     double firstLineY =  inPos.y + ( lines->size() - 1 ) * lineSpacing;
     
+    if( firstLineY > lastScreenViewCenter.y + 330 ) {
+        firstLineY = lastScreenViewCenter.y + 330;
+        }
 
-    setDrawColor( 1, 1, 1, inFade );
 
+    if( inSpeaker->dying ) {
+        setDrawColor( .65, 0, 0, inFade );
+        }
+    else {
+        setDrawColor( 1, 1, 1, inFade );
+        }
+    
     // with a fixed seed
     JenkinsRandomSource blotRandSource( 0 );
         
@@ -2152,9 +2349,13 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
             }
         }
     
+    if( inSpeaker->dying ) {
+        setDrawColor( 1, 1, 1, inFade );
+        }
+    else {
+        setDrawColor( 0, 0, 0, inFade );
+        }
     
-    setDrawColor( 0, 0, 0, inFade );
-
     for( int i=0; i<lines->size(); i++ ) {
         char *line = lines->getElementDirect( i );
         
@@ -2717,7 +2918,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
     returnPack.inObjectID = -1;
 
 
-    if( inObj->hide ) {
+    if( inObj->hide || inObj->outOfRange ) {
         return returnPack;
         }
 
@@ -3214,6 +3415,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                 babyO->holdingFlip = inObj->holdingFlip;
                 
                 // save world hold pos for smooth set-down of baby
+                babyO->lastHeldByRawPosSet = true;
                 babyO->lastHeldByRawPos = worldHoldPos;
 
                 returnPack =
@@ -3853,6 +4055,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 oID = passIDs[p];
             
                 if( p > 0 ) {    
+                    setDrawColor( 1, 1, 1, 1 );
                     startAddingToStencil( false, true );
                     }
                 
@@ -3885,8 +4088,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                 if( p > 0 ) {
                     // floor hugging pass
-                    // only draw bottom layer of floor
-                    setAnimLayerCutoff( 1 );
+                    
+                    int numLayers = getObject( oID )->numSprites;
+                    
+                    if( numLayers > 1 ) {    
+                        // draw all but top layer of floor
+                        setAnimLayerCutoff( numLayers - 1 );
+                        }
                     }
                 
                 
@@ -4747,6 +4955,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
         // now draw non-behind-marked map objects in this row
         // OVER the player objects in this row (so that pick up and set down
         // looks correct, and so players are behind all same-row objects)
+
+        // we determine what counts as a wall through floorHugging
+
+        // first permanent, non-wall objects
         for( int x=xStart; x<=xEnd; x++ ) {
             int mapI = y * mMapD + x;
             
@@ -4757,20 +4969,79 @@ void LivingLifePage::draw( doublePair inViewCenter,
             int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
 
 
-            if( mMap[ mapI ] > 0 && 
-                ! getObject( mMap[ mapI ] )->drawBehindPlayer &&
-                mMapMoveSpeeds[ mapI ] == 0 ) {
+            if( mMap[ mapI ] > 0 ) {
+                ObjectRecord *o = getObject( mMap[ mapI ] );
                 
-                drawMapCell( mapI, screenX, screenY );
-                cellDrawn[ mapI ] = true;
+                if( ! o->drawBehindPlayer &&
+                    ! o->floorHugging &&
+                    o->permanent &&
+                    mMapMoveSpeeds[ mapI ] == 0 ) {
+                
+                    drawMapCell( mapI, screenX, screenY );
+                    cellDrawn[ mapI ] = true;
+                    }
                 }
             }
 
+
+        // then non-permanent, non-wall objects
+        for( int x=xStart; x<=xEnd; x++ ) {
+            int mapI = y * mMapD + x;
+            
+            if( cellDrawn[ mapI ] ) {
+                continue;
+                }
+            
+            int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
+
+
+            if( mMap[ mapI ] > 0 ) {
+                ObjectRecord *o = getObject( mMap[ mapI ] );
+                
+                if( ! o->drawBehindPlayer &&
+                    ! o->floorHugging &&
+                    ! o->permanent &&
+                    mMapMoveSpeeds[ mapI ] == 0 ) {
+                
+                    drawMapCell( mapI, screenX, screenY );
+                    cellDrawn[ mapI ] = true;
+                    }
+                }
+            }
+
+
         // now draw held flying objects on top of objects in this row
+        // but still behind walls in this row
         for( int i=0; i<heldToDrawOnTop.size(); i++ ) {
             drawObjectAnim( heldToDrawOnTop.getElementDirect( i ) );
             }
 
+
+
+        // then permanent, wall objects
+        for( int x=xStart; x<=xEnd; x++ ) {
+            int mapI = y * mMapD + x;
+            
+            if( cellDrawn[ mapI ] ) {
+                continue;
+                }
+            
+            int screenX = CELL_D * ( x + mMapOffsetX - mMapD / 2 );
+
+
+            if( mMap[ mapI ] > 0 ) {
+                ObjectRecord *o = getObject( mMap[ mapI ] );
+                
+                if( ! o->drawBehindPlayer &&
+                    o->floorHugging &&
+                    o->permanent &&
+                    mMapMoveSpeeds[ mapI ] == 0 ) {
+                
+                    drawMapCell( mapI, screenX, screenY );
+                    cellDrawn[ mapI ] = true;
+                    }
+                }
+            }
         } // end loop over rows on screen
     
 
@@ -4855,7 +5126,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         
         drawChalkBackgroundString( speechPos, o->currentSpeech, 
-                                   o->speechFade, widthLimit );
+                                   o->speechFade, widthLimit,
+                                   o );
         }
     
 
@@ -5490,7 +5762,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
 
-
+    if( apocalypseInProgress ) {
+        toggleAdditiveBlend( true );
+        
+        setDrawColor( 1, 1, 1, apocalypseDisplayProgress );
+        
+        drawRect( lastScreenViewCenter, 640, 360 );
+        
+        toggleAdditiveBlend( false );
+        }
+    
     
     if( hideGuiPanel ) {
         // skip gui
@@ -5920,6 +6201,17 @@ void LivingLifePage::draw( doublePair inViewCenter,
     panelPos.y -= 242 + 32 + 16 + 6;
     drawSprite( mGuiPanelSprite, panelPos );
 
+    if( ourLiveObject != NULL &&
+        ourLiveObject->dying ) {
+        toggleMultiplicativeBlend( true );
+        doublePair bloodPos = panelPos;
+        bloodPos.y -= 32;
+        bloodPos.x -= 32;
+        drawSprite( mGuiBloodSprite, bloodPos );
+        toggleMultiplicativeBlend( false );
+        }
+    
+
 
     if( ourLiveObject != NULL ) {
         setDrawColor( 1, 1, 1, 1 );
@@ -6141,6 +6433,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 else {
                     des = (char*)translate( "you" );
+                    if( ourLiveObject->name != NULL ) {
+                        des = autoSprintf( "%s - %s", des, 
+                                           ourLiveObject->name );
+                        desToDelete = des;
+                        }
                     }
                 }
             else if( idToDescribe < 0 ) {
@@ -6152,9 +6449,38 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 if( des == NULL ) {
                     des = (char*)translate( "unrelated" );
                     }
+                if( otherObj != NULL && otherObj->name != NULL ) {
+                    des = autoSprintf( "%s - %s",
+                                       otherObj->name, des );
+                    desToDelete = des;
+                    }
                 }
             else {
                 des = getObject( idToDescribe )->description;
+
+                if( strstr( des, "origGrave" ) != NULL ) {
+                    
+                    for( int g=0; g<mGraveInfo.size(); g++ ) {
+                        GraveInfo *gI = mGraveInfo.getElement( g );
+                        
+                        if( gI->worldPos.x == mCurMouseOverWorld.x &&
+                            gI->worldPos.y == mCurMouseOverWorld.y ) {
+                            
+                            char *desNoComment = stringDuplicate( des );
+                            stripDescriptionComment( desNoComment );
+
+                            // a grave we know about
+                            des = autoSprintf( "%s %s %s",
+                                               desNoComment, translate( "of" ),
+                                               gI->relationName );
+                            delete [] desNoComment;
+                            
+                            desToDelete = des;
+
+                            break;
+                            }    
+                        }
+                    }
                 }
             
             char *stringUpper = stringToUpperCase( des );
@@ -6236,6 +6562,36 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
 
         
+        if( showBugMessage ) {
+            
+            setDrawColor( 1, 1, 1, 0.5 );
+            
+            drawRect( lastScreenViewCenter, 612, 252 );
+
+
+            setDrawColor( 1, 1, 1, 0.5 );
+            
+            
+            setDrawColor( 0.2, 0.2, 0.2, 0.85  );
+            
+            drawRect( lastScreenViewCenter, 600, 240 );
+            
+            setDrawColor( 1, 1, 1, 1 );
+
+            doublePair messagePos = lastScreenViewCenter;
+
+            messagePos.y += 200;
+
+            drawMessage( "bugMessage1", messagePos );
+
+            messagePos = lastScreenViewCenter;
+
+
+            drawMessage( bugEmail, messagePos );
+            
+            messagePos.y -= 200;
+            drawMessage( "bugMessage2", messagePos );
+            }
         }
     
     }
@@ -6442,7 +6798,7 @@ static char isCategory( int inID ) {
     if( c == NULL ) {
         return false;
         }
-    if( c->objectIDSet.size() > 0 ) {
+    if( ! c->isPattern && c->objectIDSet.size() > 0 ) {
         return true;
         }
     return false;
@@ -6469,6 +6825,13 @@ static char isFood( int inID ) {
 
 static char getTransHintable( TransRecord *inTrans ) {
 
+    if( inTrans->lastUseActor ) {
+        return false;
+        }
+    if( inTrans->lastUseTarget ) {
+        return false;
+        }
+    
     if( inTrans->actor >= 0 && 
         ( inTrans->target > 0 || inTrans->target == -1 ) &&
         ( inTrans->newActor > 0 || inTrans->newTarget > 0 ) ) {
@@ -6698,6 +7061,10 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
             
             result = newActor;
             }
+        else if( newTarget > 0 ) {
+            // don't show NOTHING as a result
+            result = newTarget;
+            }
         
         char *actorString;
         
@@ -6886,8 +7253,87 @@ static char checkIfHeldContChanged( LiveObject *inOld, LiveObject *inNew ) {
 
 
 
+
+void LivingLifePage::sendBugReport( int inBugNumber ) {
+    char *bugString = stringDuplicate( "" );
+
+    if( lastMessageSentToServer != NULL ) {
+        char *temp = bugString;
+        bugString = autoSprintf( "%s   Just sent: [%s]",
+                                 temp, lastMessageSentToServer );
+        delete [] temp;
+        }
+    if( nextActionMessageToSend != NULL ) {
+        char *temp = bugString;
+        bugString = autoSprintf( "%s   Waiting to send: [%s]",
+                                 temp, nextActionMessageToSend );
+        delete [] temp;
+        }
+    
+    // clear # terminators from message
+    char *spot = strstr( bugString, "#" );
+    
+    while( spot != NULL ) {
+        spot[0] = ' ';
+        spot = strstr( bugString, "#" );
+        }
+    
+    
+    char *bugMessage = autoSprintf( "BUG %d %s#", inBugNumber, bugString );
+    
+    delete [] bugString;
+
+    sendToServerSocket( bugMessage );
+    delete [] bugMessage;
+
+    FILE *f = fopen( "stdout.txt", "r" );
+
+    if( f != NULL ) {
+        // stdout.txt exists
+        
+        printf( "Bug report sent, telling user to email stdout.txt to us.\n" );
+        
+        fclose( f );
+        
+        showBugMessage = true;
+        }
+    }
+    
+
+
         
 void LivingLifePage::step() {
+    if( apocalypseInProgress ) {
+        double stepSize = frameRateFactor / ( apocalypseDisplaySeconds * 60.0 );
+        apocalypseDisplayProgress += stepSize;
+        }
+    
+    if( mRemapPeak > 0 ) {
+        if( mRemapDelay < 1 ) {
+            double stepSize = 
+                frameRateFactor / ( remapDelaySeconds * 60.0 );
+            mRemapDelay += stepSize;
+            }
+        else {
+
+            double stepSize = 
+                mRemapDirection * frameRateFactor / ( remapPeakSeconds * 60.0 );
+        
+            mCurrentRemapFraction += stepSize;
+            
+            if( stepSize > 0 && mCurrentRemapFraction >= mRemapPeak ) {
+                mCurrentRemapFraction = mRemapPeak;
+                mRemapDirection *= -1;
+                }
+            if( stepSize < 0 && mCurrentRemapFraction <= 0 ) {
+                mCurrentRemapFraction = 0;
+                mRemapPeak = 0;
+                }
+            setRemapFraction( mCurrentRemapFraction );
+            }
+        }
+    
+
     if( mouseDown ) {
         mouseDownFrames++;
         }
@@ -7152,7 +7598,7 @@ void LivingLifePage::step() {
                 }
             }
         else {
-            int speed = 4;
+            int speed = frameRateFactor * 4;
 
             if( d < 8 ) {
                 speed = lrint( frameRateFactor * d / 2 );
@@ -7214,7 +7660,7 @@ void LivingLifePage::step() {
                 }
             }
         else {
-            int speed = 4;
+            int speed = frameRateFactor * 4;
 
             if( d < 8 ) {
                 speed = lrint( frameRateFactor * d / 2 );
@@ -7314,6 +7760,23 @@ void LivingLifePage::step() {
             mHintExtraOffset[ i ].x = - longestLine;
             }
         }
+    else if( ourObject != NULL && mNextHintObjectID != 0 &&
+             getNumHints( mNextHintObjectID ) == 0 ) {
+        // holding something with no hints, hide last sheet
+        int newLiveSheetIndex = 0;
+        
+        if( mLiveHintSheetIndex != -1 ) {
+            mHintTargetOffset[mLiveHintSheetIndex] = mHintHideOffset[0];
+            
+            newLiveSheetIndex = 
+                (mLiveHintSheetIndex + 1 ) % NUM_HINT_SHEETS;
+            
+            }
+        
+        mLiveHintSheetIndex = newLiveSheetIndex;
+        
+        mCurrentHintObjectID = mNextHintObjectID;
+        }
     
 
 
@@ -7333,7 +7796,7 @@ void LivingLifePage::step() {
                     }
                 }
             else {
-                int speed = 4;
+                int speed = frameRateFactor * 4;
                 
                 if( d < 8 ) {
                     speed = lrint( frameRateFactor * d / 2 );
@@ -7401,7 +7864,7 @@ void LivingLifePage::step() {
                     }
                 }
             else {
-                int speed = 4;
+                int speed = frameRateFactor * 4;
                 
                 if( d < 8 ) {
                     speed = lrint( frameRateFactor * d / 2 );
@@ -7432,7 +7895,70 @@ void LivingLifePage::step() {
             }
         }
 
-            
+
+    double curTime = game_getCurrentTime();
+
+    if( playerActionPending && 
+        ourObject != NULL && 
+        curTime - lastServerMessageReceiveTime < 1 &&
+        curTime - ourObject->pendingActionAnimationStartTime > 
+        10 + largestPendingMessageTimeGap ) {
+        
+        // been bouncing for ten seconds with no answer from server
+        // in the mean time, we have seen other messages arrive from server
+        // (so any network outage is over)
+
+        printf( "Been waiting for response to our action request "
+                "from server for %.2f seconds, and last server message "
+                "received %.2f sec ago, saw a message time gap along the way "
+                "of %.2f, giving up\n",
+                curTime - ourObject->pendingActionAnimationStartTime,
+                curTime - lastServerMessageReceiveTime,
+                largestPendingMessageTimeGap );
+
+        sendBugReport( 1 );
+
+        // end it
+        ourObject->pendingActionAnimationProgress = 0;
+        ourObject->pendingAction = false;
+                                
+        playerActionPending = false;
+        playerActionTargetNotAdjacent = false;
+
+        if( nextActionMessageToSend != NULL ) {
+            delete [] nextActionMessageToSend;
+            nextActionMessageToSend = NULL;
+            }
+        
+        int goodX = ourObject->xServer;
+        int goodY = ourObject->yServer;
+
+        printf( "   Jumping back to last-known server position of %d,%d\n",
+                goodX, goodY );
+
+        // jump to wherever server said we were before
+        ourObject->inMotion = false;
+                        
+        ourObject->moveTotalTime = 0;
+        ourObject->currentSpeed = 0;
+        ourObject->currentGridSpeed = 0;
+        
+
+        ourObject->currentPos.x = goodX;
+        ourObject->currentPos.y = goodY;
+        
+        ourObject->xd = goodX;
+        ourObject->yd = goodY;
+        }
+    
+    
+    if( game_getCurrentTime() - timeLastMessageSent > 15 ) {
+        // more than 15 seconds without client making a move
+        // send KA to keep connection open
+        sendToServerSocket( (char*)"KA 0 0#" );
+        }
+    
+
 
     char *message = getNextServerMessage();
 
@@ -7475,12 +8001,31 @@ void LivingLifePage::step() {
             // we don't use these for anything in client
             int currentPlayers = 0;
             int maxPlayers = 0;
-
+            mRequiredVersion = versionNumber;
+            
             sscanf( message, 
                     "SN\n"
                     "%d/%d\n"
-                    "%d\n", &currentPlayers, &maxPlayers, &number );
+                    "%d\n"
+                    "%d\n", &currentPlayers, &maxPlayers, &number, 
+                    &mRequiredVersion );
             
+
+            if( mRequiredVersion > versionNumber ||
+                ( mRequiredVersion < versionNumber &&
+                  mRequiredVersion != dataVersionNumber ) ) {
+                
+                // if server is using a newer version than us, we must upgrade
+                // our client
+                
+                // if server is using an older version, check that
+                // their version matches our data version at least
+
+                setSignal( "versionMismatch" );
+                delete [] message;
+                return;
+                }
+
             char *pureKey = getPureAccountKey();
             
             char *password = 
@@ -7547,6 +8092,111 @@ void LivingLifePage::step() {
             
             delete [] message;
             return;
+            }
+        else if( type == APOCALYPSE ) {
+            apocalypseDisplayProgress = 0;
+            apocalypseInProgress = true;
+            }
+        else if( type == MONUMENT_CALL ) {
+            int posX, posY, monumentID;
+            
+            int numRead = sscanf( message, "MN\n%d %d %d",
+                                  &posX, &posY, &monumentID );
+            if( numRead == 3 ) {
+                applyReceiveOffset( &posX, &posY );
+
+                doublePair pos;
+                pos.x = posX;
+                pos.y = posY;
+                
+                LiveObject *ourLiveObject = getOurLiveObject();
+
+                if( ourLiveObject != NULL ) {
+                    double d = distance( pos, ourLiveObject->currentPos );
+                    
+                    if( d > 32 ) {
+                        addAncientHomeLocation( posX, posY );
+                        
+                        // play sound in distance
+                        ObjectRecord *monObj = getObject( monumentID );
+                        
+                        if( monObj != NULL && 
+                            monObj->creationSound.numSubSounds > 0 ) {    
+                             
+                            doublePair realVector = 
+                                getVectorFromCamera( lrint( posX ),
+                                                     lrint( posY ) );
+                            // position off camera in that direction
+                            // but fake distance
+                            realVector = mult( normalize( realVector ), 4 );
+                            
+                            playSound( monObj->creationSound, realVector );
+                            }
+                        }
+                    }
+                }            
+            }
+        else if( type == GRAVE ) {
+            int posX, posY, playerID;
+            
+            int numRead = sscanf( message, "GV\n%d %d %d",
+                                  &posX, &posY, &playerID );
+            if( numRead == 3 ) {
+                applyReceiveOffset( &posX, &posY );
+                
+                LiveObject *gravePerson = getLiveObject( playerID );
+                
+                if( gravePerson != NULL && 
+                    ( gravePerson->relationName || 
+                      gravePerson->name != NULL ) ) {
+                    
+                    GraveInfo g;
+                    g.worldPos.x = posX;
+                    g.worldPos.y = posY;
+
+                    char *des = gravePerson->relationName;
+                    char *desToDelete = NULL;
+                    
+                    if( des == NULL ) {
+                        des = (char*)translate( "unrelated" );
+                        }
+                    if( gravePerson->name != NULL ) {
+                        des = autoSprintf( "%s - %s",
+                                           gravePerson->name, des );
+                        desToDelete = des;
+                        }
+
+                    g.relationName = stringDuplicate( des );
+                    
+                    if( desToDelete != NULL ) {
+                        delete [] desToDelete;
+                        }
+                    
+                    mGraveInfo.push_back( g );
+                    }
+                }            
+            }
+        else if( type == GRAVE_MOVE ) {
+            int posX, posY, posXNew, posYNew;
+            
+            int numRead = sscanf( message, "GM\n%d %d %d %d",
+                                  &posX, &posY, &posXNew, &posYNew );
+            if( numRead == 4 ) {
+                applyReceiveOffset( &posX, &posY );
+                applyReceiveOffset( &posXNew, &posYNew );
+
+
+                for( int i=0; i<mGraveInfo.size(); i++ ) {
+                    GraveInfo *g = mGraveInfo.getElement( i );
+                    
+                    if( g->worldPos.x == posX &&
+                        g->worldPos.y == posY ) {
+                        
+                        g->worldPos.x = posXNew;
+                        g->worldPos.y = posYNew;
+                        }    
+                    }
+                }            
             }
         else if( type == MAP_CHUNK ) {
             
@@ -7666,7 +8316,7 @@ void LivingLifePage::step() {
                 
 
                 newMapCurAnimType[i] = ground;
-                newMapLastAnimFade[i] = ground;
+                newMapLastAnimType[i] = ground;
                 newMapLastAnimFade[i] = 0;
                 newMapDropOffsets[i].x = 0;
                 newMapDropOffsets[i].y = 0;
@@ -7707,7 +8357,7 @@ void LivingLifePage::step() {
                         mMapFloorAnimationFrameCount[oI];
                     
                     newMapCurAnimType[i] = mMapCurAnimType[oI];
-                    newMapLastAnimFade[i] = mMapLastAnimFade[oI];
+                    newMapLastAnimType[i] = mMapLastAnimType[oI];
                     newMapLastAnimFade[i] = mMapLastAnimFade[oI];
                     newMapDropOffsets[i] = mMapDropOffsets[oI];
                     newMapDropRot[i] = mMapDropRot[oI];
@@ -7749,7 +8399,7 @@ void LivingLifePage::step() {
             
             memcpy( mMapCurAnimType, newMapCurAnimType, 
                     mMapD * mMapD * sizeof( AnimType ) );
-            memcpy( mMapLastAnimFade, newMapLastAnimFade,
+            memcpy( mMapLastAnimType, newMapLastAnimType,
                     mMapD * mMapD * sizeof( AnimType ) );
             memcpy( mMapLastAnimFade, newMapLastAnimFade,
                     mMapD * mMapD * sizeof( double ) );
@@ -8499,7 +9149,7 @@ void LivingLifePage::step() {
                                         //  below)
                                         ObjectRecord *obj = getObject( old );
                                         
-                                        // don't play using sound
+                                        // don't play using sound unless
                                         // if they are both use dummies
                                         if( !bothSameUseParent( old, newID )
                                             &&
@@ -8815,6 +9465,10 @@ void LivingLifePage::step() {
                 o.age = 0;
                 o.finalAgeSet = false;
                 
+                o.outOfRange = false;
+                o.dying = false;
+                
+                o.name = NULL;
                 o.relationName = NULL;
 
 
@@ -8835,6 +9489,9 @@ void LivingLifePage::step() {
                 o.heldByDropOffset.x = 0;
                 o.heldByDropOffset.y = 0;
                 
+                o.jumpOutOfArmsSent = false;
+                
+
                 o.ridingOffset.x = 0;
                 o.ridingOffset.y = 0;
 
@@ -9122,6 +9779,23 @@ void LivingLifePage::step() {
                             }
                         
                         
+                        // receiving a PU means they aren't out of
+                        // range anymore
+                        if( existing->outOfRange ) {
+                            // was out of range before
+                            // this update is forced
+                            existing->currentPos.x = o.xd;
+                            existing->currentPos.y = o.yd;
+                            
+                            existing->currentSpeed = 0;
+                            existing->currentGridSpeed = 0;
+                            
+                            existing->xd = o.xd;
+                            existing->yd = o.yd;
+                            }
+                        existing->outOfRange = false;
+
+                        
                         existing->lastHoldingID = oldHeld;
                         existing->holdingID = o.holdingID;
                         
@@ -9276,6 +9950,25 @@ void LivingLifePage::step() {
                                         existing->currentPos.y ) );
                                 otherSoundPlayed = true;
                                 }
+                            if( strstr( ateObj->description, "remapStart" )
+                                != NULL ) {
+                                
+                                if( mRemapPeak == 0 ) {
+                                    // reseed
+                                    setRemapSeed( 
+                                        remapRandSource.getRandomBoundedInt( 
+                                            0,
+                                            10000000 ) );
+                                    mRemapDelay = 0;
+                                    }
+                                        
+                                // closer to max peak
+                                // zeno's paradox style
+                                mRemapPeak += 0.5 * ( 1 - mRemapPeak );
+                                
+                                // back toward peak
+                                mRemapDirection = 1.0;
+                                }
                             }
                         
                         
@@ -9289,7 +9982,7 @@ void LivingLifePage::step() {
                             
                             //existing->lastAnim = ground;
                             //existing->lastAnimFade = 0;
-                            if( oldHeld > 0 ) {
+                            if( oldHeld != 0 ) {
                                 if( o.id == ourID ) {
                                     addNewAnimPlayerOnly( existing, ground );
                                     }
@@ -9302,18 +9995,20 @@ void LivingLifePage::step() {
                                                 existing, eating );
                                             }
 
-                                        ObjectRecord *oldHeldObj =
-                                            getObject( oldHeld );
+                                        if( oldHeld > 0 ) {
+                                            ObjectRecord *oldHeldObj =
+                                                getObject( oldHeld );
                                         
-                                        if( oldHeldObj->
-                                            eatingSound.numSubSounds > 0 ) {
+                                            if( oldHeldObj->
+                                                eatingSound.numSubSounds > 0 ) {
                                             
-                                            playSound( 
-                                                oldHeldObj->eatingSound,
-                                                getVectorFromCamera( 
-                                                    existing->currentPos.x, 
-                                                    existing->currentPos.y ) );
-                                            otherSoundPlayed = true;
+                                                playSound( 
+                                                    oldHeldObj->eatingSound,
+                                                    getVectorFromCamera( 
+                                                     existing->currentPos.x, 
+                                                     existing->currentPos.y ) );
+                                                otherSoundPlayed = true;
+                                                }
                                             }
                                         }
                                     else {
@@ -9601,8 +10296,7 @@ void LivingLifePage::step() {
                                         }
                                     
                                     
-                                    if( ! otherSoundPlayed &&
-                                        ! clothingChanged &&
+                                    if( ! clothingChanged &&
                                         heldTransitionSourceID >= 0 &&
                                         heldObj->creationSound.numSubSounds 
                                         > 0 ) {
@@ -9715,7 +10409,8 @@ void LivingLifePage::step() {
                                     
                                     if( oldHeld == 0 ||
                                         heldContChanged || 
-                                        ( !autoDecay && 
+                                        ( heldTransitionSourceID == -1 &&
+                                          !autoDecay && 
                                           ! creationSoundPlayed &&
                                           ! clothingSoundPlayed ) ) {
                                         // we're holding something new
@@ -9737,7 +10432,11 @@ void LivingLifePage::step() {
                                                 getObject( 
                                                     existing->displayID );
                                 
-                                            if( existingObj->
+                                            // skip this if they are dying
+                                            // because they may have picked
+                                            // up a wound
+                                            if( !existing->dying &&
+                                                existingObj->
                                                 usingSound.numSubSounds > 0 ) {
                                     
                                                 playSound( 
@@ -9866,10 +10565,13 @@ void LivingLifePage::step() {
                         
                         existing->lastSpeed = o.lastSpeed;
                         
+                        char babyDropped = false;
                         
+                        if( done_moving && existing->heldByAdultID != -1 ) {
+                            babyDropped = true;
+                            }
                         
-
-                        if( existing->heldByAdultID != -1 ) {
+                        if( babyDropped ) {
                             // got an update for a player that's being held
                             // this means they've been dropped
                             printf( "Baby dropped\n" );
@@ -9884,10 +10586,27 @@ void LivingLifePage::step() {
                             existing->xd = o.xd;
                             existing->yd = o.yd;
                             
-                            existing->heldByDropOffset =
-                                sub( existing->lastHeldByRawPos,
-                                     existing->currentPos );
-
+                            if( existing->lastHeldByRawPosSet ) {    
+                                existing->heldByDropOffset =
+                                    sub( existing->lastHeldByRawPos,
+                                         existing->currentPos );
+                                if( length( existing->heldByDropOffset ) > 3 ) {
+                                    // too far to fly during drop
+                                    // snap instead
+                                    existing->heldByDropOffset.x = 0;
+                                    existing->heldByDropOffset.y = 0;
+                                    }
+                                }
+                            else {
+                                // held pos not known
+                                // maybe this holding parent has never
+                                // been drawn on the screen
+                                // (can happen if they drop us during map load)
+                                existing->heldByDropOffset.x = 0;
+                                existing->heldByDropOffset.y = 0;
+                                }
+                            
+                            existing->lastHeldByRawPosSet = false;
                             
                             
                             LiveObject *adultO = 
@@ -10059,6 +10778,8 @@ void LivingLifePage::step() {
                         o.inMotion = false;
                         
                         o.holdingFlip = false;
+                        
+                        o.lastHeldByRawPosSet = false;
 
                         o.pendingAction = false;
                         o.pendingActionAnimationProgress = 0;
@@ -10128,7 +10849,12 @@ void LivingLifePage::step() {
                         
                         sscanf( reasonPos, "reason_%99s", reasonString );
                         
-                        if( strcmp( reasonString, "nursing_hunger" ) == 0 ) {
+                        if( apocalypseInProgress ) {
+                            mDeathReason = stringDuplicate( 
+                                translate( "reasonApocalypse" ) );
+                            }
+                        else if( strcmp( reasonString, "nursing_hunger" ) == 
+                                 0 ) {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonNursingHunger" ) );
                             }
@@ -10257,6 +10983,10 @@ void LivingLifePage::step() {
                                 delete [] nextObject->relationName;
                                 }
 
+                            if( nextObject->name != NULL ) {
+                                delete [] nextObject->name;
+                                }
+
                             delete nextObject->futureAnimStack;
                             delete nextObject->futureHeldAnimStack;
 
@@ -10281,6 +11011,8 @@ void LivingLifePage::step() {
                 
                 if( babyO != NULL && existing != NULL ) {
                     babyO->heldByAdultID = existing->id;
+                    babyO->jumpOutOfArmsSent = false;
+                    
                     // stop crying when held
                     babyO->tempAgeOverrideSet = false;
                     
@@ -10371,6 +11103,8 @@ void LivingLifePage::step() {
                 
                 ourID = ourObject->id;
                 
+                remapRandSource.reseed( ourID );
+
                 printf( "Got first PLAYER_UPDATE message, our ID = %d\n",
                         ourID );
 
@@ -10495,6 +11229,9 @@ void LivingLifePage::step() {
                             // that means nothing else is pending yet
                             existing->somePendingMessageIsMoreMovement = false;
                                 
+                            // receiving a PM means they aren't out of
+                            // range anymore
+                            existing->outOfRange = false;
                             
 
 
@@ -11162,6 +11899,113 @@ void LivingLifePage::step() {
                     }
                 }
             }
+        else if( type == NAMES ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+
+                int id;
+                int numRead = sscanf( lines[i], "%d ",
+                                      &( id ) );
+
+                if( numRead == 1 ) {
+                    for( int j=0; j<gameObjects.size(); j++ ) {
+                        if( gameObjects.getElement(j)->id == id ) {
+                            
+                            LiveObject *existing = gameObjects.getElement(j);
+                            
+                            if( existing->name != NULL ) {
+                                delete [] existing->name;
+                                }
+                            
+                            char *firstSpace = strstr( lines[i], " " );
+        
+                            if( firstSpace != NULL ) {
+
+                                char *nameStart = &( firstSpace[1] );
+                                
+                                existing->name = stringDuplicate( nameStart );
+                                }
+                            
+                            break;
+                            }
+                        }
+                    
+                    }
+                
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
+        else if( type == DYING ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+
+                int id;
+                int numRead = sscanf( lines[i], "%d ",
+                                      &( id ) );
+
+                if( numRead == 1 ) {
+                    for( int j=0; j<gameObjects.size(); j++ ) {
+                        if( gameObjects.getElement(j)->id == id ) {
+                            
+                            LiveObject *existing = gameObjects.getElement(j);
+                            
+                            existing->dying = true;
+                            break;
+                            }
+                        }
+                    }
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
+        else if( type == PLAYER_OUT_OF_RANGE ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+
+                int id;
+                int numRead = sscanf( lines[i], "%d ",
+                                      &( id ) );
+
+                if( numRead == 1 ) {
+                    for( int j=0; j<gameObjects.size(); j++ ) {
+                        if( gameObjects.getElement(j)->id == id ) {
+                            
+                            LiveObject *existing = gameObjects.getElement(j);
+                            
+                            existing->outOfRange = true;
+                            break;
+                            }
+                        }
+                    }
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
         else if( type == FOOD_CHANGE ) {
             
             LiveObject *ourLiveObject = getOurLiveObject();
@@ -11415,6 +12259,11 @@ void LivingLifePage::step() {
 
         int sayCap = (int)( floor( age ) + 1 );
         
+        if( ourLiveObject->lineage.size() == 0  && sayCap < 30 ) {
+            // eve has a larger say limit
+            sayCap = 30;
+            }
+
         mSayField.setMaxLength( sayCap );
 
 
@@ -12140,10 +12989,18 @@ void LivingLifePage::step() {
             playerActionPending = true;
             ourLiveObject->pendingAction = true;
             
+            // start measuring again to detect network outages 
+            // during this pending action
+            largestPendingMessageTimeGap = 0;
+            
+
             // start on first frame to force at least one cycle no
             // matter how fast the server responds
             ourLiveObject->pendingActionAnimationProgress = 
                 0.025 * frameRateFactor;
+
+            ourLiveObject->pendingActionAnimationStartTime = 
+                game_getCurrentTime();
             
             if( nextActionEating ) {
                 addNewAnim( ourLiveObject, eating );
@@ -12202,6 +13059,8 @@ void LivingLifePage::step() {
                 isLiveObjectSetFullyLoaded( &mFirstObjectSetLoadingProgress );
             
             if( mDoneLoadingFirstObjectSet ) {
+                printf( "First map load done\n" );
+                
                 restartMusic( computeCurrentAge( ourLiveObject ),
                               ourLiveObject->ageRate );
                 setSoundLoudness( 1.0 );
@@ -12421,7 +13280,20 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    for( int i=0; i<mGraveInfo.size(); i++ ) {
+        delete [] mGraveInfo.getElement(i)->relationName;
+        }
+    mGraveInfo.deleteAll();
+
+
+    mRemapDelay = 0;
+    mRemapPeak = 0;
+    mRemapDirection = 1.0;
+    mCurrentRemapFraction = 0;
     
+    apocalypseInProgress = false;
+
     clearMap();
     
     mMapExtraMovingObjects.deleteAll();
@@ -12761,6 +13633,12 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
             for( int i=gameObjects.size()-1; i>=0 && ! p->hit; i-- ) {
         
                 LiveObject *o = gameObjects.getElement( i );
+
+                if( o->outOfRange ) {
+                    // out of range, but this was their last known position
+                    // don't draw now
+                    continue;
+                    }
                 
                 if( o->heldByAdultID != -1 ) {
                     // held by someone else, don't draw now
@@ -12945,6 +13823,15 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
 
+    if( showBugMessage ) {
+        return;
+        }
+
+    if( mServerSocket == -1 ) {
+        // dead
+        return;
+        }
+
     if( mFirstServerMessagesReceived != 3 || ! mDoneLoadingFirstObjectSet ) {
         return;
         }
@@ -13076,6 +13963,9 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         
         mCurMouseOverSpot.x = mapX;
         mCurMouseOverSpot.y = mapY;
+
+        mCurMouseOverWorld.x = clickDestX;
+        mCurMouseOverWorld.y = clickDestY;
         
         mCurMouseOverBehind = p.hitOurPlacementBehind;
         
@@ -13173,6 +14063,15 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
 
+    if( showBugMessage ) {
+        return;
+        }
+    
+    if( mServerSocket == -1 ) {
+        // dead
+        return;
+        }
+
     char modClick = false;
     
     if((( mEKeyDown && mEKeyEnabled ) || isLastMouseButtonRight()) && !stopingMovement) {
@@ -13203,6 +14102,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
 
     if( playerActionPending ) {
+        printf( "Skipping click, action pending\n" );
+        
         // block further actions until update received to confirm last
         // action
         return;
@@ -13213,16 +14114,22 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     if( ourLiveObject->heldByAdultID != -1 ) {
         // click from a held baby
-        
-        // send dummy move message right away to make baby jump out of arms
 
-        // we don't need to use baby's true position here... they are
-        // in arms
-        char *moveMessage = autoSprintf( "MOVE %d %d 1 0#",
-                                         ourLiveObject->xd,
-                                         ourLiveObject->yd );
-        sendToServerSocket( moveMessage );
-        delete [] moveMessage;
+        // only send once, even on multiple clicks
+        if( ! ourLiveObject->jumpOutOfArmsSent ) {    
+            // send dummy move message right away to make baby jump out of arms
+            
+            // we don't need to use baby's true position here... they are
+            // in arms
+            char *moveMessage = autoSprintf( "MOVE %d %d 1 0#",
+                                             ourLiveObject->xd,
+                                             ourLiveObject->yd );
+            sendToServerSocket( moveMessage );
+            delete [] moveMessage;
+            
+            ourLiveObject->jumpOutOfArmsSent = true;
+            }
+        
         return;
         }
     
@@ -14311,6 +15218,10 @@ void LivingLifePage::pointerDrag( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
+    
+    if( showBugMessage ) {
+        return;
+        }
     }
 
 
@@ -14318,6 +15229,15 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
 
+    if( showBugMessage ) {
+        return;
+        }
+    
+
+    if( mServerSocket == -1 ) {
+        // dead
+        return;
+        }
 
     if( mFirstServerMessagesReceived != 3 || ! mDoneLoadingFirstObjectSet ) {
         return;
@@ -14354,8 +15274,23 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
 void LivingLifePage::keyDown( unsigned char inASCII ) {
     
     registerTriggerKeyCommand( inASCII, this );
+
+
+    if( mServerSocket == -1 ) {
+        // dead
+        return;
+        }
+
+    if( showBugMessage ) {
+        if( inASCII == '%' ) {
+            showBugMessage = false;
+            }
+        return;
+        }
+
     
     switch( inASCII ) {
+        /*
         case 'b':
             blackBorder = true;
             whiteBorder = false;
@@ -14364,6 +15299,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             blackBorder = false;
             whiteBorder = true;
             break;
+        */
         /*
         case 'a':
             drawAdd = ! drawAdd;
@@ -14511,6 +15447,15 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
 
 
 void LivingLifePage::specialKeyDown( int inKeyCode ) {
+    if( showBugMessage ) {
+        return;
+        }
+    
+    if( mServerSocket == -1 ) {
+        // dead
+        return;
+        }
+
     if( inKeyCode == MG_KEY_UP ||
         inKeyCode == MG_KEY_DOWN ) {
         if( ! mSayField.isFocused() && inKeyCode == MG_KEY_UP ) {

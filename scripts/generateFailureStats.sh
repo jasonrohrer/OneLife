@@ -14,7 +14,7 @@ do
   echo "Using rsync to sync all failure logs from $server"
   echo ""
 
-  if [ ! -d "~/checkout/OneLife/server/failureLog_$server" ]
+  if [ ! -d ~/checkout/OneLife/server/failureLog_$server ]
   then
 	  echo "Making local directory failureLog_$server"
 	  mkdir ~/checkout/OneLife/server/failureLog_$server

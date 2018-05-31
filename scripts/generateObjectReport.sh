@@ -8,13 +8,17 @@ git pull
 rm */cache.fcz
 
 
-cd ../OneLifeWorking/gameSource
+cd ../OneLifeWorking
 
 git pull
+
+linesOfCode=`sloccount . | grep 'Total Physical Source' | sed 's/^.*= //'`
+
+cd gameSource
 
 
 sh makePrintReportHTML
 
 cd ../../OneLifeData7Latest
 
-../OneLifeWorking/gameSource/printReportHTML ../../public_html/objectsReport.php
+../OneLifeWorking/gameSource/printReportHTML $linesOfCode ../../public_html/objectsReport.php

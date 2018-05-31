@@ -29,7 +29,7 @@ typedef struct ObjectRecord {
         // can it go into a container
         char containable;
         // how big of a slot is needed to contain it
-        int containSize;
+        float containSize;
 
         // by default, when placed in a vertical container slot,
         // objects rotate 90 deg clockwise
@@ -169,7 +169,7 @@ typedef struct ObjectRecord {
         int numSlots;
         
         // how big of a containable can fit in each slot?
-        int slotSize;
+        float slotSize;
         
         doublePair *slotPos;
 
@@ -188,6 +188,9 @@ typedef struct ObjectRecord {
         // < 1.0 means longer decay times
         // must be larger than 0.0001
         float slotTimeStretch;
+        
+        // true if nothing can be added/removed from container
+        char slotsLocked;
         
 
         int numSprites;
@@ -236,6 +239,10 @@ typedef struct ObjectRecord {
         // something different happens
         int numUses;
 
+        // chance that using this object will make the use count
+        // decrement.  1.0 means it always decrements.
+        float useChance;
+        
         // flags for sprites that vanish with additional
         // use of this object
         // (example:  berries getting picked)
@@ -265,6 +272,25 @@ typedef struct ObjectRecord {
         // used to avoid recomputing height repeatedly at client/server runtime
         int cachedHeight;
         
+        char apocalypseTrigger;
+
+        char monumentStep;
+        char monumentDone;
+        char monumentCall;
+
+        
+        
+        // NULL unless we are auto-populating variable objects
+        // then contains ( N ) ids for auto-generated variable dummy objects
+        // with dummy_1 at index 0, dummy_2 at index 1, etc.
+        int numVariableDummyIDs;
+        int *variableDummyIDs;
+        
+        char isVariableDummy;
+        int variableDummyParent;
+
+        char isVariableHidden;
+
     } ObjectRecord;
 
 
@@ -321,8 +347,12 @@ void enableObjectSearch( char inEnable );
 //
 // if inAutoGenerateUsedObjects is true, (n-1) dummy objects are generated
 // for each object that has n uses.  These are not saved to disk
+//
+// Same for variable objects that contain the string $N in their discription
+// (objects 1 - N are generated)
 int initObjectBankStart( char *outRebuildingCache, 
-                         char inAutoGenerateUsedObjects = false );
+                         char inAutoGenerateUsedObjects = false,
+                         char inAutoGenerateVariableObjects = false );
 
 // returns progress... ready for Finish when progress == 1.0
 float initObjectBankStep();
@@ -359,7 +389,7 @@ ObjectRecord **searchObjects( const char *inSearch,
 
 int addObject( const char *inDescription,
                char inContainable,
-               int inContainSize,
+               float inContainSize,
                double inVertContainRotationOffset,
                char inPermanent,
                int inMinPickupAge,
@@ -392,10 +422,11 @@ int addObject( const char *inDescription,
                SoundUsage inEatingSound,
                SoundUsage inDecaySound,
                char inCreationSoundInitialOnly,
-               int inNumSlots, int inSlotSize, doublePair *inSlotPos,
+               int inNumSlots, float inSlotSize, doublePair *inSlotPos,
                char *inSlotVert,
                int *inSlotParent,
                float inSlotTimeStretch,
+               char inSlotsLocked,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
                double *inSpriteRot,
@@ -412,6 +443,7 @@ int addObject( const char *inDescription,
                char *inSpriteIsBackFoot,
                char *inSpriteIsFrontFoot,
                int inNumUses,
+               float inUseChance,
                char *inSpriteUseVanish,
                char *inSpriteUseAppear,
                char inNoWriteToFile = false,
@@ -476,6 +508,20 @@ char isSoundUsedByObject( int inSoundID );
 int getNumContainerSlots( int inID );
 
 char isContainable( int inID );
+
+char isApocalypseTrigger( int inID );
+
+
+// 0 for nothing
+// 1 for monumentStep
+// 2 for monumentDone
+// 3 for monumentCall
+int getMonumentStatus( int inID );
+
+
+// return vector NOT destroyed by caller
+SimpleVector<int> *getMonumentCallObjects();
+
 
 
 
@@ -553,7 +599,8 @@ double getClosestObjectPart( ObjectRecord *inObject,
                              int *outSlot,
                              // whether sprites marked as multiplicative
                              // blend-mode should be considered clickable
-                             char inConsiderTransparent = true );
+                             char inConsiderTransparent = true,
+                             char inConsiderEmptySlots = false );
 
 
 char isSpriteVisibleAtAge( ObjectRecord *inObject,
@@ -639,6 +686,12 @@ void setupSpriteUseVis( ObjectRecord *inObject, int inUsesRemaining,
 
 
 char bothSameUseParent( int inAObjectID, int inBObjectID );
+
+
+
+// processes object ID for client consumption
+// hiding hidden variable object ids behind parent ID
+int hideIDForClient( int inObjectID );
 
 
 #endif

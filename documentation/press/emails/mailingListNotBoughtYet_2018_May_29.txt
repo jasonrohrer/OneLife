@@ -1,0 +1,52 @@
+Subject:  Game Update:  One Hour One Life
+
+
+<html>
+<head>
+<title></title>
+</head>
+<body>My latest game, One Hour One Life, has been out for about three months now.  The website is at  <a href=http://onehouronelife.com>http://www.onehouronelife.com</a>  and you can also check out the trailer:<br>
+<br>
+
+<a href='https://www.youtube.com/watch?v=mT4JktcVQuE'>https://www.youtube.com/watch?v=mT4JktcVQuE</a><br>
+<br>
+
+During the past three months, the game has gone through extensive public testing.  Over 1.6 million lives have been lived inside the game, with a total of 235,000 collective player hours logged.  I've also been putting out weekly content and code updates, and the game has been getting better and better.  All known bugs have been found and fixed, and hundreds of new things have been added.<br>
+<br>
+
+I still have a long way to go, however, before I meet my goal of 10,000 craftable, interactive objects.  I plan to keep putting out weekly updates for at least two more years.<br>
+<br>
+
+But with over 700 interactive objects, it's already a pretty big game, people seem to like what's there so far.  Player reviews are currently 94% positive.<br>
+<br>
+
+This game is about a lot of things:  the deep mystery of human civilization, cooperation, and legacy.  But as the game's community has continued to evolve, the most important and unique aspect of this game has risen to the top of the list:  This is a game about families.  And not about observing or controlling families from the outside, like in The Sims, but actually about being part of a family, and interacting with other members of the family who are individuals, just like you.<br>
+<br>
+
+Some recent additions to the game focus on this aspect specifically, like the new family tree browser:<br>
+<br>
+
+<a href='http://lineage.onehouronelife.com/server.php?action=front_page'>http://lineage.onehouronelife.com/server.php?action=front_page</a><br>
+<br>
+
+We're all part of a family of some kind in real life, and it's one of the most fundamental aspects of the human experience.  Has there really never been a video game about this before?  Online multiplayer games open the door to all sorts of new and powerful experiences.<br>
+<br>
+
+I hope you'll check it out:<br>
+<br>
+
+<a href=http://onehouronelife.com>http://onehouronelife.com</a><br>
+<br>
+
+Thanks for reading,<br>
+Jason<br>
+<br>
+<br>
+--<br>
+You're receiving this email because you signed up for my release mailing list a while back and confirmed your subscription via email. (Perhaps you played Sleep Is Death, Inside a Star-filled Sky, or The Castle Doctrine.)<br>
+<br>
+You can unsubscribe from future emails about my game releases by <a href='<%asm_group_unsubscribe_raw_url%>'>clicking here.</a>
+    
+</body>
+</html>
+  

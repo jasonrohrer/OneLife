@@ -14,9 +14,15 @@ function showPayLinks( $inSimple ) {
         $referrer = urlencode( $_SERVER['HTTP_REFERER'] );
         }
     
-    
-
+    if( $inSimple ) {
     ?>
+      <a href="https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=<?php echo $referrer;?>"><img src="fs_cards.png" width=280 height=45 border=0></a>
+
+<?php
+        return;
+        }
+?>    
+        
  <center>
       <center><table border=0><tr><td> 
 <font size=3><ul> 
@@ -63,7 +69,9 @@ function showLogo( $inImageFile, $inText ) {
 <tr>
 <td><img src=portraitLeft.jpg border=0 width=197 height=414></td>
 <td>
-<center><?php include( "lifeStats.php" ); ?></center>
+<center><?php include( "lifeStats.php" ); ?><br>
+<?php include( "monumentStats.php" ); ?>
+</center>
 
 
 
@@ -95,6 +103,9 @@ if( $rs_reviewCount > 0 ) {
 
 <br>
 <br>
+<?php
+   showPayLinks( true );
+?>
 
 <center><iframe title="YouTube video player" width="640" height="390" src="http://www.youtube.com/embed/mT4JktcVQuE?rel=0" frameborder="0" allowfullscreen></iframe></center>
 
@@ -200,29 +211,36 @@ You can take a look at the <a href="requirements.php">system requirements</a>.</
 
      
 <center>     
-<table border=0 cellspacing=0><tr>
+
+
+<table border=0 cellspacing=0>
+
+<tr><td align=center colspan=3>
+<font size=6 id="reviews"><?php echo $rs_positivePercent;?>% Positive Reviews:</font></td></tr>
+
+  <tr>
 
 <?php
-if( $rs_reviewCount > 0 ) {
+if( $rs_reviewCount_positive > 0 ) {
 ?>
 
 
-<td>
-<font size=6 id="reviews">Recent Reviews:</font><br><br>
+<td valign=top>
+<font size=6>Recent Reviews:</font><br><br>
 <?php
-include( "reviewPages/recentReviews.html" );
+include( "reviewPages/recentReviewsPositive.html" );
 ?>
 </td>
 
 <?php
     }
-if( $rs_reviewCount > 16 ) {
+if( $rs_reviewCount_positive > 16 ) {
 ?>
 <td width=80></td>    
-<td>
+<td valign=top>
 <font size=6>Top Playtime Reviews:</font><br><br>
 <?php
-include( "reviewPages/playtimeReviews.html" );
+include( "reviewPages/playtimeReviewsPositive.html" );
 ?>
 </td>
 
@@ -232,6 +250,52 @@ include( "reviewPages/playtimeReviews.html" );
       
 </tr>
 </table>
+
+<br>
+<br>
+
+
+<table border=0 cellspacing=0>
+
+<tr><td align=center colspan=3>
+<font size=6><?php echo $rs_negativePercent;?>% Negative Reviews:</font></td></tr>
+
+  <tr>
+
+<?php
+if( $rs_reviewCount_negative > 0 ) {
+?>
+
+
+<td valign=top>
+<font size=6>Recent Reviews:</font><br><br>
+<?php
+include( "reviewPages/recentReviewsNegative.html" );
+?>
+</td>
+
+<?php
+    }
+if( $rs_reviewCount_negative > 16 ) {
+?>
+<td width=80></td>    
+<td valign=top>
+<font size=6>Top Playtime Reviews:</font><br><br>
+<?php
+include( "reviewPages/playtimeReviewsNegative.html" );
+?>
+</td>
+
+<?php
+    }
+?>
+      
+</tr>
+</table>
+
+
+
+
 </center>
 
 <br>

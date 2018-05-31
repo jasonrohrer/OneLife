@@ -5,6 +5,8 @@
 
 #include "minorGems/system/Time.h"
 
+#include "../gameSource/GridPos.h"
+
 
 
 typedef struct ChangePosition {
@@ -34,6 +36,12 @@ void initMap();
 void freeMap();
 
 
+// can only be called before initMap or after freeMap
+// deletes the underlying .db files for the map 
+void wipeMapFiles();
+
+
+
 // make Eve placement radius bigger
 void doubleEveRadius();
 
@@ -55,8 +63,11 @@ void mapEveDeath( char *inEmail, double inAge );
 
 // returns properly formatted chunk message for chunk in rectangle shape
 // with bottom-left corner at x,y
+// coordinates in message will be relative to inRelativeToPos
+// note that inStartX,Y are absolute world coordinates
 unsigned char *getChunkMessage( int inStartX, int inStartY, 
                                 int inWidth, int inHeight,
+                                GridPos inRelativeToPos,
                                 int *outMessageLength );
 
 
@@ -151,10 +162,27 @@ void setFloorEtaDecay( int inX, int inY, timeSec_t inAbsoluteTimeInSeconds );
 timeSec_t getFloorEtaDecay( int inX, int inY );
 
 
+typedef struct MapChangeRecord {
+        char *formatString;
+        int absoluteX, absoluteY;
+        
+        char oldCoordsUsed;
+        int absoluteOldX, absoluteOldY;
+    } MapChangeRecord;
+
+
+
+// formatString in returned record destroyed by caller
+MapChangeRecord getMapChangeRecord( ChangePosition inPos );
 
 
 // line for a map change message
 char *getMapChangeLineString( ChangePosition inPos );
+
+
+char *getMapChangeLineString( MapChangeRecord *inRecord,
+                              int inRelativeToX, int inRelativeToY );
+
 
 
 // returns number of seconds from now until when next decay is supposed
@@ -171,7 +199,7 @@ void lookAtRegion( int inXStart, int inYStart, int inXEnd, int inYEnd );
 
 // any change lines resulting from step are appended to inMapChanges
 // any change positions are added to end of inChangePosList
-void stepMap( SimpleVector<char> *inMapChanges, 
+void stepMap( SimpleVector<MapChangeRecord> *inMapChanges, 
                SimpleVector<ChangePosition> *inChangePosList );
 
 

@@ -1,0 +1,35 @@
+About to run first server restart after implementing the 24-hour no-look map
+cell culling.
+
+server1 db sizes before cull:
+
+-rw-rw-r-- 1 jcr13 jcr13 399M Mar 29 22:29 biome.db
+-rw-rw-r-- 1 jcr13 jcr13 2.2M Mar 29 22:28 eve.db
+-rw-rw-r-- 1 jcr13 jcr13 1.9M Mar 29 21:52 floor.db
+-rw-rw-r-- 1 jcr13 jcr13 1.9M Mar 29 21:52 floorTime.db
+-rw-rw-r-- 1 jcr13 jcr13  98M Mar 29 22:29 lookTime.db
+-rw-rw-r-- 1 jcr13 jcr13 163M Mar 29 22:29 map.db
+-rw-rw-r-- 1 jcr13 jcr13 173M Mar 29 22:29 mapTime.db
+-rw-rw-r-- 1 jcr13 jcr13 2.2M Mar 29 22:29 playerStats.db
+
+
+server1 top before cull:
+
+  PID USER      PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND 
+27823 jcr13     20   0  423644 290288   2164 R 56.8 28.9   1081:22 OneLifeServ+
+
+
+
+server1 after cull:
+-rw-rw-r-- 1 jcr13 jcr13  82M Mar 30 03:17 biome.db
+-rw-rw-r-- 1 jcr13 jcr13 2.2M Mar 30 03:17 eve.db
+-rw-rw-r-- 1 jcr13 jcr13 1.9M Mar 30 01:08 floor.db
+-rw-rw-r-- 1 jcr13 jcr13 1.9M Mar 30 01:08 floorTime.db
+-rw-rw-r-- 1 jcr13 jcr13  71M Mar 30 03:17 lookTime.db
+-rw-rw-r-- 1 jcr13 jcr13  91M Mar 30 03:17 map.db
+-rw-rw-r-- 1 jcr13 jcr13  91M Mar 30 03:17 mapTime.db
+-rw-rw-r-- 1 jcr13 jcr13 2.2M Mar 30 03:17 playerStats.db
+
+
+  PID USER      PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND      
+16338 jcr13     20   0  366100 246160   3716 S 38.3 24.5  74:03.90 OneLifeServ+

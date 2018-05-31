@@ -146,6 +146,9 @@ float initSpriteBankStep() {
         r->loading = false;
         r->numStepsUnused = 0;
         
+        r->remappable = true;
+        r->remapTarget = true;
+
         r->maxD = 2;
         
         // dummy values until we load the image later
@@ -180,7 +183,23 @@ float initSpriteBankStep() {
                         
                 r->tag = 
                     stringDuplicate( tokens->getElementDirect( 0 ) );
-                        
+                
+                if( strstr( r->tag, "_" ) != NULL ) {
+                    r->remapTarget = false;
+                    r->remappable = false;
+                    }
+                else if( strncmp( r->tag, "Category", 8 ) == 0 ) {
+                    r->remapTarget = false;
+                    }
+                else if( strncmp( r->tag, "BodyWhite", 9 ) == 0 ) {
+                    r->remapTarget = false;
+                    }
+                else if( strncmp( r->tag, "HeadWhite", 9 ) == 0 ) {
+                    r->remapTarget = false;
+                    }
+                
+                
+        
                 int mult;
                 sscanf( tokens->getElementDirect( 1 ),
                         "%d", &mult );
@@ -556,19 +575,87 @@ char getUsesMultiplicativeBlending( int inID ) {
     
 
 
+
+#include "minorGems/util/random/CustomRandomSource.h"
+
+
+static double remapFraction = 0;
+static char remap = false;
+static int remapSeed = 100;
+
+
+
+void setRemapSeed( int inSeed ) {
+    remapSeed = inSeed;
+    }
+
+
+    
+void setRemapFraction( double inFraction ) {
+    remapFraction = inFraction;
+    if( inFraction > 0 ) {
+        remap = true;
+        }
+    else {
+        remap = false;
+        }
+    }
+
+
+
 SpriteHandle getSprite( int inID ) {
-    if( inID < mapSize ) {
-        if( idMap[inID] != NULL ) {
-            if( idMap[inID]->sprite == NULL ) {
-                loadSpriteImage( inID );
-                return blankSprite;
+    if( inID >= mapSize || idMap[ inID ] == NULL ) {
+        return NULL;
+        }
+
+
+    if( remap && idMap[ inID ]->remappable ) {
+        char remapThis = false;
+        
+        CustomRandomSource tempRand( inID + remapSeed );
+        
+        if( tempRand.getRandomBoundedDouble( 0, 1 ) <= remapFraction ) {
+            remapThis = true;
+            }
+        
+
+        if( remapThis ) {
+        
+            char multi = false;
+            if( idMap[inID] != NULL ) {
+                multi = idMap[inID]->multiplicativeBlend;
                 }
+        
+        
+            int id = inID;
             
-            idMap[inID]->numStepsUnused = 0;
-            return idMap[inID]->sprite;
+            id += tempRand.getRandomBoundedInt( 0, mapSize );
+            while( id >= mapSize ) {
+                id -= mapSize;
+                }
+            while( idMap[id] == NULL || idMap[id]->sprite == NULL ||
+                   idMap[id]->multiplicativeBlend != multi ||
+                   ! idMap[id]->remapTarget ) {
+
+                id ++;
+
+                if( id >= mapSize ) {
+                    id -= mapSize;
+                    }
+                }
+            inID = id;
             }
         }
-    return NULL;
+    
+    
+
+    if( idMap[inID]->sprite == NULL ) {
+        loadSpriteImage( inID );
+        return blankSprite;
+        }
+            
+    idMap[inID]->numStepsUnused = 0;
+    return idMap[inID]->sprite;
     }
 
 

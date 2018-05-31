@@ -33,7 +33,11 @@ typedef struct TransRecord {
         char reverseUseActor;
         char reverseUseTarget;
         
-
+        // this transition does not decrement numUses of actor or target
+        char noUseActor;
+        char noUseTarget;
+        
+        
         // defaults to 0, which means that any transition on thje main
         // object with numUses can apply to generated useDummy objects
         // Higher values specify a cut-off point when the object becomes
@@ -55,7 +59,14 @@ typedef struct TransRecord {
 
         // for things that move longer distances per move
         int desiredMoveDist;
-
+        
+        // the likelihood of the actor or target changes happening
+        // used by auto-generated transitions
+        float actorChangeChance;
+        float targetChangeChance;
+        // what happens when changeChance doesn't happen
+        int newActorNoChange;
+        int newTargetNoChange;
         
     } TransRecord;
 
@@ -76,7 +87,8 @@ typedef struct TransRecord {
 int initTransBankStart( char *outRebuildingCache,
                         char inAutoGenerateCategoryTransitions = false,
                         char inAutoGenerateUsedObjectTransitions = false,
-                        char inAutoGenerateGenericUseTransitions = false );
+                        char inAutoGenerateGenericUseTransitions = false,
+                        char inAutoGenerateVariableTransitions = false );
 
 float initTransBankStep();
 void initTransBankFinish();
@@ -92,6 +104,17 @@ void freeTransBank();
 TransRecord *getTrans( int inActor, int inTarget, 
                        char inLastUseActor = false,
                        char inLastUseTarget = false );
+
+
+// same as getTrans, with actorChangeChance and targetChangeChance applied
+// returned pointer managed internally
+// limit of 100 results that can be used by caller simultanously
+// (statically allocated internally)
+TransRecord *getPTrans( int inActor, int inTarget, 
+                        char inLastUseActor = false,
+                        char inLastUseTarget = false );
+
+
 
 
 // might not be unique
@@ -162,11 +185,17 @@ void addTrans( int inActor, int inTarget,
                char inLastUseTarget,
                char inReverseUseActor,
                char inReverseUseTarget,
+               char inNoUseActor,
+               char inNoUseTarget,
                int inAutoDecaySeconds,
                float inActorMinUseFraction,
                float inTargetMinUseFraction,
                int inMove,
                int inDesiredMoveDist,
+               float inActorChangeChance = 1.0f,
+               float inTargetChangeChance = 1.0f,
+               int inNewActorNoChange = -1,
+               int inNewTargetNoChange = -1,
                char inNoWriteToFile = false );
 
 

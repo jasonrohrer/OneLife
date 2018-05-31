@@ -68,7 +68,7 @@ then
 			echo "Relaunching server"
 
 			# launch it
-			./runHeadlessServerLinux.sh
+			bash -l ./runHeadlessServerLinux.sh
 
 			serverT=`date`
 			pdt=`TZ=":America/Los_Angeles" date`

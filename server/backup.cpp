@@ -120,6 +120,8 @@ void checkBackup() {
                 
                 if( backupFolder.isDirectory() ) {
                     
+                    backupDBFile( "lookTime", timeFileNamePart, &backupFolder );
+
                     backupDBFile( "map", timeFileNamePart, &backupFolder );
                     
                     backupDBFile( "mapTime", timeFileNamePart, &backupFolder );

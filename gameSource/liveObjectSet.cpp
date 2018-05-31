@@ -132,6 +132,16 @@ void addBaseObjectToLiveObjectSet( int inID ) {
 
 void finalizeLiveObjectSet() {
     
+    // monument call object sounds always part of set
+    SimpleVector<int> *monumentCallIDs = getMonumentCallObjects();
+    int numMon = monumentCallIDs->size();
+    for( int i=0; i<numMon; i++ ) {
+        int id = monumentCallIDs->getElementDirect(i);
+        markSoundUsageLiveInternal( getObject( id )->creationSound  );
+        }
+    
+
+
     // follow transitions one step and add any new objects at end of our
     // list.
 

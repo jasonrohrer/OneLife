@@ -71,7 +71,7 @@ void runSteps( const char *inBankName,
 
 
 static void usage() {
-    printf( "\nUsage:\n\n printReportHTML out.html\n\n" );
+    printf( "\nUsage:\n\n printReportHTML linesOfCode out.html\n\n" );
     exit( 0 );
     }
 
@@ -103,10 +103,10 @@ char *getLatestString( int inID ) {
 
 int main( int inNumArgs, char **inArgs ) {
     
-    if( inNumArgs != 2  ) {
+    if( inNumArgs != 3  ) {
         }
     
-    FILE *outFile = fopen( inArgs[1], "w" );
+    FILE *outFile = fopen( inArgs[2], "w" );
     
     if( outFile == NULL ) {
         usage();
@@ -281,10 +281,14 @@ int main( int inNumArgs, char **inArgs ) {
              "<td> </td>"
              "<td width=33%% valign=top align=center>"
                "%d human-makeable object%s<br>%s</td>"
-             "</tr></table>",
+             "</tr>"
+             "<tr><td colspan=5 align=center>"
+               "%s lines of code</td></tr>"
+             "</table>",
              numNatural, optionalS1, latestNaturalString, 
              numPeople, optionalS2,
-             numHumanMade, optionalS3, latestHumanMadeString );
+             numHumanMade, optionalS3, latestHumanMadeString,
+             inArgs[1] );
     
     delete [] latestHumanMadeString;
     delete [] latestNaturalString;

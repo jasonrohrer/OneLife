@@ -31,15 +31,19 @@ echo "Re-compiling server"
 echo ""
 
 cd ~/checkout/minorGems
-git pull
+git pull --tags
 
 
 cd ~/checkout/OneLife/server
-git pull
+git pull --tags
 
 ./configure 1
 make
 
 
+git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt
+
+
+~/checkout/OneLife/scripts/remoteServerCodeUpdateCustomPost.sh
 
 

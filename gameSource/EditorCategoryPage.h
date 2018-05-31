@@ -13,6 +13,7 @@
 #include "GamePage.h"
 #include "TextButton.h"
 #include "TextField.h"
+#include "CheckboxButton.h"
 
 #include "Picker.h"
 
@@ -59,6 +60,8 @@ class EditorCategoryPage : public GamePage, public ActionListener {
         Picker mObjectChildPicker;
 
         TextButton mTransEditorButton;
+        
+        CheckboxButton mIsPatternCheckbox;
 
         int mCurrentObject;
         
@@ -69,6 +72,10 @@ class EditorCategoryPage : public GamePage, public ActionListener {
         int mSelectionIndex;
         
         KeyLegend mKeyLegend;
+
+
+        void updateCheckbox();
+
     };
 
 

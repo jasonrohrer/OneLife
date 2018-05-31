@@ -22,6 +22,10 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         // defaults to true
         void showReviewButton( char inShow );
         
+        // defaults to false
+        void showDisableCustomServerButton( char inShow );
+        
+
         
         virtual void actionPerformed( GUIComponent *inTarget );
 
@@ -52,6 +56,8 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         TextButton mAtSignButton;
 
         KeyEquivalentTextButton mPasteButton;
+
+        TextButton mDisableCustomServerButton;
         
         TextButton mLoginButton;
         TextButton mLoginNoSaveButton;

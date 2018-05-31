@@ -32,7 +32,7 @@ echo ""
 
 cd ~/checkout/OneLifeData7
 git checkout master
-git pull
+git pull --tags
 rm */cache.fcz
 
 
@@ -41,15 +41,19 @@ echo "Re-compiling server"
 echo ""
 
 cd ~/checkout/minorGems
-git pull
+git pull --tags
 
 
 cd ~/checkout/OneLife/server
-git pull
+git pull --tags
 
 ./configure 1
 make
 
 
+rm -f dataVersionNumber.txt
+
+ln -s ~/checkout/OneLifeData7/dataVersionNumber.txt .
 
 
+git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt

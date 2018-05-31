@@ -674,7 +674,7 @@ void EditorAnimationPage::populateCurrentAnim() {
 
     mCurrentObjectFrameRateFactor = frameRateFactor;
     
-    if( obj->speedMult < 1.0 ) {    
+    if( mCurrentType != ground && obj->speedMult < 1.0 ) {    
         mCurrentObjectFrameRateFactor =  frameRateFactor * obj->speedMult;
         }
     
@@ -1870,7 +1870,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 
                 mCurrentObjectFrameRateFactor = frameRateFactor;
                 
-                if( obj->speedMult < 1.0 ) {
+                if( mCurrentType != ground && obj->speedMult < 1.0 ) {
                     mCurrentObjectFrameRateFactor =  
                         frameRateFactor * obj->speedMult;
                     }
@@ -1992,7 +1992,7 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         
         mCurrentObjectFrameRateFactor = frameRateFactor;
         
-        if( obj->speedMult < 1.0 ) {
+        if( mCurrentType != ground && obj->speedMult < 1.0 ) {
             mCurrentObjectFrameRateFactor =  frameRateFactor * obj->speedMult;
             }
         }
@@ -2397,6 +2397,19 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 mLastTypeFrameCount = mFrozenRotFrameCount;
                 }
             
+            mCurrentObjectFrameRateFactor = frameRateFactor;
+                
+            if( mCurrentType != ground ) {
+                
+                ObjectRecord *obj = getObject( mCurrentObjectID );
+            
+                if( obj->speedMult < 1.0 ) {
+                    mCurrentObjectFrameRateFactor *= obj->speedMult;
+                    }
+                }
+                
+                
+
             if( ! isAnimFadeNeeded( mCurrentObjectID,
                                     mCurrentAnim[ mLastType ],
                                     mCurrentAnim[ mCurrentType ] ) ) {
@@ -3101,7 +3114,9 @@ int EditorAnimationPage::getClosestSpriteOrSlot( float inX, float inY ) {
                               mousePos.x, mousePos.y,
                               &pickedSprite,
                               &pickedClothing,
-                              &pickedSlot );
+                              &pickedSlot,
+                              true,
+                              true );
 
         
 
@@ -3251,6 +3266,10 @@ void EditorAnimationPage::keyDown( unsigned char inASCII ) {
 
 
 void EditorAnimationPage::specialKeyDown( int inKeyCode ) {
+    if( TextField::isAnyFocused() ) {
+        return;
+        }
+
     int offset = 1;
     
     if( isCommandKeyDown() ) {

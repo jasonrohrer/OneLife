@@ -3,6 +3,686 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+
+Version 102   ???
+
+--Fixed scene editor to display behind floor hugging objects correctly.
+
+--Fixed bug in client sending multiple jump-out-of-arms move messages due to
+  rapid clickly by held-baby-player, resulting in the server registering false
+  moves after the jump-out-of-arms, and a bouncing-forever bug as a result.
+  Thanks Gabriel G.
+
+--Fixed overlap of food bar with gui in object editor.
+
+--Widget for Using Sound visible for all objects in object editor.
+
+
+
+
+Server Fixes:
+
+--Fixed one source of bouncing-forever bug where baby move arrives in same
+  server step as parent's pick-up action.  Thanks Lynne C.
+
+
+
+
+Version 100   2018-May-25
+
+--Support for marking categories as patterns.
+
+--Support for auto-generated transitions based on new pattern categories.
+  Example:  define transition web for pink roses, and then set the pink rose
+  objects as the pattern for all white and red rose objects (seeds, sprouts,
+  etc.)  Wherever a transition involves at least two objects that are both part
+  of a pattern of the same size, the transition is replicated for all the other
+  members of that pattern.  Unlike other categories, which never appear in the
+  game and are just abstract placeholders to be filled in by member objects,
+  pattern categories have a real object as their parent (example:  pink rose
+  seed, with children red and white rose seeds).
+
+
+
+
+
+
+Version 99    2018-May-24
+
+--Label for a grave of a known person now moves with bone pile.
+
+--Fixed editor use chance and sim GUI elements disappearing with object picker
+  cleared.
+
+--Fixed so that non-permanent objects on ground are drawn in front of permanent
+  objects.  Thus, hand cart handle sticks out in front of well.
+
+--Fixed so that walls drawn in front of other tiles in row, improving overlaps
+  for trees, carts, and other overhanging objects.
+
+--Client detects largest message time gaps between server messages to prevent
+  it from sending BUG report messages to server during true network outages.
+
+--Fixed wayward chat sheet pop-up.  Thanks Yuyu.
+
+--Client now informs player when BUG report sent to server, and asks them to
+  email stdout.txt, if stdout.txt exists.
+
+--Face portrait output in editor fixed to clear picked layer first (or else
+  picked layer appears in every age portrait).
+
+
+
+
+Server Fixes:
+
+--Bug reports off again until better client-side differentiation in place.
+
+--log.txt backed up and cleared every 24 hours instead of 48 to save disk space.
+
+--Fixed bugs in lineage server triggered by playerIDs that are the same between
+  servers.
+
+--Fixed player invisibility bug.  Thanks Yuyu.
+
+--Fixed various edge cases in random family member picking code.
+
+
+
+
+
+Version 97    2018-May-18
+
+--Adding missing case to used object transition generation.  Thank Fernando GBR.
+
+--Fixed bug in the way time values were recorded in recordedGames.
+
+--Fixed bugs in wall hugging code for floors that was screwing up multi-layer
+  floors that used multiplicative blending (ancient floors).
+
+--Undisturbed grave now marked with known person's name and relationship.
+
+
+
+
+
+
+Server Fixes:
+
+--Fixed bug in lineage server that caused death to not get logged if last words
+  contained a single quote mark.
+
+--Added Daily and Weekly long lines to family tree browser.
+
+--Family tree view now shows most ancient ancestor at top.
+
+--More efficient relation computation for shallow relations in deep trees.
+  Cut-off of 25 generations when computing relations in deep trees (beyond
+  that, people become Distant Relatives) because it was getting too slow to
+  compute.
+
+--Fixed family tree to show '1 second' instead of '1 seconds'.
+
+--Fixed so that murdered person's last words shown correctly in family tree,
+  and so that a murdered person who starves to death before dying isn't logged
+  twice.
+
+--Server now sends non-human death-source ID to lineage server (snake, etc).
+
+--Lineage server displays a variety of death reasons.
+
+--Lineage server tracks and displays deepest descendant generation at bottom
+  of family tree display.
+
+--Added character_dump api call to lineage server.
+
+--Fixed lineage server behavior on IDs that don't exist.
+
+--Turned on bug reporting again, trying to catch bouncing lag bug.
+
+--Fixed bug in out-of-range player PO message.
+
+--Added extra server logging about player update messages to catch bouncing
+  lag bug.
+
+--Clicking on killer's name shows their relationship to you in family tree.
+
+--Family tree Email search now only matches exact email addresses, to thwart
+  brute-force email harvesting through trial and error.  Thanks Brian R.
+
+
+
+
+
+Version 95    2018-May-11
+
+--Fixed some transition hints.  New transition system leaves some lastUse
+  transtions in place that aren't used by server.  Client shouldn't show these
+  as redundant hints.  Client was showing NOTHING as result in case where actor
+  was used up and target stayed the same (adding stone to a pile).  Now shows
+  same target as result instead of NOTHING.
+
+--Added display of current slot position in object editor.
+
+--Fixed so that arrow keys in text field do not change rotation anchor in
+  animation editor.
+
+--Editor saving face portaits throughout life for use in family tree viewer.
+
+--Client now displays Big and Little words for siblings, and also detects twin
+  status (including identical).
+
+--Client shows A,B,C,...AA, AB,... labels for varible objects and ? label for
+  base object (like for locks after restart).
+
+
+
+
+
+Server Fixes:
+
+--Whoops, forgot to commit/push changes to transition bank.  Bug city on live
+  servers.
+
+--Back to registering lookTime whenever non-zero map or floor values are gotten
+  from database, instead of just registering lookTimes on map changes.  Only
+  looking on map change was an optimization that was necessary with the old
+  database engine, but hopefully the new engine can handle it.  Also, we are no
+  longer tracking look times for bare ground, so that should help a lot too.
+  This will prevent walls and other untouched but seen-in-the-last-24-hours
+  objects from disappeariing on server restart.
+
+--Temporarily pushed no-look cull time on server restart up to 1 week to work
+  around the lookTime issue in the next restart (which will be needed to make
+  the above fix to lookTimes live).  I.e., if it was added to the map in the
+  last week, it will not be culled in the next server restart.
+
+--Fixed generation of transitions with a minUseFractions (a well can only be
+  built from a full stone pile, for example).
+
+--Server filters SAY messages according to allowed character list.
+
+--On server shutdown, variable objects (keys and locks) now revert to their
+  parent form instead of being cleared.  All keys open all locks after server
+  restart.  Combined with new transitions that allow door locks to be removed
+  and turned back into lock blanks, this allows all doors to be re-keyed after
+  a server reset, meaning that new family lines are not locked out.
+
+--Server now adjusts all client-sent coordinates relative to player's birth
+  position in world.  No more absolute coordinates.
+
+--Fixed bug that caused some initial new-baby PLAYER_UPDATE (PU) messages to
+  not be sent, causing the following lineage message for that new baby to be
+  ignored by client (leading to NO RELATION for some actually-related babies).
+
+--Added same-lineage-birth blocking for a time that is based on the size of the
+  server population.  Below 10 players, there is no same-lineage blocking.
+  From 11 to 50 players, it rises linearly up to the full cooldown time, which
+  is currently 3 hours, and may increase in the future.
+
+--Server now sends lineage info to lineageServer upon player death.
+
+--Baby inherits the last-heard monument call from parent at 0.5 years old.
+  Thus, trips to a monument can be trans-generational (parent can die along
+  the way and baby can continue).
+
+--Support for categories in cross-transitions (where actor ends up on ground as
+  newTarget or target ends up in hand as newActor).
+
+--Server now hides ID of locked objects from the client by replacing it with
+  the parent ID for that variable object.
+
+
+
+
+Version 90    2018-May-3 
+
+--Fixed scene editor to allow replacement of shoes.
+
+--Fixed so that empty slots don't capture mouse-over.
+
+--Fixed stuck hint sheet from last object when you pick up an object that has
+  no transitions.
+
+
+
+
+Server Fixes:
+
+--Fixed server crash when worn clothing decays down to nothing.
+
+--Fixed server launch script to use login shell.  Core dumps for crashes.
+
+--Fixed getRandomDeathMarker so that it's actually random and doesn't walk
+  through the full object list each call (thanks TyrantNomad).
+
+--Fixed memory leak when held contained items decay to leave an empty container.
+
+--Fixed server crash when a held container decays to have fewer slots, but the
+  container wasn't full.
+
+--If a held object changes into something that would decay in the same time to
+  the same target, the decay ETA is preserved (example:  filling backpack with
+  soil does not reset decay time to tattered backpack, because both regular and
+  soil-filled backpack decay to tattered in the same time).
+
+--New sprial Eve placement algorithm.
+
+--Fixed generation of transitions that contain two useCount objects by
+  iterating through list twice to generate all possible combinations.
+
+--Slot size and containable size now specified as a float instead of an int.
+  We can have things smaller than slot size 1 now (for signs).
+
+--Fixed generation of reverse-use transitions (fixes last stone in stone pile
+  and empty berry bush regrowing).
+
+--Fixed so that shrinking clothing container (like backpack) results in items
+  falling on the ground instead of disappearing.
+
+--Support for useChance in objects that have multiple uses.  This is the chance
+  that using the object will take it to its next use state.  A tool that has 4
+  uses, and 0.1 useChance, will be used 40 times on average, but a bare minimum
+  of 4 times in the worst case.  This allows for tools that have 100s of uses,
+  on average, without straining the underlying implementation.
+
+--Fixed mapping of uses through target when actor experiences last use, and
+  through actor when target experiences last use.
+
+--Fixed incorrect handling of last reverse use transitions.  Fixed variable
+  transitions to work with new tool use system.
+
+--Fixed server crash when held container decays down to nothing.
+
+--No need for constant PO messages about all out-of-range players.  Instead,
+  only send POs for players that are between 32 and 64 away.
+
+--Support for noUse flag on transitions for actor and target, indicating that
+  this target shouldn't cause use count to decrement (example:  picking feather
+  from pond shouldn't cause pond to drain).
+
+--Fixed transitions where actor and target are same category so that any pair
+  of objects from that category work on eachother.  Also fixed to preserve
+  actor/target use chance through category transitions and generic use
+  transitions.  Fixes jasonrohrer/OneLifeData7#7 
+
+--Support for containers with locked slots (nothing can be added or removed).
+
+--Server log.txt backup cycle two days instead of three.  Logs were too big.
+
+
+
+
+Version 78    2018-April-20
+
+--Fixed spread of appearing use sprites by rounding instead of flooring.  If
+  there was only one sprite, it would appear at 7/8 uses.  Now it appears at
+  4/8 uses.
+
+--Allow creation sound to play for held item when it changes even if the
+  on-ground target object changes too (example:  tool breaking when chopping
+  wood).
+
+--Fixed so that usingSound will play correctly when an on-the-ground object
+  changes (example:  dumping water into goose pond).  This was broken in v66
+  with the fix to sound for swapping contained items (thanks Uncle Gus).
+
+--Fixed remap random source to seed with playerID.
+
+--Auto-generation of variable objects triggered by $N in description, which
+  generates N versions of that object and its transitions automatically.
+  Example:  Key $10 generates 10 types of keys and Locked Door $10 generates
+  matching doors.
+ 
+
+
+
+Server Fixes:
+
+--Fixed to handle dropping of contained objects when held container shrinks.
+
+--Force drop when non-permanent held object decays into a permanent.
+
+--Fixed bug in decaying, shrinking sub container.
+
+--If numUses of actor and newTarget matches, and newActor doesn't have uses,
+  then the used status of the actor is preserved in the newTarget.
+
+--If numUses of target and newActor matches, and actor doesn't have uses, then
+  the used status of the target is preserved in the newActor and decremented
+  (counts as a use of the actor).
+
+--Substitution of last-use of actor when used target produces an over-used
+  newActor.
+
+--Uses left can be decremente if actor and new actor have the same number of
+  uses (example:  dumping shovel of dung uses shovel once).  Fixed some
+  rounding errors in use transfer.
+
+--Can no longer feed other people remap-trigger foods.
+
+--Easier to kill a moving player.  Spots before and after them on their
+  current path are considered as valid targets.
+
+--New baby distribution algorithm.  Possible mothers are weighted by how close
+  they are to ideal temperature instead of how full their food bars are.
+
+
+  
+
+
+
+Version 77    2018-April-17
+
+--Added skipFPSMeasure.ini setting that can be used to disable FPS check on
+  login screen.
+
+--Fixed so that monumentCall sound is always loaded, even if monument is far
+  away, so that it can play when monumentCall is triggered.  People weren't
+  actually hearing it from far away.  Oops.
+
+--Fixed speed calculation for various paper slide-in animations when target
+  frame rate not 60.
+
+--On version mismatch, a button to disable custom server is shown.
+
+--Client now counts any later server version as a mismatch, but allows earlier
+  server versions if that version matches our client data version (to allow
+  client binary updates to fix bugs without restarting the servers).
+
+--Fixed several bugs in TextArea code that could lead to crashes on Review page.
+
+--Fixed zombie player that could be discovered radius of 32 if a player walked
+  out of range and then you walked over to their last-known spot later. 
+
+
+
+
+Server Fixes:
+
+--Wound object no longer dropped if player wounded more than once.
+
+--Fixed so that deathETA not reset if player wounded a second time, also
+  blocked their death being logged twice.
+
+--Turned off badMotherLimit.  With birth cooldown, it really isn't needed, and
+  a mother can be punished by suicidal babies and become infertile.
+
+--Fixed occurence of ~ for home directory inside quotes in various BASH scripts.
+
+--Instead of using last Eve location before shutdown as new Eve location on
+  next server startup, server remembers death location of longest lineage
+  person who died during the shutdown process and uses that as the new Eve
+  location on next startup.  That location is still used for the next three
+  Eves post-startup, to give people three chances to get the pre-shutdown
+  civilization up and running.  As a fall-back, if no shutdown death location
+  has been saved, server looks for tallest, most-recenly-built monument
+  location and uses that for the new Eve location.
+
+--Added timestamp per monument step in monument logs.
+
+--Changed monument tracking to only log monuments when second layer is built,
+  and cleared old monument logs containing only one line.
+
+--Main server backup script backs up monument logs.
+
+--Monument reports for website.
+
+--Fixed redundant if statement in transition bank (thanks UncleGus).
+
+--Eves are now spread in a circle around the server-startup-Eve-origin point
+  with a radius of 1000.  They won't keep random-walking further and further
+  away.
+
+--Mr. Still-Pretty-Nice-Guy.  Eating bonus 2, down from 3.
+
+--Animals now stay in their spawning biome if moving radomly or fleeing.  Can
+  still leave their biome in chase or fixed cardinal direction moves.
+  Rattlesnakes stay in the desert, pengins stay in the snow.  Except for the
+  rare borderlands rattlesnake or penguin who spawns off the edge.  They will
+  also stay in their biome forever (a swamp penguin will always stay in the
+  swamp if it spawns there).  But in general, you can travel in non-desert
+  areas without much snake danger. 
+
+
+
+
+
+Version 74    2018-April-13
+
+--Fixed editor to allow smaller map chances.
+
+--Fixed editor to NOT apply < 1.0 speed multiplier on ground animations, to
+  match client behavior.  Thanks TyrantNomad.
+
+--Fixed update process to NOT rewrite a lingering .bak file that failed to be
+  deleted.  On Windows, we must move our EXE out of the way, but on a
+  multi-part update, this results in trying to move it to the .bak file
+  multiple times, with later moves failing.
+
+--Fixed postUpdate process to remove any lingering .bak files.
+
+--Client displays red speech for staggering murder victims before death, and
+  shows bloody GUI overlay to victim.
+
+--Fixed three bugs in copying map animation data when a new chunk arrives
+  (thanks Christoffer Baar).
+
+--Added support for sprite remapping.
+
+--Support for monument call.
+
+
+
+
+Server Fixes:
+
+--Bug reporting back on in server.
+
+--Apocalypse off again for now.
+
+--Fixed various scripts to handle git tag changes.
+
+--Fixed so that server checks apocalypsePermitted setting live, when about to
+  trigger an apocalypse.
+
+--After a family line dies out, next Eve is spawned in a random direction 2000
+  tiles away.  After a server restart, the next three Eves are spawned around
+  the last Eve location before restart, and then the random-2000 jumping starts
+  for the fourth and subsequent Eves.
+
+--Held baby was killed if dangerous animal walked over its last ground
+  position.  Fixed.
+
+--Fixed website stats generation.
+
+--Bug reporting back off.  I think it may be causing a CPU vicious cycle.
+
+--Disabled biome database to memorize proc-genned biome map.  This helped
+  preserve seen map areas when a new biome was added, but it consumed gobs of
+  RAM and CPU resources as players and Eve spreading explores huge areas of
+  wilderness.  New biomes aren't added that often, and it's okay for them to
+  shift under existing villages for now.  No longer saving look time for every
+  single map cell that is seen, only for modified cells. 
+
+--Switched to a stack implementation of a hash table database to improve
+  performance on the most recent items.  Thus, performance won't degrade as
+  much as more and more areas of the map are explored.
+
+--Further improved performance of stack-based database implementation,
+  especially on case of repeated misses.  Individual operations are between 3x
+  and 10x faster than old kissDB engine, with 7x average speed improvement over
+  a whole range of operations on test data.  StackDB also uses 6% less disk
+  space for this test data, and 13,000x less RAM (plus, RAM usage is constant
+  regardless of data size, where kissDB RAM usage grows over time as data
+  grows).  The only place where stackDB is slightly slower is iterating through
+  all database items, but this only happens when rebuilding a database to cull
+  at startup, and we make up for it with the dramtically faster insertion
+  performance of the stack.
+
+--Server now makes use of high-performance STACKDB_put_new when rebuilding
+  databases during the map cull after restart.  Shrank table in eve location
+  database to save disk space given long email key.
+
+--Added 20 seconds of 'stagger around' time after you are murdered.  Server
+  sends clients a DY message to indicate that a player has entered this state.
+
+--Optimization:  Valgrind profiler found 40% of CPU on a live 20-player server
+  spent on computeMapBiomeIndex.  Caching this in a RAM-based hash table.
+
+--Fixed so that if we're holding something permanent that can only be dropped
+  with a use-on-bare-ground action, we drop the result of that use-on-bare-
+  ground action when we die (instead of leaving permanent version of the held
+  object on the ground after death).
+
+--Support for monument logging and monument call to client.
+
+
+
+
+
+Version 72    2018-April-5
+
+--Server now reports its version number in its first SN number, and client
+  displays error on version mismatch.
+
+--Fixed incorrect CONNECTION LOST message in client when death reason known
+  but user is clicking after death, when server socket has already been closed.
+  Now clicks immediately after death are prevented client-side.
+
+--Fixed editor bug where sound paste button not visible after recording.
+
+--Fixed bug in clothing click detection if clothing contains rotated sprites
+  that are further roted by the worn (held) animation along with custom
+  rotation offsets (example:  seal skin coat).
+
+--A lot of client BUG reports seem to be due to simple networking lag.  Maybe
+  some clients really are seeing server responses that take more than 4
+  seconds.  Updating BUG threshold to 10 seconds.
+
+--Mac fullscreen mode fixed (using borderless window AND hiding menu/dock).
+  Thanks Chard.
+
+--Support in client and server for The Apocalypse, and propagation of
+  apocalypse wave through all official servers via the reflector.
+
+--Client now sends server KA keep-alive message every 15 seconds of player
+  idleness to make sure a NAT or other router doesn't drop the connection if
+  idle.
+
+--Fixed so that speech isn't drawn off top of the screen for a character that
+  is nearby.
+
+
+
+
+Server Fixes:
+
+--Containment can transfer from actor to target through a transition.  For
+  example, adding a full cart to a horse keeps what was contained in the cart
+  in the new horse-drawn cart.
+
+--Fixed server crash (and possible client crash) caused by improper clearing of
+  removed sub-contained objects (post-data-update) if entire sub-container
+  needed to be cleared out (if it contained nothing by now-removed objects).
+  Someone had a basket in a cart containing nothing by domestic carrot seed
+  heads.
+
+--Forgot to include lookTime.db in server backups.
+
+--Fixed initialization of look times if lookTimes.db empty.  All map cells are
+  set to have look times of NOW.  This prevents them from being cleared if the
+  server restarts again in less than 24 hours.
+
+--Fixed a memory leak in naming phrases init.
+
+--Removed duplicates from firstNames list (thanks Chard).
+
+
+
+
+Version 70    2018-March-16
+
+--Fixed a crash when setting down a baby just as someone feeds you.
+
+--Fixed a crash when mousing over someone as they die.
+
+
+
+
+Version 69    2018-March-16
+
+--Scene editor now has 'V' fill function for repeating objects (useful to make
+  stress-test maps).
+
+--Fixed an invisible-self-as-baby bug when baby-self set down during map load.
+
+--Fixed another baby bouncing-forever bug (if baby's clothing state changes
+  while held, this causes a PU message about the baby, which the client was
+  interpreting as a baby-drop, even though the server saw the baby as still
+  held).
+
+--Some bouncing-forever bugs seem to be caused by server missing or ignoring
+  one of our MOVE messages, meaning that it never tells us we arrived, so our
+  next action is pending forever.  I'm still working on figuring out what's
+  going wrong in the server MOVE handling code.  In the mean time, I've added
+  a work-around client-side that detects >4 seconds of bouncing and jumps back
+  to the last known server position.
+
+--Client using BUG protocol to report 4-second bouncing.
+
+--Client support for NM names message and displaying names.
+
+--Now showing YOUR in front of relation names.
+
+--Client and server now differentiate between baby-drop PU messages and other
+  PU messages about a held baby with done_moving field (only done_moving if
+  baby no longer held).
+
+--Fixed glitches in animation when dropping a baby.  On dropping player's
+  client, the doing animation would run forever.  On witnessing players'
+  clients, the doing animation wouldn't be triggered.
+
+
+
+
+Server Fixes:
+
+--Fixed comma int printing in stats at top of home page.
+
+--Added hash table RAM caching of object database.
+
+--Eliminated repeated calls to getTrans for same id in checkDecayContained.
+
+--Eliminated expensive calls to checkDecayContained by tracking which cells on
+  map have no decaying contained items.
+
+--Fixed map file bloat by culling map of cells that haven't been looked at in
+  24 hours and re-inserting remaining cells whenever a server restarts.
+  Culled cells go back to their natural, procedurally-generated state.
+
+--Server was setting timeout when polling for socket activity even when more
+  buffered messages were potentially available, allowing messages to pile up.
+  Fixed so that we don't sleep at all when polling sockets if we received at
+  least one client message in the last loop.
+
+--Support for BUG protocol to allow client to report bugs and trigger log
+  snapshots.
+
+--Support for baby and family naming phrases in SAY messages, and reporting
+  names to client with NM messages.
+
+--Eve say limit never below 30 characters to allow saying long family names.
+
+--Fixed crash on server exit caused by lookTime db being closed first.
+
+--Fixed mistaken sending of additional PU updates for a player after death if
+  what they're holding or wearing decays.
+
+
+
+
 Version 68    2018-March-16
 
 --Fixed login FPS checking to wait 0.1 seconds for things to settle after load.

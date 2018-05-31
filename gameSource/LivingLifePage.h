@@ -52,6 +52,11 @@ typedef struct LiveObject {
         
         SimpleVector<int> lineage;
         
+        char outOfRange;
+        char dying;
+        
+        char *name;
+
         char *relationName;
         
 
@@ -78,8 +83,15 @@ typedef struct LiveObject {
         doublePair heldByDropOffset;
 
         // the actual world pos we were last held at
+        char lastHeldByRawPosSet;
         doublePair lastHeldByRawPos;
         
+        // track this so that we only send one jump message even if
+        // the player clicks more than once before the server registers the
+        // jump
+        char jumpOutOfArmsSent;
+        
+
         
         // usually 0, but used to slide into and out of riding position
         doublePair ridingOffset;
@@ -225,7 +237,8 @@ typedef struct LiveObject {
 
         char pendingAction;
         float pendingActionAnimationProgress;
-
+        double pendingActionAnimationStartTime;
+        
         
         // NULL if no active speech
         char *currentSpeech;
@@ -246,6 +259,13 @@ typedef struct LiveObject {
     } LiveObject;
 
 
+
+
+typedef struct GraveInfo {
+        GridPos worldPos;
+        char *relationName;
+    } GraveInfo;
+        
 
 
 
@@ -372,9 +392,19 @@ class LivingLifePage : public GamePage {
         // handles error detection, total byte counting, etc.
         void sendToServerSocket( char *inMessage );
         
+        void sendBugReport( int inBugNumber );
+
+
+        int getRequiredVersion() {
+            return mRequiredVersion;
+            }
+
+
     protected:
 
         int mServerSocket;
+        
+        int mRequiredVersion;
 
         int mFirstServerMessagesReceived;
         
@@ -475,6 +505,7 @@ class LivingLifePage : public GamePage {
         char stopingMovement;
 
         SpriteHandle mGuiPanelSprite;
+        SpriteHandle mGuiBloodSprite;
         
 
         SpriteHandle mHungerBoxSprites[ NUM_HUNGER_BOX_SPRITES ];
@@ -623,6 +654,9 @@ class LivingLifePage : public GamePage {
         
         GridPos mCurMouseOverSpot;
         char mCurMouseOverBehind;
+
+        GridPos mCurMouseOverWorld;
+
         
         char mCurMouseOverPerson;
         char mCurMouseOverSelf;
@@ -681,6 +715,7 @@ class LivingLifePage : public GamePage {
                                         const char *inString,
                                         double inFade,
                                         double inMaxWidth,
+                                        LiveObject *inSpeaker,
                                         int inForceMinChalkBlots = -1 );
         
 
@@ -707,7 +742,11 @@ class LivingLifePage : public GamePage {
         char *mDeathReason;
         
 
-
+        double mRemapDelay;
+        double mRemapPeak;
+        double mRemapDirection;
+        double mCurrentRemapFraction;
+        
         
 
         ExtraMapObject copyFromMap( int inMapI );
@@ -725,7 +764,9 @@ class LivingLifePage : public GamePage {
                               AnimType inType,
                               int inOldFrameCount, int inNewFrameCount,
                               double inPosX, double inPosY );
+        
 
+        SimpleVector<GraveInfo> mGraveInfo;
         
     };
 

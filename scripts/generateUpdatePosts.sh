@@ -29,7 +29,7 @@ echo "Updating OneLifeData7Latest"
 echo ""
 
 cd ~/checkout/OneLifeData7Latest
-git pull
+git pull --tags
 
 
 newerVersion="D"
@@ -302,7 +302,7 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 	newerVersion=$x
 fi
 
-done < <( git for-each-ref --sort=-creatordate --format '%(refname:short)' refs/tags | grep "OneLife" | sed 's/\s\s.*//' | sed 's/OneLife_v\([0-9a-zA-Z]\+\)/\1/')
+done < <( git for-each-ref --sort=-creatordate --format '%(refname:short)' refs/tags | grep "OneLife_v" | sed 's/\s\s.*//' | sed 's/OneLife_v\([0-9a-zA-Z]\+\)/\1/')
 
 
 git checkout -q master

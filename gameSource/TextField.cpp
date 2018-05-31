@@ -41,8 +41,10 @@ TextField::TextField( Font *inDisplayFont,
           mLabelText( NULL ),
           mAllowedChars( NULL ), mForbiddenChars( NULL ),
           mFocused( false ), mText( new char[1] ),
+          mTextLen( 0 ),
           mCursorPosition( 0 ),
           mIgnoreArrowKeys( false ),
+          mIgnoreMouse( false ),
           mDrawnText( NULL ),
           mCursorDrawPosition( 0 ),
           mHoldDeleteSteps( -1 ), mFirstDeleteRepeatDone( false ),
@@ -306,6 +308,8 @@ void TextField::draw() {
 
     double rectEndX = mWide / 2 - pixWidth;
     double rectEndY = mHigh / 2 - pixWidth;
+
+    double middleWidth = mWide - 2 * pixWidth;
     
     drawRect( rectStartX, rectStartY,
               rectEndX, rectEndY );
@@ -492,13 +496,19 @@ void TextField::draw() {
         }
     
 
+    double shadeWidth = 4 * mCharWidth;
+    
+    if( shadeWidth > middleWidth / 2 ) {
+        shadeWidth = middleWidth / 2;
+        }
+
     if( tooLongFront ) {
         // draw shaded overlay over left of string
         
         double verts[] = { rectStartX, rectStartY,
                            rectStartX, rectEndY,
-                           rectStartX + 4 * mCharWidth, rectEndY,
-                           rectStartX + 4 * mCharWidth, rectStartY };
+                           rectStartX + shadeWidth, rectEndY,
+                           rectStartX + shadeWidth, rectStartY };
         float vertColors[] = { 0.25, 0.25, 0.25, 1,
                                0.25, 0.25, 0.25, 1,
                                0.25, 0.25, 0.25, 0,
@@ -509,8 +519,8 @@ void TextField::draw() {
     if( tooLongBack ) {
         // draw shaded overlay over right of string
         
-        double verts[] = { rectEndX - 4 * mCharWidth, rectStartY,
-                           rectEndX - 4 * mCharWidth, rectEndY,
+        double verts[] = { rectEndX - shadeWidth, rectStartY,
+                           rectEndX - shadeWidth, rectEndY,
                            rectEndX, rectEndY,
                            rectEndX, rectStartY };
         float vertColors[] = { 0.25, 0.25, 0.25, 0,
@@ -576,6 +586,10 @@ void TextField::draw() {
 
 
 void TextField::pointerUp( float inX, float inY ) {
+    if( mIgnoreMouse ) {
+        return;
+        }
+    
     if( inX > - mWide / 2 &&
         inX < + mWide / 2 &&
         inY > - mHigh / 2 &&
@@ -774,6 +788,12 @@ void TextField::setIgnoreArrowKeys( char inIgnore ) {
 
 
 
+void TextField::setIgnoreMouse( char inIgnore ) {
+    mIgnoreMouse = inIgnore;
+    }
+
+
+
 double TextField::getRightEdgeX() {
     
     return mX + mWide / 2;
@@ -879,7 +899,7 @@ void TextField::keyUp( unsigned char inASCII ) {
 
 
 void TextField::deleteHit() {
-    if( mCursorPosition > 0 ) {
+    if( mCursorPosition > 0 || isAnythingSelected() ) {
         mCursorFlashSteps = 0;
     
         int newCursorPos = mCursorPosition - 1;
@@ -914,6 +934,10 @@ void TextField::deleteHit() {
                 newCursorPos --;
                 }
             }
+        
+        // section cleared no matter what when delete is hit
+        mSelectionStart = -1;
+        mSelectionEnd = -1;
 
 
         char *oldText = mText;
@@ -1224,7 +1248,7 @@ void TextField::setFloat( float inF, int inDigitsAfterDecimal,
         formatString = stringDuplicate( "%f" );
         }
     else {
-        formatString = autoSprintf( "%%.%df\n", inDigitsAfterDecimal );
+        formatString = autoSprintf( "%%.%df", inDigitsAfterDecimal );
         }
 
     char *text = autoSprintf( formatString, inF );

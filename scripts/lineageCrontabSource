@@ -1,0 +1,5 @@
+SHELL=/bin/bash
+
+0 9 * * * /home/jcr13/lineageBackup.sh
+
+*/30 * * * * /home/jcr13/checkout/OneLife/scripts/lineageCronJob.sh

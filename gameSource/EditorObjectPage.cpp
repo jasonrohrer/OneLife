@@ -17,6 +17,12 @@
 
 #include "minorGems/io/file/FileInputStream.h"
 
+#include "minorGems/graphics/converters/PNGImageConverter.h"
+
+
+
+static double faceStepAges[NUM_FACES_STEPS] = { 0.4, 4, 14, 30, 40, 55 };
+
 
 
 extern Font *mainFont;
@@ -59,7 +65,7 @@ EditorObjectPage::EditorObjectPage()
           mBiomeField( smallFont, -55, -220, 8, false, "Biomes",
                        "0123456789,", NULL ),
           mMapChanceField( smallFont, 
-                           -250,  64, 4,
+                           -250,  64, 6,
                            false,
                            "MapP", "0123456789.", NULL ),
           mHeatValueField( smallFont, 
@@ -81,15 +87,16 @@ EditorObjectPage::EditorObjectPage()
           mContainSizeField( smallFont, 
                              250,  -120, 4,
                              false,
-                             "Contain Size", "0123456789", NULL ),
+                             "Contain Size", "0123456789.", NULL ),
           mSlotSizeField( smallFont, 
                           -280,  -230, 4,
                           false,
-                          "Slot Size", "0123456789", NULL ),
+                          "Slot Size", "0123456789.", NULL ),
           mSlotTimeStretchField( smallFont, 
                                  -155,  -110, 4,
                                  false,
                                  "Tm Strch", "0123456789.", NULL ),
+          mSlotsLockedCheckbox( -260, -200, 2 ),
           mDeadlyDistanceField( smallFont, 
                                 150,  -220, 4,
                                 false,
@@ -158,9 +165,13 @@ EditorObjectPage::EditorObjectPage()
                                      false,
                                      "R Radius", "0123456789", NULL ),
           mNumUsesField( smallFont, 
-                         300,  110, 2,
+                         258,  110, 2,
                          false,
-                         "Num Uses", "0123456789", NULL ),
+                         "# Use", "0123456789", NULL ),
+          mUseChanceField( smallFont, 
+                           300,  110, 4,
+                           false,
+                           "", "0123456789.", NULL ),
           mUseVanishCheckbox( 248, 86, 2 ),
           mUseAppearCheckbox( 272, 86, 2 ),
           mSimUseCheckbox( 248, 64, 2 ),
@@ -198,7 +209,13 @@ EditorObjectPage::EditorObjectPage()
           mEatingSoundWidget( smallFont, +200, -310 ),
           mDecaySoundWidget( smallFont, +450, -310 ),
           mCreationSoundInitialOnlyCheckbox( -185, -285, 2 ),
-          mSlotPlaceholderSprite( loadSprite( "slotPlaceholder.tga" ) ) {
+          mSlotPlaceholderSprite( loadSprite( "slotPlaceholder.tga" ) ),
+          mFaceFrameSprite( loadSprite( "faceFrame.tga" ) ),
+          mFaceFrameMaskSprite( loadSprite( "faceFrameMask.tga" ) ),
+          mFaceFrameBackgroundSprite( 
+              loadSprite( "faceFrameBackground.tga" ) ),
+          mFaceFrameImage( readTGAFile( "faceFrame.tga" ) ),
+          mFaceFrameMaskImage( readTGAFile( "faceFrameMask.tga" ) ) {
 
 
     mDragging = false;
@@ -227,7 +244,8 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mContainSizeField );
     addComponent( &mSlotSizeField );
     addComponent( &mSlotTimeStretchField );
-
+    addComponent( &mSlotsLockedCheckbox );
+    
     addComponent( &mCreationSoundWidget );
     addComponent( &mUsingSoundWidget );
     addComponent( &mEatingSoundWidget );
@@ -241,6 +259,8 @@ EditorObjectPage::EditorObjectPage()
     mContainSizeField.setVisible( false );
     mSlotSizeField.setVisible( false );
     mSlotTimeStretchField.setVisible( false );
+    mSlotsLockedCheckbox.setVisible( false );
+    
 
     addComponent( &mDeadlyDistanceField );
     addComponent( &mUseDistanceField );
@@ -445,6 +465,9 @@ EditorObjectPage::EditorObjectPage()
     mPrintRequested = false;
     mSavePrintOnly = false;
     
+    mSaveFaces = false;
+    
+
     mCurrentObject.id = -1;
     mCurrentObject.description = mDescriptionField.getText();
     mCurrentObject.containable = 0;
@@ -511,8 +534,8 @@ EditorObjectPage::EditorObjectPage()
     mFoodValueField.setText( "0" );
     mSpeedMultField.setText( "1.00" );
 
-    mContainSizeField.setInt( 1 );
-    mSlotSizeField.setInt( 1 );
+    mContainSizeField.setFloat( 1, 4, true );
+    mSlotSizeField.setFloat( 1, 4, true );
     mSlotTimeStretchField.setText( "1.0" );
 
     mDeadlyDistanceField.setInt( 0 );
@@ -594,6 +617,14 @@ EditorObjectPage::EditorObjectPage()
     
     mNumUsesField.addActionListener( this );
     mNumUsesField.setFireOnAnyTextChange( true );
+
+
+    addComponent( &mUseChanceField );
+    mUseChanceField.setVisible( false );
+    
+    mUseChanceField.addActionListener( this );
+    mUseChanceField.setFireOnAnyTextChange( true );
+
     
     addComponent( &mUseVanishCheckbox );
     
@@ -703,6 +734,14 @@ EditorObjectPage::~EditorObjectPage() {
 
     freeSprite( mSlotPlaceholderSprite );
     
+    freeSprite( mFaceFrameSprite );
+    freeSprite( mFaceFrameMaskSprite );
+    freeSprite( mFaceFrameBackgroundSprite );
+    
+    delete mFaceFrameImage;
+    delete mFaceFrameMaskImage;
+
+
     for( int i=0; i<NUM_OBJECT_CHECKBOXES; i++ ) {
         delete mCheckboxes[i];
         }
@@ -883,7 +922,9 @@ void EditorObjectPage::updateAgingPanel() {
         mFloorCheckbox.setVisible( false );
         
         mNumUsesField.setInt( 1 );
+        mUseChanceField.setFloat( 1, 4, true );
         mNumUsesField.setVisible( false );
+        mUseChanceField.setVisible( false );
         mUseVanishCheckbox.setVisible( false );
         mUseAppearCheckbox.setVisible( false );
         
@@ -1262,6 +1303,10 @@ void EditorObjectPage::showVertRotButtons() {
 
 
 void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
+    if( mSaveFaces ) {
+        // ignore events
+        return;
+        }
     
     if( inTarget == &mDescriptionField ) {
         
@@ -1313,7 +1358,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         int newID =
         addObject( text,
                    mCheckboxes[0]->getToggled(),
-                   mContainSizeField.getInt(),
+                   mContainSizeField.getFloat(),
                    mCurrentObject.vertContainRotationOffset,
                    mCheckboxes[1]->getToggled(),
                    mMinPickupAgeField.getFloat(),
@@ -1348,11 +1393,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mDecaySoundWidget.getSoundUsage(),
                    creationSoundInitialOnly,
                    mCurrentObject.numSlots,
-                   mSlotSizeField.getInt(),
+                   mSlotSizeField.getFloat(),
                    mCurrentObject.slotPos,
                    mCurrentObject.slotVert,
                    mCurrentObject.slotParent,
                    mSlotTimeStretchField.getFloat(),
+                   mSlotsLockedCheckbox.getToggled(),
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
                    mCurrentObject.spriteRot,
@@ -1369,10 +1415,13 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteIsBackFoot,
                    mCurrentObject.spriteIsFrontFoot,
                    mNumUsesField.getInt(),
+                   mUseChanceField.getFloat(),
                    mCurrentObject.spriteUseVanish,
                    mCurrentObject.spriteUseAppear );
         
         objectPickable.usePickable( newID );
+        
+        mCurrentObject.id = newID;
         
         delete [] text;
         delete [] biomes;
@@ -1381,7 +1430,18 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mSpritePicker.unselectObject();
 
         mObjectPicker.redoSearch( false );
-        actionPerformed( &mClearObjectButton );
+
+        if( mCheckboxes[2]->getToggled() ) {
+            // person, save face
+            mSaveFaces = true;
+            mFacesStep = 0;
+            mFacesOrigAge = mPersonAgeSlider.getValue();
+            // clear so that this layer doesn't appear in each face picture
+            mPickedObjectLayer = -1;
+            }
+        else {
+            actionPerformed( &mClearObjectButton );
+            }
         }
     else if( inTarget == &mReplaceObjectButton ) {
         char *text = mDescriptionField.getText();
@@ -1436,7 +1496,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         addObject( text,
                    mCheckboxes[0]->getToggled(),
-                   mContainSizeField.getInt(),
+                   mContainSizeField.getFloat(),
                    mCurrentObject.vertContainRotationOffset,
                    mCheckboxes[1]->getToggled(),
                    mMinPickupAgeField.getFloat(),
@@ -1471,11 +1531,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mDecaySoundWidget.getSoundUsage(),
                    creationSoundInitialOnly,
                    mCurrentObject.numSlots,
-                   mSlotSizeField.getInt(), 
+                   mSlotSizeField.getFloat(), 
                    mCurrentObject.slotPos,
                    mCurrentObject.slotVert,
                    mCurrentObject.slotParent,
-                   mSlotTimeStretchField.getFloat(), 
+                   mSlotTimeStretchField.getFloat(),
+                   mSlotsLockedCheckbox.getToggled(),
                    mCurrentObject.numSprites, mCurrentObject.sprites, 
                    mCurrentObject.spritePos,
                    mCurrentObject.spriteRot,
@@ -1492,6 +1553,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.spriteIsBackFoot,
                    mCurrentObject.spriteIsFrontFoot,
                    mNumUsesField.getInt(),
+                   mUseChanceField.getFloat(),
                    mCurrentObject.spriteUseVanish,
                    mCurrentObject.spriteUseAppear,
                    false,
@@ -1516,7 +1578,17 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }    
 
 
-        actionPerformed( &mClearObjectButton );
+        if( mCheckboxes[2]->getToggled() ) {
+            // person, save face
+            mSaveFaces = true;
+            mFacesStep = 0;
+            mFacesOrigAge = mPersonAgeSlider.getValue();
+            // clear so that this layer doesn't appear in each face picture
+            mPickedObjectLayer = -1;
+            }
+        else {
+            actionPerformed( &mClearObjectButton );
+            }
         }
     else if( inTarget == &mClearObjectButton ) {
         mCurrentObject.id = -1;
@@ -1544,13 +1616,15 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mFoodValueField.setText( "0" );
         mSpeedMultField.setText( "1.00" );
 
-        mContainSizeField.setInt( 1 );
-        mSlotSizeField.setInt( 1 );
+        mContainSizeField.setFloat( 1, 4, true );
+        mSlotSizeField.setFloat( 1, 4, true );
         mSlotTimeStretchField.setText( "1.0" );
-        
+        mSlotsLockedCheckbox.setToggled( false );
+
         mContainSizeField.setVisible( false );
         mSlotSizeField.setVisible( false );
         mSlotTimeStretchField.setVisible( false );
+        mSlotsLockedCheckbox.setVisible( false );
         
         mFloorCheckbox.setToggled( false );
         mFloorCheckbox.setVisible( true );
@@ -1639,7 +1713,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         mNumUsesField.setInt( 1 );
         mNumUsesField.setVisible( true );
-
+        mUseChanceField.setFloat( 1, 4, true );
+        mUseChanceField.setVisible( false );
 
         mSaveObjectButton.setVisible( false );
         mReplaceObjectButton.setVisible( false );
@@ -1821,7 +1896,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         mSlotSizeField.setVisible( true );
         mSlotTimeStretchField.setVisible( true );
-        
+        mSlotsLockedCheckbox.setVisible( true );
         
         mPersonAgeSlider.setVisible( false );
 
@@ -1844,12 +1919,15 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 mDemoSlotsButton.setVisible( false );
                 mClearSlotsDemoButton.setVisible( false );
                 
-                mSlotSizeField.setInt( 1 );
+                mSlotSizeField.setFloat( 1, 4, true );
                 mSlotSizeField.setVisible( false );
                 
                 mSlotTimeStretchField.setText( "1.0" );
                 mSlotTimeStretchField.setVisible( false );
                 
+                mSlotsLockedCheckbox.setToggled( false );
+                mSlotsLockedCheckbox.setVisible( false );
+
                 mBehindSlotsCheckbox.setVisible( false );
                 }
             }
@@ -2217,6 +2295,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             
             mSimUseCheckbox.setVisible( true );
+            mUseChanceField.setVisible( true );
             }
         else {
             mUseVanishCheckbox.setVisible( false );
@@ -2224,6 +2303,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mSimUseCheckbox.setToggled( false );
             mSimUseCheckbox.setVisible( false );
             mSimUseSlider.setVisible( false );
+            mUseChanceField.setFloat( 1.0, 4, true );
+            mUseChanceField.setVisible( false );
             }
         }
     else if( inTarget == &mAgePunchInButton ) {
@@ -2368,7 +2449,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         
         mSimUseSlider.setVisible( false );
         mSimUseCheckbox.setToggled( false );
-        mSimUseCheckbox.setVisible( false );
+        
         
         
         char rightClick;
@@ -2462,7 +2543,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 
             mDescriptionField.setText( pickedRecord->description );
 
-            mMapChanceField.setFloat( pickedRecord->mapChance, 2 );
+            mMapChanceField.setFloat( pickedRecord->mapChance, 4 );
             
             char *biomeText = getBiomesString( pickedRecord );
             
@@ -2478,10 +2559,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mSpeedMultField.setFloat( pickedRecord->speedMult, 2 );
 
-            mContainSizeField.setInt( pickedRecord->containSize );
-            mSlotSizeField.setInt( pickedRecord->slotSize );
+            mContainSizeField.setFloat( pickedRecord->containSize, 4, true );
+            mSlotSizeField.setFloat( pickedRecord->slotSize, 4, true );
             mSlotTimeStretchField.setFloat( pickedRecord->slotTimeStretch,
                                             -1, true );
+            mSlotsLockedCheckbox.setToggled( pickedRecord->slotsLocked );
             
             mDeadlyDistanceField.setInt( pickedRecord->deadlyDistance );
             mUseDistanceField.setInt( pickedRecord->useDistance );
@@ -2571,8 +2653,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mNumUsesField.setInt( pickedRecord->numUses );
             
             mSimUseCheckbox.setVisible( pickedRecord->numUses > 1 );
+            mUseChanceField.setVisible( pickedRecord->numUses > 1 );
             
-
+            mUseChanceField.setFloat( pickedRecord->useChance, 4, true );
+            
+            
             memcpy( mCurrentObject.sprites, pickedRecord->sprites,
                     sizeof( int ) * pickedRecord->numSprites );
                 
@@ -2792,7 +2877,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mFloorCheckbox.setVisible( false );
             
             if( ! pickedRecord->containable ) {
-                mContainSizeField.setInt( 1 );
+                mContainSizeField.setFloat( 1, 4, true );
                 mContainSizeField.setVisible( false );
                 
                 if( ! mCheckboxes[2]->getToggled() ) {
@@ -2804,15 +2889,19 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             
             if( pickedRecord->numSlots == 0 ) {
-                mSlotSizeField.setInt( 1 );
+                mSlotSizeField.setFloat( 1, 4, true );
                 mSlotSizeField.setVisible( false );
                 
                 mSlotTimeStretchField.setText( "1.0" );
                 mSlotTimeStretchField.setVisible( false );
+                
+                mSlotsLockedCheckbox.setToggled( false );
+                mSlotsLockedCheckbox.setVisible( false );
                 }
             else {
                 mSlotSizeField.setVisible( true );
                 mSlotTimeStretchField.setVisible( true );
+                mSlotsLockedCheckbox.setVisible( true );
                 }
             }
         }
@@ -2841,7 +2930,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             }
         else {
-            mContainSizeField.setInt( 1 );
+            mContainSizeField.setFloat( 1, 4, true );
             mContainSizeField.setVisible( false );
             mFloorCheckbox.setVisible( true );
             mCurrentObject.vertContainRotationOffset = 0;
@@ -2859,7 +2948,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mSetHeldPosButton.setVisible( false );
             mMinPickupAgeField.setVisible( false );
             
-            mContainSizeField.setInt( 1 );
+            mContainSizeField.setFloat( 1, 4, true );
             mContainSizeField.setVisible( false );
             mCheckboxes[0]->setToggled( false );
             hideVertRotButtons();
@@ -2868,11 +2957,14 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mCurrentObject.vertContainRotationOffset = 0;
             
-            mSlotSizeField.setInt( 1 );
+            mSlotSizeField.setFloat( 1, 4, true );
             mSlotSizeField.setVisible( false );
             mSlotTimeStretchField.setText( "1.0" );
             mSlotTimeStretchField.setVisible( false );
             
+            mSlotsLockedCheckbox.setToggled( false );
+            mSlotsLockedCheckbox.setVisible( false );
+
             mDemoSlotsButton.setVisible( false );
             mCurrentObject.numSlots = 0;
 
@@ -3224,11 +3316,11 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
     // draw overlay to show foot-cross-over point
 
-    doublePair footRecPos = { 0, -96 };
+    doublePair footRecPos = { 0, -80 };
     
     setDrawColor( 0, 0, 0, 0.1 );
     
-    drawRect( footRecPos, 192, 32 );
+    drawRect( footRecPos, 192, 16 );
     
 
     
@@ -3244,10 +3336,67 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     drawRect( barPos, 192, 16 );
 
 
+    doublePair framePos = { 0, 0 };
+    char allLoaded = false;
+
+    // always keep whole current object loaded
+    allLoaded = true;
+    for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+        allLoaded = 
+            allLoaded && markSpriteLive( mCurrentObject.sprites[i] );
+        }
+
+
+
     if( mPrintRequested ) {
         doublePair pos = { 0, 0 };
                            
         drawSquare( pos, 600 );
+        }
+    else if( mSaveFaces ) {
+        
+        if( allLoaded ) {
+
+            mPersonAgeSlider.setValue( faceStepAges[ mFacesStep ] );
+
+            double age = mPersonAgeSlider.getValue();
+            
+            int headIndex = getHeadIndex( &mCurrentObject, age );
+            
+            doublePair headPos = mCurrentObject.spritePos[ headIndex ];
+            
+            
+            int frontFootIndex = getFrontFootIndex( &mCurrentObject, age );
+            
+            doublePair frontFootPos = 
+                mCurrentObject.spritePos[ frontFootIndex ];
+            
+
+            int bodyIndex = getBodyIndex( &mCurrentObject, age );
+            
+            doublePair bodyPos = mCurrentObject.spritePos[ bodyIndex ];
+            
+            
+            if( headIndex != -1 ) {
+                framePos = add( add( mCurrentObject.spritePos[ headIndex ],
+                                     getAgeHeadOffset( age, headPos,
+                                                       bodyPos,
+                                                       frontFootPos ) ),
+                                getAgeBodyOffset( age, bodyPos ) );
+                framePos.y -= 15;
+                }
+            
+            setDrawColor( 0, 0, 0, 1 );
+            
+            drawRect( framePos, 110, 110 );
+            
+            setDrawColor( 1, 1, 1, 1 );
+            drawSprite( mFaceFrameBackgroundSprite, framePos );
+            
+            startAddingToStencil( false, true );
+            drawSprite( mFaceFrameMaskSprite, framePos );
+            startDrawingThroughStencil();
+            }
         }
     
 
@@ -3483,7 +3632,91 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         mPrintRequested = false;
         }
-            
+
+    if( mSaveFaces && allLoaded ) {
+        stopStencil();
+        
+        setDrawColor( 1, 1, 1, 1 );
+        drawSprite( mFaceFrameSprite, framePos );
+
+        int w = 100;
+        int h = 98;
+        
+        Image *im = getScreenRegion( framePos.x - 51, framePos.y - 49,
+                                   w, h );
+        
+        
+        Image *transImage = im->generateAlphaChannel();
+
+        delete im;
+        
+        double *a = transImage->getChannel( 3 );
+        
+        int numPixels = w * h;
+        for( int i=0; i<numPixels; i++ ) {
+            a[i] = 0;
+            }
+        
+        int fW = mFaceFrameImage->getWidth();
+        int fH = mFaceFrameImage->getHeight();
+        
+        double *fA = mFaceFrameImage->getChannel( 3 );
+
+
+        int fmW = mFaceFrameMaskImage->getWidth();
+        int fmH = mFaceFrameMaskImage->getHeight();
+        
+        double *fmA = mFaceFrameMaskImage->getChannel( 3 );
+
+        for( int y=0; y<h; y++ ) {
+            int cY = y - 49;
+            int fY = cY + fH/2;
+            int fmY = cY + fmH/2;
+
+            for( int x=0; x<w; x++ ) {
+                int i = y * w + x;
+
+                int cX = x - 51;
+
+                int fX = cX + fW/2;                
+                int fI = fY * fW + fX;
+
+                int fmX = cX + fmW/2;
+                int fmI = fmY * fmW + fmX;
+
+                a[i] = fA[ fI ];
+                if( fmA[ fmI ] > a[i] ) {
+                    a[i] = fmA[ fmI ];
+                    }
+                }
+            }
+        
+        
+        
+        char *name = autoSprintf( "faces/face_%d_%d.png",
+                                  mCurrentObject.id,
+                                  lrint( mPersonAgeSlider.getValue() ) );
+        
+        PNGImageConverter pngConv;
+        
+        File outFile( NULL, name );
+        FileOutputStream outStream( &outFile );
+        
+        pngConv.formatImage( transImage, &outStream );
+
+        delete [] name;
+        delete transImage;
+        
+
+        mFacesStep++;
+        
+        if( mFacesStep >= NUM_FACES_STEPS ) {
+            mSaveFaces = false;
+            mPersonAgeSlider.setValue( mFacesOrigAge );
+            actionPerformed( &mClearObjectButton );
+            }
+        }
+    
     
 
 
@@ -3568,6 +3801,13 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         }
     
 
+    if( mSlotsLockedCheckbox.isVisible() ) {
+        pos = mSlotsLockedCheckbox.getPosition();
+        pos.x -= checkboxSep;
+        smallFont->drawString( "Locked", pos, alignRight );
+        }
+
+    
     if( mAgingLayerCheckbox.isVisible() ) {
         pos = mAgingLayerCheckbox.getPosition();
         pos.x -= checkboxSep;
@@ -3741,6 +3981,24 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                                        spritePos.x, spritePos.y );
         
         smallFont->drawString( tag, pos, alignRight );
+        
+        smallFont->drawString( posString, pos, alignLeft );
+        
+        delete [] posString;
+        }
+    else if( mPickedSlot != -1 ) {
+        char *tag = autoSprintf( "Slot %d", mPickedSlot + 1 );
+        pos.x = 0;
+        pos.y = -106;
+
+        doublePair slotPos = mCurrentObject.slotPos[ mPickedSlot ];
+        
+        char *posString = autoSprintf( "  ( %.0f, %.0f )",
+                                       slotPos.x, slotPos.y );
+        
+        smallFont->drawString( tag, pos, alignRight );
+        
+        delete [] tag;
         
         smallFont->drawString( posString, pos, alignLeft );
         
@@ -3963,10 +4221,13 @@ void EditorObjectPage::step() {
         mFlipHButton.setVisible( false );
         }
 
-    if( mPersonAgeSlider.isVisible() || 
+    // pretty sure using sound should be visible for all objects now
+    if( true ||
+        mPersonAgeSlider.isVisible() || 
         mSlotSizeField.isVisible() ||
         anyClothingToggled() ||
         mCheckboxes[1]->getToggled() ||
+        mNumUsesField.getInt() > 1 || 
         mFloorCheckbox.getToggled() ) {
         
         mUsingSoundWidget.setVisible( true );
@@ -4176,7 +4437,8 @@ double EditorObjectPage::getClosestSpriteOrSlot( float inX, float inY,
                                                 mPickedObjectLayer,
                                                 false,
                                                 pos.x, pos.y,
-                                                outSprite, &cl, outSlot );
+                                                outSprite, &cl, outSlot,
+                                                true, true );
         
 
 
@@ -4318,6 +4580,11 @@ void EditorObjectPage::pickedLayerChanged() {
 
 
 void EditorObjectPage::pointerMove( float inX, float inY ) {
+    if( mSaveFaces ) {
+        // ignore events
+        return;
+        }
+    
     lastMouseX = inX;
     lastMouseY = inY;
 
@@ -4356,6 +4623,11 @@ void EditorObjectPage::pointerMove( float inX, float inY ) {
 
 
 void EditorObjectPage::pointerDown( float inX, float inY ) {
+    if( mSaveFaces ) {
+        // ignore events
+        return;
+        }
+    
     mHoverStrength = 0;
     
     if( inX < -192 || inX > 192 || 
@@ -4494,7 +4766,11 @@ void EditorObjectPage::recursiveMove( ObjectRecord *inObject,
 
 
 void EditorObjectPage::pointerDrag( float inX, float inY ) {
-
+    if( mSaveFaces ) {
+        // ignore events
+        return;
+        }
+    
     lastMouseX = inX;
     lastMouseY = inY;
 
@@ -4612,6 +4888,10 @@ static int *deleteFromIntArray( int *inArray, int inOldLength,
 
 
 void EditorObjectPage::keyDown( unsigned char inASCII ) {
+    if( mSaveFaces ) {
+        // ignore events
+        return;
+        }
     
     if( TextField::isAnyFocused() || mSetHeldPos ) {
         return;
@@ -5034,6 +5314,10 @@ void EditorObjectPage::keyUp( unsigned char inASCII ) {
 
 
 void EditorObjectPage::specialKeyDown( int inKeyCode ) {
+    if( mSaveFaces ) {
+        // ignore events
+        return;
+        }
     
     if( mDescriptionField.isAnyFocused() ) {
         return;

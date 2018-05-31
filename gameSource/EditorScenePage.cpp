@@ -261,7 +261,7 @@ EditorScenePage::EditorScenePage()
     addKeyClassDescription( &mKeyLegend, "f/F", "Flip obj/person" );
     addKeyClassDescription( &mKeyLegend, "c/C", "Copy obj/person" );
     addKeyClassDescription( &mKeyLegend, "x/X", "Cut obj/person" );
-    addKeyDescription( &mKeyLegend, 'v', "Paste" );
+    addKeyClassDescription( &mKeyLegend, "v/V", "Paste/Fill" );
     addKeyClassDescription( &mKeyLegend, "i/I", "Insert contained/held" );
     addKeyClassDescription( &mKeyLegend, "Bkspc", "Clear cell" );
     addKeyClassDescription( &mKeyLegend, "Hold d/D", "Set obj/person dest" );
@@ -399,7 +399,13 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
                                 }
                             else if( p->clothing.frontShoe == NULL ) {
                                 p->clothing.frontShoe = o;
-                                }                            
+                                }
+                            else {
+                                // both already present, replace back
+                                // empty front
+                                p->clothing.backShoe = o;
+                                p->clothing.frontShoe = NULL;
+                                }
                             break;
                             }
                         case 'h':
@@ -1067,7 +1073,8 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                 
                 int oID = passIDs[p];
             
-                if( p > 0 ) {    
+                if( p > 0 ) {
+                    setDrawColor( 1, 1, 1, 1 );
                     startAddingToStencil( false, true );
                     }
                 
@@ -1087,8 +1094,13 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                 
                 if( p > 0 ) {
                     // floor hugging pass
-                    // only draw bottom layer of floor
-                    setAnimLayerCutoff( 1 );
+
+                    int numLayers = getObject( oID )->numSprites;
+                    
+                    if( numLayers > 1 ) {    
+                        // draw all but top layer of floor
+                        setAnimLayerCutoff( numLayers - 1 );
+                        }
                     }
 
                 char used;
@@ -1171,8 +1183,11 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
             }
 
 
-        // draw behind stuff first
-        for( int b=0; b<2; b++ ) {
+        // draw behind stuff first, b=0
+        // then people, b=1, with permanent objects in front
+        // then non-permanent objects, b=2
+        // then walls (floor hugging), b=3
+        for( int b=0; b<4; b++ ) {
             
 
             if( b == 1 ) {
@@ -1399,9 +1414,22 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     
                     if( ( b == 0 && ! o->drawBehindPlayer ) 
                         ||
-                        ( b == 1 && o->drawBehindPlayer ) ) {
+                        ( b != 0 && o->drawBehindPlayer ) ) {
                         continue;
                         }
+                    if( ( b == 3 && ! o->floorHugging ) 
+                        ||
+                        ( b != 3 && o->floorHugging 
+                          && ! o->drawBehindPlayer) ) {
+                        continue;
+                        }
+                    
+                    if( ( b == 1 && ! o->permanent ) ||
+                        ( b == 2 && o->permanent ) ) {
+                        continue;
+                        }
+                    
+
                     
                     doublePair cellPos = pos;
                     
@@ -1908,7 +1936,7 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
         mCopyBuffer = *p;
         *p = mEmptyCell;
         }
-    else if( inASCII == 'v' || inASCII == 'V' ) {
+    else if( inASCII == 'v' ) {
         // paste
         if( mCopyBuffer.oID > 0 &&
             getObject( mCopyBuffer.oID )->person ) {
@@ -1918,6 +1946,25 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
             *c = mCopyBuffer;
             }
         restartAllMoves();
+        }
+    else if( inASCII == 'V' ) {
+        if( mCopyBuffer.oID > 0 &&
+            getObject( mCopyBuffer.oID )->person ) {
+            // do nothing, don't paste people
+            }
+        else {
+            for( int dy=-4; dy<4; dy++ ) {
+                int y = mCurY + dy;
+                if( y >= 0 && y < mSceneH ) {
+                    for( int dx=-6; dx<6; dx++ ) {
+                        int x = mCurX + dx;
+                        if( x >= 0 && x < mSceneW ) {
+                            mCells[ y ][ x ] = mCopyBuffer;
+                            }
+                        }
+                    }
+                }
+            }
         }
     else if( inASCII == 'i' ) {
         // insert into container

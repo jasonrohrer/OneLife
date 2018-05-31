@@ -424,6 +424,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        slotVert,
                        slotParent,
                        1,
+                       false,
                        numSprites, spriteIDs, 
                        spritePos,
                        spriteRot,
@@ -440,6 +441,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        spriteIsBackFoot,
                        spriteIsFrontFoot,
                        1,
+                       1.0f,
                        spriteUseVanish,
                        spriteUseAppear );
             

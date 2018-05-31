@@ -34,13 +34,20 @@ map.cpp \
 ../gameSource/SoundUsage.cpp \
 ../commonSource/fractalNoise.cpp \
 kissdb.cpp \
+stackdb.cpp \
 lifeLog.cpp \
 foodLog.cpp \
 backup.cpp \
 triggers.cpp \
 dbCommon.cpp \
 playerStats.cpp \
+lineageLog.cpp \
 failureLog.cpp \
+names.cpp \
+monument.cpp \
+lineageLimit.cpp \
+
+
 
 GAME_GRAPHICS = \
 

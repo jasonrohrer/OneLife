@@ -23,3 +23,28 @@ If moving object can consume an object that it moves onto, set TARGET as well.
 
 Thus, a moving object can have distinct effects based on whether it is moving
 into an empty space (bare ground) or moving onto an object that it can consume.
+
+
+
+==Murder==
+Handheld objects with Deadly Distance > 0 can be used to murder.
+
+Put any person in the TARGET of the transition to indicate a generic on-person
+transition.
+
+The weapon is the ACTOR and NEW ACTOR is what ends up in the murderer's hand
+afterward, whether or not the murder missed (example:  empty bow).
+
+NEW TARGET is what ends up on the ground or in the grave afterward (example: 
+arrow).
+
+
+Last Use on the TARGET side indicates that NEW TARGET is a special grave
+(example: bloody grave) and NEW ACTOR is what's left in the hand after a 
+successful murder (example:  bloody bow).
+
+So these two transitions together indicate what happens if the murder attempt
+hits or misses.
+
+Last Use on the ACTOR side indicates that NEW TARGET is what the victim
+ends up holding if the murder connects (example:  wound blood).

@@ -42,6 +42,13 @@ static SimpleVector<int> personObjectIDs;
 // track female people
 static SimpleVector<int> femalePersonObjectIDs;
 
+// track monument calls
+static SimpleVector<int> monumentCallObjectIDs;
+
+// track death markers
+static SimpleVector<int> deathMarkerObjectIDs;
+
+
 
 // anything above race 100 is put in bin for race 100
 #define MAX_RACE 100
@@ -163,9 +170,12 @@ void setDrawColor( FloatRGB inColor ) {
 
 
 static char autoGenerateUsedObjects = false;
+static char autoGenerateVariableObjects = false;
+
 
 int initObjectBankStart( char *outRebuildingCache, 
-                         char inAutoGenerateUsedObjects ) {
+                         char inAutoGenerateUsedObjects,
+                         char inAutoGenerateVariableObjects ) {
     maxID = 0;
 
     currentFile = 0;
@@ -174,6 +184,7 @@ int initObjectBankStart( char *outRebuildingCache,
     cache = initFolderCache( "objects", outRebuildingCache );
 
     autoGenerateUsedObjects = inAutoGenerateUsedObjects;
+    autoGenerateVariableObjects = inAutoGenerateVariableObjects;
 
     return cache.numFiles;
     }
@@ -331,7 +342,7 @@ float initObjectBankStep() {
                 r->containSize = 1;
                 r->vertContainRotationOffset = 0;
                 
-                sscanf( lines[next], "containSize=%d,vertSlotRot=%lf", 
+                sscanf( lines[next], "containSize=%f,vertSlotRot=%lf", 
                         &( r->containSize ),
                         &( r->vertContainRotationOffset ) );
                             
@@ -474,7 +485,11 @@ float initObjectBankStep() {
                         &( deathMarkerRead ) );
                     
                 r->deathMarker = deathMarkerRead;
-                            
+                
+                if( r->deathMarker ) {
+                    deathMarkerObjectIDs.push_back( r->id );
+                    }
+
                 next++;
 
 
@@ -648,11 +663,26 @@ float initObjectBankStep() {
                 next++;
 
                 r->slotSize = 1;
-                sscanf( lines[next], "slotSize=%d", 
+                sscanf( lines[next], "slotSize=%f", 
                         &( r->slotSize ) );
                             
                 next++;
 
+                r->slotsLocked = 0;
+                if( strstr( lines[next], 
+                            "slotsLocked=" ) != NULL ) {
+                    // flag present
+                    
+                    int flagRead = 0;                            
+                    sscanf( lines[next], "slotsLocked=%d", 
+                            &( flagRead ) );
+                    
+                    r->slotsLocked = flagRead;
+                            
+                    next++;
+                    }
+                
+                
                 r->slotPos = new doublePair[ r->numSlots ];
                 r->slotVert = new char[ r->numSlots ];
                 r->slotParent = new int[ r->numSlots ];
@@ -707,6 +737,8 @@ float initObjectBankStep() {
                 
                 
                 r->numUses = 1;
+                r->useChance = 1.0f;
+                
                 r->spriteUseVanish = new char[ r->numSprites ];
                 r->spriteUseAppear = new char[ r->numSprites ];
                 r->useDummyIDs = NULL;
@@ -719,6 +751,44 @@ float initObjectBankStep() {
 
                 r->spriteSkipDrawing = new char[ r->numSprites ];
                 memset( r->spriteSkipDrawing, false, r->numSprites );
+                
+                r->apocalypseTrigger = false;
+                if( r->description[0] == 'T' &&
+                    r->description[1] == 'h' &&
+                    strstr( r->description, "The Apocalypse" ) == 
+                    r->description ) {
+                    
+                    printf( "Object id %d (%s) seen as an apocalypse trigger\n",
+                            r->id, r->description );
+
+                    r->apocalypseTrigger = true;
+                    }
+
+                r->monumentStep = false;
+                r->monumentDone = false;
+                r->monumentCall = false;
+                
+                if( strstr( r->description, "monument" ) != NULL ) {
+                    // some kind of monument state
+                    if( strstr( r->description, "monumentStep" ) != NULL ) {
+                        r->monumentStep = true;
+                        }
+                    else if( strstr( r->description, 
+                                     "monumentDone" ) != NULL ) {
+                        r->monumentDone = true;
+                        }
+                    else if( strstr( r->description, 
+                                     "monumentCall" ) != NULL ) {
+                        r->monumentCall = true;
+                        monumentCallObjectIDs.push_back( r->id );
+                        }
+                    }
+                
+                r->numVariableDummyIDs = 0;
+                r->variableDummyIDs = NULL;
+                r->isVariableDummy = false;
+                r->variableDummyParent = 0;
+                r->isVariableHidden = false;
                 
 
                 for( int i=0; i< r->numSprites; i++ ) {
@@ -811,8 +881,9 @@ float initObjectBankStep() {
                 if( next < numLines ) {
                     // info about num uses and vanish/appear sprites
                     
-                    sscanf( lines[next], "numUses=%d", 
-                            &( r->numUses ) );
+                    sscanf( lines[next], "numUses=%d,%f", 
+                            &( r->numUses ),
+                            &( r->useChance ) );
                             
                     next++;
                     
@@ -883,6 +954,44 @@ void enableObjectSearch( char inEnable ) {
 
 
 
+// turns a variable object number into a non-numeric label
+// A, B, C, ... AA, AB, AC, etc.
+// includes - AAZ hyphen offset character
+static char *getVarObjectLabel( int inNumber ) {
+    // in number starts at 1
+    inNumber -= 1;
+    
+    SimpleVector<char> digits;
+    
+    int numLeft = inNumber;
+
+    if( numLeft == 0 ) {
+        digits.push_front( 'A' );
+        }
+    
+    while( numLeft > 0 ) {
+        int digitNumber = numLeft % 26;
+        
+        char digit = 'A' + digitNumber;
+        
+        digits.push_front( digit );
+        numLeft -= digitNumber;
+        
+        if( numLeft == 26 ) {
+            digits.push_front( 'A' );
+            }
+        numLeft /= 26;
+        numLeft -= 1;
+        }
+
+    digits.push_front( ' ' );
+    digits.push_front( '-' );
+    
+    return digits.getElementString();
+    }
+
+
+
 void initObjectBankFinish() {
   
     freeFolderCache( cache );
@@ -913,6 +1022,53 @@ void initObjectBankFinish() {
     
                         
     rebuildRaceList();
+
+
+    
+    // print report on baby distribution per mother
+    // testing family code
+    if( false )
+    for( int i=0; i<femalePersonObjectIDs.size(); i++ ) {
+
+        int id = femalePersonObjectIDs.getElementDirect( i );
+        ObjectRecord *motherObject = getObject( id );
+        int numPeople = personObjectIDs.size();
+        int *hitCounts = new int[ numPeople ];
+
+        int maleCount = 0;
+        
+        memset( hitCounts, 0, sizeof( int ) * numPeople );
+    
+        int trials = 1000;
+
+        for( int j=0; j<trials; j++ ) {
+            int childID = getRandomFamilyMember( motherObject->race, id, 2 );
+            
+            ObjectRecord *childO = getObject( childID );
+            
+            int index = personObjectIDs.getElementIndex( childID );
+            
+            hitCounts[ index ] ++;
+
+            if( childO->male ) {
+                maleCount++;
+                }
+            }
+
+        printf( "Mother id %d had %d/%d males and these hits:\n",
+                id, maleCount, trials );
+        
+        for( int j=0; j<personObjectIDs.size(); j++ ) {
+            printf( "%d:  %d\n",
+                    personObjectIDs.getElementDirect( j ),
+                    hitCounts[j] );
+            }
+        printf( "\n\n" );
+        }
+    
+
+
+
 
     printf( "Loaded %d objects from objects folder\n", numRecords );
 
@@ -1012,6 +1168,123 @@ void initObjectBankFinish() {
         makeNewObjectsSearchable = oldSearch;
         
         printf( "  Auto-generated %d 'used' objects\n", numAutoGenerated );
+        }
+
+
+
+
+    if( autoGenerateVariableObjects ) {
+        int numAutoGenerated = 0;
+        
+        char oldSearch = makeNewObjectsSearchable;
+        
+        // don't need to be able to search for dummy objs
+        makeNewObjectsSearchable = false;
+
+        for( int i=0; i<mapSize; i++ ) {
+            if( idMap[i] != NULL ) {
+                ObjectRecord *o = idMap[i];
+                
+
+                char *dollarPos = strstr( o->description, "$" );
+                
+                if( dollarPos != NULL ) {
+                    int mainID = o->id;
+                    
+                    char *afterDollarPos = &( dollarPos[1] );
+
+                    int numVar = 0;
+                    
+                    int numRead = sscanf( afterDollarPos, "%d", &numVar );
+                    
+                    if( numRead != 1 || numVar < 2 ) {
+                        continue;
+                        }
+
+                    
+                    o->numVariableDummyIDs = numVar;
+                    o->variableDummyIDs = new int[ numVar ];
+                    
+                    char *target = autoSprintf( "$%d", numVar );
+                    
+                    for( int d=1; d<=numVar; d++ ) {    
+                        numAutoGenerated ++;
+                        
+                        char *sub = getVarObjectLabel( d );
+
+                        char variableHidden = false;
+                        
+                        char *targetPos = strstr( o->description, target );
+                        char *commentPos = strstr( o->description, "#" );
+                        
+                        if( commentPos != NULL && targetPos != NULL &&
+                            commentPos < targetPos ) {
+                            // variable comes after comment
+                            variableHidden = true;
+                            }
+                        
+
+                        char found;
+                        char *desc = replaceOnce( o->description, target,
+                                                  sub,
+                                                  &found );
+                        delete [] sub;
+                            
+                        
+                        int dummyID = reAddObject( o, desc, true );
+                        
+                        delete [] desc;
+
+                        o->variableDummyIDs[ d - 1 ] = dummyID;
+                        
+                        ObjectRecord *dummyO = getObject( dummyID );
+
+                        dummyO->isVariableDummy = true;
+                        dummyO->variableDummyParent = mainID;
+                        dummyO->isVariableHidden = variableHidden;
+                        
+                        // copy anims too
+                        for( int t=0; t<endAnimType; t++ ) {
+                            AnimationRecord *a = getAnimation( mainID,
+                                                               (AnimType)t );
+
+                            if( a != NULL ) {
+                                
+                                // feels more risky, but way faster
+                                // than copying it
+                                
+                                // temporarily replace the object ID
+                                // before adding this record
+                                // it will be copied internally
+                                a->objectID = dummyID;
+                                
+                                addAnimation( a, true );
+
+                                // restore original record
+                                a->objectID = mainID;
+                                }
+                            }
+                        }
+
+                    // replace original description too, but not
+                    // with a number for variable
+                    // call it "- ?" instead
+                    char found;
+                    char *desc = replaceOnce( o->description, target,
+                                              "- ?",
+                                              &found );
+                    delete [] o->description;
+                    o->description = desc;
+                    
+                    delete [] target;
+                    }
+                
+                }
+            }
+        
+        makeNewObjectsSearchable = oldSearch;
+        
+        printf( "  Auto-generated %d 'variable' objects\n", numAutoGenerated );
         }
     
 
@@ -1176,7 +1449,7 @@ void setupSpriteUseVis( ObjectRecord *inObject, int inUsesRemaining,
 
         // now handle appearing sprites
         int numInvisSpritesLeft = 
-            ( d * (numAppearingSprites) ) / numUses;
+            lrint( ( d * (numAppearingSprites) ) / (double)numUses );
                         
         /*
         // testing... do we need to do this?
@@ -1249,6 +1522,10 @@ static void freeObjectRecord( int inID ) {
                 delete [] idMap[inID]->useDummyIDs;
                 }
 
+            if( idMap[inID]->variableDummyIDs != NULL ) {
+                delete [] idMap[inID]->variableDummyIDs;
+                }
+
             delete [] idMap[inID]->spriteSkipDrawing;
             
             clearSoundUsage( &( idMap[inID]->creationSound ) );
@@ -1262,7 +1539,8 @@ static void freeObjectRecord( int inID ) {
 
             personObjectIDs.deleteElementEqualTo( inID );
             femalePersonObjectIDs.deleteElementEqualTo( inID );
-            
+            monumentCallObjectIDs.deleteElementEqualTo( inID );
+            deathMarkerObjectIDs.deleteElementEqualTo( inID );
             
             if( race <= MAX_RACE ) {
                 racePersonObjectIDs[ race ].deleteElementEqualTo( inID );
@@ -1315,6 +1593,10 @@ void freeObjectBank() {
                 delete [] idMap[i]->useDummyIDs;
                 }
 
+            if( idMap[i]->variableDummyIDs != NULL ) {
+                delete [] idMap[i]->variableDummyIDs;
+                }
+
             delete [] idMap[i]->spriteSkipDrawing;
 
             //printf( "\n\nClearing sound usage for id %d\n", i );            
@@ -1331,6 +1613,8 @@ void freeObjectBank() {
 
     personObjectIDs.deleteAll();
     femalePersonObjectIDs.deleteAll();
+    monumentCallObjectIDs.deleteAll();
+    deathMarkerObjectIDs.deleteAll();
     
     for( int i=0; i<= MAX_RACE; i++ ) {
         racePersonObjectIDs[i].deleteAll();
@@ -1394,6 +1678,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->slotVert,
                         inObject->slotParent,
                         inObject->slotTimeStretch,
+                        inObject->slotsLocked,
                         inObject->numSprites, 
                         inObject->sprites, 
                         inObject->spritePos,
@@ -1411,6 +1696,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->spriteIsBackFoot,
                         inObject->spriteIsFrontFoot,
                         inObject->numUses,
+                        inObject->useChance,
                         inObject->spriteUseVanish,
                         inObject->spriteUseAppear,
                         inNoWriteToFile,
@@ -1490,6 +1776,47 @@ char isContainable( int inID ) {
         return r->containable;
         }
     }
+
+
+char isApocalypseTrigger( int inID ) {
+    ObjectRecord *r = getObject( inID );
+    
+    if( r == NULL ) {
+        return false;
+        }
+    else {
+        return r->apocalypseTrigger;
+        }
+    }
+
+
+
+int getMonumentStatus( int inID ) {
+    ObjectRecord *r = getObject( inID );
+    
+    if( r == NULL ) {
+        return 0;
+        }
+    else {
+        if( r->monumentStep ) {
+            return 1;
+            }
+        if( r->monumentDone ) {
+            return 2;
+            }
+        if( r->monumentCall ) {
+            return 3;
+            }
+        return 0;
+        }
+    }
+
+
+SimpleVector<int> *getMonumentCallObjects() {
+    return &monumentCallObjectIDs;
+    }
+
+
 
     
 
@@ -1577,7 +1904,7 @@ ObjectRecord **searchObjects( const char *inSearch,
 
 int addObject( const char *inDescription,
                char inContainable,
-               int inContainSize,
+               float inContainSize,
                double inVertContainRotationOffset,
                char inPermanent,
                int inMinPickupAge,
@@ -1610,10 +1937,11 @@ int addObject( const char *inDescription,
                SoundUsage inEatingSound,
                SoundUsage inDecaySound,
                char inCreationSoundInitialOnly,
-               int inNumSlots, int inSlotSize, doublePair *inSlotPos,
+               int inNumSlots, float inSlotSize, doublePair *inSlotPos,
                char *inSlotVert,
                int *inSlotParent,
                float inSlotTimeStretch,
+               char inSlotsLocked,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
                double *inSpriteRot,
@@ -1630,6 +1958,7 @@ int addObject( const char *inDescription,
                char *inSpriteIsBackFoot,
                char *inSpriteIsFrontFoot,
                int inNumUses,
+               float inUseChance,
                char *inSpriteUseVanish,
                char *inSpriteUseAppear,
                char inNoWriteToFile,
@@ -1698,8 +2027,8 @@ int addObject( const char *inDescription,
         lines.push_back( stringDuplicate( inDescription ) );
 
         lines.push_back( autoSprintf( "containable=%d", (int)inContainable ) );
-        lines.push_back( autoSprintf( "containSize=%d,vertSlotRot=%f", 
-                                      (int)inContainSize,
+        lines.push_back( autoSprintf( "containSize=%f,vertSlotRot=%f", 
+                                      inContainSize,
                                       inVertContainRotationOffset ) );
         lines.push_back( autoSprintf( "permanent=%d,minPickupAge=%d", 
                                       (int)inPermanent,
@@ -1788,7 +2117,8 @@ int addObject( const char *inDescription,
         
         lines.push_back( autoSprintf( "numSlots=%d#timeStretch=%f", 
                                       inNumSlots, inSlotTimeStretch ) );
-        lines.push_back( autoSprintf( "slotSize=%d", inSlotSize ) );
+        lines.push_back( autoSprintf( "slotSize=%f", inSlotSize ) );
+        lines.push_back( autoSprintf( "slotsLocked=%d", (int)inSlotsLocked ) );
 
         for( int i=0; i<inNumSlots; i++ ) {
             lines.push_back( autoSprintf( "slotPos=%f,%f,vert=%d,parent=%d", 
@@ -1852,8 +2182,8 @@ int addObject( const char *inDescription,
                                           inNumSprites ) );
         
         
-        lines.push_back( autoSprintf( "numUses=%d",
-                                      inNumUses ) );
+        lines.push_back( autoSprintf( "numUses=%d,%f",
+                                      inNumUses, inUseChance ) );
         
         lines.push_back(
             boolArrayToSparseCommaString( "useVanishIndex",
@@ -1999,6 +2329,13 @@ int addObject( const char *inDescription,
     r->race = inRace;
     r->male = inMale;
     r->deathMarker = inDeathMarker;
+    
+    deathMarkerObjectIDs.deleteElementEqualTo( newID );
+    
+    if( r->deathMarker ) {
+        deathMarkerObjectIDs.push_back( newID );
+        }
+
     r->homeMarker = inHomeMarker;
     r->floor = inFloor;
     r->floorHugging = inFloorHugging;
@@ -2027,7 +2364,7 @@ int addObject( const char *inDescription,
     memcpy( r->slotParent, inSlotParent, inNumSlots * sizeof( int ) );
     
     r->slotTimeStretch = inSlotTimeStretch;
-    
+    r->slotsLocked = inSlotsLocked;
 
     r->numSprites = inNumSprites;
     
@@ -2051,6 +2388,7 @@ int addObject( const char *inDescription,
     r->spriteIsFrontFoot = new char[ inNumSprites ];
 
     r->numUses = inNumUses;
+    r->useChance = inUseChance;
     r->spriteUseVanish = new char[ inNumSprites ];
     r->spriteUseAppear = new char[ inNumSprites ];
     
@@ -2060,6 +2398,45 @@ int addObject( const char *inDescription,
     r->cachedHeight = newHeight;
     
     r->spriteSkipDrawing = new char[ inNumSprites ];
+
+    r->apocalypseTrigger = false;
+    if( r->description[0] == 'T' &&
+        r->description[1] == 'h' &&
+        strstr( r->description, "The Apocalypse" ) == r->description ) {
+        
+        printf( "Object id %d (%s) seen as an apocalypse trigger\n",
+                r->id, r->description );
+
+        r->apocalypseTrigger = true;
+        }
+    
+    r->monumentStep = false;
+    r->monumentDone = false;
+    r->monumentCall = false;
+
+    monumentCallObjectIDs.deleteElementEqualTo( newID );
+    
+    if( strstr( r->description, "monument" ) != NULL ) {
+        // some kind of monument state
+        if( strstr( r->description, "monumentStep" ) != NULL ) {
+            r->monumentStep = true;
+            }
+        else if( strstr( r->description, 
+                         "monumentDone" ) != NULL ) {
+            r->monumentDone = true;
+            }
+        else if( strstr( r->description, 
+                         "monumentCall" ) != NULL ) {
+            r->monumentCall = true;
+            monumentCallObjectIDs.push_back( newID );
+            }
+        }
+    
+    r->numVariableDummyIDs = 0;
+    r->variableDummyIDs = NULL;
+    r->isVariableDummy = false;
+    r->variableDummyParent = 0;
+    r->isVariableHidden = false;
     
     memset( r->spriteSkipDrawing, false, inNumSprites );
     
@@ -2145,6 +2522,13 @@ int addObject( const char *inDescription,
         }
     
     delete [] lower;
+    
+    personObjectIDs.deleteElementEqualTo( newID );
+    femalePersonObjectIDs.deleteElementEqualTo( newID );
+
+    for( int i=0; i<=MAX_RACE; i++ ) {
+        racePersonObjectIDs[ i ].deleteElementEqualTo( newID );
+        }
     
     if( r->person && ! r->personNoSpawn ) {    
         personObjectIDs.push_back( newID );
@@ -2849,6 +3233,11 @@ int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
     if( racePersonObjectIDs[ inRace ].size() == 0 ) {
         return -1;
         }
+
+    if( racePersonObjectIDs[ inRace ].size() == 1 ) {
+        // no choice in this race
+        return racePersonObjectIDs[ inRace ].getElementDirect( 0 );
+        }
     
     int motherIndex = 
         racePersonObjectIDs[ inRace ].getElementIndex( inMotherID );
@@ -2857,8 +3246,20 @@ int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
         return getRandomPersonObjectOfRace( inRace );
         }
     
+    if( racePersonObjectIDs[ inRace ].size() == 2 ) {
+        // no choice, return non-mother
+        int nonMotherIndex = 0;
+        if( motherIndex == 0 ) {
+            nonMotherIndex = 1;
+            }
+        return racePersonObjectIDs[ inRace ].getElementDirect( nonMotherIndex );
+        }
+    
 
     // never have offset 0, so we can't ever have ourself as a baby
+    if( inFamilySpan < 1 ) {
+        inFamilySpan = 1;
+        }
     int offset = randSource.getRandomBoundedInt( 1, inFamilySpan );
     
     if( randSource.getRandomBoolean() ) {
@@ -2866,13 +3267,38 @@ int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
         }
     
     int familyIndex = motherIndex + offset;
+
+    int indexOver = false;
     
     while( familyIndex >= racePersonObjectIDs[ inRace ].size() ) {
         familyIndex -= racePersonObjectIDs[ inRace ].size();
+        indexOver = true;
         }
     while( familyIndex < 0  ) {
         familyIndex += racePersonObjectIDs[ inRace ].size();
         }
+    
+    
+    if( familyIndex == motherIndex ) {
+        // wrapped back around to mother
+        if( ! indexOver ) {
+            // wrapped below 0, keep going down
+            familyIndex --;
+            }
+        else if( indexOver ) {
+            // wrapped above top, keep going up
+            familyIndex ++;
+            }
+
+        // watch for more wrap-around after avoiding mother index
+        if( familyIndex >= racePersonObjectIDs[ inRace ].size() ) {
+            familyIndex -= racePersonObjectIDs[ inRace ].size();
+            }
+        else if( familyIndex < 0 ) {
+            familyIndex += racePersonObjectIDs[ inRace ].size();
+            }
+        }
+
     
     return racePersonObjectIDs[ inRace ].getElementDirect( familyIndex );
     }
@@ -2924,15 +3350,14 @@ int getPrevPersonObject( int inCurrentPersonObjectID ) {
 
 int getRandomDeathMarker() {
 
-
-    for( int i=0; i<mapSize; i++ ) {
-        if( idMap[i] != NULL ) {
-            if( idMap[i]->deathMarker ) {
-                return i;
-                }
-            }
+    if( deathMarkerObjectIDs.size() == 0 ) {
+        return -1;
         }
-    return 0;
+    
+        
+    return deathMarkerObjectIDs.getElementDirect( 
+        randSource.getRandomBoundedInt( 0, 
+                                        deathMarkerObjectIDs.size() - 1  ) );
     }
 
 
@@ -3163,7 +3588,8 @@ double getClosestObjectPart( ObjectRecord *inObject,
                              int *outSprite,
                              int *outClothing,
                              int *outSlot,
-                             char inConsiderTransparent ) {
+                             char inConsiderTransparent,
+                             char inConsiderEmptySlots ) {
     
     doublePair pos = { inXCenterOffset, inYCenterOffset };
     
@@ -3427,6 +3853,20 @@ double getClosestObjectPart( ObjectRecord *inObject,
                     rotCenter.x *= -1;
                     }
 
+                if( inObject->spriteRot[i] != 0 ) {
+                    if( inFlip ) {
+                        rotCenter = 
+                            rotate( rotCenter, 
+                                    -2 * M_PI * inObject->spriteRot[i] );
+                        }
+                    else {
+                        rotCenter = 
+                            rotate( rotCenter, 
+                                    2 * M_PI * inObject->spriteRot[i] );
+                        }
+                    }
+                
+
                 doublePair tempOffset = 
                     sub( offset, rotCenter );
                 
@@ -3554,7 +3994,7 @@ double getClosestObjectPart( ObjectRecord *inObject,
                     break;
                     }
                 }
-            else {
+            else if( inConsiderEmptySlots ) {
                 
                 double dist = distance( pos, inObject->slotPos[i] );
             
@@ -4201,6 +4641,21 @@ char bothSameUseParent( int inAObjectID, int inBObjectID ) {
 
     return false;
     }
+
+
+
+
+int hideIDForClient( int inObjectID ) {    
+    if( inObjectID > 0 ) {
+        ObjectRecord *o = getObject( inObjectID );
+        if( o->isVariableDummy && o->isVariableHidden ) {
+            // hide from client
+            inObjectID = o->variableDummyParent;
+            }
+        }
+    return inObjectID;
+    }
+
 
 
 

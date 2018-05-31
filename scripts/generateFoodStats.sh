@@ -14,7 +14,7 @@ do
   echo "Using rsync to sync all food logs from $server"
   echo ""
 
-  if [ ! -d "~/checkout/OneLife/server/foodLog_$server" ]
+  if [ ! -d ~/checkout/OneLife/server/foodLog_$server ]
   then
 	  echo "Making local directory foodLog_$server"
 	  mkdir ~/checkout/OneLife/server/foodLog_$server

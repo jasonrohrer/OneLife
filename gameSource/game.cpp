@@ -1,5 +1,5 @@
-int versionNumber = 68;
-
+int versionNumber = 100;
+int dataVersionNumber = 0;
 
 // NOTE that OneLife doesn't use account hmacs
 
@@ -313,14 +313,12 @@ static void updateDataVersionNumber() {
         char *contents = file.readFileContents();
         
         if( contents != NULL ) {
-            int v = 0;
-            
-            sscanf( contents, "%d", &v );
+            sscanf( contents, "%d", &dataVersionNumber );
         
             delete [] contents;
 
-            if( v > versionNumber ) {
-                versionNumber = v;
+            if( dataVersionNumber > versionNumber ) {
+                versionNumber = dataVersionNumber;
                 }
             }
         }
@@ -419,7 +417,11 @@ void freeDrawString() {
 void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                       const char *inCustomRecordedGameData,
                       char inPlayingBack ) {
-    
+
+    // it's always safe to call this, just in case we're launching post-update
+    postUpdate();
+        
+
     instructionsSprite = loadWhiteSprite( "instructions.tga" );
     
     
@@ -1352,7 +1354,7 @@ void drawFrame( char inUpdate ) {
                         char rebuilding;
                         
                         int numObjects = 
-                            initObjectBankStart( &rebuilding, true );
+                            initObjectBankStart( &rebuilding, true, true );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase(
@@ -1434,7 +1436,8 @@ void drawFrame( char inUpdate ) {
                         // true to auto-generate concrete transitions
                         // for all abstract category transitions
                         int numTrans = 
-                            initTransBankStart( &rebuilding, true, true, true );
+                            initTransBankStart( &rebuilding, true, true, true,
+                                                true );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase(
@@ -1674,6 +1677,33 @@ void drawFrame( char inUpdate ) {
                 
                 existingAccountPage->setStatus( "loginFailed", true );
 
+                existingAccountPage->setStatusPositiion( true );
+
+                currentGamePage->base_makeActive( true );
+                }
+            else if( livingLifePage->checkSignal( "versionMismatch" ) ) {
+                lastScreenViewCenter.x = 0;
+                lastScreenViewCenter.y = 0;
+
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
+                
+                currentGamePage = existingAccountPage;
+                
+                char *message = autoSprintf( translate( "versionMismatch" ),
+                                             versionNumber,
+                                             livingLifePage->
+                                             getRequiredVersion() );
+
+                if( SettingsManager::getIntSetting( "useCustomServer", 0 ) ) {
+                    existingAccountPage->showDisableCustomServerButton( true );
+                    }
+                
+
+                existingAccountPage->setStatusDirect( message, true );
+                
+                delete [] message;
+                
                 existingAccountPage->setStatusPositiion( true );
 
                 currentGamePage->base_makeActive( true );

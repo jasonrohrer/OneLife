@@ -1200,7 +1200,8 @@ void drawFrame( char inUpdate ) {
                         char rebuilding;
                         
                         int numObjects = 
-                            initObjectBankStart( &rebuilding, fillAbstracts );
+                            initObjectBankStart( &rebuilding, fillAbstracts,
+                                                 fillAbstracts );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase( 
@@ -1281,6 +1282,7 @@ void drawFrame( char inUpdate ) {
                         
                         int numTrans = 
                             initTransBankStart( &rebuilding,
+                                                fillAbstracts,
                                                 fillAbstracts,
                                                 fillAbstracts,
                                                 fillAbstracts );

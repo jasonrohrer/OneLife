@@ -1,0 +1,1 @@
+g++ -I../.. -g -o dbConvert dbConvert.cpp kissdb.cpp stackdb.cpp

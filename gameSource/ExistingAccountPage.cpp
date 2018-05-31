@@ -38,6 +38,8 @@ ExistingAccountPage::ExistingAccountPage()
                      "23456789ABCDEFGHJKLMNPQRSTUVWXYZ-" ),
           mAtSignButton( mainFont, 252, 128, "@" ),
           mPasteButton( mainFont, 0, -80, translate( "paste" ), 'v', 'V' ),
+          mDisableCustomServerButton( mainFont, 0, 220, 
+                                      translate( "disableCustomServer" ) ),
           mLoginButton( mainFont, 400, 0, translate( "loginButton" ) ),
           mLoginNoSaveButton( mainFont, 400, -280, 
                               translate( "loginNoSaveButton" ) ),
@@ -76,6 +78,8 @@ ExistingAccountPage::ExistingAccountPage()
     setButtonStyle( &mAtSignButton );
     setButtonStyle( &mPasteButton );
     setButtonStyle( &mRedetectButton );
+
+    setButtonStyle( &mDisableCustomServerButton );
     
     mFields[0] = &mEmailField;
     mFields[1] = &mKeyField;
@@ -91,6 +95,7 @@ ExistingAccountPage::ExistingAccountPage()
     addComponent( &mEmailField );
     addComponent( &mKeyField );
     addComponent( &mRedetectButton );
+    addComponent( &mDisableCustomServerButton );
     
     mLoginButton.addActionListener( this );
     mLoginNoSaveButton.addActionListener( this );
@@ -104,7 +109,10 @@ ExistingAccountPage::ExistingAccountPage()
 
     mRedetectButton.addActionListener( this );
     
+    mDisableCustomServerButton.addActionListener( this );
+
     mRedetectButton.setVisible( false );
+    mDisableCustomServerButton.setVisible( false );
     
     mAtSignButton.setMouseOverTip( translate( "atSignTip" ) );
 
@@ -142,6 +150,13 @@ void ExistingAccountPage::showReviewButton( char inShow ) {
 
 
 
+void ExistingAccountPage::showDisableCustomServerButton( char inShow ) {
+    mDisableCustomServerButton.setVisible( inShow );
+    }
+
+
+
+
 void ExistingAccountPage::makeActive( char inFresh ) {
 
     mFramesCounted = 0;
@@ -150,6 +165,14 @@ void ExistingAccountPage::makeActive( char inFresh ) {
     
     mLoginButton.setVisible( false );
     
+    int skipFPSMeasure = SettingsManager::getIntSetting( "skipFPSMeasure", 0 );
+    
+    if( skipFPSMeasure ) {
+        mFPSMeasureDone = true;
+        mLoginButton.setVisible( true );
+        }
+
+
     int pastSuccess = SettingsManager::getIntSetting( "loginSuccess", 0 );
 
     char *emailText = mEmailField.getText();
@@ -258,7 +281,11 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
             setSignal( "relaunchFailed" );
             }
         }
-    
+    else if( inTarget == &mDisableCustomServerButton ) {
+        SettingsManager::setSetting( "useCustomServer", 0 );
+        mDisableCustomServerButton.setVisible( false );
+        processLogin( true );
+        }
     }
 
 
