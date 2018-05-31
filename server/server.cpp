@@ -5347,7 +5347,7 @@ int main() {
                     char riding = false;
 
                     if( nextPlayer->holdingID > 0 ) {
-                        ObjectRecord *r = getObject( inPlayer->holdingID );
+                        ObjectRecord *r = getObject( nextPlayer->holdingID );
 
                         if( r->rideable ) {
                             riding = true;
