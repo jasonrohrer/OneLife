@@ -18,6 +18,9 @@ Version 102   ???
 
 --Widget for Using Sound visible for all objects in object editor.
 
+--Fixed sound sound-doubling issues (dumping water into empty pond, grabbing
+  second-to-last stone from stone pile).
+
 
 
 

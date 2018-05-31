@@ -7125,6 +7125,10 @@ static char shouldCreationSoundPlay( int inOldID, int inNewID ) {
     
     ObjectRecord *obj = getObject( inNewID );
 
+    if( obj->creationSound.numSubSounds == 0 ) {
+        return false;
+        }
+
     if( inOldID > 0 && inNewID > 0 ) {
         ObjectRecord *oldObj = getObject( inOldID );
         
@@ -9086,27 +9090,7 @@ void LivingLifePage::step() {
                                 else if( responsiblePlayerID < -1 ) {
                                     // player caused this object to change
                                     
-                                    if( newObj->creationSound.numSubSounds == 0
-                                        ||
-                                        ! shouldCreationSoundPlay( old, 
-                                                                   newID ) ) {
-                                        // no creation sound will play for new
-                                        // (if it will, it will be played
-                                        //  below)
-                                        ObjectRecord *obj = getObject( old );
-                                        
-                                        // don't play using sound unless
-                                        // if they are both use dummies
-                                        if( !bothSameUseParent( old, newID )
-                                            &&
-                                            obj->usingSound.numSubSounds 
-                                            > 0 ) {    
-                                            
-                                            playSound( 
-                                                obj->usingSound,
-                                                getVectorFromCamera( x, y ) );
-                                            }
-                                        }
+                                    // sound will be played elsewhere
                                     }
                                 }
                             
@@ -9853,6 +9837,7 @@ void LivingLifePage::step() {
                         
                         char creationSoundPlayed = false;
                         char otherSoundPlayed = false;
+                        char groundSoundPlayed = false;
                         
 
                         if( justAte && 
@@ -10256,8 +10241,24 @@ void LivingLifePage::step() {
                                                 heldTransitionSourceID;
                                             }
                                         
+                                        if( heldTransitionSourceID > 0 ) {
+                                            TransRecord *groundTrans =
+                                                getTrans( 
+                                                    oldHeld, 
+                                                    heldTransitionSourceID );
+                                            if( groundTrans != NULL &&
+                                                groundTrans->newTarget > 0 ) {
+                                                if( shouldCreationSoundPlay(
+                                                    groundTrans->target,
+                                                    groundTrans->newTarget ) ) {
+                                                    groundSoundPlayed = true;
+                                                    }
+                                                }
+                                            }
+                                        
 
-                                        if( testAncestor > 0 ) {
+                                        if( ! groundSoundPlayed &&
+                                            testAncestor > 0 ) {
                                             // new held object is result
                                             // of a transtion
                                             // (otherwise, it has been
@@ -10371,6 +10372,7 @@ void LivingLifePage::step() {
                                         
                                         if( ! otherSoundPlayed && 
                                             ! creationSoundPlayed &&
+                                            ! groundSoundPlayed &&
                                             ! clothingSoundPlayed ) {
                                             // play generic pickup sound
 
@@ -10422,6 +10424,7 @@ void LivingLifePage::step() {
                             heldTransitionSourceID > 0 &&
                             ! creationSoundPlayed &&
                             ! clothingSoundPlayed &&
+                            ! groundSoundPlayed &&
                             ! otherSoundPlayed ) {
                             
                             
