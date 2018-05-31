@@ -5343,25 +5343,38 @@ int main() {
                 ObjectRecord *curOverObj = getObject( curOverID );
                 
                 if( curOverObj->permanent && curOverObj->deadlyDistance > 0 ) {
-                    
-                    setDeathReason( nextPlayer, 
-                                    "killed",
-                                    curOverID );
-                    
-                    nextPlayer->deathSourceID = curOverID;
-                    
-                    nextPlayer->error = true;
-                    nextPlayer->errorCauseString =
-                        "Player killed by permanent object";
 
-                    // generic on-person
-                    TransRecord *r = 
-                        getPTrans( curOverID, 0 );
+                    char riding = false;
 
-                    if( r != NULL ) {
-                        setMapObject( curPos.x, curPos.y, r->newActor );
+                    if( nextPlayer->holdingID > 0 ) {
+                        ObjectRecord *r = getObject( inPlayer->holdingID );
+
+                        if( r->rideable ) {
+                            riding = true;
+                            }
                         }
-                    continue;
+
+                    if ( !riding ) {
+                   
+                        setDeathReason( nextPlayer, 
+                                        "killed",
+                                        curOverID );
+                        
+                        nextPlayer->deathSourceID = curOverID;
+                        
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Player killed by permanent object";
+
+                        // generic on-person
+                        TransRecord *r = 
+                            getPTrans( curOverID, 0 );
+
+                        if( r != NULL ) {
+                            setMapObject( curPos.x, curPos.y, r->newActor );
+                            }
+                        continue;
+                        }
                     }
                 }
             
