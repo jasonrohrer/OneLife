@@ -3,6 +3,12 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 105   ???
+
+--Fixed crash in transition bank pattern code.  Thanks Enforcerke and Jookia.
+
+
+
 
 
 Version 102   2018-May-31

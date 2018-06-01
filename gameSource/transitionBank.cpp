@@ -466,7 +466,7 @@ void initTransBankFinish() {
             int transIDs[4] = { tr->actor, tr->target, 
                                 tr->newActor, tr->newTarget };
             
-            CategoryRecord *transCats[4];
+            CategoryRecord *transCats[4] = { NULL, NULL, NULL, NULL };
             
             int patternSize = -1;
             int numPatternsInTrans = 0;
