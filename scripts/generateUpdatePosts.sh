@@ -212,8 +212,8 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 		changedTransCount=0
 		while read y;
 		do
-			objNumA=$(echo -n "$y" | sed 's/transitions\/\([0-9\-]*\)_\([0-9\-]*\)\(_L\)*\.txt/\1/' )
-			objNumB=$(echo -n "$y" | sed 's/transitions\/\([0-9\-]*\)_\([0-9\-]*\)\(_L\)*\.txt/\2/' )
+			objNumA=$(echo -n "$y" | sed 's/transitions\/\([0-9\-]*\)_\([0-9\-]*\)\(_L.*\)*\.txt/\1/' )
+			objNumB=$(echo -n "$y" | sed 's/transitions\/\([0-9\-]*\)_\([0-9\-]*\)\(_L.*\)*\.txt/\2/' )
 
 			objNameA="-";
 			objNameB="-";
@@ -246,8 +246,8 @@ if [[ $x -ge $latestPostVersion ]] || [ $x == "Start" ]; then
 		while read y;
 		do
 			
-			objNumA=$(echo -n "$y" | sed 's/transitions\/\([0-9\-]*\)_\([0-9\-]*\)\(_L\)*\.txt/\1/' )
-			objNumB=$(echo -n "$y" | sed 's/transitions\/\([0-9\-]*\)_\([0-9\-]*\)\(_L\)*\.txt/\2/' )
+			objNumA=$(echo -n "$y" | sed 's/transitions\/\([0-9\-]*\)_\([0-9\-]*\)\(_L.*\)*\.txt/\1/' )
+			objNumB=$(echo -n "$y" | sed 's/transitions\/\([0-9\-]*\)_\([0-9\-]*\)\(_L.*\)*\.txt/\2/' )
 
 			objNameA="-";
 			objNameB="-";
