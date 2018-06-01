@@ -11,6 +11,8 @@ Version 105   ???
   move-done message in the middle of waiting for a move-and-do cycle to
   complete.  Thanks Sarah V.
 
+--Fixed bouncing-forever bug caused by path truncation.  Thanks Malo T.
+
 
 
 

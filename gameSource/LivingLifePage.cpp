@@ -1284,6 +1284,7 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
                                   &closestFound );
             inObject->xd = inObject->waypointX;
             inObject->yd = inObject->waypointY;
+            inObject->destTruncated = false;
             }
         }
     else {
@@ -7900,6 +7901,7 @@ void LivingLifePage::step() {
         
         ourObject->xd = goodX;
         ourObject->yd = goodY;
+        ourObject->destTruncated = false;
         }
     
     
@@ -9629,6 +9631,25 @@ void LivingLifePage::step() {
                         }
                     
                     if( existing != NULL &&
+                        existing->destTruncated &&
+                        ( existing->xd != o.xd ||
+                          existing->yd != o.yd ) ) {
+                        // edge case:
+                        // our move was truncated due to an obstacle
+                        // but then after that we tried to move to what
+                        // the server saw as our current location
+                        // the server will send a PU for that last move
+                        // to end it immediately, but our xd,yd will still
+                        // be set from the truncated move
+                        // treat this PU as a force
+                        printf( "Artificially forcing PU position %d,%d "
+                                "because it mismatches our last truncated "
+                                "move destination %d,%d\n",
+                                o.xd, o.yd, existing->xd, existing->yd );
+                        forced = true;
+                        }
+                    
+                    if( existing != NULL &&
                         existing->id != ourID &&
                         existing->currentSpeed != 0 &&
                         ! forced ) {
@@ -9723,6 +9744,7 @@ void LivingLifePage::step() {
                             
                             existing->xd = o.xd;
                             existing->yd = o.yd;
+                            existing->destTruncated = false;
                             }
                         existing->outOfRange = false;
 
@@ -10539,7 +10561,8 @@ void LivingLifePage::step() {
                             
                             existing->xd = o.xd;
                             existing->yd = o.yd;
-                            
+                            existing->destTruncated = false;
+
                             if( existing->lastHeldByRawPosSet ) {    
                                 existing->heldByDropOffset =
                                     sub( existing->lastHeldByRawPos,
@@ -10613,7 +10636,7 @@ void LivingLifePage::step() {
 
                             existing->xd = o.xd;
                             existing->yd = o.yd;
-
+                            existing->destTruncated = false;
                             }
                         
                         if( existing->id == ourID ) {
@@ -11261,6 +11284,8 @@ void LivingLifePage::step() {
                                 existing->xd = o.xd;
                                 existing->yd = o.yd;
                                 
+                                existing->destTruncated = truncated;
+
                                 if( existing->id != ourID ) {
                                     // look at how far we think object is
                                     // from current fractional position
@@ -14943,7 +14968,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         ourLiveObject->xd = moveDestX;
         ourLiveObject->yd = moveDestY;
-        
+        ourLiveObject->destTruncated = false;
+
         ourLiveObject->inMotion = true;
 
 
@@ -14968,6 +14994,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             // adjust move to closest possible
             ourLiveObject->xd = ourLiveObject->closestDestIfPathFailedX;
             ourLiveObject->yd = ourLiveObject->closestDestIfPathFailedY;
+            ourLiveObject->destTruncated = false;
             
             if( ourLiveObject->xd == oldXD && ourLiveObject->yd == oldYD ) {
                 // completely blocked in, no path at all toward dest

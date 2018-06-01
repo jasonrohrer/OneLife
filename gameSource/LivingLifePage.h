@@ -178,6 +178,9 @@ typedef struct LiveObject {
         int xd;
         int yd;
         
+        // true if xd,yd set based on a truncated PM from the server
+        char destTruncated;
+        
         
         // use a waypoint along the way during pathfinding.
         // path must pass through this point on its way to xd,yd
