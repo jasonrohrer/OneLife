@@ -5,7 +5,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 102   ???
+Version 102   2018-May-31
 
 --Fixed scene editor to display behind floor hugging objects correctly.
 
