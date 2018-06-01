@@ -7,6 +7,10 @@ Version 105   ???
 
 --Fixed crash in transition bank pattern code.  Thanks Enforcerke and Jookia.
 
+--Fixed spurious client BUG reports by resetting timer when we receive a
+  move-done message in the middle of waiting for a move-and-do cycle to
+  complete.  Thanks Sarah V.
+
 
 
 
