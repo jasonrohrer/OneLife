@@ -570,17 +570,19 @@ void initTransBankFinish() {
                 
                 int oID = o->id;
 
-                TransRecord *genericTrans = getTrans( oID, -1, false );
                 
-                if( genericTrans == NULL ) {
-                    // try last use instead
-                    genericTrans = getTrans( oID, -1, true );
-                    }
+                TransRecord *genericTrans[2];
+
+                // use and last use
+                genericTrans[0] = getTrans( oID, -1, false );
+                genericTrans[1] = getTrans( oID, -1, true );
                 
                 
-                if( genericTrans != NULL && genericTrans->newTarget == 0 ) {
+                for( int g=0; g<2; g++ )
+                if( genericTrans[g] != NULL && 
+                    genericTrans[g]->newTarget == 0 ) {
                     
-                    char lastUseActor = genericTrans->lastUseActor;
+                    char lastUseActor = genericTrans[g]->lastUseActor;
                     
                     numGenerics ++;
                     
@@ -603,7 +605,7 @@ void initTransBankFinish() {
                                 
                                 newTrans.lastUseActor = true;
 
-                                newTrans.newActor = genericTrans->newActor;
+                                newTrans.newActor = genericTrans[g]->newActor;
                                 
                                 transToAdd.push_back( newTrans );
 
@@ -611,7 +613,7 @@ void initTransBankFinish() {
                                 }
                             else {
                                 // replace in-place with generic use result
-                                tr->newActor = genericTrans->newActor;
+                                tr->newActor = genericTrans[g]->newActor;
                                 
                                 numChanged ++;
                                 }
@@ -633,7 +635,7 @@ void initTransBankFinish() {
                                 
                                 newTrans.lastUseTarget = true;
 
-                                newTrans.newTarget = genericTrans->newActor;
+                                newTrans.newTarget = genericTrans[g]->newActor;
                                 
                                 transToAdd.push_back( newTrans );
 
@@ -641,7 +643,7 @@ void initTransBankFinish() {
                                 }
                             else {
                                 // replace in-place with generic use result
-                                tr->newTarget = genericTrans->newActor;
+                                tr->newTarget = genericTrans[g]->newActor;
                                 
                                 numChanged ++;
                                 }

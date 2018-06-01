@@ -23,6 +23,9 @@ Version 102   ???
 
 --Fixed so that comment (after # text) is hidden from eaten food description.
 
+--Fixed code for generic transition filling to handle case where an object has
+  both regular and last use generic transition defined.
+
 
 
 
