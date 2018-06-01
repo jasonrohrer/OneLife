@@ -14,7 +14,7 @@ Version 102   2018-May-31
   moves after the jump-out-of-arms, and a bouncing-forever bug as a result.
   Thanks Gabriel G.
 
---Fixed overlap of food bar with gui in object editor.
+--Fixed overlap of foot bar with gui in object editor.
 
 --Widget for Using Sound visible for all objects in object editor.
 
