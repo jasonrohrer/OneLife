@@ -237,6 +237,7 @@ typedef struct LiveObject {
 
         char pendingAction;
         float pendingActionAnimationProgress;
+        float pendingActionAnimationTotalProgress;
         double pendingActionAnimationStartTime;
         
         
