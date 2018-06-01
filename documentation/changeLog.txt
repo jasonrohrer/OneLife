@@ -18,7 +18,7 @@ Version 102   2018-May-31
 
 --Widget for Using Sound visible for all objects in object editor.
 
---Fixed sound sound-doubling issues (dumping water into empty pond, grabbing
+--Fixed sound-doubling issues (dumping water into empty pond, grabbing
   second-to-last stone from stone pile).
 
 --Fixed so that comment (after # text) is hidden from eaten food description.
