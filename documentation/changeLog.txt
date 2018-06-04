@@ -13,6 +13,12 @@ Server Fixes:
   to full state, when before it had 1/1 chance, allowing for an infinite water
   exploit).  Thanks Eve, YAHG, and Rebel.
 
+--Support for NOT dying when riding over a deadly object (like a rattlesnake)
+  on a vehicle (like a horse), but support for transitions to the ridden object
+  (dead horse or tipped horse cart).
+
+--Fixed so that creation sound not played for items dropped on the ground when
+  held container shrinks.
 
 
 

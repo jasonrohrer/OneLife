@@ -1430,10 +1430,6 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
     */
 
 
-    // never move at 0 speed, divide by 0 errors for eta times
-    if( speed < 0.1 ) {
-        speed = 0.1;
-        }
 
     // apply character's speed mult
     speed *= getObject( inPlayer->displayID )->speedMult;
@@ -1467,6 +1463,12 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
                 }
             }
         }
+
+    // never move at 0 speed, divide by 0 errors for eta times
+    if( speed < 0.01 ) {
+        speed = 0.01;
+        }
+
     
     // after all multipliers, make sure it's a whole number of pixels per frame
 
@@ -2313,6 +2315,7 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
 // drops an object held by a player at target x,y location
 // doesn't check for adjacency (so works for thrown drops too)
 // if target spot blocked, will search for empty spot to throw object into
+// if inPlayerIndicesToSendUpdatesAbout is NULL, it is ignored
 void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                  SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
     
@@ -2409,8 +2412,11 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                             computeFoodDecrementTimeSeconds( babyO );
                         }
                     
-                    inPlayerIndicesToSendUpdatesAbout->push_back( 
-                        getLiveObjectIndex( babyID ) );
+                    if( inPlayerIndicesToSendUpdatesAbout != NULL ) {    
+                        inPlayerIndicesToSendUpdatesAbout->push_back( 
+                            getLiveObjectIndex( babyID ) );
+                        }
+                    
                     }
                 
                 }
@@ -2461,8 +2467,10 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                     computeFoodDecrementTimeSeconds( babyO );
                 }
 
-            inPlayerIndicesToSendUpdatesAbout->push_back( 
-                getLiveObjectIndex( babyID ) );
+            if( inPlayerIndicesToSendUpdatesAbout != NULL ) {
+                inPlayerIndicesToSendUpdatesAbout->push_back( 
+                    getLiveObjectIndex( babyID ) );
+                }
             }
         
         inDroppingPlayer->holdingID = 0;
@@ -2498,8 +2506,11 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             
     ObjectRecord *droppedObject = getObject( oldHoldingID );
    
-    handleMapChangeToPaths( targetX, targetY, droppedObject,
-                            inPlayerIndicesToSendUpdatesAbout );
+    if( inPlayerIndicesToSendUpdatesAbout != NULL ) {    
+        handleMapChangeToPaths( targetX, targetY, droppedObject,
+                                inPlayerIndicesToSendUpdatesAbout );
+        }
+    
     
     }
 
@@ -4001,9 +4012,75 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
         nextPlayer->holdingID );
     
     if( newHeldSlots < oldContained ) {
+        // new container can hold less
         // truncate
-        nextPlayer->numContained
-            = newHeldSlots;
+                            
+        GridPos dropPos = 
+            computePartialMoveSpot( inPlayer );
+                            
+        // offset to counter-act offsets built into
+        // drop code
+        dropPos.x += 1;
+        dropPos.y += 1;
+        
+        char found = false;
+        GridPos spot;
+        
+        if( getMapObject( dropPos.x, dropPos.y ) == 0 ) {
+            spot = dropPos;
+            found = true;
+            }
+        else {
+            found = findDropSpot( 
+                dropPos.x, dropPos.y,
+                dropPos.x, dropPos.y,
+                &spot );
+            }
+        
+        
+        if( found ) {
+            
+            // throw it on map temporarily
+            handleDrop( 
+                spot.x, spot.y, 
+                inPlayer,
+                // only temporary, don't worry about blocking players
+                // with this drop
+                NULL );
+                                
+
+            // responsible player for stuff thrown on map by shrink
+            setResponsiblePlayer( inPlayer->id );
+
+            // shrink contianer on map
+            shrinkContainer( spot.x, spot.y, 
+                             newHeldSlots );
+            
+            setResponsiblePlayer( -1 );
+            
+
+            // pick it back up
+            nextPlayer->holdingEtaDecay = 
+                getEtaDecay( spot.x, spot.y );
+                                    
+            FullMapContained f =
+                getFullMapContained( spot.x, spot.y );
+
+            setContained( inPlayer, f );
+            
+            nextPlayer->holdingID = inNewHeldID;
+
+            clearAllContained( spot.x, spot.y );
+            setMapObject( spot.x, spot.y, 0 );
+            }
+        else {
+            // no spot to throw it
+            // cannot leverage map's container-shrinking
+            // just truncate held container directly
+            
+            // truncated contained items will be lost
+            inPlayer->numContained = newHeldSlots;
+            }
         }
     
     if( newHeldSlots > 0 && 
@@ -5342,7 +5419,15 @@ int main() {
                 
                 ObjectRecord *curOverObj = getObject( curOverID );
                 
-                if( curOverObj->permanent && curOverObj->deadlyDistance > 0 ) {
+                char riding = false;
+                
+                if( nextPlayer->holdingID > 0 && 
+                    getObject( nextPlayer->holdingID )->rideable ) {
+                    riding = true;
+                    }
+
+                if( !riding &&
+                    curOverObj->permanent && curOverObj->deadlyDistance > 0 ) {
                     
                     setDeathReason( nextPlayer, 
                                     "killed",
@@ -5363,6 +5448,22 @@ int main() {
                         }
                     continue;
                     }
+                else if( riding && 
+                         curOverObj->permanent && 
+                         curOverObj->deadlyDistance > 0 ) {
+                    // rode over something deadly
+                    // see if it affects what we're riding
+
+                    TransRecord *r = 
+                        getPTrans( nextPlayer->holdingID, curOverID );
+                    
+                    if( r != NULL ) {
+                        handleHoldingChange( nextPlayer,
+                                             r->newActor );
+                        nextPlayer->heldTransitionSourceID = curOverID;
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        }
+                    }                
                 }
             
             
@@ -5525,6 +5626,23 @@ int main() {
                         
                         // drop them and ignore rest of their move
                         // request, until they click again
+                        }
+                    else if( m.type == MOVE && nextPlayer->holdingID > 0 &&
+                             getObject( nextPlayer->holdingID )->
+                             speedMult == 0 ) {
+                        // next player holding something that prevents
+                        // movement entirely
+                        printf( "  Processing move, "
+                                "but player holding a speed-0 object, "
+                                "ending now\n" );
+                        nextPlayer->xd = nextPlayer->xs;
+                        nextPlayer->yd = nextPlayer->ys;
+                        
+                        nextPlayer->posForced = true;
+                        
+                        // send update about them to end the move
+                        // right now
+                        playerIndicesToSendUpdatesAbout.push_back( i );
                         }
                     else if( m.type == MOVE ) {
                         //Thread::staticSleep( 1000 );
@@ -8285,84 +8403,10 @@ int main() {
                     if( t != NULL ) {
 
                         int newID = t->newTarget;
-                    
-                        int oldSlots = nextPlayer->numContained;
                         
-                        int newSlots = getNumContainerSlots( newID );
-                    
-                        if( newSlots < oldSlots ) {
-                            // new container can hold less
-                            // truncate
-                            
-                            GridPos dropPos = 
-                                computePartialMoveSpot( nextPlayer );
-                            
-                            // offset to counter-act offsets built into
-                            // drop code
-                            dropPos.x += 1;
-                            dropPos.y += 1;
-
-                            char found = false;
-                            GridPos spot;
-                            
-                            if( getMapObject( dropPos.x, dropPos.y ) == 0 ) {
-                                spot = dropPos;
-                                found = true;
-                                }
-                            else {
-                                found = findDropSpot( 
-                                    dropPos.x, dropPos.y,
-                                    dropPos.x, dropPos.y,
-                                    &spot );
-                                }
-                            
-                            
-                            if( found ) {
-                                
-                                // throw it on map temporarily
-                                handleDrop( 
-                                    spot.x, spot.y, 
-                                    nextPlayer,
-                                    &playerIndicesToSendUpdatesAbout );
-                                
-                                
-                                // shrink contianer on map
-                                shrinkContainer( spot.x, spot.y, 
-                                                 newSlots );
-
-                                // pick it back up
-                                nextPlayer->holdingEtaDecay = 
-                                    getEtaDecay( spot.x, spot.y );
-                                    
-                                FullMapContained f =
-                                    getFullMapContained( spot.x, spot.y );
-
-                                setContained( nextPlayer, f );
-                                
-                                clearAllContained( spot.x, spot.y );
-                                setMapObject( spot.x, spot.y, 0 );
-                                }
-                            else {
-                                // no spot to throw it
-                                // cannot leverage map's container-shrinking
-                                // just truncate held container directly
-                                
-                                // truncated contained items will be lost
-                                nextPlayer->numContained = newSlots;
-                                }
-                            }
+                        handleHoldingChange( nextPlayer, newID );
                         
-                        nextPlayer->holdingID = newID;
                         nextPlayer->heldTransitionSourceID = -1;
-                    
-                        setFreshEtaDecayForHeld( nextPlayer );
-                    
-                        if( nextPlayer->numContained > 0 ) {    
-                            restretchDecays( nextPlayer->numContained,
-                                             nextPlayer->containedEtaDecays,
-                                             oldID, newID );
-                            }
-                    
                         
                         ObjectRecord *newObj = getObject( newID );
                         ObjectRecord *oldObj = getObject( oldID );
