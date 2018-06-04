@@ -869,7 +869,16 @@ void initTransBankFinish() {
                             }
                         else if( uTo >= target->numUses - 1 ) {
                             tp.toID = newTarget->id;
-                            tp.noChangeID = newTarget->id;
+                            if( dir == 1 && tp.fromID != -1 ) {
+                                // transition back to parent object
+                                // if we have a use chance, it should
+                                // apply here too, leaving us at last use dummy
+                                // object if use chance doesn't happen.
+                                tp.noChangeID = tp.fromID;
+                                }
+                            else {
+                                tp.noChangeID = newTarget->id;
+                                }
                             }
                         
                         if( tp.fromID != -1 && tp.toID != -1 ) {
