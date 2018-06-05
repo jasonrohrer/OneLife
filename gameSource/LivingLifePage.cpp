@@ -7163,9 +7163,7 @@ static char shouldCreationSoundPlay( int inOldID, int inNewID ) {
           ||
           inOldID <= 0
           ||
-          ( ! isSpriteSubset( inOldID, inNewID ) 
-            &&
-            ! isAncestor( inOldID, inNewID, 1 ) ) ) ) {
+          ( ! isSpriteSubset( inOldID, inNewID ) ) ) ) {
         return true;
         }
 
@@ -10346,12 +10344,7 @@ void LivingLifePage::step() {
                                                  ||
                                                  ( ! isSpriteSubset( 
                                                      testAncestor, 
-                                                     existing->holdingID )
-                                                   &&
-                                                   ! isAncestor(
-                                                       testAncestor,
-                                                       existing->holdingID,
-                                                       1 ) )
+                                                     existing->holdingID ) )
                                                  ) ) {
 
                                                 playSound( 

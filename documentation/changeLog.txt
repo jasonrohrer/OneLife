@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 107    ???
+
+--No longer using ancestor test to determine if creation sound should play for
+  objects marked with creationSoundInitialOnly.  Exclusively using sprite
+  subset test.
+
+
 
 
 Server Fixes:
