@@ -27,6 +27,7 @@ Server Fixes:
 --Fixed so that creation sound not played for items dropped on the ground when
   held container shrinks.
 
+--Fixed heldTransitionSourceID after use-on-ground transitions.
 
 
 
