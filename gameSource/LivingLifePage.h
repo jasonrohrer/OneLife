@@ -243,6 +243,11 @@ typedef struct LiveObject {
         float pendingActionAnimationTotalProgress;
         double pendingActionAnimationStartTime;
         
+        double lastActionSendStartTime;
+        // how long it took server to get back to us with a PU last
+        // time we sent an action.  Most recent round-trip time
+        double lastResponseTimeDelta;
+        
         
         // NULL if no active speech
         char *currentSpeech;

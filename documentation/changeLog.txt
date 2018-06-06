@@ -10,6 +10,18 @@ Version 107    ???
   objects marked with creationSoundInitialOnly.  Exclusively using sprite
   subset test.
 
+--Was waiting 166ms for bouncing animation to start a bit before sending our
+  action message.  This prevents weird insta-response on fast connections
+  (where we get the grabbed item in our hand even before really moving toward
+  it).  However, on slow connections, this 166ms adds to perceived latency,
+  because we still need to wait for the message round trip after that.  Now we
+  measure most recent round trip time and use it to decrease this bouncing
+  start time before sending our action message.  If round trip is slow enough
+  (>166ms), we don't need to wait at all before sending our action message to
+  the server.  If round trip time is 80 ms, for example, we'd only wait/bounce
+  for 86ms before sending our message.
+
+
 
 
 
