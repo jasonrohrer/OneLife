@@ -1084,13 +1084,6 @@ int bakeSprite( const char *inTag,
                 chan[c] = image->getChannel( c );
                 }
                 
-            int xSign = 1;
-            
-            
-            if( inSpriteHFlips[i] ) {
-                xSign = -1;
-                }
-                
             // number of clockwise 90 degree rotations
             int numRotSteps = 0;
             
