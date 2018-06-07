@@ -21,6 +21,8 @@ Version 107    ???
   the server.  If round trip time is 80 ms, for example, we'd only wait/bounce
   for 86ms before sending our message.
 
+--Added support for rotated sprites when baking in object editor.
+
 
 
 

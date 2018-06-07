@@ -113,11 +113,14 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
 // bakes multiple sprite layers into a single sprite and saves it in the bank
 // returns the new ID
 // does NOT work for multiplicative blending sprites
+// does NOT work for sprite rotations that aren't in increments of 90 degrees
+// (0.25, 0.5, 0.75, 1.0 radians)
 int bakeSprite( const char *inTag,
                 int inNumSprites,
                 int *inSpriteIDs,
                 // offset of each sprite center relative to center point
                 doublePair *inSpritePos,
+                double *inSpriteRot,
                 char *inSpriteHFlips );
 
 
