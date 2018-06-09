@@ -9,6 +9,9 @@ Server Fixes:
   that may be interpreted as new category objects after restart.  Category
   objects removed from map during map cleaning process.
 
+--Added cron job for game servers that clears bug log files older than four
+  days to conserve disk space.
+
 
 
 Version 107    2018-June-8
