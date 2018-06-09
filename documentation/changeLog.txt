@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes:
+
+--Added work-around for non-clean shutdown that can leave dummy objects in map
+  that may be interpreted as new category objects after restart.  Category
+  objects removed from map during map cleaning process.
+
+
 
 Version 107    2018-June-8
 
