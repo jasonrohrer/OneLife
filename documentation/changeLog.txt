@@ -3,6 +3,15 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 110    ???
+
+--Transition editor now includes category transitions in list of 'uses'
+  transitions at the bottom of the screen (for example, looking at a leaf shows
+  transitions that use a leaf and transitions for the small trash category).
+
+ 
+
+
 Server Fixes:
 
 --Added work-around for non-clean shutdown that can leave dummy objects in map

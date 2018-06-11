@@ -1899,8 +1899,96 @@ TransRecord **searchUses( int inUsesID,
                           int inNumToGet, 
                           int *outNumResults, int *outNumRemaining ) {
     
-    return search( usesMap, inUsesID, inNumToSkip, inNumToGet,
-                   outNumResults, outNumRemaining );
+    if( inUsesID >= mapSize ) {
+        return NULL;
+        }
+
+    int numRecords = usesMap[inUsesID].size();
+
+    ReverseCategoryRecord *catRec = getReverseCategory( inUsesID );
+
+    int extraRecords = 0;
+
+    if( catRec != NULL ) {
+        for( int i=0; i< catRec->categoryIDSet.size(); i++ ) {
+            int catID = catRec->categoryIDSet.getElementDirect( i );
+            if( catID < mapSize ) {
+                extraRecords += usesMap[ catID ].size();
+                }
+            }
+        }
+    
+    
+    TransRecord **initialResult = 
+        search( usesMap, inUsesID, inNumToSkip, inNumToGet,
+                outNumResults, outNumRemaining );
+    if( inNumToGet == *outNumResults || extraRecords == 0 ) {
+        *outNumRemaining += extraRecords;
+        return initialResult;
+        }
+    else if( extraRecords > 0 ) {
+        // ran out of main results, need to go into category results
+
+        
+        SimpleVector<TransRecord *> results;
+        for( int r=0; r<*outNumResults; r++ ) {
+            results.push_back( initialResult[r] );
+            }
+        
+        if( initialResult != NULL ) {
+            delete [] initialResult;
+            }
+        
+        inNumToSkip -= numRecords;
+        if( inNumToSkip < 0 ) {
+            inNumToSkip = 0;
+            }
+        
+        int numRemaining = extraRecords - inNumToSkip;
+        int i = 0;
+        
+        while( i < catRec->categoryIDSet.size() &&
+               *outNumResults < inNumToGet ) {
+            int numLeftToGet = inNumToGet - *outNumResults;
+
+            int catID = catRec->categoryIDSet.getElementDirect( i );
+            int catTransSize = 0;
+            if( catID < mapSize ) {
+                catTransSize = usesMap[ catID ].size();
+                }
+            
+            int catNumResults = 0;
+            int catNumRemaining = 0;
+            
+            TransRecord **catResult = 
+                search( usesMap, catID, 
+                        inNumToSkip, numLeftToGet,
+                        &catNumResults, &catNumRemaining );
+            if( catResult != NULL ) {
+                for( int r=0; r<catNumResults; r++ ) {
+                    results.push_back( catResult[r] );
+                    }
+                delete [] catResult;
+                *outNumResults += catNumResults;
+
+                numRemaining -= catNumResults;                
+                }
+            
+            inNumToSkip -= catTransSize;
+            if( inNumToSkip < 0 ) {
+                inNumToSkip = 0;
+                }
+            
+            i++;
+            }
+        *outNumResults = results.size();
+        *outNumRemaining = numRemaining;
+        return results.getElementArray();
+        }
+    else {
+        return NULL;
+        }
+
     }
 
 
