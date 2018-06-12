@@ -9,6 +9,11 @@ Version 110    ???
   transitions at the bottom of the screen (for example, looking at a leaf shows
   transitions that use a leaf and transitions for the small trash category).
 
+--Fixed animation glitches when a moving object transitions from ground to
+  moving.  Was preserving frozenRotFrameCount, and setting ground frame count
+  back to 0 each time, even when we didn't need to be (when moving object had
+  no rotating parts).  (Example:  blood squirting from goose neck.)
+
  
 
 
