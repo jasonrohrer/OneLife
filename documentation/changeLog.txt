@@ -26,6 +26,9 @@ Server Fixes:
 --Added cron job for game servers that clears bug log files older than four
   days to conserve disk space.
 
+--Death stagger time up to 40 seconds instead of 20.
+
+
 
 
 Version 107    2018-June-8
