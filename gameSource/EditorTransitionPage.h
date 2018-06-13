@@ -95,6 +95,8 @@ class EditorTransitionPage : public GamePage, public ActionListener {
 
         int mProducedBySkip;
         TransRecord mProducedBy[NUM_TREE_TRANS_TO_SHOW];
+        // 0 for normal, 1 for category-based, 2 for pattern-based
+        int mProducedByType[NUM_TREE_TRANS_TO_SHOW];
         Button *mProducedByButtons[NUM_TREE_TRANS_TO_SHOW];
         
         TextButton mProducedByNext;
@@ -103,6 +105,8 @@ class EditorTransitionPage : public GamePage, public ActionListener {
 
         int mProducesSkip;
         TransRecord mProduces[NUM_TREE_TRANS_TO_SHOW];
+        // 0 for normal, 1 for category-based, 2 for pattern-based
+        int mProducesType[NUM_TREE_TRANS_TO_SHOW];
         Button *mProducesButtons[NUM_TREE_TRANS_TO_SHOW];
         
         TextButton mProducesNext;

@@ -1893,19 +1893,21 @@ static TransRecord **search( SimpleVector<TransRecord *> inMapToSearch[],
 
 
 
+static TransRecord **searchWithCategories( 
+    SimpleVector<TransRecord *> inMapToSearch[],
+    int inID, 
+    int inNumToSkip, 
+    int inNumToGet, 
+    int *outNumResults, int *outNumRemaining ) {
 
-TransRecord **searchUses( int inUsesID, 
-                          int inNumToSkip, 
-                          int inNumToGet, 
-                          int *outNumResults, int *outNumRemaining ) {
-    
-    if( inUsesID >= mapSize ) {
+
+    if( inID >= mapSize ) {
         return NULL;
         }
 
-    int numRecords = usesMap[inUsesID].size();
+    int numRecords = inMapToSearch[inID].size();
 
-    ReverseCategoryRecord *catRec = getReverseCategory( inUsesID );
+    ReverseCategoryRecord *catRec = getReverseCategory( inID );
 
     int extraRecords = 0;
 
@@ -1913,14 +1915,14 @@ TransRecord **searchUses( int inUsesID,
         for( int i=0; i< catRec->categoryIDSet.size(); i++ ) {
             int catID = catRec->categoryIDSet.getElementDirect( i );
             if( catID < mapSize ) {
-                extraRecords += usesMap[ catID ].size();
+                extraRecords += inMapToSearch[ catID ].size();
                 }
             }
         }
     
     
     TransRecord **initialResult = 
-        search( usesMap, inUsesID, inNumToSkip, inNumToGet,
+        search( inMapToSearch, inID, inNumToSkip, inNumToGet,
                 outNumResults, outNumRemaining );
     if( inNumToGet == *outNumResults || extraRecords == 0 ) {
         *outNumRemaining += extraRecords;
@@ -1954,14 +1956,15 @@ TransRecord **searchUses( int inUsesID,
             int catID = catRec->categoryIDSet.getElementDirect( i );
             int catTransSize = 0;
             if( catID < mapSize ) {
-                catTransSize = usesMap[ catID ].size();
+                
+                catTransSize = inMapToSearch[ catID ].size();
                 }
             
             int catNumResults = 0;
             int catNumRemaining = 0;
             
             TransRecord **catResult = 
-                search( usesMap, catID, 
+                search( inMapToSearch, catID, 
                         inNumToSkip, numLeftToGet,
                         &catNumResults, &catNumRemaining );
             if( catResult != NULL ) {
@@ -1989,6 +1992,26 @@ TransRecord **searchUses( int inUsesID,
         return NULL;
         }
 
+
+
+
+    }
+
+
+
+TransRecord **searchUses( int inUsesID, 
+                          int inNumToSkip, 
+                          int inNumToGet, 
+                          int *outNumResults, int *outNumRemaining ) {
+
+    if( autoGenerateCategoryTransitions ) {
+        return search( usesMap, inUsesID, inNumToSkip, inNumToGet,
+                       outNumResults, outNumRemaining );
+        }
+    else {
+        return searchWithCategories( usesMap, inUsesID, inNumToSkip, inNumToGet,
+                                     outNumResults, outNumRemaining );
+        }
     }
 
 
@@ -1998,8 +2021,15 @@ TransRecord **searchProduces( int inProducesID,
                               int inNumToGet, 
                               int *outNumResults, int *outNumRemaining ) {
     
-    return search( producesMap, inProducesID, inNumToSkip, inNumToGet,
-                   outNumResults, outNumRemaining );
+    if( autoGenerateCategoryTransitions ) {        
+        return search( producesMap, inProducesID, inNumToSkip, inNumToGet,
+                       outNumResults, outNumRemaining );
+        }
+    else {
+        return searchWithCategories(
+            producesMap, inProducesID, inNumToSkip, inNumToGet,
+            outNumResults, outNumRemaining );
+        }
     }
 
 

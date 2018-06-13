@@ -18,6 +18,9 @@ Version 110    ???
   marked initial only.  This sound will play during reverse use (example:
   adding a burrito to an empty plate).
 
+--Transition editor shows color-coded transitions from categories and patterns
+  in both produced by and produces list.
+
  
 
 
