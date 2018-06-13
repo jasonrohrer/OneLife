@@ -38,6 +38,9 @@ Server Fixes:
 --Food decrement no longer happens during death stagger.  You won't starve to
   death after being mortally wounded.
 
+--Fixed server crash when held tattered backpack decays to nothing.
+
+
 
 
 

@@ -3972,19 +3972,17 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
     
     int oldContained = 
         nextPlayer->numContained;
-
-    nextPlayer->holdingID = inNewHeldID;
     
-    if( oldHolding != nextPlayer->holdingID ) {
+    if( oldHolding != inNewHeldID ) {
         
         char kept = false;
 
         // keep old decay timeer going...
         // if they both decay to the same thing in the same time
-        if( oldHolding > 0 && nextPlayer->holdingID > 0 ) {
+        if( oldHolding > 0 && inNewHeldID > 0 ) {
             
             TransRecord *oldDecayT = getTrans( -1, oldHolding );
-            TransRecord *newDecayT = getTrans( -1, inPlayer->holdingID );
+            TransRecord *newDecayT = getTrans( -1, inNewHeldID );
             
             if( oldDecayT != NULL && newDecayT != NULL ) {
                 if( oldDecayT->autoDecaySeconds == newDecayT->autoDecaySeconds
@@ -4008,8 +4006,7 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
     // less than what it could contain
     // before?
     
-    int newHeldSlots = getNumContainerSlots( 
-        nextPlayer->holdingID );
+    int newHeldSlots = getNumContainerSlots( inNewHeldID );
     
     if( newHeldSlots < oldContained ) {
         // new container can hold less
@@ -4068,8 +4065,6 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
 
             setContained( inPlayer, f );
             
-            nextPlayer->holdingID = inNewHeldID;
-
             clearAllContained( spot.x, spot.y );
             setMapObject( spot.x, spot.y, 0 );
             }
@@ -4082,6 +4077,8 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
             inPlayer->numContained = newHeldSlots;
             }
         }
+
+    nextPlayer->holdingID = inNewHeldID;
     
     if( newHeldSlots > 0 && 
         oldHolding != 0 ) {
