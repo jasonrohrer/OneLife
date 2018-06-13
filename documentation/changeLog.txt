@@ -28,6 +28,9 @@ Server Fixes:
 
 --Death stagger time up to 40 seconds instead of 20.
 
+--Food decrement no longer happens during death stagger.  You won't starve to
+  death after being mortally wounded.
+
 
 
 

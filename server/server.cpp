@@ -6249,11 +6249,22 @@ int main() {
                                             int staggerTime = 
                                                 SettingsManager::getIntSetting(
                                                     "deathStaggerTime", 20 );
-
+                                            
+                                            double currentTime = 
+                                                Time::getCurrentTime();
+                                            
                                             hitPlayer->dying = true;
                                             hitPlayer->dyingETA = 
-                                                Time::getCurrentTime() + 
-                                                staggerTime;
+                                                currentTime + staggerTime;
+
+                                            // push next food decrement
+                                            // way in the future so they
+                                            // don't starve while staggering
+                                            // around
+                                            hitPlayer->foodDecrementETASeconds
+                                                = currentTime + 2 * staggerTime;
+                                            
+
                                             playerIndicesToSendDyingAbout.
                                                 push_back( 
                                                     getLiveObjectIndex( 
