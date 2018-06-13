@@ -1130,7 +1130,15 @@ void initObjectBankFinish() {
                         dummyO->isUseDummy = true;
                         dummyO->useDummyParent = mainID;
                         
-                        if( o->creationSoundInitialOnly ) {
+                        if( o->creationSoundInitialOnly && d != 1 ) {
+                            // only keep creation sound for last dummy
+                            // which might get created from some other
+                            // object via reverse use
+                            // We will never play this when readching d1 from
+                            // d2, because they share the same parent
+                            
+                            // clear creation sounds on all other dummies
+                            // if creation is initial only
                             clearSoundUsage( &( dummyO->creationSound ) );
                             }
                         

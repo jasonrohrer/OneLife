@@ -14,6 +14,10 @@ Version 110    ???
   back to 0 each time, even when we didn't need to be (when moving object had
   no rotating parts).  (Example:  blood squirting from goose neck.)
 
+--Fixed so that d1 use dummy keeps its creation sound even if creation sound
+  marked initial only.  This sound will play during reverse use (example:
+  adding a burrito to an empty plate).
+
  
 
 
