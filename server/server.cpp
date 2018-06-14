@@ -3203,6 +3203,8 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.justAte = false;
     newObject.justAteID = 0;
     
+    newObject.yummyBonusStore = 0;
+
     newObject.clothing = getEmptyClothingSet();
 
     for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
