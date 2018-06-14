@@ -650,6 +650,11 @@ class LivingLifePage : public GamePage {
                                     char inSkipBar,
                                     char inSkipDashes );
         
+        
+        int mYumBonus;
+        SimpleVector<int> mOldYumBonus;
+        SimpleVector<float> mOldYumBonusFades;
+
 
         // the object that we're mousing over
         int mLastMouseOverID;

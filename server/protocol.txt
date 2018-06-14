@@ -201,12 +201,12 @@ Check the code in map.cpp for details.
 
 
 PU
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set responsible_id
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
 ...
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
 #
 
 List of player ids with their display object ids, facing direction, action
@@ -245,7 +245,7 @@ before continuing to move.
 Deleted players reported in update with
 X X 
 for x y
-and a reason string a the tail end of the line.  Reason can be
+and a reason string at the tail end of the line.  Reason can be
 
 reason_disconnected
 reason_killed_id   (where id is the object that killed the player)
@@ -277,8 +277,10 @@ player (baby) that this player is holding.
 
 responsible_id is used to indicate updates that were caused by another
 player (so that client can defer these until responsible player finishes
-local wal).  Current examples involve feeding and clothing a baby.
+local walk).  Current examples involve feeding and clothing a baby.
 -1 if irrelevant.
+
+held_yum is 1 if held item is yummy food, 0 otherwise
 
 
 NOTE:
@@ -391,7 +393,7 @@ with a given speed.
 
 FX
 food_store food_capacity last_ate_id last_ate_fill_max move_speed responsible_id
-#
+ yum_bonus yum_multiplier#
 
 food_store is integer amount of food left in body, capacity is the integer 
 maximum amount of food.
@@ -407,6 +409,10 @@ move_speed is floating point speed in grid square widths per second.
 
 responsible_id is id of player that fed you if you're a baby, or -1
 
+yum_bonus is an integer indicating the current stored bonus food.
+
+yum_multiplier is an integer indicating how many yum bonus points are earned
+when the next yummy food is eaten.
 
 
 

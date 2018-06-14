@@ -6286,6 +6286,29 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 mOldDesStrings.getElementDirect( i ), pos, alignCenter );
             }
 
+        doublePair yumPos = { lastScreenViewCenter.x - 480, 
+                              lastScreenViewCenter.y - 313 };
+        
+        setDrawColor( 0, 0, 0, 1 );
+        if( mYumBonus > 0 ) {    
+            char *yumString = autoSprintf( "+%d", mYumBonus );
+            
+            pencilFont->drawString( yumString, yumPos, alignLeft );
+            delete [] yumString;
+            }
+        
+        for( int i=0; i<mOldYumBonus.size(); i++ ) {
+            float fade =
+                mOldYumBonusFades.getElementDirect( i );
+            
+            setDrawColor( 0, 0, 0, fade * pencilErasedFontExtraFade );
+            char *yumString = autoSprintf( "+%d", 
+                                           mOldYumBonus.getElementDirect( i ) );
+            pencilErasedFont->drawString( yumString, yumPos, alignLeft );
+            delete [] yumString;
+            }
+
+
 
         doublePair atePos = { lastScreenViewCenter.x, 
                               lastScreenViewCenter.y - 347 };
@@ -12038,14 +12061,61 @@ void LivingLifePage::step() {
                 int foodCapacity;
                 double lastSpeed;
 
-                sscanf( message, "FX\n%d %d %d %d %lf %d", 
+                int oldYumBonus = mYumBonus;
+                mYumBonus = 0;
+                int yumMultiplier = 0;
+                
+
+                sscanf( message, "FX\n%d %d %d %d %lf %d %d %d", 
                         &( foodStore ),
                         &( foodCapacity ),
                         &( lastAteID ),
                         &( lastAteFillMax ),
                         &( lastSpeed ),
-                        &responsiblePlayerID );
+                        &responsiblePlayerID,
+                        &mYumBonus, &yumMultiplier );
+
+
                 
+                if( oldYumBonus != mYumBonus ) {
+                    // pull out of old stack, if present
+                    for( int i=0; i<mOldYumBonus.size(); i++ ) {
+                        if( mOldYumBonus.getElementDirect( i ) == mYumBonus ) {
+                            mOldYumBonus.deleteElement( i );
+                            i--;
+                            }
+                        }
+                    
+                    // fade existing
+                    for( int i=0; i<mOldYumBonus.size(); i++ ) {
+                        float fade =
+                            mOldYumBonusFades.getElementDirect( i );
+                        
+                        if( fade > 0.5 ) {
+                            fade -= 0.20;
+                            }
+                        else {
+                            fade -= 0.1;
+                            }
+                        
+                        *( mOldYumBonusFades.getElement( i ) ) = fade;
+                        if( fade <= 0 ) {
+                            mOldYumBonus.deleteElement( i );
+                            mOldYumBonusFades.deleteElement( i );
+                            i--;
+                            }
+                        }                    
+
+                    if( oldYumBonus != 0 ) {
+                        // push on top of stack
+                        mOldYumBonus.push_back( oldYumBonus );
+                        mOldYumBonusFades.push_back( 1.0f );
+                        }
+                    }
+                
+                
+                
+
                 if( responsiblePlayerID != -1 &&
                     getLiveObject( responsiblePlayerID ) != NULL &&
                     getLiveObject( responsiblePlayerID )->
@@ -13346,6 +13416,11 @@ void LivingLifePage::makeActive( char inFresh ) {
     mOldLastAteFades.deleteAll();
     mOldLastAteBarFades.deleteAll();
     
+    mYumBonus = 0;
+    mOldYumBonus.deleteAll();
+    mOldYumBonusFades.deleteAll();
+    
+
     mCurrentArrowI = 0;
     mCurrentArrowHeat = -1;
     if( mCurrentDes != NULL ) {

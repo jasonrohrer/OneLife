@@ -24,7 +24,7 @@ Paper masking process:
 10.  Make solid black layer and mask it with same mask.
 
 11.  Blur black with radius 13, set layer opacity to 86% for shadow.
-
+     (Smaller slips use blur radius 7 with opacity 66% for shadow).
 
 
 Font process:

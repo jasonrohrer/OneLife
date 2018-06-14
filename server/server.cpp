@@ -349,6 +349,14 @@ typedef struct LiveObject {
         char justAte;
         int justAteID;
         
+        // chain of non-repeating foods eaten
+        SimpleVector<int> yummyFoodChain;
+        
+        // how many bonus from yummy food is stored
+        // these are used first before food is decremented
+        int yummyBonusStore;
+        
+
         ClothingSet clothing;
         
         timeSec_t clothingEtaDecay[NUM_CLOTHING_PIECES];
@@ -2684,6 +2692,41 @@ static char *getUpdateLineFromRecord(
 
 
 
+static char isYummy( LiveObject *inPlayer, int inObjectID ) {
+    if( getObject( inObjectID )->foodValue == 0 ) {
+        return false;
+        }
+
+    for( int i=0; i<inPlayer->yummyFoodChain.size(); i++ ) {
+        if( inObjectID == inPlayer->yummyFoodChain.getElementDirect(i) ) {
+            return false;
+            }
+        }
+    return true;
+    }
+
+
+
+static void updateYum( LiveObject *inPlayer, int inFoodEatenID ) {
+    
+    int currentBonus = inPlayer->yummyFoodChain.size();
+
+    if( ! isYummy( inPlayer, inFoodEatenID ) ) {
+        // chain broken
+        inPlayer->yummyFoodChain.deleteAll();
+        currentBonus = 0;
+        }
+    
+    // add to chain
+    // might be starting a new chain
+    inPlayer->yummyFoodChain.push_back( inFoodEatenID );
+    
+
+    inPlayer->yummyBonusStore += currentBonus;
+    }
+
+
+
 
 
 static UpdateRecord getUpdateRecord( 
@@ -2774,10 +2817,17 @@ static UpdateRecord getUpdateRecord(
         deathReason = inPlayer->deathReason;
         }
     
+    int heldYum = 0;
+    
+    if( inPlayer->holdingID > 0 &&
+        isYummy( inPlayer, inPlayer->holdingID ) ) {
+        heldYum = 1;
+        }
+
 
     r.formatString = autoSprintf( 
         "%d %d %d %d %%d %%d %s %d %%d %%d %d "
-        "%.2f %s %.2f %.2f %.2f %s %d %d %d%s\n",
+        "%.2f %s %.2f %.2f %.2f %s %d %d %d %d%s\n",
         inPlayer->id,
         inPlayer->displayID,
         inPlayer->facingOverride,
@@ -2798,6 +2848,7 @@ static UpdateRecord getUpdateRecord(
         inPlayer->justAte,
         inPlayer->justAteID,
         inPlayer->responsiblePlayerID,
+        heldYum,
         deathReason );
     
     r.absoluteActionTarget = inPlayer->actionTarget;
@@ -6803,6 +6854,10 @@ int main() {
                                     
                                     // just touching this object
                                     // causes us to eat from it
+                                    
+                                    nextPlayer->justAte = true;
+                                    nextPlayer->justAteID = 
+                                        targetObj->id;
 
                                     nextPlayer->lastAteID = 
                                         targetObj->id;
@@ -6812,6 +6867,9 @@ int main() {
                                     nextPlayer->foodStore += 
                                         targetObj->foodValue;
                                     
+                                    updateYum( nextPlayer, targetObj->id );
+                                    
+
                                     logEating( targetObj->id,
                                                targetObj->foodValue,
                                                computeAge( nextPlayer ),
@@ -7239,6 +7297,25 @@ int main() {
                                         // food
                                         int nurseCost = 1;
                                         
+                                        if( nextPlayer->yummyBonusStore > 0 ) {
+                                            nextPlayer->yummyBonusStore -= 
+                                                nurseCost;
+                                            nurseCost = 0;
+                                            if( nextPlayer->yummyBonusStore < 
+                                                0 ) {
+                                                
+                                                // not enough to cover full 
+                                                // nurse cost
+
+                                                // pass remaining nurse
+                                                // cost onto main food store
+                                                nurseCost = - nextPlayer->
+                                                    yummyBonusStore;
+                                                nextPlayer->yummyBonusStore = 0;
+                                                }
+                                            }
+                                        
+
                                         nextPlayer->foodStore -= nurseCost;
                                         
                                         if( nextPlayer->foodStore < 0 ) {
@@ -7389,6 +7466,8 @@ int main() {
                                     
                                     targetPlayer->foodStore += obj->foodValue;
                                     
+                                    updateYum( targetPlayer, obj->id );
+
                                     logEating( obj->id,
                                                obj->foodValue,
                                                computeAge( targetPlayer ),
@@ -8918,7 +8997,13 @@ int main() {
                     LiveObject *decrementedPlayer = NULL;
 
                     if( !heldByFemale ) {
-                        nextPlayer->foodStore --;
+
+                        if( nextPlayer->yummyBonusStore > 0 ) {
+                            nextPlayer->yummyBonusStore--;
+                            }
+                        else {
+                            nextPlayer->foodStore--;
+                            }
                         decrementedPlayer = nextPlayer;
                         }
                     // if held by fertile female, food for baby is free for
@@ -10637,14 +10722,17 @@ int main() {
                     
                     char *foodMessage = autoSprintf( 
                         "FX\n"
-                        "%d %d %d %d %.2f %d\n"
+                        "%d %d %d %d %.2f %d "
+                        "%d %d\n"
                         "#",
                         nextPlayer->foodStore,
                         cap,
                         nextPlayer->lastAteID,
                         nextPlayer->lastAteFillMax,
                         computeMoveSpeed( nextPlayer ),
-                        nextPlayer->responsiblePlayerID );
+                        nextPlayer->responsiblePlayerID,
+                        nextPlayer->yummyBonusStore,
+                        nextPlayer->yummyFoodChain.size() );
                      
                     int messageLength = strlen( foodMessage );
                     
