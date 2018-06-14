@@ -655,6 +655,12 @@ class LivingLifePage : public GamePage {
         SimpleVector<int> mOldYumBonus;
         SimpleVector<float> mOldYumBonusFades;
 
+        SpriteHandle mYumSlipSprites[3];
+        int mYumSlipNumberToShow[3];
+        doublePair mYumSlipHideOffset[3];
+        doublePair mYumSlipPosOffset[3];
+        doublePair mYumSlipPosTargetOffset[3];
+
 
         // the object that we're mousing over
         int mLastMouseOverID;

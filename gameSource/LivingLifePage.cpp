@@ -1661,6 +1661,11 @@ LivingLifePage::LivingLifePage()
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! " ),
           mDeathReason( NULL ),
           mShowHighlights( true ) {
+
+    mYumSlipSprites[0] = loadSprite( "yumSlip1.tga", false );
+    mYumSlipSprites[1] = loadSprite( "yumSlip2.tga", false );
+    mYumSlipSprites[2] = loadSprite( "yumSlip3.tga", false );
+
     
     mCurMouseOverCell.x = -1;
     mCurMouseOverCell.y = -1;
@@ -1717,6 +1722,19 @@ LivingLifePage::LivingLifePage()
     mHomeSlipHideOffset.x = 0;
     mHomeSlipHideOffset.y = -360;
 
+
+    for( int i=0; i<3; i++ ) {    
+        mYumSlipHideOffset[i].x = -600;
+        mYumSlipHideOffset[i].y = -300;
+        }
+    
+    mYumSlipHideOffset[2].x += 40;
+
+    for( int i=0; i<3; i++ ) {    
+        mYumSlipPosOffset[i] = mYumSlipHideOffset[i];
+        mYumSlipPosTargetOffset[i] = mYumSlipHideOffset[i];
+        }
+    
 
     for( int i=0; i<3; i++ ) {    
         mHungerSlipShowOffsets[i].x = -540;
@@ -2017,6 +2035,10 @@ LivingLifePage::~LivingLifePage() {
     
     for( int i=0; i<3; i++ ) {
         freeSprite( mHungerSlipSprites[i] );
+        }
+
+    for( int i=0; i<3; i++ ) {
+        freeSprite( mYumSlipSprites[i] );
         }
 
     freeSprite( mGuiPanelSprite );
@@ -5736,6 +5758,34 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
 
 
+    for( int i=0; i<3; i++ ) {
+
+        if( ! equal( mYumSlipPosOffset[i], mYumSlipHideOffset[i] ) ) {
+            doublePair slipPos = 
+                add( mYumSlipPosOffset[i], lastScreenViewCenter );
+            setDrawColor( 1, 1, 1, 1 );
+            drawSprite( mYumSlipSprites[i], slipPos );
+            
+            doublePair messagePos = slipPos;
+
+            if( mYumSlipNumberToShow[i] != 0 ) {
+                char *s = autoSprintf( "%dx", mYumSlipNumberToShow[i] );
+
+                setDrawColor( 0, 0, 0, 1 );
+                handwritingFont->drawString( s, messagePos, alignCenter );
+                delete [] s;
+                }
+            if( i == 2 ) {
+                setDrawColor( 0, 0, 0, 1 );
+                handwritingFont->drawString( translate( "yum" ), 
+                                             messagePos, alignCenter );
+                }
+            }
+        }
+    
+        
+
+
     doublePair slipPos = add( mHomeSlipPosOffset, lastScreenViewCenter );
     
     if( ! equal( mHomeSlipPosOffset, mHomeSlipHideOffset ) ) {
@@ -7613,8 +7663,49 @@ void LivingLifePage::step() {
             }
         }
 
+
+
+    // update yum slip positions
+    for( int i=0; i<3; i++ ) {
+        
+        if( ! equal( mYumSlipPosOffset[i], mYumSlipPosTargetOffset[i] ) ) {
+            doublePair delta = 
+                sub( mYumSlipPosTargetOffset[i], mYumSlipPosOffset[i] );
+            
+            double d = 
+                distance( mYumSlipPosTargetOffset[i], mYumSlipPosOffset[i] );
+            
+            
+            if( d <= 1 ) {
+                mYumSlipPosOffset[i] = mYumSlipPosTargetOffset[i];
+                }
+            else {
+                int speed = frameRateFactor * 4;
+                
+                if( d < 8 ) {
+                    speed = lrint( frameRateFactor * d / 2 );
+                    }
+                
+                if( speed > d ) {
+                    speed = floor( d );
+                    }
+                
+                if( speed < 1 ) {
+                    speed = 1;
+                    }
+                
+                doublePair dir = normalize( delta );
+                
+                mYumSlipPosOffset[i] = 
+                    add( mYumSlipPosOffset[i],
+                         mult( dir, speed ) );
+                }        
+            }
+        }
     
 
+    
+    // update home slip positions
     if( ! equal( mHomeSlipPosOffset, mHomeSlipPosTargetOffset ) ) {
         doublePair delta = 
             sub( mHomeSlipPosTargetOffset, mHomeSlipPosOffset );
@@ -13419,6 +13510,13 @@ void LivingLifePage::makeActive( char inFresh ) {
     mYumBonus = 0;
     mOldYumBonus.deleteAll();
     mOldYumBonusFades.deleteAll();
+    
+    
+    for( int i=0; i<3; i++ ) {
+        mYumSlipPosOffset[i] = mYumSlipHideOffset[i];
+        mYumSlipPosTargetOffset[i] = mYumSlipHideOffset[i];
+        mYumSlipNumberToShow[i] = 0;
+        }
     
 
     mCurrentArrowI = 0;
