@@ -21,7 +21,22 @@ Version 110    ???
 --Transition editor shows color-coded transitions from categories and patterns
   in both produced by and produces list.
 
+--New yummy food multiplier system.  After eating two different foods, you get
+  a yum bonus of 1 food and your yum multiplier goes up to 1.  With each unique
+  food that you eat, your yum multiplier goes up by one, and this multiplier is
+  added to your yum bonus.  When you finally repeat a food, your yum multiplier
+  goes back to 0.  Yum bonus functions as extra food units above and beyond
+  your normal food bar.  By chaining many unique foods, the yum multiplier and
+  resulting yum bonuses can be very large.  Holding a food in your hand tells
+  you whether it is yummy or meh.  Sorry about the word 'yum', but there really
+  isn't any other short word for that concept except for nom, which is way too
+  internet.  And meh?  I don't think there's any other word for that.  It's
+  kinda meh, though.  And yes, Jere, you'll still get the bonus if you save
+  your buttered roll for last.
+
+
  
+
 
 
 Server Fixes:

@@ -2708,19 +2708,22 @@ static char isYummy( LiveObject *inPlayer, int inObjectID ) {
 
 
 static void updateYum( LiveObject *inPlayer, int inFoodEatenID ) {
-    
-    int currentBonus = inPlayer->yummyFoodChain.size();
 
     if( ! isYummy( inPlayer, inFoodEatenID ) ) {
         // chain broken
         inPlayer->yummyFoodChain.deleteAll();
-        currentBonus = 0;
         }
     
     // add to chain
     // might be starting a new chain
     inPlayer->yummyFoodChain.push_back( inFoodEatenID );
-    
+
+
+    int currentBonus = inPlayer->yummyFoodChain.size() - 1;
+
+    if( currentBonus < 0 ) {
+        currentBonus = 0;
+        }    
 
     inPlayer->yummyBonusStore += currentBonus;
     }
@@ -10720,6 +10723,12 @@ int main() {
                         nextPlayer->foodStore = cap;
                         }
                     
+                    int yumMult = nextPlayer->yummyFoodChain.size() - 1;
+                    
+                    if( yumMult < 0 ) {
+                        yumMult = 0;
+                        }
+
                     char *foodMessage = autoSprintf( 
                         "FX\n"
                         "%d %d %d %d %.2f %d "
@@ -10732,7 +10741,7 @@ int main() {
                         computeMoveSpeed( nextPlayer ),
                         nextPlayer->responsiblePlayerID,
                         nextPlayer->yummyBonusStore,
-                        nextPlayer->yummyFoodChain.size() );
+                        yumMult );
                      
                     int messageLength = strlen( foodMessage );
                     
