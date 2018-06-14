@@ -2693,7 +2693,14 @@ static char *getUpdateLineFromRecord(
 
 
 static char isYummy( LiveObject *inPlayer, int inObjectID ) {
-    if( getObject( inObjectID )->foodValue == 0 ) {
+    ObjectRecord *o = getObject( inObjectID );
+    
+    if( o->isUseDummy ) {
+        inObjectID = o->useDummyParent;
+        o = getObject( inObjectID );
+        }
+
+    if( o->foodValue == 0 ) {
         return false;
         }
 
@@ -2713,6 +2720,14 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID ) {
         // chain broken
         inPlayer->yummyFoodChain.deleteAll();
         }
+    
+    
+    ObjectRecord *o = getObject( inFoodEatenID );
+    
+    if( o->isUseDummy ) {
+        inFoodEatenID = o->useDummyParent;
+        }
+    
     
     // add to chain
     // might be starting a new chain
