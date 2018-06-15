@@ -4138,6 +4138,14 @@ static void getLimbIndices( ObjectRecord *inObject,
     if( inHandOrFootIndex == -1 ) {
         return;
         }
+
+    if( inHandOrFootIndex == 0 &&
+        ! ( inObject->spriteInvisibleWhenHolding[ inHandOrFootIndex ] ||
+            inObject->spriteIsFrontFoot[ inHandOrFootIndex ] ||
+            inObject->spriteIsBackFoot[ inHandOrFootIndex ] ) ) {
+        // 0 index usually returned if no hand or foot found
+        return;
+        }
     
     int nextLimbPart = inHandOrFootIndex;
     

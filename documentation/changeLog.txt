@@ -10,6 +10,7 @@ Version 112    ???
   categories now, like pink rose seeds, which are a pattern for other rose
   seeds, but also in the small trash category).
 
+--Fixed search for limbs in objects that have no hands or feet.
 
 
 
