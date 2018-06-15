@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 110    ???
+Version 110    2018-June-14
 
 --Transition editor now includes category transitions in list of 'uses'
   transitions at the bottom of the screen (for example, looking at a leaf shows
