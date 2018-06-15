@@ -16,6 +16,12 @@ Version 112    ???
 
 
 
+Server Fixes:
+
+--Keeping server database backups 7 days instead of 14.
+
+
+
 
 
 Version 110    2018-June-14
