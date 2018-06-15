@@ -14050,7 +14050,109 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
         // count it now, if we didn't hit a person that blocks it
         p->hit = true;
         }
+
+
+
+
     
+    if( p->hit && p->hitAnObject && ! p->hitOtherPerson && ! p->hitSelf ) {
+        // hit an object
+        
+        // what if someone is standing behind it?
+        
+        // look at two cells above
+        for( int y= p->closestCellY + 1; 
+             y < p->closestCellY + 3 && ! p->hitOtherPerson; y++ ) {
+            
+            float clickOffsetY = ( clickDestY  - y ) * CELL_D + clickExtraY;
+        
+            // look one cell to left/right
+            for( int x= p->closestCellX - 1; 
+                 x < p->closestCellX + 2 && ! p->hitOtherPerson; x++ ) {
+
+                float clickOffsetX = ( clickDestX  - x ) * CELL_D + clickExtraX;
+
+                for( int i=gameObjects.size()-1; 
+                     i>=0 && ! p->hitOtherPerson; i-- ) {
+        
+                    LiveObject *o = gameObjects.getElement( i );
+                    
+                    if( o->outOfRange ) {
+                        // out of range, but this was their last known position
+                        // don't draw now
+                        continue;
+                        }
+                    
+                    if( o->heldByAdultID != -1 ) {
+                        // held by someone else, don't draw now
+                        continue;
+                        }
+                    
+                    if( o->heldByDropOffset.x != 0 ||
+                        o->heldByDropOffset.y != 0 ) {
+                        // recently dropped baby, skip
+                        continue;
+                        }
+                
+                    if( o == ourLiveObject ) {
+                        // ignore clicks on self behind tree
+                        continue;
+                        }
+                    
+                    
+                    int oX = o->xd;
+                    int oY = o->yd;
+                
+                    if( o->currentSpeed != 0 && o->pathToDest != NULL ) {
+                        if( o->onFinalPathStep ) {
+                            oX = o->pathToDest[ o->pathLength - 1 ].x;
+                            oY = o->pathToDest[ o->pathLength - 1 ].y;
+                            }
+                        else {
+                            oX = o->pathToDest[ o->currentPathStep ].x;
+                            oY = o->pathToDest[ o->currentPathStep ].y;
+                            }
+                        }
+            
+                    
+                    if( oY == y && oX == x ) {
+                        // here!
+                        ObjectRecord *obj = getObject( o->displayID );
+                    
+                        int sp, cl, sl;
+                        
+                        double dist = getClosestObjectPart( 
+                            obj,
+                            &( o->clothing ),
+                            NULL,
+                            o->clothingContained,
+                            false,
+                            computeCurrentAge( o ),
+                            -1,
+                            o->holdingFlip,
+                            clickOffsetX,
+                            clickOffsetY,
+                            &sp, &cl, &sl );
+                    
+                        if( dist < minDistThatHits ) {
+                            p->hit = true;
+                            p->closestCellX = x;
+                            p->closestCellY = y;
+                            
+                            p->hitAnObject = false;
+                            p->hitOtherPerson = true;
+                            p->hitOtherPersonID = o->id;
+                            
+                            if( cl != -1 ) {
+                                p->hitClothingIndex = cl;
+                                p->hitSlotIndex = sl;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     

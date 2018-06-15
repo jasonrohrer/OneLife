@@ -12,6 +12,7 @@ Version 112    ???
 
 --Fixed search for limbs in objects that have no hands or feet.
 
+--Fixed so that you can mouse-over and click on a person standing behind a tree.
 
 
 
