@@ -3,6 +3,19 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 112    ???
+
+--Fixed category editor to let a category be picked on the parent side that is
+  also a child of another category (pattern categories can be part of other
+  categories now, like pink rose seeds, which are a pattern for other rose
+  seeds, but also in the small trash category).
+
+
+
+
+
+
+
 Version 110    2018-June-14
 
 --Transition editor now includes category transitions in list of 'uses'
