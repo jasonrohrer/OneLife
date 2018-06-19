@@ -12,6 +12,9 @@
 typedef struct LineageTime {
         int lineageEveID;
         double lastBornTime;
+        // flag indicating that we should ignore totalLifeAge when
+        // considering lineage ban for this player in this family line
+        char murdered;
     } LineageTime;
     
 
@@ -20,6 +23,10 @@ typedef struct HashTableEntry {
         char *email;
         
         double freshestTime;
+
+        // how many years total they've lived in the game since
+        // the server started up
+        double totalLifeAge;
         
         SimpleVector<LineageTime> *times;
     } HashTableEntry;
@@ -55,8 +62,14 @@ static char testSkipped = false;
 
 static double staleTime = 0;
 
+static double totalAgeKickIn = 120;
+
 
 void primeLineageTest( int inNumLivePlayers ) {
+    
+    totalAgeKickIn = 
+        SettingsManager::getFloatSetting( "lineageLimitTotalAgeKickIn", 120 );
+
     double fractionOfMax = ( inNumLivePlayers - 10 ) / 40.0;
     
     if( fractionOfMax > 1 ) {
@@ -106,13 +119,12 @@ static HashTableEntry *lookup( const char *inPlayerEmail ) {
         HashTableEntry *e = bin->getElement( i );
         
         if( e->freshestTime < staleTime ) {
-            // a completely stale entry, remove it
-            delete [] e->email;
-            delete e->times;
-            bin->deleteElement( i );
-            i--;
+            // a completely stale entry, empty it
+            e->times->deleteAll();
+            e->freshestTime = Time::getCurrentTime();
             }
-        else if( strcmp( e->email, inPlayerEmail ) == 0 ) {
+
+        if( strcmp( e->email, inPlayerEmail ) == 0 ) {
             return e;
             }
         }
@@ -128,12 +140,13 @@ static void insert( const char *inPlayerEmail, int inLineageEveID ) {
     
     SimpleVector<LineageTime> *tList = new SimpleVector<LineageTime>();
     
-    LineageTime tNew = { inLineageEveID, curTime };
+    LineageTime tNew = { inLineageEveID, curTime, false };
     
     tList->push_back( tNew );
 
     HashTableEntry e = { stringDuplicate( inPlayerEmail ),
                          Time::getCurrentTime(),
+                         0,
                          tList };
 
     SimpleVector<HashTableEntry> *bin = lookupBin( inPlayerEmail );
@@ -154,7 +167,16 @@ char isLinePermitted( const char *inPlayerEmail, int inLineageEveID ) {
     if( e == NULL ) {
         return true;
         }
-    
+
+
+    char enoughAge = true;
+    if( e->totalLifeAge < totalAgeKickIn ) {
+        // lineage bans don't count yet
+        // unless they were murdered in a given family
+        enoughAge = false;
+        }
+
+
     for( int i=0; i<e->times->size(); i++ ) {
         LineageTime *t = e->times->getElement( i );
         
@@ -165,7 +187,13 @@ char isLinePermitted( const char *inPlayerEmail, int inLineageEveID ) {
             }
         else if( t->lineageEveID == inLineageEveID ) {
             // born in this lineage, and time not stale
-            return false;
+
+            // how much time they lived total doesn't matter if they
+            // were murdered in this family
+            if( enoughAge || t->murdered ) {
+                return false;
+                }
+            return true;
             }
         }
     
@@ -197,8 +225,39 @@ void recordLineage( const char *inPlayerEmail, int inLineageEveID ) {
         }
 
     // not found, add new one
-    LineageTime t = { inLineageEveID, curTime };
+    LineageTime t = { inLineageEveID, curTime, false };
     e->times->push_back( t );
     e->freshestTime = curTime;
     }
 
+
+
+
+void recordLineageLifeTime( const char *inPlayerEmail, double inYearsLived,
+                            int inLineageEveID, char inMurdered ) {
+    
+    HashTableEntry *e = lookup( inPlayerEmail );
+    
+    if( e == NULL ) {
+        return;
+        }
+
+    e->totalLifeAge += inYearsLived;
+
+
+    if( inMurdered ) {
+        for( int i=0; i<e->times->size(); i++ ) {
+            LineageTime *t = e->times->getElement( i );
+        
+            if( t->lastBornTime < staleTime ) {
+                // a stale birth time, remove it
+                e->times->deleteElement( i );
+                i--;
+                }
+            else if( t->lineageEveID == inLineageEveID ) {
+                t->murdered = true;
+                break;
+                }
+            }
+        }
+    }

@@ -20,6 +20,11 @@ Server Fixes:
 
 --Keeping server database backups 7 days instead of 14.
 
+--Lineage ban break for new players.  During the first two hours of play in the
+  game post-server-reset, the lineage ban does not apply, unless you are
+  murdered (then the ban applies to you in that family line regardless how
+  long you've been playing).
+
 
 
 
