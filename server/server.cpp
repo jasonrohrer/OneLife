@@ -4044,30 +4044,6 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
     int oldContained = 
         nextPlayer->numContained;
     
-    if( oldHolding != inNewHeldID ) {
-        
-        char kept = false;
-
-        // keep old decay timeer going...
-        // if they both decay to the same thing in the same time
-        if( oldHolding > 0 && inNewHeldID > 0 ) {
-            
-            TransRecord *oldDecayT = getTrans( -1, oldHolding );
-            TransRecord *newDecayT = getTrans( -1, inNewHeldID );
-            
-            if( oldDecayT != NULL && newDecayT != NULL ) {
-                if( oldDecayT->autoDecaySeconds == newDecayT->autoDecaySeconds
-                    && 
-                    oldDecayT->newTarget == newDecayT->newTarget ) {
-                    
-                    kept = true;
-                    }
-                }
-            }
-        if( !kept ) {
-            setFreshEtaDecayForHeld( nextPlayer );
-            }
-        }
     
     nextPlayer->heldOriginValid = 0;
     nextPlayer->heldOriginX = 0;
@@ -4160,7 +4136,33 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
             oldHolding,
             nextPlayer->holdingID );
         }
-                                    
+    
+    
+    if( oldHolding != inNewHeldID ) {
+            
+        char kept = false;
+
+        // keep old decay timeer going...
+        // if they both decay to the same thing in the same time
+        if( oldHolding > 0 && inNewHeldID > 0 ) {
+            
+            TransRecord *oldDecayT = getTrans( -1, oldHolding );
+            TransRecord *newDecayT = getTrans( -1, inNewHeldID );
+            
+            if( oldDecayT != NULL && newDecayT != NULL ) {
+                if( oldDecayT->autoDecaySeconds == newDecayT->autoDecaySeconds
+                    && 
+                    oldDecayT->newTarget == newDecayT->newTarget ) {
+                    
+                    kept = true;
+                    }
+                }
+            }
+        if( !kept ) {
+            setFreshEtaDecayForHeld( nextPlayer );
+            }
+        }
+
     }
 
 

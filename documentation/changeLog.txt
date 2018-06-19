@@ -25,6 +25,8 @@ Server Fixes:
   murdered (then the ban applies to you in that family line regardless how
   long you've been playing).
 
+--Fixed bug in setting decay ETA for newly held object.
+
 
 
 
