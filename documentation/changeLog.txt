@@ -14,6 +14,8 @@ Version 112    ???
 
 --Fixed so that you can mouse-over and click on a person standing behind a tree.
 
+--Hunger slips (and chimes) shown at 8 and 4 instead of 6 and 3 food remaining.
+
 
 
 Server Fixes:
