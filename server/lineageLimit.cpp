@@ -9,8 +9,14 @@
 #include <stdint.h>
 
 
+#define TOTAL_AGE_LIMIT 60.0
+#define SINGLE_LIFE_AGE_LIMIT 30
+
+
+
 typedef struct LineageTime {
         int lineageEveID;
+        double totalAge;
         double lastBornTime;
     } LineageTime;
     
@@ -121,14 +127,15 @@ static HashTableEntry *lookup( const char *inPlayerEmail ) {
 
 
 
-static void insert( const char *inPlayerEmail, int inLineageEveID ) {
+static void insert( const char *inPlayerEmail, int inLineageEveID,
+                    double inTotalAge ) {
     // new record saying player born in this line NOW
     
     double curTime = Time::getCurrentTime();
     
     SimpleVector<LineageTime> *tList = new SimpleVector<LineageTime>();
     
-    LineageTime tNew = { inLineageEveID, curTime };
+    LineageTime tNew = { inLineageEveID, inTotalAge, curTime };
     
     tList->push_back( tNew );
 
@@ -163,8 +170,10 @@ char isLinePermitted( const char *inPlayerEmail, int inLineageEveID ) {
             e->times->deleteElement( i );
             i--;
             }
-        else if( t->lineageEveID == inLineageEveID ) {
+        else if( t->lineageEveID == inLineageEveID &&
+                 t->totalAge >= TOTAL_AGE_LIMIT ) {
             // born in this lineage, and time not stale
+            // AND the total lived in this lineage is over the limit
             return false;
             }
         }
@@ -175,11 +184,20 @@ char isLinePermitted( const char *inPlayerEmail, int inLineageEveID ) {
 
 
 
-void recordLineage( const char *inPlayerEmail, int inLineageEveID ) {
+void recordLineage( const char *inPlayerEmail, int inLineageEveID,
+                    double inDeathAge, char inMurdered ) {
     HashTableEntry *e = lookup( inPlayerEmail );
-    
+
+    // if either override case applies, overflow the total to trigger it
+    if( inDeathAge > SINGLE_LIFE_AGE_LIMIT ) {
+        inDeathAge = TOTAL_AGE_LIMIT;
+        }
+    else if( inMurdered ) {
+        inDeathAge = TOTAL_AGE_LIMIT;
+        }
+
     if( e == NULL ) {
-        insert( inPlayerEmail, inLineageEveID );
+        insert( inPlayerEmail, inLineageEveID, inDeathAge );
         return;
         }
 
@@ -191,13 +209,17 @@ void recordLineage( const char *inPlayerEmail, int inLineageEveID ) {
         
         if( t->lineageEveID == inLineageEveID ) {
             // previously born in this lineage, adjust with new birth time
+            // and more total age
+            t->totalAge += inDeathAge;
             t->lastBornTime = curTime;
+            
+            e->freshestTime = curTime;
             return;
             }
         }
 
     // not found, add new one
-    LineageTime t = { inLineageEveID, curTime };
+    LineageTime t = { inLineageEveID, inDeathAge, curTime };
     e->times->push_back( t );
     e->freshestTime = curTime;
     }

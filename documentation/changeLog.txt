@@ -20,6 +20,14 @@ Server Fixes:
 
 --Keeping server database backups 7 days instead of 14.
 
+--Improved lineage ban so that it only applies if you have lived a total of one
+  hour in a given family line, or if you have lived a single life longer than
+  30 minutes in that family line, or if you died from murder.  This allows new
+  players who die young to play in the same family again.  Same for people who
+  are abandonned as babies.  Getting abandonned as a baby shouldn't block you
+  from a chance at living in that village again, while living a long, full life
+  (or a bunch of short lives) in that village should.
+
 
 
 

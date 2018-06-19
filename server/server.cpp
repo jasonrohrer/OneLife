@@ -3571,8 +3571,6 @@ void processLoggedInPlayer( Socket *inSock,
             newObject.lineage->push_back( 
                 parent->lineage->getElementDirect( i ) );
             }
-
-        recordLineage( newObject.email, newObject.lineageEveID );
         }
 
     newObject.birthPos.x = newObject.xd;
@@ -8205,6 +8203,11 @@ int main() {
                                      nextPlayer->name,
                                      nextPlayer->lastSay,
                                      male );
+
+                recordLineage( nextPlayer->email, 
+                               nextPlayer->lineageEveID,
+                               age, 
+                               ( killerID > 0 ) );
 
                 if( ! nextPlayer->deathLogged ) {
                     char disconnect = true;
