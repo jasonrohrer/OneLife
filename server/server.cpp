@@ -8595,7 +8595,7 @@ int main() {
                                 }
                             }
                         }
-                    else if( nextPlayer->holdingWound ) {
+                    if( nextPlayer->holdingWound ) {
                         // holding a wound from some other, non-murder cause
                         // of death
                         doNotDrop = true;
