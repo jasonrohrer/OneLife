@@ -6476,6 +6476,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                        description );
                     desToDelete = des;
                     }
+                else if( ourLiveObject->dying &&
+                         ourLiveObject->holdingID > 0 ) {
+                    des = autoSprintf( "%s %s",
+                                       translate( "youWith" ),
+                                       getObject( ourLiveObject->holdingID )->
+                                       description );
+                    desToDelete = des;
+                    }
                 else {
                     des = (char*)translate( "you" );
                     if( ourLiveObject->name != NULL ) {

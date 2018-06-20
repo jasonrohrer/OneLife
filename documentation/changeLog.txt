@@ -16,6 +16,8 @@ Version 112    ???
 
 --Hunger slips (and chimes) shown at 8 and 4 instead of 6 and 3 food remaining.
 
+--Mousing over wounded self now describes the wound.
+
 
 
 Server Fixes:
