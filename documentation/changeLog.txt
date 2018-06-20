@@ -32,6 +32,9 @@ Server Fixes:
   Thus, new players who die young a lot, and players who are abandonned as
   babies, are not blocked from getting reborn in the same village.
 
+--Animal attacks now can set a wound on a player and put them into a dying
+  stagger just like murder.  No more instant death (except from hunger and old
+  age).
 
 
 

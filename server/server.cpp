@@ -292,6 +292,7 @@ typedef struct LiveObject {
 
         // who killed them?
         int murderPerpID;
+        char *murderPerpEmail;
         
         // or if they were killed by a non-person, what was it?
         int deathSourceID;
@@ -3502,6 +3503,8 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.holdingWound = false;
     
     newObject.murderPerpID = 0;
+    newObject.murderPerpEmail = NULL;
+    
     newObject.deathSourceID = 0;
     
 
@@ -5507,16 +5510,63 @@ int main() {
                     
                     nextPlayer->deathSourceID = curOverID;
                     
-                    nextPlayer->error = true;
+                    if( curOverObj->isUseDummy ) {
+                        nextPlayer->deathSourceID = curOverObj->useDummyParent;
+                        }
+
                     nextPlayer->errorCauseString =
                         "Player killed by permanent object";
+                    
+                    if( ! nextPlayer->dying ) {
+                        int staggerTime = 
+                            SettingsManager::getIntSetting(
+                                "deathStaggerTime", 20 );
+                        
+                        double currentTime = 
+                            Time::getCurrentTime();
+                        
+                        nextPlayer->dying = true;
+                        nextPlayer->dyingETA = 
+                            currentTime + staggerTime;
+                        
+                        // push next food decrement
+                        // way in the future so they
+                        // don't starve while staggering
+                        // around
+                        nextPlayer->foodDecrementETASeconds
+                            = currentTime + 2 * staggerTime;
 
+                        playerIndicesToSendDyingAbout.
+                            push_back( 
+                                getLiveObjectIndex( 
+                                    nextPlayer->id ) );
+                        }
                     // generic on-person
                     TransRecord *r = 
                         getPTrans( curOverID, 0 );
 
                     if( r != NULL ) {
                         setMapObject( curPos.x, curPos.y, r->newActor );
+
+                        // new target specifies wound
+                        if( r->newTarget > 0 ) {
+                            // don't drop their wound
+                            if( nextPlayer->holdingID != 0 &&
+                                ! nextPlayer->holdingWound ) {
+                                handleDrop( 
+                                    curPos.x, curPos.y, 
+                                    nextPlayer,
+                                    &playerIndicesToSendUpdatesAbout );
+                                }
+                            nextPlayer->holdingID = 
+                                r->newTarget;
+                            nextPlayer->holdingWound = true;
+                                            
+                            playerIndicesToSendUpdatesAbout.
+                                push_back( 
+                                    getLiveObjectIndex( 
+                                        nextPlayer->id ) );
+                            }
                         }
                     continue;
                     }
@@ -6311,6 +6361,16 @@ int main() {
                                         hitPlayer->murderPerpID =
                                             nextPlayer->id;
                                         
+                                        if( hitPlayer->murderPerpEmail 
+                                            != NULL ) {
+                                            delete [] 
+                                                hitPlayer->murderPerpEmail;
+                                            }
+                                        
+                                        hitPlayer->murderPerpEmail =
+                                            stringDuplicate( 
+                                                nextPlayer->email );
+                                        
 
                                         setDeathReason( hitPlayer, 
                                                         "killed",
@@ -6344,26 +6404,6 @@ int main() {
                                         
                                             hitPlayer->errorCauseString =
                                                 "Player killed by other player";
-                                        
-                                            logDeath( hitPlayer->id,
-                                                      hitPlayer->email,
-                                                      hitPlayer->isEve,
-                                                      computeAge( hitPlayer ),
-                                                      getSecondsPlayed( 
-                                                          hitPlayer ),
-                                                      ! getFemale( hitPlayer ),
-                                                      m.x, m.y,
-                                                      players.size() - 1,
-                                                      false,
-                                                      nextPlayer->id,
-                                                      nextPlayer->email );
-                                            
-                                            if( shutdownMode ) {
-                                                handleShutdownDeath( 
-                                                    hitPlayer, m.x, m.y );
-                                                }
-
-                                            hitPlayer->deathLogged = true;
                                             }
                                         }
                                     
@@ -7272,6 +7312,7 @@ int main() {
                                             // disappears
                                             hitPlayer->holdingID = 0;
                                             hitPlayer->holdingEtaDecay = 0;
+                                            hitPlayer->holdingWound = false;
                                             }
                                         
 
@@ -8106,6 +8147,27 @@ int main() {
                 curTime >= nextPlayer->dyingETA ) {
                 // finally died
                 nextPlayer->error = true;
+
+                
+                logDeath( nextPlayer->id,
+                          nextPlayer->email,
+                          nextPlayer->isEve,
+                          computeAge( nextPlayer ),
+                          getSecondsPlayed( 
+                              nextPlayer ),
+                          ! getFemale( nextPlayer ),
+                          nextPlayer->xd, nextPlayer->yd,
+                          players.size() - 1,
+                          false,
+                          nextPlayer->murderPerpID,
+                          nextPlayer->murderPerpEmail );
+                                            
+                if( shutdownMode ) {
+                    handleShutdownDeath( 
+                        nextPlayer, nextPlayer->xd, nextPlayer->yd );
+                    }
+                
+                nextPlayer->deathLogged = true;
                 }
             
 
@@ -8495,6 +8557,12 @@ int main() {
                                 }
                             }
                         }
+                    else if( nextPlayer->holdingWound ) {
+                        // holding a wound from some other, non-murder cause
+                        // of death
+                        doNotDrop = true;
+                        }
+                    
                     
                     if( ! doNotDrop ) {
                         // drop what they were holding
@@ -10910,6 +10978,10 @@ int main() {
 
                 if( nextPlayer->email != NULL ) {
                     delete [] nextPlayer->email;
+                    }
+
+                if( nextPlayer->murderPerpEmail != NULL ) {
+                    delete [] nextPlayer->murderPerpEmail;
                     }
 
                 if( nextPlayer->deathReason != NULL ) {
