@@ -15,7 +15,3 @@ char isLinePermitted( const char *inPlayerEmail, int inLineageEveID );
 
 
 void recordLineage( const char *inPlayerEmail, int inLineageEveID );
-
-
-void recordLineageLifeTime( const char *inPlayerEmail, double inYearsLived,
-                            int inLineageEveID, char inMurdered );

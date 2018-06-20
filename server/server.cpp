@@ -8207,11 +8207,7 @@ int main() {
                                      nextPlayer->name,
                                      nextPlayer->lastSay,
                                      male );
-                
-                recordLineageLifeTime( nextPlayer->email, age,
-                                       nextPlayer->lineageEveID,
-                                       ( killerID > 0 ) );
-                
+
                 if( ! nextPlayer->deathLogged ) {
                     char disconnect = true;
                     
