@@ -5541,6 +5541,24 @@ int main() {
                                 getLiveObjectIndex( 
                                     nextPlayer->id ) );
                         }
+                    else {
+                        // already dying, and getting attacked again
+                        
+                        // halve their remaining stagger time
+                        double currentTime = 
+                            Time::getCurrentTime();
+                        
+                        double staggerTimeLeft = 
+                            nextPlayer->dyingETA - currentTime;
+                        
+                        if( staggerTimeLeft > 0 ) {
+                            staggerTimeLeft /= 2;
+                            nextPlayer->dyingETA = 
+                                currentTime + staggerTimeLeft;
+                            }
+                        }
+                
+                    
                     // generic on-person
                     TransRecord *r = 
                         getPTrans( curOverID, 0 );
@@ -6405,6 +6423,26 @@ int main() {
                                             hitPlayer->errorCauseString =
                                                 "Player killed by other player";
                                             }
+                                         else {
+                                             // already dying, 
+                                             // and getting attacked again
+                        
+                                             // halve their remaining 
+                                             // stagger time
+                                             double currentTime = 
+                                                 Time::getCurrentTime();
+                                             
+                                             double staggerTimeLeft = 
+                                                 nextPlayer->dyingETA - 
+                                                 currentTime;
+                        
+                                             if( staggerTimeLeft > 0 ) {
+                                                 staggerTimeLeft /= 2;
+                                                 nextPlayer->dyingETA = 
+                                                     currentTime + 
+                                                     staggerTimeLeft;
+                                                 }
+                                             }
                                         }
                                     
                                     

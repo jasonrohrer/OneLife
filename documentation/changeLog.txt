@@ -36,6 +36,10 @@ Server Fixes:
   stagger just like murder.  No more instant death (except from hunger and old
   age).
 
+--Getting attacked again while still wounded causes remaining stagger time to
+  be cut in half.
+
+
 
 
 Version 110    2018-June-14
