@@ -62,6 +62,10 @@ static JenkinsRandomSource randSource;
 float targetHeat = 10;
 
 
+double secondsPerYear = 60.0;
+
+
+
 #define PERSON_OBJ_ID 12
 
 
@@ -1263,7 +1267,7 @@ double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
 
 
 double getAgeRate() {
-    return 1.0 / 60.0;
+    return 1.0 / secondsPerYear;
     }
 
 
@@ -3571,8 +3575,6 @@ void processLoggedInPlayer( Socket *inSock,
             newObject.lineage->push_back( 
                 parent->lineage->getElementDirect( i ) );
             }
-
-        recordLineage( newObject.email, newObject.lineageEveID );
         }
 
     newObject.birthPos.x = newObject.xd;
@@ -8207,7 +8209,18 @@ int main() {
                                      nextPlayer->name,
                                      nextPlayer->lastSay,
                                      male );
+                
+                // don't use age here, because it unfairly gives Eve
+                // +14 years that she didn't actually live
+                // use true played years instead
+                double yearsLived = 
+                    getSecondsPlayed( nextPlayer ) * getAgeRate();
 
+                recordLineage( nextPlayer->email, 
+                               nextPlayer->lineageEveID,
+                               yearsLived, 
+                               ( killerID > 0 ) );
+        
                 if( ! nextPlayer->deathLogged ) {
                     char disconnect = true;
                     

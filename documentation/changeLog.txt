@@ -24,6 +24,13 @@ Server Fixes:
 
 --Fixed bug in setting decay ETA for newly held object.
 
+--Rework lineage ban.  Now it kicks in after you've lived 30 minutes total in a
+  given family line, and gets cleared when you've lived at least 60 minutes
+  total in other family lines.  Instantly kicks in if you get murdered,
+  regardless of how long you lived in that line so far.  Has very little
+  impact on dying babies, because they clock so little time before dying.
+  Thus, new players who die young a lot, and players who are abandonned as
+  babies, are not blocked from getting reborn in the same village.
 
 
 
