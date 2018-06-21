@@ -5792,10 +5792,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
                         if( i != foundSolid ) {
                             mHomeArrowStates[i].fade -= 0.0625;
-                            printf( "Fade %d down to %f\n",
-                                    i,
-                                    mHomeArrowStates[i].fade );
-                            
                             if( mHomeArrowStates[i].fade < 0 ) {
                                 mHomeArrowStates[i].fade = 0;
                                 }
