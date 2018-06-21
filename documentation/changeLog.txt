@@ -3,7 +3,8 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 112    ???
+
+Version 112    2018-June-21
 
 --Fixed category editor to let a category be picked on the parent side that is
   also a child of another category (pattern categories can be part of other
@@ -19,6 +20,7 @@ Version 112    ???
 --Mousing over wounded self now describes the wound.
 
 --Support for clicking on a player with a curing object to heal a wound.
+
 
 
 
@@ -44,6 +46,7 @@ Server Fixes:
   be cut in half.
 
 --With new healing in place, no longer need to delay hunger when wounded.
+
 
 
 
