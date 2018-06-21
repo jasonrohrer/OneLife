@@ -18,6 +18,8 @@ Version 112    ???
 
 --Mousing over wounded self now describes the wound.
 
+--Support for clicking on a player with a curing object to heal a wound.
+
 
 
 Server Fixes:

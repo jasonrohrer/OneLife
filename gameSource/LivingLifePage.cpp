@@ -712,6 +712,7 @@ typedef enum messageType {
     NAMES,
     APOCALYPSE,
     DYING,
+    HEALED,
     MONUMENT_CALL,
     GRAVE,
     GRAVE_MOVE,
@@ -785,6 +786,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "DY" ) == 0 ) {
         returnValue = DYING;
+        }
+    else if( strcmp( copy, "HE" ) == 0 ) {
+        returnValue = HEALED;
         }
     else if( strcmp( copy, "MN" ) == 0 ) {
         returnValue = MONUMENT_CALL;
@@ -12149,6 +12153,37 @@ void LivingLifePage::step() {
                 }
             delete [] lines;
             }
+        else if( type == HEALED ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+
+                int id;
+                int numRead = sscanf( lines[i], "%d ",
+                                      &( id ) );
+
+                if( numRead == 1 ) {
+                    for( int j=0; j<gameObjects.size(); j++ ) {
+                        if( gameObjects.getElement(j)->id == id ) {
+                            
+                            LiveObject *existing = gameObjects.getElement(j);
+                            
+                            existing->dying = false;
+                            break;
+                            }
+                        }
+                    }
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
         else if( type == PLAYER_OUT_OF_RANGE ) {
             int numLines;
             char **lines = split( message, "\n", &numLines );
@@ -14976,6 +15011,30 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
     
 
+    char tryingToHeal = false;
+    
+
+    if( ourLiveObject->holdingID > 0 &&
+        p.hitOtherPerson &&
+        getLiveObject( p.hitOtherPersonID )->dying ) {
+        
+        LiveObject *targetPlayer = getLiveObject( p.hitOtherPersonID );
+        
+        if( targetPlayer->holdingID > 0 ) {
+            
+            TransRecord *r = getTrans( ourLiveObject->holdingID,
+                                       targetPlayer->holdingID );
+            
+            if( r != NULL ) {
+                // a transition applies between what we're holding and their
+                // wound
+                tryingToHeal = true;
+                }
+            }
+        }
+    
+    
+
     
     // true if we're too far away to use on baby BUT we should execute
     // UBABY once we get to destination
@@ -14992,7 +15051,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         ourLiveObject->holdingID > 0 &&
         getObject( ourLiveObject->holdingID )->deadlyDistance == 0 &&
         ( getObject( ourLiveObject->holdingID )->clothing != 'n' ||
-          getObject( ourLiveObject->holdingID )->foodValue > 0 ) ) {
+          getObject( ourLiveObject->holdingID )->foodValue > 0 ||
+          tryingToHeal ) ) {
 
 
         doublePair targetPos = { (double)clickDestX, (double)clickDestY };

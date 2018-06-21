@@ -125,6 +125,8 @@ APOCALYPSE (AP)
 
 DYING (DY)
 
+HEALED (HE)
+
 MONUMENT_CALL (MN)
 
 GRAVE (GV)
@@ -478,6 +480,18 @@ Indicates that the listed players have been mortally wounded and will die soon.
 
 
 
+HE
+p_id
+p_id
+p_id
+...
+p_id
+#
+
+Indicates that the listed players have been healed and are no longer dying.
+
+
+
 
 
 
@@ -565,6 +579,11 @@ BABY is special case of USE action taken on a baby to pick them up.
 
 UBABY is a special case of SELF applied to a baby (to feed baby food
 	  or add/remove clothing from baby).  Also works on elderly.
+      Note that server currently allows UBABY to feed anyone food, but
+      only putting clothing on babies and elderly.
+      ALSO:  UBABY is used for healing wounded players.
+      Essentially, any action where held item is used on another player.
+      Should be called UOTHER, but UBABY is used for historical reasons.
 
 REMV is special case of removing an object from a container.
      i specifies the index of the container item to remove, or -1 to
