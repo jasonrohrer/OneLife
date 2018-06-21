@@ -7552,7 +7552,78 @@ int main() {
                             nextPlayer->actionTarget.x = m.x;
                             nextPlayer->actionTarget.y = m.y;
                             
-                            if( nextPlayer->holdingID > 0 ) {
+
+                            if( targetPlayer != nextPlayer &&
+                                targetPlayer->dying &&
+                                ! holdingFood ) {
+                                
+                                // try healing wound
+                                    
+                                TransRecord *healTrans =
+                                    getTrans( nextPlayer->holdingID,
+                                              targetPlayer->holdingID );
+                                
+                                if( healTrans != NULL ) {
+                                    targetPlayer->holdingID =
+                                        healTrans->newTarget;
+                                    
+                                    // their wound has been changed
+                                    // no longer track embedded weapon
+                                    targetPlayer->embeddedWeaponID = 0;
+                                    targetPlayer->embeddedWeaponEtaDecay = 0;
+                                    
+                                    
+                                    nextPlayer->holdingID = 
+                                        healTrans->newActor;
+                                    
+                                    setFreshEtaDecayForHeld( 
+                                        nextPlayer );
+                                    setFreshEtaDecayForHeld( 
+                                        targetPlayer );
+                                    
+                                    nextPlayer->heldOriginValid = 0;
+                                    nextPlayer->heldOriginX = 0;
+                                    nextPlayer->heldOriginY = 0;
+                                    nextPlayer->heldTransitionSourceID = 
+                                        healTrans->target;
+                                    
+                                    targetPlayer->heldOriginValid = 0;
+                                    targetPlayer->heldOriginX = 0;
+                                    targetPlayer->heldOriginY = 0;
+                                    targetPlayer->heldTransitionSourceID = 
+                                        -1;
+                                    
+                                    if( targetPlayer->holdingID == 0 ) {
+                                        // not dying anymore
+                                        targetPlayer->dying = false;
+                                        targetPlayer->murderSourceID = 0;
+                                        targetPlayer->murderPerpID = 0;
+                                        if( targetPlayer->murderPerpEmail != 
+                                            NULL ) {
+                                            delete [] 
+                                                targetPlayer->murderPerpEmail;
+                                            targetPlayer->murderPerpEmail =
+                                                NULL;
+                                            }
+                                        
+                                        targetPlayer->deathSourceID = 0;
+                                        targetPlayer->holdingWound = false;
+                                        targetPlayer->customGraveID = -1;
+                                        
+                                        if( targetPlayer->deathReason 
+                                            != NULL ) {
+                                            delete [] targetPlayer->deathReason;
+                                            targetPlayer->deathReason = NULL;
+                                            }
+                                        
+                                        playerIndicesToSendHealingAbout.
+                                            push_back( 
+                                                getLiveObjectIndex( 
+                                                    targetPlayer->id ) );
+                                        }
+                                    }
+                                }
+                            else if( nextPlayer->holdingID > 0 ) {
                                 ObjectRecord *obj = 
                                     getObject( nextPlayer->holdingID );
                                 
@@ -7788,50 +7859,6 @@ int main() {
                                     // into clothing
                                     addHeldToClothingContainer( nextPlayer,
                                                                 m.i );
-                                    }
-                                else if( targetPlayer != nextPlayer &&
-                                         targetPlayer->dying &&
-                                         targetPlayer->holdingID > 0 ) {
-                                    // try healing wound
-                                    
-                                    TransRecord *healTrans =
-                                        getTrans( nextPlayer->holdingID,
-                                                  targetPlayer->holdingID );
-                                    
-                                    if( healTrans != NULL ) {
-                                        targetPlayer->holdingID =
-                                            healTrans->newTarget;
-                                        
-                                        nextPlayer->holdingID = 
-                                            healTrans->newActor;
-                                        
-                                        setFreshEtaDecayForHeld( 
-                                                nextPlayer );
-                                        setFreshEtaDecayForHeld( 
-                                                targetPlayer );
-
-                                        nextPlayer->heldOriginValid = 0;
-                                        nextPlayer->heldOriginX = 0;
-                                        nextPlayer->heldOriginY = 0;
-                                        nextPlayer->heldTransitionSourceID = 
-                                            healTrans->target;
-
-                                        targetPlayer->heldOriginValid = 0;
-                                        targetPlayer->heldOriginX = 0;
-                                        targetPlayer->heldOriginY = 0;
-                                        targetPlayer->heldTransitionSourceID = 
-                                            -1;
-
-                                        if( targetPlayer->holdingID == 0 ) {
-                                            // not dying anymore
-                                            targetPlayer->dying = false;
-
-                                            playerIndicesToSendHealingAbout.
-                                                push_back( 
-                                                    getLiveObjectIndex( 
-                                                        targetPlayer->id ) );
-                                            }
-                                        }
                                     }
                                 }         
                             else {
