@@ -5530,13 +5530,6 @@ int main() {
                         nextPlayer->dying = true;
                         nextPlayer->dyingETA = 
                             currentTime + staggerTime;
-                        
-                        // push next food decrement
-                        // way in the future so they
-                        // don't starve while staggering
-                        // around
-                        nextPlayer->foodDecrementETASeconds
-                            = currentTime + 2 * staggerTime;
 
                         playerIndicesToSendDyingAbout.
                             push_back( 
@@ -6408,14 +6401,6 @@ int main() {
                                             hitPlayer->dying = true;
                                             hitPlayer->dyingETA = 
                                                 currentTime + staggerTime;
-
-                                            // push next food decrement
-                                            // way in the future so they
-                                            // don't starve while staggering
-                                            // around
-                                            hitPlayer->foodDecrementETASeconds
-                                                = currentTime + 2 * staggerTime;
-                                            
 
                                             playerIndicesToSendDyingAbout.
                                                 push_back( 

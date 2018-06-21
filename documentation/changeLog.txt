@@ -43,6 +43,8 @@ Server Fixes:
 --Getting attacked again while still wounded causes remaining stagger time to
   be cut in half.
 
+--With new healing in place, no longer need to delay hunger when wounded.
+
 
 
 
