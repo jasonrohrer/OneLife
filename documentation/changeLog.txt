@@ -21,6 +21,9 @@ Server Fixes:
 --Fixed glitch in generation of transitions that apply to every use dummy of
   an actor.
 
+--Fixed glitch in biome database at position 0,0.
+
+
 
 
 Version 112    2018-June-21
