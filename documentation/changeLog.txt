@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 117    ???
+
+--Support for masked speech output in client (useful for making gifs).
+
+
+
 Version 115    2018-June-22
 
 --Babies now carry their wounds with them when they are picked up, instead of

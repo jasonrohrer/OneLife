@@ -104,6 +104,15 @@ static const char *bugEmail = "jason" "rohrer" "@" "fastmail.fm";
 
 
 
+// if true, pressing S key (capital S)
+// causes current speech and mask to be saved to the screenShots folder
+static char savingSpeechEnabled = false;
+static char savingSpeech = false;
+static char savingSpeechColor = false;
+static char savingSpeechMask = false;
+
+
+
 
 // most recent home at end
 
@@ -2295,7 +2304,25 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     else {
         setDrawColor( 1, 1, 1, inFade );
         }
+
+
+
+    char maskOnly = false;
+    char colorOnly = false;
     
+    if( savingSpeech && savingSpeechColor && inFade == 1.0 ) {
+        drawSquare( inPos, 512 );
+        colorOnly = true;
+        }
+    else if( savingSpeech && savingSpeechMask && inFade == 1.0 ) {
+        setDrawColor( 0, 0, 0, 1.0 );
+        drawSquare( inPos, 512 );
+        setDrawColor( 1, 1, 1, 1 );
+        maskOnly = true;
+        }
+
+
+
     // with a fixed seed
     JenkinsRandomSource blotRandSource( 0 );
         
@@ -2342,6 +2369,13 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         setDrawColor( 0, 0, 0, inFade );
         }
     
+
+    if( maskOnly ) {
+        // font should add to opacity of mask too
+        setDrawColor( 1, 1, 1, 1 );
+        }
+
+    
     for( int i=0; i<lines->size(); i++ ) {
         char *line = lines->getElementDirect( i );
         
@@ -2353,6 +2387,19 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         }
 
     delete lines;
+
+
+    if( colorOnly ) {
+        saveScreenShot( "speechColor" );
+        savingSpeechColor = false;
+        savingSpeechMask = true;
+        }
+    else if( maskOnly ) {
+        saveScreenShot( "speechMask" );
+        savingSpeechMask = false;
+        savingSpeech = false;
+        }
+        
     }
 
 
@@ -15761,6 +15808,13 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
 
     
     switch( inASCII ) {
+        case 'S':
+            if( savingSpeechEnabled ) {
+                savingSpeechColor = true;
+                savingSpeechMask = false;
+                savingSpeech = true;
+                }
+            break;
         /*
         case 'b':
             blackBorder = true;
