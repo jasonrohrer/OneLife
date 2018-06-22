@@ -4916,8 +4916,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     if( o->holdingID < 0 ) {
                         LiveObject *babyO = getLiveObject( - o->holdingID );
-                        if( babyO != NULL && babyO->holdingID > 0  ) {
-                            // baby still holding something,
+                        if( babyO != NULL 
+                            && babyO->dying && babyO->holdingID > 0  ) {
+                            // baby still holding something while dying,
                             // likely a wound
                             // add to pack to draw it on top of baby
                             heldPack.additionalHeldID =
