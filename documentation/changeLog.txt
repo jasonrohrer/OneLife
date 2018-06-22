@@ -3,10 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
 Version 113    ???
 
 --Babies now carry their wounds with them when they are picked up, instead of
   discarding them.
+
+
 
 
 Server Fixes:
@@ -15,6 +18,8 @@ Server Fixes:
   attack to prevent multiple repeat attacks on the same person before they
   realize what has happened.
 
+--Fixed glitch in generation of transitions that apply to every use dummy of
+  an actor.
 
 
 

@@ -1170,7 +1170,7 @@ void initTransBankFinish() {
                     
                     if( actor != NULL && actor->numUses > 1 ) {
                         
-                        for( int u=0; u<actor->numUses-2; u++ ) {
+                        for( int u=0; u<actor->numUses-1; u++ ) {
                             float useFraction = 
                                 (float)( u+1 ) / (float)( actor->numUses );
                             
