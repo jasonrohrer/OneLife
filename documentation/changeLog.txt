@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 113    ???
+Version 115    2018-June-22
 
 --Babies now carry their wounds with them when they are picked up, instead of
   discarding them.
