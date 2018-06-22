@@ -3403,6 +3403,19 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                 babyO->lastHeldByRawPosSet = true;
                 babyO->lastHeldByRawPos = worldHoldPos;
 
+                int hideClosestArmBaby = 0;
+                char hideAllLimbsBaby = false;
+
+                if( babyO->holdingID > 0 ) {
+                    ObjectRecord *babyHoldingObj = 
+                        getObject( babyO->holdingID );
+                    
+                    getArmHoldingParameters( babyHoldingObj, 
+                                             &hideClosestArmBaby,
+                                             &hideAllLimbsBaby );
+                    }
+                
+
                 returnPack =
                     drawObjectAnimPacked( 
                                 babyO->displayID, curHeldType, 
@@ -3420,9 +3433,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                 false,
                                 inObj->holdingFlip,
                                 computeCurrentAge( babyO ),
-                                // don't hide baby's hands when it is held
-                                false,
-                                false,
+                                hideClosestArmBaby,
+                                hideAllLimbsBaby,
                                 false,
                                 babyO->clothing,
                                 babyO->clothingContained,
@@ -4902,6 +4914,18 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 if( heldPack.inObjectID != -1 ) {
                     // holding something, not drawn yet
                     
+                    if( o->holdingID < 0 ) {
+                        LiveObject *babyO = getLiveObject( - o->holdingID );
+                        if( babyO != NULL && babyO->holdingID > 0  ) {
+                            // baby still holding something,
+                            // likely a wound
+                            // add to pack to draw it on top of baby
+                            heldPack.additionalHeldID =
+                                babyO->holdingID;
+                            }
+                        }
+
+
                     if( ! o->heldPosOverride ) {
                         // not sliding into place
                         // draw it now

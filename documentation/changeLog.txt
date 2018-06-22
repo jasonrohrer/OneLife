@@ -3,6 +3,11 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 113    ???
+
+--Babies now carry their wounds with them when they are picked up, instead of
+  discarding them.
+
 
 Server Fixes:
 

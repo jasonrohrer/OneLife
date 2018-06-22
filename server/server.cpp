@@ -7366,38 +7366,11 @@ int main() {
                                     // holding
 
                                     if( hitPlayer->holdingID != 0 ) {
-
-                                        if( hitPlayer->holdingWound &&
-                                            hitPlayer->embeddedWeaponID > 0 ) {
-                                            
-                                            // switch from wound to
-                                            // holding embedded weapon
-                                            // have them drop it when
-                                            // picked up
-                                            hitPlayer->holdingID = 
-                                                hitPlayer->
-                                                embeddedWeaponID;
-                                            hitPlayer->holdingEtaDecay =
-                                                hitPlayer->
-                                                embeddedWeaponEtaDecay;
-                                            
-                                            hitPlayer->embeddedWeaponID = 0;
-                                            hitPlayer->embeddedWeaponEtaDecay
-                                                = 0;
-                                            hitPlayer->holdingWound = false;
-                                            }
-                                        else if( hitPlayer->holdingWound &&
-                                                 hitPlayer->embeddedWeaponID 
-                                                 == 0 ) {
-                                            // holding wound only
-                                            // disappears
-                                            hitPlayer->holdingID = 0;
-                                            hitPlayer->holdingEtaDecay = 0;
-                                            hitPlayer->holdingWound = false;
-                                            }
-                                        
-
-                                        if( hitPlayer->holdingID > 0 ) {
+                                        // never drop held wounds
+                                        // they are the only thing a baby can
+                                        // while held
+                                        if( ! hitPlayer->holdingWound && 
+                                            hitPlayer->holdingID > 0 ) {
                                             handleDrop( 
                                                 m.x, m.y, hitPlayer,
                                              &playerIndicesToSendUpdatesAbout );
