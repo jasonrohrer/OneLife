@@ -415,6 +415,54 @@ typedef struct GraveMoveInfo {
 
 
 
+// tracking spots on map that inflicted a mortal wound
+// put them on timeout afterward so that they don't attack
+// again immediately
+typedef struct DeadlyMapSpot {
+        GridPos pos;
+        double timeOfAttack;
+    } DeadlyMapSpot;
+
+
+static double deadlyMapSpotTimeoutSec = 10;
+
+static SimpleVector<DeadlyMapSpot> deadlyMapSpots;
+
+
+static char wasRecentlyDeadly( GridPos inPos ) {
+    double curTime = Time::getCurrentTime();
+    
+    for( int i=0; i<deadlyMapSpots.size(); i++ ) {
+        
+        DeadlyMapSpot *s = deadlyMapSpots.getElement( i );
+        
+        if( curTime - s->timeOfAttack >= deadlyMapSpotTimeoutSec ) {
+            deadlyMapSpots.deleteElement( i );
+            i--;
+            }
+        else if( s->pos.x == inPos.x && s->pos.y == inPos.y ) {
+            // note that this is a lazy method that only walks through
+            // the whole list and checks for timeouts when
+            // inPos isn't found
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+
+static void addDeadlyMapSpot( GridPos inPos ) {
+    // don't check for duplicates
+    // we're only called to add a new deadly spot when the spot isn't
+    // currently on deadly cooldown anyway
+    DeadlyMapSpot s = { inPos, Time::getCurrentTime() };
+    deadlyMapSpots.push_back( s );
+    }
+
+
+
+
 static LiveObject *getLiveObject( int inID ) {
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *o = players.getElement( i );
@@ -5492,7 +5540,8 @@ int main() {
 
             if( ! nextPlayer->heldByOther &&
                 curOverID != 0 && 
-                ! isMapObjectInTransit( curPos.x, curPos.y ) ) {
+                ! isMapObjectInTransit( curPos.x, curPos.y ) &&
+                ! wasRecentlyDeadly( curPos ) ) {
                 
                 ObjectRecord *curOverObj = getObject( curOverID );
                 
@@ -5505,6 +5554,8 @@ int main() {
 
                 if( !riding &&
                     curOverObj->permanent && curOverObj->deadlyDistance > 0 ) {
+                    
+                    addDeadlyMapSpot( curPos );
                     
                     setDeathReason( nextPlayer, 
                                     "killed",
@@ -5597,6 +5648,11 @@ int main() {
                                              r->newActor );
                         nextPlayer->heldTransitionSourceID = curOverID;
                         playerIndicesToSendUpdatesAbout.push_back( i );
+
+                        // it attacked their vehicle 
+                        // put it on cooldown so it won't immediately
+                        // attack them
+                        addDeadlyMapSpot( curPos );
                         }
                     }                
                 }

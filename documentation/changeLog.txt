@@ -4,6 +4,15 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes:
+
+--Deadly map spots (attacking animals) put on cooldown for 10 seconds after an
+  attack to prevent multiple repeat attacks on the same person before they
+  realize what has happened.
+
+
+
+
 Version 112    2018-June-21
 
 --Fixed category editor to let a category be picked on the parent side that is
