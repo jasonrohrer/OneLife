@@ -13653,6 +13653,10 @@ void LivingLifePage::makeActive( char inFresh ) {
         return;
         }
 
+    savingSpeechEnabled = SettingsManager::getIntSetting( "allowSavingSpeech",
+                                                          0 );
+
+
     for( int i=0; i<mGraveInfo.size(); i++ ) {
         delete [] mGraveInfo.getElement(i)->relationName;
         }
@@ -15809,7 +15813,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
     
     switch( inASCII ) {
         case 'S':
-            if( savingSpeechEnabled ) {
+            if( savingSpeechEnabled && 
+                ! mSayField.isFocused() ) {
                 savingSpeechColor = true;
                 savingSpeechMask = false;
                 savingSpeech = true;
