@@ -51,6 +51,7 @@ make
 ln -s ../../OneLifeData7/categories .
 ln -s ../../OneLifeData7/objects .
 ln -s ../../OneLifeData7/transitions .
+ln -s ../../OneLifeData7/tutorialMaps .
 
 
 echo 0 > settings/requireTicketServerCheck.ini

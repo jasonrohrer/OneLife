@@ -117,6 +117,7 @@ echo "http://onehouronelife.com/ticketServer/server.php" > settings/ticketServer
 ln -s ../../$dataName/objects .
 ln -s ../../$dataName/transitions .
 ln -s ../../$dataName/categories .
+ln -s ../../$dataName/tutorialMaps .
 ln -s ../../$dataName/dataVersionNumber.txt .
 
 git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt
