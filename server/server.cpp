@@ -3282,6 +3282,13 @@ void processLoggedInPlayer( Socket *inSock,
         // babies start out almost starving
         newObject.foodStore = 2;
         }
+    
+    if( newObject.isTutorial && newObject.foodStore > 10 ) {
+        // so they can practice eating at the beginning of the tutorial
+        newObject.foodStore -= 2;
+        }
+    
+
 
     newObject.heat = 0.5;
 
