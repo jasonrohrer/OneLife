@@ -165,6 +165,8 @@ typedef struct FreshConnection {
         double connectionStartTimeSeconds;
 
         char *email;
+        
+        int tutorialNumber;
     } FreshConnection;
 
 
@@ -185,6 +187,8 @@ typedef struct LiveObject {
         char *lastSay;
 
         char isEve;        
+
+        char isTutorial;
 
         GridPos birthPos;
 
@@ -3061,12 +3065,20 @@ static LiveObject *getHitPlayer( int inX, int inY,
     
 
 
+
+// for placement of tutorials out of the way 
+static int maxPlacementX = 5000000;
+
+// each subsequent tutorial gets put in a diferent place
+static int tutorialCount = 0;
+
         
 
 
 void processLoggedInPlayer( Socket *inSock,
                             SimpleVector<char> *inSockBuffer,
-                            char *inEmail ) {
+                            char *inEmail,
+                            int inTutorialNumber ) {
     
     // reload these settings every time someone new connects
     // thus, they can be changed without restarting the server
@@ -3103,7 +3115,12 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.displayID = getRandomPersonObject();
     
     newObject.isEve = false;
-
+    
+    newObject.isTutorial = false;
+    
+    if( inTutorialNumber > 0 ) {
+        newObject.isTutorial = true;
+        }
 
     newObject.trueStartTimeSeconds = Time::getCurrentTime();
     newObject.lifeStartTimeSeconds = newObject.trueStartTimeSeconds;
@@ -3207,6 +3224,13 @@ void processLoggedInPlayer( Socket *inSock,
             }
         }
 
+
+    if( inTutorialNumber > 0 ) {
+        // Tutorial always played full-grown
+        parentChoices.deleteAll();
+        }
+
+
     newObject.parentChainLength = 1;
 
     if( parentChoices.size() == 0 || numOfAge == 0 ) {
@@ -3288,9 +3312,12 @@ void processLoggedInPlayer( Socket *inSock,
     
     
     LiveObject *parent = NULL;
-                
-    if( parentChoices.size() > 0 ) {
 
+    char placed = false;
+    
+    if( parentChoices.size() > 0 ) {
+        placed = true;
+        
         if( newObject.isEve ) {
             // spawned next to random existing player
             int parentIndex = 
@@ -3449,8 +3476,36 @@ void processLoggedInPlayer( Socket *inSock,
             newObject.xd = cPos.x;
             newObject.yd = cPos.y;
             }
-        }                    
-    else {
+        
+        if( newObject.xs > maxPlacementX ) {
+            maxPlacementX = newObject.xs;
+            }
+        }
+    else if( inTutorialNumber > 0 ) {
+        
+        int startX = maxPlacementX * 2;
+        int startY = tutorialCount * 100;
+
+        newObject.xs = startX;
+        newObject.ys = startY;
+        
+        newObject.xd = startX;
+        newObject.yd = startY;
+
+        char *mapFileName = autoSprintf( "tutorial%d.txt", inTutorialNumber );
+        
+        placed = loadTutorial( mapFileName, startX, startY );
+        
+        delete [] mapFileName;
+
+        tutorialCount ++;
+        }
+    
+    
+    if( !placed ) {
+        // tutorial didn't happen if not placed
+        newObject.isTutorial = false;
+        
         // else starts at civ outskirts (lone Eve)
         int startX, startY;
         getEvePosition( newObject.email, &startX, &startY );
@@ -3468,7 +3523,11 @@ void processLoggedInPlayer( Socket *inSock,
         newObject.ys = startY;
         
         newObject.xd = startX;
-        newObject.yd = startY;    
+        newObject.yd = startY;
+
+        if( newObject.xs > maxPlacementX ) {
+            maxPlacementX = newObject.xs;
+            }
         }
     
 
@@ -3644,6 +3703,7 @@ void processLoggedInPlayer( Socket *inSock,
     players.push_back( newObject );            
 
 
+    if( ! newObject.isTutorial )        
     logBirth( newObject.id,
               newObject.email,
               newObject.parentID,
@@ -3654,8 +3714,9 @@ void processLoggedInPlayer( Socket *inSock,
               players.size(),
               newObject.parentChainLength );
     
-    AppLog::infoF( "New player %s connected as player %d",
-                   newObject.email, newObject.id );
+    AppLog::infoF( "New player %s connected as player %d (tutorial=%d)",
+                   newObject.email, newObject.id,
+                   inTutorialNumber );
     }
 
 
@@ -5056,6 +5117,8 @@ int main() {
 
                 newConnection.sequenceNumber = nextSequenceNumber;
                 
+                newConnection.tutorialNumber = 0;
+
                 nextSequenceNumber ++;
                 
                 SettingsManager::setSetting( "sequenceNumber",
@@ -5215,7 +5278,8 @@ int main() {
                             processLoggedInPlayer( 
                                 nextConnection->sock,
                                 nextConnection->sockBuffer,
-                                nextConnection->email );
+                                nextConnection->email,
+                                nextConnection->tutorialNumber );
                             
                             delete nextConnection->ticketServerRequest;
                             newConnections.deleteElement( i );
@@ -5273,7 +5337,7 @@ int main() {
                         SimpleVector<char *> *tokens =
                             tokenizeString( message );
                         
-                        if( tokens->size() == 4 ) {
+                        if( tokens->size() == 4 || tokens->size() == 5 ) {
                             
                             nextConnection->email = 
                                 stringDuplicate( 
@@ -5281,7 +5345,12 @@ int main() {
                             char *pwHash = tokens->getElementDirect( 2 );
                             char *keyHash = tokens->getElementDirect( 3 );
                             
-
+                            if( tokens->size() == 5 ) {
+                                sscanf( tokens->getElementDirect( 4 ),
+                                        "%d", 
+                                        &( nextConnection->tutorialNumber ) );
+                                }
+                            
                             char emailAlreadyLoggedIn = false;
                             
 
@@ -5389,7 +5458,8 @@ int main() {
                                     processLoggedInPlayer( 
                                         nextConnection->sock,
                                         nextConnection->sockBuffer,
-                                        nextConnection->email );
+                                        nextConnection->email,
+                                        nextConnection->tutorialNumber );
                                     
                                     delete nextConnection->ticketServerRequest;
                                     newConnections.deleteElement( i );
@@ -8290,6 +8360,7 @@ int main() {
                 nextPlayer->error = true;
 
                 
+                if( ! nextPlayer->isTutorial )
                 logDeath( nextPlayer->id,
                           nextPlayer->email,
                           nextPlayer->isEve,
@@ -8403,6 +8474,7 @@ int main() {
                 
                 char male = ! getFemale( nextPlayer );
                 
+                if( ! nextPlayer->isTutorial )
                 recordPlayerLineage( nextPlayer->email, 
                                      age,
                                      nextPlayer->id,
@@ -8419,6 +8491,7 @@ int main() {
                 double yearsLived = 
                     getSecondsPlayed( nextPlayer ) * getAgeRate();
 
+                if( ! nextPlayer->isTutorial )
                 recordLineage( nextPlayer->email, 
                                nextPlayer->lineageEveID,
                                yearsLived, 
@@ -8431,6 +8504,7 @@ int main() {
                         disconnect = false;
                         }
                     
+                    if( ! nextPlayer->isTutorial )
                     logDeath( nextPlayer->id,
                               nextPlayer->email,
                               nextPlayer->isEve,
@@ -9296,7 +9370,8 @@ int main() {
                                 computePartialMoveSpot( decrementedPlayer );
                             }
                         
-                        if( ! decrementedPlayer->deathLogged ) {    
+                        if( ! decrementedPlayer->deathLogged &&
+                            ! decrementedPlayer->isTutorial ) {    
                             logDeath( decrementedPlayer->id,
                                       decrementedPlayer->email,
                                       decrementedPlayer->isEve,

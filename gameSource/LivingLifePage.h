@@ -368,7 +368,10 @@ class LivingLifePage : public GamePage {
         ~LivingLifePage();
         
         void clearMap();
-
+        
+        // enabled tutorail next time a connection loads
+        void runTutorial();
+        
 
         char isMapBeingPulled();
 
@@ -415,6 +418,8 @@ class LivingLifePage : public GamePage {
         int mServerSocket;
         
         int mRequiredVersion;
+
+        int mTutorialNumber;
 
         int mFirstServerMessagesReceived;
         

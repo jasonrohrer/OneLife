@@ -17,6 +17,7 @@ extern char *userEmail;
 extern char *accountKey;
 
 
+static doublePair tutorialButtonPos = { -522, 300 };
 
 
 
@@ -26,7 +27,9 @@ RebirthChoicePage::RebirthChoicePage()
           mReviewButton( mainFont, 150, 64, 
                        translate( "postReviewButton" ) ),
           mRebornButton( mainFont, 150, -128, 
-                         translate( "reborn" ) ) {
+                         translate( "reborn" ) ),
+          mTutorialButton( mainFont, tutorialButtonPos.x, tutorialButtonPos.y, 
+                           translate( "tutorial" ) ) {
     if( !isHardToQuitMode() ) {
         addComponent( &mQuitButton );
         addComponent( &mReviewButton );
@@ -36,14 +39,17 @@ RebirthChoicePage::RebirthChoicePage()
         }
     
     addComponent( &mRebornButton );
+    addComponent( &mTutorialButton );
     
     setButtonStyle( &mQuitButton );
     setButtonStyle( &mReviewButton );
     setButtonStyle( &mRebornButton );
+    setButtonStyle( &mTutorialButton );
     
     mQuitButton.addActionListener( this );
     mReviewButton.addActionListener( this );
     mRebornButton.addActionListener( this );
+    mTutorialButton.addActionListener( this );
 
 
     int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
@@ -71,6 +77,9 @@ void RebirthChoicePage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mRebornButton ) {
         setSignal( "reborn" );
         }
+    else if( inTarget == &mTutorialButton ) {
+        setSignal( "tutorial" );
+        }
     }
 
 
@@ -95,5 +104,20 @@ void RebirthChoicePage::makeActive( char inFresh ) {
         }
     else {
         mReviewButton.setLabelText( translate( "postReviewButton" ) );
+        }
+
+    int tutorialDone = SettingsManager::getIntSetting( "tutorialDone", 0 );
+    
+
+    if( !tutorialDone ) {
+        mRebornButton.setVisible( false );
+        doublePair rebornPos = mRebornButton.getPosition();
+        mTutorialButton.setPosition( rebornPos.x, rebornPos.y );
+        mTutorialButton.setLabelText( translate( "restartTutorial" ) );
+        }
+    else {
+        mRebornButton.setVisible( true );
+        mTutorialButton.setPosition( tutorialButtonPos.x, tutorialButtonPos.y );
+        mTutorialButton.setLabelText( translate( "tutorial" ) );
         }
     }

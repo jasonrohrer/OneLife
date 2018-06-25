@@ -1759,6 +1759,10 @@ void drawFrame( char inUpdate ) {
                 // the server we were on just crashed
                 startConnecting();
                 }
+            else if( rebirthChoicePage->checkSignal( "tutorial" ) ) {
+                livingLifePage->runTutorial();
+                startConnecting();
+                }
             else if( rebirthChoicePage->checkSignal( "review" ) ) {
                 currentGamePage = reviewPage;
                 currentGamePage->base_makeActive( true );

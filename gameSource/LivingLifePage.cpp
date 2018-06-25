@@ -1652,6 +1652,7 @@ void LivingLifePage::clearMap() {
 
 LivingLifePage::LivingLifePage() 
         : mServerSocket( -1 ), 
+          mTutorialNumber( 0 ),
           mFirstServerMessagesReceived( 0 ),
           mMapGlobalOffsetSet( false ),
           mMapD( MAP_D ),
@@ -1919,9 +1920,20 @@ LivingLifePage::LivingLifePage()
         mLineSegmentSprite = loadWhiteSprite( "lineSegment.tga" );
         }
           
-
+    
+    int tutorialDone = SettingsManager::getIntSetting( "tutorialDone", 0 );
+    
+    if( ! tutorialDone ) {
+        mTutorialNumber = 1;
+        }
     }
 
+
+
+
+void LivingLifePage::runTutorial() {
+    mTutorialNumber = 1;
+    }
 
 
 
@@ -8231,16 +8243,18 @@ void LivingLifePage::step() {
             
             char *outMessage;
             if( strlen( userEmail ) <= 80 ) {    
-                outMessage = autoSprintf( "LOGIN %-80s %s %s#",
-                                          userEmail, pwHash, keyHash );
+                outMessage = autoSprintf( "LOGIN %-80s %s %s %d#",
+                                          userEmail, pwHash, keyHash,
+                                          mTutorialNumber );
                 }
             else {
                 // their email is too long for this trick
                 // don't cut it off.
                 // but note that the playback will fail if email.ini
                 // doesn't match on the playback machine
-                outMessage = autoSprintf( "LOGIN %s %s %s#",
-                                          userEmail, pwHash, keyHash );
+                outMessage = autoSprintf( "LOGIN %s %s %s %d#",
+                                          userEmail, pwHash, keyHash,
+                                          mTutorialNumber );
                 }
             
             delete [] pwHash;

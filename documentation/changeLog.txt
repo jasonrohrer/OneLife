@@ -8,6 +8,10 @@ Version 117    ???
 
 --Support for masked speech output in client (useful for making gifs).
 
+--Support for tutorial trigger on client login, and server loading a tutorial
+  map out in the unused wilderness and placing player at start of the tutorial.
+
+
 
 
 Version 115    2018-June-22
