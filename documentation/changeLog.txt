@@ -11,6 +11,8 @@ Version 117    ???
 --Support for tutorial trigger on client login, and server loading a tutorial
   map out in the unused wilderness and placing player at start of the tutorial.
 
+--Scene editor support for copy/paste of 6x6 area.  Fixed memory leak.
+
 
 
 
