@@ -1832,6 +1832,14 @@ LivingLifePage::LivingLifePage()
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
         
         mTutorialHideOffset[i].x = -914;
+        mTutorialFlips[i] = false;
+        
+        if( i % 2 == 1 ) {
+            // odd on right side of screen
+            mTutorialHideOffset[i].x = 914;
+            mTutorialFlips[i] = true;
+            }
+        
         mTutorialHideOffset[i].y = 430;
         
         mTutorialTargetOffset[i] = mTutorialHideOffset[i];
@@ -6214,11 +6222,17 @@ void LivingLifePage::draw( doublePair inViewCenter,
             doublePair tutorialPos  = 
                 add( mTutorialPosOffset[i], lastScreenViewCenter );
             
-            tutorialPos = add( tutorialPos, mTutorialExtraOffset[i] );
+            if( i % 2 == 1 ) {
+                tutorialPos = sub( tutorialPos, mTutorialExtraOffset[i] );
+                }
+            else {
+                tutorialPos = add( tutorialPos, mTutorialExtraOffset[i] );
+                }
             
             setDrawColor( 1, 1, 1, 1 );
             // rotate 180
-            drawSprite( mHintSheetSprites[i], tutorialPos, 1.0, 0.5 );
+            drawSprite( mHintSheetSprites[i], tutorialPos, 1.0, 0.5,
+                        mTutorialFlips[i] );
             
 
             setDrawColor( 0, 0, 0, 1.0f );
@@ -6229,8 +6243,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
             char **lines = split( mTutorialMessage[i], "##", &numLines );
             
             doublePair lineStart = tutorialPos;
-            lineStart.x += 289;
-            lineStart.x -= mTutorialExtraOffset[i].x;
+            
+            if( i % 2 == 1 ) {
+                lineStart.x -= 289;
+                //lineStart.x += mTutorialExtraOffset[i].x;
+                }
+            else {
+                lineStart.x += 289;
+                lineStart.x -= mTutorialExtraOffset[i].x;
+                }
+            
             lineStart.y += 8;
             for( int l=0; l<numLines; l++ ) {
                 

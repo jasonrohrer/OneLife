@@ -637,6 +637,8 @@ class LivingLifePage : public GamePage {
         // # separates lines
         const char *mTutorialMessage[NUM_HINT_SHEETS];
 
+        char mTutorialFlips[NUM_HINT_SHEETS];
+
         int mLiveTutorialSheetIndex;
         int mLiveTutorialTriggerNumber;
 
