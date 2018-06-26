@@ -3285,7 +3285,7 @@ void processLoggedInPlayer( Socket *inSock,
     
     if( newObject.isTutorial && newObject.foodStore > 10 ) {
         // so they can practice eating at the beginning of the tutorial
-        newObject.foodStore -= 2;
+        newObject.foodStore -= 5;
         }
     
 
