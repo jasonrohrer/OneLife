@@ -8120,6 +8120,15 @@ void LivingLifePage::step() {
                 }
             }
         
+
+        if( closeDist > 6 &&
+            mLiveTutorialTriggerNumber != -1 ) {
+            // don't set a new one unless we get close enough to it
+            // OR we haven't even set the first one yet.
+            closestNumber = -1;
+            }
+        
+
         
         if( closestNumber > -1 && 
             closestNumber != mLiveTutorialTriggerNumber ) {
