@@ -626,6 +626,21 @@ class LivingLifePage : public GamePage {
         int getNumHints( int inObjectID );
         char *getHintMessage( int inObjectID, int inIndex );
 
+        
+        // offset from current view center
+        doublePair mTutorialHideOffset[NUM_HINT_SHEETS];
+        doublePair mTutorialPosOffset[NUM_HINT_SHEETS];
+        doublePair mTutorialTargetOffset[NUM_HINT_SHEETS];
+
+        doublePair mTutorialExtraOffset[NUM_HINT_SHEETS];
+
+        // # separates lines
+        const char *mTutorialMessage[NUM_HINT_SHEETS];
+
+        int mLiveTutorialSheetIndex;
+        int mLiveTutorialTriggerNumber;
+
+
 
         // -1 if outside bounds of locally stored map
         int getMapIndex( int inWorldX, int inWorldY );

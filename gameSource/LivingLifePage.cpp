@@ -1827,6 +1827,25 @@ LivingLifePage::LivingLifePage()
         mHintBookmarks[i] = 0;
         }
     
+    
+
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        
+        mTutorialHideOffset[i].x = -914;
+        mTutorialHideOffset[i].y = 430;
+        
+        mTutorialTargetOffset[i] = mTutorialHideOffset[i];
+        mTutorialPosOffset[i] = mTutorialHideOffset[i];
+
+        mTutorialExtraOffset[i].x = 0;
+        mTutorialExtraOffset[i].y = 0;
+        
+        mTutorialMessage[i] = "";
+        }
+    
+    mLiveTutorialSheetIndex = -1;
+    mLiveTutorialTriggerNumber = -1;
+
 
 
     mMap = new int[ mMapD * mMapD ];
@@ -6187,6 +6206,51 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
+    // now draw tutorial sheets
+    if( mTutorialNumber > 0 )
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        if( ! equal( mTutorialPosOffset[i], mTutorialHideOffset[i] ) ) {
+            
+            doublePair tutorialPos  = 
+                add( mTutorialPosOffset[i], lastScreenViewCenter );
+            
+            tutorialPos = add( tutorialPos, mTutorialExtraOffset[i] );
+            
+            setDrawColor( 1, 1, 1, 1 );
+            // rotate 180
+            drawSprite( mHintSheetSprites[i], tutorialPos, 1.0, 0.5 );
+            
+
+            setDrawColor( 0, 0, 0, 1.0f );
+            double lineSpacing = handwritingFont->getFontHeight() / 2 + 16;
+            
+            int numLines;
+            
+            char **lines = split( mTutorialMessage[i], "##", &numLines );
+            
+            doublePair lineStart = tutorialPos;
+            lineStart.x += 289;
+            lineStart.x -= mTutorialExtraOffset[i].x;
+            lineStart.y += 8;
+            for( int l=0; l<numLines; l++ ) {
+                
+                handwritingFont->drawString( lines[l], 
+                                             lineStart, alignLeft );
+                    
+                delete [] lines[l];
+                
+                lineStart.y -= lineSpacing;
+                }
+            delete [] lines;
+            }
+        }
+
+
+
+
+
+
+
     
     setDrawColor( 0, 0, 0, 1 );
     for( int i=0; i<mErasedNoteChars.size(); i++ ) {
@@ -8000,6 +8064,158 @@ void LivingLifePage::step() {
                 
                 mHintPosOffset[i] = 
                     add( mHintPosOffset[i],
+                         mult( dir, speed ) );
+                }
+            
+            }
+        }
+
+
+    // should new tutorial sheet be shown?
+    if( mTutorialNumber > 0 && ourID > 0 ) {
+        
+        // search map for closest tutorial trigger
+
+        double closeDist = 999999;
+        int closestNumber = -1;
+        LiveObject *ourLiveObject = getOurLiveObject();
+        
+
+        for( int y=0; y<mMapD; y++ ) {
+        
+            int worldY = y + mMapOffsetY - mMapD / 2;
+            
+            for( int x=0; x<=mMapD; x++ ) {
+                
+                int worldX = x + mMapOffsetX - mMapD / 2;
+                
+                doublePair worldPos  = { (double)worldX, (double)worldY };
+                
+                double dist = distance( worldPos, ourLiveObject->currentPos );
+                
+                if( dist < closeDist ) {
+                    
+                    int mapI = y * mMapD + x;
+                    
+                    int mapID = mMap[ mapI ];
+                    
+                    if( mapID > 0 ) {
+                        
+                        ObjectRecord *mapO = getObject( mapID );
+                        
+                        char *tutLoc = strstr( mapO->description, "tutorial" );
+                        if( tutLoc != NULL ) {
+                            
+                            int tutPage = -1;
+                            
+                            sscanf( tutLoc, "tutorial %d", &tutPage );
+                            
+
+                            if( tutPage != -1 ) {
+                                
+                                closeDist = dist;
+                                closestNumber = tutPage;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        
+        
+        if( closestNumber > -1 && 
+            closestNumber != mLiveTutorialTriggerNumber ) {
+            
+            // different tutorial stone that what is showing
+            
+            if( mLiveTutorialSheetIndex >= 0 ) {
+                mTutorialTargetOffset[ mLiveTutorialSheetIndex ] =
+                    mTutorialHideOffset[ mLiveTutorialSheetIndex ];
+                }
+            mLiveTutorialSheetIndex ++;
+            
+            if( mLiveTutorialSheetIndex >= NUM_HINT_SHEETS ) {
+                mLiveTutorialSheetIndex -= NUM_HINT_SHEETS;
+                }
+
+            mLiveTutorialTriggerNumber = closestNumber;
+            
+            char *transString = autoSprintf( "tutorial_%d", 
+                                             mLiveTutorialTriggerNumber );
+            
+            mTutorialMessage[ mLiveTutorialSheetIndex ] = 
+                translate( transString );
+
+
+            mTutorialTargetOffset[ mLiveTutorialSheetIndex ] =
+                mTutorialHideOffset[ mLiveTutorialSheetIndex ];
+            
+            mTutorialTargetOffset[ mLiveTutorialSheetIndex ].y -= 100;
+            
+            delete [] transString;
+
+
+            double longestLine = 0;
+            
+            int numLines;
+            char **lines = split( mTutorialMessage[ mLiveTutorialSheetIndex ], 
+                                  "#", &numLines );
+                
+            for( int l=0; l<numLines; l++ ) {
+                double len = handwritingFont->measureString( lines[l] );
+                
+                if( len > longestLine ) {
+                    longestLine = len;
+                    }
+                delete [] lines[l];
+                }
+            delete [] lines;
+
+            mTutorialExtraOffset[ mLiveTutorialSheetIndex ].x = longestLine;
+            }
+        }
+    
+
+
+
+    // pos for tutorial sheets
+    if( mTutorialNumber > 0 )
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        
+        if( ! equal( mTutorialPosOffset[i], mTutorialTargetOffset[i] ) ) {
+            doublePair delta = 
+                sub( mTutorialTargetOffset[i], mTutorialPosOffset[i] );
+            
+            double d = distance( mTutorialTargetOffset[i], 
+                                 mTutorialPosOffset[i] );
+            
+            
+            if( d <= 1 ) {
+                mTutorialPosOffset[i] = mTutorialTargetOffset[i];
+                
+                if( equal( mTutorialTargetOffset[i], 
+                           mTutorialHideOffset[i] ) ) {
+                    }
+                }
+            else {
+                int speed = frameRateFactor * 4;
+                
+                if( d < 8 ) {
+                    speed = lrint( frameRateFactor * d / 2 );
+                    }
+                
+                if( speed > d ) {
+                    speed = floor( d );
+                    }
+                
+                if( speed < 1 ) {
+                    speed = 1;
+                    }
+                
+                doublePair dir = normalize( delta );
+                
+                mTutorialPosOffset[i] = 
+                    add( mTutorialPosOffset[i],
                          mult( dir, speed ) );
                 }
             
