@@ -8072,14 +8072,12 @@ void LivingLifePage::step() {
 
 
     // should new tutorial sheet be shown?
-    if( mTutorialNumber > 0 && ourID > 0 ) {
+    if( mTutorialNumber > 0 && ourObject != NULL ) {
         
         // search map for closest tutorial trigger
 
         double closeDist = 999999;
         int closestNumber = -1;
-        LiveObject *ourLiveObject = getOurLiveObject();
-        
 
         for( int y=0; y<mMapD; y++ ) {
         
@@ -8091,7 +8089,7 @@ void LivingLifePage::step() {
                 
                 doublePair worldPos  = { (double)worldX, (double)worldY };
                 
-                double dist = distance( worldPos, ourLiveObject->currentPos );
+                double dist = distance( worldPos, ourObject->currentPos );
                 
                 if( dist < closeDist ) {
                     
