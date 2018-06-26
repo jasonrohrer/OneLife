@@ -1716,6 +1716,13 @@ LivingLifePage::LivingLifePage()
     if( mHungerSound != NULL ) {
         toggleVariance( mHungerSound, true );
         }
+
+
+    mTutorialSound = loadSoundSprite( "otherSounds", "tutorialChime.aiff" );
+
+    if( mTutorialSound != NULL ) {
+        toggleVariance( mTutorialSound, true );
+        }
     
 
     mHungerSlipSprites[0] = loadSprite( "fullSlip.tga", false );
@@ -2085,6 +2092,10 @@ LivingLifePage::~LivingLifePage() {
     
     if( mHungerSound != NULL ) {    
         freeSoundSprite( mHungerSound );
+        }
+
+    if( mTutorialSound != NULL ) {    
+        freeSoundSprite( mTutorialSound );
         }
     
     for( int i=0; i<3; i++ ) {
@@ -8224,6 +8235,16 @@ void LivingLifePage::step() {
                 
                 if( equal( mTutorialTargetOffset[i], 
                            mTutorialHideOffset[i] ) ) {
+                    }
+                else {
+
+                    double stereoPos = 0.25;
+                    
+                    if( i % 2 != 0 ) {
+                        stereoPos = 0.75;
+                        }
+                    
+                    playSoundSprite( mTutorialSound, 0.18, stereoPos );
                     }
                 }
             else {

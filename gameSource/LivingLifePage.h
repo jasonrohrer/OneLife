@@ -572,6 +572,9 @@ class LivingLifePage : public GamePage {
         
         SoundSpriteHandle mHungerSound;
         char mPulseHungerSound;
+
+        SoundSpriteHandle mTutorialSound;
+
         
         SpriteHandle mHungerSlipSprites[3];
 
