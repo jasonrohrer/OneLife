@@ -1652,6 +1652,7 @@ void LivingLifePage::clearMap() {
 
 LivingLifePage::LivingLifePage() 
         : mServerSocket( -1 ), 
+          mForceRunTutorial( false ),
           mTutorialNumber( 0 ),
           mFirstServerMessagesReceived( 0 ),
           mMapGlobalOffsetSet( false ),
@@ -1966,7 +1967,7 @@ LivingLifePage::LivingLifePage()
 
 
 void LivingLifePage::runTutorial() {
-    mTutorialNumber = 1;
+    mForceRunTutorial = true;
     }
 
 
@@ -8112,11 +8113,14 @@ void LivingLifePage::step() {
         double closeDist = 999999;
         int closestNumber = -1;
 
+        char closestIsFinal = false;
+        
+
         for( int y=0; y<mMapD; y++ ) {
         
             int worldY = y + mMapOffsetY - mMapD / 2;
             
-            for( int x=0; x<=mMapD; x++ ) {
+            for( int x=0; x<mMapD; x++ ) {
                 
                 int worldX = x + mMapOffsetX - mMapD / 2;
                 
@@ -8146,6 +8150,14 @@ void LivingLifePage::step() {
                                 
                                 closeDist = dist;
                                 closestNumber = tutPage;
+                                
+                                if( strstr( mapO->description, "done" ) 
+                                    != NULL ) {
+                                    closestIsFinal = true;
+                                    }
+                                else {
+                                    closestIsFinal = false;
+                                    }
                                 }
                             }
                         }
@@ -8168,6 +8180,12 @@ void LivingLifePage::step() {
             
             // different tutorial stone that what is showing
             
+            if( closestIsFinal ) {
+                // done with totorial for good, unless they request it
+                SettingsManager::setSetting( "tutorialDone", 1 );
+                }
+            
+
             if( mLiveTutorialSheetIndex >= 0 ) {
                 mTutorialTargetOffset[ mLiveTutorialSheetIndex ] =
                     mTutorialHideOffset[ mLiveTutorialSheetIndex ];
@@ -13932,6 +13950,21 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    int tutorialDone = SettingsManager::getIntSetting( "tutorialDone", 0 );
+    
+    if( ! tutorialDone ) {
+        mTutorialNumber = 1;
+        }
+    else {
+        mTutorialNumber = 0;
+        }
+    
+    if( mForceRunTutorial ) {
+        mTutorialNumber = 1;
+        mForceRunTutorial = false;
+        }
+    
 
     savingSpeechEnabled = SettingsManager::getIntSetting( "allowSavingSpeech",
                                                           0 );

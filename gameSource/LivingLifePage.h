@@ -419,6 +419,7 @@ class LivingLifePage : public GamePage {
         
         int mRequiredVersion;
 
+        char mForceRunTutorial;
         int mTutorialNumber;
 
         int mFirstServerMessagesReceived;
