@@ -8237,7 +8237,8 @@ void LivingLifePage::step() {
 
 
     // pos for tutorial sheets
-    if( mTutorialNumber > 0 )
+    // don't start sliding first sheet until map loaded
+    if( mTutorialNumber > 0 && mDoneLoadingFirstObjectSet )
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
         
         if( ! equal( mTutorialPosOffset[i], mTutorialTargetOffset[i] ) ) {
