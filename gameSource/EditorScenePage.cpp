@@ -111,7 +111,7 @@ EditorScenePage::EditorScenePage()
           mShowUI( true ),
           mShowWhite( false ),
           mCursorFade( 1.0 ),
-          mSceneW( 230 ),
+          mSceneW( 400 ),
           mSceneH( 90 ),
           mShiftX( 0 ), 
           mShiftY( 0 ),
