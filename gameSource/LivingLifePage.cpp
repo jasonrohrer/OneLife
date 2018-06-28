@@ -7164,25 +7164,83 @@ int LivingLifePage::getNumHints( int inObjectID ) {
     
 
 
-    if( mLastHintFilterString != NULL && filteredTrans.size() > 0 ) {
-        printf( "\n\n\nGetting new hints with filter %s\n\n\n",
-                mLastHintFilterString );
-        
+    if( mLastHintFilterString != NULL && filteredTrans.size() > 0 ) {        
         int numHits = 0;
         int numRemain = 0;
         ObjectRecord **hits = searchObjects( mLastHintFilterString,
                                              0,
-                                             20,
+                                             200,
                                              &numHits, &numRemain );
+
+
+        // list of IDs that are used to make hit objects
+        SimpleVector<int> precursorIDs;
         
         if( numHits > 0 ) {
+            
+            if( numHits < 10 ) {
+                
+                for( int i=0; i<numHits; i++ ) {
+                    precursorIDs.push_back( hits[i]->id );
+                    }
+                // go limited number of steps back
+                
+                SimpleVector<int> lastStep = precursorIDs;
+
+                for( int s=0; s<5; s++ ) {
+                    SimpleVector<int> oldLastStep = lastStep;
+                    
+                    lastStep.deleteAll();
+                    
+                    for( int i=0; i<oldLastStep.size(); i++ ) {
+                        int oldStepID = oldLastStep.getElementDirect( i );
+                        
+                        int numResults = 0;
+                        int numRemain = 0;
+                        TransRecord **prodTrans =
+                            searchProduces( oldStepID, 
+                                            0,
+                                            200,
+                                            &numResults, &numRemain );
+                        
+                        if( prodTrans != NULL ) {
+                            for( int t=0; t<numResults; t++ ) {
+                                
+                                int actor = prodTrans[t]->actor;
+                                int target = prodTrans[t]->target;
+                                
+                                if( actor != oldStepID && 
+                                    target != oldStepID ) {
+                                    // a transition that actually makes
+                                    // oldStepID, not just one that uses it
+                                    
+                                    if( actor > 0 && 
+                                        precursorIDs.
+                                        getElementIndex( actor ) == -1 ) {
+                                        precursorIDs.push_back( actor );
+                                        lastStep.push_back( actor );
+                                        }
+                                    if( target > 0 && 
+                                        precursorIDs.
+                                        getElementIndex( target ) == -1 ) {
+                                        precursorIDs.push_back( target );
+                                        lastStep.push_back( target );
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            
+            int numPrecursors = precursorIDs.size();
+            
             for( int i = 0; i<filteredTrans.size(); i++ ) {
                 char matchesFilter = false;
-                
+                TransRecord *t = filteredTrans.getElementDirect( i );
+
                 for( int h=0; h<numHits; h++ ) {
-                    int id = hits[h]->id;
-                    
-                    TransRecord *t = filteredTrans.getElementDirect( i );
+                    int id = hits[h]->id;    
                     
                     if( t->actor == id ||
                         t->target == id ||
@@ -7192,6 +7250,21 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                         break;
                         }    
                     }
+                if( matchesFilter == false ) {
+                    for( int p=0; p<numPrecursors; p++ ) {
+                        int id = precursorIDs.getElementDirect( p );
+                        
+                        if( t->actor != id && t->target != id 
+                            &&
+                            ( t->newActor == id || t->newTarget == id ) ) {
+                            // precursors only count if they actually
+                            // make id, not just if they use it
+                            matchesFilter = true;
+                            break;
+                            }
+                        }
+                    }
+                
                 if( ! matchesFilter ) {
                     filteredTrans.deleteElement( i );
                     i--;
