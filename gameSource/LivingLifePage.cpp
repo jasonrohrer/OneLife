@@ -7165,13 +7165,87 @@ int LivingLifePage::getNumHints( int inObjectID ) {
 
 
     if( mLastHintFilterString != NULL && filteredTrans.size() > 0 ) {        
+        unsigned int filterLength = strlen( mLastHintFilterString );
+        
         int numHits = 0;
         int numRemain = 0;
         ObjectRecord **hits = searchObjects( mLastHintFilterString,
                                              0,
                                              200,
                                              &numHits, &numRemain );
+        
+        SimpleVector<int> hitMatchIDs;
 
+
+        for( int i=0; i<numHits; i++ ) {
+            char *des = stringToUpperCase( hits[i]->description );
+            
+            stripDescriptionComment( des );
+        
+            char *searchPos = strstr( des, mLastHintFilterString );
+            
+            // only count if occurrence of filter string matches whole words
+            // not partial words
+            if( searchPos != NULL && strlen( searchPos ) >= filterLength ) {
+                
+                unsigned int remainLen = strlen( searchPos );
+
+                char frontOK = false;
+                char backOK = false;
+                
+                // space or start of string in front of search phrase
+                if( searchPos == des ||
+                    searchPos[-1] == ' ' ) {
+                    frontOK = true;
+                    }
+                
+                // space or end of string after search phrase
+                if( remainLen == filterLength ||
+                    searchPos[+1] == ' ' ) {
+                    backOK = true;
+                    }
+
+                if( frontOK && backOK ) {
+                    hitMatchIDs.push_back( hits[i]->id );
+                    }
+                }
+            }
+        
+        
+        // now find shallowest matching objects
+
+        numHits = hitMatchIDs.size();
+        
+        int shallowestDepth = UNREACHABLE;
+       
+        for( int i=0; i<numHits; i++ ) {
+            
+            int depth = getObjectDepth( hitMatchIDs.getElementDirect( i ) );
+            
+            if( depth < shallowestDepth ) {
+                shallowestDepth = depth;
+                }
+            }
+
+        SimpleVector<int> hitIDs;
+
+        for( int i=0; i<numHits; i++ ) {
+            int id = hitMatchIDs.getElementDirect( i );
+            
+            int depth = getObjectDepth( id );
+            
+            if( depth == shallowestDepth ) {
+                hitIDs.push_back( id );
+                }
+            }
+        
+
+        if( hits != NULL ) {    
+            delete [] hits;
+            }
+        
+
+        numHits = hitIDs.size();
 
         // list of IDs that are used to make hit objects
         SimpleVector<int> precursorIDs;
@@ -7181,20 +7255,22 @@ int LivingLifePage::getNumHints( int inObjectID ) {
             if( numHits < 10 ) {
                 
                 for( int i=0; i<numHits; i++ ) {
-                    precursorIDs.push_back( hits[i]->id );
+                    precursorIDs.push_back( hitIDs.getElementDirect( i ) );
                     }
                 // go limited number of steps back
                 
                 SimpleVector<int> lastStep = precursorIDs;
 
-                for( int s=0; s<5; s++ ) {
+                for( int s=0; s<10; s++ ) {
                     SimpleVector<int> oldLastStep = lastStep;
                     
                     lastStep.deleteAll();
                     
                     for( int i=0; i<oldLastStep.size(); i++ ) {
                         int oldStepID = oldLastStep.getElementDirect( i );
-                        
+                        int oldStepDepth = getObjectDepth( oldStepID );
+
+
                         int numResults = 0;
                         int numRemain = 0;
                         TransRecord **prodTrans =
@@ -7204,30 +7280,82 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                                             &numResults, &numRemain );
                         
                         if( prodTrans != NULL ) {
+                            
+                            int shallowestTransDepth = UNREACHABLE;
+                            int shallowestTransIndex = -1;
+
                             for( int t=0; t<numResults; t++ ) {
                                 
                                 int actor = prodTrans[t]->actor;
                                 int target = prodTrans[t]->target;
                                 
-                                if( actor != oldStepID && 
-                                    target != oldStepID ) {
-                                    // a transition that actually makes
-                                    // oldStepID, not just one that uses it
-                                    
-                                    if( actor > 0 && 
-                                        precursorIDs.
-                                        getElementIndex( actor ) == -1 ) {
-                                        precursorIDs.push_back( actor );
-                                        lastStep.push_back( actor );
-                                        }
-                                    if( target > 0 && 
-                                        precursorIDs.
-                                        getElementIndex( target ) == -1 ) {
-                                        precursorIDs.push_back( target );
-                                        lastStep.push_back( target );
+                                int transDepth = UNREACHABLE;
+                                
+                                if( actor > 0 ) {
+                                    transDepth = getObjectDepth( actor );
+                                    if( transDepth == UNREACHABLE ) {
+                                        // is this a category?
+                                        CategoryRecord *cat = 
+                                            getCategory( actor );
+                                        
+                                        if( cat != NULL &&
+                                            cat->objectIDSet.size() > 0 &&
+                                            ! cat->isPattern ) {
+                                            continue;
+                                            }
                                         }
                                     }
+                                if( target > 0 ) {
+                                    int targetDepth = getObjectDepth( target );
+                                    if( targetDepth == UNREACHABLE ) {
+                                        // must be category
+                                        // is this a category?
+                                        CategoryRecord *cat = 
+                                            getCategory( target );
+                                        
+                                        if( cat != NULL && 
+                                            cat->objectIDSet.size() > 0 &&
+                                            ! cat->isPattern ) {
+                                            continue;
+                                            }
+                                        }
+                                    if( targetDepth > transDepth ||
+                                        transDepth == UNREACHABLE ) {
+                                        transDepth = targetDepth;
+                                        }
+                                    }
+                                
+                                if( transDepth < shallowestTransDepth ) {
+                                    shallowestTransDepth = transDepth;
+                                    shallowestTransIndex = t;
+                                    }
                                 }
+                            
+                            
+                            if( shallowestTransIndex != -1 &&
+                                shallowestTransDepth < oldStepDepth ) {
+                                int actor = 
+                                    prodTrans[shallowestTransIndex]->actor;
+                                int target = 
+                                    prodTrans[shallowestTransIndex]->target;
+                                
+                                if( actor > 0 &&
+                                    precursorIDs.
+                                    getElementIndex( actor ) == -1 ) {
+
+                                    precursorIDs.push_back( actor );
+                                    lastStep.push_back( actor );
+                                    }
+
+                                if( target > 0 && 
+                                    precursorIDs.
+                                    getElementIndex( target ) == -1 ) {
+
+                                    precursorIDs.push_back( target );
+                                    lastStep.push_back( target );
+                                    }
+                                }
+                            
                             delete [] prodTrans;
                             }
                         }
@@ -7241,7 +7369,7 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                 TransRecord *t = filteredTrans.getElementDirect( i );
 
                 for( int h=0; h<numHits; h++ ) {
-                    int id = hits[h]->id;    
+                    int id = hitIDs.getElementDirect( h );    
                     
                     if( t->actor == id ||
                         t->target == id ||
@@ -7273,7 +7401,6 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                 }
             }
 
-        delete [] hits;
         }
 
     
@@ -16442,7 +16569,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                     
                     // a command, don't send to server
                     
-                    const char *filterCommand = "/FILTER ";
+                    const char *filterCommand = "/FILTER";
                     
                     if( strstr( typedText, filterCommand ) == typedText ) {
                         // starts with filter command
@@ -16456,21 +16583,19 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                             mHintFilterString = NULL;
                             }
                         
-                        int filterStringLen = strlen( filterString );
+                        char *trimmedFilterString = 
+                            trimWhitespace( filterString );
 
-                        printf( "\n\nSeeing new filter string '%s'\n\n\n",
-                                filterString );
-                        
+                        int filterStringLen = strlen( trimmedFilterString );
+
                         if( filterStringLen > 0 ) {
-                            for( int i=0; i<filterStringLen; i++ ) {
-                                if( filterString[i] != ' ' ) {       
-                                    // not blank
-                                    mHintFilterString = 
-                                        stringDuplicate( filterString );
-                                    break;
-                                    }
-                                }
+                            // not blank
+                            mHintFilterString = 
+                                stringDuplicate( trimmedFilterString );
                             }
+
+                        delete [] trimmedFilterString;
+                        
                         mForceHintRefresh = true;
                         mNextHintIndex = 0;
                         }
