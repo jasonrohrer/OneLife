@@ -614,6 +614,8 @@ class LivingLifePage : public GamePage {
 
         int mLiveHintSheetIndex;
 
+        char mForceHintRefresh;
+        
         int mCurrentHintObjectID;
         int mCurrentHintIndex;
         
@@ -622,6 +624,7 @@ class LivingLifePage : public GamePage {
 
         SimpleVector<TransRecord *> mLastHintSortedList;
         int mLastHintSortedSourceID;
+        char *mLastHintFilterString;
         
         // table sized to number of possible objects
         int *mHintBookmarks;
@@ -629,6 +632,9 @@ class LivingLifePage : public GamePage {
 
         int getNumHints( int inObjectID );
         char *getHintMessage( int inObjectID, int inIndex );
+
+        char *mHintFilterString;
+        
 
         
         // offset from current view center

@@ -628,6 +628,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
         loadingStepBatchSize = 1;
         }
 
+    // for filter support in LivingLifePage
+    enableObjectSearch( true );
+
 
     currentGamePage = loadingPage;
 

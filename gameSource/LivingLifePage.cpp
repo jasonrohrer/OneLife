@@ -1673,7 +1673,7 @@ LivingLifePage::LivingLifePage()
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
           mPathMarkSprite( loadWhiteSprite( "pathMark.tga" ) ),
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
-                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! " ),
+                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?!/ " ),
           mDeathReason( NULL ),
           mShowHighlights( true ) {
 
@@ -1819,6 +1819,7 @@ LivingLifePage::LivingLifePage()
     
     mLiveHintSheetIndex = -1;
 
+    mForceHintRefresh = false;
     mCurrentHintObjectID = 0;
     mCurrentHintIndex = 0;
     
@@ -1834,6 +1835,9 @@ LivingLifePage::LivingLifePage()
     for( int i=0; i<=maxObjectID; i++ ) {
         mHintBookmarks[i] = 0;
         }
+    
+    mHintFilterString = NULL;
+    mLastHintFilterString = NULL;
     
     
 
@@ -2170,6 +2174,15 @@ LivingLifePage::~LivingLifePage() {
     
     delete [] mHintBookmarks;
 
+    if( mHintFilterString != NULL ) {
+        delete [] mHintFilterString;
+        mHintFilterString = NULL;
+        }
+
+    if( mLastHintFilterString != NULL ) {
+        delete [] mLastHintFilterString;
+        mLastHintFilterString = NULL;
+        }
 
     if( mDeathReason != NULL ) {
         delete [] mDeathReason;
@@ -7104,7 +7117,21 @@ static char getTransHintable( TransRecord *inTrans ) {
 int LivingLifePage::getNumHints( int inObjectID ) {
     
 
-    if( mLastHintSortedSourceID == inObjectID ) {
+    char sameFilter = false;
+    
+    if( mLastHintFilterString == NULL &&
+        mHintFilterString == NULL ) {
+        sameFilter = true;
+        }
+    else if( mLastHintFilterString != NULL &&
+             mHintFilterString != NULL &&
+             strcmp( mLastHintFilterString, mHintFilterString ) == 0 ) {
+        sameFilter = true;
+        }
+    
+
+
+    if( mLastHintSortedSourceID == inObjectID && sameFilter ) {
         return mLastHintSortedList.size();
         }
     
@@ -7114,12 +7141,70 @@ int LivingLifePage::getNumHints( int inObjectID ) {
     mLastHintSortedSourceID = inObjectID;
     mLastHintSortedList.deleteAll();
 
+    if( mLastHintFilterString != NULL ) {
+        delete [] mLastHintFilterString;
+        mLastHintFilterString = NULL;
+        }
+    
+    if( mHintFilterString != NULL ) {
+        mLastHintFilterString = stringDuplicate( mHintFilterString );
+        }
+    
     // heap sort
     MinPriorityQueue<TransRecord*> queue;
     
     SimpleVector<TransRecord*> *trans = getAllUses( inObjectID );
     
-    int numTrans = trans->size();
+    
+    SimpleVector<TransRecord *> filteredTrans;
+
+    for( int i = 0; i<trans->size(); i++ ) {
+        filteredTrans.push_back( trans->getElementDirect( i ) );
+        }
+    
+
+
+    if( mLastHintFilterString != NULL && filteredTrans.size() > 0 ) {
+        printf( "\n\n\nGetting new hints with filter %s\n\n\n",
+                mLastHintFilterString );
+        
+        int numHits = 0;
+        int numRemain = 0;
+        ObjectRecord **hits = searchObjects( mLastHintFilterString,
+                                             0,
+                                             20,
+                                             &numHits, &numRemain );
+        
+        if( numHits > 0 ) {
+            for( int i = 0; i<filteredTrans.size(); i++ ) {
+                char matchesFilter = false;
+                
+                for( int h=0; h<numHits; h++ ) {
+                    int id = hits[h]->id;
+                    
+                    TransRecord *t = filteredTrans.getElementDirect( i );
+                    
+                    if( t->actor == id ||
+                        t->target == id ||
+                        t->newActor == id ||
+                        t->newTarget == id ) {
+                        matchesFilter = true;
+                        break;
+                        }    
+                    }
+                if( ! matchesFilter ) {
+                    filteredTrans.deleteElement( i );
+                    i--;
+                    }
+                }
+            }
+
+        delete [] hits;
+        }
+
+    
+    int numTrans = filteredTrans.size();
+
 
     // skip any that repeat exactly the same string
     // (example:  goose pond in different states)
@@ -7128,7 +7213,7 @@ int LivingLifePage::getNumHints( int inObjectID ) {
     
 
     for( int i=0; i<numTrans; i++ ) {
-        TransRecord *tr = trans->getElementDirect( i );
+        TransRecord *tr = filteredTrans.getElementDirect( i );
         
         if( getTransHintable( tr ) ) {
             
@@ -7988,8 +8073,11 @@ void LivingLifePage::step() {
         getNumHints( mNextHintObjectID ) > 0 ) {
         
         if( mCurrentHintObjectID != mNextHintObjectID ||
-            mCurrentHintIndex != mNextHintIndex ) {
+            mCurrentHintIndex != mNextHintIndex ||
+            mForceHintRefresh ) {
             
+            mForceHintRefresh = false;
+
             int newLiveSheetIndex = 0;
 
             if( mLiveHintSheetIndex != -1 ) {
@@ -13912,6 +14000,20 @@ void LivingLifePage::step() {
     }
 
 
+
+
+// previous function (step) is so long that it's slowin down Emacs
+// on the following function
+// put a dummy function here to help emacs.
+static void dummyFunctionA() {
+    // call self to avoid compiler warning for unused function
+    if( false ) {
+        dummyFunctionA();
+        }
+    }
+
+
+
   
 void LivingLifePage::makeActive( char inFresh ) {
     // unhold E key
@@ -13951,6 +14053,33 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    mForceHintRefresh = false;
+    mLastHintSortedSourceID = 0;
+    mLastHintSortedList.deleteAll();
+
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        mHintTargetOffset[i] = mHintHideOffset[i];
+        mHintPosOffset[i] = mHintHideOffset[i];
+        }
+
+    mCurrentHintObjectID = 0;
+    mCurrentHintIndex = 0;
+    
+    mNextHintObjectID = 0;
+    mNextHintIndex = 0;
+    
+    
+    if( mHintFilterString != NULL ) {
+        delete [] mHintFilterString;
+        mHintFilterString = NULL;
+        }
+
+    if( mLastHintFilterString != NULL ) {
+        delete [] mLastHintFilterString;
+        mLastHintFilterString = NULL;
+        }
+
 
     int tutorialDone = SettingsManager::getIntSetting( "tutorialDone", 0 );
     
@@ -16232,6 +16361,49 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 char *typedText = mSayField.getText();
                 
                 if( strcmp( typedText, "" ) == 0 ) {
+                    mSayField.unfocus();
+                    }
+                else if( strlen( typedText ) > 0 &&
+                         typedText[0] == '/' ) {
+                    
+                    // a command, don't send to server
+                    
+                    const char *filterCommand = "/FILTER ";
+                    
+                    if( strstr( typedText, filterCommand ) == typedText ) {
+                        // starts with filter command
+                        
+                        char *filterString = 
+                            &( typedText[ strlen( filterCommand ) ] );
+                        
+                        
+                        if( mHintFilterString != NULL ) {
+                            delete [] mHintFilterString;
+                            mHintFilterString = NULL;
+                            }
+                        
+                        int filterStringLen = strlen( filterString );
+
+                        printf( "\n\nSeeing new filter string '%s'\n\n\n",
+                                filterString );
+                        
+                        if( filterStringLen > 0 ) {
+                            for( int i=0; i<filterStringLen; i++ ) {
+                                if( filterString[i] != ' ' ) {       
+                                    // not blank
+                                    mHintFilterString = 
+                                        stringDuplicate( filterString );
+                                    break;
+                                    }
+                                }
+                            }
+                        mForceHintRefresh = true;
+                        mNextHintIndex = 0;
+                        }
+
+                    mSentChatPhrases.push_back( stringDuplicate( typedText ) );
+                    
+                    mSayField.setText( "" );
                     mSayField.unfocus();
                     }
                 else {
