@@ -7228,6 +7228,7 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                                         }
                                     }
                                 }
+                            delete [] prodTrans;
                             }
                         }
                     }
