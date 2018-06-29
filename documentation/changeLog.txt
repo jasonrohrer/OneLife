@@ -23,6 +23,10 @@ Version 117    ???
   counts as fully participating in a line.  This prevents grief-killers from
   suiciding before 30 minutes and coming right back.
 
+--TEMP LOGIN button hidden along with login button when checking for FPS
+  mismatch (otherwise, someone might press TEMP LOGIN upon not seeing LOGIN at
+  first).
+
 
 
 

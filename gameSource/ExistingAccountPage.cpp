@@ -164,12 +164,14 @@ void ExistingAccountPage::makeActive( char inFresh ) {
     mFPSMeasureDone = false;
     
     mLoginButton.setVisible( false );
+    mLoginNoSaveButton.setVisible( false );
     
     int skipFPSMeasure = SettingsManager::getIntSetting( "skipFPSMeasure", 0 );
     
     if( skipFPSMeasure ) {
         mFPSMeasureDone = true;
         mLoginButton.setVisible( true );
+        mLoginNoSaveButton.setVisible( true );
         }
 
 
@@ -400,6 +402,7 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
 
             if( !fpsFailed ) {
                 mLoginButton.setVisible( true );
+                mLoginNoSaveButton.setVisible( true );
                 }
             else {
                 // show error message
