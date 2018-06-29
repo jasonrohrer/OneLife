@@ -2927,7 +2927,7 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                         inFlipH, -1, 0, false, false, emptyClothing );
             }
         else if( inClothing.frontShoe != NULL && i == frontFootIndex ) {
-            drawObject( inClothing.backShoe, 2,
+            drawObject( inClothing.frontShoe, 2,
                         frontShoePos, frontShoeRot, true,
                         inFlipH, -1, 0, false, false, emptyClothing );
             }
