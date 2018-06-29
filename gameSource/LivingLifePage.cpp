@@ -7198,7 +7198,9 @@ int LivingLifePage::getNumHints( int inObjectID ) {
             filteredTrans.push_back( t );
             }
         }
-    
+
+
+    int numFilterHits = 0;
 
 
     if( mLastHintFilterString != NULL && filteredTrans.size() > 0 ) {        
@@ -7213,6 +7215,7 @@ int LivingLifePage::getNumHints( int inObjectID ) {
         
         SimpleVector<int> hitMatchIDs;
 
+        numFilterHits = numHits;
 
         for( int i=0; i<numHits; i++ ) {
             char *des = stringToUpperCase( hits[i]->description );
@@ -7470,7 +7473,7 @@ int LivingLifePage::getNumHints( int inObjectID ) {
             mPendingFilterString = NULL;
             }
         
-        if( numRelevant == 0 ) {
+        if( numRelevant == 0 || numFilterHits == 0 ) {
             mPendingFilterString = autoSprintf( "%s %s %s",
                                                 translate( "making" ),
                                                 mLastHintFilterString,
