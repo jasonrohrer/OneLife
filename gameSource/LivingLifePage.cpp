@@ -16569,7 +16569,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                     
                     // a command, don't send to server
                     
-                    const char *filterCommand = "/FILTER";
+                    const char *filterCommand = "/";
                     
                     if( strstr( typedText, filterCommand ) == typedText ) {
                         // starts with filter command
