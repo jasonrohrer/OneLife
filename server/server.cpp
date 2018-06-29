@@ -2989,7 +2989,12 @@ static LiveObject *getHitPlayer( int inX, int inY,
         if( otherPlayer->error ) {
             continue;
             }
-
+        
+        if( otherPlayer->heldByOther ) {
+            // ghost position of a held baby
+            continue;
+            }
+        
         if( inMaxAge != -1 &&
             computeAge( otherPlayer ) > inMaxAge ) {
             continue;

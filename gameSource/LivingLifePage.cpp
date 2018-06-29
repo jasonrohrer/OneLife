@@ -15812,7 +15812,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
             LiveObject *o = gameObjects.getElement( i );
             
-            if( o->id != ourID ) {
+            if( o->id != ourID &&
+                o->heldByAdultID == -1 ) {
+                
+                // can't kill by clicking on ghost-location of held baby
+
                 if( distance( targetPos, o->currentPos ) < 1 ) {
                     // clicked on someone
                     

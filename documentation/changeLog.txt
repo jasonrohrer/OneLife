@@ -27,6 +27,13 @@ Version 117    ???
   mismatch (otherwise, someone might press TEMP LOGIN upon not seeing LOGIN at
   first).
 
+--Typo in objectBank.  Fixes #39.  Good catch UncleGus.
+
+--Fixed so that you can never click on a held baby by clicking its last ground
+  position (could kill a held baby by accident when trying to set a weapon
+  down where they were standing before pick-up).
+
+
 
 
 
