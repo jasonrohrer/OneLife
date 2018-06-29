@@ -157,6 +157,8 @@ noHint "NO INFORMATION"
 ofHint "OF"
 tabHint "[TAB]"
 
+making "MAKING:"
+
 
 your "YOUR"
 of "OF"

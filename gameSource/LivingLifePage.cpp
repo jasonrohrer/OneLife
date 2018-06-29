@@ -7145,9 +7145,33 @@ int LivingLifePage::getNumHints( int inObjectID ) {
         delete [] mLastHintFilterString;
         mLastHintFilterString = NULL;
         }
+
+
+    int lastSheet = NUM_HINT_SHEETS - 1;
     
     if( mHintFilterString != NULL ) {
         mLastHintFilterString = stringDuplicate( mHintFilterString );
+        
+        if( mHintMessage[ lastSheet ] != NULL ) {
+            delete [] mHintMessage[ lastSheet ];
+            }
+        mHintMessage[ lastSheet ] = autoSprintf( "%s %s",
+                                                 translate( "making" ),
+                                                 mLastHintFilterString );
+
+        mNumTotalHints[ lastSheet ] = 1;
+        mHintMessageIndex[ lastSheet ] = 0;
+        mHintTargetOffset[ lastSheet ] = mHintHideOffset[ lastSheet ];
+        mHintTargetOffset[ lastSheet ].y += 50;
+
+        double len = 
+            handwritingFont->measureString( mHintMessage[ lastSheet ] );
+
+        
+        mHintExtraOffset[ lastSheet ].x = - len;
+        }
+    else {
+        mHintTargetOffset[ lastSheet ] = mHintHideOffset[ lastSheet ];
         }
     
     // heap sort
@@ -7405,6 +7429,17 @@ int LivingLifePage::getNumHints( int inObjectID ) {
 
     
     int numTrans = filteredTrans.size();
+
+
+    if( numTrans == 0 && trans->size() > 0 ) {
+        // after filtering, no transititions are left
+        // show all trans instead
+        for( int i = 0; i<trans->size(); i++ ) {
+            filteredTrans.push_back( trans->getElementDirect( i ) );
+            }
+        numTrans = filteredTrans.size();
+        }
+    
 
 
     // skip any that repeat exactly the same string
@@ -8284,8 +8319,9 @@ void LivingLifePage::step() {
             if( mLiveHintSheetIndex != -1 ) {
                 mHintTargetOffset[mLiveHintSheetIndex] = mHintHideOffset[0];
                 
+                // save last hint sheet for filter
                 newLiveSheetIndex = 
-                    (mLiveHintSheetIndex + 1 ) % NUM_HINT_SHEETS;
+                    (mLiveHintSheetIndex + 1 ) % ( NUM_HINT_SHEETS - 1 );
                 
                 }
             
@@ -8296,6 +8332,11 @@ void LivingLifePage::step() {
             mHintTargetOffset[i] = mHintHideOffset[0];
             mHintTargetOffset[i].y += 100;
             
+            if( mLastHintFilterString != NULL ) {
+                mHintTargetOffset[i].y += 20;
+                }
+            
+
             mHintMessageIndex[ i ] = mNextHintIndex;
             
             mCurrentHintObjectID = mNextHintObjectID;
@@ -8341,8 +8382,9 @@ void LivingLifePage::step() {
         if( mLiveHintSheetIndex != -1 ) {
             mHintTargetOffset[mLiveHintSheetIndex] = mHintHideOffset[0];
             
+            // save last hint sheet for filter
             newLiveSheetIndex = 
-                (mLiveHintSheetIndex + 1 ) % NUM_HINT_SHEETS;
+                (mLiveHintSheetIndex + 1 ) % ( NUM_HINT_SHEETS - 1 );
             
             }
         
