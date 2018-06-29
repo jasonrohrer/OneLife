@@ -13,6 +13,16 @@ Version 117    ???
 
 --Scene editor support for copy/paste of 6x6 area.  Fixed memory leak.
 
+--New crafting hint filter system.  Say /hatchet to show only hints relevant to
+  making a hatchet.  Say / by itself to clear the filter.
+
+--Time played in other lines before returning to a line pushed up to 1.5 hours.
+
+--People who kill, regardless of their time in a line (even less than a half
+  hour) are given the full lineage ban, just like murder victims.  Killing
+  counts as fully participating in a line.  This prevents grief-killers from
+  suiciding before 30 minutes and coming right back.
+
 
 
 

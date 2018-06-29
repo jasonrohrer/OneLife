@@ -301,6 +301,9 @@ typedef struct LiveObject {
         // or if they were killed by a non-person, what was it?
         int deathSourceID;
         
+        // true if this character landed a mortal wound on another player
+        char everKilledOther;
+
 
         Socket *sock;
         SimpleVector<char> *sockBuffer;
@@ -3638,6 +3641,8 @@ void processLoggedInPlayer( Socket *inSock,
     
     newObject.deathSourceID = 0;
     
+    newObject.everKilledOther = false;
+    
 
     newObject.sock = inSock;
     newObject.sockBuffer = inSockBuffer;
@@ -6524,6 +6529,9 @@ int main() {
                                         hitPlayer->murderPerpID =
                                             nextPlayer->id;
                                         
+                                        // brand this player as a murderer
+                                        nextPlayer->everKilledOther = true;
+
                                         if( hitPlayer->murderPerpEmail 
                                             != NULL ) {
                                             delete [] 
@@ -8519,7 +8527,8 @@ int main() {
                 recordLineage( nextPlayer->email, 
                                nextPlayer->lineageEveID,
                                yearsLived, 
-                               ( killerID > 0 ) );
+                               ( killerID > 0 ),
+                               nextPlayer->everKilledOther );
         
                 if( ! nextPlayer->deathLogged ) {
                     char disconnect = true;

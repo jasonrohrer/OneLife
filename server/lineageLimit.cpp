@@ -79,7 +79,7 @@ void primeLineageTest( int inNumLivePlayers ) {
         }
     
     float maxHours = 
-        SettingsManager::getFloatSetting( "lineageLimitOtherLineHours", 1.0 );
+        SettingsManager::getFloatSetting( "lineageLimitOtherLineHours", 1.5 );
     
     double hours = fractionOfMax * maxHours;
 
@@ -210,9 +210,10 @@ char isLinePermitted( const char *inPlayerEmail, int inLineageEveID ) {
 
 
 void recordLineage( const char *inPlayerEmail, int inLineageEveID,
-                    double inLivedYears, char inMurdered ) {
+                    double inLivedYears, char inMurdered, 
+                    char inCommittedMurder ) {
 
-    if( inMurdered ) {
+    if( inMurdered || inCommittedMurder ) {
         // push up over the limit no matter how long they have lived
         inLivedYears += oneLineMaxYears;
         }
