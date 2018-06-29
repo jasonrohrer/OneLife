@@ -7156,6 +7156,14 @@ int LivingLifePage::getNumHints( int inObjectID ) {
         mLastHintFilterString = stringDuplicate( mHintFilterString );
         }
     
+    if( ! sameFilter ) {
+        // new filter, clear all bookmarks
+        int maxObjectID = getMaxObjectID();
+        for( int i=0; i<=maxObjectID; i++ ) {
+            mHintBookmarks[i] = 0;
+            }
+        }
+    
 
     // heap sort
     MinPriorityQueue<TransRecord*> queue;
