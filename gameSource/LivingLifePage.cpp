@@ -7187,10 +7187,16 @@ int LivingLifePage::getNumHints( int inObjectID ) {
     SimpleVector<TransRecord*> *trans = getAllUses( inObjectID );
     
     
+    SimpleVector<TransRecord *> unfilteredTrans;
     SimpleVector<TransRecord *> filteredTrans;
 
     for( int i = 0; i<trans->size(); i++ ) {
-        filteredTrans.push_back( trans->getElementDirect( i ) );
+        TransRecord *t = trans->getElementDirect( i );
+        
+        if( getTransHintable( t ) ) {
+            unfilteredTrans.push_back( t );
+            filteredTrans.push_back( t );
+            }
         }
     
 
@@ -7439,11 +7445,11 @@ int LivingLifePage::getNumHints( int inObjectID ) {
 
     int numRelevant = numTrans;
 
-    if( numTrans == 0 && trans->size() > 0 ) {
+    if( numTrans == 0 && unfilteredTrans.size() > 0 ) {
         // after filtering, no transititions are left
         // show all trans instead
-        for( int i = 0; i<trans->size(); i++ ) {
-            filteredTrans.push_back( trans->getElementDirect( i ) );
+        for( int i = 0; i<unfilteredTrans.size(); i++ ) {
+            filteredTrans.push_back( unfilteredTrans.getElementDirect( i ) );
             }
         numTrans = filteredTrans.size();
         }
@@ -7493,74 +7499,71 @@ int LivingLifePage::getNumHints( int inObjectID ) {
     for( int i=0; i<numTrans; i++ ) {
         TransRecord *tr = filteredTrans.getElementDirect( i );
         
-        if( getTransHintable( tr ) ) {
+        int depth = 0;
             
-            int depth = 0;
-            
-            if( tr->actor > 0 && tr->actor != inObjectID ) {
-                depth = getObjectDepth( tr->actor );
-                }
-            else if( tr->target > 0 && tr->target != inObjectID ) {
-                depth = getObjectDepth( tr->target );
-                }
+        if( tr->actor > 0 && tr->actor != inObjectID ) {
+            depth = getObjectDepth( tr->actor );
+            }
+        else if( tr->target > 0 && tr->target != inObjectID ) {
+            depth = getObjectDepth( tr->target );
+            }
             
             
-            char stringAlreadyPresent = false;
+        char stringAlreadyPresent = false;
             
-            if( tr->actor > 0 && tr->actor != inObjectID ) {
-                ObjectRecord *otherObj = getObject( tr->actor );
+        if( tr->actor > 0 && tr->actor != inObjectID ) {
+            ObjectRecord *otherObj = getObject( tr->actor );
                 
-                char *trimmedDesc = stringDuplicate( otherObj->description );
-                stripDescriptionComment( trimmedDesc );
+            char *trimmedDesc = stringDuplicate( otherObj->description );
+            stripDescriptionComment( trimmedDesc );
 
-                for( int s=0; s<otherActorStrings.size(); s++ ) {
+            for( int s=0; s<otherActorStrings.size(); s++ ) {
                     
-                    if( strcmp( trimmedDesc, 
-                                otherActorStrings.getElementDirect( s ) )
-                        == 0 ) {
+                if( strcmp( trimmedDesc, 
+                            otherActorStrings.getElementDirect( s ) )
+                    == 0 ) {
                         
-                        stringAlreadyPresent = true;
-                        break;
-                        }    
-                    }
-
-                if( !stringAlreadyPresent ) {
-                    otherActorStrings.push_back( trimmedDesc );
-                    }
-                else {
-                    delete [] trimmedDesc;
-                    }
-                }
-            
-            if( tr->target > 0 && tr->target != inObjectID ) {
-                ObjectRecord *otherObj = getObject( tr->target );
-                
-                char *trimmedDesc = stringDuplicate( otherObj->description );
-                stripDescriptionComment( trimmedDesc );
-
-                for( int s=0; s<otherTargetStrings.size(); s++ ) {
-                    
-                    if( strcmp( trimmedDesc, 
-                                otherTargetStrings.getElementDirect( s ) )
-                        == 0 ) {
-                        
-                        stringAlreadyPresent = true;
-                        break;
-                        }    
-                    }
-
-                if( !stringAlreadyPresent ) {
-                    otherTargetStrings.push_back( trimmedDesc );
-                    }
-                else {
-                    delete [] trimmedDesc;
-                    }
+                    stringAlreadyPresent = true;
+                    break;
+                    }    
                 }
 
-            
             if( !stringAlreadyPresent ) {
-                queue.insert( tr, depth );
+                otherActorStrings.push_back( trimmedDesc );
                 }
+            else {
+                delete [] trimmedDesc;
+                }
+            }
+            
+        if( tr->target > 0 && tr->target != inObjectID ) {
+            ObjectRecord *otherObj = getObject( tr->target );
+                
+            char *trimmedDesc = stringDuplicate( otherObj->description );
+            stripDescriptionComment( trimmedDesc );
+
+            for( int s=0; s<otherTargetStrings.size(); s++ ) {
+                    
+                if( strcmp( trimmedDesc, 
+                            otherTargetStrings.getElementDirect( s ) )
+                    == 0 ) {
+                        
+                    stringAlreadyPresent = true;
+                    break;
+                    }    
+                }
+
+            if( !stringAlreadyPresent ) {
+                otherTargetStrings.push_back( trimmedDesc );
+                }
+            else {
+                delete [] trimmedDesc;
+                }
+            }
+
+            
+        if( !stringAlreadyPresent ) {
+            queue.insert( tr, depth );
             }
         }
     
