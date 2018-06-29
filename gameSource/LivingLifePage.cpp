@@ -5984,14 +5984,30 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
+    int lineSpacing = 20;
+
     doublePair notePos = add( mNotePaperPosOffset, lastScreenViewCenter );
 
     if( ! equal( mNotePaperPosOffset, mNotePaperHideOffset ) ) {
         setDrawColor( 1, 1, 1, 1 );
         drawSprite( mNotePaperSprite, notePos );
+        
+
+        doublePair drawPos = notePos;
+
+        drawPos.x += 160;
+        drawPos.y += 79;
+        drawPos.y += 22;
+        
+        drawPos.x += 27;
+
+        setDrawColor( 0, 0, 0, 1 );
+        
+        handwritingFont->drawString( translate( "enterHint" ), 
+                                     drawPos,
+                                     alignRight );
         }
         
-    int lineSpacing = 20;
 
     
 
