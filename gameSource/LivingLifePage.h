@@ -626,6 +626,10 @@ class LivingLifePage : public GamePage {
         int mLastHintSortedSourceID;
         char *mLastHintFilterString;
         
+        // string that's waiting to be shown on hint-sheet 4
+        char *mPendingFilterString;
+        
+
         // table sized to number of possible objects
         int *mHintBookmarks;
         

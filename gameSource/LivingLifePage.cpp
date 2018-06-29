@@ -1838,6 +1838,7 @@ LivingLifePage::LivingLifePage()
     
     mHintFilterString = NULL;
     mLastHintFilterString = NULL;
+    mPendingFilterString = NULL;
     
     
 
@@ -2182,6 +2183,11 @@ LivingLifePage::~LivingLifePage() {
     if( mLastHintFilterString != NULL ) {
         delete [] mLastHintFilterString;
         mLastHintFilterString = NULL;
+        }
+
+    if( mPendingFilterString != NULL ) {
+        delete [] mPendingFilterString;
+        mPendingFilterString = NULL;
         }
 
     if( mDeathReason != NULL ) {
@@ -7146,34 +7152,11 @@ int LivingLifePage::getNumHints( int inObjectID ) {
         mLastHintFilterString = NULL;
         }
 
-
-    int lastSheet = NUM_HINT_SHEETS - 1;
-    
     if( mHintFilterString != NULL ) {
         mLastHintFilterString = stringDuplicate( mHintFilterString );
-        
-        if( mHintMessage[ lastSheet ] != NULL ) {
-            delete [] mHintMessage[ lastSheet ];
-            }
-        mHintMessage[ lastSheet ] = autoSprintf( "%s %s",
-                                                 translate( "making" ),
-                                                 mLastHintFilterString );
-
-        mNumTotalHints[ lastSheet ] = 1;
-        mHintMessageIndex[ lastSheet ] = 0;
-        mHintTargetOffset[ lastSheet ] = mHintHideOffset[ lastSheet ];
-        mHintTargetOffset[ lastSheet ].y += 50;
-
-        double len = 
-            handwritingFont->measureString( mHintMessage[ lastSheet ] );
-
-        
-        mHintExtraOffset[ lastSheet ].x = - len;
-        }
-    else {
-        mHintTargetOffset[ lastSheet ] = mHintHideOffset[ lastSheet ];
         }
     
+
     // heap sort
     MinPriorityQueue<TransRecord*> queue;
     
@@ -7430,6 +7413,7 @@ int LivingLifePage::getNumHints( int inObjectID ) {
     
     int numTrans = filteredTrans.size();
 
+    int numRelevant = numTrans;
 
     if( numTrans == 0 && trans->size() > 0 ) {
         // after filtering, no transititions are left
@@ -7440,6 +7424,40 @@ int LivingLifePage::getNumHints( int inObjectID ) {
         numTrans = filteredTrans.size();
         }
     
+    
+
+    int lastSheet = NUM_HINT_SHEETS - 1;
+    
+    if( mPendingFilterString != NULL ) {
+        delete [] mPendingFilterString;
+        mPendingFilterString = NULL;
+        }
+
+    if( mLastHintFilterString != NULL ) {
+
+        if( mPendingFilterString != NULL ) {
+            delete [] mPendingFilterString;
+            mPendingFilterString = NULL;
+            }
+        
+        if( numRelevant == 0 ) {
+            mPendingFilterString = autoSprintf( "%s %s %s",
+                                                translate( "making" ),
+                                                mLastHintFilterString,
+                                                translate( "noneRelevant" ) );
+            }
+        else {    
+            mPendingFilterString = autoSprintf( "%s %s",
+                                                translate( "making" ),
+                                                mLastHintFilterString );
+            }
+        
+        }
+    else {
+        mHintTargetOffset[ lastSheet ] = mHintHideOffset[ lastSheet ];
+        }
+
+
 
 
     // skip any that repeat exactly the same string
@@ -8333,7 +8351,7 @@ void LivingLifePage::step() {
             mHintTargetOffset[i].y += 100;
             
             if( mLastHintFilterString != NULL ) {
-                mHintTargetOffset[i].y += 20;
+                mHintTargetOffset[i].y += 30;
                 }
             
 
@@ -8393,7 +8411,50 @@ void LivingLifePage::step() {
         mCurrentHintObjectID = mNextHintObjectID;
         }
     
+    
+        
+    int lastSheet = NUM_HINT_SHEETS - 1;
+    if( mPendingFilterString != NULL &&
+        ( mHintMessage[ lastSheet ] == NULL ||
+          strcmp( mHintMessage[ lastSheet ], mPendingFilterString ) != 0 ) ) {
+        
+        mHintTargetOffset[ lastSheet ] = mHintHideOffset[ lastSheet ];
+        
+        if( equal( mHintPosOffset[ lastSheet ], 
+                   mHintHideOffset[ lastSheet ] ) ) {
+            
+            mNumTotalHints[ lastSheet ] = 1;
+            mHintMessageIndex[ lastSheet ] = 0;
+            
+            mHintTargetOffset[ lastSheet ].y += 53;
 
+            if( mHintMessage[ lastSheet ] != NULL ) {
+                delete [] mHintMessage[ lastSheet ];
+                }
+            
+            mHintMessage[ lastSheet ] = 
+                stringDuplicate( mPendingFilterString );
+
+            double len = 
+                handwritingFont->measureString( mHintMessage[ lastSheet ] );
+            
+            mHintExtraOffset[ lastSheet ].x = - len;
+            }
+        
+        }
+    else if( mPendingFilterString == NULL &&
+             mHintMessage[ lastSheet ] != NULL ) {
+        mHintTargetOffset[ lastSheet ] = mHintHideOffset[ lastSheet ];
+        
+        if( equal( mHintPosOffset[ lastSheet ], 
+                   mHintHideOffset[ lastSheet ] ) ) {
+            
+            // done hiding
+            delete [] mHintMessage[ lastSheet ];
+            mHintMessage[ lastSheet ] = NULL;
+            }
+        }
+    
 
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
         
@@ -14321,6 +14382,11 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( mLastHintFilterString != NULL ) {
         delete [] mLastHintFilterString;
         mLastHintFilterString = NULL;
+        }
+
+    if( mPendingFilterString != NULL ) {
+        delete [] mPendingFilterString;
+        mPendingFilterString = NULL;
         }
 
 
