@@ -16659,6 +16659,13 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                     }
                 }
             break;
+        case '/':
+            if( ! mSayField.isFocused() ) {
+                // start typing a filter
+                mSayField.setText( "/" );
+                mSayField.focus();
+                }
+            break;
         case 13:  // enter
             // speak
             if( ! mSayField.isFocused() ) {
