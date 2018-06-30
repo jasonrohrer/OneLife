@@ -32,6 +32,7 @@
 
 #define NUM_HOME_ARROWS 8
 
+#define NUM_YUM_SLIPS 4
 
 
 typedef struct LiveObject {
@@ -178,6 +179,9 @@ typedef struct LiveObject {
         int xd;
         int yd;
         
+        // true if xd,yd set based on a truncated PM from the server
+        char destTruncated;
+        
         
         // use a waypoint along the way during pathfinding.
         // path must pass through this point on its way to xd,yd
@@ -237,7 +241,13 @@ typedef struct LiveObject {
 
         char pendingAction;
         float pendingActionAnimationProgress;
+        float pendingActionAnimationTotalProgress;
         double pendingActionAnimationStartTime;
+        
+        double lastActionSendStartTime;
+        // how long it took server to get back to us with a PU last
+        // time we sent an action.  Most recent round-trip time
+        double lastResponseTimeDelta;
         
         
         // NULL if no active speech
@@ -358,7 +368,10 @@ class LivingLifePage : public GamePage {
         ~LivingLifePage();
         
         void clearMap();
-
+        
+        // enabled tutorail next time a connection loads
+        void runTutorial();
+        
 
         char isMapBeingPulled();
 
@@ -406,6 +419,9 @@ class LivingLifePage : public GamePage {
         
         int mRequiredVersion;
 
+        char mForceRunTutorial;
+        int mTutorialNumber;
+
         int mFirstServerMessagesReceived;
         
         char mStartedLoadingFirstObjectSet;
@@ -447,7 +463,7 @@ class LivingLifePage : public GamePage {
         double *mMapAnimationLastFrameCount;
         
         double *mMapAnimationFrozenRotFrameCount;
-        
+        char *mMapAnimationFrozenRotFrameCountUsed;
 
         int *mMapFloorAnimationFrameCount;
 
@@ -562,6 +578,9 @@ class LivingLifePage : public GamePage {
         
         SoundSpriteHandle mHungerSound;
         char mPulseHungerSound;
+
+        SoundSpriteHandle mTutorialSound;
+
         
         SpriteHandle mHungerSlipSprites[3];
 
@@ -600,6 +619,8 @@ class LivingLifePage : public GamePage {
 
         int mLiveHintSheetIndex;
 
+        char mForceHintRefresh;
+        
         int mCurrentHintObjectID;
         int mCurrentHintIndex;
         
@@ -608,13 +629,38 @@ class LivingLifePage : public GamePage {
 
         SimpleVector<TransRecord *> mLastHintSortedList;
         int mLastHintSortedSourceID;
+        char *mLastHintFilterString;
         
+        // string that's waiting to be shown on hint-sheet 4
+        char *mPendingFilterString;
+        
+
         // table sized to number of possible objects
         int *mHintBookmarks;
         
 
         int getNumHints( int inObjectID );
         char *getHintMessage( int inObjectID, int inIndex );
+
+        char *mHintFilterString;
+        
+
+        
+        // offset from current view center
+        doublePair mTutorialHideOffset[NUM_HINT_SHEETS];
+        doublePair mTutorialPosOffset[NUM_HINT_SHEETS];
+        doublePair mTutorialTargetOffset[NUM_HINT_SHEETS];
+
+        doublePair mTutorialExtraOffset[NUM_HINT_SHEETS];
+
+        // # separates lines
+        const char *mTutorialMessage[NUM_HINT_SHEETS];
+
+        char mTutorialFlips[NUM_HINT_SHEETS];
+
+        int mLiveTutorialSheetIndex;
+        int mLiveTutorialTriggerNumber;
+
 
 
         // -1 if outside bounds of locally stored map
@@ -645,6 +691,19 @@ class LivingLifePage : public GamePage {
                                     SpriteHandle *inDashSprites,
                                     char inSkipBar,
                                     char inSkipDashes );
+        
+        
+        int mYumBonus;
+        SimpleVector<int> mOldYumBonus;
+        SimpleVector<float> mOldYumBonusFades;
+
+        int mYumMultiplier;
+
+        SpriteHandle mYumSlipSprites[ NUM_YUM_SLIPS ];
+        int mYumSlipNumberToShow[ NUM_YUM_SLIPS ];
+        doublePair mYumSlipHideOffset[ NUM_YUM_SLIPS ];
+        doublePair mYumSlipPosOffset[ NUM_YUM_SLIPS ];
+        doublePair mYumSlipPosTargetOffset[ NUM_YUM_SLIPS ];
         
 
         // the object that we're mousing over

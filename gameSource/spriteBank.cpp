@@ -1004,6 +1004,7 @@ int bakeSprite( const char *inTag,
                 int inNumSprites,
                 int *inSpriteIDs,
                 doublePair *inSpritePos,
+                double *inSpriteRot,
                 char *inSpriteHFlips ) {
     
     File spritesDir( NULL, "sprites" );
@@ -1083,29 +1084,80 @@ int bakeSprite( const char *inTag,
                 chan[c] = image->getChannel( c );
                 }
                 
-            int xSign = 1;
+            // number of clockwise 90 degree rotations
+            int numRotSteps = 0;
             
-            
-            if( inSpriteHFlips[i] ) {
-                xSign = -1;
+            if( inSpriteRot[i] != 0 ) {
+                double rot = inSpriteRot[i];
+
+                if( inSpriteHFlips[i] ) {
+                    rot *= -1;
+                    }
+
+                while( rot < 0 ) {
+                    rot += 1.0;
+                    }
+                while( rot > 1.0 ) {
+                    rot -= 1.0;
+                    }
+
+                numRotSteps = lrint( rot / 0.25 );
                 }
-                
+            
 
             for( int y = 0; y<h; y++ ) {
                 int baseY = ( y - centerY ) - yOffsets[i] + baseCenterY;
                 
                 for( int x = 0; x<w; x++ ) {
-                    int baseX = xSign * ( x - centerX ) + 
+                    int baseX = ( x - centerX ) + 
                         xOffsets[i] + baseCenterX;
+
+                    int finalX = x;
+                    int finalY = y;
+                    
+                    int xFromCenter = x - centerX;
+                    int yFromCenter = (y - centerY);
                     
                     if( inSpriteHFlips[i] ) {
-                        baseX -= 1;
+                        xFromCenter *= -1;
+                        xFromCenter -= 1;
                         }
 
-                    int i = y * w + x;
+                    for( int r=0; r<numRotSteps; r++ ) {
+                        int newX = yFromCenter;
+                        int newY = - xFromCenter;
+                        xFromCenter = newX;
+                        yFromCenter = newY;
+                        }
+                    
+                    finalX = xFromCenter + centerX;
+                    finalY = yFromCenter + centerY;
+                    
+                    
+                    // special case tweaks found by trial and error
+                    if( numRotSteps == 1 ) {
+                        finalY -= 1;
+                        }
+                    else if( numRotSteps == 2 ) {
+                        finalY -= 1;
+                        finalX -= 1;
+                        }
+                    else if( numRotSteps == 3 ) {
+                        finalX -= 1;
+                        }
+                    
+                    
+                    // might rotate out, skip these pixels if so
+                    if( finalY >= h || finalY < 0 ||
+                        finalX >= w || finalX < 0 ) {
+                        continue;
+                        }
+                        
+
+                    int i = finalY * w + finalX;
                     
                     int baseI = baseY * baseW + baseX;
-                    
+                        
                     for( int c=0; c<3; c++ ) {
                         // blend dest and source using source alpha
                         // as weight

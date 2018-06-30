@@ -266,6 +266,16 @@ typedef struct ObjectAnimPack {
         // can be NULL if there are none contained
         int *inContainedIDs;
         SimpleVector<int> *inSubContained;
+        
+        // can be added by caller after this structure
+        // is returned by drawObjectAnimPacked
+        // set to 0 by default
+        // if added, by caller, drawObjectAnim will draw this held
+        // item on top of animating object
+        // NOTE that only basic drawing support is implementef for
+        // this held id (meant for held wounds of babies, no contained
+        // items, no animation, no rideable objects)
+        int additionalHeldID;
     } ObjectAnimPack;
 
 

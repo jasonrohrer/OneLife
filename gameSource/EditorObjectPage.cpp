@@ -1821,6 +1821,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                                 mCurrentObject.numSprites,
                                 mCurrentObject.sprites,
                                 mCurrentObject.spritePos,
+                                mCurrentObject.spriteRot,
                                 mCurrentObject.spriteHFlip );
         
         spritePickable.usePickable( newID );

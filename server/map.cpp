@@ -1606,6 +1606,22 @@ int countNewlines( char *inString ) {
 
 
 
+#include "../gameSource/categoryBank.h"
+
+
+// true if ID is a non-pattern category
+char getIsCategory( int inID ) {
+    CategoryRecord *r = getCategory( inID );
+    
+    if( r == NULL ) {
+        return false;
+        }
+    if( r->isPattern ) {
+        return false;
+        }
+    return true;
+    }
+
 
 
 // returns num set after
@@ -1649,8 +1665,12 @@ int cleanMap() {
                 
                 ObjectRecord *o = getObject( id );
                 
-                if( o == NULL ) {
+                if( o == NULL || getIsCategory( id ) ) {
                     // id doesn't exist anymore
+                    
+                    // OR it's a non-pattern category
+                    // those should never exist in map
+                    // may be left over from a non-clean shutdown
                     
                     numClearedCount++;
                     
@@ -1711,7 +1731,7 @@ int cleanMap() {
                     
                     ObjectRecord *o = getObject( - cont[c] );
                     
-                    if( o != NULL ) {
+                    if( o != NULL && ! getIsCategory( - cont[c] ) ) {
                         
                         thisKept = true;
                         
@@ -1727,7 +1747,9 @@ int cleanMap() {
 
                         for( int s=0; s<numSub; s++ ) {
                             
-                            if( getObject( contSub[s] ) != NULL ) {
+                            if( getObject( contSub[s] ) != NULL &&
+                                ! getIsCategory( contSub[s] ) ) {
+                                
                                 subCont.push_back( contSub[s] );
                                 subContDecay.push_back( decaySub[s] );
                                 }
@@ -1744,7 +1766,7 @@ int cleanMap() {
                     }
                 else {
                     ObjectRecord *o = getObject( cont[c] );
-                    if( o != NULL ) {
+                    if( o != NULL && ! getIsCategory( cont[c] ) ) {
                         
                         thisKept = true;
                         newCont.push_back( cont[c] );
@@ -1810,6 +1832,98 @@ int cleanMap() {
 
     printf( "\n" );
     return totalSetCount;
+    }
+
+
+
+
+static void loadIntoMapFromFile( FILE *inFile, 
+                          int inOffsetX = 0, 
+                          int inOffsetY = 0 ) {
+    // break out when read fails
+    while( true ) {
+        TestMapRecord r;
+                
+        char stringBuff[1000];
+                
+        int numRead = fscanf( inFile, "%d %d %d %d %999s", 
+                              &(r.x), &(r.y), &(r.biome),
+                              &(r.floor),
+                              stringBuff );
+                
+        if( numRead != 5 ) {
+            break;
+            }
+        r.x += inOffsetX;
+        r.y += inOffsetY;
+        
+        int numSlots;
+                
+        char **slots = split( stringBuff, ",", &numSlots );
+                
+        for( int i=0; i<numSlots; i++ ) {
+                    
+            if( i == 0 ) {
+                r.id = atoi( slots[0] );
+                }
+            else {
+                        
+                int numSub;
+                char **subSlots = split( slots[i], ":", &numSub );
+                        
+                for( int j=0; j<numSub; j++ ) {
+                    if( j == 0 ) {
+                        int contID = atoi( subSlots[0] );
+                                
+                        if( numSub > 1 ) {
+                            contID *= -1;
+                            }
+                                
+                        r.contained.push_back( contID );
+                        SimpleVector<int> subVec;
+                                
+                        r.subContained.push_back( subVec );
+                        }
+                    else {
+                        SimpleVector<int> *subVec =
+                            r.subContained.getElement( i - 1 );
+                        subVec->push_back( atoi( subSlots[j] ) );
+                        }
+                    delete [] subSlots[j];
+                    }
+                delete [] subSlots;
+                }
+                    
+            delete [] slots[i];
+            }
+        delete [] slots;
+
+
+
+        // set all test map directly in database
+        biomeDBPut( r.x, r.y, r.biome, r.biome, 0.5 );
+                
+        dbFloorPut( r.x, r.y, r.floor );
+
+        setMapObject( r.x, r.y, r.id );
+                
+        int *contArray = r.contained.getElementArray();
+                
+        setContained( r.x, r.y, r.contained.size(), contArray );
+        delete [] contArray;
+                
+        for( int c=0; c<r.contained.size(); c++ ) {
+
+            int *subContArray = 
+                r.subContained.getElement( c )->getElementArray();
+                    
+            setContained( r.x, r.y, 
+                          r.subContained.getElement(c)->size(),
+                          subContArray, c + 1 );
+                    
+            delete [] subContArray;
+            }
+        }
     }
 
 
@@ -2375,88 +2489,7 @@ void initMap() {
             
             printf( "Loading testMap.txt\n" );
             
-            // break out when read fails
-            while( true ) {
-                TestMapRecord r;
-                
-                char stringBuff[1000];
-                
-                int numRead = fscanf( testMapFile, "%d %d %d %d %999s", 
-                                      &(r.x), &(r.y), &(r.biome),
-                                      &(r.floor),
-                                      stringBuff );
-                
-                if( numRead != 5 ) {
-                    break;
-                    }
-                
-                int numSlots;
-                
-                char **slots = split( stringBuff, ",", &numSlots );
-                
-                for( int i=0; i<numSlots; i++ ) {
-                    
-                    if( i == 0 ) {
-                        r.id = atoi( slots[0] );
-                        }
-                    else {
-                        
-                        int numSub;
-                        char **subSlots = split( slots[i], ":", &numSub );
-                        
-                        for( int j=0; j<numSub; j++ ) {
-                            if( j == 0 ) {
-                                int contID = atoi( subSlots[0] );
-                                
-                                if( numSub > 1 ) {
-                                    contID *= -1;
-                                    }
-                                
-                                r.contained.push_back( contID );
-                                SimpleVector<int> subVec;
-                                
-                                r.subContained.push_back( subVec );
-                                }
-                            else {
-                                SimpleVector<int> *subVec =
-                                    r.subContained.getElement( i - 1 );
-                                subVec->push_back( atoi( subSlots[j] ) );
-                                }
-                            delete [] subSlots[j];
-                            }
-                        delete [] subSlots;
-                        }
-                    
-                    delete [] slots[i];
-                    }
-                delete [] slots;
-
-
-
-                // set all test map directly in database
-                biomeDBPut( r.x, r.y, r.biome, r.biome, 0.5 );
-                
-                dbFloorPut( r.x, r.y, r.floor );
-
-                setMapObject( r.x, r.y, r.id );
-                
-                int *contArray = r.contained.getElementArray();
-                
-                setContained( r.x, r.y, r.contained.size(), contArray );
-                delete [] contArray;
-                
-                for( int c=0; c<r.contained.size(); c++ ) {
-
-                    int *subContArray = 
-                        r.subContained.getElement( c )->getElementArray();
-                    
-                    setContained( r.x, r.y, 
-                                  r.subContained.getElement(c)->size(),
-                                  subContArray, c + 1 );
-                    
-                    delete [] subContArray;
-                    }
-                }
+            loadIntoMapFromFile( testMapFile );
 
             fclose( testMapFile );
             testMapFile = NULL;
@@ -5531,6 +5564,34 @@ void mapEveDeath( char *inEmail, double inAge ) {
     }
 
 
+
+char loadTutorial( const char *inMapFileName, int inX, int inY ) {
+    File tutorialFolder( NULL, "tutorialMaps" );
+    
+    char returnVal = false;
+
+    if( tutorialFolder.exists() && tutorialFolder.isDirectory() ) {
+        
+        File *mapFile = tutorialFolder.getChildFile( inMapFileName );
+        
+        if( mapFile->exists() &&  ! mapFile->isDirectory() ) {
+            char *fileName = mapFile->getFullFileName();
+            
+            FILE *file = fopen( fileName, "r" );
+
+            if( file != NULL ) {
+                loadIntoMapFromFile( file, inX, inY );
+                fclose( file );
+                returnVal = true;
+                }
+            
+            delete [] fileName;
+            }
+        delete mapFile;
+        }
+    
+    return returnVal;
+    }
 
 
 

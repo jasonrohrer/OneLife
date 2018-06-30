@@ -62,6 +62,10 @@ static JenkinsRandomSource randSource;
 float targetHeat = 10;
 
 
+double secondsPerYear = 60.0;
+
+
+
 #define PERSON_OBJ_ID 12
 
 
@@ -161,6 +165,8 @@ typedef struct FreshConnection {
         double connectionStartTimeSeconds;
 
         char *email;
+        
+        int tutorialNumber;
     } FreshConnection;
 
 
@@ -181,6 +187,8 @@ typedef struct LiveObject {
         char *lastSay;
 
         char isEve;        
+
+        char isTutorial;
 
         GridPos birthPos;
 
@@ -288,10 +296,14 @@ typedef struct LiveObject {
 
         // who killed them?
         int murderPerpID;
+        char *murderPerpEmail;
         
         // or if they were killed by a non-person, what was it?
         int deathSourceID;
         
+        // true if this character landed a mortal wound on another player
+        char everKilledOther;
+
 
         Socket *sock;
         SimpleVector<char> *sockBuffer;
@@ -349,6 +361,14 @@ typedef struct LiveObject {
         char justAte;
         int justAteID;
         
+        // chain of non-repeating foods eaten
+        SimpleVector<int> yummyFoodChain;
+        
+        // how many bonus from yummy food is stored
+        // these are used first before food is decremented
+        int yummyBonusStore;
+        
+
         ClothingSet clothing;
         
         timeSec_t clothingEtaDecay[NUM_CLOTHING_PIECES];
@@ -398,6 +418,54 @@ typedef struct GraveMoveInfo {
         GridPos posStart;
         GridPos posEnd;
     } GraveMoveInfo;
+
+
+
+
+// tracking spots on map that inflicted a mortal wound
+// put them on timeout afterward so that they don't attack
+// again immediately
+typedef struct DeadlyMapSpot {
+        GridPos pos;
+        double timeOfAttack;
+    } DeadlyMapSpot;
+
+
+static double deadlyMapSpotTimeoutSec = 10;
+
+static SimpleVector<DeadlyMapSpot> deadlyMapSpots;
+
+
+static char wasRecentlyDeadly( GridPos inPos ) {
+    double curTime = Time::getCurrentTime();
+    
+    for( int i=0; i<deadlyMapSpots.size(); i++ ) {
+        
+        DeadlyMapSpot *s = deadlyMapSpots.getElement( i );
+        
+        if( curTime - s->timeOfAttack >= deadlyMapSpotTimeoutSec ) {
+            deadlyMapSpots.deleteElement( i );
+            i--;
+            }
+        else if( s->pos.x == inPos.x && s->pos.y == inPos.y ) {
+            // note that this is a lazy method that only walks through
+            // the whole list and checks for timeouts when
+            // inPos isn't found
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+
+static void addDeadlyMapSpot( GridPos inPos ) {
+    // don't check for duplicates
+    // we're only called to add a new deadly spot when the spot isn't
+    // currently on deadly cooldown anyway
+    DeadlyMapSpot s = { inPos, Time::getCurrentTime() };
+    deadlyMapSpots.push_back( s );
+    }
 
 
 
@@ -1255,7 +1323,7 @@ double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
 
 
 double getAgeRate() {
-    return 1.0 / 60.0;
+    return 1.0 / secondsPerYear;
     }
 
 
@@ -1430,10 +1498,6 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
     */
 
 
-    // never move at 0 speed, divide by 0 errors for eta times
-    if( speed < 0.1 ) {
-        speed = 0.1;
-        }
 
     // apply character's speed mult
     speed *= getObject( inPlayer->displayID )->speedMult;
@@ -1467,6 +1531,12 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
                 }
             }
         }
+
+    // never move at 0 speed, divide by 0 errors for eta times
+    if( speed < 0.01 ) {
+        speed = 0.01;
+        }
+
     
     // after all multipliers, make sure it's a whole number of pixels per frame
 
@@ -2313,6 +2383,7 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
 // drops an object held by a player at target x,y location
 // doesn't check for adjacency (so works for thrown drops too)
 // if target spot blocked, will search for empty spot to throw object into
+// if inPlayerIndicesToSendUpdatesAbout is NULL, it is ignored
 void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                  SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
     
@@ -2409,8 +2480,11 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                             computeFoodDecrementTimeSeconds( babyO );
                         }
                     
-                    inPlayerIndicesToSendUpdatesAbout->push_back( 
-                        getLiveObjectIndex( babyID ) );
+                    if( inPlayerIndicesToSendUpdatesAbout != NULL ) {    
+                        inPlayerIndicesToSendUpdatesAbout->push_back( 
+                            getLiveObjectIndex( babyID ) );
+                        }
+                    
                     }
                 
                 }
@@ -2461,8 +2535,10 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                     computeFoodDecrementTimeSeconds( babyO );
                 }
 
-            inPlayerIndicesToSendUpdatesAbout->push_back( 
-                getLiveObjectIndex( babyID ) );
+            if( inPlayerIndicesToSendUpdatesAbout != NULL ) {
+                inPlayerIndicesToSendUpdatesAbout->push_back( 
+                    getLiveObjectIndex( babyID ) );
+                }
             }
         
         inDroppingPlayer->holdingID = 0;
@@ -2498,8 +2574,11 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             
     ObjectRecord *droppedObject = getObject( oldHoldingID );
    
-    handleMapChangeToPaths( targetX, targetY, droppedObject,
-                            inPlayerIndicesToSendUpdatesAbout );
+    if( inPlayerIndicesToSendUpdatesAbout != NULL ) {    
+        handleMapChangeToPaths( targetX, targetY, droppedObject,
+                                inPlayerIndicesToSendUpdatesAbout );
+        }
+    
     
     }
 
@@ -2673,6 +2752,59 @@ static char *getUpdateLineFromRecord(
 
 
 
+static char isYummy( LiveObject *inPlayer, int inObjectID ) {
+    ObjectRecord *o = getObject( inObjectID );
+    
+    if( o->isUseDummy ) {
+        inObjectID = o->useDummyParent;
+        o = getObject( inObjectID );
+        }
+
+    if( o->foodValue == 0 ) {
+        return false;
+        }
+
+    for( int i=0; i<inPlayer->yummyFoodChain.size(); i++ ) {
+        if( inObjectID == inPlayer->yummyFoodChain.getElementDirect(i) ) {
+            return false;
+            }
+        }
+    return true;
+    }
+
+
+
+static void updateYum( LiveObject *inPlayer, int inFoodEatenID ) {
+
+    if( ! isYummy( inPlayer, inFoodEatenID ) ) {
+        // chain broken
+        inPlayer->yummyFoodChain.deleteAll();
+        }
+    
+    
+    ObjectRecord *o = getObject( inFoodEatenID );
+    
+    if( o->isUseDummy ) {
+        inFoodEatenID = o->useDummyParent;
+        }
+    
+    
+    // add to chain
+    // might be starting a new chain
+    inPlayer->yummyFoodChain.push_back( inFoodEatenID );
+
+
+    int currentBonus = inPlayer->yummyFoodChain.size() - 1;
+
+    if( currentBonus < 0 ) {
+        currentBonus = 0;
+        }    
+
+    inPlayer->yummyBonusStore += currentBonus;
+    }
+
+
+
 
 
 static UpdateRecord getUpdateRecord( 
@@ -2763,10 +2895,17 @@ static UpdateRecord getUpdateRecord(
         deathReason = inPlayer->deathReason;
         }
     
+    int heldYum = 0;
+    
+    if( inPlayer->holdingID > 0 &&
+        isYummy( inPlayer, inPlayer->holdingID ) ) {
+        heldYum = 1;
+        }
+
 
     r.formatString = autoSprintf( 
         "%d %d %d %d %%d %%d %s %d %%d %%d %d "
-        "%.2f %s %.2f %.2f %.2f %s %d %d %d%s\n",
+        "%.2f %s %.2f %.2f %.2f %s %d %d %d %d%s\n",
         inPlayer->id,
         inPlayer->displayID,
         inPlayer->facingOverride,
@@ -2787,6 +2926,7 @@ static UpdateRecord getUpdateRecord(
         inPlayer->justAte,
         inPlayer->justAteID,
         inPlayer->responsiblePlayerID,
+        heldYum,
         deathReason );
     
     r.absoluteActionTarget = inPlayer->actionTarget;
@@ -2849,7 +2989,12 @@ static LiveObject *getHitPlayer( int inX, int inY,
         if( otherPlayer->error ) {
             continue;
             }
-
+        
+        if( otherPlayer->heldByOther ) {
+            // ghost position of a held baby
+            continue;
+            }
+        
         if( inMaxAge != -1 &&
             computeAge( otherPlayer ) > inMaxAge ) {
             continue;
@@ -2928,12 +3073,20 @@ static LiveObject *getHitPlayer( int inX, int inY,
     
 
 
+
+// for placement of tutorials out of the way 
+static int maxPlacementX = 5000000;
+
+// each subsequent tutorial gets put in a diferent place
+static int tutorialCount = 0;
+
         
 
 
 void processLoggedInPlayer( Socket *inSock,
                             SimpleVector<char> *inSockBuffer,
-                            char *inEmail ) {
+                            char *inEmail,
+                            int inTutorialNumber ) {
     
     // reload these settings every time someone new connects
     // thus, they can be changed without restarting the server
@@ -2970,7 +3123,12 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.displayID = getRandomPersonObject();
     
     newObject.isEve = false;
-
+    
+    newObject.isTutorial = false;
+    
+    if( inTutorialNumber > 0 ) {
+        newObject.isTutorial = true;
+        }
 
     newObject.trueStartTimeSeconds = Time::getCurrentTime();
     newObject.lifeStartTimeSeconds = newObject.trueStartTimeSeconds;
@@ -3009,6 +3167,10 @@ void processLoggedInPlayer( Socket *inSock,
         LiveObject *player = players.getElement( i );
         
         if( player->error ) {
+            continue;
+            }
+
+        if( player->isTutorial ) {
             continue;
             }
 
@@ -3074,6 +3236,13 @@ void processLoggedInPlayer( Socket *inSock,
             }
         }
 
+
+    if( inTutorialNumber > 0 ) {
+        // Tutorial always played full-grown
+        parentChoices.deleteAll();
+        }
+
+
     newObject.parentChainLength = 1;
 
     if( parentChoices.size() == 0 || numOfAge == 0 ) {
@@ -3125,6 +3294,13 @@ void processLoggedInPlayer( Socket *inSock,
         // babies start out almost starving
         newObject.foodStore = 2;
         }
+    
+    if( newObject.isTutorial && newObject.foodStore > 10 ) {
+        // so they can practice eating at the beginning of the tutorial
+        newObject.foodStore -= 6;
+        }
+    
+
 
     newObject.heat = 0.5;
 
@@ -3138,6 +3314,8 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.justAte = false;
     newObject.justAteID = 0;
     
+    newObject.yummyBonusStore = 0;
+
     newObject.clothing = getEmptyClothingSet();
 
     for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
@@ -3153,9 +3331,12 @@ void processLoggedInPlayer( Socket *inSock,
     
     
     LiveObject *parent = NULL;
-                
-    if( parentChoices.size() > 0 ) {
 
+    char placed = false;
+    
+    if( parentChoices.size() > 0 ) {
+        placed = true;
+        
         if( newObject.isEve ) {
             // spawned next to random existing player
             int parentIndex = 
@@ -3314,8 +3495,49 @@ void processLoggedInPlayer( Socket *inSock,
             newObject.xd = cPos.x;
             newObject.yd = cPos.y;
             }
-        }                    
-    else {
+        
+        if( newObject.xs > maxPlacementX ) {
+            maxPlacementX = newObject.xs;
+            }
+        }
+    else if( inTutorialNumber > 0 ) {
+        
+        int startX = maxPlacementX * 2;
+        int startY = tutorialCount * 100;
+
+        newObject.xs = startX;
+        newObject.ys = startY;
+        
+        newObject.xd = startX;
+        newObject.yd = startY;
+
+        char *mapFileName = autoSprintf( "tutorial%d.txt", inTutorialNumber );
+        
+        placed = loadTutorial( mapFileName, startX, startY );
+        
+        delete [] mapFileName;
+
+        tutorialCount ++;
+
+        int maxPlayers = 
+            SettingsManager::getIntSetting( "maxPlayers", 200 );
+
+        if( tutorialCount > maxPlayers * 2 ) {
+            // wrap back to 0 so we don't keep getting farther
+            // and farther away on map if server runs for a long time.
+
+            // The earlier-placed tutorials are over by now, because
+            // we can't have more than maxPlayers tutorials running at once
+            
+            tutorialCount = 0;
+            }
+        }
+    
+    
+    if( !placed ) {
+        // tutorial didn't happen if not placed
+        newObject.isTutorial = false;
+        
         // else starts at civ outskirts (lone Eve)
         int startX, startY;
         getEvePosition( newObject.email, &startX, &startY );
@@ -3333,7 +3555,11 @@ void processLoggedInPlayer( Socket *inSock,
         newObject.ys = startY;
         
         newObject.xd = startX;
-        newObject.yd = startY;    
+        newObject.yd = startY;
+
+        if( newObject.xs > maxPlacementX ) {
+            maxPlacementX = newObject.xs;
+            }
         }
     
 
@@ -3416,7 +3642,11 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.holdingWound = false;
     
     newObject.murderPerpID = 0;
+    newObject.murderPerpEmail = NULL;
+    
     newObject.deathSourceID = 0;
+    
+    newObject.everKilledOther = false;
     
 
     newObject.sock = inSock;
@@ -3489,8 +3719,6 @@ void processLoggedInPlayer( Socket *inSock,
             newObject.lineage->push_back( 
                 parent->lineage->getElementDirect( i ) );
             }
-
-        recordLineage( newObject.email, newObject.lineageEveID );
         }
 
     newObject.birthPos.x = newObject.xd;
@@ -3509,6 +3737,7 @@ void processLoggedInPlayer( Socket *inSock,
     players.push_back( newObject );            
 
 
+    if( ! newObject.isTutorial )        
     logBirth( newObject.id,
               newObject.email,
               newObject.parentID,
@@ -3519,8 +3748,9 @@ void processLoggedInPlayer( Socket *inSock,
               players.size(),
               newObject.parentChainLength );
     
-    AppLog::infoF( "New player %s connected as player %d",
-                   newObject.email, newObject.id );
+    AppLog::infoF( "New player %s connected as player %d (tutorial=%d)",
+                   newObject.email, newObject.id,
+                   inTutorialNumber );
     }
 
 
@@ -3961,19 +4191,111 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
     
     int oldContained = 
         nextPlayer->numContained;
+    
+    
+    nextPlayer->heldOriginValid = 0;
+    nextPlayer->heldOriginX = 0;
+    nextPlayer->heldOriginY = 0;
+    
+    // can newly changed container hold
+    // less than what it could contain
+    // before?
+    
+    int newHeldSlots = getNumContainerSlots( inNewHeldID );
+    
+    if( newHeldSlots < oldContained ) {
+        // new container can hold less
+        // truncate
+                            
+        GridPos dropPos = 
+            computePartialMoveSpot( inPlayer );
+                            
+        // offset to counter-act offsets built into
+        // drop code
+        dropPos.x += 1;
+        dropPos.y += 1;
+        
+        char found = false;
+        GridPos spot;
+        
+        if( getMapObject( dropPos.x, dropPos.y ) == 0 ) {
+            spot = dropPos;
+            found = true;
+            }
+        else {
+            found = findDropSpot( 
+                dropPos.x, dropPos.y,
+                dropPos.x, dropPos.y,
+                &spot );
+            }
+        
+        
+        if( found ) {
+            
+            // throw it on map temporarily
+            handleDrop( 
+                spot.x, spot.y, 
+                inPlayer,
+                // only temporary, don't worry about blocking players
+                // with this drop
+                NULL );
+                                
+
+            // responsible player for stuff thrown on map by shrink
+            setResponsiblePlayer( inPlayer->id );
+
+            // shrink contianer on map
+            shrinkContainer( spot.x, spot.y, 
+                             newHeldSlots );
+            
+            setResponsiblePlayer( -1 );
+            
+
+            // pick it back up
+            nextPlayer->holdingEtaDecay = 
+                getEtaDecay( spot.x, spot.y );
+                                    
+            FullMapContained f =
+                getFullMapContained( spot.x, spot.y );
+
+            setContained( inPlayer, f );
+            
+            clearAllContained( spot.x, spot.y );
+            setMapObject( spot.x, spot.y, 0 );
+            }
+        else {
+            // no spot to throw it
+            // cannot leverage map's container-shrinking
+            // just truncate held container directly
+            
+            // truncated contained items will be lost
+            inPlayer->numContained = newHeldSlots;
+            }
+        }
 
     nextPlayer->holdingID = inNewHeldID;
     
-    if( oldHolding != nextPlayer->holdingID ) {
-        
+    if( newHeldSlots > 0 && 
+        oldHolding != 0 ) {
+                                        
+        restretchDecays( 
+            newHeldSlots,
+            nextPlayer->containedEtaDecays,
+            oldHolding,
+            nextPlayer->holdingID );
+        }
+    
+    
+    if( oldHolding != inNewHeldID ) {
+            
         char kept = false;
 
         // keep old decay timeer going...
         // if they both decay to the same thing in the same time
-        if( oldHolding > 0 && nextPlayer->holdingID > 0 ) {
+        if( oldHolding > 0 && inNewHeldID > 0 ) {
             
             TransRecord *oldDecayT = getTrans( -1, oldHolding );
-            TransRecord *newDecayT = getTrans( -1, inPlayer->holdingID );
+            TransRecord *newDecayT = getTrans( -1, inNewHeldID );
             
             if( oldDecayT != NULL && newDecayT != NULL ) {
                 if( oldDecayT->autoDecaySeconds == newDecayT->autoDecaySeconds
@@ -3988,34 +4310,7 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
             setFreshEtaDecayForHeld( nextPlayer );
             }
         }
-    
-    nextPlayer->heldOriginValid = 0;
-    nextPlayer->heldOriginX = 0;
-    nextPlayer->heldOriginY = 0;
-    
-    // can newly changed container hold
-    // less than what it could contain
-    // before?
-    
-    int newHeldSlots = getNumContainerSlots( 
-        nextPlayer->holdingID );
-    
-    if( newHeldSlots < oldContained ) {
-        // truncate
-        nextPlayer->numContained
-            = newHeldSlots;
-        }
-    
-    if( newHeldSlots > 0 && 
-        oldHolding != 0 ) {
-                                        
-        restretchDecays( 
-            newHeldSlots,
-            nextPlayer->containedEtaDecays,
-            oldHolding,
-            nextPlayer->holdingID );
-        }
-                                    
+
     }
 
 
@@ -4856,6 +5151,8 @@ int main() {
 
                 newConnection.sequenceNumber = nextSequenceNumber;
                 
+                newConnection.tutorialNumber = 0;
+
                 nextSequenceNumber ++;
                 
                 SettingsManager::setSetting( "sequenceNumber",
@@ -5015,7 +5312,8 @@ int main() {
                             processLoggedInPlayer( 
                                 nextConnection->sock,
                                 nextConnection->sockBuffer,
-                                nextConnection->email );
+                                nextConnection->email,
+                                nextConnection->tutorialNumber );
                             
                             delete nextConnection->ticketServerRequest;
                             newConnections.deleteElement( i );
@@ -5073,7 +5371,7 @@ int main() {
                         SimpleVector<char *> *tokens =
                             tokenizeString( message );
                         
-                        if( tokens->size() == 4 ) {
+                        if( tokens->size() == 4 || tokens->size() == 5 ) {
                             
                             nextConnection->email = 
                                 stringDuplicate( 
@@ -5081,7 +5379,12 @@ int main() {
                             char *pwHash = tokens->getElementDirect( 2 );
                             char *keyHash = tokens->getElementDirect( 3 );
                             
-
+                            if( tokens->size() == 5 ) {
+                                sscanf( tokens->getElementDirect( 4 ),
+                                        "%d", 
+                                        &( nextConnection->tutorialNumber ) );
+                                }
+                            
                             char emailAlreadyLoggedIn = false;
                             
 
@@ -5189,7 +5492,8 @@ int main() {
                                     processLoggedInPlayer( 
                                         nextConnection->sock,
                                         nextConnection->sockBuffer,
-                                        nextConnection->email );
+                                        nextConnection->email,
+                                        nextConnection->tutorialNumber );
                                     
                                     delete nextConnection->ticketServerRequest;
                                     newConnections.deleteElement( i );
@@ -5293,6 +5597,8 @@ int main() {
 
         SimpleVector<int> playerIndicesToSendDyingAbout;
 
+        SimpleVector<int> playerIndicesToSendHealingAbout;
+
         SimpleVector<GraveInfo> newGraves;
         SimpleVector<GraveMoveInfo> newGraveMoves;
 
@@ -5338,11 +5644,22 @@ int main() {
 
             if( ! nextPlayer->heldByOther &&
                 curOverID != 0 && 
-                ! isMapObjectInTransit( curPos.x, curPos.y ) ) {
+                ! isMapObjectInTransit( curPos.x, curPos.y ) &&
+                ! wasRecentlyDeadly( curPos ) ) {
                 
                 ObjectRecord *curOverObj = getObject( curOverID );
                 
-                if( curOverObj->permanent && curOverObj->deadlyDistance > 0 ) {
+                char riding = false;
+                
+                if( nextPlayer->holdingID > 0 && 
+                    getObject( nextPlayer->holdingID )->rideable ) {
+                    riding = true;
+                    }
+
+                if( !riding &&
+                    curOverObj->permanent && curOverObj->deadlyDistance > 0 ) {
+                    
+                    addDeadlyMapSpot( curPos );
                     
                     setDeathReason( nextPlayer, 
                                     "killed",
@@ -5350,19 +5667,98 @@ int main() {
                     
                     nextPlayer->deathSourceID = curOverID;
                     
-                    nextPlayer->error = true;
+                    if( curOverObj->isUseDummy ) {
+                        nextPlayer->deathSourceID = curOverObj->useDummyParent;
+                        }
+
                     nextPlayer->errorCauseString =
                         "Player killed by permanent object";
+                    
+                    if( ! nextPlayer->dying ) {
+                        int staggerTime = 
+                            SettingsManager::getIntSetting(
+                                "deathStaggerTime", 20 );
+                        
+                        double currentTime = 
+                            Time::getCurrentTime();
+                        
+                        nextPlayer->dying = true;
+                        nextPlayer->dyingETA = 
+                            currentTime + staggerTime;
 
+                        playerIndicesToSendDyingAbout.
+                            push_back( 
+                                getLiveObjectIndex( 
+                                    nextPlayer->id ) );
+                        }
+                    else {
+                        // already dying, and getting attacked again
+                        
+                        // halve their remaining stagger time
+                        double currentTime = 
+                            Time::getCurrentTime();
+                        
+                        double staggerTimeLeft = 
+                            nextPlayer->dyingETA - currentTime;
+                        
+                        if( staggerTimeLeft > 0 ) {
+                            staggerTimeLeft /= 2;
+                            nextPlayer->dyingETA = 
+                                currentTime + staggerTimeLeft;
+                            }
+                        }
+                
+                    
                     // generic on-person
                     TransRecord *r = 
                         getPTrans( curOverID, 0 );
 
                     if( r != NULL ) {
                         setMapObject( curPos.x, curPos.y, r->newActor );
+
+                        // new target specifies wound
+                        if( r->newTarget > 0 ) {
+                            // don't drop their wound
+                            if( nextPlayer->holdingID != 0 &&
+                                ! nextPlayer->holdingWound ) {
+                                handleDrop( 
+                                    curPos.x, curPos.y, 
+                                    nextPlayer,
+                                    &playerIndicesToSendUpdatesAbout );
+                                }
+                            nextPlayer->holdingID = 
+                                r->newTarget;
+                            nextPlayer->holdingWound = true;
+                                            
+                            playerIndicesToSendUpdatesAbout.
+                                push_back( 
+                                    getLiveObjectIndex( 
+                                        nextPlayer->id ) );
+                            }
                         }
                     continue;
                     }
+                else if( riding && 
+                         curOverObj->permanent && 
+                         curOverObj->deadlyDistance > 0 ) {
+                    // rode over something deadly
+                    // see if it affects what we're riding
+
+                    TransRecord *r = 
+                        getPTrans( nextPlayer->holdingID, curOverID );
+                    
+                    if( r != NULL ) {
+                        handleHoldingChange( nextPlayer,
+                                             r->newActor );
+                        nextPlayer->heldTransitionSourceID = curOverID;
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+
+                        // it attacked their vehicle 
+                        // put it on cooldown so it won't immediately
+                        // attack them
+                        addDeadlyMapSpot( curPos );
+                        }
+                    }                
                 }
             
             
@@ -5525,6 +5921,23 @@ int main() {
                         
                         // drop them and ignore rest of their move
                         // request, until they click again
+                        }
+                    else if( m.type == MOVE && nextPlayer->holdingID > 0 &&
+                             getObject( nextPlayer->holdingID )->
+                             speedMult == 0 ) {
+                        // next player holding something that prevents
+                        // movement entirely
+                        printf( "  Processing move, "
+                                "but player holding a speed-0 object, "
+                                "ending now\n" );
+                        nextPlayer->xd = nextPlayer->xs;
+                        nextPlayer->yd = nextPlayer->ys;
+                        
+                        nextPlayer->posForced = true;
+                        
+                        // send update about them to end the move
+                        // right now
+                        playerIndicesToSendUpdatesAbout.push_back( i );
                         }
                     else if( m.type == MOVE ) {
                         //Thread::staticSleep( 1000 );
@@ -6121,6 +6534,19 @@ int main() {
                                         hitPlayer->murderPerpID =
                                             nextPlayer->id;
                                         
+                                        // brand this player as a murderer
+                                        nextPlayer->everKilledOther = true;
+
+                                        if( hitPlayer->murderPerpEmail 
+                                            != NULL ) {
+                                            delete [] 
+                                                hitPlayer->murderPerpEmail;
+                                            }
+                                        
+                                        hitPlayer->murderPerpEmail =
+                                            stringDuplicate( 
+                                                nextPlayer->email );
+                                        
 
                                         setDeathReason( hitPlayer, 
                                                         "killed",
@@ -6131,11 +6557,14 @@ int main() {
                                             int staggerTime = 
                                                 SettingsManager::getIntSetting(
                                                     "deathStaggerTime", 20 );
-
+                                            
+                                            double currentTime = 
+                                                Time::getCurrentTime();
+                                            
                                             hitPlayer->dying = true;
                                             hitPlayer->dyingETA = 
-                                                Time::getCurrentTime() + 
-                                                staggerTime;
+                                                currentTime + staggerTime;
+
                                             playerIndicesToSendDyingAbout.
                                                 push_back( 
                                                     getLiveObjectIndex( 
@@ -6143,27 +6572,27 @@ int main() {
                                         
                                             hitPlayer->errorCauseString =
                                                 "Player killed by other player";
-                                        
-                                            logDeath( hitPlayer->id,
-                                                      hitPlayer->email,
-                                                      hitPlayer->isEve,
-                                                      computeAge( hitPlayer ),
-                                                      getSecondsPlayed( 
-                                                          hitPlayer ),
-                                                      ! getFemale( hitPlayer ),
-                                                      m.x, m.y,
-                                                      players.size() - 1,
-                                                      false,
-                                                      nextPlayer->id,
-                                                      nextPlayer->email );
-                                            
-                                            if( shutdownMode ) {
-                                                handleShutdownDeath( 
-                                                    hitPlayer, m.x, m.y );
-                                                }
-
-                                            hitPlayer->deathLogged = true;
                                             }
+                                         else {
+                                             // already dying, 
+                                             // and getting attacked again
+                        
+                                             // halve their remaining 
+                                             // stagger time
+                                             double currentTime = 
+                                                 Time::getCurrentTime();
+                                             
+                                             double staggerTimeLeft = 
+                                                 nextPlayer->dyingETA - 
+                                                 currentTime;
+                        
+                                             if( staggerTimeLeft > 0 ) {
+                                                 staggerTimeLeft /= 2;
+                                                 nextPlayer->dyingETA = 
+                                                     currentTime + 
+                                                     staggerTimeLeft;
+                                                 }
+                                             }
                                         }
                                     
                                     
@@ -6677,6 +7106,10 @@ int main() {
                                     
                                     // just touching this object
                                     // causes us to eat from it
+                                    
+                                    nextPlayer->justAte = true;
+                                    nextPlayer->justAteID = 
+                                        targetObj->id;
 
                                     nextPlayer->lastAteID = 
                                         targetObj->id;
@@ -6686,6 +7119,9 @@ int main() {
                                     nextPlayer->foodStore += 
                                         targetObj->foodValue;
                                     
+                                    updateYum( nextPlayer, targetObj->id );
+                                    
+
                                     logEating( targetObj->id,
                                                targetObj->foodValue,
                                                computeAge( nextPlayer ),
@@ -6900,7 +7336,9 @@ int main() {
                                         }
                                     
                                     if( canPlace ) {
-
+                                        nextPlayer->heldTransitionSourceID =
+                                            nextPlayer->holdingID;
+                                        
                                         if( nextPlayer->numContained > 0 &&
                                             r->newActor == 0 &&
                                             r->newTarget > 0 &&
@@ -7035,37 +7473,11 @@ int main() {
                                     // holding
 
                                     if( hitPlayer->holdingID != 0 ) {
-
-                                        if( hitPlayer->holdingWound &&
-                                            hitPlayer->embeddedWeaponID > 0 ) {
-                                            
-                                            // switch from wound to
-                                            // holding embedded weapon
-                                            // have them drop it when
-                                            // picked up
-                                            hitPlayer->holdingID = 
-                                                hitPlayer->
-                                                embeddedWeaponID;
-                                            hitPlayer->holdingEtaDecay =
-                                                hitPlayer->
-                                                embeddedWeaponEtaDecay;
-                                            
-                                            hitPlayer->embeddedWeaponID = 0;
-                                            hitPlayer->embeddedWeaponEtaDecay
-                                                = 0;
-                                            hitPlayer->holdingWound = false;
-                                            }
-                                        else if( hitPlayer->holdingWound &&
-                                                 hitPlayer->embeddedWeaponID 
-                                                 == 0 ) {
-                                            // holding wound only
-                                            // disappears
-                                            hitPlayer->holdingID = 0;
-                                            hitPlayer->holdingEtaDecay = 0;
-                                            }
-                                        
-
-                                        if( hitPlayer->holdingID > 0 ) {
+                                        // never drop held wounds
+                                        // they are the only thing a baby can
+                                        // while held
+                                        if( ! hitPlayer->holdingWound && 
+                                            hitPlayer->holdingID > 0 ) {
                                             handleDrop( 
                                                 m.x, m.y, hitPlayer,
                                              &playerIndicesToSendUpdatesAbout );
@@ -7111,6 +7523,25 @@ int main() {
                                         // food
                                         int nurseCost = 1;
                                         
+                                        if( nextPlayer->yummyBonusStore > 0 ) {
+                                            nextPlayer->yummyBonusStore -= 
+                                                nurseCost;
+                                            nurseCost = 0;
+                                            if( nextPlayer->yummyBonusStore < 
+                                                0 ) {
+                                                
+                                                // not enough to cover full 
+                                                // nurse cost
+
+                                                // pass remaining nurse
+                                                // cost onto main food store
+                                                nurseCost = - nextPlayer->
+                                                    yummyBonusStore;
+                                                nextPlayer->yummyBonusStore = 0;
+                                                }
+                                            }
+                                        
+
                                         nextPlayer->foodStore -= nurseCost;
                                         
                                         if( nextPlayer->foodStore < 0 ) {
@@ -7218,6 +7649,22 @@ int main() {
                                                       &hitIndex );
                                     }
                                 
+                                
+                                if( ( hitPlayer == NULL ||
+                                      hitPlayer == nextPlayer )
+                                    &&
+                                    ! holdingDrugs ) {
+                                    
+                                    // see if clicked-on player is dying
+                                    hitPlayer = 
+                                        getHitPlayer( m.x, m.y, false, -1, -1, 
+                                                      &hitIndex );
+                                    if( hitPlayer != NULL &&
+                                        ! hitPlayer->dying ) {
+                                        hitPlayer = NULL;
+                                        }
+                                    }
+                                
 
                                 if( hitPlayer != NULL &&
                                     hitPlayer != nextPlayer ) {
@@ -7241,7 +7688,78 @@ int main() {
                             nextPlayer->actionTarget.x = m.x;
                             nextPlayer->actionTarget.y = m.y;
                             
-                            if( nextPlayer->holdingID > 0 ) {
+
+                            if( targetPlayer != nextPlayer &&
+                                targetPlayer->dying &&
+                                ! holdingFood ) {
+                                
+                                // try healing wound
+                                    
+                                TransRecord *healTrans =
+                                    getTrans( nextPlayer->holdingID,
+                                              targetPlayer->holdingID );
+                                
+                                if( healTrans != NULL ) {
+                                    targetPlayer->holdingID =
+                                        healTrans->newTarget;
+                                    
+                                    // their wound has been changed
+                                    // no longer track embedded weapon
+                                    targetPlayer->embeddedWeaponID = 0;
+                                    targetPlayer->embeddedWeaponEtaDecay = 0;
+                                    
+                                    
+                                    nextPlayer->holdingID = 
+                                        healTrans->newActor;
+                                    
+                                    setFreshEtaDecayForHeld( 
+                                        nextPlayer );
+                                    setFreshEtaDecayForHeld( 
+                                        targetPlayer );
+                                    
+                                    nextPlayer->heldOriginValid = 0;
+                                    nextPlayer->heldOriginX = 0;
+                                    nextPlayer->heldOriginY = 0;
+                                    nextPlayer->heldTransitionSourceID = 
+                                        healTrans->target;
+                                    
+                                    targetPlayer->heldOriginValid = 0;
+                                    targetPlayer->heldOriginX = 0;
+                                    targetPlayer->heldOriginY = 0;
+                                    targetPlayer->heldTransitionSourceID = 
+                                        -1;
+                                    
+                                    if( targetPlayer->holdingID == 0 ) {
+                                        // not dying anymore
+                                        targetPlayer->dying = false;
+                                        targetPlayer->murderSourceID = 0;
+                                        targetPlayer->murderPerpID = 0;
+                                        if( targetPlayer->murderPerpEmail != 
+                                            NULL ) {
+                                            delete [] 
+                                                targetPlayer->murderPerpEmail;
+                                            targetPlayer->murderPerpEmail =
+                                                NULL;
+                                            }
+                                        
+                                        targetPlayer->deathSourceID = 0;
+                                        targetPlayer->holdingWound = false;
+                                        targetPlayer->customGraveID = -1;
+                                        
+                                        if( targetPlayer->deathReason 
+                                            != NULL ) {
+                                            delete [] targetPlayer->deathReason;
+                                            targetPlayer->deathReason = NULL;
+                                            }
+                                        
+                                        playerIndicesToSendHealingAbout.
+                                            push_back( 
+                                                getLiveObjectIndex( 
+                                                    targetPlayer->id ) );
+                                        }
+                                    }
+                                }
+                            else if( nextPlayer->holdingID > 0 ) {
                                 ObjectRecord *obj = 
                                     getObject( nextPlayer->holdingID );
                                 
@@ -7261,6 +7779,8 @@ int main() {
                                     
                                     targetPlayer->foodStore += obj->foodValue;
                                     
+                                    updateYum( targetPlayer, obj->id );
+
                                     logEating( obj->id,
                                                obj->foodValue,
                                                computeAge( targetPlayer ),
@@ -7875,6 +8395,28 @@ int main() {
                 curTime >= nextPlayer->dyingETA ) {
                 // finally died
                 nextPlayer->error = true;
+
+                
+                if( ! nextPlayer->isTutorial )
+                logDeath( nextPlayer->id,
+                          nextPlayer->email,
+                          nextPlayer->isEve,
+                          computeAge( nextPlayer ),
+                          getSecondsPlayed( 
+                              nextPlayer ),
+                          ! getFemale( nextPlayer ),
+                          nextPlayer->xd, nextPlayer->yd,
+                          players.size() - 1,
+                          false,
+                          nextPlayer->murderPerpID,
+                          nextPlayer->murderPerpEmail );
+                                            
+                if( shutdownMode ) {
+                    handleShutdownDeath( 
+                        nextPlayer, nextPlayer->xd, nextPlayer->yd );
+                    }
+                
+                nextPlayer->deathLogged = true;
                 }
             
 
@@ -7969,6 +8511,7 @@ int main() {
                 
                 char male = ! getFemale( nextPlayer );
                 
+                if( ! nextPlayer->isTutorial )
                 recordPlayerLineage( nextPlayer->email, 
                                      age,
                                      nextPlayer->id,
@@ -7978,7 +8521,20 @@ int main() {
                                      nextPlayer->name,
                                      nextPlayer->lastSay,
                                      male );
+                
+                // don't use age here, because it unfairly gives Eve
+                // +14 years that she didn't actually live
+                // use true played years instead
+                double yearsLived = 
+                    getSecondsPlayed( nextPlayer ) * getAgeRate();
 
+                if( ! nextPlayer->isTutorial )
+                recordLineage( nextPlayer->email, 
+                               nextPlayer->lineageEveID,
+                               yearsLived, 
+                               ( killerID > 0 ),
+                               nextPlayer->everKilledOther );
+        
                 if( ! nextPlayer->deathLogged ) {
                     char disconnect = true;
                     
@@ -7986,6 +8542,7 @@ int main() {
                         disconnect = false;
                         }
                     
+                    if( ! nextPlayer->isTutorial )
                     logDeath( nextPlayer->id,
                               nextPlayer->email,
                               nextPlayer->isEve,
@@ -8253,6 +8810,12 @@ int main() {
                                 }
                             }
                         }
+                    if( nextPlayer->holdingWound ) {
+                        // holding a wound from some other, non-murder cause
+                        // of death
+                        doNotDrop = true;
+                        }
+                    
                     
                     if( ! doNotDrop ) {
                         // drop what they were holding
@@ -8285,84 +8848,10 @@ int main() {
                     if( t != NULL ) {
 
                         int newID = t->newTarget;
-                    
-                        int oldSlots = nextPlayer->numContained;
                         
-                        int newSlots = getNumContainerSlots( newID );
-                    
-                        if( newSlots < oldSlots ) {
-                            // new container can hold less
-                            // truncate
-                            
-                            GridPos dropPos = 
-                                computePartialMoveSpot( nextPlayer );
-                            
-                            // offset to counter-act offsets built into
-                            // drop code
-                            dropPos.x += 1;
-                            dropPos.y += 1;
-
-                            char found = false;
-                            GridPos spot;
-                            
-                            if( getMapObject( dropPos.x, dropPos.y ) == 0 ) {
-                                spot = dropPos;
-                                found = true;
-                                }
-                            else {
-                                found = findDropSpot( 
-                                    dropPos.x, dropPos.y,
-                                    dropPos.x, dropPos.y,
-                                    &spot );
-                                }
-                            
-                            
-                            if( found ) {
-                                
-                                // throw it on map temporarily
-                                handleDrop( 
-                                    spot.x, spot.y, 
-                                    nextPlayer,
-                                    &playerIndicesToSendUpdatesAbout );
-                                
-                                
-                                // shrink contianer on map
-                                shrinkContainer( spot.x, spot.y, 
-                                                 newSlots );
-
-                                // pick it back up
-                                nextPlayer->holdingEtaDecay = 
-                                    getEtaDecay( spot.x, spot.y );
-                                    
-                                FullMapContained f =
-                                    getFullMapContained( spot.x, spot.y );
-
-                                setContained( nextPlayer, f );
-                                
-                                clearAllContained( spot.x, spot.y );
-                                setMapObject( spot.x, spot.y, 0 );
-                                }
-                            else {
-                                // no spot to throw it
-                                // cannot leverage map's container-shrinking
-                                // just truncate held container directly
-                                
-                                // truncated contained items will be lost
-                                nextPlayer->numContained = newSlots;
-                                }
-                            }
+                        handleHoldingChange( nextPlayer, newID );
                         
-                        nextPlayer->holdingID = newID;
                         nextPlayer->heldTransitionSourceID = -1;
-                    
-                        setFreshEtaDecayForHeld( nextPlayer );
-                    
-                        if( nextPlayer->numContained > 0 ) {    
-                            restretchDecays( nextPlayer->numContained,
-                                             nextPlayer->containedEtaDecays,
-                                             oldID, newID );
-                            }
-                    
                         
                         ObjectRecord *newObj = getObject( newID );
                         ObjectRecord *oldObj = getObject( oldID );
@@ -8864,7 +9353,13 @@ int main() {
                     LiveObject *decrementedPlayer = NULL;
 
                     if( !heldByFemale ) {
-                        nextPlayer->foodStore --;
+
+                        if( nextPlayer->yummyBonusStore > 0 ) {
+                            nextPlayer->yummyBonusStore--;
+                            }
+                        else {
+                            nextPlayer->foodStore--;
+                            }
                         decrementedPlayer = nextPlayer;
                         }
                     // if held by fertile female, food for baby is free for
@@ -8913,7 +9408,8 @@ int main() {
                                 computePartialMoveSpot( decrementedPlayer );
                             }
                         
-                        if( ! decrementedPlayer->deathLogged ) {    
+                        if( ! decrementedPlayer->deathLogged &&
+                            ! decrementedPlayer->isTutorial ) {    
                             logDeath( decrementedPlayer->id,
                                       decrementedPlayer->email,
                                       decrementedPlayer->isEve,
@@ -9595,6 +10091,54 @@ int main() {
                     }
                 }
             }
+
+
+
+
+        unsigned char *healingMessage = NULL;
+        int healingMessageLength = 0;
+        
+        if( playerIndicesToSendHealingAbout.size() > 0 ) {
+            SimpleVector<char> healingWorking;
+            healingWorking.appendElementString( "HE\n" );
+            
+            int numAdded = 0;
+            for( int i=0; i<playerIndicesToSendHealingAbout.size(); i++ ) {
+                LiveObject *nextPlayer = players.getElement( 
+                    playerIndicesToSendHealingAbout.getElementDirect( i ) );
+
+                if( nextPlayer->error ) {
+                    continue;
+                    }
+
+                char *line = autoSprintf( "%d\n", nextPlayer->id );
+
+                numAdded++;
+                healingWorking.appendElementString( line );
+                delete [] line;
+                }
+            
+            healingWorking.push_back( '#' );
+            
+            if( numAdded > 0 ) {
+
+                char *healingMessageText = healingWorking.getElementString();
+                
+                healingMessageLength = strlen( healingMessageText );
+                
+                if( healingMessageLength < maxUncompressedSize ) {
+                    healingMessage = (unsigned char*)healingMessageText;
+                    }
+                else {
+                    // compress for all players once here
+                    healingMessage = makeCompressedMessage( 
+                        healingMessageText, 
+                        healingMessageLength, &healingMessageLength );
+                    
+                    delete [] healingMessageText;
+                    }
+                }
+            }
         
         
         // send moves and updates to clients
@@ -10072,6 +10616,24 @@ int main() {
                             false, false );
                     
                     if( numSent != dyingMessageLength ) {
+                        setDeathReason( nextPlayer, "disconnected" );
+
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Socket write failed";
+                        }
+                    }
+
+
+                // EVERYONE gets info about now-healed players           
+                if( healingMessage != NULL ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            healingMessage, 
+                            healingMessageLength, 
+                            false, false );
+                    
+                    if( numSent != healingMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
 
                         nextPlayer->error = true;
@@ -10581,16 +11143,25 @@ int main() {
                         nextPlayer->foodStore = cap;
                         }
                     
+                    int yumMult = nextPlayer->yummyFoodChain.size() - 1;
+                    
+                    if( yumMult < 0 ) {
+                        yumMult = 0;
+                        }
+
                     char *foodMessage = autoSprintf( 
                         "FX\n"
-                        "%d %d %d %d %.2f %d\n"
+                        "%d %d %d %d %.2f %d "
+                        "%d %d\n"
                         "#",
                         nextPlayer->foodStore,
                         cap,
                         nextPlayer->lastAteID,
                         nextPlayer->lastAteFillMax,
                         computeMoveSpeed( nextPlayer ),
-                        nextPlayer->responsiblePlayerID );
+                        nextPlayer->responsiblePlayerID,
+                        nextPlayer->yummyBonusStore,
+                        yumMult );
                      
                     int messageLength = strlen( foodMessage );
                     
@@ -10677,6 +11248,9 @@ int main() {
         if( dyingMessage != NULL ) {
             delete [] dyingMessage;
             }
+        if( healingMessage != NULL ) {
+            delete [] healingMessage;
+            }
 
         
         // handle closing any that have an error
@@ -10727,6 +11301,10 @@ int main() {
 
                 if( nextPlayer->email != NULL ) {
                     delete [] nextPlayer->email;
+                    }
+
+                if( nextPlayer->murderPerpEmail != NULL ) {
+                    delete [] nextPlayer->murderPerpEmail;
                     }
 
                 if( nextPlayer->deathReason != NULL ) {

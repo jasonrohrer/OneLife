@@ -1,4 +1,4 @@
-int versionNumber = 100;
+int versionNumber = 118;
 int dataVersionNumber = 0;
 
 // NOTE that OneLife doesn't use account hmacs
@@ -627,6 +627,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     if( loadingStepBatchSize < 1 ) {
         loadingStepBatchSize = 1;
         }
+
+    // for filter support in LivingLifePage
+    enableObjectSearch( true );
 
 
     currentGamePage = loadingPage;
@@ -1757,6 +1760,10 @@ void drawFrame( char inUpdate ) {
             if( rebirthChoicePage->checkSignal( "reborn" ) ) {
                 // get server address again from scratch, in case
                 // the server we were on just crashed
+                startConnecting();
+                }
+            else if( rebirthChoicePage->checkSignal( "tutorial" ) ) {
+                livingLifePage->runTutorial();
                 startConnecting();
                 }
             else if( rebirthChoicePage->checkSignal( "review" ) ) {

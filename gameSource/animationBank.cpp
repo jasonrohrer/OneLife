@@ -1219,7 +1219,8 @@ ObjectAnimPack drawObjectAnimPacked(
         inClothingContained,
         inNumContained,
         inContainedIDs,
-        inSubContained };
+        inSubContained, 
+        0 };
     
     return outPack;
     }
@@ -1228,8 +1229,11 @@ ObjectAnimPack drawObjectAnimPacked(
 
 
 void drawObjectAnim( ObjectAnimPack inPack ) {
+    HoldingPos p;
+    p.valid = false;
+
     if( inPack.inContainedIDs == NULL ) {
-        drawObjectAnim( 
+        p = drawObjectAnim( 
             inPack.inObjectID,
             2,
             inPack.inType,
@@ -1277,6 +1281,42 @@ void drawObjectAnim( ObjectAnimPack inPack ) {
             inPack.inNumContained,
             inPack.inContainedIDs,
             inPack.inSubContained );
+        }
+
+    if( inPack.additionalHeldID > 0 && p.valid ) {
+        doublePair holdPos;
+        
+        double holdRot = 0;
+        
+        ObjectRecord *heldObject = getObject( inPack.additionalHeldID );
+        
+        computeHeldDrawPos( p, inPack.inPos,
+                            heldObject,
+                            inPack.inFlipH,
+                            &holdPos, &holdRot );
+
+        drawObjectAnim( 
+            inPack.additionalHeldID,
+            2,
+            inPack.inType,
+            inPack.inFrameTime, 
+            inPack.inAnimFade,
+            inPack.inFadeTargetType,
+            inPack.inFadeTargetFrameTime,
+            inPack.inFrozenRotFrameTime,
+            inPack.outFrozenRotFrameTimeUsed,
+            endAnimType,
+            endAnimType,
+            holdPos,
+            holdRot,
+            false,
+            inPack.inFlipH,
+            -1,
+            0,
+            false,
+            false,
+            emptyClothing,
+            NULL );
         }
     }
 

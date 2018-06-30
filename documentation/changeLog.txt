@@ -4,8 +4,220 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 118    2018-June-29
 
-Version 102   ???
+--Support for masked speech output in client (useful for making gifs).
+
+--Support for tutorial trigger on client login, and server loading a tutorial
+  map out in the unused wilderness and placing player at start of the tutorial.
+
+--Scene editor support for copy/paste of 6x6 area.  Fixed memory leak.
+
+--New crafting hint filter system.  Say /hatchet to show only hints relevant to
+  making a hatchet.  Say / by itself to clear the filter.
+
+--Time played in other lines before returning to a line pushed up to 1.5 hours.
+
+--People who kill, regardless of their time in a line (even less than a half
+  hour) are given the full lineage ban, just like murder victims.  Killing
+  counts as fully participating in a line.  This prevents grief-killers from
+  suiciding before 30 minutes and coming right back.
+
+--TEMP LOGIN button hidden along with login button when checking for FPS
+  mismatch (otherwise, someone might press TEMP LOGIN upon not seeing LOGIN at
+  first).
+
+--Typo in objectBank.  Fixes #39.  Good catch UncleGus.
+
+--Fixed so that you can never click on a held baby by clicking its last ground
+  position (could kill a held baby by accident when trying to set a weapon
+  down where they were standing before pick-up).
+
+
+
+
+
+Version 115    2018-June-22
+
+--Babies now carry their wounds with them when they are picked up, instead of
+  discarding them.
+
+
+
+
+Server Fixes:
+
+--Deadly map spots (attacking animals) put on cooldown for 10 seconds after an
+  attack to prevent multiple repeat attacks on the same person before they
+  realize what has happened.
+
+--Fixed glitch in generation of transitions that apply to every use dummy of
+  an actor.
+
+--Fixed glitch in biome database at position 0,0.
+
+
+
+
+Version 112    2018-June-21
+
+--Fixed category editor to let a category be picked on the parent side that is
+  also a child of another category (pattern categories can be part of other
+  categories now, like pink rose seeds, which are a pattern for other rose
+  seeds, but also in the small trash category).
+
+--Fixed search for limbs in objects that have no hands or feet.
+
+--Fixed so that you can mouse-over and click on a person standing behind a tree.
+
+--Hunger slips (and chimes) shown at 8 and 4 instead of 6 and 3 food remaining.
+
+--Mousing over wounded self now describes the wound.
+
+--Support for clicking on a player with a curing object to heal a wound.
+
+
+
+
+Server Fixes:
+
+--Keeping server database backups 7 days instead of 14.
+
+--Fixed bug in setting decay ETA for newly held object.
+
+--Rework lineage ban.  Now it kicks in after you've lived 30 minutes total in a
+  given family line, and gets cleared when you've lived at least 60 minutes
+  total in other family lines.  Instantly kicks in if you get murdered,
+  regardless of how long you lived in that line so far.  Has very little
+  impact on dying babies, because they clock so little time before dying.
+  Thus, new players who die young a lot, and players who are abandonned as
+  babies, are not blocked from getting reborn in the same village.
+
+--Animal attacks now can set a wound on a player and put them into a dying
+  stagger just like murder.  No more instant death (except from hunger and old
+  age).
+
+--Getting attacked again while still wounded causes remaining stagger time to
+  be cut in half.
+
+--With new healing in place, no longer need to delay hunger when wounded.
+
+
+
+
+
+Version 110    2018-June-14
+
+--Transition editor now includes category transitions in list of 'uses'
+  transitions at the bottom of the screen (for example, looking at a leaf shows
+  transitions that use a leaf and transitions for the small trash category).
+
+--Fixed animation glitches when a moving object transitions from ground to
+  moving.  Was preserving frozenRotFrameCount, and setting ground frame count
+  back to 0 each time, even when we didn't need to be (when moving object had
+  no rotating parts).  (Example:  blood squirting from goose neck.)
+
+--Fixed so that d1 use dummy keeps its creation sound even if creation sound
+  marked initial only.  This sound will play during reverse use (example:
+  adding a burrito to an empty plate).
+
+--Transition editor shows color-coded transitions from categories and patterns
+  in both produced by and produces list.
+
+--New yummy food multiplier system.  After eating two different foods, you get
+  a yum bonus of 1 food and your yum multiplier goes up to 1.  With each unique
+  food that you eat, your yum multiplier goes up by one, and this multiplier is
+  added to your yum bonus.  When you finally repeat a food, your yum multiplier
+  goes back to 0.  Yum bonus functions as extra food units above and beyond
+  your normal food bar.  By chaining many unique foods, the yum multiplier and
+  resulting yum bonuses can be very large.  Holding a food in your hand tells
+  you whether it is yummy or meh.  Sorry about the word 'yum', but there really
+  isn't any other short word for that concept except for nom, which is way too
+  internet.  And meh?  I don't think there's any other word for that.  It's
+  kinda meh, though.  And yes, Jere, you'll still get the bonus if you save
+  your buttered roll for last.
+
+
+ 
+
+
+
+Server Fixes:
+
+--Added work-around for non-clean shutdown that can leave dummy objects in map
+  that may be interpreted as new category objects after restart.  Category
+  objects removed from map during map cleaning process.
+
+--Added cron job for game servers that clears bug log files older than four
+  days to conserve disk space.
+
+--Death stagger time up to 40 seconds instead of 20.
+
+--Food decrement no longer happens during death stagger.  You won't starve to
+  death after being mortally wounded.
+
+--Fixed server crash when held tattered backpack decays to nothing.
+
+
+
+
+
+Version 107    2018-June-8
+
+--No longer using ancestor test to determine if creation sound should play for
+  objects marked with creationSoundInitialOnly.  Exclusively using sprite
+  subset test.
+
+--Was waiting 166ms for bouncing animation to start a bit before sending our
+  action message.  This prevents weird insta-response on fast connections
+  (where we get the grabbed item in our hand even before really moving toward
+  it).  However, on slow connections, this 166ms adds to perceived latency,
+  because we still need to wait for the message round trip after that.  Now we
+  measure most recent round trip time and use it to decrease this bouncing
+  start time before sending our action message.  If round trip is slow enough
+  (>166ms), we don't need to wait at all before sending our action message to
+  the server.  If round trip time is 80 ms, for example, we'd only wait/bounce
+  for 86ms before sending our message.
+
+--Added support for rotated sprites when baking in object editor.
+
+
+
+
+
+Server Fixes:
+
+--Fixed so that useChance applies in last transition back to parent object
+  (example:  refilling last step of pond should have 1/5 chance of taking pond
+  to full state, when before it had 1/1 chance, allowing for an infinite water
+  exploit).  Thanks Eve, YAHG, and Rebel.
+
+--Support for NOT dying when riding over a deadly object (like a rattlesnake)
+  on a vehicle (like a horse), but support for transitions to the ridden object
+  (dead horse or tipped horse cart).
+
+--Fixed so that creation sound not played for items dropped on the ground when
+  held container shrinks.
+
+--Fixed heldTransitionSourceID after use-on-ground transitions.
+
+
+
+Version 105   2018-June-1
+
+--Fixed crash in transition bank pattern code.  Thanks Enforcerke and Jookia.
+
+--Fixed spurious client BUG reports by resetting timer when we receive a
+  move-done message in the middle of waiting for a move-and-do cycle to
+  complete.  Thanks Sarah V.
+
+--Fixed bouncing-forever bug caused by path truncation.  Thanks Malo T.
+
+
+
+
+
+Version 102   2018-May-31
 
 --Fixed scene editor to display behind floor hugging objects correctly.
 
@@ -14,9 +226,18 @@ Version 102   ???
   moves after the jump-out-of-arms, and a bouncing-forever bug as a result.
   Thanks Gabriel G.
 
---Fixed overlap of food bar with gui in object editor.
+--Fixed overlap of foot bar with gui in object editor.
 
 --Widget for Using Sound visible for all objects in object editor.
+
+--Fixed sound-doubling issues (dumping water into empty pond, grabbing
+  second-to-last stone from stone pile).
+
+--Fixed so that comment (after # text) is hidden from eaten food description.
+
+--Fixed code for generic transition filling to handle case where an object has
+  both regular and last use generic transition defined.
+
 
 
 

@@ -466,7 +466,7 @@ void initTransBankFinish() {
             int transIDs[4] = { tr->actor, tr->target, 
                                 tr->newActor, tr->newTarget };
             
-            CategoryRecord *transCats[4];
+            CategoryRecord *transCats[4] = { NULL, NULL, NULL, NULL };
             
             int patternSize = -1;
             int numPatternsInTrans = 0;
@@ -570,17 +570,19 @@ void initTransBankFinish() {
                 
                 int oID = o->id;
 
-                TransRecord *genericTrans = getTrans( oID, -1, false );
                 
-                if( genericTrans == NULL ) {
-                    // try last use instead
-                    genericTrans = getTrans( oID, -1, true );
-                    }
+                TransRecord *genericTrans[2];
+
+                // use and last use
+                genericTrans[0] = getTrans( oID, -1, false );
+                genericTrans[1] = getTrans( oID, -1, true );
                 
                 
-                if( genericTrans != NULL && genericTrans->newTarget == 0 ) {
+                for( int g=0; g<2; g++ )
+                if( genericTrans[g] != NULL && 
+                    genericTrans[g]->newTarget == 0 ) {
                     
-                    char lastUseActor = genericTrans->lastUseActor;
+                    char lastUseActor = genericTrans[g]->lastUseActor;
                     
                     numGenerics ++;
                     
@@ -603,7 +605,7 @@ void initTransBankFinish() {
                                 
                                 newTrans.lastUseActor = true;
 
-                                newTrans.newActor = genericTrans->newActor;
+                                newTrans.newActor = genericTrans[g]->newActor;
                                 
                                 transToAdd.push_back( newTrans );
 
@@ -611,7 +613,7 @@ void initTransBankFinish() {
                                 }
                             else {
                                 // replace in-place with generic use result
-                                tr->newActor = genericTrans->newActor;
+                                tr->newActor = genericTrans[g]->newActor;
                                 
                                 numChanged ++;
                                 }
@@ -633,7 +635,7 @@ void initTransBankFinish() {
                                 
                                 newTrans.lastUseTarget = true;
 
-                                newTrans.newTarget = genericTrans->newActor;
+                                newTrans.newTarget = genericTrans[g]->newActor;
                                 
                                 transToAdd.push_back( newTrans );
 
@@ -641,7 +643,7 @@ void initTransBankFinish() {
                                 }
                             else {
                                 // replace in-place with generic use result
-                                tr->newTarget = genericTrans->newActor;
+                                tr->newTarget = genericTrans[g]->newActor;
                                 
                                 numChanged ++;
                                 }
@@ -867,7 +869,16 @@ void initTransBankFinish() {
                             }
                         else if( uTo >= target->numUses - 1 ) {
                             tp.toID = newTarget->id;
-                            tp.noChangeID = newTarget->id;
+                            if( dir == 1 && tp.fromID != -1 ) {
+                                // transition back to parent object
+                                // if we have a use chance, it should
+                                // apply here too, leaving us at last use dummy
+                                // object if use chance doesn't happen.
+                                tp.noChangeID = tp.fromID;
+                                }
+                            else {
+                                tp.noChangeID = newTarget->id;
+                                }
                             }
                         
                         if( tp.fromID != -1 && tp.toID != -1 ) {
@@ -1159,7 +1170,7 @@ void initTransBankFinish() {
                     
                     if( actor != NULL && actor->numUses > 1 ) {
                         
-                        for( int u=0; u<actor->numUses-2; u++ ) {
+                        for( int u=0; u<actor->numUses-1; u++ ) {
                             float useFraction = 
                                 (float)( u+1 ) / (float)( actor->numUses );
                             
@@ -1882,14 +1893,125 @@ static TransRecord **search( SimpleVector<TransRecord *> inMapToSearch[],
 
 
 
+static TransRecord **searchWithCategories( 
+    SimpleVector<TransRecord *> inMapToSearch[],
+    int inID, 
+    int inNumToSkip, 
+    int inNumToGet, 
+    int *outNumResults, int *outNumRemaining ) {
+
+
+    if( inID >= mapSize ) {
+        return NULL;
+        }
+
+    int numRecords = inMapToSearch[inID].size();
+
+    ReverseCategoryRecord *catRec = getReverseCategory( inID );
+
+    int extraRecords = 0;
+
+    if( catRec != NULL ) {
+        for( int i=0; i< catRec->categoryIDSet.size(); i++ ) {
+            int catID = catRec->categoryIDSet.getElementDirect( i );
+            if( catID < mapSize ) {
+                extraRecords += inMapToSearch[ catID ].size();
+                }
+            }
+        }
+    
+    
+    TransRecord **initialResult = 
+        search( inMapToSearch, inID, inNumToSkip, inNumToGet,
+                outNumResults, outNumRemaining );
+    if( inNumToGet == *outNumResults || extraRecords == 0 ) {
+        *outNumRemaining += extraRecords;
+        return initialResult;
+        }
+    else if( extraRecords > 0 ) {
+        // ran out of main results, need to go into category results
+
+        
+        SimpleVector<TransRecord *> results;
+        for( int r=0; r<*outNumResults; r++ ) {
+            results.push_back( initialResult[r] );
+            }
+        
+        if( initialResult != NULL ) {
+            delete [] initialResult;
+            }
+        
+        inNumToSkip -= numRecords;
+        if( inNumToSkip < 0 ) {
+            inNumToSkip = 0;
+            }
+        
+        int numRemaining = extraRecords - inNumToSkip;
+        int i = 0;
+        
+        while( i < catRec->categoryIDSet.size() &&
+               *outNumResults < inNumToGet ) {
+            int numLeftToGet = inNumToGet - *outNumResults;
+
+            int catID = catRec->categoryIDSet.getElementDirect( i );
+            int catTransSize = 0;
+            if( catID < mapSize ) {
+                
+                catTransSize = inMapToSearch[ catID ].size();
+                }
+            
+            int catNumResults = 0;
+            int catNumRemaining = 0;
+            
+            TransRecord **catResult = 
+                search( inMapToSearch, catID, 
+                        inNumToSkip, numLeftToGet,
+                        &catNumResults, &catNumRemaining );
+            if( catResult != NULL ) {
+                for( int r=0; r<catNumResults; r++ ) {
+                    results.push_back( catResult[r] );
+                    }
+                delete [] catResult;
+                *outNumResults += catNumResults;
+
+                numRemaining -= catNumResults;                
+                }
+            
+            inNumToSkip -= catTransSize;
+            if( inNumToSkip < 0 ) {
+                inNumToSkip = 0;
+                }
+            
+            i++;
+            }
+        *outNumResults = results.size();
+        *outNumRemaining = numRemaining;
+        return results.getElementArray();
+        }
+    else {
+        return NULL;
+        }
+
+
+
+
+    }
+
+
 
 TransRecord **searchUses( int inUsesID, 
                           int inNumToSkip, 
                           int inNumToGet, 
                           int *outNumResults, int *outNumRemaining ) {
-    
-    return search( usesMap, inUsesID, inNumToSkip, inNumToGet,
-                   outNumResults, outNumRemaining );
+
+    if( autoGenerateCategoryTransitions ) {
+        return search( usesMap, inUsesID, inNumToSkip, inNumToGet,
+                       outNumResults, outNumRemaining );
+        }
+    else {
+        return searchWithCategories( usesMap, inUsesID, inNumToSkip, inNumToGet,
+                                     outNumResults, outNumRemaining );
+        }
     }
 
 
@@ -1899,8 +2021,15 @@ TransRecord **searchProduces( int inProducesID,
                               int inNumToGet, 
                               int *outNumResults, int *outNumRemaining ) {
     
-    return search( producesMap, inProducesID, inNumToSkip, inNumToGet,
-                   outNumResults, outNumRemaining );
+    if( autoGenerateCategoryTransitions ) {        
+        return search( producesMap, inProducesID, inNumToSkip, inNumToGet,
+                       outNumResults, outNumRemaining );
+        }
+    else {
+        return searchWithCategories(
+            producesMap, inProducesID, inNumToSkip, inNumToGet,
+            outNumResults, outNumRemaining );
+        }
     }
 
 

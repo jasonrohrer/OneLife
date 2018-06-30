@@ -31,6 +31,22 @@ static ObjectPickable objectPickableChild;
 
 
 char parentUnpickable( int inID ) {
+    // if it's already a category itself, we must let it be picked
+    // so that it can be viewed
+    
+    // this should only be able to happen for pattern categories (which
+    // can also be part of other, non-pattern categories)
+
+    // This is okay, because transitions for regular categories are generated
+    // first, followed by transitions for patterns
+    CategoryRecord *catR = getCategory( inID );
+    
+    if( catR != NULL && catR->objectIDSet.size() > 0 ) {
+        return false;
+        }
+    
+    
+
     if( getNumCategoriesForObject( inID ) > 0 ) {
         // already a child, can't be a parent
         return true;

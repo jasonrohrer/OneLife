@@ -14,4 +14,6 @@ char isLinePermitted( const char *inPlayerEmail, int inLineageEveID );
 
 
 
-void recordLineage( const char *inPlayerEmail, int inLineageEveID );
+void recordLineage( const char *inPlayerEmail, int inLineageEveID,
+                    double inLivedYears, char inMurdered, 
+                    char inCommittedMurder );

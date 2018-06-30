@@ -1130,7 +1130,15 @@ void initObjectBankFinish() {
                         dummyO->isUseDummy = true;
                         dummyO->useDummyParent = mainID;
                         
-                        if( o->creationSoundInitialOnly ) {
+                        if( o->creationSoundInitialOnly && d != 1 ) {
+                            // only keep creation sound for last dummy
+                            // which might get created from some other
+                            // object via reverse use
+                            // We will never play this when readching d1 from
+                            // d2, because they share the same parent
+                            
+                            // clear creation sounds on all other dummies
+                            // if creation is initial only
                             clearSoundUsage( &( dummyO->creationSound ) );
                             }
                         
@@ -2919,7 +2927,7 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                         inFlipH, -1, 0, false, false, emptyClothing );
             }
         else if( inClothing.frontShoe != NULL && i == frontFootIndex ) {
-            drawObject( inClothing.backShoe, 2,
+            drawObject( inClothing.frontShoe, 2,
                         frontShoePos, frontShoeRot, true,
                         inFlipH, -1, 0, false, false, emptyClothing );
             }
@@ -4128,6 +4136,14 @@ static void getLimbIndices( ObjectRecord *inObject,
                             int inHandOrFootIndex ) {
     
     if( inHandOrFootIndex == -1 ) {
+        return;
+        }
+
+    if( inHandOrFootIndex == 0 &&
+        ! ( inObject->spriteInvisibleWhenHolding[ inHandOrFootIndex ] ||
+            inObject->spriteIsFrontFoot[ inHandOrFootIndex ] ||
+            inObject->spriteIsBackFoot[ inHandOrFootIndex ] ) ) {
+        // 0 index usually returned if no hand or foot found
         return;
         }
     

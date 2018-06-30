@@ -49,6 +49,12 @@ static const AnimType personAnimTypes[ NUM_PERSON_ANIM ] =
 static doublePair cornerPos = { - 704, 360 };
 
 
+#define copyAreaSize 6
+
+static char copyAreaSet = false;
+static SceneCell copyArea[ copyAreaSize ][ copyAreaSize ];
+
+
 
 EditorScenePage::EditorScenePage()
         : mPlayingTime( false ),
@@ -105,7 +111,7 @@ EditorScenePage::EditorScenePage()
           mShowUI( true ),
           mShowWhite( false ),
           mCursorFade( 1.0 ),
-          mSceneW( 230 ),
+          mSceneW( 400 ),
           mSceneH( 90 ),
           mShiftX( 0 ), 
           mShiftY( 0 ),
@@ -259,7 +265,7 @@ EditorScenePage::EditorScenePage()
     addKeyClassDescription( &mKeyLegend, "Arrows", "Change selected cell" );
     addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger cell jumps" );
     addKeyClassDescription( &mKeyLegend, "f/F", "Flip obj/person" );
-    addKeyClassDescription( &mKeyLegend, "c/C", "Copy obj/person" );
+    addKeyClassDescription( &mKeyLegend, "c/C/A", "Copy obj/person/area" );
     addKeyClassDescription( &mKeyLegend, "x/X", "Cut obj/person" );
     addKeyClassDescription( &mKeyLegend, "v/V", "Paste/Fill" );
     addKeyClassDescription( &mKeyLegend, "i/I", "Insert contained/held" );
@@ -1692,10 +1698,12 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     if( c->oID > 0 ) {
         doublePair pos = { -500, -300 };
         
-        char *s = autoSprintf( "oID=%d", c->oID );
+        char *s = autoSprintf( "oID=%d  %s", c->oID,
+                               getObject( c->oID )->description );
         
 
         drawOutlineString( s, pos, alignLeft );
+        delete [] s;
         }
 
     if( p->oID > 0 ) {
@@ -1915,13 +1923,25 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
     else if( inASCII == 'F' ) {
         p->flipH = ! p->flipH;
         }
+    else if( inASCII == 'A' ) {
+        for( int y=mCurY; y< mCurY + copyAreaSize; y++ ) {
+            for( int x=mCurX; x< mCurX + copyAreaSize; x++ ) {
+                
+                copyArea[ y - mCurY ][ x - mCurX ] 
+                    = mCells[ y ][ x ];
+                }
+            }
+        copyAreaSet = true;
+        }
     else if( inASCII == 'c' ) {
         // copy
         mCopyBuffer = *c;
+        copyAreaSet = false;
         }
     else if( inASCII == 'C' ) {
         // copy
         mCopyBuffer = *p;
+        copyAreaSet = false;
         }
     else if( inASCII == 'x' ) {
         // cut
@@ -1930,15 +1950,26 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
         mCopyBuffer = *c;
         *c = mEmptyCell;
         c->biome = oldBiome;
+        copyAreaSet = false;
         }
     else if( inASCII == 'X' ) {
         // cut person
         mCopyBuffer = *p;
         *p = mEmptyCell;
+        copyAreaSet = false;
         }
     else if( inASCII == 'v' ) {
         // paste
-        if( mCopyBuffer.oID > 0 &&
+        if( copyAreaSet ) {
+            for( int y=mCurY; y< mCurY + copyAreaSize; y++ ) {
+                for( int x=mCurX; x< mCurX + copyAreaSize; x++ ) {
+                
+                    mCells[ y ][ x ] = 
+                        copyArea[ y - mCurY ][ x - mCurX ];
+                    }
+                }
+            }
+        else if( mCopyBuffer.oID > 0 &&
             getObject( mCopyBuffer.oID )->person ) {
             *p = mCopyBuffer;
             }

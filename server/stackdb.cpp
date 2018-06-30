@@ -264,6 +264,18 @@ inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
     }
 
 
+inline char isKeyZero( int inKeySize, const void *inKeyA ) {
+    uint8_t *a = (uint8_t*)inKeyA;
+    
+    for( int i=0; i<inKeySize; i++ ) {
+        if( a[i] != 0 ) {
+            return false;
+            }
+        }
+    return true;
+    }
+
+
 
 // if key found, moves key to top of hash stack
 // upon return
@@ -302,7 +314,12 @@ static int findValue( STACKDB *inDB, const void *inKey,
         return -1;
         }
     
-    if( keyComp( inDB->keySize, inDB->hashBinBuffer, inKey ) ) {
+    // do not trust top-of-stack hint for known-missing keys if inKey is
+    // the all-zero key, because the all-zero key is used to mark empty
+    // known-missing buffers
+    // Thus, when looking for a zero key, we always have a slow miss.
+    if( keyComp( inDB->keySize, inDB->hashBinBuffer, inKey ) &&
+        ! isKeyZero( inDB->keySize, inKey ) ) {
         // key is marked at top of bin stack as known-missing for this bin
         inDB->lastWasQuickMiss = true;
         return 1;
