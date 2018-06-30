@@ -13370,6 +13370,14 @@ void LivingLifePage::step() {
             // eve has a larger say limit
             sayCap = 30;
             }
+        char *currentText = mSayField.getText();
+        
+        if( strlen( currentText ) > 0 && currentText[0] == '/' ) {
+            // typing a filter
+            // hard cap at 25, regardless of age
+            // don't want them typing long filters that overflow the display
+            sayCap = 25;
+            }
 
         mSayField.setMaxLength( sayCap );
 
