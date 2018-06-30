@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--Fixed typo in computation of stagger time for player who is wounded multiple
+  times.  Fixes #41.  Thanks UncleGus.
+
+
+
 Version 118    2018-June-29
 
 --Support for masked speech output in client (useful for making gifs).

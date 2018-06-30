@@ -6583,12 +6583,12 @@ int main() {
                                                  Time::getCurrentTime();
                                              
                                              double staggerTimeLeft = 
-                                                 nextPlayer->dyingETA - 
+                                                 hitPlayer->dyingETA - 
                                                  currentTime;
                         
                                              if( staggerTimeLeft > 0 ) {
                                                  staggerTimeLeft /= 2;
-                                                 nextPlayer->dyingETA = 
+                                                 hitPlayer->dyingETA = 
                                                      currentTime + 
                                                      staggerTimeLeft;
                                                  }
