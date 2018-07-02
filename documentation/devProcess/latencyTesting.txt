@@ -1,0 +1,5 @@
+// add 97ms latency to local loopback:
+sudo tc qdisc add dev lo root netem delay 97ms
+
+// clear extra latency
+sudo tc qdisc del dev lo root netem
