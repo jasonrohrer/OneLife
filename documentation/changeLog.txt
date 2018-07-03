@@ -17,6 +17,9 @@ Version 119    ???
 --NONE RELEVANT if the filter matches, but no transitions are relevant, but
   NO MATCH if the filter simply doesn't match anything.
 
+--Fixed so that you can't click on arm by accident when trying to click on
+  tunic, bottom, or backpack clothing.  Arm should be unclickable if you are
+  wearing clothes.
 
 
 

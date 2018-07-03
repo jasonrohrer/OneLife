@@ -3642,7 +3642,6 @@ double getClosestObjectPart( ObjectRecord *inObject,
         bodyPos = inObject->spritePos[ bodyIndex ];
         }
 
-    int backArmTopIndex = getBackArmTopIndex( inObject, inAge );
     
     char tunicChecked = false;
     char hatChecked = false;
@@ -3682,8 +3681,10 @@ double getClosestObjectPart( ObjectRecord *inObject,
                     }
                 hatChecked = true;
                 }
-            else if( i < backArmTopIndex && ! tunicChecked ) {
+            else if( tunicChecked ) {
                 // bottom, tunic, and backpack behind back arm
+                // but ignore the arm when checking for clothing hit
+                // we never want to click on arm instead of the clothing
                 
                 
                 cObj[0] = inClothing->backpack;        
