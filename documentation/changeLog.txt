@@ -19,6 +19,7 @@ Version 119    ???
 
 
 
+
 Server Fixes
 
 --Fixed typo in computation of stagger time for player who is wounded multiple
@@ -26,6 +27,10 @@ Server Fixes
 
 --Added YOU'RE and YOURE and I'M and IM as naming phrases, after seeing that in
   the Life of Bumpy video.
+
+--Fixed so that grave doesn't disappear if you are standing on a cross of
+  permanent objects when you die.  Server now searches in a spiral of 100
+  tiles around your current location to find an empty spot for your grave.
 
 
 

@@ -2380,6 +2380,69 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
 
 
 
+
+GridPos findClosestEmptyMapSpot( int inX, int inY, int inMaxPointsToCheck,
+                                 char *outFound ) {
+    // square spiral, found here:
+
+    // https://stackoverflow.com/questions/3706219/
+    //      algorithm-for-iterating-over-an-outward-spiral-on-a-
+    //      discrete-2d-grid-from-the-or
+    //
+
+    int layer = 1;
+    int leg = 0;
+    int x = 0;
+    int y = 0;
+    
+    int pointsChecked = 0;
+    
+    while( pointsChecked < inMaxPointsToCheck ) {
+        if( isMapSpotEmpty( inX + x, inY + y, false ) ) {    
+            GridPos p = { inX + x, inY + y };
+            *outFound = true;
+            return p;
+            }
+        
+        pointsChecked++;
+        
+        switch( leg ) {
+            case 0: 
+                x++; 
+                if( x == layer ) {
+                    leg++;
+                    }
+                break;
+            case 1:
+                y++; 
+                if( y == layer ) {
+                    leg++;
+                    }
+                break;
+            case 2:
+                x--; 
+                if( -x == layer ) {
+                    leg++;
+                    }
+                break;
+            case 3:
+                y--; 
+                if( -y == layer ) { 
+                    leg = 0; 
+                    layer++;
+                    }   
+                break;
+            }
+        }
+    
+    *outFound = false;
+    GridPos p = { inX, inY };
+    return p;
+    }
+
+
+
+
 // drops an object held by a player at target x,y location
 // doesn't check for adjacency (so works for thrown drops too)
 // if target spot blocked, will search for empty spot to throw object into
@@ -8631,6 +8694,25 @@ int main() {
                         
                         n++;
                         oldObject = getMapObject( dropPos.x, dropPos.y );
+                        }
+                    }
+
+
+                if( ! isMapSpotEmpty( dropPos.x, dropPos.y, false ) ) {
+                    
+                    // failed to find an empty spot, or a containable object
+                    // at center or four neighbors
+                    
+                    // search outward in spiral of up to 100 points
+                    // look for some empty spot
+                    
+                    char foundEmpty = false;
+                    
+                    GridPos newDropPos = findClosestEmptyMapSpot(
+                        dropPos.x, dropPos.y, 100, &foundEmpty );
+                    
+                    if( foundEmpty ) {
+                        dropPos = newDropPos;
                         }
                     }
 
