@@ -4,6 +4,16 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 119    ???
+
+--Fixed glitch when picked up and put down by an adult who still has messages
+  pending (thanks Jacek T).  Also handled case where two adults are passing
+  baby back and forth.  It's still a little jumpy if the baby's client has
+  delay, but at least the end result is correct now.
+
+
+
+
 Server Fixes
 
 --Fixed typo in computation of stagger time for player who is wounded multiple

@@ -78,6 +78,12 @@ typedef struct LiveObject {
         // by an adult
         int heldByAdultID;
         
+        // -1 if not set
+        // otherwise, ID of adult that is holding us according to pending
+        // messages, but not according to already-played messages
+        int heldByAdultPendingID;
+        
+
         // usually 0, unless we're being held by an adult
         // and just got put down
         // then we slide back into position
