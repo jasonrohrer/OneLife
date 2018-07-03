@@ -14,6 +14,9 @@ Version 119    ???
 --Fixed bug where player can still try to click on baby's old ground location
   while the baby is held by someone else.
 
+--NONE RELEVANT if the filter matches, but no transitions are relevant, but
+  NO MATCH if the filter simply doesn't match anything.
+
 
 
 Server Fixes

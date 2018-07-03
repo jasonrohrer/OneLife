@@ -7474,10 +7474,14 @@ int LivingLifePage::getNumHints( int inObjectID ) {
             }
         
         if( numRelevant == 0 || numFilterHits == 0 ) {
+            const char *key = "noneRelevant";
+            if( numFilterHits == 0 ) {
+                key = "noMatch";
+                }
             mPendingFilterString = autoSprintf( "%s %s %s",
                                                 translate( "making" ),
                                                 mLastHintFilterString,
-                                                translate( "noneRelevant" ) );
+                                                translate( key ) );
             }
         else {    
             mPendingFilterString = autoSprintf( "%s %s",
