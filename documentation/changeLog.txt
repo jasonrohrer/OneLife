@@ -19,6 +19,10 @@ Server Fixes
 --Fixed typo in computation of stagger time for player who is wounded multiple
   times.  Fixes #41.  Thanks UncleGus.
 
+--Added YOU'RE and YOURE and I'M and IM as naming phrases, after seeing that in
+  the Life of Bumpy video.
+
+
 
 
 Version 118    2018-June-29
