@@ -11,6 +11,8 @@ Version 119    ???
   baby back and forth.  It's still a little jumpy if the baby's client has
   delay, but at least the end result is correct now.
 
+--Fixed bug where player can still try to click on baby's old ground location
+  while the baby is held by someone else.
 
 
 
