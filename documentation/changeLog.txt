@@ -35,6 +35,9 @@ Server Fixes
   permanent objects when you die.  Server now searches in a spiral of 100
   tiles around your current location to find an empty spot for your grave.
 
+--Max players back down to 140 from 200, so load balancing kicks in at 70
+  players instead of at 100 players.
+
 
 
 
