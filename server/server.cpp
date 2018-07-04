@@ -6532,8 +6532,10 @@ int main() {
                             LiveObject *holdingPlayer = 
                                 getLiveObject( nextPlayer->heldByOtherID );
                 
-                            p.x = holdingPlayer->xd;
-                            p.y = holdingPlayer->yd;
+                            if( holdingPlayer != NULL ) {
+                                p.x = holdingPlayer->xd;
+                                p.y = holdingPlayer->yd;
+                                }
                             }
 
 
@@ -10520,8 +10522,10 @@ int main() {
                     LiveObject *holdingPlayer = 
                         getLiveObject( nextPlayer->heldByOtherID );
                 
-                    playerXD = holdingPlayer->xd;
-                    playerYD = holdingPlayer->yd;
+                    if( holdingPlayer != NULL ) {
+                        playerXD = holdingPlayer->xd;
+                        playerYD = holdingPlayer->yd;
+                        }
                     }
 
 

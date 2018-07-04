@@ -38,6 +38,8 @@ Server Fixes
 --Max players back down to 140 from 200, so load balancing kicks in at 70
   players instead of at 100 players.
 
+--Fixed some crashes when baby marked as held by player that is gone.
+
 
 
 
