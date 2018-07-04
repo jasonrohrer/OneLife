@@ -12,6 +12,18 @@ fi
 
 
 
+emailSaltFile=~/lifeLogEmailSalt.txt
+
+emailSaltValue="test_salt"
+
+
+if [ -f $emailSaltFile ]
+then
+	emailSaltValue=$(head -n 1 $emailSaltFile)
+fi
+
+
+
 days=$1
 
 echo "Processing files newer than $days days"
@@ -53,9 +65,10 @@ for f in lifeLog*; do
 			
 				cat $g | sed -e 's/\(killer_[0-9]*\)_[^ ]*/\1/' > "$g"_temp
 				cat "$g"_temp | sed -e 's/\(parent=[0-9]*\),[^ ]*/\1/' > "$g"_temp2
+				salt=$emailSaltValue
 
 				# replace each email with a hash
-				perl -MDigest::SHA=sha1_hex -pe 's/[^_ @][^ @]*@[^ ]*/sha1_hex$&/ge' "$g"_temp2 > "$g"_temp3
+				perl -MDigest::SHA=sha1_hex -pe 's/[^_ @][^ @]*@[^ ]*/sha1_hex( $& . "'$salt'" )/ge' "$g"_temp2 > "$g"_temp3
 				
 				gFilename=$(basename -- "$g")
 			
