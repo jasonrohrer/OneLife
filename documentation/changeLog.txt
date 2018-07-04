@@ -40,6 +40,8 @@ Server Fixes
 
 --Fixed some crashes when baby marked as held by player that is gone.
 
+--Fixed order of naming phrases so that prefixes of other phrases come last.
+
 
 
 
