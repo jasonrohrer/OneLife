@@ -11,7 +11,10 @@ then
 fi
 
 
+
 days=$1
+
+echo "Processing files newer than $days days"
 
 
 tempDir=~/tempLifeLogs
@@ -37,20 +40,27 @@ for f in lifeLog*; do
 		mkdir $webDir/$f
 		
         # copy new files ($days days or newer) into temp dir 
-		find $f/* -mtime +$days -exec cp {} $tempDir/$f/ \;
+		find $f/* -mtime -$days -exec cp {} $tempDir/$f/ \;
 		
 
-		for g in $tempDir/$f/*; do
+		if [ -z "$(ls -A $tempDir/$f/)" ]
+		then
+			# empty
+			empty=1
+		else
+			# some files
+			for g in $tempDir/$f/*; do
 			
-		# replace each email with a hash
-			perl -MDigest::SHA=sha1_hex -pe 's/[^ @]*@[^ ]*/sha1_hex$&/ge' $g > "$g"_temp
+				# replace each email with a hash
+				perl -MDigest::SHA=sha1_hex -pe 's/[^ @]*@[^ ]*/sha1_hex$&/ge' $g > "$g"_temp
+				
+				gFilename=$(basename -- "$g")
 			
-			gFilename=$(basename -- "$g")
-			
-			echo "Processing $gFilename"
-
-			mv "$g"_temp $webDir/$f/$gFilename
-		done
+				echo "Processing $gFilename"
+				
+				mv "$g"_temp $webDir/$f/$gFilename
+			done
+		fi
 	fi
 
 done
