@@ -256,11 +256,14 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
 
 
 
+#include "curses.h"
 
-void logName( int inPlayerID, char *inName ) {
+
+void logName( int inPlayerID, char *inEmail, char *inName ) {
     if( nameLogFile != NULL ) {
         fprintf( nameLogFile, "%d %s\n", inPlayerID, inName );
         }
+    logPlayerNameForCurses( inEmail, inName );
     }
 
     

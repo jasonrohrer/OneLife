@@ -136,6 +136,8 @@ GRAVE (GV)
 
 GRAVE_MOVE (GM)
 
+CURSED (CU)
+
 
 
 Client can expect to receive these at any time, and in any order.
@@ -526,6 +528,18 @@ xs ys xd yd
 
 
 Grave at xs,ys moved to xd,yd.
+
+
+
+CU
+p_id level
+p_id level
+...
+p_id level
+#
+
+
+List of player ids that are cursed, and their curse level
 
 
 

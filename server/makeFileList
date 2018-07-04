@@ -46,6 +46,7 @@ failureLog.cpp \
 names.cpp \
 monument.cpp \
 lineageLimit.cpp \
+curses.cpp \
 
 
 

@@ -45,6 +45,7 @@
 #include "serverCalls.h"
 #include "failureLog.h"
 #include "names.h"
+#include "curses.h"
 #include "lineageLimit.h"
 
 
@@ -133,6 +134,7 @@ static int familySpan = 2;
 // phrases that trigger baby and family naming
 static SimpleVector<char*> nameGivingPhrases;
 static SimpleVector<char*> familyNameGivingPhrases;
+static SimpleVector<char*> cursingPhrases;
 
 static char *eveName = NULL;
 
@@ -185,6 +187,9 @@ typedef struct LiveObject {
         char *name;
 
         char *lastSay;
+
+        int curseLevel;
+        
 
         char isEve;        
 
@@ -830,6 +835,8 @@ void quitCleanup() {
     
     freeNames();
     
+    freeCurses();
+    
     freeLifeLog();
     
     freeFoodLog();
@@ -862,7 +869,8 @@ void quitCleanup() {
 
     nameGivingPhrases.deallocateStringElements();
     familyNameGivingPhrases.deallocateStringElements();
-    
+    cursingPhrases.deallocateStringElements();
+
     if( eveName != NULL ) {
         delete [] eveName;
         eveName = NULL;
@@ -3672,6 +3680,7 @@ void processLoggedInPlayer( Socket *inSock,
     
     newObject.name = NULL;
     newObject.lastSay = NULL;
+    newObject.curseLevel = 0;
 
     newObject.pathLength = 0;
     newObject.pathToDest = NULL;
@@ -4445,8 +4454,8 @@ static void sendMessageToPlayer( LiveObject *inPlayer,
     
 
 
-void readNameGivingPhrases( const char *inSettingsName, 
-                            SimpleVector<char*> *inList ) {
+void readPhrases( const char *inSettingsName, 
+                  SimpleVector<char*> *inList ) {
     char *cont = SettingsManager::getSettingContents( inSettingsName, "" );
     
     if( strcmp( cont, "" ) == 0 ) {
@@ -4497,7 +4506,9 @@ char *isFamilyNamingSay( char *inSaidString ) {
     return isNamingSay( inSaidString, &familyNameGivingPhrases );
     }
 
-
+char *isCurseNamingSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &cursingPhrases );
+    }
 
 
 int readIntFromFile( const char *inFileName, int inDefaultValue ) {
@@ -4915,8 +4926,10 @@ int main() {
         SettingsManager::getIntSetting( "familySpan", 2 );
     
     
-    readNameGivingPhrases( "babyNamingPhrases", &nameGivingPhrases );
-    readNameGivingPhrases( "familyNamingPhrases", &familyNameGivingPhrases );
+    readPhrases( "babyNamingPhrases", &nameGivingPhrases );
+    readPhrases( "familyNamingPhrases", &familyNameGivingPhrases );
+
+    readPhrases( "cursingPhrases", &cursingPhrases );
     
     eveName = 
         SettingsManager::getStringSetting( "eveName", "EVE" );
@@ -4933,6 +4946,9 @@ int main() {
 #endif
 
     initNames();
+
+    initCurses();
+    
 
     initLifeLog();
     initBackup();
@@ -5655,6 +5671,8 @@ int main() {
         SimpleVector<int> playerIndicesToSendUpdatesAbout;
         
         SimpleVector<int> playerIndicesToSendLineageAbout;
+
+        SimpleVector<int> playerIndicesToSendCursesAbout;
 
         SimpleVector<int> playerIndicesToSendNamesAbout;
 
@@ -6454,6 +6472,16 @@ int main() {
                             }
                         
 
+                        char *cursedName = isCurseNamingSay( m.saidText );
+                        
+                        if( cursedName != NULL && 
+                            strcmp( cursedName, "" ) != 0 ) {
+                            
+                            cursePlayer( nextPlayer->email,
+                                         cursedName );
+                            }
+                        
+
                         
                         if( nextPlayer->isEve && nextPlayer->name == NULL ) {
                             char *name = isFamilyNamingSay( m.saidText );
@@ -6464,6 +6492,7 @@ int main() {
                                                                 eveName, 
                                                                 close );
                                 logName( nextPlayer->id,
+                                         nextPlayer->email,
                                          nextPlayer->name );
                                 playerIndicesToSendNamesAbout.push_back( i );
                                 }
@@ -6499,6 +6528,7 @@ int main() {
                                                                close, 
                                                                lastName );
                                     logName( babyO->id,
+                                             babyO->email,
                                              babyO->name );
                                     
                                     playerIndicesToSendNamesAbout.push_back( 
@@ -8493,6 +8523,13 @@ int main() {
                 playerIndicesToSendUpdatesAbout.push_back( i );
                 playerIndicesToSendLineageAbout.push_back( i );
                 
+                
+                nextPlayer->curseLevel = getCurseLevel( nextPlayer->email );
+                
+                if( nextPlayer->curseLevel > 0 ) {
+                    playerIndicesToSendCursesAbout.push_back( i );
+                    }
+
                 nextPlayer->isNew = false;
                 
                 // force this PU to be sent to everyone
@@ -10084,6 +10121,55 @@ int main() {
 
 
 
+        unsigned char *cursesMessage = NULL;
+        int cursesMessageLength = 0;
+        
+        if( playerIndicesToSendCursesAbout.size() > 0 ) {
+            SimpleVector<char> curseWorking;
+            curseWorking.appendElementString( "CU\n" );
+            
+            int numAdded = 0;
+            for( int i=0; i<playerIndicesToSendCursesAbout.size(); i++ ) {
+                LiveObject *nextPlayer = players.getElement( 
+                    playerIndicesToSendCursesAbout.getElementDirect( i ) );
+
+                if( nextPlayer->error ) {
+                    continue;
+                    }
+
+                char *line = autoSprintf( "%d %d\n", nextPlayer->id,
+                                         nextPlayer->curseLevel );
+                
+                curseWorking.appendElementString( line );
+                delete [] line;
+                numAdded++;
+                }
+            
+            curseWorking.push_back( '#' );
+            
+            if( numAdded > 0 ) {
+
+                char *cursesMessageText = curseWorking.getElementString();
+                
+                cursesMessageLength = strlen( cursesMessageText );
+                
+                if( cursesMessageLength < maxUncompressedSize ) {
+                    cursesMessage = (unsigned char*)cursesMessageText;
+                    }
+                else {
+                    // compress for all players once here
+                    cursesMessage = makeCompressedMessage( 
+                        cursesMessageText, 
+                        cursesMessageLength, &cursesMessageLength );
+                    
+                    delete [] cursesMessageText;
+                    }
+                }
+            }
+
+
+
+
         unsigned char *namesMessage = NULL;
         int namesMessageLength = 0;
         
@@ -10393,6 +10479,49 @@ int main() {
                                          strlen( namesMessage ) );
                 
                     delete [] namesMessage;
+                    }
+
+
+
+                // send cursed status for all living cursed
+                
+                SimpleVector<char> cursesWorking;
+                cursesWorking.appendElementString( "CU\n" );
+
+                numAdded = 0;
+                
+                for( int i=0; i<numPlayers; i++ ) {
+                
+                    LiveObject *o = players.getElement( i );
+                
+                    if( o->error ) {
+                        continue;
+                        }
+
+                    int level = o->curseLevel;
+                    
+                    if( level == 0 ) {
+                        continue;
+                        }
+                    
+
+                    char *line = autoSprintf( "%d %d\n", o->id, level );
+                    cursesWorking.appendElementString( line );
+                    delete [] line;
+                    
+                    numAdded++;
+                    }
+                
+                cursesWorking.push_back( '#' );
+            
+                if( numAdded > 0 ) {
+                    char *cursesMessage = cursesWorking.getElementString();
+
+
+                    sendMessageToPlayer( nextPlayer, cursesMessage, 
+                                         strlen( cursesMessage ) );
+                
+                    delete [] cursesMessage;
                     }
 
 
@@ -11200,6 +11329,24 @@ int main() {
                         }
                     }
 
+
+                // EVERYONE gets curse info for new babies
+                if( cursesMessage != NULL ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            cursesMessage, 
+                            cursesMessageLength, 
+                            false, false );
+                    
+                    if( numSent != cursesMessageLength ) {
+                        setDeathReason( nextPlayer, "disconnected" );
+
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Socket write failed";
+                        }
+                    }
+
                 // EVERYONE gets newly-given names
                 if( namesMessage != NULL ) {
                     int numSent = 
@@ -11327,6 +11474,9 @@ int main() {
             }
         if( lineageMessage != NULL ) {
             delete [] lineageMessage;
+            }
+        if( cursesMessage != NULL ) {
+            delete [] cursesMessage;
             }
         if( namesMessage != NULL ) {
             delete [] namesMessage;
