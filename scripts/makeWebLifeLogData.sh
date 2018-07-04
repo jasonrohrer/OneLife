@@ -52,15 +52,16 @@ for f in lifeLog*; do
 			for g in $tempDir/$f/*; do
 			
 				cat $g | sed -e 's/\(killer_[0-9]*\)_[^ ]*/\1/' > "$g"_temp
+				cat "$g"_temp | sed -e 's/\(parent=[0-9]*\),[^ ]*/\1/' > "$g"_temp2
 
 				# replace each email with a hash
-				perl -MDigest::SHA=sha1_hex -pe 's/[^_ @][^ @]*@[^ ]*/sha1_hex$&/ge' "$g"_temp > "$g"_temp2
+				perl -MDigest::SHA=sha1_hex -pe 's/[^_ @][^ @]*@[^ ]*/sha1_hex$&/ge' "$g"_temp2 > "$g"_temp3
 				
 				gFilename=$(basename -- "$g")
 			
 				echo "Processing $gFilename"
 				
-				mv "$g"_temp2 $webDir/$f/$gFilename
+				mv "$g"_temp3 $webDir/$f/$gFilename
 			done
 		fi
 	fi
