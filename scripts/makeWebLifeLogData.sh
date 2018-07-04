@@ -52,7 +52,7 @@ for f in lifeLog*; do
 			for g in $tempDir/$f/*; do
 			
 				# replace each email with a hash
-				perl -MDigest::SHA=sha1_hex -pe 's/[^ @]*@[^ ]*/sha1_hex$&/ge' $g > "$g"_temp
+				perl -MDigest::SHA=sha1_hex -pe 's/[^_ @][^ @]*@[^ ]*/sha1_hex$&/ge' $g > "$g"_temp
 				
 				gFilename=$(basename -- "$g")
 			
