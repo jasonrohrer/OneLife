@@ -28,6 +28,9 @@ Version 119    ???
   curse points is born marked.  A marked person cannot be cursed further until
   they are born unmarked later.
 
+--Fixed several bugs in UI paper slip animations and clearing when not
+  operating at full frame rate.
+
 
 
 

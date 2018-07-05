@@ -8231,13 +8231,6 @@ void LivingLifePage::step() {
         
         if( d <= 1 ) {
             mNotePaperPosOffset = mNotePaperPosTargetOffset;
-            
-            if( equal( mNotePaperPosTargetOffset, mNotePaperHideOffset ) ) {
-                mLastKnownNoteLines.deallocateStringElements();
-                mErasedNoteChars.deleteAll();
-                mErasedNoteCharOffsets.deleteAll();
-                mErasedNoteCharFades.deleteAll();
-                }
             }
         else {
             int speed = frameRateFactor * 4;
@@ -8261,6 +8254,13 @@ void LivingLifePage::step() {
                      mult( dir, speed ) );
             }
         
+        if( equal( mNotePaperPosTargetOffset, mNotePaperHideOffset ) ) {
+            // fully hidden, clear erased stuff
+            mLastKnownNoteLines.deallocateStringElements();
+            mErasedNoteChars.deleteAll();
+            mErasedNoteCharOffsets.deleteAll();
+            mErasedNoteCharFades.deleteAll();
+            }
         }
     
     
@@ -8332,15 +8332,6 @@ void LivingLifePage::step() {
         
         if( d <= 1 ) {
             mHomeSlipPosOffset = mHomeSlipPosTargetOffset;
-
-            if( equal( mHomeSlipPosTargetOffset, mHomeSlipHideOffset ) ) {
-                // fully hidden
-                // clear all arrow states
-                for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
-                    mHomeArrowStates[i].solid = false;
-                    mHomeArrowStates[i].fade = 0;
-                    }
-                }
             }
         else {
             int speed = frameRateFactor * 4;
@@ -8363,6 +8354,14 @@ void LivingLifePage::step() {
                 add( mHomeSlipPosOffset,
                      mult( dir, speed ) );
             }        
+        if( equal( mHomeSlipPosTargetOffset, mHomeSlipHideOffset ) ) {
+            // fully hidden
+            // clear all arrow states
+            for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
+                mHomeArrowStates[i].solid = false;
+                    mHomeArrowStates[i].fade = 0;
+                }
+            }
         }
     
     
@@ -8526,10 +8525,7 @@ void LivingLifePage::step() {
             
             
             if( d <= 1 ) {
-                mHintPosOffset[i] = mHintTargetOffset[i];
-                
-                if( equal( mHintTargetOffset[i], mHintHideOffset[i] ) ) {
-                    }
+                mHintPosOffset[i] = mHintTargetOffset[i];                
                 }
             else {
                 int speed = frameRateFactor * 4;
@@ -8703,22 +8699,6 @@ void LivingLifePage::step() {
             
             if( d <= 1 ) {
                 mTutorialPosOffset[i] = mTutorialTargetOffset[i];
-                
-                if( equal( mTutorialTargetOffset[i], 
-                           mTutorialHideOffset[i] ) ) {
-                    }
-                else {
-
-                    double stereoPos = 0.25;
-                    
-                    if( i % 2 != 0 ) {
-                        stereoPos = 0.75;
-                        }
-                    
-                    if( mTutorialSound != NULL ) {
-                        playSoundSprite( mTutorialSound, 0.18, stereoPos );
-                        }
-                    }
                 }
             else {
                 int speed = frameRateFactor * 4;
@@ -8742,6 +8722,23 @@ void LivingLifePage::step() {
                          mult( dir, speed ) );
                 }
             
+            if( equal( mTutorialTargetOffset[i], 
+                       mTutorialHideOffset[i] ) ) {
+                // fully hidden
+                }
+            else if( equal( mTutorialPosOffset[i],
+                            mTutorialTargetOffset[i] ) ) {
+                // fully visible, play chime
+                double stereoPos = 0.25;
+                
+                if( i % 2 != 0 ) {
+                    stereoPos = 0.75;
+                    }
+                
+                if( mTutorialSound != NULL ) {
+                        playSoundSprite( mTutorialSound, 0.18, stereoPos );
+                    }
+                }
             }
         }
     
@@ -8782,11 +8779,6 @@ void LivingLifePage::step() {
         
             if( d <= 1 ) {
                 mHungerSlipPosOffset[i] = mHungerSlipPosTargetOffset[i];
-                if( equal( mHungerSlipPosTargetOffset[i],
-                           mHungerSlipHideOffsets[i] ) ) {
-                        // reset wiggle time
-                    mHungerSlipWiggleTime[i] = 0;
-                    }
                 }
             else {
                 int speed = frameRateFactor * 4;
@@ -8809,6 +8801,14 @@ void LivingLifePage::step() {
                     add( mHungerSlipPosOffset[i],
                          mult( dir, speed ) );
                 }
+            
+            if( equal( mHungerSlipPosTargetOffset[i],
+                       mHungerSlipHideOffsets[i] ) ) {
+                // fully hidden    
+                // reset wiggle time
+                mHungerSlipWiggleTime[i] = 0;
+                }
+                
             }
         
         if( ! equal( mHungerSlipPosOffset[i],
