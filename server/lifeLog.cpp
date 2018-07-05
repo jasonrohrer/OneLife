@@ -5,6 +5,8 @@
 #include "playerStats.h"
 #include "lineageLog.h"
 
+#include "curses.h"
+
 
 
 #include "minorGems/util/stringUtils.h"
@@ -143,6 +145,9 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
                int inMapX, int inMapY,
                int inTotalPopulation,
                int inParentChainLength ) {
+    
+    cursesLogBirth( inPlayerEmail );
+    
     if( logFile != NULL ) {
         stepLog();
 
@@ -189,6 +194,8 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
                char inDisconnect, int inKillerID, 
                char *inKillerEmail ) {
     
+    cursesLogDeath( inPlayerEmail );
+
     recordPlayerLifeStats( inPlayerEmail, inSecPlayed );
     
     if( inEve ) {
@@ -256,7 +263,6 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
 
 
 
-#include "curses.h"
 
 
 void logName( int inPlayerID, char *inEmail, char *inName ) {

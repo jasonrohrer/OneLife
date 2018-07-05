@@ -5,7 +5,12 @@ void initCurses();
 void freeCurses();
 
 
-void cursePlayer( char *inGiverEmail, char *inReceiverName );
+void cursesLogBirth( char *inEmail );
+void cursesLogDeath( char *inEmail );
+
+
+// returns true of curse effective
+char cursePlayer( char *inGiverEmail, char *inReceiverName );
 
 void logPlayerNameForCurses( char *inPlayerEmail, char *inPlayerName );
 

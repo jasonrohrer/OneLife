@@ -347,14 +347,26 @@ they have moved out of range.
 
 
 PS
-p_id text
-p_id text
-p_id text
+p_id/isCurse text
+p_id/isCurse text
+p_id/isCurse text
 ...
-p_id text
+p_id/isCurse text
 #
 
+isCurse is 0 if not a successful curse, or 1 if successful.
+
 Text that each player says must not contain # or newline.
+
+Example:
+
+PS
+1432/0 HELLO THERE
+1501/1 CURSE JOHN SMITH
+1448/0 HELP ME
+#
+
+
 
 
 

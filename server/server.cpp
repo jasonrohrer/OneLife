@@ -6471,14 +6471,15 @@ int main() {
                                 }
                             }
                         
+                        char isCurse = false;
 
                         char *cursedName = isCurseNamingSay( m.saidText );
                         
                         if( cursedName != NULL && 
                             strcmp( cursedName, "" ) != 0 ) {
                             
-                            cursePlayer( nextPlayer->email,
-                                         cursedName );
+                            isCurse = cursePlayer( nextPlayer->email,
+                                                   cursedName );
                             }
                         
 
@@ -6544,8 +6545,14 @@ int main() {
                             }
                         nextPlayer->lastSay = stringDuplicate( m.saidText );
                         
+                        int curseFlag = 0;
+                        if( isCurse ) {
+                            curseFlag = 1;
+                            }
                         
-                        char *line = autoSprintf( "%d %s\n", nextPlayer->id,
+                        char *line = autoSprintf( "%d/%d %s\n", 
+                                                  nextPlayer->id,
+                                                  curseFlag,
                                                   m.saidText );
                         
                         newSpeech.appendElementString( line );

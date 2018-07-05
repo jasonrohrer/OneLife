@@ -718,6 +718,7 @@ typedef enum messageType {
     PLAYER_SAYS,
     FOOD_CHANGE,
     LINEAGE,
+    CURSED,
     NAMES,
     APOCALYPSE,
     DYING,
@@ -786,6 +787,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "LN" ) == 0 ) {
         returnValue = LINEAGE;
+        }
+    else if( strcmp( copy, "CU" ) == 0 ) {
+        returnValue = CURSED;
         }
     else if( strcmp( copy, "NM" ) == 0 ) {
         returnValue = NAMES;
@@ -1724,6 +1728,12 @@ LivingLifePage::LivingLifePage()
     if( mTutorialSound != NULL ) {
         toggleVariance( mTutorialSound, true );
         }
+
+    mCurseSound = loadSoundSprite( "otherSounds", "curseChime.aiff" );
+
+    if( mCurseSound != NULL ) {
+        toggleVariance( mCurseSound, true );
+        }
     
 
     mHungerSlipSprites[0] = loadSprite( "fullSlip.tga", false );
@@ -2103,6 +2113,10 @@ LivingLifePage::~LivingLifePage() {
     if( mTutorialSound != NULL ) {    
         freeSoundSprite( mTutorialSound );
         }
+
+    if( mCurseSound != NULL ) {    
+        freeSoundSprite( mCurseSound );
+        }
     
     for( int i=0; i<3; i++ ) {
         freeSprite( mHungerSlipSprites[i] );
@@ -2371,6 +2385,9 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     if( inSpeaker->dying ) {
         setDrawColor( .65, 0, 0, inFade );
         }
+    else if( inSpeaker->curseLevel > 0 ) {
+        setDrawColor( 0, 0, 0, inFade );
+        }
     else {
         setDrawColor( 1, 1, 1, inFade );
         }
@@ -2433,6 +2450,9 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         }
     
     if( inSpeaker->dying ) {
+        setDrawColor( 1, 1, 1, inFade );
+        }
+    else if( inSpeaker->curseLevel > 0 ) {
         setDrawColor( 1, 1, 1, inFade );
         }
     else {
@@ -8689,7 +8709,9 @@ void LivingLifePage::step() {
                         stereoPos = 0.75;
                         }
                     
-                    playSoundSprite( mTutorialSound, 0.18, stereoPos );
+                    if( mTutorialSound != NULL ) {
+                        playSoundSprite( mTutorialSound, 0.18, stereoPos );
+                        }
                     }
                 }
             else {
@@ -10367,6 +10389,8 @@ void LivingLifePage::step() {
                 o.name = NULL;
                 o.relationName = NULL;
 
+                o.curseLevel = 0;
+                
 
                 o.tempAgeOverrideSet = false;
                 o.tempAgeOverride = 0;
@@ -10380,6 +10404,7 @@ void LivingLifePage::step() {
 
                 o.currentSpeech = NULL;
                 o.speechFade = 1.0;
+                o.speechIsSuccessfulCurse = false;
                 
                 o.heldByAdultID = -1;
                 o.heldByAdultPendingID = -1;
@@ -12848,11 +12873,21 @@ void LivingLifePage::step() {
             
             for( int i=1; i<numLines; i++ ) {
 
-                int id;
-                int numRead = sscanf( lines[i], "%d ",
-                                      &( id ) );
+                int id = -1;
+                int curseFlag = 0;
 
-                if( numRead == 1 ) {
+                int numRead = 0;
+                
+                if( strstr( lines[i], "/" ) != NULL ) {
+                    // new id/curse_flag format
+                    numRead = sscanf( lines[i], "%d/%d ", &id, &curseFlag );
+                    }
+                else {
+                    // old straight ID format
+                    numRead = sscanf( lines[i], "%d ", &id );
+                    }
+                
+                if( numRead >= 1 ) {
                     for( int j=0; j<gameObjects.size(); j++ ) {
                         if( gameObjects.getElement(j)->id == id ) {
                             
@@ -12871,6 +12906,8 @@ void LivingLifePage::step() {
                                 
                                 existing->speechFade = 1.0;
                                 
+                                existing->speechIsSuccessfulCurse = curseFlag;
+
                                 // longer time for longer speech
                                 existing->speechFadeETATime = 
                                     game_getCurrentTime() + 3 +
@@ -12884,6 +12921,14 @@ void LivingLifePage::step() {
                                     existing->tempAgeOverride = 0;
                                     existing->tempAgeOverrideSetTime = 
                                         game_getCurrentTime();
+                                    }
+                                
+                                if( curseFlag && mCurseSound != NULL ) {
+                                    playSound( 
+                                        mCurseSound,
+                                        getVectorFromCamera( 
+                                            existing->currentPos.x, 
+                                            existing->currentPos.y ) );
                                     }
                                 }
                             
@@ -12992,6 +13037,39 @@ void LivingLifePage::step() {
                         }
                     }
                 }
+            }
+        else if( type == CURSED ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+
+                int id, level;
+                int numRead = sscanf( lines[i], "%d %d",
+                                      &id, &level );
+
+                if( numRead == 2 ) {
+                    for( int j=0; j<gameObjects.size(); j++ ) {
+                        if( gameObjects.getElement(j)->id == id ) {
+                            
+                            LiveObject *existing = gameObjects.getElement(j);
+                            
+                            existing->curseLevel = level;
+                            break;
+                            }
+                        }
+                    
+                    }
+                
+                delete [] lines[i];
+                }
+            delete [] lines;
             }
         else if( type == NAMES ) {
             int numLines;
@@ -13488,6 +13566,7 @@ void LivingLifePage::step() {
             // don't want them typing long filters that overflow the display
             sayCap = 25;
             }
+        delete [] currentText;
 
         mSayField.setMaxLength( sayCap );
 
@@ -13703,6 +13782,7 @@ void LivingLifePage::step() {
                     delete [] o->currentSpeech;
                     o->currentSpeech = NULL;
                     o->speechFade = 1.0;
+                    o->speechIsSuccessfulCurse = false;
                     }
                 }
             }

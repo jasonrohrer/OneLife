@@ -60,6 +60,7 @@ typedef struct LiveObject {
 
         char *relationName;
         
+        int curseLevel;
 
         // roll back age temporarily to make baby revert to crying
         // when baby speaks
@@ -262,6 +263,8 @@ typedef struct LiveObject {
         // wall clock time when speech should start fading
         double speechFadeETATime;
 
+        char speechIsSuccessfulCurse;
+        
 
         char shouldDrawPathMarks;
         double pathMarkFade;
@@ -581,6 +584,7 @@ class LivingLifePage : public GamePage {
         char mPulseHungerSound;
 
         SoundSpriteHandle mTutorialSound;
+        SoundSpriteHandle mCurseSound;
 
         
         SpriteHandle mHungerSlipSprites[3];

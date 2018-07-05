@@ -21,6 +21,14 @@ Version 119    ???
   tunic, bottom, or backpack clothing.  Arm should be unclickable if you are
   wearing clothes.
 
+--Curse system.  Everyone starts with one curse token and zero curse points. 
+  CURSE JANE SMITH curses Jane Smith, giving her one curse point, and consuming
+  the sayer's curse token.  Sayer gets new curse token after two hours of play.
+  One curse point removed after each hour of play.  A baby with ten or more
+  curse points is born marked.  A marked person cannot be cursed further until
+  they are born unmarked later.
+
+
 
 
 Server Fixes
