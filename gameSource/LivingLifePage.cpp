@@ -2454,6 +2454,12 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         }
     else if( inSpeaker->curseLevel > 0 ) {
         setDrawColor( 1, 1, 1, inFade );
+        if( inSpeaker->speechIsSuccessfulCurse ) {
+            setDrawColor( 0.875, 0, 0.875, inFade );
+            }
+        }
+    else if( inSpeaker->speechIsSuccessfulCurse ) {
+        setDrawColor( 0.5, 0, 0.5, inFade );
         }
     else {
         setDrawColor( 0, 0, 0, inFade );
