@@ -813,8 +813,8 @@ static double sigmoidF( double inDstance ) {
 
 
 
-void playSound( SoundUsage inUsage,
-                doublePair inVectorFromCameraToSoundSource ) {
+static void getVolumeAndPan( doublePair inVectorFromCameraToSoundSource,
+                             double *outVolume, double *outPan ) {
         
     double d = length( inVectorFromCameraToSoundSource );
     
@@ -863,6 +863,21 @@ void playSound( SoundUsage inUsage,
     // between 3 and 13
     xPan += 3;
 
+
+    *outVolume = volumeScale;
+    *outPan = xPan / 16.0;
+    }
+
+
+
+void playSound( SoundUsage inUsage,
+                doublePair inVectorFromCameraToSoundSource ) {
+
+    double volume, pan;
+    
+    getVolumeAndPan( inVectorFromCameraToSoundSource, &volume, &pan );
+
+
     // if we treat it as going from 0 to 16, we avoid hard left and right stereo
     // even at the edge of the screen
     
@@ -879,15 +894,28 @@ void playSound( SoundUsage inUsage,
     double reverbContstant = 0.1;
     
     double reverbMix = 
-        ( 1.0 - reverbContstant ) * ( 1.0 - volumeScale ) + 
+        ( 1.0 - reverbContstant ) * ( 1.0 - volume ) + 
         reverbContstant;
 
     SoundUsagePlay p = playRandom( inUsage );
 
-    playSound( p.id, volumeScale * p.volume, xPan / 16.0,
+    playSound( p.id, volume * p.volume, pan,
                reverbMix );
     }
 
+
+
+void playSound( SoundSpriteHandle inSoundSprite,
+                doublePair inVectorFromCameraToSoundSource ) {
+    double volume, pan;
+    
+    getVolumeAndPan( inVectorFromCameraToSoundSource, &volume, &pan );
+
+    playSoundSprite( inSoundSprite,
+                     soundEffectsLoudness * 
+                     volume * playedSoundVolumeScale, 
+                     pan );
+    }
 
 
     

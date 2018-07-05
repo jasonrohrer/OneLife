@@ -89,6 +89,11 @@ void playSound( SoundUsage inUsage,
 void playSound( SoundUsage inUsage,
                 doublePair inVectorFromCameraToSoundSource );
 
+// leverage stereo positioning code on a raw sound sprite
+void playSound( SoundSpriteHandle inSoundSprite,
+                doublePair inVectorFromCameraToSoundSource );
+
+
 
 
 // true if started
