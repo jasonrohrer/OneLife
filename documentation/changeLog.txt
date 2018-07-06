@@ -31,6 +31,9 @@ Version 119    ???
 --Fixed several bugs in UI paper slip animations and clearing when not
   operating at full frame rate.
 
+--Home arrow shows tile distance if target is more than 1000 tiles away.
+  Useful for judging whether distant monuments are worth the trip.
+
 
 
 

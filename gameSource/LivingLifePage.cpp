@@ -192,6 +192,7 @@ static void addAncientHomeLocation( int inX, int inY ) {
 // returns if -1 no home needs to be shown (home unknown)
 // otherwise, returns 0..7 index of arrow
 static int getHomeDir( doublePair inCurrentPlayerPos, 
+                       double *outTileDistance = NULL,
                        char *outTooClose = NULL ) {
     GridPos *p = getHomeLocation();
     
@@ -210,6 +211,10 @@ static int getHomeDir( doublePair inCurrentPlayerPos,
     doublePair vector = sub( homePos, inCurrentPlayerPos );
 
     double dist = length( vector );
+
+    if( outTileDistance != NULL ) {
+        *outTileDistance = dist;
+        }
 
     if( dist < 5 ) {
         // too close
@@ -2062,6 +2067,9 @@ LivingLifePage::~LivingLifePage() {
     if( mServerSocket != -1 ) {
         closeSocket( mServerSocket );
         }
+    
+    mPreviousHomeDistStrings.deallocateStringElements();
+    mPreviousHomeDistFades.deleteAll();
 
     
     delete [] mMapAnimationFrameCount;
@@ -5946,7 +5954,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         if( ourLiveObject != NULL ) {
             
-            int arrowIndex = getHomeDir( ourLiveObject->currentPos );
+            double homeDist = 0;
+            
+            int arrowIndex = getHomeDir( ourLiveObject->currentPos, &homeDist );
             
             if( arrowIndex == -1 || ! mHomeArrowStates[arrowIndex].solid ) {
                 // solid change
@@ -6005,6 +6015,125 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 }
                             
             toggleMultiplicativeBlend( false );
+            
+            char drawTopAsErased = true;
+            
+            doublePair distPos = arrowPos;
+            
+            distPos.y -= 47;
+            
+            if( homeDist > 1000 ) {
+                drawTopAsErased = false;
+                
+                setDrawColor( 0, 0, 0, 1 );
+                
+                char *distString = NULL;
+
+                double thousands = homeDist / 1000;
+                
+                if( thousands < 1000 ) {
+                    if( thousands < 10 ) {
+                        distString = autoSprintf( "%.1fK", thousands );
+                        }
+                    else {
+                        distString = autoSprintf( "%.0fK", 
+                                                  thousands );
+                        }
+                    }
+                else {
+                    double millions = homeDist / 1000000;
+                    if( millions < 1000 ) {
+                        if( millions < 10 ) {
+                            distString = autoSprintf( "%.1fM", millions );
+                            }
+                        else {
+                            distString = autoSprintf( "%.0fM", millions );
+                            }
+                        }
+                    else {
+                        double billions = homeDist / 1000000000;
+                        
+                        distString = autoSprintf( "%.1fG", billions );
+                        }
+                    }
+
+                
+                
+                pencilFont->drawString( distString, distPos, alignCenter );
+
+                char alreadyOld = false;
+
+                for( int i=0; i<mPreviousHomeDistStrings.size(); i++ ) {
+                    char *oldString = 
+                        mPreviousHomeDistStrings.getElementDirect( i );
+                    
+                    if( strcmp( oldString, distString ) == 0 ) {
+                        // hit
+                        alreadyOld = true;
+                        // move to top
+                        mPreviousHomeDistStrings.deleteElement( i );
+                        mPreviousHomeDistStrings.push_back( oldString );
+                        
+                        mPreviousHomeDistFades.deleteElement( i );
+                        mPreviousHomeDistFades.push_back( 1.0f );
+                        break;
+                        }
+                    }
+                
+                if( ! alreadyOld ) {
+                    // put new one top
+                    mPreviousHomeDistStrings.push_back( distString );
+                    mPreviousHomeDistFades.push_back( 1.0f );
+                    
+                    // fade old ones
+                    for( int i=0; i<mPreviousHomeDistFades.size() - 1; i++ ) {
+                        float fade = 
+                            mPreviousHomeDistFades.getElementDirect( i );
+                        
+                        if( fade > 0.5 ) {
+                            fade -= 0.20;
+                            }
+                        else {
+                            fade -= 0.1;
+                            }
+                        
+                        *( mPreviousHomeDistFades.getElement( i ) ) =
+                            fade;
+                        
+                        if( fade <= 0 ) {
+                            mPreviousHomeDistFades.deleteElement( i );
+                            mPreviousHomeDistStrings.
+                                deallocateStringElement( i );
+                            i--;
+                            }
+                        }
+                    }
+                else {
+                    delete [] distString;
+                    }
+                }
+            
+            int numPrevious = mPreviousHomeDistStrings.size();
+            
+            if( numPrevious > 1 ||
+                ( numPrevious == 1 && drawTopAsErased ) ) {
+                
+                int limit = mPreviousHomeDistStrings.size() - 1;
+                
+                if( drawTopAsErased ) {
+                    limit += 1;
+                    }
+                for( int i=0; i<limit; i++ ) {
+                    float fade = 
+                        mPreviousHomeDistFades.getElementDirect( i );
+                    char *string = 
+                        mPreviousHomeDistStrings.getElementDirect( i );
+                    
+                    setDrawColor( 0, 0, 0, fade * pencilErasedFontExtraFade );
+                    pencilErasedFont->drawString( 
+                        string, distPos, alignCenter );
+                    }
+                }    
             }
         }
 
@@ -8269,11 +8398,17 @@ void LivingLifePage::step() {
 
     if( ourObject != NULL ) {    
         char tooClose = false;
+        double homeDist = 0;
         
-        int homeArrow = getHomeDir( ourObject->currentPos, &tooClose );
+        int homeArrow = getHomeDir( ourObject->currentPos, &homeDist,
+                                    &tooClose );
         
         if( homeArrow != -1 && ! tooClose ) {
             mHomeSlipPosTargetOffset.y = mHomeSlipHideOffset.y + 68;
+            
+            if( homeDist > 1000 ) {
+                mHomeSlipPosTargetOffset.y += 20;
+                }
             }
         else {
             mHomeSlipPosTargetOffset.y = mHomeSlipHideOffset.y;
@@ -14591,6 +14726,9 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+    
+    mPreviousHomeDistStrings.deallocateStringElements();
+    mPreviousHomeDistFades.deleteAll();
 
     mForceHintRefresh = false;
     mLastHintSortedSourceID = 0;

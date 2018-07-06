@@ -556,6 +556,9 @@ class LivingLifePage : public GamePage {
         
         HomeArrow mHomeArrowStates[ NUM_HOME_ARROWS ];
         
+        SimpleVector<char*> mPreviousHomeDistStrings;
+        SimpleVector<float> mPreviousHomeDistFades;
+        
 
         // offset from current view center
         doublePair mNotePaperHideOffset;
