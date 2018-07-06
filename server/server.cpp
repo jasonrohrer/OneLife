@@ -3577,7 +3577,7 @@ void processLoggedInPlayer( Socket *inSock,
     else if( inTutorialNumber > 0 ) {
         
         int startX = maxPlacementX * 2;
-        int startY = tutorialCount * 100;
+        int startY = tutorialCount * 25;
 
         newObject.xs = startX;
         newObject.ys = startY;
