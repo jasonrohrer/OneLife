@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 119    ???
+Version 119    2018-July-6
 
 --Fixed glitch when picked up and put down by an adult who still has messages
   pending (thanks Jacek T).  Also handled case where two adults are passing
@@ -26,7 +26,7 @@ Version 119    ???
   the sayer's curse token.  Sayer gets new curse token after two hours of play.
   One curse point removed after each hour of play.  A baby with ten or more
   curse points is born marked.  A marked person cannot be cursed further until
-  they are born unmarked later.
+  they are born unmarked later.  Curse token displayed near temp meter.
 
 --Fixed several bugs in UI paper slip animations and clearing when not
   operating at full frame rate.
