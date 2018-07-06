@@ -61,6 +61,9 @@ typedef struct LiveObject {
         char *relationName;
         
         int curseLevel;
+        
+        int curseTokenCount;
+        
 
         // roll back age temporarily to make baby revert to crying
         // when baby speaks

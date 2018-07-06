@@ -190,6 +190,9 @@ typedef struct LiveObject {
 
         int curseLevel;
         
+        int curseTokenCount;
+        char curseTokenUpdate;
+
 
         char isEve;        
 
@@ -3681,7 +3684,18 @@ void processLoggedInPlayer( Socket *inSock,
     newObject.name = NULL;
     newObject.lastSay = NULL;
     newObject.curseLevel = 0;
+    
 
+    if( hasCurseToken( inEmail ) ) {
+        newObject.curseTokenCount = 1;
+        }
+    else {
+        newObject.curseTokenCount = 0;
+        }
+
+    newObject.curseTokenUpdate = true;
+
+    
     newObject.pathLength = 0;
     newObject.pathToDest = NULL;
     newObject.pathTruncated = 0;
@@ -6480,6 +6494,17 @@ int main() {
                             
                             isCurse = cursePlayer( nextPlayer->email,
                                                    cursedName );
+                            
+                            if( isCurse ) {
+                                
+                                if( hasCurseToken( nextPlayer->email ) ) {
+                                    nextPlayer->curseTokenCount = 1;
+                                    }
+                                else {
+                                    nextPlayer->curseTokenCount = 0;
+                                    }
+                                nextPlayer->curseTokenUpdate = true;
+                                }
                             }
                         
 
@@ -10042,6 +10067,29 @@ int main() {
         stepMap( &mapChanges, &mapChangesPos );
         
 
+        // figure out who has recieved a new curse token
+        // they are sent a message about it below (CX)
+        SimpleVector<char*> newCurseTokenEmails;
+        getNewCurseTokenHolders( &newCurseTokenEmails );
+        
+        for( int i=0; i<newCurseTokenEmails.size(); i++ ) {
+            char *email = newCurseTokenEmails.getElementDirect( i );
+            
+            for( int j=0; j<numLive; j++ ) {
+                LiveObject *nextPlayer = players.getElement(i);
+                
+                if( strcmp( nextPlayer->email, email ) == 0 ) {
+                    
+                    nextPlayer->curseTokenCount = 1;
+                    nextPlayer->curseTokenUpdate = true;
+                    break;
+                    }
+                }
+            
+            delete [] email;
+            }
+        
+
         
 
 
@@ -11411,19 +11459,49 @@ int main() {
                              messageLength,
                              false, false );
 
-                     if( numSent != messageLength ) {
-                         setDeathReason( nextPlayer, "disconnected" );
+                    if( numSent != messageLength ) {
+                        setDeathReason( nextPlayer, "disconnected" );
+                        
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Socket write failed";
+                        }
+                    
+                    delete [] foodMessage;
+                    
+                    nextPlayer->foodUpdate = false;
+                    nextPlayer->lastAteID = 0;
+                    nextPlayer->lastAteFillMax = 0;
+                    }
 
-                         nextPlayer->error = true;
-                         nextPlayer->errorCauseString =
-                             "Socket write failed";
-                         }
+
+                if( nextPlayer->curseTokenUpdate ) {
+                    // send this player a curse token status change
+                    
+                    char *tokenMessage = autoSprintf( 
+                        "CX\n"
+                        "%d#",
+                        nextPlayer->curseTokenCount );
                      
-                     delete [] foodMessage;
-                     
-                     nextPlayer->foodUpdate = false;
-                     nextPlayer->lastAteID = 0;
-                     nextPlayer->lastAteFillMax = 0;
+                    int messageLength = strlen( tokenMessage );
+                    
+                    int numSent = 
+                         nextPlayer->sock->send( 
+                             (unsigned char*)tokenMessage, 
+                             messageLength,
+                             false, false );
+
+                    if( numSent != messageLength ) {
+                        setDeathReason( nextPlayer, "disconnected" );
+                        
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Socket write failed";
+                        }
+                    
+                    delete [] tokenMessage;
+                    
+                    nextPlayer->curseTokenUpdate = false;
                     }
                 }
             }

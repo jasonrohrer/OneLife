@@ -138,6 +138,8 @@ GRAVE_MOVE (GM)
 
 CURSED (CU)
 
+CURSE_TOKEN_CHANGE (CX)
+
 
 
 Client can expect to receive these at any time, and in any order.
@@ -552,6 +554,13 @@ p_id level
 
 
 List of player ids that are cursed, and their curse level
+
+
+
+CX
+curse_token_count#
+
+Tells player about how many curse tokens they have
 
 
 

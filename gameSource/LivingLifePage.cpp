@@ -724,6 +724,7 @@ typedef enum messageType {
     FOOD_CHANGE,
     LINEAGE,
     CURSED,
+    CURSE_TOKEN_CHANGE,
     NAMES,
     APOCALYPSE,
     DYING,
@@ -795,6 +796,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "CU" ) == 0 ) {
         returnValue = CURSED;
+        }
+    else if( strcmp( copy, "CX" ) == 0 ) {
+        returnValue = CURSE_TOKEN_CHANGE;
         }
     else if( strcmp( copy, "NM" ) == 0 ) {
         returnValue = NAMES;
@@ -6608,6 +6612,29 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
     if( ourLiveObject != NULL ) {
+
+        // draw curse token status
+        Font *curseTokenFont;
+        if( ourLiveObject->curseTokenCount > 0 ) {
+            setDrawColor( 0, 0, 0, 1.0 );
+            curseTokenFont = pencilFont;
+            }
+        else {
+            setDrawColor( 0, 0, 0, pencilErasedFontExtraFade );
+            curseTokenFont = pencilErasedFont;
+            }
+
+        // show as a sigil to right of temp meter
+        doublePair curseTokenPos = { lastScreenViewCenter.x + 621, 
+                                     lastScreenViewCenter.y - 316 };
+        curseTokenFont->drawString( "C", curseTokenPos, alignCenter );
+        curseTokenFont->drawString( "+", curseTokenPos, alignCenter );
+        curseTokenPos.x += 6;
+        curseTokenFont->drawString( "X", curseTokenPos, alignCenter );
+        
+
+
+
         setDrawColor( 1, 1, 1, 1 );
         toggleMultiplicativeBlend( true );
 
@@ -10531,7 +10558,7 @@ void LivingLifePage::step() {
                 o.relationName = NULL;
 
                 o.curseLevel = 0;
-                
+                o.curseTokenCount = 0;
 
                 o.tempAgeOverrideSet = false;
                 o.tempAgeOverride = 0;
@@ -13211,6 +13238,15 @@ void LivingLifePage::step() {
                 delete [] lines[i];
                 }
             delete [] lines;
+            }
+        else if( type == CURSE_TOKEN_CHANGE ) {
+            LiveObject *ourLiveObject = getOurLiveObject();
+            
+            if( ourLiveObject != NULL ) {
+                
+                sscanf( message, "CX\n%d", 
+                        &( ourLiveObject->curseTokenCount ) );
+                }
             }
         else if( type == NAMES ) {
             int numLines;

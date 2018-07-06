@@ -1,6 +1,5 @@
 #include "curses.h"
 
-#include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/SettingsManager.h"
 #include "minorGems/util/stringUtils.h"
 
@@ -48,7 +47,11 @@ typedef struct PlayerNameRecord {
 static double playerNameTimeout = 2 * 3600;
 
 static SimpleVector<PlayerNameRecord> playerNames;
-    
+
+
+// players that have gotten new tokens recently
+static SimpleVector<char*> newTokenEmails;
+
 
 
 
@@ -76,6 +79,9 @@ void freeCurses() {
         delete [] r->email;
         }
     curseRecords.deleteAll();
+
+
+    newTokenEmails.deallocateStringElements();
     }
 
 
@@ -120,6 +126,8 @@ static void stepCurses() {
                 r->tokens ++;
                 r->livedTimeSinceTokenSpent = 0;
                 r->aliveStartTimeSinceTokenSpent = curTime;
+                
+                newTokenEmails.push_back( stringDuplicate( r->email ) );
                 }
             }
         if( r->score > 0 ) {
@@ -275,6 +283,26 @@ static CurseRecord *findCurseRecordByName( char *inName ) {
 
 
 
+
+char hasCurseToken( char *inEmail ) {
+    stepCurses();    
+
+    CurseRecord *r = findCurseRecord( inEmail );
+    
+    if( r->tokens < 1 ) {  
+        return false;
+        }
+    return true;
+    }
+
+
+
+
+void getNewCurseTokenHolders( SimpleVector<char*> *inEmailList ) {
+    inEmailList->push_back_other( &newTokenEmails );
+    
+    newTokenEmails.deleteAll();
+    }
 
 
 
