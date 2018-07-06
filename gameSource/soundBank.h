@@ -89,8 +89,11 @@ void playSound( SoundUsage inUsage,
 void playSound( SoundUsage inUsage,
                 doublePair inVectorFromCameraToSoundSource );
 
+
 // leverage stereo positioning code on a raw sound sprite
+// still offer a volume tweak on top of stereo positioning
 void playSound( SoundSpriteHandle inSoundSprite,
+                double inVolumeTweak,
                 doublePair inVectorFromCameraToSoundSource );
 
 

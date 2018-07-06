@@ -906,13 +906,14 @@ void playSound( SoundUsage inUsage,
 
 
 void playSound( SoundSpriteHandle inSoundSprite,
+                double inVolumeTweak,
                 doublePair inVectorFromCameraToSoundSource ) {
     double volume, pan;
     
     getVolumeAndPan( inVectorFromCameraToSoundSource, &volume, &pan );
 
     playSoundSprite( inSoundSprite,
-                     soundEffectsLoudness * 
+                     inVolumeTweak * soundEffectsLoudness * 
                      volume * playedSoundVolumeScale, 
                      pan );
     }

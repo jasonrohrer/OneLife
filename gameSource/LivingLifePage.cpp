@@ -13094,6 +13094,7 @@ void LivingLifePage::step() {
                                 if( curseFlag && mCurseSound != NULL ) {
                                     playSound( 
                                         mCurseSound,
+                                        0.5, // a little loud, tweak it
                                         getVectorFromCamera( 
                                             existing->currentPos.x, 
                                             existing->currentPos.y ) );
