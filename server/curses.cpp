@@ -43,8 +43,9 @@ typedef struct PlayerNameRecord {
 
 
 
-
-static double playerNameTimeout = 1800;
+// a full hour after their full life is over, we can clear their name
+// no one living remembers them
+static double playerNameTimeout = 2 * 3600;
 
 static SimpleVector<PlayerNameRecord> playerNames;
     
