@@ -3681,7 +3681,7 @@ double getClosestObjectPart( ObjectRecord *inObject,
                     }
                 hatChecked = true;
                 }
-            else if( tunicChecked ) {
+            else if( !tunicChecked ) {
                 // bottom, tunic, and backpack behind back arm
                 // but ignore the arm when checking for clothing hit
                 // we never want to click on arm instead of the clothing

@@ -11,6 +11,9 @@ Version 121    2018-July-6
 
 --Responds to new SD (FORCED_SHUTDOWN) message from server.
 
+--Fixed bug that prevented body clothing from being removed.
+  Thanks Midget Maker.
+
 
 
 Server Fixes
