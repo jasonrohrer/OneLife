@@ -140,6 +140,8 @@ CURSED (CU)
 
 CURSE_TOKEN_CHANGE (CX)
 
+FORCED_SHUTDOWN (SD)
+
 
 
 Client can expect to receive these at any time, and in any order.
@@ -561,6 +563,17 @@ CX
 curse_token_count#
 
 Tells player about how many curse tokens they have
+
+
+
+
+
+SD
+#
+
+Indicates that the server is undergoing a forced shutdown.  Gives client a
+chance to hear about this and close connection before connection is
+force-closed by server.
 
 
 

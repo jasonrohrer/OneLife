@@ -9,6 +9,17 @@ Version 121    ???
   far enough away that volume equation becomes negative (was causing all kinds
   of sound glitches).
 
+--Responds to new SD (FORCED_SHUTDOWN) message from server.
+
+
+
+Server Fixes
+
+--Added new forcedShutdown trigger for server, to cleanly shut down server,
+  and send notice to connected clients, without waiting for everyone to live
+  out their lives.  Need this for emergencies sometimes, and sending SIGSTP to
+  the server, unlike ctrl-z, wasn't working.
+
 
 
 

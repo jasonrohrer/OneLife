@@ -5035,7 +5035,37 @@ int main() {
     while( !quit ) {
         
         int shutdownMode = SettingsManager::getIntSetting( "shutdownMode", 0 );
+        int forceShutdownMode = 
+            SettingsManager::getIntSetting( "forceShutdownMode", 0 );
         
+        if( forceShutdownMode ) {
+            shutdownMode = 1;
+        
+            const char *shutdownMessage = "SD\n#";
+            int messageLength = strlen( shutdownMessage );
+            
+            // send everyone who's still alive a shutdown message
+            for( int i=0; i<players.size(); i++ ) {
+                LiveObject *nextPlayer = players.getElement( i );
+                
+                if( nextPlayer->error ) {
+                    continue;
+                    }
+
+                nextPlayer->sock->send( 
+                    (unsigned char*)shutdownMessage, 
+                    messageLength,
+                    false, false );
+                
+                // don't worry about num sent
+                // it's the last message to this client anyway
+                nextPlayer->error = true;
+                nextPlayer->errorCauseString =
+                    "Forced server shutdown";
+                }
+            }
+        
+
         
         apocalypseStep();
         monumentStep();
