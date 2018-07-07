@@ -812,8 +812,8 @@ static double sigmoidF( double inDstance ) {
 
 
 
-
-static void getVolumeAndPan( doublePair inVectorFromCameraToSoundSource,
+// returns true if sound should play
+static char getVolumeAndPan( doublePair inVectorFromCameraToSoundSource,
                              double *outVolume, double *outPan ) {
         
     double d = length( inVectorFromCameraToSoundSource );
@@ -838,9 +838,9 @@ static void getVolumeAndPan( doublePair inVectorFromCameraToSoundSource,
     // which are audible
     volumeScale = sigmoidF( d );
     
-    if( volumeScale < 0 ) {
+    if( volumeScale <= 0 ) {
         // don't play sound at all
-        return;
+        return false;
         }
     if( volumeScale > 1 ) {
         volumeScale = 1;
@@ -866,6 +866,8 @@ static void getVolumeAndPan( doublePair inVectorFromCameraToSoundSource,
 
     *outVolume = volumeScale;
     *outPan = xPan / 16.0;
+
+    return true;
     }
 
 
@@ -875,8 +877,13 @@ void playSound( SoundUsage inUsage,
 
     double volume, pan;
     
-    getVolumeAndPan( inVectorFromCameraToSoundSource, &volume, &pan );
+    char shouldPlay = 
+        getVolumeAndPan( inVectorFromCameraToSoundSource, &volume, &pan );
 
+    if( ! shouldPlay ) {
+        // skip sound
+        return;
+        }
 
     // if we treat it as going from 0 to 16, we avoid hard left and right stereo
     // even at the edge of the screen
@@ -909,8 +916,15 @@ void playSound( SoundSpriteHandle inSoundSprite,
                 double inVolumeTweak,
                 doublePair inVectorFromCameraToSoundSource ) {
     double volume, pan;
+
+    char shouldPlay = 
+        getVolumeAndPan( inVectorFromCameraToSoundSource, &volume, &pan );
+
     
-    getVolumeAndPan( inVectorFromCameraToSoundSource, &volume, &pan );
+    if( ! shouldPlay ) {
+        // skip sound
+        return;
+        }
 
     playSoundSprite( inSoundSprite,
                      inVolumeTweak * soundEffectsLoudness * 

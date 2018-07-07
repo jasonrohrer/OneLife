@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 121    ???
+
+--Fixed newly introduced bug in sound volumes for positioned sound source when
+  far enough away that volume equation becomes negative (was causing all kinds
+  of sound glitches).
+
+
+
 
 Version 119    2018-July-6
 
