@@ -65,7 +65,8 @@ Run a server code update (local and remote) NOW.
 Generating platform-specific (binary code) update for a platform.
 ++++
 
-1. Update game.cpp version number.
+1. Update game.cpp version number (ONLY if client not backwards compatible
+   with previous server version).  Usually don't need to do this.
 
 NOTE:  On Mac and Linux, steps 2-4 can be accomplished with these scripts:
        pullBuildAndPostMac.sh
