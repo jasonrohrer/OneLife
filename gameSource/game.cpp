@@ -1,17 +1,5 @@
-// Note that this version number should NOT be updated if client is backwards
-// compatible with older servers.
-
-// This version number is meant to deal with cases where a client binary
-// update requires a corresponding server update.
-
-// Otherwise, client hard-coded version number can lag behind, allowing new
-// client to keep playing on old servers during the update process.
-
-// In other words, the version listed here does not necessarily match the
-// latest version tag in the repository.
-int versionNumber = 119;
+int versionNumber = 121;
 int dataVersionNumber = 0;
-
 
 // NOTE that OneLife doesn't use account hmacs
 

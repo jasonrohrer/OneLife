@@ -3,6 +3,15 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 122    2018-July-6
+
+--Back to updating hard-coded version number with every client update.  Not
+  sure what I was thinking there.  Saw a version mismatched and found the
+  wrong reason for it.
+
+
+
+
 Version 121    2018-July-6
 
 --Fixed newly introduced bug in sound volumes for positioned sound source when
