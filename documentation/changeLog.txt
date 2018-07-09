@@ -21,6 +21,9 @@ Server Fixes
   of their adoptive parent.  An unnamed person who is older than baby age can
   be named by anyone nearby, but they will never have a last name.
 
+--If a name isn't unique as far as the curse system is concerned, a roman
+  numeral suffix (II, III, IV, V, etc.) is automatically added.
+
 
 
 

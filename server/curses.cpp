@@ -377,3 +377,20 @@ int getCurseLevel( char *inPlayerEmail ) {
     return getCurseLevel( r );
     }
 
+
+
+
+char isNameDuplicateForCurses( char *inPlayerName ) {
+    int numRec = playerNames.size();
+    
+    for( int i=0; i<numRec; i++ ) {
+        
+        PlayerNameRecord *r = playerNames.getElement( i );
+        
+        if( strcmp( inPlayerName, r->name ) == 0 ) {
+            return true;
+            }
+        }
+    return false;
+    }
+

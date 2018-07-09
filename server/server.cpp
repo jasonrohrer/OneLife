@@ -4853,6 +4853,86 @@ void monumentStep() {
 
 
 
+// inPlayerName may be destroyed inside this function
+// returns a uniquified name, sometimes newly allocated.
+// return value destroyed by caller
+char *getUniqueCursableName( char *inPlayerName ) {
+    
+    char dup = isNameDuplicateForCurses( inPlayerName );
+    
+    if( ! dup ) {
+        return inPlayerName;
+        }
+    else {
+        
+        int targetPersonNumber = 1;
+        
+        char *fullName = stringDuplicate( inPlayerName );
+
+        while( dup ) {
+            // try next roman numeral
+            targetPersonNumber++;
+            
+            int personNumber = targetPersonNumber;            
+        
+            SimpleVector<char> romanNumeralList;
+        
+            while( personNumber >= 100 ) {
+                romanNumeralList.push_back( 'C' );
+                personNumber -= 100;
+                }
+            while( personNumber >= 50 ) {
+                romanNumeralList.push_back( 'L' );
+                personNumber -= 50;
+                }
+            while( personNumber >= 40 ) {
+                romanNumeralList.push_back( 'X' );
+                romanNumeralList.push_back( 'L' );
+                personNumber -= 40;
+                }
+            while( personNumber >= 10 ) {
+                romanNumeralList.push_back( 'X' );
+                personNumber -= 10;
+                }
+            while( personNumber >= 9 ) {
+                romanNumeralList.push_back( 'I' );
+                romanNumeralList.push_back( 'X' );
+                personNumber -= 9;
+                }
+            while( personNumber >= 5 ) {
+                romanNumeralList.push_back( 'V' );
+                personNumber -= 5;
+                }
+            while( personNumber >= 4 ) {
+                romanNumeralList.push_back( 'I' );
+                romanNumeralList.push_back( 'V' );
+                personNumber -= 4;
+                }
+            while( personNumber >= 1 ) {
+                romanNumeralList.push_back( 'I' );
+                personNumber -= 1;
+                }
+            
+            char *romanString = romanNumeralList.getElementString();
+
+            delete [] fullName;
+            
+            fullName = autoSprintf( "%s %s", inPlayerName, romanString );
+            delete [] romanString;
+            
+            dup = isNameDuplicateForCurses( fullName );
+            }
+        
+        delete [] inPlayerName;
+        
+        return fullName;
+        }
+    
+    }
+
+
+
+
 int main() {
 
     memset( allowedSayCharMap, false, 256 );
@@ -6562,6 +6642,9 @@ int main() {
                                 nextPlayer->name = autoSprintf( "%s %s",
                                                                 eveName, 
                                                                 close );
+                                nextPlayer->name = getUniqueCursableName( 
+                                    nextPlayer->name );
+
                                 logName( nextPlayer->id,
                                          nextPlayer->email,
                                          nextPlayer->name );
@@ -6597,6 +6680,26 @@ int main() {
                                     babyO->name = autoSprintf( "%s%s",
                                                                close, 
                                                                lastName );
+
+                                    int spaceCount = 0;
+                                    int lastSpaceIndex = -1;
+
+                                    int nameLen = strlen( babyO->name );
+                                    for( int s=0; s<nameLen; s++ ) {
+                                        if( babyO->name[s] == ' ' ) {
+                                            lastSpaceIndex = s;
+                                            spaceCount++;
+                                            }
+                                        }
+                                    
+                                    if( spaceCount > 1 ) {
+                                        // remove suffix from end
+                                        babyO->name[ lastSpaceIndex ] = '\0';
+                                        }
+                                    
+                                    babyO->name = getUniqueCursableName( 
+                                        babyO->name );
+                                    
                                     logName( babyO->id,
                                              babyO->email,
                                              babyO->name );
@@ -6647,6 +6750,9 @@ int main() {
                                     closestOther->name = 
                                         stringDuplicate( close );
                                     
+                                    closestOther->name = getUniqueCursableName( 
+                                        closestOther->name );
+
                                     logName( closestOther->id,
                                              closestOther->email,
                                              closestOther->name );
