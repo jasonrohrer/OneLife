@@ -7,6 +7,10 @@ Version 123    ???
 
 --Fixed memory leak and uninitialized variable.
 
+--Fixed bad memory access in audio callback when shutting down.
+
+--Fixed memory leak in update process.
+
 
 
 
