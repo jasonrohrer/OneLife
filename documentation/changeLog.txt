@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 123    ???
+
+--Fixed memory leak and uninitialized variable.
+
+
+
+
 Version 122    2018-July-6
 
 --Back to updating hard-coded version number with every client update.  Not

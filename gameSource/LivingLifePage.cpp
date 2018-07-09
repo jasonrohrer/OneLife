@@ -9789,6 +9789,7 @@ void LivingLifePage::step() {
                 delete [] lines[0];
                 }
             
+            char idBuffer[500];
             
             for( int i=1; i<numLines; i++ ) {
                 
@@ -9796,8 +9797,7 @@ void LivingLifePage::step() {
                 int oldX, oldY;
                 float speed = 0;
                                 
-                char *idBuffer = new char[500];
-
+                
                 int numRead = sscanf( lines[i], "%d %d %d %499s %d %d %d %f",
                                       &x, &y, &floorID, 
                                       idBuffer, &responsiblePlayerID,
@@ -10510,8 +10510,6 @@ void LivingLifePage::step() {
                             }
                         }
                     }
-                
-                delete [] idBuffer;
                 
                 delete [] lines[i];
                 }
@@ -12062,6 +12060,8 @@ void LivingLifePage::step() {
                         
                         o.currentPos.x = o.xd;
                         o.currentPos.y = o.yd;
+
+                        o.destTruncated = false;
 
                         o.heldPosOverride = false;
                         o.heldPosOverrideAlmostOver = false;
