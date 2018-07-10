@@ -15,6 +15,14 @@ Version 123    ???
 
 
 
+Windows base update:   Version 65c    2018-July-10
+
+--Fixed slow newline replacement code (as part of update process) that was 
+  getting bogged down when processing text files with many lines.
+
+
+
+
 Server Fixes
 
 --Anyone can name a held baby, even adoptive parents.  They get the last name
