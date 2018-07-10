@@ -32,6 +32,9 @@ Server Fixes
 --If a name isn't unique as far as the curse system is concerned, a roman
   numeral suffix (II, III, IV, V, etc.) is automatically added.
 
+--Data-only diff bundle generation script now skips scenes.  They never should
+  have been included, and the tutorial map scene was BIG (26,000 lines).
+
 
 
 
