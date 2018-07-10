@@ -4,7 +4,8 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 123    ???
+
+Version 123    2018-July-10
 
 --Fixed memory leak and uninitialized variable.
 
