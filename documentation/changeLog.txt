@@ -3,6 +3,12 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 124    ???
+
+--Added client source code version match check in platform build scripts
+  (to prevent problem that happened during release of v123).
+
+
 
 
 Version 123    2018-July-10

@@ -35,6 +35,16 @@ cd ../../../OneLife
 
 ./configure 3
 cd gameSource
+
+cppFileVer=$(grep versionNumber game.cpp | head -1 | sed -e 's/[^0-9]*//g' );
+
+
+if [ $2 -ne $cppFileVer ] ; then
+   echo "game.cpp version number mismatch (found '$cppFileVer', expecting $2)."
+   exit 1
+fi
+
+
 make
 
 cd ../build
