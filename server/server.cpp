@@ -1015,7 +1015,7 @@ typedef enum messageType {
 
 typedef struct ClientMessage {
         messageType type;
-        int x, y, c, i;
+        int x, y, c, i, id;
         
         int trigger;
         int bug;
@@ -1047,6 +1047,7 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     
     m.i = -1;
     m.c = -1;
+    m.id = -1;
     m.trigger = -1;
     m.numExtraPos = 0;
     m.extraPos = NULL;
@@ -1152,16 +1153,28 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     else if( strcmp( nameBuffer, "UBABY" ) == 0 ) {
         m.type = UBABY;
 
+        // id param optional
         numRead = sscanf( inMessage, 
-                          "%99s %d %d %d", 
-                          nameBuffer, &( m.x ), &( m.y ), &( m.i ) );
+                          "%99s %d %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.i ), &( m.id ) );
         
-        if( numRead != 4 ) {
+        if( numRead != 4 && numRead != 5 ) {
             m.type = UNKNOWN;
+            }
+        if( numRead != 5 ) {
+            m.id = -1;
             }
         }
     else if( strcmp( nameBuffer, "BABY" ) == 0 ) {
         m.type = BABY;
+        // read optional id parameter
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.id ) );
+        
+        if( numRead != 4 ) {
+            m.id = -1;
+            }
         }
     else if( strcmp( nameBuffer, "SREMV" ) == 0 ) {
         m.type = SREMV;
@@ -1198,6 +1211,15 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "KILL" ) == 0 ) {
         m.type = KILL;
+        
+        // read optional id parameter
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.id ) );
+        
+        if( numRead != 4 ) {
+            m.id = -1;
+            }
         }
     else if( strcmp( nameBuffer, "MAP" ) == 0 ) {
         m.type = MAP;
@@ -3060,7 +3082,11 @@ static char *getUpdateLine( LiveObject *inPlayer, GridPos inRelativeToPos,
 
 
 
+// if inTargetID set, we only detect whether inTargetID is close enough to
+// be hit
+// otherwise, we find the lowest-id player that is hit and return that
 static LiveObject *getHitPlayer( int inX, int inY,
+                                 int inTargetID = -1,
                                  char inCountMidPath = false,
                                  int inMaxAge = -1,
                                  int inMinAge = -1,
@@ -3091,6 +3117,11 @@ static LiveObject *getHitPlayer( int inX, int inY,
 
         if( inMinAge != -1 &&
             computeAge( otherPlayer ) < inMinAge ) {
+            continue;
+            }
+        
+        if( inTargetID != -1 &&
+            otherPlayer->id != inTargetID ) {
             continue;
             }
 
@@ -6846,7 +6877,7 @@ int main() {
                                     
                                     // is anyone there?
                                     LiveObject *hitPlayer = 
-                                        getHitPlayer( m.x, m.y, true );
+                                        getHitPlayer( m.x, m.y, m.id, true );
                                     
                                     char someoneHit = false;
 
@@ -7782,7 +7813,8 @@ int main() {
 
                                 // is anyone there?
                                 LiveObject *hitPlayer = 
-                                    getHitPlayer( m.x, m.y, false, babyAge );
+                                    getHitPlayer( m.x, m.y, m.id, 
+                                                  false, babyAge );
                                 
                                 if( hitPlayer != NULL &&
                                     !hitPlayer->heldByOther &&
@@ -7948,7 +7980,7 @@ int main() {
                                 // try click on baby
                                 int hitIndex;
                                 LiveObject *hitPlayer = 
-                                    getHitPlayer( m.x, m.y, 
+                                    getHitPlayer( m.x, m.y, m.id,
                                                   false, 
                                                   babyAge, -1, &hitIndex );
                                 
@@ -7962,7 +7994,8 @@ int main() {
                                     hitPlayer == nextPlayer ) {
                                     // try click on elderly
                                     hitPlayer = 
-                                        getHitPlayer( m.x, m.y, false, -1, 
+                                        getHitPlayer( m.x, m.y, m.id,
+                                                      false, -1, 
                                                       55, &hitIndex );
                                     }
                                 
@@ -7974,7 +8007,8 @@ int main() {
                                     // feeding action 
                                     // try click on everyone
                                     hitPlayer = 
-                                        getHitPlayer( m.x, m.y, false, -1, -1, 
+                                        getHitPlayer( m.x, m.y, m.id,
+                                                      false, -1, -1, 
                                                       &hitIndex );
                                     }
                                 
@@ -7986,7 +8020,8 @@ int main() {
                                     
                                     // see if clicked-on player is dying
                                     hitPlayer = 
-                                        getHitPlayer( m.x, m.y, false, -1, -1, 
+                                        getHitPlayer( m.x, m.y, m.id,
+                                                      false, -1, -1, 
                                                       &hitIndex );
                                     if( hitPlayer != NULL &&
                                         ! hitPlayer->dying ) {

@@ -592,12 +592,15 @@ Clients send moves in the following format:
 KA x y#
 USE x y#
 BABY x y#
+BABY x y id#
 SELF x y i#
 UBABY x y i#
+UBABY x y i id#
 REMV x y i#
 SREMV x y c i#
 DROP x y c#
 KILL x y#
+KILL x y id#
 
 
 KA   is a keep-alive message used to keep the connection alive when the client
@@ -627,6 +630,9 @@ SELF is special case of USE action taken on self (to eat what we're holding
 	 
 BABY is special case of USE action taken on a baby to pick them up.
      They are dropped with the normal DROP action.
+     NOTE the alternate call for BABY with extra id parameter.
+     this specifies a specific person to pick up, if more than one is
+	 close to the target tile.
 
 UBABY is a special case of SELF applied to a baby (to feed baby food
 	  or add/remove clothing from baby).  Also works on elderly.
@@ -635,6 +641,9 @@ UBABY is a special case of SELF applied to a baby (to feed baby food
       ALSO:  UBABY is used for healing wounded players.
       Essentially, any action where held item is used on another player.
       Should be called UOTHER, but UBABY is used for historical reasons.
+      NOTE the alternate call for UBABY with extra id parameter.
+      this specifies a specific person to do the action on, if more than one is
+	  close to the target tile.
 
 REMV is special case of removing an object from a container.
      i specifies the index of the container item to remove, or -1 to
@@ -651,6 +660,9 @@ KILL is for using a deadly object on the target square.  Square can
      be non-adjacent depending on deadly distance of held object.
      If another player is located there (even if moving and crossing)
 	 they will be killed.
+     NOTE the alternate call for KILL with extra id parameter.
+     this specifies a specific person to kill, if more than one is
+	 close to the target tile.
 
 
 

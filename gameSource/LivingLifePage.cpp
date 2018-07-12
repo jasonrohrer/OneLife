@@ -16211,6 +16211,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     // if we're close enough to kill, we'll kill from where we're standing
     // and return
     char killLater = false;
+    int killLaterID = -1;
     
 
     if( destID == 0 &&
@@ -16256,11 +16257,24 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                             delete [] nextActionMessageToSend;
                             nextActionMessageToSend = NULL;
                             }
-            
-                        nextActionMessageToSend = 
-                            autoSprintf( "KILL %d %d#",
-                                         sendX( clickDestX ), 
-                                         sendY( clickDestY ) );
+                        
+                        if( p.hitOtherPerson ) {
+                            nextActionMessageToSend = 
+                                autoSprintf( "KILL %d %d %d#",
+                                             sendX( clickDestX ), 
+                                             sendY( clickDestY ),
+                                             p.hitOtherPersonID );
+                            printf( "KILL with direct-click target player "
+                                    "id=%d\n", p.hitOtherPersonID );
+                            }
+                        else {
+                            nextActionMessageToSend = 
+                                autoSprintf( "KILL %d %d#",
+                                             sendX( clickDestX ), 
+                                             sendY( clickDestY ) );
+                            printf( "KILL with target "
+                                    "player on closest tile, id=%d\n", o->id );
+                            }
                         
                         
                         playerActionTargetX = clickDestX;
@@ -16268,7 +16282,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         
                         playerActionTargetNotAdjacent = true;
                         
-                        printf( "KILL with target player %d\n", o->id );
+                        
 
                         return;
                         }
@@ -16277,6 +16291,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         // once we walk there, using standard path-to-adjacent
                         // code below
                         killLater = true;
+                        
+                        if( p.hitOtherPerson ) {
+                            killLaterID = p.hitOtherPersonID;
+                            }
                         
                         break;
                         }
@@ -16409,10 +16427,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                             }
             
                         nextActionMessageToSend = 
-                            autoSprintf( "UBABY %d %d %d#",
+                            autoSprintf( "UBABY %d %d %d %d#",
                                          sendX( clickDestX ), 
                                          sendY( clickDestY ), 
-                                         p.hitClothingIndex );
+                                         p.hitClothingIndex, 
+                                         p.hitOtherPersonID );
                         
                         
                         playerActionTargetX = clickDestX;
@@ -16420,7 +16439,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         
                         playerActionTargetNotAdjacent = true;
                         
-                        printf( "UBABY with target player %d\n", o->id );
+                        printf( "UBABY with target player %d\n", 
+                                p.hitOtherPersonID );
 
                         return;
                         }
@@ -16447,6 +16467,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     if( destID == 0 &&
         p.hit &&
+        p.hitOtherPerson &&
         ! p.hitAnObject &&
         ! modClick && ourLiveObject->holdingID == 0 &&
         // only adults can pick up babies
@@ -16593,12 +16614,17 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             if( tryingToPickUpBaby ) {
                 action = "BABY";
+                if( p.hitOtherPerson ) {
+                    delete [] extra;
+                    extra = autoSprintf( " %d", p.hitOtherPersonID );
+                    }
                 send = true;
                 }
             else if( useOnBabyLater ) {
                 action = "UBABY";
                 delete [] extra;
-                extra = autoSprintf( " %d", p.hitClothingIndex );
+                extra = autoSprintf( " %d %d", p.hitClothingIndex,
+                                     p.hitOtherPersonID );
                 send = true;
                 }
             else if( modClick && destID == 0 && 
@@ -16613,6 +16639,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 
                 if( killLater ) {
                     action = "KILL";
+
+                    if( killLaterID != -1 ) {
+                        delete [] extra;
+                        extra = autoSprintf( " %d", killLaterID );
+                        }
                     }
                 else {
                     // check for other special case

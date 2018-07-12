@@ -17,7 +17,15 @@ Version 124    ???
 
 --Fixed so that mouse-over works correctly for moving people (you used to have
   to mouse over the next tile on their path, but now you can mouse over their
-  exact position mid-move).
+  exact position mid-move).  This also makes it much easier to kill a moving
+  player that is crossing over thing on the ground.
+
+--Added player ID parameter to KILL, BABY, and UBABY client messages to specify
+  a specific player that the client clicked on (no more killing a bystander who
+  was standing in the same tile as the person you actually clicked on, and no
+  more grabbing the wrong baby).
+
+
 
 
 
