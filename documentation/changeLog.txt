@@ -25,6 +25,13 @@ Version 124    ???
   was standing in the same tile as the person you actually clicked on, and no
   more grabbing the wrong baby).
 
+--Players have always been drawn in age order (youngest in front), so now
+  mouse-over works the same way.  This worked by accident most of the time,
+  because most people enter the game in age order, but was broken for an Eve
+  that entered later than a baby (she would capture mouse clicks of the baby
+  she was standing visually behind).
+
+
 
 
 
