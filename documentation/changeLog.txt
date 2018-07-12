@@ -8,6 +8,13 @@ Version 124    ???
 --Added client source code version match check in platform build scripts
   (to prevent problem that happened during release of v123).
 
+--Fixed invisible babies, bouncing forever, duplicated objects, and all sorts
+  of other problems caused when a player carries a baby out of range (so that
+  updates aren't received about them anymore), and then a different player
+  carries the same baby back into range.  Messages about the held baby were
+  being queued by the client, since the client was still waiting for the first
+  player to drop the baby, but the drop happened out of range.
+
 
 
 

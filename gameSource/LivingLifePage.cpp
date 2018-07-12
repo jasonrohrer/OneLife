@@ -10863,7 +10863,41 @@ void LivingLifePage::step() {
                             LiveObject *heldBaby = getLiveObject( heldBabyID );
                             
                             if( heldBaby != NULL ) {
+
+                                // clear up held status on baby if old
+                                // holding adult is out of range
+                                // (we're not getting updates about them
+                                //  anymore).
+                               
+                                if( heldBaby->heldByAdultID > 0 && 
+                                    heldBaby->heldByAdultID != existing->id ) {
+                                    
+                                    LiveObject *oldHolder =
+                                        getLiveObject( 
+                                            heldBaby->heldByAdultID );
+                                    
+                                    if( oldHolder != NULL &&
+                                        oldHolder->outOfRange ) {
+                                        heldBaby->heldByAdultID = -1;
+                                        }
+                                    }
+
+                                if( heldBaby->heldByAdultPendingID > 0 && 
+                                    heldBaby->heldByAdultPendingID != 
+                                    existing->id ) {
+                                    
+                                    LiveObject *oldPendingHolder =
+                                        getLiveObject( 
+                                            heldBaby->heldByAdultPendingID );
+                                    
+                                    if( oldPendingHolder != NULL &&
+                                        oldPendingHolder->outOfRange ) {
+                                        heldBaby->heldByAdultPendingID = -1;
+                                        }
+                                    }
+
                                 
+                                // now handle changes to held status
                                 if( heldBaby->heldByAdultID == existing->id ) {
                                     // baby already knows it's held
                                     }
@@ -13400,6 +13434,13 @@ void LivingLifePage::step() {
                             LiveObject *existing = gameObjects.getElement(j);
                             
                             existing->outOfRange = true;
+                            
+                            if( existing->pendingReceivedMessages.size() > 0 ) {
+                                // don't let pending messages for out-of-range
+                                // players linger
+                                playPendingReceivedMessages( existing );
+                                }
+
                             break;
                             }
                         }
