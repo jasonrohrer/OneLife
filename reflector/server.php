@@ -3,6 +3,8 @@
 
 $tooFullFraction = .90;
 
+$tooFullForTwinsFraction = .75;
+
 $startSpreadingFraction = .50;
 
 $stopSpreadingFraction = .10;
@@ -22,6 +24,11 @@ global $version;
 $action = or_requestFilter( "action", "/[A-Z_]+/i", "" );
 $email = or_requestFilter( "email", "/[A-Z0-9._%+-]+@[A-Z0-9.-]+/i", "" );
 
+$twin_code = or_requestFilter( "twin_code", "/[A-F0-9]+/i", "" );
+$twin_code = strtoupper( $twin_code );
+
+
+
 //$ip = $_SERVER[ 'REMOTE_ADDR' ];
 
 // seed the random number generator with their email adddress
@@ -30,6 +37,14 @@ $email = or_requestFilter( "email", "/[A-Z0-9._%+-]+@[A-Z0-9.-]+/i", "" );
 // Want to send people back to the same server tomorrow if load conditions
 // are the same, even if their IP changes.
 mt_srand( crc32( $email ) );
+
+
+if( $twin_code != "" ) {
+    // all twins using same code go to same server
+    // regardless of what email they use
+    mt_srand( crc32( $twin_code ) );
+    }
+
 
 
 $reportOnly = false;
@@ -169,6 +184,7 @@ if( !$serverFound && !$reportOnly ) {
 function tryServer( $inAddress, $inPort, $inReportOnly ) {
 
     global $version, $startSpreadingFraction, $tooFullFraction,
+        $tooFullForTwinsFraction, $twin_code,
         $stopSpreadingFraction, $updateServerURL;
     global $totalPlayers, $totalCap;
     
@@ -229,6 +245,10 @@ function tryServer( $inAddress, $inPort, $inReportOnly ) {
                     }
                 
                 if( $current / $max > $tooFullFraction ) {
+                    $tooFull = $true;
+                    }
+                else if( $twin_code != "" &&
+                         $current / $max > $tooFullForTwinsFraction ) {
                     $tooFull = $true;
                     }
                 else if( $current / $max >= $startSpreadingFraction ) {

@@ -16,7 +16,7 @@ char *HMAC_SHA1( char *inKey, char *inData )
 
 
 === Call:
-server.php?action=reflect&email=email_address
+server.php?action=reflect&email=email_address&twin_code=hash
 
 Returns:
 serverIP
@@ -37,6 +37,9 @@ OK
 Where:
 email     = email address of connecting user (used for sorting users)
 
+twin_code  = (optional) SHA1 hash of twin code.
+
+
 serverIP   = IP address of server this user should connect to
 serverPort = the port number to connect to
 
@@ -44,6 +47,11 @@ requiredVersionNumber = the minimum client version number needed to connect
                         to this server
 autoUpdateURL         = the URL of the diffBundle update server's server.php
 
+
+NOTE:  the SHA1 hash of the twin code is NOT in place for security reasons,
+       because it can be sniffed and replayed anyway.  It's just a clean way
+       to turn an arbitrary string of characters into a parameter with a known
+       format.
 
 
 
