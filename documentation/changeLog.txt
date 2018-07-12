@@ -40,6 +40,10 @@ Server Fixes
 
 --Web export of curse logs along with life logs.
 
+--Curse system saves state between runs of given server.  Thus, cursed status
+  isn't reset when server restarts (no more free pass to griefers right before
+  an update).
+
 
 
 
