@@ -15,6 +15,9 @@ Version 124    ???
   being queued by the client, since the client was still waiting for the first
   player to drop the baby, but the drop happened out of range.
 
+--Fixed so that mouse-over works correctly for moving people (you used to have
+  to mouse over the next tile on their path, but now you can mouse over their
+  exact position mid-move).
 
 
 
