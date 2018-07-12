@@ -33,6 +33,12 @@ Version 124    ???
 
 
 
+Server Fixes
+
+--Server logs curses cast and curse score changes.  These logs are backed up
+  along with lifeLogs.
+
+
 
 
 

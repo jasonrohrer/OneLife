@@ -11,7 +11,7 @@ sh makePrintLifeLogStatsHTML
 while read user server port
 do
   echo ""
-  echo "Using rsync to sync all life logs from $server"
+  echo "Using rsync to sync all life logs and curse logs from $server"
   echo ""
 
   if [ ! -d ~/checkout/OneLife/server/lifeLog_$server ]
@@ -21,6 +21,15 @@ do
   fi
 
   rsync -avz -e ssh --progress $user@$server:checkout/OneLife/server/lifeLog/*.txt ~/checkout/OneLife/server/lifeLog_$server
+
+
+  if [ ! -d ~/checkout/OneLife/server/curseLog_$server ]
+  then
+	  echo "Making local directory curseLog_$server"
+	  mkdir ~/checkout/OneLife/server/curseLog_$server
+  fi
+
+  rsync -avz -e ssh --progress $user@$server:checkout/OneLife/server/curseLog/*.txt ~/checkout/OneLife/server/curseLog_$server
 
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 

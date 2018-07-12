@@ -25,7 +25,7 @@ void getNewCurseTokenHolders( SimpleVector<char*> *inEmailList );
 
 
 // returns true of curse effective
-char cursePlayer( char *inGiverEmail, char *inReceiverName );
+char cursePlayer( int inGiverID, char *inGiverEmail, char *inReceiverName );
 
 void logPlayerNameForCurses( char *inPlayerEmail, char *inPlayerName );
 

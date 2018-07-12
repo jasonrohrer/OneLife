@@ -1,4 +1,6 @@
 #include "curses.h"
+#include "curseLog.h"
+
 
 #include "minorGems/util/SettingsManager.h"
 #include "minorGems/util/stringUtils.h"
@@ -58,6 +60,7 @@ static SimpleVector<char*> newTokenEmails;
 
 
 void initCurses() {
+    initCurseLog();
     }
 
 
@@ -82,6 +85,8 @@ void freeCurses() {
 
 
     newTokenEmails.deallocateStringElements();
+    
+    freeCurseLog();
     }
 
 
@@ -139,6 +144,9 @@ static void stepCurses() {
 
             if( r->livedTimeSinceScoreDecrement + aliveTime >= decrementTime ) {
                 r->score --;
+                
+                logCurseScore( r->email, r->score );
+                
                 r->livedTimeSinceScoreDecrement = 0;
                 r->aliveStartTimeSinceScoreDecrement = curTime;
                 }
@@ -308,7 +316,8 @@ void getNewCurseTokenHolders( SimpleVector<char*> *inEmailList ) {
 
 
 
-char cursePlayer( char *inGiverEmail, char *inReceiverName ) {
+char cursePlayer( int inGiverID, char *inGiverEmail, 
+                  char *inReceiverName ) {
     stepCurses();
     
     CurseRecord *receiverRecord = findCurseRecordByName( inReceiverName );
@@ -351,6 +360,10 @@ char cursePlayer( char *inGiverEmail, char *inReceiverName ) {
     if( receiverRecord->alive ) {
         receiverRecord->aliveStartTimeSinceScoreDecrement = curTime;
         }
+
+    logCurse( inGiverID, inGiverEmail, receiverRecord->email );
+    
+    logCurseScore( receiverRecord->email, receiverRecord->score );
 
     return true;
     }

@@ -58,8 +58,9 @@ static void openCurrentLogFiles() {
     delete newFile;
     
     if( logFile == NULL ) {
-        delete [] newFileName;
         AppLog::errorF( "Failed to open log file %s", newFileName );
+        delete [] newFileName;
+
         return;
         }
 

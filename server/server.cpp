@@ -6648,7 +6648,8 @@ int main() {
                         if( cursedName != NULL && 
                             strcmp( cursedName, "" ) != 0 ) {
                             
-                            isCurse = cursePlayer( nextPlayer->email,
+                            isCurse = cursePlayer( nextPlayer->id,
+                                                   nextPlayer->email,
                                                    cursedName );
                             
                             if( isCurse ) {
