@@ -60,7 +60,8 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         TextButton mDisableCustomServerButton;
         
         TextButton mLoginButton;
-        TextButton mLoginNoSaveButton;
+        TextButton mFriendsButton;
+        TextButton mClearAccountButton;
         TextButton mCancelButton;
 
         TextButton mSettingsButton;
@@ -76,7 +77,7 @@ class ExistingAccountPage : public GamePage, public ActionListener {
 
         void switchFields();
         
-        void processLogin( char inStore );
+        void processLogin( char inStore, const char *inSignal );
 
     };
 

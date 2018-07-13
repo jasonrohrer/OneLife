@@ -35,12 +35,13 @@ categoriesRebuild "CATEGORIES##(REBUILDING CACHE)"
 
 
 
-email "EMAIL"
+email "EMAIL:"
 atSignTip "INSERT '@' SIGN (INTL KEYBOARDS)"
 
 
 loginButton "LOGIN"
-loginNoSaveButton "TEMP LOGIN"
+friendsButton "FRIENDS"
+clearAccount "CLEAR ACCOUNT"
 settingsButton "SETTINGS"
 postReviewButton "POST REVIEW"
 updateReviewButton "UPDATE REVIEW"
@@ -76,16 +77,27 @@ reviewRemoved "REVIEW HAS BEEN REMOVED"
 
 
 saveTip "LOGIN AND STORE DETAILS LOCALLY"
-noSaveTip "DO NOT STORE DETAILS LOCALLY"
+clearAccountTip "DELETES ACCOUNT DETAILS FROM DISK"
 
 
-accountKey "KEY"
+accountKey "KEY:"
 paste "PASTE"
 copy "COPY"
 clear "CLEAR"
 
 charLimit "5000 CHARACTER LIMIT REACHED"
 
+
+twinCode "TWIN CODE:"
+generate "GENERATE"
+
+twinTip "GIVE FRIENDS THIS CODE AND GET BORN TOGETHER"
+
+twins "TWINS"
+triplets "TRIPLETS"
+quadruplets "QUADRUPLETS"
+
+cancel "CANCEL"
 
 
 backButton "BACK"
@@ -126,6 +138,10 @@ serverFull "SERVER IS FULL"
 
 
 waitingBirth "WAITING TO BE BORN"
+waitingBirthFriends "WAITING TO BE BORN AS %s"
+
+cancelWaitingFriends "PRESS [x] KEY TO CANCEL"
+
 
 loadingMap "LOADING MAP"
 

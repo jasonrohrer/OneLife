@@ -41,8 +41,9 @@ ExistingAccountPage::ExistingAccountPage()
           mDisableCustomServerButton( mainFont, 0, 220, 
                                       translate( "disableCustomServer" ) ),
           mLoginButton( mainFont, 400, 0, translate( "loginButton" ) ),
-          mLoginNoSaveButton( mainFont, 400, -280, 
-                              translate( "loginNoSaveButton" ) ),
+          mFriendsButton( mainFont, 400, -120, translate( "friendsButton" ) ),
+          mClearAccountButton( mainFont, 400, -280, 
+                               translate( "clearAccount" ) ),
           mCancelButton( mainFont, -400, -280, 
                          translate( "quit" ) ),
           mSettingsButton( mainFont, -400, -120, 
@@ -71,7 +72,8 @@ ExistingAccountPage::ExistingAccountPage()
         }
 
     setButtonStyle( &mLoginButton );
-    setButtonStyle( &mLoginNoSaveButton );
+    setButtonStyle( &mFriendsButton );
+    setButtonStyle( &mClearAccountButton );
     setButtonStyle( &mCancelButton );
     setButtonStyle( &mSettingsButton );
     setButtonStyle( &mReviewButton );
@@ -86,7 +88,8 @@ ExistingAccountPage::ExistingAccountPage()
 
     
     addComponent( &mLoginButton );
-    addComponent( &mLoginNoSaveButton );
+    addComponent( &mFriendsButton );
+    addComponent( &mClearAccountButton );
     addComponent( &mCancelButton );
     addComponent( &mSettingsButton );
     addComponent( &mReviewButton );
@@ -98,7 +101,8 @@ ExistingAccountPage::ExistingAccountPage()
     addComponent( &mDisableCustomServerButton );
     
     mLoginButton.addActionListener( this );
-    mLoginNoSaveButton.addActionListener( this );
+    mFriendsButton.addActionListener( this );
+    mClearAccountButton.addActionListener( this );
     
     mCancelButton.addActionListener( this );
     mSettingsButton.addActionListener( this );
@@ -117,7 +121,7 @@ ExistingAccountPage::ExistingAccountPage()
     mAtSignButton.setMouseOverTip( translate( "atSignTip" ) );
 
     mLoginButton.setMouseOverTip( translate( "saveTip" ) );
-    mLoginNoSaveButton.setMouseOverTip( translate( "noSaveTip" ) );
+    mClearAccountButton.setMouseOverTip( translate( "clearAccountTip" ) );
     
     int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
     
@@ -164,14 +168,14 @@ void ExistingAccountPage::makeActive( char inFresh ) {
     mFPSMeasureDone = false;
     
     mLoginButton.setVisible( false );
-    mLoginNoSaveButton.setVisible( false );
+    mFriendsButton.setVisible( false );
     
     int skipFPSMeasure = SettingsManager::getIntSetting( "skipFPSMeasure", 0 );
     
     if( skipFPSMeasure ) {
         mFPSMeasureDone = true;
         mLoginButton.setVisible( true );
-        mLoginNoSaveButton.setVisible( true );
+        mFriendsButton.setVisible( true );
         }
 
 
@@ -234,10 +238,32 @@ void ExistingAccountPage::step() {
 
 void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mLoginButton ) {
-        processLogin( true );
+        processLogin( true, "done" );
         }
-    else if( inTarget == &mLoginNoSaveButton ) {
-        processLogin( false );
+    else if( inTarget == &mClearAccountButton ) {
+        SettingsManager::setSetting( "email", "" );
+        SettingsManager::setSetting( "accountKey", "" );
+        SettingsManager::setSetting( "loginSuccess", 0 );
+        SettingsManager::setSetting( "twinCode", "" );
+
+        mEmailField.setText( "" );
+        mKeyField.setText( "" );
+        
+        if( userEmail != NULL ) {
+            delete [] userEmail;
+            }
+        userEmail = mEmailField.getText();
+        
+        if( accountKey != NULL ) {
+            delete [] accountKey;
+            }
+        accountKey = mKeyField.getText();
+        
+        mEmailField.setContentsHidden( false );
+        mKeyField.setContentsHidden( false );
+        }
+    else if( inTarget == &mFriendsButton ) {
+        processLogin( true, "friends" );
         }
     else if( inTarget == &mCancelButton ) {
         setSignal( "quit" );
@@ -286,7 +312,7 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mDisableCustomServerButton ) {
         SettingsManager::setSetting( "useCustomServer", 0 );
         mDisableCustomServerButton.setVisible( false );
-        processLogin( true );
+        processLogin( true, "done" );
         }
     }
 
@@ -315,7 +341,7 @@ void ExistingAccountPage::keyDown( unsigned char inASCII ) {
         
         if( mKeyField.isFocused() ) {
 
-            processLogin( true );
+            processLogin( true, "done" );
             
             return;
             }
@@ -338,7 +364,7 @@ void ExistingAccountPage::specialKeyDown( int inKeyCode ) {
 
 
 
-void ExistingAccountPage::processLogin( char inStore ) {
+void ExistingAccountPage::processLogin( char inStore, const char *inSignal ) {
     if( userEmail != NULL ) {
         delete [] userEmail;
         }
@@ -362,7 +388,7 @@ void ExistingAccountPage::processLogin( char inStore ) {
         }
     
                 
-    setSignal( "done" );
+    setSignal( inSignal );
     }
 
 
@@ -402,7 +428,12 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
 
             if( !fpsFailed ) {
                 mLoginButton.setVisible( true );
-                mLoginNoSaveButton.setVisible( true );
+                
+                int pastSuccess = 
+                    SettingsManager::getIntSetting( "loginSuccess", 0 );
+                if( pastSuccess ) {
+                    mFriendsButton.setVisible( true );
+                    }
                 }
             else {
                 // show error message

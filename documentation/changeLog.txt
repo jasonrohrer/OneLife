@@ -31,6 +31,9 @@ Version 124    ???
   that entered later than a baby (she would capture mouse clicks of the baby
   she was standing visually behind).
 
+--TEMP LOGIN was a confusing feature.  Added CLEAR ACCOUNT button instead.
+
+
 
 
 Server Fixes

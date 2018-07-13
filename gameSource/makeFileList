@@ -61,6 +61,7 @@ TextArea.cpp \
 RadioButtonSet.cpp \
 spellCheck.cpp \
 SoundUsage.cpp \
+TwinPage.cpp \
 
 
 GAME_GRAPHICS = \
@@ -157,4 +158,5 @@ NEEDED_MINOR_GEMS_OBJECTS = \
  ${CRYPTO_RANDOM_O} \
  ${DIFF_BUNDLE_CLIENT_O} \
  ${STRING_TREE_O} \
+ ${CRC32_O} \
 

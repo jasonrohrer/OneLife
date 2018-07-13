@@ -72,6 +72,8 @@ extern char *serverIP;
 extern int serverPort;
 
 extern char *userEmail;
+extern char *userTwinCode;
+extern int userTwinCount;
 
 
 extern float musicLoudness;
@@ -3842,8 +3844,34 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         setDrawColor( 1, 1, 1, 1 );
         doublePair pos = { 0, 0 };
-        drawMessage( "waitingBirth", pos );
+        
+        if( userTwinCode == NULL ) {
+            drawMessage( "waitingBirth", pos );
+            }
+        else {
+            const char *sizeString = translate( "twins" );
+            
+            if( userTwinCount == 3 ) {
+                sizeString = translate( "triplets" );
+                }
+            else if( userTwinCount == 4 ) {
+                sizeString = translate( "quadruplets" );
+                }
+            char *message = autoSprintf( translate( "waitingBirthFriends" ),
+                                         sizeString );
 
+            drawMessage( message, pos );
+            delete [] message;
+
+            if( !mStartedLoadingFirstObjectSet ) {
+                doublePair tipPos = pos;
+                tipPos.y -= 200;
+                
+                drawMessage( translate( "cancelWaitingFriends" ), tipPos );
+                }
+            }
+        
+        
         if( mStartedLoadingFirstObjectSet ) {
             
             pos.y = -100;
@@ -9151,22 +9179,35 @@ void LivingLifePage::step() {
             // So pad the email with up to 80 space characters
             // Thus, the login message is always this same length
             
+            char *twinExtra;
+            
+            if( userTwinCode != NULL ) {
+                char *hash = computeSHA1Digest( userTwinCode );
+                twinExtra = autoSprintf( " %s %d", hash, userTwinCount );
+                delete [] hash;
+                }
+            else {
+                twinExtra = stringDuplicate( "" );
+                }
+                                         
+
             char *outMessage;
             if( strlen( userEmail ) <= 80 ) {    
-                outMessage = autoSprintf( "LOGIN %-80s %s %s %d#",
+                outMessage = autoSprintf( "LOGIN %-80s %s %s %d%s#",
                                           userEmail, pwHash, keyHash,
-                                          mTutorialNumber );
+                                          mTutorialNumber, twinExtra );
                 }
             else {
                 // their email is too long for this trick
                 // don't cut it off.
                 // but note that the playback will fail if email.ini
                 // doesn't match on the playback machine
-                outMessage = autoSprintf( "LOGIN %s %s %s %d#",
+                outMessage = autoSprintf( "LOGIN %s %s %s %d%s#",
                                           userEmail, pwHash, keyHash,
-                                          mTutorialNumber );
+                                          mTutorialNumber, twinExtra );
                 }
             
+            delete [] twinExtra;
             delete [] pwHash;
             delete [] keyHash;
 
@@ -17090,6 +17131,16 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 savingSpeechColor = true;
                 savingSpeechMask = false;
                 savingSpeech = true;
+                }
+            break;
+        case 'x':
+            if( userTwinCode != NULL &&
+                ! mStartedLoadingFirstObjectSet ) {
+                
+                closeSocket( mServerSocket );
+                mServerSocket = -1;
+                
+                setSignal( "twinCancel" );
                 }
             break;
         /*
