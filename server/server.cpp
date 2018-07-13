@@ -763,6 +763,25 @@ static int getLiveObjectIndex( int inID ) {
 int nextID = 2;
 
 
+static void deleteMembers( FreshConnection *inConnection ) {
+    delete inConnection->sock;
+    delete inConnection->sockBuffer;
+    
+    if( inConnection->ticketServerRequest != NULL ) {
+        delete inConnection->ticketServerRequest;
+        }
+    
+    if( inConnection->email != NULL ) {
+        delete [] inConnection->email;
+        }
+    
+    if( inConnection->twinCode != NULL ) {
+        delete [] inConnection->twinCode;
+        }
+    }
+
+
+
 
 void quitCleanup() {
     AppLog::info( "Cleaning up on quit..." );
@@ -777,22 +796,7 @@ void quitCleanup() {
         
         for( int i=0; i<list->size(); i++ ) {
             FreshConnection *nextConnection = list->getElement( i );
-        
-            delete nextConnection->sock;
-            delete nextConnection->sockBuffer;
-        
-
-            if( nextConnection->ticketServerRequest != NULL ) {
-                delete nextConnection->ticketServerRequest;
-                }
-
-            if( nextConnection->email != NULL ) {
-                delete [] nextConnection->email;
-                }
-
-            if( nextConnection->twinCode != NULL ) {
-                delete [] nextConnection->twinCode;
-                }
+            deleteMembers( nextConnection );
             }
         list->deleteAll();
         }
@@ -3220,11 +3224,15 @@ static int tutorialCount = 0;
 
         
 
-
-void processLoggedInPlayer( Socket *inSock,
-                            SimpleVector<char> *inSockBuffer,
-                            char *inEmail,
-                            int inTutorialNumber ) {
+// returns ID of new player
+int processLoggedInPlayer( Socket *inSock,
+                           SimpleVector<char> *inSockBuffer,
+                           char *inEmail,
+                           int inTutorialNumber,
+                           // set to -2 to force Eve
+                           int inForceParentID = -1,
+                           int inForceDisplayID = -1,
+                           GridPos *inForcePlayerPos = NULL ) {
     
     // reload these settings every time someone new connects
     // thus, they can be changed without restarting the server
@@ -3379,6 +3387,23 @@ void processLoggedInPlayer( Socket *inSock,
         // Tutorial always played full-grown
         parentChoices.deleteAll();
         }
+
+    if( inForceParentID == -2 ) {
+        // force eve
+        parentChoices.deleteAll();
+        }
+    else if( inForceParentID > -1 ) {
+        // force parent choice
+        parentChoices.deleteAll();
+        
+        LiveObject *forcedParent = getLiveObject( inForceParentID );
+        
+        if( forcedParent != NULL ) {
+            parentChoices.push_back( forcedParent );
+            }
+        }
+    
+    
 
 
     newObject.parentChainLength = 1;
@@ -3701,6 +3726,26 @@ void processLoggedInPlayer( Socket *inSock,
         }
     
 
+    if( inForceDisplayID != -1 ) {
+        newObject.displayID = inForceDisplayID;
+        }
+
+    if( inForcePlayerPos != NULL ) {
+        int startX = inForcePlayerPos->x;
+        int startY = inForcePlayerPos->y;
+        
+        newObject.xs = startX;
+        newObject.ys = startY;
+        
+        newObject.xd = startX;
+        newObject.yd = startY;
+
+        if( newObject.xs > maxPlacementX ) {
+            maxPlacementX = newObject.xs;
+            }
+        }
+    
+
     int forceID = SettingsManager::getIntSetting( "forceEveObject", 0 );
     
     if( forceID > 0 ) {
@@ -3901,6 +3946,129 @@ void processLoggedInPlayer( Socket *inSock,
     AppLog::infoF( "New player %s connected as player %d (tutorial=%d)",
                    newObject.email, newObject.id,
                    inTutorialNumber );
+    
+    return newObject.id;
+    }
+
+
+
+
+static void processWaitingTwinConnection( FreshConnection inConnection ) {
+    AppLog::infoF( "Player %s waiting for twin party of %d", 
+                   inConnection.email,
+                   inConnection.twinCount );
+    waitingForTwinConnections.push_back( inConnection );
+    
+    // first, make sure all twin-waiting sockets are still connected
+    for( int i=0; i<waitingForTwinConnections.size(); i++ ) {
+        FreshConnection *nextConnection = 
+            waitingForTwinConnections.getElement( i );
+        
+        char result = 
+            readSocketFull( nextConnection->sock,
+                            nextConnection->sockBuffer );
+                
+        if( ! result ) {
+            AppLog::info( "Failed to read from twin-waiting client socket, "
+                          "client rejected." );
+            nextConnection->error = true;
+            nextConnection->errorCauseString =
+                "Socket read failed";
+            }
+        }
+    
+
+    // count how many match twin code from inConnection
+    // is this the last one to join the party?
+    SimpleVector<FreshConnection*> twinConnections;
+    
+
+    for( int i=0; i<waitingForTwinConnections.size(); i++ ) {
+        FreshConnection *nextConnection = 
+            waitingForTwinConnections.getElement( i );
+        
+        if( nextConnection->error ) {
+            continue;
+            }
+        
+        if( nextConnection->twinCode != NULL
+            &&
+            strcmp( inConnection.twinCode, nextConnection->twinCode ) == 0 
+            &&
+            inConnection.twinCount == nextConnection->twinCount ) {
+            
+            if( strcmp( inConnection.email, nextConnection->email ) == 0 ) {
+                // don't count this connection itself
+                continue;
+                }
+            twinConnections.push_back( nextConnection );
+            }
+        }
+
+    
+    if( twinConnections.size() + 1 >= inConnection.twinCount ) {
+        // everyone connected and ready in twin party
+
+        int newID = processLoggedInPlayer( inConnection.sock,
+                                           inConnection.sockBuffer,
+                                           inConnection.email,
+                                           inConnection.tutorialNumber );
+        
+        
+        LiveObject *newPlayer = getLiveObject( newID );
+        
+        int parent = newPlayer->parentID;
+        int displayID = newPlayer->displayID;
+        GridPos playerPos = { newPlayer->xd, newPlayer->yd };
+        
+        GridPos *forcedEvePos = NULL;
+        
+        if( parent == -1 ) {
+            // first twin placed was Eve
+            // others are identical Eves
+            forcedEvePos = &playerPos;
+            // trigger forced Eve placement
+            parent = -2;
+            }
+
+        for( int i=0; i<twinConnections.size(); i++ ) {
+            FreshConnection *nextConnection = 
+                twinConnections.getElementDirect( i );
+            
+            processLoggedInPlayer( nextConnection->sock,
+                                   nextConnection->sockBuffer,
+                                   nextConnection->email,
+                                   nextConnection->tutorialNumber,
+                                   parent,
+                                   displayID,
+                                   forcedEvePos );
+            }
+        
+
+        char *twinCode = stringDuplicate( inConnection.twinCode );
+        
+        for( int i=0; i<waitingForTwinConnections.size(); i++ ) {
+            FreshConnection *nextConnection = 
+                waitingForTwinConnections.getElement( i );
+            
+            if( nextConnection->error ) {
+                continue;
+                }
+            
+            if( nextConnection->twinCode != NULL 
+                &&
+                nextConnection->twinCount == inConnection.twinCount
+                &&
+                strcmp( nextConnection->twinCode, twinCode ) == 0 ) {
+                
+                delete [] nextConnection->twinCode;
+                waitingForTwinConnections.deleteElement( i );
+                i--;
+                }
+            }
+        
+        delete [] twinCode;
+        }
     }
 
 
@@ -5586,14 +5754,14 @@ int main() {
                             if( nextConnection->twinCode != NULL
                                 && 
                                 nextConnection->twinCount > 0 ) {
-                                AppLog::infoF( 
-                                    "Player waiting for twin "
-                                    "party of %d",
-                                    nextConnection->twinCount );
-                                waitingForTwinConnections.push_back(
-                                    *nextConnection );
+                                processWaitingTwinConnection( *nextConnection );
                                 }
                             else {
+                                if( nextConnection->twinCode != NULL ) {
+                                    delete [] nextConnection->twinCode;
+                                    nextConnection->twinCode = NULL;
+                                    }
+                                
                                 processLoggedInPlayer( 
                                     nextConnection->sock,
                                     nextConnection->sockBuffer,
@@ -5791,14 +5959,14 @@ int main() {
                                     if( nextConnection->twinCode != NULL
                                         && 
                                         nextConnection->twinCount > 0 ) {
-                                        AppLog::infoF( 
-                                            "Player waiting for twin "
-                                            "party of %d",
-                                            nextConnection->twinCount );
-                                        waitingForTwinConnections.push_back(
+                                        processWaitingTwinConnection(
                                             *nextConnection );
                                         }
                                     else {
+                                        if( nextConnection->twinCode != NULL ) {
+                                            delete [] nextConnection->twinCode;
+                                            nextConnection->twinCode = NULL;
+                                            }
                                         processLoggedInPlayer( 
                                             nextConnection->sock,
                                             nextConnection->sockBuffer,
@@ -5854,41 +6022,37 @@ int main() {
 
         // now clean up any new connections that have errors
         
-        for( int i=0; i<newConnections.size(); i++ ) {
+        // FreshConnections are in two different lists
+        // clean up errors in both
+        SimpleVector<FreshConnection> *connectionLists[2] =
+            { &newConnections, &waitingForTwinConnections };
+        for( int c=0; c<2; c++ ) {
+            SimpleVector<FreshConnection> *list = connectionLists[c];
+        
+            for( int i=0; i<list->size(); i++ ) {
             
-            FreshConnection *nextConnection = newConnections.getElement( i );
+                FreshConnection *nextConnection = list->getElement( i );
             
-            if( nextConnection->error ) {
+                if( nextConnection->error ) {
                 
-                // try sending REJECTED message at end
+                    // try sending REJECTED message at end
 
-                const char *message = "REJECTED\n#";
-                nextConnection->sock->send( (unsigned char*)message,
-                                            strlen( message ), false, false );
+                    const char *message = "REJECTED\n#";
+                    nextConnection->sock->send( (unsigned char*)message,
+                                                strlen( message ), 
+                                                false, false );
 
-                AppLog::infoF( "Closing new connection on error "
-                               "(cause: %s)",
-                               nextConnection->errorCauseString );
+                    AppLog::infoF( "Closing new connection on error "
+                                   "(cause: %s)",
+                                   nextConnection->errorCauseString );
 
-                delete nextConnection->sock;
-                delete nextConnection->sockBuffer;
-                
-                if( nextConnection->ticketServerRequest != NULL ) {
-                    delete nextConnection->ticketServerRequest;
+                    deleteMembers( nextConnection );
+                    
+                    list->deleteElement( i );
+                    i--;
                     }
-                
-                if( nextConnection->email != NULL ) {
-                    delete [] nextConnection->email;
-                    }
-                if( nextConnection->twinCode != NULL ) {
-                    delete [] nextConnection->twinCode;
-                    }
-
-                newConnections.deleteElement( i );
-                i--;
                 }
             }
-        
     
         
     
