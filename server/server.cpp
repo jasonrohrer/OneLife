@@ -3959,23 +3959,6 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                    inConnection.twinCount );
     waitingForTwinConnections.push_back( inConnection );
     
-    // first, make sure all twin-waiting sockets are still connected
-    for( int i=0; i<waitingForTwinConnections.size(); i++ ) {
-        FreshConnection *nextConnection = 
-            waitingForTwinConnections.getElement( i );
-        
-        char result = 
-            readSocketFull( nextConnection->sock,
-                            nextConnection->sockBuffer );
-                
-        if( ! result ) {
-            AppLog::info( "Failed to read from twin-waiting client socket, "
-                          "client rejected." );
-            nextConnection->error = true;
-            nextConnection->errorCauseString =
-                "Socket read failed";
-            }
-        }
     
 
     // count how many match twin code from inConnection
@@ -5573,7 +5556,17 @@ int main() {
             Socket *sock = server.acceptConnection( 0 );
 
             if( sock != NULL ) {
-                AppLog::info( "Got connection" );                
+                HostAddress *a = sock->getRemoteHostAddress();
+                
+                if( a == NULL ) {    
+                    AppLog::info( "Got connection from unknown address" );
+                    }
+                else {
+                    AppLog::infoF( "Got connection from %s:%d",
+                                  a->mAddressString, a->mPort );
+                    delete a;
+                    }
+            
 
                 FreshConnection newConnection;
                 
@@ -6025,6 +6018,25 @@ int main() {
                 }
             }
             
+
+
+        // make sure all twin-waiting sockets are still connected
+        for( int i=0; i<waitingForTwinConnections.size(); i++ ) {
+            FreshConnection *nextConnection = 
+                waitingForTwinConnections.getElement( i );
+            
+            char result = 
+                readSocketFull( nextConnection->sock,
+                                nextConnection->sockBuffer );
+            
+            if( ! result ) {
+                AppLog::info( "Failed to read from twin-waiting client socket, "
+                              "client rejected." );
+                nextConnection->error = true;
+                nextConnection->errorCauseString =
+                    "Socket read failed";
+                }
+            }
             
         
 
@@ -6054,6 +6066,8 @@ int main() {
                                    "(cause: %s)",
                                    nextConnection->errorCauseString );
 
+                    sockPoll.removeSocket( nextConnection->sock );
+                    
                     deleteMembers( nextConnection );
                     
                     list->deleteElement( i );
@@ -12060,6 +12074,7 @@ int main() {
                 AppLog::infoF( "%d remaining player(s) alive on server ",
                                players.size() - 1 );
 
+                sockPoll.removeSocket( nextPlayer->sock );
                 
                 delete nextPlayer->sock;
                 delete nextPlayer->sockBuffer;
