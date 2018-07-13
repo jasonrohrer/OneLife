@@ -169,10 +169,16 @@ typedef struct FreshConnection {
         char *email;
         
         int tutorialNumber;
+
+        char *twinCode;
+        int twinCount;
+
     } FreshConnection;
 
 
 SimpleVector<FreshConnection> newConnections;
+
+SimpleVector<FreshConnection> waitingForTwinConnections;
 
 
 
@@ -760,24 +766,36 @@ int nextID = 2;
 
 void quitCleanup() {
     AppLog::info( "Cleaning up on quit..." );
-    
 
-    for( int i=0; i<newConnections.size(); i++ ) {
-        FreshConnection *nextConnection = newConnections.getElement( i );
+    // FreshConnections are in two different lists
+    // free structures from both
+    SimpleVector<FreshConnection> *connectionLists[2] =
+        { &newConnections, &waitingForTwinConnections };
+
+    for( int c=0; c<2; c++ ) {
+        SimpleVector<FreshConnection> *list = connectionLists[c];
         
-        delete nextConnection->sock;
-        delete nextConnection->sockBuffer;
+        for( int i=0; i<list->size(); i++ ) {
+            FreshConnection *nextConnection = list->getElement( i );
+        
+            delete nextConnection->sock;
+            delete nextConnection->sockBuffer;
         
 
-        if( nextConnection->ticketServerRequest != NULL ) {
-            delete nextConnection->ticketServerRequest;
-            }
+            if( nextConnection->ticketServerRequest != NULL ) {
+                delete nextConnection->ticketServerRequest;
+                }
 
-        if( nextConnection->email != NULL ) {
-            delete [] nextConnection->email;
+            if( nextConnection->email != NULL ) {
+                delete [] nextConnection->email;
+                }
+
+            if( nextConnection->twinCode != NULL ) {
+                delete [] nextConnection->twinCode;
+                }
             }
+        list->deleteAll();
         }
-    newConnections.deleteAll();
     
 
 
@@ -5402,6 +5420,10 @@ int main() {
                 
                 newConnection.tutorialNumber = 0;
 
+                newConnection.twinCode = NULL;
+                newConnection.twinCount = 0;
+                
+                
                 nextSequenceNumber ++;
                 
                 SettingsManager::setSetting( "sequenceNumber",
@@ -5558,13 +5580,27 @@ int main() {
                             
                             AppLog::info( "Got new player logged in" );
                             
-                            processLoggedInPlayer( 
-                                nextConnection->sock,
-                                nextConnection->sockBuffer,
-                                nextConnection->email,
-                                nextConnection->tutorialNumber );
-                            
                             delete nextConnection->ticketServerRequest;
+                            nextConnection->ticketServerRequest = NULL;
+                            
+                            if( nextConnection->twinCode != NULL
+                                && 
+                                nextConnection->twinCount > 0 ) {
+                                AppLog::infoF( 
+                                    "Player waiting for twin "
+                                    "party of %d",
+                                    nextConnection->twinCount );
+                                waitingForTwinConnections.push_back(
+                                    *nextConnection );
+                                }
+                            else {
+                                processLoggedInPlayer( 
+                                    nextConnection->sock,
+                                    nextConnection->sockBuffer,
+                                    nextConnection->email,
+                                    nextConnection->tutorialNumber );
+                                }
+                            
                             newConnections.deleteElement( i );
                             i--;
                             }
@@ -5620,7 +5656,8 @@ int main() {
                         SimpleVector<char *> *tokens =
                             tokenizeString( message );
                         
-                        if( tokens->size() == 4 || tokens->size() == 5 ) {
+                        if( tokens->size() == 4 || tokens->size() == 5 ||
+                            tokens->size() == 7 ) {
                             
                             nextConnection->email = 
                                 stringDuplicate( 
@@ -5634,6 +5671,16 @@ int main() {
                                         &( nextConnection->tutorialNumber ) );
                                 }
                             
+                            if( tokens->size() == 7 ) {
+                                nextConnection->twinCode =
+                                    stringDuplicate( 
+                                        tokens->getElementDirect( 5 ) );
+                                
+                                sscanf( tokens->getElementDirect( 6 ),
+                                        "%d", 
+                                        &( nextConnection->twinCount ) );
+                                }
+
                             char emailAlreadyLoggedIn = false;
                             
 
@@ -5738,13 +5785,26 @@ int main() {
                             
                                     AppLog::info( "Got new player logged in" );
                                     
-                                    processLoggedInPlayer( 
-                                        nextConnection->sock,
-                                        nextConnection->sockBuffer,
-                                        nextConnection->email,
-                                        nextConnection->tutorialNumber );
-                                    
                                     delete nextConnection->ticketServerRequest;
+                                    nextConnection->ticketServerRequest = NULL;
+                            
+                                    if( nextConnection->twinCode != NULL
+                                        && 
+                                        nextConnection->twinCount > 0 ) {
+                                        AppLog::infoF( 
+                                            "Player waiting for twin "
+                                            "party of %d",
+                                            nextConnection->twinCount );
+                                        waitingForTwinConnections.push_back(
+                                            *nextConnection );
+                                        }
+                                    else {
+                                        processLoggedInPlayer( 
+                                            nextConnection->sock,
+                                            nextConnection->sockBuffer,
+                                            nextConnection->email,
+                                            nextConnection->tutorialNumber );
+                                        }
                                     newConnections.deleteElement( i );
                                     i--;
                                     }
@@ -5819,6 +5879,9 @@ int main() {
                 
                 if( nextConnection->email != NULL ) {
                     delete [] nextConnection->email;
+                    }
+                if( nextConnection->twinCode != NULL ) {
+                    delete [] nextConnection->twinCode;
                     }
 
                 newConnections.deleteElement( i );

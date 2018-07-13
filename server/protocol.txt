@@ -64,7 +64,7 @@ Where sequence_number is a positive integer in base-10 ascii.
 
 2.  The client MUST respond with the following login message:
 
-LOGIN email password_hash account_key_hash tutorial_number#
+LOGIN email password_hash account_key_hash tutorial_number twin_code_hash twin_count#
 
 
 password_hash is based on the server access password, and is computed by:
@@ -79,6 +79,13 @@ HMAC_SHA1( account_key, sequence_number )
 
 
 tutorial_number specifies the tutorail map number to load, or 0 for normal game.
+
+
+twin_code_hash is optional.  The sha1 hash of the twin code.
+
+twin_count is mandatory if twin_code_hash is present.  How many twins are in
+the party, total.
+
 
 
 3.  The server responds with one of:
