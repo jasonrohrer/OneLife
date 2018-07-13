@@ -152,6 +152,7 @@ void TwinPage::actionPerformed( GUIComponent *inTarget ) {
         else {
             mLoginButton.setVisible( true );
             }
+        delete [] text;
         }
     else if( inTarget == &mCancelButton ) {
         if( userTwinCode != NULL ) {
