@@ -5847,6 +5847,14 @@ int main() {
                                 sscanf( tokens->getElementDirect( 6 ),
                                         "%d", 
                                         &( nextConnection->twinCount ) );
+
+                                int maxCount = 
+                                    SettingsManager::getIntSetting( 
+                                        "maxTwinPartySize", 4 );
+                                
+                                if( nextConnection->twinCount > maxCount ) {
+                                    nextConnection->twinCount = maxCount;
+                                    }
                                 }
 
                             char emailAlreadyLoggedIn = false;
