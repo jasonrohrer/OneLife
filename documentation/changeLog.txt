@@ -33,6 +33,10 @@ Version 124    ???
 
 --TEMP LOGIN was a confusing feature.  Added CLEAR ACCOUNT button instead.
 
+--Twin system.  Players can share a code friends and get born as identical
+  twins, triplets, or quadruplets.
+
+
 
 
 
