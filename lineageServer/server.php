@@ -158,6 +158,9 @@ else if( $action == "character_page" ) {
 else if( $action == "character_dump" ) {
     ls_characterDump();
     }
+else if( $action == "reformat_names" ) {
+    ls_reformatNames();
+    }
 else if( $action == "ls_setup" ) {
     global $setup_header, $setup_footer;
     echo $setup_header; 
@@ -1086,7 +1089,7 @@ function ls_romanToInt( $inRomanString ) {
     foreach( $romans as $key => $value ) {
         while( strpos( $inRomanString, $key ) === 0 ) {
             $result += $value;
-            $roman = substr( $inRomanString, strlen( $key ) );
+            $inRomanString = substr( $inRomanString, strlen( $key ) );
             }
         }
 
@@ -2518,6 +2521,49 @@ function ls_characterDump() {
             }        
         }    
     }
+
+
+function ls_reformatNames() {
+    global $tableNamePrefix;
+
+    $query = "SELECT id, name FROM $tableNamePrefix"."lives ".
+            "WHERE death_time > '2018-07-06';";
+
+    $result = ls_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    echo "Processing $numRows names to reformat...<br>\n";
+
+    $touched = 0;
+    
+    for( $i=0; $i<$numRows; $i++ ) {
+        
+        $id = ls_mysqli_result( $result, $i, "id" );
+
+        
+        $name = ls_mysqli_result( $result, $i, "name" );
+
+        $oldName = $name;
+        
+
+        $name = ls_formatName( $name );
+
+        if( $oldName != $name ) {
+            echo "Old name:  $oldName :::: ";
+            echo "New name:  $name<br>\n";
+            $query = "UPDATE $tableNamePrefix"."lives SET ".
+                "name = '$name' WHERE id = '$id';";
+            ls_queryDatabase( $query );
+            $touched ++;
+            }
+        }
+
+    $notTouched = $numRows - $touched;
+    
+    echo "$touched/$numRows needed to be updated.  Done<br>\n";
+    }
+
 
 
 
