@@ -5381,6 +5381,9 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
         // New method:
         GridPos eveLocToUse = eveLocation;
         
+        maxEveLocationUsage = 
+            SettingsManager::getIntSetting( "maxEveStartupLocationUsage", 10 );
+
         if( eveLocationUsage < maxEveLocationUsage ) {
             eveLocationUsage++;
             // keep using same location

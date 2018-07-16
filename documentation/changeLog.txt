@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Eve location reususe after server restart upped to 10 chances instead of 3.
+  Also made it a setting that can be changed at runtime.
+
+
+
 Version 125    2018-July-13
 
 --Added client source code version match check in platform build scripts
