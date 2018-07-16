@@ -158,7 +158,8 @@ else if( $action == "character_page" ) {
 else if( $action == "character_dump" ) {
     ls_characterDump();
     }
-else if( $action == "reformat_names" ) {
+// disable this one for now, no longer needed
+else if( false && $action == "reformat_names" ) {
     ls_reformatNames();
     }
 else if( $action == "ls_setup" ) {
