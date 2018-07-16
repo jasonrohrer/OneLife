@@ -1057,6 +1057,94 @@ function ls_getAllChildren( $inServerID, $inParentID ) {
 
 
 
+
+// returns -1 on failure
+// found here:
+// https://stackoverflow.com/questions/6265596/
+//         how-to-convert-a-roman-numeral-to-integer-in-php
+function ls_romanToInt( $inRomanString ) {    
+
+    $romans = array(
+        // currently, server never uses M or D
+        /*'M' => 1000,
+          'CM' => 900,
+          'D' => 500,
+          'CD' => 400,
+        */
+        'C' => 100,
+        'XC' => 90,
+        'L' => 50,
+        'XL' => 40,
+        'X' => 10,
+        'IX' => 9,
+        'V' => 5,
+        'IV' => 4,
+        'I' => 1 );
+
+    $result = 0;
+
+    foreach( $romans as $key => $value ) {
+        while( strpos( $inRomanString, $key ) === 0 ) {
+            $result += $value;
+            $roman = substr( $inRomanString, strlen( $key ) );
+            }
+        }
+
+    if( strlen( $inRomanString ) == 0 ) {
+        return $result;
+        }
+    else {
+        // unmatched characters left
+        return -1;
+        }
+    }
+
+
+
+function ls_formatName( $inName ) {
+    $inName = strtoupper( $inName );
+
+    $nameParts = preg_split( "/\s+/", $inName );
+
+    $numParts = count( $nameParts );
+
+    if( $numParts > 0 ) {
+        // first part always a name part,
+        $nameParts[0] = ucfirst( strtolower( $nameParts[0] ) );
+        }
+    
+    if( $numParts == 3 ) {
+        // second part last name
+        $nameParts[1] = ucfirst( strtolower( $nameParts[1] ) );
+        // leave suffix uppercase
+        }
+    else if( count( $nameParts ) == 2 ) {
+        // tricky case
+        // is second part suffix or last name?
+
+        $secondRoman = false;
+        
+        if( !preg_match('/[^IVCXL]/', $nameParts[1] ) ) {
+            // string contains only roman numeral digits
+            // but VIX and other last names possible
+            if( ls_romanToInt( $nameParts[1] ) > 0 ) {
+                // leave second part uppercase
+                $secondRoman = true;
+                }
+            }
+
+        if( ! $secondRoman ) {
+            // second is last name
+            $nameParts[1] = ucfirst( strtolower( $nameParts[1] ) );
+            }
+        }
+    
+    return implode( " ", $nameParts );
+    }
+
+
+
+
 function ls_logLife() {
     global $tableNamePrefix, $sharedGameServerSecret;
 
@@ -1097,7 +1185,10 @@ function ls_logLife() {
     
 
     
-    $name = ucwords( strtolower( $name ) );
+    
+    
+    
+    $name = ls_formatName( $name );
     
     $male = ls_requestFilter( "male", "/[01]/", "0" );
     

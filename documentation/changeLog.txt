@@ -8,6 +8,8 @@ Server Fixes
 --Eve location reususe after server restart upped to 10 chances instead of 3.
   Also made it a setting that can be changed at runtime.
 
+--Proper formatting of roman numeral suffixes in family tree browser.
+
 
 
 Version 125    2018-July-13
