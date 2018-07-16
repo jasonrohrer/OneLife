@@ -10,6 +10,9 @@ Server Fixes
 
 --Proper formatting of roman numeral suffixes in family tree browser.
 
+--Added tracking of which names have suffix already in server to avoid
+  mistakenly treating suffix like a last name.
+
 
 
 Version 125    2018-July-13

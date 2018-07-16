@@ -191,7 +191,8 @@ typedef struct LiveObject {
         int displayID;
         
         char *name;
-
+        char nameHasSuffix;
+        
         char *lastSay;
 
         int curseLevel;
@@ -3791,6 +3792,7 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.lineage = new SimpleVector<int>();
     
     newObject.name = NULL;
+    newObject.nameHasSuffix = false;
     newObject.lastSay = NULL;
     newObject.curseLevel = 0;
     
@@ -5056,15 +5058,17 @@ void monumentStep() {
 // inPlayerName may be destroyed inside this function
 // returns a uniquified name, sometimes newly allocated.
 // return value destroyed by caller
-char *getUniqueCursableName( char *inPlayerName ) {
+char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded ) {
     
     char dup = isNameDuplicateForCurses( inPlayerName );
     
     if( ! dup ) {
+        *outSuffixAdded = false;
         return inPlayerName;
         }
     else {
-        
+        *outSuffixAdded = true;
+
         int targetPersonNumber = 1;
         
         char *fullName = stringDuplicate( inPlayerName );
@@ -6924,7 +6928,8 @@ int main() {
                                                                 eveName, 
                                                                 close );
                                 nextPlayer->name = getUniqueCursableName( 
-                                    nextPlayer->name );
+                                    nextPlayer->name, 
+                                    &( nextPlayer->nameHasSuffix ) );
 
                                 logName( nextPlayer->id,
                                          nextPlayer->email,
@@ -6954,6 +6959,32 @@ int main() {
                                         if( lastName == NULL ) {
                                             lastName = "";
                                             }
+                                        else if( nextPlayer->nameHasSuffix ) {
+                                            // only keep last name
+                                            // if it contains another
+                                            // space (the suffix is after
+                                            // the last name).  Otherwise
+                                            // we are probably confused,
+                                            // and what we think
+                                            // is the last name IS the suffix.
+                                            
+                                            char *suffixPos =
+                                                strstr( (char*)&( lastName[1] ),
+                                                        " " );
+                                            
+                                            if( suffixPos == NULL ) {
+                                                // last name is suffix, actually
+                                                // don't pass suffix on to baby
+                                                lastName = "";
+                                                }
+                                            else {
+                                                // last name plus suffix
+                                                // okay to pass to baby
+                                                // because we strip off
+                                                // third part of name
+                                                // (suffix) below.
+                                                }
+                                            }
                                         }
 
                                     const char *close = 
@@ -6979,7 +7010,8 @@ int main() {
                                         }
                                     
                                     babyO->name = getUniqueCursableName( 
-                                        babyO->name );
+                                        babyO->name, 
+                                        &( babyO->nameHasSuffix ) );
                                     
                                     logName( babyO->id,
                                              babyO->email,
@@ -7032,7 +7064,8 @@ int main() {
                                         stringDuplicate( close );
                                     
                                     closestOther->name = getUniqueCursableName( 
-                                        closestOther->name );
+                                        closestOther->name,
+                                        &( closestOther->nameHasSuffix ) );
 
                                     logName( closestOther->id,
                                              closestOther->email,
