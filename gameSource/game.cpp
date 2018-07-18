@@ -38,6 +38,8 @@ int accountHmacVersionNumber = 0;
 
 #include "minorGems/system/Time.h"
 
+#include "minorGems/crypto/hashes/sha1.h"
+
 
 // static seed
 CustomRandomSource randSource( 34957197 );
@@ -109,7 +111,7 @@ int userTwinCount = 0;
 
 
 // these are needed by ServerActionPage, but we don't use them
-int userID = 0;
+int userID = -1;
 int serverSequenceNumber = 0;
 
 
@@ -1061,8 +1063,19 @@ static void startConnecting() {
         printf( "Starting fetching server URL from reflector %s\n",
                 reflectorURL );
                 
+        getServerAddressPage->clearActionParameters();
+        
+            
         getServerAddressPage->setActionParameter( "email", 
                                                   userEmail );
+        
+        if( userTwinCode != NULL ) {
+            char *codeHash = computeSHA1Digest( userTwinCode );
+            getServerAddressPage->setActionParameter( "twin_code", 
+                                                      codeHash );
+            delete [] codeHash;
+            }
+        
                     
         currentGamePage = getServerAddressPage;
         currentGamePage->base_makeActive( true );

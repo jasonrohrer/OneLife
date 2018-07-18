@@ -3,6 +3,17 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 126    ???
+
+--Trim whitespace from starnd and end of twin codes entered by user. 
+  Hidden whitespace could cause a mismatch.
+
+--Wow.  Twin implementation in client is totally broken, and not sending twin
+  code to reflector at all.  Anyone who successfully played with twins so far
+  was just lucky (both got sent to the same server by random chance).
+
+
+
 Server Fixes
 
 --Eve location reususe after server restart upped to 10 chances instead of 3.
