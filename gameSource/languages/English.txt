@@ -114,6 +114,11 @@ vsyncYes "YES"
 vsyncNo "NO"
 redetectButton "RE-DETECT"
 
+useCustomServer "USE CUSTOM SERVER:"
+address "ADDRESS:"
+port "PORT:"
+
+
 
 downloadingUpdate "DOWNLOADING UPDATE"
 applyingUpdate "APPLYING UPDATE"

@@ -40,13 +40,17 @@ SettingsPage::SettingsPage()
                                      // forbid spaces
                                      " " ),
           mCustomServerPortField( mainFont, 84, -208, 4, false, 
-                                     translate( "port" ),
-                                     "0123456789", NULL ) {
+                                  translate( "port" ),
+                                  "0123456789", NULL ),
+          mCopyButton( mainFont, 381, -216, translate( "copy" ) ),
+          mPasteButton( mainFont, 518, -216, translate( "paste" ) ) {
     
     setButtonStyle( &mBackButton );
     setButtonStyle( &mRestartButton );
     setButtonStyle( &mRedetectButton );
-    
+    setButtonStyle( &mCopyButton );
+    setButtonStyle( &mPasteButton );
+
     addComponent( &mBackButton );
     mBackButton.addActionListener( this );
 
@@ -66,6 +70,16 @@ SettingsPage::SettingsPage()
     addComponent( &mCustomServerAddressField );
     addComponent( &mCustomServerPortField );
     
+    addComponent( &mCopyButton );
+    addComponent( &mPasteButton );
+    
+    mCopyButton.addActionListener( this );
+    mPasteButton.addActionListener( this );
+    
+    if( ! isClipboardSupported() ) {
+        mCopyButton.setVisible( false );
+        mPasteButton.setVisible( false );
+        }
 
     mRestartButton.setVisible( false );
     
@@ -199,6 +213,67 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
             setMusicLoudness( mMusicLoudnessSlider.getValue(), true );
             }
         }
+    else if( inTarget == &mCopyButton ) {
+        char *address = mCustomServerAddressField.getText();
+        
+        char *fullAddress = autoSprintf( "%s:%d", address,
+                                         mCustomServerPortField.getInt() );
+        delete [] address;
+        
+        setClipboardText( fullAddress );
+        
+        delete [] fullAddress;
+        }
+    else if( inTarget == &mPasteButton ) {
+        char *text = getClipboardText();
+
+        char *trimmed = trimWhitespace( text );
+        
+        delete [] text;
+        
+
+        char setWithPort = false;
+        
+        if( strstr( trimmed, ":" ) != NULL ) {
+            char addressBuff[100];
+            int port = 0;
+            
+            int numRead = sscanf( trimmed, "%99[^:]:%d", addressBuff, &port );
+            
+            if( numRead == 2 ) {
+                setWithPort = true;
+                
+                char *trimmedAddr = trimWhitespace( addressBuff );
+                
+                // terminate at first space, if any
+                char *spacePos = strstr( trimmedAddr, " " );
+                if( spacePos != NULL ) {
+                    spacePos[0] = '\0';
+                    }
+
+                mCustomServerAddressField.setText( trimmedAddr );
+
+                delete [] trimmedAddr;
+                
+                mCustomServerPortField.setInt( port );
+                }
+            }
+        
+        if( ! setWithPort ) {
+            // treat the whole thing as an address
+            
+            // terminate at first space, if any
+            char *spacePos = strstr( trimmed, " " );
+            
+            if( spacePos != NULL ) {
+                spacePos[0] = '\0';
+                }
+            mCustomServerAddressField.setText( trimmed );
+            }
+        delete [] trimmed;
+        }
+    
+    
     }
 
 

@@ -56,4 +56,8 @@ class SettingsPage : public GamePage, public ActionListener {
         
         TextField mCustomServerAddressField;
         TextField mCustomServerPortField;
+
+        TextButton mCopyButton;
+        TextButton mPasteButton;
+;
     };
