@@ -12,6 +12,8 @@ Version 126    ???
   code to reflector at all.  Anyone who successfully played with twins so far
   was just lucky (both got sent to the same server by random chance).
 
+--MENU button on rebirth choice page to return to login screen.
+
 
 
 Server Fixes

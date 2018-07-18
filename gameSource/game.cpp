@@ -1834,6 +1834,10 @@ void drawFrame( char inUpdate ) {
                 currentGamePage = reviewPage;
                 currentGamePage->base_makeActive( true );
                 }
+            else if( rebirthChoicePage->checkSignal( "menu" ) ) {
+                currentGamePage = existingAccountPage;
+                currentGamePage->base_makeActive( true );
+                }
             else if( rebirthChoicePage->checkSignal( "quit" ) ) {
                 quitGame();
                 }

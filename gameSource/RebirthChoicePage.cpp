@@ -17,7 +17,7 @@ extern char *userEmail;
 extern char *accountKey;
 
 
-static doublePair tutorialButtonPos = { -522, 300 };
+static doublePair tutorialButtonPos = { 522, 300 };
 
 
 
@@ -29,10 +29,13 @@ RebirthChoicePage::RebirthChoicePage()
           mRebornButton( mainFont, 150, -128, 
                          translate( "reborn" ) ),
           mTutorialButton( mainFont, tutorialButtonPos.x, tutorialButtonPos.y, 
-                           translate( "tutorial" ) ) {
+                           translate( "tutorial" ) ),
+          mMenuButton( mainFont, -tutorialButtonPos.x, tutorialButtonPos.y, 
+                       translate( "menu" ) ){
     if( !isHardToQuitMode() ) {
         addComponent( &mQuitButton );
         addComponent( &mReviewButton );
+        addComponent( &mMenuButton );
         }
     else {
         mRebornButton.setPosition( 0, -128 );
@@ -45,11 +48,13 @@ RebirthChoicePage::RebirthChoicePage()
     setButtonStyle( &mReviewButton );
     setButtonStyle( &mRebornButton );
     setButtonStyle( &mTutorialButton );
+    setButtonStyle( &mMenuButton );
     
     mQuitButton.addActionListener( this );
     mReviewButton.addActionListener( this );
     mRebornButton.addActionListener( this );
     mTutorialButton.addActionListener( this );
+    mMenuButton.addActionListener( this );
 
 
     int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
@@ -79,6 +84,9 @@ void RebirthChoicePage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mTutorialButton ) {
         setSignal( "tutorial" );
+        }
+    else if( inTarget == &mMenuButton ) {
+        setSignal( "menu" );
         }
     }
 

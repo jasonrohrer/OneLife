@@ -31,5 +31,6 @@ class RebirthChoicePage : public GamePage, public ActionListener {
         TextButton mRebornButton;
         
         TextButton mTutorialButton;
+        TextButton mMenuButton;
 
     };
