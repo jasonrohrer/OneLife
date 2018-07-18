@@ -5,7 +5,7 @@ http://onehouronelife.com/updateLog.php
 
 Version 126    ???
 
---Trim whitespace from starnd and end of twin codes entered by user. 
+--Trim whitespace from start and end of twin codes entered by user. 
   Hidden whitespace could cause a mismatch.
 
 --Wow.  Twin implementation in client is totally broken, and not sending twin
