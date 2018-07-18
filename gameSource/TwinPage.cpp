@@ -146,13 +146,16 @@ void TwinPage::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mCodeField ) {
         char *text = mCodeField.getText();
         
-        if( strcmp( text, "" ) == 0 ) {
+        char *trimText = trimWhitespace( text );
+
+        if( strcmp( trimText, "" ) == 0 ) {
             mLoginButton.setVisible( false );
             }
         else {
             mLoginButton.setVisible( true );
             }
         delete [] text;
+        delete [] trimText;
         }
     else if( inTarget == &mCancelButton ) {
         if( userTwinCode != NULL ) {
@@ -199,8 +202,11 @@ void TwinPage::actionPerformed( GUIComponent *inTarget ) {
             userTwinCode = NULL;
             }
         
-        userTwinCode = mCodeField.getText();
+        char *text = mCodeField.getText();
         
+        userTwinCode = trimWhitespace( text );
+        delete [] text;
+
         SettingsManager::setSetting( "twinCode", userTwinCode );
 
         userTwinCount = mPlayerCountRadioButtonSet->getSelectedItem() + 2;
