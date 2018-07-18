@@ -68,6 +68,7 @@ extern double viewHeight;
 
 extern int screenW, screenH;
 
+extern char usingCustomServer;
 extern char *serverIP;
 extern int serverPort;
 
@@ -3860,7 +3861,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         if( connectionMessageFade > 0 ) {
             
             if( serverSocketConnected ) {    
-                connectionMessageFade -= 0.01 * frameRateFactor;
+                connectionMessageFade -= 0.05 * frameRateFactor;
                 
                 if( connectionMessageFade < 0 ) {
                     connectionMessageFade = 0;
@@ -3876,6 +3877,21 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         setDrawColor( 1, 1, 1, 1 );
 
+        if( usingCustomServer ) {
+            char *upperIP = stringToUpperCase( serverIP );
+            
+            char *message = autoSprintf( translate( "customServerMesssage" ),
+                                         upperIP, serverPort );
+            delete [] upperIP;
+            
+            doublePair custPos = pos;
+            custPos.y += 192;
+            drawMessage( message, custPos );
+            
+            delete [] message;
+            }
+        
+        
 
         if( ! serverSocketConnected ) {
             // don't draw waiting message, not connected yet

@@ -145,6 +145,8 @@ serverFull "SERVER IS FULL"
 connectionFailed "CONNECTION FAILED"
 
 
+customServerMesssage "CUSTOM SERVER:  %s : %d"
+
 connecting "CONNECTING"
 
 waitingBirth "WAITING TO BE BORN"

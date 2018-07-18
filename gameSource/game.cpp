@@ -100,6 +100,7 @@ static char autoLogIn = 0;
 // start at reflector URL
 char *reflectorURL = NULL;
 
+char usingCustomServer = false;
 char *serverIP = NULL;
 int serverPort = 0;
 
@@ -1040,7 +1041,8 @@ void deleteCharFromUserTypedMessage() {
 
 static void startConnecting() {
     if( SettingsManager::getIntSetting( "useCustomServer", 0 ) ) {
-                    
+        usingCustomServer = true;
+        
         if( serverIP != NULL ) {
             delete [] serverIP;
             serverIP = NULL;
@@ -1060,6 +1062,8 @@ static void startConnecting() {
         currentGamePage->base_makeActive( true );
         }
     else {
+        usingCustomServer = false;
+        
         printf( "Starting fetching server URL from reflector %s\n",
                 reflectorURL );
                 
