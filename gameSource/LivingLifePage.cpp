@@ -507,6 +507,10 @@ static void replaceLastMessageSent( char *inNewMessage ) {
 
 SimpleVector<unsigned char> serverSocketBuffer;
 
+static char serverSocketConnected = false;
+static float connectionMessageFade = 1.0f;
+static double connectedTime = 0;
+
 
 // reads all waiting data from socket and stores it in buffer
 // returns false on socket error
@@ -518,6 +522,11 @@ static char readServerSocketFull( int inServerSocket ) {
     
     
     while( numRead > 0 ) {
+        if( ! serverSocketConnected ) {    
+            serverSocketConnected = true;
+            connectedTime = game_getCurrentTime();
+            }
+        
         serverSocketBuffer.appendArray( buffer, numRead );
         numServerBytesRead += numRead;
 
@@ -572,6 +581,7 @@ void LivingLifePage::sendToServerSocket( char *inMessage ) {
             handleOurDeath();
             }
         else {
+            setWaiting( false );
             setSignal( "loginFailed" );
             }
         }
@@ -3845,7 +3855,32 @@ void LivingLifePage::draw( doublePair inViewCenter,
         setDrawColor( 1, 1, 1, 1 );
         doublePair pos = { 0, 0 };
         
-        if( userTwinCode == NULL ) {
+
+       
+        if( connectionMessageFade > 0 ) {
+            
+            if( serverSocketConnected ) {    
+                connectionMessageFade -= 0.01 * frameRateFactor;
+                
+                if( connectionMessageFade < 0 ) {
+                    connectionMessageFade = 0;
+                    }       
+                }
+            
+            
+            doublePair conPos = pos;
+            conPos.y += 128;
+            drawMessage( "connecting", conPos, false, connectionMessageFade );
+            }
+
+        
+        setDrawColor( 1, 1, 1, 1 );
+
+
+        if( ! serverSocketConnected ) {
+            // don't draw waiting message, not connected yet
+            }
+        else if( userTwinCode == NULL ) {
             drawMessage( "waitingBirth", pos );
             }
         else {
@@ -7275,7 +7310,9 @@ void LivingLifePage::handleOurDeath() {
     delete [] partialReason;
     
 
+    setWaiting( false );
     setSignal( "died" );
+
     instantStopMusic();
     // so sound tails are not still playing when we we get reborn
     fadeSoundSprites( 0.1 );
@@ -8175,7 +8212,11 @@ void LivingLifePage::step() {
         }
     
     if( mServerSocket == -1 ) {
+        serverSocketConnected = false;
+        connectionMessageFade = 1.0f;
         mServerSocket = openSocketConnection( serverIP, serverPort );
+        timeLastMessageSent = game_getCurrentTime();
+        
         return;
         }
     
@@ -8183,18 +8224,47 @@ void LivingLifePage::step() {
     double pageLifeTime = game_getCurrentTime() - mPageStartTime;
     
     if( pageLifeTime < 1 ) {
+        // let them see CONNECTING message for a bit
         return;
         }
-    else {
+    
+
+    if( serverSocketConnected ) {
+        // we've heard from server, not waiting to connect anymore
         setWaiting( false );
         }
+    else {
+        
+        if( pageLifeTime > 10 ) {
+            // having trouble connecting.
+            closeSocket( mServerSocket );
+            mServerSocket = -1;
 
+            setWaiting( false );
+            setSignal( "connectionFailed" );
+            
+            return;
+            }
+        }
+    
 
     // first, read all available data from server
     char readSuccess = readServerSocketFull( mServerSocket );
     
 
     if( ! readSuccess ) {
+        
+        if( serverSocketConnected ) {    
+            double connLifeTime = game_getCurrentTime() - connectedTime;
+            
+            if( connLifeTime < 1 ) {
+                // let player at least see waiting page
+                // avoid flicker
+                return;
+                }
+            }
+        
+
         closeSocket( mServerSocket );
         mServerSocket = -1;
 
@@ -8208,6 +8278,7 @@ void LivingLifePage::step() {
             handleOurDeath();
             }
         else {
+            setWaiting( false );
             setSignal( "loginFailed" );
             }
         return;
@@ -9078,7 +9149,8 @@ void LivingLifePage::step() {
         }
     
     
-    if( game_getCurrentTime() - timeLastMessageSent > 15 ) {
+    if( serverSocketConnected && 
+        game_getCurrentTime() - timeLastMessageSent > 15 ) {
         // more than 15 seconds without client making a move
         // send KA to keep connection open
         sendToServerSocket( (char*)"KA 0 0#" );
@@ -9106,6 +9178,8 @@ void LivingLifePage::step() {
         if( type == SHUTDOWN  || type == FORCED_SHUTDOWN ) {
             closeSocket( mServerSocket );
             mServerSocket = -1;
+            
+            setWaiting( false );
             setSignal( "serverShutdown" );
             
             delete [] message;
@@ -9114,6 +9188,8 @@ void LivingLifePage::step() {
         else if( type == SERVER_FULL ) {
             closeSocket( mServerSocket );
             mServerSocket = -1;
+            
+            setWaiting( false );
             setSignal( "serverFull" );
             
             delete [] message;
@@ -9147,6 +9223,10 @@ void LivingLifePage::step() {
                 // if server is using an older version, check that
                 // their version matches our data version at least
 
+                closeSocket( mServerSocket );
+                mServerSocket = -1;
+
+                setWaiting( false );
                 setSignal( "versionMismatch" );
                 delete [] message;
                 return;
@@ -9229,6 +9309,8 @@ void LivingLifePage::step() {
         else if( type == REJECTED ) {
             closeSocket( mServerSocket );
             mServerSocket = -1;
+            
+            setWaiting( false );
             setSignal( "loginFailed" );
             
             delete [] message;
@@ -14873,6 +14955,11 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    serverSocketConnected = false;
+    connectionMessageFade = 1.0f;
+    connectedTime = 0;
+
     
     mPreviousHomeDistStrings.deallocateStringElements();
     mPreviousHomeDistFades.deleteAll();
@@ -17140,6 +17227,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 closeSocket( mServerSocket );
                 mServerSocket = -1;
                 
+                setWaiting( false );
                 setSignal( "twinCancel" );
                 }
             break;

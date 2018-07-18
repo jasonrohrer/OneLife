@@ -20,6 +20,12 @@ Version 126    ???
 
 --Custom server can now be configured on SETTINGS page.
 
+--Fixed wayward KEEP_ALIVE message from client if player waits a while before
+  pressing LOGIN button.  Fixed lots of other little connection glitches, and
+  made the connection phases more clearn (connecting vs waiting to be born vs
+  loading map).
+
+
 
 
 

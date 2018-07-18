@@ -142,6 +142,10 @@ serverShutdown "SERVER HAS BEEN SHUT DOWN"
 
 serverFull "SERVER IS FULL"
 
+connectionFailed "CONNECTION FAILED"
+
+
+connecting "CONNECTING"
 
 waitingBirth "WAITING TO BE BORN"
 waitingBirthFriends "WAITING TO BE BORN AS %s"
