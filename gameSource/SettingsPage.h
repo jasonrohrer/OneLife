@@ -52,8 +52,8 @@ class SettingsPage : public GamePage, public ActionListener {
         ValueSlider mSoundEffectsLoudnessSlider;
 
 
-        //CheckboxButton mUseCustomServerBox;
+        CheckboxButton mUseCustomServerBox;
         
-        //TextField mCustomServerAddressField;
-        //TextField mCustomServerAddressPort;
+        TextField mCustomServerAddressField;
+        TextField mCustomServerPortField;
     };

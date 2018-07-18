@@ -18,6 +18,8 @@ Version 126    ???
 
 --More info in fps mismatch error message.
 
+--Custom server can now be configured on SETTINGS page.
+
 
 
 
