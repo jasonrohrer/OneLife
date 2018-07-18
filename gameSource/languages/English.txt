@@ -11,7 +11,7 @@ vsyncWarning3 "GRAPHICS CARD CONTROL PANEL CAN FIX THIS"
 vsyncContinueMessage "PRESS Y TO CONTINUE WITHOUT VSYNC OR ESC TO QUIT"
 
 
-fpsErrorLogin "ERROR:  FPS MISMATCH DETECTED.  VSYNC CHANGED?"
+fpsErrorLogin "ERROR:  FPS MISMATCH DETECTED.  VSYNC CHANGED?##MEASURED %0.1f FPS, EXPECTING %d FPS"
 
 
 
@@ -103,6 +103,7 @@ cancel "CANCEL"
 backButton "BACK"
 restartButton "RESTART"
 fullscreen "FULLSCREEN:"
+borderless "BORDERLESS:"
 musicLoudness "MUSIC LOUDNESS:"
 soundLoudness "SOUND LOUDNESS:"
 

@@ -50,7 +50,7 @@ ExistingAccountPage::ExistingAccountPage()
                            translate( "settingsButton" ) ),
           mReviewButton( mainFont, -400, -200, 
                          translate( "postReviewButton" ) ),
-          mRedetectButton( mainFont, 0, 220, translate( "redetectButton" ) ),
+          mRedetectButton( mainFont, 0, 198, translate( "redetectButton" ) ),
           mPageActiveStartTime( 0 ),
           mFramesCounted( 0 ),
           mFPSMeasureDone( false ) {
@@ -437,8 +437,12 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
                 }
             else {
                 // show error message
+                
+                char *message = autoSprintf( translate( "fpsErrorLogin" ),
+                                                        fps, targetFPS );
+                setStatusDirect( message, true );
+                delete [] message;
 
-                setStatus( "fpsErrorLogin", true );
                 setStatusPositiion( true );
                 mRedetectButton.setVisible( true );
                 }

@@ -14,6 +14,11 @@ Version 126    ???
 
 --MENU button on rebirth choice page to return to login screen.
 
+--Borderless mode on settings page.
+
+--More info in fps mismatch error message.
+
+
 
 
 Server Fixes

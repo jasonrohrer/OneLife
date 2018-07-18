@@ -26,10 +26,11 @@ SettingsPage::SettingsPage()
           mRestartButton( mainFont, 128, 128, translate( "restartButton" ) ),
           mRedetectButton( mainFont, 153, 249, translate( "redetectButton" ) ),
           mFullscreenBox( 0, 128, 4 ),
-          mMusicLoudnessSlider( mainFont, 0, 0, 4, 200, 30,
+          mBorderlessBox( 0, 168, 4 ),
+          mMusicLoudnessSlider( mainFont, 0, 40, 4, 200, 30,
                                 0.0, 1.0, 
                                 translate( "musicLoudness" ) ),
-          mSoundEffectsLoudnessSlider( mainFont, 0, -128, 4, 200, 30,
+          mSoundEffectsLoudnessSlider( mainFont, 0, -48, 4, 200, 30,
                                        0.0, 1.0, 
                                        translate( "soundLoudness" ) ) {
     
@@ -42,6 +43,9 @@ SettingsPage::SettingsPage()
 
     addComponent( &mFullscreenBox );
     mFullscreenBox.addActionListener( this );
+
+    addComponent( &mBorderlessBox );
+    mBorderlessBox.addActionListener( this );
 
     addComponent( &mRestartButton );
     mRestartButton.addActionListener( this );
@@ -61,6 +65,14 @@ SettingsPage::SettingsPage()
 
     mFullscreenBox.setToggled( mOldFullscreenSetting );
 
+    mBorderlessBox.setVisible( mOldFullscreenSetting );
+
+
+    mOldBorderlessSetting = 
+        SettingsManager::getIntSetting( "borderless", 0 );
+
+    mBorderlessBox.setToggled( mOldBorderlessSetting );
+    
     
 
     addComponent( &mMusicLoudnessSlider );
@@ -91,6 +103,15 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
         SettingsManager::setSetting( "fullscreen", newSetting );
         
         mRestartButton.setVisible( mOldFullscreenSetting != newSetting );
+        
+        mBorderlessBox.setVisible( newSetting );
+        }
+    else if( inTarget == &mBorderlessBox ) {
+        int newSetting = mBorderlessBox.getToggled();
+        
+        SettingsManager::setSetting( "borderless", newSetting );
+        
+        mRestartButton.setVisible( mOldBorderlessSetting != newSetting );
         }
     else if( inTarget == &mRestartButton ||
              inTarget == &mRedetectButton ) {
@@ -167,6 +188,17 @@ void SettingsPage::draw( doublePair inViewCenter,
     
     mainFont->drawString( translate( "fullscreen" ), pos, alignRight );
     
+
+    if( mBorderlessBox.isVisible() ) {
+        pos = mBorderlessBox.getPosition();
+    
+        pos.x -= 30;
+        pos.y -= 2;
+        
+        mainFont->drawString( translate( "borderless" ), pos, alignRight );
+        }
+    
+
     pos = mFullscreenBox.getPosition();
     
     pos.y += 96;
