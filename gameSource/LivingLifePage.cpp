@@ -8192,6 +8192,12 @@ void LivingLifePage::sendBugReport( int inBugNumber ) {
 
         
 void LivingLifePage::step() {
+    
+    if( isAnySignalSet() ) {
+        return;
+        }
+    
+
     if( apocalypseInProgress ) {
         double stepSize = frameRateFactor / ( apocalypseDisplaySeconds * 60.0 );
         apocalypseDisplayProgress += stepSize;

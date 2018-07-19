@@ -28,6 +28,11 @@ Version 126    ???
 --Custom server status shown on connection page if set.  No more forgetting
   that it's set and wondering why you can't connect with a friend.
 
+--Fixed bug in reopening connection after signal set to leave LivingLifePage.
+  This was causing a bad socket to remain open, which could cause subsequent
+  logins to fail (usually after pressing x to leave twin waiting screen).
+
+
 
 
 

@@ -183,6 +183,8 @@ class GamePage : public PageComponent {
         // signal is also auto-cleared by base_makeActive( true ) 
         virtual void clearSignal();
         
+        virtual char isAnySignalSet();
+        
 
 
         GamePage();
