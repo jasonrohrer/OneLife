@@ -52,6 +52,13 @@
 #include "minorGems/util/random/JenkinsRandomSource.h"
 
 
+//#define IGNORE_PRINTF
+
+#ifdef IGNORE_PRINTF
+#define printf(fmt, ...) (0)
+#endif
+
+
 static JenkinsRandomSource randSource;
 
 
