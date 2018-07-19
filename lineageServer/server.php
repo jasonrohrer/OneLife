@@ -338,6 +338,12 @@ function ls_setupDatabase() {
             // -1 if not set yet
             // 0 for Eve
             "generation INT NOT NULL,".
+            // this will make queries ordering by generation and death_time fast
+            // OR just queries on generation fast.
+            // but not querys on just death_time fast
+            "INDEX( generation, death_time ),".
+            // single index on death_time to speed up queries on just death_time
+            "INDEX( death_time ),".
             // -1 if not set yet
             // 0 for Eve
             // the Eve of this family line
@@ -1539,6 +1545,9 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
         "ON lives.user_id = users.id  $inFilterClause ".
         "ORDER BY $inOrderBy ".
         "LIMIT $inNumRows;";
+
+    ls_log( "Front page query:  $query" );
+    
     $result = ls_queryDatabase( $query );
     
     $numRows = mysqli_num_rows( $result );

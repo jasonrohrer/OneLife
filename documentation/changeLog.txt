@@ -3,6 +3,17 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes
+
+--Added a few more MySQL indexes to speed up front page queries in lineage
+  server.  One of these queries used to take 1.2 seconds, and now takes
+  0.00079350 seconds, or a 1500x speedup.  Front page of family tree browser
+  now loads quickly.
+
+
+
+
 Version 126    2018-July-18
 
 --Trim whitespace from start and end of twin codes entered by user. 
