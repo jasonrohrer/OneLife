@@ -1416,6 +1416,7 @@ static void dbPutCached( int inX, int inY, int inSlot, int inSubCont,
 
 char lookTimeDBEmpty = false;
 char skipLookTimeCleanup = 0;
+char skipRemovedObjectCleanup = 0;
 
 // if lookTimeDBEmpty, then we init all map cell look times to NOW
 int cellsLookedAtToInit = 0;
@@ -2468,9 +2469,20 @@ void initMap() {
     
     delete [] allObjects;
 
-
-    int totalSetCount = cleanMap();
     
+    skipRemovedObjectCleanup = 
+        SettingsManager::getIntSetting( "skipRemovedObjectCleanup", 0 );
+
+
+
+    int totalSetCount = 1;
+
+    if( ! skipRemovedObjectCleanup ) {
+        cleanMap();
+        }
+    else {
+        AppLog::info( "Skipping cleaning map of removed objects" );
+        }
     
     if( totalSetCount == 0 ) {
         // map has been cleared
@@ -2587,6 +2599,13 @@ void freeMap() {
         SimpleVector<int> bContToCheck;
         
         
+        int skipUseDummyCleanup = 
+            SettingsManager::getIntSetting( "skipUseDummyCleanup", 0 );
+        
+        
+
+        
+        if( !skipUseDummyCleanup );
         while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
         
             int s = valueToInt( &( key[8] ) );
@@ -2685,21 +2704,31 @@ void freeMap() {
                 }
             }
 
-
-        AppLog::infoF(
-            "...%d useDummy/variable objects present that were changed "
-            "back into their unused parent.",
-            xToPlace.size() );
-        AppLog::infoF( 
-            "...%d contained useDummy/variable objects present and changed "
-            "back to usused parent.",
-            numContChanged );
-
+        
+        if( ! skipUseDummyCleanup ) {    
+            AppLog::infoF(
+                "...%d useDummy/variable objects present that were changed "
+                "back into their unused parent.",
+                xToPlace.size() );
+            AppLog::infoF( 
+                "...%d contained useDummy/variable objects present and changed "
+                "back to usused parent.",
+                numContChanged );
+            }
+        else {
+            AppLog::info( "Skipping use dummy cleanup." );
+            }
+        
         printf( "\n" );
 
-        AppLog::info( "Now running normal map clean..." );
-        cleanMap();
-
+        if( ! skipRemovedObjectCleanup ) {
+            AppLog::info( "Now running normal map clean..." );
+            cleanMap();
+            }
+        else {
+            AppLog::info( "Skipping running normal map clean." );
+            }
+        
         
         DB_close( &db );
         }

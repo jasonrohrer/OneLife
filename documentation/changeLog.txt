@@ -13,6 +13,9 @@ Server Fixes
 
 --Support for skipping look-time based cleanup for profiling purposes.
 
+--Support for skipping removed object cleanup and use dummy cleanup (to speed
+  up profiling cycle).
+
 
 
 Version 126    2018-July-18
