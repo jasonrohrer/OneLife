@@ -1415,6 +1415,7 @@ static void dbPutCached( int inX, int inY, int inSlot, int inSubCont,
 
 
 char lookTimeDBEmpty = false;
+char skipLookTimeCleanup = 0;
 
 // if lookTimeDBEmpty, then we init all map cell look times to NOW
 int cellsLookedAtToInit = 0;
@@ -1441,7 +1442,7 @@ int DB_open_timeShrunk(
 
     File dbFile( NULL, path );
     
-    if( ! dbFile.exists() || lookTimeDBEmpty ) {
+    if( ! dbFile.exists() || lookTimeDBEmpty || skipLookTimeCleanup ) {
 
         if( lookTimeDBEmpty ) {
             AppLog::infoF( "No lookTimes present, not cleaning %s", path );
@@ -1454,7 +1455,7 @@ int DB_open_timeShrunk(
                                  key_size,
                                  value_size );
 
-        if( ! error ) {
+        if( ! error && ! skipLookTimeCleanup ) {
             // add look time for cells in this DB to present
             // essentially resetting all look times to NOW
             
@@ -2076,9 +2077,20 @@ void initMap() {
         lookTimeDBEmpty = true;
         }
 
-    DB lookTimeDB_old;
 
-    int error = DB_open( &lookTimeDB_old, 
+    skipLookTimeCleanup = 
+        SettingsManager::getIntSetting( "skipLookTimeCleanup", 0 );
+
+
+    if( skipLookTimeCleanup ) {
+        AppLog::info( "skipLookTimeCleanup.ini flag set, "
+                      "not cleaning databases based on stale look times." );
+        }
+
+    if( ! skipLookTimeCleanup ) {
+        DB lookTimeDB_old;
+        
+        int error = DB_open( &lookTimeDB_old, 
                              lookTimeDBName, 
                              KISSDB_OPEN_MODE_RWCREAT,
                              80000,
@@ -2088,34 +2100,31 @@ void initMap() {
                                // "double" on the server platform uses
                              );
     
-    if( error ) {
-        AppLog::errorF( "Error %d opening look time KissDB", error );
-        return;
-        }
-    
-    lookTimeDBOpen = true;
-
-    
-
-    int staleSec = SettingsManager::getIntSetting( "mapCellForgottenSeconds", 
-                                                   0 );
-    
-    if( lookTimeDBExists && staleSec > 0 ) {
-        AppLog::info( "\nCleaning stale look times from map..." );
-
-
-        static DB lookTimeDB_temp;
-        
-        const char *lookTimeDBName_temp = "lookTime_temp.db";
-
-        File tempDBFile( NULL, lookTimeDBName_temp );
-        
-        if( tempDBFile.exists() ) {
-            tempDBFile.remove();
+        if( error ) {
+            AppLog::errorF( "Error %d opening look time KissDB", error );
+            return;
             }
+    
+
+        int staleSec = 
+            SettingsManager::getIntSetting( "mapCellForgottenSeconds", 0 );
+    
+        if( lookTimeDBExists && staleSec > 0 ) {
+            AppLog::info( "\nCleaning stale look times from map..." );
+            
+            
+            static DB lookTimeDB_temp;
+        
+            const char *lookTimeDBName_temp = "lookTime_temp.db";
+
+            File tempDBFile( NULL, lookTimeDBName_temp );
+        
+            if( tempDBFile.exists() ) {
+                tempDBFile.remove();
+                }
         
 
-        error = DB_open( &lookTimeDB_temp, 
+            error = DB_open( &lookTimeDB_temp, 
                              lookTimeDBName_temp, 
                              KISSDB_OPEN_MODE_RWCREAT,
                              80000,
@@ -2125,63 +2134,64 @@ void initMap() {
                              // "double" on the server platform uses
                              );
     
-        if( error ) {
-            AppLog::errorF( "Error %d opening look time temp KissDB", error );
-            return;
-            }
+            if( error ) {
+                AppLog::errorF( 
+                    "Error %d opening look time temp KissDB", error );
+                return;
+                }
         
-        DB_Iterator dbi;
+            DB_Iterator dbi;
         
         
-        DB_Iterator_init( &lookTimeDB_old, &dbi );
+            DB_Iterator_init( &lookTimeDB_old, &dbi );
         
     
-        timeSec_t curTime = MAP_TIMESEC;
+            timeSec_t curTime = MAP_TIMESEC;
         
-        unsigned char key[8];
-        unsigned char value[8];
+            unsigned char key[8];
+            unsigned char value[8];
 
-        int total = 0;
-        int stale = 0;
+            int total = 0;
+            int stale = 0;
 
-        while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
-            total++;
+            while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
+                total++;
 
-            timeSec_t t = valueToTime( value );
+                timeSec_t t = valueToTime( value );
             
-            if( curTime - t >= staleSec ) {
-                // stale cell
-                // ignore
-                stale++;
+                if( curTime - t >= staleSec ) {
+                    // stale cell
+                    // ignore
+                    stale++;
+                    }
+                else {
+                    // non-stale
+                    // insert it in temp
+                    DB_put_new( &lookTimeDB_temp, key, value );
+                    }
                 }
-            else {
-                // non-stale
-                // insert it in temp
-                DB_put_new( &lookTimeDB_temp, key, value );
-                }
-            }
         
-        AppLog::infoF( "Cleaned %d / %d stale look times", stale, total );
+            AppLog::infoF( "Cleaned %d / %d stale look times", stale, total );
 
-        printf( "\n" );
+            printf( "\n" );
 
-        if( total == 0 ) {
-            lookTimeDBEmpty = true;
+            if( total == 0 ) {
+                lookTimeDBEmpty = true;
+                }
+
+            DB_close( &lookTimeDB_temp );
+            DB_close( &lookTimeDB_old );
+
+            tempDBFile.copy( &lookTimeDBFile );
+            tempDBFile.remove();
             }
-
-        DB_close( &lookTimeDB_temp );
-        DB_close( &lookTimeDB_old );
-
-        tempDBFile.copy( &lookTimeDBFile );
-        tempDBFile.remove();
+        else {
+            DB_close( &lookTimeDB_old );
+            }
         }
-    else {
-        DB_close( &lookTimeDB_old );
-        }
-    
 
 
-    error = DB_open( &lookTimeDB, 
+    int error = DB_open( &lookTimeDB, 
                          lookTimeDBName, 
                          KISSDB_OPEN_MODE_RWCREAT,
                          80000,
@@ -2195,7 +2205,9 @@ void initMap() {
         AppLog::errorF( "Error %d opening look time KissDB", error );
         return;
         }
-
+    
+    lookTimeDBOpen = true;
+    
     
 
 

@@ -11,6 +11,7 @@ Server Fixes
   0.00079350 seconds, or a 1500x speedup.  Front page of family tree browser
   now loads quickly.
 
+--Support for skipping look-time based cleanup for profiling purposes.
 
 
 
