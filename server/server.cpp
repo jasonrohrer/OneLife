@@ -1062,6 +1062,7 @@ static int pathDeltaMax = 16;
 
 
 // if extraPos present in result, destroyed by caller
+// inMessage may be modified by this call
 ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     
     char nameBuffer[100];
@@ -1109,12 +1110,12 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     if( strcmp( nameBuffer, "MOVE" ) == 0) {
         m.type = MOVE;
 
+        // in place, so we don't need to deallocate them
         SimpleVector<char *> *tokens =
-            tokenizeString( inMessage );
+            tokenizeStringInPlace( inMessage );
         
         // require an odd number at least 5
         if( tokens->size() < 5 || tokens->size() % 2 != 1 ) {
-            tokens->deallocateStringElements();
             delete tokens;
             
             m.type = UNKNOWN;
@@ -1156,7 +1157,6 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
             m.extraPos[e].y += m.y;
             }
         
-        tokens->deallocateStringElements();
         delete tokens;
         }
     else if( strcmp( nameBuffer, "USE" ) == 0 ) {
