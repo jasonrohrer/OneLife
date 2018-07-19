@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 126    ???
+Version 126    2018-July-18
 
 --Trim whitespace from start and end of twin codes entered by user. 
   Hidden whitespace could cause a mismatch.
@@ -22,7 +22,7 @@ Version 126    ???
 
 --Fixed wayward KEEP_ALIVE message from client if player waits a while before
   pressing LOGIN button.  Fixed lots of other little connection glitches, and
-  made the connection phases more clearn (connecting vs waiting to be born vs
+  made the connection phases more clear (connecting vs waiting to be born vs
   loading map).
 
 --Custom server status shown on connection page if set.  No more forgetting
