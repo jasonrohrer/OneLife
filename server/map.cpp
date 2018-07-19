@@ -2605,7 +2605,7 @@ void freeMap() {
         
 
         
-        if( !skipUseDummyCleanup );
+        if( !skipUseDummyCleanup )
         while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
         
             int s = valueToInt( &( key[8] ) );
