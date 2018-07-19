@@ -19,7 +19,12 @@ Server Fixes
 --Profiler found that looking up container cells in map, when doing
   lookAtRegion operation, was a huge hotspot.  All we needed was a count of
   how many contained items are present.  We don't need a db lookup for that.
-  Now storing these in a hash table.
+  Now storing these in a hash table.  This results in a 91x speedup for the 
+  lookAtMapRegion call.
+
+--We can safely assume ID=0 tiles never decay, greatly improving performcance
+  of checkDecayObject, which is called a lot when people are moving around the
+  map.
 
 
 

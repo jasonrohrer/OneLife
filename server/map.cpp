@@ -3367,6 +3367,10 @@ timeSec_t *getContainedEtaDecay( int inX, int inY, int *outNumContained,
 
 
 int checkDecayObject( int inX, int inY, int inID ) {
+    if( inID == 0 ) {
+        return inID;
+        }
+    
     TransRecord *t = getPTrans( -1, inID );
 
     if( t == NULL ) {
