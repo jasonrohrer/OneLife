@@ -1,0 +1,14 @@
+diff fluxbb-1.5.10/edit.php www/forums/edit.php
+77a78,80
+>		else if( preg_match( "/http:/i", $subject ) ||
+>                  preg_match( "/[^\s]\.[^\s]/i", $subject ) )
+> 				   			   					  $errors[] = $lang_post['URLs subject'];
+
+
+Do same in post.php in similar spot.
+
+
+
+diff fluxbb-1.5.10/lang/English/post.php www/forums/lang/English/post.php
+13a14
+> 'URLs subject'		=>	'Subjects cannot contain URLs.',
