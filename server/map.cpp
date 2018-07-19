@@ -279,6 +279,22 @@ static HashTable<timeSec_t> liveDecayRecordPresentHashTable( 1024 );
 static HashTable<timeSec_t> liveDecayRecordLastLookTimeHashTable( 1024 );
 
 
+typedef struct ContRecord {
+    int maxSlots;
+    int maxSubSlots;
+    } ContRecord;
+
+static ContRecord defaultContRecord = { 0, 0 };
+
+
+// track max tracked contained for each x,y
+// this allows us to update last look times without getting contained count
+// from map
+// indexed as x, y, 0, 0
+static HashTable<ContRecord> 
+liveDecayRecordLastLookTimeMaxContainedHashTable( 1024, defaultContRecord );
+
+
 
 // track currently in-process movements so that we can be queried
 // about whether arrival has happened or not
@@ -3142,6 +3158,29 @@ static void trackETA( int inX, int inY, int inSlot, timeSec_t inETA,
                 liveDecayRecordLastLookTimeHashTable.insert( inX, inY, inSlot,
                                                              inSubCont,
                                                              MAP_TIMESEC );
+                if( inSlot > 0 || inSubCont > 0 ) {
+                    
+                    ContRecord *oldCount = 
+                        liveDecayRecordLastLookTimeMaxContainedHashTable.
+                        lookupPointer( inX, inY, 0, 0 );
+                    
+                    if( oldCount != NULL ) {
+                        // update if needed
+                        if( oldCount->maxSlots < inSlot ) {
+                            oldCount->maxSlots = inSlot;
+                            }
+                        if( oldCount->maxSubSlots < inSubCont ) {
+                            oldCount->maxSubSlots = inSubCont;
+                            }
+                        }
+                    else {
+                        // insert new
+                        ContRecord r = { inSlot, inSubCont };
+                        
+                        liveDecayRecordLastLookTimeMaxContainedHashTable.
+                            insert( inX, inY, 0, 0, r );
+                        }
+                    }
                 }
             }
         }
@@ -3263,12 +3302,10 @@ int *getContained( int inX, int inY, int *outNumContained, int inSubCont ) {
     timeSec_t currentTime = MAP_TIMESEC;
     
     for( int i=0; i<*outNumContained; i++ ) {
-        char found;
         timeSec_t *oldLookTime =
             liveDecayRecordLastLookTimeHashTable.lookupPointer( inX, inY,
                                                                 i + 1,
-                                                                inSubCont,
-                                                                &found );
+                                                                inSubCont );
         if( oldLookTime != NULL ) {
             // look at it now
             *oldLookTime = currentTime;
@@ -4153,51 +4190,42 @@ void lookAtRegion( int inXStart, int inYStart, int inXEnd, int inYEnd ) {
     for( int y=inYStart; y<=inYEnd; y++ ) {
         for( int x=inXStart; x<=inXEnd; x++ ) {
         
-            char found;
             timeSec_t *oldLookTime = 
                 liveDecayRecordLastLookTimeHashTable.lookupPointer( x, y, 
-                                                                    0, 0,
-                                                                    &found );
+                                                                    0, 0 );
     
             if( oldLookTime != NULL ) {
                 // we're tracking decay for this cell
                 *oldLookTime = currentTime;
                 }
 
-            int numContained;
+            ContRecord *contRec = 
+                liveDecayRecordLastLookTimeMaxContainedHashTable.
+                lookupPointer( x, y, 0, 0 );
             
-            int *contained = getContained( x, y, &numContained );
+            if( contRec != NULL ) {
 
-            for( int c=0; c<numContained; c++ ) {
+                for( int c=1; c<= contRec->maxSlots; c++ ) {
                 
-                char found;
-                oldLookTime =
-                    liveDecayRecordLastLookTimeHashTable.lookupPointer( 
-                        x, y, c + 1, 0, &found );
-                if( oldLookTime != NULL ) {
-                    // look at it now
-                    *oldLookTime = currentTime;
-                    }
-                
-                if( contained[c] < 0 ) {
-                    // sub contained
-                    int numSub = getNumContained( x, y, c + 1 );
-                    
-                    for( int s=0; s<numSub; s++ ) {
+                    oldLookTime =
+                        liveDecayRecordLastLookTimeHashTable.lookupPointer( 
+                            x, y, c, 0 );
+                    if( oldLookTime != NULL ) {
+                        // look at it now
+                        *oldLookTime = currentTime;
+                        }            
+
+                    for( int s=s; s<= contRec->maxSubSlots; s++ ) {
                         
                         oldLookTime =
                             liveDecayRecordLastLookTimeHashTable.lookupPointer( 
-                                x, y, s + 1, c+1, &found );
+                                x, y, c, s );
                         if( oldLookTime != NULL ) {
                             // look at it now
                             *oldLookTime = currentTime;
                             }
                         }
                     }
-                }
-            
-            if( contained != NULL ) {
-                delete [] contained;
                 }
             }
         }
@@ -4208,10 +4236,8 @@ void lookAtRegion( int inXStart, int inYStart, int inXEnd, int inYEnd ) {
 int getMapObject( int inX, int inY ) {
 
     // look at this map cell
-    char found;
     timeSec_t *oldLookTime = 
-        liveDecayRecordLastLookTimeHashTable.lookupPointer( inX, inY, 0, 0,
-                                                            &found );
+        liveDecayRecordLastLookTimeHashTable.lookupPointer( inX, inY, 0, 0 );
     
     timeSec_t curTime = MAP_TIMESEC;
 
@@ -5144,6 +5170,52 @@ int getNextDecayDelta() {
 
 
 
+static void cleanMaxContainedHashTable( int inX, int inY ) {
+    
+    ContRecord *oldCount = 
+        liveDecayRecordLastLookTimeMaxContainedHashTable.
+        lookupPointer( inX, inY, 0, 0 );
+                
+    if( oldCount != NULL ) {
+    
+        int maxFoundSlot = 0;
+        int maxFoundSubSlot = 0;
+        
+        for( int c=1; c<= oldCount->maxSlots; c++ ) {
+
+            for( int s=0; s<= oldCount->maxSubSlots; s++ ) {
+                timeSec_t *val =
+                    liveDecayRecordLastLookTimeHashTable.lookupPointer(
+                        inX, inY, c, s );
+                
+                if( val != NULL ) {
+                    maxFoundSlot = c;
+                    maxFoundSubSlot = s;
+                    }
+                }
+            }
+        
+
+        if( maxFoundSlot == 0 && maxFoundSubSlot == 0 ) {
+            liveDecayRecordLastLookTimeMaxContainedHashTable.
+                remove( inX, inY, 0, 0 );
+            }
+        else {
+            if( maxFoundSlot < oldCount->maxSlots ) {
+                oldCount->maxSlots = maxFoundSlot;
+                }
+            if( maxFoundSubSlot < oldCount->maxSubSlots ) {
+                oldCount->maxSubSlots = maxFoundSubSlot;
+                }            
+            }
+        
+        
+        }
+    }
+
+
+
+
 void stepMap( SimpleVector<MapChangeRecord> *inMapChanges, 
               SimpleVector<ChangePosition> *inChangePosList ) {
     
@@ -5182,6 +5254,7 @@ void stepMap( SimpleVector<MapChangeRecord> *inMapChanges,
                     // don't even apply this decay now
                     liveDecayRecordLastLookTimeHashTable.remove( 
                         r.x, r.y, r.slot, r.subCont );
+                    cleanMaxContainedHashTable( r.x, r.y );
                     continue;
                     }
                 // else keep lastlook time around in case
@@ -5219,6 +5292,8 @@ void stepMap( SimpleVector<MapChangeRecord> *inMapChanges,
             // forget last look time
             liveDecayRecordLastLookTimeHashTable.remove( 
                 r.x, r.y, r.slot, r.subCont );
+            
+            cleanMaxContainedHashTable( r.x, r.y );
             }
         }
     

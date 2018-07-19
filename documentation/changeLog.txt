@@ -16,6 +16,12 @@ Server Fixes
 --Support for skipping removed object cleanup and use dummy cleanup (to speed
   up profiling cycle).
 
+--Profiler found that looking up container cells in map, when doing
+  lookAtRegion operation, was a huge hotspot.  All we needed was a count of
+  how many contained items are present.  We don't need a db lookup for that.
+  Now storing these in a hash table.
+
+
 
 
 Version 126    2018-July-18
