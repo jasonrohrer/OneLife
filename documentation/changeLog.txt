@@ -26,6 +26,16 @@ Server Fixes
   of checkDecayObject, which is called a lot when people are moving around the
   map.
 
+--Profiler found that tokenizeString, which is used to parse client messages,
+  consumes a resonable amount of CPU.  Wrote optimzed version for 2x speedup.
+
+--Switched to a 7x faster in-place tokenizeString implementation for parsing
+  MOVE messages.
+
+--Profiler found sscanf hotspot in message parsing code.  Replaced with own
+  task-specific implementation for a 4x speedup. 
+
+
 
 
 
