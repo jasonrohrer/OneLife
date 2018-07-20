@@ -6449,7 +6449,7 @@ int main() {
                     else if( m.type == MOVE ) {
                         //Thread::staticSleep( 1000 );
 
-
+                        /*
                         printf( "  Processing move, "
                                 "we think player at old start pos %d,%d\n",
                                 nextPlayer->xs,
@@ -6461,7 +6461,8 @@ int main() {
                                     nextPlayer->pathToDest[p].y );
                             }
                         printf( "\n" );
-
+                        */
+                        
                         char interrupt = false;
                         char pathPrefixAdded = false;
                         
@@ -6503,12 +6504,12 @@ int main() {
                                 cPos.y = nextPlayer->ys;
                                 }
                             
-                            
+                            /*
                             printf( "   we think player in motion or "
                                     "done moving at %d,%d\n",
                                     cPos.x,
                                     cPos.y );
-       
+                            */
                             nextPlayer->xs = cPos.x;
                             nextPlayer->ys = cPos.y;
                             
@@ -6565,10 +6566,11 @@ int main() {
                                     theirPathIndex = 0;
                                     }
                                 
-
+                                /*
                                 printf( "They are on our path at index %d\n",
                                         theirPathIndex );
-                                
+                                */
+
                                 // okay, they think they are on last path
                                 // that we had for them
 
@@ -6619,9 +6621,11 @@ int main() {
                                 // they are, and we don't need to prefix
                                 // their path
 
+                                /*
                                 printf( "Prefixing their path "
                                         "with %d steps\n",
                                         unfilteredPath.size() );
+                                */
                                 }
                             }
                         
@@ -6635,7 +6639,7 @@ int main() {
                             unfilteredPath.push_back( m.extraPos[p] );
                             }
                         
-
+                        /*
                         printf( "Unfiltered path = " );
                         for( int p=0; p<unfilteredPath.size(); p++ ) {
                             printf( "(%d, %d) ",
@@ -6643,6 +6647,7 @@ int main() {
                                     unfilteredPath.getElementDirect(p).y );
                             }
                         printf( "\n" );
+                        */
 
                         // remove any duplicate spots due to doubling back
 
@@ -6652,7 +6657,7 @@ int main() {
                                        unfilteredPath.getElementDirect(p) ) ) {
                                 unfilteredPath.deleteElement( p );
                                 p--;
-                                printf( "FOUND duplicate path element\n" );
+                                //printf( "FOUND duplicate path element\n" );
                                 }
                             }
                             
@@ -6670,15 +6675,17 @@ int main() {
 
                             // send update to terminate move right now
                             playerIndicesToSendUpdatesAbout.push_back( i );
+                            /*
                             printf( "A move that takes player "
                                     "where they already are, "
                                     "ending move now\n" );
+                            */
                             }
                         else {
                             // an actual move away from current xs,ys
 
                             if( interrupt ) {
-                                printf( "Got valid move interrupt\n" );
+                                //printf( "Got valid move interrupt\n" );
                                 }
                                 
 
@@ -6709,10 +6716,11 @@ int main() {
                                     break;
                                     }
                                 }
-                            
+                            /*
                             printf( "Start index = %d (startFound = %d)\n", 
                                     startIndex, startFound );
-                            
+                            */
+
                             if( ! startFound &&
                                 ! isGridAdjacentDiag( 
                                     unfilteredPath.
@@ -6857,12 +6865,12 @@ int main() {
                            
                                 double secondsAlreadyDone = distAlreadyDone / 
                                     moveSpeed;
-                                
+                                /*
                                 printf( "Skipping %f seconds along new %f-"
                                         "second path\n",
                                         secondsAlreadyDone, 
                                         nextPlayer->moveTotalSeconds );
-                                
+                                */
                                 nextPlayer->moveStartTime = 
                                     Time::getCurrentTime() - 
                                     secondsAlreadyDone;
