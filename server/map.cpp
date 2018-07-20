@@ -1390,10 +1390,25 @@ static int computeDBCacheHash( int inKeyA, int inKeyB,
 
 
 
-static void initDBCache() {
+
+typedef struct DBTimeCacheRecord {
+        int x, y, slot, subCont;
+        timeSec_t timeVal;
+    } DBTimeCacheRecord;
+    
+static DBTimeCacheRecord dbTimeCache[ DB_CACHE_SIZE ];
+
+
+
+static void initDBCaches() {
     DBCacheRecord blankRecord = { 0, 0, 0, 0, -2 };
     for( int i=0; i<DB_CACHE_SIZE; i++ ) {
         dbCache[i] = blankRecord;
+        }
+    // 1 for empty (because 0 is a valid value)
+    DBTimeCacheRecord blankTimeRecord = { 0, 0, 0, 0, 1 };
+    for( int i=0; i<DB_CACHE_SIZE; i++ ) {
+        dbTimeCache[i] = blankTimeRecord;
         }
     }
 
@@ -1422,6 +1437,34 @@ static void dbPutCached( int inX, int inY, int inSlot, int inSubCont,
     DBCacheRecord r = { inX, inY, inSlot, inSubCont, inValue };
     
     dbCache[ computeDBCacheHash( inX, inY, inSlot, inSubCont ) ] = r;
+    }
+
+
+
+
+
+// returns 1 on miss
+static int dbTimeGetCached( int inX, int inY, int inSlot, int inSubCont ) {
+    DBTimeCacheRecord r =
+        dbTimeCache[ computeDBCacheHash( inX, inY, inSlot, inSubCont ) ];
+
+    if( r.x == inX && r.y == inY && 
+        r.slot == inSlot && r.subCont == inSubCont &&
+        r.timeVal != 1 ) {
+        return r.timeVal;
+        }
+    else {
+        return 1;
+        }
+    }
+
+
+
+static void dbTimePutCached( int inX, int inY, int inSlot, int inSubCont, 
+                         timeSec_t inValue ) {
+    DBTimeCacheRecord r = { inX, inY, inSlot, inSubCont, inValue };
+    
+    dbTimeCache[ computeDBCacheHash( inX, inY, inSlot, inSubCont ) ] = r;
     }
 
 
@@ -1946,7 +1989,7 @@ static void loadIntoMapFromFile( FILE *inFile,
 
 
 void initMap() {
-    initDBCache();
+    initDBCaches();
     initBiomeCache();
 
     mapCacheClear();
@@ -2861,6 +2904,14 @@ static int dbGet( int inX, int inY, int inSlot, int inSubCont = 0 ) {
 
 // returns 0 if not found
 static timeSec_t dbTimeGet( int inX, int inY, int inSlot, int inSubCont = 0 ) {
+
+    timeSec_t cachedVal = dbTimeGetCached( inX, inY, inSlot, inSubCont );
+    if( cachedVal != 1 ) {
+        
+        return cachedVal;
+        }
+
+    
     unsigned char key[16];
     unsigned char value[8];
 
@@ -2869,13 +2920,19 @@ static timeSec_t dbTimeGet( int inX, int inY, int inSlot, int inSubCont = 0 ) {
     
     int result = DB_get( &timeDB, key, value );
     
+    timeSec_t timeVal;
+    
     if( result == 0 ) {
         // found
-        return valueToTime( value );
+        timeVal = valueToTime( value );
         }
     else {
-        return 0;
+        timeVal = 0;
         }
+
+    dbTimePutCached( inX, inY, inSlot, inSubCont, timeVal );
+    
+    return timeVal;
     }
 
 
@@ -3027,6 +3084,8 @@ static void dbTimePut( int inX, int inY, int inSlot, timeSec_t inTime,
             
     
     DB_put( &timeDB, key, value );
+
+    dbTimePutCached( inX, inY, inSlot, inSubCont, inTime );
     }
 
 
