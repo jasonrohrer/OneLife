@@ -596,6 +596,10 @@ a full player update message for ALL players on entire server.
 
 Clients send moves in the following format:
 
+NOTE that this format is exact, with exactly one space character between
+parameters, and no leading spaces.
+
+
 KA x y#
 USE x y#
 BABY x y#

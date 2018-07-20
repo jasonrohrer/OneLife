@@ -1085,9 +1085,50 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     m.saidText = NULL;
     m.bugText = NULL;
     // don't require # terminator here
+    
+    
+    //int numRead = sscanf( inMessage, 
+    //                      "%99s %d %d", nameBuffer, &( m.x ), &( m.y ) );
+    
 
-    int numRead = sscanf( inMessage, 
-                          "%99s %d %d", nameBuffer, &( m.x ), &( m.y ) );
+    // profiler finds sscanf as a hotspot
+    // try a custom bit of code instead
+    
+    int numRead = 0;
+    
+    int parseLen = strlen( inMessage );
+    if( parseLen > 99 ) {
+        parseLen = 99;
+        }
+    
+    for( int i=0; i<parseLen; i++ ) {
+        if( inMessage[i] == ' ' ) {
+            switch( numRead ) {
+                case 0:
+                    if( i != 0 ) {
+                        memcpy( nameBuffer, inMessage, i );
+                        nameBuffer[i] = '\0';
+                        numRead++;
+                        // rewind back to read the space again
+                        // before the first number
+                        i--;
+                        }
+                    break;
+                case 1:
+                    m.x = atoi( &( inMessage[i] ) );
+                    numRead++;
+                    break;
+                case 2:
+                    m.y = atoi( &( inMessage[i] ) );
+                    numRead++;
+                    break;
+                }
+            if( numRead == 3 ) {
+                break;
+                }
+            }
+        }
+    
 
     
     if( numRead >= 2 &&
@@ -1140,9 +1181,14 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
             char *xToken = tokens->getElementDirect( 3 + e * 2 );
             char *yToken = tokens->getElementDirect( 3 + e * 2 + 1 );
             
+            // profiler found sscanf is a bottleneck here
+            // try atoi instead
+            //sscanf( xToken, "%d", &( m.extraPos[e].x ) );
+            //sscanf( yToken, "%d", &( m.extraPos[e].y ) );
+
+            m.extraPos[e].x = atoi( xToken );
+            m.extraPos[e].y = atoi( yToken );
             
-            sscanf( xToken, "%d", &( m.extraPos[e].x ) );
-            sscanf( yToken, "%d", &( m.extraPos[e].y ) );
             
             if( abs( m.extraPos[e].x ) > pathDeltaMax ||
                 abs( m.extraPos[e].y ) > pathDeltaMax ) {
