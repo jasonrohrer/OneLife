@@ -471,8 +471,6 @@ static void biomeDBPut( int inX, int inY, int inValue, int inSecondPlace,
     
     anyBiomesInDB = true;
     DB_put( &biomeDB, key, value );
-
-    dbLookTimePut( inX, inY, MAP_TIMESEC );
     }
     
 
@@ -2829,10 +2827,6 @@ static int dbGet( int inX, int inY, int inSlot, int inSubCont = 0 ) {
     int cachedVal = dbGetCached( inX, inY, inSlot, inSubCont );
     if( cachedVal != -2 ) {
         
-        if( cachedVal > 0 ) {
-            dbLookTimePut( inX, inY, MAP_TIMESEC );
-            }
-        
         return cachedVal;
         }
     
@@ -2858,10 +2852,6 @@ static int dbGet( int inX, int inY, int inSlot, int inSubCont = 0 ) {
         }
 
     dbPutCached( inX, inY, inSlot, inSubCont, returnVal );
-
-    if( returnVal > 0 ) {
-        dbLookTimePut( inX, inY, MAP_TIMESEC );
-        }
     
     return returnVal;
     }
@@ -2903,10 +2893,6 @@ static int dbFloorGet( int inX, int inY ) {
         // found
         int returnVal = valueToInt( value );
         
-        if( returnVal > 0 ) {
-            dbLookTimePut( inX, inY, MAP_TIMESEC );
-            }
-        
         return returnVal;
         }
     else {
@@ -2941,7 +2927,7 @@ timeSec_t dbLookTimeGet( int inX, int inY ) {
     unsigned char key[8];
     unsigned char value[8];
 
-    intPairToKey( inX, inY, key );
+    intPairToKey( inX/100, inY/100, key );
     
     int result = DB_get( &lookTimeDB, key, value );
     
@@ -3022,7 +3008,6 @@ static void dbPut( int inX, int inY, int inSlot, int inValue,
     DB_put( &db, key, value );
 
     dbPutCached( inX, inY, inSlot, inSubCont, inValue );
-    dbLookTimePut( inX, inY, MAP_TIMESEC );
     }
 
 
@@ -3079,7 +3064,6 @@ static void dbFloorPut( int inX, int inY, int inValue ) {
             
     
     DB_put( &floorDB, key, value );
-    dbLookTimePut( inX, inY, MAP_TIMESEC );
     }
 
 
@@ -3107,7 +3091,7 @@ void dbLookTimePut( int inX, int inY, timeSec_t inTime ) {
     unsigned char value[8];
     
 
-    intPairToKey( inX, inY, key );
+    intPairToKey( inX/100, inY/100, key );
     timeToValue( inTime, value );
             
     
@@ -4311,7 +4295,13 @@ unsigned char *getChunkMessage( int inStartX, int inStartY,
     int endY = inStartY + inHeight;
     int endX = inStartX + inWidth;
 
-    
+    timeSec_t curTime = MAP_TIMESEC;
+
+    // look at four corners of chunk whenever we fetch one
+    dbLookTimePut( inStartX, inStartY, curTime );
+    dbLookTimePut( inStartX, endY, curTime );
+    dbLookTimePut( endX, inStartY, curTime );
+    dbLookTimePut( endX, endY, curTime );
     
     for( int y=inStartY; y<endY; y++ ) {
         int chunkY = y - inStartY;

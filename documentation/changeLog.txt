@@ -35,6 +35,13 @@ Server Fixes
 --Profiler found sscanf hotspot in message parsing code.  Replaced with own
   task-specific implementation for a 4x speedup. 
 
+--Next profiler hotspot is dbLookTimePut, which is being called in every dbGet
+  call, even if dbGet result is cached in RAM.  We're constantly touching the
+  lookTime database.  But look times don't need to be so fine-grained.  +/- 1
+  hour precision is fine.  Changed lookTime db coordinates to be x/100,y/100
+  (one time for every chunk of 100x100 tiles), and changed to register new look
+  times only when map chunks are fetched (registering the four corners of the
+  chunk only).
 
 
 
