@@ -2833,57 +2833,7 @@ void handleForcedBabyDrop(
 
 
 
-char isMapSpotBlocking( int inX, int inY ) {
-    
-    int target = getMapObject( inX, inY );
 
-    if( target != 0 ) {
-        ObjectRecord *obj = getObject( target );
-    
-        if( obj->blocksWalking ) {
-            return true;
-            }
-        }
-    
-    // not directly blocked
-    // need to check for wide objects to left and right
-    int maxR = getMaxWideRadius();
-    
-    for( int dx = -maxR; dx <= maxR; dx++ ) {
-        
-        if( dx != 0 ) {
-            
-            int nX = inX + dx;
-        
-            int nID = getMapObject( nX, inY );
-            
-            if( nID != 0 ) {
-                ObjectRecord *nO = getObject( nID );
-                
-                if( nO->wide ) {
-                    
-                    int dist;
-                    int minDist;
-                    
-                    if( dx < 0 ) {
-                        dist = -dx;
-                        minDist = nO->rightBlockingRadius;
-                        }
-                    else {
-                        dist = dx;
-                        minDist = nO->leftBlockingRadius;
-                        }
-                    
-                    if( dist <= minDist ) {
-                        return true;
-                        }
-                    }
-                }
-            }
-        }
-    
-    return false;
-    }
 
 
 

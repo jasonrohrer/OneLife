@@ -45,6 +45,9 @@ Server Fixes
 
 --Next profiler hotspot:  RAM caching around time.db.
 
+--Next profiler hotspot:  isMapSpotBlocking, which is called for each spot on
+  each move path submitted.  RAM caching results, and clearing cache record
+  when map cell changes.
 
 
 

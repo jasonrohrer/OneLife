@@ -79,6 +79,8 @@ void setResponsiblePlayer( int inPlayerID );
 
 int getMapObject( int inX, int inY );
 
+char isMapSpotBlocking( int inX, int inY );
+
 
 // is the object returned by getMapObject still in motion with
 // destination inX, inY

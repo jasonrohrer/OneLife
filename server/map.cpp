@@ -578,7 +578,7 @@ static BiomeCacheRecord biomeCache[ BIOME_CACHE_SIZE ];
 #define CACHE_PRIME_C 528383237
 #define CACHE_PRIME_D 148497157
 
-static int computeBiomeCacheHash( int inKeyA, int inKeyB ) {
+static int computeXYCacheHash( int inKeyA, int inKeyB ) {
     
     int hashKey = ( inKeyA * CACHE_PRIME_A + 
                     inKeyB * CACHE_PRIME_B ) % BIOME_CACHE_SIZE;
@@ -605,7 +605,7 @@ static int biomeGetCached( int inX, int inY,
                            int *outSecondPlaceIndex,
                            double *outSecondPlaceGap ) {
     BiomeCacheRecord r =
-        biomeCache[ computeBiomeCacheHash( inX, inY ) ];
+        biomeCache[ computeXYCacheHash( inX, inY ) ];
 
     if( r.x == inX && r.y == inY ) {
         *outSecondPlaceIndex = r.secondPlace;
@@ -624,7 +624,7 @@ static void biomePutCached( int inX, int inY, int inBiome, int inSecondPlace,
                             double inSecondPlaceGap ) {
     BiomeCacheRecord r = { inX, inY, inBiome, inSecondPlace, inSecondPlaceGap };
     
-    biomeCache[ computeBiomeCacheHash( inX, inY ) ] = r;
+    biomeCache[ computeXYCacheHash( inX, inY ) ] = r;
     }
 
 
@@ -1370,10 +1370,6 @@ typedef struct DBCacheRecord {
 static DBCacheRecord dbCache[ DB_CACHE_SIZE ];
 
 
-#define CACHE_PRIME_A 776509273
-#define CACHE_PRIME_B 904124281
-#define CACHE_PRIME_C 528383237
-#define CACHE_PRIME_D 148497157
 
 static int computeDBCacheHash( int inKeyA, int inKeyB, 
                                int inKeyC, int inKeyD ) {
@@ -1400,6 +1396,18 @@ static DBTimeCacheRecord dbTimeCache[ DB_CACHE_SIZE ];
 
 
 
+typedef struct BlockingCacheRecord {
+        int x, y;
+        // -1 if not present
+        char blocking;
+    } BlockingCacheRecord;
+    
+static BlockingCacheRecord blockingCache[ DB_CACHE_SIZE ];
+
+
+
+
+
 static void initDBCaches() {
     DBCacheRecord blankRecord = { 0, 0, 0, 0, -2 };
     for( int i=0; i<DB_CACHE_SIZE; i++ ) {
@@ -1409,6 +1417,11 @@ static void initDBCaches() {
     DBTimeCacheRecord blankTimeRecord = { 0, 0, 0, 0, 1 };
     for( int i=0; i<DB_CACHE_SIZE; i++ ) {
         dbTimeCache[i] = blankTimeRecord;
+        }
+    // -1 for empty
+    BlockingCacheRecord blankBlockingRecord = { 0, 0, -1 };
+    for( int i=0; i<DB_CACHE_SIZE; i++ ) {
+        blockingCache[i] = blankBlockingRecord;
         }
     }
 
@@ -1465,6 +1478,43 @@ static void dbTimePutCached( int inX, int inY, int inSlot, int inSubCont,
     DBTimeCacheRecord r = { inX, inY, inSlot, inSubCont, inValue };
     
     dbTimeCache[ computeDBCacheHash( inX, inY, inSlot, inSubCont ) ] = r;
+    }
+
+
+
+
+
+// returns -1 on miss
+static char blockingGetCached( int inX, int inY ) {
+    BlockingCacheRecord r =
+        blockingCache[ computeXYCacheHash( inX, inY ) ];
+
+    if( r.x == inX && r.y == inY &&
+        r.blocking != -1 ) {
+        return r.blocking;
+        }
+    else {
+        return -1;
+        }
+    }
+
+
+
+static void blockingPutCached( int inX, int inY, char inBlocking ) {
+    BlockingCacheRecord r = { inX, inY, inBlocking };
+    
+    blockingCache[ computeXYCacheHash( inX, inY ) ] = r;
+    }
+
+
+static void blockingClearCached( int inX, int inY ) {
+    
+    BlockingCacheRecord *r =
+        &( blockingCache[ computeXYCacheHash( inX, inY ) ] );
+
+    if( r->x == inX && r->y == inY ) {
+        r->blocking = -1;
+        }
     }
 
 
@@ -3003,6 +3053,13 @@ timeSec_t dbLookTimeGet( int inX, int inY ) {
 static void dbPut( int inX, int inY, int inSlot, int inValue, 
                    int inSubCont = 0 ) {
     
+    if( inSlot == 0 && inSubCont == 0 ) {
+        // object has changed
+        // clear blocking cache
+        blockingClearCached( inX, inY );
+        }
+    
+
     // count all slot changes as changes, because we're storing
     // time in a separate database now (so we don't need to worry
     // about time changes being reported as map changes)
@@ -4529,6 +4586,75 @@ unsigned char *getChunkMessage( int inStartX, int inStartY,
 
 
 
+
+
+
+
+char isMapSpotBlocking( int inX, int inY ) {
+    
+    char cachedVal = blockingGetCached( inX, inY );
+    if( cachedVal != -1 ) {
+        
+        return cachedVal;
+        }
+
+
+    int target = getMapObject( inX, inY );
+
+    if( target != 0 ) {
+        ObjectRecord *obj = getObject( target );
+    
+        if( obj->blocksWalking ) {
+            // only cache direct hits
+            // wide objects that block are difficult to clear from cache
+            // when map cell changes
+            blockingPutCached( inX, inY, 1 );
+            return true;
+            }
+        }
+    
+    // not directly blocked
+    // need to check for wide objects to left and right
+    int maxR = getMaxWideRadius();
+    
+    for( int dx = -maxR; dx <= maxR; dx++ ) {
+        
+        if( dx != 0 ) {
+            
+            int nX = inX + dx;
+        
+            int nID = getMapObject( nX, inY );
+            
+            if( nID != 0 ) {
+                ObjectRecord *nO = getObject( nID );
+                
+                if( nO->wide ) {
+                    
+                    int dist;
+                    int minDist;
+                    
+                    if( dx < 0 ) {
+                        dist = -dx;
+                        minDist = nO->rightBlockingRadius;
+                        }
+                    else {
+                        dist = dx;
+                        minDist = nO->leftBlockingRadius;
+                        }
+                    
+                    if( dist <= minDist ) {
+                        // don't cache results from wide objects
+                        return true;
+                        }
+                    }
+                }
+            }
+        }
+    
+    // cache non-blocking results
+    blockingPutCached( inX, inY, 0 );
+    return false;
+    }
 
 
 
