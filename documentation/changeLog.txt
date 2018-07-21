@@ -53,6 +53,12 @@ Server Fixes
   all printf statements from MOVE message processing.  This is the most common
   message type, and processing it involved the most print statements.
 
+--Support for flushing look times on first server startup to avoid mismatch
+  errors between old look time format, which was indexed as x,y, and new
+  format, which is indexed as x/100, y/100.  On first startup after this
+  change, we treat all map cells as not stale.
+
+
 
 
 

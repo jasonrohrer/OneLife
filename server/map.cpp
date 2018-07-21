@@ -2178,6 +2178,18 @@ void initMap() {
     char lookTimeDBExists = false;
     
     File lookTimeDBFile( NULL, lookTimeDBName );
+
+
+
+    if( lookTimeDBFile.exists() &&
+        SettingsManager::getIntSetting( "flushLookTimes", 0 ) ) {
+        
+        AppLog::info( "flushLookTimes.ini set, deleting lookTime.db" );
+        
+        lookTimeDBFile.remove();
+        }
+
+
     
     lookTimeDBExists = lookTimeDBFile.exists();
 
