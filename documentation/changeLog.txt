@@ -58,7 +58,8 @@ Server Fixes
   format, which is indexed as x/100, y/100.  On first startup after this
   change, we treat all map cells as not stale.
 
-
+--Profiler hotspot:  getChunkMessage is checking for contained items even for
+  empty map cells or cells that have no container slots.
 
 
 

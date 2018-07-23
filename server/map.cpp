@@ -4458,8 +4458,12 @@ unsigned char *getChunkMessage( int inStartX, int inStartY,
             
 
             int numContained;
-            int *contained = getContained( x, y, &numContained );
+            int *contained = NULL;
 
+            if( chunk[cI] > 0 && getObject( chunk[cI] )->numSlots > 0 ) {
+                contained = getContained( x, y, &numContained );
+                }
+            
             if( contained != NULL ) {
                 containedStackSizes[cI] = numContained;
                 containedStacks[cI] = contained;
