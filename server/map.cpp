@@ -2488,6 +2488,12 @@ void initMap() {
             }
         }
     
+    printf( "Min (x,y) of biome in db = (%d,%d), "
+            "Max (x,y) of biome in db = (%d,%d)\n",
+            minBiomeXLoc, minBiomeYLoc,
+            maxBiomeXLoc, maxBiomeYLoc );
+    
+            
 
 
     error = DB_open_timeShrunk( &floorDB, 
