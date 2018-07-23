@@ -320,6 +320,10 @@ static SimpleVector<ChangePosition> mapChangePosSinceLastStep;
 
 
 static char anyBiomesInDB = false;
+static int maxBiomeXLoc = -2000000000;
+static int maxBiomeYLoc = -2000000000;
+static int minBiomeXLoc = 2000000000;
+static int minBiomeYLoc = 2000000000;
 
 
 
@@ -470,6 +474,21 @@ static void biomeDBPut( int inX, int inY, int inValue, int inSecondPlace,
             
     
     anyBiomesInDB = true;
+
+    if( inX > maxBiomeXLoc ) {
+        maxBiomeXLoc = inX;
+        }
+    if( inX < minBiomeXLoc ) {
+        minBiomeXLoc = inX;
+        }
+    if( inY > maxBiomeYLoc ) {
+        maxBiomeYLoc = inY;
+        }
+    if( inY < minBiomeYLoc ) {
+        minBiomeYLoc = inY;
+        }
+    
+
     DB_put( &biomeDB, key, value );
     }
     
@@ -718,9 +737,12 @@ static int getMapBiomeIndex( int inX, int inY,
     
     int dbBiome = -1;
     
-    if( anyBiomesInDB ) {
+    if( anyBiomesInDB && 
+        inX >= minBiomeXLoc && inX <= maxBiomeXLoc &&
+        inY >= minBiomeYLoc && inY <= maxBiomeYLoc ) {
         // don't bother with this call unless biome DB has
-        // something in it
+        // something in it, and this inX,inY is in the region where biomes
+        // exist in the database (tutorial loading, or test maps)
         dbBiome = biomeDBGet( inX, inY,
                               &secondPlaceBiome,
                               outSecondPlaceGap );
@@ -2442,12 +2464,28 @@ void initMap() {
     DB_Iterator biomeDBi;
     DB_Iterator_init( &biomeDB, &biomeDBi );
     
-    unsigned char *biomeKey[8];
-    unsigned char *biomeValue[12];
+    unsigned char biomeKey[8];
+    unsigned char biomeValue[12];
     
-    if( DB_Iterator_next( &biomeDBi, biomeKey, biomeValue ) ) {
-        // only check for the first one
+
+    while( DB_Iterator_next( &biomeDBi, biomeKey, biomeValue ) > 0 ) {
+        int x = valueToInt( biomeKey );
+        int y = valueToInt( &( biomeKey[4] ) );
+        
         anyBiomesInDB = true;
+        
+        if( x > maxBiomeXLoc ) {
+            maxBiomeXLoc = x;
+            }
+        if( x < minBiomeXLoc ) {
+            minBiomeXLoc = x;
+            }
+        if( y > maxBiomeYLoc ) {
+            maxBiomeYLoc = y;
+            }
+        if( y < minBiomeYLoc ) {
+            minBiomeYLoc = y;
+            }
         }
     
 

@@ -61,6 +61,11 @@ Server Fixes
 --Profiler hotspot:  getChunkMessage is checking for contained items even for
   empty map cells or cells that have no container slots.
 
+--Profiler hotspot:  the existence of tutorial maps in biome database causes
+  biome to be looked up elsewhere on map.  We can track max/min x,y locations
+  where biomes exist before looking in the biome database.
+
+
 
 
 Version 126    2018-July-18
