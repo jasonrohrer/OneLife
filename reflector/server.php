@@ -245,11 +245,11 @@ function tryServer( $inAddress, $inPort, $inReportOnly ) {
                     }
                 
                 if( $current / $max > $tooFullFraction ) {
-                    $tooFull = $true;
+                    $tooFull = true;
                     }
                 else if( $twin_code != "" &&
                          $current / $max > $tooFullForTwinsFraction ) {
-                    $tooFull = $true;
+                    $tooFull = true;
                     }
                 else if( $current / $max >= $startSpreadingFraction ) {
                     $spreading = true;
