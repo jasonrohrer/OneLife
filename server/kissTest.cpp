@@ -11,7 +11,7 @@
 
 
 
-/*
+/**/
 #define DB KISSDB
 #define DB_open KISSDB_open
 #define DB_close KISSDB_close
@@ -22,9 +22,10 @@
 #define DB_Iterator  KISSDB_Iterator
 #define DB_Iterator_init  KISSDB_Iterator_init
 #define DB_Iterator_next  KISSDB_Iterator_next
-*/
-
+#define DB_maxStack (int)( db.num_hash_tables )
 /**/
+
+/*
 #define DB STACKDB
 #define DB_open STACKDB_open
 #define DB_close STACKDB_close
@@ -35,7 +36,8 @@
 #define DB_Iterator  STACKDB_Iterator
 #define DB_Iterator_init  STACKDB_Iterator_init
 #define DB_Iterator_next  STACKDB_Iterator_next
-/**/
+#define DB_maxStack db.maxStackDepth
+*/
 
 CustomRandomSource randSource( 0 );
 
@@ -271,6 +273,8 @@ int main() {
             Time::getCurrentTime() - startTime );
 
 
+    printf( "Max bin depth = %d\n", DB_maxStack );
+    
     DB_close( &db );
 
     return 0;

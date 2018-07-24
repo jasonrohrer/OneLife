@@ -39,6 +39,8 @@ int STACKDB_open(
     unsigned int inKeySize,
     unsigned int inValueSize ) {
 
+    inDB->maxStackDepth = 0;
+    
     inDB->hashBinBuffer = NULL;
     
     inDB->file = fopen( inPath, "r+b" );
@@ -429,6 +431,9 @@ static int findValue( STACKDB *inDB, const void *inKey,
             }
         }
 
+    if( stackPos > inDB->maxStackDepth ) {
+        inDB->maxStackDepth = stackPos;
+        }
     
 
     int numWritten;
