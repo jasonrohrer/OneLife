@@ -10,8 +10,20 @@
 #include "minorGems/util/random/CustomRandomSource.h"
 
 
+#define TABLE_SIZE 80000
 
-/**/
+//#define INSERT_SIZE 15000000
+//#define INSERT_SIZE 2000000
+#define INSERT_SIZE 20000
+
+#define FLUSH_BETWEEN_OPS
+
+
+//#define USE_KISSDB
+
+
+#ifdef USE_KISSDB
+
 #define DB KISSDB
 #define DB_open KISSDB_open
 #define DB_close KISSDB_close
@@ -23,9 +35,10 @@
 #define DB_Iterator_init  KISSDB_Iterator_init
 #define DB_Iterator_next  KISSDB_Iterator_next
 #define DB_maxStack (int)( db.num_hash_tables )
-/**/
 
-/*
+
+#else
+
 #define DB STACKDB
 #define DB_open STACKDB_open
 #define DB_close STACKDB_close
@@ -37,7 +50,19 @@
 #define DB_Iterator_init  STACKDB_Iterator_init
 #define DB_Iterator_next  STACKDB_Iterator_next
 #define DB_maxStack db.maxStackDepth
-*/
+
+
+#endif
+
+
+
+void maybeFlush() {
+    #ifdef FLUSH_BETWEEN_OPS
+    printf( "Flushing system disk caches.\n" );
+    system( "sudo ../gameSource/flushDiskCaches.sh" );
+    #endif
+    }
+
 
 CustomRandomSource randSource( 0 );
 
@@ -51,6 +76,20 @@ void intPairToKey( int inX, int inY, unsigned char *outKey ) {
         outKey[i+4] = ( inY >> offset ) & 0xFF;
         }    
     }
+
+
+// four ints to a 16-byte key
+void intQuadToKey( int inX, int inY, int inSlot, int inB, 
+                   unsigned char *outKey ) {
+    for( int i=0; i<4; i++ ) {
+        int offset = i * 8;
+        outKey[i] = ( inX >> offset ) & 0xFF;
+        outKey[i+4] = ( inY >> offset ) & 0xFF;
+        outKey[i+8] = ( inSlot >> offset ) & 0xFF;
+        outKey[i+12] = ( inB >> offset ) & 0xFF;
+        }    
+    }
+
 
 
 int lastMallocCheck = 0;
@@ -76,13 +115,13 @@ int main() {
     
     DB db;
 
-    int tableSize = 80000;
+    int tableSize = TABLE_SIZE;
     
     int error = DB_open( &db, 
                              "test.db", 
                              KISSDB_OPEN_MODE_RWCREAT,
                              tableSize,
-                             8, // two ints,  x_center, y_center
+                             16, // four ints,  x_center, y_center, s, b
                              4 // one int
                              );
 
@@ -99,30 +138,39 @@ int main() {
 
     startTime = Time::getCurrentTime();
 
-    int num = 1414;
+    // quad-root
+    int num = (int)ceil( pow( INSERT_SIZE, 0.25 ) );
     
-    unsigned char key[8];
+    unsigned char key[16];
     unsigned char value[4];
     
     int insertCount = 0;
     for( int x=0; x<num; x++ ) {
         for( int y=0; y<num; y++ ) {
+            for( int s=0; s<num; s++ ) {
+                for( int b=0; b<num; b++ ) {
             
-            insertCount++;
+                    insertCount++;
             
-            intToValue( x + y, value );
-            intPairToKey( x, y, key );
+                    intToValue( x + y + s + b, value );
+                    intQuadToKey( x, y, s, b, key );
+                    
+                    //printf( "Inserting %d,%d\n", x, y );
             
-            //printf( "Inserting %d,%d\n", x, y );
-            
-            DB_put_new( &db, key, value );
+                    DB_put_new( &db, key, value );
+                    }
+                }
             }
         }
+    
     printf( "Inserted %d\n", insertCount );
 
     printf( "Inserts used %d bytes, took %f sec\n", getMallocDelta(),
             Time::getCurrentTime() - startTime );
 
+
+    maybeFlush();
+    
 
     startTime = Time::getCurrentTime();
 
@@ -139,7 +187,10 @@ int main() {
         for( int i=0; i<lookupCount; i++ ) {
             int x = runSource.getRandomBoundedInt( 0, num-1 );
             int y = runSource.getRandomBoundedInt( 0, num-1 );
-            intPairToKey( x, y, key );
+            int s = runSource.getRandomBoundedInt( 0, num-1 );
+            int b = runSource.getRandomBoundedInt( 0, num-1 );
+            intQuadToKey( x, y, s, b, key );
+            
             int result = DB_get( &db, key, value );
             numLooks ++;
             if( result == 0 ) {
@@ -159,7 +210,8 @@ int main() {
 
     printf( "Checksum = %u\n", checksum );
 
-
+    
+    maybeFlush();
 
 
 
@@ -170,25 +222,29 @@ int main() {
     numHits = 0;
     checksum = 0;
     
-    int endNum = 50;
+    int endNum = 7;
 
     for( int r=0; r<numRuns; r++ ) {
         for( int x=num-endNum; x<num; x++ ) {
             for( int y=num-endNum; y<num; y++ ) {
-                intPairToKey( x, y, key );
-                int result = DB_get( &db, key, value );
-                numLooks ++;
-                if( result == 0 ) {
-                    int v = valueToInt( value );
-                    checksum += v;
-                    numHits++;
+                for( int s=num-endNum; s<num; s++ ) {
+                    for( int b=num-endNum; b<num; b++ ) {
+                        intQuadToKey( x, y, s, b, key );
+                        int result = DB_get( &db, key, value );
+                        numLooks ++;
+                        if( result == 0 ) {
+                            int v = valueToInt( value );
+                            checksum += v;
+                            numHits++;
+                            }
+                        }
                     }
                 }
             }
         }
     
     printf( "Last-inserted lookup for %d batchs of %d (%d/%d hits)\n", 
-            numRuns, endNum * endNum, numHits, numLooks );
+            numRuns, endNum * endNum * endNum * endNum, numHits, numLooks );
 
     printf( "Last-inserted lookup used %d bytes, took %f sec\n", 
             getMallocDelta(),
@@ -196,6 +252,8 @@ int main() {
 
     printf( "Checksum = %u\n", checksum );
 
+
+    maybeFlush();
 
     
     startTime = Time::getCurrentTime();
@@ -209,7 +267,9 @@ int main() {
             // these don't exist
             int x = runSource.getRandomBoundedInt( num + 10, num + num );
             int y = runSource.getRandomBoundedInt( 0, num-1 );
-            intPairToKey( x, y, key );
+            int s = runSource.getRandomBoundedInt( 0, num-1 );
+            int b = runSource.getRandomBoundedInt( 0, num-1 );
+            intQuadToKey( x, y, s, b, key );
             int result = DB_get( &db, key, value );
             numLooks ++;
             if( result == 0 ) {
@@ -219,14 +279,52 @@ int main() {
         }
     
 
-    printf( "Random lookup for non-existing %d batchs of %d (%d/%d hits)\n", 
+    printf( "Random lookup for non-existing %d repeating batchs of %d (%d/%d hits)\n", 
             numRuns, lookupCount, numHits, numLooks );
 
     printf( "Random look/miss used %d bytes, took %f sec\n", getMallocDelta(),
             Time::getCurrentTime() - startTime );
     
+    maybeFlush();
     
 
+
+
+    startTime = Time::getCurrentTime();
+    numLooks = 0;
+    numHits = 0;
+
+    CustomRandomSource runSource( 0 );
+    
+    for( int r=0; r<numRuns; r++ ) {
+        for( int i=0; i<lookupCount; i++ ) {
+            // these don't exist
+            int x = runSource.getRandomBoundedInt( num + 10, num + num );
+            int y = runSource.getRandomBoundedInt( 0, num-1 );
+            int s = runSource.getRandomBoundedInt( 0, num-1 );
+            int b = runSource.getRandomBoundedInt( 0, num-1 );
+            intQuadToKey( x, y, s, b, key );
+            int result = DB_get( &db, key, value );
+            numLooks ++;
+            if( result == 0 ) {
+                numHits++;
+                }
+            }
+        }
+    
+
+    printf( "Random lookup for non-existing %d non-repeating values (%d/%d hits)\n", 
+            numRuns * lookupCount, numHits, numLooks );
+
+    printf( "Random look/miss used %d bytes, took %f sec\n", getMallocDelta(),
+            Time::getCurrentTime() - startTime );
+    
+    maybeFlush();
+    
+
+
+    
+    
     startTime = Time::getCurrentTime();
 
     for( int r=0; r<numRuns; r++ ) {
@@ -236,8 +334,10 @@ int main() {
             // these don't exist
             int x = runSource.getRandomBoundedInt( num + 10, num + num );
             int y = runSource.getRandomBoundedInt( 0, num-1 );
-            intPairToKey( x, y, key );
-            intToValue( x + y, value );
+            int s = runSource.getRandomBoundedInt( 0, num-1 );
+            int b = runSource.getRandomBoundedInt( 0, num-1 );
+            intQuadToKey( x, y, s, b, key );
+            intToValue( x + y + s + b, value );
             DB_put( &db, key, value );
             }
         }
@@ -250,6 +350,7 @@ int main() {
             Time::getCurrentTime() - startTime );
     
 
+    maybeFlush();
 
 
     
