@@ -4,8 +4,8 @@ include( "forums/config.php" );
 
 
 // number id of the news forum to pull from
-$forumID = 4;
-
+//$newsForumID = 4;
+global $newsForumID;
 
 
 
@@ -54,7 +54,7 @@ $numToGet = $numNewsPerPage + 1;
 
 
 $query = "select id, num_replies, first_post_id, subject from topics ".
-    "where forum_id=$forumID $postSQL order by first_post_id desc ".
+    "where forum_id=$newsForumID $postSQL order by first_post_id desc ".
     "limit $numToSkip, $numToGet;";
 
 $result = mysql_query( $query );
@@ -354,12 +354,12 @@ function sb_rcb_blog2html( $inData ){
 
         
         // [img][/img], [img=][/img], [clear]
-        '<center><img border=0 src="$1" alt="$1" /></center>',
-        '<img border=0 align="left" src="$1" alt="$1" />',
-        '<img border=0 align="right" src="$1" alt="$1" />',
-        '<img border=0 src="$1" alt="$2" title="$2" />',
-        '<img border=0 align="left" src="$1" alt="$2" title="$2" />',
-        '<img border=0 align="right" src="$1" alt="$2" title="$2" />',
+        '<center><img style="max-width: 98%;" border=0 src="$1" alt="$1" /></center>',
+        '<img style="max-width: 98%;" border=0 align="left" src="$1" alt="$1" />',
+        '<img style="max-width: 98%;" border=0 align="right" src="$1" alt="$1" />',
+        '<img style="max-width: 98%;" border=0 src="$1" alt="$2" title="$2" />',
+        '<img style="max-width: 98%;" border=0 align="left" src="$1" alt="$2" title="$2" />',
+        '<img style="max-width: 98%;" border=0 align="right" src="$1" alt="$2" title="$2" />',
         '<div style="clear:both"></div>',
 			
         // [hr], \n
