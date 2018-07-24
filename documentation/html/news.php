@@ -354,12 +354,12 @@ function sb_rcb_blog2html( $inData ){
 
         
         // [img][/img], [img=][/img], [clear]
-        '<center><img style="max-width: 98%;" border=0 src="$1" alt="$1" /></center>',
-        '<img style="max-width: 98%;" border=0 align="left" src="$1" alt="$1" />',
-        '<img style="max-width: 98%;" border=0 align="right" src="$1" alt="$1" />',
-        '<img style="max-width: 98%;" border=0 src="$1" alt="$2" title="$2" />',
-        '<img style="max-width: 98%;" border=0 align="left" src="$1" alt="$2" title="$2" />',
-        '<img style="max-width: 98%;" border=0 align="right" src="$1" alt="$2" title="$2" />',
+        '<center><img style="max-width: 80%; max-height: 640px;" border=0 src="$1" alt="$1" /></center>',
+        '<img style="max-width: 80%; max-height: 640px;" border=0 align="left" src="$1" alt="$1" />',
+        '<img style="max-width: 80%; max-height: 640px;" border=0 align="right" src="$1" alt="$1" />',
+        '<img style="max-width: 80%; max-height: 640px;" border=0 src="$1" alt="$2" title="$2" />',
+        '<img style="max-width: 80%; max-height: 640px;" border=0 align="left" src="$1" alt="$2" title="$2" />',
+        '<img style="max-width: 80%; max-height: 640px;" border=0 align="right" src="$1" alt="$2" title="$2" />',
         '<div style="clear:both"></div>',
 			
         // [hr], \n
