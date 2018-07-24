@@ -6,6 +6,7 @@
 $newsSummaryOnly = 0;
 $numNewsPerPage = 5;
 $newsForumID = 8;
+$newsLinkPage = "fanArtPage.php";
 
 include( "news.php" ); 
 ?>
