@@ -1777,6 +1777,7 @@ int cleanMap() {
     SimpleVector<int> xContToCheck;
     SimpleVector<int> yContToCheck;
     
+    int totalDBRecordCount = 0;
     
     int totalSetCount = 0;
     int numClearedCount = 0;
@@ -1784,6 +1785,7 @@ int cleanMap() {
     int numContainedCleared = 0;
     
     while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
+        totalDBRecordCount++;
         
         int s = valueToInt( &( key[8] ) );
         int b = valueToInt( &( key[12] ) );
@@ -1960,7 +1962,8 @@ int cleanMap() {
     AppLog::infoF( 
         "...%d contained objects present, and %d needed to be cleared.",
         totalNumContained, numContainedCleared );
-
+    AppLog::infoF( "...%d database records total.", totalDBRecordCount );
+    
     printf( "\n" );
     return totalSetCount;
     }
