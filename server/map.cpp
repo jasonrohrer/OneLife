@@ -33,6 +33,7 @@
 #define DB_Iterator  KISSDB_Iterator
 #define DB_Iterator_init  KISSDB_Iterator_init
 #define DB_Iterator_next  KISSDB_Iterator_next
+#define DB_maxStack (int)( db.num_hash_tables )
 */
 
 /**/
@@ -46,6 +47,7 @@
 #define DB_Iterator  STACKDB_Iterator
 #define DB_Iterator_init  STACKDB_Iterator_init
 #define DB_Iterator_next  STACKDB_Iterator_next
+#define DB_maxStack db.maxStackDepth
 /**/
 
 
@@ -1962,7 +1964,8 @@ int cleanMap() {
     AppLog::infoF( 
         "...%d contained objects present, and %d needed to be cleared.",
         totalNumContained, numContainedCleared );
-    AppLog::infoF( "...%d database records total.", totalDBRecordCount );
+    AppLog::infoF( "...%d database records total (%d max hash bin depth).", 
+                   totalDBRecordCount, DB_maxStack );
     
     printf( "\n" );
     return totalSetCount;

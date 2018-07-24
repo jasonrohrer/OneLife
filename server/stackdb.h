@@ -97,6 +97,7 @@ typedef struct {
         STACKDB *db;
         unsigned int hashBin;
         uint64_t nextRecordLoc;
+        int stackDepth;
 } STACKDB_Iterator;
 
 /**
