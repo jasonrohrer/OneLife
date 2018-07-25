@@ -2,6 +2,7 @@
 
 #include "kissdb.h"
 #include "stackdb.h"
+#include "lineardb.h"
 #include "dbCommon.h"
 #include "minorGems/system/Time.h"
 
@@ -10,16 +11,19 @@
 #include "minorGems/util/random/CustomRandomSource.h"
 
 
-#define TABLE_SIZE 80000
+#define TABLE_SIZE 800000
 
 //#define INSERT_SIZE 15000000
 //#define INSERT_SIZE 2000000
-#define INSERT_SIZE 20000
+#define INSERT_SIZE 200000
 
 #define FLUSH_BETWEEN_OPS
 
 
 //#define USE_KISSDB
+//#define USE_STACKDB
+#define USE_LINEARDB
+
 
 
 #ifdef USE_KISSDB
@@ -36,8 +40,10 @@
 #define DB_Iterator_next  KISSDB_Iterator_next
 #define DB_maxStack (int)( db.num_hash_tables )
 
+#endif
 
-#else
+
+#ifdef USE_STACKDB
 
 #define DB STACKDB
 #define DB_open STACKDB_open
@@ -51,6 +57,23 @@
 #define DB_Iterator_next  STACKDB_Iterator_next
 #define DB_maxStack db.maxStackDepth
 
+#endif
+
+
+
+#ifdef USE_LINEARDB
+
+#define DB LINEARDB
+#define DB_open LINEARDB_open
+#define DB_close LINEARDB_close
+#define DB_get LINEARDB_get
+#define DB_put LINEARDB_put
+// linear db has no put_new
+#define DB_put_new LINEARDB_put
+#define DB_Iterator  LINEARDB_Iterator
+#define DB_Iterator_init  LINEARDB_Iterator_init
+#define DB_Iterator_next  LINEARDB_Iterator_next
+#define DB_maxStack db.maxProbeDepth
 
 #endif
 
@@ -144,6 +167,39 @@ int main() {
     unsigned char key[16];
     unsigned char value[4];
     
+
+    // sanity check:
+    int testVal = 3248934;
+    intToValue( testVal, value );
+    int testX = 349;
+    int testY = 4480;
+    
+    intQuadToKey( testX, testY, 0, 0, key );
+
+    DB_put_new( &db, key, value );
+
+
+    int result = DB_get( &db, key, value );
+    if( result == 0 ) {
+        int v = valueToInt( value );
+        if( v != testVal ) {
+            printf( "Sanity check failed.  Put %d at (%d,%d), got back %d\n",
+                    testVal, testX, testY, v );
+            return 1;
+            }
+        else {
+            printf( "Sanity check passed\n" );
+            }
+        }
+    else {
+        printf( "Sanity check failed.  Put %d at (%d,%d), result not found\n",
+                testVal, testX, testY );
+        return 1;
+        }
+    
+    
+
+
     int insertCount = 0;
     for( int x=0; x<num; x++ ) {
         for( int y=0; y<num; y++ ) {

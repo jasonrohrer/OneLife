@@ -14,12 +14,22 @@
 #include "murmurhash2_64.cpp"
 
 
+// djb2 hash function
+static uint64_t djb2( const void *inB, unsigned int inLen ) {
+    uint64_t hash = 5381;
+    for( unsigned int i=0; i<inLen; i++ ) {
+        hash = ((hash << 5) + hash) + (uint64_t)(((const uint8_t *)inB)[i]);
+        }
+    return hash;
+    }
+
 // function used here must have the following signature:
 // static uint64_t LINEARDB_hash( const void *inB, unsigned int inLen );
 #define LINEARDB_hash(inB, inLen) MurmurHash64( inB, inLen, 0xb9115a39 )
+//#define LINEARDB_hash(inB, inLen) djb2( inB, inLen )
 
 
-const char *magicString = "Ldb";
+static const char *magicString = "Ldb";
 
 // Ldb magic characters plus
 // three 32-bit ints
@@ -38,6 +48,7 @@ int LINEARDB_open(
     unsigned int inValueSize ) {
     
     inDB->recordBuffer = NULL;
+    inDB->maxProbeDepth = 0;
     
 
     inDB->file = fopen( inPath, "r+b" );
@@ -291,7 +302,9 @@ inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
 //              return the location where the value for inKey should go
 uint64_t findValueSpot( LINEARDB *inDB, const void *inKey, 
                         char inInsert = false ) {
-
+    
+    int probeDepth = 0;
+    
     // hash to find first possible bin for inKey
     uint64_t binNumber = 
         LINEARDB_hash( inKey, inDB->keySize ) % 
@@ -330,7 +343,12 @@ uint64_t findValueSpot( LINEARDB *inDB, const void *inKey,
             else {            
                 // go on to next bin
                 binNumber++;
+                probeDepth ++;
                 
+                if( probeDepth > inDB->maxProbeDepth ) {
+                    inDB->maxProbeDepth = probeDepth;
+                    }
+
                 // wrap around
                 if( binNumber >= inDB->hashTableSize ) {
                     binNumber -= inDB->hashTableSize;
@@ -376,7 +394,7 @@ int LINEARDB_get( LINEARDB *inDB, const void *inKey, void *outValue ) {
 
         int numRead = fread( outValue, inDB->valueSize, 1, inDB->file );
         
-        if( numRead != inDB->valueSize ) {
+        if( numRead != 1 ) {
             return -1;
             }
         return 0;

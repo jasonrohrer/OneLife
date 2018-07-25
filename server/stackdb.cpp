@@ -23,7 +23,7 @@ static uint64_t STACKDB_hash( const void *inB, unsigned int inLen ) {
 
 
 
-const char *magicString = "Sdb";
+static const char *magicString = "Sdb";
 
 // Sdb magic characters plus
 // three 32-bit ints

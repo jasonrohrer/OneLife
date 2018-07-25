@@ -12,6 +12,7 @@ typedef struct {
         uint64_t tableSizeBytes;
         unsigned int recordSizeBytes;
         uint8_t *recordBuffer;
+        int maxProbeDepth;
     } LINEARDB;
 
     
