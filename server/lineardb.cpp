@@ -16,7 +16,7 @@
 
 // function used here must have the following signature:
 // static uint64_t LINEARDB_hash( const void *inB, unsigned int inLen );
-#define LINEARDB_hash MurmurHash64
+#define LINEARDB_hash(inB, inLen) MurmurHash64( inB, inLen, 0xb9115a39 )
 
 
 const char *magicString = "Ldb";
@@ -291,6 +291,76 @@ inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
 //              return the location where the value for inKey should go
 uint64_t findValueSpot( LINEARDB *inDB, const void *inKey, 
                         char inInsert = false ) {
+
+    // hash to find first possible bin for inKey
+    uint64_t binNumber = 
+        LINEARDB_hash( inKey, inDB->keySize ) % 
+        (uint64_t)( inDB->hashTableSize );
+
+    
+    // linear prob after that
+    while( true ) {
+
+        uint64_t binLoc = 
+            binNumber * inDB->recordSizeBytes + LINEARDB_HEADER_SIZE;
+    
+        if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
+            return 0;
+            }
+        
+        char present;
+        
+        int numRead = fread( &present, 1, 1, inDB->file );
+        if( numRead != 1 ) {
+            return 0;
+            }
+        
+        if( present ) {
+            int numRead = fread( inDB->recordBuffer, 
+                                 inDB->keySize, 1, inDB->file );
+            
+            if( numRead != 1 ) {
+                return 0;
+                }
+            
+            if( keyComp( inDB->keySize, inKey, inDB->recordBuffer ) ) {
+                // key match!
+                return binLoc + 1 + inDB->keySize;
+                }
+            else {            
+                // go on to next bin
+                binNumber++;
+                
+                // wrap around
+                if( binNumber >= inDB->hashTableSize ) {
+                    binNumber -= inDB->hashTableSize;
+                    }
+                }
+            }
+        else if( inInsert ) {
+            // empty bin, insert mode
+            
+            if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
+                return 0;
+                }
+            inDB->recordBuffer[0] = 1;
+            
+            memcpy( &( inDB->recordBuffer[1] ), inKey, inDB->keySize );
+            
+            // write present flag and key
+            int numWritten = fwrite( inDB->recordBuffer, 1 + inDB->keySize,
+                                     1, inDB->file );
+            
+            if( numWritten != 1 ) {
+                return 0;
+                }
+            return binLoc + 1 + inDB->keySize;
+            }
+        else {
+            // empty bin hit, not insert mode
+            return 0;
+            }
+        }
     
     }
 
