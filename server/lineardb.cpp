@@ -365,6 +365,10 @@ uint64_t findValueSpot( LINEARDB *inDB, const void *inKey,
             
             memcpy( &( inDB->recordBuffer[1] ), inKey, inDB->keySize );
             
+            // need to seek at least once after fread before doing fwrite
+            // at this pos  (C99 spec)
+            fseeko( inDB->f, 0, SEEK_CUR );            
+
             // write present flag and key
             int numWritten = fwrite( inDB->recordBuffer, 1 + inDB->keySize,
                                      1, inDB->file );
@@ -411,7 +415,11 @@ int LINEARDB_put( LINEARDB *inDB, const void *inKey, const void *inValue ) {
         if( fseeko( inDB->file, spot, SEEK_SET ) ) {
             return -1;
             }
-
+        
+        // need to seek at least once after fread before doing fwrite
+        // at this pos  (C99 spec)
+        fseeko( inDB->f, 0, SEEK_CUR );
+            
         int numWritten = fwrite( inValue, inDB->valueSize, 1, inDB->file );
         
         if( numWritten != inDB->valueSize ) {
@@ -435,34 +443,38 @@ void LINEARDB_Iterator_init( LINEARDB *inDB, LINEARDB_Iterator *inDBi ) {
 int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi, 
                             void *outKey, void *outValue ) {
     LINEARDB *db = inDBi->db;
-    
-    if( inDBi->nextRecordLoc > db->tableSizeBytes + LINEARDB_HEADER_SIZE ) {
-        return 0;
-        }
-    
-    if( fseeko( db->file, inDBi->nextRecordLoc, SEEK_SET ) ) {
-        return -1;
-        }
 
-    int numRead = fread( db->recordBuffer, 
-                         db->recordSizeBytes, 1,
-                         db->file );
-    if( numRead != 1 ) {
-        return -1;
-        }
     
-    inDBi->nextRecordLoc += db->recordSizeBytes;
+    while( true ) {        
 
-    if( db->recordBuffer[0] ) {
-        // present
-        memcpy( outKey, 
-                &( db->recordBuffer[1] ), 
-                db->keySize );
+        if( inDBi->nextRecordLoc > db->tableSizeBytes + LINEARDB_HEADER_SIZE ) {
+            return 0;
+            }
         
-        memcpy( outValue, 
-                &( db->recordBuffer[1 + db->keySize] ), 
-                db->valueSize );
-        return 1;
+        if( fseeko( db->file, inDBi->nextRecordLoc, SEEK_SET ) ) {
+            return -1;
+            }
+
+        int numRead = fread( db->recordBuffer, 
+                             db->recordSizeBytes, 1,
+                             db->file );
+        if( numRead != 1 ) {
+            return -1;
+            }
+    
+        inDBi->nextRecordLoc += db->recordSizeBytes;
+
+        if( db->recordBuffer[0] ) {
+            // present
+            memcpy( outKey, 
+                    &( db->recordBuffer[1] ), 
+                    db->keySize );
+            
+            memcpy( outValue, 
+                    &( db->recordBuffer[1 + db->keySize] ), 
+                    db->valueSize );
+            return 1;
+            }
         }
     }
 
