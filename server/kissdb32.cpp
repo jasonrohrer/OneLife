@@ -48,7 +48,7 @@ static uint32_t KISSDB_hash_old(const void *b,unsigned long len)
 
 
 //static uint32_t MurmurHash2 ( const void * key, int len, uint32_t seed )
-static uint32_t KISSDB_hash( const void * key, int len )
+static uint32_t KISSDB_hash_old2( const void * key, int len )
 {
   // 'm' and 'r' are mixing constants generated offline.
   // They're not really 'magic', they just happen to work well.
@@ -58,7 +58,8 @@ static uint32_t KISSDB_hash( const void * key, int len )
   
   // usually passed in as a param
   // fixed for use in KISSDB
-  const uint32_t seed = 34892093;
+  //const uint32_t seed = 34892093;
+  const uint32_t seed = 0xb9115a39;
   
 
   // Initialize the hash to a 'random' value
@@ -103,6 +104,95 @@ static uint32_t KISSDB_hash( const void * key, int len )
 
   return h;
 } 
+
+
+
+// uint32_t murmur3_32(const uint8_t* key, size_t len, uint32_t seed) {
+uint32_t KISSDB_hash_old3(const void* data, size_t len ) {
+    const uint32_t seed = 0xb9115a39;
+    
+    const unsigned char * key = (const unsigned char *)data;
+
+    uint32_t h = seed;
+  if (len > 3) {
+    const uint32_t* key_x4 = (const uint32_t*) key;
+    size_t i = len >> 2;
+    do {
+      uint32_t k = *key_x4++;
+      k *= 0xcc9e2d51;
+      k = (k << 15) | (k >> 17);
+      k *= 0x1b873593;
+      h ^= k;
+      h = (h << 13) | (h >> 19);
+      h = (h * 5) + 0xe6546b64;
+    } while (--i);
+    key = (const uint8_t*) key_x4;
+  }
+  if (len & 3) {
+    size_t i = len & 3;
+    uint32_t k = 0;
+    key = &key[i - 1];
+    do {
+      k <<= 8;
+      k |= *key--;
+    } while (--i);
+    k *= 0xcc9e2d51;
+    k = (k << 15) | (k >> 17);
+    k *= 0x1b873593;
+    h ^= k;
+  }
+  h ^= len;
+  h ^= h >> 16;
+  h *= 0x85ebca6b;
+  h ^= h >> 13;
+  h *= 0xc2b2ae35;
+  h ^= h >> 16;
+  return h;
+}
+
+
+//uint32_t jenkins_one_at_a_time_hash(const void* key, size_t length) {
+uint32_t KISSDB_hash_old4(const void* data, size_t length) {
+    const uint8_t* key = (const uint8_t *)data;
+    size_t i = 0;
+  uint32_t hash = 0;
+  while (i != length) {
+    hash += key[i++];
+    hash += hash << 10;
+    hash ^= hash >> 6;
+  }
+  hash += hash << 3;
+  hash ^= hash >> 11;
+  hash += hash << 15;
+  return hash;
+}
+
+
+/*
+static unsigned long sdbm(str)
+    unsigned char *str;
+    {
+        unsigned long hash = 0;
+        int c;
+
+        while (c = *str++)
+            hash = c + (hash << 6) + (hash << 16) - hash;
+
+        return hash;
+    }
+*/
+static uint32_t KISSDB_hash(const void *b,unsigned long len)
+{
+	unsigned long i;
+	uint32_t hash = 0;
+	for(i=0;i<len;++i)
+		hash = (uint32_t)(((const uint8_t *)b)[i]) + (hash << 6) + (hash << 16) - hash;
+	return hash;
+}
+
+
+
+
 
 
 
@@ -335,6 +425,8 @@ put_no_match_next_hash_table:
 	}
 
 	/* if no existing slots, add a new page of hash table entries */
+    printf( "Adding new page to the hash table\n" );
+    
 	if (fseeko(db->f,0,SEEK_END))
 		return KISSDB_ERROR_IO;
 	endoffset = ftello(db->f);
