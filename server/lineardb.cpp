@@ -48,6 +48,7 @@ int LINEARDB_open(
     unsigned int inValueSize ) {
     
     inDB->recordBuffer = NULL;
+    inDB->existenceMap = NULL;
     inDB->maxProbeDepth = 0;
     
 
@@ -70,6 +71,10 @@ int LINEARDB_open(
     inDB->recordSizeBytes = 1 + inKeySize + inValueSize;
     
     inDB->recordBuffer = new uint8_t[ inDB->recordSizeBytes ];
+
+    inDB->existenceMap = new uint8_t[ ( inHashTableSize / 8 ) + 1 ];
+    
+    memset( inDB->existenceMap, 0, ( inHashTableSize / 8 ) + 1 );
 
 
     // does the file already contain a header
@@ -260,6 +265,31 @@ int LINEARDB_open(
             inDB->file = NULL;
             return 1;
             }
+
+
+        // now populate existence map
+        fseeko( inDB->file, LINEARDB_HEADER_SIZE, SEEK_SET );
+        
+        for( int i=0; i<inDB->hashTableSize; i++ ) {
+            
+            fseeko( inDB->file, 
+                    LINEARDB_HEADER_SIZE + inDB->recordSizeBytes, SEEK_SET );
+
+            char present = 0;
+            int numRead = fread( &present, 1, 1, inDB->file );
+            
+            if( numRead != 1 ) {
+                printf( "Failed to scan hash table from lineardb file\n" );
+                fclose( inDB->file );
+                inDB->file = NULL;
+                return 1;
+                }
+            if( present ) {
+                uint8_t presentFlag = 1 << ( i % 8 );
+                
+                inDB->existenceMap[ i / 8 ] |= presentFlag;
+                }
+            }
         }
     
     return 0;
@@ -272,6 +302,11 @@ void LINEARDB_close( LINEARDB *inDB ) {
     if( inDB->recordBuffer != NULL ) {
         delete [] inDB->recordBuffer;
         inDB->recordBuffer = NULL;
+        }    
+
+    if( inDB->existenceMap != NULL ) {
+        delete [] inDB->existenceMap;
+        inDB->existenceMap = NULL;
         }    
 
     if( inDB->file != NULL ) {
@@ -296,12 +331,31 @@ inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
 
 
 
+static char exists( LINEARDB *inDB, uint64_t inBinNumber ) {
+    return 
+        ( inDB->existenceMap[ inBinNumber / 8 ] >> ( inBinNumber % 8 ) ) 
+        & 0x01;
+    }
+
+
+
+
+static void setExists( LINEARDB *inDB, uint64_t inBinNumber ) {
+    
+    uint8_t presentFlag = 1 << ( inBinNumber % 8 );
+    
+    inDB->existenceMap[ inBinNumber / 8 ] |= presentFlag;
+    }
+
+
+
+
 // finds file location where value is
 // returns 0 if not found
 // if inInsert, it will create a new location for inKey and
 //              return the location where the value for inKey should go
-uint64_t findValueSpot( LINEARDB *inDB, const void *inKey, 
-                        char inInsert = false ) {
+static uint64_t findValueSpot( LINEARDB *inDB, const void *inKey, 
+                               char inInsert = false ) {
     
     int probeDepth = 0;
     
@@ -316,19 +370,17 @@ uint64_t findValueSpot( LINEARDB *inDB, const void *inKey,
 
         uint64_t binLoc = 
             binNumber * inDB->recordSizeBytes + LINEARDB_HEADER_SIZE;
-    
-        if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
-            return 0;
-            }
         
-        char present;
         
-        int numRead = fread( &present, 1, 1, inDB->file );
-        if( numRead != 1 ) {
-            return 0;
-            }
+        char present = exists( inDB, binNumber );
         
         if( present ) {
+
+            // skip present flag to key
+            if( fseeko( inDB->file, binLoc + 1, SEEK_SET ) ) {
+                return 0;
+                }        
+            
             int numRead = fread( inDB->recordBuffer, 
                                  inDB->keySize, 1, inDB->file );
             
@@ -365,10 +417,6 @@ uint64_t findValueSpot( LINEARDB *inDB, const void *inKey,
             
             memcpy( &( inDB->recordBuffer[1] ), inKey, inDB->keySize );
             
-            // need to seek at least once after fread before doing fwrite
-            // at this pos  (C99 spec)
-            fseeko( inDB->f, 0, SEEK_CUR );            
-
             // write present flag and key
             int numWritten = fwrite( inDB->recordBuffer, 1 + inDB->keySize,
                                      1, inDB->file );
@@ -376,6 +424,9 @@ uint64_t findValueSpot( LINEARDB *inDB, const void *inKey,
             if( numWritten != 1 ) {
                 return 0;
                 }
+
+            setExists( inDB, binNumber );
+            
             return binLoc + 1 + inDB->keySize;
             }
         else {
@@ -415,11 +466,7 @@ int LINEARDB_put( LINEARDB *inDB, const void *inKey, const void *inValue ) {
         if( fseeko( inDB->file, spot, SEEK_SET ) ) {
             return -1;
             }
-        
-        // need to seek at least once after fread before doing fwrite
-        // at this pos  (C99 spec)
-        fseeko( inDB->f, 0, SEEK_CUR );
-            
+
         int numWritten = fwrite( inValue, inDB->valueSize, 1, inDB->file );
         
         if( numWritten != inDB->valueSize ) {

@@ -13,6 +13,8 @@ typedef struct {
         unsigned int recordSizeBytes;
         uint8_t *recordBuffer;
         int maxProbeDepth;
+
+        uint8_t *existenceMap;
     } LINEARDB;
 
     
