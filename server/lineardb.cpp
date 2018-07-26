@@ -196,7 +196,7 @@ static int writeHeader( LINEARDB *inDB ) {
         return -1;
         }
         
-    val32 = inKeySize;
+    val32 = inDB->keySize;
     
     numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
     if( numWritten != 1 ) {
@@ -204,7 +204,7 @@ static int writeHeader( LINEARDB *inDB ) {
         }
 
 
-    val32 = inValueSize;
+    val32 = inDB->valueSize;
     
     numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
     if( numWritten != 1 ) {
@@ -297,7 +297,7 @@ int LINEARDB_open(
         
         uint64_t i = 0;
         for( i=0; i < inDB->tableSizeBytes-4096; i += 4096 ) {
-            numWritten = fwrite( buff, 4096, 1, inDB->file );
+            int numWritten = fwrite( buff, 4096, 1, inDB->file );
             if( numWritten != 1 ) {
                 fclose( inDB->file );
                 inDB->file = NULL;
@@ -306,8 +306,8 @@ int LINEARDB_open(
             }
         if( i < inDB->tableSizeBytes ) {
             // last partial buffer
-            numWritten = fwrite( buff, inDB->tableSizeBytes - i, 1, 
-                                 inDB->file );
+            int numWritten = fwrite( buff, inDB->tableSizeBytes - i, 1, 
+                                     inDB->file );
             if( numWritten != 1 ) {
                 fclose( inDB->file );
                 inDB->file = NULL;
@@ -316,7 +316,7 @@ int LINEARDB_open(
             }
 
         // empty existence and fingerprint map
-        createMaps( inDB );
+        recreateMaps( inDB );
         }
     else {
         // read header
@@ -477,7 +477,7 @@ int LINEARDB_open(
         
 
 
-        createMaps( inDB );
+        recreateMaps( inDB );
         
         // now populate existence map and fingerprint map
         if( fseeko( inDB->file, LINEARDB_HEADER_SIZE, SEEK_SET ) ) {
