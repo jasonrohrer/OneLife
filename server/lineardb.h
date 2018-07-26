@@ -5,6 +5,12 @@
 
 
 typedef struct {
+        // load above this causes table to expand incrementally
+        double maxLoad;
+        
+        // number of inserted records in database
+        unsigned int numRecords;
+        
 
         // for linear hashing table expansion
         // number of slots in base table
@@ -77,6 +83,17 @@ int LINEARDB_open(
  * @param db Database struct
  */
 void LINEARDB_close( LINEARDB *inDB );
+
+
+
+/**
+ * Sets max load, (number of elements)/(table size), before table starts
+ * to expand incremntally.
+ *
+ * Defaults to 0.5.
+ */
+void LINEARDB_setMaxLoad( LINEARDB *inDB, double inMaxLoad );
+
 
 /**
  * Get an entry

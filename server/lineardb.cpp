@@ -84,18 +84,51 @@ static unsigned int getExistenceMapSize( unsigned int inHashTableSizeA ) {
     }
 
 
-static void createMaps( LINEARDB *inDB ) {
+
+static void recreateMaps( LINEARDB *inDB, 
+                          unsigned int inOldTableSizeA = 0 ) {
+    uint8_t *oldExistenceMap = inDB->existenceMap;
+    
+
     inDB->existenceMap = 
         new uint8_t[ getExistenceMapSize( inDB->hashTableSizeA ) ];
     
     memset( inDB->existenceMap, 
             0, getExistenceMapSize( inDB->hashTableSizeA ) );
     
+
+    if( oldExistenceMap != NULL ) {
+        if( inOldTableSizeA > 0 ) {
+            memcpy( inDB->existenceMap,
+                    oldExistenceMap,
+                    getExistenceMapSize( inOldTableSizeA ) * 
+                    sizeof( uint8_t ) );
+            
+            }
+        
+        delete [] oldExistenceMap;
+        }
+    
+
+
+    uint16_t *oldFingerprintMap = inDB->fingerprintMap;
     
     inDB->fingerprintMap = new uint16_t[ inDB->hashTableSizeA * 2 ];
     
     memset( inDB->fingerprintMap, 0, 
             inDB->hashTableSizeA * 2 * sizeof( uint16_t ) );
+
+
+    if( oldFingerprintMap != NULL ) {
+        if( inOldTableSizeA > 0 ) {
+            memcpy( inDB->fingerprintMap,
+                    oldFingerprintMap,
+                    inOldTableSizeA * 2 * sizeof( uint16_t ) );
+            }
+        
+        delete [] oldFingerprintMap;
+        }
+
     }
 
 
@@ -117,6 +150,70 @@ static void setExists( LINEARDB *inDB, uint64_t inBinNumber ) {
     }
 
 
+static void setNotExists( LINEARDB *inDB, uint64_t inBinNumber ) {
+    
+    uint8_t presentFlag = 0 << ( inBinNumber % 8 );
+    
+    inDB->existenceMap[ inBinNumber / 8 ] |= presentFlag;
+    }
+
+
+
+static uint64_t getBinLoc( LINEARDB *inDB, uint64_t inBinNumber ) {    
+    return inBinNumber * inDB->recordSizeBytes + LINEARDB_HEADER_SIZE;
+    }
+
+
+
+// returns 0 on success, -1 on error
+static int writeHeader( LINEARDB *inDB ) {
+    if( fseeko( inDB->file, 0, SEEK_SET ) ) {
+        return -1;
+        }
+
+    int numWritten;
+        
+    numWritten = fwrite( magicString, strlen( magicString ), 
+                         1, inDB->file );
+    if( numWritten != 1 ) {
+        return -1;
+        }
+
+
+    uint32_t val32;
+    
+    val32 = inDB->hashTableSizeA;
+    
+    numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
+    if( numWritten != 1 ) {
+        return -1;
+        }
+        
+    val32 = inDB->hashTableSizeB;
+    
+    numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
+    if( numWritten != 1 ) {
+        return -1;
+        }
+        
+    val32 = inKeySize;
+    
+    numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
+    if( numWritten != 1 ) {
+        return -1;
+        }
+
+
+    val32 = inValueSize;
+    
+    numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
+    if( numWritten != 1 ) {
+        return -1;
+        }
+
+    return 0;
+    }
+
 
 
 int LINEARDB_open(
@@ -131,6 +228,10 @@ int LINEARDB_open(
     inDB->existenceMap = NULL;
     inDB->fingerprintMap = NULL;
     inDB->maxProbeDepth = 0;
+
+    inDB->numRecords = 0;
+    
+    inDB->maxLoad = 0.5;
     
 
     inDB->file = fopen( inPath, "r+b" );
@@ -177,59 +278,12 @@ int LINEARDB_open(
 
         // rewrite header
     
-        fseeko( inDB->file, 0, SEEK_SET );
-        
-        
-
-        int numWritten;
-        
-        numWritten = fwrite( magicString, strlen( magicString ), 
-                             1, inDB->file );
-        if( numWritten != 1 ) {
-            fclose( inDB->file );
-            inDB->file = NULL;
-            return 1;
-            }
-
-
-        uint32_t val32;
-
-        val32 = inDB->hashTableSizeA;
-        
-        numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
-        if( numWritten != 1 ) {
+        if( writeHeader( inDB ) != 0 ) {
             fclose( inDB->file );
             inDB->file = NULL;
             return 1;
             }
         
-        val32 = inDB->hashTableSizeB;
-        
-        numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
-        if( numWritten != 1 ) {
-            fclose( inDB->file );
-            inDB->file = NULL;
-            return 1;
-            }
-        
-        val32 = inKeySize;
-        
-        numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
-        if( numWritten != 1 ) {
-            fclose( inDB->file );
-            inDB->file = NULL;
-            return 1;
-            }
-
-
-        val32 = inValueSize;
-        
-        numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
-        if( numWritten != 1 ) {
-            fclose( inDB->file );
-            inDB->file = NULL;
-            return 1;
-            }
         
 
         inDB->tableSizeBytes = 
@@ -266,7 +320,12 @@ int LINEARDB_open(
         }
     else {
         // read header
-        fseeko( inDB->file, 0, SEEK_SET );
+        if( fseeko( inDB->file, 0, SEEK_SET ) ) {
+            fclose( inDB->file );
+            inDB->file = NULL;
+            return 1;
+            }
+        
         
         int numRead;
         
@@ -400,7 +459,11 @@ int LINEARDB_open(
             (uint64_t)( inDB->hashTableSizeB );
         
         // make sure hash table exists in file
-        fseeko( inDB->file, 0, SEEK_END );
+        if( fseeko( inDB->file, 0, SEEK_END ) ) {
+            fclose( inDB->file );
+            inDB->file = NULL;
+            return 1;
+            }
         
         if( ftello( inDB->file ) < 
             LINEARDB_HEADER_SIZE + inDB->tableSizeBytes ) {
@@ -417,13 +480,21 @@ int LINEARDB_open(
         createMaps( inDB );
         
         // now populate existence map and fingerprint map
-        fseeko( inDB->file, LINEARDB_HEADER_SIZE, SEEK_SET );
+        if( fseeko( inDB->file, LINEARDB_HEADER_SIZE, SEEK_SET ) ) {
+            fclose( inDB->file );
+            inDB->file = NULL;
+            return 1;
+            }
         
         for( int i=0; i<inDB->hashTableSizeB; i++ ) {
             
-            fseeko( inDB->file, 
-                    LINEARDB_HEADER_SIZE + i * inDB->recordSizeBytes, 
-                    SEEK_SET );
+            if( fseeko( inDB->file, 
+                        LINEARDB_HEADER_SIZE + i * inDB->recordSizeBytes, 
+                        SEEK_SET ) ) {
+                fclose( inDB->file );
+                inDB->file = NULL;
+                return 1;
+                }
 
             char present = 0;
             int numRead = fread( &present, 1, 1, inDB->file );
@@ -435,6 +506,8 @@ int LINEARDB_open(
                 return 1;
                 }
             if( present ) {
+                
+                inDB->numRecords ++;
                 
                 setExists( inDB, i );
                 
@@ -489,6 +562,14 @@ void LINEARDB_close( LINEARDB *inDB ) {
 
 
 
+
+void LINEARDB_setMaxLoad( LINEARDB *inDB, double inMaxLoad ) {
+    inDB->maxLoad = inMaxLoad;
+    }
+
+
+
+
 inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
     uint8_t *a = (uint8_t*)inKeyA;
     uint8_t *b = (uint8_t*)inKeyB;
@@ -501,6 +582,157 @@ inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
     return true;
     }
 
+
+// removes a coniguous segment of cells from the table, one by one,
+// from left to right,
+// starting at inFirstBinNumber, and reinserts them
+// returns 0 on success, -1 on failure
+static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber ) {
+    
+    uint64_t c = inFirstBinNumber;
+    
+    // don't infinite loop if table is 100% full
+    uint64_t numCellsTouched = 0;
+
+    while( numCellsTouched < inDB->hashTableSizeB && exists( inDB, c ) ) {
+        // a full cell is here
+
+        uint64_t binLoc = getBinLoc( inDB, c );
+        
+        if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
+            return -1;
+            }
+        
+        int numRead = fread( inDB->recordBuffer, 
+                             inDB->recordSizeBytes, 1, inDB->file );
+        
+        if( numRead != 1 ) {
+            return -1;
+            }
+        
+        // now clear present byte
+        if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
+            return -1;
+            }
+
+        // write not present flag
+        unsigned char presentFlag = 0;
+            
+        int numWritten = fwrite( &presentFlag, 1, 1, inDB->file );
+        
+        if( numWritten != 1 ) {
+            return -1;
+            }
+        
+        
+        setNotExists( inDB, c );
+        
+        // decrease count before reinsert, which will increment count
+        inDB->numRecords --;
+        
+        
+        int putResult = 
+            LINEARDB_put( inDB,
+                          // key
+                          &( inDB->recordBuffer[ 1 ] ), 
+                          // value
+                          &( inDB->recordBuffer[ 1 + inDB->keySize ] ) );
+        
+        if( putResult != 0 ) {
+            return -1;
+            }
+        c++;
+
+        if( c >= inDB->hashTableSizeB ) {
+            c -= inDB->hashTableSizeB;
+            }
+        
+        numCellsTouched++;
+        }
+    return 0;
+    }
+
+
+
+
+// uses method described here:
+// https://en.wikipedia.org/wiki/Linear_hashing
+// But adds support for linear probing by potentially rehashing
+// all cells hit by a linear probe from the split point
+// returns 0 on success, -1 on failure
+static int expandTable( LINEARDB *inDB ) {
+
+    unsigned int oldSplitPoint = inDB->hashTableSizeB - inDB->hashTableSizeA;
+    
+    unsigned int newSplitPoint = oldSplitPoint + 1;
+    
+    // expand table
+    inDB->hashTableSizeB ++;
+
+    // add extra cell at end
+    uint64_t endBinLoc = getBinLoc( inDB, inDB->hashTableSizeB - 1 );
+
+    if( fseeko( inDB->file, endBinLoc, SEEK_SET ) ) {
+        return -1;
+        }
+    memset( inDB->recordBuffer, 0, inDB->recordSizeBytes );
+
+    int numWritten = 
+        fwrite( inDB->recordBuffer, inDB->recordSizeBytes, 1, inDB->file );
+    
+    if( numWritten != 1 ) {
+        return -1;
+        }
+
+
+    // existence and fingerprint maps already 0 for this extra cell
+    // (they are big enough already to have room for it at the end
+
+
+
+
+    // remove and re-insert all contiguous cells from the old split
+    // point and to the right
+    // we need to ensure there are no holes for future linear probes
+    unsigned int c = oldSplitPoint;
+    
+    
+    int result = reinsertCellSegment( inDB, c );
+    
+    if( result != 0 ) {
+        return -1;
+        }
+    
+    
+    // do the same for first cell of table, which might have wraped-around
+    // cells in it due to linear probing, and there might be an empty cell
+    // at the end of the table now that we've expanded it
+    result = reinsertCellSegment( inDB, 0 );
+    
+
+    if( result != 0 ) {
+        return -1;
+        }
+
+    
+    if( inDB->hashTableSizeB == inDB->hashTableSizeA * 2 ) {
+        // full round of expansion is done.
+        
+        unsigned int oldTableSizeA = inDB->hashTableSizeA;
+        
+        inDB->hashTableSizeA = inDB->hashTableSizeB;
+        
+
+        recreateMaps( inDB, oldTableSizeA );
+        }
+
+    inDB->tableSizeBytes = 
+        (uint64_t)( inDB->recordSizeBytes ) * 
+        (uint64_t)( inDB->hashTableSizeB );
+
+    // write latest sizes into header
+    return writeHeader( inDB );
+    }
 
 
 
@@ -548,9 +780,8 @@ static int locateValue( LINEARDB *inDB, const void *inKey,
     // linear prob after that
     while( true ) {
 
-        uint64_t binLoc = 
-            binNumberB * inDB->recordSizeBytes + LINEARDB_HEADER_SIZE;
-    
+        uint64_t binLoc = getBinLoc( inDB, binNumberB );
+        
         char present = exists( inDB, binNumberB );
         
         if( present ) {
@@ -662,6 +893,14 @@ static int locateValue( LINEARDB *inDB, const void *inKey,
             setExists( inDB, binNumberB );
             
             inDB->fingerprintMap[ binNumberB ] = fingerprint;
+
+            inDB->numRecords++;
+            
+            if( (double)( inDB->numRecords ) /
+                (double)( inDB->hashTableSizeB ) > inDB->maxLoad ) {
+                
+                return expandTable( inDB );
+                }
             
             return 0;
             }
