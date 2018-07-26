@@ -418,11 +418,14 @@ static void setExists( LINEARDB *inDB, uint64_t inBinNumber ) {
 
 
 // finds file location where value is
-// returns 0 if not found
-// if inInsert, it will create a new location for inKey and
-//              return the location where the value for inKey should go
-static uint64_t findValueSpot( LINEARDB *inDB, const void *inKey, 
-                               char inInsert = false ) {
+// returns 0 if found or 1 if not found, -1 on error
+// if inInsert, it will create a new location for inKey and and write
+//              the contents of inOutValue into that spot.
+// if inInsert is false, it will read the contents of the value into 
+//              inOutValue.
+static int findValueSpot( LINEARDB *inDB, const void *inKey, 
+                          void *inOutValue,
+                          char inInsert = false ) {
     
     int probeDepth = 0;
     
@@ -452,19 +455,52 @@ static uint64_t findValueSpot( LINEARDB *inDB, const void *inKey,
 
                 // skip present flag to key
                 if( fseeko( inDB->file, binLoc + 1, SEEK_SET ) ) {
-                    return 0;
+                    return -1;
                     }        
-            
+                
                 int numRead = fread( inDB->recordBuffer, 
                                      inDB->keySize, 1, inDB->file );
             
                 if( numRead != 1 ) {
-                    return 0;
+                    return -1;
                     }
             
                 if( keyComp( inDB->keySize, inKey, inDB->recordBuffer ) ) {
                     // key match!
-                    return binLoc + 1 + inDB->keySize;
+
+                    if( inInsert ) {
+                        // replace value
+                        
+                        // C99 standard says we must seek after reading
+                        // before writing
+                        
+                        // we're already at the right spot
+                        fseeko( inDB->file, 0, SEEK_CUR );
+                        
+                        int numWritten = 
+                            fwrite( inOutValue, inDB->valueSize, 
+                                    1, inDB->file );
+            
+                        if( numWritten != 1 ) {
+                            return -1;
+                            }
+                        
+                        // present flag and fingerprint already set
+                        
+                        return 0;
+                        }
+                    else {
+                        
+                        // read value
+                        numRead = fread( inOutValue, 
+                                         inDB->valueSize, 1, inDB->file );
+            
+                        if( numRead != 1 ) {
+                            return -1;
+                            }
+                    
+                        return 0;
+                        }
                     }
                 }
             
@@ -487,29 +523,43 @@ static uint64_t findValueSpot( LINEARDB *inDB, const void *inKey,
             // empty bin, insert mode
             
             if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
-                return 0;
-                }
-            inDB->recordBuffer[0] = 1;
-            
-            memcpy( &( inDB->recordBuffer[1] ), inKey, inDB->keySize );
-            
-            // write present flag and key
-            int numWritten = fwrite( inDB->recordBuffer, 1 + inDB->keySize,
-                                     1, inDB->file );
-            
-            if( numWritten != 1 ) {
-                return 0;
+                return -1;
                 }
 
+            // write present flag
+            unsigned char presentFlag = 1;
+            
+            int numWritten = fwrite( &presentFlag, 1, 1, inDB->file );
+            
+            if( numWritten != 1 ) {
+                return -1;
+                }
+
+            // write key
+            numWritten = fwrite( inKey, inDB->keySize, 1, inDB->file );
+            
+            if( numWritten != 1 ) {
+                return -1;
+                }
+
+            // write value
+            numWritten = fwrite( inOutValue, inDB->valueSize, 1, inDB->file );
+            
+            if( numWritten != 1 ) {
+                return -1;
+                }
+            
+            // write present flag and key
+            
             setExists( inDB, binNumber );
             
             inDB->fingerprintMap[ binNumber ] = fingerprint;
             
-            return binLoc + 1 + inDB->keySize;
+            return 0;
             }
         else {
             // empty bin hit, not insert mode
-            return 0;
+            return 1;
             }
         }
     
@@ -518,41 +568,13 @@ static uint64_t findValueSpot( LINEARDB *inDB, const void *inKey,
 
 
 int LINEARDB_get( LINEARDB *inDB, const void *inKey, void *outValue ) {
-    uint64_t spot = findValueSpot( inDB, inKey );
-    
-    if( spot != 0 ) {
-        if( fseeko( inDB->file, spot, SEEK_SET ) ) {
-            return -1;
-            }
-
-        int numRead = fread( outValue, inDB->valueSize, 1, inDB->file );
-        
-        if( numRead != 1 ) {
-            return -1;
-            }
-        return 0;
-        }
-    return 1;
+    return findValueSpot( inDB, inKey, outValue, false );
     }
 
 
 
 int LINEARDB_put( LINEARDB *inDB, const void *inKey, const void *inValue ) {
-    uint64_t spot = findValueSpot( inDB, inKey, true );
-    
-    if( spot != 0 ) {
-        if( fseeko( inDB->file, spot, SEEK_SET ) ) {
-            return -1;
-            }
-
-        int numWritten = fwrite( inValue, inDB->valueSize, 1, inDB->file );
-        
-        if( numWritten != inDB->valueSize ) {
-            return -1;
-            }
-        return 0;
-        }
-    return -1;
+    return findValueSpot( inDB, inKey, (void*)inValue, true );
     }
 
 
@@ -575,7 +597,9 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
         if( inDBi->nextRecordLoc > db->tableSizeBytes + LINEARDB_HEADER_SIZE ) {
             return 0;
             }
-        
+
+        // FIXME:
+        // fseek may not be needed here
         if( fseeko( db->file, inDBi->nextRecordLoc, SEEK_SET ) ) {
             return -1;
             }
