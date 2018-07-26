@@ -15,6 +15,10 @@ typedef struct {
         int maxProbeDepth;
 
         uint8_t *existenceMap;
+        // 16 bit hash fingerprints of key in each spot in table
+        // we can verify matches (with false positives and no false negatives) 
+        // without touching the disk
+        uint16_t *fingerprintMap;
     } LINEARDB;
 
     
