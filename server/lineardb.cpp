@@ -435,14 +435,15 @@ static int findValueSpot( LINEARDB *inDB, const void *inKey,
         (uint64_t)( inDB->hashTableSize );
 
     
+    uint16_t fingerprint = shortHash( inKey, inDB->keySize );
+
+    
     // linear prob after that
     while( true ) {
 
         uint64_t binLoc = 
             binNumber * inDB->recordSizeBytes + LINEARDB_HEADER_SIZE;
-        
-        uint16_t fingerprint = shortHash( inKey, inDB->keySize );
-        
+    
         char present = exists( inDB, binNumber );
         
         if( present ) {
