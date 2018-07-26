@@ -5,20 +5,39 @@
 
 
 typedef struct {
-        unsigned int hashTableSize;
+
+        // for linear hashing table expansion
+        // number of slots in base table
+        unsigned int hashTableSizeA;
+
+        // number of slots in expanded table
+        // when this reaches hashTableSizeA * 2
+        // hash table is done with a full round of expansion
+        // and hashTableSizeA is set to hashTableSizeB at that point
+        unsigned int hashTableSizeB;
+        
+
         unsigned int keySize;
         unsigned int valueSize;
         FILE *file;
+        
+        // size of fully expanded (hashTableSizeB) table in bytes
+        // (size of all records together)
         uint64_t tableSizeBytes;
+
         unsigned int recordSizeBytes;
         uint8_t *recordBuffer;
         int maxProbeDepth;
 
+        // sized to ( hashTableSizeA * 2 ) / 8 + 1
         uint8_t *existenceMap;
+
         // 16 bit hash fingerprints of key in each spot in table
         // we can verify matches (with false positives and no false negatives) 
         // without touching the disk
+        // sized to ( hashTableSizeA * 2 ) 16-bit values
         uint16_t *fingerprintMap;
+        
     } LINEARDB;
 
     

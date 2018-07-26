@@ -74,9 +74,47 @@ static uint16_t shortHash( const void *inB, unsigned int inLen ) {
 static const char *magicString = "Ldb";
 
 // Ldb magic characters plus
-// three 32-bit ints
-#define LINEARDB_HEADER_SIZE 15
+// four 32-bit ints
+#define LINEARDB_HEADER_SIZE 19
 
+
+
+static unsigned int getExistenceMapSize( unsigned int inHashTableSizeA ) {
+    return ( ( inHashTableSizeA * 2 ) / 8 ) + 1;
+    }
+
+
+static void createMaps( LINEARDB *inDB ) {
+    inDB->existenceMap = 
+        new uint8_t[ getExistenceMapSize( inDB->hashTableSizeA ) ];
+    
+    memset( inDB->existenceMap, 
+            0, getExistenceMapSize( inDB->hashTableSizeA ) );
+    
+    
+    inDB->fingerprintMap = new uint16_t[ inDB->hashTableSizeA * 2 ];
+    
+    memset( inDB->fingerprintMap, 0, 
+            inDB->hashTableSizeA * 2 * sizeof( uint16_t ) );
+    }
+
+
+
+static char exists( LINEARDB *inDB, uint64_t inBinNumber ) {
+    return 
+        ( inDB->existenceMap[ inBinNumber / 8 ] >> ( inBinNumber % 8 ) ) 
+        & 0x01;
+    }
+
+
+
+
+static void setExists( LINEARDB *inDB, uint64_t inBinNumber ) {
+    
+    uint8_t presentFlag = 1 << ( inBinNumber % 8 );
+    
+    inDB->existenceMap[ inBinNumber / 8 ] |= presentFlag;
+    }
 
 
 
@@ -85,7 +123,7 @@ int LINEARDB_open(
     LINEARDB *inDB,
     const char *inPath,
     int inMode,
-    unsigned int inHashTableSize,
+    unsigned int inHashTableStartSize,
     unsigned int inKeySize,
     unsigned int inValueSize ) {
     
@@ -106,7 +144,9 @@ int LINEARDB_open(
         return 1;
         }
 
-    inDB->hashTableSize = inHashTableSize;
+    inDB->hashTableSizeA = inHashTableStartSize;
+    inDB->hashTableSizeB = inHashTableStartSize;
+    
     inDB->keySize = inKeySize;
     inDB->valueSize = inValueSize;
     
@@ -115,14 +155,6 @@ int LINEARDB_open(
     
     inDB->recordBuffer = new uint8_t[ inDB->recordSizeBytes ];
 
-    inDB->existenceMap = new uint8_t[ ( inHashTableSize / 8 ) + 1 ];
-    
-    memset( inDB->existenceMap, 0, ( inHashTableSize / 8 ) + 1 );
-
-
-    inDB->fingerprintMap = new uint16_t[ inHashTableSize ];
-    
-    memset( inDB->fingerprintMap, 0, inHashTableSize & sizeof( uint16_t ) );
 
 
     // does the file already contain a header
@@ -136,9 +168,6 @@ int LINEARDB_open(
         }
 
 
-    // first byte is present flag
-    inDB->tableSizeBytes = 
-        (uint64_t)( 1 + inKeySize + inValueSize ) * (uint64_t)inHashTableSize;
 
     
     if( ftello( inDB->file ) < LINEARDB_HEADER_SIZE ) {
@@ -165,7 +194,16 @@ int LINEARDB_open(
 
         uint32_t val32;
 
-        val32 = inHashTableSize;
+        val32 = inDB->hashTableSizeA;
+        
+        numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
+        if( numWritten != 1 ) {
+            fclose( inDB->file );
+            inDB->file = NULL;
+            return 1;
+            }
+        
+        val32 = inDB->hashTableSizeB;
         
         numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
         if( numWritten != 1 ) {
@@ -193,6 +231,11 @@ int LINEARDB_open(
             return 1;
             }
         
+
+        inDB->tableSizeBytes = 
+            (uint64_t)( inDB->recordSizeBytes ) * 
+            (uint64_t)( inDB->hashTableSizeB );
+
         // now write empty hash table, full of 0 values
 
         unsigned char buff[ 4096 ];
@@ -217,6 +260,9 @@ int LINEARDB_open(
                 return 1;
                 }
             }
+
+        // empty existence and fingerprint map
+        createMaps( inDB );
         }
     else {
         // read header
@@ -255,13 +301,60 @@ int LINEARDB_open(
             return 1;
             }
         
-        if( val32 != inHashTableSize ) {
-            printf( "Requested lineardb hash table size of %u does not match "
-                    "size of %u in file header\n", inHashTableSize, val32 );
+        if( val32 < inDB->hashTableSizeA ) {
+            printf( "Requested lineardb hash table size of %u is larger than "
+                    "base size of %u in file header\n", 
+                    inDB->hashTableSizeA, val32 );
             fclose( inDB->file );
             inDB->file = NULL;
             return 1;
             }
+
+        // can be bigger than what's been requested
+        inDB->hashTableSizeA = val32;
+
+
+
+        numRead = fread( &val32, sizeof(uint32_t), 1, inDB->file );
+        
+        if( numRead != 1 ) {
+            fclose( inDB->file );
+            inDB->file = NULL;
+            return 1;
+            }
+
+        
+        if( val32 < inDB->hashTableSizeB ) {
+            printf( "Requested lineardb hash table size of %u is larger than "
+                    "expanded size of %u in file header\n", 
+                    inDB->hashTableSizeB, val32 );
+            fclose( inDB->file );
+            inDB->file = NULL;
+            return 1;
+            }
+
+        if( val32 < inDB->hashTableSizeA ) {
+            printf( "lineardb hash table base size of %u is larger than "
+                    "expanded size of %u in file header\n", 
+                    inDB->hashTableSizeA, val32 );
+            fclose( inDB->file );
+            inDB->file = NULL;
+            return 1;
+            }
+
+
+        if( val32 >= inDB->hashTableSizeA * 2 ) {
+            printf( "lineardb hash table expanded size of %u is 2x or more "
+                    "larger than base size of %u in file header\n", 
+                    val32, inDB->hashTableSizeA );
+            fclose( inDB->file );
+            inDB->file = NULL;
+            return 1;
+            }
+
+        // can be bigger than what's been requested
+        inDB->hashTableSizeB = val32;
+        
 
         
         numRead = fread( &val32, sizeof(uint32_t), 1, inDB->file );
@@ -300,6 +393,11 @@ int LINEARDB_open(
         
 
         // got here, header matches
+
+
+        inDB->tableSizeBytes = 
+            (uint64_t)( inDB->recordSizeBytes ) * 
+            (uint64_t)( inDB->hashTableSizeB );
         
         // make sure hash table exists in file
         fseeko( inDB->file, 0, SEEK_END );
@@ -313,15 +411,19 @@ int LINEARDB_open(
             inDB->file = NULL;
             return 1;
             }
+        
 
 
-        // now populate existence map
+        createMaps( inDB );
+        
+        // now populate existence map and fingerprint map
         fseeko( inDB->file, LINEARDB_HEADER_SIZE, SEEK_SET );
         
-        for( int i=0; i<inDB->hashTableSize; i++ ) {
+        for( int i=0; i<inDB->hashTableSizeB; i++ ) {
             
             fseeko( inDB->file, 
-                    LINEARDB_HEADER_SIZE + inDB->recordSizeBytes, SEEK_SET );
+                    LINEARDB_HEADER_SIZE + i * inDB->recordSizeBytes, 
+                    SEEK_SET );
 
             char present = 0;
             int numRead = fread( &present, 1, 1, inDB->file );
@@ -333,10 +435,9 @@ int LINEARDB_open(
                 return 1;
                 }
             if( present ) {
-                uint8_t presentFlag = 1 << ( i % 8 );
                 
-                inDB->existenceMap[ i / 8 ] |= presentFlag;
-
+                setExists( inDB, i );
+                
                 // now read key
                 numRead = fread( inDB->recordBuffer, 
                                  inDB->keySize, 1, inDB->file );
@@ -354,6 +455,10 @@ int LINEARDB_open(
             }
         }
     
+
+    
+
+
     return 0;
     }
 
@@ -398,41 +503,43 @@ inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
 
 
 
-static char exists( LINEARDB *inDB, uint64_t inBinNumber ) {
-    return 
-        ( inDB->existenceMap[ inBinNumber / 8 ] >> ( inBinNumber % 8 ) ) 
-        & 0x01;
-    }
 
 
 
 
-static void setExists( LINEARDB *inDB, uint64_t inBinNumber ) {
-    
-    uint8_t presentFlag = 1 << ( inBinNumber % 8 );
-    
-    inDB->existenceMap[ inBinNumber / 8 ] |= presentFlag;
-    }
-
-
-
-
-// finds file location where value is
 // returns 0 if found or 1 if not found, -1 on error
-// if inInsert, it will create a new location for inKey and and write
-//              the contents of inOutValue into that spot.
-// if inInsert is false, it will read the contents of the value into 
+// if inPut, it will create a new location for inKey and and write
+//              the contents of inOutValue into that spot, or overwrite
+//              existing value.
+// if inPut is false, it will read the contents of the value into 
 //              inOutValue.
-static int findValueSpot( LINEARDB *inDB, const void *inKey, 
-                          void *inOutValue,
-                          char inInsert = false ) {
+static int locateValue( LINEARDB *inDB, const void *inKey, 
+                        void *inOutValue,
+                        char inPut = false ) {
     
     int probeDepth = 0;
     
     // hash to find first possible bin for inKey
-    uint64_t binNumber = 
-        LINEARDB_hash( inKey, inDB->keySize ) % 
-        (uint64_t)( inDB->hashTableSize );
+
+
+    uint64_t hashVal = LINEARDB_hash( inKey, inDB->keySize );
+    
+    uint64_t binNumberA = hashVal % (uint64_t)( inDB->hashTableSizeA );
+    
+    uint64_t binNumberB = binNumberA;
+    
+
+
+    unsigned int splitPoint = inDB->hashTableSizeB - inDB->hashTableSizeA;
+    
+    
+    if( binNumberA < splitPoint ) {
+        // points before split can be mod'ed with double base table size
+
+        // binNumberB will always fit in hashTableSizeB, the expanded table
+        binNumberB = hashVal % (uint64_t)( inDB->hashTableSizeA * 2 );
+        }
+    
 
     
     uint16_t fingerprint = shortHash( inKey, inDB->keySize );
@@ -442,13 +549,13 @@ static int findValueSpot( LINEARDB *inDB, const void *inKey,
     while( true ) {
 
         uint64_t binLoc = 
-            binNumber * inDB->recordSizeBytes + LINEARDB_HEADER_SIZE;
+            binNumberB * inDB->recordSizeBytes + LINEARDB_HEADER_SIZE;
     
-        char present = exists( inDB, binNumber );
+        char present = exists( inDB, binNumberB );
         
         if( present ) {
             
-            if( fingerprint == inDB->fingerprintMap[ binNumber ] ) {
+            if( fingerprint == inDB->fingerprintMap[ binNumberB ] ) {
                 
                 // match in fingerprint, but might be false positive
                 
@@ -469,7 +576,7 @@ static int findValueSpot( LINEARDB *inDB, const void *inKey,
                 if( keyComp( inDB->keySize, inKey, inDB->recordBuffer ) ) {
                     // key match!
 
-                    if( inInsert ) {
+                    if( inPut ) {
                         // replace value
                         
                         // C99 standard says we must seek after reading
@@ -508,7 +615,7 @@ static int findValueSpot( LINEARDB *inDB, const void *inKey,
             // no key match, collision in this bin
 
             // go on to next bin
-            binNumber++;
+            binNumberB++;
             probeDepth ++;
             
             if( probeDepth > inDB->maxProbeDepth ) {
@@ -516,11 +623,11 @@ static int findValueSpot( LINEARDB *inDB, const void *inKey,
                 }
 
             // wrap around
-            if( binNumber >= inDB->hashTableSize ) {
-                binNumber -= inDB->hashTableSize;
+            if( binNumberB >= inDB->hashTableSizeB ) {
+                binNumberB -= inDB->hashTableSizeB;
                 }
             }
-        else if( inInsert ) {
+        else if( inPut ) {
             // empty bin, insert mode
             
             if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
@@ -552,9 +659,9 @@ static int findValueSpot( LINEARDB *inDB, const void *inKey,
             
             // write present flag and key
             
-            setExists( inDB, binNumber );
+            setExists( inDB, binNumberB );
             
-            inDB->fingerprintMap[ binNumber ] = fingerprint;
+            inDB->fingerprintMap[ binNumberB ] = fingerprint;
             
             return 0;
             }
@@ -569,13 +676,13 @@ static int findValueSpot( LINEARDB *inDB, const void *inKey,
 
 
 int LINEARDB_get( LINEARDB *inDB, const void *inKey, void *outValue ) {
-    return findValueSpot( inDB, inKey, outValue, false );
+    return locateValue( inDB, inKey, outValue, false );
     }
 
 
 
 int LINEARDB_put( LINEARDB *inDB, const void *inKey, const void *inValue ) {
-    return findValueSpot( inDB, inKey, (void*)inValue, true );
+    return locateValue( inDB, inKey, (void*)inValue, true );
     }
 
 
