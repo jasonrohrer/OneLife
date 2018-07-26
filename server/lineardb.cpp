@@ -598,8 +598,11 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
             return 0;
             }
 
-        // FIXME:
-        // fseek may not be needed here
+        // fseek is needed here to make iterator safe to interleave
+        // with other calls
+        // If iterator calls are not interleaved, this seek should have
+        // little impact on performance (seek to current location between
+        // reads).
         if( fseeko( db->file, inDBi->nextRecordLoc, SEEK_SET ) ) {
             return -1;
             }
