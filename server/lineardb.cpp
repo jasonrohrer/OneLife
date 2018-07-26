@@ -25,10 +25,10 @@ static uint64_t djb2( const void *inB, unsigned int inLen ) {
 
 // function used here must have the following signature:
 // static uint64_t LINEARDB_hash( const void *inB, unsigned int inLen );
-#define LINEARDB_hash(inB, inLen) MurmurHash64( inB, inLen, 0xb9115a39 )
+//#define LINEARDB_hash(inB, inLen) MurmurHash64( inB, inLen, 0xb9115a39 )
 
 // djb2 is resulting in way fewer collisions in test data
-//#define LINEARDB_hash(inB, inLen) djb2( inB, inLen )
+#define LINEARDB_hash(inB, inLen) djb2( inB, inLen )
 
 
 
@@ -152,9 +152,10 @@ static void setExists( LINEARDB *inDB, uint64_t inBinNumber ) {
 
 static void setNotExists( LINEARDB *inDB, uint64_t inBinNumber ) {
     
-    uint8_t presentFlag = 0 << ( inBinNumber % 8 );
+    // bitwise inversion
+    uint8_t presentFlag = ~( 1 << ( inBinNumber % 8 ) );
     
-    inDB->existenceMap[ inBinNumber / 8 ] |= presentFlag;
+    inDB->existenceMap[ inBinNumber / 8 ] &= presentFlag;
     }
 
 
@@ -664,13 +665,12 @@ static int expandTable( LINEARDB *inDB ) {
 
     unsigned int oldSplitPoint = inDB->hashTableSizeB - inDB->hashTableSizeA;
     
-    unsigned int newSplitPoint = oldSplitPoint + 1;
     
     // expand table
     inDB->hashTableSizeB ++;
 
     // add extra cell at end
-    uint64_t endBinLoc = getBinLoc( inDB, inDB->hashTableSizeB - 1 );
+    uint64_t endBinLoc = getBinLoc( inDB, inDB->hashTableSizeB - 2 );
 
     if( fseeko( inDB->file, endBinLoc, SEEK_SET ) ) {
         return -1;
@@ -929,6 +929,8 @@ int LINEARDB_put( LINEARDB *inDB, const void *inKey, const void *inValue ) {
 void LINEARDB_Iterator_init( LINEARDB *inDB, LINEARDB_Iterator *inDBi ) {
     inDBi->db = inDB;
     inDBi->nextRecordLoc = LINEARDB_HEADER_SIZE;
+    inDBi->currentRunLength = 0;
+    inDB->maxProbeDepth = 0;
     }
 
 
@@ -964,6 +966,12 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
         inDBi->nextRecordLoc += db->recordSizeBytes;
 
         if( db->recordBuffer[0] ) {
+            inDBi->currentRunLength++;
+            
+            if( inDBi->currentRunLength > db->maxProbeDepth ) {
+                db->maxProbeDepth = inDBi->currentRunLength;
+                }
+            
             // present
             memcpy( outKey, 
                     &( db->recordBuffer[1] ), 
@@ -973,6 +981,10 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
                     &( db->recordBuffer[1 + db->keySize] ), 
                     db->valueSize );
             return 1;
+            }
+        else {
+            // empty table cell, run broken
+            inDBi->currentRunLength = 0;
             }
         }
     }

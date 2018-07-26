@@ -126,6 +126,7 @@ int LINEARDB_put( LINEARDB *inDB, const void *inKey, const void *inValue );
 typedef struct {
         LINEARDB *db;
         uint64_t nextRecordLoc;
+        unsigned int currentRunLength;
 } LINEARDB_Iterator;
 
 /**
