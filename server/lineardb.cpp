@@ -778,7 +778,7 @@ static int locateValue( LINEARDB *inDB, const void *inKey,
                         void *inOutValue,
                         char inPut = false ) {
     
-    int probeDepth = 0;
+    unsigned int probeDepth = 0;
     
     // hash to find first possible bin for inKey
 
