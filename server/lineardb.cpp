@@ -670,7 +670,7 @@ static int expandTable( LINEARDB *inDB ) {
     inDB->hashTableSizeB ++;
 
     // add extra cell at end
-    uint64_t endBinLoc = getBinLoc( inDB, inDB->hashTableSizeB - 2 );
+    uint64_t endBinLoc = getBinLoc( inDB, inDB->hashTableSizeB - 1 );
 
     if( fseeko( inDB->file, endBinLoc, SEEK_SET ) ) {
         return -1;
@@ -694,10 +694,7 @@ static int expandTable( LINEARDB *inDB ) {
     // remove and re-insert all contiguous cells from the old split
     // point and to the right
     // we need to ensure there are no holes for future linear probes
-    unsigned int c = oldSplitPoint;
-    
-    
-    int result = reinsertCellSegment( inDB, c );
+    int result = reinsertCellSegment( inDB, oldSplitPoint );
     
     if( result != 0 ) {
         return -1;
@@ -888,7 +885,6 @@ static int locateValue( LINEARDB *inDB, const void *inKey,
                 return -1;
                 }
             
-            // write present flag and key
             
             setExists( inDB, binNumberB );
             
