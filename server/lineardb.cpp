@@ -297,14 +297,17 @@ int LINEARDB_open(
         memset( buff, 0, 4096 );
         
         uint64_t i = 0;
-        for( i=0; i < inDB->tableSizeBytes-4096; i += 4096 ) {
-            int numWritten = fwrite( buff, 4096, 1, inDB->file );
-            if( numWritten != 1 ) {
-                fclose( inDB->file );
-                inDB->file = NULL;
-                return 1;
+        if( inDB->tableSizeBytes > 4096 ) {    
+            for( i=0; i < inDB->tableSizeBytes-4096; i += 4096 ) {
+                int numWritten = fwrite( buff, 4096, 1, inDB->file );
+                if( numWritten != 1 ) {
+                    fclose( inDB->file );
+                    inDB->file = NULL;
+                    return 1;
+                    }
                 }
             }
+        
         if( i < inDB->tableSizeBytes ) {
             // last partial buffer
             int numWritten = fwrite( buff, inDB->tableSizeBytes - i, 1, 
