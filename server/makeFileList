@@ -35,6 +35,7 @@ map.cpp \
 ../commonSource/fractalNoise.cpp \
 kissdb.cpp \
 stackdb.cpp \
+lineardb.cpp \
 lifeLog.cpp \
 foodLog.cpp \
 backup.cpp \

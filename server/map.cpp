@@ -19,7 +19,8 @@
 #include "minorGems/formats/encodingUtils.h"
 
 #include "kissdb.h"
-#include "stackdb.h"
+//#include "stackdb.h"
+#include "lineardb.h"
 
 
 /*
@@ -36,7 +37,7 @@
 #define DB_maxStack (int)( db.num_hash_tables )
 */
 
-/**/
+/*
 #define DB STACKDB
 #define DB_open STACKDB_open
 #define DB_close STACKDB_close
@@ -48,7 +49,20 @@
 #define DB_Iterator_init  STACKDB_Iterator_init
 #define DB_Iterator_next  STACKDB_Iterator_next
 #define DB_maxStack db.maxStackDepth
-/**/
+*/
+
+
+#define DB LINEARDB
+#define DB_open LINEARDB_open
+#define DB_close LINEARDB_close
+#define DB_get LINEARDB_get
+#define DB_put LINEARDB_put
+// no distinction between put and put_new in lineardb
+#define DB_put_new LINEARDB_put
+#define DB_Iterator  LINEARDB_Iterator
+#define DB_Iterator_init  LINEARDB_Iterator_init
+#define DB_Iterator_next  LINEARDB_Iterator_next
+#define DB_maxStack db.maxProbeDepth
 
 
 
