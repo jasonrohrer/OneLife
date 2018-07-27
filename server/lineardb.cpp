@@ -661,28 +661,38 @@ static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber ) {
 // But adds support for linear probing by potentially rehashing
 // all cells hit by a linear probe from the split point
 // returns 0 on success, -1 on failure
+// since each of our cells has one item, we need to add two cells
+// at a time whenever we do a split and rehash the two cells at the
+// split point
+// Otherwise, we never catch up when the table becomes too full through
+// the addition of an item (if we expand by 1 each time adding 1 item makes
+//  the table too full, the table will tend toward 100% full asymptotically
+//  as its size grows.  Starting at 5/10 and adding/expanding by 1 item/cell
+//  90 times will give us 95/100 fullness).
 static int expandTable( LINEARDB *inDB ) {
 
     unsigned int oldSplitPoint = inDB->hashTableSizeB - inDB->hashTableSizeA;
     
     
     // expand table
-    inDB->hashTableSizeB ++;
+    // always by two cells at a time
+    inDB->hashTableSizeB += 2;
 
-    // add extra cell at end
-    uint64_t endBinLoc = getBinLoc( inDB, inDB->hashTableSizeB - 1 );
-
-    if( fseeko( inDB->file, endBinLoc, SEEK_SET ) ) {
+    // add extra two cell at end of the file
+    if( fseeko( inDB->file, 0, SEEK_END ) ) {
         return -1;
         }
     memset( inDB->recordBuffer, 0, inDB->recordSizeBytes );
 
-    int numWritten = 
-        fwrite( inDB->recordBuffer, inDB->recordSizeBytes, 1, inDB->file );
-    
-    if( numWritten != 1 ) {
-        return -1;
+    for( int c=0; c<2; c++ ) {    
+        int numWritten = 
+            fwrite( inDB->recordBuffer, inDB->recordSizeBytes, 1, inDB->file );
+        
+        if( numWritten != 1 ) {
+            return -1;
+            }
         }
+    
 
 
     // existence and fingerprint maps already 0 for this extra cell
@@ -691,20 +701,24 @@ static int expandTable( LINEARDB *inDB ) {
 
 
 
-    // remove and re-insert all contiguous cells from the old split
-    // point and to the right
+    // remove and re-insert all contiguous cells from the two
+    // cells at the old split point and to the right
     // we need to ensure there are no holes for future linear probes
-    int result = reinsertCellSegment( inDB, oldSplitPoint );
     
-    if( result != 0 ) {
-        return -1;
+    for( int c=0; c<2; c++ ) {
+        int result = reinsertCellSegment( inDB, oldSplitPoint + c );
+    
+        if( result != 0 ) {
+            return -1;
+            }
         }
+    
     
     
     // do the same for first cell of table, which might have wraped-around
     // cells in it due to linear probing, and there might be an empty cell
     // at the end of the table now that we've expanded it
-    result = reinsertCellSegment( inDB, 0 );
+    int result = reinsertCellSegment( inDB, 0 );
     
 
     if( result != 0 ) {
