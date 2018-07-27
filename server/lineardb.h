@@ -33,7 +33,7 @@ typedef struct {
 
         unsigned int recordSizeBytes;
         uint8_t *recordBuffer;
-        int maxProbeDepth;
+        unsigned int maxProbeDepth;
 
         // sized to ( hashTableSizeA * 2 ) / 8 + 1
         uint8_t *existenceMap;

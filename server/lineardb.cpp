@@ -31,7 +31,7 @@ static uint64_t djb2( const void *inB, unsigned int inLen ) {
 #define LINEARDB_hash(inB, inLen) djb2( inB, inLen )
 
 
-
+/*
 // computes 8-bit hashing using different method from LINEARDB_hash
 static uint8_t byteHash( const void *inB, unsigned int inLen ) {
     // use different seed
@@ -50,6 +50,7 @@ static uint8_t byteHash( const void *inB, unsigned int inLen ) {
     
     return smallHash;
     }
+*/
 
 
 // computes 16-bit hashing using different method from LINEARDB_hash
@@ -470,7 +471,7 @@ int LINEARDB_open(
             }
         
         if( ftello( inDB->file ) < 
-            LINEARDB_HEADER_SIZE + inDB->tableSizeBytes ) {
+            (int64_t)( LINEARDB_HEADER_SIZE + inDB->tableSizeBytes ) ) {
             
             printf( "lineardb file contains correct header but is missing "
                     "hash table.\n" );
@@ -490,7 +491,7 @@ int LINEARDB_open(
             return 1;
             }
         
-        for( int i=0; i<inDB->hashTableSizeB; i++ ) {
+        for( unsigned int i=0; i<inDB->hashTableSizeB; i++ ) {
             
             if( fseeko( inDB->file, 
                         LINEARDB_HEADER_SIZE + i * inDB->recordSizeBytes, 
