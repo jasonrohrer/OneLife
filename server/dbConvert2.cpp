@@ -98,6 +98,8 @@ int main( int inNumArgs, char **inArgs ) {
         exit( 1 );
         }
 
+    printf( "Converting %s from stackdb to lineardb...\n", oldFileName );
+
     // insert all keys from old to new
     unsigned char *keyBuff = new unsigned char[ keySize ];
     unsigned char *valueBuff = new unsigned char[ valueSize ];
@@ -106,10 +108,13 @@ int main( int inNumArgs, char **inArgs ) {
     
     STACKDB_Iterator_init( &db, &dbi );
     
+    int count = 0;
     while( STACKDB_Iterator_next( &dbi, keyBuff, valueBuff ) > 0 ) {
         LINEARDB_put( &dbNew, keyBuff, valueBuff );
+        count++;
         }
-
+    printf( "...converted %d records\n\n", count );
+    
     delete [] keyBuff;
     delete [] valueBuff;
     
