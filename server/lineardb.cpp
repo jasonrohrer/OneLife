@@ -587,13 +587,16 @@ inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
 // removes a coniguous segment of cells from the table, one by one,
 // from left to right,
 // starting at inFirstBinNumber, and reinserts them
-// returns 0 on success, -1 on failure
+// returns size of contiguous segment reinserted on success, -1 on failure
 static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber ) {
     
     uint64_t c = inFirstBinNumber;
     
     // don't infinite loop if table is 100% full
     uint64_t numCellsTouched = 0;
+
+    int numReinserted = 0;
+    
 
     while( numCellsTouched < inDB->hashTableSizeB && exists( inDB, c ) ) {
         // a full cell is here
@@ -642,6 +645,9 @@ static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber ) {
         if( putResult != 0 ) {
             return -1;
             }
+
+        numReinserted ++;
+        
         c++;
 
         if( c >= inDB->hashTableSizeB ) {
@@ -650,7 +656,8 @@ static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber ) {
         
         numCellsTouched++;
         }
-    return 0;
+    
+    return numReinserted;
     }
 
 
@@ -708,8 +715,15 @@ static int expandTable( LINEARDB *inDB ) {
     for( int c=0; c<2; c++ ) {
         int result = reinsertCellSegment( inDB, oldSplitPoint + c );
     
-        if( result != 0 ) {
+        if( result == -1 ) {
             return -1;
+            }
+
+        if( result > 1 ) {
+            // already reinserted the next cell along the line, as part
+            // of a contiguous segment.
+            // don't need to reinsert it again
+            break;
             }
         }
     
