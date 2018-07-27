@@ -7,6 +7,7 @@
 #include "minorGems/system/Time.h"
 
 #include <malloc.h>
+#include <math.h>
 
 #include "minorGems/util/random/CustomRandomSource.h"
 
@@ -16,6 +17,10 @@
 //#define INSERT_SIZE 15000000
 //#define INSERT_SIZE 2000000
 #define INSERT_SIZE 200000
+
+
+#define NUM_RUNS 500
+
 
 #define FLUSH_BETWEEN_OPS
 
@@ -231,7 +236,7 @@ int main() {
     startTime = Time::getCurrentTime();
 
     int lookupCount = 3000;
-    int numRuns = 500;
+    int numRuns = NUM_RUNS;
     int numLooks = 0;
     int numHits = 0;
     
