@@ -135,13 +135,46 @@ int getMallocDelta() {
     }
 
 
+DB db;
+unsigned char key[16];
+unsigned char value[4];
+
+
+void iterateValues() {
+    DB_Iterator dbi;
+
+    double startTime = Time::getCurrentTime();
+
+    DB_Iterator_init( &db, &dbi );
+    
+    
+    int count = 0;
+    int checksum = 0;
+    while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
+        count++;
+        int v = valueToInt( value );
+        checksum += v;
+        }
+    printf( "Iterated %d, checksum %u\n", count, checksum );
+
+    printf( "Iterating used %d bytes, took %f sec\n", getMallocDelta(),
+            Time::getCurrentTime() - startTime );
+
+
+    printf( "Max bin depth = %d\n", DB_maxStack );
+    }
+
+
+
+
+
 int main() {
 
     getMallocDelta();
     
     double startTime = Time::getCurrentTime();
     
-    DB db;
+   
 
     int tableSize = TABLE_SIZE;
     
@@ -164,13 +197,22 @@ int main() {
         }
 
 
+    maybeFlush();
+    
+    printf( "Iterating through any initial items in database...\n" );
+    
+    iterateValues();
+    
+
+    maybeFlush();
+
+
     startTime = Time::getCurrentTime();
 
     // quad-root
     int num = (int)ceil( pow( INSERT_SIZE, 0.25 ) );
     
-    unsigned char key[16];
-    unsigned char value[4];
+
     
 
     // sanity check:
@@ -415,27 +457,7 @@ int main() {
 
 
     
-    DB_Iterator dbi;
-
-    startTime = Time::getCurrentTime();
-
-    DB_Iterator_init( &db, &dbi );
-    
-    
-    int count = 0;
-    checksum = 0;
-    while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
-        count++;
-        int v = valueToInt( value );
-        checksum += v;
-        }
-    printf( "Iterated %d, checksum %u\n", count, checksum );
-
-    printf( "Iterating used %d bytes, took %f sec\n", getMallocDelta(),
-            Time::getCurrentTime() - startTime );
-
-
-    printf( "Max bin depth = %d\n", DB_maxStack );
+    iterateValues();
     
     DB_close( &db );
 
