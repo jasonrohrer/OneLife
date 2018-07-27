@@ -34,13 +34,13 @@ int main( int inNumArgs, char **inArgs ) {
         usage();
         }
 
-    sscanf( inArgs[2], "%d", &keySize );
+    sscanf( inArgs[3], "%d", &keySize );
     
     if( keySize == 0 ) {
         usage();
         }
 
-    sscanf( inArgs[2], "%d", &valueSize );
+    sscanf( inArgs[4], "%d", &valueSize );
     
     if( valueSize == 0 ) {
         usage();
