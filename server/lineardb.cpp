@@ -735,7 +735,7 @@ static int expandTable( LINEARDB *inDB ) {
     int result = reinsertCellSegment( inDB, 0 );
     
 
-    if( result != 0 ) {
+    if( result == -1 ) {
         return -1;
         }
 
