@@ -1,2 +1,3 @@
 g++ -I../.. -g -o dbConvert dbConvert.cpp kissdb.cpp stackdb.cpp
 g++ -I../.. -g -o dbCount dbCount.cpp stackdb.cpp
+g++ -I../.. -g -o dbConvert2 dbConvert2.cpp lineardb.cpp stackdb.cpp
