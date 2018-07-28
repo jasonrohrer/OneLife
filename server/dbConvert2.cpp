@@ -10,7 +10,7 @@
 
 void usage() {
     printf( "Usage:\n" );
-    printf( "dbConvert stack_db_file old_table_size key_size value_size new_table_size\n\n" );
+    printf( "dbConvert stack_db_file old_table_size key_size value_size\n\n" );
     
     printf( "Example:\n" );
     printf( "dbConvert map.db 80000 16 4 1000000\n\n" );
@@ -22,7 +22,7 @@ void usage() {
 
 int main( int inNumArgs, char **inArgs ) {
     
-    if( inNumArgs != 6 ) {
+    if( inNumArgs != 5 ) {
         usage();
         }
 
@@ -52,13 +52,6 @@ int main( int inNumArgs, char **inArgs ) {
         }
 
 
-    sscanf( inArgs[5], "%d", &newTableSize );
-    
-    if( newTableSize == 0 ) {
-        usage();
-        }
-
-
     char *oldFileName = inArgs[1];
     
     STACKDB db;
@@ -83,6 +76,31 @@ int main( int inNumArgs, char **inArgs ) {
     sprintf( tempFileName, "%s.temp", oldFileName );
     
 
+    // insert all keys from old to new
+    unsigned char *keyBuff = new unsigned char[ keySize ];
+    unsigned char *valueBuff = new unsigned char[ valueSize ];
+
+    STACKDB_Iterator dbi;
+    
+
+
+    
+    printf( "Counting records in %s stackdb...\n", oldFileName );
+    
+    int count = 0;
+    while( STACKDB_Iterator_next( &dbi, keyBuff, valueBuff ) > 0 ) {
+        count ++;
+        }
+    
+    printf( "...%d records found\n", count );
+    
+    
+    // anticipate maxLoad of 0.5
+    newTableSize = count * 2;
+
+    printf( "Converting %s from stackdb to lineardb with %d "
+            "starting size...\n", oldFileName, newTableSize );
+
     LINEARDB dbNew;
 
     error = LINEARDB_open( &dbNew,
@@ -98,17 +116,11 @@ int main( int inNumArgs, char **inArgs ) {
         exit( 1 );
         }
 
-    printf( "Converting %s from stackdb to lineardb...\n", oldFileName );
 
-    // insert all keys from old to new
-    unsigned char *keyBuff = new unsigned char[ keySize ];
-    unsigned char *valueBuff = new unsigned char[ valueSize ];
 
-    STACKDB_Iterator dbi;
-    
     STACKDB_Iterator_init( &db, &dbi );
-    
-    int count = 0;
+
+    count = 0;
     while( STACKDB_Iterator_next( &dbi, keyBuff, valueBuff ) > 0 ) {
         LINEARDB_put( &dbNew, keyBuff, valueBuff );
         count++;
