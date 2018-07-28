@@ -59,7 +59,8 @@ typedef struct {
  * they were.
  *
  * @param db Database struct
- * @param path Path to file
+ * @param path Path to file, or NULL to use previously forced
+ *   FILE * already set in db struct by previous forceFile call.
  * @param inMode is ignored, and always opened in RW-create mode
  *   (left for compatibility with KISSDB api)
  * @param inHashTableStartSize Size of hash table in entries
@@ -150,3 +151,33 @@ void LINEARDB_Iterator_init( LINEARDB *inDB, LINEARDB_Iterator *inDBi );
  */
 int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi, 
                             void *outKey, void *outValue );
+
+
+
+
+/**
+ * For the given maxLoad that is currently set, get the maximum
+ * file size that the database will fill for the given parameters.
+ *
+ * If inMaxLoad is  0, default max load is used.
+ */
+uint64_t LINEARDB_getMaxFileSize( unsigned int inTableStartSize,
+                                  unsigned int inKeySize,
+                                  unsigned int inValueSize,
+                                  uint64_t inNumRecords,
+                                  double inMaxLoad = 0 );
+
+
+
+/**
+ * Force the file that will be used by the as-of-yet unopened database.
+ *
+ * Pass NULL for inPath to open call to use the file thus forced.
+ *
+ * Allows for memory buffered files and other such things.
+ *
+ * Note that forced files are treated as empty and ready to be rewritten
+ * with a new header and new data.
+ */
+void LINEARDB_forceFile( LINEARDB *inDB,
+                         FILE *inFile );

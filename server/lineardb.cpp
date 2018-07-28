@@ -4,11 +4,15 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 #ifdef _WIN32
 #define fseeko fseeko64
 #define ftello ftello64
 #endif
+
+
+#define DEFAULT_MAX_LOAD 0.5
 
 
 #include "murmurhash2_64.cpp"
@@ -236,19 +240,23 @@ int LINEARDB_open(
 
     inDB->numRecords = 0;
     
-    inDB->maxLoad = 0.5;
+    inDB->maxLoad = DEFAULT_MAX_LOAD;
     
 
-    inDB->file = fopen( inPath, "r+b" );
+    if( inPath != NULL ) {
+        inDB->file = fopen( inPath, "r+b" );
     
-    if( inDB->file == NULL ) {
-        // doesn't exist yet
-        inDB->file = fopen( inPath, "w+b" );
+        if( inDB->file == NULL ) {
+            // doesn't exist yet
+            inDB->file = fopen( inPath, "w+b" );
+            }
+        
+        if( inDB->file == NULL ) {
+            return 1;
+            }
         }
+    // else file already set by forceFile
     
-    if( inDB->file == NULL ) {
-        return 1;
-        }
 
     inDB->hashTableSizeA = inHashTableStartSize;
     inDB->hashTableSizeB = inHashTableStartSize;
@@ -276,8 +284,12 @@ int LINEARDB_open(
 
 
     
-    if( ftello( inDB->file ) < LINEARDB_HEADER_SIZE ) {
+    if( inPath == NULL ||
+        ftello( inDB->file ) < LINEARDB_HEADER_SIZE ) {
         // file that doesn't even contain the header
+
+        // or it's a forced file (which is forced to be empty)
+        
 
         // write fresh header and hash table
 
@@ -1021,4 +1033,39 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
         }
     }
 
+
+
+
+uint64_t LINEARDB_getMaxFileSize( unsigned int inTableStartSize,
+                                  unsigned int inKeySize,
+                                  unsigned int inValueSize,
+                                  uint64_t inNumRecords,
+                                  double inMaxLoad ) {
+    if( inMaxLoad == 0 ) {
+        inMaxLoad = DEFAULT_MAX_LOAD;
+        }
+
+    uint64_t recordSize = 1 + inKeySize + inValueSize;
     
+    double load = (double)inNumRecords / (double)inTableStartSize;
+    
+    uint64_t tableSize = inTableStartSize;
+
+    if( load > inMaxLoad ) {
+        // too big for original table
+
+        tableSize = (uint64_t)( ceil( ( inNumRecords / inMaxLoad ) ) );
+        }
+
+    return LINEARDB_HEADER_SIZE + tableSize * recordSize;
+    }
+
+
+
+
+
+void LINEARDB_forceFile( LINEARDB *inDB,
+                         FILE *inFile ) {    
+    inDB->file = inFile;
+    }
+

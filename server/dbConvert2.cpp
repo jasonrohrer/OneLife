@@ -101,17 +101,41 @@ int main( int inNumArgs, char **inArgs ) {
     printf( "Converting %s from stackdb to lineardb with %d "
             "starting size...\n", oldFileName, newTableSize );
 
+
+    // memory buffer to speed this up
+
+    uint64_t maxFileSize = LINEARDB_getMaxFileSize( newTableSize,
+                                                    keySize,
+                                                    valueSize,
+                                                    count );
+
+    // leave room for NULL byte at end
+    unsigned char *fileBuffer = new unsigned char[ maxFileSize + 1 ];
+    
+    FILE *memFile = fmemopen( (void *)fileBuffer, maxFileSize + 1, "w+b" );
+    
+    if( memFile == NULL ) {
+        printf( "dbConvert: Failed to open RAM buffered file\n" );
+        STACKDB_close( &db );
+        exit( 1 );
+        }
+
+
+
     LINEARDB dbNew;
 
+    
+    LINEARDB_forceFile( &dbNew, memFile );
+
+
     error = LINEARDB_open( &dbNew,
-                          tempFileName,
-                          0,
-                          newTableSize,
-                          keySize,
-                          valueSize );
+                           NULL,
+                           0,
+                           newTableSize,
+                           keySize,
+                           valueSize );
     if( error ) {
-        printf( "dbConvert: Failed to open temp linear file %s\n", 
-                tempFileName );
+        printf( "dbConvert: Failed to open linear database\n" );
         STACKDB_close( &db );
         exit( 1 );
         }
@@ -133,13 +157,21 @@ int main( int inNumArgs, char **inArgs ) {
     STACKDB_close( &db );
     LINEARDB_close( &dbNew );
         
-    if( rename ( tempFileName, oldFileName ) != 0 ) {
-        printf( "dbConvert: Failed to move temp file %s to "
-                "overwrite old stackdb file %s\n",
-                tempFileName, oldFileName );
+    // memory buffer should be full of data
+    // dump it to file
+    FILE *outFile = fopen( oldFileName, "w" );
+    
+    if( outFile == NULL ) {
+        printf( "Failed to re-open %s for writing\n", oldFileName );
         }
     
-
+    int numWritten = fwrite( fileBuffer, maxFileSize, 1, outFile );
+    
+    if( numWritten != 1 ) {
+        printf( "Failed to write data buffer to file %s\n", oldFileName );
+        }
+    
+    fclose( outFile );
     
     return 0;
     }
