@@ -82,7 +82,7 @@ int main( int inNumArgs, char **inArgs ) {
 
     STACKDB_Iterator dbi;
     
-
+    STACKDB_Iterator_init( &db, &dbi );
 
     
     printf( "Counting records in %s stackdb...\n", oldFileName );
