@@ -172,6 +172,9 @@ int main( int inNumArgs, char **inArgs ) {
         }
     
     fclose( outFile );
+
+    delete [] fileBuffer;
+    
     
     return 0;
     }
