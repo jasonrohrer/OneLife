@@ -65,7 +65,6 @@ typedef struct {
  * @param inHashTableStartSize Size of hash table in entries
  *   This is the starting size of the table, which will grow as the table
  *   becomes full.
- *   This must be an even number.
  * @param key_size Size of keys in bytes
  * @param value_size Size of values in bytes
  * @return 0 on success, nonzero on error

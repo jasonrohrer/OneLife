@@ -591,66 +591,69 @@ inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
 // removes a coniguous segment of cells from the table, one by one,
 // from left to right,
 // starting at inFirstBinNumber, and reinserts them
-// returns size of contiguous segment reinserted on success, -1 on failure
-static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber ) {
+// examines at least inMinCellCount cells, but maybe more, if there
+// is a long run with no empty spots
+// returns 0 on success, -1 on failure
+static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber,
+                                uint64_t inMinCellCount ) {
     
     uint64_t c = inFirstBinNumber;
     
     // don't infinite loop if table is 100% full
     uint64_t numCellsTouched = 0;
 
-    int numReinserted = 0;
-    
-
-    while( numCellsTouched < inDB->hashTableSizeB && exists( inDB, c ) ) {
-        // a full cell is here
-
-        uint64_t binLoc = getBinLoc( inDB, c );
+    while( numCellsTouched < inDB->hashTableSizeB && 
+           ( numCellsTouched < inMinCellCount || exists( inDB, c )  ) ) {
         
-        if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
-            return -1;
-            }
-        
-        int numRead = fread( inDB->recordBuffer, 
-                             inDB->recordSizeBytes, 1, inDB->file );
-        
-        if( numRead != 1 ) {
-            return -1;
-            }
-        
-        // now clear present byte
-        if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
-            return -1;
-            }
-
-        // write not present flag
-        unsigned char presentFlag = 0;
+        if( exists( inDB, c ) ) {
             
-        int numWritten = fwrite( &presentFlag, 1, 1, inDB->file );
-        
-        if( numWritten != 1 ) {
-            return -1;
-            }
-        
-        
-        setNotExists( inDB, c );
-        
-        // decrease count before reinsert, which will increment count
-        inDB->numRecords --;
-        
-        
-        int putResult = 
-            LINEARDB_put( inDB,
-                          // key
-                          &( inDB->recordBuffer[ 1 ] ), 
-                          // value
-                          &( inDB->recordBuffer[ 1 + inDB->keySize ] ) );
-        
-        if( putResult != 0 ) {
-            return -1;
-            }
+            // a full cell is here
 
-        numReinserted ++;
+            uint64_t binLoc = getBinLoc( inDB, c );
+        
+            if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
+                return -1;
+                }
+        
+            int numRead = fread( inDB->recordBuffer, 
+                                 inDB->recordSizeBytes, 1, inDB->file );
+        
+            if( numRead != 1 ) {
+                return -1;
+                }
+        
+            // now clear present byte
+            if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
+                return -1;
+                }
+
+            // write not present flag
+            unsigned char presentFlag = 0;
+            
+            int numWritten = fwrite( &presentFlag, 1, 1, inDB->file );
+        
+            if( numWritten != 1 ) {
+                return -1;
+                }
+        
+        
+            setNotExists( inDB, c );
+        
+            // decrease count before reinsert, which will increment count
+            inDB->numRecords --;
+        
+        
+            int putResult = 
+                LINEARDB_put( inDB,
+                              // key
+                              &( inDB->recordBuffer[ 1 ] ), 
+                              // value
+                              &( inDB->recordBuffer[ 1 + inDB->keySize ] ) );
+        
+            if( putResult != 0 ) {
+                return -1;
+                }
+            }
         
         c++;
 
@@ -661,7 +664,7 @@ static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber ) {
         numCellsTouched++;
         }
     
-    return numReinserted;
+    return 0;
     }
 
 
@@ -672,30 +675,43 @@ static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber ) {
 // But adds support for linear probing by potentially rehashing
 // all cells hit by a linear probe from the split point
 // returns 0 on success, -1 on failure
-// since each of our cells has one item, we need to add two cells
-// at a time whenever we do a split and rehash the two cells at the
-// split point
-// Otherwise, we never catch up when the table becomes too full through
-// the addition of an item (if we expand by 1 each time adding 1 item makes
-//  the table too full, the table will tend toward 100% full asymptotically
-//  as its size grows.  Starting at 5/10 and adding/expanding by 1 item/cell
-//  90 times will give us 95/100 fullness).
+//
+// This call may expand the table by more than one cell, until the table
+// is big enough that it's at or below the maxLoad
 static int expandTable( LINEARDB *inDB ) {
 
     unsigned int oldSplitPoint = inDB->hashTableSizeB - inDB->hashTableSizeA;
     
-    
-    // expand table
-    // always by two cells at a time
-    inDB->hashTableSizeB += 2;
 
-    // add extra two cell at end of the file
+    // expand table until we are back at or below maxLoad
+    int numExpanded = 0;
+    while( (double)( inDB->numRecords ) /
+           (double)( inDB->hashTableSizeB ) > inDB->maxLoad ) {
+
+        inDB->hashTableSizeB ++;
+        numExpanded++;
+        
+        if( inDB->hashTableSizeB == inDB->hashTableSizeA * 2 ) {
+            // full round of expansion is done.
+        
+            unsigned int oldTableSizeA = inDB->hashTableSizeA;
+        
+            inDB->hashTableSizeA = inDB->hashTableSizeB;
+            
+
+            recreateMaps( inDB, oldTableSizeA );
+            }
+        }
+    
+
+
+    // add extra cells at end of the file
     if( fseeko( inDB->file, 0, SEEK_END ) ) {
         return -1;
         }
     memset( inDB->recordBuffer, 0, inDB->recordSizeBytes );
 
-    for( int c=0; c<2; c++ ) {    
+    for( int c=0; c<numExpanded; c++ ) {    
         int numWritten = 
             fwrite( inDB->recordBuffer, inDB->recordSizeBytes, 1, inDB->file );
         
@@ -706,37 +722,31 @@ static int expandTable( LINEARDB *inDB ) {
     
 
 
-    // existence and fingerprint maps already 0 for this extra cell
-    // (they are big enough already to have room for it at the end
+    // existence and fingerprint maps already 0 for these extra cells
+    // (they are big enough already to have room for it at the end)
 
 
 
 
-    // remove and re-insert all contiguous cells from the two
-    // cells at the old split point and to the right
+    // remove and re-insert all contiguous cells from the region
+    // between the old and new split point
     // we need to ensure there are no holes for future linear probes
     
-    for( int c=0; c<2; c++ ) {
-        int result = reinsertCellSegment( inDB, oldSplitPoint + c );
-    
-        if( result == -1 ) {
-            return -1;
-            }
 
-        if( result > 1 ) {
-            // already reinserted the next cell along the line, as part
-            // of a contiguous segment.
-            // don't need to reinsert it again
-            break;
-            }
+    int result = reinsertCellSegment( inDB, oldSplitPoint, numExpanded );
+    if( result == -1 ) {
+        return -1;
         }
+
     
     
     
     // do the same for first cell of table, which might have wraped-around
     // cells in it due to linear probing, and there might be an empty cell
     // at the end of the table now that we've expanded it
-    int result = reinsertCellSegment( inDB, 0 );
+    // there is no minimum number we must examine, if first cell is empty
+    // looking at just that cell is enough
+    result = reinsertCellSegment( inDB, 0, 1 );
     
 
     if( result == -1 ) {
@@ -744,16 +754,7 @@ static int expandTable( LINEARDB *inDB ) {
         }
 
     
-    if( inDB->hashTableSizeB == inDB->hashTableSizeA * 2 ) {
-        // full round of expansion is done.
-        
-        unsigned int oldTableSizeA = inDB->hashTableSizeA;
-        
-        inDB->hashTableSizeA = inDB->hashTableSizeB;
-        
-
-        recreateMaps( inDB, oldTableSizeA );
-        }
+    
 
     inDB->tableSizeBytes = 
         (uint64_t)( inDB->recordSizeBytes ) * 
